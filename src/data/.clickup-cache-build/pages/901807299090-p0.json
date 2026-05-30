@@ -1,0 +1,41 @@
+{
+  "tasks": [
+    {
+      "id": "86et8jxde",
+      "custom_id": null,
+      "name": "Client Y",
+      "status": "invoice sent",
+      "url": "https://app.clickup.com/t/86et8jxde",
+      "priority": null,
+      "assignees": [],
+      "tags": [],
+      "due_date": null,
+      "list": { "id": "901807299090", "name": "INVOICE SENT" }
+    },
+    {
+      "id": "86et8jxda",
+      "custom_id": null,
+      "name": "Client D",
+      "status": "invoice sent",
+      "url": "https://app.clickup.com/t/86et8jxda",
+      "priority": null,
+      "assignees": [],
+      "tags": [],
+      "due_date": "1746752400000",
+      "list": { "id": "901807299090", "name": "INVOICE SENT" }
+    },
+    {
+      "id": "86et7qem2",
+      "custom_id": null,
+      "name": "Client X",
+      "status": "invoice sent",
+      "url": "https://app.clickup.com/t/86et7qem2",
+      "priority": null,
+      "assignees": [],
+      "tags": [],
+      "due_date": "1746666000000",
+      "list": { "id": "901807299090", "name": "INVOICE SENT" }
+    }
+  ],
+  "count": 3
+}

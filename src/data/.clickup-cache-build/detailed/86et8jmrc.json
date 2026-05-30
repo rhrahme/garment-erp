@@ -1,0 +1,26 @@
+{
+  "id": "86et8jmrc",
+  "name": "Client k",
+  "parent": null,
+  "top_level_parent": null,
+  "date_created": "0",
+  "date_updated": "0",
+  "list": {
+    "id": "901807229914",
+    "name": "AWAITING INVOICE"
+  },
+  "custom_fields": [
+    {
+      "id": "32919abd-3920-4c5e-84a6-a58c2517f107",
+      "name": "Size",
+      "type": "short_text",
+      "value": "FR-2024-1034"
+    },
+    {
+      "id": "0d5ea738-a1d2-4573-9994-adf86355e565",
+      "name": "Unit",
+      "type": "number",
+      "value": "1"
+    }
+  ]
+}

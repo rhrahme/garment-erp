@@ -1,0 +1,32 @@
+{
+  "id": "86et8xkxt",
+  "name": "client CCDDEE",
+  "parent": null,
+  "top_level_parent": null,
+  "date_created": "0",
+  "date_updated": "0",
+  "list": {
+    "id": "901807229914",
+    "name": "AWAITING INVOICE"
+  },
+  "custom_fields": [
+    {
+      "id": "6b18f1e6-5733-423c-b7e1-51e32d43760f",
+      "name": "Fabric Number",
+      "type": "short_text",
+      "value": "8953"
+    },
+    {
+      "id": "0d5ea738-a1d2-4573-9994-adf86355e565",
+      "name": "Unit",
+      "type": "number",
+      "value": "10"
+    },
+    {
+      "id": "7307290a-872e-4fce-85b5-14435b123904",
+      "name": "Trial Date 1",
+      "type": "date",
+      "value": "1745463600000"
+    }
+  ]
+}

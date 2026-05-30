@@ -1,0 +1,110 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  ScanLine,
+  Package,
+  Factory,
+  ShoppingCart,
+  Mail,
+  Inbox,
+  Truck,
+  ClipboardCheck,
+  Users,
+  Calculator,
+  Droplets,
+  Plane,
+  FileText,
+  LogOut,
+  Shirt,
+  SwatchBook,
+  Tags,
+  UsersRound,
+  Store,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+
+const navItems = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/fabric-receiving", label: "Fabric Receiving", icon: ScanLine },
+  { href: "/brands", label: "Production Brands", icon: Tags },
+  { href: "/clients", label: "Clients", icon: UsersRound },
+  { href: "/ready-made", label: "Ready-Made", icon: Store },
+  { href: "/fabric-specification", label: "Fabric Specification", icon: SwatchBook },
+  { href: "/inventory", label: "Inventory", icon: Package },
+  { href: "/production", label: "Production", icon: Factory },
+  { href: "/orders", label: "Sales Orders", icon: ShoppingCart },
+  { href: "/supplier-emails", label: "Supplier Emails", icon: Mail },
+  { href: "/supplier-inbox", label: "Supplier Inbox", icon: Inbox },
+  { href: "/supplier-invoices", label: "Supplier Invoices", icon: FileText },
+  { href: "/purchasing", label: "Purchasing", icon: Truck },
+  { href: "/shipments", label: "AWB Tracking", icon: Plane },
+  { href: "/washing", label: "Washing", icon: Droplets },
+  { href: "/quality", label: "Quality Control", icon: ClipboardCheck },
+  { href: "/hr", label: "HR & Payroll", icon: Users },
+  { href: "/costing", label: "Costing", icon: Calculator },
+];
+
+export function Sidebar() {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleLogout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
+
+  return (
+    <aside className="flex h-screen w-64 flex-col border-r border-slate-200 bg-slate-900 text-white">
+      <div className="flex items-center gap-3 border-b border-slate-700 px-6 py-5">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500">
+          <Shirt className="h-5 w-5" />
+        </div>
+        <div>
+          <p className="text-sm font-bold leading-tight">Garment ERP</p>
+          <p className="text-xs text-slate-400">Factory Management</p>
+        </div>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto px-3 py-4">
+        <ul className="space-y-1">
+          {navItems.map(({ href, label, icon: Icon }) => {
+            const active = pathname === href || pathname.startsWith(href + "/");
+            return (
+              <li key={href}>
+                <Link
+                  href={href}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    active
+                      ? "bg-indigo-600 text-white"
+                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {label}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      <div className="border-t border-slate-700 p-4">
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+        >
+          <LogOut className="h-4 w-4" />
+          Sign out
+        </button>
+      </div>
+    </aside>
+  );
+}

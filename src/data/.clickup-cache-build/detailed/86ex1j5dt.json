@@ -1,0 +1,1320 @@
+{
+  "id": "86ex1j5dt",
+  "name": "Abdullah Al Moussa",
+  "parent": "86ewa8t4c",
+  "top_level_parent": "86ewa8t4c",
+  "date_created": "1774428431204",
+  "date_updated": "1775749562154",
+  "list": {
+    "id": "901815679914",
+    "name": "CUTTING"
+  },
+  "custom_fields": [
+    {
+      "id": "e312685c-eb7a-4e19-a643-97747c3ef8d3",
+      "name": "# Pattern",
+      "type": "short_text",
+      "type_config": {}
+    },
+    {
+      "id": "5cc617db-c626-4111-a6f3-343e197dd31c",
+      "name": "ASSIGNEES",
+      "type": "labels",
+      "type_config": {
+        "sorting": "manual",
+        "options": [
+          {
+            "id": "42c00907-5d6b-49f1-a5df-ec6201bde583",
+            "label": "Javed",
+            "color": "#b5bcc2",
+            "orderindex": 0
+          },
+          {
+            "id": "9691b697-9c7c-416e-8f79-10ca5f3d0b14",
+            "label": "Kashef",
+            "color": "#1bbc9c",
+            "orderindex": 1
+          },
+          {
+            "id": "e6fa7aa9-3b91-43eb-82be-a0bd4f08382a",
+            "label": "Ashraf",
+            "color": "#fff",
+            "orderindex": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "a1e5b0b7-79b0-46a4-b3a3-4cd60af29b64",
+      "name": "Brands",
+      "type": "drop_down",
+      "type_config": {
+        "sorting": "manual",
+        "new_drop_down": true,
+        "options": [
+          {
+            "id": "41cdd04e-ecfb-41ab-9f0a-f4c2f79b0385",
+            "name": "FR",
+            "color": "#e50000",
+            "orderindex": 0
+          },
+          {
+            "id": "e6ccc404-dd56-47ff-ac44-cc9e072b2a90",
+            "name": "FD",
+            "color": "#AF7E2E",
+            "orderindex": 1
+          },
+          {
+            "id": "a26ffc4d-a6e5-49b2-aa21-c8259aa76740",
+            "name": "JU",
+            "color": "#81B1FF",
+            "orderindex": 2
+          },
+          {
+            "id": "833d8c53-9b4a-41b4-964e-db915c16a9b9",
+            "name": "G",
+            "color": "#d33d44",
+            "orderindex": 3
+          },
+          {
+            "id": "7c7aac44-3a73-43b0-a8b8-f9676afc0478",
+            "name": "Gliani",
+            "color": "#008844",
+            "orderindex": 4
+          }
+        ]
+      },
+      "value": 0
+    },
+    {
+      "id": "d4bc5bc4-5847-4660-88bd-acd00dba2c15",
+      "name": "Color",
+      "type": "drop_down",
+      "type_config": {
+        "sorting": "manual",
+        "new_drop_down": true,
+        "options": [
+          {
+            "id": "d1cbb4e2-15fc-4174-97c6-beee38232f22",
+            "name": "White",
+            "color": "#fff",
+            "orderindex": 0
+          },
+          {
+            "id": "ee47d97e-6fe1-457c-9f26-03d78c77f5a0",
+            "name": "Vibrant Blue",
+            "color": "#04A9F4",
+            "orderindex": 1
+          },
+          {
+            "id": "9112acce-554a-4255-9f55-c8aff1612a8b",
+            "name": "Light pink",
+            "color": "#FF7FAB",
+            "orderindex": 2
+          },
+          {
+            "id": "5536a15a-b854-4929-a70e-fc1864debf6a",
+            "name": "Black",
+            "color": "#000000",
+            "orderindex": 3
+          },
+          {
+            "id": "686ed81e-5651-4f0a-9140-7ff3b4b49c7e",
+            "name": "Blue dark",
+            "color": "#4762f0",
+            "orderindex": 4
+          },
+          {
+            "id": "b2617aa4-b56f-40ad-bcf9-cc8e1e8209e5",
+            "name": "Light Blue",
+            "color": "#04A9F4",
+            "orderindex": 5
+          },
+          {
+            "id": "4ee08f58-4efc-4c1f-8e3b-d89fdeb437d4",
+            "name": "Green",
+            "color": "#40a430",
+            "orderindex": 6
+          },
+          {
+            "id": "13ef9ff6-3d4d-4061-8015-1642a0fd41dd",
+            "name": "Yellow",
+            "color": "#f9d900",
+            "orderindex": 7
+          },
+          {
+            "id": "ab05d6d2-4528-43ed-ae2f-cb100fd0037c",
+            "name": "Pink",
+            "color": "#FF4081",
+            "orderindex": 8
+          },
+          {
+            "id": "d5f8842f-1673-4dd9-847b-37f23c49544b",
+            "name": "Brown",
+            "color": "#a18072",
+            "orderindex": 9
+          },
+          {
+            "id": "3f0e64d1-a8a2-4b45-bbfe-9249e3fe9b45",
+            "name": "Beige",
+            "color": "#f5f5dc",
+            "orderindex": 10
+          },
+          {
+            "id": "99c56a06-6696-48f0-9d13-e24c194ffdfd",
+            "name": "Purple",
+            "color": "#bf55ec",
+            "orderindex": 11
+          },
+          {
+            "id": "666bd9d6-3752-43b8-94e2-02049719bd55",
+            "name": "Red",
+            "color": "#e50000",
+            "orderindex": 12
+          },
+          {
+            "id": "852cd45b-d0ab-4791-a37b-df68c6a3154b",
+            "name": "Red stripe",
+            "color": "#e5484d",
+            "orderindex": 13
+          },
+          {
+            "id": "32de1e59-557f-4e18-bb2f-22d8cbffd5e8",
+            "name": "Green stripe",
+            "color": "#30a46c",
+            "orderindex": 14
+          },
+          {
+            "id": "c6916cf0-010b-4a91-a77a-18aa7ae06999",
+            "name": "Grey",
+            "color": "#cecece",
+            "orderindex": 15
+          },
+          {
+            "id": "990d515d-a1c6-43a2-9a10-734f053fcaff",
+            "name": "Grey solid dark",
+            "color": "#C44667",
+            "orderindex": 16
+          },
+          {
+            "id": "cc9d56db-c8ad-482f-b1fa-1e362aca6b4a",
+            "name": "Beige/Black check",
+            "color": "#8F3FFF",
+            "orderindex": 17
+          },
+          {
+            "id": "d3c18547-7f6d-4b02-aad3-476923702a73",
+            "name": "Blue check",
+            "color": "#BC481C",
+            "orderindex": 18
+          },
+          {
+            "id": "d21f859c-e1bc-49e6-8f08-19afd764187e",
+            "name": "Black check",
+            "color": "#D00219",
+            "orderindex": 19
+          },
+          {
+            "id": "0af39fd9-35f4-4fef-bfbe-3bcf7f9dacc3",
+            "name": "Grey check",
+            "color": "#692CEA",
+            "orderindex": 20
+          },
+          {
+            "id": "a1a4e843-2300-4d83-be96-3cc035783783",
+            "name": "Mole dusty dark",
+            "color": "#EF0688",
+            "orderindex": 21
+          },
+          {
+            "id": "43a03eff-a8af-4bdf-9d18-eb4f8b9db39e",
+            "name": "Brown dark",
+            "color": "#D20AC8",
+            "orderindex": 22
+          },
+          {
+            "id": "25ed0599-f8b4-44bf-a66a-1e59efc2d8a3",
+            "name": "Nvey check",
+            "color": "#A963F3",
+            "orderindex": 23
+          },
+          {
+            "id": "2aa859a6-cef0-4f01-87b1-54c7c84da292",
+            "name": "Khaki dark",
+            "color": "#3E66AD",
+            "orderindex": 24
+          },
+          {
+            "id": "bd07b023-dc9e-45d7-957e-0fb2acfae00f",
+            "name": "Khaki light",
+            "color": "#cecece",
+            "orderindex": 25
+          },
+          {
+            "id": "f232ef51-dfba-4cab-b3cd-d7236603257d",
+            "name": "White stripe",
+            "color": "#841289",
+            "orderindex": 26
+          },
+          {
+            "id": "97366255-e929-48d4-ad03-41bc2274dd8d",
+            "name": "Grey light",
+            "color": "#cecece",
+            "orderindex": 27
+          },
+          {
+            "id": "de5abe94-05bc-4859-8797-6e4a20d004ab",
+            "name": "Orange solid",
+            "color": "#aec0f5",
+            "orderindex": 28
+          },
+          {
+            "id": "3bb36cd4-c2ed-4562-ac2e-b91c5df7cc9e",
+            "name": "Navy blue dark",
+            "color": "#3e91dd",
+            "orderindex": 29
+          },
+          {
+            "id": "f8fe372d-a0ee-450e-9671-4ca0ecb555cd",
+            "name": "Off White",
+            "color": "#bbbbbb",
+            "orderindex": 30
+          },
+          {
+            "id": "476a41ce-939b-4d14-a51c-397ebec8cc68",
+            "name": "Stripe-Fabric",
+            "color": "#92ceac",
+            "orderindex": 31
+          },
+          {
+            "id": "ce4e39c0-f08e-494d-9014-074339717c37",
+            "name": "Check Fabric",
+            "color": "#e9c162",
+            "orderindex": 32
+          },
+          {
+            "id": "4d86426a-fdb4-4ed9-a8a6-6c8836a2f842",
+            "name": "6 Color- Fabric",
+            "color": "#ffaa7d",
+            "orderindex": 33
+          },
+          {
+            "id": "36fcca1d-c2bc-4557-8025-7bff11c8c3a0",
+            "name": "Light Beige",
+            "color": "#6647f0",
+            "orderindex": 34
+          },
+          {
+            "id": "08197a73-21ef-4f1f-8973-88fe2ab05704",
+            "name": "Olive Solid",
+            "color": "#8d8d8d",
+            "orderindex": 35
+          },
+          {
+            "id": "c428a9b6-e04d-4d73-9200-90f668094625",
+            "name": "Light neon blue",
+            "color": "#aec0f5",
+            "orderindex": 36
+          },
+          {
+            "id": "8b49515f-fd70-4a54-8a81-ba9651220ad3",
+            "name": "Turqoise",
+            "color": "#12a594",
+            "orderindex": 37
+          },
+          {
+            "id": "aec03241-23b5-42c9-95c2-0ffae45bf549",
+            "name": "Olive Stripe",
+            "color": "#92ceac",
+            "orderindex": 38
+          },
+          {
+            "id": "68c23981-4b78-48f3-85d3-9115f741da54",
+            "name": "Lime Green",
+            "color": "#acce92",
+            "orderindex": 39
+          },
+          {
+            "id": "e22f3d2b-b50e-4b9a-a967-f2da05c3edba",
+            "name": "Lavender",
+            "color": "#b6b6ff",
+            "orderindex": 40
+          },
+          {
+            "id": "c2273a3c-8dfe-4c1a-9734-04c386188b19",
+            "name": "Mole dusty light",
+            "color": "#d1b9b0",
+            "orderindex": 41
+          },
+          {
+            "id": "2cebaf12-cd37-49b6-a7dc-2f318bf143c2",
+            "name": "Quicksilver 17-3907TCX",
+            "color": "#8d8d8d",
+            "orderindex": 42
+          },
+          {
+            "id": "4c779fca-849e-45ad-be47-0c5512c13bc9",
+            "name": "Cyan Blue",
+            "color": "#0091ff",
+            "orderindex": 43
+          },
+          {
+            "id": "ee0512be-8230-4593-ae42-62d388149f10",
+            "name": "Sky Blue",
+            "color": "#96c7f2",
+            "orderindex": 44
+          },
+          {
+            "id": "6282264d-80dd-43cd-a13c-e02380c6a3cd",
+            "name": "Dark Green",
+            "color": "#8dcec3",
+            "orderindex": 45
+          },
+          {
+            "id": "015d0aad-508f-42ef-8f43-ef14ec3badda",
+            "name": "Paste Color",
+            "color": "#3e63dd",
+            "orderindex": 46
+          },
+          {
+            "id": "9af843e8-365f-4dc5-b7e1-17e1d6c72c4f",
+            "name": "Blue Stripe",
+            "color": "#ffc53d",
+            "orderindex": 47
+          },
+          {
+            "id": "878045e7-bcaa-4144-8abc-23401bcdb6f6",
+            "name": "Blue",
+            "color": "#3e63dd",
+            "orderindex": 48
+          },
+          {
+            "id": "dbb9b7ca-c189-46ab-add3-dd7647a5857a",
+            "name": "AOP Fabric",
+            "color": "#f76808",
+            "orderindex": 49
+          }
+        ]
+      },
+      "value": 31
+    },
+    {
+      "id": "9f72edb1-0897-45a1-9354-5058f38ef122",
+      "name": "Composition",
+      "type": "short_text",
+      "type_config": {},
+      "value": "83%WV-10%SE-5%LI-2%EA"
+    },
+    {
+      "id": "8b4b75ff-6e56-4250-85d2-3523b8b76f07",
+      "name": "Cutting",
+      "type": "labels",
+      "type_config": {
+        "sorting": "manual",
+        "options": [
+          {
+            "id": "b60e7696-b42b-4aac-95ab-5f0c500bca4e",
+            "label": "Javed",
+            "color": "#b6b6ff",
+            "orderindex": 0
+          },
+          {
+            "id": "da3175b3-1395-4b1f-b7cf-aea49198cb24",
+            "label": "Kassef",
+            "color": "#ffc53d",
+            "orderindex": 1
+          },
+          {
+            "id": "2b56e60f-ea73-42a2-93a6-86d1d84c13b6",
+            "label": "Ashraf",
+            "color": "#ffaa7d",
+            "orderindex": 2
+          },
+          {
+            "id": "ba938954-ccfb-4520-9988-e372bc895db3",
+            "label": "Ijaj",
+            "color": "#30a46c",
+            "orderindex": 3
+          },
+          {
+            "id": "51db447f-6c2a-431e-9a3f-fa35142d0fba",
+            "label": "To do",
+            "color": "#cecece",
+            "orderindex": 4
+          },
+          {
+            "id": "b86bac9d-9e65-4fc0-9c58-481acfac4c18",
+            "label": "In progress",
+            "color": "#6647f0",
+            "orderindex": 5
+          },
+          {
+            "id": "59697dde-3f5c-49ac-b221-31f937d5a83c",
+            "label": "Not yet",
+            "color": "#e5484d",
+            "orderindex": 6
+          }
+        ]
+      },
+      "value": [
+        "ba938954-ccfb-4520-9988-e372bc895db3"
+      ]
+    },
+    {
+      "id": "06878a53-0c55-4c7d-a721-4644fbeda815",
+      "name": "Delivered",
+      "type": "checkbox",
+      "type_config": {}
+    },
+    {
+      "id": "118480ce-263c-4e50-a076-edc0368cd7a3",
+      "name": "Delivery date",
+      "type": "date",
+      "type_config": {}
+    },
+    {
+      "id": "6b3411ef-0b00-47fe-8e80-759efe36d4c6",
+      "name": "Fabric Brand",
+      "type": "drop_down",
+      "type_config": {
+        "sorting": "manual",
+        "new_drop_down": true,
+        "options": [
+          {
+            "id": "9979353a-c2a7-400f-9243-7a44ede69489",
+            "name": "Drapers",
+            "color": "#f900ea",
+            "orderindex": 0
+          },
+          {
+            "id": "95fba048-8d0a-4808-8c68-09d0702ee350",
+            "name": "Loro Piana",
+            "color": "#e50000",
+            "orderindex": 1
+          },
+          {
+            "id": "ed0be28e-0d6c-48e4-8992-9af7e45577b9",
+            "name": "Canclini",
+            "color": "#800000",
+            "orderindex": 2
+          },
+          {
+            "id": "a3032a0c-394e-41eb-a20b-023e21b96a3d",
+            "name": "Zegna",
+            "color": "#81B1FF",
+            "orderindex": 3
+          },
+          {
+            "id": "c7380191-9417-4d85-8afc-8d903c9b7303",
+            "name": "Stylbiella",
+            "color": "#f9d900",
+            "orderindex": 4
+          },
+          {
+            "id": "05916f88-5c15-4e9d-8c62-f3a5eac76afb",
+            "name": "STK",
+            "color": "#02BCD4",
+            "orderindex": 5
+          },
+          {
+            "id": "814f0c57-21fd-49cc-a520-d599d448b974",
+            "name": "Albini",
+            "color": "#800000",
+            "orderindex": 6
+          },
+          {
+            "id": "7f9ba303-4f1a-4c31-9c91-43908085eeab",
+            "name": "Other",
+            "color": "#1bbc9c",
+            "orderindex": 7
+          },
+          {
+            "id": "cda09cac-7975-4453-8e0f-3fb65d81e7ae",
+            "name": "GL",
+            "color": "#b6b6ff",
+            "orderindex": 8
+          },
+          {
+            "id": "dbc22ef2-0d0e-4adf-8d7b-b42e5e219f28",
+            "name": "Stock",
+            "color": "#aec0f5",
+            "orderindex": 9
+          },
+          {
+            "id": "143170f2-69d7-4c91-abf6-a6d5df1ba42c",
+            "name": "FR",
+            "color": "#F9E530",
+            "orderindex": 10
+          },
+          {
+            "id": "06ccb936-01ad-4eab-bf85-b5a4fe88fa22",
+            "name": "Solbiati",
+            "color": "#96c7f2",
+            "orderindex": 11
+          },
+          {
+            "id": "761fd9b0-7f9b-46ba-95ca-9c78e9c611d4",
+            "name": "Caccioppoli",
+            "color": "#f76808",
+            "orderindex": 12
+          }
+        ]
+      },
+      "value": 1
+    },
+    {
+      "id": "6b18f1e6-5733-423c-b7e1-51e32d43760f",
+      "name": "Fabric Number",
+      "type": "short_text",
+      "type_config": {},
+      "value": "N781040"
+    },
+    {
+      "id": "6494f591-86f8-4386-97ad-7df8dfacbdb8",
+      "name": "Finishing",
+      "type": "labels",
+      "type_config": {
+        "sorting": "manual",
+        "options": [
+          {
+            "id": "3af822e9-1eea-4669-8b27-846fef772b47",
+            "label": "To do",
+            "color": "#aec0f5",
+            "orderindex": 0
+          },
+          {
+            "id": "36100b17-1e2c-49e1-a02f-bdc3b7c78d62",
+            "label": "In Progress",
+            "color": "#6647f0",
+            "orderindex": 1
+          },
+          {
+            "id": "58d760c3-7121-4f39-b87f-ebfe8480e29e",
+            "label": "Complete-Niraj",
+            "color": "#12a594",
+            "orderindex": 2
+          },
+          {
+            "id": "a2ba72f3-9b3b-4d8d-91ca-37f1e0ab7c65",
+            "label": "Complete-Sharhiar",
+            "color": "#30a46c",
+            "orderindex": 3
+          },
+          {
+            "id": "6abd8deb-48c2-423a-8eec-69c32ee9bf69",
+            "label": "Complete sharhiar/Niraj",
+            "color": "#e5484d",
+            "orderindex": 4
+          }
+        ]
+      },
+      "value": [
+        "58d760c3-7121-4f39-b87f-ebfe8480e29e"
+      ]
+    },
+    {
+      "id": "88f09a48-586d-4734-a9b3-cfd356fb9198",
+      "name": "Ironing",
+      "type": "text",
+      "type_config": {}
+    },
+    {
+      "id": "0bc50678-5d2d-44e3-9c2e-5846c76e5bc3",
+      "name": "Ironing",
+      "type": "labels",
+      "type_config": {
+        "sorting": "manual",
+        "options": [
+          {
+            "id": "c3b00107-d346-4e1e-a434-b1065ff12039",
+            "label": "To do",
+            "color": "#e5484d",
+            "orderindex": 0
+          },
+          {
+            "id": "f0307e83-62ab-41b4-aa70-fcd3541f1071",
+            "label": "In progress",
+            "color": "#6647f0",
+            "orderindex": 1
+          },
+          {
+            "id": "8673c1e4-499f-4737-b95a-a0684b8358cd",
+            "label": "Complete",
+            "color": "#12a594",
+            "orderindex": 2
+          }
+        ]
+      },
+      "value": [
+        "8673c1e4-499f-4737-b95a-a0684b8358cd"
+      ]
+    },
+    {
+      "id": "76e5fedc-ad3d-4f4f-b2de-a3c844da9487",
+      "name": "Item",
+      "type": "drop_down",
+      "type_config": {
+        "sorting": "manual",
+        "new_drop_down": true,
+        "options": [
+          {
+            "id": "e3c1df90-50ac-40c9-b373-87637965c8c6",
+            "name": "Trouser Suit (FR)",
+            "color": "#e50000",
+            "orderindex": 0
+          },
+          {
+            "id": "a85e111c-12f1-4907-952c-839a704cb6a8",
+            "name": "Blazer Suit (FR)",
+            "color": "#e5484d",
+            "orderindex": 1
+          },
+          {
+            "id": "a58654bf-6cdf-4a4c-8dde-190034749e2b",
+            "name": "Vest (FR)",
+            "color": "#e50000",
+            "orderindex": 2
+          },
+          {
+            "id": "b23c8906-6f64-45d4-82b3-506c4cbcd199",
+            "name": "Blazers (FR)",
+            "color": "#e50000",
+            "orderindex": 3
+          },
+          {
+            "id": "7922f3c5-b01e-4e6f-96d9-14412e8c2972",
+            "name": "Overshirts (FR) ",
+            "color": "#e50000",
+            "orderindex": 4
+          },
+          {
+            "id": "383f07a3-9e89-48ea-9711-0d2a854ef702",
+            "name": "Trousers (FR)",
+            "color": "#e50000",
+            "orderindex": 5
+          },
+          {
+            "id": "409b2fc4-c272-45c7-aabf-6016e5d60e06",
+            "name": "Shirts (FR)",
+            "color": "#e50000",
+            "orderindex": 6
+          },
+          {
+            "id": "ce78871b-9a8b-489a-be90-a8bcea8fd486",
+            "name": "Tuxeedo (FR)",
+            "color": "#e50000",
+            "orderindex": 7
+          },
+          {
+            "id": "7ac60a4d-83a7-4f06-ba34-45585015ea18",
+            "name": "Shorts (FR)",
+            "color": "#e50000",
+            "orderindex": 8
+          },
+          {
+            "id": "a91ee388-801e-4cff-a15d-9273c979a67e",
+            "name": "Overcoats (FR)",
+            "color": "#e50000",
+            "orderindex": 9
+          },
+          {
+            "id": "f1a3086d-eba1-4827-ab86-6319bd8e9ceb",
+            "name": "Boxers (FR)",
+            "color": "#e50000",
+            "orderindex": 10
+          },
+          {
+            "id": "38df49cc-81aa-41af-9abe-9ec3ad0aaea1",
+            "name": "Tshirts (FR)",
+            "color": "#e50000",
+            "orderindex": 11
+          },
+          {
+            "id": "009de355-4074-473f-9bcf-9034f27483b4",
+            "name": "Swimshorts (FR)",
+            "color": "#e50000",
+            "orderindex": 12
+          },
+          {
+            "id": "d939251a-dc4f-424f-b86d-f6d7c6056af7",
+            "name": "Suits (G)",
+            "color": "#2ecd6f",
+            "orderindex": 13
+          },
+          {
+            "id": "81b362f8-3c77-4c36-aa5f-f6df1d240604",
+            "name": "Blazers (G)",
+            "color": "#2ecd6f",
+            "orderindex": 14
+          },
+          {
+            "id": "b8dd12f8-9a3c-4be3-974e-47f843439140",
+            "name": "Trousers (G)",
+            "color": "#2ecd6f",
+            "orderindex": 15
+          },
+          {
+            "id": "05924cca-5870-4dae-8f5c-766d5f628d08",
+            "name": "Shirts (G)",
+            "color": "#2ecd6f",
+            "orderindex": 16
+          },
+          {
+            "id": "da2f827c-cf8e-4181-a2ba-f036d8d532ef",
+            "name": "Overcoats (G)",
+            "color": "#2ecd6f",
+            "orderindex": 17
+          },
+          {
+            "id": "0ae8ac68-b717-4d5c-96e6-15a93ed56818",
+            "name": "Swimshorts (G)",
+            "color": "#2ecd6f",
+            "orderindex": 18
+          },
+          {
+            "id": "a13dce07-4103-4b16-95f0-36c81ff16329",
+            "name": "Tuxeedo (G)",
+            "color": "#2ecd6f",
+            "orderindex": 19
+          },
+          {
+            "id": "831a5689-51fb-4575-a75b-d1a1e3abb828",
+            "name": "THOBES SUMMER (FR)",
+            "color": "#AF7E2E",
+            "orderindex": 20
+          },
+          {
+            "id": "2056066c-531d-40e1-8bf0-d8cff3c2a79d",
+            "name": "THOBES WINTER (FD)",
+            "color": "#AF7E2E",
+            "orderindex": 21
+          },
+          {
+            "id": "3263f643-6332-4b32-a617-ea6f37353b4c",
+            "name": "Serwals (FD)",
+            "color": "#AF7E2E",
+            "orderindex": 22
+          },
+          {
+            "id": "5f3c54a5-8a6d-4e6f-936a-49e762a3cc44",
+            "name": "Balto (FD)",
+            "color": "#AF7E2E",
+            "orderindex": 23
+          },
+          {
+            "id": "d13e01a4-e390-4664-bc72-b1395336b6d2",
+            "name": "Vests (FD)",
+            "color": "#AF7E2E",
+            "orderindex": 24
+          },
+          {
+            "id": "048a86e5-36b8-4637-aae0-f9e5ffd420af",
+            "name": "Boxers (FD)",
+            "color": "#AF7E2E",
+            "orderindex": 25
+          },
+          {
+            "id": "e5e511ad-9e8c-4917-95ed-c8119c42bac7",
+            "name": "Undershirts (FD)",
+            "color": "#AF7E2E",
+            "orderindex": 26
+          },
+          {
+            "id": "d4e9ae0b-a53c-4bfa-870b-b31e63f65752",
+            "name": "Suits (JU)",
+            "color": "#04A9F4",
+            "orderindex": 27
+          },
+          {
+            "id": "b773d644-a6c8-4dcf-85d0-b2c7992f23bb",
+            "name": "Blazers (JU)",
+            "color": "#81B1FF",
+            "orderindex": 28
+          },
+          {
+            "id": "10481133-74ce-46fa-b804-4d9ce53c2060",
+            "name": "Vests (JU)",
+            "color": "#81B1FF",
+            "orderindex": 29
+          },
+          {
+            "id": "94433833-e540-4580-a413-d935c5b4abc7",
+            "name": "Trousers (JU)",
+            "color": "#81B1FF",
+            "orderindex": 30
+          },
+          {
+            "id": "d70ef8ef-cda0-4c10-bd7d-3bdd578990fb",
+            "name": "Shirts (JU)",
+            "color": "#81B1FF",
+            "orderindex": 31
+          },
+          {
+            "id": "101aa283-c86f-4e60-bd0e-010e47adb3c6",
+            "name": "Tuxeedo (JU)",
+            "color": "#81B1FF",
+            "orderindex": 32
+          },
+          {
+            "id": "99524709-1737-4d11-9cf6-92f19dc6f92d",
+            "name": "Jacket for thobe",
+            "color": "#FA325C",
+            "orderindex": 33
+          },
+          {
+            "id": "824f4462-8cba-43a8-b4a7-435c781c302e",
+            "name": "Peak lapel jacket for suit",
+            "color": "#D4BB6A",
+            "orderindex": 34
+          },
+          {
+            "id": "dea7b60c-4664-451e-9bd0-cf6a9ededad4",
+            "name": "Formal jacket",
+            "color": "#2AA401",
+            "orderindex": 35
+          },
+          {
+            "id": "007f4deb-75c3-4325-aa52-56daed9cc02d",
+            "name": "Vest (G)",
+            "color": "#b6b6ff",
+            "orderindex": 36
+          },
+          {
+            "id": "83fd802f-300b-4321-90b1-c6e31ff83475",
+            "name": "Dagla",
+            "color": "#aec0f5",
+            "orderindex": 37
+          },
+          {
+            "id": "32862f58-b54a-46f5-a86a-4f3da0ab00e0",
+            "name": "Salwar",
+            "color": "#96c7f2",
+            "orderindex": 38
+          },
+          {
+            "id": "fa9e28c7-a7d3-46a1-9d4c-ed71aa5c2910",
+            "name": "Hoodie",
+            "color": "#8dcec3",
+            "orderindex": 39
+          },
+          {
+            "id": "8875e4c7-d562-42b7-a8e4-ebecbadb073e",
+            "name": "Hoodie (FR)",
+            "color": "#92ceac",
+            "orderindex": 40
+          },
+          {
+            "id": "ff72dd19-88ae-49ff-a534-402f34b34326",
+            "name": "Over shirt (G)",
+            "color": "#e9c162",
+            "orderindex": 41
+          },
+          {
+            "id": "7ff9642e-6429-4602-ad74-d777dad3be82",
+            "name": "THOBES WINTER (FR)",
+            "color": "#e9c162",
+            "orderindex": 42
+          },
+          {
+            "id": "986ce69f-da5f-47af-ab6c-d1e2c0ff20fb",
+            "name": "Shorts (GL)",
+            "color": "#40a430",
+            "orderindex": 43
+          },
+          {
+            "id": "902c1857-a324-4660-8871-374e66eb207e",
+            "name": "Ravello Shirt",
+            "color": "#ffaa7d",
+            "orderindex": 44
+          },
+          {
+            "id": "8eacbf33-3e97-44c1-8f6a-3e7bde28eba9",
+            "name": "Jersy fabric Short (FR)",
+            "color": "#6647f0",
+            "orderindex": 45
+          },
+          {
+            "id": "95401e04-d72d-4e6b-ac49-ab8963d875b1",
+            "name": "Shirt (Chines collar)",
+            "color": "#3e63dd",
+            "orderindex": 46
+          },
+          {
+            "id": "3b59f4aa-e6b8-4bbe-ba92-414ddb7275c5",
+            "name": "Resort Collar Shirt",
+            "color": "#0091ff",
+            "orderindex": 47
+          },
+          {
+            "id": "7b501085-6d93-40cb-8a90-8cfb14e3023f",
+            "name": "Suit + Vest Sets (G)",
+            "color": "#12a594",
+            "orderindex": 48
+          },
+          {
+            "id": "45695b4f-7efb-4cbf-9132-8447d34e7b0b",
+            "name": "Over Shirt + Trouser (FR)",
+            "color": "#30a46c",
+            "orderindex": 49
+          },
+          {
+            "id": "69d7b6ae-3a22-41a5-b702-d3be4a76f50d",
+            "name": "Shirt + Trouser + Short Sets (FR)",
+            "color": "#ffc53d",
+            "orderindex": 50
+          },
+          {
+            "id": "725fbad9-3030-4f54-8f77-47729a9ce586",
+            "name": "Shirt + Short sets (FR)",
+            "color": "#f76808",
+            "orderindex": 51
+          },
+          {
+            "id": "44fed3e0-6adb-424f-aab3-2fb8f19385a2",
+            "name": "Trouser + Shirt (FR)",
+            "color": "#0091ff",
+            "orderindex": 52
+          },
+          {
+            "id": "38884c06-aa15-4e82-9c99-67840f036ee4",
+            "name": "Short Sleeve Shirt (FR)",
+            "color": "#e93d82",
+            "orderindex": 53
+          }
+        ]
+      },
+      "value": 34
+    },
+    {
+      "id": "8875608b-e030-4e42-b04d-7d5bae76406c",
+      "name": "Ordered",
+      "type": "drop_down",
+      "type_config": {
+        "sorting": "manual",
+        "new_drop_down": true,
+        "options": [
+          {
+            "id": "d086a263-a7f6-4a1d-b863-52d01da51ace",
+            "name": "Not Received",
+            "color": "#FF4081",
+            "orderindex": 0
+          },
+          {
+            "id": "74c31195-8aca-484f-80ab-4d108da7479a",
+            "name": "Received-12/04/2026",
+            "color": "#7C4DFF",
+            "orderindex": 1
+          },
+          {
+            "id": "c6713ae3-6127-42d2-8584-2c1f43b14e62",
+            "name": "Received-13/04/26",
+            "color": "#b6b6ff",
+            "orderindex": 2
+          },
+          {
+            "id": "72df1994-ae34-43a0-847c-f1652a68d65a",
+            "name": "Received-04/04/26",
+            "color": "#aec0f5",
+            "orderindex": 3
+          },
+          {
+            "id": "26035462-04fe-48ea-a826-ee5763764012",
+            "name": "Received 09/05/26",
+            "color": "#6647f0",
+            "orderindex": 4
+          },
+          {
+            "id": "bf2008ee-a7ec-49be-a992-53e2e8f98f01",
+            "name": "Received",
+            "color": "#ffc53d",
+            "orderindex": 5
+          },
+          {
+            "id": "e9eae5fd-0875-46af-a3cc-5e531b12aaa1",
+            "name": "Fabric not available",
+            "color": "#96c7f2",
+            "orderindex": 6
+          }
+        ]
+      }
+    },
+    {
+      "id": "95f5895a-4694-4f6b-9ca7-a4f43387bb13",
+      "name": "Quality Checked",
+      "type": "checkbox",
+      "type_config": {}
+    },
+    {
+      "id": "afac9bc1-68ee-467d-9f4d-1420e85b18a4",
+      "name": "Quality Control 1",
+      "type": "drop_down",
+      "type_config": {
+        "sorting": "manual",
+        "options": [
+          {
+            "id": "46e23bba-c476-4ec1-84b4-f79f9eda5600",
+            "name": "Checked",
+            "color": "#2ecd6f",
+            "orderindex": 0
+          },
+          {
+            "id": "813c66d5-0e9e-4dc8-b5a3-732e7a289be1",
+            "name": "Error",
+            "color": "#e50000",
+            "orderindex": 1
+          },
+          {
+            "id": "69355c58-55af-41a0-8858-e06baa6c9ea0",
+            "name": "Fixed",
+            "color": "#0231E8",
+            "orderindex": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "6a02adfb-e00c-4656-a17f-03a7b06e3f12",
+      "name": "Quality Control 2",
+      "type": "drop_down",
+      "type_config": {
+        "sorting": "manual",
+        "options": [
+          {
+            "id": "d6d932a5-a8c1-4f45-a484-32db531e880c",
+            "name": "Checked",
+            "color": "#2ecd6f",
+            "orderindex": 0
+          },
+          {
+            "id": "2f054d36-bce3-491a-9dee-302a21f523af",
+            "name": "Error",
+            "color": "#e50000",
+            "orderindex": 1
+          },
+          {
+            "id": "354b0dc2-0128-4f77-a90d-9172e30e6211",
+            "name": "Fixed",
+            "color": "#0231E8",
+            "orderindex": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "47ef277a-234f-4b1f-bc28-73e1d9e8f6cd",
+      "name": "Quality Control 3",
+      "type": "drop_down",
+      "type_config": {
+        "sorting": "manual",
+        "options": [
+          {
+            "id": "6fe4b638-6226-46c9-96dc-2057284e6d09",
+            "name": "Checked",
+            "color": "#2ecd6f",
+            "orderindex": 0
+          },
+          {
+            "id": "48c3b6e1-57f6-432d-92d6-7e2d4cfcad98",
+            "name": "Error",
+            "color": "#e50000",
+            "orderindex": 1
+          },
+          {
+            "id": "9a3e2839-4129-442b-911c-a90cf36eb201",
+            "name": "Fixed",
+            "color": "#0231E8",
+            "orderindex": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "86baa9d6-1560-4e45-b94d-1fe132fbb474",
+      "name": "Sewing",
+      "type": "drop_down",
+      "type_config": {
+        "sorting": "manual",
+        "new_drop_down": true,
+        "options": [
+          {
+            "id": "754d63f7-c096-4db7-afc3-4a8d091e0abb",
+            "name": "Yes",
+            "color": "#FF4081",
+            "orderindex": 0
+          },
+          {
+            "id": "8c24e5bc-dec4-44ec-bf80-ad453ee78e76",
+            "name": "No",
+            "color": "#ffc53d",
+            "orderindex": 1
+          },
+          {
+            "id": "0aff67a4-2ffa-4ee8-ba49-1256f6038709",
+            "name": "In Progress",
+            "color": "#6647f0",
+            "orderindex": 2
+          },
+          {
+            "id": "8a00c2b3-c736-4ae2-b83b-25b8bab712da",
+            "name": "Complete",
+            "color": "#ffaa7d",
+            "orderindex": 3
+          },
+          {
+            "id": "d3872471-ccb8-47f5-b697-b9e38bdeb0a8",
+            "name": "Only Short Complete",
+            "color": "#b6b6ff",
+            "orderindex": 4
+          },
+          {
+            "id": "78a148f9-00fb-494a-8365-e94691dbb52c",
+            "name": "Only Shirt",
+            "color": "#aec0f5",
+            "orderindex": 5
+          }
+        ]
+      },
+      "value": 3
+    },
+    {
+      "id": "32919abd-3920-4c5e-84a6-a58c2517f107",
+      "name": "Size",
+      "type": "short_text",
+      "type_config": {}
+    },
+    {
+      "id": "cd4273f7-a7b4-4424-ace2-787dc95e2d95",
+      "name": "Tailor",
+      "type": "labels",
+      "type_config": {
+        "sorting": "manual",
+        "options": [
+          {
+            "id": "4458512c-ab4b-487b-a115-082b816f347f",
+            "label": "Soldier",
+            "color": "#02BCD4",
+            "orderindex": 0
+          },
+          {
+            "id": "9f47e996-9cde-4c42-b962-d79ba3511d2c",
+            "label": "Daniel",
+            "color": "#02BCD4",
+            "orderindex": 1
+          },
+          {
+            "id": "51dc349a-4aa0-451c-a081-47099fbfffb3",
+            "label": "Rahmat",
+            "color": "#02BCD4",
+            "orderindex": 2
+          },
+          {
+            "id": "bbd6596e-3e0b-4a7f-83ab-bdc05e665b70",
+            "label": "Haider",
+            "color": "#e50000",
+            "orderindex": 3
+          },
+          {
+            "id": "c92894fd-1ecc-48c9-9012-38e5a1fd7dc6",
+            "label": "Kabir",
+            "color": "#e50000",
+            "orderindex": 4
+          },
+          {
+            "id": "c37627f5-7539-4c5f-8b6c-b24d7945e10c",
+            "label": "Haffiz",
+            "color": "#e50000",
+            "orderindex": 5
+          },
+          {
+            "id": "4fa154fd-43dd-4f33-ac0d-08e703ba282b",
+            "label": "Sameer",
+            "color": "#f9d900",
+            "orderindex": 6
+          },
+          {
+            "id": "10290908-315a-4d89-80a5-d95e927c613d",
+            "label": "Imran",
+            "color": "#ffc53d",
+            "orderindex": 7
+          },
+          {
+            "id": "a61972ba-903f-42bb-9f69-1facffc501b8",
+            "label": "Assef",
+            "color": "#ffc53d",
+            "orderindex": 8
+          },
+          {
+            "id": "4a4b85a1-590e-47c1-91e1-da491161cbea",
+            "label": "Parvez",
+            "color": "#b6b6ff",
+            "orderindex": 9
+          },
+          {
+            "id": "aec7cfd9-23e1-4eff-be70-3dd2a046bef3",
+            "label": "Abdullah",
+            "color": "#30a46c",
+            "orderindex": 10
+          },
+          {
+            "id": "6aa84035-116e-4347-a9cf-bb400985b775",
+            "label": "Rone",
+            "color": "#aec0f5",
+            "orderindex": 11
+          }
+        ]
+      },
+      "value": [
+        "51dc349a-4aa0-451c-a081-47099fbfffb3",
+        "c92894fd-1ecc-48c9-9012-38e5a1fd7dc6"
+      ]
+    },
+    {
+      "id": "7307290a-872e-4fce-85b5-14435b123904",
+      "name": "Trial Date 1",
+      "type": "date",
+      "type_config": {}
+    },
+    {
+      "id": "4d205449-e18d-4789-bbac-cbf386b2aa6c",
+      "name": "Trial Date 2",
+      "type": "date",
+      "type_config": {}
+    },
+    {
+      "id": "0d5ea738-a1d2-4573-9994-adf86355e565",
+      "name": "Unit",
+      "type": "number",
+      "type_config": {},
+      "value": "1"
+    },
+    {
+      "id": "53435c87-fe6b-41bc-95a1-a378d6490047",
+      "name": "Weight (grms)",
+      "type": "short_text",
+      "type_config": {},
+      "value": "240"
+    },
+    {
+      "id": "80622cff-171e-472f-b038-0222855666a0",
+      "name": "move",
+      "type": "drop_down",
+      "type_config": {
+        "sorting": "manual",
+        "options": [
+          {
+            "id": "5bfbb32d-ef9e-407f-8e92-7005da41343a",
+            "name": "Yes",
+            "color": "#FF4081",
+            "orderindex": 0
+          },
+          {
+            "id": "7264853e-8dae-45ca-ba70-4aa3c535e664",
+            "name": "No",
+            "color": "#7C4DFF",
+            "orderindex": 1
+          }
+        ]
+      }
+    }
+  ]
+}

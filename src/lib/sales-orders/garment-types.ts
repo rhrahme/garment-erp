@@ -1,0 +1,41 @@
+export const GARMENT_STITCH_TYPES = [
+  "Suit",
+  "Jacket",
+  "Trouser",
+  "Short",
+  "Shirt LS",
+  "Shirt SS",
+  "Overshirt",
+  "Overshirt+Trouser",
+  "Overcoat",
+  "Shirt+Trouser",
+  "Shirt+Short",
+] as const;
+
+export type GarmentStitchType = (typeof GARMENT_STITCH_TYPES)[number];
+
+export function isGarmentStitchType(value: string): value is GarmentStitchType {
+  return (GARMENT_STITCH_TYPES as readonly string[]).includes(value);
+}
+
+/** Labels the fabric factory must attach — one per garment piece (e.g. suit = jacket + trouser). */
+export const GARMENT_LABEL_COUNTS: Record<GarmentStitchType, number> = {
+  Suit: 2,
+  Jacket: 1,
+  Trouser: 1,
+  Short: 1,
+  "Shirt LS": 1,
+  "Shirt SS": 1,
+  Overshirt: 1,
+  "Overshirt+Trouser": 2,
+  Overcoat: 1,
+  "Shirt+Trouser": 2,
+  "Shirt+Short": 2,
+};
+
+export function getLabelCountForGarment(garmentType: string): number {
+  if (isGarmentStitchType(garmentType)) {
+    return GARMENT_LABEL_COUNTS[garmentType];
+  }
+  return 1;
+}

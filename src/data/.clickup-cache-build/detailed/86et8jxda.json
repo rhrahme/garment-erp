@@ -1,0 +1,151 @@
+{
+  "id": "86et8jxda",
+  "name": "Client D",
+  "parent": null,
+  "top_level_parent": null,
+  "date_created": "1745510374700",
+  "date_updated": "1745576890467",
+  "list": {
+    "id": "901807299090",
+    "name": "INVOICE SENT"
+  },
+  "custom_fields": [
+    {
+      "id": "d13df845-2b78-4442-bca0-0ba7d8a11995",
+      "name": "Any remarks or clarification",
+      "type": "text",
+      "type_config": {}
+    },
+    {
+      "id": "a899eec5-1111-4ca1-85f1-24c34daa2e0f",
+      "name": "Description",
+      "type": "short_text",
+      "type_config": {}
+    },
+    {
+      "id": "8875608b-e030-4e42-b04d-7d5bae76406c",
+      "name": "Ordered",
+      "type": "drop_down",
+      "type_config": {
+        "sorting": "manual",
+        "new_drop_down": true,
+        "options": [
+          {
+            "id": "d086a263-a7f6-4a1d-b863-52d01da51ace",
+            "name": "Not Received",
+            "color": "#FF4081",
+            "orderindex": 0
+          },
+          {
+            "id": "74c31195-8aca-484f-80ab-4d108da7479a",
+            "name": "Received-12/04/2026",
+            "color": "#7C4DFF",
+            "orderindex": 1
+          },
+          {
+            "id": "c6713ae3-6127-42d2-8584-2c1f43b14e62",
+            "name": "Received-13/04/26",
+            "color": "#b6b6ff",
+            "orderindex": 2
+          },
+          {
+            "id": "72df1994-ae34-43a0-847c-f1652a68d65a",
+            "name": "Received-04/04/26",
+            "color": "#aec0f5",
+            "orderindex": 3
+          },
+          {
+            "id": "26035462-04fe-48ea-a826-ee5763764012",
+            "name": "Received 09/05/26",
+            "color": "#6647f0",
+            "orderindex": 4
+          },
+          {
+            "id": "bf2008ee-a7ec-49be-a992-53e2e8f98f01",
+            "name": "Received",
+            "color": "#ffc53d",
+            "orderindex": 5
+          },
+          {
+            "id": "e9eae5fd-0875-46af-a3cc-5e531b12aaa1",
+            "name": "Fabric not available",
+            "color": "#96c7f2",
+            "orderindex": 6
+          }
+        ]
+      }
+    },
+    {
+      "id": "fb0e2505-646a-404c-9983-c13e8566bfe8",
+      "name": "Payment Method",
+      "type": "drop_down",
+      "type_config": {
+        "sorting": "manual",
+        "options": [
+          {
+            "id": "d0948dcb-ebb7-435e-b7e8-97973475590f",
+            "name": "Cash",
+            "color": "#FF4081",
+            "orderindex": 0
+          },
+          {
+            "id": "eb2128f7-6083-4703-a4a6-2bd4e4f023f4",
+            "name": "Bank transfer",
+            "color": "#04A9F4",
+            "orderindex": 1
+          },
+          {
+            "id": "40c4fba1-dd1c-4ac6-9aec-d698e6b99e0b",
+            "name": "POS",
+            "color": "#f9d900",
+            "orderindex": 2
+          },
+          {
+            "id": "f5cd198a-aa47-4bc3-9a58-dd6bd67fb822",
+            "name": "Online",
+            "color": "#bf55ec",
+            "orderindex": 3
+          }
+        ]
+      },
+      "value": 3
+    },
+    {
+      "id": "3217b8b3-8878-4cb8-bef0-1fe98260d36c",
+      "name": "Price / unit",
+      "type": "currency",
+      "type_config": {
+        "precision": 2,
+        "currency_type": "USD"
+      }
+    },
+    {
+      "id": "32919abd-3920-4c5e-84a6-a58c2517f107",
+      "name": "Size",
+      "type": "short_text",
+      "type_config": {},
+      "value": "Test"
+    },
+    {
+      "id": "c00d4b4f-25f5-46dd-a93a-6399fff8017b",
+      "name": "Total",
+      "type": "currency",
+      "type_config": {
+        "precision": 2,
+        "currency_type": "USD"
+      }
+    },
+    {
+      "id": "0d5ea738-a1d2-4573-9994-adf86355e565",
+      "name": "Unit",
+      "type": "number",
+      "type_config": {}
+    },
+    {
+      "id": "087deba0-acd6-4c51-972a-ab68e978df1d",
+      "name": "invoice link",
+      "type": "url",
+      "type_config": {}
+    }
+  ]
+}

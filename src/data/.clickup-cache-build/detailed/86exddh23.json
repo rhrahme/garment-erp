@@ -1,0 +1,70 @@
+{
+  "id": "86exddh23",
+  "name": "Massimo Dutti Cotton Short",
+  "parent": null,
+  "top_level_parent": null,
+  "date_created": "0",
+  "date_updated": "0",
+  "list": {
+    "id": "901807298385",
+    "name": "🎨 FILLING PRODUCT DETAILS"
+  },
+  "custom_fields": [
+    {
+      "id": "32919abd-3920-4c5e-84a6-a58c2517f107",
+      "name": "Size",
+      "type": "short_text",
+      "value": "#42"
+    },
+    {
+      "id": "9f72edb1-0897-45a1-9354-5058f38ef122",
+      "name": "Composition",
+      "type": "short_text",
+      "value": "100% Cotton"
+    },
+    {
+      "id": "6b18f1e6-5733-423c-b7e1-51e32d43760f",
+      "name": "Fabric Number",
+      "type": "short_text",
+      "value": "242128"
+    },
+    {
+      "id": "0d5ea738-a1d2-4573-9994-adf86355e565",
+      "name": "Unit",
+      "type": "number",
+      "value": "1"
+    },
+    {
+      "id": "d4bc5bc4-5847-4660-88bd-acd00dba2c15",
+      "name": "Color",
+      "type": "drop_down",
+      "value": 43
+    },
+    {
+      "id": "76e5fedc-ad3d-4f4f-b2de-a3c844da9487",
+      "name": "Item",
+      "type": "drop_down",
+      "value": 43
+    },
+    {
+      "id": "a1e5b0b7-79b0-46a4-b3a3-4cd60af29b64",
+      "name": "Brands",
+      "type": "drop_down",
+      "value": 4
+    },
+    {
+      "id": "6b3411ef-0b00-47fe-8e80-759efe36d4c6",
+      "name": "Fabric Brand",
+      "type": "drop_down",
+      "value": 9
+    },
+    {
+      "id": "8b4b75ff-6e56-4250-85d2-3523b8b76f07",
+      "name": "Cutting",
+      "type": "labels",
+      "value": [
+        "ba938954-ccfb-4520-9988-e372bc895db3"
+      ]
+    }
+  ]
+}

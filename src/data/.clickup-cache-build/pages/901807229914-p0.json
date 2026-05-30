@@ -1,0 +1,125 @@
+{
+  "tasks": [
+    {
+      "id": "86et8xkxt",
+      "custom_id": null,
+      "name": "client CCDDEE",
+      "status": "awaiting invoice",
+      "url": "https://app.clickup.com/t/86et8xkxt",
+      "priority": null,
+      "assignees": [],
+      "tags": [],
+      "due_date": "1745895600000",
+      "list": {
+        "id": "901807229914",
+        "name": "AWAITING INVOICE"
+      }
+    },
+    {
+      "id": "86et8jmru",
+      "custom_id": null,
+      "name": "Trousers",
+      "status": "awaiting invoice",
+      "url": "https://app.clickup.com/t/86et8jmru",
+      "priority": null,
+      "assignees": [],
+      "tags": [],
+      "due_date": null,
+      "list": {
+        "id": "901807229914",
+        "name": "AWAITING INVOICE"
+      }
+    },
+    {
+      "id": "86et8jmrj",
+      "custom_id": null,
+      "name": "Overshirts",
+      "status": "awaiting invoice",
+      "url": "https://app.clickup.com/t/86et8jmrj",
+      "priority": null,
+      "assignees": [],
+      "tags": [],
+      "due_date": null,
+      "list": {
+        "id": "901807229914",
+        "name": "AWAITING INVOICE"
+      }
+    },
+    {
+      "id": "86et8jmrf",
+      "custom_id": null,
+      "name": "Blazers",
+      "status": "awaiting invoice",
+      "url": "https://app.clickup.com/t/86et8jmrf",
+      "priority": null,
+      "assignees": [],
+      "tags": [],
+      "due_date": null,
+      "list": {
+        "id": "901807229914",
+        "name": "AWAITING INVOICE"
+      }
+    },
+    {
+      "id": "86et8jmrc",
+      "custom_id": null,
+      "name": "Client k",
+      "status": "awaiting invoice",
+      "url": "https://app.clickup.com/t/86et8jmrc",
+      "priority": null,
+      "assignees": [],
+      "tags": [],
+      "due_date": "1747270800000",
+      "list": {
+        "id": "901807229914",
+        "name": "AWAITING INVOICE"
+      }
+    },
+    {
+      "id": "86et834du",
+      "custom_id": null,
+      "name": "Client D",
+      "status": "awaiting invoice",
+      "url": "https://app.clickup.com/t/86et834du",
+      "priority": null,
+      "assignees": [],
+      "tags": [],
+      "due_date": "1746752400000",
+      "list": {
+        "id": "901807229914",
+        "name": "AWAITING INVOICE"
+      }
+    },
+    {
+      "id": "86et7qfrj",
+      "custom_id": null,
+      "name": "Client D",
+      "status": "awaiting invoice",
+      "url": "https://app.clickup.com/t/86et7qfrj",
+      "priority": null,
+      "assignees": [],
+      "tags": [],
+      "due_date": null,
+      "list": {
+        "id": "901807229914",
+        "name": "AWAITING INVOICE"
+      }
+    },
+    {
+      "id": "86et7qexv",
+      "custom_id": null,
+      "name": "Client Y",
+      "status": "awaiting invoice",
+      "url": "https://app.clickup.com/t/86et7qexv",
+      "priority": null,
+      "assignees": [],
+      "tags": [],
+      "due_date": "1746147600000",
+      "list": {
+        "id": "901807229914",
+        "name": "AWAITING INVOICE"
+      }
+    }
+  ],
+  "count": 8
+}

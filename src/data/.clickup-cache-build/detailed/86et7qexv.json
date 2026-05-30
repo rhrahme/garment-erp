@@ -1,0 +1,57 @@
+{
+  "id": "86et7qexv",
+  "name": "Client Y",
+  "parent": null,
+  "top_level_parent": null,
+  "date_created": "1745314999125",
+  "date_updated": "1745576875437",
+  "list": {
+    "id": "901807229914",
+    "name": "AWAITING INVOICE"
+  },
+  "custom_fields": [
+    {
+      "id": "32919abd-3920-4c5e-84a6-a58c2517f107",
+      "name": "Size",
+      "type": "short_text",
+      "type_config": {},
+      "value": "#124657"
+    },
+    {
+      "id": "fb0e2505-646a-404c-9983-c13e8566bfe8",
+      "name": "Payment Method",
+      "type": "drop_down",
+      "type_config": {
+        "options": [
+          {
+            "name": "Cash",
+            "orderindex": 0
+          },
+          {
+            "name": "Bank transfer",
+            "orderindex": 1
+          },
+          {
+            "name": "POS",
+            "orderindex": 2
+          },
+          {
+            "name": "Online",
+            "orderindex": 3
+          }
+        ]
+      },
+      "value": 1
+    },
+    {
+      "id": "c00d4b4f-25f5-46dd-a93a-6399fff8017b",
+      "name": "Total",
+      "type": "currency",
+      "type_config": {
+        "precision": 2,
+        "currency_type": "USD"
+      },
+      "value": "10000"
+    }
+  ]
+}

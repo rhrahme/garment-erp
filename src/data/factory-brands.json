@@ -1,0 +1,64 @@
+{
+  "updated_at": "2026-05-27T00:00:00.000Z",
+  "brands": [
+    {
+      "id": "fouad-rahme",
+      "code": "FOUAD-RAHME",
+      "name": "Fouad Rahme",
+      "description": "Full menswear collection — tailored and casual pieces.",
+      "product_types": [
+        "suits",
+        "trousers",
+        "jackets",
+        "shirts",
+        "overshirts",
+        "overcoats",
+        "shorts"
+      ],
+      "market": "International menswear",
+      "fabric_sourcing": "supplier_catalog",
+      "is_active": true,
+      "notes": "Fabrics ordered from external suppliers (Caccioppoli, Zegna, Drapers, etc.) via supplier price lists."
+    },
+    {
+      "id": "fouad",
+      "code": "FOUAD",
+      "name": "Fouad",
+      "description": "Traditional Saudi menswear.",
+      "product_types": ["thobe"],
+      "market": "Saudi Arabia — men's thobe dress",
+      "fabric_sourcing": "supplier_catalog",
+      "is_active": true,
+      "notes": "Fabrics ordered from external suppliers (Caccioppoli, Zegna, Drapers, etc.) via supplier price lists."
+    },
+    {
+      "id": "gliani",
+      "code": "GLIANI",
+      "name": "Gliani",
+      "description": "Contemporary menswear collection.",
+      "product_types": [
+        "suits",
+        "trousers",
+        "jackets",
+        "overcoats",
+        "shirts",
+        "shorts"
+      ],
+      "market": "International menswear",
+      "fabric_sourcing": "warehouse_stock",
+      "is_active": true,
+      "notes": "Uses fabrics held in warehouse stock — not ordered from external supplier price lists. Stock list to be added."
+    },
+    {
+      "id": "just-uniforms",
+      "code": "JUST-UNIFORMS",
+      "name": "Just Uniforms",
+      "description": "Uniform programs — details to be added.",
+      "product_types": [],
+      "market": null,
+      "fabric_sourcing": "pending",
+      "is_active": true,
+      "notes": "Product range and fabric sourcing to be defined."
+    }
+  ]
+}

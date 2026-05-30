@@ -1,0 +1,107 @@
+{
+  "factory_orders_email": "orders.ruh@hagan.pro",
+  "inbox_scan_email": "rhrahme@gmail.com",
+  "notes": "Fabric orders are sent from orders.ruh@hagan.pro. Supplier replies are scanned from inbox_scan_email (currently rhrahme@gmail.com — temporary for active-order testing).",
+  "updated_at": "2026-05-28T13:45:00.000Z",
+  "suppliers": [
+    {
+      "id": "caccioppoli",
+      "code": "CACCIOPPOLI",
+      "name": "Caccioppoli",
+      "country": "Italy",
+      "contact_person": null,
+      "emails": [
+        "info@caccioppolinapoli.it",
+        "orders@comoluxuryfabrics.com",
+        "ragheed@comoluxuryfabrics.com"
+      ],
+      "email": "info@caccioppolinapoli.it, orders@comoluxuryfabrics.com, ragheed@comoluxuryfabrics.com",
+      "lead_time_days": 14,
+      "has_price_list": true,
+      "reply_domains": ["caccioppolinapoli.it", "comoluxuryfabrics.com"],
+      "notes": "Jackets + shirting price lists imported"
+    },
+    {
+      "id": "zegna",
+      "code": "ZEGNA",
+      "name": "Zegna",
+      "country": "Italy",
+      "contact_person": null,
+      "emails": [
+        "arianna.angelino@zegna.com",
+        "alessio.ferracin@zegna.com",
+        "ragheed@comoluxuryfabrics.com",
+        "orders@comoluxuryfabrics.com"
+      ],
+      "email": "arianna.angelino@zegna.com, alessio.ferracin@zegna.com, ragheed@comoluxuryfabrics.com, orders@comoluxuryfabrics.com",
+      "lead_time_days": 14,
+      "has_price_list": true,
+      "reply_domains": ["zegna.com", "comoluxuryfabrics.com"],
+      "notes": "SS26 quick-lengths price list imported"
+    },
+    {
+      "id": "drapers",
+      "code": "DRAPERS",
+      "name": "Drapers",
+      "country": "Italy",
+      "contact_person": null,
+      "emails": [
+        "jessica@drapersitaly.it",
+        "federico@drapersitaly.it",
+        "vittorio.prossimo@gmail.com"
+      ],
+      "email": "jessica@drapersitaly.it, federico@drapersitaly.it, vittorio.prossimo@gmail.com",
+      "lead_time_days": 14,
+      "has_price_list": true,
+      "reply_domains": ["drapersitaly.it"],
+      "notes": "HS codes + PE26 prices merged. Inbox scan: jessica + federico (invoices/AWB) + vittorio."
+    },
+    {
+      "id": "stylbiella",
+      "code": "STYLBIELLA",
+      "name": "Stylbiella",
+      "country": "Italy",
+      "contact_person": null,
+      "emails": [
+        "order@stylbiella.it",
+        "lisa.ren@stylbiella.it",
+        "piero.antonini@stylbiella.it",
+        "orders@comoluxuryfabrics.com",
+        "ragheed@comoluxuryfabrics.com"
+      ],
+      "email": "order@stylbiella.it, lisa.ren@stylbiella.it, piero.antonini@stylbiella.it, orders@comoluxuryfabrics.com, ragheed@comoluxuryfabrics.com",
+      "lead_time_days": 14,
+      "has_price_list": true,
+      "reply_domains": ["stylbiella.it", "comoluxuryfabrics.com"],
+      "notes": "SS26 product info + USD price list imported (537 fabrics; price code = suffix after /)"
+    },
+    {
+      "id": "loro-piana",
+      "code": "LORO-PIANA",
+      "name": "Loro Piana",
+      "country": "Italy",
+      "contact_person": null,
+      "emails": [
+        "valentina.cao@loropiana.com",
+        "vittorio.osella@loropiana.com"
+      ],
+      "email": "valentina.cao@loropiana.com, vittorio.osella@loropiana.com",
+      "lead_time_days": 14,
+      "has_price_list": true,
+      "reply_domains": ["loropiana.com"],
+      "notes": "SS26 price list imported (EUR, CIP Europe)."
+    },
+    {
+      "id": "fab6",
+      "code": "FAB-006",
+      "name": "Fabric Supplier 6",
+      "country": null,
+      "contact_person": null,
+      "emails": [],
+      "email": null,
+      "lead_time_days": 14,
+      "has_price_list": false,
+      "notes": null
+    }
+  ]
+}

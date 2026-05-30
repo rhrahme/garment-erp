@@ -1,0 +1,19 @@
+{
+  "id": "86et8jmrj",
+  "name": "Overshirts",
+  "parent": null,
+  "top_level_parent": null,
+  "date_created": "1745508312729",
+  "date_updated": "1745576555669",
+  "list": {
+    "id": "901807229914",
+    "name": "AWAITING INVOICE"
+  },
+  "custom_fields": [
+    {
+      "id": "32919abd-3920-4c5e-84a6-a58c2517f107",
+      "name": "Size",
+      "type": "short_text"
+    }
+  ]
+}

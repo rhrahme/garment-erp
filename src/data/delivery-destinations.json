@@ -1,0 +1,14 @@
+{
+  "destinations": [
+    {
+      "id": "RUH",
+      "label": "Hagan Riyadh",
+      "city": "Riyadh"
+    },
+    {
+      "id": "DXB",
+      "label": "Hagan Dubai",
+      "city": "Dubai"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "id": "86ewefwrz",
+  "name": "Mazen Al Zahrani",
+  "parent": "86ewefwkr",
+  "top_level_parent": "86ewefwkr",
+  "list": {
+    "id": "901815680060",
+    "name": "ALTERATION"
+  },
+  "custom_fields": [
+    {
+      "id": "76e5fedc-ad3d-4f4f-b2de-a3c844da9487",
+      "name": "Item",
+      "type": "drop_down",
+      "value": 5
+    },
+    {
+      "id": "6b18f1e6-5733-423c-b7e1-51e32d43760f",
+      "name": "Fabric Number",
+      "type": "short_text",
+      "value": "99210"
+    }
+  ]
+}

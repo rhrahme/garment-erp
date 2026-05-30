@@ -1,0 +1,31 @@
+Garment ERP — saved on disk at:
+  /Users/ralphrahme/Projects/garment-erp
+
+After restarting your laptop:
+
+1. Open Terminal and run:
+   export PATH="/tmp/node-local/bin:$PATH"
+   cd ~/Projects/garment-erp
+   npm run dev
+
+   (If /tmp/node-local is gone after reboot, reinstall Node once:
+   curl -fsSL https://nodejs.org/dist/v22.22.0/node-v22.22.0-darwin-x64.tar.gz | tar xz -C /tmp/node-local --strip-components=1
+   mkdir -p /tmp/node-local && tar xzf node.tar.gz -C /tmp/node-local --strip-components=1
+   Or install Node from https://nodejs.org)
+
+2. Open in browser:
+   http://localhost:3000
+
+3. Open project in Cursor:
+   File → Open Folder → ~/Projects/garment-erp
+
+What's saved:
+- Full ERP app (Next.js + Supabase-ready)
+- Caccioppoli price list: 1,268 fabrics in src/data/suppliers/caccioppoli-ss26.json
+- Fabric Specification page (/fabric-specification)
+- Purchasing, Inventory, Production, AWB tracking, etc.
+
+Your original PDF is still at:
+  ~/Downloads/Caccioppoli Price list SS26 - D.pdf
+
+No git repo yet (Xcode CLI tools not installed). All code is in the folder above.

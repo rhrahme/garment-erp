@@ -1,0 +1,19 @@
+{
+  "id": "86et8jmrf",
+  "name": "Blazers",
+  "parent": null,
+  "top_level_parent": null,
+  "date_created": "0",
+  "date_updated": "0",
+  "list": {
+    "id": "901807229914",
+    "name": "AWAITING INVOICE"
+  },
+  "custom_fields": [
+    {
+      "id": "a899eec5-1111-4ca1-85f1-24c34daa2e0f",
+      "name": "Description",
+      "type": "short_text"
+    }
+  ]
+}

@@ -1,0 +1,783 @@
+"use client";
+
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { LayoutGrid, List, Plus, Search, Table2, Trash2, UserCircle, X } from "lucide-react";
+import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
+import { PhoneInput } from "@/components/ui/PhoneInput";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { AutoSaveStatusBar } from "@/components/ui/AutoSaveStatus";
+import { filterClientsByBrand, searchClients } from "@/lib/clients/filter";
+import { getFactoryBrands } from "@/lib/data/factory-brands";
+import { generateNextClientCode, getBrandClientCodePrefix, getJoinMonthYear } from "@/lib/clients/codes";
+import { formatClientDisplayName, formatReferredByName, isClientSaveable } from "@/lib/clients/names";
+import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
+import { useAutoSave } from "@/hooks/useAutoSave";
+import { cn } from "@/lib/utils";
+import type { ClientProfile, ClientsFile } from "@/lib/types/clients";
+
+const factoryBrands = getFactoryBrands();
+
+type ClientViewMode = "list" | "table" | "cards";
+type ClientSortBy = "name-asc" | "name-desc" | "code-asc" | "code-desc" | "joined-desc" | "joined-asc";
+
+const VIEW_MODE_OPTIONS: { id: ClientViewMode; label: string; icon: typeof List }[] = [
+  { id: "list", label: "List", icon: List },
+  { id: "table", label: "Table", icon: Table2 },
+  { id: "cards", label: "Cards", icon: LayoutGrid },
+];
+
+const SORT_OPTIONS: { id: ClientSortBy; label: string }[] = [
+  { id: "name-asc", label: "Name A–Z" },
+  { id: "name-desc", label: "Name Z–A" },
+  { id: "code-asc", label: "Client code" },
+  { id: "code-desc", label: "Client code (reverse)" },
+  { id: "joined-desc", label: "Newest joined" },
+  { id: "joined-asc", label: "Oldest joined" },
+];
+
+const VIEW_STORAGE_KEY = "erp-clients-view-mode";
+const SORT_STORAGE_KEY = "erp-clients-sort-by";
+
+function emptyClient(): ClientProfile {
+  return {
+    id: `new-${Date.now()}`,
+    code: "",
+    joined_at: null,
+    first_name: "",
+    middle_name: null,
+    last_name: "",
+    brand_ids: [],
+    contact_person: null,
+    referred_by_first_name: null,
+    referred_by_middle_name: null,
+    referred_by_last_name: null,
+    email: null,
+    phone: null,
+    country: null,
+    city: null,
+    address: null,
+    payment_terms: null,
+    client_reference_prefix: null,
+    notes: null,
+    is_active: true,
+  };
+}
+
+function cloneClients(data: ClientsFile): ClientsFile {
+  return JSON.parse(JSON.stringify(data)) as ClientsFile;
+}
+
+function sortClients(clients: ClientProfile[], sortBy: ClientSortBy): ClientProfile[] {
+  return [...clients].sort((a, b) => {
+    switch (sortBy) {
+      case "name-desc":
+        return formatClientDisplayName(b).localeCompare(formatClientDisplayName(a));
+      case "code-asc":
+        return (a.code || "").localeCompare(b.code || "");
+      case "code-desc":
+        return (b.code || "").localeCompare(a.code || "");
+      case "joined-desc":
+        return new Date(b.joined_at ?? 0).getTime() - new Date(a.joined_at ?? 0).getTime();
+      case "joined-asc":
+        return new Date(a.joined_at ?? 0).getTime() - new Date(b.joined_at ?? 0).getTime();
+      case "name-asc":
+      default:
+        return formatClientDisplayName(a).localeCompare(formatClientDisplayName(b));
+    }
+  });
+}
+
+function formatJoinedLabel(client: ClientProfile): string {
+  if (!client.joined_at) return "—";
+  return new Date(client.joined_at).toLocaleDateString(undefined, {
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export function ClientProfilesEditor() {
+  const [saved, setSaved] = useState<ClientsFile>({ updated_at: null, clients: [] });
+  const [draft, setDraft] = useState<ClientsFile>({ updated_at: null, clients: [] });
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { brandId: brandFilter, setBrandId: setBrandFilter, hydrated: brandFilterHydrated } = useFactoryBrandFilter();
+  const [viewMode, setViewMode] = useState<ClientViewMode>("list");
+  const [sortBy, setSortBy] = useState<ClientSortBy>("name-asc");
+
+  useEffect(() => {
+    const storedView = localStorage.getItem(VIEW_STORAGE_KEY);
+    const normalizedView = storedView === "compact" ? "list" : storedView;
+    const storedSort = localStorage.getItem(SORT_STORAGE_KEY) as ClientSortBy | null;
+    if (normalizedView && VIEW_MODE_OPTIONS.some((option) => option.id === normalizedView)) {
+      setViewMode(normalizedView as ClientViewMode);
+    }
+    if (storedSort && SORT_OPTIONS.some((option) => option.id === storedSort)) {
+      setSortBy(storedSort);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(VIEW_STORAGE_KEY, viewMode);
+  }, [viewMode]);
+
+  useEffect(() => {
+    localStorage.setItem(SORT_STORAGE_KEY, sortBy);
+  }, [sortBy]);
+
+  useEffect(() => {
+    async function loadSession() {
+      try {
+        const res = await fetch("/api/auth/session");
+        if (!res.ok) return;
+        const data = (await res.json()) as { is_super_admin?: boolean };
+        setIsSuperAdmin(Boolean(data.is_super_admin));
+      } catch {
+        /* ignore */
+      }
+    }
+    void loadSession();
+  }, []);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/clients");
+        if (!res.ok) throw new Error("Failed to load clients");
+        const data = (await res.json()) as ClientsFile;
+        setSaved(data);
+        setDraft(cloneClients(data));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load clients");
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  const isDirty = useMemo(() => JSON.stringify(saved) !== JSON.stringify(draft), [saved, draft]);
+  const canAutoSave = useMemo(() => draft.clients.every(isClientSaveable), [draft.clients]);
+  const personClients = useMemo(
+    () => draft.clients.filter((client) => client.client_kind !== "retail_brand"),
+    [draft.clients]
+  );
+
+  const displayClients = useMemo(() => {
+    const filtered = searchClients(filterClientsByBrand(personClients, brandFilter), searchQuery);
+    return sortClients(filtered, sortBy);
+  }, [personClients, searchQuery, brandFilter, sortBy]);
+
+  const hasActiveFilters = Boolean(searchQuery.trim() || brandFilter);
+
+  const persistDraft = useCallback(async () => {
+    const res = await fetch("/api/clients", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(draft),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Failed to save clients");
+    setSaved(data as ClientsFile);
+    setDraft(cloneClients(data as ClientsFile));
+    setError(null);
+  }, [draft]);
+
+  const { status: autoSaveStatus, error: autoSaveError, isSaving, saveNow } = useAutoSave({
+    isDirty,
+    canSave: canAutoSave,
+    onSave: persistDraft,
+    waitingMessage: "Add first name, last name, and brand to auto-save",
+  });
+
+  function isNewClient(client: ClientProfile): boolean {
+    return !saved.clients.some((savedClient) => savedClient.id === client.id);
+  }
+
+  function allClientsForCode(excludeClientId?: string): ClientProfile[] {
+    const merged = [...saved.clients];
+    for (const client of draft.clients) {
+      const index = merged.findIndex((row) => row.id === client.id);
+      if (index >= 0) merged[index] = client;
+      else merged.push(client);
+    }
+    return excludeClientId ? merged.filter((client) => client.id !== excludeClientId) : merged;
+  }
+
+  function assignCodeForNewClient(client: ClientProfile, brandIds: string[]): string {
+    const primaryBrandId = brandIds[0];
+    if (!primaryBrandId) return "";
+    return generateNextClientCode(allClientsForCode(client.id), primaryBrandId, {
+      excludeClientId: client.id,
+      joinedAt: new Date(),
+    }) ?? "";
+  }
+
+  function updateClient(id: string, patch: Partial<ClientProfile>) {
+    setDraft((prev) => ({
+      ...prev,
+      clients: prev.clients.map((client) => (client.id === id ? { ...client, ...patch } : client)),
+    }));
+  }
+
+  function toggleBrand(clientId: string, brandId: string) {
+    const client = draft.clients.find((c) => c.id === clientId);
+    if (!client) return;
+    const brand_ids = client.brand_ids.includes(brandId)
+      ? client.brand_ids.filter((id) => id !== brandId)
+      : [...client.brand_ids, brandId];
+
+    const patch: Partial<ClientProfile> = { brand_ids };
+    if (isNewClient(client)) {
+      patch.code = assignCodeForNewClient(client, brand_ids);
+    }
+    updateClient(clientId, patch);
+  }
+
+  function addClient() {
+    const client = emptyClient();
+    setDraft((prev) => ({ ...prev, clients: [client, ...prev.clients] }));
+    setEditingId(client.id);
+  }
+
+  function handleDiscard() {
+    setDraft(cloneClients(saved));
+    setEditingId(null);
+    setError(null);
+  }
+
+  async function deleteClient(client: ClientProfile) {
+    const name = formatClientDisplayName(client) || client.code || "this client";
+    const confirmed = window.confirm(
+      `Delete ${name}? This cannot be undone. Sales orders linked to this client must be removed first.`
+    );
+    if (!confirmed) return;
+
+    setDeletingId(client.id);
+    setError(null);
+    try {
+      const res = await fetch(`/api/clients/${encodeURIComponent(client.id)}`, { method: "DELETE" });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Failed to delete client");
+
+      setSaved((prev) => ({
+        ...prev,
+        clients: prev.clients.filter((row) => row.id !== client.id),
+      }));
+      setDraft((prev) => ({
+        ...prev,
+        clients: prev.clients.filter((row) => row.id !== client.id),
+      }));
+      if (editingId === client.id) setEditingId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete client");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  function renderBrandBadges(client: ClientProfile) {
+    const brands = factoryBrands.filter((b) => client.brand_ids.includes(b.id));
+    if (brands.length === 0) {
+      return <Badge className="bg-amber-100 text-amber-700">No brand assigned</Badge>;
+    }
+    return brands.map((brand) => (
+      <Badge key={brand.id} className="bg-indigo-100 text-indigo-700">
+        {brand.name}
+      </Badge>
+    ));
+  }
+
+  function renderClientActions(client: ClientProfile, isEditing: boolean) {
+    return (
+      <div className="flex items-center gap-2">
+        {isSuperAdmin && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-red-600 hover:bg-red-50 hover:text-red-700"
+            disabled={deletingId === client.id || isSaving}
+            onClick={() => void deleteClient(client)}
+          >
+            <Trash2 className="mr-1.5 h-4 w-4" />
+            {deletingId === client.id ? "Deleting…" : "Delete"}
+          </Button>
+        )}
+        <Button variant="ghost" size="sm" onClick={() => setEditingId(isEditing ? null : client.id)}>
+          {isEditing ? "Done" : "Edit"}
+        </Button>
+      </div>
+    );
+  }
+
+  function renderClientEditor(client: ClientProfile) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="md:col-span-2">
+          <p className="text-sm font-medium text-slate-700">Client name</p>
+          <div className="mt-2 grid gap-4 md:grid-cols-3">
+            <label className="block text-sm">
+              <span className="font-medium text-slate-700">First</span>
+              <input
+                value={client.first_name}
+                onChange={(e) => updateClient(client.id, { first_name: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                placeholder="First name"
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium text-slate-700">Middle</span>
+              <input
+                value={client.middle_name ?? ""}
+                onChange={(e) => updateClient(client.id, { middle_name: e.target.value.trim() || null })}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                placeholder="Optional"
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium text-slate-700">Last</span>
+              <input
+                value={client.last_name}
+                onChange={(e) => updateClient(client.id, { last_name: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                placeholder="Last name"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="md:col-span-2">
+          <p className="text-sm font-medium text-slate-700">Referred by</p>
+          <div className="mt-2 grid gap-4 md:grid-cols-3">
+            <label className="block text-sm">
+              <span className="font-medium text-slate-700">First</span>
+              <input
+                value={client.referred_by_first_name ?? ""}
+                onChange={(e) =>
+                  updateClient(client.id, { referred_by_first_name: e.target.value.trim() || null })
+                }
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                placeholder="First name"
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium text-slate-700">Middle</span>
+              <input
+                value={client.referred_by_middle_name ?? ""}
+                onChange={(e) =>
+                  updateClient(client.id, { referred_by_middle_name: e.target.value.trim() || null })
+                }
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                placeholder="Optional"
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium text-slate-700">Last</span>
+              <input
+                value={client.referred_by_last_name ?? ""}
+                onChange={(e) =>
+                  updateClient(client.id, { referred_by_last_name: e.target.value.trim() || null })
+                }
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                placeholder="Last name"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="md:col-span-2">
+          <p className="text-sm font-medium text-slate-700">Production brand(s)</p>
+          <p className="mt-1 text-xs text-slate-500">
+            Code prefix uses your first selected brand. Format:{" "}
+            <span className="font-mono">
+              {getBrandClientCodePrefix(client.brand_ids[0] ?? "gliani") ?? "GL"}-{getJoinMonthYear()}-0001
+            </span>{" "}
+            — middle digits are month/year joined; the last 4 digits keep counting for each brand (
+            {getJoinMonthYear().slice(0, 2)}/{getJoinMonthYear().slice(2)}).
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {factoryBrands.map((brand) => (
+              <button
+                key={brand.id}
+                type="button"
+                onClick={() => toggleBrand(client.id, brand.id)}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  client.brand_ids.includes(brand.id)
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {brand.name}
+                {getBrandClientCodePrefix(brand.id) ? (
+                  <span className="ml-1 opacity-75">({getBrandClientCodePrefix(brand.id)})</span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="block text-sm">
+          <span className="font-medium text-slate-700">Client code</span>
+          <div className="mt-1 flex h-10 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 font-mono text-slate-700">
+            {client.code || (client.brand_ids[0] ? "Assigned when saved" : "Select a brand first")}
+          </div>
+          <span className="mt-1 block text-xs text-slate-500">
+            {isNewClient(client)
+              ? "Auto-assigned on save — month/year reflects join date."
+              : "Permanent — cannot be changed."}
+          </span>
+        </div>
+
+        <div className="md:col-span-2" />
+
+        <label className="block text-sm">
+          <span className="font-medium text-slate-700">Contact person</span>
+          <input
+            value={client.contact_person ?? ""}
+            onChange={(e) => updateClient(client.id, { contact_person: e.target.value || null })}
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium text-slate-700">Email</span>
+          <input
+            type="email"
+            value={client.email ?? ""}
+            onChange={(e) => updateClient(client.id, { email: e.target.value || null })}
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium text-slate-700">Mobile number</span>
+          <PhoneInput
+            value={client.phone}
+            onChange={(phone) => updateClient(client.id, { phone })}
+            className="mt-1"
+          />
+          <span className="mt-1 block text-xs text-slate-500">Defaults to Saudi Arabia (+966)</span>
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium text-slate-700">Country</span>
+          <input
+            value={client.country ?? ""}
+            onChange={(e) => updateClient(client.id, { country: e.target.value || null })}
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          />
+        </label>
+        <label className="block text-sm md:col-span-2">
+          <span className="font-medium text-slate-700">Notes</span>
+          <textarea
+            value={client.notes ?? ""}
+            onChange={(e) => updateClient(client.id, { notes: e.target.value || null })}
+            rows={2}
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          />
+        </label>
+      </div>
+    );
+  }
+
+  function renderClientSummary(client: ClientProfile) {
+    return (
+      <div className="grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
+        <p>
+          <span className="text-slate-400">Name:</span> {formatClientDisplayName(client) || "—"}
+        </p>
+        <p>
+          <span className="text-slate-400">Joined:</span> {formatJoinedLabel(client)}
+        </p>
+        <p>
+          <span className="text-slate-400">Referred by:</span> {formatReferredByName(client) || "—"}
+        </p>
+        <p>
+          <span className="text-slate-400">Contact:</span> {client.contact_person ?? "—"}
+        </p>
+        <p>
+          <span className="text-slate-400">Email:</span> {client.email ?? "—"}
+        </p>
+        <p>
+          <span className="text-slate-400">Mobile:</span> {client.phone ?? "—"}
+        </p>
+        <p>
+          <span className="text-slate-400">Country:</span> {client.country ?? "—"}
+        </p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-500">
+        Loading client profiles…
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-1">
+          <p className="text-sm text-slate-600">
+            {hasActiveFilters
+              ? `${displayClients.length} of ${personClients.length} client${personClients.length !== 1 ? "s" : ""}`
+              : `${personClients.length} bespoke client${personClients.length !== 1 ? "s" : ""}`}{" "}
+            · ready-made brands live under Ready-Made
+          </p>
+          <AutoSaveStatusBar
+            status={autoSaveStatus}
+            error={autoSaveError}
+            waitingMessage="Add first name, last name, and brand to auto-save"
+            isDirty={isDirty}
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={addClient}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add client
+          </Button>
+          {isDirty && (
+            <Button variant="secondary" onClick={handleDiscard} disabled={isSaving}>
+              Discard
+            </Button>
+          )}
+          {isDirty && canAutoSave && autoSaveStatus === "error" && (
+            <Button variant="secondary" onClick={() => void saveNow()} disabled={isSaving}>
+              Retry save
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
+      )}
+
+      {personClients.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-200 py-16 text-center">
+          <UserCircle className="mx-auto h-10 w-10 text-slate-300" />
+          <p className="mt-3 text-lg font-medium text-slate-700">No clients yet</p>
+          <p className="mt-2 text-sm text-slate-500">
+            Pick a production brand first — code format is GL-0526-0001 (brand · month/year joined · number).
+          </p>
+          <Button className="mt-4" onClick={addClient}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add client
+          </Button>
+        </div>
+      ) : (
+        <>
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+              <label className="relative block flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by name, client code, email, mobile, or referred by…"
+                  className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-10 text-sm"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </label>
+              {brandFilterHydrated && (
+                <FactoryBrandTabs
+                  value={brandFilter}
+                  onChange={setBrandFilter}
+                  showAll
+                  allLabel="All"
+                  label="Brand"
+                  className="lg:min-w-[22rem]"
+                />
+              )}
+            </div>
+            <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-medium uppercase tracking-wide text-slate-400">View</span>
+                {VIEW_MODE_OPTIONS.map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setViewMode(id)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                      viewMode === id
+                        ? "bg-indigo-600 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <label className="flex items-center gap-2 text-sm text-slate-600">
+                <span className="text-xs font-medium uppercase tracking-wide text-slate-400">Sort</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as ClientSortBy)}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
+                >
+                  {SORT_OPTIONS.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </div>
+
+          {displayClients.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-500">
+              No clients match your search.
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setBrandFilter(null);
+                  }}
+                  className="mt-2 block w-full text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+          ) : viewMode === "list" ? (
+            <ul className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+              {displayClients.map((client, index) => {
+                const isEditing = editingId === client.id;
+                const name = formatClientDisplayName(client) || "Unnamed client";
+                const brands = factoryBrands.filter((b) => client.brand_ids.includes(b.id));
+                const brandLabel = brands.map((b) => b.name).join(", ") || "No brand";
+
+                return (
+                  <li
+                    key={client.id}
+                    className={cn(
+                      "border-slate-200",
+                      index > 0 && "border-t",
+                      isEditing ? "bg-slate-50" : "hover:bg-slate-50/70"
+                    )}
+                  >
+                    <div className="flex items-center gap-4 px-4 py-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
+                        {name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                          <p className="truncate font-medium text-slate-900">{name}</p>
+                          <p className="font-mono text-xs text-slate-400">{client.code || "NEW"}</p>
+                        </div>
+                        <p className="mt-0.5 truncate text-sm text-slate-500">
+                          {brandLabel}
+                          {client.joined_at ? ` · Joined ${formatJoinedLabel(client)}` : ""}
+                          {formatReferredByName(client) ? ` · Referred by ${formatReferredByName(client)}` : ""}
+                          {client.email ? ` · ${client.email}` : ""}
+                        </p>
+                      </div>
+                      <div className="shrink-0">{renderClientActions(client, isEditing)}</div>
+                    </div>
+                    {isEditing && (
+                      <div className="border-t border-slate-200 bg-white px-4 py-4">{renderClientEditor(client)}</div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : viewMode === "table" ? (
+            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                    <th className="px-4 py-3">Code</th>
+                    <th className="px-4 py-3">Name</th>
+                    <th className="px-4 py-3">Brand</th>
+                    <th className="px-4 py-3">Joined</th>
+                    <th className="px-4 py-3">Referred by</th>
+                    <th className="px-4 py-3">Contact</th>
+                    <th className="px-4 py-3">Email</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {displayClients.map((client) => {
+                    const isEditing = editingId === client.id;
+                    return (
+                      <Fragment key={client.id}>
+                        <tr className="hover:bg-slate-50/60">
+                          <td className="px-4 py-3 font-mono text-xs text-slate-600">{client.code || "NEW"}</td>
+                          <td className="px-4 py-3 font-medium text-slate-900">
+                            {formatClientDisplayName(client) || "Unnamed client"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-wrap gap-1">{renderBrandBadges(client)}</div>
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">{formatJoinedLabel(client)}</td>
+                          <td className="px-4 py-3 text-slate-600">{formatReferredByName(client) || "—"}</td>
+                          <td className="px-4 py-3 text-slate-600">{client.contact_person ?? "—"}</td>
+                          <td className="px-4 py-3 text-slate-600">{client.email ?? "—"}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex justify-end">{renderClientActions(client, isEditing)}</div>
+                          </td>
+                        </tr>
+                        {isEditing && (
+                          <tr>
+                            <td colSpan={8} className="border-t border-slate-100 bg-slate-50/50 px-4 py-4">
+                              {renderClientEditor(client)}
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+        <div className="space-y-4">
+          {displayClients.map((client) => {
+            const isEditing = editingId === client.id;
+
+            return (
+              <div key={client.id} className="rounded-xl border border-slate-200 bg-white p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{client.code || "NEW"}</p>
+                    <h3 className="mt-1 text-lg font-semibold text-slate-900">
+                      {formatClientDisplayName(client) || "Unnamed client"}
+                    </h3>
+                    <div className="mt-2 flex flex-wrap gap-2">{renderBrandBadges(client)}</div>
+                  </div>
+                  {renderClientActions(client, isEditing)}
+                </div>
+
+                {isEditing ? (
+                  <div className="mt-4">{renderClientEditor(client)}</div>
+                ) : (
+                  <div className="mt-4">{renderClientSummary(client)}</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
