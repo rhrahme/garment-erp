@@ -5,70 +5,25 @@ import {
   ERP_DOCUMENT_DEFINITIONS,
   recordSummaryForKey,
   updatedAtFromData,
-  type DocumentCategoryId,
-  type ErpDocumentDefinition,
 } from "@/lib/data/erp-document-catalog";
 import { ERP_DOCUMENT_SPECS, type ErpDocumentKey } from "@/lib/data/document-keys";
 import { loadDocument, useSupabaseDocuments } from "@/lib/data/document-persistence";
+import type {
+  DocumentsLibrarySnapshot,
+  ErpDocumentRow,
+  PriceCatalogRow,
+  ReferenceSourceFileRow,
+} from "@/lib/data/documents-library-shared";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
-export interface ErpDocumentRow extends ErpDocumentDefinition {
-  recordSummary: string;
-  updatedAt: string | null;
-  supabaseUpdatedAt: string | null;
-  approximateBytes: number;
-}
-
-export interface PriceCatalogRow {
-  id: string;
-  supplierName: string;
-  priceListName: string;
-  sourceFile: string | null;
-  fabricCount: number;
-  importedAt: string | null;
-  filePath: string;
-  appHref: string;
-}
-
-export interface ScannedFileGroup {
-  id: string;
-  label: string;
-  description: string;
-  fileCount: number;
-  totalBytes: number;
-  appHref: string;
-  folderPath: string;
-}
-
-export interface ReferenceSourceFileRow {
-  id: string;
-  supplier: string;
-  filename: string;
-  relativePath: string;
-  type: string;
-  catalogId: string | null;
-  importStatus: "imported" | "archived" | string;
-  notes: string | null;
-  fileBytes: number;
-  existsOnDisk: boolean;
-  downloadHref: string;
-}
-
-export interface DocumentsLibrarySnapshot {
-  storageMode: "supabase" | "local";
-  erpDocumentCount: number;
-  totalErpBytes: number;
-  categories: Array<{
-    id: DocumentCategoryId;
-    label: string;
-    description: string;
-    documents: ErpDocumentRow[];
-  }>;
-  priceCatalogs: PriceCatalogRow[];
-  scannedFiles: ScannedFileGroup[];
-  referenceSourceFiles: ReferenceSourceFileRow[];
-  referenceSourceUpdatedAt: string | null;
-}
+export type {
+  DocumentsLibrarySnapshot,
+  ErpDocumentRow,
+  PriceCatalogRow,
+  ReferenceSourceFileRow,
+  ScannedFileGroup,
+} from "@/lib/data/documents-library-shared";
+export { formatDataSize } from "@/lib/data/documents-library-shared";
 
 function approximateJsonBytes(data: unknown): number {
   try {
@@ -258,8 +213,3 @@ export async function getDocumentsLibrarySnapshot(): Promise<DocumentsLibrarySna
   };
 }
 
-export function formatDataSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-}

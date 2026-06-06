@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Cloud, Database, ExternalLink, FileText, FolderOpen, HardDrive } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { formatDataSize, type DocumentsLibrarySnapshot } from "@/lib/data/documents-library";
+import { formatDataSize, type DocumentsLibrarySnapshot } from "@/lib/data/documents-library-shared";
 import { formatDate } from "@/lib/utils";
 
 function formatWhen(iso: string | null): string {
