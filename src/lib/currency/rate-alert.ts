@@ -37,7 +37,11 @@ function readState(): ExchangeRateState {
 }
 
 function writeState(state: ExchangeRateState): void {
-  writeJsonFile(STATE_PATH, state);
+  try {
+    writeJsonFile(STATE_PATH, state);
+  } catch (error) {
+    console.error("Exchange rate state write failed:", error);
+  }
 }
 
 function shouldRefresh(lastCheckedAt: string | null): boolean {

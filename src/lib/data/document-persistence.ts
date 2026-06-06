@@ -42,12 +42,29 @@ function readLocalJsonFile<T>(filePath: string, fallback: T): T {
   }
 }
 
-function writeLocalJsonFile<T>(filePath: string, data: T): T {
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, `${JSON.stringify(data, null, 2)}\n`, "utf8");
-  const stat = fs.statSync(filePath);
-  fileCache.set(filePath, { mtimeMs: stat.mtimeMs, data });
+function isLocalJsonWritable(): boolean {
+  return process.env.VERCEL !== "1";
+}
+
+function cacheJsonFile<T>(filePath: string, data: T): T {
+  fileCache.set(filePath, { mtimeMs: Date.now(), data });
   return data;
+}
+
+function writeLocalJsonFile<T>(filePath: string, data: T): T {
+  if (!isLocalJsonWritable()) {
+    return cacheJsonFile(filePath, data);
+  }
+  try {
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+    const stat = fs.statSync(filePath);
+    fileCache.set(filePath, { mtimeMs: stat.mtimeMs, data });
+    return data;
+  } catch (error) {
+    console.error(`Local JSON write skipped for ${filePath}:`, error);
+    return cacheJsonFile(filePath, data);
+  }
 }
 
 async function readFromSupabase<T>(documentKey: ErpDocumentKey): Promise<T | null> {
@@ -207,16 +224,24 @@ export async function readJsonFileFreshAsync<T>(
 /** Sync write — updates local file + memory; Supabase write is async (best-effort). */
 export function writeJsonFile<T>(filePath: string, data: T): T {
   const documentKey = documentKeyForPath(filePath);
-  const saved = writeLocalJsonFile(filePath, data);
 
   if (isSupabaseDocumentsStorage() && documentKey) {
+    const saved = cacheJsonFile(filePath, data);
     loadedKeys.add(documentKey);
     void writeToSupabase(documentKey, saved).catch((error) => {
       console.error(`Async Supabase write failed for ${documentKey}:`, error);
     });
+    if (isLocalJsonWritable()) {
+      try {
+        writeLocalJsonFile(filePath, saved);
+      } catch {
+        // Best-effort local mirror for dev machines only.
+      }
+    }
+    return saved;
   }
 
-  return saved;
+  return writeLocalJsonFile(filePath, data);
 }
 
 /** Preferred write path when Supabase is the source of truth. */

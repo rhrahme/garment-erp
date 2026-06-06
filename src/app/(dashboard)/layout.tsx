@@ -5,8 +5,23 @@ import { SupplierAvailabilityBanner } from "@/components/supplier-inbox/Supplier
 import { checkEurSarRateAlert } from "@/lib/currency/rate-alert";
 import { getSessionContext } from "@/lib/auth/session";
 
+const DEFAULT_RATE_STATUS = {
+  bookRate: 4.5,
+  alertThreshold: 4.5,
+  marketRate: null as number | null,
+  aboveThreshold: false,
+  alertSent: false,
+  checkedAt: new Date().toISOString(),
+};
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [rateStatus, session] = await Promise.all([checkEurSarRateAlert(), getSessionContext()]);
+  const session = await getSessionContext();
+  let rateStatus = DEFAULT_RATE_STATUS;
+  try {
+    rateStatus = await checkEurSarRateAlert();
+  } catch (error) {
+    console.error("EUR/SAR rate check failed:", error);
+  }
   const clientsOnly = session.isClientManager;
 
   return (
