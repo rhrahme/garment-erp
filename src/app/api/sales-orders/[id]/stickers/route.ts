@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
 import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 import {
+  applyOrderStickerBatch,
   buildAllPoPrintSheets,
   buildFabricCutLabelsForSalesOrder,
   buildLabelsForSalesOrder,
@@ -49,7 +50,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       sheet === "fabric-cuts" ? fabricCutLabels : sheet === "print-pack" ? fabricCutLabels : pieceLabels;
 
     const mapLabels = (labels: ReturnType<typeof buildLabelsForSalesOrder>) =>
-      labels.map((label) => ({
+      applyOrderStickerBatch(labels, order).map((label) => ({
         ...label,
         qr_url: qrImageUrl(label.qr_payload, 120),
       }));

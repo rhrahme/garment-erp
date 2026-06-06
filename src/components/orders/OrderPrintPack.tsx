@@ -4,13 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { StickerCell } from "@/components/orders/StickerPrintSheet";
-import {
-  labelRollHeightCss,
-  labelRollSizeCss,
-  labelRollSizeLabel,
-  labelRollWidthCss,
-} from "@/lib/production/label-print-config";
+import { StickerCell } from "@/components/orders/StickerCell";
+import { labelRollSizeLabel } from "@/lib/production/label-print-config";
+import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
 import type { PrintableStickerLabel } from "@/lib/production/qr-labels";
 
 type PrintPackResponse = {
@@ -29,10 +25,12 @@ function StickerRollSection({
   title,
   hint,
   labels,
+  role,
 }: {
   title: string;
   hint: string;
   labels: Array<PrintableStickerLabel & { qr_url: string }>;
+  role: "prep" | "prod";
 }) {
   if (labels.length === 0) return null;
 
@@ -51,15 +49,17 @@ function StickerRollSection({
         <p>{hint}</p>
       </div>
 
-      <div className="sticker-roll flex flex-wrap gap-3 print:block print:gap-0">
-        {labels.map((label) => (
-          <div
-            key={`${label.sticker_code}-${label.production_code}`}
-            className="sticker-page print:break-after-page"
-          >
-            <StickerCell label={label} />
-          </div>
-        ))}
+      <div className="sticker-print-zone">
+        <div className="sticker-roll flex flex-wrap gap-3 print:block print:gap-0">
+          {labels.map((label) => (
+            <div
+              key={`${label.sticker_code}-${label.production_code}`}
+              className="sticker-page print:break-after-page"
+            >
+              <StickerCell label={label} role={role} />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -128,6 +128,7 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
         title="Receiving team — fabric cut stickers"
         hint="One sticker per fabric roll. Stick on the roll when fabric arrives — receiving scans this QR through wash / soak / iron."
         labels={data.fabric_cut_labels}
+        role="prep"
       />
 
       {data.has_cutting_pack && (
@@ -135,67 +136,11 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
           title="Cutting team — piece stickers"
           hint="Multi-piece garments only. Pre-print and hand to cutting — stick on jacket / trouser after iron, then scan piece QRs at Cutting."
           labels={data.cutting_piece_labels}
+          role="prod"
         />
       )}
 
-      <style jsx global>{`
-        @media print {
-          @page {
-            size: ${labelRollSizeCss()};
-            margin: 0;
-          }
-          aside,
-          header,
-          nav,
-          .no-print {
-            display: none !important;
-          }
-          main {
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: visible !important;
-          }
-          body {
-            background: white !important;
-            print-color-adjust: exact;
-            -webkit-print-color-adjust: exact;
-          }
-          .print-pack-stickers {
-            position: static !important;
-            width: auto !important;
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-          .sticker-roll {
-            display: block !important;
-          }
-          .sticker-page {
-            width: ${labelRollWidthCss()} !important;
-            height: ${labelRollHeightCss()} !important;
-            max-width: ${labelRollWidthCss()} !important;
-            max-height: ${labelRollHeightCss()} !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: hidden !important;
-            page-break-after: always !important;
-            break-after: page !important;
-          }
-          .sticker-page:last-child {
-            page-break-after: auto !important;
-            break-after: auto !important;
-          }
-          .sticker-cell {
-            width: ${labelRollWidthCss()} !important;
-            height: ${labelRollHeightCss()} !important;
-            max-width: ${labelRollWidthCss()} !important;
-            max-height: ${labelRollHeightCss()} !important;
-            box-sizing: border-box;
-            border: none !important;
-            break-inside: avoid !important;
-            page-break-inside: avoid !important;
-          }
-        }
-      `}</style>
+      <style dangerouslySetInnerHTML={{ __html: stickerPrintStyles() }} />
     </div>
   );
 }

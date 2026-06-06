@@ -67,7 +67,8 @@ export async function updateSession(request: NextRequest) {
   const isOpenAuthRoute =
     pathname.startsWith("/api/auth/login") ||
     pathname.startsWith("/api/auth/dev-impersonate") ||
-    pathname.startsWith("/api/auth/confirm-client-manager");
+    pathname.startsWith("/api/auth/confirm-client-manager") ||
+    pathname.startsWith("/api/qr");
 
   if (!isAuthenticated && !isAuthPage && !isPublicApiRoute && !isOpenAuthRoute) {
     if (isApiRoute) {

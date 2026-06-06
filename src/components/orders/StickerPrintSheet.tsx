@@ -2,17 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Printer } from "lucide-react";
+import { Check, Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import {
-  labelRollHeightCss,
-  labelRollHeightMm,
-  labelRollSizeLabel,
-  labelRollSizeCss,
-  labelRollWidthCss,
-  labelRollWidthMm,
-} from "@/lib/production/label-print-config";
-import { qrImageUrl } from "@/lib/production/qr-labels";
+import { StickerCell } from "@/components/orders/StickerCell";
+import { labelRollSizeLabel } from "@/lib/production/label-print-config";
+import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
 import type { PrintablePoSheet, PrintableStickerLabel } from "@/lib/production/qr-labels";
 
 type StickersApiResponse = {
@@ -39,56 +33,59 @@ type StickerPrintSheetProps = {
   sheet?: StickerSheetMode;
 };
 
-function formatWeight(weightGsm: number | null): string | null {
-  if (weightGsm == null) return null;
-  return `${weightGsm} gsm`;
-}
+const STICKER_SHEET_TABS: Array<{
+  id: StickerSheetMode;
+  label: string;
+  subtitle: string;
+}> = [
+  {
+    id: "fabric-cuts",
+    label: "Preparation",
+    subtitle: "receive / wash",
+  },
+  {
+    id: "pieces",
+    label: "Production",
+    subtitle: "cutting / sewing",
+  },
+];
 
-export function StickerCell({ label }: { label: PrintableStickerLabel & { qr_url?: string } }) {
-  const qrUrl = label.qr_url ?? qrImageUrl(label.qr_payload, 112);
-  const weight = formatWeight(label.weight_gsm);
-
-  return (
-    <div
-      className="sticker-cell flex flex-col items-center justify-center border border-dashed border-slate-300 bg-white p-1 text-center"
-      style={{ width: `${labelRollWidthMm()}mm`, height: `${labelRollHeightMm()}mm` }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={qrUrl} alt="" width={56} height={56} className="h-14 w-14 shrink-0" />
-      <p className="mt-0.5 font-mono text-[9px] font-bold leading-tight text-slate-900">{label.client_code}</p>
-      <p className="font-mono text-[8px] font-semibold leading-tight text-indigo-800">{label.production_code}</p>
-      <p className="mt-0.5 truncate text-[7px] font-medium leading-tight text-slate-700">
-        {label.fabric_brand} · {label.fabric_number}
-      </p>
-      {(label.composition || weight) && (
-        <p className="line-clamp-2 text-[6.5px] leading-tight text-slate-500">
-          {[label.composition, weight].filter(Boolean).join(" · ")}
-        </p>
-      )}
-      <p className="truncate text-[6.5px] leading-tight text-slate-400">
-        {label.production_code === label.fabric_cut_code ? `Cut · ${label.piece_name}` : label.piece_name}
-      </p>
-    </div>
-  );
-}
-
-const SHEET_COPY: Record<
-  StickerSheetMode,
-  { title: string; hint: string; otherLabel: string; otherSheet: StickerSheetMode }
-> = {
+const SHEET_COPY: Record<StickerSheetMode, { title: string; hint: string }> = {
   "fabric-cuts": {
     title: "Fabric cut stickers (receive / wash)",
     hint: `One ${labelRollSizeLabel()} roll label per fabric line — stick on the roll when fabric arrives. Receiving & washing scan this QR.`,
-    otherLabel: "Production stickers",
-    otherSheet: "pieces",
   },
   pieces: {
     title: "Piece stickers (cutting / sewing)",
     hint: `One ${labelRollSizeLabel()} roll label per garment piece — after prep, stick on jacket, trouser, etc. (e.g. suit = 2 stickers).`,
-    otherLabel: "Print fabric cut stickers (receive)",
-    otherSheet: "fabric-cuts",
   },
 };
+
+function stickerPrintStorageKey(orderId: string, sheet: StickerSheetMode): string {
+  return `sticker-printed:${orderId}:${sheet}`;
+}
+
+function readPrintedSheets(orderId: string): Set<StickerSheetMode> {
+  const printed = new Set<StickerSheetMode>();
+  for (const tab of STICKER_SHEET_TABS) {
+    if (typeof window !== "undefined" && sessionStorage.getItem(stickerPrintStorageKey(orderId, tab.id))) {
+      printed.add(tab.id);
+    }
+  }
+  return printed;
+}
+
+function stickerSheetHref(
+  orderId: string,
+  sheetMode: StickerSheetMode,
+  poNumber?: string,
+  poId?: string
+): string {
+  const params = new URLSearchParams({ sheet: sheetMode });
+  if (poNumber) params.set("po", poNumber);
+  if (poId) params.set("po_id", poId);
+  return `/orders/${orderId}/stickers?${params.toString()}`;
+}
 
 export function StickerPrintSheet({
   salesOrderId,
@@ -99,6 +96,11 @@ export function StickerPrintSheet({
   const [data, setData] = useState<StickersApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [printedSheets, setPrintedSheets] = useState<Set<StickerSheetMode>>(() => new Set());
+
+  useEffect(() => {
+    setPrintedSheets(readPrintedSheets(salesOrderId));
+  }, [salesOrderId]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -123,6 +125,15 @@ export function StickerPrintSheet({
   useEffect(() => {
     void load();
   }, [load]);
+
+  const handlePrint = useCallback(() => {
+    const markPrinted = () => {
+      sessionStorage.setItem(stickerPrintStorageKey(salesOrderId, sheet), "1");
+      setPrintedSheets(readPrintedSheets(salesOrderId));
+    };
+    window.addEventListener("afterprint", markPrinted, { once: true });
+    window.print();
+  }, [salesOrderId, sheet]);
 
   if (loading) {
     return <p className="text-sm text-slate-500">Loading printable stickers…</p>;
@@ -153,10 +164,44 @@ export function StickerPrintSheet({
           ];
 
   const copy = SHEET_COPY[sheet];
-  const otherHref = `/orders/${salesOrderId}/stickers?sheet=${copy.otherSheet}${poNumber ? `&po=${encodeURIComponent(poNumber)}` : ""}`;
+  const stickerRole = sheet === "fabric-cuts" ? "prep" : "prod";
 
   return (
     <div>
+      <div className="no-print mb-4">
+        <div className="inline-flex gap-1 rounded-lg border border-slate-200 bg-white p-1">
+          {STICKER_SHEET_TABS.map((tab) => {
+            const active = sheet === tab.id;
+            const printed = printedSheets.has(tab.id);
+            return (
+              <Link
+                key={tab.id}
+                href={stickerSheetHref(salesOrderId, tab.id, poNumber, poId)}
+                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  active
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : printed
+                      ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-300"
+                      : "text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  {printed ? <Check className="h-3.5 w-3.5 shrink-0" aria-hidden /> : null}
+                  <span className="font-semibold">{tab.label}</span>
+                </span>
+                <span
+                  className={`ml-2 text-xs ${
+                    active ? "text-emerald-100" : printed ? "text-emerald-600" : "text-slate-400"
+                  }`}
+                >
+                  {tab.subtitle}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-slate-900">{copy.title}</p>
@@ -171,13 +216,10 @@ export function StickerPrintSheet({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => window.print()}>
+          <Button onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" />
             Print roll labels
           </Button>
-          <Link href={otherHref}>
-            <Button variant="secondary">{copy.otherLabel}</Button>
-          </Link>
           <Link href={`/orders/${salesOrderId}`}>
             <Button variant="secondary">View order</Button>
           </Link>
@@ -186,107 +228,51 @@ export function StickerPrintSheet({
 
       {data.po_sheets.length > 1 && !poNumber && !poId && (
         <div className="no-print mb-6 flex flex-wrap gap-2">
-          {data.po_sheets.map((sheet) => (
-            <Link key={sheet.po_number} href={`/orders/${salesOrderId}/stickers?po=${encodeURIComponent(sheet.po_number)}`}>
+          {data.po_sheets.map((poSheet) => (
+            <Link key={poSheet.po_number} href={`/orders/${salesOrderId}/stickers?po=${encodeURIComponent(poSheet.po_number)}`}>
               <Button variant="secondary" size="sm">
-                {sheet.po_number} — {sheet.supplier_name}
+                {poSheet.po_number} — {poSheet.supplier_name}
               </Button>
             </Link>
           ))}
         </div>
       )}
 
-      {sheets.map((sheet) => (
-        <section key={sheet.po_number} className="print-sheet mb-10 break-after-page">
+      {sheets.map((poSheet) => (
+        <section key={poSheet.po_number} className="print-sheet mb-10 break-after-page">
           <div className="no-print mb-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
             <p className="font-semibold text-slate-900">
-              {sheet.po_number} — {sheet.supplier_name}
+              {poSheet.po_number} — {poSheet.supplier_name}
             </p>
             <p className="text-slate-600">
-              {sheet.so_number} · Client {sheet.client_code} · {sheet.labels.length} sticker
-              {sheet.labels.length !== 1 ? "s" : ""}
+              {poSheet.so_number} · Client {poSheet.client_code} · {poSheet.labels.length} sticker
+              {poSheet.labels.length !== 1 ? "s" : ""}
             </p>
           </div>
 
           <div className="print-header mb-4 hidden text-sm print:block">
-            <p className="font-bold">{sheet.po_number} — {sheet.supplier_name}</p>
+            <p className="font-bold">{poSheet.po_number} — {poSheet.supplier_name}</p>
             <p>
-              {sheet.so_number} · {sheet.client_code}
+              {poSheet.so_number} · {poSheet.client_code}
             </p>
           </div>
 
-          <div className="sticker-roll flex flex-wrap gap-3 print:block print:gap-0">
-            {sheet.labels.map((label) => (
-              <div
-                key={`${label.sticker_code}-${label.production_code}`}
-                className="sticker-page print:break-after-page"
-              >
-                <StickerCell label={label} />
-              </div>
-            ))}
+          <div className="sticker-print-zone">
+            <div className="sticker-roll flex flex-wrap gap-3 print:block print:gap-0">
+              {poSheet.labels.map((label) => (
+                <div
+                  key={`${label.sticker_code}-${label.production_code}`}
+                  className="sticker-page print:break-after-page"
+                >
+                  <StickerCell label={label} role={stickerRole} />
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       ))}
 
-      <style jsx global>{`
-        @media print {
-          @page {
-            size: ${labelRollSizeCss()};
-            margin: 0;
-          }
-          aside,
-          header,
-          nav,
-          .no-print {
-            display: none !important;
-          }
-          main {
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: visible !important;
-          }
-          body {
-            background: white !important;
-            print-color-adjust: exact;
-            -webkit-print-color-adjust: exact;
-          }
-          .print-sheet {
-            position: static !important;
-            width: auto !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: visible !important;
-          }
-          .sticker-roll {
-            display: block !important;
-          }
-          .sticker-page {
-            width: ${labelRollWidthCss()} !important;
-            height: ${labelRollHeightCss()} !important;
-            max-width: ${labelRollWidthCss()} !important;
-            max-height: ${labelRollHeightCss()} !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: hidden !important;
-            page-break-after: always !important;
-            break-after: page !important;
-          }
-          .sticker-page:last-child {
-            page-break-after: auto !important;
-            break-after: auto !important;
-          }
-          .sticker-cell {
-            width: ${labelRollWidthCss()} !important;
-            height: ${labelRollHeightCss()} !important;
-            max-width: ${labelRollWidthCss()} !important;
-            max-height: ${labelRollHeightCss()} !important;
-            box-sizing: border-box;
-            border: none !important;
-            break-inside: avoid !important;
-            page-break-inside: avoid !important;
-          }
-        }
-      `}</style>
+      <style dangerouslySetInnerHTML={{ __html: stickerPrintStyles() }} />
     </div>
   );
 }

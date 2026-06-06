@@ -7,7 +7,7 @@ import {
   productionCodeFromSticker,
 } from "@/lib/sales-orders/label-codes";
 import { productionBrandNameForOrder } from "@/lib/sales-orders/production-brand";
-import { qrImageUrl } from "@/lib/production/qr-labels";
+import { qrImageFetchUrl } from "@/lib/production/qr-labels";
 import {
   fabricSupplierGroupKey,
   formatFabricSupplierName,
@@ -41,7 +41,7 @@ function groupLinesBySupplier(lines: SalesOrderFabricLine[]) {
 }
 
 async function fetchQrDataUrl(payload: string, size = 80): Promise<string> {
-  const res = await fetch(qrImageUrl(payload, size));
+  const res = await fetch(qrImageFetchUrl(payload, size));
   if (!res.ok) throw new Error("Failed to load QR code image.");
   const buffer = Buffer.from(await res.arrayBuffer());
   return `data:image/png;base64,${buffer.toString("base64")}`;
