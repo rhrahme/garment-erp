@@ -9,7 +9,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Enter a sticker code." }, { status: 400 });
     }
 
-    const result = scanStickerForProduction(sticker_code);
+    const result = await scanStickerForProduction(sticker_code);
     return NextResponse.json(result, { status: result.created ? 201 : 200 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to scan sticker.";

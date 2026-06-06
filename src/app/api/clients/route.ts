@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { redactClientsFile } from "@/lib/auth/client-contact-access";
+import { requireAuthenticated } from "@/lib/auth/session";
 import { generateNextClientCode, getBrandClientCodePrefix } from "@/lib/clients/codes";
 import { formatClientDisplayName, formatReferredByName, hasRequiredClientName, migrateClientName, migrateReferredByName, normalizeNamePart } from "@/lib/clients/names";
 import { normalizeStoredPhone } from "@/lib/phone/countries";
@@ -19,8 +21,10 @@ function normalizeText(value: unknown): string | null {
 
 function validateClients(
   body: unknown,
-  previousClients: ClientProfile[] = []
+  previousClients: ClientProfile[] = [],
+  options: { allowContactFields?: boolean } = {}
 ): { ok: true; data: ClientProfile[] } | { ok: false; error: string } {
+  const allowContactFields = options.allowContactFields !== false;
   if (!body || typeof body !== "object" || !Array.isArray((body as { clients?: unknown }).clients)) {
     return { ok: false, error: "clients array is required." };
   }
@@ -96,13 +100,21 @@ function validateClients(
       middle_name: normalizeText(names.middle_name),
       last_name: normalizeNamePart(names.last_name),
       brand_ids,
-      contact_person: normalizeText(row.contact_person),
-      referred_by_first_name: referredBy.referred_by_first_name,
-      referred_by_middle_name: referredBy.referred_by_middle_name,
-      referred_by_last_name: referredBy.referred_by_last_name,
-      email: normalizeText(row.email),
-      phone: normalizeStoredPhone(row.phone),
-      country: normalizeText(row.country),
+      contact_person: allowContactFields
+        ? normalizeText(row.contact_person)
+        : (previous?.contact_person ?? null),
+      referred_by_first_name: allowContactFields
+        ? referredBy.referred_by_first_name
+        : (previous?.referred_by_first_name ?? null),
+      referred_by_middle_name: allowContactFields
+        ? referredBy.referred_by_middle_name
+        : (previous?.referred_by_middle_name ?? null),
+      referred_by_last_name: allowContactFields
+        ? referredBy.referred_by_last_name
+        : (previous?.referred_by_last_name ?? null),
+      email: allowContactFields ? normalizeText(row.email) : (previous?.email ?? null),
+      phone: allowContactFields ? normalizeStoredPhone(row.phone) : (previous?.phone ?? null),
+      country: allowContactFields ? normalizeText(row.country) : (previous?.country ?? null),
       city: normalizeText(row.city),
       address: normalizeText(row.address),
       payment_terms: normalizeText(row.payment_terms),
@@ -118,7 +130,13 @@ function validateClients(
 
 export async function GET() {
   try {
-    return NextResponse.json(readClients());
+    const session = await requireAuthenticated();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    const data = readClients();
+    return NextResponse.json(session.canViewClientContact ? data : redactClientsFile(data));
   } catch (error) {
     console.error("Failed to read clients:", error);
     return NextResponse.json({ error: "Failed to load clients." }, { status: 500 });
@@ -127,14 +145,21 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    const session = await requireAuthenticated();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
     const body = await request.json();
     const previous = readClients();
-    const result = validateClients(body, previous.clients);
+    const result = validateClients(body, previous.clients, {
+      allowContactFields: session.canViewClientContact,
+    });
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
-    const saved = writeClients({ updated_at: null, clients: result.data });
+    const saved = await writeClients({ updated_at: null, clients: result.data });
 
     const isNew = previous.clients.length === 0 && saved.clients.length > 0;
     await notifyIntegration(isNew ? "client.created" : "client.updated", {
@@ -142,7 +167,8 @@ export async function PUT(request: Request) {
       updated_at: saved.updated_at,
     });
 
-    return NextResponse.json(saved);
+    const responseData = session.canViewClientContact ? saved : redactClientsFile(saved);
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error("Failed to save clients:", error);
     return NextResponse.json({ error: "Failed to save clients." }, { status: 500 });

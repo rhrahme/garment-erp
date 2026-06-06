@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Pencil, Trash2, X } from "lucide-react";
+import { ChevronDown, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { AutoSaveStatusBar } from "@/components/ui/AutoSaveStatus";
 import { GARMENT_STITCH_TYPES, getLabelCountForGarment } from "@/lib/sales-orders/garment-types";
@@ -15,18 +15,47 @@ import { useLocalDraft } from "@/hooks/useLocalDraft";
 import { DRAFT_KEYS } from "@/lib/autosave/draft-keys";
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
 import {
+  formatLoroPianaMillLineLabel,
+  normalizeLoroPianaFabricNumber,
+  resolveLoroPianaFabricInput,
+} from "@/lib/fabric-sourcing/loro-piana-styles";
+import {
+  fabricSupplierGroupKey,
+  formatFabricSupplierName,
+  normalizeFabricSupplierFields,
+} from "@/lib/fabric-sourcing/supplier-display";
+import { fabricStockTone, formatFabricStockLabel, isFabricUnavailable } from "@/lib/fabric-sourcing/fabric-stock";
+import {
+  FabricReplacementBadge,
+  FabricStockBadge,
+  lineNeedsAvailabilityAttention,
+} from "@/components/fabric/FabricStockBadge";
+import {
+  describeSalesOrderDraftSummary,
   isSalesOrderDraftEmpty,
+  migrateSalesOrderDraft,
   SALES_ORDER_DRAFT_VERSION,
   type SalesOrderFormDraft,
   type SalesOrderLineDraft,
 } from "@/lib/autosave/sales-order-draft";
+import {
+  clientDraftTabLabel,
+  clientIdTabLabel,
+  createClientDraft,
+  createFabricAddEntry,
+  type FabricAddClientEntry,
+  type SalesOrderClientDraft,
+} from "@/lib/sales-orders/multi-client-draft";
 import type { ClientProfile, ClientsFile } from "@/lib/types/clients";
 import { formatSupplierUnitPrice } from "@/lib/currency/format";
 import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
 import { DeliveryDestinationTabs } from "@/components/shipping/DeliveryDestinationTabs";
 import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
-import { normalizeLoroPianaFabricNumber } from "@/lib/fabric-sourcing/loro-piana-styles";
-import { formatFabricStockLabel } from "@/lib/fabric-sourcing/fabric-stock";
+import {
+  salesOrderToDuplicateSeed,
+  type SalesOrderDuplicateSeed,
+} from "@/lib/sales-orders/duplicate-draft";
+import type { SalesOrder } from "@/lib/types/sales-orders";
 
 type FabricBrand = { id: string; name: string; has_price_list?: boolean };
 
@@ -63,10 +92,11 @@ async function resolveFabricItem(
     if (match) return match;
   }
 
+  const normalized = normalizeFabricSupplierFields(supplierId, supplierName, trimmed);
   return {
-    id: `manual-${supplierId}-${trimmed.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-    supplier_id: supplierId,
-    supplier_name: supplierName,
+    id: `manual-${normalized.supplier_id}-${trimmed.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    supplier_id: normalized.supplier_id,
+    supplier_name: normalized.supplier_name,
     fabric_number: trimmed,
     composition: null,
     color: null,
@@ -75,6 +105,7 @@ async function resolveFabricItem(
     width_inches: null,
     unit_price: null,
     unit: "meters",
+    mill_line: normalized.supplier_name === "Solbiati" ? "solbiati" : null,
     manual: true,
   };
 }
@@ -101,12 +132,14 @@ function FabricPicker({
   value,
   onChange,
   onSelect,
+  canViewFabricPrices = true,
 }: {
   brandName: string;
   supplierId: string;
   value: string;
   onChange: (value: string) => void;
   onSelect: (item: FabricSearchItem) => void;
+  canViewFabricPrices?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [fabrics, setFabrics] = useState<FabricSearchItem[]>([]);
@@ -156,11 +189,16 @@ function FabricPicker({
   }, [supplierId]);
 
   function selectManualFabric(fabricNumber: string) {
+    const resolved =
+      supplierId === "loro-piana"
+        ? resolveLoroPianaFabricInput(fabricNumber)
+        : { preferredNumber: fabricNumber.trim(), millLine: null as const };
+    const normalized = normalizeFabricSupplierFields(supplierId, brandName, resolved.preferredNumber);
     onSelect({
-      id: `manual-${supplierId}-${fabricNumber.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-      supplier_id: supplierId,
-      supplier_name: brandName,
-      fabric_number: fabricNumber.trim(),
+      id: `manual-${normalized.supplier_id}-${resolved.preferredNumber.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+      supplier_id: normalized.supplier_id,
+      supplier_name: normalized.supplier_name,
+      fabric_number: resolved.preferredNumber,
       composition: null,
       color: null,
       weight_gsm: null,
@@ -168,10 +206,25 @@ function FabricPicker({
       width_inches: null,
       unit_price: null,
       unit: "meters",
+      mill_line: resolved.millLine,
       manual: true,
     });
-    onChange(fabricNumber.trim());
+    onChange(resolved.preferredNumber);
     setOpen(false);
+  }
+
+  function millLineBadge(item: FabricSearchItem) {
+    if (supplierId !== "loro-piana" || !item.mill_line) return null;
+    const isSolbiati = item.mill_line === "solbiati";
+    return (
+      <span
+        className={`ml-2 rounded px-1.5 py-0.5 text-[10px] font-sans font-medium uppercase tracking-wide ${
+          isSolbiati ? "bg-amber-100 text-amber-900" : "bg-slate-100 text-slate-700"
+        }`}
+      >
+        {formatLoroPianaMillLineLabel(item.mill_line)}
+      </span>
+    );
   }
 
   return (
@@ -189,9 +242,11 @@ function FabricPicker({
             onKeyDown={(e) => {
               if (e.key === "Enter" && value.trim()) {
                 e.preventDefault();
-                const match = fabrics.find(
-                  (item) => item.fabric_number.toLowerCase() === value.trim().toLowerCase()
-                );
+                const lookup =
+                  supplierId === "loro-piana"
+                    ? resolveLoroPianaFabricInput(value.trim()).preferredNumber.toLowerCase()
+                    : value.trim().toLowerCase();
+                const match = fabrics.find((item) => item.fabric_number.toLowerCase() === lookup);
                 if (match) {
                   onSelect(match);
                   onChange(match.fabric_number);
@@ -221,11 +276,30 @@ function FabricPicker({
           {loading ? (
             <p className="px-4 py-3 text-sm text-slate-500">Loading fabrics…</p>
           ) : fabrics.length === 0 ? (
-            <p className="px-4 py-3 text-sm text-slate-500">
-              {value.trim()
-                ? "Press Enter to use this fabric number manually."
-                : "No price list yet — type a fabric number and press Enter."}
-            </p>
+            <div className="px-4 py-3 text-sm text-slate-500">
+              {value.trim() ? (
+                <>
+                  <p>Not in the imported price list.</p>
+                  <button
+                    type="button"
+                    onClick={() => selectManualFabric(value.trim())}
+                    className="mt-2 font-medium text-indigo-600 hover:text-indigo-700"
+                  >
+                    Use {supplierId === "loro-piana" ? resolveLoroPianaFabricInput(value.trim()).preferredNumber : value.trim()} anyway →
+                  </button>
+                  {supplierId === "loro-piana" && /^\d{4,5}$/.test(value.trim()) && (
+                    <p className="mt-2 text-xs text-slate-400">
+                      5-digit codes are usually Solbiati linen — saved as S{value.trim()} (e.g. S23021). Loro Piana
+                      wool/cashmere uses 6 digits (e.g. 781050).
+                    </p>
+                  )}
+                </>
+              ) : (
+                supplierId === "loro-piana"
+                  ? "Loro Piana / Solbiati — 6-digit LP (781050) or Solbiati linen with S (S23021, or type 23021)"
+                  : "Type a fabric number and press Enter."
+              )}
+            </div>
           ) : (
             <>
               <p className="border-b border-slate-100 px-4 py-2 text-xs text-slate-400">
@@ -234,7 +308,9 @@ function FabricPicker({
                   : `Showing first ${fabrics.length} — type to filter`}
               </p>
               <ul className="max-h-64 overflow-y-auto">
-                {fabrics.map((item) => (
+                {fabrics.map((item) => {
+                  const soldOut = item.stock_status === "permanently_unavailable";
+                  return (
                   <li key={item.id}>
                     <button
                       type="button"
@@ -243,10 +319,13 @@ function FabricPicker({
                         onChange(item.fabric_number);
                         setOpen(false);
                       }}
-                      className="flex w-full flex-col gap-0.5 border-b border-slate-100 px-4 py-2.5 text-left hover:bg-slate-50 last:border-0"
+                      className={`flex w-full flex-col gap-0.5 border-b border-slate-100 px-4 py-2.5 text-left hover:bg-slate-50 last:border-0 ${
+                        soldOut ? "bg-red-50/40" : ""
+                      }`}
                     >
                       <span className="font-mono font-medium text-slate-900">
                         {item.fabric_number}
+                        {millLineBadge(item)}
                         {item.manual ? (
                           <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-sans font-medium uppercase tracking-wide text-amber-800">
                             Manual
@@ -260,7 +339,7 @@ function FabricPicker({
                               item.composition ?? "—",
                               item.weight_gsm != null ? `${item.weight_gsm} gsm` : null,
                               formatWidth(item) !== "—" ? formatWidth(item) : null,
-                              item.unit_price != null ? formatLinePrice(item) : null,
+                              canViewFabricPrices && item.unit_price != null ? formatLinePrice(item) : null,
                               formatFabricStockLabel(item),
                             ]
                               .filter(Boolean)
@@ -268,7 +347,8 @@ function FabricPicker({
                       </span>
                     </button>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             </>
           )}
@@ -278,24 +358,52 @@ function FabricPicker({
   );
 }
 
-export function SalesOrderForm() {
+export function SalesOrderForm({
+  duplicateFromOrderId,
+  startFresh = false,
+  continueDraft = false,
+}: {
+  duplicateFromOrderId?: string;
+  startFresh?: boolean;
+  continueDraft?: boolean;
+} = {}) {
   const router = useRouter();
+  const duplicateModeRef = useRef(Boolean(duplicateFromOrderId));
+  const duplicateSeedRef = useRef<SalesOrderDuplicateSeed | null>(null);
+  const duplicateSeedAppliedRef = useRef(false);
+  const [duplicateSource, setDuplicateSource] = useState<{
+    id: string;
+    so_number: string;
+    client_name: string;
+  } | null>(null);
   const [clients, setClients] = useState<ClientProfile[]>([]);
   const [fabricBrands, setFabricBrands] = useState<FabricBrand[]>([]);
+  const [canViewFabricPrices, setCanViewFabricPrices] = useState(false);
   const { brandId: productionBrandId, setBrandId: setProductionBrandId, hydrated: brandFilterHydrated } =
     useFactoryBrandFilter();
-  const [clientId, setClientId] = useState("");
-  const [deliveryDestination, setDeliveryDestination] = useState<DeliveryDestination | "">("");
-  const [deliveryDate, setDeliveryDate] = useState("");
-  const [notes, setNotes] = useState("");
-  const [lines, setLines] = useState<DraftLine[]>([]);
+  const initialClientDraftRef = useRef(createClientDraft());
+  const [clientDrafts, setClientDrafts] = useState<SalesOrderClientDraft[]>(() => [initialClientDraftRef.current]);
+  const [activeDraftId, setActiveDraftId] = useState(() => initialClientDraftRef.current.id);
+
+  const activeDraft =
+    clientDrafts.find((draft) => draft.id === activeDraftId) ?? clientDrafts[0] ?? createClientDraft();
+  const clientId = activeDraft.clientId;
+  const deliveryDestination = activeDraft.deliveryDestination;
+  const deliveryDate = activeDraft.deliveryDate;
+  const notes = activeDraft.notes;
+  const lines = activeDraft.lines;
 
   const [selectedFabricBrandId, setSelectedFabricBrandId] = useState("");
   const [fabricPickerValue, setFabricPickerValue] = useState("");
   const [pendingFabric, setPendingFabric] = useState<FabricSearchItem | null>(null);
-  const [garmentType, setGarmentType] = useState("");
-  const [draftLabelCount, setDraftLabelCount] = useState("1");
-  const [draftMeters, setDraftMeters] = useState("");
+  const [fabricAddEntries, setFabricAddEntries] = useState<FabricAddClientEntry[]>([]);
+  const [activeFabricAddId, setActiveFabricAddId] = useState("");
+
+  const activeFabricAdd =
+    fabricAddEntries.find((entry) => entry.id === activeFabricAddId) ?? fabricAddEntries[0];
+  const garmentType = activeFabricAdd?.garmentType ?? "";
+  const draftLabelCount = activeFabricAdd?.labelCount ?? "1";
+  const draftMeters = activeFabricAdd?.meters ?? "";
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -304,17 +412,55 @@ export function SalesOrderForm() {
   const [lineEditForm, setLineEditForm] = useState<LineEditForm | null>(null);
   const [savingLineEdit, setSavingLineEdit] = useState(false);
   const skipClientResetRef = useRef(false);
+  const [draftChoiceResolved, setDraftChoiceResolved] = useState(
+    () => Boolean(duplicateFromOrderId || startFresh || continueDraft)
+  );
+
+  function patchActiveDraft(patch: Partial<SalesOrderClientDraft>) {
+    setClientDrafts((prev) =>
+      prev.map((draft) => (draft.id === activeDraftId ? { ...draft, ...patch } : draft))
+    );
+  }
+
+  function updateActiveLines(updater: (current: DraftLine[]) => DraftLine[]) {
+    setClientDrafts((prev) =>
+      prev.map((draft) =>
+        draft.id === activeDraftId ? { ...draft, lines: updater(draft.lines) } : draft
+      )
+    );
+  }
+
+  function patchActiveFabricAdd(patch: Partial<FabricAddClientEntry>) {
+    if (!activeFabricAddId) return;
+    setFabricAddEntries((prev) =>
+      prev.map((entry) => (entry.id === activeFabricAddId ? { ...entry, ...patch } : entry))
+    );
+  }
+
+  function resetFabricAddEntries(defaultClientId = "") {
+    const entry = createFabricAddEntry({ clientId: defaultClientId });
+    setFabricAddEntries([entry]);
+    setActiveFabricAddId(entry.id);
+  }
+
+  function clearFabricAddEntries() {
+    setFabricAddEntries([]);
+    setActiveFabricAddId("");
+  }
+
+  function resetClientDrafts() {
+    const draft = createClientDraft();
+    setClientDrafts([draft]);
+    setActiveDraftId(draft.id);
+  }
 
   const draftSnapshot = useMemo(
     (): SalesOrderFormDraft => ({
       version: SALES_ORDER_DRAFT_VERSION,
       savedAt: new Date().toISOString(),
       productionBrandId,
-      clientId,
-      deliveryDestination,
-      deliveryDate,
-      notes,
-      lines,
+      activeClientDraftId: activeDraftId,
+      clientDrafts,
       selectedFabricBrandId,
       fabricPickerValue,
       pendingFabric,
@@ -324,11 +470,8 @@ export function SalesOrderForm() {
     }),
     [
       productionBrandId,
-      clientId,
-      deliveryDestination,
-      deliveryDate,
-      notes,
-      lines,
+      activeDraftId,
+      clientDrafts,
       selectedFabricBrandId,
       fabricPickerValue,
       pendingFabric,
@@ -339,21 +482,38 @@ export function SalesOrderForm() {
   );
 
   const restoreDraft = useCallback(
-    (draft: SalesOrderFormDraft) => {
-      if (draft.version !== SALES_ORDER_DRAFT_VERSION || isSalesOrderDraftEmpty(draft)) return;
+    (raw: unknown) => {
+      const draft = migrateSalesOrderDraft(raw);
+      if (!draft || isSalesOrderDraftEmpty(draft)) return;
       skipClientResetRef.current = true;
       setProductionBrandId(draft.productionBrandId);
-      setClientId(draft.clientId);
-      setDeliveryDestination(draft.deliveryDestination ?? "");
-      setDeliveryDate(draft.deliveryDate);
-      setNotes(draft.notes);
-      setLines(draft.lines);
+      const restoredDrafts =
+        draft.clientDrafts.length > 0 ? draft.clientDrafts : [createClientDraft()];
+      setClientDrafts(restoredDrafts);
+      setActiveDraftId(
+        restoredDrafts.some((entry) => entry.id === draft.activeClientDraftId)
+          ? draft.activeClientDraftId
+          : restoredDrafts[0]!.id
+      );
       setSelectedFabricBrandId(draft.selectedFabricBrandId);
       setFabricPickerValue(draft.fabricPickerValue);
       setPendingFabric(draft.pendingFabric);
-      setGarmentType(draft.garmentType);
-      setDraftLabelCount(draft.draftLabelCount);
-      setDraftMeters(draft.draftMeters);
+      if (draft.pendingFabric) {
+        const defaultClientId =
+          restoredDrafts.find((entry) => entry.id === draft.activeClientDraftId)?.clientId ??
+          restoredDrafts[0]?.clientId ??
+          "";
+        const entry = createFabricAddEntry({
+          clientId: defaultClientId,
+          garmentType: draft.garmentType,
+          labelCount: draft.draftLabelCount,
+          meters: draft.draftMeters,
+        });
+        setFabricAddEntries([entry]);
+        setActiveFabricAddId(entry.id);
+      } else {
+        clearFabricAddEntries();
+      }
       queueMicrotask(() => {
         skipClientResetRef.current = false;
       });
@@ -361,41 +521,142 @@ export function SalesOrderForm() {
     [setProductionBrandId]
   );
 
+  const draftKey = duplicateFromOrderId
+    ? DRAFT_KEYS.salesOrderDuplicate(duplicateFromOrderId)
+    : DRAFT_KEYS.salesOrderNew;
+
+  const promptForDraft = !duplicateFromOrderId;
+
   const {
     status: draftStatus,
     error: draftError,
     restored: draftRestored,
     hydrated: draftHydrated,
+    hasPendingRestore,
+    pendingDraft,
     isDirty: draftDirty,
     clearDraft,
-    dismissRestore,
+    restorePending,
+    dismissPendingRestore,
     saveNow,
   } = useLocalDraft({
-    draftKey: DRAFT_KEYS.salesOrderNew,
+    draftKey,
     value: draftSnapshot,
     enabled: !loading && brandFilterHydrated,
     canSave: true,
     isEmpty: isSalesOrderDraftEmpty,
     onRestore: restoreDraft,
+    autoRestore: !promptForDraft,
   });
+
+  const draftSummary = useMemo(
+    () => (pendingDraft ? describeSalesOrderDraftSummary(pendingDraft, clients) : null),
+    [clients, pendingDraft]
+  );
+
+  useEffect(() => {
+    if (loading || !draftHydrated || draftChoiceResolved || !promptForDraft) return;
+
+    if (startFresh && hasPendingRestore) {
+      clearDraft();
+      resetClientDrafts();
+      dismissPendingRestore();
+      setDraftChoiceResolved(true);
+      return;
+    }
+
+    if (continueDraft && hasPendingRestore) {
+      restorePending();
+      setDraftChoiceResolved(true);
+      return;
+    }
+
+    if (!hasPendingRestore) {
+      setDraftChoiceResolved(true);
+    }
+  }, [
+    clearDraft,
+    continueDraft,
+    dismissPendingRestore,
+    draftChoiceResolved,
+    draftHydrated,
+    hasPendingRestore,
+    loading,
+    promptForDraft,
+    restorePending,
+    startFresh,
+  ]);
+
+  function continueSavedDraft() {
+    restorePending();
+    setDraftChoiceResolved(true);
+  }
+
+  function startBlankOrder() {
+    clearDraft();
+    resetClientDrafts();
+    resetAddFlow();
+    setProductionBrandId(null);
+    dismissPendingRestore();
+    setDraftChoiceResolved(true);
+    setError(null);
+  }
+
+  function applyDuplicateSeed(seed: SalesOrderDuplicateSeed) {
+    skipClientResetRef.current = true;
+    duplicateModeRef.current = true;
+    const draft = createClientDraft({
+      deliveryDestination: seed.deliveryDestination,
+      deliveryDate: seed.deliveryDate,
+      notes: seed.notes,
+      lines: seed.lines,
+    });
+    setClientDrafts([draft]);
+    setActiveDraftId(draft.id);
+    resetAddFlow();
+    setError(null);
+    queueMicrotask(() => {
+      skipClientResetRef.current = false;
+    });
+  }
 
   function discardDraft() {
     clearDraft();
     setProductionBrandId(null);
-    setClientId("");
-    setDeliveryDestination("");
-    setDeliveryDate("");
-    setNotes("");
-    setLines([]);
+    resetClientDrafts();
     resetAddFlow();
     setError(null);
+    if (duplicateFromOrderId && duplicateSeedRef.current) {
+      duplicateSeedAppliedRef.current = true;
+      applyDuplicateSeed(duplicateSeedRef.current);
+    }
   }
+
+  useEffect(() => {
+    async function loadSession() {
+      try {
+        const res = await fetch("/api/auth/session");
+        if (!res.ok) return;
+        const data = (await res.json()) as { can_view_fabric_list_prices?: boolean };
+        setCanViewFabricPrices(Boolean(data.can_view_fabric_list_prices));
+      } catch {
+        /* ignore */
+      }
+    }
+    void loadSession();
+  }, []);
 
   useEffect(() => {
     async function load() {
       setLoading(true);
       try {
-        const [clientsRes, brandsRes] = await Promise.all([fetch("/api/clients"), fetch("/api/fabric-brands")]);
+        const fetches: Promise<Response>[] = [fetch("/api/clients"), fetch("/api/fabric-brands")];
+        if (duplicateFromOrderId) {
+          fetches.push(fetch(`/api/sales-orders/${duplicateFromOrderId}`));
+        }
+        const responses = await Promise.all(fetches);
+        const [clientsRes, brandsRes, duplicateRes] = responses;
+
         if (!clientsRes.ok) throw new Error("Failed to load clients");
         const clientsData = (await clientsRes.json()) as ClientsFile;
         setClients(filterPersonClients(clientsData.clients.filter((client) => client.is_active)));
@@ -404,6 +665,19 @@ export function SalesOrderForm() {
           const brandsData = (await brandsRes.json()) as { brands: FabricBrand[] };
           setFabricBrands(brandsData.brands);
         }
+
+        if (duplicateFromOrderId) {
+          if (!duplicateRes?.ok) {
+            throw new Error("Could not load the source order to duplicate.");
+          }
+          const { order } = (await duplicateRes.json()) as { order: SalesOrder };
+          duplicateSeedRef.current = salesOrderToDuplicateSeed(order);
+          setDuplicateSource({
+            id: order.id,
+            so_number: order.so_number,
+            client_name: order.client_name,
+          });
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load form data");
       } finally {
@@ -411,7 +685,18 @@ export function SalesOrderForm() {
       }
     }
     load();
-  }, []);
+  }, [duplicateFromOrderId]);
+
+  useEffect(() => {
+    if (!duplicateFromOrderId || !draftHydrated || duplicateSeedAppliedRef.current) return;
+    duplicateSeedAppliedRef.current = true;
+
+    if (draftRestored) return;
+
+    const seed = duplicateSeedRef.current;
+    if (!seed) return;
+    applyDuplicateSeed(seed);
+  }, [duplicateFromOrderId, draftHydrated, draftRestored]);
 
   const selectedClient = clients.find((client) => client.id === clientId);
   const selectedFabricBrand = fabricBrands.find((brand) => brand.id === selectedFabricBrandId) ?? null;
@@ -419,98 +704,193 @@ export function SalesOrderForm() {
   const linesByFabricBrand = useMemo(() => {
     const groups = new Map<string, { name: string; lines: DraftLine[] }>();
     for (const line of lines) {
-      const bucket = groups.get(line.supplier_id) ?? { name: line.supplier_name, lines: [] };
+      const key = fabricSupplierGroupKey(line.supplier_id, line.fabric_number);
+      const bucket = groups.get(key) ?? {
+        name: formatFabricSupplierName(line.supplier_id, line.supplier_name, line.fabric_number),
+        lines: [],
+      };
       bucket.lines.push(line);
-      groups.set(line.supplier_id, bucket);
+      groups.set(key, bucket);
     }
     return groups;
   }, [lines]);
+
+  const readyDrafts = useMemo(
+    () => clientDrafts.filter((draft) => draft.clientId && draft.lines.length > 0),
+    [clientDrafts]
+  );
 
   function resetAddFlow() {
     setSelectedFabricBrandId("");
     setFabricPickerValue("");
     setPendingFabric(null);
-    setGarmentType("");
-    setDraftLabelCount("1");
-    setDraftMeters("");
+    clearFabricAddEntries();
   }
 
   function handleProductionBrandChange(nextBrandId: string | null) {
     setProductionBrandId(nextBrandId);
-    if (skipClientResetRef.current) return;
-    setClientId("");
-    setLines([]);
+    if (skipClientResetRef.current || duplicateModeRef.current) return;
+    resetClientDrafts();
     resetAddFlow();
     setError(null);
   }
 
   function handleClientChange(nextClientId: string) {
-    setClientId(nextClientId);
-    if (skipClientResetRef.current) return;
-    setLines([]);
-    resetAddFlow();
-    setGarmentType("");
+    patchActiveDraft({ clientId: nextClientId });
     setError(null);
+  }
+
+  function switchClientDraft(nextDraftId: string) {
+    if (nextDraftId === activeDraftId) return;
+    setEditingLineId(null);
+    setLineEditForm(null);
+    setActiveDraftId(nextDraftId);
+    resetAddFlow();
+    setError(null);
+  }
+
+  function addFabricAddClient() {
+    const source = fabricAddEntries.find((entry) => entry.id === activeFabricAddId) ?? fabricAddEntries[0];
+    if (!source?.garmentType) {
+      setError("Select garment type first — it will be copied to the new client tab.");
+      return;
+    }
+    const entry = createFabricAddEntry({ clientId: "" }, source);
+    setFabricAddEntries((prev) => [...prev, entry]);
+    setActiveFabricAddId(entry.id);
+    setError(null);
+  }
+
+  function removeFabricAddClient(entryId: string) {
+    if (fabricAddEntries.length <= 1) return;
+    const next = fabricAddEntries.filter((entry) => entry.id !== entryId);
+    setFabricAddEntries(next);
+    if (activeFabricAddId === entryId) {
+      setActiveFabricAddId(next[0]!.id);
+    }
   }
 
   function handleFabricBrandChange(nextBrandId: string) {
     setSelectedFabricBrandId(nextBrandId);
     setFabricPickerValue("");
     setPendingFabric(null);
-    setGarmentType("");
-    setDraftLabelCount("1");
-    setDraftMeters("");
+    clearFabricAddEntries();
   }
 
   function selectFabric(item: FabricSearchItem) {
     setPendingFabric(item);
-    setGarmentType("");
-    setDraftLabelCount("1");
-    setDraftMeters("");
+    resetFabricAddEntries(clientId);
     setFabricPickerValue(item.fabric_number);
   }
 
   function addLine() {
-    if (!pendingFabric) return;
+    if (!pendingFabric || fabricAddEntries.length === 0) return;
 
-    if (!garmentType) {
-      setError("Select a garment type.");
+    const clientIds = fabricAddEntries.map((entry) => entry.clientId).filter(Boolean);
+    if (new Set(clientIds).size !== clientIds.length) {
+      setError("Each client tab must be a different client.");
       return;
     }
 
-    const meters = Number(draftMeters);
-    if (!Number.isFinite(meters) || meters <= 0) {
-      setError("Enter meters to order.");
-      return;
-    }
-
-    const labelCount = Number(draftLabelCount);
-    if (!Number.isInteger(labelCount) || labelCount < 1) {
-      setError("Enter a valid label count (at least 1).");
-      return;
+    for (const [index, entry] of fabricAddEntries.entries()) {
+      if (!entry.clientId) {
+        setError(`Select a client for tab ${index + 1}.`);
+        setActiveFabricAddId(entry.id);
+        return;
+      }
+      if (!entry.garmentType) {
+        setError(`Select garment type for ${clientIdTabLabel(entry.clientId, index, clients)}.`);
+        setActiveFabricAddId(entry.id);
+        return;
+      }
+      const meters = Number(entry.meters);
+      if (!Number.isFinite(meters) || meters <= 0) {
+        setError(`Enter meters for ${clientIdTabLabel(entry.clientId, index, clients)}.`);
+        setActiveFabricAddId(entry.id);
+        return;
+      }
+      const labelCount = Number(entry.labelCount);
+      if (!Number.isInteger(labelCount) || labelCount < 1) {
+        setError(`Enter a valid label count for ${clientIdTabLabel(entry.clientId, index, clients)}.`);
+        setActiveFabricAddId(entry.id);
+        return;
+      }
     }
 
     setError(null);
-    setLines((prev) => [
-      ...prev,
-      {
-        ...pendingFabric,
-        lineId: `line-${Date.now()}-${pendingFabric.fabric_number}`,
-        garment_type: garmentType,
-        label_count: labelCount,
-        meters: String(meters),
-      },
-    ]);
+    const normalized = normalizeFabricSupplierFields(
+      pendingFabric.supplier_id,
+      pendingFabric.supplier_name,
+      pendingFabric.fabric_number
+    );
+    const stamp = Date.now();
+
+    setClientDrafts((prev) => {
+      let next = [...prev];
+      for (const [index, entry] of fabricAddEntries.entries()) {
+        let draftIndex = next.findIndex((draft) => draft.clientId === entry.clientId);
+        if (draftIndex < 0) {
+          const source = next.find((draft) => draft.id === activeDraftId) ?? next[0];
+          const newDraft = createClientDraft({
+            clientId: entry.clientId,
+            deliveryDestination: source?.deliveryDestination ?? "",
+            deliveryDate: source?.deliveryDate ?? "",
+          });
+          next = [...next, newDraft];
+          draftIndex = next.length - 1;
+        }
+
+        const labelCount = Number(entry.labelCount);
+        const line: DraftLine = {
+          ...pendingFabric,
+          ...normalized,
+          lineId: `line-${stamp}-${index}-${entry.clientId}-${pendingFabric.fabric_number}`,
+          garment_type: entry.garmentType,
+          label_count: labelCount,
+          meters: String(Number(entry.meters)),
+          stock_status: pendingFabric.stock_status ?? null,
+          restock_date: pendingFabric.restock_date ?? null,
+          needs_replacement: pendingFabric.stock_status === "permanently_unavailable",
+        };
+        const draft = next[draftIndex]!;
+        next[draftIndex] = { ...draft, lines: [...draft.lines, line] };
+      }
+
+      const focusClientId = fabricAddEntries[0]?.clientId;
+      const focusDraft = focusClientId ? next.find((draft) => draft.clientId === focusClientId) : undefined;
+      if (focusDraft) {
+        queueMicrotask(() => setActiveDraftId(focusDraft.id));
+      }
+
+      return next;
+    });
 
     setPendingFabric(null);
-    setGarmentType("");
-    setDraftLabelCount("1");
-    setDraftMeters("");
+    clearFabricAddEntries();
     setFabricPickerValue("");
   }
 
+  function removeClientDraft(draftId: string) {
+    if (clientDrafts.length <= 1) return;
+    const nextDrafts = clientDrafts.filter((draft) => draft.id !== draftId);
+    setClientDrafts(nextDrafts);
+    if (activeDraftId === draftId) {
+      setActiveDraftId(nextDrafts[0]!.id);
+      setEditingLineId(null);
+      setLineEditForm(null);
+      resetAddFlow();
+    }
+  }
+
+  function markFindReplacement(lineId: string) {
+    updateActiveLines((prev) =>
+      prev.map((line) => (line.lineId === lineId ? { ...line, needs_replacement: true } : line))
+    );
+    setError(null);
+  }
+
   function updateMeters(lineId: string, meters: string) {
-    setLines((prev) => prev.map((line) => (line.lineId === lineId ? { ...line, meters } : line)));
+    updateActiveLines((prev) => prev.map((line) => (line.lineId === lineId ? { ...line, meters } : line)));
   }
 
   function removeLine(lineId: string) {
@@ -518,7 +898,7 @@ export function SalesOrderForm() {
       setEditingLineId(null);
       setLineEditForm(null);
     }
-    setLines((prev) => prev.filter((line) => line.lineId !== lineId));
+    updateActiveLines((prev) => prev.filter((line) => line.lineId !== lineId));
   }
 
   function startEditLine(line: DraftLine) {
@@ -571,16 +951,28 @@ export function SalesOrderForm() {
       const fabricItem = fabricChanged
         ? await resolveFabricItem(line.supplier_id, line.supplier_name, nextFabricNumber)
         : line;
+      const normalized = normalizeFabricSupplierFields(
+        fabricItem.supplier_id,
+        fabricItem.supplier_name,
+        nextFabricNumber
+      );
 
-      setLines((prev) =>
+      updateActiveLines((prev) =>
         prev.map((entry) =>
           entry.lineId === line.lineId
             ? {
                 ...fabricItem,
+                ...normalized,
+                fabric_number: nextFabricNumber,
                 lineId: entry.lineId,
                 garment_type: lineEditForm.garment_type,
                 label_count: labelCount,
                 meters: String(meters),
+                stock_status: fabricItem.stock_status ?? entry.stock_status ?? null,
+                restock_date: fabricItem.restock_date ?? entry.restock_date ?? null,
+                needs_replacement: isFabricUnavailable(fabricItem.stock_status)
+                  ? entry.needs_replacement ?? true
+                  : false,
               }
             : entry
         )
@@ -595,51 +987,81 @@ export function SalesOrderForm() {
     }
   }
 
+  function mapDraftLinesToPayload(draftLines: DraftLine[]) {
+    return draftLines.map((line) => {
+      const quantity = Number(line.meters);
+      if (!Number.isFinite(quantity) || quantity <= 0) {
+        throw new Error(`Enter meters for fabric ${line.fabric_number}.`);
+      }
+      if (!line.garment_type) {
+        throw new Error(`Select garment type for fabric ${line.fabric_number}.`);
+      }
+      return {
+        garment_type: line.garment_type,
+        label_count: line.label_count,
+        ...normalizeFabricSupplierFields(line.supplier_id, line.supplier_name, line.fabric_number),
+        fabric_number: line.fabric_number,
+        quantity,
+        unit: line.unit,
+        unit_price: line.unit_price ?? 0,
+        composition: line.composition,
+        weight_gsm: line.weight_gsm,
+        width_cm: line.width_cm,
+        width_inches: line.width_inches,
+        color: line.color,
+        stock_status: line.stock_status ?? null,
+        restock_date: line.restock_date ?? null,
+        needs_replacement: Boolean(line.needs_replacement),
+        replacement_fabric_number: line.replacement_fabric_number ?? null,
+      };
+    });
+  }
+
   async function handleSubmit() {
     setError(null);
-    if (!clientId) {
-      setError("Select a production brand and client.");
-      return;
-    }
     if (!productionBrandId) {
       setError("Select a production brand.");
       return;
     }
-    if (lines.length === 0) {
-      setError("Add at least one fabric.");
-      return;
-    }
-    if (!deliveryDestination) {
-      setError("Select a fabric delivery destination (Riyadh or Dubai).");
+    if (readyDrafts.length === 0) {
+      setError("Select a client and add at least one fabric on at least one tab.");
       return;
     }
 
-    let fabric_lines;
+    const clientIds = readyDrafts.map((draft) => draft.clientId);
+    if (new Set(clientIds).size !== clientIds.length) {
+      setError("Each client tab must have a different client.");
+      return;
+    }
+
+    const payloads: Array<{
+      draftId: string;
+      body: {
+        client_id: string;
+        delivery_destination: DeliveryDestination;
+        delivery_date: string | null;
+        notes: string | null;
+        fabric_lines: ReturnType<typeof mapDraftLinesToPayload>;
+      };
+    }> = [];
+
     try {
-      fabric_lines = lines.map((line) => {
-        const quantity = Number(line.meters);
-        if (!Number.isFinite(quantity) || quantity <= 0) {
-          throw new Error(`Enter meters for fabric ${line.fabric_number}.`);
+      for (const draft of readyDrafts) {
+        if (!draft.deliveryDestination) {
+          setActiveDraftId(draft.id);
+          throw new Error("Select a fabric delivery destination (Riyadh or Dubai) for each client.");
         }
-        if (!line.garment_type) {
-          throw new Error(`Select garment type for fabric ${line.fabric_number}.`);
-        }
-        return {
-          garment_type: line.garment_type,
-          label_count: line.label_count,
-          supplier_id: line.supplier_id,
-          supplier_name: line.supplier_name,
-          fabric_number: line.fabric_number,
-          quantity,
-          unit: line.unit,
-          unit_price: line.unit_price ?? 0,
-          composition: line.composition,
-          weight_gsm: line.weight_gsm,
-          width_cm: line.width_cm,
-          width_inches: line.width_inches,
-          color: line.color,
-        };
-      });
+        payloads.push({
+          draftId: draft.id,
+          body: {
+            client_id: draft.clientId,
+            delivery_destination: draft.deliveryDestination,
+            delivery_date: draft.deliveryDate || null,
+            notes: draft.notes || null,
+            fabric_lines: mapDraftLinesToPayload(draft.lines),
+          },
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invalid fabric lines.");
       return;
@@ -647,21 +1069,21 @@ export function SalesOrderForm() {
 
     setSubmitting(true);
     try {
-      const res = await fetch("/api/sales-orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          client_id: clientId,
-          delivery_destination: deliveryDestination,
-          delivery_date: deliveryDate || null,
-          notes: notes || null,
-          fabric_lines,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to create sales order");
+      const createdOrderIds: string[] = [];
+      for (const payload of payloads) {
+        const res = await fetch("/api/sales-orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload.body),
+        });
+        const data = (await res.json()) as { order?: { id: string }; error?: string };
+        if (!res.ok) throw new Error(data.error ?? "Failed to create sales order");
+        if (data.order?.id) createdOrderIds.push(data.order.id);
+      }
       clearDraft();
-      router.push(`/orders/${data.order.id}`);
+      router.push(
+        createdOrderIds.length === 1 ? `/orders/${createdOrderIds[0]}` : "/orders"
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create sales order");
     } finally {
@@ -677,24 +1099,69 @@ export function SalesOrderForm() {
     );
   }
 
+  const showDraftChooser =
+    promptForDraft && hasPendingRestore && !draftChoiceResolved && draftHydrated && draftSummary;
+
+  if (showDraftChooser) {
+    const savedLabel = draftSummary.savedAt
+      ? new Date(draftSummary.savedAt).toLocaleString(undefined, {
+          dateStyle: "medium",
+          timeStyle: "short",
+        })
+      : null;
+
+    return (
+      <div className="mx-auto max-w-2xl space-y-6">
+        <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+          <h2 className="text-xl font-semibold text-slate-900">Continue an unfinished order?</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            You have a saved draft that wasn&apos;t submitted yet. Continue where you left off, or start a blank
+            order for a different client.
+          </p>
+
+          <div className="mt-6 rounded-lg border border-indigo-100 bg-indigo-50/60 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Saved draft</p>
+            {savedLabel && <p className="mt-1 text-xs text-slate-500">Last edited {savedLabel}</p>}
+            <ul className="mt-3 space-y-2">
+              {draftSummary.clientEntries.map((entry, index) => (
+                <li key={`${entry.label}-${index}`} className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-slate-900">{entry.label}</span>
+                  <span className="text-slate-500">
+                    {entry.fabricCount} fabric{entry.fabricCount !== 1 ? "s" : ""}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Button onClick={continueSavedDraft} className="flex-1">
+              Continue draft
+            </Button>
+            <Button variant="secondary" onClick={startBlankOrder} className="flex-1">
+              Start new order
+            </Button>
+          </div>
+
+          <div className="mt-4 flex justify-center">
+            <Button variant="ghost" size="sm" onClick={() => router.push("/orders")} className="text-slate-500">
+              Back to orders list
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {draftRestored && draftHydrated && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
-          <p>Restored your unsaved order draft — fabrics and client selection are back.</p>
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" onClick={discardDraft}>
-              Discard draft
-            </Button>
-            <button
-              type="button"
-              onClick={dismissRestore}
-              className="rounded p-1 text-indigo-500 hover:bg-indigo-100 hover:text-indigo-700"
-              aria-label="Dismiss"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+      {duplicateSource && (
+        <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-950">
+          <p>
+            Copied from{" "}
+            <span className="font-semibold">{duplicateSource.so_number}</span> ({duplicateSource.client_name}). Pick
+            the new client below — all fabrics, garment types, and meters are editable before you save.
+          </p>
         </div>
       )}
 
@@ -732,6 +1199,49 @@ export function SalesOrderForm() {
           />
         )}
 
+        {productionBrandId && (
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {clientDrafts.map((draft, index) => {
+                const isActive = draft.id === activeDraftId;
+                const label = clientDraftTabLabel(draft, index, clients);
+                return (
+                  <div key={draft.id} className="flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => switchClientDraft(draft.id)}
+                      className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                        isActive
+                          ? "border-indigo-600 bg-indigo-50 text-indigo-900"
+                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      {label}
+                      <span className="ml-2 text-xs font-normal text-slate-500">
+                        {draft.lines.length} fabric{draft.lines.length !== 1 ? "s" : ""}
+                      </span>
+                    </button>
+                    {clientDrafts.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeClientDraft(draft.id)}
+                        className="ml-1 rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                        aria-label={`Remove ${label}`}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-slate-500">
+              Switch tabs to review each client&apos;s fabrics. To add the same fabric for another client, use{" "}
+              <span className="font-medium">Add client</span> under Step 2 when picking a fabric.
+            </p>
+          </div>
+        )}
+
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block text-sm md:col-span-2">
             <span className="font-medium text-slate-700">Client</span>
@@ -750,14 +1260,17 @@ export function SalesOrderForm() {
             )}
           </label>
           <div className="md:col-span-2">
-            <DeliveryDestinationTabs value={deliveryDestination} onChange={setDeliveryDestination} />
+            <DeliveryDestinationTabs
+              value={deliveryDestination}
+              onChange={(value) => patchActiveDraft({ deliveryDestination: value })}
+            />
           </div>
           <label className="block text-sm">
             <span className="font-medium text-slate-700">Delivery date</span>
             <input
               type="date"
               value={deliveryDate}
-              onChange={(e) => setDeliveryDate(e.target.value)}
+              onChange={(e) => patchActiveDraft({ deliveryDate: e.target.value })}
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
             />
           </label>
@@ -765,7 +1278,7 @@ export function SalesOrderForm() {
             <span className="font-medium text-slate-700">Notes</span>
             <textarea
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => patchActiveDraft({ notes: e.target.value })}
               rows={2}
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
               placeholder="Optional order notes"
@@ -820,6 +1333,7 @@ export function SalesOrderForm() {
                       value={fabricPickerValue}
                       onChange={setFabricPickerValue}
                       onSelect={selectFabric}
+                      canViewFabricPrices={canViewFabricPrices}
                     />
                     {!pendingFabric && (
                       <p className="text-xs text-slate-500">
@@ -840,68 +1354,172 @@ export function SalesOrderForm() {
                     <div className="mt-3 space-y-4">
                       <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
                         <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Selected fabric</p>
-                        <p className="mt-1 font-mono font-medium text-slate-900">{pendingFabric.fabric_number}</p>
+                        <p className="mt-1 font-mono font-medium text-slate-900">
+                          {pendingFabric.fabric_number}
+                          <FabricStockBadge fabric={pendingFabric} />
+                        </p>
                         <p className="mt-0.5 text-xs text-slate-500">{selectedFabricBrand.name}</p>
                       </div>
 
-                      <div className="grid gap-4 sm:grid-cols-3">
-                        <label className="block text-sm">
-                          <span className="font-medium text-slate-700">Garment to stitch</span>
-                          <select
-                            value={garmentType}
-                            onChange={(e) => {
-                              const next = e.target.value;
-                              setGarmentType(next);
-                              if (next) setDraftLabelCount(String(getLabelCountForGarment(next)));
-                            }}
-                            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
-                          >
-                            <option value="">Select garment type…</option>
-                            {GARMENT_STITCH_TYPES.map((type) => (
-                              <option key={type} value={type}>
-                                {type}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="block text-sm">
-                          <span className="font-medium text-slate-700">Factory labels</span>
-                          <input
-                            type="number"
-                            min={1}
-                            step={1}
-                            value={draftLabelCount}
-                            onChange={(e) => setDraftLabelCount(e.target.value)}
-                            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
-                          />
-                          <span className="mt-1 block text-xs text-slate-500">
-                            Pieces to track (e.g. suit = 2 labels).
-                          </span>
-                        </label>
-                        <label className="block text-sm">
-                          <span className="font-medium text-slate-700">Meters to order</span>
-                          <input
-                            type="number"
-                            min={0.1}
-                            step={0.1}
-                            value={draftMeters}
-                            onChange={(e) => setDraftMeters(e.target.value)}
-                            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
-                            placeholder="e.g. 3.5"
-                          />
-                        </label>
+                      {isFabricUnavailable(pendingFabric.stock_status) && (
+                        <div
+                          className={`rounded-lg border px-4 py-3 text-sm ${
+                            pendingFabric.stock_status === "permanently_unavailable"
+                              ? "border-red-200 bg-red-50 text-red-900"
+                              : "border-amber-200 bg-amber-50 text-amber-900"
+                          }`}
+                        >
+                          <p className="font-medium">
+                            {pendingFabric.stock_status === "permanently_unavailable"
+                              ? "This fabric is out of stock."
+                              : formatFabricStockLabel(pendingFabric) ?? "This fabric is temporarily unavailable."}
+                          </p>
+                          <p className="mt-1 text-xs opacity-90">
+                            You can still add it with garment, labels & meters —{" "}
+                            {pendingFabric.stock_status === "permanently_unavailable"
+                              ? "it will be marked to find a replacement later."
+                              : "use Find replacement on the line if you need a substitute now."}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {fabricAddEntries.map((entry, index) => {
+                            const isActive = entry.id === activeFabricAddId;
+                            const label = clientIdTabLabel(entry.clientId, index, clients);
+                            return (
+                              <div key={entry.id} className="flex items-center">
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveFabricAddId(entry.id)}
+                                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
+                                    isActive
+                                      ? "border-indigo-600 bg-indigo-50 text-indigo-900"
+                                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                                  }`}
+                                >
+                                  {label}
+                                </button>
+                                {fabricAddEntries.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeFabricAddClient(entry.id)}
+                                    className="ml-1 rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                                    aria-label={`Remove ${label}`}
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {activeFabricAdd && (
+                        <>
+                          <label className="block text-sm">
+                            <span className="font-medium text-slate-700">Client for this fabric</span>
+                            <ClientSearchSelect
+                              clients={clients}
+                              value={activeFabricAdd.clientId}
+                              onChange={(value) => patchActiveFabricAdd({ clientId: value })}
+                              brandId={productionBrandId}
+                              className="mt-1"
+                            />
+                          </label>
+
+                          <div className="grid gap-4 sm:grid-cols-3">
+                            <label className="block text-sm">
+                              <span className="font-medium text-slate-700">Garment to stitch</span>
+                              <select
+                                value={activeFabricAdd.garmentType}
+                                onChange={(e) => {
+                                  const next = e.target.value;
+                                  patchActiveFabricAdd({
+                                    garmentType: next,
+                                    labelCount: next
+                                      ? String(getLabelCountForGarment(next))
+                                      : activeFabricAdd.labelCount,
+                                  });
+                                }}
+                                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                              >
+                                <option value="">Select garment type…</option>
+                                {GARMENT_STITCH_TYPES.map((type) => (
+                                  <option key={type} value={type}>
+                                    {type}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="block text-sm">
+                              <span className="font-medium text-slate-700">Factory labels</span>
+                              <input
+                                type="number"
+                                min={1}
+                                step={1}
+                                value={activeFabricAdd.labelCount}
+                                onChange={(e) => patchActiveFabricAdd({ labelCount: e.target.value })}
+                                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                              />
+                              <span className="mt-1 block text-xs text-slate-500">
+                                Pieces to track (e.g. suit = 2 labels).
+                              </span>
+                            </label>
+                            <label className="block text-sm">
+                              <span className="font-medium text-slate-700">Meters to order</span>
+                              <input
+                                type="number"
+                                min={0.1}
+                                step={0.1}
+                                value={activeFabricAdd.meters}
+                                onChange={(e) => patchActiveFabricAdd({ meters: e.target.value })}
+                                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                                placeholder="e.g. 3.5"
+                              />
+                            </label>
+                          </div>
+                        </>
+                      )}
+
+                      <div className="space-y-2 border-t border-slate-200 pt-4">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={addFabricAddClient}
+                          className="gap-1.5"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add client
+                        </Button>
+                        <p className="text-xs text-slate-500">
+                          Same fabric for another client? Copies garment, labels & meters — pick the client and adjust
+                          meters, then add to order.
+                        </p>
                       </div>
 
                       <div className="flex flex-wrap gap-2">
-                        <Button onClick={addLine} disabled={!garmentType || !draftMeters || !draftLabelCount}>
-                          Add to order
+                        <Button
+                          onClick={addLine}
+                          disabled={
+                            fabricAddEntries.length === 0 ||
+                            fabricAddEntries.some(
+                              (entry) => !entry.clientId || !entry.garmentType || !entry.meters || !entry.labelCount
+                            )
+                          }
+                        >
+                          {fabricAddEntries.length > 1
+                            ? `Add to ${fabricAddEntries.length} clients' orders`
+                            : "Add to order"}
                         </Button>
                         <Button
                           variant="secondary"
                           onClick={() => {
                             setPendingFabric(null);
-                            setGarmentType("");
-                            setDraftMeters("");
+                            clearFabricAddEntries();
                             setFabricPickerValue("");
                           }}
                         >
@@ -932,7 +1550,7 @@ export function SalesOrderForm() {
                       <th className="px-3 py-2">Composition</th>
                       <th className="px-3 py-2">Weight</th>
                       <th className="px-3 py-2">Width</th>
-                      <th className="px-3 py-2">Price</th>
+                      {canViewFabricPrices ? <th className="px-3 py-2">Price</th> : null}
                       <th className="px-3 py-2">Meters</th>
                       <th className="px-3 py-2 w-10" />
                     </tr>
@@ -941,11 +1559,26 @@ export function SalesOrderForm() {
                     {group.lines.map((line) => {
                       const isEditing = editingLineId === line.lineId;
                       return (
-                      <tr key={line.lineId} className="border-b border-slate-100 last:border-0 bg-white">
+                      <tr
+                        key={line.lineId}
+                        className={
+                          lineNeedsAvailabilityAttention(line)
+                            ? "border-b border-slate-100 last:border-0 bg-amber-50/40"
+                            : "border-b border-slate-100 last:border-0 bg-white"
+                        }
+                      >
                         {isEditing && lineEditForm ? (
-                          <td colSpan={9} className="px-3 py-4">
+                          <td colSpan={canViewFabricPrices ? 9 : 8} className="px-3 py-4">
                             <div className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
-                              <p className="text-sm font-medium text-slate-900">Edit fabric line</p>
+                              <p className="text-sm font-medium text-slate-900">
+                                {line.needs_replacement ? "Pick replacement fabric" : "Edit fabric line"}
+                              </p>
+                              {line.needs_replacement && (
+                                <p className="mt-1 text-xs text-violet-800">
+                                  Original {line.fabric_number} is unavailable — search for a substitute. Garment, labels
+                                  & meters stay the same.
+                                </p>
+                              )}
                               <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                                 <label className="block text-sm">
                                   <span className="font-medium text-slate-700">Fabric number</span>
@@ -1030,6 +1663,8 @@ export function SalesOrderForm() {
                           <>
                         <td className="px-3 py-2 font-mono font-medium text-slate-900">
                           {line.fabric_number}
+                          <FabricStockBadge fabric={line} />
+                          <FabricReplacementBadge needsReplacement={line.needs_replacement} />
                           {line.manual ? (
                             <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-sans font-medium uppercase tracking-wide text-amber-800">
                               Manual
@@ -1041,13 +1676,15 @@ export function SalesOrderForm() {
                         <td className="px-3 py-2 text-slate-600">{line.composition ?? "—"}</td>
                         <td className="px-3 py-2 text-slate-600">{formatWeight(line.weight_gsm)}</td>
                         <td className="px-3 py-2 text-slate-600">{formatWidth(line)}</td>
-                        <td className="px-3 py-2 text-slate-600">
-                          <DualCurrencyPrice
-                            amount={line.unit_price}
-                            supplierId={line.supplier_id}
-                            unit={line.unit}
-                          />
-                        </td>
+                        {canViewFabricPrices ? (
+                          <td className="px-3 py-2 text-slate-600">
+                            <DualCurrencyPrice
+                              amount={line.unit_price}
+                              supplierId={line.supplier_id}
+                              unit={line.unit}
+                            />
+                          </td>
+                        ) : null}
                         <td className="px-3 py-2">
                           <input
                             type="number"
@@ -1059,13 +1696,28 @@ export function SalesOrderForm() {
                           />
                         </td>
                         <td className="px-3 py-2">
-                          <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => startEditLine(line)} title="Edit line">
-                              <Pencil className="h-4 w-4 text-slate-400" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => removeLine(line.lineId)} title="Remove line">
-                              <Trash2 className="h-4 w-4 text-slate-400" />
-                            </Button>
+                          <div className="flex flex-col items-end gap-1">
+                            {isFabricUnavailable(line.stock_status) && (
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="h-7 gap-1 px-2 text-xs"
+                                onClick={() =>
+                                  line.needs_replacement ? startEditLine(line) : markFindReplacement(line.lineId)
+                                }
+                              >
+                                <Search className="h-3.5 w-3.5" />
+                                {line.needs_replacement ? "Pick replacement" : "Find replacement"}
+                              </Button>
+                            )}
+                            <div className="flex items-center gap-1">
+                              <Button variant="ghost" size="sm" onClick={() => startEditLine(line)} title="Edit line">
+                                <Pencil className="h-4 w-4 text-slate-400" />
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => removeLine(line.lineId)} title="Remove line">
+                                <Trash2 className="h-4 w-4 text-slate-400" />
+                              </Button>
+                            </div>
                           </div>
                         </td>
                           </>
@@ -1091,8 +1743,15 @@ export function SalesOrderForm() {
         <Button variant="secondary" onClick={() => router.push("/orders")}>
           Cancel
         </Button>
-        <Button onClick={handleSubmit} disabled={submitting || !productionBrandId || !clientId || lines.length === 0}>
-          {submitting ? "Creating…" : "Create sales order"}
+        <Button
+          onClick={handleSubmit}
+          disabled={submitting || !productionBrandId || readyDrafts.length === 0}
+        >
+          {submitting
+            ? "Creating…"
+            : readyDrafts.length > 1
+              ? `Create ${readyDrafts.length} sales orders`
+              : "Create sales order"}
         </Button>
       </div>
     </div>

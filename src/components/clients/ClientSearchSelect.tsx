@@ -2,11 +2,21 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
-import { filterClientsByBrand, searchClients } from "@/lib/clients/filter";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import {
+  CLIENT_SORT_OPTIONS,
+  filterClientsByBrand,
+  formatClientJoinedLabel,
+  searchClients,
+  sortClients,
+  type ClientSortBy,
+} from "@/lib/clients/filter";
 import { formatClientDisplayName } from "@/lib/clients/names";
 import { getFactoryBrandById } from "@/lib/data/factory-brands";
 import { cn } from "@/lib/utils";
 import type { ClientProfile } from "@/lib/types/clients";
+
+const SORT_STORAGE_KEY = "erp-sales-order-client-sort";
 
 export interface ClientSearchSelectProps {
   clients: ClientProfile[];
@@ -16,6 +26,8 @@ export interface ClientSearchSelectProps {
   disabled?: boolean;
   placeholder?: string;
   className?: string;
+  defaultSort?: ClientSortBy;
+  showSort?: boolean;
 }
 
 export function ClientSearchSelect({
@@ -26,19 +38,45 @@ export function ClientSearchSelect({
   disabled = false,
   placeholder = "Search by name or client code…",
   className,
+  defaultSort = "joined-desc",
+  showSort = true,
 }: ClientSearchSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query, 150);
+  const [sortBy, setSortBy] = useState<ClientSortBy>(defaultSort);
+  const [sortHydrated, setSortHydrated] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const selectedClient = clients.find((client) => client.id === value) ?? null;
 
+  useEffect(() => {
+    const stored = localStorage.getItem(SORT_STORAGE_KEY) as ClientSortBy | null;
+    if (stored && CLIENT_SORT_OPTIONS.some((option) => option.id === stored)) {
+      setSortBy(stored);
+    }
+    setSortHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!sortHydrated) return;
+    localStorage.setItem(SORT_STORAGE_KEY, sortBy);
+  }, [sortBy, sortHydrated]);
+
   const filteredClients = useMemo(() => {
     const byBrand = filterClientsByBrand(clients, brandId);
-    return searchClients(byBrand, query).sort((a, b) =>
-      formatClientDisplayName(a).localeCompare(formatClientDisplayName(b))
-    );
-  }, [brandId, clients, query]);
+    const selectedLabel = selectedClient
+      ? `${selectedClient.code} — ${formatClientDisplayName(selectedClient)}`
+      : null;
+    const list =
+      selectedLabel && debouncedQuery === selectedLabel
+        ? byBrand
+        : searchClients(byBrand, debouncedQuery);
+    return sortClients(list, sortBy);
+  }, [brandId, clients, debouncedQuery, selectedClient, sortBy]);
+
+  const sortLabel = CLIENT_SORT_OPTIONS.find((option) => option.id === sortBy)?.label ?? "Sort";
+  const showJoinedDate = sortBy === "joined-desc" || sortBy === "joined-asc";
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -70,6 +108,24 @@ export function ClientSearchSelect({
 
   return (
     <div ref={containerRef} className={cn("relative", className)}>
+      {showSort && brandId && (
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <span className="text-xs font-medium text-slate-600">Sort clients</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as ClientSortBy)}
+            className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700"
+            aria-label="Sort clients"
+          >
+            {CLIENT_SORT_OPTIONS.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
@@ -101,7 +157,8 @@ export function ClientSearchSelect({
 
       {brand && (
         <p className="mt-1 text-xs text-slate-500">
-          Showing {brand.name} clients only · {filteredClients.length} match{filteredClients.length !== 1 ? "es" : ""}
+          {brand.name} clients · {filteredClients.length} match{filteredClients.length !== 1 ? "es" : ""} ·{" "}
+          {sortLabel.toLowerCase()}
         </p>
       )}
 
@@ -131,7 +188,14 @@ export function ClientSearchSelect({
                       )}
                     >
                       <span className="font-medium text-slate-900">{name}</span>
-                      <span className="font-mono text-xs text-slate-500">{client.code}</span>
+                      <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-xs text-slate-500">
+                        <span>{client.code}</span>
+                        {showJoinedDate && client.joined_at ? (
+                          <span className="font-sans text-slate-400">
+                            Added {formatClientJoinedLabel(client)}
+                          </span>
+                        ) : null}
+                      </span>
                     </button>
                   </li>
                 );

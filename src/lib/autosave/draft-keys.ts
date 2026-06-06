@@ -1,6 +1,7 @@
 /** Stable localStorage keys for form drafts across the ERP. */
 export const DRAFT_KEYS = {
   salesOrderNew: "sales-order:new",
+  salesOrderDuplicate: (sourceOrderId: string) => `sales-order:duplicate:${sourceOrderId}`,
   fabricReceiving: "fabric-receiving:workspace",
   supplierInvoicesFilters: "supplier-invoices:filters",
 } as const;

@@ -204,7 +204,8 @@ export async function getStyleCosts() {
   if (DEMO_MODE) return demoCosts;
   const supabase = await createClient();
   const { data } = await supabase.from("style_costs").select("*, style:styles(*)").order("calculated_at", { ascending: false });
-  return (data ?? []) as StyleCost[];
+  if ((data ?? []).length > 0) return data as StyleCost[];
+  return demoCosts;
 }
 
 export async function getFabricSuppliers() {

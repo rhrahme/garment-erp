@@ -10,9 +10,10 @@ import { AutoSaveStatusBar } from "@/components/ui/AutoSaveStatus";
 import { filterClientsByBrand, searchClients } from "@/lib/clients/filter";
 import { getFactoryBrands } from "@/lib/data/factory-brands";
 import { generateNextClientCode, getBrandClientCodePrefix, getJoinMonthYear } from "@/lib/clients/codes";
-import { formatClientDisplayName, formatReferredByName, isClientSaveable } from "@/lib/clients/names";
+import { formatClientDisplayName, formatReferredByName, isBlankClientPlaceholder, isClientSaveable } from "@/lib/clients/names";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import { useAutoSave } from "@/hooks/useAutoSave";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { cn } from "@/lib/utils";
 import type { ClientProfile, ClientsFile } from "@/lib/types/clients";
 
@@ -103,8 +104,11 @@ export function ClientProfilesEditor() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [canViewClientContact, setCanViewClientContact] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 200);
+  const [isDirty, setIsDirty] = useState(false);
   const { brandId: brandFilter, setBrandId: setBrandFilter, hydrated: brandFilterHydrated } = useFactoryBrandFilter();
   const [viewMode, setViewMode] = useState<ClientViewMode>("list");
   const [sortBy, setSortBy] = useState<ClientSortBy>("name-asc");
@@ -134,8 +138,9 @@ export function ClientProfilesEditor() {
       try {
         const res = await fetch("/api/auth/session");
         if (!res.ok) return;
-        const data = (await res.json()) as { is_super_admin?: boolean };
+        const data = (await res.json()) as { is_super_admin?: boolean; can_view_client_contact?: boolean };
         setIsSuperAdmin(Boolean(data.is_super_admin));
+        setCanViewClientContact(data.can_view_client_contact !== false);
       } catch {
         /* ignore */
       }
@@ -152,6 +157,7 @@ export function ClientProfilesEditor() {
         const data = (await res.json()) as ClientsFile;
         setSaved(data);
         setDraft(cloneClients(data));
+        setIsDirty(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load clients");
       } finally {
@@ -161,32 +167,42 @@ export function ClientProfilesEditor() {
     load();
   }, []);
 
-  const isDirty = useMemo(() => JSON.stringify(saved) !== JSON.stringify(draft), [saved, draft]);
-  const canAutoSave = useMemo(() => draft.clients.every(isClientSaveable), [draft.clients]);
+  const clientsToPersist = useMemo(
+    () => draft.clients.filter((client) => !isBlankClientPlaceholder(client)),
+    [draft.clients]
+  );
+  const canAutoSave = useMemo(
+    () => clientsToPersist.length > 0 && clientsToPersist.every(isClientSaveable),
+    [clientsToPersist]
+  );
   const personClients = useMemo(
     () => draft.clients.filter((client) => client.client_kind !== "retail_brand"),
     [draft.clients]
   );
 
   const displayClients = useMemo(() => {
-    const filtered = searchClients(filterClientsByBrand(personClients, brandFilter), searchQuery);
+    const filtered = searchClients(filterClientsByBrand(personClients, brandFilter), debouncedSearchQuery, {
+      excludeContactFields: !canViewClientContact,
+    });
     return sortClients(filtered, sortBy);
-  }, [personClients, searchQuery, brandFilter, sortBy]);
+  }, [personClients, debouncedSearchQuery, brandFilter, sortBy, canViewClientContact]);
 
   const hasActiveFilters = Boolean(searchQuery.trim() || brandFilter);
 
   const persistDraft = useCallback(async () => {
+    const payload = { ...draft, clients: clientsToPersist };
     const res = await fetch("/api/clients", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(draft),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "Failed to save clients");
     setSaved(data as ClientsFile);
     setDraft(cloneClients(data as ClientsFile));
+    setIsDirty(false);
     setError(null);
-  }, [draft]);
+  }, [clientsToPersist, draft]);
 
   const { status: autoSaveStatus, error: autoSaveError, isSaving, saveNow } = useAutoSave({
     isDirty,
@@ -219,6 +235,7 @@ export function ClientProfilesEditor() {
   }
 
   function updateClient(id: string, patch: Partial<ClientProfile>) {
+    setIsDirty(true);
     setDraft((prev) => ({
       ...prev,
       clients: prev.clients.map((client) => (client.id === id ? { ...client, ...patch } : client)),
@@ -241,12 +258,14 @@ export function ClientProfilesEditor() {
 
   function addClient() {
     const client = emptyClient();
+    setIsDirty(true);
     setDraft((prev) => ({ ...prev, clients: [client, ...prev.clients] }));
     setEditingId(client.id);
   }
 
   function handleDiscard() {
     setDraft(cloneClients(saved));
+    setIsDirty(false);
     setEditingId(null);
     setError(null);
   }
@@ -351,44 +370,46 @@ export function ClientProfilesEditor() {
           </div>
         </div>
 
-        <div className="md:col-span-2">
-          <p className="text-sm font-medium text-slate-700">Referred by</p>
-          <div className="mt-2 grid gap-4 md:grid-cols-3">
-            <label className="block text-sm">
-              <span className="font-medium text-slate-700">First</span>
-              <input
-                value={client.referred_by_first_name ?? ""}
-                onChange={(e) =>
-                  updateClient(client.id, { referred_by_first_name: e.target.value.trim() || null })
-                }
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-                placeholder="First name"
-              />
-            </label>
-            <label className="block text-sm">
-              <span className="font-medium text-slate-700">Middle</span>
-              <input
-                value={client.referred_by_middle_name ?? ""}
-                onChange={(e) =>
-                  updateClient(client.id, { referred_by_middle_name: e.target.value.trim() || null })
-                }
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-                placeholder="Optional"
-              />
-            </label>
-            <label className="block text-sm">
-              <span className="font-medium text-slate-700">Last</span>
-              <input
-                value={client.referred_by_last_name ?? ""}
-                onChange={(e) =>
-                  updateClient(client.id, { referred_by_last_name: e.target.value.trim() || null })
-                }
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-                placeholder="Last name"
-              />
-            </label>
+        {canViewClientContact && (
+          <div className="md:col-span-2">
+            <p className="text-sm font-medium text-slate-700">Referred by</p>
+            <div className="mt-2 grid gap-4 md:grid-cols-3">
+              <label className="block text-sm">
+                <span className="font-medium text-slate-700">First</span>
+                <input
+                  value={client.referred_by_first_name ?? ""}
+                  onChange={(e) =>
+                    updateClient(client.id, { referred_by_first_name: e.target.value.trim() || null })
+                  }
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                  placeholder="First name"
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="font-medium text-slate-700">Middle</span>
+                <input
+                  value={client.referred_by_middle_name ?? ""}
+                  onChange={(e) =>
+                    updateClient(client.id, { referred_by_middle_name: e.target.value.trim() || null })
+                  }
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                  placeholder="Optional"
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="font-medium text-slate-700">Last</span>
+                <input
+                  value={client.referred_by_last_name ?? ""}
+                  onChange={(e) =>
+                    updateClient(client.id, { referred_by_last_name: e.target.value.trim() || null })
+                  }
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                  placeholder="Last name"
+                />
+              </label>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="md:col-span-2">
           <p className="text-sm font-medium text-slate-700">Production brand(s)</p>
@@ -435,40 +456,44 @@ export function ClientProfilesEditor() {
 
         <div className="md:col-span-2" />
 
-        <label className="block text-sm">
-          <span className="font-medium text-slate-700">Contact person</span>
-          <input
-            value={client.contact_person ?? ""}
-            onChange={(e) => updateClient(client.id, { contact_person: e.target.value || null })}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-          />
-        </label>
-        <label className="block text-sm">
-          <span className="font-medium text-slate-700">Email</span>
-          <input
-            type="email"
-            value={client.email ?? ""}
-            onChange={(e) => updateClient(client.id, { email: e.target.value || null })}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-          />
-        </label>
-        <label className="block text-sm">
-          <span className="font-medium text-slate-700">Mobile number</span>
-          <PhoneInput
-            value={client.phone}
-            onChange={(phone) => updateClient(client.id, { phone })}
-            className="mt-1"
-          />
-          <span className="mt-1 block text-xs text-slate-500">Defaults to Saudi Arabia (+966)</span>
-        </label>
-        <label className="block text-sm">
-          <span className="font-medium text-slate-700">Country</span>
-          <input
-            value={client.country ?? ""}
-            onChange={(e) => updateClient(client.id, { country: e.target.value || null })}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-          />
-        </label>
+        {canViewClientContact && (
+          <>
+            <label className="block text-sm">
+              <span className="font-medium text-slate-700">Contact person</span>
+              <input
+                value={client.contact_person ?? ""}
+                onChange={(e) => updateClient(client.id, { contact_person: e.target.value || null })}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium text-slate-700">Email</span>
+              <input
+                type="email"
+                value={client.email ?? ""}
+                onChange={(e) => updateClient(client.id, { email: e.target.value || null })}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium text-slate-700">Mobile number</span>
+              <PhoneInput
+                value={client.phone}
+                onChange={(phone) => updateClient(client.id, { phone })}
+                className="mt-1"
+              />
+              <span className="mt-1 block text-xs text-slate-500">Defaults to Saudi Arabia (+966)</span>
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium text-slate-700">Country</span>
+              <input
+                value={client.country ?? ""}
+                onChange={(e) => updateClient(client.id, { country: e.target.value || null })}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              />
+            </label>
+          </>
+        )}
         <label className="block text-sm md:col-span-2">
           <span className="font-medium text-slate-700">Notes</span>
           <textarea
@@ -491,21 +516,25 @@ export function ClientProfilesEditor() {
         <p>
           <span className="text-slate-400">Joined:</span> {formatJoinedLabel(client)}
         </p>
-        <p>
-          <span className="text-slate-400">Referred by:</span> {formatReferredByName(client) || "—"}
-        </p>
-        <p>
-          <span className="text-slate-400">Contact:</span> {client.contact_person ?? "—"}
-        </p>
-        <p>
-          <span className="text-slate-400">Email:</span> {client.email ?? "—"}
-        </p>
-        <p>
-          <span className="text-slate-400">Mobile:</span> {client.phone ?? "—"}
-        </p>
-        <p>
-          <span className="text-slate-400">Country:</span> {client.country ?? "—"}
-        </p>
+        {canViewClientContact && (
+          <>
+            <p>
+              <span className="text-slate-400">Referred by:</span> {formatReferredByName(client) || "—"}
+            </p>
+            <p>
+              <span className="text-slate-400">Contact:</span> {client.contact_person ?? "—"}
+            </p>
+            <p>
+              <span className="text-slate-400">Email:</span> {client.email ?? "—"}
+            </p>
+            <p>
+              <span className="text-slate-400">Mobile:</span> {client.phone ?? "—"}
+            </p>
+            <p>
+              <span className="text-slate-400">Country:</span> {client.country ?? "—"}
+            </p>
+          </>
+        )}
       </div>
     );
   }
@@ -579,7 +608,11 @@ export function ClientProfilesEditor() {
                   type="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by name, client code, email, mobile, or referred by…"
+                  placeholder={
+                    canViewClientContact
+                      ? "Search by name, client code, email, mobile, or referred by…"
+                      : "Search by name or client code…"
+                  }
                   className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-10 text-sm"
                 />
                 {searchQuery && (
@@ -686,8 +719,10 @@ export function ClientProfilesEditor() {
                         <p className="mt-0.5 truncate text-sm text-slate-500">
                           {brandLabel}
                           {client.joined_at ? ` · Joined ${formatJoinedLabel(client)}` : ""}
-                          {formatReferredByName(client) ? ` · Referred by ${formatReferredByName(client)}` : ""}
-                          {client.email ? ` · ${client.email}` : ""}
+                          {canViewClientContact && formatReferredByName(client)
+                            ? ` · Referred by ${formatReferredByName(client)}`
+                            : ""}
+                          {canViewClientContact && client.email ? ` · ${client.email}` : ""}
                         </p>
                       </div>
                       <div className="shrink-0">{renderClientActions(client, isEditing)}</div>
@@ -708,9 +743,9 @@ export function ClientProfilesEditor() {
                     <th className="px-4 py-3">Name</th>
                     <th className="px-4 py-3">Brand</th>
                     <th className="px-4 py-3">Joined</th>
-                    <th className="px-4 py-3">Referred by</th>
-                    <th className="px-4 py-3">Contact</th>
-                    <th className="px-4 py-3">Email</th>
+                    {canViewClientContact && <th className="px-4 py-3">Referred by</th>}
+                    {canViewClientContact && <th className="px-4 py-3">Contact</th>}
+                    {canViewClientContact && <th className="px-4 py-3">Email</th>}
                     <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -728,16 +763,22 @@ export function ClientProfilesEditor() {
                             <div className="flex flex-wrap gap-1">{renderBrandBadges(client)}</div>
                           </td>
                           <td className="px-4 py-3 text-slate-600">{formatJoinedLabel(client)}</td>
-                          <td className="px-4 py-3 text-slate-600">{formatReferredByName(client) || "—"}</td>
-                          <td className="px-4 py-3 text-slate-600">{client.contact_person ?? "—"}</td>
-                          <td className="px-4 py-3 text-slate-600">{client.email ?? "—"}</td>
+                          {canViewClientContact && (
+                            <td className="px-4 py-3 text-slate-600">{formatReferredByName(client) || "—"}</td>
+                          )}
+                          {canViewClientContact && (
+                            <td className="px-4 py-3 text-slate-600">{client.contact_person ?? "—"}</td>
+                          )}
+                          {canViewClientContact && (
+                            <td className="px-4 py-3 text-slate-600">{client.email ?? "—"}</td>
+                          )}
                           <td className="px-4 py-3">
                             <div className="flex justify-end">{renderClientActions(client, isEditing)}</div>
                           </td>
                         </tr>
                         {isEditing && (
                           <tr>
-                            <td colSpan={8} className="border-t border-slate-100 bg-slate-50/50 px-4 py-4">
+                            <td colSpan={canViewClientContact ? 8 : 5} className="border-t border-slate-100 bg-slate-50/50 px-4 py-4">
                               {renderClientEditor(client)}
                             </td>
                           </tr>

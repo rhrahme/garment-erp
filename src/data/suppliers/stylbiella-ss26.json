@@ -8,8 +8,8 @@
     "lead_time_days": 14,
     "currency": "USD"
   },
-  "price_list_name": "SS26 Product Info + USD Prices",
-  "imported_at": "2026-05-29T12:01:41.543054Z",
+  "price_list_name": "SS26 Product Info + SS26 USD Prices",
+  "imported_at": "2026-06-01T12:39:29.254513Z",
   "source_file": "Stylbiella SS26 Product info.xlsx + Stylbiella - SS26 pricelist USD CLF.pdf",
   "fabric_count": 537,
   "fabrics": [

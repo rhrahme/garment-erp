@@ -1,9 +1,20 @@
 import path from "path";
-import { readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
+import { loadDocument, readJsonFile, saveDocument } from "@/lib/data/document-persistence";
+import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
+import { isSalesOrderArchived } from "@/lib/sales-orders/archive";
 import type { SalesOrder, SalesOrdersFile } from "@/lib/types/sales-orders";
 
 const SALES_ORDERS_PATH = path.join(process.cwd(), "src/data/sales-orders.json");
 const EMPTY_SALES_ORDERS: SalesOrdersFile = { updated_at: null, orders: [] };
+
+/** ClickUp retail batches (Massimo Dutti, Suit Supply, …) — shown under Ready-Made, not Sales Orders. */
+export function isReadyMadeSalesOrder(order: Pick<SalesOrder, "retail_brand">): boolean {
+  return Boolean(order.retail_brand?.trim());
+}
+
+export function listBespokeSalesOrders(orders: SalesOrder[]): SalesOrder[] {
+  return orders.filter((order) => !isReadyMadeSalesOrder(order));
+}
 
 export interface SalesOrderListRow {
   id: string;
@@ -15,18 +26,57 @@ export interface SalesOrderListRow {
   order_date: string;
   delivery_date: string | null;
   status: SalesOrder["status"];
+  is_archived: boolean;
+  /** Lowercase haystack for client-side list search — not shown in the UI. */
+  search_text: string;
+}
+
+function buildSalesOrderSearchText(order: SalesOrder): string {
+  const parts: Array<string | null | undefined> = [
+    order.so_number,
+    order.client_code,
+    order.client_name,
+    order.client_reference,
+    order.product_article,
+    order.retail_brand,
+    order.delivery_destination,
+    order.status,
+    order.notes,
+  ];
+
+  for (const line of order.fabric_lines) {
+    parts.push(
+      line.fabric_number,
+      line.supplier_name,
+      formatFabricSupplierName(line.supplier_id, line.supplier_name, line.fabric_number),
+      line.supplier_id,
+      line.garment_type,
+      line.composition,
+      line.color,
+      ...(line.label_stickers ?? []).map((sticker) => sticker.code)
+    );
+  }
+
+  return parts
+    .filter((value): value is string => Boolean(value && String(value).trim()))
+    .join(" ")
+    .toLowerCase();
 }
 
 export function readSalesOrders(): SalesOrdersFile {
   return readJsonFile(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS);
 }
 
-export function writeSalesOrders(data: SalesOrdersFile): SalesOrdersFile {
+export async function readSalesOrdersAsync(): Promise<SalesOrdersFile> {
+  return loadDocument(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS);
+}
+
+export async function writeSalesOrders(data: SalesOrdersFile): Promise<SalesOrdersFile> {
   const payload: SalesOrdersFile = {
     ...data,
     updated_at: new Date().toISOString(),
   };
-  return writeJsonFile(SALES_ORDERS_PATH, payload);
+  return saveDocument(SALES_ORDERS_PATH, payload);
 }
 
 export function toSalesOrderListRow(order: SalesOrder): SalesOrderListRow {
@@ -40,11 +90,36 @@ export function toSalesOrderListRow(order: SalesOrder): SalesOrderListRow {
     order_date: order.order_date,
     delivery_date: order.delivery_date,
     status: order.status,
+    is_archived: isSalesOrderArchived(order),
+    search_text: buildSalesOrderSearchText(order),
   };
 }
 
 export function getSalesOrderById(id: string): SalesOrder | undefined {
   return readSalesOrders().orders.find((order) => order.id === id);
+}
+
+export async function deleteSalesOrderById(
+  id: string
+): Promise<{ ok: true; order: SalesOrder } | { ok: false; error: string; status: number }> {
+  const store = readSalesOrders();
+  const index = store.orders.findIndex((order) => order.id === id);
+  if (index < 0) {
+    return { ok: false, error: "Sales order not found.", status: 404 };
+  }
+
+  const order = store.orders[index]!;
+  if (order.fabric_po_ids.length > 0) {
+    return {
+      ok: false,
+      error: "Cannot delete — supplier fabric orders were already created. Cancel those first.",
+      status: 409,
+    };
+  }
+
+  store.orders.splice(index, 1);
+  await writeSalesOrders(store);
+  return { ok: true, order };
 }
 
 export function generateSoNumber(orders: SalesOrder[]): string {

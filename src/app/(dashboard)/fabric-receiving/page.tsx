@@ -6,7 +6,7 @@ export default function FabricReceivingPage() {
     <div>
       <PageHeader
         title="Fabric Receiving"
-        description="Receive fabric as one cut per order line, prepare it, then hand off — multi-piece garments like suits split into separate production pieces."
+        description="Scan fabric cut stickers at Receive, then Wash or Iron. Work list matches the sales order A4 receiving sheet — QR, fabric cut, composition."
       />
       <FabricReceivingWorkspace />
     </div>

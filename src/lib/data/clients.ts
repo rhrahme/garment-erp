@@ -1,20 +1,24 @@
 import path from "path";
-import { readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
+import { loadDocument, readJsonFile, saveDocument } from "@/lib/data/document-persistence";
 import type { ClientProfile, ClientsFile } from "@/lib/types/clients";
 
 const CLIENTS_PATH = path.join(process.cwd(), "src/data/clients.json");
 const EMPTY_CLIENTS: ClientsFile = { updated_at: null, clients: [] };
 
+export async function readClientsAsync(): Promise<ClientsFile> {
+  return loadDocument(CLIENTS_PATH, EMPTY_CLIENTS);
+}
+
 export function readClients(): ClientsFile {
   return readJsonFile(CLIENTS_PATH, EMPTY_CLIENTS);
 }
 
-export function writeClients(data: ClientsFile): ClientsFile {
+export async function writeClients(data: ClientsFile): Promise<ClientsFile> {
   const payload: ClientsFile = {
     ...data,
     updated_at: new Date().toISOString(),
   };
-  return writeJsonFile(CLIENTS_PATH, payload);
+  return saveDocument(CLIENTS_PATH, payload);
 }
 
 export function getActiveClients(): ClientProfile[] {
@@ -42,7 +46,9 @@ export function slugifyClientId(name: string): string {
     .slice(0, 40);
 }
 
-export function deleteClientById(id: string): { ok: true; client: ClientProfile } | { ok: false; error: string } {
+export async function deleteClientById(
+  id: string
+): Promise<{ ok: true; client: ClientProfile } | { ok: false; error: string }> {
   const data = readClients();
   const index = data.clients.findIndex((client) => client.id === id);
   if (index < 0) {
@@ -50,6 +56,6 @@ export function deleteClientById(id: string): { ok: true; client: ClientProfile 
   }
 
   const [removed] = data.clients.splice(index, 1);
-  writeClients({ ...data, clients: data.clients });
+  await writeClients({ ...data, clients: data.clients });
   return { ok: true, client: removed };
 }

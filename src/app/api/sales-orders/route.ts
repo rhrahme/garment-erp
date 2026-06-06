@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getClientById } from "@/lib/data/clients";
 import { formatClientDisplayName } from "@/lib/clients/names";
 import { generateSoNumber, readSalesOrders, writeSalesOrders, buildClientReference } from "@/lib/data/sales-orders";
+import { findOpenOrderWithSameArticles } from "@/lib/sales-orders/duplicate-order";
 import { getSupplierByIdFromContacts } from "@/lib/data/supplier-contacts";
+import { normalizeFabricSupplierFields, fabricPoSupplierId } from "@/lib/fabric-sourcing/supplier-display";
 import { isGarmentStitchType } from "@/lib/sales-orders/garment-types";
 import { generateFabricLabelStickers } from "@/lib/sales-orders/label-codes";
 import { notifyIntegration } from "@/lib/integrations";
@@ -16,6 +19,7 @@ function normalizeText(value: unknown): string | null {
 
 export async function GET() {
   try {
+    await ensureDocumentsLoaded(["sales_orders"]);
     return NextResponse.json(readSalesOrders());
   } catch (error) {
     console.error("Failed to read sales orders:", error);
@@ -44,6 +48,10 @@ export async function POST(request: Request) {
         width_cm?: number | null;
         width_inches?: number | null;
         color?: string | null;
+        stock_status?: "in_stock" | "temp_unavailable" | "permanently_unavailable" | null;
+        restock_date?: string | null;
+        needs_replacement?: boolean;
+        replacement_fabric_number?: string | null;
       }>;
     };
 
@@ -77,7 +85,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Each fabric line needs supplier, fabric number, and quantity." }, { status: 400 });
       }
 
-      const supplier = getSupplierByIdFromContacts(supplier_id);
+      const poSupplierId = fabricPoSupplierId(supplier_id, fabric_number);
+      const supplier = getSupplierByIdFromContacts(poSupplierId) ?? getSupplierByIdFromContacts(supplier_id);
       if (!supplier) {
         return NextResponse.json({ error: `Unknown supplier: ${supplier_id}` }, { status: 400 });
       }
@@ -93,13 +102,19 @@ export async function POST(request: Request) {
       const label_stickers = generateFabricLabelStickers(client_reference, index + 1, garment_type);
       const label_count = label_stickers.length;
 
+      const supplierFields = normalizeFabricSupplierFields(
+        supplier_id,
+        line.supplier_name ?? supplier.name,
+        fabric_number
+      );
+
       fabric_lines.push({
         id: `line-${Date.now()}-${index}`,
         garment_type,
         label_count,
         label_stickers,
-        supplier_id,
-        supplier_name: line.supplier_name ?? supplier.name,
+        supplier_id: supplierFields.supplier_id,
+        supplier_name: supplierFields.supplier_name,
         fabric_number,
         quantity,
         unit: line.unit?.trim() || "meters",
@@ -109,7 +124,23 @@ export async function POST(request: Request) {
         width_cm: line.width_cm ?? null,
         width_inches: line.width_inches ?? null,
         color: line.color ?? null,
+        stock_status: line.stock_status ?? null,
+        restock_date: line.restock_date ?? null,
+        needs_replacement: Boolean(line.needs_replacement),
+        replacement_fabric_number: line.replacement_fabric_number ?? null,
       });
+    }
+
+    const duplicateOrder = findOpenOrderWithSameArticles(store.orders, client_id, fabric_lines);
+    if (duplicateOrder) {
+      return NextResponse.json(
+        {
+          error: `${formatClientDisplayName(client)} already has open order ${duplicateOrder.so_number} with the same fabrics — open that order instead of creating a duplicate.`,
+          existing_order_id: duplicateOrder.id,
+          existing_so_number: duplicateOrder.so_number,
+        },
+        { status: 409 }
+      );
     }
 
     const order: SalesOrder = {
@@ -129,7 +160,7 @@ export async function POST(request: Request) {
     };
 
     store.orders.unshift(order);
-    const saved = writeSalesOrders(store);
+    const saved = await writeSalesOrders(store);
 
     await notifyIntegration("sales_order.created", {
       id: order.id,

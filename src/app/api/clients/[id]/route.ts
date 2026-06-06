@@ -22,7 +22,7 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
       );
     }
 
-    const result = deleteClientById(id);
+    const result = await deleteClientById(id);
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 404 });
     }

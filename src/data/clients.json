@@ -1,6 +1,31 @@
 {
-  "updated_at": "2026-05-29T10:39:33.256Z",
+  "updated_at": "2026-06-01T13:02:20.054327Z",
   "clients": [
+    {
+      "id": "new-1780144919980",
+      "code": "FR-0526-0028",
+      "joined_at": "2026-05-30T12:42:45.080Z",
+      "first_name": "Samer",
+      "middle_name": null,
+      "last_name": "Al Jameel",
+      "brand_ids": [
+        "fouad-rahme"
+      ],
+      "contact_person": null,
+      "referred_by_first_name": null,
+      "referred_by_middle_name": null,
+      "referred_by_last_name": null,
+      "email": null,
+      "phone": "+966555828121",
+      "country": null,
+      "city": null,
+      "address": null,
+      "payment_terms": null,
+      "client_reference_prefix": null,
+      "notes": null,
+      "is_active": true,
+      "client_kind": "person"
+    },
     {
       "id": "new-1780048982108",
       "code": "FR-0526-0027",
@@ -273,7 +298,7 @@
       "address": null,
       "payment_terms": null,
       "client_reference_prefix": null,
-      "notes": "Ready-made retail brand — production tracked by garment article on each order",
+      "notes": "Ready-made retail brand \u2014 production tracked by garment article on each order",
       "is_active": true,
       "client_kind": "retail_brand"
     },
@@ -298,7 +323,7 @@
       "address": null,
       "payment_terms": null,
       "client_reference_prefix": null,
-      "notes": "Ready-made retail brand — production tracked by garment article on each order",
+      "notes": "Ready-made retail brand \u2014 production tracked by garment article on each order",
       "is_active": true,
       "client_kind": "retail_brand"
     },
@@ -324,7 +349,7 @@
       "address": null,
       "payment_terms": null,
       "client_reference_prefix": null,
-      "notes": "Ready-made retail brand — production tracked by garment article on each order",
+      "notes": "Ready-made retail brand \u2014 production tracked by garment article on each order",
       "is_active": true,
       "client_kind": "retail_brand"
     },
@@ -354,12 +379,12 @@
       "client_kind": "person"
     },
     {
-      "id": "cu-luca-faloni-linen-shirt-fouad-rahme",
-      "code": "FR-0426-0008",
+      "id": "cu-retail-luca-faloni",
+      "code": "RM-LF",
       "joined_at": "2026-04-11T00:00:00.000Z",
-      "first_name": "Luca",
-      "middle_name": "Faloni Linen",
-      "last_name": "Shirt",
+      "first_name": "Luca Faloni",
+      "middle_name": null,
+      "last_name": "Ready-Made",
       "brand_ids": [
         "fouad-rahme"
       ],
@@ -374,9 +399,9 @@
       "address": null,
       "payment_terms": null,
       "client_reference_prefix": null,
-      "notes": "Imported from ClickUp task 86ex7hq4e",
+      "notes": "Ready-made retail brand \u2014 production tracked by garment article on each order",
       "is_active": true,
-      "client_kind": "person"
+      "client_kind": "retail_brand"
     },
     {
       "id": "cu-retail-cafe-cotton",
@@ -399,7 +424,7 @@
       "address": null,
       "payment_terms": null,
       "client_reference_prefix": null,
-      "notes": "Ready-made retail brand — production tracked by garment article on each order",
+      "notes": "Ready-made retail brand \u2014 production tracked by garment article on each order",
       "is_active": true,
       "client_kind": "retail_brand"
     },
@@ -599,7 +624,7 @@
       "address": null,
       "payment_terms": null,
       "client_reference_prefix": null,
-      "notes": "Ready-made retail brand — production tracked by garment article on each order",
+      "notes": "Ready-made retail brand \u2014 production tracked by garment article on each order",
       "is_active": true,
       "client_kind": "retail_brand"
     },
@@ -624,7 +649,7 @@
       "address": null,
       "payment_terms": null,
       "client_reference_prefix": null,
-      "notes": "Ready-made retail brand — production tracked by garment article on each order",
+      "notes": "Ready-made retail brand \u2014 production tracked by garment article on each order",
       "is_active": true,
       "client_kind": "retail_brand"
     },
@@ -724,7 +749,7 @@
       "address": null,
       "payment_terms": null,
       "client_reference_prefix": null,
-      "notes": "Ready-made retail brand — production tracked by garment article on each order",
+      "notes": "Ready-made retail brand \u2014 production tracked by garment article on each order",
       "is_active": true,
       "client_kind": "retail_brand"
     },
@@ -1000,6 +1025,31 @@
       "payment_terms": null,
       "client_reference_prefix": null,
       "notes": "Imported from ClickUp task 86ewa95ey",
+      "is_active": true,
+      "client_kind": "person"
+    },
+    {
+      "id": "new-1780146000000",
+      "code": "FR-0526-0029",
+      "joined_at": "2026-05-30T13:00:00.000Z",
+      "first_name": "Moiid",
+      "middle_name": null,
+      "last_name": "Al Zahrani",
+      "brand_ids": [
+        "fouad-rahme"
+      ],
+      "contact_person": null,
+      "referred_by_first_name": null,
+      "referred_by_middle_name": null,
+      "referred_by_last_name": null,
+      "email": null,
+      "phone": null,
+      "country": null,
+      "city": null,
+      "address": null,
+      "payment_terms": null,
+      "client_reference_prefix": null,
+      "notes": null,
       "is_active": true,
       "client_kind": "person"
     }

@@ -24,6 +24,10 @@ export interface SalesOrderFabricLine {
   width_cm: number | null;
   width_inches: number | null;
   color: string | null;
+  stock_status?: "in_stock" | "temp_unavailable" | "permanently_unavailable" | null;
+  restock_date?: string | null;
+  needs_replacement?: boolean;
+  replacement_fabric_number?: string | null;
 }
 
 export interface SalesOrder {

@@ -2,25 +2,70 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/lib/types/database";
 import { DEMO_MODE, DEMO_USER_EMAIL_COOKIE } from "@/lib/auth/demo-mode";
-import { isSuperAdminEmail, isSuperAdminRole } from "@/lib/auth/permissions";
+import { DEV_IMPERSONATION_COOKIE, resolveDevImpersonationEmail } from "@/lib/auth/dev-impersonation";
+import {
+  canViewClientContact,
+  isAdminEmail,
+  isAdminRole,
+  isClientManagerAccess,
+  isSuperAdminEmail,
+  isSuperAdminRole,
+} from "@/lib/auth/permissions";
 
 export interface SessionContext {
   userId: string | null;
   email: string | null;
   role: UserRole | null;
   isSuperAdmin: boolean;
+  isAdmin: boolean;
+  isClientManager: boolean;
+  canViewClientContact: boolean;
+  canViewFabricListPrices: boolean;
+}
+
+function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<SessionContext, "userId" | "email"> {
+  const isSuperAdmin = isSuperAdminRole(role) || isSuperAdminEmail(email);
+  const isClientManager = !isSuperAdmin && isClientManagerAccess(role, email);
+  const isAdmin =
+    isSuperAdmin || (!isClientManager && (isAdminRole(role) || isAdminEmail(email)));
+  const effectiveRole: UserRole | null = isSuperAdmin
+    ? "super_admin"
+    : isAdmin
+      ? "admin"
+      : isClientManager
+        ? "client_manager"
+        : role;
+
+  return {
+    role: effectiveRole,
+    isSuperAdmin,
+    isAdmin,
+    isClientManager,
+    canViewClientContact: canViewClientContact(role, email, isSuperAdmin),
+    canViewFabricListPrices: !isClientManager,
+  };
 }
 
 export async function getSessionContext(): Promise<SessionContext> {
   if (DEMO_MODE) {
     const cookieStore = await cookies();
     const email = cookieStore.get(DEMO_USER_EMAIL_COOKIE)?.value?.trim().toLowerCase() ?? null;
-    const isSuperAdmin = isSuperAdminEmail(email);
     return {
       userId: email,
       email,
-      role: isSuperAdmin ? "super_admin" : "viewer",
-      isSuperAdmin,
+      ...resolveSessionFlags(null, email),
+    };
+  }
+
+  const cookieStore = await cookies();
+  const impersonatedEmail = resolveDevImpersonationEmail(
+    cookieStore.get(DEV_IMPERSONATION_COOKIE)?.value
+  );
+  if (impersonatedEmail) {
+    return {
+      userId: `dev:${impersonatedEmail}`,
+      email: impersonatedEmail,
+      ...resolveSessionFlags("client_manager", impersonatedEmail),
     };
   }
 
@@ -30,7 +75,16 @@ export async function getSessionContext(): Promise<SessionContext> {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { userId: null, email: null, role: null, isSuperAdmin: false };
+    return {
+      userId: null,
+      email: null,
+      role: null,
+      isSuperAdmin: false,
+      isAdmin: false,
+      isClientManager: false,
+      canViewClientContact: false,
+      canViewFabricListPrices: false,
+    };
   }
 
   const { data: profile } = await supabase
@@ -40,13 +94,25 @@ export async function getSessionContext(): Promise<SessionContext> {
     .maybeSingle();
 
   const role = (profile?.role as UserRole | undefined) ?? null;
+  const email = user.email?.trim().toLowerCase() ?? null;
 
   return {
     userId: user.id,
-    email: user.email ?? null,
-    role,
-    isSuperAdmin: isSuperAdminRole(role) || isSuperAdminEmail(user.email),
+    email,
+    ...resolveSessionFlags(role, email),
   };
+}
+
+export async function requireAuthenticated(): Promise<SessionContext | null> {
+  const session = await getSessionContext();
+  if (!session.userId && !session.email) return null;
+  return session;
+}
+
+export async function requireAdmin(): Promise<SessionContext | null> {
+  const session = await getSessionContext();
+  if (!session.isAdmin) return null;
+  return session;
 }
 
 export async function requireSuperAdmin(): Promise<SessionContext | null> {

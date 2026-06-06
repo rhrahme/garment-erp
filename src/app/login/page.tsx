@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Shirt } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { createClient } from "@/lib/supabase/client";
 import { DEMO_MODE, DEMO_USER_EMAIL_COOKIE } from "@/lib/auth/demo-mode";
 
 export default function LoginPage() {
@@ -25,20 +24,30 @@ export default function LoginPage() {
         document.cookie = `${DEMO_USER_EMAIL_COOKIE}=${encodeURIComponent(demoEmail)}; path=/; max-age=2592000; samesite=lax`;
       }
       router.push("/dashboard");
+      router.refresh();
       return;
     }
 
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = (await res.json()) as { ok?: boolean; redirect?: string; error?: string };
 
-    if (authError) {
-      setError(authError.message);
+      if (!res.ok) {
+        setError(data.error ?? "Sign in failed.");
+        setLoading(false);
+        return;
+      }
+
+      router.push(data.redirect ?? "/dashboard");
+      router.refresh();
+    } catch {
+      setError("Sign in failed.");
       setLoading(false);
-      return;
     }
-
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (

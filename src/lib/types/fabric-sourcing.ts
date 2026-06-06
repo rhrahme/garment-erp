@@ -36,6 +36,8 @@ export interface SupplierFabric {
   stock_status?: "in_stock" | "temp_unavailable" | "permanently_unavailable" | null;
   restock_date?: string | null;
   stock_updated_at?: string | null;
+  /** Loro Piana price list only — Solbiati (S-prefix linen) vs Loro Piana wool/cashmere. */
+  mill_line?: "loro_piana" | "solbiati" | null;
   supplier?: Supplier;
 }
 

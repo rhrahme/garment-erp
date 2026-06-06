@@ -111,7 +111,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
-    const saved = writeSupplierContacts(result.data);
+    const saved = await writeSupplierContacts(result.data);
     await notifyIntegration("supplier.contacts_updated", {
       supplier_count: saved.suppliers.length,
       with_email: saved.suppliers.filter((s) => s.emails.length > 0).length,

@@ -1,9 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { DrapersFabricSwatch } from "@/components/fabric-specification/DrapersFabricSwatch";
 import { DataTable } from "@/components/ui/PageHeader";
 import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useDrapersSwatchMap } from "@/hooks/useDrapersSwatchMap";
+import { DRAPERS_SUPPLIER_ID } from "@/lib/integrations/drapers/config";
 import { expandLoroPianaStyleQuery, normalizeLoroPianaFabricNumber } from "@/lib/fabric-sourcing/loro-piana-styles";
+import { formatFabricSupplierName, isSolbiatiFabric } from "@/lib/fabric-sourcing/supplier-display";
 import { fabricStockTone, formatFabricStockLabel } from "@/lib/fabric-sourcing/fabric-stock";
 import type { Supplier, SupplierFabric } from "@/lib/types/fabric-sourcing";
 import { cn } from "@/lib/utils";
@@ -11,33 +16,54 @@ import { cn } from "@/lib/utils";
 interface FabricSpecViewProps {
   suppliers: Supplier[];
   items: SupplierFabric[];
+  canViewPrices?: boolean;
 }
 
-export function FabricSpecView({ suppliers, items }: FabricSpecViewProps) {
+export function FabricSpecView({ suppliers, items, canViewPrices = true }: FabricSpecViewProps) {
+  const brandCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of items) {
+      counts.set(item.supplier_id, (counts.get(item.supplier_id) ?? 0) + 1);
+    }
+    return counts;
+  }, [items]);
+
+  const itemsBySupplier = useMemo(() => {
+    const map = new Map<string, SupplierFabric[]>();
+    for (const item of items) {
+      const bucket = map.get(item.supplier_id);
+      if (bucket) bucket.push(item);
+      else map.set(item.supplier_id, [item]);
+    }
+    return map;
+  }, [items]);
+
   const brands = useMemo(() => {
     return [...suppliers]
       .map((s) => ({
         ...s,
-        count: items.filter((i) => i.supplier_id === s.id).length,
+        count: brandCounts.get(s.id) ?? 0,
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [suppliers, items]);
+  }, [suppliers, brandCounts]);
 
   const firstWithData = brands.find((b) => b.count > 0)?.id ?? brands[0]?.id ?? "all";
   const [brandId, setBrandId] = useState<string>(firstWithData);
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query, 200);
 
   const filtered = useMemo(() => {
-    let list = brandId === "all" ? items : items.filter((i) => i.supplier_id === brandId);
-    if (query.trim()) {
-      const q = query.trim().toLowerCase();
+    let list = brandId === "all" ? items : (itemsBySupplier.get(brandId) ?? []);
+    const search = debouncedQuery.trim();
+    if (search) {
+      const q = search.toLowerCase();
       const lookup =
         brandId === "loro-piana" || brandId === "all"
-          ? normalizeLoroPianaFabricNumber(query).toLowerCase()
+          ? normalizeLoroPianaFabricNumber(search).toLowerCase()
           : q;
       const rangeNumbers =
         brandId === "loro-piana" || brandId === "all"
-          ? expandLoroPianaStyleQuery(query).map((n) => n.toLowerCase())
+          ? expandLoroPianaStyleQuery(search).map((n) => n.toLowerCase())
           : [];
       if (rangeNumbers.length > 1) {
         const numberSet = new Set(rangeNumbers);
@@ -54,16 +80,45 @@ export function FabricSpecView({ suppliers, items }: FabricSpecViewProps) {
         );
       }
     }
-    return list.sort((a, b) => {
+    return list;
+  }, [items, itemsBySupplier, brandId, debouncedQuery]);
+
+  const sortedDisplay = useMemo(() => {
+    const sorted = [...filtered].sort((a, b) => {
       const brandCmp = (a.supplier?.name ?? "").localeCompare(b.supplier?.name ?? "");
       if (brandCmp !== 0 && brandId === "all") return brandCmp;
       return a.fabric_number.localeCompare(b.fabric_number);
     });
-  }, [items, brandId, query]);
+    return sorted.slice(0, 150);
+  }, [filtered, brandId]);
 
-  const display = filtered.slice(0, 150);
+  const showStockColumn = useMemo(
+    () => filtered.some((fabric) => fabric.stock_status && fabric.stock_status !== "in_stock"),
+    [filtered]
+  );
+
+  const showMillLineColumn =
+    brandId === "loro-piana" ||
+    (brandId === "all" && (itemsBySupplier.get("loro-piana")?.length ?? 0) > 0);
+
+  const showDrapersSwatch =
+    brandId === DRAPERS_SUPPLIER_ID ||
+    (brandId === "all" && sortedDisplay.some((f) => f.supplier_id === DRAPERS_SUPPLIER_ID));
+
+  const drapersFabricNumbers = useMemo(
+    () =>
+      showDrapersSwatch
+        ? sortedDisplay
+            .filter((f) => f.supplier_id === DRAPERS_SUPPLIER_ID)
+            .map((f) => f.fabric_number)
+            .slice(0, 60)
+        : [],
+    [showDrapersSwatch, sortedDisplay]
+  );
+
+  const drapersSwatchMap = useDrapersSwatchMap(drapersFabricNumbers);
+
   const activeBrand = brands.find((b) => b.id === brandId);
-  const showStockColumn = filtered.some((fabric) => fabric.stock_status && fabric.stock_status !== "in_stock");
 
   return (
     <div className="flex gap-6">
@@ -117,7 +172,8 @@ export function FabricSpecView({ suppliers, items }: FabricSpecViewProps) {
               {brandId === "all" ? "All brands" : activeBrand?.name ?? "—"}
             </h2>
             <p className="text-sm text-slate-500">
-              {filtered.length.toLocaleString()} fabrics · reference price list, not stock
+              {filtered.length.toLocaleString()} fabrics
+              {canViewPrices ? " · reference price list, not stock" : " · specs only, prices hidden"}
             </p>
           </div>
           <input
@@ -132,6 +188,8 @@ export function FabricSpecView({ suppliers, items }: FabricSpecViewProps) {
         <DataTable
           columns={[
             ...(brandId === "all" ? [{ key: "brand", label: "Brand" }] : []),
+            ...(showDrapersSwatch ? [{ key: "swatch", label: "", className: "w-10 px-2" }] : []),
+            ...(showMillLineColumn ? [{ key: "millLine", label: "Line" }] : []),
             { key: "fabricNo", label: "Fabric No." },
             { key: "composition", label: "Composition" },
             { key: "color", label: "Color" },
@@ -140,11 +198,44 @@ export function FabricSpecView({ suppliers, items }: FabricSpecViewProps) {
             { key: "width", label: "Width" },
           { key: "hsCode", label: "HS Code" },
           { key: "mill", label: "Mill" },
-          { key: "price", label: "List price/m" },
+          ...(canViewPrices ? [{ key: "price", label: "List price/m" }] : []),
           ...(showStockColumn ? [{ key: "stock", label: "Stock" }] : []),
           ]}
-          rows={display.map((f) => ({
-            ...(brandId === "all" ? { brand: f.supplier?.name ?? "—" } : {}),
+          rows={sortedDisplay.map((f) => ({
+            ...(brandId === "all"
+              ? {
+                  brand: formatFabricSupplierName(
+                    f.supplier_id,
+                    f.supplier?.name ?? f.supplier_id,
+                    f.fabric_number
+                  ),
+                }
+              : {}),
+            ...(showDrapersSwatch
+              ? {
+                  swatch:
+                    f.supplier_id === DRAPERS_SUPPLIER_ID ? (
+                      <DrapersFabricSwatch
+                        fabricNumber={f.fabric_number}
+                        src={drapersSwatchMap.get(f.fabric_number)?.square}
+                        zoomSrc={drapersSwatchMap.get(f.fabric_number)?.zoom}
+                      />
+                    ) : (
+                      <span className="inline-block h-7 w-7" aria-hidden />
+                    ),
+                }
+              : {}),
+            ...(showMillLineColumn
+              ? {
+                  millLine: isSolbiatiFabric(f.supplier_id, f.fabric_number) ? (
+                    <span className="font-medium text-amber-900">Solbiati</span>
+                  ) : f.supplier_id === "loro-piana" ? (
+                    "Loro Piana"
+                  ) : (
+                    "—"
+                  ),
+                }
+              : {}),
             fabricNo: <span className="font-mono font-medium">{f.fabric_number}</span>,
             composition: <span className="text-xs">{f.composition ?? "—"}</span>,
             color: f.color ?? "—",
@@ -155,12 +246,16 @@ export function FabricSpecView({ suppliers, items }: FabricSpecViewProps) {
             <span className="font-mono text-xs">{f.gn_code}</span>
           ) : "—",
           mill: f.weave_type ? <span className="text-xs">{f.weave_type}</span> : "—",
-          price:
-            f.unit_price != null ? (
-              <DualCurrencyPrice amount={f.unit_price} supplierId={f.supplier_id} unit="m" />
-            ) : (
-              <span className="text-slate-400">—</span>
-            ),
+          ...(canViewPrices
+            ? {
+                price:
+                  f.unit_price != null ? (
+                    <DualCurrencyPrice amount={f.unit_price} supplierId={f.supplier_id} unit="m" />
+                  ) : (
+                    <span className="text-slate-400">—</span>
+                  ),
+              }
+            : {}),
           stock: (() => {
             const label = formatFabricStockLabel(f);
             if (!label) return <span className="text-emerald-700">In stock</span>;

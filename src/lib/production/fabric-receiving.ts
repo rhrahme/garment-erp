@@ -1,4 +1,10 @@
-import { getFabricReceiptById, getFabricReceiptByLineId, readFabricReceipts, writeFabricReceipts } from "@/lib/data/fabric-receipts";
+import {
+  getFabricReceiptById,
+  archiveFabricReceipt,
+  getFabricReceiptByLineId,
+  mutateFabricReceipts,
+  readFabricReceipts,
+} from "@/lib/data/fabric-receipts";
 import { readProductionWorkOrders, writeProductionWorkOrders } from "@/lib/data/production-work-orders";
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import {
@@ -6,10 +12,38 @@ import {
   isFabricPrepType,
   nextFabricPrepStep,
 } from "@/lib/production/fabric-prep";
-import { formatLabelGarmentDescription, generateFabricLabelStickers, getGarmentPieces } from "@/lib/sales-orders/label-codes";
-import type { FabricReceipt, PendingFabricLine } from "@/lib/types/fabric-receipts";
-import type { FabricPrepType, ProductionWorkOrder } from "@/lib/types/production";
+import { qrScanPayload } from "@/lib/production/qr-labels";
+import {
+  fabricLineArticleNumber,
+  generateFabricLabelStickers,
+  getGarmentPieces,
+  productionCodeFromSticker,
+  supplierFabricProductionCode,
+} from "@/lib/sales-orders/label-codes";
+import { formatFabricSupplierName, normalizeFabricSupplierFields } from "@/lib/fabric-sourcing/supplier-display";
+import {
+  fabricLineHighlightLabel,
+  fabricLineToHighlightStage,
+  productionStageToHighlight,
+  scanStageStyles,
+  type ScanHighlightStage,
+} from "@/lib/production/scan-stage-highlight";
+import type {
+  FabricLineReceiveStatus,
+  FabricReceipt,
+  FabricReceivingLineRow,
+  FabricReceivingOrderRow,
+  FabricReceivingOverview,
+  PendingFabricLine,
+} from "@/lib/types/fabric-receipts";
+import type { FabricPrepStep, FabricPrepType, ProductionWorkOrder } from "@/lib/types/production";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
+
+const INACTIVE_SALES_ORDER_STATUSES = new Set(["complete", "cancelled", "delivered"]);
+
+function isActiveSalesOrder(order: { status: string }): boolean {
+  return !INACTIVE_SALES_ORDER_STATUSES.has(order.status);
+}
 
 function findSalesOrderLine(lineId: string): { order: SalesOrder; line: SalesOrderFabricLine; lineIndex: number } | null {
   for (const order of readSalesOrders().orders) {
@@ -28,7 +62,7 @@ function formatPendingLabel(
 ): string {
   const garmentLabel =
     pieceNames.length > 1 ? `${line.garment_type} (${pieceNames.join(" + ")})` : line.garment_type;
-  return `${order.client_name} · ${order.so_number} · ${line.supplier_name} ${line.fabric_number} · ${garmentLabel} · ${line.quantity} m`;
+  return `${order.client_name} · ${order.so_number} · ${formatFabricSupplierName(line.supplier_id, line.supplier_name, line.fabric_number)} ${line.fabric_number} · ${garmentLabel} · ${line.quantity} m`;
 }
 
 function enrichFabricReceipt(receipt: FabricReceipt): FabricReceipt {
@@ -47,12 +81,20 @@ function enrichFabricReceipt(receipt: FabricReceipt): FabricReceipt {
 }
 
 export function listPendingFabricLines(): PendingFabricLine[] {
-  const receivedLineIds = new Set(readFabricReceipts().receipts.map((receipt) => receipt.sales_order_line_id));
+  const receivedLineIds = new Set([
+    ...readFabricReceipts().receipts.map((receipt) => receipt.sales_order_line_id),
+    ...readProductionWorkOrders().work_orders.map((workOrder) => workOrder.sales_order_line_id),
+  ]);
+  const linesOnProductionFloor = new Set(
+    readProductionWorkOrders().work_orders.map((workOrder) => workOrder.sales_order_line_id)
+  );
   const pending: PendingFabricLine[] = [];
 
   for (const order of readSalesOrders().orders) {
+    if (!isActiveSalesOrder(order)) continue;
     order.fabric_lines.forEach((line, index) => {
       if (receivedLineIds.has(line.id)) return;
+      if (linesOnProductionFloor.has(line.id)) return;
 
       const pieceNames = getGarmentPieces(line.garment_type);
       pending.push({
@@ -63,7 +105,8 @@ export function listPendingFabricLines(): PendingFabricLine[] {
         garment_type: line.garment_type,
         piece_count: pieceNames.length,
         piece_names: pieceNames,
-        supplier_name: line.supplier_name,
+        supplier_id: line.supplier_id,
+        supplier_name: formatFabricSupplierName(line.supplier_id, line.supplier_name, line.fabric_number),
         fabric_number: line.fabric_number,
         fabric_meters: line.quantity,
         composition: line.composition,
@@ -87,84 +130,310 @@ export function listActiveFabricReceipts(): FabricReceipt[] {
     .sort((a, b) => b.received_at.localeCompare(a.received_at));
 }
 
-export function receiveFabricLine(sales_order_line_id: string): {
+function lineReceiveStatus(
+  receipt: FabricReceipt | undefined,
+  lineWorkOrders: ProductionWorkOrder[]
+): FabricLineReceiveStatus {
+  if (receipt) {
+    if (receipt.status === "handed_off") return "handed_off";
+    return receipt.status;
+  }
+  if (lineWorkOrders.length > 0) return "handed_off";
+  return "pending";
+}
+
+const PRODUCTION_PIPELINE_ORDER: ScanHighlightStage[] = [
+  "cutting",
+  "sewing",
+  "garment_wash",
+  "finishing",
+  "packed",
+  "completed",
+];
+
+function workOrdersByLineId(): Map<string, ProductionWorkOrder[]> {
+  const map = new Map<string, ProductionWorkOrder[]>();
+  for (const wo of readProductionWorkOrders().work_orders) {
+    const list = map.get(wo.sales_order_line_id) ?? [];
+    list.push(wo);
+    map.set(wo.sales_order_line_id, list);
+  }
+  return map;
+}
+
+function lineHasActiveProduction(workOrders: ProductionWorkOrder[]): boolean {
+  return workOrders.some((wo) => wo.status !== "completed");
+}
+
+function resolveHandedOffLineStage(workOrders: ProductionWorkOrder[]): ScanHighlightStage {
+  const active = workOrders.filter((wo) => wo.status !== "completed");
+  if (active.length === 0) return "completed";
+
+  const stages = new Set(active.map((wo) => productionStageToHighlight(wo.status)));
+  for (const stage of PRODUCTION_PIPELINE_ORDER) {
+    if (stages.has(stage)) return stage;
+  }
+  return "in_production";
+}
+
+function resolveLineScanStage(
+  status: FabricLineReceiveStatus,
+  prepStep: FabricPrepStep | null | undefined,
+  workOrders: ProductionWorkOrder[]
+): ScanHighlightStage {
+  if (status === "handed_off") return resolveHandedOffLineStage(workOrders);
+  return fabricLineToHighlightStage(status, prepStep);
+}
+
+function stickerScanStage(
+  status: FabricLineReceiveStatus,
+  prepStep: FabricPrepStep | null | undefined,
+  stickerCode: string,
+  workOrdersBySticker: Map<string, ProductionWorkOrder>
+): ScanHighlightStage {
+  const wo = workOrdersBySticker.get(stickerCode);
+  if (wo) return productionStageToHighlight(wo.status);
+  return fabricLineToHighlightStage(status, prepStep);
+}
+
+function buildLineStickerRows(
+  order: SalesOrder,
+  line: SalesOrderFabricLine,
+  lineIndex: number,
+  status: FabricLineReceiveStatus,
+  prepStep: FabricPrepStep | null | undefined,
+  workOrdersBySticker: Map<string, ProductionWorkOrder>
+): FabricReceivingLineRow["stickers"] {
+  const stickers =
+    line.label_stickers?.length > 0
+      ? line.label_stickers
+      : generateFabricLabelStickers(
+          order.client_reference ?? order.so_number,
+          lineIndex + 1,
+          line.garment_type
+        );
+
+  return stickers.map((sticker) => ({
+    sticker_code: sticker.code,
+    piece_name: sticker.piece_name,
+    production_code: productionCodeFromSticker(sticker.code, order.client_code),
+    scan_stage: stickerScanStage(status, prepStep, sticker.code, workOrdersBySticker),
+  }));
+}
+
+function listRecentFabricScans(
+  entries: Array<{ order: FabricReceivingOrderRow; line: FabricReceivingLineRow }>
+): FabricReceivingOverview["recent_scans"] {
+  return entries
+    .filter(({ line }) => line.status === "received" || line.status === "fabric_prep")
+    .sort((a, b) => {
+      const aAt = a.line.updated_at ?? a.line.received_at ?? "";
+      const bAt = b.line.updated_at ?? b.line.received_at ?? "";
+      return bAt.localeCompare(aAt);
+    })
+    .slice(0, 12)
+    .map(({ order, line }) => ({
+      receipt_id: line.receipt_id,
+      sales_order_line_id: line.sales_order_line_id,
+      so_number: order.so_number,
+      client_name: order.client_name,
+      article_number: line.article_number,
+      fabric_cut_code: line.fabric_cut_code,
+      garment_type: line.garment_type,
+      fabric_number: line.fabric_number,
+      status: line.status,
+      updated_at: line.updated_at ?? line.received_at,
+    }));
+}
+
+export async function listFabricReceivingOverview(
+  filter: "actionable" | "all_open" = "actionable"
+): Promise<FabricReceivingOverview> {
+  const allReceipts = (await readFabricReceiptsFreshAsync()).receipts;
+  const receiptsByLineId = new Map<string, FabricReceipt>();
+  for (const receipt of allReceipts) {
+    receiptsByLineId.set(receipt.sales_order_line_id, receipt);
+  }
+
+  const workOrdersByLine = workOrdersByLineId();
+  const workOrderBySticker = new Map<string, ProductionWorkOrder>();
+  for (const wo of readProductionWorkOrders().work_orders) {
+    workOrderBySticker.set(wo.sticker_code, wo);
+  }
+
+  const orders: FabricReceivingOrderRow[] = [];
+  let pendingLines = 0;
+  let activeQueueLines = 0;
+
+  for (const order of readSalesOrders().orders) {
+    if (!isActiveSalesOrder(order)) continue;
+    if (order.fabric_lines.length === 0) continue;
+
+    const lines: FabricReceivingLineRow[] = [];
+
+    order.fabric_lines.forEach((line, index) => {
+      const receipt = receiptsByLineId.get(line.id);
+      const lineWorkOrders = workOrdersByLine.get(line.id) ?? [];
+      const status = lineReceiveStatus(receipt, lineWorkOrders);
+      if (filter === "actionable" && status === "handed_off" && !lineHasActiveProduction(lineWorkOrders)) {
+        return;
+      }
+
+      const prepStep = receipt?.fabric_prep_step ?? null;
+      const stickerRows = buildLineStickerRows(order, line, index, status, prepStep, workOrderBySticker);
+      const scan_stage = resolveLineScanStage(status, prepStep, lineWorkOrders);
+      const scan_stage_label =
+        status === "handed_off"
+          ? scanStageStyles(scan_stage).label
+          : fabricLineHighlightLabel(status, prepStep);
+      const firstSticker = stickerRows[0]?.sticker_code ?? `${order.client_reference ?? order.so_number}-L${String(index + 1).padStart(2, "0")}`;
+      const fabric_cut_code = supplierFabricProductionCode(firstSticker, order.client_code);
+
+      if (status === "pending") pendingLines += 1;
+      if (status === "received" || status === "fabric_prep") activeQueueLines += 1;
+
+      lines.push({
+        sales_order_line_id: line.id,
+        receipt_id: receipt?.id ?? null,
+        article_number: fabricLineArticleNumber(index),
+        garment_type: line.garment_type,
+        fabric_number: line.fabric_number,
+        supplier_id: line.supplier_id,
+        supplier_name: formatFabricSupplierName(line.supplier_id, line.supplier_name, line.fabric_number),
+        fabric_meters: line.quantity,
+        composition: line.composition,
+        weight_gsm: line.weight_gsm,
+        width_cm: line.width_cm,
+        width_inches: line.width_inches,
+        status,
+        fabric_cut_code,
+        qr_payload: qrScanPayload(fabric_cut_code),
+        stickers: stickerRows,
+        received_at: receipt?.received_at ?? null,
+        updated_at: receipt?.updated_at ?? receipt?.received_at ?? null,
+        fabric_prep_type: receipt?.fabric_prep_type ?? null,
+        fabric_prep_step: prepStep,
+        scan_stage,
+        scan_stage_label,
+      });
+    });
+
+    if (lines.length === 0) continue;
+
+    orders.push({
+      sales_order_id: order.id,
+      so_number: order.so_number,
+      client_name: order.client_name,
+      client_code: order.client_code,
+      order_status: order.status,
+      lines,
+      pending_line_count: lines.filter((line) => line.status === "pending").length,
+      active_line_count: lines.filter((line) => line.status === "received" || line.status === "fabric_prep").length,
+    });
+  }
+
+  orders.sort((a, b) => {
+    if (a.pending_line_count !== b.pending_line_count) {
+      return b.pending_line_count - a.pending_line_count;
+    }
+    return b.so_number.localeCompare(a.so_number);
+  });
+
+  const totalLinesShown = orders.reduce((sum, order) => sum + order.lines.length, 0);
+  const lineEntries = orders.flatMap((order) => order.lines.map((line) => ({ order, line })));
+
+  return {
+    orders,
+    recent_scans: listRecentFabricScans(lineEntries),
+    summary: {
+      open_orders: orders.length,
+      pending_lines: pendingLines,
+      active_queue_lines: activeQueueLines,
+      total_lines_shown: totalLinesShown,
+    },
+  };
+}
+
+export async function receiveFabricLine(sales_order_line_id: string): Promise<{
   receipt: FabricReceipt;
   created: boolean;
   garment_description: string;
-} {
+}> {
   const lookup = findSalesOrderLine(sales_order_line_id);
   if (!lookup) {
     throw new Error("Sales order fabric line not found.");
   }
 
-  const existing = getFabricReceiptByLineId(sales_order_line_id);
-  if (existing) {
-    return {
-      receipt: existing,
-      created: false,
-      garment_description: lookup.line.garment_type,
-    };
-  }
-
   const { order, line } = lookup;
-  const now = new Date().toISOString();
 
-  const receipt: FabricReceipt = {
-    id: `fr-${Date.now()}`,
-    sales_order_id: order.id,
-    so_number: order.so_number,
-    sales_order_line_id: line.id,
-    client_id: order.client_id,
-    client_code: order.client_code,
-    client_name: order.client_name,
-    garment_type: line.garment_type,
-    fabric_number: line.fabric_number,
-    supplier_id: line.supplier_id,
-    supplier_name: line.supplier_name,
-    fabric_meters: line.quantity,
-    composition: line.composition,
-    weight_gsm: line.weight_gsm,
-    status: "received",
-    fabric_prep_type: null,
-    fabric_prep_step: null,
-    received_at: now,
-    updated_at: now,
-    handed_off_at: null,
-  };
+  return mutateFabricReceipts((store) => {
+    const existing = store.receipts.find((item) => item.sales_order_line_id === sales_order_line_id);
+    if (existing) {
+      return {
+        receipt: existing,
+        created: false,
+        garment_description: line.garment_type,
+      };
+    }
 
-  const store = readFabricReceipts();
-  store.receipts.unshift(receipt);
-  writeFabricReceipts(store);
+    const now = new Date().toISOString();
+    const supplierFields = normalizeFabricSupplierFields(line.supplier_id, line.supplier_name, line.fabric_number);
 
-  return {
-    receipt,
-    created: true,
-    garment_description: line.garment_type,
-  };
+    const receipt: FabricReceipt = {
+      id: `fr-${Date.now()}`,
+      sales_order_id: order.id,
+      so_number: order.so_number,
+      sales_order_line_id: line.id,
+      client_id: order.client_id,
+      client_code: order.client_code,
+      client_name: order.client_name,
+      garment_type: line.garment_type,
+      fabric_number: line.fabric_number,
+      supplier_id: supplierFields.supplier_id,
+      supplier_name: supplierFields.supplier_name,
+      fabric_meters: line.quantity,
+      composition: line.composition,
+      weight_gsm: line.weight_gsm,
+      status: "received",
+      fabric_prep_type: null,
+      fabric_prep_step: null,
+      received_at: now,
+      updated_at: now,
+      handed_off_at: null,
+    };
+
+    store.receipts.unshift(receipt);
+
+    return {
+      receipt,
+      created: true,
+      garment_description: line.garment_type,
+    };
+  });
 }
 
-export function startFabricReceiptPrep(id: string, fabric_prep_type: FabricPrepType): FabricReceipt {
+export async function startFabricReceiptPrep(id: string, fabric_prep_type: FabricPrepType): Promise<FabricReceipt> {
   if (!isFabricPrepType(fabric_prep_type)) {
     throw new Error("Select a fabric preparation type.");
   }
 
-  const store = readFabricReceipts();
-  const receipt = store.receipts.find((item) => item.id === id);
-  if (!receipt) {
-    throw new Error("Fabric receipt not found.");
-  }
-  if (receipt.status !== "received") {
-    throw new Error("Fabric preparation can only start after the fabric is received.");
-  }
+  return mutateFabricReceipts((store) => {
+    const receipt = store.receipts.find((item) => item.id === id);
+    if (!receipt) {
+      throw new Error("Fabric receipt not found.");
+    }
+    if (receipt.status !== "received") {
+      throw new Error("Fabric preparation can only start after the fabric is received.");
+    }
 
-  const now = new Date().toISOString();
-  receipt.status = "fabric_prep";
-  receipt.fabric_prep_type = fabric_prep_type;
-  receipt.fabric_prep_step = firstFabricPrepStep(fabric_prep_type);
-  receipt.updated_at = now;
+    const now = new Date().toISOString();
+    receipt.status = "fabric_prep";
+    receipt.fabric_prep_type = fabric_prep_type;
+    receipt.fabric_prep_step = firstFabricPrepStep(fabric_prep_type);
+    receipt.updated_at = now;
 
-  writeFabricReceipts(store);
-  return receipt;
+    return receipt;
+  });
 }
 
 function createProductionWorkOrdersFromReceipt(
@@ -179,6 +448,7 @@ function createProductionWorkOrdersFromReceipt(
       : generateFabricLabelStickers(order.client_reference ?? order.so_number, lineIndex + 1, line.garment_type);
 
   const now = new Date().toISOString();
+  const supplierName = formatFabricSupplierName(line.supplier_id, line.supplier_name, line.fabric_number);
   return stickers.map((sticker, index) => ({
     id: `pwo-${Date.now()}-${index}`,
     sticker_code: sticker.code,
@@ -192,7 +462,7 @@ function createProductionWorkOrdersFromReceipt(
     piece_name: sticker.piece_name,
     fabric_number: line.fabric_number,
     supplier_id: line.supplier_id,
-    supplier_name: line.supplier_name,
+    supplier_name: supplierName,
     fabric_meters: line.quantity,
     status: "cutting" as const,
     fabric_prep_type: null,
@@ -203,7 +473,7 @@ function createProductionWorkOrdersFromReceipt(
   }));
 }
 
-function handoffFabricReceiptToProduction(receipt: FabricReceipt): ProductionWorkOrder[] {
+async function handoffFabricReceiptToProduction(receipt: FabricReceipt): Promise<ProductionWorkOrder[]> {
   const lookup = findSalesOrderLine(receipt.sales_order_line_id);
   if (!lookup) {
     throw new Error("Sales order fabric line not found.");
@@ -212,56 +482,61 @@ function handoffFabricReceiptToProduction(receipt: FabricReceipt): ProductionWor
   const workOrders = createProductionWorkOrdersFromReceipt(receipt, lookup.order, lookup.line, lookup.lineIndex);
   const productionStore = readProductionWorkOrders();
   productionStore.work_orders.unshift(...workOrders);
-  writeProductionWorkOrders(productionStore);
+  await writeProductionWorkOrders(productionStore);
 
   return workOrders;
 }
 
-export function advanceFabricReceipt(id: string): {
+export async function advanceFabricReceipt(id: string): Promise<{
   receipt: FabricReceipt;
   work_orders: ProductionWorkOrder[];
-} {
-  const store = readFabricReceipts();
-  const receipt = store.receipts.find((item) => item.id === id);
-  if (!receipt) {
-    throw new Error("Fabric receipt not found.");
-  }
-
-  const now = new Date().toISOString();
-
-  if (receipt.status === "fabric_prep") {
-    if (!receipt.fabric_prep_type || !receipt.fabric_prep_step) {
-      throw new Error("Fabric preparation type is missing.");
+}> {
+  const handoffResult = await mutateFabricReceipts(async (store) => {
+    const receipt = store.receipts.find((item) => item.id === id);
+    if (!receipt) {
+      throw new Error("Fabric receipt not found.");
     }
 
-    const nextStep = nextFabricPrepStep(receipt.fabric_prep_type, receipt.fabric_prep_step);
-    if (nextStep) {
-      receipt.fabric_prep_step = nextStep;
+    const now = new Date().toISOString();
+
+    if (receipt.status === "fabric_prep") {
+      if (!receipt.fabric_prep_type || !receipt.fabric_prep_step) {
+        throw new Error("Fabric preparation type is missing.");
+      }
+
+      const nextStep = nextFabricPrepStep(receipt.fabric_prep_type, receipt.fabric_prep_step);
+      if (nextStep) {
+        receipt.fabric_prep_step = nextStep;
+        receipt.updated_at = now;
+        return { receipt, work_orders: [] as ProductionWorkOrder[], handoff: false };
+      }
+
+      if (receipt.fabric_prep_step !== "iron") {
+        throw new Error("Fabric preparation must finish with ironing before cutting.");
+      }
+
+      receipt.status = "handed_off";
+      receipt.fabric_prep_type = null;
+      receipt.fabric_prep_step = null;
+      receipt.handed_off_at = now;
       receipt.updated_at = now;
-      writeFabricReceipts(store);
-      return { receipt, work_orders: [] };
+      return { receipt, work_orders: [] as ProductionWorkOrder[], handoff: true };
     }
 
-    if (receipt.fabric_prep_step !== "iron") {
-      throw new Error("Fabric preparation must finish with ironing before cutting.");
+    if (receipt.status === "received") {
+      throw new Error("Choose fabric preparation (wash, soak, or iron) before handoff.");
     }
 
-    receipt.status = "handed_off";
-    receipt.fabric_prep_type = null;
-    receipt.fabric_prep_step = null;
-    receipt.handed_off_at = now;
-    receipt.updated_at = now;
-    writeFabricReceipts(store);
+    throw new Error("This fabric has already been handed off to production.");
+  });
 
-    const work_orders = handoffFabricReceiptToProduction(receipt);
-    return { receipt, work_orders };
+  if (handoffResult.handoff) {
+    const work_orders = await handoffFabricReceiptToProduction(handoffResult.receipt);
+    await archiveFabricReceipt(handoffResult.receipt);
+    return { receipt: handoffResult.receipt, work_orders };
   }
 
-  if (receipt.status === "received") {
-    throw new Error("Choose fabric preparation (wash, soak, or iron) before handoff.");
-  }
-
-  throw new Error("This fabric has already been handed off to production.");
+  return { receipt: handoffResult.receipt, work_orders: handoffResult.work_orders };
 }
 
 export function formatFabricReceiptDescription(receipt: FabricReceipt): string {
@@ -271,9 +546,10 @@ export function formatFabricReceiptDescription(receipt: FabricReceipt): string {
 }
 
 export function formatFabricReceiptHandoffMessage(receipt: FabricReceipt, workOrders: ProductionWorkOrder[]): string {
-  if (workOrders.length === 1) {
-    return `Fabric prep complete — ${formatLabelGarmentDescription(workOrders[0]!.garment_type, workOrders[0]!.piece_name)} handed off to Production.`;
+  const pieceNames = getGarmentPieces(receipt.garment_type);
+  if (pieceNames.length > 1) {
+    const pieces = workOrders.map((order) => order.piece_name).join(" + ") || pieceNames.join(" + ");
+    return `Fabric prep complete — stick ${pieces} labels from the cutting pack, then scan at Cutting.`;
   }
-  const pieces = workOrders.map((order) => order.piece_name).join(" + ");
-  return `Fabric prep complete — ${receipt.garment_type} split into ${workOrders.length} pieces (${pieces}) on Production.`;
+  return `Fabric prep complete — ready for cutting. Scan the same fabric cut sticker at Cutting.`;
 }

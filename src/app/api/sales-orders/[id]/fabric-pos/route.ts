@@ -5,7 +5,7 @@ import { notifyIntegration } from "@/lib/integrations";
 export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params;
-    const result = createFabricPosFromSalesOrder(id);
+    const result = await createFabricPosFromSalesOrder(id);
 
     await notifyIntegration("fabric_order.created", {
       sales_order_id: result.order.id,

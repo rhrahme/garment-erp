@@ -1,143 +1,107 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowRight, Package } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { AutoSaveStatusBar } from "@/components/ui/AutoSaveStatus";
-import { StatusBadge } from "@/components/ui/PageHeader";
-import { useFabricReceipts } from "@/components/fabric-receiving/useFabricReceipts";
-import { useLocalDraft } from "@/hooks/useLocalDraft";
-import { DRAFT_KEYS } from "@/lib/autosave/draft-keys";
+import { useCallback, useState } from "react";
 import {
-  FABRIC_PREP_TYPES,
-  completeFabricPrepActionLabel,
-  fabricPrepStatusLabel,
+  scanHighlightForFabricStation,
+  scanStageStyles,
+} from "@/lib/production/scan-stage-highlight";
+import type { ScanStation } from "@/lib/production/stage-scan";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { FabricReceivingWorkList } from "@/components/fabric-receiving/FabricReceivingWorkList";
+import { StageScanPanel } from "@/components/production/StageScanPanel";
+import type { StageScanResponse } from "@/components/production/StickerScanInput";
+import {
   fabricPrepTypeLabel,
+  completeFabricPrepActionLabel,
 } from "@/lib/production/fabric-prep";
-import { getGarmentPieces } from "@/lib/sales-orders/label-codes";
-import type { FabricReceipt, PendingFabricLine } from "@/lib/types/fabric-receipts";
 import type { FabricPrepType } from "@/lib/types/production";
-import { formatDate } from "@/lib/utils";
 
+type SessionScan = {
+  id: string;
+  scanned_at: string;
+  fabric_cut_code: string;
+  article_number: number;
+  garment_type: string;
+  fabric_number: string;
+  so_number: string;
+  notice?: StageScanResponse["notice"];
+  station: ScanStation;
+  message: string;
+};
 
-function formatReceiptDescription(receipt: FabricReceipt): string {
-  const pieces = getGarmentPieces(receipt.garment_type);
-  if (pieces.length === 1) return receipt.garment_type;
-  return `${receipt.garment_type} (${pieces.join(" + ")})`;
-}
-
-function FabricSpecs({ composition, weightGsm }: { composition: string | null; weightGsm: number | null }) {
-  if (!composition && weightGsm == null) return null;
-
-  return (
-    <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-      {composition && (
-        <p>
-          <span className="font-medium text-slate-800">Composition:</span> {composition}
-        </p>
-      )}
-      {weightGsm != null && (
-        <p className={composition ? "mt-1" : undefined}>
-          <span className="font-medium text-slate-800">Weight:</span> {weightGsm} gsm
-        </p>
-      )}
-    </div>
-  );
+function formatArticle(articleNumber: number): string {
+  return `L${String(articleNumber).padStart(2, "0")}`;
 }
 
 export function FabricReceivingWorkspace() {
-  const { receipts, loading, error, load, setError } = useFabricReceipts();
-  const [pending, setPending] = useState<PendingFabricLine[]>([]);
-  const [pendingLoading, setPendingLoading] = useState(true);
-  const [selectedLineId, setSelectedLineId] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
   const [prepTypeByReceipt, setPrepTypeByReceipt] = useState<Record<string, FabricPrepType>>({});
-  const [receiving, setReceiving] = useState(false);
   const [actingId, setActingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [readyCount, setReadyCount] = useState(0);
+  const [tabAfterScan, setTabAfterScan] = useState<
+    "to_receive" | "awaiting_prep" | "in_prep" | "all" | null
+  >(null);
+  const [sessionScans, setSessionScans] = useState<SessionScan[]>([]);
 
-  const workspaceDraft = useMemo(
-    () => ({
-      selectedLineId,
-      prepTypeByReceipt,
-    }),
-    [selectedLineId, prepTypeByReceipt]
-  );
-
-  const { status: workspaceDraftStatus, isDirty: workspaceDraftDirty } = useLocalDraft({
-    draftKey: DRAFT_KEYS.fabricReceiving,
-    value: workspaceDraft,
-    isEmpty: (draft) => !draft.selectedLineId && Object.keys(draft.prepTypeByReceipt).length === 0,
-    onRestore: (draft) => {
-      setSelectedLineId(draft.selectedLineId);
-      setPrepTypeByReceipt(draft.prepTypeByReceipt);
-    },
-  });
-
-  const loadPending = useCallback(async () => {
-    setPendingLoading(true);
-    try {
-      const res = await fetch("/api/fabric-receiving/pending");
-      if (!res.ok) throw new Error("Failed to load expected fabric");
-      const data = (await res.json()) as { pending: PendingFabricLine[] };
-      setPending(data.pending);
-    } catch {
-      setPending([]);
-    } finally {
-      setPendingLoading(false);
-    }
+  const refreshAll = useCallback(() => {
+    setReloadKey((key) => key + 1);
   }, []);
 
-  const loadReadyCount = useCallback(async () => {
-    try {
-      const res = await fetch("/api/production/work-orders");
-      if (!res.ok) return;
-      const data = (await res.json()) as { work_orders: { status: string }[] };
-      setReadyCount(data.work_orders.filter((order) => order.status === "cutting").length);
-    } catch {
-      setReadyCount(0);
-    }
-  }, []);
+  function handleScanResult(result: StageScanResponse) {
+    setTabAfterScan(
+      result.notice === "advanced" ||
+        result.station === "wash" ||
+        result.station === "soak" ||
+        result.station === "iron"
+        ? "in_prep"
+        : result.notice === "created"
+          ? "awaiting_prep"
+          : "all"
+    );
+    refreshAll();
+    setSessionScans((current) =>
+      [
+        {
+          id: `${Date.now()}-${result.fabric_cut_code}`,
+          scanned_at: new Date().toISOString(),
+          fabric_cut_code: result.fabric_cut_code,
+          article_number: result.article_number,
+          garment_type: result.garment_type,
+          fabric_number: result.fabric_number,
+          so_number: result.so_number,
+          notice: result.notice,
+          station: result.station,
+          message: result.message,
+        },
+        ...current,
+      ].slice(0, 25)
+    );
+  }
 
-  useEffect(() => {
-    void loadPending();
-    void loadReadyCount();
-  }, [loadPending, loadReadyCount]);
-
-  const receivedCount = receipts.filter((receipt) => receipt.status === "received").length;
-  const prepCount = receipts.filter((receipt) => receipt.status === "fabric_prep").length;
-
-  async function handleReceive(event: React.FormEvent) {
-    event.preventDefault();
+  async function handleReceiveLine(salesOrderLineId: string) {
     setError(null);
     setMessage(null);
-
-    if (!selectedLineId) {
-      setError("Select fabric from the list.");
-      return;
-    }
-
-    setReceiving(true);
+    setActingId(salesOrderLineId);
     try {
       const res = await fetch("/api/fabric-receiving/receive", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sales_order_line_id: selectedLineId }),
+        body: JSON.stringify({ sales_order_line_id: salesOrderLineId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to receive fabric");
-
       setMessage(
         data.created
-          ? `Fabric received for ${data.garment_description}. One fabric cut — choose preparation before handoff.`
-          : `Fabric already received (${data.garment_description}).`
+          ? `Received — ${data.garment_description}.`
+          : `Already received — ${data.garment_description}.`
       );
-      setSelectedLineId("");
-      await Promise.all([load(), loadPending(), loadReadyCount()]);
+      refreshAll();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to receive fabric");
     } finally {
-      setReceiving(false);
+      setActingId(null);
     }
   }
 
@@ -154,8 +118,8 @@ export function FabricReceivingWorkspace() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to start fabric prep");
-      setMessage(`Fabric prep started: ${fabricPrepTypeLabel(fabric_prep_type)}.`);
-      await load();
+      setMessage(`Prep started — ${fabricPrepTypeLabel(fabric_prep_type)}.`);
+      refreshAll();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start fabric prep");
     } finally {
@@ -178,12 +142,18 @@ export function FabricReceivingWorkspace() {
 
       if (data.work_orders?.length > 0) {
         const pieces = data.work_orders.map((order: { piece_name: string }) => order.piece_name).join(" + ");
-        setMessage(`Fabric prep complete — split into ${data.work_orders.length} production piece${data.work_orders.length === 1 ? "" : "s"} (${pieces}).`);
-        await Promise.all([load(), loadPending(), loadReadyCount()]);
+        setMessage(
+          `Handed to production — ${data.work_orders.length} piece${data.work_orders.length === 1 ? "" : "s"} (${pieces}).`
+        );
       } else {
-        setMessage(`Updated to ${data.receipt.fabric_prep_step ?? "next step"}.`);
-        await load();
+        const receipt = data.receipt;
+        const action =
+          receipt?.fabric_prep_type && receipt?.fabric_prep_step
+            ? completeFabricPrepActionLabel(receipt.fabric_prep_type, receipt.fabric_prep_step)
+            : null;
+        setMessage(action ? `Advanced — ${action.replace(/^Finish → /, "")}` : "Prep step updated.");
       }
+      refreshAll();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to advance fabric prep");
     } finally {
@@ -192,50 +162,14 @@ export function FabricReceivingWorkspace() {
   }
 
   return (
-    <div className="space-y-8">
-      <AutoSaveStatusBar status={workspaceDraftStatus} isDirty={workspaceDraftDirty} variant="local" />
-
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
-        <div className="flex items-start gap-3">
-          <div className="rounded-lg bg-sky-50 p-2 text-sky-600">
-            <Package className="h-5 w-5" />
-          </div>
-          <div className="flex-1">
-            <h2 className="text-lg font-semibold text-slate-900">Receive fabric</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Fabric arrives as one cut per order line (e.g. one piece for a full suit). Select what arrived, prepare it,
-              then it splits into separate pieces for production.
-            </p>
-            <form onSubmit={handleReceive} className="mt-4 flex flex-wrap items-end gap-3">
-              <label className="block min-w-[280px] flex-1 text-sm">
-                <span className="font-medium text-slate-700">Expected fabric</span>
-                <select
-                  value={selectedLineId}
-                  onChange={(e) => setSelectedLineId(e.target.value)}
-                  className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                  disabled={pendingLoading}
-                >
-                  <option value="">
-                    {pendingLoading
-                      ? "Loading ordered fabric…"
-                      : pending.length === 0
-                        ? "No fabric waiting to be received"
-                        : "Select fabric to receive…"}
-                  </option>
-                  {pending.map((item) => (
-                    <option key={item.sales_order_line_id} value={item.sales_order_line_id}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <Button type="submit" disabled={receiving || !selectedLineId}>
-                {receiving ? "Receiving…" : "Receive fabric"}
-              </Button>
-            </form>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <StageScanPanel
+        stations={["receive", "wash", "soak", "iron"]}
+        scanContext="fabric-receiving"
+        onRefresh={refreshAll}
+        onScanMessage={setMessage}
+        onScanResult={handleScanResult}
+      />
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
@@ -246,106 +180,73 @@ export function FabricReceivingWorkspace() {
         </div>
       )}
 
-      <div>
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">Queue</h2>
-        <div className="flex flex-wrap gap-2">
-          <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 text-center">
-            <p className="text-2xl font-bold text-slate-900">{receivedCount}</p>
-            <p className="text-xs font-medium text-slate-600">Awaiting prep</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 text-center">
-            <p className="text-2xl font-bold text-slate-900">{prepCount}</p>
-            <p className="text-xs font-medium text-slate-600">In fabric prep</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 text-center">
-            <p className="text-2xl font-bold text-slate-900">{readyCount}</p>
-            <p className="text-xs font-medium text-slate-600">On production floor</p>
-          </div>
-        </div>
-      </div>
-
-      {loading ? (
-        <p className="text-sm text-slate-500">Loading…</p>
-      ) : receipts.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-500">
-          No fabric waiting — select from the list when fabric arrives.
-        </p>
-      ) : (
-        <div className="space-y-3">
-          {receipts.map((receipt) => {
-            const prepAction =
-              receipt.status === "fabric_prep" && receipt.fabric_prep_type && receipt.fabric_prep_step
-                ? completeFabricPrepActionLabel(receipt.fabric_prep_type, receipt.fabric_prep_step)
-                : null;
-
-            return (
-              <div key={receipt.id} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
-                <div className="md:flex md:items-start md:justify-between md:gap-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-slate-900">{formatReceiptDescription(receipt)}</p>
-                    <p className="mt-1 text-sm text-slate-700">{receipt.client_name}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      {receipt.so_number} · {receipt.supplier_name} {receipt.fabric_number} · {receipt.fabric_meters} m ·
-                      received {formatDate(receipt.received_at.slice(0, 10))}
-                    </p>
+      {sessionScans.length > 0 && (
+        <section className="rounded-xl border border-indigo-200 bg-white px-5 py-4">
+          <h2 className="text-lg font-semibold text-slate-900">This session — your scans</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Every scan in this session, newest first. Use the fabric cut code to find the row on the work list.
+          </p>
+          <ul className="mt-3 space-y-2">
+            {sessionScans.map((scan) => {
+              const stage =
+                scan.notice === "created" || scan.notice === "already_received"
+                  ? scanStageStyles("received")
+                  : scan.station === "receive" ||
+                      scan.station === "wash" ||
+                      scan.station === "soak" ||
+                      scan.station === "iron"
+                    ? scanStageStyles(scanHighlightForFabricStation(scan.station))
+                    : scanStageStyles("received");
+              return (
+                <li
+                  key={scan.id}
+                  className={cn("rounded-lg border px-3 py-2.5", stage.row, "border-slate-200")}
+                >
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <span className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                      Art. {formatArticle(scan.article_number)}
+                    </span>
+                    <code className="text-lg font-bold text-indigo-900">{scan.fabric_cut_code}</code>
                   </div>
-                  <div className="mt-3 md:mt-0 md:shrink-0">
-                    <StatusBadge status={receipt.status === "fabric_prep" ? "fabric_prep" : "received"} />
-                  </div>
-                </div>
-
-                {(receipt.status === "received" || receipt.status === "fabric_prep") && (
-                  <div className="space-y-3 border-t border-slate-100 pt-3">
-                    <FabricSpecs composition={receipt.composition} weightGsm={receipt.weight_gsm} />
-
-                    {receipt.status === "received" && (
-                      <div className="flex flex-wrap items-end gap-3">
-                        <label className="block text-sm">
-                          <span className="font-medium text-slate-700">Fabric preparation</span>
-                          <select
-                            value={prepTypeByReceipt[receipt.id] ?? "iron_only"}
-                            onChange={(e) =>
-                              setPrepTypeByReceipt((prev) => ({
-                                ...prev,
-                                [receipt.id]: e.target.value as FabricPrepType,
-                              }))
-                            }
-                            className="mt-1 block rounded-lg border border-slate-300 px-3 py-2"
-                          >
-                            {FABRIC_PREP_TYPES.map((type) => (
-                              <option key={type.id} value={type.id}>
-                                {type.label}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <Button size="sm" onClick={() => void startFabricPrep(receipt.id)} disabled={actingId === receipt.id}>
-                          {actingId === receipt.id ? "Starting…" : "Start fabric prep"}
-                        </Button>
-                      </div>
-                    )}
-
-                    {receipt.status === "fabric_prep" && receipt.fabric_prep_type && receipt.fabric_prep_step && (
-                      <p className="text-sm text-amber-800">
-                        {fabricPrepStatusLabel(receipt.fabric_prep_type, receipt.fabric_prep_step)}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {prepAction && (
-                  <div className="border-t border-slate-100 pt-3">
-                    <Button size="sm" onClick={() => void advancePrep(receipt.id)} disabled={actingId === receipt.id}>
-                      <ArrowRight className="mr-1 h-4 w-4" />
-                      {actingId === receipt.id ? "Updating…" : prepAction}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                  <p className="mt-1 text-sm font-medium text-slate-900">
+                    {scan.garment_type} · {scan.fabric_number}
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-600">
+                    {scan.so_number} · {new Date(scan.scanned_at).toLocaleTimeString()}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-700">{scan.message}</p>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
+
+      <FabricReceivingWorkList
+        reloadKey={reloadKey}
+        tabAfterScan={tabAfterScan}
+        highlightCutCodes={sessionScans.map((scan) => scan.fabric_cut_code)}
+        actingId={actingId}
+        prepTypeByReceipt={prepTypeByReceipt}
+        onPrepTypeChange={(receiptId, type) =>
+          setPrepTypeByReceipt((prev) => ({ ...prev, [receiptId]: type }))
+        }
+        onReceiveLine={handleReceiveLine}
+        onStartPrep={startFabricPrep}
+        onAdvancePrep={advancePrep}
+      />
+
+      <p className="text-center text-sm text-slate-500">
+        After ironing, pieces move to{" "}
+        <Link href="/production" className="font-medium text-indigo-600 hover:text-indigo-800">
+          Production
+        </Link>
+        .{" "}
+        <Link href="/production/floor-map" className="font-medium text-indigo-600 hover:text-indigo-800">
+          Floor map
+        </Link>{" "}
+        shows where Receive, Wash, Soak, and Iron stations sit.
+      </p>
     </div>
   );
 }

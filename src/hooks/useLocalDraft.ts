@@ -16,6 +16,8 @@ type UseLocalDraftOptions<T> = {
   delayMs?: number;
   onRestore?: (value: T) => void;
   isEmpty?: (value: T) => boolean;
+  /** When false, stored drafts are held until restorePending() is called. Default true. */
+  autoRestore?: boolean;
 };
 
 export function useLocalDraft<T>({
@@ -23,17 +25,21 @@ export function useLocalDraft<T>({
   value,
   enabled = true,
   canSave = true,
-  delayMs = 400,
+  delayMs = 20_000,
   onRestore,
   isEmpty,
+  autoRestore = true,
 }: UseLocalDraftOptions<T>) {
   const [status, setStatus] = useState<AutoSaveStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [restored, setRestored] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [hasPendingRestore, setHasPendingRestore] = useState(false);
+  const [pendingDraft, setPendingDraft] = useState<T | null>(null);
 
   const valueRef = useRef(value);
   const onRestoreRef = useRef(onRestore);
+  const pendingDraftRef = useRef<T | null>(null);
   const lastWrittenRef = useRef<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedFlashRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -83,12 +89,35 @@ export function useLocalDraft<T>({
     setHydrated(true);
 
     const stored = readLocalDraft<T>(draftKey);
-    if (stored && onRestoreRef.current && !(isEmpty?.(stored) ?? false)) {
-      onRestoreRef.current(stored);
-      lastWrittenRef.current = JSON.stringify(stored);
-      setRestored(true);
+    if (stored && !(isEmpty?.(stored) ?? false)) {
+      if (autoRestore && onRestoreRef.current) {
+        onRestoreRef.current(stored);
+        lastWrittenRef.current = JSON.stringify(stored);
+        setRestored(true);
+      } else {
+        pendingDraftRef.current = stored;
+        setPendingDraft(stored);
+        setHasPendingRestore(true);
+      }
     }
-  }, [draftKey, enabled, isEmpty]);
+  }, [autoRestore, draftKey, enabled, isEmpty]);
+
+  const restorePending = useCallback(() => {
+    const stored = pendingDraftRef.current ?? readLocalDraft<T>(draftKey);
+    if (!stored || (isEmpty?.(stored) ?? false) || !onRestoreRef.current) return;
+    onRestoreRef.current(stored);
+    lastWrittenRef.current = JSON.stringify(stored);
+    setRestored(true);
+    setHasPendingRestore(false);
+    pendingDraftRef.current = null;
+    setPendingDraft(null);
+  }, [draftKey, isEmpty]);
+
+  const dismissPendingRestore = useCallback(() => {
+    pendingDraftRef.current = null;
+    setPendingDraft(null);
+    setHasPendingRestore(false);
+  }, []);
 
   useEffect(() => {
     if (!enabled || !hydrated) return;
@@ -115,7 +144,7 @@ export function useLocalDraft<T>({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [canSave, delayMs, draftKey, enabled, hydrated, isEmpty, persistNow, value, status]);
+  }, [canSave, delayMs, draftKey, enabled, hydrated, isEmpty, persistNow, value]);
 
   useEffect(() => {
     if (!enabled || !hydrated || !canSave || isEmpty?.(value)) return;
@@ -156,6 +185,9 @@ export function useLocalDraft<T>({
   const clearDraft = useCallback(() => {
     clearLocalDraft(draftKey);
     lastWrittenRef.current = null;
+    pendingDraftRef.current = null;
+    setPendingDraft(null);
+    setHasPendingRestore(false);
     setRestored(false);
     setStatus("idle");
     setError(null);
@@ -170,9 +202,13 @@ export function useLocalDraft<T>({
     error,
     restored,
     hydrated,
+    hasPendingRestore,
+    pendingDraft: hasPendingRestore ? pendingDraft : null,
     isDirty: Boolean(canSave && !(isEmpty?.(value) ?? false)),
     clearDraft,
     dismissRestore,
+    restorePending,
+    dismissPendingRestore,
     saveNow: persistNow,
   };
 }

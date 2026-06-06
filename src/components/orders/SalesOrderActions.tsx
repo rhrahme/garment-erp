@@ -1,15 +1,24 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { DownloadSalesOrderPdfButton } from "@/components/orders/DownloadSalesOrderPdfButton";
 import { Badge } from "@/components/ui/Badge";
+import { DeleteSalesOrderButton } from "@/components/orders/DeleteSalesOrderButton";
+import { FabricPriceRevealToggle, MaskedFabricPrice } from "@/components/orders/FabricPriceRevealToggle";
+import { CreateInvoiceButton } from "@/components/invoicing/CreateInvoiceButton";
 import { DeliveryDestinationTabs } from "@/components/shipping/DeliveryDestinationTabs";
-import { formatLabelGarmentDescription } from "@/lib/sales-orders/label-codes";
+import { FabricReplacementBadge, FabricStockBadge } from "@/components/fabric/FabricStockBadge";
+import { formatFabricStockLabel } from "@/lib/fabric-sourcing/fabric-stock";
+import { FabricSupplierName } from "@/components/fabric/FabricSupplierName";
+import { fabricSupplierGroupKey, formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import { formatSupplierUnitPrice } from "@/lib/currency/format";
+import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
+import { formatLabelGarmentDescription } from "@/lib/sales-orders/label-codes";
 
 function formatWidth(line: SalesOrderFabricLine) {
   if (line.width_cm != null) return `${line.width_cm} cm`;
@@ -22,7 +31,19 @@ function formatLinePrice(line: SalesOrderFabricLine) {
   return formatSupplierUnitPrice(line.unit_price, line.supplier_id, line.unit);
 }
 
-export function SalesOrderActions({ order }: { order: SalesOrder }) {
+export function SalesOrderActions({
+  order,
+  existingInvoiceId = null,
+  isReadyMade = false,
+  canViewFabricPrices = false,
+  isClientManager = false,
+}: {
+  order: SalesOrder;
+  existingInvoiceId?: string | null;
+  isReadyMade?: boolean;
+  canViewFabricPrices?: boolean;
+  isClientManager?: boolean;
+}) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [savingDestination, setSavingDestination] = useState(false);
@@ -30,22 +51,42 @@ export function SalesOrderActions({ order }: { order: SalesOrder }) {
     order.delivery_destination ?? ""
   );
   const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    async function loadSession() {
+      try {
+        const res = await fetch("/api/auth/session");
+        if (!res.ok) return;
+        const data = (await res.json()) as { is_admin?: boolean };
+        setIsAdmin(Boolean(data.is_admin));
+      } catch {
+        /* ignore */
+      }
+    }
+    void loadSession();
+  }, []);
 
   const supplierGroups = order.fabric_lines.reduce<
     Record<string, { name: string; lines: typeof order.fabric_lines }>
   >((acc, line) => {
-    const bucket = acc[line.supplier_id] ?? { name: line.supplier_name, lines: [] };
+    const key = fabricSupplierGroupKey(line.supplier_id, line.fabric_number);
+    const name = formatFabricSupplierName(line.supplier_id, line.supplier_name, line.fabric_number);
+    const bucket = acc[key] ?? { name, lines: [] };
     bucket.lines.push(line);
-    acc[line.supplier_id] = bucket;
+    acc[key] = bucket;
     return acc;
   }, {});
+
+  const fabricTotals = getFabricTotalsSummary(order.fabric_lines);
 
   const allStickers = order.fabric_lines.flatMap((line) =>
     (line.label_stickers ?? []).map((sticker) => ({
       ...sticker,
       fabric_number: line.fabric_number,
       garment_type: line.garment_type,
-      supplier_name: line.supplier_name,
+      supplier_id: line.supplier_id,
+      supplier_name: formatFabricSupplierName(line.supplier_id, line.supplier_name, line.fabric_number),
     }))
   );
 
@@ -79,6 +120,14 @@ export function SalesOrderActions({ order }: { order: SalesOrder }) {
   async function createFabricPos() {
     if (!order.delivery_destination && !deliveryDestination) {
       setError("Select a fabric delivery destination before creating supplier emails.");
+      return;
+    }
+
+    const pendingReplacements = order.fabric_lines.filter((line) => line.needs_replacement);
+    if (pendingReplacements.length > 0) {
+      setError(
+        `Pick replacements for ${pendingReplacements.map((line) => line.fabric_number).join(", ")} before creating supplier emails.`
+      );
       return;
     }
 
@@ -123,11 +172,32 @@ export function SalesOrderActions({ order }: { order: SalesOrder }) {
 
       {allStickers.length > 0 && (
         <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-6">
-          <h2 className="text-lg font-semibold text-slate-900">Label sticker codes</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            One unique code per garment piece — the fabric supplier prints these on stickers so production can identify
-            the client and garment when fabric arrives.
-          </p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Label sticker codes</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                One unique code per garment piece — print QR stickers for the team to stick on fabric tags, then scan
+                at receive, wash, iron, cutting, and sewing.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link href={`/orders/${order.id}/print-pack`}>
+                <Button>Print packs (receiving + cutting)</Button>
+              </Link>
+              <Link href={`/orders/${order.id}/print?team=receiving`}>
+                <Button variant="secondary">A4 receiving list</Button>
+              </Link>
+              <Link href={`/orders/${order.id}/stickers?sheet=fabric-cuts`}>
+                <Button variant="secondary">Print fabric cuts (receive)</Button>
+              </Link>
+              <Link href={`/orders/${order.id}/print?team=production`}>
+                <Button variant="secondary">A4 production list</Button>
+              </Link>
+              <Link href={`/orders/${order.id}/stickers?sheet=pieces`}>
+                <Button variant="secondary">Production stickers</Button>
+              </Link>
+            </div>
+          </div>
           <div className="mt-4 overflow-x-auto rounded-lg border border-indigo-100 bg-white">
             <table className="min-w-full text-sm">
               <thead>
@@ -148,7 +218,13 @@ export function SalesOrderActions({ order }: { order: SalesOrder }) {
                       {formatLabelGarmentDescription(sticker.garment_type, sticker.piece_name)}
                     </td>
                     <td className="px-3 py-2 font-mono text-slate-700">{sticker.fabric_number}</td>
-                    <td className="px-3 py-2 text-slate-600">{sticker.supplier_name}</td>
+                    <td className="px-3 py-2 text-slate-600">
+                      <FabricSupplierName
+                        supplierId={sticker.supplier_id}
+                        supplierName={sticker.supplier_name}
+                        fabricNumber={sticker.fabric_number}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -158,20 +234,52 @@ export function SalesOrderActions({ order }: { order: SalesOrder }) {
       )}
 
       <div className="rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-slate-900">Fabrics by supplier</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          One consolidated email will be created per supplier. Send them from Supplier Emails in the sidebar.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Fabrics by supplier</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              One consolidated email will be created per supplier. Send them from Supplier Emails in the sidebar.
+            </p>
+            {order.fabric_lines.length > 0 && (
+              <p className="mt-2 text-sm font-medium text-slate-800">
+                Order total: {fabricTotals.total_meters.toFixed(1)} m
+                {fabricTotals.total_kg != null ? ` · ${fabricTotals.total_kg.toFixed(1)} kg` : null}
+              </p>
+            )}
+          </div>
+          <FabricPriceRevealToggle canViewFabricPrices={canViewFabricPrices} />
+        </div>
         <div className="mt-4 space-y-4">
-          {Object.entries(supplierGroups).map(([supplierId, group]) => (
-            <div key={supplierId} className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+          {Object.entries(supplierGroups).map(([groupKey, group]) => (
+            <div key={groupKey} className="rounded-lg border border-slate-100 bg-slate-50 p-4">
               <p className="font-medium text-slate-900">{group.name}</p>
               <ul className="mt-2 space-y-2 text-sm text-slate-600">
                 {group.lines.map((line) => (
-                  <li key={line.id} className="rounded border border-slate-200 bg-white px-3 py-2">
+                  <li
+                    key={line.id}
+                    className={`rounded border bg-white px-3 py-2 ${
+                      line.needs_replacement || line.stock_status === "permanently_unavailable"
+                        ? "border-amber-200 bg-amber-50/30"
+                        : line.stock_status === "temp_unavailable"
+                          ? "border-amber-100"
+                          : "border-slate-200"
+                    }`}
+                  >
                     <p className="font-mono font-medium text-slate-900">
-                      {line.fabric_number} — {line.quantity} {line.unit === "meters" ? "m" : line.unit}
+                      {line.fabric_number}
+                      <FabricStockBadge fabric={line} />
+                      <FabricReplacementBadge needsReplacement={line.needs_replacement} />
+                      <span className="font-sans text-slate-600">
+                        {" "}
+                        — {line.quantity} {line.unit === "meters" ? "m" : line.unit}
+                      </span>
                     </p>
+                    {line.needs_replacement && (
+                      <p className="mt-1 text-xs text-violet-800">Replacement still needed — update fabric before supplier emails.</p>
+                    )}
+                    {!line.needs_replacement && formatFabricStockLabel(line) && (
+                      <p className="mt-1 text-xs text-amber-800">{formatFabricStockLabel(line)}</p>
+                    )}
                     <p className="mt-0.5 text-xs text-slate-500">
                       {[
                         line.garment_type,
@@ -179,10 +287,16 @@ export function SalesOrderActions({ order }: { order: SalesOrder }) {
                         line.composition,
                         line.weight_gsm != null ? `${line.weight_gsm} gsm` : null,
                         formatWidth(line),
-                        formatLinePrice(line),
+                        canViewFabricPrices ? formatLinePrice(line) : null,
                       ]
                         .filter(Boolean)
                         .join(" · ")}
+                      {!canViewFabricPrices && (
+                        <>
+                          {" · "}
+                          <MaskedFabricPrice />
+                        </>
+                      )}
                     </p>
                     {(line.label_stickers ?? []).length > 0 && (
                       <ul className="mt-2 space-y-1 border-t border-slate-100 pt-2">
@@ -205,24 +319,41 @@ export function SalesOrderActions({ order }: { order: SalesOrder }) {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        {order.fabric_po_ids.length > 0 ? (
-          <Link href={`/supplier-emails?sales_order_id=${order.id}`}>
-            <Button>Send supplier emails</Button>
+        {!isClientManager &&
+          (order.fabric_po_ids.length > 0 ? (
+            <Link href={`/supplier-emails?sales_order_id=${order.id}`}>
+              <Button>Send supplier emails</Button>
+            </Link>
+          ) : (
+            <Button
+              onClick={() => void createFabricPos()}
+              disabled={creating || (!order.delivery_destination && !deliveryDestination)}
+            >
+              {creating ? "Creating…" : "Create fabric orders for suppliers"}
+            </Button>
+          ))}
+        {!isClientManager && (
+          <Link href="/supplier-inbox">
+            <Button variant="secondary">Supplier inbox</Button>
           </Link>
-        ) : (
-          <Button
-            onClick={() => void createFabricPos()}
-            disabled={creating || (!order.delivery_destination && !deliveryDestination)}
-          >
-            {creating ? "Creating…" : "Create fabric orders for suppliers"}
-          </Button>
         )}
-        <Link href="/supplier-inbox">
-          <Button variant="secondary">Supplier inbox</Button>
+        {!isClientManager && (
+          <CreateInvoiceButton
+            salesOrderId={order.id}
+            existingInvoiceId={existingInvoiceId}
+            isReadyMade={isReadyMade}
+          />
+        )}
+        <Link href={`/orders/new?duplicate_from=${order.id}`}>
+          <Button variant="secondary">Duplicate for another client</Button>
         </Link>
         <Link href="/orders/new">
           <Button variant="secondary">New sales order</Button>
         </Link>
+        <DownloadSalesOrderPdfButton orderId={order.id} soNumber={order.so_number} />
+        {isAdmin && order.status === "open" && order.fabric_po_ids.length === 0 && (
+          <DeleteSalesOrderButton order={order} />
+        )}
       </div>
 
       {order.client_reference && (

@@ -5,6 +5,7 @@ import { slugifyClientId } from "../../data/clients";
 import { buildClientReference, generateSoNumber } from "../../data/sales-orders";
 import { formatClientDisplayName } from "../../clients/names";
 import { generateFabricLabelStickers } from "../../sales-orders/label-codes";
+import { findOpenOrderWithOverlappingArticle as findOpenOrderWithSameArticle } from "../../sales-orders/duplicate-order";
 import { resolveClickUpListMapping } from "./list-stage-mapping";
 import { parseClickUpClientName } from "./client-name";
 import {
@@ -321,6 +322,18 @@ export function importClickUpTasks(
     const orderId = importOrderId(group);
     if (orders.some((order) => order.id === orderId)) {
       warnings.push(`Skipping duplicate consolidated order ${orderId} (${rootNames.join("; ")})`);
+      skipped += 1;
+      continue;
+    }
+
+    const duplicateArticleOrder = lines
+      .map((line) => findOpenOrderWithSameArticle(orders, client.id, line))
+      .find((order): order is SalesOrder => order != null);
+    if (duplicateArticleOrder) {
+      const articleSummary = lines.map((line) => `${line.garment_type} ${line.fabric_number}`).join(", ");
+      warnings.push(
+        `Skipping ClickUp ${rootNames.join("; ")} — same article(s) already on ${duplicateArticleOrder.so_number} (${articleSummary})`
+      );
       skipped += 1;
       continue;
     }

@@ -12,7 +12,7 @@ export function useFabricReceipts() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/fabric-receiving/receipts");
+      const res = await fetch("/api/fabric-receiving/receipts", { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load fabric receipts");
       const data = (await res.json()) as { receipts: FabricReceipt[] };
       setReceipts(data.receipts);

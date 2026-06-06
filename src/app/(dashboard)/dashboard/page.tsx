@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   ShoppingCart,
   Factory,
@@ -5,6 +6,7 @@ import {
   Plane,
   ClipboardCheck,
   Users,
+  Receipt,
 } from "lucide-react";
 import { PageHeader, StatCard } from "@/components/ui/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -15,15 +17,23 @@ import {
   getShipments,
   getInventory,
 } from "@/lib/data/queries";
-import { formatDate, formatNumber } from "@/lib/utils";
+import { getCustomerInvoiceSummary } from "@/lib/data/customer-invoices";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { countInvoiceableSalesOrders } from "@/lib/invoicing/invoiceable-orders";
+import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
 
 export default async function DashboardPage() {
+  await ensureDocumentsLoaded(["customer_invoices", "sales_orders", "costing_rates"]);
+
   const [stats, workOrders, shipments, inventory] = await Promise.all([
     getDashboardStats(),
     getWorkOrders(),
     getShipments(),
     getInventory(),
   ]);
+
+  const invoiceSummary = getCustomerInvoiceSummary();
+  const readyToInvoice = countInvoiceableSalesOrders();
 
   const lowStock = inventory.filter(
     (i) => i.material && i.quantity_on_hand <= i.material.reorder_level
@@ -45,6 +55,18 @@ export default async function DashboardPage() {
         <StatCard label="Inbound Shipments" value={stats.inboundShipments} icon={<Plane className="h-5 w-5" />} accent="bg-cyan-50 text-cyan-600" />
         <StatCard label="Pending QC" value={stats.pendingInspections} icon={<ClipboardCheck className="h-5 w-5" />} accent="bg-amber-50 text-amber-600" />
         <StatCard label="Active Employees" value={stats.totalEmployees} icon={<Users className="h-5 w-5" />} accent="bg-emerald-50 text-emerald-600" />
+      </div>
+
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Link href="/invoices" className="block transition-opacity hover:opacity-90">
+          <StatCard
+            label="Ready to invoice"
+            value={readyToInvoice}
+            subtext={`${invoiceSummary.draft_count} draft · ${formatCurrency(invoiceSummary.outstanding_sar, "SAR")} outstanding`}
+            icon={<Receipt className="h-5 w-5" />}
+            accent="bg-indigo-50 text-indigo-600"
+          />
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

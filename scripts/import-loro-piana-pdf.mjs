@@ -3,6 +3,7 @@
  * Usage: node scripts/import-loro-piana-pdf.mjs [pdf-path]
  *
  * Style ranges like 781038-781041 expand to 781038, 781039, 781040, 781041.
+ * Solbiati linen codes keep a leading S (e.g. S23021).
  */
 import fs from "fs";
 import path from "path";
@@ -32,7 +33,22 @@ const GRADE_PREFIX = "[A-F]\\s+";
 const WIDTH_PATTERN = "\\d{2,3}(?:/\\d{2,3})?";
 
 function expandStyleToken(token) {
-  const cleaned = token.replace(/^[A-F]\s+/, "").trim();
+  const cleaned = token.replace(/^[A-F]\s+/, "").trim().toUpperCase();
+  if (/^S\d{5,6}$/.test(cleaned)) return [cleaned];
+
+  const solbiatiRange = cleaned.match(/^S(\d+)-S(\d+)$/);
+  if (solbiatiRange) {
+    const start = parseInt(solbiatiRange[1], 10);
+    const end = parseInt(solbiatiRange[2], 10);
+    const width = Math.max(solbiatiRange[1].length, solbiatiRange[2].length);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return [];
+    const out = [];
+    for (let n = start; n <= end; n += 1) {
+      out.push(`S${String(n).padStart(width, "0")}`);
+    }
+    return out;
+  }
+
   const match = cleaned.match(/^(\d{6})(?:-(\d{6}))?$/);
   if (!match) return [];
   const start = parseInt(match[1], 10);
@@ -63,7 +79,13 @@ function extractStyleTokens(part) {
   return part
     .trim()
     .split(/\s+/)
-    .filter((token) => /^\d{6}(?:-\d{6})?$/.test(token.replace(/^[A-F]\s+/, "")));
+    .flatMap((token) => {
+      const cleaned = token.replace(/^[A-F]\s+/, "").trim().toUpperCase();
+      if (/^S\d{5,6}$/.test(cleaned)) return [cleaned];
+      if (/^S\d+-S\d+$/.test(cleaned)) return [cleaned];
+      if (/^\d{6}(?:-\d{6})?$/.test(cleaned)) return [cleaned];
+      return [];
+    });
 }
 
 function isBoilerplateLine(line) {
@@ -186,7 +208,7 @@ function parseLoroPiana(text) {
 
     const withPrice = line.match(
       new RegExp(
-        `^(?:${GRADE_PREFIX})?((?:\\d{6}(?:-\\d{6})?\\s*)+)\\s+(${WIDTH_PATTERN})\\s+(\\d+(?:/\\d+)?)\\s+(.+?)(?:\\t|\\s+)([\\d]+,[\\d]{2})$`
+        `^(?:${GRADE_PREFIX})?((?:(?:S\\d+-S\\d+|S\\d{5,6}|\\d{6})(?:-\\d{6})?\\s*)+)\\s+(${WIDTH_PATTERN})\\s+(\\d+(?:/\\d+)?)\\s+(.+?)(?:\\t|\\s+)([\\d]+,[\\d]{2})$`
       )
     );
     if (withPrice) {
@@ -204,7 +226,7 @@ function parseLoroPiana(text) {
 
     const withoutPrice = line.match(
       new RegExp(
-        `^(?:${GRADE_PREFIX})?((?:\\d{6}(?:-\\d{6})?\\s*)+)\\s+(${WIDTH_PATTERN})\\s+(\\d+(?:/\\d+)?)\\s+(.+)$`
+        `^(?:${GRADE_PREFIX})?((?:(?:S\\d+-S\\d+|S\\d{5,6}|\\d{6})(?:-\\d{6})?\\s*)+)\\s+(${WIDTH_PATTERN})\\s+(\\d+(?:/\\d+)?)\\s+(.+)$`
       )
     );
     if (withoutPrice) {
@@ -221,7 +243,7 @@ function parseLoroPiana(text) {
     }
 
     const stylesOnly = line.match(
-      new RegExp(`^(?:${GRADE_PREFIX})?((?:\\d{6}(?:-\\d{6})?\\s*)+)$`)
+      new RegExp(`^(?:${GRADE_PREFIX})?((?:(?:S\\d+-S\\d+|S\\d{5,6}|\\d{6})(?:-\\d{6})?\\s*)+)$`)
     );
     if (stylesOnly) {
       pendingStyles.push(...extractStyleTokens(stylesOnly[1]));

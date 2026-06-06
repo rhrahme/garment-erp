@@ -1,4 +1,5 @@
 import { getSupplierByIdFromContacts } from "@/lib/data/supplier-contacts";
+import { fabricPoSupplierId } from "@/lib/fabric-sourcing/supplier-display";
 import { buildClientReference, getSalesOrderById, writeSalesOrders, readSalesOrders } from "@/lib/data/sales-orders";
 import { createStoredFabricOrder } from "@/lib/integrations/fabric-order-store";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
@@ -7,17 +8,18 @@ import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders"
 function groupLinesBySupplier(lines: SalesOrderFabricLine[]): Map<string, SalesOrderFabricLine[]> {
   const groups = new Map<string, SalesOrderFabricLine[]>();
   for (const line of lines) {
-    const bucket = groups.get(line.supplier_id) ?? [];
+    const poSupplierId = fabricPoSupplierId(line.supplier_id, line.fabric_number);
+    const bucket = groups.get(poSupplierId) ?? [];
     bucket.push(line);
-    groups.set(line.supplier_id, bucket);
+    groups.set(poSupplierId, bucket);
   }
   return groups;
 }
 
-export function createFabricPosFromSalesOrder(salesOrderId: string): {
+export async function createFabricPosFromSalesOrder(salesOrderId: string): Promise<{
   order: SalesOrder;
   fabricOrders: PurchaseOrder[];
-} {
+}> {
   const store = readSalesOrders();
   const salesOrder = store.orders.find((order) => order.id === salesOrderId);
   if (!salesOrder) {
@@ -67,7 +69,7 @@ export function createFabricPosFromSalesOrder(salesOrderId: string): {
       : order
   );
 
-  const saved = writeSalesOrders({ ...store, orders: updatedOrders });
+  const saved = await writeSalesOrders({ ...store, orders: updatedOrders });
   const order = saved.orders.find((item) => item.id === salesOrderId);
   if (!order) {
     throw new Error("Failed to update sales order.");

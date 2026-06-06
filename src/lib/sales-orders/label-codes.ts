@@ -125,3 +125,18 @@ export function stickerCodesMatch(scanInput: string, stickerCode: string, client
   if (productionCodeFromSticker(stickerCode, clientCode).toUpperCase() === normalized) return true;
   return supplierFabricProductionCode(stickerCode, clientCode).toUpperCase() === normalized;
 }
+
+/** 1-based article # for a fabric line — matches L01, L02… on sticker codes. */
+export function fabricLineArticleNumber(zeroBasedLineIndex: number): number {
+  return zeroBasedLineIndex + 1;
+}
+
+export function lineArticleFromStickerCode(stickerCode: string): number | null {
+  const match = stickerCode.match(/-L(\d{2})(?:-|$)/i);
+  if (!match) return null;
+  return Number.parseInt(match[1], 10);
+}
+
+export function buildFabricLineArticleMap(fabricLineIds: string[]): Map<string, number> {
+  return new Map(fabricLineIds.map((id, index) => [id, fabricLineArticleNumber(index)]));
+}

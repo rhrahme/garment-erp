@@ -17,7 +17,7 @@ export function useAutoSave({
   isDirty,
   canSave,
   onSave,
-  delayMs = 1500,
+  delayMs = 20_000,
   enabled = true,
   waitingMessage = "Complete required fields to save",
 }: UseAutoSaveOptions) {

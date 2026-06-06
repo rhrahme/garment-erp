@@ -5,7 +5,8 @@ export type ReadyMadeBrandId =
   | "cafe-cotton"
   | "zegna"
   | "blue-mint"
-  | "lebanon-beirut";
+  | "lebanon-beirut"
+  | "luca-faloni";
 
 export interface ReadyMadeBrandDefinition {
   id: ReadyMadeBrandId;
@@ -57,6 +58,12 @@ export const READY_MADE_BRANDS: ReadyMadeBrandDefinition[] = [
     label: "Lebanon Beirut",
     aliases: ["lebanon beirut"],
     client_code: "RM-LB",
+  },
+  {
+    id: "luca-faloni",
+    label: "Luca Faloni",
+    aliases: ["luca faloni"],
+    client_code: "RM-LF",
   },
 ];
 

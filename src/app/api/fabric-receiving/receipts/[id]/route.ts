@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { ensureFabricReceivingDocumentsLoaded } from "@/lib/data/fabric-receiving-docs";
 import { advanceFabricReceipt, startFabricReceiptPrep } from "@/lib/production/fabric-receiving";
 import { isFabricPrepType } from "@/lib/production/fabric-prep";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    await ensureFabricReceivingDocumentsLoaded();
     const { id } = await params;
     const body = (await request.json().catch(() => ({}))) as {
       action?: string;
@@ -15,11 +17,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       if (!isFabricPrepType(fabric_prep_type)) {
         return NextResponse.json({ error: "Select a valid fabric preparation type." }, { status: 400 });
       }
-      const receipt = startFabricReceiptPrep(id, fabric_prep_type);
+      const receipt = await startFabricReceiptPrep(id, fabric_prep_type);
       return NextResponse.json({ receipt });
     }
 
-    const result = advanceFabricReceipt(id);
+    const result = await advanceFabricReceipt(id);
     return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to update fabric receipt.";

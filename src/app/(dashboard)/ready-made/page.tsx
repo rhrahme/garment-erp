@@ -26,7 +26,7 @@ export default function ReadyMadePage() {
         <StatCard
           label="Retail brands"
           value={overview.brandCount}
-          subtext="Massimo Dutti · Suit Supply · Boggi · Cafe Cotton · Zegna · Blue Mint · Lebanon Beirut"
+          subtext="Massimo Dutti · Suit Supply · Boggi · Cafe Cotton · Zegna · Blue Mint · Lebanon Beirut · Luca Faloni"
           icon={<Store className="h-5 w-5" />}
           accent="bg-violet-50 text-violet-600"
         />

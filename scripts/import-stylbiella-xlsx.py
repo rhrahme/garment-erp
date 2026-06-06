@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Import Stylbiella SS26 product info Excel into supplier catalog JSON."""
+"""Import Stylbiella product info Excel into supplier catalog JSON."""
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -13,8 +14,7 @@ try:
 except ImportError as exc:
     raise SystemExit("Install openpyxl: pip3 install openpyxl") from exc
 
-DEFAULT_XLSX = Path.home() / "Downloads/Stylbiella SS26 Product info.xlsx"
-OUT_PATH = Path("src/data/suppliers/stylbiella-ss26.json")
+FABRIC_CODE_RE = re.compile(r"^\d{4,6}/\d{2,4}$")
 
 
 def clean(value) -> str | None:
@@ -60,30 +60,76 @@ def build_description(**parts) -> str:
     return " — ".join(value for value in parts.values() if value)
 
 
-def import_workbook(xlsx_path: Path) -> list[dict]:
-    fabrics: list[dict] = []
-    seen: set[str] = set()
+def find_lookbook_columns(ws) -> dict | None:
+    for row_idx in range(3, 8):
+        row = next(ws.iter_rows(min_row=row_idx, max_row=row_idx, values_only=True))
+        labels = [str(cell).strip().lower() if cell is not None else "" for cell in row]
+        if not any("product features" in label for label in labels):
+            continue
 
-    def add(entry: dict) -> None:
-        fabric_number = entry["fabric_number"]
-        if not fabric_number or fabric_number in seen:
-            return
-        seen.add(fabric_number)
-        fabrics.append(entry)
+        def col(label: str, occurrence: int = 0) -> int | None:
+            hits = [index for index, value in enumerate(labels) if label in value]
+            return hits[occurrence] if len(hits) > occurrence else None
 
-    workbook = openpyxl.load_workbook(xlsx_path, read_only=True, data_only=True)
+        return {
+            "book_number": 0,
+            "book_name": 1,
+            "garments": 3,
+            "suit_features": col("product features", 0),
+            "suit_code": col("product code", 0),
+            "suit_comment": col("comments", 0),
+            "suit_pattern": col("pattern", 0),
+            "suit_color": col("color", 0),
+            "shirt_code": col("product code", 1),
+            "shirt_features": col("product features", 1),
+            "data_start_row": row_idx + 1,
+        }
+    return None
 
-    lookbooks = workbook["Lookbooks"]
-    for row in lookbooks.iter_rows(min_row=5, values_only=True):
-        book_number, book_name, _, garments = row[0], clean(row[1]), row[2], clean(row[3])
-        suit_code, suit_features, suit_comment, suit_pattern, suit_color = (
-            clean(row[4]),
-            row[5],
-            clean(row[6]),
-            clean(row[7]),
-            clean(row[8]),
+
+def import_lookbooks(ws, add) -> None:
+    columns = find_lookbook_columns(ws)
+    if not columns:
+        return
+
+    for row in ws.iter_rows(min_row=columns["data_start_row"], values_only=True):
+        book_number = row[columns["book_number"]] if len(row) > columns["book_number"] else None
+        book_name = clean(row[columns["book_name"]] if len(row) > columns["book_name"] else None)
+        garments = clean(row[columns["garments"]] if len(row) > columns["garments"] else None)
+
+        suit_code = (
+            clean(row[columns["suit_code"]]) if columns["suit_code"] is not None and len(row) > columns["suit_code"] else None
         )
-        shirt_code, shirt_features = clean(row[9]), row[10]
+        suit_features = (
+            row[columns["suit_features"]]
+            if columns["suit_features"] is not None and len(row) > columns["suit_features"]
+            else None
+        )
+        suit_comment = (
+            clean(row[columns["suit_comment"]])
+            if columns["suit_comment"] is not None and len(row) > columns["suit_comment"]
+            else None
+        )
+        suit_pattern = (
+            clean(row[columns["suit_pattern"]])
+            if columns["suit_pattern"] is not None and len(row) > columns["suit_pattern"]
+            else None
+        )
+        suit_color = (
+            clean(row[columns["suit_color"]])
+            if columns["suit_color"] is not None and len(row) > columns["suit_color"]
+            else None
+        )
+        shirt_code = (
+            clean(row[columns["shirt_code"]])
+            if columns["shirt_code"] is not None and len(row) > columns["shirt_code"]
+            else None
+        )
+        shirt_features = (
+            row[columns["shirt_features"]]
+            if columns["shirt_features"] is not None and len(row) > columns["shirt_features"]
+            else None
+        )
 
         if suit_code:
             parsed = parse_features(suit_features)
@@ -106,7 +152,7 @@ def import_workbook(xlsx_path: Path) -> list[dict]:
                     "width_cm": parsed["width_cm"],
                     "unit_price": None,
                     "unit": "meters",
-                    "currency": "EUR",
+                    "currency": "USD",
                     "is_active": True,
                     "category": (garments or "suiting").lower(),
                 }
@@ -130,15 +176,16 @@ def import_workbook(xlsx_path: Path) -> list[dict]:
                     "width_cm": parsed["width_cm"],
                     "unit_price": None,
                     "unit": "meters",
-                    "currency": "EUR",
+                    "currency": "USD",
                     "is_active": True,
                     "category": "shirts",
                 }
             )
 
-    bunches = workbook["Bunches"]
-    for row in bunches.iter_rows(min_row=3, values_only=True):
-        bunch_number, _, bunch_name, code, features, comment, pattern = row
+
+def import_standard_bunches(ws, add) -> None:
+    for row in ws.iter_rows(min_row=3, values_only=True):
+        bunch_number, _, bunch_name, code, features, comment, pattern = (list(row) + [None] * 7)[:7]
         code = clean(code)
         if not code:
             continue
@@ -161,18 +208,88 @@ def import_workbook(xlsx_path: Path) -> list[dict]:
                 "width_cm": parsed["width_cm"],
                 "unit_price": None,
                 "unit": "meters",
-                "currency": "EUR",
+                "currency": "USD",
                 "is_active": True,
                 "category": "bunch",
             }
         )
+
+
+def import_charm_bunch_grid(ws, add, bunch_name: str) -> None:
+    for row in ws.iter_rows(min_row=4, values_only=True):
+        for cell in row:
+            code = clean(cell)
+            if code and FABRIC_CODE_RE.match(code):
+                add(
+                    {
+                        "fabric_number": code,
+                        "book_number": None,
+                        "collection": bunch_name,
+                        "composition": None,
+                        "color": None,
+                        "description": build_description(book=bunch_name, category="BUNCH"),
+                        "weight_gsm": None,
+                        "width_cm": None,
+                        "unit_price": None,
+                        "unit": "meters",
+                        "currency": "USD",
+                        "is_active": True,
+                        "category": "bunch",
+                    }
+                )
+
+
+def is_charm_grid_sheet(ws) -> bool:
+    rows = list(ws.iter_rows(min_row=2, max_row=3, values_only=True))
+    if len(rows) < 2:
+        return False
+    header = [str(cell).strip().lower() if cell is not None else "" for cell in rows[1]]
+    return header.count("product code") >= 2
+
+
+def import_workbook(xlsx_path: Path) -> list[dict]:
+    fabrics: list[dict] = []
+    seen: set[str] = set()
+
+    def add(entry: dict) -> None:
+        fabric_number = entry["fabric_number"]
+        if not fabric_number or fabric_number in seen:
+            return
+        seen.add(fabric_number)
+        fabrics.append(entry)
+
+    workbook = openpyxl.load_workbook(xlsx_path, read_only=True, data_only=True)
+
+    if "Lookbooks" in workbook.sheetnames:
+        import_lookbooks(workbook["Lookbooks"], add)
+
+    bunch_sheets = [name for name in workbook.sheetnames if name == "Bunches" or name.startswith("Bunch-")]
+    for sheet_name in bunch_sheets:
+        ws = workbook[sheet_name]
+        if is_charm_grid_sheet(ws):
+            import_charm_bunch_grid(ws, add, sheet_name.replace("Bunch-", "").strip())
+        else:
+            import_standard_bunches(ws, add)
 
     fabrics.sort(key=lambda fabric: fabric["fabric_number"])
     return fabrics
 
 
 def main() -> None:
-    xlsx_path = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_XLSX
+    parser = argparse.ArgumentParser(description="Import Stylbiella product info Excel")
+    parser.add_argument("xlsx", nargs="?", help="Path to Stylbiella product info .xlsx")
+    parser.add_argument("--season", default="SS26", help="Season label, e.g. AW25, SS25, SS26")
+    parser.add_argument(
+        "--out",
+        default=None,
+        help="Output JSON path (default: src/data/suppliers/stylbiella-{season}.json)",
+    )
+    args = parser.parse_args()
+
+    season = args.season.strip().lower()
+    xlsx_path = Path(args.xlsx) if args.xlsx else Path.home() / "Downloads/Stylbiella SS26 Product info.xlsx"
+    out_path = Path(args.out) if args.out else Path(f"src/data/suppliers/stylbiella-{season}.json")
+
     if not xlsx_path.exists():
         raise SystemExit(f"File not found: {xlsx_path}")
 
@@ -185,18 +302,18 @@ def main() -> None:
             "country": "Italy",
             "is_fabric_supplier": True,
             "lead_time_days": 14,
-            "currency": "EUR",
+            "currency": "USD",
         },
-        "price_list_name": "SS26 Product Info",
+        "price_list_name": f"{args.season.upper()} Product Info",
         "imported_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "source_file": xlsx_path.name,
         "fabric_count": len(fabrics),
         "fabrics": fabrics,
     }
 
-    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUT_PATH.write_text(json.dumps(payload, indent=2) + "\n")
-    print(f"✓ Stylbiella SS26: {len(fabrics)} fabrics → {OUT_PATH}")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(payload, indent=2) + "\n")
+    print(f"✓ Stylbiella {args.season.upper()}: {len(fabrics)} fabrics → {out_path}")
 
 
 if __name__ == "__main__":

@@ -35,6 +35,19 @@ export function isClientSaveable(client: Pick<ClientProfile, "first_name" | "las
   return hasRequiredClientName(client) && client.brand_ids.length > 0;
 }
 
+/** Empty row from "Add client" — safe to drop before persisting. */
+export function isBlankClientPlaceholder(
+  client: Pick<ClientProfile, "first_name" | "last_name" | "brand_ids" | "code" | "email" | "phone">
+): boolean {
+  return (
+    !hasRequiredClientName(client) &&
+    client.brand_ids.length === 0 &&
+    !client.code &&
+    !client.email &&
+    !client.phone
+  );
+}
+
 /** Map legacy single `name` field to first/last when loading old records */
 export function migrateClientName(raw: Record<string, unknown>): Pick<ClientProfile, "first_name" | "middle_name" | "last_name"> {
   const first_name = normalizeNamePart(raw.first_name);

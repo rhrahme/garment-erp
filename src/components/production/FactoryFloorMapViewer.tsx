@@ -1,0 +1,375 @@
+"use client";
+
+import Link from "next/link";
+import { useCallback, useRef, useState } from "react";
+import { ExternalLink, Move, ZoomIn, ZoomOut } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { useFactoryFloorStationPositions } from "@/hooks/useFactoryFloorStationPositions";
+import {
+  FACTORY_FLOOR_MAP_IMAGE,
+  FACTORY_FLOOR_MAP_PDF,
+  factoryFloorStationStyle,
+  factoryFloorStationsByZone,
+  type FactoryFloorStation,
+  type FactoryFloorZone,
+} from "@/lib/production/factory-floor-stations";
+import { SCAN_STAGE_LEGEND, scanStageStyles } from "@/lib/production/scan-stage-highlight";
+import { cn } from "@/lib/utils";
+
+type ZoneFilter = FactoryFloorZone | "all";
+
+function StationPin({
+  station,
+  active,
+  editMode,
+  dragging,
+  onPointerDown,
+}: {
+  station: FactoryFloorStation;
+  active: boolean;
+  editMode: boolean;
+  dragging: boolean;
+  onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => void;
+}) {
+  const { chip } = factoryFloorStationStyle(station);
+  const bgClass = chip.split(" ")[0];
+
+  return (
+    <button
+      type="button"
+      onPointerDown={onPointerDown}
+      className={cn(
+        "group absolute z-10 touch-none -translate-x-1/2 -translate-y-1/2 focus:outline-none",
+        editMode ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+      )}
+      style={{ left: `${station.x}%`, top: `${station.y}%` }}
+      aria-label={`${station.label} scan station`}
+      aria-pressed={active}
+    >
+      <span
+        className={cn(
+          "block h-5 w-5 rounded-full border-2 border-white shadow-md",
+          bgClass,
+          !dragging && "transition-transform group-hover:scale-110",
+          (active || dragging) && "scale-125 ring-2 ring-indigo-500 ring-offset-1"
+        )}
+      />
+      <span
+        className={cn(
+          "pointer-events-none absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-semibold shadow-sm",
+          chip,
+          active || dragging ? "opacity-100" : "opacity-90 group-hover:opacity-100"
+        )}
+      >
+        {station.label}
+        {editMode ? <span className="ml-1 opacity-70">↕</span> : null}
+      </span>
+    </button>
+  );
+}
+
+export function FactoryFloorMapViewer() {
+  const {
+    stations,
+    updatePosition,
+    saveToBrowser,
+    resetToDefaults,
+    dirty,
+    hasBrowserOverrides,
+  } = useFactoryFloorStationPositions();
+
+  const [zoom, setZoom] = useState(100);
+  const [zone, setZone] = useState<ZoneFilter>("all");
+  const [showStations, setShowStations] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [savingServer, setSavingServer] = useState(false);
+
+  const mapRef = useRef<HTMLDivElement>(null);
+  const dragIdRef = useRef<string | null>(null);
+
+  const visibleStations = factoryFloorStationsByZone(zone, stations);
+  const selected = stations.find((s) => s.id === selectedId) ?? null;
+
+  const positionFromClient = useCallback((clientX: number, clientY: number) => {
+    const rect = mapRef.current?.getBoundingClientRect();
+    if (!rect?.width || !rect?.height) return null;
+    const x = ((clientX - rect.left) / rect.width) * 100;
+    const y = ((clientY - rect.top) / rect.height) * 100;
+    return { x, y };
+  }, []);
+
+  const handlePinPointerDown = useCallback(
+    (stationId: string, event: React.PointerEvent<HTMLButtonElement>) => {
+      if (!editMode) {
+        setSelectedId(stationId);
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      dragIdRef.current = stationId;
+      setDraggingId(stationId);
+      setSelectedId(stationId);
+      event.currentTarget.setPointerCapture(event.pointerId);
+    },
+    [editMode]
+  );
+
+  const handleMapPointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const id = dragIdRef.current;
+      if (!id || !editMode) return;
+      const pos = positionFromClient(event.clientX, event.clientY);
+      if (!pos) return;
+      updatePosition(id, pos.x, pos.y);
+    },
+    [editMode, positionFromClient, updatePosition]
+  );
+
+  const finishDrag = useCallback(() => {
+    if (!dragIdRef.current) return;
+    dragIdRef.current = null;
+    setDraggingId(null);
+    saveToBrowser();
+    setSaveMessage("Position saved in this browser.");
+    setTimeout(() => setSaveMessage(null), 2500);
+  }, [saveToBrowser]);
+
+  async function saveToServer() {
+    setSaveError(null);
+    setSaveMessage(null);
+    setSavingServer(true);
+    try {
+      const res = await fetch("/api/factory/floor-stations", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          positions: stations.map((s) => ({ id: s.id, x: s.x, y: s.y })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to save positions");
+      saveToBrowser();
+      setSaveMessage("Saved for everyone — positions written to ERP data file.");
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Failed to save positions");
+    } finally {
+      setSavingServer(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+        <div>
+          <p className="font-medium text-slate-900">Hagan factory layout</p>
+          <p className="text-sm text-slate-600">
+            Scan stations on the floor plan — colours match Fabric Receiving &amp; Production.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant={editMode ? "primary" : "secondary"}
+            size="sm"
+            onClick={() => setEditMode((value) => !value)}
+          >
+            <Move className="mr-1 h-4 w-4" />
+            {editMode ? "Done adjusting" : "Adjust positions"}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => setZoom((value) => Math.max(60, value - 15))}
+            aria-label="Zoom out"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </Button>
+          <span className="min-w-[3.5rem] text-center text-sm font-medium text-slate-700">{zoom}%</span>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => setZoom((value) => Math.min(180, value + 15))}
+            aria-label="Zoom in"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </Button>
+          <a href={FACTORY_FLOOR_MAP_PDF} target="_blank" rel="noreferrer">
+            <Button type="button" variant="secondary" size="sm">
+              <ExternalLink className="mr-1 h-4 w-4" />
+              Open PDF
+            </Button>
+          </a>
+        </div>
+      </div>
+
+      {editMode ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-medium">Drag mode on</p>
+          <p className="mt-1">
+            Click and drag any pin to move it. Positions auto-save in this browser when you release. Use{" "}
+            <strong>Save for all users</strong> (admin) to update the shared ERP file.
+          </p>
+        </div>
+      ) : null}
+
+      {saveMessage ? (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">
+          {saveMessage}
+        </div>
+      ) : null}
+      {saveError ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">{saveError}</div>
+      ) : null}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Show</span>
+        {(
+          [
+            { id: "all", label: "All stations" },
+            { id: "fabric_receiving", label: "Fabric receiving" },
+            { id: "production", label: "Production" },
+          ] as const
+        ).map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setZone(item.id)}
+            className={cn(
+              "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+              zone === item.id ? "bg-indigo-600 text-white" : "bg-white text-slate-700 ring-1 ring-slate-200"
+            )}
+          >
+            {item.label}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => setShowStations((value) => !value)}
+          className={cn(
+            "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+            showStations ? "bg-slate-800 text-white" : "bg-white text-slate-700 ring-1 ring-slate-200"
+          )}
+        >
+          {showStations ? "Hide pins" : "Show pins"}
+        </button>
+        {hasBrowserOverrides || dirty ? (
+          <button
+            type="button"
+            onClick={() => {
+              resetToDefaults();
+              setSaveMessage("Reset to default positions.");
+              setTimeout(() => setSaveMessage(null), 2500);
+            }}
+            className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200"
+          >
+            Reset positions
+          </button>
+        ) : null}
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          disabled={savingServer}
+          onClick={() => void saveToServer()}
+        >
+          {savingServer ? "Saving…" : "Save for all users"}
+        </Button>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
+        <div className="overflow-auto rounded-xl border border-slate-200 bg-slate-100 p-2">
+          <div
+            className="mx-auto origin-top transition-transform"
+            style={{ width: `${zoom}%`, minWidth: zoom < 100 ? "100%" : undefined }}
+          >
+            <div
+              ref={mapRef}
+              className={cn("relative w-full", editMode && "ring-2 ring-amber-300 ring-offset-2")}
+              style={{ aspectRatio: "2000 / 1414" }}
+              onPointerMove={handleMapPointerMove}
+              onPointerUp={finishDrag}
+              onPointerCancel={finishDrag}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={FACTORY_FLOOR_MAP_IMAGE}
+                alt="Hagan factory floor layout"
+                className="h-full w-full select-none object-contain"
+                draggable={false}
+              />
+              {showStations &&
+                visibleStations.map((station) => (
+                  <StationPin
+                    key={station.id}
+                    station={station}
+                    active={selectedId === station.id}
+                    editMode={editMode}
+                    dragging={draggingId === station.id}
+                    onPointerDown={(event) => handlePinPointerDown(station.id, event)}
+                  />
+                ))}
+            </div>
+          </div>
+        </div>
+
+        <aside className="space-y-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Selected station</p>
+            {selected ? (
+              <div className="mt-2 space-y-2">
+                <p className="text-lg font-semibold text-slate-900">{selected.label}</p>
+                <span
+                  className={cn(
+                    "inline-block rounded-full px-2 py-0.5 text-xs font-medium",
+                    factoryFloorStationStyle(selected).chip
+                  )}
+                >
+                  {factoryFloorStationStyle(selected).label}
+                </span>
+                <p className="font-mono text-xs text-slate-500">
+                  x {selected.x}% · y {selected.y}%
+                </p>
+                <p className="text-sm text-slate-600">{selected.description}</p>
+                {!editMode ? (
+                  <Link
+                    href={selected.erp_href}
+                    className="inline-block text-sm font-medium text-indigo-700 hover:text-indigo-900"
+                  >
+                    Open {selected.zone === "fabric_receiving" ? "Fabric Receiving" : "Production"} →
+                  </Link>
+                ) : (
+                  <p className="text-xs text-amber-800">Drag the pin on the map to reposition.</p>
+                )}
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">
+                {editMode ? "Select a pin, then drag it to the correct area." : "Tap a pin for scan instructions."}
+              </p>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Colour legend</p>
+            <ul className="mt-2 space-y-1.5">
+              {SCAN_STAGE_LEGEND.map((item) => {
+                const { chip } = scanStageStyles(item.stage);
+                return (
+                  <li key={item.stage} className="flex items-center gap-2 text-xs text-slate-700">
+                    <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", chip.split(" ")[0])} />
+                    {item.label}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}

@@ -41,7 +41,7 @@ export function createStoredFabricOrder(input: {
 }): PurchaseOrder {
   const store = readStore();
   const nextNum = store.orders.length + 1;
-  const id = `po-${Date.now()}`;
+  const id = `po-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const po_number = `PO-${new Date().getFullYear()}-${String(nextNum).padStart(4, "0")}`;
 
   const lines: PurchaseOrderLine[] = input.lines.map((line, index) => ({

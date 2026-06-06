@@ -2,16 +2,17 @@ import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { OrdersList } from "@/components/orders/OrdersList";
-import { readSalesOrders, toSalesOrderListRow } from "@/lib/data/sales-orders";
+import { readSalesOrders, listBespokeSalesOrders, toSalesOrderListRow } from "@/lib/data/sales-orders";
+import { dedupeIdenticalSalesOrders } from "@/lib/sales-orders/duplicate-order";
 
 export default function OrdersPage() {
-  const orders = readSalesOrders().orders.map(toSalesOrderListRow);
+  const orders = dedupeIdenticalSalesOrders(listBespokeSalesOrders(readSalesOrders().orders)).map(toSalesOrderListRow);
 
   return (
     <div>
       <PageHeader
         title="Sales Orders"
-        description="Client orders — create fabric POs grouped by supplier and send consolidated emails"
+        description="Bespoke client orders — fabric POs by supplier. Ready-made retail batches are under Ready-Made."
         action={
           <Link href="/orders/new">
             <Button>+ New Sales Order</Button>

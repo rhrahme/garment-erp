@@ -9,7 +9,7 @@
  */
 import fs from "fs";
 import path from "path";
-import { applyClickUpImport } from "../src/lib/integrations/clickup/import-orders.ts";
+import { applyClickUpImport } from "../src/lib/integrations/clickup/import-orders";
 import { CLICKUP_IMPORT_LIST_IDS, fetchClickUpTasks } from "../src/lib/integrations/clickup/fetch-tasks.ts";
 
 const CACHE_PATH = path.join(process.cwd(), "src/data/clickup-import-cache.json");

@@ -102,7 +102,7 @@ export async function POST(request: Request) {
     };
 
     store.clients.push(client);
-    const saved = writeClients(store);
+    const saved = await writeClients(store);
 
     await notifyIntegration("client.created", {
       id: client.id,

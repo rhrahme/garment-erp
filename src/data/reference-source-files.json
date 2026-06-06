@@ -1,0 +1,177 @@
+{
+  "updated_at": "2026-06-02T00:00:00.000Z",
+  "notes": "Original supplier price lists and product info — copied from ~/Desktop/Fabrics/",
+  "files": [
+    {
+      "id": "zegna-price-list",
+      "supplier": "Zegna",
+      "filename": "Zegna price list.pdf",
+      "relative_path": "reference-documents/Zegna/Zegna price list.pdf",
+      "type": "price_list",
+      "catalog_id": "zegna-ss26",
+      "import_status": "imported"
+    },
+    {
+      "id": "caccioppoli-jackets-pdf",
+      "supplier": "Caccioppoli",
+      "filename": "Caccioppoli Price list SS26 - D.pdf",
+      "relative_path": "reference-documents/Caccioppoli/Caccioppoli Price list SS26 - D.pdf",
+      "type": "price_list",
+      "catalog_id": "caccioppoli-jackets-ss26",
+      "import_status": "imported"
+    },
+    {
+      "id": "caccioppoli-shirting-pdf",
+      "supplier": "Caccioppoli",
+      "filename": "Caccioppoli SHIRTING SS26 PRICE LIST _ D.pdf",
+      "relative_path": "reference-documents/Caccioppoli/Caccioppoli SHIRTING SS26 PRICE LIST _ D.pdf",
+      "type": "price_list",
+      "catalog_id": "caccioppoli-shirting-ss26",
+      "import_status": "imported"
+    },
+    {
+      "id": "caccioppoli-fabric-details",
+      "supplier": "Caccioppoli",
+      "filename": "Caccioppoli Fabric details.xlsx",
+      "relative_path": "reference-documents/Caccioppoli/Caccioppoli Fabric details.xlsx",
+      "type": "product_info",
+      "catalog_id": null,
+      "import_status": "archived",
+      "notes": "Extra composition/details spreadsheet — not yet wired into fabric search"
+    },
+    {
+      "id": "caccioppoli-general-pdf",
+      "supplier": "Caccioppoli",
+      "filename": "Caccioppoli.pdf",
+      "relative_path": "reference-documents/Caccioppoli/Caccioppoli.pdf",
+      "type": "reference",
+      "catalog_id": null,
+      "import_status": "archived",
+      "notes": "General Caccioppoli reference PDF — not parsed into a catalog yet"
+    },
+    {
+      "id": "caccioppoli-stock-camiceria-a",
+      "supplier": "Caccioppoli",
+      "filename": "Esauriti-Camiceria-A.pdf",
+      "relative_path": "reference-documents/Caccioppoli/stock update/Esauriti-Camiceria-A.pdf",
+      "type": "stock_update",
+      "catalog_id": null,
+      "import_status": "archived",
+      "notes": "AW 25/26 shirts — not in SS26 catalog; kept on file only"
+    },
+    {
+      "id": "caccioppoli-stock-camiceria-e",
+      "supplier": "Caccioppoli",
+      "filename": "Esauriti-Camiceria-E.pdf",
+      "relative_path": "reference-documents/Caccioppoli/stock update/Esauriti-Camiceria-E.pdf",
+      "type": "stock_update",
+      "catalog_id": "caccioppoli-shirting-ss26",
+      "import_status": "imported"
+    },
+    {
+      "id": "caccioppoli-stock-drapperia-a",
+      "supplier": "Caccioppoli",
+      "filename": "Esauriti-Drapperia-A.pdf",
+      "relative_path": "reference-documents/Caccioppoli/stock update/Esauriti-Drapperia-A.pdf",
+      "type": "stock_update",
+      "catalog_id": null,
+      "import_status": "archived",
+      "notes": "AW 25/26 drapperia — not applied to SS26 jackets catalog"
+    },
+    {
+      "id": "caccioppoli-stock-drapperia-e",
+      "supplier": "Caccioppoli",
+      "filename": "Esauriti-Drapperia-E.pdf",
+      "relative_path": "reference-documents/Caccioppoli/stock update/Esauriti-Drapperia-E.pdf",
+      "type": "stock_update",
+      "catalog_id": "caccioppoli-jackets-ss26",
+      "import_status": "imported",
+      "notes": "SS26 jacket/trouser collection — sold out / pending"
+    },
+    {
+      "id": "stylbiella-ss26-pricelist",
+      "supplier": "Stylbiella",
+      "filename": "Stylbiella - SS26 pricelist USD CLF.pdf",
+      "relative_path": "reference-documents/Stylbiella/Stylbiella - SS26 pricelist USD CLF.pdf",
+      "type": "price_list",
+      "catalog_id": "stylbiella-ss26,stylbiella-ss25,stylbiella-aw25",
+      "import_status": "imported"
+    },
+    {
+      "id": "stylbiella-ss26-product",
+      "supplier": "Stylbiella",
+      "filename": "Stylbiella SS26 Product info.xlsx",
+      "relative_path": "reference-documents/Stylbiella/Stylbiella SS26 Product info.xlsx",
+      "type": "product_info",
+      "catalog_id": "stylbiella-ss26",
+      "import_status": "imported"
+    },
+    {
+      "id": "stylbiella-aw25-product",
+      "supplier": "Stylbiella",
+      "filename": "Stylbiella AW25 Product info vf.xlsx",
+      "relative_path": "reference-documents/Stylbiella/Stylbiella AW25 Product info vf.xlsx",
+      "type": "product_info",
+      "catalog_id": "stylbiella-aw25",
+      "import_status": "imported"
+    },
+    {
+      "id": "stylbiella-ss25-product",
+      "supplier": "Stylbiella",
+      "filename": "Stylbiella SS25 Product info.xlsx",
+      "relative_path": "reference-documents/Stylbiella/Stylbiella SS25 Product info.xlsx",
+      "type": "product_info",
+      "catalog_id": "stylbiella-ss25",
+      "import_status": "imported"
+    },
+    {
+      "id": "stylbiella-ss26-hs",
+      "supplier": "Stylbiella",
+      "filename": "Stylbiella SS26 Product Code with HS Code.xlsx",
+      "relative_path": "reference-documents/Stylbiella/Stylbiella SS26 Product Code with HS Code.xlsx",
+      "type": "product_info",
+      "catalog_id": null,
+      "import_status": "archived",
+      "notes": "HS codes — available for future customs integration"
+    },
+    {
+      "id": "stylbiella-ss26-copy",
+      "supplier": "Stylbiella",
+      "filename": "Stylbiella SS26 Product info copy.xlsx",
+      "relative_path": "reference-documents/Stylbiella/Stylbiella SS26 Product info copy.xlsx",
+      "type": "product_info",
+      "catalog_id": null,
+      "import_status": "archived",
+      "notes": "Duplicate of SS26 product info — kept as backup"
+    },
+    {
+      "id": "loro-piana-pricelist",
+      "supplier": "Loro Piana",
+      "filename": "PriceList_2852026_175306.pdf",
+      "relative_path": "reference-documents/Loro-Piana/PriceList_2852026_175306.pdf",
+      "type": "price_list",
+      "catalog_id": "loro-piana-ss26",
+      "import_status": "imported"
+    },
+    {
+      "id": "drapers-api-docs",
+      "supplier": "Drapers",
+      "filename": "DrapersAPI_DocumentationEN-202601.pdf",
+      "relative_path": "reference-documents/Drapers/DrapersAPI_DocumentationEN-202601.pdf",
+      "type": "api_docs",
+      "catalog_id": null,
+      "import_status": "imported",
+      "notes": "Official REST API v2026.1 — stock, catalog, pricelist, carts, orders"
+    },
+    {
+      "id": "hagan-factory-layout",
+      "supplier": "Factory",
+      "filename": "HAGAN FACTORY LAYOUT.pdf",
+      "relative_path": "reference-documents/Factory/HAGAN FACTORY LAYOUT.pdf",
+      "type": "floor_plan",
+      "catalog_id": null,
+      "import_status": "imported",
+      "notes": "Hagan factory layout — shown in ERP at /production/floor-map"
+    }
+  ]
+}

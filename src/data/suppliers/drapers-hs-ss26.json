@@ -99,7 +99,8 @@
       "weight_gsm": 250,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 53.2
     },
     {
       "fabric_number": "10105",
@@ -473,7 +474,8 @@
       "weight_gsm": 250,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 54.65
     },
     {
       "fabric_number": "10122",
@@ -1150,9 +1152,10 @@
       "is_active": true,
       "category": "CLASSICO",
       "weight_gsm": 250,
-      "stock_status": "temp_unavailable",
-      "restock_date": "2026-06-03",
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_status": "in_stock",
+      "restock_date": null,
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 65.5
     },
     {
       "fabric_number": "10153",
@@ -1895,9 +1898,10 @@
       "is_active": true,
       "category": "UNITO",
       "weight_gsm": 250,
-      "stock_status": "temp_unavailable",
-      "restock_date": "2026-06-03",
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_status": "in_stock",
+      "restock_date": null,
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 46.5
     },
     {
       "fabric_number": "10187",
@@ -2861,7 +2865,8 @@
       "category": null,
       "stock_status": "permanently_unavailable",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 0
     },
     {
       "fabric_number": "12518",
@@ -13789,7 +13794,8 @@
       "category": null,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 114.6
     },
     {
       "fabric_number": "26102",
@@ -13852,7 +13858,8 @@
       "category": null,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 273.24
     },
     {
       "fabric_number": "26105",
@@ -13873,7 +13880,8 @@
       "category": null,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 219.33
     },
     {
       "fabric_number": "26106",
@@ -14019,8 +14027,9 @@
       "is_active": true,
       "category": null,
       "stock_status": "temp_unavailable",
-      "restock_date": "2026-06-12",
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "restock_date": 1781222400,
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 0
     },
     {
       "fabric_number": "26113",
@@ -14398,7 +14407,8 @@
       "category": null,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 21.25
     },
     {
       "fabric_number": "26131",
@@ -18050,7 +18060,8 @@
       "category": null,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 37.8
     },
     {
       "fabric_number": "40121",
@@ -18763,8 +18774,9 @@
       "is_active": true,
       "category": null,
       "stock_status": "temp_unavailable",
-      "restock_date": "2026-06-01",
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "restock_date": 1780876800,
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 0
     },
     {
       "fabric_number": "40155",
@@ -18869,7 +18881,8 @@
       "category": null,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 55.75
     },
     {
       "fabric_number": "40160",
@@ -19709,7 +19722,8 @@
       "category": null,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 42.15
     },
     {
       "fabric_number": "50840",
@@ -19730,7 +19744,8 @@
       "category": null,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 8.85
     },
     {
       "fabric_number": "50841",
@@ -19751,7 +19766,8 @@
       "category": null,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 37.15
     },
     {
       "fabric_number": "50842",
@@ -22028,7 +22044,8 @@
       "weight_gsm": 260,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 77.35
     },
     {
       "fabric_number": "60022",
@@ -22546,7 +22563,8 @@
       "weight_gsm": 260,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 90.1
     },
     {
       "fabric_number": "60046",
@@ -22612,7 +22630,8 @@
       "weight_gsm": 260,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 49.05
     },
     {
       "fabric_number": "60049",
@@ -22832,7 +22851,8 @@
       "weight_gsm": 260,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 111.55
     },
     {
       "fabric_number": "60059",
@@ -22852,9 +22872,10 @@
       "is_active": true,
       "category": "CLASSICO",
       "weight_gsm": 260,
-      "stock_status": "in_stock",
+      "stock_status": "permanently_unavailable",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 0
     },
     {
       "fabric_number": "60060",
@@ -23312,7 +23333,8 @@
       "weight_gsm": 260,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 27.5
     },
     {
       "fabric_number": "60081",
@@ -23356,7 +23378,8 @@
       "weight_gsm": 260,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 58.4
     },
     {
       "fabric_number": "60083",
@@ -23466,7 +23489,8 @@
       "weight_gsm": 260,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 30.05
     },
     {
       "fabric_number": "61001",
@@ -25216,9 +25240,10 @@
       "currency": "EUR",
       "is_active": true,
       "category": "CLASSICO",
-      "stock_status": "permanently_unavailable",
+      "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 54.45
     },
     {
       "fabric_number": "65219",
@@ -25447,9 +25472,10 @@
       "currency": "EUR",
       "is_active": true,
       "category": "SEMI CLASSICO",
-      "stock_status": "permanently_unavailable",
+      "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 94.8
     },
     {
       "fabric_number": "65230",
@@ -25510,9 +25536,10 @@
       "currency": "EUR",
       "is_active": true,
       "category": "CLASSICO",
-      "stock_status": "permanently_unavailable",
+      "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 47.4
     },
     {
       "fabric_number": "65233",
@@ -26672,7 +26699,8 @@
       "weight_gsm": 360,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 121.6
     },
     {
       "fabric_number": "70106",
@@ -27308,7 +27336,8 @@
       "weight_gsm": 340,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 49.1
     },
     {
       "fabric_number": "70139",
@@ -27461,7 +27490,8 @@
       "weight_gsm": 340,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 47.35
     },
     {
       "fabric_number": "70146",
@@ -27703,7 +27733,8 @@
       "weight_gsm": 340,
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 105.3
     },
     {
       "fabric_number": "70157",
@@ -28475,7 +28506,8 @@
       "category": "SEMI CLASSICO",
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 45.95
     },
     {
       "fabric_number": "71022",
@@ -28517,7 +28549,8 @@
       "category": "FANTASIA",
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 39.05
     },
     {
       "fabric_number": "71025",
@@ -29063,7 +29096,8 @@
       "category": "UNITO",
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 48.6
     },
     {
       "fabric_number": "71052",
@@ -29231,7 +29265,8 @@
       "category": "UNITO",
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 52.7
     },
     {
       "fabric_number": "71060",
@@ -29252,7 +29287,8 @@
       "category": "UNITO",
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 25.3
     },
     {
       "fabric_number": "71063",
@@ -29294,7 +29330,8 @@
       "category": "UNITO",
       "stock_status": "in_stock",
       "restock_date": null,
-      "stock_updated_at": "2026-05-29T19:39:34.289Z"
+      "stock_updated_at": "2026-06-03T15:36:24.455Z",
+      "disponibilita_meters": 43.05
     },
     {
       "fabric_number": "71065",
@@ -33019,5 +33056,7 @@
     "temp_unavailable_count": 148,
     "permanently_unavailable_count": 207,
     "parsed_unavailable_count": 516
-  }
+  },
+  "stock_synced_at": "2026-06-03T15:36:24.455Z",
+  "stock_sync_source": "api.drapersitaly.it/stock"
 }

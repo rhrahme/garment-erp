@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Drapers fabric swatch preview</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        padding: 24px;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+      h1 { font-size: 1.25rem; margin: 0 0 8px; }
+      p { margin: 0 0 20px; color: #64748b; font-size: 0.875rem; }
+      .grid {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        max-width: 960px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .card img {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        display: block;
+        background: #e2e8f0;
+      }
+      .meta { padding: 12px 14px; font-size: 0.8rem; }
+      .code { font-weight: 700; font-size: 1rem; }
+      .links { margin-top: 8px; }
+      .links a { color: #b45309; margin-right: 12px; }
+    </style>
+  </head>
+  <body>
+    <h1>Drapers API — fabric swatch preview</h1>
+    <p>GET /fabrics/{code}/medias/ → square (thumbnail), zoom, ruler</p>
+    <div class="grid" id="grid"></div>
+    <script>
+      const samples = [
+        {
+          code: "10101",
+          bunch: "Blazon Super 150's",
+          square:
+            "https://drapersitaly.it/public/uploads/drapersmedia-bxym-20220909-tessuto_10015.jpg",
+          zoom:
+            "https://drapersitaly.it/public/uploads/drapersmedia-tfw5-20220909-resa2_10015.jpg",
+          ruler:
+            "https://drapersitaly.it/public/uploads/drapersmedia-fupz-20220909-resa10_10015.jpg",
+        },
+        {
+          code: "90640",
+          bunch: "Golden Selection AW 2025-26",
+          square:
+            "https://drapersitaly.it/public/uploads/drapersmedia-oo7h-20250901-tessuto_90640.jpg",
+          zoom:
+            "https://drapersitaly.it/public/uploads/drapersmedia-s2kv-20250901-resa2_90640.jpg",
+          ruler:
+            "https://drapersitaly.it/public/uploads/drapersmedia-zcjs-20250901-resa10_90640.jpg",
+        },
+        {
+          code: "85119",
+          bunch: "Puro Cashmere",
+          square:
+            "https://drapersitaly.it/public/uploads/drapersmedia-cb3r-20240829-tessuto_85119.jpg",
+          zoom:
+            "https://drapersitaly.it/public/uploads/drapersmedia-hpml-20240829-resa2_85119.jpg",
+          ruler:
+            "https://drapersitaly.it/public/uploads/drapersmedia-undg-20240829-resa10_85119.jpg",
+        },
+      ];
+      document.getElementById("grid").innerHTML = samples
+        .map(
+          (s) => `<article class="card">
+        <img src="${s.square}" alt="Fabric ${s.code}" />
+        <div class="meta">
+          <div class="code">${s.code}</div>
+          <div>${s.bunch}</div>
+          <div class="links">
+            <a href="${s.zoom}" target="_blank" rel="noreferrer">Zoom</a>
+            <a href="${s.ruler}" target="_blank" rel="noreferrer">Ruler</a>
+          </div>
+        </div>
+      </article>`
+        )
+        .join("");
+    </script>
+  </body>
+</html>

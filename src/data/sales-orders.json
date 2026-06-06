@@ -1,6 +1,910 @@
 {
-  "updated_at": "2026-05-29T19:46:29.704Z",
+  "updated_at": "2026-06-05T23:06:24.922Z",
   "orders": [
+    {
+      "id": "so-1780164354118",
+      "so_number": "SO-2026-0102",
+      "client_id": "cu-ralph-rahme-fouad-rahme",
+      "client_code": "FR-0126-0019",
+      "client_name": "Ralph Rahme",
+      "client_reference": "FR-0126-0019-SO-2026-0102",
+      "order_date": "2026-05-30",
+      "delivery_date": null,
+      "delivery_destination": "DXB",
+      "status": "open",
+      "notes": null,
+      "fabric_lines": [
+        {
+          "id": "line-1780164354117-0",
+          "garment_type": "Short",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0126-0019-SO-2026-0102-L01-SH",
+              "piece_name": "Short",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S10009",
+          "quantity": 0.9,
+          "unit": "meters",
+          "unit_price": 58.5,
+          "composition": "ZEFIRO 100% COTTON",
+          "weight_gsm": 240,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164354118-1",
+          "garment_type": "Short",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0126-0019-SO-2026-0102-L02-SH",
+              "piece_name": "Short",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S10008",
+          "quantity": 0.9,
+          "unit": "meters",
+          "unit_price": 58.5,
+          "composition": "ZEFIRO 100% COTTON",
+          "weight_gsm": 240,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        }
+      ],
+      "fabric_po_ids": []
+    },
+    {
+      "id": "so-1780164353525",
+      "so_number": "SO-2026-0101",
+      "client_id": "new-1780146000000",
+      "client_code": "FR-0526-0029",
+      "client_name": "Moiid Al Zahrani",
+      "client_reference": "FR-0526-0029-SO-2026-0101",
+      "order_date": "2026-05-30",
+      "delivery_date": null,
+      "delivery_destination": "DXB",
+      "status": "open",
+      "notes": "Fabric shipped to Hagan Dubai.",
+      "fabric_lines": [
+        {
+          "id": "line-1780164353525-0",
+          "garment_type": "Shirt LS",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0029-SO-2026-0101-L01-SHT-LS",
+              "piece_name": "Shirt LS",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S13029",
+          "quantity": 1.6,
+          "unit": "meters",
+          "unit_price": 34.5,
+          "composition": "STREET LINO DELAVE' ALOE NEW 100% LINEN",
+          "weight_gsm": 195,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164353525-1",
+          "garment_type": "Shirt+Trouser",
+          "label_count": 2,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0029-SO-2026-0101-L02-SHT",
+              "piece_name": "Shirt",
+              "sequence": 1
+            },
+            {
+              "code": "FR-0526-0029-SO-2026-0101-L02-TR",
+              "piece_name": "Trouser",
+              "sequence": 2
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S13032",
+          "quantity": 2.8,
+          "unit": "meters",
+          "unit_price": 34.5,
+          "composition": "STREET LINO ALOE NEW 100% LINEN",
+          "weight_gsm": 195,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164353525-2",
+          "garment_type": "Shirt+Short",
+          "label_count": 2,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0029-SO-2026-0101-L03-SHT",
+              "piece_name": "Shirt",
+              "sequence": 1
+            },
+            {
+              "code": "FR-0526-0029-SO-2026-0101-L03-SH",
+              "piece_name": "Short",
+              "sequence": 2
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S13022",
+          "quantity": 2.5,
+          "unit": "meters",
+          "unit_price": 34.5,
+          "composition": "STREET LINO BARRE' CAT.BIANCA ALOE NEW 100% LINEN",
+          "weight_gsm": 195,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164353525-3",
+          "garment_type": "Shirt LS",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0029-SO-2026-0101-L04-SHT-LS",
+              "piece_name": "Shirt LS",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S25003",
+          "quantity": 1.6,
+          "unit": "meters",
+          "unit_price": 34.5,
+          "composition": "STREET LINO ALOE NEW 100% LINEN",
+          "weight_gsm": 195,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164353525-4",
+          "garment_type": "Shirt+Short",
+          "label_count": 2,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0029-SO-2026-0101-L05-SHT",
+              "piece_name": "Shirt",
+              "sequence": 1
+            },
+            {
+              "code": "FR-0526-0029-SO-2026-0101-L05-SH",
+              "piece_name": "Short",
+              "sequence": 2
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S23020",
+          "quantity": 2.5,
+          "unit": "meters",
+          "unit_price": 88.5,
+          "composition": "LIGHT TWISTED T.P. 100%LINEN",
+          "weight_gsm": 330,
+          "width_cm": 150,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164353525-5",
+          "garment_type": "Shirt LS",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0029-SO-2026-0101-L06-SHT-LS",
+              "piece_name": "Shirt LS",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S13026",
+          "quantity": 1.6,
+          "unit": "meters",
+          "unit_price": 34.5,
+          "composition": "STREET LINO BARRE' CAT.BIANCA ALOE NEW 100% LINEN",
+          "weight_gsm": 195,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164353525-6",
+          "garment_type": "Shirt LS",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0029-SO-2026-0101-L07-SHT-LS",
+              "piece_name": "Shirt LS",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S23010",
+          "quantity": 1.6,
+          "unit": "meters",
+          "unit_price": 88.5,
+          "composition": "LIGHT TWISTED T.P. 100%LINEN",
+          "weight_gsm": 330,
+          "width_cm": 150,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164353525-7",
+          "garment_type": "Shirt LS",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0029-SO-2026-0101-L08-SHT-LS",
+              "piece_name": "Shirt LS",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S23019",
+          "quantity": 1.6,
+          "unit": "meters",
+          "unit_price": 88.5,
+          "composition": "LIGHT TWISTED T.P. 100%LINEN",
+          "weight_gsm": 330,
+          "width_cm": 150,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164353525-8",
+          "garment_type": "Shirt LS",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0029-SO-2026-0101-L09-SHT-LS",
+              "piece_name": "Shirt LS",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S25030",
+          "quantity": 1.6,
+          "unit": "meters",
+          "unit_price": 0,
+          "composition": null,
+          "weight_gsm": null,
+          "width_cm": null,
+          "width_inches": null,
+          "color": null,
+          "stock_status": "permanently_unavailable",
+          "restock_date": null,
+          "needs_replacement": true,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164353525-9",
+          "garment_type": "Short",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0029-SO-2026-0101-L10-SH",
+              "piece_name": "Short",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S10002",
+          "quantity": 0.9,
+          "unit": "meters",
+          "unit_price": 58.5,
+          "composition": "ZEFIRO 100% COTTON",
+          "weight_gsm": 240,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164353525-10",
+          "garment_type": "Trouser",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0029-SO-2026-0101-L11-TR",
+              "piece_name": "Trouser",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S14036",
+          "quantity": 1.3,
+          "unit": "meters",
+          "unit_price": 63,
+          "composition": "PEGASO DELAVE' 100%LINEN",
+          "weight_gsm": 340,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164353525-11",
+          "garment_type": "Trouser",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0029-SO-2026-0101-L12-TR",
+              "piece_name": "Trouser",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S14033",
+          "quantity": 1.3,
+          "unit": "meters",
+          "unit_price": 63,
+          "composition": "PEGASO DELAVE' 100%LINEN",
+          "weight_gsm": 340,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164353525-12",
+          "garment_type": "Trouser",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0029-SO-2026-0101-L13-TR",
+              "piece_name": "Trouser",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S14040",
+          "quantity": 1.3,
+          "unit": "meters",
+          "unit_price": 63,
+          "composition": "PEGASO DELAVE' 100%LINEN",
+          "weight_gsm": 340,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164353525-13",
+          "garment_type": "Short",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0029-SO-2026-0101-L14-SH",
+              "piece_name": "Short",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S10006",
+          "quantity": 0.9,
+          "unit": "meters",
+          "unit_price": 58.5,
+          "composition": "ZEFIRO 100% COTTON",
+          "weight_gsm": 240,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        }
+      ],
+      "fabric_po_ids": []
+    },
+    {
+      "id": "so-1780164122258",
+      "so_number": "SO-2026-0099",
+      "client_id": "cu-ralph-rahme-fouad-rahme",
+      "client_code": "FR-0126-0019",
+      "client_name": "Ralph Rahme",
+      "client_reference": "FR-0126-0019-SO-2026-0099",
+      "order_date": "2026-05-30",
+      "delivery_date": null,
+      "delivery_destination": "DXB",
+      "status": "cancelled",
+      "notes": "[Duplicate cancelled] Duplicate of SO-2026-0102 (same Short S10009/S10008).",
+      "fabric_lines": [
+        {
+          "id": "line-1780164122258-0",
+          "garment_type": "Short",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0126-0019-SO-2026-0099-L01-SH",
+              "piece_name": "Short",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S10009",
+          "quantity": 0.9,
+          "unit": "meters",
+          "unit_price": 58.5,
+          "composition": "ZEFIRO 100% COTTON",
+          "weight_gsm": 240,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164122258-1",
+          "garment_type": "Short",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0126-0019-SO-2026-0099-L02-SH",
+              "piece_name": "Short",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S10008",
+          "quantity": 0.9,
+          "unit": "meters",
+          "unit_price": 58.5,
+          "composition": "ZEFIRO 100% COTTON",
+          "weight_gsm": 240,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        }
+      ],
+      "fabric_po_ids": []
+    },
+    {
+      "id": "so-1780164121004",
+      "so_number": "SO-2026-0097",
+      "client_id": "new-1780144919980",
+      "client_code": "FR-0526-0028",
+      "client_name": "Samer Al Jameel",
+      "client_reference": "FR-0526-0028-SO-2026-0097",
+      "order_date": "2026-05-30",
+      "delivery_date": null,
+      "delivery_destination": "DXB",
+      "status": "open",
+      "notes": "Fabric shipped to Hagan Dubai.",
+      "fabric_lines": [
+        {
+          "id": "line-1780164121003-0",
+          "garment_type": "Shirt LS",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0028-SO-2026-0097-L01-SHT-LS",
+              "piece_name": "Shirt LS",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S13029",
+          "quantity": 1.6,
+          "unit": "meters",
+          "unit_price": 34.5,
+          "composition": "STREET LINO DELAVE' ALOE NEW 100% LINEN",
+          "weight_gsm": 195,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164121003-1",
+          "garment_type": "Shirt+Trouser",
+          "label_count": 2,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0028-SO-2026-0097-L02-SHT",
+              "piece_name": "Shirt",
+              "sequence": 1
+            },
+            {
+              "code": "FR-0526-0028-SO-2026-0097-L02-TR",
+              "piece_name": "Trouser",
+              "sequence": 2
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S13032",
+          "quantity": 2.8,
+          "unit": "meters",
+          "unit_price": 34.5,
+          "composition": "STREET LINO ALOE NEW 100% LINEN",
+          "weight_gsm": 195,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164121003-2",
+          "garment_type": "Shirt+Short",
+          "label_count": 2,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0028-SO-2026-0097-L03-SHT",
+              "piece_name": "Shirt",
+              "sequence": 1
+            },
+            {
+              "code": "FR-0526-0028-SO-2026-0097-L03-SH",
+              "piece_name": "Short",
+              "sequence": 2
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S13022",
+          "quantity": 2.5,
+          "unit": "meters",
+          "unit_price": 34.5,
+          "composition": "STREET LINO BARRE' CAT.BIANCA ALOE NEW 100% LINEN",
+          "weight_gsm": 195,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164121003-3",
+          "garment_type": "Shirt+Short",
+          "label_count": 2,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0028-SO-2026-0097-L04-SHT",
+              "piece_name": "Shirt",
+              "sequence": 1
+            },
+            {
+              "code": "FR-0526-0028-SO-2026-0097-L04-SH",
+              "piece_name": "Short",
+              "sequence": 2
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S23020",
+          "quantity": 2.5,
+          "unit": "meters",
+          "unit_price": 88.5,
+          "composition": "LIGHT TWISTED T.P. 100%LINEN",
+          "weight_gsm": 330,
+          "width_cm": 150,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164121003-4",
+          "garment_type": "Shirt LS",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0028-SO-2026-0097-L05-SHT-LS",
+              "piece_name": "Shirt LS",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S13026",
+          "quantity": 1.6,
+          "unit": "meters",
+          "unit_price": 34.5,
+          "composition": "STREET LINO BARRE' CAT.BIANCA ALOE NEW 100% LINEN",
+          "weight_gsm": 195,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164121003-5",
+          "garment_type": "Trouser",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0028-SO-2026-0097-L06-TR",
+              "piece_name": "Trouser",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S13026",
+          "quantity": 1.3,
+          "unit": "meters",
+          "unit_price": 34.5,
+          "composition": "STREET LINO BARRE' CAT.BIANCA ALOE NEW 100% LINEN",
+          "weight_gsm": 195,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164121003-6",
+          "garment_type": "Shirt LS",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0028-SO-2026-0097-L07-SHT-LS",
+              "piece_name": "Shirt LS",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S23010",
+          "quantity": 1.6,
+          "unit": "meters",
+          "unit_price": 88.5,
+          "composition": "LIGHT TWISTED T.P. 100%LINEN",
+          "weight_gsm": 330,
+          "width_cm": 150,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164121003-7",
+          "garment_type": "Trouser",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0028-SO-2026-0097-L08-TR",
+              "piece_name": "Trouser",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S23010",
+          "quantity": 1.3,
+          "unit": "meters",
+          "unit_price": 88.5,
+          "composition": "LIGHT TWISTED T.P. 100%LINEN",
+          "weight_gsm": 330,
+          "width_cm": 150,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164121004-8",
+          "garment_type": "Shirt LS",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0028-SO-2026-0097-L09-SHT-LS",
+              "piece_name": "Shirt LS",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S23019",
+          "quantity": 1.6,
+          "unit": "meters",
+          "unit_price": 88.5,
+          "composition": "LIGHT TWISTED T.P. 100%LINEN",
+          "weight_gsm": 330,
+          "width_cm": 150,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164121004-9",
+          "garment_type": "Trouser",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0028-SO-2026-0097-L10-TR",
+              "piece_name": "Trouser",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S23019",
+          "quantity": 1.3,
+          "unit": "meters",
+          "unit_price": 88.5,
+          "composition": "LIGHT TWISTED T.P. 100%LINEN",
+          "weight_gsm": 330,
+          "width_cm": 150,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164121004-10",
+          "garment_type": "Shirt LS",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0028-SO-2026-0097-L11-SHT-LS",
+              "piece_name": "Shirt LS",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S25030",
+          "quantity": 1.6,
+          "unit": "meters",
+          "unit_price": 0,
+          "composition": null,
+          "weight_gsm": null,
+          "width_cm": null,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1780164121004-11",
+          "garment_type": "Short",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "FR-0526-0028-SO-2026-0097-L12-SH",
+              "piece_name": "Short",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "loro-piana",
+          "supplier_name": "Solbiati",
+          "fabric_number": "S10009",
+          "quantity": 0.9,
+          "unit": "meters",
+          "unit_price": 58.5,
+          "composition": "ZEFIRO 100% COTTON",
+          "weight_gsm": 240,
+          "width_cm": 148,
+          "width_inches": null,
+          "color": null,
+          "stock_status": null,
+          "restock_date": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        }
+      ],
+      "fabric_po_ids": []
+    },
     {
       "id": "so-1780073620287",
       "so_number": "SO-2026-0096",
@@ -281,7 +1185,7 @@
       "fabric_po_ids": [
         "po-1780083989702",
         "po-1780083989703",
-        "po-1780083989704",
+        "po-1780083989705",
         "po-1780083989704"
       ]
     },
@@ -6480,14 +7384,14 @@
     {
       "id": "so-cu-86ex7hq4e",
       "so_number": "SO-2026-0023",
-      "client_id": "cu-luca-faloni-linen-shirt-fouad-rahme",
-      "client_code": "FR-0426-0008",
-      "client_name": "Luca Faloni Linen Shirt",
-      "client_reference": "FR-0426-0008-SO-2026-0023",
+      "client_id": "cu-retail-luca-faloni",
+      "client_code": "RM-LF",
+      "client_name": "Luca Faloni",
+      "client_reference": "RM-LF-SO-2026-0023",
       "order_date": "2026-04-11",
       "delivery_date": null,
       "status": "open",
-      "notes": "ClickUp: Luca Faloni Linen Shirt (86ex7hq4e)",
+      "notes": "Ready-made · Linen Shirt · ClickUp: Luca Faloni Linen Shirt (86ex7hq4e)",
       "fabric_lines": [
         {
           "id": "line-cu-86ex7hq4e-0",
@@ -6698,8 +7602,8 @@
         }
       ],
       "fabric_po_ids": [],
-      "retail_brand": null,
-      "product_article": null
+      "retail_brand": "Luca Faloni",
+      "product_article": "Linen Shirt"
     },
     {
       "id": "so-cu-rm-massimo-dutti-linen-shirt",
@@ -14469,8 +15373,8 @@
       "client_reference": "FR-0126-0019-SO-2026-0049",
       "order_date": "2026-01-31",
       "delivery_date": null,
-      "status": "open",
-      "notes": "ClickUp: Ralph Rahme (86ewekqpn)",
+      "status": "cancelled",
+      "notes": "[Duplicate cancelled] Duplicate of SO-2026-0048 (same Overshirt 90640). ClickUp: Ralph Rahme (86ewekqpn)",
       "fabric_lines": [
         {
           "id": "line-cu-86ewekqpn-0",

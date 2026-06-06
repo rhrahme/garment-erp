@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { attachLiveSupplierContacts, getAllPriceListItems } from "@/lib/data/supplier-catalogs";
+import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
+import { getLoroPianaMillLine } from "@/lib/fabric-sourcing/loro-piana-styles";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -14,7 +16,12 @@ export async function GET(request: Request) {
     items: items.map((item) => ({
       id: item.id,
       supplier_id: item.supplier_id,
-      supplier_name: item.supplier?.name ?? item.supplier_id,
+      supplier_name: formatFabricSupplierName(
+        item.supplier_id,
+        item.supplier?.name ?? item.supplier_id,
+        item.fabric_number
+      ),
+      mill_line: item.mill_line ?? (item.supplier_id === "loro-piana" ? getLoroPianaMillLine(item.fabric_number) : null),
       fabric_number: item.fabric_number,
       composition: item.composition,
       description: item.description,

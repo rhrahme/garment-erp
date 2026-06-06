@@ -45,6 +45,7 @@ src/data/clickup-import-cache.json
 supplier-invoices.local.json
 supplier-invoices/
 transporter-invoices.local.json
+reference-documents/
 
 # local tooling / temp
 .cursor/

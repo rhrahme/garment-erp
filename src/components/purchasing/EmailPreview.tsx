@@ -89,6 +89,21 @@ export function EmailPreview({ email, poNumber, onSent }: EmailPreviewProps) {
           <Button variant="secondary" size="sm" onClick={openMailClient}>
             Open in Mail
           </Button>
+          {onSent && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() =>
+                onSent({
+                  emailedAt: new Date().toISOString(),
+                  emailTo: email.to,
+                })
+              }
+            >
+              <Check className="mr-2 h-4 w-4" />
+              Already sent
+            </Button>
+          )}
           <Button size="sm" onClick={sendEmail} disabled={!canSend || !email.to || sending}>
             {sending ? (
               <>

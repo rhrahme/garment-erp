@@ -1,5 +1,5 @@
 import path from "path";
-import { readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
+import { readJsonFile, saveDocument } from "@/lib/data/document-persistence";
 import type { Supplier } from "@/lib/types/fabric-sourcing";
 import type { SupplierContactRow, SupplierContactsFile } from "@/lib/types/supplier-contacts";
 
@@ -24,12 +24,12 @@ export function readSupplierContacts(): SupplierContactsFile {
   };
 }
 
-export function writeSupplierContacts(data: SupplierContactsFile): SupplierContactsFile {
+export async function writeSupplierContacts(data: SupplierContactsFile): Promise<SupplierContactsFile> {
   const payload: SupplierContactsFile = {
     ...data,
     updated_at: new Date().toISOString(),
   };
-  return writeJsonFile(CONTACTS_PATH, payload);
+  return saveDocument(CONTACTS_PATH, payload);
 }
 
 export function normalizeEmailList(

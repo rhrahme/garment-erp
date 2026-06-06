@@ -1,0 +1,98 @@
+{
+  "updated_at": "2026-06-05T00:00:00.000Z",
+  "map_image": "/factory/hagan-factory-layout.png",
+  "map_pdf": "/factory/hagan-factory-layout.pdf",
+  "notes": "Pin positions are % from top-left of the layout image. Adjust x/y after walking the floor.",
+  "stations": [
+    {
+      "id": "receive",
+      "label": "Receive",
+      "description": "Scan fabric cut stickers when rolls arrive (Fabric Receiving).",
+      "zone": "fabric_receiving",
+      "scan_stage": "received",
+      "erp_href": "/fabric-receiving",
+      "x": 50,
+      "y": 7
+    },
+    {
+      "id": "wash",
+      "label": "Wash",
+      "description": "Start or finish machine wash (Fabric Receiving).",
+      "zone": "fabric_receiving",
+      "scan_stage": "fabric_wash",
+      "erp_href": "/fabric-receiving",
+      "x": 13,
+      "y": 22
+    },
+    {
+      "id": "soak",
+      "label": "Soak",
+      "description": "Start or finish soaking (Fabric Receiving).",
+      "zone": "fabric_receiving",
+      "scan_stage": "fabric_soak",
+      "erp_href": "/fabric-receiving",
+      "x": 32,
+      "y": 22
+    },
+    {
+      "id": "iron",
+      "label": "Iron",
+      "description": "Finish prep and hand off to cutting (Fabric Receiving).",
+      "zone": "fabric_receiving",
+      "scan_stage": "fabric_iron",
+      "erp_href": "/fabric-receiving",
+      "x": 13,
+      "y": 32
+    },
+    {
+      "id": "cutting",
+      "label": "Cutting",
+      "description": "Scan piece stickers at the cutting table (Production).",
+      "zone": "production",
+      "scan_stage": "cutting",
+      "erp_href": "/production",
+      "x": 27,
+      "y": 29
+    },
+    {
+      "id": "sewing",
+      "label": "Sewing",
+      "description": "Scan when cutting is done — moves piece to sewing (Production).",
+      "zone": "production",
+      "scan_stage": "sewing",
+      "erp_href": "/production",
+      "x": 56,
+      "y": 41
+    },
+    {
+      "id": "garment_wash",
+      "label": "Garment wash",
+      "description": "Finished garments — garment wash stage (Production pipeline).",
+      "zone": "production",
+      "scan_stage": "garment_wash",
+      "erp_href": "/production",
+      "x": 20,
+      "y": 74
+    },
+    {
+      "id": "finishing",
+      "label": "Finishing",
+      "description": "Press, trim, and final prep before packing.",
+      "zone": "production",
+      "scan_stage": "finishing",
+      "erp_href": "/production",
+      "x": 46,
+      "y": 81
+    },
+    {
+      "id": "packed",
+      "label": "Packed",
+      "description": "Ready for dispatch — rack / shipping area.",
+      "zone": "production",
+      "scan_stage": "packed",
+      "erp_href": "/production",
+      "x": 80,
+      "y": 83
+    }
+  ]
+}

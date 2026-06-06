@@ -17,16 +17,19 @@ import {
   Droplets,
   Plane,
   FileText,
+  Receipt,
   LogOut,
   Shirt,
   SwatchBook,
   Tags,
   UsersRound,
   Store,
+  FolderArchive,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { CLIENT_MANAGER_NAV_HREFS } from "@/lib/auth/permissions";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -38,6 +41,7 @@ const navItems = [
   { href: "/inventory", label: "Inventory", icon: Package },
   { href: "/production", label: "Production", icon: Factory },
   { href: "/orders", label: "Sales Orders", icon: ShoppingCart },
+  { href: "/invoices", label: "Invoicing", icon: Receipt },
   { href: "/supplier-emails", label: "Supplier Emails", icon: Mail },
   { href: "/supplier-inbox", label: "Supplier Inbox", icon: Inbox },
   { href: "/supplier-invoices", label: "Supplier Invoices", icon: FileText },
@@ -47,11 +51,16 @@ const navItems = [
   { href: "/quality", label: "Quality Control", icon: ClipboardCheck },
   { href: "/hr", label: "HR & Payroll", icon: Users },
   { href: "/costing", label: "Costing", icon: Calculator },
+  { href: "/documents", label: "Documents & Data", icon: FolderArchive },
 ];
 
-export function Sidebar() {
+const qcNavHrefs = new Set<string>(CLIENT_MANAGER_NAV_HREFS);
+const qcNavItems = navItems.filter((item) => qcNavHrefs.has(item.href));
+
+export function Sidebar({ clientsOnly = false }: { clientsOnly?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
+  const items = clientsOnly ? qcNavItems : navItems;
 
   async function handleLogout() {
     const supabase = createClient();
@@ -74,7 +83,7 @@ export function Sidebar() {
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         <ul className="space-y-1">
-          {navItems.map(({ href, label, icon: Icon }) => {
+          {items.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
             return (
               <li key={href}>

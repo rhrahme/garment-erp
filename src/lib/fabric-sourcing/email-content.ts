@@ -72,9 +72,7 @@ Print one sticker per fabric cut with client code + production code.
 Fabric No.       Client           Production code  Labels   Quantity
 ────────────────────────────────────────────────────────────────────
 ${lineRows}
-
-Labels = woven brand labels to include with the fabric (one per garment piece we stitch from that fabric).
-Our factory re-labels for individual pieces when the fabric arrives.
+${lines.some((line) => /^S/i.test(line.fabricNumber)) ? "\nNote: fabrics starting with S are Solbiati (linen line).\n" : ""}
 Please confirm availability and advise expected shipping date.
 Provide AWB once dispatched.
 

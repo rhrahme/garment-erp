@@ -10,6 +10,7 @@ import {
   isFabricPrepType,
 } from "@/lib/production/fabric-prep";
 import { formatLabelGarmentDescription, stickerCodesMatch } from "@/lib/sales-orders/label-codes";
+import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import type {
   FabricPrepStep,
   FabricPrepType,
@@ -48,11 +49,11 @@ export function findStickerInSalesOrders(stickerCode: string): StickerLookupResu
   return null;
 }
 
-export function scanStickerForProduction(stickerCode: string): {
+export async function scanStickerForProduction(stickerCode: string): Promise<{
   work_order: ProductionWorkOrder;
   created: boolean;
   garment_description: string;
-} {
+}> {
   const existing = getProductionWorkOrderBySticker(stickerCode);
   if (existing) {
     const work_order = normalizeWorkOrder(existing);
@@ -84,7 +85,7 @@ export function scanStickerForProduction(stickerCode: string): {
     piece_name: sticker.piece_name,
     fabric_number: line.fabric_number,
     supplier_id: line.supplier_id,
-    supplier_name: line.supplier_name,
+    supplier_name: formatFabricSupplierName(line.supplier_id, line.supplier_name, line.fabric_number),
     fabric_meters: line.quantity,
     status: "received",
     fabric_prep_type: null,
@@ -96,7 +97,7 @@ export function scanStickerForProduction(stickerCode: string): {
 
   const store = readProductionWorkOrders();
   store.work_orders.unshift(work_order);
-  writeProductionWorkOrders(store);
+  await writeProductionWorkOrders(store);
 
   return {
     work_order,
@@ -105,7 +106,7 @@ export function scanStickerForProduction(stickerCode: string): {
   };
 }
 
-export function startFabricPrep(id: string, fabric_prep_type: FabricPrepType): ProductionWorkOrder {
+export async function startFabricPrep(id: string, fabric_prep_type: FabricPrepType): Promise<ProductionWorkOrder> {
   if (!isFabricPrepType(fabric_prep_type)) {
     throw new Error("Select a fabric preparation type.");
   }
@@ -127,7 +128,7 @@ export function startFabricPrep(id: string, fabric_prep_type: FabricPrepType): P
   workOrder.fabric_prep_step = firstFabricPrepStep(fabric_prep_type);
   workOrder.updated_at = now;
 
-  writeProductionWorkOrders(store);
+  await writeProductionWorkOrders(store);
   return workOrder;
 }
 
@@ -147,7 +148,7 @@ function getNextProductionStage(current: ProductionStage): ProductionStage | nul
   return stages[index + 1];
 }
 
-export function advanceProductionWorkOrder(id: string): ProductionWorkOrder {
+export async function advanceProductionWorkOrder(id: string): Promise<ProductionWorkOrder> {
   const store = readProductionWorkOrders();
   const workOrder = store.work_orders.find((order) => order.id === id);
   if (!workOrder) {
@@ -172,7 +173,7 @@ export function advanceProductionWorkOrder(id: string): ProductionWorkOrder {
     workOrder.completed_at = now;
   }
 
-  writeProductionWorkOrders(store);
+  await writeProductionWorkOrders(store);
   return workOrder;
 }
 

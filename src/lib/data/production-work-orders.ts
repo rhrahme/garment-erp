@@ -1,5 +1,5 @@
 import path from "path";
-import { readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
+import { readJsonFile, saveDocument } from "@/lib/data/document-persistence";
 import type { ProductionWorkOrder, ProductionWorkOrdersFile } from "@/lib/types/production";
 import { productionCodeFromSticker, supplierFabricProductionCode } from "@/lib/sales-orders/label-codes";
 
@@ -10,12 +10,14 @@ export function readProductionWorkOrders(): ProductionWorkOrdersFile {
   return readJsonFile(STORE_PATH, EMPTY_PRODUCTION_WORK_ORDERS);
 }
 
-export function writeProductionWorkOrders(data: ProductionWorkOrdersFile): ProductionWorkOrdersFile {
+export async function writeProductionWorkOrders(
+  data: ProductionWorkOrdersFile
+): Promise<ProductionWorkOrdersFile> {
   const payload: ProductionWorkOrdersFile = {
     ...data,
     updated_at: new Date().toISOString(),
   };
-  return writeJsonFile(STORE_PATH, payload);
+  return saveDocument(STORE_PATH, payload);
 }
 
 export function getProductionWorkOrderBySticker(stickerCode: string): ProductionWorkOrder | undefined {

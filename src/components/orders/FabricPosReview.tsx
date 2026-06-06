@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { EmailPreview } from "@/components/purchasing/EmailPreview";
+import { Button } from "@/components/ui/Button";
 import { purchaseOrderToEmail } from "@/lib/fabric-sourcing/email-content";
 import type { PurchaseOrder, SupplierFabric } from "@/lib/types/fabric-sourcing";
 import type { SalesOrder } from "@/lib/types/sales-orders";
@@ -121,15 +123,22 @@ export function FabricPosReview({ salesOrderId }: FabricPosReviewProps) {
                   {po.supplier?.name ?? po.supplier_id}{" "}
                   <span className="font-mono text-sm font-normal text-slate-500">{po.po_number}</span>
                 </h3>
-                {po.emailed_at ? (
-                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
-                    Sent {new Date(po.emailed_at).toLocaleDateString()}
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
-                    Not sent yet
-                  </span>
-                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link href={`/orders/${salesOrderId}/stickers?po=${encodeURIComponent(po.po_number)}`}>
+                    <Button variant="secondary" size="sm">
+                      Print stickers
+                    </Button>
+                  </Link>
+                  {po.emailed_at ? (
+                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
+                      Sent {new Date(po.emailed_at).toLocaleDateString()}
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
+                      Not sent yet
+                    </span>
+                  )}
+                </div>
               </div>
               <EmailPreview
                 email={email}
