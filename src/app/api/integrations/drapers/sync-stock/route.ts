@@ -11,6 +11,7 @@ export async function POST(request: Request) {
     const body = (await request.json().catch(() => ({}))) as {
       scope?: "open_orders" | "catalog";
       limit?: number;
+      page_limit?: number;
     };
 
     const scope = body.scope === "catalog" ? "catalog" : "open_orders";

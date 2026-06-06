@@ -7,6 +7,6 @@ export {
   loadedErpDocumentKeys,
   readJsonFile,
   saveDocument,
-  useSupabaseDocuments,
+  isSupabaseDocumentsStorage,
   writeJsonFile,
 } from "@/lib/data/document-persistence";

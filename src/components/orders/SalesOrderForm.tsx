@@ -192,7 +192,7 @@ function FabricPicker({
     const resolved =
       supplierId === "loro-piana"
         ? resolveLoroPianaFabricInput(fabricNumber)
-        : { preferredNumber: fabricNumber.trim(), millLine: null as const };
+        : { preferredNumber: fabricNumber.trim(), millLine: null };
     const normalized = normalizeFabricSupplierFields(supplierId, brandName, resolved.preferredNumber);
     onSelect({
       id: `manual-${normalized.supplier_id}-${resolved.preferredNumber.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,

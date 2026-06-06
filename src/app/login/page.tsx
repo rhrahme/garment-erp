@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { Shirt } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -42,7 +43,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push(data.redirect ?? "/dashboard");
+      router.push((data.redirect ?? "/dashboard") as Route);
       router.refresh();
     } catch {
       setError("Sign in failed.");

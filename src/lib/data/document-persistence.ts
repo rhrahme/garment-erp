@@ -19,7 +19,7 @@ const fileCache = new Map<string, CacheEntry>();
 const loadedKeys = new Set<ErpDocumentKey>();
 const loadingByKey = new Map<ErpDocumentKey, Promise<void>>();
 
-export function useSupabaseDocuments(): boolean {
+export function isSupabaseDocumentsStorage(): boolean {
   if (process.env.ERP_USE_JSON === "true") return false;
   return isSupabaseConfigured() && isSupabaseAdminConfigured();
 }
@@ -96,7 +96,7 @@ async function loadDocumentKey(documentKey: ErpDocumentKey): Promise<void> {
 
   const task = (async () => {
     const spec = ERP_DOCUMENT_SPECS[documentKey];
-    if (useSupabaseDocuments()) {
+    if (isSupabaseDocumentsStorage()) {
       const remote = await readFromSupabase<unknown>(documentKey);
       if (remote != null) {
         fileCache.set(spec.path, { mtimeMs: Date.now(), data: remote });
@@ -119,7 +119,7 @@ async function loadDocumentKey(documentKey: ErpDocumentKey): Promise<void> {
 
 /** Load specific ERP documents from Supabase (or local) — once per process per key. */
 export async function ensureDocumentsLoaded(keys: readonly ErpDocumentKey[]): Promise<void> {
-  if (!useSupabaseDocuments()) return;
+  if (!isSupabaseDocumentsStorage()) return;
   await Promise.all(keys.map((key) => loadDocumentKey(key)));
 }
 
@@ -132,7 +132,7 @@ export async function ensureErpDocumentsLoaded(): Promise<void> {
 export async function loadDocument<T>(filePath: string, fallback: T): Promise<T> {
   const documentKey = documentKeyForPath(filePath);
 
-  if (useSupabaseDocuments() && documentKey) {
+  if (isSupabaseDocumentsStorage() && documentKey) {
     await loadDocumentKey(documentKey);
     const cached = fileCache.get(filePath);
     if (cached) return cached.data as T;
@@ -145,7 +145,7 @@ export async function loadDocument<T>(filePath: string, fallback: T): Promise<T>
 export async function saveDocument<T>(filePath: string, data: T): Promise<T> {
   const documentKey = documentKeyForPath(filePath);
 
-  if (useSupabaseDocuments() && documentKey) {
+  if (isSupabaseDocumentsStorage() && documentKey) {
     const ok = await writeToSupabase(documentKey, data);
     if (!ok) {
       throw new Error(`Failed to save ${documentKey} to Supabase.`);
@@ -162,7 +162,7 @@ export async function saveDocument<T>(filePath: string, data: T): Promise<T> {
  * API handlers should call ensureDocumentsLoaded() first when Supabase is source of truth.
  */
 export function readJsonFile<T>(filePath: string, fallback: T): T {
-  if (useSupabaseDocuments()) {
+  if (isSupabaseDocumentsStorage()) {
     const cached = fileCache.get(filePath);
     if (cached) return cached.data as T;
   }
@@ -171,7 +171,7 @@ export function readJsonFile<T>(filePath: string, fallback: T): T {
 
 /** Read warmed cache when available; otherwise local disk. */
 export function readJsonFileFresh<T>(filePath: string, fallback: T): T {
-  if (useSupabaseDocuments()) {
+  if (isSupabaseDocumentsStorage()) {
     const cached = fileCache.get(filePath);
     if (cached) return cached.data as T;
   }
@@ -187,7 +187,7 @@ export async function readJsonFileFreshAsync<T>(
 ): Promise<T> {
   const documentKey = documentKeyForPath(filePath);
 
-  if (useSupabaseDocuments() && documentKey) {
+  if (isSupabaseDocumentsStorage() && documentKey) {
     if (!options?.force) {
       const cached = fileCache.get(filePath);
       if (cached) return cached.data as T;
@@ -209,7 +209,7 @@ export function writeJsonFile<T>(filePath: string, data: T): T {
   const documentKey = documentKeyForPath(filePath);
   const saved = writeLocalJsonFile(filePath, data);
 
-  if (useSupabaseDocuments() && documentKey) {
+  if (isSupabaseDocumentsStorage() && documentKey) {
     loadedKeys.add(documentKey);
     void writeToSupabase(documentKey, saved).catch((error) => {
       console.error(`Async Supabase write failed for ${documentKey}:`, error);

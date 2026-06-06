@@ -7,7 +7,7 @@ import {
   updatedAtFromData,
 } from "@/lib/data/erp-document-catalog";
 import { ERP_DOCUMENT_SPECS, type ErpDocumentKey } from "@/lib/data/document-keys";
-import { loadDocument, useSupabaseDocuments } from "@/lib/data/document-persistence";
+import { isSupabaseDocumentsStorage, loadDocument } from "@/lib/data/document-persistence";
 import type {
   DocumentsLibrarySnapshot,
   ErpDocumentRow,
@@ -183,7 +183,7 @@ export async function getDocumentsLibrarySnapshot(): Promise<DocumentsLibrarySna
   const referenceSource = loadReferenceSourceFiles();
 
   return {
-    storageMode: useSupabaseDocuments() ? "supabase" : "local",
+    storageMode: isSupabaseDocumentsStorage() ? "supabase" : "local",
     erpDocumentCount: erpRows.length,
     totalErpBytes: erpRows.reduce((sum, row) => sum + row.approximateBytes, 0),
     categories,

@@ -11,6 +11,7 @@ import {
 import { getFactoryBrandById } from "@/lib/data/factory-brands";
 import { normalizeStoredPhone } from "@/lib/phone/countries";
 import { notifyIntegration } from "@/lib/integrations";
+import { verifyApiKey } from "@/lib/integrations/api-auth";
 import type { ClientProfile } from "@/lib/types/clients";
 
 function normalizeText(value: unknown): string | null {

@@ -216,10 +216,10 @@ export function buildDraftInvoiceFromSalesOrder(
   };
 }
 
-export function enrichInvoiceDeliveryDestination(
-  invoice: CustomerInvoice,
+export function enrichInvoiceDeliveryDestination<T extends CustomerInvoice>(
+  invoice: T,
   order: SalesOrder | undefined
-): CustomerInvoice {
+): T {
   if (invoice.delivery_destination) return invoice;
   if (!order?.delivery_destination) return { ...invoice, delivery_destination: null };
   return { ...invoice, delivery_destination: order.delivery_destination };

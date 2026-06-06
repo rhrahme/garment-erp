@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import type { ProductionWorkOrder } from "@/lib/types/production";
 
 function normalizeWorkOrders(orders: ProductionWorkOrder[]): ProductionWorkOrder[] {
-  return orders.map((order) => (order.status === "planned" ? { ...order, status: "received" } : order));
+  return orders.map((order) =>
+    (order.status as string) === "planned" ? { ...order, status: "received" } : order
+  );
 }
 
 export function useProductionWorkOrders() {
