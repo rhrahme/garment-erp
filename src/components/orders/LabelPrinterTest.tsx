@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { StickerCell } from "@/components/orders/StickerCell";
-import { labelRollSizeLabel } from "@/lib/production/label-print-config";
+import { labelRollSizeLabel, labelRollSizeMmLabel } from "@/lib/production/label-print-config";
 import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
 import type { PrintableStickerLabel } from "@/lib/production/qr-labels";
 
@@ -61,11 +61,11 @@ export function LabelPrinterTest() {
         <ol className="list-decimal space-y-1 pl-5">
           <li>
             In <strong>LabelLife</strong> or the <strong>AIMO driver</strong>, set media to{" "}
-            <strong>{labelRollSizeLabel()}</strong> (75 × 50 mm).
+            <strong>{labelRollSizeLabel()}</strong> ({labelRollSizeMmLabel()}).
           </li>
           <li>
             In the browser print dialog: <strong>Scale 100%</strong>, <strong>Margins: None</strong>, paper{" "}
-            <strong>75 × 50 mm</strong>.
+            <strong>{labelRollSizeMmLabel()}</strong>.
           </li>
           <li>Select your thermal printer (not “Save as PDF” unless testing layout only).</li>
           <li>Click <strong>Print test label</strong> — only the sticker (QR + codes) should print.</li>

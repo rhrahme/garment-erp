@@ -7,7 +7,7 @@ export default function LabelPrinterTestPage() {
       <div className="no-print">
         <PageHeader
           title="Sticker printer test"
-          description="7.5 × 5 cm roll — calibrate AIMO / LabelLife media, then print one test label"
+          description="10 × 5 cm roll — calibrate AIMO / LabelLife media, then print one test label"
         />
       </div>
       <LabelPrinterTest />

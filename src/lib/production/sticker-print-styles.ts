@@ -1,11 +1,15 @@
 import {
+  LABEL_STICKER_BATCH_GAP_MM,
+  LABEL_STICKER_PADDING_H_MM,
+  LABEL_STICKER_PADDING_V_MM,
+  LABEL_STICKER_QR_SIZE_MM,
   labelRollHeightCss,
   labelRollSizeCss,
   labelRollWidthCss,
 } from "@/lib/production/label-print-config";
 import { STICKER_FONT } from "@/lib/production/sticker-typography";
 
-/** Shared @media print rules for 7.5 × 5 cm thermal roll labels. */
+/** Shared @media print rules for 10 × 5 cm thermal roll labels. */
 export function stickerPrintStyles(): string {
   const width = labelRollWidthCss();
   const height = labelRollHeightCss();
@@ -88,7 +92,7 @@ export function stickerPrintStyles(): string {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        padding: 1mm 1.5mm !important;
+        padding: ${LABEL_STICKER_PADDING_V_MM}mm ${LABEL_STICKER_PADDING_H_MM}mm !important;
       }
       .sticker-cell-body {
         display: flex !important;
@@ -117,11 +121,11 @@ export function stickerPrintStyles(): string {
         page-break-inside: avoid !important;
       }
       .sticker-line-piece {
-        font-size: 2.1mm !important;
+        font-size: 2.2mm !important;
         letter-spacing: 0.05mm !important;
       }
       .sticker-line-cut-qty {
-        font-size: 2.15mm !important;
+        font-size: 2.3mm !important;
         letter-spacing: 0.06mm !important;
         font-variant-numeric: tabular-nums !important;
         flex-shrink: 0 !important;
@@ -136,14 +140,14 @@ export function stickerPrintStyles(): string {
         display: grid !important;
         grid-template-columns: 1fr auto 1fr !important;
         align-items: center !important;
-        column-gap: 4mm !important;
-        min-height: 10mm !important;
+        column-gap: ${LABEL_STICKER_BATCH_GAP_MM}mm !important;
+        min-height: ${LABEL_STICKER_QR_SIZE_MM}mm !important;
         flex-shrink: 0 !important;
       }
       .sticker-role-mark {
         justify-self: end !important;
         text-align: right !important;
-        font-size: 1.9mm !important;
+        font-size: 2mm !important;
         letter-spacing: 0.02mm !important;
         line-height: 1.1 !important;
         font-weight: 300 !important;
@@ -153,7 +157,7 @@ export function stickerPrintStyles(): string {
       .sticker-batch-mark {
         justify-self: start !important;
         text-align: left !important;
-        font-size: 2.15mm !important;
+        font-size: 2.25mm !important;
         letter-spacing: 0.04mm !important;
         font-variant-numeric: tabular-nums !important;
         line-height: 1.1 !important;
@@ -162,6 +166,8 @@ export function stickerPrintStyles(): string {
         white-space: nowrap !important;
       }
       .sticker-cell img {
+        width: ${LABEL_STICKER_QR_SIZE_MM}mm !important;
+        height: ${LABEL_STICKER_QR_SIZE_MM}mm !important;
         display: block !important;
         print-color-adjust: exact !important;
         -webkit-print-color-adjust: exact !important;
