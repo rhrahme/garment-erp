@@ -20,6 +20,12 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/login",
 ] as const;
 
+/**
+ * QC logins — always restricted (no prices, limited menu) even if
+ * CLIENT_MANAGER_EMAILS is missing from a deploy.
+ */
+const BUILTIN_CLIENT_MANAGER_EMAILS = ["hagan.qc@gmail.com"] as const;
+
 /** Sidebar pages for QC / client-manager accounts (subset of admin ERP). */
 export const CLIENT_MANAGER_NAV_HREFS = [
   "/orders",
@@ -69,12 +75,11 @@ export function isAdminEmail(email: string | null | undefined): boolean {
 
 export function parseClientManagerEmails(): Set<string> {
   const raw = process.env.CLIENT_MANAGER_EMAILS?.trim() ?? "";
-  return new Set(
-    raw
-      .split(",")
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean)
-  );
+  const fromEnv = raw
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+  return new Set([...BUILTIN_CLIENT_MANAGER_EMAILS, ...fromEnv]);
 }
 
 export function isClientManagerRole(role: UserRole | null | undefined): boolean {
