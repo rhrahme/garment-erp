@@ -1,5 +1,5 @@
 import path from "path";
-import { loadDocument, readJsonFile, saveDocument } from "@/lib/data/document-persistence";
+import { ensureDocumentsLoaded, loadDocument, readJsonFile, saveDocument } from "@/lib/data/document-persistence";
 import type { ClientProfile, ClientsFile } from "@/lib/types/clients";
 
 const CLIENTS_PATH = path.join(process.cwd(), "src/data/clients.json");
@@ -49,6 +49,7 @@ export function slugifyClientId(name: string): string {
 export async function deleteClientById(
   id: string
 ): Promise<{ ok: true; client: ClientProfile } | { ok: false; error: string }> {
+  await ensureDocumentsLoaded(["clients"]);
   const data = readClients();
   const index = data.clients.findIndex((client) => client.id === id);
   if (index < 0) {

@@ -10,6 +10,7 @@ import {
 } from "@/lib/data/clients";
 import { getFactoryBrandById } from "@/lib/data/factory-brands";
 import { normalizeStoredPhone } from "@/lib/phone/countries";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { notifyIntegration } from "@/lib/integrations";
 import { verifyApiKey } from "@/lib/integrations/api-auth";
 import type { ClientProfile } from "@/lib/types/clients";

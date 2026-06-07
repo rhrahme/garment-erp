@@ -204,12 +204,28 @@ export function ClientProfilesEditor() {
     setError(null);
   }, [clientsToPersist, draft]);
 
+  const autoSaveWaitingMessage = canViewClientContact
+    ? "Add first name, last name, and brand to auto-save"
+    : "Add first name, last name, and brand — contact fields are optional for your account";
+
   const { status: autoSaveStatus, error: autoSaveError, isSaving, saveNow } = useAutoSave({
     isDirty,
     canSave: canAutoSave,
     onSave: persistDraft,
-    waitingMessage: "Add first name, last name, and brand to auto-save",
+    delayMs: 3_000,
+    waitingMessage: autoSaveWaitingMessage,
   });
+
+  async function closeClientEditor(clientId: string) {
+    if (editingId === clientId && isDirty && canAutoSave) {
+      try {
+        await persistDraft();
+      } catch {
+        return;
+      }
+    }
+    setEditingId(null);
+  }
 
   function isNewClient(client: ClientProfile): boolean {
     return !saved.clients.some((savedClient) => savedClient.id === client.id);
@@ -327,8 +343,19 @@ export function ClientProfilesEditor() {
             {deletingId === client.id ? "Deleting…" : "Delete"}
           </Button>
         )}
-        <Button variant="ghost" size="sm" onClick={() => setEditingId(isEditing ? null : client.id)}>
-          {isEditing ? "Done" : "Edit"}
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={isSaving}
+          onClick={() => {
+            if (isEditing) {
+              void closeClientEditor(client.id);
+              return;
+            }
+            setEditingId(client.id);
+          }}
+        >
+          {isEditing ? (isSaving ? "Saving…" : "Done") : "Edit"}
         </Button>
       </div>
     );
@@ -560,7 +587,7 @@ export function ClientProfilesEditor() {
           <AutoSaveStatusBar
             status={autoSaveStatus}
             error={autoSaveError}
-            waitingMessage="Add first name, last name, and brand to auto-save"
+            waitingMessage={autoSaveWaitingMessage}
             isDirty={isDirty}
           />
         </div>

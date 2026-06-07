@@ -10,6 +10,7 @@ import {
   slugifyClientId,
   writeClients,
 } from "@/lib/data/clients";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getFactoryBrandById } from "@/lib/data/factory-brands";
 import { notifyIntegration } from "@/lib/integrations";
 import type { ClientProfile } from "@/lib/types/clients";
@@ -135,6 +136,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
+    await ensureDocumentsLoaded(["clients"]);
     const data = readClients();
     return NextResponse.json(session.canViewClientContact ? data : redactClientsFile(data));
   } catch (error) {
@@ -151,6 +153,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
+    await ensureDocumentsLoaded(["clients"]);
     const previous = readClients();
     const result = validateClients(body, previous.clients, {
       allowContactFields: session.canViewClientContact,
