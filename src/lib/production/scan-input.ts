@@ -1,6 +1,14 @@
+/** Strip control chars / GS1 prefixes some USB scanners prepend. */
+export function normalizeScannerInput(raw: string): string {
+  return raw
+    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, "")
+    .replace(/^\]+/, "")
+    .trim();
+}
+
 /** Split scanner input when two codes are typed back-to-back without Enter. */
 export function splitScanInput(raw: string): string[] {
-  const trimmed = raw.trim();
+  const trimmed = normalizeScannerInput(raw);
   if (!trimmed) return [];
 
   const glued = trimmed.split(/(?<=-L\d{2})(?=FR-)/i).map((part) => part.trim()).filter(Boolean);

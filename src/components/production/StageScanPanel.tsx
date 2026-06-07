@@ -103,8 +103,10 @@ export function StageScanPanel({ stations, scanContext, onRefresh, onScanMessage
       />
       {scanContext === "fabric-receiving" && (
         <p className="text-sm text-slate-600">
-          <span className="font-medium text-slate-800">Floor use:</span> scan the dashed box. Beeps + short voice (e.g.
-          “L04 received”). Tap the box once if sound is silent on first scan.
+          <span className="font-medium text-slate-800">USB wireless scanner:</span> click the dashed scan box once
+          (turns green), keep this browser window focused, then scan. Pick <strong>Receive</strong>,{" "}
+          <strong>Wash</strong>, <strong>Soak</strong>, or <strong>Iron</strong> to match where the fabric is on the
+          floor.
         </p>
       )}
     </div>

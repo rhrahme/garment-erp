@@ -6,7 +6,7 @@ export default function FabricReceivingPage() {
     <div>
       <PageHeader
         title="Fabric Receiving"
-        description="Scan fabric cut stickers at Receive, then Wash or Iron. Work list matches the sales order A4 receiving sheet — QR, fabric cut, composition."
+        description="Scan fabric cut stickers at Receive, then Wash or Iron. Click the green scan box first on Windows — USB scanners type like a keyboard. Work list shows QR, fabric cut, composition."
       />
       <FabricReceivingWorkspace />
     </div>

@@ -9,8 +9,9 @@ import {
   unlockScanAudio,
 } from "@/lib/production/scan-feedback";
 import { postStageScan } from "@/lib/production/scan-fetch";
-import { splitScanInput } from "@/lib/production/scan-input";
+import { normalizeScannerInput, splitScanInput } from "@/lib/production/scan-input";
 import type { ScanStation, StageScanNotice } from "@/lib/production/stage-scan";
+import { cn } from "@/lib/utils";
 
 export type StageScanResponse = {
   station: ScanStation;
@@ -50,8 +51,10 @@ function resultPanelClass(notice?: StageScanNotice): string {
   return "border-sky-300 bg-sky-50 text-sky-950";
 }
 
-/** Scanner finishes typing a code in about this many ms — then auto-submit. */
-const SCAN_BURST_IDLE_MS = 100;
+/** Wireless USB scanners often need a longer gap before auto-submit (no Enter suffix). */
+const SCAN_BURST_IDLE_MS = 220;
+/** Avoid flushing partial codes when the wireless link pauses mid-burst. */
+const MIN_CHARS_BEFORE_IDLE_FLUSH = 8;
 
 export function StickerScanInput({
   station,
@@ -67,6 +70,10 @@ export function StickerScanInput({
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<StageScanResponse | null>(null);
+  const [isFocused, setIsFocused] = useState(false);
+  const [typedCharCount, setTypedCharCount] = useState(0);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualCode, setManualCode] = useState("");
   const scanChainRef = useRef<Promise<void>>(Promise.resolve());
   const pendingCountRef = useRef(0);
 
@@ -83,14 +90,16 @@ export function StickerScanInput({
 
   function clearInput() {
     if (inputRef.current) inputRef.current.value = "";
+    setTypedCharCount(0);
   }
 
   function captureAndClearInput(): string {
     const el = inputRef.current;
     if (!el) return "";
-    const raw = el.value;
+    const raw = normalizeScannerInput(el.value);
     el.value = "";
-    return raw.trim();
+    setTypedCharCount(0);
+    return raw;
   }
 
   function setProcessingState() {
@@ -105,7 +114,8 @@ export function StickerScanInput({
   }
 
   function enqueueOneScan(trimmed: string) {
-    if (!trimmed) return;
+    const code = normalizeScannerInput(trimmed);
+    if (!code) return;
 
     pendingCountRef.current += 1;
     setProcessingState();
@@ -116,7 +126,7 @@ export function StickerScanInput({
 
         try {
           const res = await postStageScan({
-            code: trimmed,
+            code,
             station,
             ...(scanContext ? { context: scanContext } : {}),
           });
@@ -176,17 +186,22 @@ export function StickerScanInput({
   function scheduleFlushFromHiddenInput() {
     cancelFlushTimer();
     flushTimerRef.current = window.setTimeout(() => {
+      const el = inputRef.current;
+      if (!el) return;
+      const pending = normalizeScannerInput(el.value);
+      if (pending.length < MIN_CHARS_BEFORE_IDLE_FLUSH) return;
       const raw = captureAndClearInput();
       submitCaptured(raw);
     }, SCAN_BURST_IDLE_MS);
   }
 
-  function primeAudioFromScanner() {
+  function activateScanZone() {
     void unlockScanAudio();
+    focusInput();
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
-    primeAudioFromScanner();
+    void unlockScanAudio();
 
     if (event.key === "Enter" || event.key === "Tab") {
       event.preventDefault();
@@ -195,17 +210,32 @@ export function StickerScanInput({
       return;
     }
 
+    if (event.key.length === 1) {
+      window.setTimeout(() => {
+        setTypedCharCount(inputRef.current?.value.length ?? 0);
+      }, 0);
+    }
+
     scheduleFlushFromHiddenInput();
   }
 
   function handleInput() {
-    primeAudioFromScanner();
+    void unlockScanAudio();
+    setTypedCharCount(inputRef.current?.value.length ?? 0);
     scheduleFlushFromHiddenInput();
   }
 
   function handleBlur() {
+    setIsFocused(false);
     if (!autoFocus) return;
     window.setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 50);
+  }
+
+  function submitManual() {
+    const code = normalizeScannerInput(manualCode);
+    if (!code) return;
+    setManualCode("");
+    enqueueOneScan(code);
   }
 
   const headline = result ? scanFeedbackHeadline(result.notice) : null;
@@ -221,22 +251,41 @@ export function StickerScanInput({
           <h3 className="text-lg font-semibold text-slate-900">Scan here — {stationLabel}</h3>
           <p className="mt-1 text-sm text-slate-600">
             {isFabricFloor
-              ? "Aim the scanner at the box below. Beeps + short voice — details on screen."
-              : "Aim the scanner at the box below. Beeps + voice confirm each scan."}
+              ? "USB scanners act like a keyboard — click the dashed box once, then scan. Beeps + voice confirm."
+              : "Click the dashed box once, then scan the sticker QR."}
           </p>
 
-          {/* Scanner target — input is invisible on top; codes never appear as visible text. */}
           <div
-            className="relative mt-4 w-full rounded-xl border-2 border-dashed border-indigo-400 bg-white py-10 text-center shadow-sm ring-4 ring-indigo-100"
-            onPointerDown={() => void unlockScanAudio()}
+            className={cn(
+              "relative mt-4 w-full cursor-pointer rounded-xl border-2 border-dashed bg-white py-10 text-center shadow-sm transition-colors",
+              isFocused
+                ? "border-emerald-500 ring-4 ring-emerald-100"
+                : "border-indigo-400 ring-4 ring-indigo-100"
+            )}
+            onPointerDown={activateScanZone}
+            onClick={activateScanZone}
+            role="button"
+            tabIndex={-1}
+            aria-label={`Activate scanner for ${stationLabel}`}
           >
             {processing ? (
               <span className="pointer-events-none inline-flex items-center gap-2 text-base font-semibold text-indigo-700">
                 <Loader2 className="h-5 w-5 animate-spin" />
                 Saving scan…
               </span>
+            ) : isFocused ? (
+              <span className="pointer-events-none text-base font-semibold text-emerald-700">
+                Ready — scan sticker
+                {typedCharCount > 0 ? (
+                  <span className="mt-1 block text-xs font-normal text-emerald-600">
+                    Receiving {typedCharCount} characters…
+                  </span>
+                ) : null}
+              </span>
             ) : (
-              <span className="pointer-events-none text-base font-semibold text-emerald-700">Ready — scan sticker</span>
+              <span className="pointer-events-none text-base font-semibold text-amber-700">
+                Click here, then scan
+              </span>
             )}
             <input
               ref={inputRef}
@@ -244,14 +293,57 @@ export function StickerScanInput({
               name="sticker-scan"
               onKeyDown={handleKeyDown}
               onInput={handleInput}
+              onFocus={() => setIsFocused(true)}
               onBlur={handleBlur}
               className="absolute inset-0 cursor-default opacity-0"
               autoComplete="off"
               autoCorrect="off"
-              autoCapitalize="off"
+              autoCapitalize="characters"
               spellCheck={false}
               aria-label={`Scan sticker at ${stationLabel}`}
             />
+          </div>
+
+          {isFabricFloor && (
+            <p className="mt-2 text-xs text-slate-500">
+              Scanner not working? Open Notepad and scan — if text appears there, click the dashed box above and try
+              again. Set the scanner to <strong>USB keyboard (HID)</strong> mode with <strong>Enter</strong> suffix.
+            </p>
+          )}
+
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => setManualOpen((open) => !open)}
+              className="text-xs font-medium text-indigo-700 hover:text-indigo-900"
+            >
+              {manualOpen ? "Hide manual entry" : "Type code manually instead"}
+            </button>
+            {manualOpen && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                <input
+                  type="text"
+                  value={manualCode}
+                  onChange={(e) => setManualCode(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      submitManual();
+                    }
+                  }}
+                  placeholder="FR-0526-0101-L04"
+                  className="min-w-[14rem] flex-1 rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm uppercase"
+                />
+                <button
+                  type="button"
+                  onClick={submitManual}
+                  disabled={processing || !manualCode.trim()}
+                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                >
+                  Submit
+                </button>
+              </div>
+            )}
           </div>
 
           {error && (
