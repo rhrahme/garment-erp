@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import { cn } from "@/lib/utils";
-import { qrImageUrl } from "@/lib/production/qr-labels";
+import { FabricCutQrImage } from "@/components/orders/FabricCutQrImage";
 import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
 export type ReceivingCutTableRow = {
@@ -148,12 +148,9 @@ export function SalesOrderReceivingCutTable({
             >
               <td className={cell("text-center font-semibold")}>{row.article_number}</td>
               <td className={cell()}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={qrImageUrl(row.fabric_cut_code, 96)}
-                  alt=""
-                  width={48}
-                  height={48}
+                <FabricCutQrImage
+                  fabricCutCode={row.fabric_cut_code}
+                  size={96}
                   className="h-14 w-14 print:h-11 print:w-11"
                 />
               </td>
