@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
+import { requireAuthenticated } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getClientById } from "@/lib/data/clients";
 import { formatClientDisplayName } from "@/lib/clients/names";
@@ -19,8 +21,20 @@ function normalizeText(value: unknown): string | null {
 
 export async function GET() {
   try {
+    const session = await requireAuthenticated();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
     await ensureDocumentsLoaded(["sales_orders"]);
-    return NextResponse.json(readSalesOrders());
+    const store = readSalesOrders();
+    if (!session.canViewFabricListPrices) {
+      return NextResponse.json({
+        ...store,
+        orders: store.orders.map(redactSalesOrderFabricPrices),
+      });
+    }
+    return NextResponse.json(store);
   } catch (error) {
     console.error("Failed to read sales orders:", error);
     return NextResponse.json({ error: "Failed to load sales orders." }, { status: 500 });
@@ -29,6 +43,13 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const session = await requireAuthenticated();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    await ensureDocumentsLoaded(["sales_orders", "clients"]);
+
     const body = (await request.json()) as {
       client_id?: string;
       delivery_destination?: string;

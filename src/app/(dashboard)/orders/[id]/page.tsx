@@ -11,8 +11,10 @@ import {
 } from "@/lib/auth/fabric-price-access";
 import { getSessionContext } from "@/lib/auth/session";
 import { getCustomerInvoiceBySalesOrderId } from "@/lib/data/customer-invoices";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderById, isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
+import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import { formatDate } from "@/lib/utils";
 
 export default async function SalesOrderDetailPage({
@@ -21,9 +23,11 @@ export default async function SalesOrderDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  await ensureDocumentsLoaded(["sales_orders", "customer_invoices"]);
   const rawOrder = getSalesOrderById(id);
   if (!rawOrder) notFound();
   const session = await getSessionContext();
+  const labels = ordersUiLabels(session.isClientManager);
   const cookieStore = await cookies();
   const canViewFabricPrices = hasFabricPriceAccess(
     session,
@@ -46,7 +50,7 @@ export default async function SalesOrderDetailPage({
           <div className="flex flex-wrap items-center gap-3">
             <DownloadSalesOrderPdfButton orderId={order.id} soNumber={order.so_number} />
             <Link href="/orders" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
-              ← All orders
+              {labels.allOrdersLink}
             </Link>
           </div>
         }
@@ -124,6 +128,7 @@ export default async function SalesOrderDetailPage({
         isReadyMade={isReadyMadeSalesOrder(order)}
         canViewFabricPrices={canViewFabricPrices}
         isClientManager={session.isClientManager}
+        productionMode={session.isClientManager}
       />
     </div>
   );

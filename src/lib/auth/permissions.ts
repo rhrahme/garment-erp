@@ -26,6 +26,9 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
  */
 const BUILTIN_CLIENT_MANAGER_EMAILS = ["hagan.qc@gmail.com"] as const;
 
+/** Sidebar label for QC production orders (same `/orders` routes, production-focused UI). */
+export const CLIENT_MANAGER_ORDERS_NAV_LABEL = "Production Orders";
+
 /** Sidebar pages for QC / client-manager accounts (subset of admin ERP). */
 export const CLIENT_MANAGER_NAV_HREFS = [
   "/orders",

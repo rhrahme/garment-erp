@@ -55,6 +55,7 @@ import {
   salesOrderToDuplicateSeed,
   type SalesOrderDuplicateSeed,
 } from "@/lib/sales-orders/duplicate-draft";
+import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import type { SalesOrder } from "@/lib/types/sales-orders";
 
 type FabricBrand = { id: string; name: string; has_price_list?: boolean };
@@ -362,11 +363,14 @@ export function SalesOrderForm({
   duplicateFromOrderId,
   startFresh = false,
   continueDraft = false,
+  productionMode = false,
 }: {
   duplicateFromOrderId?: string;
   startFresh?: boolean;
   continueDraft?: boolean;
+  productionMode?: boolean;
 } = {}) {
+  const labels = ordersUiLabels(productionMode);
   const router = useRouter();
   const duplicateModeRef = useRef(Boolean(duplicateFromOrderId));
   const duplicateSeedRef = useRef<SalesOrderDuplicateSeed | null>(null);
@@ -1750,8 +1754,8 @@ export function SalesOrderForm({
           {submitting
             ? "Creating…"
             : readyDrafts.length > 1
-              ? `Create ${readyDrafts.length} sales orders`
-              : "Create sales order"}
+              ? labels.createMany(readyDrafts.length)
+              : labels.createOne}
         </Button>
       </div>
     </div>

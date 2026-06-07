@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
-import { getSessionContext, requireAdmin } from "@/lib/auth/session";
+import { getSessionContext, requireAdmin, requireAuthenticated } from "@/lib/auth/session";
 import { deleteSalesOrderById, getSalesOrderById, readSalesOrders, writeSalesOrders } from "@/lib/data/sales-orders";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { notifyIntegration } from "@/lib/integrations";
 import { isDeliveryDestination } from "@/lib/shipping/delivery-destinations";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSessionContext();
+    if (!session.userId && !session.email) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    await ensureDocumentsLoaded(["sales_orders"]);
+
     const { id } = await context.params;
     const order = getSalesOrderById(id);
     if (!order) {
@@ -23,6 +30,13 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const session = await requireAuthenticated();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    await ensureDocumentsLoaded(["sales_orders"]);
+
     const { id } = await context.params;
     const body = (await request.json()) as { delivery_destination?: string | null };
 
@@ -47,8 +61,13 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     };
     const saved = await writeSalesOrders(store);
     const order = saved.orders.find((item) => item.id === id);
+    const safeOrder = session.canViewFabricListPrices && order
+      ? order
+      : order
+        ? redactSalesOrderFabricPrices(order)
+        : undefined;
 
-    return NextResponse.json({ order });
+    return NextResponse.json({ order: safeOrder });
   } catch (error) {
     console.error("Failed to update sales order:", error);
     return NextResponse.json({ error: "Failed to update sales order." }, { status: 500 });

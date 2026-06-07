@@ -29,7 +29,7 @@ import {
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { CLIENT_MANAGER_NAV_HREFS } from "@/lib/auth/permissions";
+import { CLIENT_MANAGER_NAV_HREFS, CLIENT_MANAGER_ORDERS_NAV_LABEL } from "@/lib/auth/permissions";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -97,7 +97,7 @@ export function Sidebar({ clientsOnly = false }: { clientsOnly?: boolean }) {
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
-                  {label}
+                  {clientsOnly && href === "/orders" ? CLIENT_MANAGER_ORDERS_NAV_LABEL : label}
                 </Link>
               </li>
             );

@@ -12,11 +12,19 @@ import { salesOrderMatchesSearch } from "@/lib/sales-orders/list-search";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { formatDate } from "@/lib/utils";
+import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import type { SalesOrderListRow } from "@/lib/data/sales-orders";
 
 type OrdersView = "active" | "archived";
 
-export function OrdersList({ orders }: { orders: SalesOrderListRow[] }) {
+export function OrdersList({
+  orders,
+  productionMode = false,
+}: {
+  orders: SalesOrderListRow[];
+  productionMode?: boolean;
+}) {
+  const labels = ordersUiLabels(productionMode);
   const { brandId, setBrandId, hydrated } = useFactoryBrandFilter();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 200);
@@ -50,10 +58,10 @@ export function OrdersList({ orders }: { orders: SalesOrderListRow[] }) {
   if (orders.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 py-16 text-center">
-        <p className="text-lg font-medium text-slate-700">No sales orders yet</p>
-        <p className="mt-2 text-sm text-slate-500">Create your first order to start the fabric PO workflow.</p>
+        <p className="text-lg font-medium text-slate-700">{labels.emptyTitle}</p>
+        <p className="mt-2 text-sm text-slate-500">{labels.emptyDescription}</p>
         <Link href="/orders/new" className="mt-4 inline-block">
-          <Button>+ New Sales Order</Button>
+          <Button>{labels.newButton}</Button>
         </Link>
       </div>
     );

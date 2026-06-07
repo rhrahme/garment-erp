@@ -18,6 +18,7 @@ import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import { formatSupplierUnitPrice } from "@/lib/currency/format";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
+import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import { formatLabelGarmentDescription } from "@/lib/sales-orders/label-codes";
 
 function formatWidth(line: SalesOrderFabricLine) {
@@ -37,13 +38,16 @@ export function SalesOrderActions({
   isReadyMade = false,
   canViewFabricPrices = false,
   isClientManager = false,
+  productionMode = false,
 }: {
   order: SalesOrder;
   existingInvoiceId?: string | null;
   isReadyMade?: boolean;
   canViewFabricPrices?: boolean;
   isClientManager?: boolean;
+  productionMode?: boolean;
 }) {
+  const labels = ordersUiLabels(productionMode);
   const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [savingDestination, setSavingDestination] = useState(false);
@@ -236,10 +240,8 @@ export function SalesOrderActions({
       <div className="rounded-xl border border-slate-200 bg-white p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Fabrics by supplier</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              One consolidated email will be created per supplier. Send them from Supplier Emails in the sidebar.
-            </p>
+            <h2 className="text-lg font-semibold text-slate-900">{labels.fabricsSectionTitle}</h2>
+            <p className="mt-1 text-sm text-slate-500">{labels.fabricsSectionDescription}</p>
             {order.fabric_lines.length > 0 && (
               <p className="mt-2 text-sm font-medium text-slate-800">
                 Order total: {fabricTotals.total_meters.toFixed(1)} m
@@ -247,7 +249,7 @@ export function SalesOrderActions({
               </p>
             )}
           </div>
-          <FabricPriceRevealToggle canViewFabricPrices={canViewFabricPrices} />
+          {!productionMode && <FabricPriceRevealToggle canViewFabricPrices={canViewFabricPrices} />}
         </div>
         <div className="mt-4 space-y-4">
           {Object.entries(supplierGroups).map(([groupKey, group]) => (
@@ -348,7 +350,7 @@ export function SalesOrderActions({
           <Button variant="secondary">Duplicate for another client</Button>
         </Link>
         <Link href="/orders/new">
-          <Button variant="secondary">New sales order</Button>
+          <Button variant="secondary">{labels.detailNewButton}</Button>
         </Link>
         <DownloadSalesOrderPdfButton orderId={order.id} soNumber={order.so_number} />
         {isAdmin && order.status === "open" && order.fabric_po_ids.length === 0 && (
