@@ -5,6 +5,11 @@ import { resolveFabricItemFromCatalog } from "@/lib/fabric-sourcing/resolve-fabr
 import { fabricPoSupplierId, normalizeFabricSupplierFields } from "@/lib/fabric-sourcing/supplier-display";
 import { generateFabricLabelStickers, getGarmentPieces } from "@/lib/sales-orders/label-codes";
 import { isGarmentStitchType } from "@/lib/sales-orders/garment-types";
+import {
+  fabricArticleKey,
+  findDuplicateFabricArticle,
+  formatFabricArticleDuplicateError,
+} from "@/lib/sales-orders/duplicate-order";
 import { canAppendFabricLines, canEditFabricLines, fabricLineEditBlockedReason } from "@/lib/sales-orders/fabric-lines-rules";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
@@ -197,12 +202,41 @@ export function buildFabricLineFromInput(
   };
 }
 
+function validateNoDuplicateFabricArticles(
+  existingLines: SalesOrderFabricLine[],
+  candidates: Array<Pick<SalesOrderFabricLine, "garment_type" | "fabric_number" | "supplier_id" | "supplier_name">>,
+  excludeLineId?: string
+): string | null {
+  const seenKeys = new Set<string>();
+
+  for (const line of existingLines) {
+    if (line.id !== excludeLineId) {
+      seenKeys.add(fabricArticleKey(line));
+    }
+  }
+
+  for (const candidate of candidates) {
+    const key = fabricArticleKey(candidate);
+    if (seenKeys.has(key)) {
+      const duplicate =
+        findDuplicateFabricArticle(existingLines, candidate, excludeLineId) ?? candidate;
+      return formatFabricArticleDuplicateError(duplicate);
+    }
+    seenKeys.add(key);
+  }
+
+  return null;
+}
+
 export function buildFabricLinesFromInputs(
   inputs: FabricLineInput[],
   order: Pick<SalesOrder, "client_code" | "so_number" | "client_reference" | "fabric_lines">,
   startLineIndex = order.fabric_lines.length,
   options: { addedAt?: string; addedBy?: string | null } = {}
 ): { lines: SalesOrderFabricLine[] } | { error: string } {
+  const duplicateError = validateNoDuplicateFabricArticles(order.fabric_lines, inputs);
+  if (duplicateError) return { error: duplicateError };
+
   const clientReference = resolveOrderClientReference(order);
   const lines: SalesOrderFabricLine[] = [];
   const addedAt = options.addedAt ?? new Date().toISOString();
@@ -248,6 +282,11 @@ export async function appendSalesOrderFabricLines(
 
   if (inputs.length === 0) {
     return { ok: false, status: 400, error: "Add at least one fabric line." };
+  }
+
+  const duplicateError = validateNoDuplicateFabricArticles(order.fabric_lines, inputs);
+  if (duplicateError) {
+    return { ok: false, status: 409, error: duplicateError };
   }
 
   const built = buildFabricLinesFromInputs(inputs, order, order.fabric_lines.length, {
@@ -319,6 +358,27 @@ export async function updateSalesOrderFabricLine(
     return { ok: false, status: 400, error: `Invalid garment type: ${nextGarmentType}` };
   }
 
+  const supplierFieldsPreview = normalizeFabricSupplierFields(
+    nextSupplierId,
+    input.supplier_name ?? existing.supplier_name ?? "",
+    nextFabricNumber
+  );
+  const duplicateError = validateNoDuplicateFabricArticles(
+    order.fabric_lines,
+    [
+      {
+        garment_type: nextGarmentType,
+        fabric_number: nextFabricNumber,
+        supplier_id: supplierFieldsPreview.supplier_id,
+        supplier_name: supplierFieldsPreview.supplier_name,
+      },
+    ],
+    lineId
+  );
+  if (duplicateError) {
+    return { ok: false, status: 409, error: duplicateError };
+  }
+
   const poSupplierId = fabricPoSupplierId(nextSupplierId, nextFabricNumber);
   const supplier =
     getSupplierByIdFromContacts(poSupplierId) ?? getSupplierByIdFromContacts(nextSupplierId);
@@ -384,4 +444,46 @@ export async function updateSalesOrderFabricLine(
   const updated = saved.orders.find((item) => item.id === orderId)!;
 
   return { ok: true, order: updated, updated_line: updatedLine };
+}
+
+export async function deleteSalesOrderFabricLine(
+  orderId: string,
+  lineId: string,
+  options: { removedBy?: string | null } = {}
+): Promise<
+  | { ok: true; order: SalesOrder; removed_line: SalesOrderFabricLine }
+  | { ok: false; status: number; error: string }
+> {
+  await ensureDocumentsLoaded(["sales_orders"]);
+
+  const trimmedLineId = String(lineId ?? "").trim();
+  if (!trimmedLineId) {
+    return { ok: false, status: 400, error: "line_id is required." };
+  }
+
+  const store = readSalesOrders();
+  const index = store.orders.findIndex((order) => order.id === orderId);
+  if (index < 0) {
+    return { ok: false, status: 404, error: "Sales order not found." };
+  }
+
+  const order = store.orders[index]!;
+  const blockedReason = fabricLineEditBlockedReason(order);
+  if (blockedReason) {
+    return { ok: false, status: 409, error: blockedReason };
+  }
+
+  const lineIndex = order.fabric_lines.findIndex((line) => line.id === trimmedLineId);
+  if (lineIndex < 0) {
+    return { ok: false, status: 404, error: "Fabric line not found on this order." };
+  }
+
+  const removedLine = order.fabric_lines[lineIndex]!;
+  const nextLines = order.fabric_lines.filter((line) => line.id !== trimmedLineId);
+  store.orders[index] = { ...order, fabric_lines: nextLines };
+
+  const saved = await writeSalesOrders(store);
+  const updated = saved.orders.find((item) => item.id === orderId)!;
+
+  return { ok: true, order: updated, removed_line: removedLine };
 }

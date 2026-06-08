@@ -3,6 +3,7 @@ import { notifyIntegration } from "@/lib/integrations";
 import { verifyApiKey } from "@/lib/integrations/api-auth";
 import {
   appendSalesOrderFabricLines,
+  deleteSalesOrderFabricLine,
   updateSalesOrderFabricLine,
   type FabricLineInput,
   type FabricLineUpdateInput,
@@ -80,5 +81,41 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   } catch (error) {
     console.error("Failed to update fabric line (API):", error);
     return NextResponse.json({ error: "Failed to update fabric line." }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
+  const authError = verifyApiKey(request);
+  if (authError) return authError;
+
+  try {
+    const { id } = await context.params;
+    const body = (await request.json()) as { line_id?: string; removed_by?: string };
+    const lineId = body.line_id?.trim() ?? "";
+    if (!lineId) {
+      return NextResponse.json({ error: "line_id is required." }, { status: 400 });
+    }
+
+    const removedBy = body.removed_by?.trim() || "api";
+    const result = await deleteSalesOrderFabricLine(id, lineId, { removedBy });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+
+    await notifyIntegration("sales_order.fabric_lines_removed", {
+      order_id: result.order.id,
+      so_number: result.order.so_number,
+      line_id: result.removed_line.id,
+      removed_by: removedBy,
+      source: "api",
+    });
+
+    return NextResponse.json({
+      order: result.order,
+      removed_line_id: result.removed_line.id,
+    });
+  } catch (error) {
+    console.error("Failed to delete fabric line (API):", error);
+    return NextResponse.json({ error: "Failed to remove fabric line." }, { status: 500 });
   }
 }

@@ -21,6 +21,7 @@ import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
 import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import { ProductionOrderAddFabrics } from "@/components/orders/ProductionOrderAddFabrics";
 import { OrderFabricLineEditor } from "@/components/orders/OrderFabricLineEditor";
+import { OrderFabricLineRemove } from "@/components/orders/OrderFabricLineRemove";
 import { canAppendFabricLines, canEditFabricLines, fabricLineEditBlockedReason } from "@/lib/sales-orders/fabric-lines-rules";
 import { formatLabelGarmentDescription } from "@/lib/sales-orders/label-codes";
 import { formatDateTime } from "@/lib/utils";
@@ -99,6 +100,14 @@ export function SalesOrderActions({
     setLiveOrder((prev) => ({
       ...prev,
       fabric_lines: prev.fabric_lines.map((line) => (line.id === updatedLine.id ? updatedLine : line)),
+    }));
+    router.refresh();
+  }
+
+  function handleLineRemoved(lineId: string) {
+    setLiveOrder((prev) => ({
+      ...prev,
+      fabric_lines: prev.fabric_lines.filter((line) => line.id !== lineId),
     }));
     router.refresh();
   }
@@ -358,12 +367,20 @@ export function SalesOrderActions({
                       </ul>
                     )}
                     {fabricLinesEditable && (
-                      <OrderFabricLineEditor
-                        orderId={liveOrder.id}
-                        line={line}
-                        productionMode={productionMode}
-                        onLineUpdated={handleLineUpdated}
-                      />
+                      <div className="mt-3 flex flex-wrap items-start gap-2">
+                        <OrderFabricLineEditor
+                          orderId={liveOrder.id}
+                          line={line}
+                          productionMode={productionMode}
+                          onLineUpdated={handleLineUpdated}
+                        />
+                        <OrderFabricLineRemove
+                          orderId={liveOrder.id}
+                          line={line}
+                          productionMode={productionMode}
+                          onLineRemoved={handleLineRemoved}
+                        />
+                      </div>
                     )}
                   </li>
                 ))}

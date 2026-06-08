@@ -8,6 +8,22 @@ export function fabricArticleKey(line: Pick<SalesOrderFabricLine, "garment_type"
     .join("|");
 }
 
+export function formatFabricArticleDuplicateError(
+  line: Pick<SalesOrderFabricLine, "garment_type" | "fabric_number" | "supplier_id" | "supplier_name">
+): string {
+  const supplierLabel = line.supplier_name?.trim() || line.supplier_id;
+  return `This order already has ${supplierLabel} ${line.fabric_number} for ${line.garment_type}. Edit the existing line instead of adding a duplicate.`;
+}
+
+export function findDuplicateFabricArticle(
+  lines: SalesOrderFabricLine[],
+  candidate: Pick<SalesOrderFabricLine, "garment_type" | "fabric_number" | "supplier_id">,
+  excludeLineId?: string
+): SalesOrderFabricLine | undefined {
+  const key = fabricArticleKey(candidate);
+  return lines.find((line) => line.id !== excludeLineId && fabricArticleKey(line) === key);
+}
+
 /** Stable signature for a full order's fabric list (same lines = duplicate order). */
 export function orderFabricSignature(lines: SalesOrderFabricLine[]): string {
   return lines

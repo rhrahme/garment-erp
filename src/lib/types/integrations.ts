@@ -16,6 +16,7 @@ export type IntegrationEventType =
   | "sales_order.deleted"
   | "sales_order.fabric_lines_added"
   | "sales_order.fabric_lines_updated"
+  | "sales_order.fabric_lines_removed"
   | "sales_order.fabric_lines_printed";
 
 export interface IntegrationEvent<T = Record<string, unknown>> {

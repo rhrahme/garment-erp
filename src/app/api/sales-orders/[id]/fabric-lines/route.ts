@@ -4,6 +4,7 @@ import { requireAuthenticated } from "@/lib/auth/session";
 import { notifyIntegration } from "@/lib/integrations";
 import {
   appendSalesOrderFabricLines,
+  deleteSalesOrderFabricLine,
   updateSalesOrderFabricLine,
   type FabricLineInput,
   type FabricLineUpdateInput,
@@ -76,5 +77,42 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   } catch (error) {
     console.error("Failed to update fabric line:", error);
     return NextResponse.json({ error: "Failed to update fabric line." }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await requireAuthenticated();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    const { id } = await context.params;
+    const body = (await request.json()) as { line_id?: string };
+    const lineId = body.line_id?.trim() ?? "";
+    if (!lineId) {
+      return NextResponse.json({ error: "line_id is required." }, { status: 400 });
+    }
+
+    const result = await deleteSalesOrderFabricLine(id, lineId, { removedBy: session.email });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+
+    await notifyIntegration("sales_order.fabric_lines_removed", {
+      order_id: result.order.id,
+      so_number: result.order.so_number,
+      line_id: result.removed_line.id,
+      removed_by: session.email,
+    });
+
+    const safeOrder = session.canViewFabricListPrices
+      ? result.order
+      : redactSalesOrderFabricPrices(result.order);
+
+    return NextResponse.json({ order: safeOrder, removed_line_id: result.removed_line.id });
+  } catch (error) {
+    console.error("Failed to delete fabric line:", error);
+    return NextResponse.json({ error: "Failed to remove fabric line." }, { status: 500 });
   }
 }
