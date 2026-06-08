@@ -164,6 +164,16 @@
       "notes": "Official REST API v2026.1 — stock, catalog, pricelist, carts, orders"
     },
     {
+      "id": "canclini-linen-stock",
+      "supplier": "Canclini",
+      "filename": "Linen Stock HAGAN.xlsx",
+      "relative_path": "reference-documents/Canclini/Linen Stock HAGAN.xlsx",
+      "type": "warehouse_stock",
+      "catalog_id": "canclini-linen-stock",
+      "import_status": "imported",
+      "notes": "Gliani warehouse linen — 46 T-weight (145 g/m²) + 6 H-weight (206 g/m²) codes at 135 cm"
+    },
+    {
       "id": "hagan-factory-layout",
       "supplier": "Factory",
       "filename": "HAGAN FACTORY LAYOUT.pdf",

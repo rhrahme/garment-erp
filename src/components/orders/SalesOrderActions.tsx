@@ -19,7 +19,10 @@ import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders"
 import { formatSupplierUnitPrice } from "@/lib/currency/format";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
 import { ordersUiLabels } from "@/lib/orders/ui-labels";
+import { ProductionOrderAddFabrics } from "@/components/orders/ProductionOrderAddFabrics";
+import { canAppendFabricLines } from "@/lib/sales-orders/fabric-lines";
 import { formatLabelGarmentDescription } from "@/lib/sales-orders/label-codes";
+import { formatDateTime } from "@/lib/utils";
 
 function formatWidth(line: SalesOrderFabricLine) {
   if (line.width_cm != null) return `${line.width_cm} cm`;
@@ -174,6 +177,10 @@ export function SalesOrderActions({
         disabled={savingDestination}
       />
 
+      {canAppendFabricLines(order) && (
+        <ProductionOrderAddFabrics order={order} productionMode={productionMode} />
+      )}
+
       {allStickers.length > 0 && (
         <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -300,6 +307,12 @@ export function SalesOrderActions({
                         </>
                       )}
                     </p>
+                    {line.added_at && (
+                      <p className="mt-1 text-xs text-slate-400">
+                        Added {formatDateTime(line.added_at)}
+                        {line.added_by ? ` by ${line.added_by}` : ""}
+                      </p>
+                    )}
                     {(line.label_stickers ?? []).length > 0 && (
                       <ul className="mt-2 space-y-1 border-t border-slate-100 pt-2">
                         {line.label_stickers.map((sticker) => (

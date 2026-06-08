@@ -149,6 +149,11 @@ export async function POST(request: Request) {
         restock_date: line.restock_date ?? null,
         needs_replacement: Boolean(line.needs_replacement),
         replacement_fabric_number: line.replacement_fabric_number ?? null,
+        added_at: new Date().toISOString(),
+        added_by: session.email,
+        a4_printed_at: null,
+        prep_stickers_printed_at: null,
+        prod_stickers_printed_at: null,
       });
     }
 

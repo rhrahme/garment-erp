@@ -20,7 +20,11 @@ function roundMoney(amount: number): number {
 /** Warehouse / local stock — already in KSA, no import duty or VAT on arrival */
 export function isImportedFabricSupplier(supplierId: string): boolean {
   const normalized = supplierId.trim().toLowerCase();
-  return normalized !== "gliani-stock" && normalized !== "gliani-warehouse";
+  return (
+    normalized !== "gliani-stock" &&
+    normalized !== "gliani-warehouse" &&
+    normalized !== "canclini"
+  );
 }
 
 export function getFabricImportRates(): { customs_duty_rate: number; import_vat_rate: number } {

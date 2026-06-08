@@ -47,7 +47,7 @@
       "market": "International menswear",
       "fabric_sourcing": "warehouse_stock",
       "is_active": true,
-      "notes": "Uses fabrics held in warehouse stock — not ordered from external supplier price lists. Stock list to be added."
+      "notes": "Uses Canclini linen held in warehouse stock (25T / 25H codes) — not ordered from external supplier price lists."
     },
     {
       "id": "just-uniforms",

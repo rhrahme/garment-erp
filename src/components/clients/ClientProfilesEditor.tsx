@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LayoutGrid, List, Plus, Search, Table2, Trash2, UserCircle, X } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { PhoneInput } from "@/components/ui/PhoneInput";
@@ -112,6 +112,7 @@ export function ClientProfilesEditor() {
   const { brandId: brandFilter, setBrandId: setBrandFilter, hydrated: brandFilterHydrated } = useFactoryBrandFilter();
   const [viewMode, setViewMode] = useState<ClientViewMode>("list");
   const [sortBy, setSortBy] = useState<ClientSortBy>("name-asc");
+  const firstNameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const storedView = localStorage.getItem(VIEW_STORAGE_KEY);
@@ -184,8 +185,14 @@ export function ClientProfilesEditor() {
     const filtered = searchClients(filterClientsByBrand(personClients, brandFilter), debouncedSearchQuery, {
       excludeContactFields: !canViewClientContact,
     });
-    return sortClients(filtered, sortBy);
-  }, [personClients, debouncedSearchQuery, brandFilter, sortBy, canViewClientContact]);
+    const sorted = sortClients(filtered, sortBy);
+    if (!editingId) return sorted;
+
+    const editing = sorted.find((client) => client.id === editingId);
+    if (!editing) return sorted;
+
+    return [editing, ...sorted.filter((client) => client.id !== editingId)];
+  }, [personClients, debouncedSearchQuery, brandFilter, sortBy, canViewClientContact, editingId]);
 
   const hasActiveFilters = Boolean(searchQuery.trim() || brandFilter);
 
@@ -274,10 +281,17 @@ export function ClientProfilesEditor() {
 
   function addClient() {
     const client = emptyClient();
+    setSearchQuery("");
     setIsDirty(true);
     setDraft((prev) => ({ ...prev, clients: [client, ...prev.clients] }));
     setEditingId(client.id);
   }
+
+  useEffect(() => {
+    if (!editingId) return;
+    const timer = window.setTimeout(() => firstNameInputRef.current?.focus({ preventScroll: true }), 0);
+    return () => window.clearTimeout(timer);
+  }, [editingId]);
 
   function handleDiscard() {
     setDraft(cloneClients(saved));
@@ -370,10 +384,12 @@ export function ClientProfilesEditor() {
             <label className="block text-sm">
               <span className="font-medium text-slate-700">First</span>
               <input
+                ref={editingId === client.id ? firstNameInputRef : undefined}
                 value={client.first_name}
                 onChange={(e) => updateClient(client.id, { first_name: e.target.value })}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
                 placeholder="First name"
+                autoComplete="off"
               />
             </label>
             <label className="block text-sm">
@@ -635,6 +651,8 @@ export function ClientProfilesEditor() {
                   type="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  disabled={Boolean(editingId)}
+                  title={editingId ? "Finish editing the open client before searching the list" : undefined}
                   placeholder={
                     canViewClientContact
                       ? "Search by name, client code, email, mobile, or referred by…"

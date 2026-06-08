@@ -2,7 +2,7 @@
   "factory_orders_email": "orders.ruh@hagan.pro",
   "inbox_scan_email": "rhrahme@gmail.com",
   "notes": "Fabric orders are sent from orders.ruh@hagan.pro. Supplier replies are scanned from inbox_scan_email (currently rhrahme@gmail.com — temporary for active-order testing).",
-  "updated_at": "2026-05-28T13:45:00.000Z",
+  "updated_at": "2026-06-07T17:40:00.000Z",
   "suppliers": [
     {
       "id": "caccioppoli",
@@ -90,6 +90,18 @@
       "has_price_list": true,
       "reply_domains": ["loropiana.com"],
       "notes": "SS26 price list imported (EUR, CIP Europe)."
+    },
+    {
+      "id": "canclini",
+      "code": "CANCLINI",
+      "name": "Canclini",
+      "country": "Italy",
+      "contact_person": null,
+      "emails": [],
+      "email": null,
+      "lead_time_days": 0,
+      "has_price_list": true,
+      "notes": "HAGAN warehouse linen stock — 52 T/H codes from Linen Stock HAGAN.xlsx (Gliani production)"
     },
     {
       "id": "fab6",

@@ -28,6 +28,16 @@ export interface SalesOrderFabricLine {
   restock_date?: string | null;
   needs_replacement?: boolean;
   replacement_fabric_number?: string | null;
+  /** When this line was added to the order (ISO datetime). */
+  added_at?: string | null;
+  /** User email when QC appended the line; null for original order lines. */
+  added_by?: string | null;
+  /** Receiving A4 sheet printed for this line. */
+  a4_printed_at?: string | null;
+  /** Fabric cut roll stickers printed (receive / wash). */
+  prep_stickers_printed_at?: string | null;
+  /** Production piece roll stickers printed (cutting / sewing). */
+  prod_stickers_printed_at?: string | null;
 }
 
 export interface SalesOrder {

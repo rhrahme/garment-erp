@@ -24,6 +24,8 @@ export async function GET(request: Request) {
   const authError = verifyApiKey(request);
   if (authError) return authError;
 
+  await ensureDocumentsLoaded(["clients"]);
+
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
   if (id) {
@@ -67,6 +69,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `No client code prefix for brand: ${primaryBrandId}` }, { status: 400 });
     }
 
+    await ensureDocumentsLoaded(["clients"]);
     const store = readClients();
     const joined_at = new Date().toISOString();
     const code = generateNextClientCode(store.clients, primaryBrandId, { joinedAt: new Date(joined_at) });

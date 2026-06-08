@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
 import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 import {
+  getFabricLinesForProdStickers,
+  getUnprintedFabricLines,
+  orderWithFabricLines,
+} from "@/lib/sales-orders/fabric-lines";
+import {
   applyOrderStickerBatch,
   buildAllPoPrintSheets,
   buildFabricCutLabelsForSalesOrder,
@@ -10,6 +15,19 @@ import {
   buildPoPrintSheet,
   qrImageUrl,
 } from "@/lib/production/qr-labels";
+
+function unprintedLineIds(order: NonNullable<ReturnType<typeof getSalesOrderById>>) {
+  const prepLines = getUnprintedFabricLines(order.fabric_lines, "prep_stickers");
+  const prodLines = getUnprintedFabricLines(
+    getFabricLinesForProdStickers(order.fabric_lines),
+    "prod_stickers"
+  );
+  return {
+    a4: getUnprintedFabricLines(order.fabric_lines, "a4").map((line) => line.id),
+    prep_stickers: prepLines.map((line) => line.id),
+    prod_stickers: prodLines.map((line) => line.id),
+  };
+}
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -34,6 +52,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       (po) => po.sales_order_id === order.id || po.client_reference?.includes(order.so_number)
     );
 
+    const unprintedIds = unprintedLineIds(order);
+    const unprintedPrepLines = getUnprintedFabricLines(order.fabric_lines, "prep_stickers");
+    const unprintedProdLines = getUnprintedFabricLines(
+      getFabricLinesForProdStickers(order.fabric_lines),
+      "prod_stickers"
+    );
+    const prepOrder = orderWithFabricLines(order, unprintedPrepLines);
+    const prodOrder = orderWithFabricLines(order, unprintedProdLines);
+
     let sheets = buildAllPoPrintSheets(order, pos);
     if (poNumber) {
       const match = pos.find((po) => po.po_number === poNumber);
@@ -43,9 +70,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       sheets = match ? [buildPoPrintSheet(match, order)] : [];
     }
 
-    const pieceLabels = buildLabelsForSalesOrder(order);
-    const fabricCutLabels = buildFabricCutLabelsForSalesOrder(order);
-    const cuttingPieceLabels = buildMultiPieceLabelsForSalesOrder(order);
+    const pieceLabels = buildLabelsForSalesOrder(prodOrder);
+    const fabricCutLabels = buildFabricCutLabelsForSalesOrder(prepOrder);
+    const cuttingPieceLabels = buildMultiPieceLabelsForSalesOrder(prodOrder);
     const activeLabels =
       sheet === "fabric-cuts" ? fabricCutLabels : sheet === "print-pack" ? fabricCutLabels : pieceLabels;
 
@@ -67,6 +94,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         fabric_cut_labels: mapLabels(fabricCutLabels),
         cutting_piece_labels: mapLabels(cuttingPieceLabels),
         has_cutting_pack: cuttingPieceLabels.length > 0,
+        unprinted_line_ids: unprintedIds,
       });
     }
 
@@ -79,12 +107,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         client_name: order.client_name,
       },
       labels: mapLabels(activeLabels),
+      unprinted_line_ids: unprintedIds,
       po_sheets: sheets.map((poSheet) => {
         const fabricNumbers = new Set(poSheet.labels.map((label) => label.fabric_number));
         const filtered =
           sheet === "fabric-cuts"
             ? fabricCutLabels.filter((label) => fabricNumbers.has(label.fabric_number))
-            : poSheet.labels;
+            : poSheet.labels.filter((label) =>
+                unprintedProdLines.some((line) => line.fabric_number === label.fabric_number)
+              );
         return {
           ...poSheet,
           labels: mapLabels(filtered),

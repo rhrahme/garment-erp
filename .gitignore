@@ -30,6 +30,7 @@ yarn-error.log*
 
 # env files
 .env*.local
+vercel-import.env
 smtp-secret.local.json
 imap-secret.local.json
 fabric-orders.local.json

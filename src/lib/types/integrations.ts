@@ -13,7 +13,9 @@ export type IntegrationEventType =
   | "client.updated"
   | "client.deleted"
   | "sales_order.created"
-  | "sales_order.deleted";
+  | "sales_order.deleted"
+  | "sales_order.fabric_lines_added"
+  | "sales_order.fabric_lines_printed";
 
 export interface IntegrationEvent<T = Record<string, unknown>> {
   event: IntegrationEventType;

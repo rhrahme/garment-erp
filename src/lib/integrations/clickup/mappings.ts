@@ -27,6 +27,7 @@ export function mapClickUpSupplier(fabricBrand: string | null): { id: string; na
     "loro piana": { id: "loro-piana", name: "Loro Piana" },
     stock: { id: "gliani-stock", name: "Gliani Stock" },
     gl: { id: "gliani-stock", name: "Gliani Stock" },
+    canclini: { id: "canclini", name: "Canclini" },
   };
   return map[normalized] ?? { id: normalized.replace(/\s+/g, "-"), name: fabricBrand.trim() };
 }

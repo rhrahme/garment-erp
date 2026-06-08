@@ -115,6 +115,11 @@ function buildFabricLine(
     width_cm: null,
     width_inches: null,
     color: getDropdown(subtask.custom_fields, "Color"),
+    added_at: new Date().toISOString(),
+    added_by: null,
+    a4_printed_at: null,
+    prep_stickers_printed_at: null,
+    prod_stickers_printed_at: null,
   };
 }
 

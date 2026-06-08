@@ -3,16 +3,25 @@
 import Link from "next/link";
 import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { useMarkFabricLinesPrinted } from "@/components/orders/useMarkFabricLinesPrinted";
+import type { FabricLinePrintKind } from "@/lib/sales-orders/fabric-lines";
 
 export function SalesOrderPrintToolbar({
   orderId,
   soNumber,
   team = "full",
+  printKind,
+  printLineIds = [],
 }: {
   orderId: string;
   soNumber: string;
   team?: "full" | "receiving" | "production";
+  printKind?: FabricLinePrintKind;
+  printLineIds?: string[];
 }) {
+  const { printWithMark } = useMarkFabricLinesPrinted(orderId);
+  const canMarkPrint = Boolean(printKind && printLineIds.length > 0);
+
   const printLinks = [
     { id: "receiving" as const, label: "Receiving / wash (A4)" },
     { id: "production" as const, label: "Production pieces (A4)" },
@@ -29,8 +38,21 @@ export function SalesOrderPrintToolbar({
           {soNumber}
         </Link>
         <div className="flex flex-wrap items-center gap-3">
-          <p className="text-xs text-slate-500">Print dialog → Save as PDF</p>
-          <Button onClick={() => window.print()}>
+          <p className="text-xs text-slate-500">
+            {canMarkPrint
+              ? `Print dialog covers ${printLineIds.length} unprinted line${printLineIds.length === 1 ? "" : "s"}`
+              : team === "full"
+                ? "Print dialog → Save as PDF (full order summary)"
+                : "All lines on this sheet are already printed"}
+          </p>
+          <Button
+            onClick={() =>
+              printKind
+                ? printWithMark([{ kind: printKind, lineIds: printLineIds }])
+                : window.print()
+            }
+            disabled={team !== "full" && !canMarkPrint}
+          >
             <Printer className="h-4 w-4" />
             Print this sheet
           </Button>

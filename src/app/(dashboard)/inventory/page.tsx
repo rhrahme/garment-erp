@@ -20,8 +20,12 @@ export default async function InventoryPage() {
       <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-900">
         <p className="font-medium">{stockBrands.map((b) => b.name).join(" ")} stock fabrics</p>
         <p className="mt-1 text-emerald-800">
-          Gliani production uses fabrics from this warehouse — not supplier price lists. The Gliani fabric list
-          will be added here soon. Supplier-ordered fabric for{" "}
+          Gliani production uses Canclini linen from this warehouse — not supplier price lists. Search{" "}
+          <strong>Canclini</strong> on orders or in{" "}
+          <Link href="/fabric-specification" className="font-medium underline">
+            Fabric Specification
+          </Link>{" "}
+          for 52 linen codes (25T lightweight / 25H heavyweight). Supplier-ordered fabric for{" "}
           <Link href="/brands" className="font-medium underline">
             Fouad Rahme & Fouad
           </Link>{" "}
