@@ -42,7 +42,7 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
     isAdmin,
     isClientManager,
     canViewClientContact: canViewClientContact(role, email, isSuperAdmin),
-    canViewFabricListPrices: !isClientManager,
+    canViewFabricListPrices: isAdmin,
   };
 }
 

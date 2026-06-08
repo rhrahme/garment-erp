@@ -28,12 +28,9 @@ export function isFabricPriceAccessCodeValid(code: string): boolean {
 
 export function hasFabricPriceAccess(
   session: SessionContext,
-  unlockedCookie: string | undefined | null
+  _unlockedCookie: string | undefined | null
 ): boolean {
-  if (session.isClientManager) return false;
-  if (session.isAdmin) return true;
-  if (unlockedCookie !== "1") return false;
-  return parseFabricPriceAccessCodes().length > 0;
+  return session.isAdmin;
 }
 
 export function redactSupplierFabricPrice<T extends { unit_price?: number | null }>(item: T): T {
