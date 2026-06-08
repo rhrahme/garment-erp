@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { FabricLinePrintKind } from "@/lib/sales-orders/fabric-lines";
+import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 
 export function useMarkFabricLinesPrinted(orderId: string) {
   const router = useRouter();
@@ -26,6 +27,11 @@ export function useMarkFabricLinesPrinted(orderId: string) {
 
   const printWithMark = useCallback(
     (marks: Array<{ kind: FabricLinePrintKind; lineIds: string[] }>) => {
+      if (PRINTING_FREE) {
+        window.print();
+        return;
+      }
+
       const pending = marks.filter((mark) => mark.lineIds.length > 0);
       if (pending.length === 0) {
         window.print();

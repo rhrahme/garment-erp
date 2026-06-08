@@ -6,6 +6,7 @@ import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { StickerCell } from "@/components/orders/StickerCell";
 import { useMarkFabricLinesPrinted } from "@/components/orders/useMarkFabricLinesPrinted";
+import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 import { labelRollSizeLabel } from "@/lib/production/label-print-config";
 import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
 import type { PrintableStickerLabel } from "@/lib/production/qr-labels";
@@ -108,9 +109,9 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
     );
   }
 
-  const unprinted = data.unprinted_line_ids;
-  const prepLineIds = unprinted?.prep_stickers ?? [];
-  const prodLineIds = unprinted?.prod_stickers ?? [];
+  const printIds = data.unprinted_line_ids;
+  const prepLineIds = printIds?.prep_stickers ?? [];
+  const prodLineIds = printIds?.prod_stickers ?? [];
   const stickerCount = data.fabric_cut_labels.length + data.cutting_piece_labels.length;
   const hasStickersToPrint = stickerCount > 0;
 
@@ -123,13 +124,14 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
             {hasStickersToPrint ? (
               <>
                 Receiving pack: {data.fabric_cut_labels.length} fabric cut sticker
-                {data.fabric_cut_labels.length === 1 ? "" : "s"} (new lines only).{" "}
+                {data.fabric_cut_labels.length === 1 ? "" : "s"}
+                {PRINTING_FREE ? " (testing: all lines)." : " (new lines only)."}{" "}
                 {data.has_cutting_pack
                   ? `Cutting pack: ${data.cutting_piece_labels.length} piece sticker${data.cutting_piece_labels.length === 1 ? "" : "s"} for multi-piece lines.`
                   : "No cutting pack — single-piece lines use the same fabric cut QR through cutting."}
               </>
             ) : (
-              "All sticker rolls are already printed for this order."
+              "No fabric lines on this order."
             )}
           </p>
         </div>

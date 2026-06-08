@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
 import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 import {
-  getFabricLinesForProdStickers,
-  getUnprintedFabricLines,
+  getFabricLineIdsForPrint,
+  linesNeedingPrint,
   orderWithFabricLines,
 } from "@/lib/sales-orders/fabric-lines";
 import {
@@ -16,16 +16,11 @@ import {
   qrImageUrl,
 } from "@/lib/production/qr-labels";
 
-function unprintedLineIds(order: NonNullable<ReturnType<typeof getSalesOrderById>>) {
-  const prepLines = getUnprintedFabricLines(order.fabric_lines, "prep_stickers");
-  const prodLines = getUnprintedFabricLines(
-    getFabricLinesForProdStickers(order.fabric_lines),
-    "prod_stickers"
-  );
+function printLineIds(order: NonNullable<ReturnType<typeof getSalesOrderById>>) {
   return {
-    a4: getUnprintedFabricLines(order.fabric_lines, "a4").map((line) => line.id),
-    prep_stickers: prepLines.map((line) => line.id),
-    prod_stickers: prodLines.map((line) => line.id),
+    a4: getFabricLineIdsForPrint(order, "a4"),
+    prep_stickers: getFabricLineIdsForPrint(order, "prep_stickers"),
+    prod_stickers: getFabricLineIdsForPrint(order, "prod_stickers"),
   };
 }
 
@@ -52,14 +47,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       (po) => po.sales_order_id === order.id || po.client_reference?.includes(order.so_number)
     );
 
-    const unprintedIds = unprintedLineIds(order);
-    const unprintedPrepLines = getUnprintedFabricLines(order.fabric_lines, "prep_stickers");
-    const unprintedProdLines = getUnprintedFabricLines(
-      getFabricLinesForProdStickers(order.fabric_lines),
-      "prod_stickers"
-    );
-    const prepOrder = orderWithFabricLines(order, unprintedPrepLines);
-    const prodOrder = orderWithFabricLines(order, unprintedProdLines);
+    const unprintedIds = printLineIds(order);
+    const prepLines = linesNeedingPrint(order.fabric_lines, "prep_stickers");
+    const prodLines = linesNeedingPrint(order.fabric_lines, "prod_stickers");
+    const prepOrder = orderWithFabricLines(order, prepLines);
+    const prodOrder = orderWithFabricLines(order, prodLines);
 
     let sheets = buildAllPoPrintSheets(order, pos);
     if (poNumber) {
@@ -114,7 +106,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           sheet === "fabric-cuts"
             ? fabricCutLabels.filter((label) => fabricNumbers.has(label.fabric_number))
             : poSheet.labels.filter((label) =>
-                unprintedProdLines.some((line) => line.fabric_number === label.fabric_number)
+                prodLines.some((line) => line.fabric_number === label.fabric_number)
               );
         return {
           ...poSheet,

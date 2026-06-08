@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useMarkFabricLinesPrinted } from "@/components/orders/useMarkFabricLinesPrinted";
+import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 
 export function PrintPackToolbar({
   orderId,
@@ -18,7 +19,6 @@ export function PrintPackToolbar({
   a4SheetLineCount: number;
 }) {
   const { printWithMark } = useMarkFabricLinesPrinted(orderId);
-  const hasUnprinted = a4LineIds.length > 0;
   const canPrintA4 = a4SheetLineCount > 0;
 
   return (
@@ -28,9 +28,9 @@ export function PrintPackToolbar({
       </Link>
       <p className="text-xs text-slate-500">
         {canPrintA4
-          ? hasUnprinted
-            ? `Full receiving A4 (${a4SheetLineCount} lines) — marks ${a4LineIds.length} new line${a4LineIds.length === 1 ? "" : "s"} after print, then sticker rolls below`
-            : `Full receiving A4 (${a4SheetLineCount} lines) — reprint includes previously printed lines; sticker rolls below cover new lines only`
+          ? PRINTING_FREE
+            ? `Full receiving A4 (${a4SheetLineCount} lines) — testing: reprint anytime, then sticker rolls below`
+            : `Full receiving A4 (${a4SheetLineCount} lines) — then sticker rolls below`
           : "No fabric lines on this order"}
       </p>
       <Button

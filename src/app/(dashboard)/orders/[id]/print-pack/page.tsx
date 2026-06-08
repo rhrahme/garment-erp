@@ -13,8 +13,9 @@ import {
 } from "@/lib/sales-orders/label-codes";
 import {
   getFabricLinesForA4Print,
-  getUnprintedFabricLines,
+  getFabricLineIdsForPrint,
 } from "@/lib/sales-orders/fabric-lines";
+import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 
 export default async function OrderPrintPackPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -23,8 +24,7 @@ export default async function OrderPrintPackPage({ params }: { params: Promise<{
 
   const articleByLineId = buildFabricLineArticleMap(order.fabric_lines.map((line) => line.id));
   const a4PrintLines = getFabricLinesForA4Print(order.fabric_lines);
-  const unprintedA4LineIds = getUnprintedFabricLines(order.fabric_lines, "a4").map((line) => line.id);
-  const hasUnprintedA4 = unprintedA4LineIds.length > 0;
+  const a4LineIds = getFabricLineIdsForPrint(order, "a4");
 
   return (
     <div className="order-print-pack min-h-screen bg-white p-8 text-slate-900 print:min-h-0 print:p-0">
@@ -51,7 +51,7 @@ export default async function OrderPrintPackPage({ params }: { params: Promise<{
       <PrintPackToolbar
         orderId={id}
         soNumber={order.so_number}
-        a4LineIds={unprintedA4LineIds}
+        a4LineIds={a4LineIds}
         a4SheetLineCount={a4PrintLines.length}
       />
 
@@ -61,12 +61,9 @@ export default async function OrderPrintPackPage({ params }: { params: Promise<{
           <p className="mt-1 text-sm text-slate-600">
             Fabric cut codes with QR — match rolls to this sheet at receive. Full order sheet (
             {a4PrintLines.length} line{a4PrintLines.length === 1 ? "" : "s"}).
-            {hasUnprintedA4
-              ? ` ${unprintedA4LineIds.length} new line${unprintedA4LineIds.length === 1 ? "" : "s"} will be marked printed after this run.`
-              : a4PrintLines.length > 0
-                ? " Includes previously printed lines — reprint for receiving desk."
-                : ""}{" "}
-            Print fabric cut roll stickers below (new lines only).
+            {PRINTING_FREE
+              ? " Testing mode: reprint anytime. Sticker rolls below include all lines."
+              : " Print fabric cut roll stickers below (new lines only)."}
           </p>
         </div>
 

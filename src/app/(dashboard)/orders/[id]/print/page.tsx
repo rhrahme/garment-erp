@@ -31,9 +31,10 @@ import { getDeliveryDestination } from "@/lib/shipping/delivery-destinations";
 import { formatTotalFabricWeightKg } from "@/lib/sales-orders/fabric-weight";
 import {
   getFabricLinesForA4Print,
-  getFabricLinesForProdStickers,
-  getUnprintedFabricLines,
+  getFabricLineIdsForPrint,
+  linesNeedingPrint,
 } from "@/lib/sales-orders/fabric-lines";
+import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 import { formatDate } from "@/lib/utils";
 import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
@@ -103,18 +104,14 @@ export default async function SalesOrderPrintPage({
   const articleByLineId = buildFabricLineArticleMap(order.fabric_lines.map((line) => line.id));
   const productionBrand = productionBrandNameForOrder(order);
   const a4PrintLines = getFabricLinesForA4Print(order.fabric_lines);
-  const unprintedA4Lines = getUnprintedFabricLines(order.fabric_lines, "a4");
-  const unprintedProdLines = getUnprintedFabricLines(
-    getFabricLinesForProdStickers(order.fabric_lines),
-    "prod_stickers"
-  );
+  const prodPrintLines = linesNeedingPrint(order.fabric_lines, "prod_stickers");
   const printKind =
     team === "receiving" ? ("a4" as const) : team === "production" ? ("prod_stickers" as const) : undefined;
   const printLineIds =
     team === "receiving"
-      ? unprintedA4Lines.map((line) => line.id)
+      ? getFabricLineIdsForPrint(order, "a4")
       : team === "production"
-        ? unprintedProdLines.map((line) => line.id)
+        ? getFabricLineIdsForPrint(order, "prod_stickers")
         : [];
 
   return (
@@ -302,17 +299,11 @@ export default async function SalesOrderPrintPage({
 
         {team === "receiving" && a4PrintLines.length > 0 && (
           <div className="mt-8 border-t border-slate-200 pt-6 print:mt-0 print:border-0 print:pt-0">
-            {unprintedA4Lines.length === 0 && (
+            {PRINTING_FREE ? (
               <p className="no-print mb-4 text-sm text-slate-500">
-                Full order sheet — includes previously printed lines (reprint for receiving desk).
+                Full order sheet ({a4PrintLines.length} lines) — testing mode: reprint anytime.
               </p>
-            )}
-            {unprintedA4Lines.length > 0 && (
-              <p className="no-print mb-4 text-sm text-slate-500">
-                Full order sheet — {unprintedA4Lines.length} new line
-                {unprintedA4Lines.length === 1 ? "" : "s"} will be marked printed after this run.
-              </p>
-            )}
+            ) : null}
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-700 print:mb-2">
               Fabric cut QR — receive / wash
             </h2>
@@ -334,7 +325,7 @@ export default async function SalesOrderPrintPage({
         )}
 
         {(team === "full" || team === "production") &&
-          (team === "production" ? unprintedProdLines : order.fabric_lines).some(
+          (team === "production" ? prodPrintLines : order.fabric_lines).some(
             (line) => (line.label_stickers ?? []).length > 0
           ) && (
           <div className="mt-8 border-t border-slate-200 pt-6 print:mt-0 print:border-0 print:pt-0">
@@ -343,11 +334,11 @@ export default async function SalesOrderPrintPage({
             </h2>
             <p className="mb-6 text-xs text-slate-500 print:hidden">
               Art. # matches fabric table — one row per piece (suit = jacket + trouser)
-              {team === "production" && unprintedProdLines.length === 0
-                ? " · all lines already printed"
-                : team === "production"
-                  ? ` · ${unprintedProdLines.length} line${unprintedProdLines.length === 1 ? "" : "s"} to print`
-                  : ""}
+              {team === "production"
+                ? PRINTING_FREE
+                  ? ` · ${prodPrintLines.length} line${prodPrintLines.length === 1 ? "" : "s"} (testing: reprint anytime)`
+                  : ` · ${prodPrintLines.length} line${prodPrintLines.length === 1 ? "" : "s"} to print`
+                : ""}
             </p>
             <table className="print-receiving-table w-full text-sm">
               <thead>
@@ -364,7 +355,7 @@ export default async function SalesOrderPrintPage({
                 </tr>
               </thead>
               <tbody>
-                {(team === "production" ? unprintedProdLines : order.fabric_lines).flatMap((line) =>
+                {(team === "production" ? prodPrintLines : order.fabric_lines).flatMap((line) =>
                   (line.label_stickers ?? []).map((sticker) => {
                     const productionCode = productionCodeFromSticker(sticker.code, order.client_code);
                     return (

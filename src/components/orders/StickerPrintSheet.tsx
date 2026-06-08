@@ -6,6 +6,7 @@ import { Check, Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { StickerCell } from "@/components/orders/StickerCell";
 import { useMarkFabricLinesPrinted } from "@/components/orders/useMarkFabricLinesPrinted";
+import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 import { labelRollSizeLabel } from "@/lib/production/label-print-config";
 import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
 import type { PrintablePoSheet, PrintableStickerLabel } from "@/lib/production/qr-labels";
@@ -59,11 +60,15 @@ const STICKER_SHEET_TABS: Array<{
 const SHEET_COPY: Record<StickerSheetMode, { title: string; hint: string }> = {
   "fabric-cuts": {
     title: "Fabric cut stickers (receive / wash)",
-    hint: `One ${labelRollSizeLabel()} roll label per fabric line — stick on the roll when fabric arrives. Receiving & washing scan this QR. New lines only.`,
+    hint: `One ${labelRollSizeLabel()} roll label per fabric line — stick on the roll when fabric arrives. Receiving & washing scan this QR.${
+      PRINTING_FREE ? " Testing: all lines, reprint anytime." : " New lines only."
+    }`,
   },
   pieces: {
     title: "Piece stickers (cutting / sewing)",
-    hint: `One ${labelRollSizeLabel()} roll label per garment piece — after prep, stick on jacket, trouser, etc. (e.g. suit = 2 stickers). New lines only.`,
+    hint: `One ${labelRollSizeLabel()} roll label per garment piece — after prep, stick on jacket, trouser, etc. (e.g. suit = 2 stickers).${
+      PRINTING_FREE ? " Testing: all lines, reprint anytime." : " New lines only."
+    }`,
   },
 };
 
@@ -140,19 +145,16 @@ export function StickerPrintSheet({
         ? (data?.unprinted_line_ids?.prep_stickers ?? [])
         : (data?.unprinted_line_ids?.prod_stickers ?? []);
 
-    if (lineIds.length === 0) {
-      window.print();
-      return;
+    if (!PRINTING_FREE) {
+      window.addEventListener(
+        "afterprint",
+        () => {
+          sessionStorage.setItem(printedStorageKey(salesOrderId, sheet), "1");
+          setPrintedSheets(readPrintedSheets(salesOrderId));
+        },
+        { once: true }
+      );
     }
-
-    window.addEventListener(
-      "afterprint",
-      () => {
-        sessionStorage.setItem(printedStorageKey(salesOrderId, sheet), "1");
-        setPrintedSheets(readPrintedSheets(salesOrderId));
-      },
-      { once: true }
-    );
     printWithMark([{ kind: printKind, lineIds }]);
   }, [data?.unprinted_line_ids, printWithMark, salesOrderId, sheet]);
 
@@ -236,7 +238,7 @@ export function StickerPrintSheet({
           <p className="mt-1 text-xs text-slate-400">
             Roll printer ({labelRollSizeLabel()}) — one label per feed. In LabelLife or the AIMO driver, set media to{" "}
             {labelRollSizeLabel()} before printing.
-            {!hasLabelsToPrint ? " All lines already printed." : null}
+            {!hasLabelsToPrint ? " No fabric lines on this order." : null}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

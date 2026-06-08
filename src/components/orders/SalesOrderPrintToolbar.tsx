@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { useMarkFabricLinesPrinted } from "@/components/orders/useMarkFabricLinesPrinted";
 import type { FabricLinePrintKind } from "@/lib/sales-orders/fabric-lines";
+import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
+import { useMarkFabricLinesPrinted } from "@/components/orders/useMarkFabricLinesPrinted";
+
 
 export function SalesOrderPrintToolbar({
   orderId,
@@ -24,21 +26,23 @@ export function SalesOrderPrintToolbar({
   sheetLineCount?: number;
 }) {
   const { printWithMark } = useMarkFabricLinesPrinted(orderId);
-  const hasUnprinted = printLineIds.length > 0;
-  const canMarkPrint = Boolean(printKind && hasUnprinted);
+  const lineCount = printLineIds.length;
+  const hasLines = lineCount > 0;
   const canPrintReceivingA4 = printKind === "a4" && (sheetLineCount ?? 0) > 0;
-  const canPrintSheet = team === "full" || canMarkPrint || canPrintReceivingA4;
+  const canPrintProduction = printKind === "prod_stickers" && hasLines;
+  const canPrintSheet =
+    team === "full" || canPrintReceivingA4 || canPrintProduction || (PRINTING_FREE && Boolean(printKind) && hasLines);
 
   const printHint =
-    team === "receiving" && canPrintReceivingA4
-      ? hasUnprinted
-        ? `Full order sheet (${sheetLineCount} lines) — marks ${printLineIds.length} new line${printLineIds.length === 1 ? "" : "s"} after print`
-        : `Full order sheet (${sheetLineCount} lines) — includes previously printed lines (reprint for receiving desk)`
-      : canMarkPrint
-        ? `Print dialog covers ${printLineIds.length} unprinted line${printLineIds.length === 1 ? "" : "s"}`
-        : team === "full"
-          ? "Print dialog → Save as PDF (full order summary)"
-          : "All lines on this sheet are already printed";
+    PRINTING_FREE && printKind && hasLines
+      ? `Testing mode — ${lineCount} line${lineCount === 1 ? "" : "s"}, reprint anytime`
+      : team === "receiving" && canPrintReceivingA4
+        ? `Full order sheet (${sheetLineCount} lines)`
+        : canPrintProduction
+          ? `Print dialog covers ${lineCount} line${lineCount === 1 ? "" : "s"}`
+          : team === "full"
+            ? "Print dialog → Save as PDF (full order summary)"
+            : "No fabric lines on this sheet";
 
   const printLinks = [
     { id: "receiving" as const, label: "Receiving / wash (A4)" },

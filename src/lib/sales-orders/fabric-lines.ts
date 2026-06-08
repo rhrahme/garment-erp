@@ -6,8 +6,9 @@ import { generateFabricLabelStickers, getGarmentPieces } from "@/lib/sales-order
 import { isGarmentStitchType } from "@/lib/sales-orders/garment-types";
 import { canAppendFabricLines } from "@/lib/sales-orders/fabric-lines-rules";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
+import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 
-export { canAppendFabricLines };
+export { canAppendFabricLines, PRINTING_FREE };
 
 export type FabricLinePrintKind = "a4" | "prep_stickers" | "prod_stickers";
 
@@ -31,6 +32,30 @@ export function getUnprintedFabricLines(
   kind: FabricLinePrintKind
 ): SalesOrderFabricLine[] {
   return lines.filter((line) => !isFabricLinePrinted(line, kind));
+}
+
+function fabricLinePoolForPrintKind(
+  lines: SalesOrderFabricLine[],
+  kind: FabricLinePrintKind
+): SalesOrderFabricLine[] {
+  return kind === "prod_stickers" ? getFabricLinesForProdStickers(lines) : lines;
+}
+
+/** Lines included on a print sheet — all lines when PRINTING_FREE, else unprinted only. */
+export function linesNeedingPrint(
+  lines: SalesOrderFabricLine[],
+  kind: FabricLinePrintKind
+): SalesOrderFabricLine[] {
+  const pool = fabricLinePoolForPrintKind(lines, kind);
+  if (PRINTING_FREE) return pool;
+  return getUnprintedFabricLines(pool, kind);
+}
+
+export function getFabricLineIdsForPrint(
+  order: Pick<SalesOrder, "fabric_lines">,
+  kind: FabricLinePrintKind
+): string[] {
+  return linesNeedingPrint(order.fabric_lines, kind).map((line) => line.id);
 }
 
 /** A4 receiving sheet lists every fabric line — full reprint is OK at the desk. */
@@ -66,11 +91,7 @@ export function resolvePrintLineIds(
   lineIds?: string[]
 ): string[] {
   if (lineIds && lineIds.length > 0) return lineIds;
-  const pool =
-    kind === "prod_stickers"
-      ? getFabricLinesForProdStickers(order.fabric_lines)
-      : order.fabric_lines;
-  return getUnprintedFabricLines(pool, kind).map((line) => line.id);
+  return getFabricLineIdsForPrint(order, kind);
 }
 
 export type FabricLineInput = {
