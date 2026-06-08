@@ -5,13 +5,14 @@
 export const LABEL_ROLL_WIDTH_MM = 100;
 export const LABEL_ROLL_HEIGHT_MM = 50;
 
-/** QR square on the sticker face. */
-export const LABEL_STICKER_QR_SIZE_MM = 12;
+/** QR square on the left — ~38 mm fits 100×50 mm with 2 mm margins. */
+export const LABEL_STICKER_QR_SIZE_MM = 38;
 
-export const LABEL_STICKER_PADDING_H_MM = 2.5;
-export const LABEL_STICKER_PADDING_V_MM = 1;
+export const LABEL_STICKER_PADDING_H_MM = 2;
+export const LABEL_STICKER_PADDING_V_MM = 2;
+export const LABEL_STICKER_COLUMN_GAP_MM = 3;
 export const LABEL_STICKER_BATCH_GAP_MM = 6;
-export const LABEL_STICKER_LINE_GAP_MM = 0.55;
+export const LABEL_STICKER_LINE_GAP_MM = 0.6;
 
 export function labelRollSizeCss(): string {
   return `${LABEL_ROLL_WIDTH_MM}mm ${LABEL_ROLL_HEIGHT_MM}mm`;

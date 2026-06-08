@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  LABEL_STICKER_BATCH_GAP_MM,
+  LABEL_STICKER_COLUMN_GAP_MM,
   LABEL_STICKER_LINE_GAP_MM,
   LABEL_STICKER_PADDING_H_MM,
   LABEL_STICKER_PADDING_V_MM,
@@ -21,20 +21,12 @@ import type { StickerRole } from "@/lib/production/qr-labels";
 import type { PrintableStickerLabel } from "@/lib/production/qr-labels";
 import { stickerTextLine } from "@/lib/production/sticker-typography";
 
-const qrFlankStyle = stickerTextLine({
-  fontSize: "2mm",
-  letterSpacing: "0.02mm",
-  lineHeight: 1.1,
-  whiteSpace: "nowrap",
-  flexShrink: 0,
-});
-
 function formatWeight(weightGsm: number | null): string | null {
   if (weightGsm == null) return null;
   return `${weightGsm} gsm`;
 }
 
-/** One 10 × 5 cm roll label — light sans type for thermal printers. */
+/** One 10 × 5 cm roll label — QR left, text right, thermal-readable sizes. */
 export function StickerCell({
   label,
   role,
@@ -45,7 +37,7 @@ export function StickerCell({
   role?: StickerRole;
   onQrReady?: () => void;
 }) {
-  const qrUrl = qrImageUrl(label.qr_payload, 140);
+  const qrUrl = qrImageUrl(label.qr_payload, 380);
   const weight = formatWeight(label.weight_gsm);
   const pieceLabel =
     label.production_code === label.fabric_cut_code
@@ -67,70 +59,68 @@ export function StickerCell({
         boxSizing: "border-box",
         padding: `${LABEL_STICKER_PADDING_V_MM}mm ${LABEL_STICKER_PADDING_H_MM}mm`,
         display: "flex",
-        flexDirection: "column",
+        flexDirection: "row",
         alignItems: "center",
-        justifyContent: "center",
         overflow: "hidden",
-        textAlign: "center",
       }}
     >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={qrUrl}
+        alt=""
+        onLoad={onQrReady}
+        onError={onQrReady}
+        style={{
+          width: `${LABEL_STICKER_QR_SIZE_MM}mm`,
+          height: `${LABEL_STICKER_QR_SIZE_MM}mm`,
+          flexShrink: 0,
+          display: "block",
+        }}
+      />
+
       <div
         className="sticker-cell-body"
         style={{
+          flex: 1,
+          minWidth: 0,
+          marginLeft: `${LABEL_STICKER_COLUMN_GAP_MM}mm`,
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
           justifyContent: "center",
           gap: `${LABEL_STICKER_LINE_GAP_MM}mm`,
-          width: "100%",
-          maxHeight: "100%",
         }}
       >
         <div
-          className="sticker-qr-row"
+          className="sticker-header-row"
           style={{
-            width: "100%",
-            display: "grid",
-            gridTemplateColumns: "1fr auto 1fr",
-            alignItems: "center",
-            columnGap: `${LABEL_STICKER_BATCH_GAP_MM}mm`,
-            minHeight: `${LABEL_STICKER_QR_SIZE_MM}mm`,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+            gap: "1mm",
             flexShrink: 0,
           }}
         >
           <span
             className="sticker-role-mark"
-            style={{
-              ...qrFlankStyle,
-              justifySelf: "end",
-              textAlign: "right",
-            }}
+            style={stickerTextLine({
+              fontSize: "2.8mm",
+              letterSpacing: "0.02mm",
+              lineHeight: 1.1,
+              whiteSpace: "nowrap",
+            })}
           >
             {STICKER_ROLE_LABEL[stickerRole]}
           </span>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={qrUrl}
-            alt=""
-            onLoad={onQrReady}
-            onError={onQrReady}
-            style={{
-              width: `${LABEL_STICKER_QR_SIZE_MM}mm`,
-              height: `${LABEL_STICKER_QR_SIZE_MM}mm`,
-              flexShrink: 0,
-              display: "block",
-              justifySelf: "center",
-            }}
-          />
           <span
             className="sticker-batch-mark"
-            style={{
-              ...qrFlankStyle,
-              justifySelf: "start",
-              textAlign: "left",
+            style={stickerTextLine({
+              fontSize: "2.8mm",
+              letterSpacing: "0.04mm",
               fontVariantNumeric: "tabular-nums",
+              lineHeight: 1.1,
+              whiteSpace: "nowrap",
               visibility: batchMark ? "visible" : "hidden",
-            }}
+            })}
           >
             {batchMark ?? "\u00a0"}
           </span>
@@ -139,7 +129,7 @@ export function StickerCell({
         <p
           className="sticker-line sticker-line-client"
           style={stickerTextLine({
-            fontSize: "2.35mm",
+            fontSize: "3.6mm",
             letterSpacing: "0.04mm",
             fontVariantNumeric: "tabular-nums",
           })}
@@ -150,7 +140,7 @@ export function StickerCell({
         <p
           className="sticker-line sticker-line-client-name"
           style={stickerTextLine({
-            fontSize: "2.3mm",
+            fontSize: "3.4mm",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -162,7 +152,7 @@ export function StickerCell({
         <p
           className="sticker-line sticker-line-code"
           style={stickerTextLine({
-            fontSize: "2.25mm",
+            fontSize: "3.3mm",
             letterSpacing: "0.04mm",
             fontVariantNumeric: "tabular-nums",
           })}
@@ -174,7 +164,7 @@ export function StickerCell({
         <p
           className="sticker-line sticker-line-fabric"
           style={stickerTextLine({
-            fontSize: "2.2mm",
+            fontSize: "3.2mm",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -186,7 +176,7 @@ export function StickerCell({
         <p
           className="sticker-line sticker-line-cut-qty"
           style={stickerTextLine({
-            fontSize: "2.55mm",
+            fontSize: "3.8mm",
             letterSpacing: "0.14mm",
             fontVariantNumeric: "tabular-nums",
             flexShrink: 0,
@@ -198,7 +188,7 @@ export function StickerCell({
         <p
           className="sticker-line sticker-line-cut-labels"
           style={stickerTextLine({
-            fontSize: "2.2mm",
+            fontSize: "3.2mm",
             letterSpacing: "0.05mm",
             fontVariantNumeric: "tabular-nums",
             flexShrink: 0,
@@ -211,7 +201,7 @@ export function StickerCell({
           <p
             className="sticker-line sticker-line-spec"
             style={stickerTextLine({
-              fontSize: "2.05mm",
+              fontSize: "3mm",
               lineHeight: 1.4,
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -225,7 +215,7 @@ export function StickerCell({
         <p
           className="sticker-line sticker-line-piece"
           style={stickerTextLine({
-            fontSize: "2.2mm",
+            fontSize: "3.2mm",
             letterSpacing: "0.05mm",
             flexShrink: 0,
           })}

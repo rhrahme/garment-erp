@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { StickerCell } from "@/components/orders/StickerCell";

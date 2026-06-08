@@ -2,6 +2,7 @@ import { jsPDF } from "jspdf";
 import {
   LABEL_ROLL_HEIGHT_MM,
   LABEL_ROLL_WIDTH_MM,
+  LABEL_STICKER_COLUMN_GAP_MM,
   LABEL_STICKER_LINE_GAP_MM,
   LABEL_STICKER_PADDING_H_MM,
   LABEL_STICKER_PADDING_V_MM,
@@ -17,23 +18,27 @@ import {
   type PrintableStickerLabel,
   type StickerRole,
 } from "@/lib/production/qr-labels";
-import { STICKER_PRINT_COLOR } from "@/lib/production/sticker-typography";
 
 const STICKER_RGB = { r: 42, g: 42, b: 42 };
+const LINE_HEIGHT_FACTOR = 1.15;
 
-/** jsPDF font size is in pt; sticker CSS uses mm — convert for matching layout. */
+/** jsPDF font size is in pt; sticker layout uses mm. */
 function mmToPt(mm: number): number {
   return (mm * 72) / 25.4;
 }
 
-async function fetchQrDataUrl(payload: string, size = 140): Promise<string> {
+function lineHeightMm(fontMm: number): number {
+  return fontMm * LINE_HEIGHT_FACTOR;
+}
+
+async function fetchQrDataUrl(payload: string, size = 380): Promise<string> {
   const res = await fetch(qrImageFetchUrl(payload, size));
   if (!res.ok) throw new Error("Failed to load QR code image.");
   const buffer = Buffer.from(await res.arrayBuffer());
   return `data:image/png;base64,${buffer.toString("base64")}`;
 }
 
-function fitCenteredText(doc: jsPDF, text: string, centerX: number, maxWidth: number): string {
+function fitText(doc: jsPDF, text: string, maxWidth: number): string {
   if (doc.getTextWidth(text) <= maxWidth) return text;
   let trimmed = text;
   while (trimmed.length > 1 && doc.getTextWidth(`${trimmed}…`) > maxWidth) {
@@ -42,15 +47,15 @@ function fitCenteredText(doc: jsPDF, text: string, centerX: number, maxWidth: nu
   return `${trimmed}…`;
 }
 
-function drawCenteredLine(
+function drawLeftLine(
   doc: jsPDF,
   text: string,
-  centerX: number,
+  x: number,
   y: number,
   maxWidth: number
 ): void {
-  const line = fitCenteredText(doc, text, centerX, maxWidth);
-  doc.text(line, centerX, y, { align: "center", baseline: "middle" });
+  const line = fitText(doc, text, maxWidth);
+  doc.text(line, x, y, { align: "left", baseline: "middle" });
 }
 
 function formatWeight(weightGsm: number | null): string | null {
@@ -72,9 +77,15 @@ async function drawStickerPage(
 ): Promise<void> {
   const pageW = LABEL_ROLL_WIDTH_MM;
   const pageH = LABEL_ROLL_HEIGHT_MM;
-  const contentW = pageW - LABEL_STICKER_PADDING_H_MM * 2;
-  const centerX = pageW / 2;
-  const maxTextW = contentW - 1;
+  const padH = LABEL_STICKER_PADDING_H_MM;
+  const padV = LABEL_STICKER_PADDING_V_MM;
+  const contentW = pageW - padH * 2;
+  const contentH = pageH - padV * 2;
+  const qrSize = LABEL_STICKER_QR_SIZE_MM;
+  const textX = padH + qrSize + LABEL_STICKER_COLUMN_GAP_MM;
+  const textW = contentW - qrSize - LABEL_STICKER_COLUMN_GAP_MM;
+  const qrX = padH;
+  const qrY = padV + (contentH - qrSize) / 2;
 
   doc.setTextColor(STICKER_RGB.r, STICKER_RGB.g, STICKER_RGB.b);
   doc.setFont("helvetica", "normal");
@@ -86,56 +97,47 @@ async function drawStickerPage(
   const cutLengthLine = formatStickerCutLength(label.cut_quantity, label.cut_unit);
   const labelsLine = formatStickerLabelsSent(label.labels_sent);
 
+  const headerFontMm = 2.8;
   const lines: Array<{ text: string; fontMm: number }> = [
-    { text: label.client_code, fontMm: 2.35 },
-    { text: label.client_name, fontMm: 2.3 },
-    { text: label.production_code, fontMm: 2.25 },
-    { text: fabricLine, fontMm: 2.2 },
-    { text: cutLengthLine, fontMm: 2.55 },
-    { text: labelsLine, fontMm: 2.2 },
+    { text: label.client_code, fontMm: 3.6 },
+    { text: label.client_name, fontMm: 3.4 },
+    { text: label.production_code, fontMm: 3.3 },
+    { text: fabricLine, fontMm: 3.2 },
+    { text: cutLengthLine, fontMm: 3.8 },
+    { text: labelsLine, fontMm: 3.2 },
   ];
-  if (specLine) lines.push({ text: specLine, fontMm: 2.05 });
-  lines.push({ text: pieceLabel(label), fontMm: 2.2 });
-
-  const qrRowH = LABEL_STICKER_QR_SIZE_MM;
-  const lineHeights = lines.map((line) => mmToPt(line.fontMm) * 0.38);
-  const gap = LABEL_STICKER_LINE_GAP_MM;
-  const bodyH = qrRowH + gap + lineHeights.reduce((sum, h) => sum + h + gap, 0) - gap;
-  const startY = (pageH - bodyH) / 2;
-
-  const qrY = startY;
-  const qrX = (pageW - LABEL_STICKER_QR_SIZE_MM) / 2;
-
-  doc.setFontSize(mmToPt(2));
-  const roleText = STICKER_ROLE_LABEL[stickerRole];
-  const roleX = qrX - 1.5;
-  doc.text(roleText, roleX, qrY + LABEL_STICKER_QR_SIZE_MM / 2, {
-    align: "right",
-    baseline: "middle",
-  });
-
-  if (batchMark) {
-    doc.setFontSize(mmToPt(2.25));
-    const batchX = qrX + LABEL_STICKER_QR_SIZE_MM + 1.5;
-    doc.text(batchMark, batchX, qrY + LABEL_STICKER_QR_SIZE_MM / 2, {
-      align: "left",
-      baseline: "middle",
-    });
-  }
+  if (specLine) lines.push({ text: specLine, fontMm: 3.0 });
+  lines.push({ text: pieceLabel(label), fontMm: 3.2 });
 
   let qrData = qrCache.get(label.qr_payload);
   if (!qrData) {
-    qrData = await fetchQrDataUrl(label.qr_payload, 140);
+    qrData = await fetchQrDataUrl(label.qr_payload, 380);
     qrCache.set(label.qr_payload, qrData);
   }
-  doc.addImage(qrData, "PNG", qrX, qrY, LABEL_STICKER_QR_SIZE_MM, LABEL_STICKER_QR_SIZE_MM);
+  doc.addImage(qrData, "PNG", qrX, qrY, qrSize, qrSize);
 
-  let y = qrY + qrRowH + gap;
-  for (let i = 0; i < lines.length; i += 1) {
-    const line = lines[i]!;
+  const gap = LABEL_STICKER_LINE_GAP_MM;
+  const headerH = lineHeightMm(headerFontMm);
+  const bodyH =
+    headerH +
+    gap +
+    lines.reduce((sum, line) => sum + lineHeightMm(line.fontMm) + gap, 0) -
+    gap;
+  let y = padV + (contentH - bodyH) / 2 + headerH / 2;
+
+  doc.setFontSize(mmToPt(headerFontMm));
+  doc.text(STICKER_ROLE_LABEL[stickerRole], textX, y, { align: "left", baseline: "middle" });
+  if (batchMark) {
+    doc.text(batchMark, textX + textW, y, { align: "right", baseline: "middle" });
+  }
+
+  y += headerH / 2 + gap;
+  for (const line of lines) {
+    const lineH = lineHeightMm(line.fontMm);
+    y += lineH / 2;
     doc.setFontSize(mmToPt(line.fontMm));
-    drawCenteredLine(doc, line.text, centerX, y + lineHeights[i]! / 2, maxTextW);
-    y += lineHeights[i]! + gap;
+    drawLeftLine(doc, line.text, textX, y, textW);
+    y += lineH / 2 + gap;
   }
 }
 
