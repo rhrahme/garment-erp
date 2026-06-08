@@ -17,13 +17,12 @@ const PRINT_FIELD: Record<FabricLinePrintKind, keyof SalesOrderFabricLine> = {
   prod_stickers: "prod_stickers_printed_at",
 };
 
-/** Original order lines (pre-incremental-print) have no added_at — treat as already printed. */
+/** Pre-incremental-print lines have no added_at — print state comes from timestamp fields only. */
 export function isLegacyFabricLine(line: SalesOrderFabricLine): boolean {
   return !line.added_at;
 }
 
 export function isFabricLinePrinted(line: SalesOrderFabricLine, kind: FabricLinePrintKind): boolean {
-  if (isLegacyFabricLine(line)) return true;
   return Boolean(line[PRINT_FIELD[kind]]);
 }
 
