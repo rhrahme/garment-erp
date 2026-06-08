@@ -1,4 +1,8 @@
 import { getLoroPianaMillLine } from "@/lib/fabric-sourcing/loro-piana-styles";
+import {
+  resolveFabricSupplierDisplayName,
+  resolveFabricSupplierId,
+} from "@/lib/fabric-sourcing/supplier-aliases";
 
 export function isSolbiatiFabric(supplierId: string, fabricNumber: string): boolean {
   if (supplierId === "solbiati") return true;
@@ -13,15 +17,16 @@ export function formatFabricSupplierName(
   fabricNumber: string
 ): string {
   if (isSolbiatiFabric(supplierId, fabricNumber)) return "Solbiati";
-  return supplierName;
+  return resolveFabricSupplierDisplayName(supplierId, supplierName);
 }
 
 /** Solbiati ships on the Loro Piana supplier account — one PO contact. */
 export function fabricPoSupplierId(supplierId: string, fabricNumber: string): string {
-  if (supplierId === "solbiati" || (supplierId === "loro-piana" && isSolbiatiFabric(supplierId, fabricNumber))) {
+  const resolvedId = resolveFabricSupplierId(supplierId);
+  if (resolvedId === "solbiati" || (resolvedId === "loro-piana" && isSolbiatiFabric(resolvedId, fabricNumber))) {
     return "loro-piana";
   }
-  return supplierId;
+  return resolvedId;
 }
 
 export function normalizeFabricSupplierFields(
@@ -29,10 +34,11 @@ export function normalizeFabricSupplierFields(
   supplierName: string,
   fabricNumber: string
 ): { supplier_id: string; supplier_name: string } {
-  const poSupplierId = fabricPoSupplierId(supplierId, fabricNumber);
+  const canonicalId = resolveFabricSupplierId(supplierId);
+  const poSupplierId = fabricPoSupplierId(canonicalId, fabricNumber);
   return {
     supplier_id: poSupplierId,
-    supplier_name: formatFabricSupplierName(supplierId, supplierName, fabricNumber),
+    supplier_name: formatFabricSupplierName(canonicalId, supplierName, fabricNumber),
   };
 }
 

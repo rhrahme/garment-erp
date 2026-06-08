@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { redactSupplierFabricPrices } from "@/lib/auth/fabric-price-access";
 import { getSessionContext } from "@/lib/auth/session";
+import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import { getSupplierByIdFromContacts } from "@/lib/data/supplier-contacts";
 import { searchSupplierFabrics } from "@/lib/data/supplier-catalogs";
 import { expandLoroPianaStyleQuery, resolveLoroPianaFabricInput, getLoroPianaMillLine } from "@/lib/fabric-sourcing/loro-piana-styles";
@@ -10,13 +11,14 @@ import type { SupplierFabric } from "@/lib/types/fabric-sourcing";
 const supplierNameCache = new Map<string, string>();
 
 function supplierName(supplierId: string): string {
-  if (!supplierNameCache.has(supplierId)) {
+  const canonicalId = resolveFabricSupplierId(supplierId);
+  if (!supplierNameCache.has(canonicalId)) {
     supplierNameCache.set(
-      supplierId,
-      getSupplierByIdFromContacts(supplierId)?.name ?? supplierId
+      canonicalId,
+      getSupplierByIdFromContacts(canonicalId)?.name ?? canonicalId
     );
   }
-  return supplierNameCache.get(supplierId)!;
+  return supplierNameCache.get(canonicalId)!;
 }
 
 function buildManualFabricEntry(supplierId: string, fabricNumber: string): SupplierFabric {
@@ -78,12 +80,14 @@ export async function GET(request: Request) {
   const session = await getSessionContext();
   const url = new URL(request.url);
   const query = url.searchParams.get("q")?.trim() ?? "";
-  const supplierId = url.searchParams.get("supplier_id")?.trim();
+  const rawSupplierId = url.searchParams.get("supplier_id")?.trim();
   const limit = Math.min(Number(url.searchParams.get("limit") ?? 60), 100);
 
-  if (!supplierId) {
+  if (!rawSupplierId) {
     return NextResponse.json({ error: "Select a fabric brand first." }, { status: 400 });
   }
+
+  const supplierId = resolveFabricSupplierId(rawSupplierId);
 
   const catalogMatches = searchSupplierFabrics(supplierId, query, limit);
   const items = catalogMatches.map((item) => toSearchItem(item, false));

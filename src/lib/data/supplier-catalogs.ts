@@ -13,6 +13,7 @@ import {
   normalizeLoroPianaFabricNumber,
   resolveLoroPianaFabricInput,
 } from "@/lib/fabric-sourcing/loro-piana-styles";
+import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import {
   getAllSuppliersFromContacts,
   getSupplierByIdFromContacts,
@@ -226,7 +227,7 @@ for (const bucket of fabricsBySupplier.values()) {
 }
 
 export function getFabricsBySupplierId(supplierId: string): SupplierFabric[] {
-  return fabricsBySupplier.get(supplierId) ?? [];
+  return fabricsBySupplier.get(resolveFabricSupplierId(supplierId)) ?? [];
 }
 
 export function searchSupplierFabrics(supplierId: string, query: string, limit: number): SupplierFabric[] {

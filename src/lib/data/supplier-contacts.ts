@@ -1,4 +1,5 @@
 import path from "path";
+import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import { readJsonFile, saveDocument } from "@/lib/data/document-persistence";
 import type { Supplier } from "@/lib/types/fabric-sourcing";
 import type { SupplierContactRow, SupplierContactsFile } from "@/lib/types/supplier-contacts";
@@ -81,7 +82,8 @@ export function getAllSuppliersFromContacts(): Supplier[] {
 }
 
 export function getSupplierByIdFromContacts(id: string): Supplier | undefined {
-  const row = readSupplierContacts().suppliers.find((s) => s.id === id);
+  const canonicalId = resolveFabricSupplierId(id);
+  const row = readSupplierContacts().suppliers.find((s) => s.id === canonicalId);
   return row ? contactToSupplier(row) : undefined;
 }
 
