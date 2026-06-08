@@ -4,7 +4,10 @@ import { getSupplierByIdFromContacts } from "@/lib/data/supplier-contacts";
 import { fabricPoSupplierId, normalizeFabricSupplierFields } from "@/lib/fabric-sourcing/supplier-display";
 import { generateFabricLabelStickers, getGarmentPieces } from "@/lib/sales-orders/label-codes";
 import { isGarmentStitchType } from "@/lib/sales-orders/garment-types";
+import { canAppendFabricLines } from "@/lib/sales-orders/fabric-lines-rules";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
+
+export { canAppendFabricLines };
 
 export type FabricLinePrintKind = "a4" | "prep_stickers" | "prod_stickers";
 
@@ -90,15 +93,6 @@ export type FabricLineInput = {
   needs_replacement?: boolean;
   replacement_fabric_number?: string | null;
 };
-
-export function canAppendFabricLines(
-  order: Pick<SalesOrder, "status" | "fabric_po_ids" | "retail_brand">
-): boolean {
-  if (order.retail_brand?.trim()) return false;
-  if (order.status !== "open") return false;
-  if (order.fabric_po_ids.length > 0) return false;
-  return true;
-}
 
 export function resolveOrderClientReference(order: Pick<SalesOrder, "client_code" | "so_number" | "client_reference">): string {
   if (order.client_reference?.trim()) return order.client_reference.trim();

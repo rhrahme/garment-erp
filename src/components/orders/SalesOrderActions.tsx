@@ -20,7 +20,7 @@ import { formatSupplierUnitPrice } from "@/lib/currency/format";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
 import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import { ProductionOrderAddFabrics } from "@/components/orders/ProductionOrderAddFabrics";
-import { canAppendFabricLines } from "@/lib/sales-orders/fabric-lines";
+import { canAppendFabricLines } from "@/lib/sales-orders/fabric-lines-rules";
 import { formatLabelGarmentDescription } from "@/lib/sales-orders/label-codes";
 import { formatDateTime } from "@/lib/utils";
 
