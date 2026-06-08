@@ -5,7 +5,7 @@ import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { StickerCell } from "@/components/orders/StickerCell";
 import { useStickerPrint } from "@/hooks/useStickerPrint";
-import { labelRollSizeLabel, labelRollSizeMmLabel } from "@/lib/production/label-print-config";
+import { labelPdfMediaLabel, labelPdfMediaMmLabel, labelRollSizeLabel } from "@/lib/production/label-print-config";
 import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
 import type { PrintableStickerLabel } from "@/lib/production/qr-labels";
 
@@ -45,11 +45,13 @@ export function LabelPrinterTest() {
         <ol className="list-decimal space-y-1 pl-5">
           <li>
             In <strong>LabelLife</strong> or the <strong>AIMO driver</strong>, set media to{" "}
-            <strong>{labelRollSizeLabel()}</strong> ({labelRollSizeMmLabel()}).
+            <strong>{labelPdfMediaMmLabel()}</strong> ({labelPdfMediaLabel()}).
           </li>
           <li>
             Click <strong>Print test label</strong> — a server PDF opens (no browser date/URL headers). Set{" "}
-            <strong>Scale 100%</strong>, <strong>Margins: None</strong>, paper <strong>{labelRollSizeMmLabel()}</strong>.
+            <strong>Scale 100%</strong>, <strong>Margins: None</strong>, paper{" "}
+            <strong>{labelPdfMediaMmLabel()}</strong>. Content fills the full{" "}
+            <strong>{labelRollSizeLabel()}</strong> label (QR left, text horizontal).
           </li>
           <li>Select your thermal printer (not “Save as PDF” unless testing layout only).</li>
           <li>Scan the QR with Fabric Receiving — it should read <code className="font-mono">L01-SHT</code>.</li>

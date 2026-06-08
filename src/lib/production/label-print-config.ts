@@ -5,6 +5,15 @@
 export const LABEL_ROLL_WIDTH_MM = 102;
 export const LABEL_ROLL_HEIGHT_MM = 51;
 
+/**
+ * LabelLife / AIMO driver media is named 51×102 mm (portrait page).
+ * jsPDF format array is [long, short]; orientation swaps to 51×102 MediaBox.
+ */
+export const LABEL_PDF_FORMAT_MM = [LABEL_ROLL_WIDTH_MM, LABEL_ROLL_HEIGHT_MM] as const;
+export const LABEL_PDF_ORIENTATION = "portrait" as const;
+export const LABEL_PDF_PAGE_WIDTH_MM = LABEL_ROLL_HEIGHT_MM;
+export const LABEL_PDF_PAGE_HEIGHT_MM = LABEL_ROLL_WIDTH_MM;
+
 /** QR square on the left — ~45 mm fits 102×51 mm with 2 mm margins. */
 export const LABEL_STICKER_QR_SIZE_MM = 45;
 
@@ -32,6 +41,15 @@ export function labelRollSizeLabel(): string {
 
 export function labelRollSizeMmLabel(): string {
   return `${LABEL_ROLL_WIDTH_MM} × ${LABEL_ROLL_HEIGHT_MM} mm`;
+}
+
+/** Driver / LabelLife media setting (portrait page — matches PDF MediaBox). */
+export function labelPdfMediaLabel(): string {
+  return `${LABEL_PDF_PAGE_WIDTH_MM} × ${LABEL_PDF_PAGE_HEIGHT_MM} mm portrait`;
+}
+
+export function labelPdfMediaMmLabel(): string {
+  return `${LABEL_PDF_PAGE_WIDTH_MM} × ${LABEL_PDF_PAGE_HEIGHT_MM} mm`;
 }
 
 export function labelRollWidthMm(): number {

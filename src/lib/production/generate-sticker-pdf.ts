@@ -1,5 +1,9 @@
 import { jsPDF } from "jspdf";
 import {
+  LABEL_PDF_FORMAT_MM,
+  LABEL_PDF_ORIENTATION,
+  LABEL_PDF_PAGE_HEIGHT_MM,
+  LABEL_PDF_PAGE_WIDTH_MM,
   LABEL_ROLL_HEIGHT_MM,
   LABEL_ROLL_WIDTH_MM,
   LABEL_STICKER_COLUMN_GAP_MM,
@@ -67,6 +71,37 @@ function pieceLabel(label: PrintableStickerLabel): string {
   return label.production_code === label.fabric_cut_code
     ? `Cut · ${label.piece_name}`
     : label.piece_name;
+}
+
+function createStickerPdfDocument(): jsPDF {
+  const doc = new jsPDF({
+    unit: "mm",
+    format: [...LABEL_PDF_FORMAT_MM],
+    orientation: LABEL_PDF_ORIENTATION,
+    compress: true,
+  });
+
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  if (pageW !== LABEL_PDF_PAGE_WIDTH_MM || pageH !== LABEL_PDF_PAGE_HEIGHT_MM) {
+    throw new Error(
+      `Sticker PDF page must be ${LABEL_PDF_PAGE_WIDTH_MM}×${LABEL_PDF_PAGE_HEIGHT_MM} mm, got ${pageW}×${pageH} mm.`
+    );
+  }
+
+  return doc;
+}
+
+/** Rotate 102×51 landscape layout onto 51×102 portrait PDF page (LabelLife driver media). */
+async function drawRotatedLandscapePage(
+  doc: jsPDF,
+  draw: () => Promise<void>
+): Promise<void> {
+  doc.saveGraphicsState();
+  // 90° CCW: landscape (102×51) coords → portrait page (51×102).
+  doc.setCurrentTransformationMatrix([0, -1, 1, 0, 0, LABEL_PDF_PAGE_HEIGHT_MM]);
+  await draw();
+  doc.restoreGraphicsState();
 }
 
 async function drawStickerPage(
@@ -146,26 +181,23 @@ export type StickerPdfEntry = {
   role?: StickerRole;
 };
 
-/** Server-generated roll PDF — exact 102×51 mm landscape pages, no browser headers/footers. */
+/** Server-generated roll PDF — 51×102 mm portrait pages with rotated 102×51 layout. */
 export async function generateStickerRollPdf(entries: StickerPdfEntry[]): Promise<Uint8Array> {
   if (entries.length === 0) {
     throw new Error("No sticker labels to print.");
   }
 
-  const doc = new jsPDF({
-    unit: "mm",
-    format: [LABEL_ROLL_WIDTH_MM, LABEL_ROLL_HEIGHT_MM],
-    orientation: "landscape",
-    compress: true,
-  });
-
+  const doc = createStickerPdfDocument();
   const qrCache = new Map<string, string>();
 
   for (let index = 0; index < entries.length; index += 1) {
     if (index > 0) {
-      doc.addPage([LABEL_ROLL_WIDTH_MM, LABEL_ROLL_HEIGHT_MM], "landscape");
+      doc.addPage([...LABEL_PDF_FORMAT_MM], LABEL_PDF_ORIENTATION);
     }
-    await drawStickerPage(doc, entries[index]!.label, entries[index]!.role, qrCache);
+    const entry = entries[index]!;
+    await drawRotatedLandscapePage(doc, () =>
+      drawStickerPage(doc, entry.label, entry.role, qrCache)
+    );
   }
 
   return new Uint8Array(doc.output("arraybuffer"));

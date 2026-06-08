@@ -8,7 +8,7 @@ import { StickerCell } from "@/components/orders/StickerCell";
 import { useMarkFabricLinesPrinted } from "@/components/orders/useMarkFabricLinesPrinted";
 import { useStickerPrint } from "@/hooks/useStickerPrint";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
-import { labelRollSizeLabel } from "@/lib/production/label-print-config";
+import { labelPdfMediaMmLabel, labelRollSizeLabel } from "@/lib/production/label-print-config";
 import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
 import type { PrintablePoSheet, PrintableStickerLabel } from "@/lib/production/qr-labels";
 
@@ -237,8 +237,8 @@ export function StickerPrintSheet({
           </p>
           <p className="mt-1 text-sm text-slate-500">{copy.hint}</p>
           <p className="mt-1 text-xs text-slate-400">
-            Roll printer ({labelRollSizeLabel()}) — one label per feed. In LabelLife or the AIMO driver, set media to{" "}
-            {labelRollSizeLabel()} before printing. Labels print from a server PDF (no browser date/URL headers).
+            Roll printer ({labelRollSizeLabel()} physical) — one label per feed. In LabelLife or the AIMO driver, set media to{" "}
+            {labelPdfMediaMmLabel()} before printing. Labels print from a server PDF (no browser date/URL headers).
             {!hasLabelsToPrint ? " No fabric lines on this order." : null}
           </p>
         </div>
