@@ -59,7 +59,8 @@ interface RawCatalog {
   };
   price_list_name: string;
   imported_at: string;
-  source_file: string;
+  source_file?: string;
+  source_files?: string[];
   fabric_count: number;
   fabrics: RawFabric[];
 }
@@ -147,16 +148,21 @@ function mergeCatalogFabrics(
   return [...byNumber.values()];
 }
 
+function catalogSourceFile(catalog: RawCatalog): string {
+  return catalog.source_file ?? catalog.source_files?.[0] ?? "catalog";
+}
+
 function toPriceList(catalog: RawCatalog, supplierId: string, supplier: Supplier): SupplierPriceList {
+  const sourceFile = catalogSourceFile(catalog);
   return {
-    id: `pl-${prefixSlug(catalog.source_file)}`,
+    id: `pl-${prefixSlug(sourceFile)}`,
     supplier_id: supplierId,
     name: catalog.price_list_name,
     effective_date: "2026-01-01",
     currency: catalog.supplier.currency,
     uploaded_at: catalog.imported_at,
     fabric_count: catalog.fabric_count,
-    source_file: catalog.source_file,
+    source_file: sourceFile,
     supplier,
   };
 }

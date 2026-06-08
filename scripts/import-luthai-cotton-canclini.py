@@ -311,6 +311,7 @@ def main() -> None:
         },
         "price_list_name": "HAGAN Warehouse Stock (Canclini linen + Luthai cotton)",
         "imported_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "source_file": linen_path.name,
         "source_files": [linen_path.name] + [p.name for p in luthai_paths if p.exists()],
         "fabric_count": len(fabrics),
         "fabrics": fabrics,
