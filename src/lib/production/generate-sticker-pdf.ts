@@ -92,18 +92,6 @@ function createStickerPdfDocument(): jsPDF {
   return doc;
 }
 
-/** Rotate 102×51 landscape layout onto 51×102 portrait PDF page (LabelLife driver media). */
-async function drawRotatedLandscapePage(
-  doc: jsPDF,
-  draw: () => Promise<void>
-): Promise<void> {
-  doc.saveGraphicsState();
-  // 90° CCW: landscape (102×51) coords → portrait page (51×102).
-  doc.setCurrentTransformationMatrix([0, -1, 1, 0, 0, LABEL_PDF_PAGE_HEIGHT_MM]);
-  await draw();
-  doc.restoreGraphicsState();
-}
-
 async function drawStickerPage(
   doc: jsPDF,
   label: PrintableStickerLabel,
@@ -181,7 +169,7 @@ export type StickerPdfEntry = {
   role?: StickerRole;
 };
 
-/** Server-generated roll PDF — 51×102 mm portrait pages with rotated 102×51 layout. */
+/** Server-generated roll PDF — 102×51 mm landscape pages, content drawn without CTM rotation. */
 export async function generateStickerRollPdf(entries: StickerPdfEntry[]): Promise<Uint8Array> {
   if (entries.length === 0) {
     throw new Error("No sticker labels to print.");
@@ -195,9 +183,7 @@ export async function generateStickerRollPdf(entries: StickerPdfEntry[]): Promis
       doc.addPage([...LABEL_PDF_FORMAT_MM], LABEL_PDF_ORIENTATION);
     }
     const entry = entries[index]!;
-    await drawRotatedLandscapePage(doc, () =>
-      drawStickerPage(doc, entry.label, entry.role, qrCache)
-    );
+    await drawStickerPage(doc, entry.label, entry.role, qrCache);
   }
 
   return new Uint8Array(doc.output("arraybuffer"));

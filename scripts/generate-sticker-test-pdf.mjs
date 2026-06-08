@@ -7,8 +7,6 @@ import { jsPDF } from "jspdf";
 
 const WIDTH = 102;
 const HEIGHT = 51;
-const PDF_PAGE_W = 51;
-const PDF_PAGE_H = 102;
 const QR = 45;
 const PAD = 2;
 const GAP = 3;
@@ -18,16 +16,13 @@ const outPath = process.argv[2] ?? "sticker-test-local.pdf";
 const doc = new jsPDF({
   unit: "mm",
   format: [WIDTH, HEIGHT],
-  orientation: "portrait",
+  orientation: "landscape",
   compress: false,
 });
 
 const pageW = doc.internal.pageSize.getWidth();
 const pageH = doc.internal.pageSize.getHeight();
 console.log("jsPDF internal page:", pageW, "×", pageH, "mm");
-
-doc.saveGraphicsState();
-doc.setCurrentTransformationMatrix([0, -1, 1, 0, 0, pageH]);
 
 const qrX = PAD;
 const qrY = PAD + (HEIGHT - PAD * 2 - QR) / 2;
@@ -49,15 +44,15 @@ doc.text("1.3 m · 1 label", textX, PAD + 28);
 doc.text("PEGASO DELAVE 100% LINEN", textX, PAD + 34, { maxWidth: textW });
 doc.text("Cut · Trouser", textX, PAD + 40);
 
-doc.restoreGraphicsState();
-
 const bytes = Buffer.from(doc.output("arraybuffer"));
 writeFileSync(outPath, bytes);
 
 const pdfText = bytes.toString("latin1");
 const mediaBox = pdfText.match(/\/MediaBox\s*\[([^\]]+)\]/);
 const rotate = pdfText.match(/\/Rotate\s+(\d+)/);
+const hasText = pdfText.includes("PREPARATION") && pdfText.includes("Mokid");
 console.log("Written:", outPath);
 console.log("MediaBox (pt):", mediaBox?.[1] ?? "not found");
 console.log("Rotate:", rotate?.[1] ?? "0");
-console.log("Expected MediaBox pt: 0 0 144.57 289.13 (51×102 mm portrait)");
+console.log("Has visible text:", hasText);
+console.log("Expected MediaBox pt: 0 0 289.13 144.57 (102×51 mm landscape)");

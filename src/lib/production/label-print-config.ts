@@ -6,13 +6,14 @@ export const LABEL_ROLL_WIDTH_MM = 102;
 export const LABEL_ROLL_HEIGHT_MM = 51;
 
 /**
- * LabelLife / AIMO driver media is named 51×102 mm (portrait page).
- * jsPDF format array is [long, short]; orientation swaps to 51×102 MediaBox.
+ * PDF pages match the physical label: 102×51 mm landscape (no CTM rotation).
+ * Thermal drivers (LabelLife / AIMO) often ignore PDF transformation matrices —
+ * portrait pages with rotated content print blank.
  */
 export const LABEL_PDF_FORMAT_MM = [LABEL_ROLL_WIDTH_MM, LABEL_ROLL_HEIGHT_MM] as const;
-export const LABEL_PDF_ORIENTATION = "portrait" as const;
-export const LABEL_PDF_PAGE_WIDTH_MM = LABEL_ROLL_HEIGHT_MM;
-export const LABEL_PDF_PAGE_HEIGHT_MM = LABEL_ROLL_WIDTH_MM;
+export const LABEL_PDF_ORIENTATION = "landscape" as const;
+export const LABEL_PDF_PAGE_WIDTH_MM = LABEL_ROLL_WIDTH_MM;
+export const LABEL_PDF_PAGE_HEIGHT_MM = LABEL_ROLL_HEIGHT_MM;
 
 /** QR square on the left — ~45 mm fits 102×51 mm with 2 mm margins. */
 export const LABEL_STICKER_QR_SIZE_MM = 45;
@@ -43,9 +44,9 @@ export function labelRollSizeMmLabel(): string {
   return `${LABEL_ROLL_WIDTH_MM} × ${LABEL_ROLL_HEIGHT_MM} mm`;
 }
 
-/** Driver / LabelLife media setting (portrait page — matches PDF MediaBox). */
+/** Driver / LabelLife media setting — matches PDF MediaBox and physical roll. */
 export function labelPdfMediaLabel(): string {
-  return `${LABEL_PDF_PAGE_WIDTH_MM} × ${LABEL_PDF_PAGE_HEIGHT_MM} mm portrait`;
+  return `${LABEL_PDF_PAGE_WIDTH_MM} × ${LABEL_PDF_PAGE_HEIGHT_MM} mm landscape`;
 }
 
 export function labelPdfMediaMmLabel(): string {
