@@ -1,5 +1,10 @@
 import path from "path";
-import { loadDocument, readJsonFile, saveDocument } from "@/lib/data/document-persistence";
+import {
+  loadDocument,
+  readJsonFile,
+  readJsonFileFreshAsync,
+  saveDocument,
+} from "@/lib/data/document-persistence";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import { isSalesOrderArchived } from "@/lib/sales-orders/archive";
 import type { SalesOrder, SalesOrdersFile } from "@/lib/types/sales-orders";
@@ -97,6 +102,12 @@ export function toSalesOrderListRow(order: SalesOrder): SalesOrderListRow {
 
 export function getSalesOrderById(id: string): SalesOrder | undefined {
   return readSalesOrders().orders.find((order) => order.id === id);
+}
+
+/** Bypass in-process cache — use on order detail after mutations (multi-instance safe). */
+export async function getSalesOrderByIdFresh(id: string): Promise<SalesOrder | undefined> {
+  const store = await readJsonFileFreshAsync(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS, { force: true });
+  return store.orders.find((order) => order.id === id);
 }
 
 export async function deleteSalesOrderById(

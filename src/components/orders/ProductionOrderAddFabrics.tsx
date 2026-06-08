@@ -17,9 +17,11 @@ type FabricBrand = { id: string; name: string; has_price_list?: boolean };
 export function ProductionOrderAddFabrics({
   order,
   productionMode = false,
+  onOrderUpdated,
 }: {
   order: SalesOrder;
   productionMode?: boolean;
+  onOrderUpdated?: (order: SalesOrder) => void;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -115,8 +117,10 @@ export function ProductionOrderAddFabrics({
           ],
         }),
       });
-      const data = (await res.json()) as { error?: string };
+      const data = (await res.json()) as { error?: string; order?: SalesOrder };
       if (!res.ok) throw new Error(data.error ?? "Failed to add fabric.");
+
+      if (data.order) onOrderUpdated?.(data.order);
 
       resetForm();
       setOpen(false);

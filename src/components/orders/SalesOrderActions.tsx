@@ -52,13 +52,18 @@ export function SalesOrderActions({
 }) {
   const labels = ordersUiLabels(productionMode);
   const router = useRouter();
+  const [liveOrder, setLiveOrder] = useState(order);
   const [creating, setCreating] = useState(false);
   const [savingDestination, setSavingDestination] = useState(false);
   const [deliveryDestination, setDeliveryDestination] = useState<DeliveryDestination | "">(
-    order.delivery_destination ?? ""
+    liveOrder.delivery_destination ?? ""
   );
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    setLiveOrder(order);
+  }, [order]);
 
   useEffect(() => {
     async function loadSession() {
@@ -74,8 +79,8 @@ export function SalesOrderActions({
     void loadSession();
   }, []);
 
-  const supplierGroups = order.fabric_lines.reduce<
-    Record<string, { name: string; lines: typeof order.fabric_lines }>
+  const supplierGroups = liveOrder.fabric_lines.reduce<
+    Record<string, { name: string; lines: typeof liveOrder.fabric_lines }>
   >((acc, line) => {
     const key = fabricSupplierGroupKey(line.supplier_id, line.fabric_number);
     const name = formatFabricSupplierName(line.supplier_id, line.supplier_name, line.fabric_number);
@@ -85,9 +90,9 @@ export function SalesOrderActions({
     return acc;
   }, {});
 
-  const fabricTotals = getFabricTotalsSummary(order.fabric_lines);
+  const fabricTotals = getFabricTotalsSummary(liveOrder.fabric_lines);
 
-  const allStickers = order.fabric_lines.flatMap((line) =>
+  const allStickers = liveOrder.fabric_lines.flatMap((line) =>
     (line.label_stickers ?? []).map((sticker) => ({
       ...sticker,
       fabric_number: line.fabric_number,
@@ -101,7 +106,7 @@ export function SalesOrderActions({
     setSavingDestination(true);
     setError(null);
     try {
-      const res = await fetch(`/api/sales-orders/${order.id}`, {
+      const res = await fetch(`/api/sales-orders/${liveOrder.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ delivery_destination: next }),
@@ -119,18 +124,18 @@ export function SalesOrderActions({
 
   function handleDestinationChange(next: DeliveryDestination) {
     setDeliveryDestination(next);
-    if (order.delivery_destination !== next) {
+    if (liveOrder.delivery_destination !== next) {
       void saveDeliveryDestination(next);
     }
   }
 
   async function createFabricPos() {
-    if (!order.delivery_destination && !deliveryDestination) {
+    if (!liveOrder.delivery_destination && !deliveryDestination) {
       setError("Select a fabric delivery destination before creating supplier emails.");
       return;
     }
 
-    const pendingReplacements = order.fabric_lines.filter((line) => line.needs_replacement);
+    const pendingReplacements = liveOrder.fabric_lines.filter((line) => line.needs_replacement);
     if (pendingReplacements.length > 0) {
       setError(
         `Pick replacements for ${pendingReplacements.map((line) => line.fabric_number).join(", ")} before creating supplier emails.`
@@ -141,8 +146,8 @@ export function SalesOrderActions({
     setCreating(true);
     setError(null);
     try {
-      if (!order.delivery_destination) {
-        const saveRes = await fetch(`/api/sales-orders/${order.id}`, {
+      if (!liveOrder.delivery_destination) {
+        const saveRes = await fetch(`/api/sales-orders/${liveOrder.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ delivery_destination: deliveryDestination }),
@@ -153,10 +158,10 @@ export function SalesOrderActions({
         }
       }
 
-      const res = await fetch(`/api/sales-orders/${order.id}/fabric-pos`, { method: "POST" });
+      const res = await fetch(`/api/sales-orders/${liveOrder.id}/fabric-pos`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to create fabric orders");
-      router.push(`/supplier-emails?sales_order_id=${order.id}`);
+      router.push(`/supplier-emails?sales_order_id=${liveOrder.id}`);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create fabric orders");
@@ -177,8 +182,12 @@ export function SalesOrderActions({
         disabled={savingDestination}
       />
 
-      {canAppendFabricLines(order) && (
-        <ProductionOrderAddFabrics order={order} productionMode={productionMode} />
+      {canAppendFabricLines(liveOrder) && (
+        <ProductionOrderAddFabrics
+          order={liveOrder}
+          productionMode={productionMode}
+          onOrderUpdated={setLiveOrder}
+        />
       )}
 
       {allStickers.length > 0 && (
@@ -224,7 +233,7 @@ export function SalesOrderActions({
                 {allStickers.map((sticker) => (
                   <tr key={sticker.code} className="border-b border-slate-100 last:border-0">
                     <td className="px-3 py-2 font-mono font-medium text-indigo-800">{sticker.code}</td>
-                    <td className="px-3 py-2 text-slate-700">{order.client_name}</td>
+                    <td className="px-3 py-2 text-slate-700">{liveOrder.client_name}</td>
                     <td className="px-3 py-2 text-slate-700">
                       {formatLabelGarmentDescription(sticker.garment_type, sticker.piece_name)}
                     </td>
@@ -249,7 +258,7 @@ export function SalesOrderActions({
           <div>
             <h2 className="text-lg font-semibold text-slate-900">{labels.fabricsSectionTitle}</h2>
             <p className="mt-1 text-sm text-slate-500">{labels.fabricsSectionDescription}</p>
-            {order.fabric_lines.length > 0 && (
+            {liveOrder.fabric_lines.length > 0 && (
               <p className="mt-2 text-sm font-medium text-slate-800">
                 Order total: {fabricTotals.total_meters.toFixed(1)} m
                 {fabricTotals.total_kg != null ? ` · ${fabricTotals.total_kg.toFixed(1)} kg` : null}
@@ -335,14 +344,14 @@ export function SalesOrderActions({
 
       <div className="flex flex-wrap gap-3">
         {!isClientManager &&
-          (order.fabric_po_ids.length > 0 ? (
-            <Link href={`/supplier-emails?sales_order_id=${order.id}`}>
+          (liveOrder.fabric_po_ids.length > 0 ? (
+            <Link href={`/supplier-emails?sales_order_id=${liveOrder.id}`}>
               <Button>Send supplier emails</Button>
             </Link>
           ) : (
             <Button
               onClick={() => void createFabricPos()}
-              disabled={creating || (!order.delivery_destination && !deliveryDestination)}
+              disabled={creating || (!liveOrder.delivery_destination && !deliveryDestination)}
             >
               {creating ? "Creating…" : "Create fabric orders for suppliers"}
             </Button>
@@ -354,7 +363,7 @@ export function SalesOrderActions({
         )}
         {!isClientManager && (
           <CreateInvoiceButton
-            salesOrderId={order.id}
+            salesOrderId={liveOrder.id}
             existingInvoiceId={existingInvoiceId}
             isReadyMade={isReadyMade}
           />
@@ -366,18 +375,18 @@ export function SalesOrderActions({
           <Button variant="secondary">{labels.detailNewButton}</Button>
         </Link>
         <DownloadSalesOrderPdfButton orderId={order.id} soNumber={order.so_number} />
-        {isAdmin && order.status === "open" && order.fabric_po_ids.length === 0 && (
-          <DeleteSalesOrderButton order={order} />
+        {isAdmin && liveOrder.status === "open" && liveOrder.fabric_po_ids.length === 0 && (
+          <DeleteSalesOrderButton order={liveOrder} />
         )}
       </div>
 
-      {order.client_reference && (
+      {liveOrder.client_reference && (
         <p className="text-sm text-slate-500">
-          Client reference: <span className="font-mono text-indigo-700">{order.client_reference}</span>
+          Client reference: <span className="font-mono text-indigo-700">{liveOrder.client_reference}</span>
         </p>
       )}
 
-      <Badge className="bg-slate-100 text-slate-700">Status: {order.status.replace(/_/g, " ")}</Badge>
+      <Badge className="bg-slate-100 text-slate-700">Status: {liveOrder.status.replace(/_/g, " ")}</Badge>
     </div>
   );
 }

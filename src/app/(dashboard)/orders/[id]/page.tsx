@@ -12,7 +12,7 @@ import {
 import { getSessionContext } from "@/lib/auth/session";
 import { getCustomerInvoiceBySalesOrderId } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { getSalesOrderById, isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
+import { getSalesOrderByIdFresh, isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
 import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import { formatDate } from "@/lib/utils";
@@ -24,7 +24,7 @@ export default async function SalesOrderDetailPage({
 }) {
   const { id } = await params;
   await ensureDocumentsLoaded(["sales_orders", "customer_invoices"]);
-  const rawOrder = getSalesOrderById(id);
+  const rawOrder = await getSalesOrderByIdFresh(id);
   if (!rawOrder) notFound();
   const session = await getSessionContext();
   const labels = ordersUiLabels(session.isClientManager);
