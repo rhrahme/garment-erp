@@ -26,7 +26,6 @@ export function ProductionOrderAddFabrics({
   const [fabricQuery, setFabricQuery] = useState("");
   const [pendingFabric, setPendingFabric] = useState<FabricSearchItem | null>(null);
   const [garmentType, setGarmentType] = useState("");
-  const [labelCount, setLabelCount] = useState("1");
   const [meters, setMeters] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +50,6 @@ export function ProductionOrderAddFabrics({
     setFabricQuery("");
     setPendingFabric(null);
     setGarmentType("");
-    setLabelCount("1");
     setMeters("");
     setError(null);
   }
@@ -115,12 +113,6 @@ export function ProductionOrderAddFabrics({
       setError("Enter valid meters.");
       return;
     }
-    const labels = Number(labelCount);
-    if (!Number.isInteger(labels) || labels < 1) {
-      setError("Enter a valid label count.");
-      return;
-    }
-
     setSubmitting(true);
     setError(null);
     try {
@@ -131,7 +123,6 @@ export function ProductionOrderAddFabrics({
           fabric_lines: [
             {
               garment_type: garmentType,
-              label_count: labels,
               supplier_id: pendingFabric.supplier_id,
               supplier_name: pendingFabric.supplier_name,
               fabric_number: pendingFabric.fabric_number,
@@ -249,16 +240,12 @@ export function ProductionOrderAddFabrics({
                 </div>
               )}
 
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block text-sm">
                   <span className="font-medium text-slate-700">Garment to stitch</span>
                   <select
                     value={garmentType}
-                    onChange={(e) => {
-                      const next = e.target.value;
-                      setGarmentType(next);
-                      if (next) setLabelCount(String(getLabelCountForGarment(next)));
-                    }}
+                    onChange={(e) => setGarmentType(e.target.value)}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
                   >
                     <option value="">Select garment…</option>
@@ -268,17 +255,12 @@ export function ProductionOrderAddFabrics({
                       </option>
                     ))}
                   </select>
-                </label>
-                <label className="block text-sm">
-                  <span className="font-medium text-slate-700">Factory labels</span>
-                  <input
-                    type="number"
-                    min={1}
-                    step={1}
-                    value={labelCount}
-                    onChange={(e) => setLabelCount(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-                  />
+                  {garmentType && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      {getLabelCountForGarment(garmentType)} factory label
+                      {getLabelCountForGarment(garmentType) === 1 ? "" : "s"} — auto from garment type
+                    </p>
+                  )}
                 </label>
                 <label className="block text-sm">
                   <span className="font-medium text-slate-700">Meters</span>

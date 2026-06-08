@@ -14,7 +14,13 @@ const PRINT_FIELD: Record<FabricLinePrintKind, keyof SalesOrderFabricLine> = {
   prod_stickers: "prod_stickers_printed_at",
 };
 
+/** Original order lines (pre-incremental-print) have no added_at — treat as already printed. */
+export function isLegacyFabricLine(line: SalesOrderFabricLine): boolean {
+  return !line.added_at;
+}
+
 export function isFabricLinePrinted(line: SalesOrderFabricLine, kind: FabricLinePrintKind): boolean {
+  if (isLegacyFabricLine(line)) return true;
   return Boolean(line[PRINT_FIELD[kind]]);
 }
 
@@ -201,14 +207,13 @@ export async function appendSalesOrderFabricLines(
 
   const order = store.orders[index]!;
   if (!canAppendFabricLines(order)) {
-    return {
-      ok: false,
-      status: 409,
-      error:
-        order.fabric_po_ids.length > 0
+    const error =
+      order.retail_brand?.trim()
+        ? "Ready-made retail orders cannot have fabrics appended."
+        : order.fabric_po_ids.length > 0
           ? "Cannot add fabrics — supplier fabric orders were already created for this order."
-          : "This order is closed — fabrics can only be added while the order is open.",
-    };
+          : "This order is closed — fabrics can only be added while the order is open.";
+    return { ok: false, status: 409, error };
   }
 
   if (inputs.length === 0) {
