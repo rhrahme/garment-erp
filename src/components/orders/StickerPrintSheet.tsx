@@ -123,7 +123,9 @@ export function StickerPrintSheet({
       if (poId) params.set("po_id", poId);
       params.set("sheet", sheet);
       const qs = params.toString();
-      const res = await fetch(`/api/sales-orders/${salesOrderId}/stickers${qs ? `?${qs}` : ""}`);
+      const res = await fetch(`/api/sales-orders/${salesOrderId}/stickers${qs ? `?${qs}` : ""}`, {
+        cache: "no-store",
+      });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Failed to load stickers");
       setData(json as StickersApiResponse);

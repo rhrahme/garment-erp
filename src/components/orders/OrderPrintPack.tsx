@@ -82,7 +82,9 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/sales-orders/${salesOrderId}/stickers?sheet=print-pack`);
+      const res = await fetch(`/api/sales-orders/${salesOrderId}/stickers?sheet=print-pack`, {
+        cache: "no-store",
+      });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Failed to load print pack");
       setData(json as PrintPackResponse);

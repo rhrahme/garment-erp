@@ -206,25 +206,39 @@ function lineToLabels(
   });
 }
 
-export function buildLabelsForSalesOrder(order: SalesOrder): PrintableStickerLabel[] {
-  const labels = order.fabric_lines.flatMap((line, index) =>
-    lineToLabels(order, line, fabricLineArticleNumber(index))
+function articleNumberForLine(line: SalesOrderFabricLine, order: SalesOrder): number {
+  const index = order.fabric_lines.findIndex((item) => item.id === line.id);
+  return fabricLineArticleNumber(index >= 0 ? index : 0);
+}
+
+export function buildLabelsForSalesOrder(
+  linesOrder: SalesOrder,
+  batchOrder: SalesOrder = linesOrder
+): PrintableStickerLabel[] {
+  const labels = linesOrder.fabric_lines.flatMap((line) =>
+    lineToLabels(batchOrder, line, articleNumberForLine(line, batchOrder))
   );
-  return applyOrderStickerBatch(labels, order);
+  return applyOrderStickerBatch(labels, batchOrder);
 }
 
 /** One physical sticker per fabric line — QR encodes fabric cut code for receive / wash / iron. */
 /** Piece stickers for multi-piece garments only (suit, shirt+trouser, …). */
-export function buildMultiPieceLabelsForSalesOrder(order: SalesOrder): PrintableStickerLabel[] {
-  return buildLabelsForSalesOrder(order).filter(
+export function buildMultiPieceLabelsForSalesOrder(
+  linesOrder: SalesOrder,
+  batchOrder: SalesOrder = linesOrder
+): PrintableStickerLabel[] {
+  return buildLabelsForSalesOrder(linesOrder, batchOrder).filter(
     (label) => getGarmentPieces(label.garment_type).length > 1
   );
 }
 
-export function buildFabricCutLabelsForSalesOrder(order: SalesOrder): PrintableStickerLabel[] {
-  const labels = order.fabric_lines.flatMap((line, index) => {
-    const articleNumber = fabricLineArticleNumber(index);
-    const pieceLabels = lineToLabels(order, line, articleNumber);
+export function buildFabricCutLabelsForSalesOrder(
+  linesOrder: SalesOrder,
+  batchOrder: SalesOrder = linesOrder
+): PrintableStickerLabel[] {
+  const labels = linesOrder.fabric_lines.flatMap((line) => {
+    const articleNumber = articleNumberForLine(line, batchOrder);
+    const pieceLabels = lineToLabels(batchOrder, line, articleNumber);
     const first = pieceLabels[0];
     if (!first) return [];
 
@@ -233,14 +247,14 @@ export function buildFabricCutLabelsForSalesOrder(order: SalesOrder): PrintableS
         ...first,
         article_number: articleNumber,
         sticker_index: articleNumber,
-        sticker_total: order.fabric_lines.length,
+        sticker_total: batchOrder.fabric_lines.length,
         production_code: first.fabric_cut_code,
         qr_payload: qrScanPayload(first.fabric_cut_code),
         piece_name: line.garment_type,
       },
     ];
   });
-  return applyOrderStickerBatch(labels, order);
+  return applyOrderStickerBatch(labels, batchOrder);
 }
 
 export function buildPoPrintSheet(po: PurchaseOrder, order: SalesOrder): PrintablePoSheet {

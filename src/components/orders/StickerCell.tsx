@@ -166,6 +166,7 @@ export function StickerCell({
             letterSpacing: "0.04mm",
             fontVariantNumeric: "tabular-nums",
           })}
+          spellCheck={false}
         >
           {label.production_code}
         </p>

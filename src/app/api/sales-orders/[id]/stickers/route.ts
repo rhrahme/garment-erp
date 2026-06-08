@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getSalesOrderById } from "@/lib/data/sales-orders";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 import {
   getFabricLineIdsForPrint,
@@ -15,8 +16,9 @@ import {
   buildPoPrintSheet,
   qrImageUrl,
 } from "@/lib/production/qr-labels";
+import type { SalesOrder } from "@/lib/types/sales-orders";
 
-function printLineIds(order: NonNullable<ReturnType<typeof getSalesOrderById>>) {
+function printLineIds(order: SalesOrder) {
   return {
     a4: getFabricLineIdsForPrint(order, "a4"),
     prep_stickers: getFabricLineIdsForPrint(order, "prep_stickers"),
@@ -27,7 +29,8 @@ function printLineIds(order: NonNullable<ReturnType<typeof getSalesOrderById>>) 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const order = getSalesOrderById(id);
+    await ensureDocumentsLoaded(["sales_orders"]);
+    const order = await getSalesOrderByIdFresh(id);
     if (!order) {
       return NextResponse.json({ error: "Sales order not found." }, { status: 404 });
     }
@@ -62,9 +65,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       sheets = match ? [buildPoPrintSheet(match, order)] : [];
     }
 
-    const pieceLabels = buildLabelsForSalesOrder(prodOrder);
-    const fabricCutLabels = buildFabricCutLabelsForSalesOrder(prepOrder);
-    const cuttingPieceLabels = buildMultiPieceLabelsForSalesOrder(prodOrder);
+    const pieceLabels = buildLabelsForSalesOrder(prodOrder, order);
+    const fabricCutLabels = buildFabricCutLabelsForSalesOrder(prepOrder, order);
+    const cuttingPieceLabels = buildMultiPieceLabelsForSalesOrder(prodOrder, order);
     const activeLabels =
       sheet === "fabric-cuts" ? fabricCutLabels : sheet === "print-pack" ? fabricCutLabels : pieceLabels;
 
