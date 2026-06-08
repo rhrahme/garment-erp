@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { FabricPicker } from "@/components/fabric/FabricPicker";
 import { FabricStockBadge } from "@/components/fabric/FabricStockBadge";
 import { formatFabricStockLabel, isFabricUnavailable } from "@/lib/fabric-sourcing/fabric-stock";
 import { GARMENT_STITCH_TYPES, getLabelCountForGarment } from "@/lib/sales-orders/garment-types";
@@ -54,49 +55,10 @@ export function ProductionOrderAddFabrics({
     setError(null);
   }
 
-  async function resolveFabric(fabricNumber: string): Promise<FabricSearchItem> {
-    const trimmed = fabricNumber.trim();
-    const params = new URLSearchParams({
-      supplier_id: selectedBrandId,
-      q: trimmed,
-      limit: "20",
-    });
-    const res = await fetch(`/api/fabric-search?${params}`);
-    if (res.ok) {
-      const data = (await res.json()) as { items: FabricSearchItem[] };
-      const match =
-        data.items.find(
-          (item) => !item.manual && item.fabric_number.toLowerCase() === trimmed.toLowerCase()
-        ) ?? data.items[0];
-      if (match) return match;
-    }
-
-    return {
-      id: `manual-${selectedBrandId}-${trimmed.toLowerCase()}`,
-      supplier_id: selectedBrandId,
-      supplier_name: selectedBrand?.name ?? selectedBrandId,
-      fabric_number: trimmed,
-      composition: null,
-      color: null,
-      weight_gsm: null,
-      width_cm: null,
-      width_inches: null,
-      unit_price: null,
-      unit: "meters",
-      manual: true,
-    };
-  }
-
-  async function handleFabricEnter() {
-    if (!selectedBrandId || !fabricQuery.trim()) return;
+  function selectFabric(item: FabricSearchItem) {
+    setPendingFabric(item);
+    setFabricQuery(item.fabric_number);
     setError(null);
-    try {
-      const item = await resolveFabric(fabricQuery.trim());
-      setPendingFabric(item);
-      setFabricQuery(item.fabric_number);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to look up fabric.");
-    }
   }
 
   async function handleSubmit() {
@@ -199,27 +161,20 @@ export function ProductionOrderAddFabrics({
             </select>
           </label>
 
-          {selectedBrandId && (
+          {selectedBrandId && selectedBrand && (
             <>
-              <label className="block text-sm">
-                <span className="font-medium text-slate-700">Fabric number</span>
-                <input
-                  value={fabricQuery}
-                  onChange={(e) => {
-                    setFabricQuery(e.target.value);
-                    setPendingFabric(null);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      void handleFabricEnter();
-                    }
-                  }}
-                  placeholder={`Type ${selectedBrand?.name ?? "fabric"} number and press Enter`}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono md:max-w-md"
-                  autoComplete="off"
-                />
-              </label>
+              <FabricPicker
+                brandName={selectedBrand.name}
+                supplierId={selectedBrandId}
+                value={fabricQuery}
+                onChange={(next) => {
+                  setFabricQuery(next);
+                  setPendingFabric(null);
+                }}
+                onSelect={selectFabric}
+                label="Fabric number"
+                inputClassName="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono md:max-w-md"
+              />
 
               {pendingFabric && (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
@@ -230,7 +185,7 @@ export function ProductionOrderAddFabrics({
                   <p className="mt-1 text-xs text-slate-500">
                     {[pendingFabric.composition, pendingFabric.weight_gsm != null ? `${pendingFabric.weight_gsm} gsm` : null]
                       .filter(Boolean)
-                      .join(" · ") || selectedBrand?.name}
+                      .join(" · ") || selectedBrand.name}
                   </p>
                   {isFabricUnavailable(pendingFabric.stock_status) && (
                     <p className="mt-2 text-xs text-amber-800">

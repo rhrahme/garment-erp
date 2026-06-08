@@ -56,3 +56,4 @@ reference-documents/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.vercel

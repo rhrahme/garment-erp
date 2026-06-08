@@ -248,7 +248,8 @@ export function getFabricsBySupplierId(supplierId: string): SupplierFabric[] {
 }
 
 export function searchSupplierFabrics(supplierId: string, query: string, limit: number): SupplierFabric[] {
-  const items = getFabricsBySupplierId(supplierId);
+  const canonicalId = resolveFabricSupplierId(supplierId);
+  const items = getFabricsBySupplierId(canonicalId);
   const trimmed = query.trim();
   if (!trimmed) {
     return items.slice(0, limit);
@@ -257,9 +258,9 @@ export function searchSupplierFabrics(supplierId: string, query: string, limit: 
   const byNumber = new Map(items.map((item) => [item.fabric_number.toLowerCase(), item]));
 
   const fabricNumbers =
-    supplierId === "loro-piana" ? expandLoroPianaStyleQuery(trimmed) : [trimmed];
+    canonicalId === "loro-piana" ? expandLoroPianaStyleQuery(trimmed) : [trimmed];
   const loroCandidates =
-    supplierId === "loro-piana" ? resolveLoroPianaFabricInput(trimmed).candidates : [trimmed];
+    canonicalId === "loro-piana" ? resolveLoroPianaFabricInput(trimmed).candidates : [trimmed];
 
   if (fabricNumbers.length > 1) {
     const rangeMatches: SupplierFabric[] = [];
@@ -277,7 +278,7 @@ export function searchSupplierFabrics(supplierId: string, query: string, limit: 
   }
 
   const normalized =
-    supplierId === "loro-piana"
+    canonicalId === "loro-piana"
       ? normalizeLoroPianaFabricNumber(trimmed).toLowerCase()
       : trimmed.toLowerCase();
 

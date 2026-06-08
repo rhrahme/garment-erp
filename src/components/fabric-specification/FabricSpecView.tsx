@@ -8,6 +8,7 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useDrapersSwatchMap } from "@/hooks/useDrapersSwatchMap";
 import { DRAPERS_SUPPLIER_ID } from "@/lib/integrations/drapers/config";
 import { expandLoroPianaStyleQuery, normalizeLoroPianaFabricNumber } from "@/lib/fabric-sourcing/loro-piana-styles";
+import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import { formatFabricSupplierName, isSolbiatiFabric } from "@/lib/fabric-sourcing/supplier-display";
 import { fabricStockTone, formatFabricStockLabel } from "@/lib/fabric-sourcing/fabric-stock";
 import type { Supplier, SupplierFabric } from "@/lib/types/fabric-sourcing";
@@ -23,7 +24,8 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
   const brandCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const item of items) {
-      counts.set(item.supplier_id, (counts.get(item.supplier_id) ?? 0) + 1);
+      const key = resolveFabricSupplierId(item.supplier_id);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
     }
     return counts;
   }, [items]);
@@ -31,9 +33,10 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
   const itemsBySupplier = useMemo(() => {
     const map = new Map<string, SupplierFabric[]>();
     for (const item of items) {
-      const bucket = map.get(item.supplier_id);
+      const key = resolveFabricSupplierId(item.supplier_id);
+      const bucket = map.get(key);
       if (bucket) bucket.push(item);
-      else map.set(item.supplier_id, [item]);
+      else map.set(key, [item]);
     }
     return map;
   }, [items]);
@@ -42,7 +45,7 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
     return [...suppliers]
       .map((s) => ({
         ...s,
-        count: brandCounts.get(s.id) ?? 0,
+        count: brandCounts.get(resolveFabricSupplierId(s.id)) ?? 0,
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [suppliers, brandCounts]);
@@ -53,7 +56,8 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
   const debouncedQuery = useDebouncedValue(query, 200);
 
   const filtered = useMemo(() => {
-    let list = brandId === "all" ? items : (itemsBySupplier.get(brandId) ?? []);
+    const resolvedBrandId = brandId === "all" ? "all" : resolveFabricSupplierId(brandId);
+    let list = resolvedBrandId === "all" ? items : (itemsBySupplier.get(resolvedBrandId) ?? []);
     const search = debouncedQuery.trim();
     if (search) {
       const q = search.toLowerCase();

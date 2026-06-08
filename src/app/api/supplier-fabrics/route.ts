@@ -1,15 +1,17 @@
 import { NextResponse } from "next/server";
 import { attachLiveSupplierContacts, getAllPriceListItems } from "@/lib/data/supplier-catalogs";
+import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import { getLoroPianaMillLine } from "@/lib/fabric-sourcing/loro-piana-styles";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const supplierId = url.searchParams.get("supplier_id")?.trim();
+  const rawSupplierId = url.searchParams.get("supplier_id")?.trim();
+  const supplierId = rawSupplierId ? resolveFabricSupplierId(rawSupplierId) : undefined;
 
   let items = attachLiveSupplierContacts(getAllPriceListItems());
   if (supplierId) {
-    items = items.filter((item) => item.supplier_id === supplierId);
+    items = items.filter((item) => resolveFabricSupplierId(item.supplier_id) === supplierId);
   }
 
   return NextResponse.json({

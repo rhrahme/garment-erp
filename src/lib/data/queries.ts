@@ -26,6 +26,7 @@ import {
   getImportedPriceLists,
   getImportedSuppliers,
 } from "@/lib/data/supplier-catalogs";
+import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 
 const DEMO_MODE = !isSupabaseConfigured();
 
@@ -208,46 +209,42 @@ export async function getStyleCosts() {
   return demoCosts;
 }
 
-async function hasSupplierFabricsTable(supabase: Awaited<ReturnType<typeof createClient>>): Promise<boolean> {
-  const { data, error } = await supabase.from("supplier_fabrics").select("id").limit(1);
-  return !error && (data?.length ?? 0) > 0;
+function catalogItemKey(item: Pick<SupplierFabric, "supplier_id" | "fabric_number">): string {
+  return `${resolveFabricSupplierId(item.supplier_id)}:${item.fabric_number.toLowerCase()}`;
 }
 
 function mergeCatalogPriceListItems(dbItems: SupplierFabric[]): SupplierFabric[] {
   const catalog = attachLiveSupplierContacts(getAllPriceListItems());
   if (dbItems.length === 0) return catalog;
-  const keys = new Set(dbItems.map((item) => `${item.supplier_id}:${item.fabric_number.toLowerCase()}`));
-  const extras = catalog.filter(
-    (item) => !keys.has(`${item.supplier_id}:${item.fabric_number.toLowerCase()}`)
-  );
+  const keys = new Set(dbItems.map(catalogItemKey));
+  const extras = catalog.filter((item) => !keys.has(catalogItemKey(item)));
   return [...dbItems, ...extras];
 }
 
 export async function getFabricSuppliers() {
   if (DEMO_MODE) return getImportedSuppliers();
-  const supabase = await createClient();
-  // Catalog pages use stable contact ids (canclini, loro-piana). Warehouse `suppliers` rows use UUIDs.
-  if (!(await hasSupplierFabricsTable(supabase))) {
-    return getImportedSuppliers();
-  }
-  const { data } = await supabase.from("suppliers").select("*").eq("is_fabric_supplier", true).order("name");
-  const dbSuppliers = (data ?? []) as Supplier[];
-  if (dbSuppliers.length === 0) return getImportedSuppliers();
-  return dbSuppliers;
+  // Fabric search/spec UIs read JSON catalogs keyed by contact ids (canclini, zegna, …).
+  // Supabase warehouse `suppliers` rows may use UUIDs that never match catalog items.
+  return getImportedSuppliers();
 }
 
 export async function getPriceListItems(supplierId?: string) {
   if (DEMO_MODE) {
     const items = attachLiveSupplierContacts(getAllPriceListItems());
-    return supplierId ? items.filter((f) => f.supplier_id === supplierId) : items;
+    return supplierId
+      ? items.filter((f) => resolveFabricSupplierId(f.supplier_id) === resolveFabricSupplierId(supplierId))
+      : items;
   }
   const supabase = await createClient();
+  const canonicalId = supplierId ? resolveFabricSupplierId(supplierId) : undefined;
   let query = supabase.from("supplier_fabrics").select("*, supplier:suppliers(*)").eq("is_active", true).order("fabric_number");
-  if (supplierId) query = query.eq("supplier_id", supplierId);
+  if (canonicalId) query = query.eq("supplier_id", canonicalId);
   const { data, error } = await query;
   const dbItems = error ? [] : ((data ?? []) as SupplierFabric[]);
   const merged = mergeCatalogPriceListItems(dbItems);
-  return supplierId ? merged.filter((f) => f.supplier_id === supplierId) : merged;
+  return canonicalId
+    ? merged.filter((f) => resolveFabricSupplierId(f.supplier_id) === canonicalId)
+    : merged;
 }
 
 /** @deprecated use getPriceListItems */

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { FabricPicker } from "@/components/fabric/FabricPicker";
 import { Button } from "@/components/ui/Button";
 import { AutoSaveStatusBar } from "@/components/ui/AutoSaveStatus";
 import { GARMENT_STITCH_TYPES, getLabelCountForGarment } from "@/lib/sales-orders/garment-types";
@@ -15,7 +16,6 @@ import { useLocalDraft } from "@/hooks/useLocalDraft";
 import { DRAFT_KEYS } from "@/lib/autosave/draft-keys";
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
 import {
-  formatLoroPianaMillLineLabel,
   normalizeLoroPianaFabricNumber,
   resolveLoroPianaFabricInput,
 } from "@/lib/fabric-sourcing/loro-piana-styles";
@@ -24,7 +24,7 @@ import {
   formatFabricSupplierName,
   normalizeFabricSupplierFields,
 } from "@/lib/fabric-sourcing/supplier-display";
-import { fabricStockTone, formatFabricStockLabel, isFabricUnavailable } from "@/lib/fabric-sourcing/fabric-stock";
+import { formatFabricStockLabel, isFabricUnavailable } from "@/lib/fabric-sourcing/fabric-stock";
 import {
   FabricReplacementBadge,
   FabricStockBadge,
@@ -47,7 +47,6 @@ import {
   type SalesOrderClientDraft,
 } from "@/lib/sales-orders/multi-client-draft";
 import type { ClientProfile, ClientsFile } from "@/lib/types/clients";
-import { formatSupplierUnitPrice } from "@/lib/currency/format";
 import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
 import { DeliveryDestinationTabs } from "@/components/shipping/DeliveryDestinationTabs";
 import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
@@ -120,243 +119,6 @@ function formatWidth(line: { width_cm?: number | null; width_inches?: number | n
 function formatWeight(weight_gsm: number | null | undefined) {
   if (weight_gsm != null) return `${weight_gsm} gsm`;
   return "—";
-}
-
-function formatLinePrice(line: { supplier_id: string; unit_price: number | null; unit: string }) {
-  if (line.unit_price == null) return "—";
-  return formatSupplierUnitPrice(line.unit_price, line.supplier_id, line.unit);
-}
-
-function FabricPicker({
-  brandName,
-  supplierId,
-  value,
-  onChange,
-  onSelect,
-  canViewFabricPrices = true,
-}: {
-  brandName: string;
-  supplierId: string;
-  value: string;
-  onChange: (value: string) => void;
-  onSelect: (item: FabricSearchItem) => void;
-  canViewFabricPrices?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const [fabrics, setFabrics] = useState<FabricSearchItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    if (!supplierId || !open) return;
-
-    let cancelled = false;
-    const timer = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams({
-          supplier_id: supplierId,
-          q: value.trim(),
-          limit: "60",
-        });
-        const res = await fetch(`/api/fabric-search?${params}`);
-        if (!res.ok || cancelled) return;
-        const data = (await res.json()) as { items: FabricSearchItem[] };
-        if (!cancelled) setFabrics(data.items);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }, value.trim() ? 200 : 0);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [open, supplierId, value]);
-
-  useEffect(() => {
-    setFabrics([]);
-    setOpen(false);
-  }, [supplierId]);
-
-  function selectManualFabric(fabricNumber: string) {
-    const resolved =
-      supplierId === "loro-piana"
-        ? resolveLoroPianaFabricInput(fabricNumber)
-        : { preferredNumber: fabricNumber.trim(), millLine: null };
-    const normalized = normalizeFabricSupplierFields(supplierId, brandName, resolved.preferredNumber);
-    onSelect({
-      id: `manual-${normalized.supplier_id}-${resolved.preferredNumber.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-      supplier_id: normalized.supplier_id,
-      supplier_name: normalized.supplier_name,
-      fabric_number: resolved.preferredNumber,
-      composition: null,
-      color: null,
-      weight_gsm: null,
-      width_cm: null,
-      width_inches: null,
-      unit_price: null,
-      unit: "meters",
-      mill_line: resolved.millLine,
-      manual: true,
-    });
-    onChange(resolved.preferredNumber);
-    setOpen(false);
-  }
-
-  function millLineBadge(item: FabricSearchItem) {
-    if (supplierId !== "loro-piana" || !item.mill_line) return null;
-    const isSolbiati = item.mill_line === "solbiati";
-    return (
-      <span
-        className={`ml-2 rounded px-1.5 py-0.5 text-[10px] font-sans font-medium uppercase tracking-wide ${
-          isSolbiati ? "bg-amber-100 text-amber-900" : "bg-slate-100 text-slate-700"
-        }`}
-      >
-        {formatLoroPianaMillLineLabel(item.mill_line)}
-      </span>
-    );
-  }
-
-  return (
-    <div ref={containerRef} className="relative">
-      <label className="block text-sm">
-        <span className="font-medium text-slate-700">Fabric</span>
-        <div className="relative mt-1">
-          <input
-            value={value}
-            onChange={(e) => {
-              onChange(e.target.value);
-              setOpen(true);
-            }}
-            onFocus={() => setOpen(true)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && value.trim()) {
-                e.preventDefault();
-                const lookup =
-                  supplierId === "loro-piana"
-                    ? resolveLoroPianaFabricInput(value.trim()).preferredNumber.toLowerCase()
-                    : value.trim().toLowerCase();
-                const match = fabrics.find((item) => item.fabric_number.toLowerCase() === lookup);
-                if (match) {
-                  onSelect(match);
-                  onChange(match.fabric_number);
-                  setOpen(false);
-                } else {
-                  selectManualFabric(value.trim());
-                }
-              }
-            }}
-            placeholder={`Type or select ${brandName} fabric…`}
-            className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-3 pr-10 text-sm"
-            autoComplete="off"
-          />
-          <button
-            type="button"
-            onClick={() => setOpen((prev) => !prev)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:text-slate-600"
-            aria-label="Toggle fabric list"
-          >
-            <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
-          </button>
-        </div>
-      </label>
-
-      {open && (
-        <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
-          {loading ? (
-            <p className="px-4 py-3 text-sm text-slate-500">Loading fabrics…</p>
-          ) : fabrics.length === 0 ? (
-            <div className="px-4 py-3 text-sm text-slate-500">
-              {value.trim() ? (
-                <>
-                  <p>Not in the imported price list.</p>
-                  <button
-                    type="button"
-                    onClick={() => selectManualFabric(value.trim())}
-                    className="mt-2 font-medium text-indigo-600 hover:text-indigo-700"
-                  >
-                    Use {supplierId === "loro-piana" ? resolveLoroPianaFabricInput(value.trim()).preferredNumber : value.trim()} anyway →
-                  </button>
-                  {supplierId === "loro-piana" && /^\d{4,5}$/.test(value.trim()) && (
-                    <p className="mt-2 text-xs text-slate-400">
-                      5-digit codes are usually Solbiati linen — saved as S{value.trim()} (e.g. S23021). Loro Piana
-                      wool/cashmere uses 6 digits (e.g. 781050).
-                    </p>
-                  )}
-                </>
-              ) : (
-                supplierId === "loro-piana"
-                  ? "Loro Piana / Solbiati — 6-digit LP (781050) or Solbiati linen with S (S23021, or type 23021)"
-                  : "Type a fabric number and press Enter."
-              )}
-            </div>
-          ) : (
-            <>
-              <p className="border-b border-slate-100 px-4 py-2 text-xs text-slate-400">
-                {value.trim()
-                  ? `${fabrics.length} match${fabrics.length !== 1 ? "es" : ""}`
-                  : `Showing first ${fabrics.length} — type to filter`}
-              </p>
-              <ul className="max-h-64 overflow-y-auto">
-                {fabrics.map((item) => {
-                  const soldOut = item.stock_status === "permanently_unavailable";
-                  return (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onSelect(item);
-                        onChange(item.fabric_number);
-                        setOpen(false);
-                      }}
-                      className={`flex w-full flex-col gap-0.5 border-b border-slate-100 px-4 py-2.5 text-left hover:bg-slate-50 last:border-0 ${
-                        soldOut ? "bg-red-50/40" : ""
-                      }`}
-                    >
-                      <span className="font-mono font-medium text-slate-900">
-                        {item.fabric_number}
-                        {millLineBadge(item)}
-                        {item.manual ? (
-                          <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-sans font-medium uppercase tracking-wide text-amber-800">
-                            Manual
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className="text-xs text-slate-500">
-                        {item.manual
-                          ? "Manual entry — specs can be filled when the price list is imported"
-                          : [
-                              item.composition ?? "—",
-                              item.weight_gsm != null ? `${item.weight_gsm} gsm` : null,
-                              formatWidth(item) !== "—" ? formatWidth(item) : null,
-                              canViewFabricPrices && item.unit_price != null ? formatLinePrice(item) : null,
-                              formatFabricStockLabel(item),
-                            ]
-                              .filter(Boolean)
-                              .join(" · ")}
-                      </span>
-                    </button>
-                  </li>
-                  );
-                })}
-              </ul>
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  );
 }
 
 export function SalesOrderForm({
