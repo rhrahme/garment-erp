@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { FabricPicker } from "@/components/fabric/FabricPicker";
 import { FabricStockBadge } from "@/components/fabric/FabricStockBadge";
 import { formatFabricStockLabel, isFabricUnavailable } from "@/lib/fabric-sourcing/fabric-stock";
+import { resolveFabricItem } from "@/lib/fabric-sourcing/resolve-fabric-item";
 import { GARMENT_STITCH_TYPES, getLabelCountForGarment } from "@/lib/sales-orders/garment-types";
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
 import type { SalesOrder } from "@/lib/types/sales-orders";
@@ -61,23 +62,34 @@ export function ProductionOrderAddFabrics({
     setError(null);
   }
 
+  const quantity = Number(meters);
+  const formValid =
+    Boolean(selectedBrand && fabricQuery.trim()) &&
+    Boolean(garmentType) &&
+    Number.isFinite(quantity) &&
+    quantity > 0;
+
   async function handleSubmit() {
-    if (!pendingFabric) {
-      setError("Select a fabric first.");
-      return;
-    }
     if (!garmentType) {
       setError("Select a garment type.");
       return;
     }
-    const quantity = Number(meters);
     if (!Number.isFinite(quantity) || quantity <= 0) {
       setError("Enter valid meters.");
+      return;
+    }
+    if (!fabricQuery.trim() || !selectedBrand) {
+      setError("Select a fabric first.");
       return;
     }
     setSubmitting(true);
     setError(null);
     try {
+      const fabric =
+        pendingFabric ??
+        (await resolveFabricItem(selectedBrandId, selectedBrand.name, fabricQuery.trim()));
+      if (!pendingFabric) setPendingFabric(fabric);
+
       const res = await fetch(`/api/sales-orders/${order.id}/fabric-lines`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -85,20 +97,20 @@ export function ProductionOrderAddFabrics({
           fabric_lines: [
             {
               garment_type: garmentType,
-              supplier_id: pendingFabric.supplier_id,
-              supplier_name: pendingFabric.supplier_name,
-              fabric_number: pendingFabric.fabric_number,
+              supplier_id: fabric.supplier_id,
+              supplier_name: fabric.supplier_name,
+              fabric_number: fabric.fabric_number,
               quantity,
-              unit: pendingFabric.unit,
-              unit_price: pendingFabric.unit_price ?? 0,
-              composition: pendingFabric.composition,
-              weight_gsm: pendingFabric.weight_gsm,
-              width_cm: pendingFabric.width_cm,
-              width_inches: pendingFabric.width_inches,
-              color: pendingFabric.color,
-              stock_status: pendingFabric.stock_status ?? null,
-              restock_date: pendingFabric.restock_date ?? null,
-              needs_replacement: pendingFabric.stock_status === "permanently_unavailable",
+              unit: fabric.unit,
+              unit_price: fabric.unit_price ?? 0,
+              composition: fabric.composition,
+              weight_gsm: fabric.weight_gsm,
+              width_cm: fabric.width_cm,
+              width_inches: fabric.width_inches,
+              color: fabric.color,
+              stock_status: fabric.stock_status ?? null,
+              restock_date: fabric.restock_date ?? null,
+              needs_replacement: fabric.stock_status === "permanently_unavailable",
             },
           ],
         }),
@@ -235,7 +247,7 @@ export function ProductionOrderAddFabrics({
                 <Button
                   type="button"
                   onClick={() => void handleSubmit()}
-                  disabled={submitting || !pendingFabric || !garmentType || !meters}
+                  disabled={submitting || !formValid}
                 >
                   {submitting ? "Adding…" : productionMode ? "Add article to order" : "Add to order"}
                 </Button>
