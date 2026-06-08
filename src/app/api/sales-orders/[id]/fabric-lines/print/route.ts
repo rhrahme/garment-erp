@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
 import { requireAuthenticated } from "@/lib/auth/session";
 import {
   isFabricLinePrintKind,
@@ -25,8 +26,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
+    const safeOrder = session.canViewFabricListPrices
+      ? result.order
+      : redactSalesOrderFabricPrices(result.order);
+
     return NextResponse.json({
-      order: result.order,
+      order: safeOrder,
       marked_line_ids: result.marked_line_ids,
       kind,
     });

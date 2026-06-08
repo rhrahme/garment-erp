@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
+import {
+  redactPurchaseOrderPrices,
+  redactSalesOrderFabricPrices,
+} from "@/lib/auth/fabric-price-access";
+import { requireAdmin } from "@/lib/auth/session";
 import { createFabricPosFromSalesOrder } from "@/lib/sales-orders/create-fabric-pos";
 import { notifyIntegration } from "@/lib/integrations";
 
 export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const session = await requireAdmin();
+    if (!session) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
+
     const { id } = await context.params;
     const result = await createFabricPosFromSalesOrder(id);
 
@@ -15,7 +25,14 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
       fabric_po_ids: result.fabricOrders.map((po) => po.id),
     });
 
-    return NextResponse.json(result, { status: 201 });
+    const safeResult = session.canViewFabricListPrices
+      ? result
+      : {
+          order: redactSalesOrderFabricPrices(result.order),
+          fabricOrders: result.fabricOrders.map(redactPurchaseOrderPrices),
+        };
+
+    return NextResponse.json(safeResult, { status: 201 });
   } catch (error) {
     console.error("Failed to create fabric POs:", error);
     const message = error instanceof Error ? error.message : "Failed to create fabric orders.";

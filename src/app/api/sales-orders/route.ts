@@ -196,7 +196,9 @@ export async function POST(request: Request) {
       line_count: order.fabric_lines.length,
     });
 
-    return NextResponse.json({ order, updated_at: saved.updated_at }, { status: 201 });
+    const safeOrder = session.canViewFabricListPrices ? order : redactSalesOrderFabricPrices(order);
+
+    return NextResponse.json({ order: safeOrder, updated_at: saved.updated_at }, { status: 201 });
   } catch (error) {
     console.error("Failed to create sales order:", error);
     return NextResponse.json({ error: "Failed to create sales order." }, { status: 500 });

@@ -6,9 +6,10 @@ import {
 } from "@/lib/auth/dev-impersonation";
 import {
   defaultPathForSession,
-  isClientManagerEmail,
+  isClientManagerAccess,
   isClientManagerRouteAllowed,
 } from "@/lib/auth/permissions";
+import type { UserRole } from "@/lib/types/database";
 import { getSupabasePublishableKey, getSupabaseUrl, isSupabaseConfigured } from "@/lib/supabase/env";
 
 const AUTH_LOOKUP_MS = 4_000;
@@ -80,7 +81,17 @@ export async function updateSession(request: NextRequest) {
   }
 
   const email = impersonatedEmail ?? user?.email?.trim().toLowerCase() ?? null;
-  const isClientManager = Boolean(email && isClientManagerEmail(email));
+  let isClientManager = false;
+  if (impersonatedEmail) {
+    isClientManager = isClientManagerAccess("client_manager", impersonatedEmail);
+  } else if (user?.id && email) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    isClientManager = isClientManagerAccess((profile?.role as UserRole | undefined) ?? null, email);
+  }
 
   if (isAuthenticated && isAuthPage) {
     const url = request.nextUrl.clone();
