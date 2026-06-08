@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { AlertTriangle, Printer, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { labelRollSizeLabel } from "@/lib/production/label-print-config";
 import {
   rememberStickerPrintHeadersHint,
   STICKER_PRINT_HEADERS_HINT,
@@ -40,7 +41,8 @@ export function StickerPrintBanner({ open, onClose, onConfirm }: StickerPrintBan
             </h2>
             <p className="mt-2 text-sm text-slate-600">{STICKER_PRINT_HEADERS_HINT}</p>
             <p className="mt-2 text-sm text-slate-600">
-              Also set <strong>Scale 100%</strong>, <strong>Margins: None</strong>, and your roll size (10×5 cm).
+              Also set <strong>Scale 100%</strong>, <strong>Margins: None</strong>, and your roll size (
+              {labelRollSizeLabel()}).
             </p>
             <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm text-slate-700">
               <input

@@ -1,5 +1,6 @@
 import { LabelPrinterTest } from "@/components/orders/LabelPrinterTest";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { labelRollSizeLabel } from "@/lib/production/label-print-config";
 
 export default function LabelPrinterTestPage() {
   return (
@@ -7,7 +8,7 @@ export default function LabelPrinterTestPage() {
       <div className="no-print">
         <PageHeader
           title="Sticker printer test"
-          description="10 × 5 cm roll — calibrate AIMO / LabelLife media, then print one test label"
+          description={`${labelRollSizeLabel()} roll — calibrate AIMO / LabelLife media, then print one test label`}
         />
       </div>
       <LabelPrinterTest />

@@ -1,5 +1,16 @@
 export type StickerPdfSheet = "fabric-cuts" | "pieces" | "print-pack" | "test";
 
+export const STICKER_PRINT_HEADERS_HINT_KEY = "sticker-print-headers-hint-seen";
+
+/** Chrome/Edge add date, title, URL, and page numbers — not removable via CSS. */
+export const STICKER_PRINT_HEADERS_HINT =
+  'In the print dialog, open More settings and turn OFF "Headers and footers". Browsers add date, URL, and page numbers otherwise — the app cannot remove them.';
+
+export function rememberStickerPrintHeadersHint(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(STICKER_PRINT_HEADERS_HINT_KEY, "1");
+}
+
 export type StickerPdfRequest = {
   orderId: string;
   sheet?: StickerPdfSheet;
@@ -21,7 +32,7 @@ function pdfFilename(orderId: string, sheet: StickerPdfSheet): string {
 
 /**
  * Fetch server-generated roll PDF and open the system print dialog.
- * PDF pages are exact 100×50 mm labels — no Chrome date/URL headers.
+ * PDF pages are exact 51×102 mm labels — no Chrome date/URL headers.
  */
 export async function printStickerPdf(
   request: StickerPdfRequest,

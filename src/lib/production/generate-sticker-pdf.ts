@@ -80,12 +80,11 @@ async function drawStickerPage(
   const padH = LABEL_STICKER_PADDING_H_MM;
   const padV = LABEL_STICKER_PADDING_V_MM;
   const contentW = pageW - padH * 2;
-  const contentH = pageH - padV * 2;
   const qrSize = LABEL_STICKER_QR_SIZE_MM;
-  const textX = padH + qrSize + LABEL_STICKER_COLUMN_GAP_MM;
-  const textW = contentW - qrSize - LABEL_STICKER_COLUMN_GAP_MM;
-  const qrX = padH;
-  const qrY = padV + (contentH - qrSize) / 2;
+  const textX = padH;
+  const textW = contentW;
+  const qrX = padH + (contentW - qrSize) / 2;
+  const qrY = padV;
 
   doc.setTextColor(STICKER_RGB.r, STICKER_RGB.g, STICKER_RGB.b);
   doc.setFont("helvetica", "normal");
@@ -111,19 +110,14 @@ async function drawStickerPage(
 
   let qrData = qrCache.get(label.qr_payload);
   if (!qrData) {
-    qrData = await fetchQrDataUrl(label.qr_payload, 380);
+    qrData = await fetchQrDataUrl(label.qr_payload, 450);
     qrCache.set(label.qr_payload, qrData);
   }
   doc.addImage(qrData, "PNG", qrX, qrY, qrSize, qrSize);
 
   const gap = LABEL_STICKER_LINE_GAP_MM;
   const headerH = lineHeightMm(headerFontMm);
-  const bodyH =
-    headerH +
-    gap +
-    lines.reduce((sum, line) => sum + lineHeightMm(line.fontMm) + gap, 0) -
-    gap;
-  let y = padV + (contentH - bodyH) / 2 + headerH / 2;
+  let y = padV + qrSize + LABEL_STICKER_COLUMN_GAP_MM + headerH / 2;
 
   doc.setFontSize(mmToPt(headerFontMm));
   doc.text(STICKER_ROLE_LABEL[stickerRole], textX, y, { align: "left", baseline: "middle" });
@@ -146,7 +140,7 @@ export type StickerPdfEntry = {
   role?: StickerRole;
 };
 
-/** Server-generated roll PDF — exact 100×50 mm pages, no browser headers/footers. */
+/** Server-generated roll PDF — exact 51×102 mm pages, no browser headers/footers. */
 export async function generateStickerRollPdf(entries: StickerPdfEntry[]): Promise<Uint8Array> {
   if (entries.length === 0) {
     throw new Error("No sticker labels to print.");
@@ -155,7 +149,7 @@ export async function generateStickerRollPdf(entries: StickerPdfEntry[]): Promis
   const doc = new jsPDF({
     unit: "mm",
     format: [LABEL_ROLL_WIDTH_MM, LABEL_ROLL_HEIGHT_MM],
-    orientation: "landscape",
+    orientation: "portrait",
     compress: true,
   });
 
@@ -163,7 +157,7 @@ export async function generateStickerRollPdf(entries: StickerPdfEntry[]): Promis
 
   for (let index = 0; index < entries.length; index += 1) {
     if (index > 0) {
-      doc.addPage([LABEL_ROLL_WIDTH_MM, LABEL_ROLL_HEIGHT_MM], "landscape");
+      doc.addPage([LABEL_ROLL_WIDTH_MM, LABEL_ROLL_HEIGHT_MM], "portrait");
     }
     await drawStickerPage(doc, entries[index]!.label, entries[index]!.role, qrCache);
   }
