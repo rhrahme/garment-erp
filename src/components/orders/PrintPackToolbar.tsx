@@ -9,13 +9,17 @@ export function PrintPackToolbar({
   orderId,
   soNumber,
   a4LineIds,
+  a4SheetLineCount,
 }: {
   orderId: string;
   soNumber: string;
+  /** Unprinted line ids only — passed to mark-print API after print. */
   a4LineIds: string[];
+  a4SheetLineCount: number;
 }) {
   const { printWithMark } = useMarkFabricLinesPrinted(orderId);
   const hasUnprinted = a4LineIds.length > 0;
+  const canPrintA4 = a4SheetLineCount > 0;
 
   return (
     <div className="no-print mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
@@ -23,13 +27,15 @@ export function PrintPackToolbar({
         {soNumber}
       </Link>
       <p className="text-xs text-slate-500">
-        {hasUnprinted
-          ? `Print receiving A4 for ${a4LineIds.length} new line${a4LineIds.length === 1 ? "" : "s"}, then sticker rolls below`
-          : "All lines printed on receiving A4 — sticker rolls below cover any new lines only"}
+        {canPrintA4
+          ? hasUnprinted
+            ? `Full receiving A4 (${a4SheetLineCount} lines) — marks ${a4LineIds.length} new line${a4LineIds.length === 1 ? "" : "s"} after print, then sticker rolls below`
+            : `Full receiving A4 (${a4SheetLineCount} lines) — reprint includes previously printed lines; sticker rolls below cover new lines only`
+          : "No fabric lines on this order"}
       </p>
       <Button
         onClick={() => printWithMark([{ kind: "a4", lineIds: a4LineIds }])}
-        disabled={!hasUnprinted}
+        disabled={!canPrintA4}
       >
         <Printer className="h-4 w-4" />
         Print receiving A4

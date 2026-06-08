@@ -30,6 +30,7 @@ import { formatSalesOrderLineStock, orderLineHasStockAlert } from "@/lib/fabric-
 import { getDeliveryDestination } from "@/lib/shipping/delivery-destinations";
 import { formatTotalFabricWeightKg } from "@/lib/sales-orders/fabric-weight";
 import {
+  getFabricLinesForA4Print,
   getFabricLinesForProdStickers,
   getUnprintedFabricLines,
 } from "@/lib/sales-orders/fabric-lines";
@@ -101,6 +102,7 @@ export default async function SalesOrderPrintPage({
     getDeliveryDestination(order.delivery_destination)?.label ?? order.delivery_destination ?? "Not set";
   const articleByLineId = buildFabricLineArticleMap(order.fabric_lines.map((line) => line.id));
   const productionBrand = productionBrandNameForOrder(order);
+  const a4PrintLines = getFabricLinesForA4Print(order.fabric_lines);
   const unprintedA4Lines = getUnprintedFabricLines(order.fabric_lines, "a4");
   const unprintedProdLines = getUnprintedFabricLines(
     getFabricLinesForProdStickers(order.fabric_lines),
@@ -172,6 +174,7 @@ export default async function SalesOrderPrintPage({
         team={team}
         printKind={printKind}
         printLineIds={printLineIds}
+        sheetLineCount={team === "receiving" ? a4PrintLines.length : undefined}
       />
 
       <div className="mx-auto max-w-4xl print:max-w-none">
@@ -297,13 +300,24 @@ export default async function SalesOrderPrintPage({
         </div>
         )}
 
-        {team === "receiving" && unprintedA4Lines.length > 0 && (
+        {team === "receiving" && a4PrintLines.length > 0 && (
           <div className="mt-8 border-t border-slate-200 pt-6 print:mt-0 print:border-0 print:pt-0">
+            {unprintedA4Lines.length === 0 && (
+              <p className="no-print mb-4 text-sm text-slate-500">
+                Full order sheet — includes previously printed lines (reprint for receiving desk).
+              </p>
+            )}
+            {unprintedA4Lines.length > 0 && (
+              <p className="no-print mb-4 text-sm text-slate-500">
+                Full order sheet — {unprintedA4Lines.length} new line
+                {unprintedA4Lines.length === 1 ? "" : "s"} will be marked printed after this run.
+              </p>
+            )}
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-700 print:mb-2">
               Fabric cut QR — receive / wash
             </h2>
             <SalesOrderReceivingCutTable
-              rows={unprintedA4Lines.map((line) => {
+              rows={a4PrintLines.map((line) => {
                 const art = articleByLineId.get(line.id) ?? 0;
                 const stickers = line.label_stickers ?? [];
                 const firstCode =
@@ -315,8 +329,8 @@ export default async function SalesOrderPrintPage({
             />
           </div>
         )}
-        {team === "receiving" && unprintedA4Lines.length === 0 && (
-          <p className="text-sm text-slate-500">All fabric lines already printed on receiving A4.</p>
+        {team === "receiving" && a4PrintLines.length === 0 && (
+          <p className="text-sm text-slate-500">No fabric lines on this order.</p>
         )}
 
         {(team === "full" || team === "production") &&

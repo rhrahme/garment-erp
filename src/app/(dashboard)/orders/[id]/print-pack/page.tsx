@@ -11,7 +11,10 @@ import {
   buildFabricLineArticleMap,
   supplierFabricProductionCode,
 } from "@/lib/sales-orders/label-codes";
-import { getUnprintedFabricLines } from "@/lib/sales-orders/fabric-lines";
+import {
+  getFabricLinesForA4Print,
+  getUnprintedFabricLines,
+} from "@/lib/sales-orders/fabric-lines";
 
 export default async function OrderPrintPackPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,7 +22,9 @@ export default async function OrderPrintPackPage({ params }: { params: Promise<{
   if (!order) notFound();
 
   const articleByLineId = buildFabricLineArticleMap(order.fabric_lines.map((line) => line.id));
-  const unprintedA4Lines = getUnprintedFabricLines(order.fabric_lines, "a4");
+  const a4PrintLines = getFabricLinesForA4Print(order.fabric_lines);
+  const unprintedA4LineIds = getUnprintedFabricLines(order.fabric_lines, "a4").map((line) => line.id);
+  const hasUnprintedA4 = unprintedA4LineIds.length > 0;
 
   return (
     <div className="order-print-pack min-h-screen bg-white p-8 text-slate-900 print:min-h-0 print:p-0">
@@ -46,18 +51,22 @@ export default async function OrderPrintPackPage({ params }: { params: Promise<{
       <PrintPackToolbar
         orderId={id}
         soNumber={order.so_number}
-        a4LineIds={unprintedA4Lines.map((line) => line.id)}
+        a4LineIds={unprintedA4LineIds}
+        a4SheetLineCount={a4PrintLines.length}
       />
 
       <section className="print-pack-a4 mb-10">
         <div className="no-print mb-4 rounded-lg border border-pink-200 bg-pink-50/50 px-4 py-3">
           <p className="font-semibold text-slate-900">Receiving team pack — A4 sheet</p>
           <p className="mt-1 text-sm text-slate-600">
-            Fabric cut codes with QR — match rolls to this sheet at receive.{" "}
-            {unprintedA4Lines.length > 0
-              ? `${unprintedA4Lines.length} new line${unprintedA4Lines.length === 1 ? "" : "s"} to print.`
-              : "All lines already printed on receiving A4."}{" "}
-            Print fabric cut roll stickers below (or from the sticker section).
+            Fabric cut codes with QR — match rolls to this sheet at receive. Full order sheet (
+            {a4PrintLines.length} line{a4PrintLines.length === 1 ? "" : "s"}).
+            {hasUnprintedA4
+              ? ` ${unprintedA4LineIds.length} new line${unprintedA4LineIds.length === 1 ? "" : "s"} will be marked printed after this run.`
+              : a4PrintLines.length > 0
+                ? " Includes previously printed lines — reprint for receiving desk."
+                : ""}{" "}
+            Print fabric cut roll stickers below (new lines only).
           </p>
         </div>
 
@@ -71,9 +80,9 @@ export default async function OrderPrintPackPage({ params }: { params: Promise<{
           </p>
         </header>
 
-        {unprintedA4Lines.length > 0 ? (
+        {a4PrintLines.length > 0 ? (
           <SalesOrderReceivingCutTable
-            rows={unprintedA4Lines.map((line) => {
+            rows={a4PrintLines.map((line) => {
               const art = articleByLineId.get(line.id) ?? 0;
               const stickers = line.label_stickers ?? [];
               const firstCode =
@@ -84,7 +93,7 @@ export default async function OrderPrintPackPage({ params }: { params: Promise<{
             })}
           />
         ) : (
-          <p className="text-sm text-slate-500">No new fabric lines need receiving A4 printing.</p>
+          <p className="text-sm text-slate-500">No fabric lines on this order.</p>
         )}
       </section>
 

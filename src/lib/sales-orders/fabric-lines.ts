@@ -31,6 +31,11 @@ export function getUnprintedFabricLines(
   return lines.filter((line) => !isFabricLinePrinted(line, kind));
 }
 
+/** A4 receiving sheet lists every fabric line — full reprint is OK at the desk. */
+export function getFabricLinesForA4Print(lines: SalesOrderFabricLine[]): SalesOrderFabricLine[] {
+  return lines;
+}
+
 /** Multi-piece garments need separate production piece stickers at cutting. */
 export function getFabricLinesForProdStickers(lines: SalesOrderFabricLine[]): SalesOrderFabricLine[] {
   return lines.filter((line) => getGarmentPieces(line.garment_type).length > 1);

@@ -12,15 +12,33 @@ export function SalesOrderPrintToolbar({
   team = "full",
   printKind,
   printLineIds = [],
+  sheetLineCount,
 }: {
   orderId: string;
   soNumber: string;
   team?: "full" | "receiving" | "production";
   printKind?: FabricLinePrintKind;
+  /** Unprinted line ids only — passed to mark-print API after print. */
   printLineIds?: string[];
+  /** Receiving A4: enable print when full sheet has lines even if all already marked. */
+  sheetLineCount?: number;
 }) {
   const { printWithMark } = useMarkFabricLinesPrinted(orderId);
-  const canMarkPrint = Boolean(printKind && printLineIds.length > 0);
+  const hasUnprinted = printLineIds.length > 0;
+  const canMarkPrint = Boolean(printKind && hasUnprinted);
+  const canPrintReceivingA4 = printKind === "a4" && (sheetLineCount ?? 0) > 0;
+  const canPrintSheet = team === "full" || canMarkPrint || canPrintReceivingA4;
+
+  const printHint =
+    team === "receiving" && canPrintReceivingA4
+      ? hasUnprinted
+        ? `Full order sheet (${sheetLineCount} lines) — marks ${printLineIds.length} new line${printLineIds.length === 1 ? "" : "s"} after print`
+        : `Full order sheet (${sheetLineCount} lines) — includes previously printed lines (reprint for receiving desk)`
+      : canMarkPrint
+        ? `Print dialog covers ${printLineIds.length} unprinted line${printLineIds.length === 1 ? "" : "s"}`
+        : team === "full"
+          ? "Print dialog → Save as PDF (full order summary)"
+          : "All lines on this sheet are already printed";
 
   const printLinks = [
     { id: "receiving" as const, label: "Receiving / wash (A4)" },
@@ -38,20 +56,14 @@ export function SalesOrderPrintToolbar({
           {soNumber}
         </Link>
         <div className="flex flex-wrap items-center gap-3">
-          <p className="text-xs text-slate-500">
-            {canMarkPrint
-              ? `Print dialog covers ${printLineIds.length} unprinted line${printLineIds.length === 1 ? "" : "s"}`
-              : team === "full"
-                ? "Print dialog → Save as PDF (full order summary)"
-                : "All lines on this sheet are already printed"}
-          </p>
+          <p className="text-xs text-slate-500">{printHint}</p>
           <Button
             onClick={() =>
               printKind
                 ? printWithMark([{ kind: printKind, lineIds: printLineIds }])
                 : window.print()
             }
-            disabled={team !== "full" && !canMarkPrint}
+            disabled={!canPrintSheet}
           >
             <Printer className="h-4 w-4" />
             Print this sheet
