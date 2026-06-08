@@ -104,6 +104,18 @@
       "notes": "HAGAN warehouse linen stock — 52 T/H codes from Linen Stock HAGAN.xlsx (Gliani production)"
     },
     {
+      "id": "wool-stock",
+      "code": "WOOL-STOCK",
+      "name": "Wool Stock",
+      "country": null,
+      "contact_person": null,
+      "emails": [],
+      "email": null,
+      "lead_time_days": 0,
+      "has_price_list": true,
+      "notes": "HAGAN warehouse wool stock — 56 references from Wool Stock .xlsx"
+    },
+    {
       "id": "fab6",
       "code": "FAB-006",
       "name": "Fabric Supplier 6",

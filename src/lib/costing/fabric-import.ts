@@ -1,5 +1,5 @@
 import { readCostingRates } from "@/lib/costing/rates";
-import { isWarehouseLinenSupplier } from "@/lib/fabric-sourcing/supplier-aliases";
+import { isWarehouseStockSupplier } from "@/lib/fabric-sourcing/supplier-aliases";
 
 export type FabricImportCostBreakdown = {
   fabric_base_sar: number;
@@ -20,7 +20,7 @@ function roundMoney(amount: number): number {
 
 /** Warehouse / local stock — already in KSA, no import duty or VAT on arrival */
 export function isImportedFabricSupplier(supplierId: string): boolean {
-  return !isWarehouseLinenSupplier(supplierId);
+  return !isWarehouseStockSupplier(supplierId);
 }
 
 export function getFabricImportRates(): { customs_duty_rate: number; import_vat_rate: number } {

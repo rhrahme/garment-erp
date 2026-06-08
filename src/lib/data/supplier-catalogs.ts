@@ -7,6 +7,7 @@ import stylbiellaSs25Catalog from "@/data/suppliers/stylbiella-ss25.json";
 import stylbiellaSs26Catalog from "@/data/suppliers/stylbiella-ss26.json";
 import loroPianaCatalog from "@/data/suppliers/loro-piana-ss26.json";
 import cancliniLinenStock from "@/data/suppliers/canclini-linen-stock.json";
+import woolStock from "@/data/suppliers/wool-stock.json";
 import {
   expandLoroPianaStyleQuery,
   getLoroPianaMillLine,
@@ -69,6 +70,7 @@ const DRAPERS_ID = "drapers";
 const STYLBIELLA_ID = "stylbiella";
 const LORO_PIANA_ID = "loro-piana";
 const CANCLINI_ID = "canclini";
+const WOOL_STOCK_ID = "wool-stock";
 
 function supplierForCatalog(supplierId: string): Supplier {
   return getSupplierByIdFromContacts(supplierId) ?? {
@@ -169,6 +171,7 @@ export const drapersSupplier: Supplier = supplierForCatalog(DRAPERS_ID);
 export const stylbiellaSupplier: Supplier = supplierForCatalog(STYLBIELLA_ID);
 export const loroPianaSupplier: Supplier = supplierForCatalog(LORO_PIANA_ID);
 export const cancliniSupplier: Supplier = supplierForCatalog(CANCLINI_ID);
+export const woolStockSupplier: Supplier = supplierForCatalog(WOOL_STOCK_ID);
 
 const jackets = caccioppoliJackets as RawCatalog;
 const shirting = caccioppoliShirting as RawCatalog;
@@ -180,6 +183,7 @@ const stylbiellaSs26 = stylbiellaSs26Catalog as RawCatalog;
 const stylbiellaCatalogs = [stylbiellaAw25, stylbiellaSs25, stylbiellaSs26];
 const loroPiana = loroPianaCatalog as RawCatalog;
 const cancliniStock = cancliniLinenStock as RawCatalog;
+const woolStockCatalog = woolStock as RawCatalog;
 
 export const caccioppoliFabrics: SupplierFabric[] = [
   ...toFabrics(jackets, CACCIOPPOLI_ID, caccioppoliSupplier, "cac-j"),
@@ -206,6 +210,12 @@ export const cancliniFabrics: SupplierFabric[] = toFabrics(
   cancliniSupplier,
   "can"
 );
+export const woolStockFabrics: SupplierFabric[] = toFabrics(
+  woolStockCatalog,
+  WOOL_STOCK_ID,
+  woolStockSupplier,
+  "wool"
+);
 
 export const allPriceListItems: SupplierFabric[] = [
   ...caccioppoliFabrics,
@@ -214,6 +224,7 @@ export const allPriceListItems: SupplierFabric[] = [
   ...stylbiellaFabrics,
   ...loroPianaFabrics,
   ...cancliniFabrics,
+  ...woolStockFabrics,
 ];
 
 const fabricsBySupplier = new Map<string, SupplierFabric[]>();
@@ -296,6 +307,7 @@ export const allPriceLists: SupplierPriceList[] = [
   toPriceList(stylbiellaSs26, STYLBIELLA_ID, stylbiellaSupplier),
   toPriceList(loroPiana, LORO_PIANA_ID, loroPianaSupplier),
   toPriceList(cancliniStock, CANCLINI_ID, cancliniSupplier),
+  toPriceList(woolStockCatalog, WOOL_STOCK_ID, woolStockSupplier),
 ];
 
 export function getSupplierContacts(): SupplierContactRow[] {

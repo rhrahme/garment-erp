@@ -20,8 +20,9 @@ export default async function InventoryPage() {
       <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-900">
         <p className="font-medium">{stockBrands.map((b) => b.name).join(" ")} stock fabrics</p>
         <p className="mt-1 text-emerald-800">
-          Gliani production uses Canclini linen from this warehouse — not supplier price lists. Search{" "}
-          <strong>Canclini</strong> on orders or in{" "}
+          Gliani production uses Canclini linen from this warehouse — not supplier price lists. Wool Stock
+          references are also held here. Search{" "}
+          <strong>Canclini</strong> or <strong>Wool Stock</strong> on orders or in{" "}
           <Link href="/fabric-specification" className="font-medium underline">
             Fabric Specification
           </Link>{" "}
