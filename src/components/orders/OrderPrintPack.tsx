@@ -1,14 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { StickerCell } from "@/components/orders/StickerCell";
+import { StickerPrintPreviewModal } from "@/components/orders/StickerPrintPreviewModal";
 import { useMarkFabricLinesPrinted } from "@/components/orders/useMarkFabricLinesPrinted";
 import { useStickerPrint } from "@/hooks/useStickerPrint";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 import { labelRollSizeLabel } from "@/lib/production/label-print-config";
+import {
+  lineIdsForStickerSelection,
+  type StickerPreviewItem,
+} from "@/lib/production/sticker-print-selection";
 import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
 import type { PrintableStickerLabel } from "@/lib/production/qr-labels";
 
@@ -72,10 +77,9 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
   const [data, setData] = useState<PrintPackResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const { printing, requestPrint } = useStickerPrint();
-  const { printWithMark } = useMarkFabricLinesPrinted(salesOrderId, (onAfterPrint) => {
-    requestPrint({ orderId: salesOrderId, sheet: "print-pack" }, onAfterPrint);
-  });
+  const { printWithMark } = useMarkFabricLinesPrinted(salesOrderId);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -98,6 +102,45 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
     void load();
   }, [load]);
 
+  const previewItems = useMemo<StickerPreviewItem[]>(() => {
+    if (!data) return [];
+    const items: StickerPreviewItem[] = data.fabric_cut_labels.map((label) => ({
+      label,
+      role: "prep",
+    }));
+    for (const label of data.cutting_piece_labels) {
+      items.push({ label, role: "prod" });
+    }
+    return items;
+  }, [data]);
+
+  const handlePrintSelected = useCallback(
+    (selectedCodes: string[]) => {
+      setPreviewOpen(false);
+      const selected = new Set(selectedCodes);
+      const prepLineIds = lineIdsForStickerSelection(previewItems, selected, "prep_stickers");
+      const prodLineIds = lineIdsForStickerSelection(previewItems, selected, "prod_stickers");
+
+      printWithMark(
+        [
+          { kind: "prep_stickers", lineIds: prepLineIds },
+          { kind: "prod_stickers", lineIds: prodLineIds },
+        ],
+        undefined,
+        (onAfterPrint) =>
+          requestPrint(
+            {
+              orderId: salesOrderId,
+              sheet: "print-pack",
+              codes: selectedCodes,
+            },
+            onAfterPrint
+          )
+      );
+    },
+    [previewItems, printWithMark, requestPrint, salesOrderId]
+  );
+
   if (loading) {
     return <p className="text-sm text-slate-500">Loading sticker rolls for print pack…</p>;
   }
@@ -110,10 +153,9 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
     );
   }
 
-  const printIds = data.unprinted_line_ids;
-  const prepLineIds = printIds?.prep_stickers ?? [];
-  const prodLineIds = printIds?.prod_stickers ?? [];
-  const stickerCount = data.fabric_cut_labels.length + data.cutting_piece_labels.length;
+  const stickerCount = data
+    ? data.fabric_cut_labels.length + data.cutting_piece_labels.length
+    : 0;
   const hasStickersToPrint = stickerCount > 0;
 
   return (
@@ -138,12 +180,7 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
-            onClick={() =>
-              printWithMark([
-                { kind: "prep_stickers", lineIds: prepLineIds },
-                { kind: "prod_stickers", lineIds: prodLineIds },
-              ])
-            }
+            onClick={() => setPreviewOpen(true)}
             disabled={!hasStickersToPrint || printing}
           >
             <Printer className="mr-2 h-4 w-4" />
@@ -170,6 +207,15 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
           role="prod"
         />
       )}
+
+      <StickerPrintPreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        onPrint={handlePrintSelected}
+        items={previewItems}
+        title="Print pack sticker preview"
+        printing={printing}
+      />
 
       <style dangerouslySetInnerHTML={{ __html: stickerPrintStyles() }} />
     </div>

@@ -48,6 +48,8 @@ export function resolveStickerRole(
 
 export interface PrintableStickerLabel {
   sticker_code: string;
+  /** Fabric line this sticker belongs to — used for partial print / mark-as-printed. */
+  fabric_line_id: string;
   client_code: string;
   client_name: string;
   production_code: string;
@@ -166,6 +168,7 @@ function lineToLabels(
     return [
       {
         sticker_code: generated,
+        fabric_line_id: line.id,
         client_code: clientCode,
         client_name: order.client_name,
         article_number: lineIndex,
@@ -189,6 +192,7 @@ function lineToLabels(
     const productionCode = productionCodeFromSticker(sticker.code, clientCode);
     return {
       sticker_code: sticker.code,
+      fabric_line_id: line.id,
       client_code: clientCode,
       client_name: order.client_name,
       article_number: lineIndex,

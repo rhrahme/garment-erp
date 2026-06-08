@@ -11,6 +11,7 @@ import type { PrintableStickerLabel } from "@/lib/production/qr-labels";
 
 const TEST_LABEL: PrintableStickerLabel = {
   sticker_code: "TEST-L01-SHT",
+  fabric_line_id: "test-line",
   production_code: "L01-SHT",
   fabric_cut_code: "L01-SHT",
   qr_payload: "L01-SHT",

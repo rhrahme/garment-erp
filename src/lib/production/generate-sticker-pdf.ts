@@ -193,6 +193,7 @@ export async function generateStickerRollPdf(entries: StickerPdfEntry[]): Promis
 export async function generateTestStickerPdf(): Promise<Uint8Array> {
   const testLabel: PrintableStickerLabel = {
     sticker_code: "TEST-L01-SHT",
+    fabric_line_id: "test-line",
     production_code: "L01-SHT",
     fabric_cut_code: "L01-SHT",
     qr_payload: "L01-SHT",

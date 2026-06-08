@@ -34,9 +34,11 @@ export function useMarkFabricLinesPrinted(
   const printWithMark = useCallback(
     (
       marks: Array<{ kind: FabricLinePrintKind; lineIds: string[] }>,
-      onPrinted?: () => void
+      onPrinted?: () => void,
+      printOverride?: (onAfterPrint?: () => void) => void
     ) => {
       const pending = marks.filter((mark) => mark.lineIds.length > 0);
+      const print = printOverride ?? printFn;
 
       const onAfterPrint = () => {
         onPrinted?.();
@@ -45,7 +47,7 @@ export function useMarkFabricLinesPrinted(
         }
       };
 
-      printFn(onAfterPrint);
+      print(onAfterPrint);
     },
     [markPrinted, printFn]
   );

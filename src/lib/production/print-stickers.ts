@@ -16,13 +16,37 @@ export type StickerPdfRequest = {
   sheet?: StickerPdfSheet;
   po?: string;
   poId?: string;
+  /** When set, only these sticker codes are included in the PDF. */
+  codes?: string[];
 };
 
-function buildStickerPdfUrl({ orderId, sheet = "pieces", po, poId }: StickerPdfRequest): string {
+function buildStickerPdfUrl({ orderId, sheet = "pieces", po, poId, codes }: StickerPdfRequest): string {
   const params = new URLSearchParams({ sheet });
   if (po) params.set("po", po);
   if (poId) params.set("po_id", poId);
+  if (codes && codes.length > 0) params.set("codes", codes.join(","));
   return `/api/sales-orders/${orderId}/stickers/pdf?${params.toString()}`;
+}
+
+async function fetchStickerPdf(request: StickerPdfRequest): Promise<Response> {
+  const { orderId, sheet = "pieces", po, poId, codes } = request;
+  const url = `/api/sales-orders/${orderId}/stickers/pdf`;
+
+  if (codes && codes.length > 0) {
+    return fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sheet,
+        po: po ?? null,
+        po_id: poId ?? null,
+        codes,
+      }),
+      cache: "no-store",
+    });
+  }
+
+  return fetch(buildStickerPdfUrl(request), { cache: "no-store" });
 }
 
 function pdfFilename(orderId: string, sheet: StickerPdfSheet): string {
@@ -38,11 +62,10 @@ export async function printStickerPdf(
   request: StickerPdfRequest,
   onAfterPrint?: () => void
 ): Promise<boolean> {
-  const url = buildStickerPdfUrl(request);
   const sheet = request.sheet ?? "pieces";
 
   try {
-    const res = await fetch(url, { cache: "no-store" });
+    const res = await fetchStickerPdf(request);
     if (!res.ok) {
       console.error("Sticker PDF request failed:", res.status);
       return false;
