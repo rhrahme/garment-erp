@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { StickerCell } from "@/components/orders/StickerCell";
-import { StickerPrintBanner } from "@/components/orders/StickerPrintBanner";
 import { useMarkFabricLinesPrinted } from "@/components/orders/useMarkFabricLinesPrinted";
 import { useStickerPrint } from "@/hooks/useStickerPrint";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
@@ -73,8 +72,10 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
   const [data, setData] = useState<PrintPackResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { bannerOpen, requestPrint, confirmBanner, closeBanner } = useStickerPrint();
-  const { printWithMark } = useMarkFabricLinesPrinted(salesOrderId, requestPrint);
+  const { printing, requestPrint } = useStickerPrint();
+  const { printWithMark } = useMarkFabricLinesPrinted(salesOrderId, (onAfterPrint) => {
+    requestPrint({ orderId: salesOrderId, sheet: "print-pack" }, onAfterPrint);
+  });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -143,10 +144,10 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
                 { kind: "prod_stickers", lineIds: prodLineIds },
               ])
             }
-            disabled={!hasStickersToPrint}
+            disabled={!hasStickersToPrint || printing}
           >
             <Printer className="mr-2 h-4 w-4" />
-            Print sticker rolls
+            {printing ? "Preparing PDF…" : "Print sticker rolls"}
           </Button>
           <Link href={`/orders/${salesOrderId}`}>
             <Button variant="secondary">View order</Button>
@@ -171,7 +172,6 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
       )}
 
       <style dangerouslySetInnerHTML={{ __html: stickerPrintStyles() }} />
-      <StickerPrintBanner open={bannerOpen} onClose={closeBanner} onConfirm={confirmBanner} />
     </div>
   );
 }

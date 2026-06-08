@@ -1,10 +1,9 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { StickerCell } from "@/components/orders/StickerCell";
-import { StickerPrintBanner } from "@/components/orders/StickerPrintBanner";
 import { useStickerPrint } from "@/hooks/useStickerPrint";
 import { labelRollSizeLabel, labelRollSizeMmLabel } from "@/lib/production/label-print-config";
 import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
@@ -33,33 +32,11 @@ const TEST_LABEL: PrintableStickerLabel = {
 };
 
 export function LabelPrinterTest() {
-  const [qrReady, setQrReady] = useState(false);
-  const printPending = useRef(false);
-  const { bannerOpen, requestPrint, confirmBanner, closeBanner } = useStickerPrint();
-
-  const triggerPrint = useCallback(() => {
-    requestPrint();
-  }, [requestPrint]);
-
-  const handleQrReady = useCallback(() => {
-    setQrReady(true);
-    if (printPending.current) {
-      printPending.current = false;
-      triggerPrint();
-    }
-  }, [triggerPrint]);
+  const { printing, requestPrint } = useStickerPrint();
 
   const handlePrint = useCallback(() => {
-    const img = document.querySelector<HTMLImageElement>(".sticker-print-zone img");
-    if (img?.complete && img.naturalWidth > 0) {
-      triggerPrint();
-      return;
-    }
-    printPending.current = true;
-    if (qrReady) {
-      window.setTimeout(triggerPrint, 300);
-    }
-  }, [qrReady, triggerPrint]);
+    requestPrint({ orderId: "test", sheet: "test" });
+  }, [requestPrint]);
 
   return (
     <div>
@@ -71,32 +48,30 @@ export function LabelPrinterTest() {
             <strong>{labelRollSizeLabel()}</strong> ({labelRollSizeMmLabel()}).
           </li>
           <li>
-            In the browser print dialog: turn <strong>OFF Headers and footers</strong> (More settings),{" "}
+            Click <strong>Print test label</strong> — a server PDF opens (no browser date/URL headers). Set{" "}
             <strong>Scale 100%</strong>, <strong>Margins: None</strong>, paper <strong>{labelRollSizeMmLabel()}</strong>.
           </li>
           <li>Select your thermal printer (not “Save as PDF” unless testing layout only).</li>
-          <li>Click <strong>Print test label</strong> — only the sticker (QR + codes) should print.</li>
           <li>Scan the QR with Fabric Receiving — it should read <code className="font-mono">L01-SHT</code>.</li>
         </ol>
       </div>
 
       <div className="no-print mb-4">
-        <Button onClick={handlePrint}>
+        <Button onClick={handlePrint} disabled={printing}>
           <Printer className="mr-2 h-4 w-4" />
-          Print test label
+          {printing ? "Preparing PDF…" : "Print test label"}
         </Button>
       </div>
 
       <div className="sticker-print-zone">
         <div className="sticker-roll inline-block">
           <div className="sticker-page">
-            <StickerCell label={TEST_LABEL} role="prep" onQrReady={handleQrReady} />
+            <StickerCell label={TEST_LABEL} role="prep" />
           </div>
         </div>
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: stickerPrintStyles() }} />
-      <StickerPrintBanner open={bannerOpen} onClose={closeBanner} onConfirm={confirmBanner} />
     </div>
   );
 }

@@ -1,101 +1,90 @@
-import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
+export type StickerPdfSheet = "fabric-cuts" | "pieces" | "print-pack" | "test";
 
-export const STICKER_PRINT_HEADERS_HINT_KEY = "sticker-print-headers-hint-seen";
+export type StickerPdfRequest = {
+  orderId: string;
+  sheet?: StickerPdfSheet;
+  po?: string;
+  poId?: string;
+};
 
-/** Chrome/Edge add date, title, URL, and page numbers — not removable via CSS. */
-export const STICKER_PRINT_HEADERS_HINT =
-  "In the print dialog, open More settings and turn OFF \"Headers and footers\". Browsers add date, URL, and page numbers otherwise — the app cannot remove them.";
-
-function collectStickerHtml(): string | null {
-  const zones = document.querySelectorAll<HTMLElement>(".sticker-print-zone");
-  if (zones.length === 0) return null;
-  return Array.from(zones)
-    .map((zone) => zone.innerHTML)
-    .join("");
+function buildStickerPdfUrl({ orderId, sheet = "pieces", po, poId }: StickerPdfRequest): string {
+  const params = new URLSearchParams({ sheet });
+  if (po) params.set("po", po);
+  if (poId) params.set("po_id", poId);
+  return `/api/sales-orders/${orderId}/stickers/pdf?${params.toString()}`;
 }
 
-function waitForImages(doc: Document, onReady: () => void) {
-  const imgs = Array.from(doc.querySelectorAll<HTMLImageElement>("img"));
-  if (imgs.length === 0) {
-    window.setTimeout(onReady, 200);
-    return;
-  }
-
-  let pending = imgs.length;
-  const check = () => {
-    pending -= 1;
-    if (pending <= 0) window.setTimeout(onReady, 200);
-  };
-
-  for (const img of imgs) {
-    if (img.complete && img.naturalWidth > 0) {
-      check();
-    } else {
-      img.addEventListener("load", check, { once: true });
-      img.addEventListener("error", check, { once: true });
-    }
-  }
+function pdfFilename(orderId: string, sheet: StickerPdfSheet): string {
+  if (sheet === "test") return "sticker-test.pdf";
+  return `stickers-${orderId}-${sheet}.pdf`;
 }
 
 /**
- * Open a minimal popup with only sticker markup and print from there.
- * Short document title and zero margins reduce clutter; headers/footers still require the print dialog setting.
+ * Fetch server-generated roll PDF and open the system print dialog.
+ * PDF pages are exact 100×50 mm labels — no Chrome date/URL headers.
  */
-export function printStickersInPopup(onAfterPrint?: () => void): boolean {
-  const stickerHtml = collectStickerHtml();
-  if (!stickerHtml) return false;
+export async function printStickerPdf(
+  request: StickerPdfRequest,
+  onAfterPrint?: () => void
+): Promise<boolean> {
+  const url = buildStickerPdfUrl(request);
+  const sheet = request.sheet ?? "pieces";
 
-  const popup = window.open("", "sticker-print", "noopener,noreferrer,width=520,height=400");
-  if (!popup) return false;
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) {
+      console.error("Sticker PDF request failed:", res.status);
+      return false;
+    }
 
-  const styles = stickerPrintStyles();
-  popup.document.open();
-  popup.document.write(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title> </title>
-  <style>
-    html, body { margin: 0; padding: 0; background: #fff; }
-    ${styles}
-  </style>
-</head>
-<body>
-  <div class="sticker-print-zone">${stickerHtml}</div>
-</body>
-</html>`);
-  popup.document.close();
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.src = objectUrl;
 
-  const finish = () => {
-    onAfterPrint?.();
-    popup.close();
-  };
+    const cleanup = () => {
+      window.setTimeout(() => {
+        iframe.remove();
+        URL.revokeObjectURL(objectUrl);
+      }, 1000);
+    };
 
-  popup.addEventListener("afterprint", finish, { once: true });
+    const finish = () => {
+      onAfterPrint?.();
+      cleanup();
+    };
 
-  waitForImages(popup.document, () => {
-    popup.focus();
-    popup.print();
-  });
+    iframe.onload = () => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch {
+        window.open(objectUrl, "_blank");
+        finish();
+        return;
+      }
 
-  return true;
-}
+      iframe.contentWindow?.addEventListener("afterprint", finish, { once: true });
+      window.setTimeout(finish, 60_000);
+    };
 
-export function printStickerLabels(onAfterPrint?: () => void): void {
-  if (printStickersInPopup(onAfterPrint)) return;
-
-  if (onAfterPrint) {
-    window.addEventListener("afterprint", onAfterPrint, { once: true });
+    document.body.appendChild(iframe);
+    return true;
+  } catch (error) {
+    console.error("Failed to print sticker PDF:", error);
+    return false;
   }
-  window.print();
 }
 
-export function hasSeenStickerPrintHeadersHint(): boolean {
-  if (typeof window === "undefined") return true;
-  return window.localStorage.getItem(STICKER_PRINT_HEADERS_HINT_KEY) === "1";
+/** @deprecated Browser HTML print added date/URL headers — use printStickerPdf instead. */
+export function printStickerLabels(_onAfterPrint?: () => void): void {
+  console.warn("printStickerLabels is deprecated; use printStickerPdf.");
 }
 
-export function rememberStickerPrintHeadersHint(): void {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(STICKER_PRINT_HEADERS_HINT_KEY, "1");
-}
+export { buildStickerPdfUrl, pdfFilename };

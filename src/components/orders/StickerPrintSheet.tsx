@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Check, Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { StickerCell } from "@/components/orders/StickerCell";
-import { StickerPrintBanner } from "@/components/orders/StickerPrintBanner";
 import { useMarkFabricLinesPrinted } from "@/components/orders/useMarkFabricLinesPrinted";
 import { useStickerPrint } from "@/hooks/useStickerPrint";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
@@ -110,8 +109,10 @@ export function StickerPrintSheet({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [printedSheets, setPrintedSheets] = useState<Set<StickerSheetMode>>(() => new Set());
-  const { bannerOpen, requestPrint, confirmBanner, closeBanner } = useStickerPrint();
-  const { printWithMark } = useMarkFabricLinesPrinted(salesOrderId, requestPrint);
+  const { printing, requestPrint } = useStickerPrint();
+  const { printWithMark } = useMarkFabricLinesPrinted(salesOrderId, (onAfterPrint) => {
+    requestPrint({ orderId: salesOrderId, sheet, po: poNumber, poId }, onAfterPrint);
+  });
 
   useEffect(() => {
     setPrintedSheets(readPrintedSheets(salesOrderId));
@@ -237,15 +238,14 @@ export function StickerPrintSheet({
           <p className="mt-1 text-sm text-slate-500">{copy.hint}</p>
           <p className="mt-1 text-xs text-slate-400">
             Roll printer ({labelRollSizeLabel()}) — one label per feed. In LabelLife or the AIMO driver, set media to{" "}
-            {labelRollSizeLabel()} before printing. In the browser print dialog, turn off{" "}
-            <strong>Headers and footers</strong> (More settings).
+            {labelRollSizeLabel()} before printing. Labels print from a server PDF (no browser date/URL headers).
             {!hasLabelsToPrint ? " No fabric lines on this order." : null}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={handlePrint} disabled={!hasLabelsToPrint}>
+          <Button onClick={handlePrint} disabled={!hasLabelsToPrint || printing}>
             <Printer className="mr-2 h-4 w-4" />
-            Print roll labels
+            {printing ? "Preparing PDF…" : "Print roll labels"}
           </Button>
           <Link href={`/orders/${salesOrderId}`}>
             <Button variant="secondary">View order</Button>
@@ -293,7 +293,6 @@ export function StickerPrintSheet({
       ))}
 
       <style dangerouslySetInnerHTML={{ __html: stickerPrintStyles() }} />
-      <StickerPrintBanner open={bannerOpen} onClose={closeBanner} onConfirm={confirmBanner} />
     </div>
   );
 }
