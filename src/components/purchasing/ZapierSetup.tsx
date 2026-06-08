@@ -18,6 +18,7 @@ const OUTBOUND_EVENTS = [
   "sales_order.created",
   "sales_order.deleted",
   "sales_order.fabric_lines_added",
+  "sales_order.fabric_lines_updated",
   "sales_order.fabric_lines_printed",
 ];
 
@@ -81,7 +82,7 @@ export function ZapierSetup() {
             <li>POST {baseUrl}/api/v1/supplier-replies</li>
             <li>POST {baseUrl}/api/v1/shipments</li>
             <li>GET/POST {baseUrl}/api/v1/follow-ups</li>
-            <li>POST {baseUrl}/api/v1/sales-orders/[id]/fabric-lines</li>
+            <li>POST/PATCH {baseUrl}/api/v1/sales-orders/[id]/fabric-lines</li>
             <li>POST {baseUrl}/api/v1/sales-orders/[id]/fabric-lines/print</li>
             <li>GET {baseUrl}/api/v1/events</li>
           </ul>

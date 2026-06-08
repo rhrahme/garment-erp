@@ -1,14 +1,15 @@
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSalesOrders, writeSalesOrders } from "@/lib/data/sales-orders";
 import { getSupplierByIdFromContacts } from "@/lib/data/supplier-contacts";
+import { resolveFabricItemFromCatalog } from "@/lib/fabric-sourcing/resolve-fabric-from-catalog";
 import { fabricPoSupplierId, normalizeFabricSupplierFields } from "@/lib/fabric-sourcing/supplier-display";
 import { generateFabricLabelStickers, getGarmentPieces } from "@/lib/sales-orders/label-codes";
 import { isGarmentStitchType } from "@/lib/sales-orders/garment-types";
-import { canAppendFabricLines } from "@/lib/sales-orders/fabric-lines-rules";
+import { canAppendFabricLines, canEditFabricLines, fabricLineEditBlockedReason } from "@/lib/sales-orders/fabric-lines-rules";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 
-export { canAppendFabricLines, PRINTING_FREE };
+export { canAppendFabricLines, canEditFabricLines, fabricLineEditBlockedReason, PRINTING_FREE };
 
 export type FabricLinePrintKind = "a4" | "prep_stickers" | "prod_stickers";
 
@@ -112,6 +113,16 @@ export type FabricLineInput = {
   restock_date?: string | null;
   needs_replacement?: boolean;
   replacement_fabric_number?: string | null;
+};
+
+export type FabricLineUpdateInput = {
+  line_id: string;
+  garment_type?: string;
+  supplier_id?: string;
+  supplier_name?: string;
+  fabric_number?: string;
+  quantity?: number;
+  unit_price?: number;
 };
 
 export function resolveOrderClientReference(order: Pick<SalesOrder, "client_code" | "so_number" | "client_reference">): string {
@@ -255,4 +266,122 @@ export async function appendSalesOrderFabricLines(
   const updated = saved.orders.find((item) => item.id === orderId)!;
 
   return { ok: true, order: updated, added_lines: built.lines };
+}
+
+export async function updateSalesOrderFabricLine(
+  orderId: string,
+  input: FabricLineUpdateInput,
+  options: { updatedBy?: string | null; allowPriceEdit?: boolean } = {}
+): Promise<
+  | { ok: true; order: SalesOrder; updated_line: SalesOrderFabricLine }
+  | { ok: false; status: number; error: string }
+> {
+  await ensureDocumentsLoaded(["sales_orders"]);
+
+  const lineId = String(input.line_id ?? "").trim();
+  if (!lineId) {
+    return { ok: false, status: 400, error: "line_id is required." };
+  }
+
+  const store = readSalesOrders();
+  const index = store.orders.findIndex((order) => order.id === orderId);
+  if (index < 0) {
+    return { ok: false, status: 404, error: "Sales order not found." };
+  }
+
+  const order = store.orders[index]!;
+  const blockedReason = fabricLineEditBlockedReason(order);
+  if (blockedReason) {
+    return { ok: false, status: 409, error: blockedReason };
+  }
+
+  const lineIndex = order.fabric_lines.findIndex((line) => line.id === lineId);
+  if (lineIndex < 0) {
+    return { ok: false, status: 404, error: "Fabric line not found on this order." };
+  }
+
+  const existing = order.fabric_lines[lineIndex]!;
+  const nextSupplierId = String(input.supplier_id ?? existing.supplier_id).trim();
+  const nextFabricNumber = String(input.fabric_number ?? existing.fabric_number).trim();
+  const nextGarmentType = String(input.garment_type ?? existing.garment_type).trim();
+  const nextQuantity = input.quantity != null ? Number(input.quantity) : existing.quantity;
+
+  if (!nextSupplierId || !nextFabricNumber) {
+    return { ok: false, status: 400, error: "Each fabric line needs supplier and fabric number." };
+  }
+  if (!Number.isFinite(nextQuantity) || nextQuantity <= 0) {
+    return { ok: false, status: 400, error: "Enter valid meters for this fabric line." };
+  }
+  if (!nextGarmentType) {
+    return { ok: false, status: 400, error: "Each fabric line needs a garment type." };
+  }
+  if (!isGarmentStitchType(nextGarmentType)) {
+    return { ok: false, status: 400, error: `Invalid garment type: ${nextGarmentType}` };
+  }
+
+  const poSupplierId = fabricPoSupplierId(nextSupplierId, nextFabricNumber);
+  const supplier =
+    getSupplierByIdFromContacts(poSupplierId) ?? getSupplierByIdFromContacts(nextSupplierId);
+  if (!supplier) {
+    return { ok: false, status: 400, error: `Unknown supplier: ${nextSupplierId}` };
+  }
+
+  const fabricChanged =
+    nextFabricNumber.toLowerCase() !== existing.fabric_number.toLowerCase() ||
+    nextSupplierId !== existing.supplier_id;
+  const garmentChanged = nextGarmentType !== existing.garment_type;
+
+  const catalogItem = fabricChanged
+    ? resolveFabricItemFromCatalog(nextSupplierId, nextFabricNumber)
+    : null;
+  const supplierFields = normalizeFabricSupplierFields(
+    nextSupplierId,
+    input.supplier_name ?? catalogItem?.supplier_name ?? existing.supplier_name ?? supplier.name,
+    nextFabricNumber
+  );
+
+  const clientReference = resolveOrderClientReference(order);
+  const label_stickers = garmentChanged
+    ? generateFabricLabelStickers(clientReference, lineIndex + 1, nextGarmentType)
+    : existing.label_stickers;
+  const label_count = garmentChanged ? label_stickers.length : existing.label_count;
+
+  const nextUnitPrice =
+    options.allowPriceEdit && input.unit_price != null
+      ? Number(input.unit_price)
+      : fabricChanged && catalogItem?.unit_price != null && options.allowPriceEdit
+        ? Number(catalogItem.unit_price)
+        : existing.unit_price;
+
+  const updatedLine: SalesOrderFabricLine = {
+    ...existing,
+    garment_type: nextGarmentType,
+    label_count,
+    label_stickers,
+    supplier_id: supplierFields.supplier_id,
+    supplier_name: supplierFields.supplier_name,
+    fabric_number: nextFabricNumber,
+    quantity: nextQuantity,
+    unit: catalogItem?.unit ?? existing.unit,
+    unit_price: nextUnitPrice,
+    composition: fabricChanged ? (catalogItem?.composition ?? null) : existing.composition,
+    weight_gsm: fabricChanged ? (catalogItem?.weight_gsm ?? null) : existing.weight_gsm,
+    width_cm: fabricChanged ? (catalogItem?.width_cm ?? null) : existing.width_cm,
+    width_inches: fabricChanged ? (catalogItem?.width_inches ?? null) : existing.width_inches,
+    color: fabricChanged ? (catalogItem?.color ?? null) : existing.color,
+    stock_status: fabricChanged ? (catalogItem?.stock_status ?? null) : existing.stock_status,
+    restock_date: fabricChanged ? (catalogItem?.restock_date ?? null) : existing.restock_date,
+    needs_replacement: fabricChanged
+      ? catalogItem?.stock_status === "permanently_unavailable"
+      : existing.needs_replacement,
+    replacement_fabric_number: fabricChanged ? null : existing.replacement_fabric_number,
+  };
+
+  const nextLines = order.fabric_lines.map((line, idx) => (idx === lineIndex ? updatedLine : line));
+  store.orders[index] = { ...order, fabric_lines: nextLines };
+
+  const saved = await writeSalesOrders(store);
+  const updated = saved.orders.find((item) => item.id === orderId)!;
+
+  return { ok: true, order: updated, updated_line: updatedLine };
 }

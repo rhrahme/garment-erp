@@ -20,7 +20,8 @@ import { formatSupplierUnitPrice } from "@/lib/currency/format";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
 import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import { ProductionOrderAddFabrics } from "@/components/orders/ProductionOrderAddFabrics";
-import { canAppendFabricLines } from "@/lib/sales-orders/fabric-lines-rules";
+import { OrderFabricLineEditor } from "@/components/orders/OrderFabricLineEditor";
+import { canAppendFabricLines, canEditFabricLines, fabricLineEditBlockedReason } from "@/lib/sales-orders/fabric-lines-rules";
 import { formatLabelGarmentDescription } from "@/lib/sales-orders/label-codes";
 import { formatDateTime } from "@/lib/utils";
 
@@ -91,6 +92,16 @@ export function SalesOrderActions({
   }, {});
 
   const fabricTotals = getFabricTotalsSummary(liveOrder.fabric_lines);
+  const fabricLinesEditable = canEditFabricLines(liveOrder);
+  const fabricEditBlockedReason = fabricLineEditBlockedReason(liveOrder);
+
+  function handleLineUpdated(updatedLine: SalesOrderFabricLine) {
+    setLiveOrder((prev) => ({
+      ...prev,
+      fabric_lines: prev.fabric_lines.map((line) => (line.id === updatedLine.id ? updatedLine : line)),
+    }));
+    router.refresh();
+  }
 
   const allStickers = liveOrder.fabric_lines.flatMap((line) =>
     (line.label_stickers ?? []).map((sticker) => ({
@@ -260,6 +271,16 @@ export function SalesOrderActions({
           <div>
             <h2 className="text-lg font-semibold text-slate-900">{labels.fabricsSectionTitle}</h2>
             <p className="mt-1 text-sm text-slate-500">{labels.fabricsSectionDescription}</p>
+            {fabricLinesEditable && (
+              <p className="mt-1 text-xs text-slate-500">
+                {productionMode
+                  ? "Edit fabric number, supplier, garment type, or meters on existing articles."
+                  : "Edit fabric number, supplier, garment type, or meters on existing lines."}
+              </p>
+            )}
+            {!fabricLinesEditable && fabricEditBlockedReason && (
+              <p className="mt-1 text-xs text-amber-800">{fabricEditBlockedReason}</p>
+            )}
             {liveOrder.fabric_lines.length > 0 && (
               <p className="mt-2 text-sm font-medium text-slate-800">
                 Order total: {fabricTotals.total_meters.toFixed(1)} m
@@ -335,6 +356,14 @@ export function SalesOrderActions({
                           </li>
                         ))}
                       </ul>
+                    )}
+                    {fabricLinesEditable && (
+                      <OrderFabricLineEditor
+                        orderId={liveOrder.id}
+                        line={line}
+                        productionMode={productionMode}
+                        onLineUpdated={handleLineUpdated}
+                      />
                     )}
                   </li>
                 ))}

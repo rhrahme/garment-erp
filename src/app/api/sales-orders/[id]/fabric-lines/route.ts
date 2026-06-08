@@ -4,7 +4,9 @@ import { requireAuthenticated } from "@/lib/auth/session";
 import { notifyIntegration } from "@/lib/integrations";
 import {
   appendSalesOrderFabricLines,
+  updateSalesOrderFabricLine,
   type FabricLineInput,
+  type FabricLineUpdateInput,
 } from "@/lib/sales-orders/fabric-lines";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -39,5 +41,40 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   } catch (error) {
     console.error("Failed to append fabric lines:", error);
     return NextResponse.json({ error: "Failed to add fabric lines." }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await requireAuthenticated();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    const { id } = await context.params;
+    const body = (await request.json()) as FabricLineUpdateInput;
+    const result = await updateSalesOrderFabricLine(id, body, {
+      updatedBy: session.email,
+      allowPriceEdit: session.canViewFabricListPrices,
+    });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+
+    await notifyIntegration("sales_order.fabric_lines_updated", {
+      order_id: result.order.id,
+      so_number: result.order.so_number,
+      line_id: result.updated_line.id,
+      updated_by: session.email,
+    });
+
+    const safeOrder = session.canViewFabricListPrices
+      ? result.order
+      : redactSalesOrderFabricPrices(result.order);
+
+    return NextResponse.json({ order: safeOrder, updated_line: result.updated_line });
+  } catch (error) {
+    console.error("Failed to update fabric line:", error);
+    return NextResponse.json({ error: "Failed to update fabric line." }, { status: 500 });
   }
 }
