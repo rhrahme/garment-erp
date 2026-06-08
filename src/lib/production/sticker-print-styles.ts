@@ -10,7 +10,7 @@ import {
 } from "@/lib/production/label-print-config";
 import { STICKER_FONT } from "@/lib/production/sticker-typography";
 
-/** Shared @page + @media print rules for 51 × 102 mm thermal roll labels. */
+/** Shared @page + @media print rules for 102 × 51 mm thermal roll labels. */
 export function stickerPrintStyles(): string {
   const width = labelRollWidthCss();
   const height = labelRollHeightCss();
@@ -100,18 +100,17 @@ export function stickerPrintStyles(): string {
         overflow: hidden !important;
         background: white !important;
         display: flex !important;
-        flex-direction: column !important;
-        align-items: stretch !important;
+        flex-direction: row !important;
+        align-items: center !important;
         padding: ${LABEL_STICKER_PADDING_V_MM}mm ${LABEL_STICKER_PADDING_H_MM}mm !important;
       }
       .sticker-cell-body {
         flex: 1 !important;
         min-width: 0 !important;
-        min-height: 0 !important;
-        margin-top: ${LABEL_STICKER_COLUMN_GAP_MM}mm !important;
+        margin-left: ${LABEL_STICKER_COLUMN_GAP_MM}mm !important;
         display: flex !important;
         flex-direction: column !important;
-        justify-content: flex-start !important;
+        justify-content: center !important;
         gap: ${LABEL_STICKER_LINE_GAP_MM}mm !important;
       }
       .sticker-header-row {
@@ -190,7 +189,6 @@ export function stickerPrintStyles(): string {
         height: ${LABEL_STICKER_QR_SIZE_MM}mm !important;
         flex-shrink: 0 !important;
         display: block !important;
-        align-self: center !important;
         print-color-adjust: exact !important;
         -webkit-print-color-adjust: exact !important;
       }

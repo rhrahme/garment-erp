@@ -32,7 +32,7 @@ function pdfFilename(orderId: string, sheet: StickerPdfSheet): string {
 
 /**
  * Fetch server-generated roll PDF and open the system print dialog.
- * PDF pages are exact 51×102 mm labels — no Chrome date/URL headers.
+ * PDF pages are exact 102×51 mm landscape labels — no Chrome date/URL headers.
  */
 export async function printStickerPdf(
   request: StickerPdfRequest,
