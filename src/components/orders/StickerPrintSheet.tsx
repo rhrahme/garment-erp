@@ -5,7 +5,9 @@ import Link from "next/link";
 import { Check, Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { StickerCell } from "@/components/orders/StickerCell";
+import { StickerPrintBanner } from "@/components/orders/StickerPrintBanner";
 import { useMarkFabricLinesPrinted } from "@/components/orders/useMarkFabricLinesPrinted";
+import { useStickerPrint } from "@/hooks/useStickerPrint";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 import { labelRollSizeLabel } from "@/lib/production/label-print-config";
 import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
@@ -108,7 +110,8 @@ export function StickerPrintSheet({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [printedSheets, setPrintedSheets] = useState<Set<StickerSheetMode>>(() => new Set());
-  const { printWithMark } = useMarkFabricLinesPrinted(salesOrderId);
+  const { bannerOpen, requestPrint, confirmBanner, closeBanner } = useStickerPrint();
+  const { printWithMark } = useMarkFabricLinesPrinted(salesOrderId, requestPrint);
 
   useEffect(() => {
     setPrintedSheets(readPrintedSheets(salesOrderId));
@@ -147,17 +150,12 @@ export function StickerPrintSheet({
         ? (data?.unprinted_line_ids?.prep_stickers ?? [])
         : (data?.unprinted_line_ids?.prod_stickers ?? []);
 
-    if (!PRINTING_FREE) {
-      window.addEventListener(
-        "afterprint",
-        () => {
-          sessionStorage.setItem(printedStorageKey(salesOrderId, sheet), "1");
-          setPrintedSheets(readPrintedSheets(salesOrderId));
-        },
-        { once: true }
-      );
-    }
-    printWithMark([{ kind: printKind, lineIds }]);
+    printWithMark([{ kind: printKind, lineIds }], () => {
+      if (!PRINTING_FREE) {
+        sessionStorage.setItem(printedStorageKey(salesOrderId, sheet), "1");
+        setPrintedSheets(readPrintedSheets(salesOrderId));
+      }
+    });
   }, [data?.unprinted_line_ids, printWithMark, salesOrderId, sheet]);
 
   if (loading) {
@@ -239,7 +237,8 @@ export function StickerPrintSheet({
           <p className="mt-1 text-sm text-slate-500">{copy.hint}</p>
           <p className="mt-1 text-xs text-slate-400">
             Roll printer ({labelRollSizeLabel()}) — one label per feed. In LabelLife or the AIMO driver, set media to{" "}
-            {labelRollSizeLabel()} before printing.
+            {labelRollSizeLabel()} before printing. In the browser print dialog, turn off{" "}
+            <strong>Headers and footers</strong> (More settings).
             {!hasLabelsToPrint ? " No fabric lines on this order." : null}
           </p>
         </div>
@@ -278,13 +277,6 @@ export function StickerPrintSheet({
             </p>
           </div>
 
-          <div className="print-header mb-4 hidden text-sm print:block">
-            <p className="font-bold">{poSheet.po_number} — {poSheet.supplier_name}</p>
-            <p>
-              {poSheet.so_number} · {poSheet.client_code}
-            </p>
-          </div>
-
           <div className="sticker-print-zone">
             <div className="sticker-roll flex flex-wrap gap-3 print:block print:gap-0">
               {poSheet.labels.map((label) => (
@@ -301,6 +293,7 @@ export function StickerPrintSheet({
       ))}
 
       <style dangerouslySetInnerHTML={{ __html: stickerPrintStyles() }} />
+      <StickerPrintBanner open={bannerOpen} onClose={closeBanner} onConfirm={confirmBanner} />
     </div>
   );
 }

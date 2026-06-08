@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 import type { FabricLinePrintKind } from "@/lib/sales-orders/fabric-lines";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 
-export function useMarkFabricLinesPrinted(orderId: string) {
+export function useMarkFabricLinesPrinted(
+  orderId: string,
+  printFn: (onAfterPrint?: () => void) => void = (onAfterPrint) => {
+    if (onAfterPrint) window.addEventListener("afterprint", onAfterPrint, { once: true });
+    window.print();
+  }
+) {
   const router = useRouter();
 
   const markPrinted = useCallback(
@@ -26,25 +32,22 @@ export function useMarkFabricLinesPrinted(orderId: string) {
   );
 
   const printWithMark = useCallback(
-    (marks: Array<{ kind: FabricLinePrintKind; lineIds: string[] }>) => {
-      if (PRINTING_FREE) {
-        window.print();
-        return;
-      }
-
+    (
+      marks: Array<{ kind: FabricLinePrintKind; lineIds: string[] }>,
+      onPrinted?: () => void
+    ) => {
       const pending = marks.filter((mark) => mark.lineIds.length > 0);
-      if (pending.length === 0) {
-        window.print();
-        return;
-      }
 
       const onAfterPrint = () => {
-        void Promise.all(pending.map((mark) => markPrinted(mark.kind, mark.lineIds)));
+        onPrinted?.();
+        if (!PRINTING_FREE && pending.length > 0) {
+          void Promise.all(pending.map((mark) => markPrinted(mark.kind, mark.lineIds)));
+        }
       };
-      window.addEventListener("afterprint", onAfterPrint, { once: true });
-      window.print();
+
+      printFn(onAfterPrint);
     },
-    [markPrinted]
+    [markPrinted, printFn]
   );
 
   return { markPrinted, printWithMark };

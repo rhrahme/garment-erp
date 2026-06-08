@@ -9,18 +9,18 @@ import {
 } from "@/lib/production/label-print-config";
 import { STICKER_FONT } from "@/lib/production/sticker-typography";
 
-/** Shared @media print rules for 10 × 5 cm thermal roll labels. */
+/** Shared @page + @media print rules for 10 × 5 cm thermal roll labels. */
 export function stickerPrintStyles(): string {
   const width = labelRollWidthCss();
   const height = labelRollHeightCss();
   const pageSize = labelRollSizeCss();
 
   return `
+    @page {
+      size: ${pageSize};
+      margin: 0;
+    }
     @media print {
-      @page {
-        size: ${pageSize};
-        margin: 0;
-      }
       html,
       body {
         width: ${width} !important;
@@ -31,6 +31,15 @@ export function stickerPrintStyles(): string {
         overflow: hidden !important;
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
+      }
+      aside,
+      header,
+      nav,
+      .no-print,
+      .print-header,
+      .print-sheet > :not(.sticker-print-zone),
+      .print-pack-stickers > :not(.sticker-print-zone) {
+        display: none !important;
       }
       body * {
         visibility: hidden !important;

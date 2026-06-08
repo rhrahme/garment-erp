@@ -5,7 +5,9 @@ import Link from "next/link";
 import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { StickerCell } from "@/components/orders/StickerCell";
+import { StickerPrintBanner } from "@/components/orders/StickerPrintBanner";
 import { useMarkFabricLinesPrinted } from "@/components/orders/useMarkFabricLinesPrinted";
+import { useStickerPrint } from "@/hooks/useStickerPrint";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 import { labelRollSizeLabel } from "@/lib/production/label-print-config";
 import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
@@ -51,11 +53,6 @@ function StickerRollSection({
         </p>
       </div>
 
-      <div className="print-header mb-3 hidden text-sm print:block">
-        <p className="font-bold">{title}</p>
-        <p>{hint}</p>
-      </div>
-
       <div className="sticker-print-zone">
         <div className="sticker-roll flex flex-wrap gap-3 print:block print:gap-0">
           {labels.map((label) => (
@@ -76,7 +73,8 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
   const [data, setData] = useState<PrintPackResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { printWithMark } = useMarkFabricLinesPrinted(salesOrderId);
+  const { bannerOpen, requestPrint, confirmBanner, closeBanner } = useStickerPrint();
+  const { printWithMark } = useMarkFabricLinesPrinted(salesOrderId, requestPrint);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -173,6 +171,7 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
       )}
 
       <style dangerouslySetInnerHTML={{ __html: stickerPrintStyles() }} />
+      <StickerPrintBanner open={bannerOpen} onClose={closeBanner} onConfirm={confirmBanner} />
     </div>
   );
 }
