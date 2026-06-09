@@ -10,6 +10,7 @@ import { DRAPERS_SUPPLIER_ID } from "@/lib/integrations/drapers/config";
 import { expandLoroPianaStyleQuery, normalizeLoroPianaFabricNumber } from "@/lib/fabric-sourcing/loro-piana-styles";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import { formatFabricSupplierName, isSolbiatiFabric } from "@/lib/fabric-sourcing/supplier-display";
+import { formatFabricPatternLabel, formatFabricTextLabel } from "@/lib/fabric-sourcing/fabric-display";
 import { fabricStockTone, formatFabricStockLabel } from "@/lib/fabric-sourcing/fabric-stock";
 import type { Supplier, SupplierFabric } from "@/lib/types/fabric-sourcing";
 import { cn } from "@/lib/utils";
@@ -80,6 +81,7 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
             f.color?.toLowerCase().includes(q) ||
             f.composition?.toLowerCase().includes(q) ||
             f.description?.toLowerCase().includes(q) ||
+            f.finish?.toLowerCase().includes(q) ||
             f.gn_code?.includes(q)
         );
       }
@@ -198,6 +200,7 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
             { key: "composition", label: "Composition" },
             { key: "color", label: "Color" },
             { key: "pattern", label: "Pattern" },
+            { key: "text", label: "Text" },
             { key: "weight", label: "Weight" },
             { key: "width", label: "Width" },
           { key: "hsCode", label: "HS Code" },
@@ -243,7 +246,8 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
             fabricNo: <span className="font-mono font-medium">{f.fabric_number}</span>,
             composition: <span className="text-xs">{f.composition ?? "—"}</span>,
             color: f.color ?? "—",
-            pattern: f.description ?? "—",
+            pattern: formatFabricPatternLabel(f) ?? "—",
+            text: formatFabricTextLabel(f) ?? "—",
             weight: f.weight_gsm != null ? `${f.weight_gsm} gsm` : "—",
             width: f.width_cm != null ? `${f.width_cm} cm` : "—",
           hsCode: f.gn_code ? (
