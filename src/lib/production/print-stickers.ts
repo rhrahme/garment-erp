@@ -5,7 +5,7 @@ import {
   type LabelScalePct,
 } from "@/lib/production/label-printer-settings";
 
-export type StickerPdfSheet = "fabric-cuts" | "pieces" | "print-pack" | "test";
+export type StickerPdfSheet = "fabric-cuts" | "pieces" | "print-pack" | "test" | "calibration";
 
 export const STICKER_PRINT_HEADERS_HINT_KEY = "sticker-print-headers-hint-seen";
 
@@ -76,6 +76,7 @@ async function fetchStickerPdf(request: StickerPdfRequest): Promise<Response> {
 }
 
 function pdfFilename(orderId: string, sheet: StickerPdfSheet): string {
+  if (sheet === "calibration") return "sticker-rotation-calibration.pdf";
   if (sheet === "test") return "sticker-test.pdf";
   return `stickers-${orderId}-${sheet}.pdf`;
 }

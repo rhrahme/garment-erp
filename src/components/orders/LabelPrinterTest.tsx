@@ -54,6 +54,10 @@ export function LabelPrinterTest() {
     requestPrint({ orderId: "test", sheet: "test", rotationDeg: rotation, scalePct });
   }, [requestPrint, rotation, scalePct]);
 
+  const handleCalibration = useCallback(() => {
+    requestPrint({ orderId: "test", sheet: "calibration" });
+  }, [requestPrint]);
+
   return (
     <div>
       <div className="no-print mb-6 rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
@@ -125,11 +129,35 @@ export function LabelPrinterTest() {
         ) : null}
       </div>
 
-      <div className="no-print mb-4">
+      <div className="no-print mb-4 flex flex-wrap gap-3">
         <Button onClick={handlePrint} disabled={printing}>
           <Printer className="mr-2 h-4 w-4" />
           {printing ? "Preparing PDF…" : "Print test labels (2 pages)"}
         </Button>
+        <Button variant="secondary" onClick={handleCalibration} disabled={printing}>
+          <Printer className="mr-2 h-4 w-4" />
+          {printing ? "Preparing PDF…" : "Print rotation calibration (A/B/C/D)"}
+        </Button>
+      </div>
+
+      <div className="no-print mb-6 rounded-xl border border-amber-300 bg-amber-50/70 px-4 py-4 text-sm text-amber-900">
+        <p className="font-semibold">One-time rotation calibration (A / B / C / D)</p>
+        <p className="mt-1">
+          If labels keep coming out rotated 90°, click{" "}
+          <strong>“Print rotation calibration (A/B/C/D)”</strong> above. It prints ONE job of 4 pages
+          (51×102 mm) — keep your <strong>current D550 settings</strong> (51×102, Fit to paper). Each page
+          shows a huge letter and the same QR + text drawn at a different rotation:
+        </p>
+        <ul className="mt-1 list-disc space-y-0.5 pl-5">
+          <li><strong>A</strong> = content rotated 0°</li>
+          <li><strong>B</strong> = content rotated 90° CW</li>
+          <li><strong>C</strong> = content rotated 180°</li>
+          <li><strong>D</strong> = content rotated 270° CW</li>
+        </ul>
+        <p className="mt-1">
+          Exactly one page will come out <strong>upright and readable</strong> (QR top-left, text
+          horizontal). Tell us that letter and we’ll lock it in as the default.
+        </p>
       </div>
 
       <div className="sticker-print-zone">

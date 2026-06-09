@@ -360,6 +360,156 @@ const TEST_LABEL_BASE: Omit<PrintableStickerLabel, "fabric_number" | "sticker_co
   sticker_total: 2,
 };
 
+/**
+ * ── ROTATION CALIBRATION ────────────────────────────────────────────────────
+ *
+ * The D550 Windows driver applies a fixed rotation we can neither predict nor
+ * change from the web app. To find the exact pre-rotation that cancels it, we
+ * print ONE sheet of four labels — A/B/C/D — each drawing the SAME sample
+ * content pre-rotated by a different amount. Exactly one comes out upright on
+ * the physical label; the user reports that letter.
+ *
+ * This is the SINGLE SOURCE OF TRUTH for the letter → pre-rotation mapping.
+ * Once the user reports the upright letter, set CALIBRATION_WINNER below (or
+ * wire its rotation into the real sticker output) — no other edits needed.
+ */
+export const CALIBRATION_PAGES: ReadonlyArray<{
+  letter: string;
+  /** Degrees the content is pre-rotated CW on the 51×102 portrait page. */
+  rotationDeg: 0 | 90 | 180 | 270;
+}> = [
+  { letter: "A", rotationDeg: 0 },
+  { letter: "B", rotationDeg: 90 },
+  { letter: "C", rotationDeg: 180 },
+  { letter: "D", rotationDeg: 270 },
+] as const;
+
+/** Set this to the upright letter once the user reports it (e.g. "B"). */
+export const CALIBRATION_WINNER: string | null = null;
+
+/**
+ * Draw one calibration page: a huge letter + QR + two text lines + caption, all
+ * laid out upright inside a 48×48 mm design box centred on the page, then the
+ * whole group rotated `rotationDeg` CW about the page centre. The square design
+ * box fits the 51×102 page at EVERY rotation, so whichever one the driver turns
+ * upright is fully legible (never clipped) — we find the answer in one print.
+ */
+function drawCalibrationPage(
+  doc: jsPDF,
+  pageW: number,
+  pageH: number,
+  letter: string,
+  rotationDeg: number,
+  qrDataUrl: string
+): void {
+  const DESIGN = 48; // square so it fits the page at any rotation
+  const cx = pageW / 2;
+  const cy = pageH / 2;
+  const theta = (rotationDeg * Math.PI) / 180;
+  const cos = Math.cos(theta);
+  const sin = Math.sin(theta);
+
+  // Map a design-space point (origin top-left of the 48×48 box) onto the page,
+  // rotating CW about the page centre. Screen coords (y down) → this matrix
+  // turns "up" into "right" for a visual clockwise rotation.
+  const mapPoint = (dx: number, dy: number): { x: number; y: number } => {
+    const rx = dx - DESIGN / 2;
+    const ry = dy - DESIGN / 2;
+    return { x: cx + rx * cos - ry * sin, y: cy + rx * sin + ry * cos };
+  };
+  // jsPDF text angle is CCW-positive; a visual CW turn of θ is (360 − θ).
+  const textAngle = (360 - (rotationDeg % 360)) % 360;
+
+  doc.setTextColor(STICKER_RGB.r, STICKER_RGB.g, STICKER_RGB.b);
+  doc.setFont("helvetica", "normal");
+
+  // Frame around the design box (4 mapped corners) so orientation is obvious.
+  const c0 = mapPoint(0, 0);
+  const c1 = mapPoint(DESIGN, 0);
+  const c2 = mapPoint(DESIGN, DESIGN);
+  const c3 = mapPoint(0, DESIGN);
+  doc.setDrawColor(STICKER_RGB.r, STICKER_RGB.g, STICKER_RGB.b);
+  doc.setLineWidth(0.4);
+  doc.lines(
+    [
+      [c1.x - c0.x, c1.y - c0.y],
+      [c2.x - c1.x, c2.y - c1.y],
+      [c3.x - c2.x, c3.y - c2.y],
+      [c0.x - c3.x, c0.y - c3.y],
+    ],
+    c0.x,
+    c0.y
+  );
+
+  // QR (axis-aligned, but positioned by the rotation) — top-left of the design.
+  const qrSize = 16;
+  const qrCenter = mapPoint(3 + qrSize / 2, 3 + qrSize / 2);
+  doc.addImage(qrDataUrl, "PNG", qrCenter.x - qrSize / 2, qrCenter.y - qrSize / 2, qrSize, qrSize);
+
+  // Two sample text lines to the RIGHT of the QR, read horizontally when upright.
+  const drawText = (
+    text: string,
+    dx: number,
+    dy: number,
+    fontMm: number,
+    align: "left" | "center" | "right" = "left"
+  ): void => {
+    const p = mapPoint(dx, dy);
+    doc.setFontSize(mmToPt(fontMm));
+    doc.text(text, p.x, p.y, { align, baseline: "middle", angle: textAngle });
+  };
+
+  drawText("QR LEFT", 22, 7, 3.6, "left");
+  drawText("TEXT HORIZONTAL", 22, 12.5, 3.0, "left");
+
+  // HUGE letter, centred in the lower half — unmistakable when upright.
+  drawText(letter, DESIGN / 2, 30, 30, "center");
+
+  // Tiny caption, e.g. "A = 0°".
+  drawText(`${letter} = ${rotationDeg}\u00B0`, DESIGN / 2, 45, 4.2, "center");
+}
+
+/**
+ * Calibration sheet: ONE print job of four 51×102 mm portrait pages (A/B/C/D),
+ * each the same content pre-rotated 0/90/180/270° CW. The user prints this with
+ * their CURRENT D550 settings (51×102, Fit to paper) and reports which letter
+ * comes out upright; that letter's rotation becomes the real pre-rotation.
+ */
+export async function generateCalibrationStickerPdf(
+  options: { letters?: string[] } = {}
+): Promise<Uint8Array> {
+  const pageW = LABEL_MATCH_PRINTER_PAGE_W_MM; // 51
+  const pageH = LABEL_MATCH_PRINTER_PAGE_H_MM; // 102
+  const pages = options.letters
+    ? CALIBRATION_PAGES.filter((p) => options.letters!.includes(p.letter))
+    : CALIBRATION_PAGES;
+  if (pages.length === 0) throw new Error("No calibration pages to render.");
+
+  const doc = new jsPDF({
+    unit: "mm",
+    format: [pageW, pageH],
+    orientation: "portrait",
+    compress: true,
+  });
+
+  const EPS_MM = 0.01;
+  const gotW = doc.internal.pageSize.getWidth();
+  const gotH = doc.internal.pageSize.getHeight();
+  if (Math.abs(gotW - pageW) > EPS_MM || Math.abs(gotH - pageH) > EPS_MM) {
+    throw new Error(`Calibration page must be ${pageW}×${pageH} mm, got ${gotW}×${gotH} mm.`);
+  }
+
+  const qrDataUrl = await fetchQrDataUrl("CALIBRATION", 380);
+
+  for (let index = 0; index < pages.length; index += 1) {
+    const page = pages[index]!;
+    if (index > 0) doc.addPage([pageW, pageH], "portrait");
+    drawCalibrationPage(doc, pageW, pageH, page.letter, page.rotationDeg, qrDataUrl);
+  }
+
+  return new Uint8Array(doc.output("arraybuffer"));
+}
+
 /** Two test labels (S10008 + S10009) — one page each for roll calibration. */
 export async function generateTestStickerPdf(
   options: StickerPdfOptions = {}

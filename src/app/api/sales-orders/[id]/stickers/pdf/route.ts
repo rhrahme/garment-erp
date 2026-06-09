@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticated } from "@/lib/auth/session";
 import {
+  generateCalibrationStickerPdf,
   generateStickerRollPdf,
   generateTestStickerPdf,
 } from "@/lib/production/generate-sticker-pdf";
@@ -8,10 +9,11 @@ import { parseLabelRotation, parseLabelScalePct } from "@/lib/production/label-p
 import { filterEntriesByStickerCodes } from "@/lib/production/sticker-print-selection";
 import { loadStickerPdfEntries, type StickerSheetKind } from "@/lib/production/sticker-sheet-data";
 
-function parseSheetParam(value: string | null): StickerSheetKind | "test" {
+function parseSheetParam(value: string | null): StickerSheetKind | "test" | "calibration" {
   if (value === "fabric-cuts") return "fabric-cuts";
   if (value === "print-pack") return "print-pack";
   if (value === "test") return "test";
+  if (value === "calibration") return "calibration";
   return "pieces";
 }
 
@@ -33,7 +35,7 @@ function parseCodesFromBody(body: unknown): string[] | null {
 }
 
 type PdfQuery = {
-  sheet: StickerSheetKind | "test";
+  sheet: StickerSheetKind | "test" | "calibration";
   poNumber: string | null;
   poId: string | null;
   codes: string[] | null;
@@ -55,6 +57,17 @@ function queryFromUrl(url: URL): PdfQuery {
 async function generatePdfResponse(orderId: string, query: PdfQuery) {
   const { sheet, poNumber, poId, codes, rotationDeg, scalePct } = query;
   const pdfOptions = { rotationDeg, scalePct };
+
+  if (sheet === "calibration") {
+    const pdfBytes = await generateCalibrationStickerPdf();
+    return new NextResponse(Buffer.from(pdfBytes), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": 'inline; filename="sticker-rotation-calibration.pdf"',
+        "Cache-Control": "no-store",
+      },
+    });
+  }
 
   if (sheet === "test") {
     const pdfBytes = await generateTestStickerPdf(pdfOptions);
