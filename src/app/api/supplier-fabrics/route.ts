@@ -23,7 +23,11 @@ export async function GET(request: Request) {
         item.supplier?.name ?? item.supplier_id,
         item.fabric_number
       ),
-      mill_line: item.mill_line ?? (item.supplier_id === "loro-piana" ? getLoroPianaMillLine(item.fabric_number) : null),
+      mill_line:
+        item.mill_line ??
+        (item.supplier_id === "loro-piana" || item.supplier_id === "solbiati"
+          ? getLoroPianaMillLine(item.fabric_number)
+          : null),
       fabric_number: item.fabric_number,
       composition: item.composition,
       description: item.description,

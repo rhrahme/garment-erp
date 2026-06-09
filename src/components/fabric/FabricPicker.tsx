@@ -6,7 +6,7 @@ import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
 import { formatSupplierUnitPrice } from "@/lib/currency/format";
 import { formatFabricStockLabel } from "@/lib/fabric-sourcing/fabric-stock";
 import {
-  formatLoroPianaMillLineLabel,
+  isLoroPianaStyleSupplier,
   resolveLoroPianaFabricInput,
 } from "@/lib/fabric-sourcing/loro-piana-styles";
 import { normalizeFabricSupplierFields } from "@/lib/fabric-sourcing/supplier-display";
@@ -89,10 +89,16 @@ export function FabricPicker({
   }, [supplierId]);
 
   function selectManualFabric(fabricNumber: string) {
-    const resolved =
-      supplierId === "loro-piana"
-        ? resolveLoroPianaFabricInput(fabricNumber)
-        : { preferredNumber: fabricNumber.trim(), millLine: null };
+    const resolved = isLoroPianaStyleSupplier(supplierId)
+      ? resolveLoroPianaFabricInput(fabricNumber)
+      : { preferredNumber: fabricNumber.trim(), millLine: null as "loro_piana" | "solbiati" | null };
+    if (
+      isLoroPianaStyleSupplier(supplierId) &&
+      ((supplierId === "solbiati" && resolved.millLine !== "solbiati") ||
+        (supplierId === "loro-piana" && resolved.millLine !== "loro_piana"))
+    ) {
+      return;
+    }
     const normalized = normalizeFabricSupplierFields(supplierId, brandName, resolved.preferredNumber);
     onSelect({
       id: `manual-${normalized.supplier_id}-${resolved.preferredNumber.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
@@ -113,20 +119,6 @@ export function FabricPicker({
     setOpen(false);
   }
 
-  function millLineBadge(item: FabricSearchItem) {
-    if (supplierId !== "loro-piana" || !item.mill_line) return null;
-    const isSolbiati = item.mill_line === "solbiati";
-    return (
-      <span
-        className={`ml-2 rounded px-1.5 py-0.5 text-[10px] font-sans font-medium uppercase tracking-wide ${
-          isSolbiati ? "bg-amber-100 text-amber-900" : "bg-slate-100 text-slate-700"
-        }`}
-      >
-        {formatLoroPianaMillLineLabel(item.mill_line)}
-      </span>
-    );
-  }
-
   return (
     <div ref={containerRef} className="relative">
       <label className="block text-sm">
@@ -142,10 +134,9 @@ export function FabricPicker({
             onKeyDown={(e) => {
               if (e.key === "Enter" && value.trim()) {
                 e.preventDefault();
-                const lookup =
-                  supplierId === "loro-piana"
-                    ? resolveLoroPianaFabricInput(value.trim()).preferredNumber.toLowerCase()
-                    : value.trim().toLowerCase();
+                const lookup = isLoroPianaStyleSupplier(supplierId)
+                  ? resolveLoroPianaFabricInput(value.trim()).preferredNumber.toLowerCase()
+                  : value.trim().toLowerCase();
                 const match = fabrics.find((item) => item.fabric_number.toLowerCase() === lookup);
                 if (match) {
                   onSelect(match);
@@ -186,20 +177,27 @@ export function FabricPicker({
                     className="mt-2 font-medium text-indigo-600 hover:text-indigo-700"
                   >
                     Use{" "}
-                    {supplierId === "loro-piana"
+                    {isLoroPianaStyleSupplier(supplierId)
                       ? resolveLoroPianaFabricInput(value.trim()).preferredNumber
                       : value.trim()}{" "}
                     anyway →
                   </button>
+                  {supplierId === "solbiati" && /^\d{4,5}$/.test(value.trim()) && (
+                    <p className="mt-2 text-xs text-slate-400">
+                      Solbiati linen codes use S + 5 digits — saved as S{value.trim()} (e.g. S23021).
+                    </p>
+                  )}
                   {supplierId === "loro-piana" && /^\d{4,5}$/.test(value.trim()) && (
                     <p className="mt-2 text-xs text-slate-400">
-                      5-digit codes are usually Solbiati linen — saved as S{value.trim()} (e.g. S23021). Loro Piana
-                      wool/cashmere uses 6 digits (e.g. 781050).
+                      Loro Piana wool/cashmere uses 6 digits (e.g. 781050). For Solbiati linen, select the Solbiati
+                      brand.
                     </p>
                   )}
                 </>
+              ) : supplierId === "solbiati" ? (
+                "Solbiati linen — S-prefix (S23021) or type 23021"
               ) : supplierId === "loro-piana" ? (
-                "Loro Piana / Solbiati — 6-digit LP (781050) or Solbiati linen with S (S23021, or type 23021)"
+                "Loro Piana — 6-digit codes (e.g. 781050)"
               ) : (
                 "Loading catalog…"
               )}
@@ -229,7 +227,6 @@ export function FabricPicker({
                       >
                         <span className="font-mono font-medium text-slate-900">
                           {item.fabric_number}
-                          {millLineBadge(item)}
                           {item.manual ? (
                             <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-sans font-medium uppercase tracking-wide text-amber-800">
                               Manual

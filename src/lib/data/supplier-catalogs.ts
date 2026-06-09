@@ -11,6 +11,7 @@ import woolStock from "@/data/suppliers/wool-stock.json";
 import {
   expandLoroPianaStyleQuery,
   getLoroPianaMillLine,
+  isLoroPianaStyleSupplier,
   normalizeLoroPianaFabricNumber,
   resolveLoroPianaFabricInput,
 } from "@/lib/fabric-sourcing/loro-piana-styles";
@@ -70,6 +71,7 @@ const ZEGNA_ID = "zegna";
 const DRAPERS_ID = "drapers";
 const STYLBIELLA_ID = "stylbiella";
 const LORO_PIANA_ID = "loro-piana";
+const SOLBIATI_ID = "solbiati";
 const CANCLINI_ID = "canclini";
 const WOOL_STOCK_ID = "wool-stock";
 
@@ -128,7 +130,10 @@ function toFabrics(catalog: RawCatalog, supplierId: string, supplier: Supplier, 
     stock_status: f.stock_status ?? null,
     restock_date: f.restock_date ?? null,
     stock_updated_at: f.stock_updated_at ?? null,
-    mill_line: supplierId === LORO_PIANA_ID ? getLoroPianaMillLine(f.fabric_number) : null,
+    mill_line:
+      supplierId === LORO_PIANA_ID || supplierId === SOLBIATI_ID
+        ? getLoroPianaMillLine(f.fabric_number)
+        : null,
     supplier,
   }));
 }
@@ -176,6 +181,7 @@ export const zegnaSupplier: Supplier = supplierForCatalog(ZEGNA_ID);
 export const drapersSupplier: Supplier = supplierForCatalog(DRAPERS_ID);
 export const stylbiellaSupplier: Supplier = supplierForCatalog(STYLBIELLA_ID);
 export const loroPianaSupplier: Supplier = supplierForCatalog(LORO_PIANA_ID);
+export const solbiatiSupplier: Supplier = supplierForCatalog(SOLBIATI_ID);
 export const cancliniSupplier: Supplier = supplierForCatalog(CANCLINI_ID);
 export const woolStockSupplier: Supplier = supplierForCatalog(WOOL_STOCK_ID);
 
@@ -204,12 +210,29 @@ export const stylbiellaFabrics: SupplierFabric[] = mergeCatalogFabrics(
   stylbiellaSupplier,
   "sty"
 );
-export const loroPianaFabrics: SupplierFabric[] = toFabrics(
+const loroPianaCatalogFabrics: SupplierFabric[] = toFabrics(
   loroPiana,
   LORO_PIANA_ID,
   loroPianaSupplier,
   "lp"
 );
+
+export const solbiatiFabrics: SupplierFabric[] = loroPianaCatalogFabrics
+  .filter((fabric) => getLoroPianaMillLine(fabric.fabric_number) === "solbiati")
+  .map((fabric) => ({
+    ...fabric,
+    id: `sol-${fabric.fabric_number}`,
+    supplier_id: SOLBIATI_ID,
+    supplier: solbiatiSupplier,
+    mill_line: "solbiati" as const,
+  }));
+
+export const loroPianaFabrics: SupplierFabric[] = loroPianaCatalogFabrics
+  .filter((fabric) => getLoroPianaMillLine(fabric.fabric_number) !== "solbiati")
+  .map((fabric) => ({
+    ...fabric,
+    mill_line: "loro_piana" as const,
+  }));
 export const cancliniFabrics: SupplierFabric[] = toFabrics(
   cancliniStock,
   CANCLINI_ID,
@@ -229,6 +252,7 @@ export const allPriceListItems: SupplierFabric[] = [
   ...drapersFabrics,
   ...stylbiellaFabrics,
   ...loroPianaFabrics,
+  ...solbiatiFabrics,
   ...cancliniFabrics,
   ...woolStockFabrics,
 ];
@@ -257,10 +281,9 @@ export function searchSupplierFabrics(supplierId: string, query: string, limit: 
 
   const byNumber = new Map(items.map((item) => [item.fabric_number.toLowerCase(), item]));
 
-  const fabricNumbers =
-    canonicalId === "loro-piana" ? expandLoroPianaStyleQuery(trimmed) : [trimmed];
-  const loroCandidates =
-    canonicalId === "loro-piana" ? resolveLoroPianaFabricInput(trimmed).candidates : [trimmed];
+  const usesLpStyleInput = isLoroPianaStyleSupplier(canonicalId);
+  const fabricNumbers = usesLpStyleInput ? expandLoroPianaStyleQuery(trimmed) : [trimmed];
+  const loroCandidates = usesLpStyleInput ? resolveLoroPianaFabricInput(trimmed).candidates : [trimmed];
 
   if (fabricNumbers.length > 1) {
     const rangeMatches: SupplierFabric[] = [];
@@ -277,10 +300,9 @@ export function searchSupplierFabrics(supplierId: string, query: string, limit: 
     if (exact) return [exact];
   }
 
-  const normalized =
-    canonicalId === "loro-piana"
-      ? normalizeLoroPianaFabricNumber(trimmed).toLowerCase()
-      : trimmed.toLowerCase();
+  const normalized = usesLpStyleInput
+    ? normalizeLoroPianaFabricNumber(trimmed).toLowerCase()
+    : trimmed.toLowerCase();
 
   const exact = byNumber.get(normalized);
   if (exact) return [exact];
@@ -312,7 +334,16 @@ export const allPriceLists: SupplierPriceList[] = [
   toPriceList(stylbiellaAw25, STYLBIELLA_ID, stylbiellaSupplier),
   toPriceList(stylbiellaSs25, STYLBIELLA_ID, stylbiellaSupplier),
   toPriceList(stylbiellaSs26, STYLBIELLA_ID, stylbiellaSupplier),
-  toPriceList(loroPiana, LORO_PIANA_ID, loroPianaSupplier),
+  {
+    ...toPriceList(loroPiana, LORO_PIANA_ID, loroPianaSupplier),
+    fabric_count: loroPianaFabrics.length,
+  },
+  {
+    ...toPriceList(loroPiana, SOLBIATI_ID, solbiatiSupplier),
+    id: "pl-loro-piana-ss26-solbiati",
+    name: "Solbiati — SS26 (Loro Piana account)",
+    fabric_count: solbiatiFabrics.length,
+  },
   toPriceList(cancliniStock, CANCLINI_ID, cancliniSupplier),
   toPriceList(woolStockCatalog, WOOL_STOCK_ID, woolStockSupplier),
 ];

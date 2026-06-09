@@ -4,6 +4,7 @@ import { getSupplierByIdFromContacts } from "@/lib/data/supplier-contacts";
 import {
   expandLoroPianaStyleQuery,
   getLoroPianaMillLine,
+  isLoroPianaStyleSupplier,
   normalizeLoroPianaFabricNumber,
   resolveLoroPianaFabricInput,
 } from "@/lib/fabric-sourcing/loro-piana-styles";
@@ -30,7 +31,11 @@ function toSearchItem(item: SupplierFabric, manual = false): FabricSearchItem {
     unit: item.unit,
     stock_status: item.stock_status ?? null,
     restock_date: item.restock_date ?? null,
-    mill_line: item.mill_line ?? (item.supplier_id === "loro-piana" ? getLoroPianaMillLine(item.fabric_number) : null),
+    mill_line:
+      item.mill_line ??
+      (item.supplier_id === "loro-piana" || item.supplier_id === "solbiati"
+        ? getLoroPianaMillLine(item.fabric_number)
+        : null),
     manual,
   };
 }
@@ -67,25 +72,32 @@ export function resolveFabricItemFromCatalog(
   const catalogMatches = searchSupplierFabrics(canonicalId, trimmed, 20);
   const items = catalogMatches.map((item) => toSearchItem(item, false));
 
-  const lookupNumber =
-    canonicalId === "loro-piana"
-      ? normalizeLoroPianaFabricNumber(trimmed).toLowerCase()
-      : trimmed.toLowerCase();
+  const usesLpStyleInput = isLoroPianaStyleSupplier(canonicalId);
+  const lookupNumber = usesLpStyleInput
+    ? normalizeLoroPianaFabricNumber(trimmed).toLowerCase()
+    : trimmed.toLowerCase();
   const match =
     items.find((item) => !item.manual && item.fabric_number.toLowerCase() === lookupNumber) ??
     items.find((item) => item.fabric_number.toLowerCase() === trimmed.toLowerCase());
   if (match) return match;
 
   if (trimmed) {
-    const rangeMatch = canonicalId === "loro-piana" && expandLoroPianaStyleQuery(trimmed).length > 1;
+    const rangeMatch = usesLpStyleInput && expandLoroPianaStyleQuery(trimmed).length > 1;
     if (!rangeMatch) {
-      const resolved = resolveLoroPianaFabricInput(trimmed);
-      const manualNumber = canonicalId === "loro-piana" ? resolved.preferredNumber : trimmed;
-      const manual = buildManualFabricEntry(canonicalId, manualNumber);
-      if (canonicalId === "loro-piana") {
-        manual.mill_line = resolved.millLine;
+      if (usesLpStyleInput) {
+        const resolved = resolveLoroPianaFabricInput(trimmed);
+        const allowManual =
+          canonicalId === "solbiati"
+            ? resolved.millLine === "solbiati"
+            : resolved.millLine === "loro_piana";
+        if (allowManual) {
+          const manual = buildManualFabricEntry(canonicalId, resolved.preferredNumber);
+          manual.mill_line = resolved.millLine;
+          return manual;
+        }
+      } else {
+        return buildManualFabricEntry(canonicalId, trimmed);
       }
-      return manual;
     }
   }
 

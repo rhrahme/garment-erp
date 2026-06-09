@@ -2,6 +2,12 @@
 
 export type LoroPianaMillLine = "loro_piana" | "solbiati";
 
+export const LORO_PIANA_STYLE_SUPPLIER_IDS = ["loro-piana", "solbiati"] as const;
+
+export function isLoroPianaStyleSupplier(supplierId: string): boolean {
+  return (LORO_PIANA_STYLE_SUPPLIER_IDS as readonly string[]).includes(supplierId);
+}
+
 export function getLoroPianaMillLine(fabricNumber: string): LoroPianaMillLine {
   return /^S/i.test(fabricNumber.trim()) ? "solbiati" : "loro_piana";
 }

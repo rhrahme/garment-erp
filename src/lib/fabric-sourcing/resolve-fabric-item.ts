@@ -1,5 +1,5 @@
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
-import { normalizeLoroPianaFabricNumber } from "@/lib/fabric-sourcing/loro-piana-styles";
+import { isLoroPianaStyleSupplier, normalizeLoroPianaFabricNumber } from "@/lib/fabric-sourcing/loro-piana-styles";
 import { normalizeFabricSupplierFields } from "@/lib/fabric-sourcing/supplier-display";
 
 export async function resolveFabricItem(
@@ -16,8 +16,9 @@ export async function resolveFabricItem(
   const res = await fetch(`/api/fabric-search?${params}`);
   if (res.ok) {
     const data = (await res.json()) as { items: FabricSearchItem[] };
-    const lookup =
-      supplierId === "loro-piana" ? normalizeLoroPianaFabricNumber(trimmed) : trimmed;
+    const lookup = isLoroPianaStyleSupplier(supplierId)
+      ? normalizeLoroPianaFabricNumber(trimmed)
+      : trimmed;
     const match =
       data.items.find(
         (item) => !item.manual && item.fabric_number.toLowerCase() === lookup.toLowerCase()

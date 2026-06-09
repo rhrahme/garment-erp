@@ -4,7 +4,13 @@ import { getSessionContext } from "@/lib/auth/session";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import { getSupplierByIdFromContacts } from "@/lib/data/supplier-contacts";
 import { searchSupplierFabrics } from "@/lib/data/supplier-catalogs";
-import { expandLoroPianaStyleQuery, resolveLoroPianaFabricInput, getLoroPianaMillLine } from "@/lib/fabric-sourcing/loro-piana-styles";
+import {
+  expandLoroPianaStyleQuery,
+  resolveLoroPianaFabricInput,
+  getLoroPianaMillLine,
+  isLoroPianaStyleSupplier,
+  normalizeLoroPianaFabricNumber,
+} from "@/lib/fabric-sourcing/loro-piana-styles";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import type { SupplierFabric } from "@/lib/types/fabric-sourcing";
 
@@ -71,7 +77,11 @@ function toSearchItem(item: SupplierFabric, manual = false) {
     unit: item.unit,
     stock_status: item.stock_status ?? null,
     restock_date: item.restock_date ?? null,
-    mill_line: item.mill_line ?? (item.supplier_id === "loro-piana" ? getLoroPianaMillLine(item.fabric_number) : null),
+    mill_line:
+      item.mill_line ??
+      (item.supplier_id === "loro-piana" || item.supplier_id === "solbiati"
+        ? getLoroPianaMillLine(item.fabric_number)
+        : null),
     manual,
   };
 }
@@ -93,19 +103,27 @@ export async function GET(request: Request) {
   const items = catalogMatches.map((item) => toSearchItem(item, false));
 
   if (query) {
-    const lookupNumber =
-      supplierId === "loro-piana"
-        ? resolveLoroPianaFabricInput(query).preferredNumber.toLowerCase()
-        : query.toLowerCase();
+    const usesLpStyleInput = isLoroPianaStyleSupplier(supplierId);
+    const lookupNumber = usesLpStyleInput
+      ? normalizeLoroPianaFabricNumber(query).toLowerCase()
+      : query.toLowerCase();
     const exact = items.some((item) => item.fabric_number.toLowerCase() === lookupNumber);
-    const rangeMatch =
-      supplierId === "loro-piana" && expandLoroPianaStyleQuery(query).length > 1;
+    const rangeMatch = usesLpStyleInput && expandLoroPianaStyleQuery(query).length > 1;
     if (!exact && !rangeMatch) {
-      const resolved = resolveLoroPianaFabricInput(query);
-      const manualNumber = supplierId === "loro-piana" ? resolved.preferredNumber : query;
-      const manualEntry = buildManualFabricEntry(supplierId, manualNumber);
-      manualEntry.mill_line = supplierId === "loro-piana" ? resolved.millLine : null;
-      items.unshift(toSearchItem(manualEntry, true));
+      if (usesLpStyleInput) {
+        const resolved = resolveLoroPianaFabricInput(query);
+        const allowManual =
+          supplierId === "solbiati"
+            ? resolved.millLine === "solbiati"
+            : resolved.millLine === "loro_piana";
+        if (allowManual) {
+          const manualEntry = buildManualFabricEntry(supplierId, resolved.preferredNumber);
+          manualEntry.mill_line = resolved.millLine;
+          items.unshift(toSearchItem(manualEntry, true));
+        }
+      } else {
+        items.unshift(toSearchItem(buildManualFabricEntry(supplierId, query), true));
+      }
     }
   }
 

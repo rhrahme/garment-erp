@@ -89,7 +89,23 @@
       "lead_time_days": 14,
       "has_price_list": true,
       "reply_domains": ["loropiana.com"],
-      "notes": "SS26 price list imported (EUR, CIP Europe)."
+      "notes": "SS26 price list imported (EUR, CIP Europe). Wool/cashmere only — Solbiati linen (S-prefix) is a separate brand tab."
+    },
+    {
+      "id": "solbiati",
+      "code": "SOLBIATI",
+      "name": "Solbiati",
+      "country": "Italy",
+      "contact_person": null,
+      "emails": [
+        "valentina.cao@loropiana.com",
+        "vittorio.osella@loropiana.com"
+      ],
+      "email": "valentina.cao@loropiana.com, vittorio.osella@loropiana.com",
+      "lead_time_days": 14,
+      "has_price_list": true,
+      "reply_domains": ["loropiana.com"],
+      "notes": "Linen line from Loro Piana SS26 catalog (S-prefix fabrics). Orders route to the Loro Piana supplier account."
     },
     {
       "id": "canclini",
