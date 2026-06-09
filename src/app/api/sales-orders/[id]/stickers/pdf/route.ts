@@ -4,7 +4,7 @@ import {
   generateStickerRollPdf,
   generateTestStickerPdf,
 } from "@/lib/production/generate-sticker-pdf";
-import { parseLabelRotation } from "@/lib/production/label-printer-settings";
+import { parseLabelRotation, parseLabelScalePct } from "@/lib/production/label-printer-settings";
 import { filterEntriesByStickerCodes } from "@/lib/production/sticker-print-selection";
 import { loadStickerPdfEntries, type StickerSheetKind } from "@/lib/production/sticker-sheet-data";
 
@@ -38,6 +38,7 @@ type PdfQuery = {
   poId: string | null;
   codes: string[] | null;
   rotationDeg: ReturnType<typeof parseLabelRotation>;
+  scalePct: ReturnType<typeof parseLabelScalePct>;
 };
 
 function queryFromUrl(url: URL): PdfQuery {
@@ -47,12 +48,13 @@ function queryFromUrl(url: URL): PdfQuery {
     poId: url.searchParams.get("po_id"),
     codes: parseCodesParam(url.searchParams.get("codes")),
     rotationDeg: parseLabelRotation(url.searchParams.get("rotation")),
+    scalePct: parseLabelScalePct(url.searchParams.get("scale")),
   };
 }
 
 async function generatePdfResponse(orderId: string, query: PdfQuery) {
-  const { sheet, poNumber, poId, codes, rotationDeg } = query;
-  const pdfOptions = { rotationDeg };
+  const { sheet, poNumber, poId, codes, rotationDeg, scalePct } = query;
+  const pdfOptions = { rotationDeg, scalePct };
 
   if (sheet === "test") {
     const pdfBytes = await generateTestStickerPdf(pdfOptions);
@@ -116,6 +118,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       po_id?: string | null;
       codes?: string[];
       rotation?: string | number | null;
+      scale?: string | number | null;
     };
 
     const query: PdfQuery = {
@@ -124,6 +127,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       poId: body.po_id?.trim() || null,
       codes: parseCodesFromBody(body),
       rotationDeg: parseLabelRotation(body.rotation),
+      scalePct: parseLabelScalePct(body.scale),
     };
 
     return await generatePdfResponse(id, query);

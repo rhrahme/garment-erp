@@ -9,9 +9,9 @@ const LAYOUT_W = 102;
 const LAYOUT_H = 51;
 const PDF_PAGE_W = 51;
 const PDF_PAGE_H = 102;
-const QR = 45;
-const PAD = 2;
-const GAP = 3;
+const QR = 47;
+const PAD = 1;
+const GAP = 2;
 const TEXT_ANGLE = -90;
 const IMAGE_ROTATION = 270;
 
@@ -53,13 +53,13 @@ doc.text("QR", qrCenter.x, qrCenter.y, {
 const textX = PAD + QR + GAP;
 const textW = LAYOUT_W - PAD * 2 - QR - GAP;
 const lines = [
-  ["PREPARATION", 10, PAD + 4],
-  ["FR-0528-0029", 8, PAD + 10],
-  ["Mokid Al Zahrani", 8, PAD + 16],
-  ["FR-0101-L13", 8, PAD + 22],
-  ["1.3 m · 1 label", 8, PAD + 28],
-  ["PEGASO DELAVE 100% LINEN", 8, PAD + 34],
-  ["Cut · Trouser", 8, PAD + 40],
+  ["PREPARATION", 12, PAD + 4],
+  ["FR-0528-0029", 10, PAD + 11],
+  ["Mokid Al Zahrani", 10, PAD + 18],
+  ["FR-0101-L13", 10, PAD + 25],
+  ["1.3 m · 1 label", 11, PAD + 32],
+  ["PEGASO DELAVE 100% LINEN", 9, PAD + 39],
+  ["Cut · Trouser", 10, PAD + 46],
 ];
 
 for (const [text, fontSize, layoutY] of lines) {

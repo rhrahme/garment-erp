@@ -2,6 +2,7 @@
 
 import {
   LABEL_STICKER_COLUMN_GAP_MM,
+  LABEL_STICKER_FONT_MM,
   LABEL_STICKER_LINE_GAP_MM,
   LABEL_STICKER_PADDING_H_MM,
   LABEL_STICKER_PADDING_V_MM,
@@ -103,7 +104,7 @@ export function StickerCell({
           <span
             className="sticker-role-mark"
             style={stickerTextLine({
-              fontSize: "2.8mm",
+              fontSize: `${LABEL_STICKER_FONT_MM.header}mm`,
               letterSpacing: "0.02mm",
               lineHeight: 1.1,
               whiteSpace: "nowrap",
@@ -114,7 +115,7 @@ export function StickerCell({
           <span
             className="sticker-batch-mark"
             style={stickerTextLine({
-              fontSize: "2.8mm",
+              fontSize: `${LABEL_STICKER_FONT_MM.header}mm`,
               letterSpacing: "0.04mm",
               fontVariantNumeric: "tabular-nums",
               lineHeight: 1.1,
@@ -129,7 +130,7 @@ export function StickerCell({
         <p
           className="sticker-line sticker-line-client"
           style={stickerTextLine({
-            fontSize: "3.6mm",
+            fontSize: `${LABEL_STICKER_FONT_MM.clientCode}mm`,
             letterSpacing: "0.04mm",
             fontVariantNumeric: "tabular-nums",
           })}
@@ -140,7 +141,7 @@ export function StickerCell({
         <p
           className="sticker-line sticker-line-client-name"
           style={stickerTextLine({
-            fontSize: "3.4mm",
+            fontSize: `${LABEL_STICKER_FONT_MM.clientName}mm`,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -152,7 +153,7 @@ export function StickerCell({
         <p
           className="sticker-line sticker-line-code"
           style={stickerTextLine({
-            fontSize: "3.3mm",
+            fontSize: `${LABEL_STICKER_FONT_MM.productionCode}mm`,
             letterSpacing: "0.04mm",
             fontVariantNumeric: "tabular-nums",
           })}
@@ -164,7 +165,7 @@ export function StickerCell({
         <p
           className="sticker-line sticker-line-fabric"
           style={stickerTextLine({
-            fontSize: "3.2mm",
+            fontSize: `${LABEL_STICKER_FONT_MM.fabric}mm`,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -176,7 +177,7 @@ export function StickerCell({
         <p
           className="sticker-line sticker-line-cut-qty"
           style={stickerTextLine({
-            fontSize: "3.8mm",
+            fontSize: `${LABEL_STICKER_FONT_MM.cutLength}mm`,
             letterSpacing: "0.14mm",
             fontVariantNumeric: "tabular-nums",
             flexShrink: 0,
@@ -188,7 +189,7 @@ export function StickerCell({
         <p
           className="sticker-line sticker-line-cut-labels"
           style={stickerTextLine({
-            fontSize: "3.2mm",
+            fontSize: `${LABEL_STICKER_FONT_MM.labels}mm`,
             letterSpacing: "0.05mm",
             fontVariantNumeric: "tabular-nums",
             flexShrink: 0,
@@ -201,7 +202,7 @@ export function StickerCell({
           <p
             className="sticker-line sticker-line-spec"
             style={stickerTextLine({
-              fontSize: "3mm",
+              fontSize: `${LABEL_STICKER_FONT_MM.spec}mm`,
               lineHeight: 1.4,
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -215,7 +216,7 @@ export function StickerCell({
         <p
           className="sticker-line sticker-line-piece"
           style={stickerTextLine({
-            fontSize: "3.2mm",
+            fontSize: `${LABEL_STICKER_FONT_MM.piece}mm`,
             letterSpacing: "0.05mm",
             flexShrink: 0,
           })}

@@ -16,14 +16,27 @@ export const LABEL_PDF_ORIENTATION = "portrait" as const;
 export const LABEL_PDF_PAGE_WIDTH_MM = LABEL_ROLL_HEIGHT_MM;
 export const LABEL_PDF_PAGE_HEIGHT_MM = LABEL_ROLL_WIDTH_MM;
 
-/** QR square on the left — ~45 mm fits 102×51 mm with 2 mm margins. */
-export const LABEL_STICKER_QR_SIZE_MM = 45;
+/** QR square on the left — ~47 mm fills 102×51 mm with 1 mm margins. */
+export const LABEL_STICKER_QR_SIZE_MM = 47;
 
-export const LABEL_STICKER_PADDING_H_MM = 2;
-export const LABEL_STICKER_PADDING_V_MM = 2;
-export const LABEL_STICKER_COLUMN_GAP_MM = 3;
+export const LABEL_STICKER_PADDING_H_MM = 1;
+export const LABEL_STICKER_PADDING_V_MM = 1;
+export const LABEL_STICKER_COLUMN_GAP_MM = 2;
 export const LABEL_STICKER_BATCH_GAP_MM = 6;
-export const LABEL_STICKER_LINE_GAP_MM = 0.6;
+export const LABEL_STICKER_LINE_GAP_MM = 0.35;
+
+/** Thermal-readable font sizes (mm cap height) for 102×51 mm roll labels. */
+export const LABEL_STICKER_FONT_MM = {
+  header: 3.5,
+  clientCode: 4.5,
+  clientName: 4.2,
+  productionCode: 4.1,
+  fabric: 4.0,
+  cutLength: 4.8,
+  labels: 4.0,
+  spec: 3.8,
+  piece: 4.0,
+} as const;
 
 export function labelRollSizeCss(): string {
   return `${LABEL_ROLL_WIDTH_MM}mm ${LABEL_ROLL_HEIGHT_MM}mm`;

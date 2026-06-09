@@ -3,6 +3,7 @@ import {
   LABEL_ROLL_HEIGHT_MM,
   LABEL_ROLL_WIDTH_MM,
   LABEL_STICKER_COLUMN_GAP_MM,
+  LABEL_STICKER_FONT_MM,
   LABEL_STICKER_LINE_GAP_MM,
   LABEL_STICKER_PADDING_H_MM,
   LABEL_STICKER_PADDING_V_MM,
@@ -10,9 +11,12 @@ import {
 } from "@/lib/production/label-print-config";
 import {
   DEFAULT_LABEL_ROTATION,
+  DEFAULT_LABEL_SCALE_PCT,
   labelPdfOrientation,
   labelPdfPageSizeMm,
+  labelScaleMultiplier,
   type LabelRotationDeg,
+  type LabelScalePct,
 } from "@/lib/production/label-printer-settings";
 import {
   formatStickerBatchMark,
@@ -182,19 +186,22 @@ async function drawStickerPage(
   label: PrintableStickerLabel,
   role: StickerRole | undefined,
   qrCache: Map<string, string>,
-  rotation: LabelRotationDeg
+  rotation: LabelRotationDeg,
+  scalePct: LabelScalePct
 ): Promise<void> {
   const pageW = LAYOUT_W;
   const pageH = LAYOUT_H;
+  const scale = labelScaleMultiplier(scalePct);
   const padH = LABEL_STICKER_PADDING_H_MM;
   const padV = LABEL_STICKER_PADDING_V_MM;
   const contentW = pageW - padH * 2;
   const contentH = pageH - padV * 2;
-  const qrSize = LABEL_STICKER_QR_SIZE_MM;
-  const textX = padH + qrSize + LABEL_STICKER_COLUMN_GAP_MM;
-  const textW = contentW - qrSize - LABEL_STICKER_COLUMN_GAP_MM;
+  const qrSize = LABEL_STICKER_QR_SIZE_MM * scale;
+  const columnGap = LABEL_STICKER_COLUMN_GAP_MM * scale;
+  const textX = padH + qrSize + columnGap;
+  const textW = Math.max(contentW - qrSize - columnGap, 8);
   const qrX = padH;
-  const qrY = padV + (contentH - qrSize) / 2;
+  const qrY = padV + Math.max(0, (contentH - qrSize) / 2);
 
   doc.setTextColor(STICKER_RGB.r, STICKER_RGB.g, STICKER_RGB.b);
   doc.setFont("helvetica", "normal");
@@ -206,17 +213,17 @@ async function drawStickerPage(
   const cutLengthLine = formatStickerCutLength(label.cut_quantity, label.cut_unit);
   const labelsLine = formatStickerLabelsSent(label.labels_sent);
 
-  const headerFontMm = 2.8;
+  const headerFontMm = LABEL_STICKER_FONT_MM.header * scale;
   const lines: Array<{ text: string; fontMm: number }> = [
-    { text: label.client_code, fontMm: 3.6 },
-    { text: label.client_name, fontMm: 3.4 },
-    { text: label.production_code, fontMm: 3.3 },
-    { text: fabricLine, fontMm: 3.2 },
-    { text: cutLengthLine, fontMm: 3.8 },
-    { text: labelsLine, fontMm: 3.2 },
+    { text: label.client_code, fontMm: LABEL_STICKER_FONT_MM.clientCode * scale },
+    { text: label.client_name, fontMm: LABEL_STICKER_FONT_MM.clientName * scale },
+    { text: label.production_code, fontMm: LABEL_STICKER_FONT_MM.productionCode * scale },
+    { text: fabricLine, fontMm: LABEL_STICKER_FONT_MM.fabric * scale },
+    { text: cutLengthLine, fontMm: LABEL_STICKER_FONT_MM.cutLength * scale },
+    { text: labelsLine, fontMm: LABEL_STICKER_FONT_MM.labels * scale },
   ];
-  if (specLine) lines.push({ text: specLine, fontMm: 3.0 });
-  lines.push({ text: pieceLabel(label), fontMm: 3.2 });
+  if (specLine) lines.push({ text: specLine, fontMm: LABEL_STICKER_FONT_MM.spec * scale });
+  lines.push({ text: pieceLabel(label), fontMm: LABEL_STICKER_FONT_MM.piece * scale });
 
   let qrData = qrCache.get(label.qr_payload);
   if (!qrData) {
@@ -237,7 +244,7 @@ async function drawStickerPage(
     imageRotationForLayout(rotation)
   );
 
-  const gap = LABEL_STICKER_LINE_GAP_MM;
+  const gap = LABEL_STICKER_LINE_GAP_MM * scale;
   const headerH = lineHeightMm(headerFontMm);
   const bodyH =
     headerH +
@@ -269,6 +276,7 @@ export type StickerPdfEntry = {
 
 export type StickerPdfOptions = {
   rotationDeg?: LabelRotationDeg;
+  scalePct?: LabelScalePct;
 };
 
 /** Server-generated roll PDF — page size and mapping depend on rotation setting. */
@@ -281,6 +289,7 @@ export async function generateStickerRollPdf(
   }
 
   const rotation = options.rotationDeg ?? DEFAULT_LABEL_ROTATION;
+  const scalePct = options.scalePct ?? DEFAULT_LABEL_SCALE_PCT;
   const doc = createStickerPdfDocument(rotation);
   const qrCache = new Map<string, string>();
 
@@ -289,7 +298,7 @@ export async function generateStickerRollPdf(
       doc.addPage([LAYOUT_W, LAYOUT_H], labelPdfOrientation(rotation));
     }
     const entry = entries[index]!;
-    await drawStickerPage(doc, entry.label, entry.role, qrCache, rotation);
+    await drawStickerPage(doc, entry.label, entry.role, qrCache, rotation, scalePct);
   }
 
   return new Uint8Array(doc.output("arraybuffer"));

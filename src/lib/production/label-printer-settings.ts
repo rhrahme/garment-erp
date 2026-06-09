@@ -7,9 +7,63 @@ import {
 export type LabelRotationDeg = 0 | 90 | 180 | 270;
 
 export const LABEL_ROTATION_STORAGE_KEY = "label-printer:rotation-deg";
+export const LABEL_SCALE_STORAGE_KEY = "label-printer:scale-pct";
 
 /** Matches prior portrait per-element mapping (LabelLife 51×102 media). */
 export const DEFAULT_LABEL_ROTATION: LabelRotationDeg = 90;
+
+/** Content scale multiplier for thermal drivers that shrink PDFs to fit. */
+export type LabelScalePct = 100 | 125 | 150;
+
+export const DEFAULT_LABEL_SCALE_PCT: LabelScalePct = 100;
+
+export const LABEL_SCALE_OPTIONS: ReadonlyArray<{
+  value: LabelScalePct;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 100,
+    label: "Small (100%)",
+    description: "Base layout size. Use when the driver prints at true 100% scale.",
+  },
+  {
+    value: 125,
+    label: "Medium (125%)",
+    description: "Recommended when text and QR print smaller than expected with empty margins.",
+  },
+  {
+    value: 150,
+    label: "Large (150%)",
+    description: "Maximum size for drivers that shrink content to fit the media box.",
+  },
+] as const;
+
+const VALID_SCALE_PCT = new Set<LabelScalePct>([100, 125, 150]);
+
+export function isLabelScalePct(value: number): value is LabelScalePct {
+  return VALID_SCALE_PCT.has(value as LabelScalePct);
+}
+
+export function parseLabelScalePct(raw: string | number | null | undefined): LabelScalePct {
+  const n = typeof raw === "string" ? Number.parseInt(raw, 10) : raw;
+  if (typeof n === "number" && isLabelScalePct(n)) return n;
+  return DEFAULT_LABEL_SCALE_PCT;
+}
+
+export function labelScaleMultiplier(scalePct: LabelScalePct): number {
+  return scalePct / 100;
+}
+
+export function readLabelScalePct(): LabelScalePct {
+  if (typeof window === "undefined") return DEFAULT_LABEL_SCALE_PCT;
+  return parseLabelScalePct(window.localStorage.getItem(LABEL_SCALE_STORAGE_KEY));
+}
+
+export function writeLabelScalePct(scalePct: LabelScalePct): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(LABEL_SCALE_STORAGE_KEY, String(scalePct));
+}
 
 export const LABEL_ROTATION_OPTIONS: ReadonlyArray<{
   value: LabelRotationDeg;

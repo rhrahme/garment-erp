@@ -1,5 +1,6 @@
 import {
   LABEL_STICKER_COLUMN_GAP_MM,
+  LABEL_STICKER_FONT_MM,
   LABEL_STICKER_LINE_GAP_MM,
   LABEL_STICKER_PADDING_H_MM,
   LABEL_STICKER_PADDING_V_MM,
@@ -139,41 +140,44 @@ export function stickerPrintStyles(): string {
         page-break-inside: avoid !important;
       }
       .sticker-line-client {
-        font-size: 3.6mm !important;
+        font-size: ${LABEL_STICKER_FONT_MM.clientCode}mm !important;
         letter-spacing: 0.04mm !important;
         font-variant-numeric: tabular-nums !important;
       }
       .sticker-line-client-name {
-        font-size: 3.4mm !important;
+        font-size: ${LABEL_STICKER_FONT_MM.clientName}mm !important;
       }
       .sticker-line-code {
-        font-size: 3.3mm !important;
+        font-size: ${LABEL_STICKER_FONT_MM.productionCode}mm !important;
         letter-spacing: 0.04mm !important;
         font-variant-numeric: tabular-nums !important;
       }
       .sticker-line-fabric {
-        font-size: 3.2mm !important;
+        font-size: ${LABEL_STICKER_FONT_MM.fabric}mm !important;
       }
       .sticker-line-cut-qty {
-        font-size: 3.8mm !important;
+        font-size: ${LABEL_STICKER_FONT_MM.cutLength}mm !important;
         letter-spacing: 0.14mm !important;
         font-variant-numeric: tabular-nums !important;
         flex-shrink: 0 !important;
       }
-      .sticker-line-cut-labels,
+      .sticker-line-cut-labels {
+        font-size: ${LABEL_STICKER_FONT_MM.labels}mm !important;
+        flex-shrink: 0 !important;
+      }
       .sticker-line-piece {
-        font-size: 3.2mm !important;
+        font-size: ${LABEL_STICKER_FONT_MM.piece}mm !important;
         flex-shrink: 0 !important;
       }
       .sticker-line-spec {
-        font-size: 3mm !important;
+        font-size: ${LABEL_STICKER_FONT_MM.spec}mm !important;
       }
       .sticker-line-piece {
         letter-spacing: 0.05mm !important;
       }
       .sticker-role-mark,
       .sticker-batch-mark {
-        font-size: 2.8mm !important;
+        font-size: ${LABEL_STICKER_FONT_MM.header}mm !important;
         letter-spacing: 0.02mm !important;
         line-height: 1.1 !important;
         font-weight: 300 !important;

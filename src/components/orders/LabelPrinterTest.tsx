@@ -3,9 +3,10 @@
 import { useCallback } from "react";
 import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { LabelRotationControl } from "@/components/orders/LabelRotationControl";
+import { LabelPrinterSettingsControl } from "@/components/orders/LabelRotationControl";
 import { StickerCell } from "@/components/orders/StickerCell";
 import { useLabelRotation } from "@/hooks/useLabelRotation";
+import { useLabelScale } from "@/hooks/useLabelScale";
 import { useStickerPrint } from "@/hooks/useStickerPrint";
 import { labelPdfMediaLabel, labelPdfMediaMmLabel, labelRollSizeLabel } from "@/lib/production/label-print-config";
 import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
@@ -37,15 +38,21 @@ const TEST_LABEL: PrintableStickerLabel = {
 export function LabelPrinterTest() {
   const { printing, requestPrint } = useStickerPrint();
   const { rotation, setRotation } = useLabelRotation();
+  const { scalePct, setScalePct } = useLabelScale();
 
   const handlePrint = useCallback(() => {
-    requestPrint({ orderId: "test", sheet: "test", rotationDeg: rotation });
-  }, [requestPrint, rotation]);
+    requestPrint({ orderId: "test", sheet: "test", rotationDeg: rotation, scalePct });
+  }, [requestPrint, rotation, scalePct]);
 
   return (
     <div>
       <div className="no-print mb-6 rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
-        <LabelRotationControl value={rotation} onChange={setRotation} />
+        <LabelPrinterSettingsControl
+          rotation={rotation}
+          onRotationChange={setRotation}
+          scalePct={scalePct}
+          onScalePctChange={setScalePct}
+        />
       </div>
 
       <div className="no-print mb-6 space-y-3 rounded-xl border border-indigo-200 bg-indigo-50/60 px-4 py-4 text-sm text-slate-700">
@@ -56,9 +63,9 @@ export function LabelPrinterTest() {
             <strong>{labelPdfMediaMmLabel()}</strong> ({labelPdfMediaLabel()}).
           </li>
           <li>
-            Pick <strong>Label rotation</strong> above, then click <strong>Print test label</strong>. If QR or text
-            prints sideways or upside down, try another rotation and print again until the physical label reads
-            correctly (QR left, text horizontal on the {labelRollSizeLabel()} roll).
+            Pick <strong>Label rotation</strong> and <strong>Label size</strong> above, then click{" "}
+            <strong>Print test label</strong>. If QR or text prints sideways or upside down, try another rotation.
+            If content looks too small with empty margins, try Medium (125%) or Large (150%).
           </li>
           <li>
             In the print dialog: <strong>Scale 100%</strong>, <strong>Margins: None</strong>, paper{" "}

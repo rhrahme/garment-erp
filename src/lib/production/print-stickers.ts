@@ -1,6 +1,8 @@
 import {
   readLabelRotation,
+  readLabelScalePct,
   type LabelRotationDeg,
+  type LabelScalePct,
 } from "@/lib/production/label-printer-settings";
 
 export type StickerPdfSheet = "fabric-cuts" | "pieces" | "print-pack" | "test";
@@ -25,10 +27,16 @@ export type StickerPdfRequest = {
   codes?: string[];
   /** Label rotation in degrees (0/90/180/270). Defaults to saved printer setting. */
   rotationDeg?: LabelRotationDeg;
+  /** Content scale (100/125/150). Defaults to saved printer setting. */
+  scalePct?: LabelScalePct;
 };
 
 function resolveRotationDeg(request: StickerPdfRequest): LabelRotationDeg {
   return request.rotationDeg ?? readLabelRotation();
+}
+
+function resolveScalePct(request: StickerPdfRequest): LabelScalePct {
+  return request.scalePct ?? readLabelScalePct();
 }
 
 function buildStickerPdfUrl(request: StickerPdfRequest): string {
@@ -38,12 +46,14 @@ function buildStickerPdfUrl(request: StickerPdfRequest): string {
   if (poId) params.set("po_id", poId);
   if (codes && codes.length > 0) params.set("codes", codes.join(","));
   params.set("rotation", String(resolveRotationDeg(request)));
+  params.set("scale", String(resolveScalePct(request)));
   return `/api/sales-orders/${orderId}/stickers/pdf?${params.toString()}`;
 }
 
 async function fetchStickerPdf(request: StickerPdfRequest): Promise<Response> {
   const { orderId, sheet = "pieces", po, poId, codes } = request;
   const rotationDeg = resolveRotationDeg(request);
+  const scalePct = resolveScalePct(request);
   const url = `/api/sales-orders/${orderId}/stickers/pdf`;
 
   if (codes && codes.length > 0) {
@@ -56,6 +66,7 @@ async function fetchStickerPdf(request: StickerPdfRequest): Promise<Response> {
         po_id: poId ?? null,
         codes,
         rotation: rotationDeg,
+        scale: scalePct,
       }),
       cache: "no-store",
     });
