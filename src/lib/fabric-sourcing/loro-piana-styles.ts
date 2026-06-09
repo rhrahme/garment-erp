@@ -24,10 +24,19 @@ export function formatLoroPianaMillLineLabel(line: LoroPianaMillLine): string {
 export function normalizeLoroPianaFabricNumber(input: string): string {
   const trimmed = input.trim();
   const upper = trimmed.toUpperCase();
-  if (/^S\d+$/.test(upper)) return upper;
+  if (/^S\d+$/.test(upper)) return normalizeSolbiatiFabricNumber(upper);
   const withN = upper.match(/^N(\d+)$/);
   if (withN) return withN[1]!;
   return trimmed;
+}
+
+/** Solbiati linen codes are S + 5 digits (e.g. S25016). Correct common S250016-style typos. */
+export function normalizeSolbiatiFabricNumber(fabricNumber: string): string {
+  const upper = fabricNumber.trim().toUpperCase();
+  if (!/^S\d+$/.test(upper)) return upper;
+  const solbiatiTypo = upper.match(/^S(\d{2})0(\d{3})$/);
+  if (solbiatiTypo) return `S${solbiatiTypo[1]}${solbiatiTypo[2]}`;
+  return upper;
 }
 
 /**
@@ -43,7 +52,9 @@ export function expandLoroPianaFabricNumberCandidates(input: string): string[] {
   const out = new Set<string>([trimmed, upper]);
 
   if (/^S\d+$/.test(upper)) {
-    out.add(upper);
+    const normalized = normalizeSolbiatiFabricNumber(upper);
+    out.add(normalized);
+    if (normalized !== upper) out.add(upper);
     return [...out];
   }
 
@@ -86,7 +97,8 @@ export function resolveLoroPianaFabricInput(input: string): {
   const upper = trimmed.toUpperCase();
 
   if (/^S\d+$/i.test(trimmed)) {
-    return { candidates, preferredNumber: upper, millLine: "solbiati" };
+    const preferredNumber = normalizeSolbiatiFabricNumber(upper);
+    return { candidates, preferredNumber, millLine: "solbiati" };
   }
 
   // 5-digit shorthand without S → Solbiati (S23010). LP codes are 6 digits.
@@ -145,7 +157,7 @@ export function expandLoroPianaStyleQuery(query: string): string[] {
   if (!trimmed) return [];
 
   const upper = trimmed.toUpperCase();
-  if (/^S\d+$/i.test(trimmed)) return [upper];
+  if (/^S\d+$/i.test(trimmed)) return [normalizeSolbiatiFabricNumber(upper)];
 
   const solbiatiRange = upper.match(/^S(\d+)-S(\d+)$/);
   if (solbiatiRange) {

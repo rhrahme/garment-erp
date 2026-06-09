@@ -9,9 +9,9 @@
     "currency": "EUR"
   },
   "price_list_name": "SS26 Price List",
-  "imported_at": "2026-05-30T13:28:37.324Z",
+  "imported_at": "2026-06-09T12:27:34.661Z",
   "source_file": "PriceList_2852026_175306.pdf",
-  "fabric_count": 2596,
+  "fabric_count": 2597,
   "fabrics": [
     {
       "fabric_number": "645200",
@@ -41439,6 +41439,22 @@
     },
     {
       "fabric_number": "S25009",
+      "book_number": "782",
+      "collection": "AUSTRALIS JACKETS",
+      "composition": "STREET LINO ALOE NEW 100% LINEN",
+      "color": null,
+      "description": "AUSTRALIS JACKETS — STREET LINO ALOE NEW 100% LINEN",
+      "weight_gsm": 195,
+      "width_cm": 148,
+      "gn_code": "53091900",
+      "unit_price": 34.5,
+      "unit": "meters",
+      "currency": "EUR",
+      "is_active": true,
+      "category": "australis jackets"
+    },
+    {
+      "fabric_number": "S25016",
       "book_number": "782",
       "collection": "AUSTRALIS JACKETS",
       "composition": "STREET LINO ALOE NEW 100% LINEN",
