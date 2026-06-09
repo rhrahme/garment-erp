@@ -27,7 +27,7 @@ function formatWeight(weightGsm: number | null): string | null {
   return `${weightGsm} gsm`;
 }
 
-/** One 102 × 51 mm roll label — QR left, text right, thermal-readable sizes. */
+/** One 100 × 50 mm roll label — QR left, text right, thermal-readable sizes. */
 export function StickerCell({
   label,
   role,

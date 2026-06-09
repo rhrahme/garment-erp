@@ -59,8 +59,9 @@ export function LabelPrinterTest() {
         <p className="font-semibold text-slate-900">LabelLife / AIMO roll printing</p>
         <ol className="list-decimal space-y-2 pl-5">
           <li>
-            Set media / paper size to <strong>{labelPdfMediaMmLabel()}</strong> (
-            {labelPdfMediaLabel()}) in LabelLife or the AIMO driver.
+            Set media / paper size to <strong>{labelPdfMediaMmLabel()}</strong> ({labelRollSizeLabel()},{" "}
+            {labelPdfMediaLabel()}) in LabelLife or the AIMO driver — this matches the physical roll label
+            exactly.
           </li>
           <li>
             Each PDF page is <strong>exactly one label</strong> — the roll advances one page per physical

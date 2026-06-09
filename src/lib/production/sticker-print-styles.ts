@@ -11,7 +11,7 @@ import {
 } from "@/lib/production/label-print-config";
 import { STICKER_FONT } from "@/lib/production/sticker-typography";
 
-/** Shared @page + @media print rules for 102 × 51 mm thermal roll labels. */
+/** Shared @page + @media print rules for 100 × 50 mm thermal roll labels. */
 export function stickerPrintStyles(): string {
   const width = labelRollWidthCss();
   const height = labelRollHeightCss();

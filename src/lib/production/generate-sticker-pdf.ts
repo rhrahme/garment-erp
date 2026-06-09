@@ -172,7 +172,10 @@ function createStickerPdfDocument(rotation: LabelRotationDeg): jsPDF {
   const expected = labelPdfPageSizeMm(rotation);
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  if (pageW !== expected.width || pageH !== expected.height) {
+  // jsPDF stores points internally; the mm→pt→mm round-trip introduces sub-micron
+  // float error (e.g. 100 → 99.99999999999999), so compare with a tolerance.
+  const EPS_MM = 0.01;
+  if (Math.abs(pageW - expected.width) > EPS_MM || Math.abs(pageH - expected.height) > EPS_MM) {
     throw new Error(
       `Sticker PDF page must be ${expected.width}×${expected.height} mm at ${rotation}°, got ${pageW}×${pageH} mm.`
     );
@@ -279,7 +282,7 @@ export type StickerPdfOptions = {
   scalePct?: LabelScalePct;
 };
 
-/** Server-generated roll PDF — one label per page at exact roll size (102×51 mm at 0°). */
+/** Server-generated roll PDF — one label per page at exact roll size (100×50 mm at 0°). */
 export async function generateStickerRollPdf(
   entries: StickerPdfEntry[],
   options: StickerPdfOptions = {}

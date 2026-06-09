@@ -8,6 +8,7 @@ import { StickerCell } from "@/components/orders/StickerCell";
 import { useLabelRotation } from "@/hooks/useLabelRotation";
 import { useLabelScale } from "@/hooks/useLabelScale";
 import type { StickerPreviewItem } from "@/lib/production/sticker-print-selection";
+import { labelRollHeightCss, labelRollWidthCss } from "@/lib/production/label-print-config";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 
 type StickerPrintPreviewModalProps = {
@@ -60,7 +61,7 @@ function PreviewCard({
       <div className="overflow-hidden p-2">
         <div
           className="pointer-events-none origin-top-left scale-[0.42]"
-          style={{ width: "102mm", height: "51mm" }}
+          style={{ width: labelRollWidthCss(), height: labelRollHeightCss() }}
         >
           <StickerCell label={label} role={role} />
         </div>
