@@ -28,7 +28,8 @@ export function SalesOrderPrintToolbar({
   const { printWithMark } = useMarkFabricLinesPrinted(orderId);
   const lineCount = printLineIds.length;
   const hasLines = lineCount > 0;
-  const canPrintReceivingA4 = printKind === "a4" && (sheetLineCount ?? 0) > 0;
+  const canPrintReceivingA4 =
+    printKind === "a4" && (PRINTING_FREE ? (sheetLineCount ?? 0) > 0 : lineCount > 0);
   const canPrintProduction = printKind === "prod_stickers" && hasLines;
   const canPrintSheet =
     team === "full" || canPrintReceivingA4 || canPrintProduction || (PRINTING_FREE && Boolean(printKind) && hasLines);
@@ -37,7 +38,9 @@ export function SalesOrderPrintToolbar({
     PRINTING_FREE && printKind && hasLines
       ? `Testing mode — ${lineCount} line${lineCount === 1 ? "" : "s"}, reprint anytime`
       : team === "receiving" && canPrintReceivingA4
-        ? `Full order sheet (${sheetLineCount} lines)`
+        ? PRINTING_FREE
+          ? `Full order sheet (${sheetLineCount} lines)`
+          : `${lineCount} new line${lineCount === 1 ? "" : "s"} to print`
         : canPrintProduction
           ? `Print dialog covers ${lineCount} line${lineCount === 1 ? "" : "s"}`
           : team === "full"

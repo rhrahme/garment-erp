@@ -303,6 +303,10 @@ export default async function SalesOrderPrintPage({
               <p className="no-print mb-4 text-sm text-slate-500">
                 Full order sheet ({a4PrintLines.length} lines) — testing mode: reprint anytime.
               </p>
+            ) : a4PrintLines.length > 0 ? (
+              <p className="no-print mb-4 text-sm text-slate-500">
+                {a4PrintLines.length} new line{a4PrintLines.length === 1 ? "" : "s"} since last A4 print.
+              </p>
             ) : null}
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-700 print:mb-2">
               Fabric cut QR — receive / wash

@@ -105,12 +105,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       unprinted_line_ids: unprintedIds,
       po_sheets: sheets.map((poSheet) => {
         const fabricNumbers = new Set(poSheet.labels.map((label) => label.fabric_number));
+        const unprintedPrepIds = new Set(prepLines.map((line) => line.id));
+        const unprintedProdIds = new Set(prodLines.map((line) => line.id));
         const filtered =
           sheet === "fabric-cuts"
-            ? fabricCutLabels.filter((label) => fabricNumbers.has(label.fabric_number))
-            : poSheet.labels.filter((label) =>
-                prodLines.some((line) => line.fabric_number === label.fabric_number)
-              );
+            ? fabricCutLabels.filter(
+                (label) =>
+                  unprintedPrepIds.has(label.fabric_line_id) &&
+                  fabricNumbers.has(label.fabric_number)
+              )
+            : poSheet.labels.filter((label) => unprintedProdIds.has(label.fabric_line_id));
         return {
           ...poSheet,
           labels: mapLabels(filtered),

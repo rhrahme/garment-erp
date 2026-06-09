@@ -19,7 +19,7 @@ export function PrintPackToolbar({
   a4SheetLineCount: number;
 }) {
   const { printWithMark } = useMarkFabricLinesPrinted(orderId);
-  const canPrintA4 = a4SheetLineCount > 0;
+  const canPrintA4 = PRINTING_FREE ? a4SheetLineCount > 0 : a4LineIds.length > 0;
 
   return (
     <div className="no-print mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
@@ -30,8 +30,10 @@ export function PrintPackToolbar({
         {canPrintA4
           ? PRINTING_FREE
             ? `Full receiving A4 (${a4SheetLineCount} lines) — testing: reprint anytime, then sticker rolls below`
-            : `Full receiving A4 (${a4SheetLineCount} lines) — then sticker rolls below`
-          : "No fabric lines on this order"}
+            : `Receiving A4 (${a4LineIds.length} new line${a4LineIds.length === 1 ? "" : "s"}) — then sticker rolls below`
+          : a4SheetLineCount > 0
+            ? "All fabric lines already printed on A4 — add a new article or print sticker rolls below"
+            : "No fabric lines on this order"}
       </p>
       <Button
         onClick={() => printWithMark([{ kind: "a4", lineIds: a4LineIds }])}

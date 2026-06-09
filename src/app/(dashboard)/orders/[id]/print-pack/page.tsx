@@ -59,11 +59,22 @@ export default async function OrderPrintPackPage({ params }: { params: Promise<{
         <div className="no-print mb-4 rounded-lg border border-pink-200 bg-pink-50/50 px-4 py-3">
           <p className="font-semibold text-slate-900">Receiving team pack — A4 sheet</p>
           <p className="mt-1 text-sm text-slate-600">
-            Fabric cut codes with QR — match rolls to this sheet at receive. Full order sheet (
-            {a4PrintLines.length} line{a4PrintLines.length === 1 ? "" : "s"}).
-            {PRINTING_FREE
-              ? " Testing mode: reprint anytime. Sticker rolls below include all lines."
-              : " Print fabric cut roll stickers below (new lines only)."}
+            Fabric cut codes with QR — match rolls to this sheet at receive.
+            {PRINTING_FREE ? (
+              <>
+                {" "}
+                Full order sheet ({a4PrintLines.length} line{a4PrintLines.length === 1 ? "" : "s"}). Testing mode:
+                reprint anytime. Sticker rolls below include all lines.
+              </>
+            ) : a4PrintLines.length > 0 ? (
+              <>
+                {" "}
+                {a4PrintLines.length} new line{a4PrintLines.length === 1 ? "" : "s"} since last A4 print. Print
+                fabric cut roll stickers below (new lines only).
+              </>
+            ) : (
+              <> All lines already on A4 — add a new article to print more, or print sticker rolls below.</>
+            )}
           </p>
         </div>
 

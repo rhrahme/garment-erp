@@ -87,15 +87,20 @@ function labelsForSheet(
       ? mapLabels(buildFabricCutLabelsForSalesOrder(prepOrder, order), order)
       : mapLabels(buildLabelsForSalesOrder(prodOrder, order), order);
 
+  const unprintedPrepIds = new Set(prepLines.map((line) => line.id));
+  const unprintedProdIds = new Set(prodLines.map((line) => line.id));
+
   if (poSheets.length > 0 && (poNumber || poId)) {
     const filtered = poSheets.flatMap((poSheet) => {
       const fabricNumbers = new Set(poSheet.labels.map((label) => label.fabric_number));
       const labels =
         sheet === "fabric-cuts"
-          ? activeLabels.filter((label) => fabricNumbers.has(label.fabric_number))
-          : poSheet.labels.filter((label) =>
-              prodLines.some((line) => line.fabric_number === label.fabric_number)
-            );
+          ? activeLabels.filter(
+              (label) =>
+                unprintedPrepIds.has(label.fabric_line_id) &&
+                fabricNumbers.has(label.fabric_number)
+            )
+          : poSheet.labels.filter((label) => unprintedProdIds.has(label.fabric_line_id));
       return mapLabels(labels, order);
     });
     return filtered.map((label) => ({ label, role }));
@@ -106,10 +111,12 @@ function labelsForSheet(
       const fabricNumbers = new Set(poSheet.labels.map((label) => label.fabric_number));
       const labels =
         sheet === "fabric-cuts"
-          ? activeLabels.filter((label) => fabricNumbers.has(label.fabric_number))
-          : poSheet.labels.filter((label) =>
-              prodLines.some((line) => line.fabric_number === label.fabric_number)
-            );
+          ? activeLabels.filter(
+              (label) =>
+                unprintedPrepIds.has(label.fabric_line_id) &&
+                fabricNumbers.has(label.fabric_number)
+            )
+          : poSheet.labels.filter((label) => unprintedProdIds.has(label.fabric_line_id));
       return mapLabels(labels, order).map((label) => ({ label, role }));
     });
   }

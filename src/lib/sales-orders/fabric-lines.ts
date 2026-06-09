@@ -64,9 +64,10 @@ export function getFabricLineIdsForPrint(
   return linesNeedingPrint(order.fabric_lines, kind).map((line) => line.id);
 }
 
-/** A4 receiving sheet lists every fabric line — full reprint is OK at the desk. */
+/** A4 receiving sheet — all lines when PRINTING_FREE, else unprinted only. */
 export function getFabricLinesForA4Print(lines: SalesOrderFabricLine[]): SalesOrderFabricLine[] {
-  return lines;
+  if (PRINTING_FREE) return lines;
+  return linesNeedingPrint(lines, "a4");
 }
 
 /** Multi-piece garments need separate production piece stickers at cutting. */
