@@ -27,7 +27,7 @@ function formatWeight(weightGsm: number | null): string | null {
   return `${weightGsm} gsm`;
 }
 
-/** One 100 × 50 mm roll label — QR left, text right, thermal-readable sizes. */
+/** One 50 × 100 mm portrait roll label — QR on top, horizontal text below. */
 export function StickerCell({
   label,
   role,
@@ -60,8 +60,8 @@ export function StickerCell({
         boxSizing: "border-box",
         padding: `${LABEL_STICKER_PADDING_V_MM}mm ${LABEL_STICKER_PADDING_H_MM}mm`,
         display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
+        flexDirection: "column",
+        alignItems: "stretch",
         overflow: "hidden",
       }}
     >
@@ -76,6 +76,7 @@ export function StickerCell({
           height: `${LABEL_STICKER_QR_SIZE_MM}mm`,
           flexShrink: 0,
           display: "block",
+          alignSelf: "center",
         }}
       />
 
@@ -84,10 +85,10 @@ export function StickerCell({
         style={{
           flex: 1,
           minWidth: 0,
-          marginLeft: `${LABEL_STICKER_COLUMN_GAP_MM}mm`,
+          marginTop: `${LABEL_STICKER_COLUMN_GAP_MM}mm`,
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
+          justifyContent: "flex-start",
           gap: `${LABEL_STICKER_LINE_GAP_MM}mm`,
         }}
       >

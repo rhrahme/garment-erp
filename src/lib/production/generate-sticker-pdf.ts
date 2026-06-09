@@ -31,8 +31,15 @@ import {
 
 const STICKER_RGB = { r: 42, g: 42, b: 42 };
 const LINE_HEIGHT_FACTOR = 1.15;
-const LAYOUT_W = LABEL_ROLL_WIDTH_MM;
-const LAYOUT_H = LABEL_ROLL_HEIGHT_MM;
+
+/**
+ * Canonical design space = the UPRIGHT portrait label: 50 mm wide × 100 mm tall.
+ * QR on top, horizontal text stacked below. Rotation 0° draws this directly
+ * (identity mapping — no per-element rotation, no CTM tricks). 90°/180°/270°
+ * rotate the same design onto the matching page for feed-direction edge cases.
+ */
+const DESIGN_W = LABEL_ROLL_WIDTH_MM; // 50
+const DESIGN_H = LABEL_ROLL_HEIGHT_MM; // 100
 
 /** jsPDF font size is in pt; sticker layout uses mm. */
 function mmToPt(mm: number): number {
@@ -59,6 +66,7 @@ function fitText(doc: jsPDF, text: string, maxWidth: number): string {
   return `${trimmed}…`;
 }
 
+/** Map a point from upright portrait design space onto the rotated page. */
 function mapLayoutPoint(
   x: number,
   y: number,
@@ -68,14 +76,15 @@ function mapLayoutPoint(
     case 0:
       return { x, y };
     case 90:
-      return { x: y, y: LAYOUT_W - x };
+      return { x: DESIGN_H - y, y: x };
     case 180:
-      return { x: LAYOUT_W - x, y: LAYOUT_H - y };
+      return { x: DESIGN_W - x, y: DESIGN_H - y };
     case 270:
-      return { x: LAYOUT_H - y, y: x };
+      return { x: y, y: DESIGN_W - x };
   }
 }
 
+/** Map an upright design-space rectangle (top-left + size) onto the rotated page. */
 function mapLayoutImageRect(
   x: number,
   y: number,
@@ -87,11 +96,11 @@ function mapLayoutImageRect(
     case 0:
       return { x, y, w, h };
     case 90:
-      return { x: y, y: LAYOUT_W - x - w, w: h, h: w };
+      return { x: DESIGN_H - y - h, y: x, w: h, h: w };
     case 180:
-      return { x: LAYOUT_W - x - w, y: LAYOUT_H - y - h, w, h };
+      return { x: DESIGN_W - x - w, y: DESIGN_H - y - h, w, h };
     case 270:
-      return { x: LAYOUT_H - y - h, y: x, w: h, h: w };
+      return { x: y, y: DESIGN_W - x - w, w: h, h: w };
   }
 }
 
@@ -127,27 +136,14 @@ function drawStickerText(
   layoutX: number,
   layoutY: number,
   rotation: LabelRotationDeg,
-  options: { align?: "left" | "right" | "center"; maxWidth?: number } = {}
+  options: { align?: "left" | "right" | "center" } = {}
 ): void {
   const { x, y } = mapLayoutPoint(layoutX, layoutY, rotation);
   doc.text(text, x, y, {
     align: options.align ?? "left",
     baseline: "middle",
     angle: textAngleForRotation(rotation),
-    maxWidth: options.maxWidth,
   });
-}
-
-function drawLeftLine(
-  doc: jsPDF,
-  text: string,
-  x: number,
-  y: number,
-  maxWidth: number,
-  rotation: LabelRotationDeg
-): void {
-  const line = fitText(doc, text, maxWidth);
-  drawStickerText(doc, line, x, y, rotation);
 }
 
 function formatWeight(weightGsm: number | null): string | null {
@@ -162,22 +158,22 @@ function pieceLabel(label: PrintableStickerLabel): string {
 }
 
 function createStickerPdfDocument(rotation: LabelRotationDeg): jsPDF {
+  const pageSize = labelPdfPageSizeMm(rotation);
   const doc = new jsPDF({
     unit: "mm",
-    format: [LAYOUT_W, LAYOUT_H],
+    format: [pageSize.width, pageSize.height],
     orientation: labelPdfOrientation(rotation),
     compress: true,
   });
 
-  const expected = labelPdfPageSizeMm(rotation);
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   // jsPDF stores points internally; the mm→pt→mm round-trip introduces sub-micron
   // float error (e.g. 100 → 99.99999999999999), so compare with a tolerance.
   const EPS_MM = 0.01;
-  if (Math.abs(pageW - expected.width) > EPS_MM || Math.abs(pageH - expected.height) > EPS_MM) {
+  if (Math.abs(pageW - pageSize.width) > EPS_MM || Math.abs(pageH - pageSize.height) > EPS_MM) {
     throw new Error(
-      `Sticker PDF page must be ${expected.width}×${expected.height} mm at ${rotation}°, got ${pageW}×${pageH} mm.`
+      `Sticker PDF page must be ${pageSize.width}×${pageSize.height} mm at ${rotation}°, got ${pageW}×${pageH} mm.`
     );
   }
 
@@ -192,19 +188,15 @@ async function drawStickerPage(
   rotation: LabelRotationDeg,
   scalePct: LabelScalePct
 ): Promise<void> {
-  const pageW = LAYOUT_W;
-  const pageH = LAYOUT_H;
   const scale = labelScaleMultiplier(scalePct);
   const padH = LABEL_STICKER_PADDING_H_MM;
   const padV = LABEL_STICKER_PADDING_V_MM;
-  const contentW = pageW - padH * 2;
-  const contentH = pageH - padV * 2;
-  const qrSize = LABEL_STICKER_QR_SIZE_MM * scale;
-  const columnGap = LABEL_STICKER_COLUMN_GAP_MM * scale;
-  const textX = padH + qrSize + columnGap;
-  const textW = Math.max(contentW - qrSize - columnGap, 8);
-  const qrX = padH;
-  const qrY = padV + Math.max(0, (contentH - qrSize) / 2);
+  const contentW = DESIGN_W - padH * 2;
+
+  // --- QR: top, centred horizontally, fills (most of) the 50 mm width ---
+  const qrSize = Math.min(LABEL_STICKER_QR_SIZE_MM * scale, contentW);
+  const qrX = padH + Math.max(0, (contentW - qrSize) / 2);
+  const qrY = padV;
 
   doc.setTextColor(STICKER_RGB.r, STICKER_RGB.g, STICKER_RGB.b);
   doc.setFont("helvetica", "normal");
@@ -247,27 +239,26 @@ async function drawStickerPage(
     imageRotationForLayout(rotation)
   );
 
+  // --- Text block: horizontal lines stacked below the QR, read left-to-right ---
   const gap = LABEL_STICKER_LINE_GAP_MM * scale;
-  const headerH = lineHeightMm(headerFontMm);
-  const bodyH =
-    headerH +
-    gap +
-    lines.reduce((sum, line) => sum + lineHeightMm(line.fontMm) + gap, 0) -
-    gap;
-  let y = padV + (contentH - bodyH) / 2 + headerH / 2;
+  const textX = padH;
+  let y = qrY + qrSize + LABEL_STICKER_COLUMN_GAP_MM * scale;
 
+  const headerH = lineHeightMm(headerFontMm);
+  y += headerH / 2;
   doc.setFontSize(mmToPt(headerFontMm));
   drawStickerText(doc, STICKER_ROLE_LABEL[stickerRole], textX, y, rotation, { align: "left" });
   if (batchMark) {
-    drawStickerText(doc, batchMark, textX + textW, y, rotation, { align: "right" });
+    drawStickerText(doc, batchMark, padH + contentW, y, rotation, { align: "right" });
   }
-
   y += headerH / 2 + gap;
+
   for (const line of lines) {
     const lineH = lineHeightMm(line.fontMm);
     y += lineH / 2;
     doc.setFontSize(mmToPt(line.fontMm));
-    drawLeftLine(doc, line.text, textX, y, textW, rotation);
+    const fitted = fitText(doc, line.text, contentW);
+    drawStickerText(doc, fitted, textX, y, rotation, { align: "left" });
     y += lineH / 2 + gap;
   }
 }
@@ -282,7 +273,7 @@ export type StickerPdfOptions = {
   scalePct?: LabelScalePct;
 };
 
-/** Server-generated roll PDF — one label per page at exact roll size (100×50 mm at 0°). */
+/** Server-generated roll PDF — one label per page, 50×100 mm portrait upright at 0°. */
 export async function generateStickerRollPdf(
   entries: StickerPdfEntry[],
   options: StickerPdfOptions = {}

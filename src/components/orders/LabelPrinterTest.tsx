@@ -44,7 +44,10 @@ export function LabelPrinterTest() {
   const pageSize = labelPdfPageSizeMm(rotation);
   const orientation = labelPdfOrientation(rotation);
   const mediaLabel = `${pageSize.width} × ${pageSize.height} mm ${orientation}`;
-  const altLabel = orientation === "landscape" ? "50 × 100 mm portrait (rotation 90°)" : "100 × 50 mm landscape (rotation 0°)";
+  const altLabel =
+    orientation === "portrait"
+      ? "100 × 50 mm landscape (rotation 90°)"
+      : "50 × 100 mm portrait (rotation 0°)";
 
   const handlePrint = useCallback(() => {
     requestPrint({ orderId: "test", sheet: "test", rotationDeg: rotation, scalePct });
@@ -62,42 +65,52 @@ export function LabelPrinterTest() {
       </div>
 
       <div className="no-print mb-6 space-y-3 rounded-xl border border-indigo-200 bg-indigo-50/60 px-4 py-4 text-sm text-slate-700">
-        <p className="font-semibold text-slate-900">LabelLife / AIMO roll printing</p>
+        <p className="font-semibold text-slate-900">LabelLife / AIMO roll printing (portrait 50×100)</p>
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900">
-          <p className="font-semibold">The driver media MUST match the PDF page size exactly.</p>
-          <p className="mt-1">
-            At the current rotation the PDF page is <strong>{mediaLabel}</strong>. Set the AIMO / LabelLife
-            media to <strong>exactly {mediaLabel}</strong> — same width, same height, same orientation.
+          <p className="font-semibold">
+            Default = portrait upright: QR on top, text below. Use these exact print-dialog settings.
           </p>
+          <ul className="mt-1 list-disc space-y-0.5 pl-5">
+            <li>
+              Media / paper: <strong>50 × 100 mm portrait</strong> (the driver preset{" "}
+              <strong>“51 × 102 mm portrait”</strong> is correct — don’t fight it).
+            </li>
+            <li>
+              Scale: <strong>100%</strong> — turn <strong>OFF “Fit to paper” / “Shrink oversized”</strong>.
+              This is the #1 cause of sideways/vertical text.
+            </li>
+            <li>
+              Margins: <strong>None</strong>. Headers &amp; footers: <strong>OFF</strong>.
+            </li>
+          </ul>
           <p className="mt-1">
-            If labels still print sideways or drift / get truncated across the roll, the driver media is the
-            other way round: switch rotation so the PDF becomes <strong>{altLabel}</strong> and set the driver
-            media to match that instead.
+            At the current rotation the PDF page is <strong>{mediaLabel}</strong>. Only switch rotation (to{" "}
+            <strong>{altLabel}</strong>) if your printer genuinely feeds the long edge first.
           </p>
         </div>
         <ol className="list-decimal space-y-2 pl-5">
           <li>
-            Physical roll label is <strong>{labelRollSizeLabel()}</strong> (100×50 mm). The roll advances{" "}
-            <strong>one label at a time</strong>; each PDF page is <strong>exactly one label</strong>. Never
-            use multi-label or “N-up” templates.
+            Physical roll label is <strong>{labelRollSizeLabel()}</strong> (50×100 mm portrait — the 50 mm
+            edge crosses the print head). The roll advances <strong>one label at a time</strong>; each PDF page
+            is <strong>exactly one label</strong>. Never use multi-label or “N-up” templates.
           </li>
           <li>
-            Pick the rotation that matches how your printer feeds: <strong>0° (100×50 landscape)</strong> if
-            the long 100 mm edge runs across the print head, or <strong>90° (50×100 portrait)</strong> if the
-            short 50 mm edge feeds first. Set the driver media to the matching size shown above.
+            Keep rotation on <strong>0° (portrait upright, 50×100)</strong> — QR on top, horizontal text below,
+            read top-to-bottom without turning the label. This is the default for the AIMO / Phomemo 50 mm
+            head.
           </li>
           <li>
-            In the print dialog: <strong>Scale 100%</strong> (not “Fit to page” or “Shrink oversized”),{" "}
-            <strong>Margins: None</strong>, paper <strong>{mediaLabel}</strong>.
+            In the print dialog: <strong>Scale 100%</strong> (NOT “Fit to paper”), <strong>Margins: None</strong>
+            , paper <strong>{mediaLabel}</strong>.
           </li>
           <li>
             Click <strong>Print test labels</strong> — you should get <strong>2 labels</strong> (S10008, then
-            S10009), each centred and the same on every label (no drift). If content looks too small, try
-            Medium (125%) or Large (150%).
+            S10009), each centred and identical (no drift). If content looks too small, try Medium (125%) or
+            Large (150%).
           </li>
           <li>
-            If content is upside down, use <strong>180°</strong> (landscape) or <strong>270°</strong>{" "}
-            (portrait) — same media size, flipped.
+            If content prints upside down, use <strong>180°</strong> (portrait flipped). Use{" "}
+            <strong>90° / 270°</strong> (landscape 100×50) only for the long-edge-feed edge case.
           </li>
           <li>Select your thermal printer (not “Save as PDF” unless checking layout only).</li>
           <li>Scan the QR with Fabric Receiving — it should read <code className="font-mono">L01-SHT</code>.</li>

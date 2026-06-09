@@ -3,13 +3,20 @@ import {
   LABEL_ROLL_WIDTH_MM,
 } from "@/lib/production/label-print-config";
 
-/** Clockwise rotation applied to roll layout when generating the PDF. */
+/**
+ * Clockwise rotation applied to the UPRIGHT portrait layout when generating the PDF.
+ * The canonical design is a 50×100 mm portrait label: QR on top, text stacked below.
+ *   - 0°   = portrait upright   (50×100 page)  ← DEFAULT, no rotation / no CTM tricks
+ *   - 180° = portrait flipped   (50×100 page)  — same content, fed upside down
+ *   - 90°  = landscape          (100×50 page)  — content rotated, feed-direction edge case
+ *   - 270° = landscape flipped  (100×50 page)
+ */
 export type LabelRotationDeg = 0 | 90 | 180 | 270;
 
 export const LABEL_ROTATION_STORAGE_KEY = "label-printer:rotation-deg";
 export const LABEL_SCALE_STORAGE_KEY = "label-printer:scale-pct";
 
-/** 100×50 mm landscape PDF — QR left, text horizontal, no coordinate remapping. */
+/** 50×100 mm portrait PDF — QR on top, horizontal text below, drawn upright. */
 export const DEFAULT_LABEL_ROTATION: LabelRotationDeg = 0;
 
 /** Content scale multiplier for thermal drivers that shrink PDFs to fit. */
@@ -72,27 +79,27 @@ export const LABEL_ROTATION_OPTIONS: ReadonlyArray<{
 }> = [
   {
     value: 0,
-    label: "0° — landscape (100×50)",
+    label: "0° — portrait upright (50×100)",
     description:
-      "PDF page = 100×50 mm landscape, one label per page. Set the driver media to EXACTLY 100×50 mm landscape. Use when the printer feeds the 100 mm (long) edge across the head.",
-  },
-  {
-    value: 90,
-    label: "90° — portrait (50×100)",
-    description:
-      "PDF page = 50×100 mm portrait, content rotated 90°. Set the driver media to EXACTLY 50×100 mm portrait. Use when the printer feeds the 50 mm (short) edge first — fixes content that prints sideways and drifts across labels at 0°.",
+      "DEFAULT. PDF page = 50×100 mm portrait — QR on top, horizontal text below, drawn upright. Set the driver media to 50×100 mm (≈51×102) portrait, Scale 100% (NOT fit to paper), margins none. Use for the AIMO / Phomemo 50 mm head.",
   },
   {
     value: 180,
-    label: "180° — landscape flipped (100×50)",
+    label: "180° — portrait flipped (50×100)",
     description:
-      "PDF page = 100×50 mm landscape rotated 180°. Driver media stays 100×50 mm landscape. Use when 0° is otherwise correct but the label feeds in upside down.",
+      "PDF page = 50×100 mm portrait, the upright layout rotated 180°. Driver media stays 50×100 mm portrait. Use when 0° is correct but the label feeds in upside down.",
+  },
+  {
+    value: 90,
+    label: "90° — landscape (100×50)",
+    description:
+      "EDGE CASE. PDF page = 100×50 mm landscape, the portrait layout rotated 90°. Set the driver media to 100×50 mm landscape. Only use if your printer truly feeds the long 100 mm edge across the head.",
   },
   {
     value: 270,
-    label: "270° — portrait flipped (50×100)",
+    label: "270° — landscape flipped (100×50)",
     description:
-      "PDF page = 50×100 mm portrait, content rotated the opposite way from 90°. Driver media stays 50×100 mm portrait. Try when 90° reads upside down.",
+      "PDF page = 100×50 mm landscape, rotated the opposite way from 90°. Driver media stays 100×50 mm landscape. Try when 90° reads upside down.",
   },
 ] as const;
 
@@ -119,6 +126,8 @@ export function writeLabelRotation(rotation: LabelRotationDeg): void {
 }
 
 export function labelPdfPageSizeMm(rotation: LabelRotationDeg): { width: number; height: number } {
+  // 0°/180° keep the portrait design upright (50×100). 90°/270° rotate it onto a
+  // landscape page (100×50) for the long-edge feed edge case.
   if (rotation === 90 || rotation === 270) {
     return { width: LABEL_ROLL_HEIGHT_MM, height: LABEL_ROLL_WIDTH_MM };
   }
@@ -126,5 +135,5 @@ export function labelPdfPageSizeMm(rotation: LabelRotationDeg): { width: number;
 }
 
 export function labelPdfOrientation(rotation: LabelRotationDeg): "portrait" | "landscape" {
-  return rotation === 90 || rotation === 270 ? "portrait" : "landscape";
+  return rotation === 90 || rotation === 270 ? "landscape" : "portrait";
 }

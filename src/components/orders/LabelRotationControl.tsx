@@ -75,9 +75,9 @@ export function LabelPrinterSettingsControl({
 
       {!compact ? (
         <p className="text-xs text-slate-500">
-          Default rotation is {DEFAULT_LABEL_ROTATION}° and size is {DEFAULT_LABEL_SCALE_PCT}%. Print a test
-          label, then adjust rotation until QR and text read correctly, and size until content fills your{" "}
-          {`100×50 mm`} roll.
+          Default rotation is {DEFAULT_LABEL_ROTATION}° (portrait upright — QR on top, text below) and size is{" "}
+          {DEFAULT_LABEL_SCALE_PCT}%. Print a test label, then adjust rotation only if QR and text read
+          sideways, and size until content fills your {`50×100 mm`} portrait roll.
         </p>
       ) : null}
     </div>

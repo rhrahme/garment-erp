@@ -82,7 +82,7 @@ function pdfFilename(orderId: string, sheet: StickerPdfSheet): string {
 
 /**
  * Fetch server-generated roll PDF and open the system print dialog.
- * PDF pages use the saved label rotation (default 0° — 100×50 mm landscape, one label per page).
+ * PDF pages use the saved label rotation (default 0° — 50×100 mm portrait upright, one label per page).
  */
 export async function printStickerPdf(
   request: StickerPdfRequest,

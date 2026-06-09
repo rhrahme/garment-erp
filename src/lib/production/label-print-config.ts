@@ -1,42 +1,48 @@
 /**
- * Thermal roll label size for piece / fabric-cut stickers (AIMO + LabelLife).
- * Physical roll label: 100 mm wide × 50 mm tall = 10×5 cm (landscape on the roll).
+ * Thermal roll label size for piece / fabric-cut stickers (AIMO / Phomemo "D550").
+ *
+ * BREAKTHROUGH (geometry): the print head is 2 inch / 50 mm wide. The physical
+ * label is 50 mm wide × 100 mm long, PORTRAIT — the 50 mm edge runs across the
+ * head, the 100 mm runs along the feed. The driver media preset "51 × 102 mm
+ * portrait" is therefore CORRECT. Content is drawn UPRIGHT on a portrait page:
+ * QR on top, horizontal text stacked below (read top-to-bottom, no turning).
  */
-export const LABEL_ROLL_WIDTH_MM = 100;
-export const LABEL_ROLL_HEIGHT_MM = 50;
+export const LABEL_ROLL_WIDTH_MM = 50;
+export const LABEL_ROLL_HEIGHT_MM = 100;
 
 /**
  * PDF convention for LabelLife / AIMO roll printing:
  * - One physical label = one PDF page (never stack multiple labels on one page).
- * - MediaBox matches the roll exactly: 100×50 mm landscape (width × height).
- * - Print at 100% scale, margins none, do not “fit to page”.
- * Override rotation in printer settings only if content prints sideways or inverted.
+ * - MediaBox matches the roll exactly: 50×100 mm portrait (width × height).
+ * - Print at 100% scale, margins none, do NOT "fit to paper".
+ * Use the rotation setting only for feed-direction edge cases.
  */
 export const LABEL_PDF_FORMAT_MM = [LABEL_ROLL_WIDTH_MM, LABEL_ROLL_HEIGHT_MM] as const;
-export const LABEL_PDF_ORIENTATION = "landscape" as const;
+export const LABEL_PDF_ORIENTATION = "portrait" as const;
 export const LABEL_PDF_PAGE_WIDTH_MM = LABEL_ROLL_WIDTH_MM;
 export const LABEL_PDF_PAGE_HEIGHT_MM = LABEL_ROLL_HEIGHT_MM;
 
-/** QR square on the left — ~46 mm fills 100×50 mm with 1 mm margins. */
-export const LABEL_STICKER_QR_SIZE_MM = 46;
+/** QR square on top — ~44 mm fills the 50 mm width with ~3 mm side margins. */
+export const LABEL_STICKER_QR_SIZE_MM = 44;
 
-export const LABEL_STICKER_PADDING_H_MM = 1;
-export const LABEL_STICKER_PADDING_V_MM = 1;
-export const LABEL_STICKER_COLUMN_GAP_MM = 2;
-export const LABEL_STICKER_BATCH_GAP_MM = 6;
-export const LABEL_STICKER_LINE_GAP_MM = 0.35;
+export const LABEL_STICKER_PADDING_H_MM = 2;
+export const LABEL_STICKER_PADDING_V_MM = 2;
+/** Vertical gap between the QR block and the text block below it. */
+export const LABEL_STICKER_COLUMN_GAP_MM = 2.5;
+export const LABEL_STICKER_BATCH_GAP_MM = 4;
+export const LABEL_STICKER_LINE_GAP_MM = 0.6;
 
-/** Thermal-readable font sizes (mm cap height) for 100×50 mm roll labels. */
+/** Thermal-readable font sizes (mm cap height) for the 50×100 mm portrait label. */
 export const LABEL_STICKER_FONT_MM = {
-  header: 3.5,
-  clientCode: 4.5,
-  clientName: 4.2,
-  productionCode: 4.1,
-  fabric: 4.0,
-  cutLength: 4.8,
-  labels: 4.0,
-  spec: 3.8,
-  piece: 4.0,
+  header: 3.4,
+  clientCode: 4.4,
+  clientName: 4.0,
+  productionCode: 4.0,
+  fabric: 3.8,
+  cutLength: 4.6,
+  labels: 3.8,
+  spec: 3.4,
+  piece: 3.8,
 } as const;
 
 export function labelRollSizeCss(): string {
@@ -61,7 +67,7 @@ export function labelRollSizeMmLabel(): string {
 
 /** Driver / LabelLife media setting (matches PDF MediaBox). */
 export function labelPdfMediaLabel(): string {
-  return `${LABEL_PDF_PAGE_WIDTH_MM} × ${LABEL_PDF_PAGE_HEIGHT_MM} mm landscape`;
+  return `${LABEL_PDF_PAGE_WIDTH_MM} × ${LABEL_PDF_PAGE_HEIGHT_MM} mm portrait`;
 }
 
 export function labelPdfMediaMmLabel(): string {
