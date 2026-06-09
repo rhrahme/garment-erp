@@ -14,6 +14,7 @@
  *   node scripts/download-drapers-fabric-images.mjs --codes 10101,90640,85119
  *   node scripts/download-drapers-fabric-images.mjs --by-collection --best --limit 20
  *   node scripts/download-drapers-fabric-images.mjs --by-collection --best --all
+ *   node scripts/download-drapers-fabric-images.mjs --retry-failed --by-collection --best --delay-ms 500
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
@@ -48,7 +49,9 @@ function parseArgs(argv) {
     out: null,
     codes: null,
     delayMs: 200,
+    delayMsExplicit: false,
     byCollection: false,
+    retryFailed: false,
   };
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
@@ -57,10 +60,13 @@ function parseArgs(argv) {
     else if (arg === "--quality" && argv[i + 1]) args.quality = argv[++i];
     else if (arg === "--best") args.quality = "best";
     else if (arg === "--by-collection") args.byCollection = true;
+    else if (arg === "--retry-failed") args.retryFailed = true;
     else if (arg === "--out" && argv[i + 1]) args.out = resolve(ROOT, argv[++i]);
     else if (arg === "--codes" && argv[i + 1]) args.codes = argv[++i].split(/[,\s]+/).filter(Boolean);
-    else if (arg === "--delay-ms" && argv[i + 1]) args.delayMs = Number.parseInt(argv[++i], 10);
-    else if (arg === "--help" || arg === "-h") {
+    else if (arg === "--delay-ms" && argv[i + 1]) {
+      args.delayMs = Number.parseInt(argv[++i], 10);
+      args.delayMsExplicit = true;
+    } else if (arg === "--help" || arg === "-h") {
       console.log(`Usage: node scripts/download-drapers-fabric-images.mjs [options]
 
 Options:
@@ -71,12 +77,19 @@ Options:
   --by-collection Organize into {collection-slug}/{fabric_number}.jpg under images-by-collection/
   --out DIR       Output directory (default: images/, images-higher/, or images-by-collection/)
   --codes A,B,C   Specific fabric numbers instead of catalog order
-  --delay-ms N    Pause between API calls (default: 200)
+  --delay-ms N    Pause between API calls (default: 200; 500 when --retry-failed)
+  --retry-failed  Re-download only failed/missing items from existing manifest.json
 `);
       process.exit(0);
     }
   }
-  if (args.byCollection) {
+  if (args.retryFailed) {
+    args.all = true;
+    args.byCollection = true;
+    args.quality = "best";
+    if (!args.out) args.out = BY_COLLECTION_OUT;
+    if (!args.delayMsExplicit) args.delayMs = 500;
+  } else if (args.byCollection) {
     args.quality = "best";
     if (!args.out) args.out = BY_COLLECTION_OUT;
   } else if (!args.out) {
@@ -267,24 +280,86 @@ function loadCatalogFabrics(codesArg) {
   return fabrics;
 }
 
+function manifestItemFileExists(outDir, item) {
+  if (!item.ok || !item.filename) return false;
+  return existsSync(resolve(outDir, item.filename));
+}
+
+function loadRetryTargets(outDir) {
+  const manifestPath = resolve(outDir, "manifest.json");
+  if (!existsSync(manifestPath)) {
+    throw new Error(`Manifest not found: ${manifestPath}`);
+  }
+  const existing = JSON.parse(readFileSync(manifestPath, "utf8"));
+  const preservedItems = [];
+  const retryTargets = [];
+
+  for (const item of existing.items ?? []) {
+    if (manifestItemFileExists(outDir, item)) {
+      preservedItems.push(item);
+    } else {
+      retryTargets.push({
+        fabric_number: item.fabric_number,
+        collection: item.collection ?? null,
+      });
+    }
+  }
+
+  return { existing, preservedItems, retryTargets };
+}
+
+function rebuildManifestCollections(items, byCollection) {
+  const collections = {};
+  if (!byCollection) return collections;
+  for (const item of items) {
+    const slug = item.collection_slug ?? collectionSlug(item.collection);
+    if (!collections[slug]) collections[slug] = { ok: 0, failed: 0, skipped: 0 };
+    collections[slug][item.ok ? "ok" : "failed"] += 1;
+  }
+  return collections;
+}
+
 loadEnvLocal();
 const args = parseArgs(process.argv);
 
-if (!existsSync(CATALOG_PATH) && !args.codes) {
+if (!args.retryFailed && !existsSync(CATALOG_PATH) && !args.codes) {
   console.error(`Catalog not found: ${CATALOG_PATH}`);
   process.exit(1);
 }
 
 mkdirSync(args.out, { recursive: true });
 
-const allFabrics = loadCatalogFabrics(args.codes);
-const targets = args.all ? allFabrics : allFabrics.slice(0, args.limit);
+let preservedItems = [];
+let existingManifest = null;
+let targets;
+
+if (args.retryFailed) {
+  try {
+    const retryState = loadRetryTargets(args.out);
+    existingManifest = retryState.existing;
+    preservedItems = retryState.preservedItems;
+    targets = retryState.retryTargets;
+  } catch (err) {
+    console.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
+} else {
+  const allFabrics = loadCatalogFabrics(args.codes);
+  targets = args.all ? allFabrics : allFabrics.slice(0, args.limit);
+}
 
 console.log(`Drapers fabric image download`);
-console.log(`  Catalog: ${CATALOG_PATH} (${allFabrics.length} fabrics)`);
+if (args.retryFailed) {
+  console.log(`  Mode:    retry-failed (${preservedItems.length} preserved, ${targets.length} to retry)`);
+} else {
+  console.log(`  Catalog: ${CATALOG_PATH} (${targets.length}${args.all ? "" : ` of ${loadCatalogFabrics(args.codes).length}`} fabrics)`);
+}
 console.log(`  Output:  ${args.out}`);
 console.log(`  Quality: ${args.quality}${args.byCollection ? " (by-collection mode)" : ""}`);
-console.log(`  Limit:   ${args.all ? "all" : targets.length} fabric(s)\n`);
+console.log(`  Delay:   ${args.delayMs}ms`);
+console.log(
+  `  Limit:   ${args.retryFailed ? `${targets.length} retry target(s)` : args.all ? "all" : targets.length} fabric(s)\n`,
+);
 
 const originalManifestPath = resolve(ROOT, "data/suppliers/drapers/images/manifest.json");
 const originalByFabric = new Map();
@@ -303,18 +378,36 @@ const manifest = {
   output_root: args.out.replace(`${ROOT}/`, "").replace(/\\/g, "/"),
   by_collection: args.byCollection,
   compare_against: existsSync(originalManifestPath) ? "data/suppliers/drapers/images/manifest.json" : null,
+  retry_failed: args.retryFailed || undefined,
   items: [],
   collections: {},
 };
 
 let okCount = 0;
 let failCount = 0;
+let newlyDownloaded = 0;
+const retriedByFabric = new Map();
 
 function bumpCollectionCount(slug, field) {
   if (!manifest.collections[slug]) {
     manifest.collections[slug] = { ok: 0, failed: 0, skipped: 0 };
   }
   manifest.collections[slug][field] += 1;
+}
+
+function recordFailedItem(fabricNumber, fabric, slug, error) {
+  const item = {
+    fabric_number: fabricNumber,
+    collection: fabric.collection,
+    collection_slug: slug,
+    ok: false,
+    error,
+  };
+  manifest.items.push(item);
+  retriedByFabric.set(fabricNumber, item);
+  if (args.byCollection) bumpCollectionCount(slug, "failed");
+  failCount += 1;
+  return item;
 }
 
 for (const fabric of targets) {
@@ -326,15 +419,7 @@ for (const fabric of targets) {
     const result = await lookupMedias(fabricNumber);
     if (!result.ok) {
       console.log(`SKIP (${result.error})`);
-      manifest.items.push({
-        fabric_number: fabricNumber,
-        collection: fabric.collection,
-        collection_slug: slug,
-        ok: false,
-        error: result.error,
-      });
-      if (args.byCollection) bumpCollectionCount(slug, "failed");
-      failCount += 1;
+      recordFailedItem(fabricNumber, fabric, slug, result.error);
       await sleep(args.delayMs);
       continue;
     }
@@ -350,15 +435,7 @@ for (const fabric of targets) {
       const result_best = await compareMediaCandidates(result.medias);
       if (!result_best) {
         console.log("SKIP (no downloadable image)");
-        manifest.items.push({
-          fabric_number: fabricNumber,
-          collection: fabric.collection,
-          collection_slug: slug,
-          ok: false,
-          error: "no downloadable image",
-        });
-        if (args.byCollection) bumpCollectionCount(slug, "failed");
-        failCount += 1;
+        recordFailedItem(fabricNumber, fabric, slug, "no downloadable image");
         await sleep(args.delayMs);
         continue;
       }
@@ -373,15 +450,7 @@ for (const fabric of targets) {
       picked = pickImageUrl(result.medias, args.quality);
       if (!picked) {
         console.log("SKIP (no image URL)");
-        manifest.items.push({
-          fabric_number: fabricNumber,
-          collection: fabric.collection,
-          collection_slug: slug,
-          ok: false,
-          error: "no image URL",
-        });
-        if (args.byCollection) bumpCollectionCount(slug, "failed");
-        failCount += 1;
+        recordFailedItem(fabricNumber, fabric, slug, "no image URL");
         await sleep(args.delayMs);
         continue;
       }
@@ -442,39 +511,65 @@ for (const fabric of targets) {
       item.bytes_vs_original = bytes - original.bytes;
     }
     manifest.items.push(item);
+    retriedByFabric.set(fabricNumber, item);
     if (args.byCollection) bumpCollectionCount(slug, "ok");
     okCount += 1;
+    newlyDownloaded += 1;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.log(`FAIL (${message})`);
-    manifest.items.push({
-      fabric_number: fabricNumber,
-      collection: fabric.collection,
-      collection_slug: slug,
-      ok: false,
-      error: message,
-    });
-    if (args.byCollection) bumpCollectionCount(slug, "failed");
-    failCount += 1;
+    recordFailedItem(fabricNumber, fabric, slug, message);
   }
 
   await sleep(args.delayMs);
 }
 
+if (args.retryFailed) {
+  const preservedByFabric = new Map(preservedItems.map((item) => [item.fabric_number, item]));
+  manifest.items = (existingManifest.items ?? []).map((orig) => {
+    const preserved = preservedByFabric.get(orig.fabric_number);
+    if (preserved) return preserved;
+    return retriedByFabric.get(orig.fabric_number) ?? orig;
+  });
+  manifest.collections = rebuildManifestCollections(manifest.items, args.byCollection);
+}
+
+const finalOk = args.retryFailed
+  ? manifest.items.filter((item) => item.ok).length
+  : okCount;
+const finalFailed = args.retryFailed
+  ? manifest.items.filter((item) => !item.ok).length
+  : failCount;
+const finalTotal = args.retryFailed ? manifest.items.length : targets.length;
+
 manifest.summary = {
-  ok: okCount,
-  failed: failCount,
-  total: targets.length,
+  ok: finalOk,
+  failed: finalFailed,
+  total: finalTotal,
+  ...(args.retryFailed
+    ? {
+        newly_downloaded: newlyDownloaded,
+        preserved: preservedItems.length,
+        retried: targets.length,
+        still_failed: failCount,
+      }
+    : {}),
   collection_folders: args.byCollection ? Object.keys(manifest.collections).sort() : undefined,
 };
 const manifestPath = resolve(args.out, "manifest.json");
 writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 
-console.log(`\nDone: ${okCount} downloaded, ${failCount} failed/skipped`);
+if (args.retryFailed) {
+  console.log(
+    `\nDone: ${newlyDownloaded} newly downloaded, ${failCount} still failed (${finalOk} ok total, ${finalFailed} failed total)`,
+  );
+} else {
+  console.log(`\nDone: ${okCount} downloaded, ${failCount} failed/skipped`);
+}
 if (args.byCollection) {
   const folders = Object.keys(manifest.collections).sort();
   console.log(`Collections: ${folders.length} folder(s) — ${folders.join(", ")}`);
 }
 console.log(`Manifest: ${manifestPath}`);
 
-process.exit(failCount > 0 && okCount === 0 ? 1 : 0);
+process.exit(args.retryFailed ? (failCount > 0 ? 1 : 0) : failCount > 0 && okCount === 0 ? 1 : 0);
