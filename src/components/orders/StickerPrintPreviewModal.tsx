@@ -76,13 +76,13 @@ export function StickerPrintPreviewModal({
 }: StickerPrintPreviewModalProps) {
   const allCodes = useMemo(() => items.map((item) => item.label.sticker_code), [items]);
   const initialSelection = useMemo(
-    () => new Set(defaultSelectedCodes ?? allCodes),
+    () => new Set(defaultSelectedCodes?.length ? defaultSelectedCodes : allCodes),
     [allCodes, defaultSelectedCodes]
   );
   const [selected, setSelected] = useState<Set<string>>(initialSelection);
 
   useEffect(() => {
-    if (open) setSelected(new Set(defaultSelectedCodes ?? allCodes));
+    if (open) setSelected(new Set(defaultSelectedCodes?.length ? defaultSelectedCodes : allCodes));
   }, [open, allCodes, defaultSelectedCodes]);
 
   const selectedCount = selected.size;

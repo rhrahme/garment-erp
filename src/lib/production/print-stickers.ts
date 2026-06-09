@@ -82,6 +82,8 @@ export async function printStickerPdf(
     iframe.style.border = "0";
     iframe.src = objectUrl;
 
+    let finished = false;
+
     const cleanup = () => {
       window.setTimeout(() => {
         iframe.remove();
@@ -89,7 +91,9 @@ export async function printStickerPdf(
       }, 1000);
     };
 
-    const finish = () => {
+    const finishAfterPrint = () => {
+      if (finished) return;
+      finished = true;
       onAfterPrint?.();
       cleanup();
     };
@@ -100,12 +104,13 @@ export async function printStickerPdf(
         iframe.contentWindow?.print();
       } catch {
         window.open(objectUrl, "_blank");
-        finish();
+        cleanup();
         return;
       }
 
-      iframe.contentWindow?.addEventListener("afterprint", finish, { once: true });
-      window.setTimeout(finish, 60_000);
+      iframe.contentWindow?.addEventListener("afterprint", finishAfterPrint, { once: true });
+      // Cleanup only — do not mark lines printed on timeout (dialog may still be open).
+      window.setTimeout(cleanup, 120_000);
     };
 
     document.body.appendChild(iframe);

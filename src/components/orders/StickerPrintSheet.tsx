@@ -116,7 +116,7 @@ export function StickerPrintSheet({
   const [error, setError] = useState<string | null>(null);
   const [printedSheets, setPrintedSheets] = useState<Set<StickerSheetMode>>(() => new Set());
   const [previewOpen, setPreviewOpen] = useState(false);
-  const { printing, requestPrint } = useStickerPrint();
+  const { printing, printError, clearPrintError, requestPrint } = useStickerPrint();
   const { printWithMark } = useMarkFabricLinesPrinted(salesOrderId);
 
   useEffect(() => {
@@ -157,18 +157,26 @@ export function StickerPrintSheet({
         labels: Array<PrintableStickerLabel & { qr_url: string }>;
       }
     >;
+
+    const fallbackSheet = {
+      po_number: data.order.so_number,
+      supplier_name: "All fabrics",
+      client_code: data.order.client_code,
+      so_number: data.order.so_number,
+      client_reference: data.order.client_code,
+      labels: data.labels,
+    };
+
     if (data.po_sheets.length > 0 && (poNumber || poId)) return data.po_sheets;
+
+    const poLabelCount = data.po_sheets.reduce((sum, poSheet) => sum + poSheet.labels.length, 0);
+    if (data.po_sheets.length > 0 && poLabelCount > 0) return data.po_sheets;
+
+    if (data.labels.length > 0) return [fallbackSheet];
+
     if (data.po_sheets.length > 0) return data.po_sheets;
-    return [
-      {
-        po_number: data.order.so_number,
-        supplier_name: "All fabrics",
-        client_code: data.order.client_code,
-        so_number: data.order.so_number,
-        client_reference: data.order.client_code,
-        labels: data.labels,
-      },
-    ];
+
+    return [fallbackSheet];
   }, [data, poNumber, poId]);
 
   const previewItems = useMemo<StickerPreviewItem[]>(
@@ -236,9 +244,24 @@ export function StickerPrintSheet({
   const copy = SHEET_COPY[sheet];
   const labelCount = sheets.reduce((sum, poSheet) => sum + poSheet.labels.length, 0);
   const hasLabelsToPrint = labelCount > 0;
+  const totalFabricLines = data.labels.length;
+  const allPrepPrinted =
+    sheet === "fabric-cuts" &&
+    totalFabricLines === 0 &&
+    (data.unprinted_line_ids?.prep_stickers.length ?? 0) === 0;
+  const singlePieceProductionEmpty =
+    sheet === "pieces" && !hasLabelsToPrint && (data.unprinted_line_ids?.prod_stickers.length ?? 0) === 0;
 
   return (
     <div>
+      {printError ? (
+        <div className="no-print mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {printError}
+          <button type="button" onClick={clearPrintError} className="ml-2 font-medium underline">
+            Dismiss
+          </button>
+        </div>
+      ) : null}
       <div className="no-print mb-4">
         <div className="inline-flex gap-1 rounded-lg border border-slate-200 bg-white p-1">
           {STICKER_SHEET_TABS.map((tab) => {
@@ -284,8 +307,25 @@ export function StickerPrintSheet({
           <p className="mt-1 text-xs text-slate-400">
             Roll printer ({labelRollSizeLabel()} physical) — one label per feed. In LabelLife or the AIMO driver, set media to{" "}
             {labelPdfMediaMmLabel()} before printing. Labels print from a server PDF (no browser date/URL headers).
-            {!hasLabelsToPrint ? " No fabric lines on this order." : null}
+            {!hasLabelsToPrint && !allPrepPrinted && !singlePieceProductionEmpty
+              ? " No fabric lines on this order."
+              : null}
           </p>
+          {allPrepPrinted ? (
+            <p className="mt-2 text-sm text-amber-800">
+              All receive stickers on this order were already marked printed. Add a new fabric article to print more, or
+              ask an admin to clear sticker print timestamps (Fabric Receiving → testing reset).
+            </p>
+          ) : null}
+          {singlePieceProductionEmpty ? (
+            <p className="mt-2 text-sm text-slate-600">
+              Single-piece garments (Short, Trouser, Shirt, …) use the same fabric-cut QR through cutting — switch to{" "}
+              <Link href={stickerSheetHref(salesOrderId, "fabric-cuts", poNumber, poId)} className="font-medium text-indigo-700 underline">
+                Preparation / receive stickers
+              </Link>
+              .
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => setPreviewOpen(true)} disabled={!hasLabelsToPrint || printing}>
