@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  DEFAULT_LABEL_ROTATION,
   DEFAULT_LABEL_SCALE_PCT,
   LABEL_ROTATION_OPTIONS,
   LABEL_SCALE_OPTIONS,
@@ -75,9 +74,9 @@ export function LabelPrinterSettingsControl({
 
       {!compact ? (
         <p className="text-xs text-slate-500">
-          Default rotation is {DEFAULT_LABEL_ROTATION}° (portrait upright — QR on top, text below) and size is{" "}
-          {DEFAULT_LABEL_SCALE_PCT}%. Print a test label, then adjust rotation only if QR and text read
-          sideways, and size until content fills your {`50×100 mm`} portrait roll.
+          Default is landscape 100×50 (QR left, horizontal text right) at {DEFAULT_LABEL_SCALE_PCT}% size. Set
+          the driver media / paper size to match (100×50 mm) and Scale 100% — never “Fit to paper”. Switch to a
+          portrait option only if your physical label is taller than it is wide.
         </p>
       ) : null}
     </div>

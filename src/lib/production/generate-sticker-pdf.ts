@@ -33,13 +33,38 @@ const STICKER_RGB = { r: 42, g: 42, b: 42 };
 const LINE_HEIGHT_FACTOR = 1.15;
 
 /**
- * Canonical design space = the UPRIGHT portrait label: 50 mm wide × 100 mm tall.
- * QR on top, horizontal text stacked below. Rotation 0° draws this directly
- * (identity mapping — no per-element rotation, no CTM tricks). 90°/180°/270°
- * rotate the same design onto the matching page for feed-direction edge cases.
+ * Two NATIVE designs — each drawn upright for its own page orientation, so text
+ * always reads horizontally left-to-right. No element is ever turned sideways.
+ *
+ *   - PORTRAIT 50×100  (rotation 0° / 180°): QR on top, text stacked below.
+ *   - LANDSCAPE 100×50 (rotation 90° / 270°): QR on the LEFT, text column on the
+ *     RIGHT. This is the layout for printers whose physical label is landscape
+ *     (the 100 mm long edge feeds across / along the head).
+ *
+ * The optional 180° "flip" (rotation 180° or 270°) maps every element through the
+ * page centre for printers that feed the label upside down. It is NOT a 90° turn.
  */
-const DESIGN_W = LABEL_ROLL_WIDTH_MM; // 50
-const DESIGN_H = LABEL_ROLL_HEIGHT_MM; // 100
+const PORTRAIT_W = LABEL_ROLL_WIDTH_MM; // 50
+const PORTRAIT_H = LABEL_ROLL_HEIGHT_MM; // 100
+const LANDSCAPE_W = LABEL_ROLL_HEIGHT_MM; // 100
+const LANDSCAPE_H = LABEL_ROLL_WIDTH_MM; // 50
+
+type LayoutKind = "portrait" | "landscape";
+
+function layoutKindForRotation(rotation: LabelRotationDeg): LayoutKind {
+  return rotation === 90 || rotation === 270 ? "landscape" : "portrait";
+}
+
+/** 180° flip through the page centre (upside-down feed), never a 90° turn. */
+function isFlipped(rotation: LabelRotationDeg): boolean {
+  return rotation === 180 || rotation === 270;
+}
+
+function designDims(kind: LayoutKind): { W: number; H: number } {
+  return kind === "landscape"
+    ? { W: LANDSCAPE_W, H: LANDSCAPE_H }
+    : { W: PORTRAIT_W, H: PORTRAIT_H };
+}
 
 /** jsPDF font size is in pt; sticker layout uses mm. */
 function mmToPt(mm: number): number {
@@ -66,68 +91,28 @@ function fitText(doc: jsPDF, text: string, maxWidth: number): string {
   return `${trimmed}…`;
 }
 
-/** Map a point from upright portrait design space onto the rotated page. */
-function mapLayoutPoint(
+/** Map an upright design point onto the page (identity, or 180° through centre). */
+function mapPoint(
   x: number,
   y: number,
-  rotation: LabelRotationDeg
+  flip: boolean,
+  W: number,
+  H: number
 ): { x: number; y: number } {
-  switch (rotation) {
-    case 0:
-      return { x, y };
-    case 90:
-      return { x: DESIGN_H - y, y: x };
-    case 180:
-      return { x: DESIGN_W - x, y: DESIGN_H - y };
-    case 270:
-      return { x: y, y: DESIGN_W - x };
-  }
+  return flip ? { x: W - x, y: H - y } : { x, y };
 }
 
-/** Map an upright design-space rectangle (top-left + size) onto the rotated page. */
-function mapLayoutImageRect(
+/** Map an upright design rectangle (top-left + size) onto the page. */
+function mapRect(
   x: number,
   y: number,
   w: number,
   h: number,
-  rotation: LabelRotationDeg
+  flip: boolean,
+  W: number,
+  H: number
 ): { x: number; y: number; w: number; h: number } {
-  switch (rotation) {
-    case 0:
-      return { x, y, w, h };
-    case 90:
-      return { x: DESIGN_H - y - h, y: x, w: h, h: w };
-    case 180:
-      return { x: DESIGN_W - x - w, y: DESIGN_H - y - h, w, h };
-    case 270:
-      return { x: y, y: DESIGN_W - x - w, w: h, h: w };
-  }
-}
-
-function textAngleForRotation(rotation: LabelRotationDeg): number {
-  switch (rotation) {
-    case 0:
-      return 0;
-    case 90:
-      return -90;
-    case 180:
-      return 180;
-    case 270:
-      return 90;
-  }
-}
-
-function imageRotationForLayout(rotation: LabelRotationDeg): number {
-  switch (rotation) {
-    case 0:
-      return 0;
-    case 90:
-      return 270;
-    case 180:
-      return 180;
-    case 270:
-      return 90;
-  }
+  return flip ? { x: W - x - w, y: H - y - h, w, h } : { x, y, w, h };
 }
 
 function drawStickerText(
@@ -135,14 +120,15 @@ function drawStickerText(
   text: string,
   layoutX: number,
   layoutY: number,
-  rotation: LabelRotationDeg,
+  flip: boolean,
+  dims: { W: number; H: number },
   options: { align?: "left" | "right" | "center" } = {}
 ): void {
-  const { x, y } = mapLayoutPoint(layoutX, layoutY, rotation);
+  const { x, y } = mapPoint(layoutX, layoutY, flip, dims.W, dims.H);
   doc.text(text, x, y, {
     align: options.align ?? "left",
     baseline: "middle",
-    angle: textAngleForRotation(rotation),
+    angle: flip ? 180 : 0,
   });
 }
 
@@ -189,14 +175,42 @@ async function drawStickerPage(
   scalePct: LabelScalePct
 ): Promise<void> {
   const scale = labelScaleMultiplier(scalePct);
+  const kind = layoutKindForRotation(rotation);
+  const flip = isFlipped(rotation);
+  const dims = designDims(kind);
   const padH = LABEL_STICKER_PADDING_H_MM;
   const padV = LABEL_STICKER_PADDING_V_MM;
-  const contentW = DESIGN_W - padH * 2;
+  const columnGap = LABEL_STICKER_COLUMN_GAP_MM * scale;
 
-  // --- QR: top, centred horizontally, fills (most of) the 50 mm width ---
-  const qrSize = Math.min(LABEL_STICKER_QR_SIZE_MM * scale, contentW);
-  const qrX = padH + Math.max(0, (contentW - qrSize) / 2);
-  const qrY = padV;
+  // --- Geometry per native orientation ---
+  // Portrait: QR on top (centred across the 50 mm width), text stacked below.
+  // Landscape: QR on the left (centred over the 50 mm height), text column right.
+  let qrSize: number;
+  let qrX: number;
+  let qrY: number;
+  let textX: number;
+  let textRightX: number;
+  let textTop: number;
+
+  if (kind === "landscape") {
+    const availH = dims.H - padV * 2; // 46 mm
+    qrSize = Math.min(LABEL_STICKER_QR_SIZE_MM * scale, availH);
+    qrX = padH;
+    qrY = padV + Math.max(0, (availH - qrSize) / 2);
+    textX = padH + qrSize + columnGap;
+    textRightX = dims.W - padH;
+    textTop = padV;
+  } else {
+    const availW = dims.W - padH * 2; // 46 mm
+    qrSize = Math.min(LABEL_STICKER_QR_SIZE_MM * scale, availW);
+    qrX = padH + Math.max(0, (availW - qrSize) / 2);
+    qrY = padV;
+    textX = padH;
+    textRightX = dims.W - padH;
+    textTop = qrY + qrSize + columnGap;
+  }
+
+  const contentW = textRightX - textX;
 
   doc.setTextColor(STICKER_RGB.r, STICKER_RGB.g, STICKER_RGB.b);
   doc.setFont("helvetica", "normal");
@@ -226,7 +240,7 @@ async function drawStickerPage(
     qrCache.set(label.qr_payload, qrData);
   }
 
-  const mapped = mapLayoutImageRect(qrX, qrY, qrSize, qrSize, rotation);
+  const mapped = mapRect(qrX, qrY, qrSize, qrSize, flip, dims.W, dims.H);
   doc.addImage(
     qrData,
     "PNG",
@@ -236,20 +250,19 @@ async function drawStickerPage(
     mapped.h,
     undefined,
     undefined,
-    imageRotationForLayout(rotation)
+    flip ? 180 : 0
   );
 
-  // --- Text block: horizontal lines stacked below the QR, read left-to-right ---
+  // --- Text block: horizontal lines, read left-to-right ---
   const gap = LABEL_STICKER_LINE_GAP_MM * scale;
-  const textX = padH;
-  let y = qrY + qrSize + LABEL_STICKER_COLUMN_GAP_MM * scale;
+  let y = textTop;
 
   const headerH = lineHeightMm(headerFontMm);
   y += headerH / 2;
   doc.setFontSize(mmToPt(headerFontMm));
-  drawStickerText(doc, STICKER_ROLE_LABEL[stickerRole], textX, y, rotation, { align: "left" });
+  drawStickerText(doc, STICKER_ROLE_LABEL[stickerRole], textX, y, flip, dims, { align: "left" });
   if (batchMark) {
-    drawStickerText(doc, batchMark, padH + contentW, y, rotation, { align: "right" });
+    drawStickerText(doc, batchMark, textRightX, y, flip, dims, { align: "right" });
   }
   y += headerH / 2 + gap;
 
@@ -258,7 +271,7 @@ async function drawStickerPage(
     y += lineH / 2;
     doc.setFontSize(mmToPt(line.fontMm));
     const fitted = fitText(doc, line.text, contentW);
-    drawStickerText(doc, fitted, textX, y, rotation, { align: "left" });
+    drawStickerText(doc, fitted, textX, y, flip, dims, { align: "left" });
     y += lineH / 2 + gap;
   }
 }

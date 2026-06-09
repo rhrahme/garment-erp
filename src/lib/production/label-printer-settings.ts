@@ -4,20 +4,25 @@ import {
 } from "@/lib/production/label-print-config";
 
 /**
- * Clockwise rotation applied to the UPRIGHT portrait layout when generating the PDF.
- * The canonical design is a 50×100 mm portrait label: QR on top, text stacked below.
- *   - 0°   = portrait upright   (50×100 page)  ← DEFAULT, no rotation / no CTM tricks
- *   - 180° = portrait flipped   (50×100 page)  — same content, fed upside down
- *   - 90°  = landscape          (100×50 page)  — content rotated, feed-direction edge case
- *   - 270° = landscape flipped  (100×50 page)
+ * Selects which NATIVE label layout the PDF is drawn in. Each option draws text
+ * horizontally (left-to-right) for its own page orientation — nothing is ever
+ * turned sideways. The 180°/270° variants are 180° flips for upside-down feed.
+ *   - 90°  = LANDSCAPE 100×50  ← DEFAULT. QR on the LEFT, text column on the RIGHT.
+ *            For printers whose physical label is landscape (the 100 mm long edge
+ *            feeds across the head). This is the AIMO / Phomemo "D550".
+ *   - 270° = landscape 100×50, flipped 180° (use if 90° feeds in upside down).
+ *   - 0°   = portrait 50×100. QR on top, text stacked below.
+ *   - 180° = portrait 50×100, flipped 180°.
  */
 export type LabelRotationDeg = 0 | 90 | 180 | 270;
 
-export const LABEL_ROTATION_STORAGE_KEY = "label-printer:rotation-deg";
+// v2: switched default to native landscape (100×50). Bumping the key ignores any
+// stored portrait value from earlier testing so the landscape default takes effect.
+export const LABEL_ROTATION_STORAGE_KEY = "label-printer:rotation-deg:v2";
 export const LABEL_SCALE_STORAGE_KEY = "label-printer:scale-pct";
 
-/** 50×100 mm portrait PDF — QR on top, horizontal text below, drawn upright. */
-export const DEFAULT_LABEL_ROTATION: LabelRotationDeg = 0;
+/** Native landscape 100×50 PDF — QR on the left, horizontal text on the right. */
+export const DEFAULT_LABEL_ROTATION: LabelRotationDeg = 90;
 
 /** Content scale multiplier for thermal drivers that shrink PDFs to fit. */
 export type LabelScalePct = 100 | 125 | 150;
@@ -78,28 +83,28 @@ export const LABEL_ROTATION_OPTIONS: ReadonlyArray<{
   description: string;
 }> = [
   {
-    value: 0,
-    label: "0° — portrait upright (50×100)",
-    description:
-      "DEFAULT. PDF page = 50×100 mm portrait — QR on top, horizontal text below, drawn upright. Set the driver media to 50×100 mm (≈51×102) portrait, Scale 100% (NOT fit to paper), margins none. Use for the AIMO / Phomemo 50 mm head.",
-  },
-  {
-    value: 180,
-    label: "180° — portrait flipped (50×100)",
-    description:
-      "PDF page = 50×100 mm portrait, the upright layout rotated 180°. Driver media stays 50×100 mm portrait. Use when 0° is correct but the label feeds in upside down.",
-  },
-  {
     value: 90,
-    label: "90° — landscape (100×50)",
+    label: "Landscape 100×50 (default) — QR left, text right",
     description:
-      "EDGE CASE. PDF page = 100×50 mm landscape, the portrait layout rotated 90°. Set the driver media to 100×50 mm landscape. Only use if your printer truly feeds the long 100 mm edge across the head.",
+      "DEFAULT. PDF page = 100×50 mm landscape, drawn natively: QR on the LEFT, horizontal text on the RIGHT, reading left-to-right. For printers that feed the 100 mm LONG edge (the physical label is wider than it is tall). Set the driver media / paper size to 100×50 mm (custom if needed), Scale 100% — NEVER “Fit to paper” — margins none.",
   },
   {
     value: 270,
-    label: "270° — landscape flipped (100×50)",
+    label: "Landscape 100×50 — flipped (upside-down feed)",
     description:
-      "PDF page = 100×50 mm landscape, rotated the opposite way from 90°. Driver media stays 100×50 mm landscape. Try when 90° reads upside down.",
+      "Same native landscape layout as the default, flipped 180°. Driver media stays 100×50 mm landscape, Scale 100%, margins none. Use only if the default landscape comes out upside down.",
+  },
+  {
+    value: 0,
+    label: "Portrait 50×100 — QR top, text below",
+    description:
+      "PDF page = 50×100 mm portrait, drawn upright: QR on top, horizontal text stacked below. For printers whose physical label is TALLER than it is wide (the 50 mm short edge feeds across the head). Set the driver media to 50×100 mm (≈51×102) portrait, Scale 100% (NOT “Fit to paper”), margins none.",
+  },
+  {
+    value: 180,
+    label: "Portrait 50×100 — flipped (upside-down feed)",
+    description:
+      "Portrait 50×100 layout flipped 180°. Driver media stays 50×100 mm portrait, Scale 100%, margins none. Use only if the portrait mode comes out upside down.",
   },
 ] as const;
 
@@ -126,8 +131,8 @@ export function writeLabelRotation(rotation: LabelRotationDeg): void {
 }
 
 export function labelPdfPageSizeMm(rotation: LabelRotationDeg): { width: number; height: number } {
-  // 0°/180° keep the portrait design upright (50×100). 90°/270° rotate it onto a
-  // landscape page (100×50) for the long-edge feed edge case.
+  // 90°/270° = native landscape page (100×50, QR left / text right) — the DEFAULT.
+  // 0°/180° = native portrait page (50×100, QR top / text below).
   if (rotation === 90 || rotation === 270) {
     return { width: LABEL_ROLL_HEIGHT_MM, height: LABEL_ROLL_WIDTH_MM };
   }
