@@ -25,6 +25,9 @@ import {
 
 const STICKER_RGB = { r: 42, g: 42, b: 42 };
 const LINE_HEIGHT_FACTOR = 1.15;
+/** 90° CCW: landscape roll layout (102×51) → portrait PDF page (51×102). */
+const PORTRAIT_TEXT_ANGLE = -90;
+const PORTRAIT_IMAGE_ROTATION = 270;
 
 /** jsPDF font size is in pt; sticker layout uses mm. */
 function mmToPt(mm: number): number {
@@ -51,6 +54,38 @@ function fitText(doc: jsPDF, text: string, maxWidth: number): string {
   return `${trimmed}…`;
 }
 
+function mapLayoutPoint(x: number, y: number): { x: number; y: number } {
+  return { x: y, y: LABEL_PDF_PAGE_HEIGHT_MM - x };
+}
+
+function mapLayoutImageRect(
+  x: number,
+  y: number,
+  w: number,
+  h: number
+): { x: number; y: number; w: number; h: number } {
+  return { x: y, y: LABEL_PDF_PAGE_HEIGHT_MM - x - w, w: h, h: w };
+}
+
+function drawStickerText(
+  doc: jsPDF,
+  text: string,
+  layoutX: number,
+  layoutY: number,
+  options: { align?: "left" | "right" | "center"; maxWidth?: number } = {}
+): void {
+  const { x, y } =
+    LABEL_PDF_ORIENTATION === "portrait"
+      ? mapLayoutPoint(layoutX, layoutY)
+      : { x: layoutX, y: layoutY };
+  doc.text(text, x, y, {
+    align: options.align ?? "left",
+    baseline: "middle",
+    angle: LABEL_PDF_ORIENTATION === "portrait" ? PORTRAIT_TEXT_ANGLE : 0,
+    maxWidth: options.maxWidth,
+  });
+}
+
 function drawLeftLine(
   doc: jsPDF,
   text: string,
@@ -59,7 +94,7 @@ function drawLeftLine(
   maxWidth: number
 ): void {
   const line = fitText(doc, text, maxWidth);
-  doc.text(line, x, y, { align: "left", baseline: "middle" });
+  drawStickerText(doc, line, x, y);
 }
 
 function formatWeight(weightGsm: number | null): string | null {
@@ -137,7 +172,22 @@ async function drawStickerPage(
     qrData = await fetchQrDataUrl(label.qr_payload, 450);
     qrCache.set(label.qr_payload, qrData);
   }
-  doc.addImage(qrData, "PNG", qrX, qrY, qrSize, qrSize);
+  if (LABEL_PDF_ORIENTATION === "portrait") {
+    const mapped = mapLayoutImageRect(qrX, qrY, qrSize, qrSize);
+    doc.addImage(
+      qrData,
+      "PNG",
+      mapped.x,
+      mapped.y,
+      mapped.w,
+      mapped.h,
+      undefined,
+      undefined,
+      PORTRAIT_IMAGE_ROTATION
+    );
+  } else {
+    doc.addImage(qrData, "PNG", qrX, qrY, qrSize, qrSize);
+  }
 
   const gap = LABEL_STICKER_LINE_GAP_MM;
   const headerH = lineHeightMm(headerFontMm);
@@ -149,9 +199,9 @@ async function drawStickerPage(
   let y = padV + (contentH - bodyH) / 2 + headerH / 2;
 
   doc.setFontSize(mmToPt(headerFontMm));
-  doc.text(STICKER_ROLE_LABEL[stickerRole], textX, y, { align: "left", baseline: "middle" });
+  drawStickerText(doc, STICKER_ROLE_LABEL[stickerRole], textX, y, { align: "left" });
   if (batchMark) {
-    doc.text(batchMark, textX + textW, y, { align: "right", baseline: "middle" });
+    drawStickerText(doc, batchMark, textX + textW, y, { align: "right" });
   }
 
   y += headerH / 2 + gap;
@@ -169,7 +219,7 @@ export type StickerPdfEntry = {
   role?: StickerRole;
 };
 
-/** Server-generated roll PDF — 102×51 mm landscape pages, content drawn without CTM rotation. */
+/** Server-generated roll PDF — 51×102 mm portrait pages, roll layout mapped per element. */
 export async function generateStickerRollPdf(entries: StickerPdfEntry[]): Promise<Uint8Array> {
   if (entries.length === 0) {
     throw new Error("No sticker labels to print.");

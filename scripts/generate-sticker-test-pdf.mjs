@@ -5,18 +5,30 @@
 import { writeFileSync } from "node:fs";
 import { jsPDF } from "jspdf";
 
-const WIDTH = 102;
-const HEIGHT = 51;
+const LAYOUT_W = 102;
+const LAYOUT_H = 51;
+const PDF_PAGE_W = 51;
+const PDF_PAGE_H = 102;
 const QR = 45;
 const PAD = 2;
 const GAP = 3;
+const TEXT_ANGLE = -90;
+const IMAGE_ROTATION = 270;
 
 const outPath = process.argv[2] ?? "sticker-test-local.pdf";
 
+function mapPoint(x, y) {
+  return { x: y, y: PDF_PAGE_H - x };
+}
+
+function mapImageRect(x, y, w, h) {
+  return { x: y, y: PDF_PAGE_H - x - w, w: h, h: w };
+}
+
 const doc = new jsPDF({
   unit: "mm",
-  format: [WIDTH, HEIGHT],
-  orientation: "landscape",
+  format: [LAYOUT_W, LAYOUT_H],
+  orientation: "portrait",
   compress: false,
 });
 
@@ -25,24 +37,41 @@ const pageH = doc.internal.pageSize.getHeight();
 console.log("jsPDF internal page:", pageW, "×", pageH, "mm");
 
 const qrX = PAD;
-const qrY = PAD + (HEIGHT - PAD * 2 - QR) / 2;
+const qrY = PAD + (LAYOUT_H - PAD * 2 - QR) / 2;
+const mappedQr = mapImageRect(qrX, qrY, QR, QR);
 doc.setDrawColor(0, 0, 0);
 doc.setFillColor(230, 230, 230);
-doc.rect(qrX, qrY, QR, QR, "FD");
+doc.rect(mappedQr.x, mappedQr.y, mappedQr.w, mappedQr.h, "FD");
 doc.setFontSize(8);
-doc.text("QR", qrX + QR / 2, qrY + QR / 2, { align: "center", baseline: "middle" });
+const qrCenter = mapPoint(qrX + QR / 2, qrY + QR / 2);
+doc.text("QR", qrCenter.x, qrCenter.y, {
+  align: "center",
+  baseline: "middle",
+  angle: TEXT_ANGLE,
+});
 
 const textX = PAD + QR + GAP;
-const textW = WIDTH - PAD * 2 - QR - GAP;
-doc.setFontSize(10);
-doc.text("PREPARATION", textX, PAD + 4);
-doc.setFontSize(8);
-doc.text("FR-0528-0029", textX, PAD + 10);
-doc.text("Mokid Al Zahrani", textX, PAD + 16);
-doc.text("FR-0101-L13", textX, PAD + 22);
-doc.text("1.3 m · 1 label", textX, PAD + 28);
-doc.text("PEGASO DELAVE 100% LINEN", textX, PAD + 34, { maxWidth: textW });
-doc.text("Cut · Trouser", textX, PAD + 40);
+const textW = LAYOUT_W - PAD * 2 - QR - GAP;
+const lines = [
+  ["PREPARATION", 10, PAD + 4],
+  ["FR-0528-0029", 8, PAD + 10],
+  ["Mokid Al Zahrani", 8, PAD + 16],
+  ["FR-0101-L13", 8, PAD + 22],
+  ["1.3 m · 1 label", 8, PAD + 28],
+  ["PEGASO DELAVE 100% LINEN", 8, PAD + 34],
+  ["Cut · Trouser", 8, PAD + 40],
+];
+
+for (const [text, fontSize, layoutY] of lines) {
+  doc.setFontSize(fontSize);
+  const point = mapPoint(textX, layoutY);
+  doc.text(text, point.x, point.y, {
+    align: "left",
+    baseline: "middle",
+    angle: TEXT_ANGLE,
+    maxWidth: textW,
+  });
+}
 
 const bytes = Buffer.from(doc.output("arraybuffer"));
 writeFileSync(outPath, bytes);
@@ -55,4 +84,4 @@ console.log("Written:", outPath);
 console.log("MediaBox (pt):", mediaBox?.[1] ?? "not found");
 console.log("Rotate:", rotate?.[1] ?? "0");
 console.log("Has visible text:", hasText);
-console.log("Expected MediaBox pt: 0 0 289.13 144.57 (102×51 mm landscape)");
+console.log("Expected MediaBox pt: 0 0 144.57 289.13 (51×102 mm portrait)");

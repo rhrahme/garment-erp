@@ -56,7 +56,7 @@ function pdfFilename(orderId: string, sheet: StickerPdfSheet): string {
 
 /**
  * Fetch server-generated roll PDF and open the system print dialog.
- * PDF pages are 102×51 mm landscape — matches physical label; no CTM rotation (thermal-safe).
+ * PDF pages are 51×102 mm portrait (LabelLife media); roll layout mapped per element.
  */
 export async function printStickerPdf(
   request: StickerPdfRequest,
