@@ -63,7 +63,7 @@ export function mapClickUpItemToGarmentType(item: string | null): string {
     "shirts (ju)": "Shirt LS",
     "short sleeve shirt (fr)": "Shirt SS",
     "shirt + trouser (fr)": "Shirt+Trouser",
-    "shirt + trouser + short sets (fr)": "Shirt+Trouser",
+    "shirt + trouser + short sets (fr)": "Shirt+Trouser+Short",
     "shirt + short sets (fr)": "Shirt+Short",
     "trouser + shirt (fr)": "Shirt+Trouser",
     "overcoats (fr)": "Overcoat",

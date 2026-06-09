@@ -9,6 +9,7 @@ export const GARMENT_STITCH_TYPES = [
   "Overshirt+Trouser",
   "Overcoat",
   "Shirt+Trouser",
+  "Shirt+Trouser+Short",
   "Shirt+Short",
 ] as const;
 
@@ -30,6 +31,7 @@ export const GARMENT_LABEL_COUNTS: Record<GarmentStitchType, number> = {
   "Overshirt+Trouser": 2,
   Overcoat: 1,
   "Shirt+Trouser": 2,
+  "Shirt+Trouser+Short": 3,
   "Shirt+Short": 2,
 };
 

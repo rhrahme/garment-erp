@@ -13,6 +13,7 @@
     "Overshirt+Trouser": { "labor": 320, "washing": 70, "overhead": 90 },
     "Overcoat": { "labor": 380, "washing": 60, "overhead": 100 },
     "Shirt+Trouser": { "labor": 300, "washing": 65, "overhead": 85 },
+    "Shirt+Trouser+Short": { "labor": 360, "washing": 75, "overhead": 95 },
     "Shirt+Short": { "labor": 240, "washing": 55, "overhead": 70 }
   },
   "default_garment_rate": { "labor": 150, "washing": 40, "overhead": 50 },
