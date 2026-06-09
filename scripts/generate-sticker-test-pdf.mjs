@@ -1,13 +1,15 @@
 /**
- * Generate a local 2-label sticker test PDF (102×51 mm landscape, one label per page).
+ * Generate a local 2-label sticker test PDF (100×50 mm landscape, one label per page).
+ * Page size matches the physical roll label and the driver media exactly — no 102×51
+ * over-scan that drifts across consecutive labels.
  * Usage: node scripts/generate-sticker-test-pdf.mjs [output.pdf]
  */
 import { writeFileSync } from "node:fs";
 import { jsPDF } from "jspdf";
 
-const PAGE_W = 102;
-const PAGE_H = 51;
-const QR = 47;
+const PAGE_W = 100;
+const PAGE_H = 50;
+const QR = 46;
 const PAD = 1;
 const GAP = 2;
 
@@ -70,9 +72,10 @@ console.log("Written:", outPath);
 console.log("Page count:", pageCount);
 console.log("MediaBox per page (pt):", mediaBoxes.join(" | "));
 console.log("Has S10008 + S10009:", hasBoth);
-console.log("Expected: 2 pages, each MediaBox 0 0 289.13 144.57 (102×51 mm landscape)");
+console.log("Expected: 2 pages, each MediaBox 0 0 283.46 141.73 (100×50 mm landscape)");
 
-if (pageW !== PAGE_W || pageH !== PAGE_H) {
+const EPS = 0.01;
+if (Math.abs(pageW - PAGE_W) > EPS || Math.abs(pageH - PAGE_H) > EPS) {
   process.exitCode = 1;
   console.error("FAIL: page 1 size mismatch");
 } else if (pageCount !== 2) {

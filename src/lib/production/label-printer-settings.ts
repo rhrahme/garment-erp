@@ -72,27 +72,27 @@ export const LABEL_ROTATION_OPTIONS: ReadonlyArray<{
 }> = [
   {
     value: 0,
-    label: "0° — landscape (default)",
+    label: "0° — landscape (100×50)",
     description:
-      "100×50 mm PDF, one label per page. QR on the left, text horizontal. Use this for LabelLife / AIMO roll printing.",
+      "PDF page = 100×50 mm landscape, one label per page. Set the driver media to EXACTLY 100×50 mm landscape. Use when the printer feeds the 100 mm (long) edge across the head.",
   },
   {
     value: 90,
-    label: "90° — portrait remapped",
+    label: "90° — portrait (50×100)",
     description:
-      "50×100 mm portrait PDF with per-element coordinate mapping. Only if 0° prints sideways on your driver.",
+      "PDF page = 50×100 mm portrait, content rotated 90°. Set the driver media to EXACTLY 50×100 mm portrait. Use when the printer feeds the 50 mm (short) edge first — fixes content that prints sideways and drifts across labels at 0°.",
   },
   {
     value: 180,
-    label: "180° — upside down",
+    label: "180° — landscape flipped (100×50)",
     description:
-      "100×50 mm PDF rotated 180°. Try when the label feeds inverted or content appears upside down.",
+      "PDF page = 100×50 mm landscape rotated 180°. Driver media stays 100×50 mm landscape. Use when 0° is otherwise correct but the label feeds in upside down.",
   },
   {
     value: 270,
-    label: "270° — portrait flipped",
+    label: "270° — portrait flipped (50×100)",
     description:
-      "50×100 mm portrait PDF with the opposite mapping from 90°. Try when content prints sideways along the long edge.",
+      "PDF page = 50×100 mm portrait, content rotated the opposite way from 90°. Driver media stays 50×100 mm portrait. Try when 90° reads upside down.",
   },
 ] as const;
 
