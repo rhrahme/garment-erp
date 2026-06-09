@@ -1,0 +1,986 @@
+{
+  "downloaded_at": "2026-06-09T06:29:17.446Z",
+  "source": "Drapers API GET /fabrics/{code}/medias/",
+  "catalog_path": "src/data/suppliers/drapers-hs-ss26.json",
+  "quality_requested": "best",
+  "output_root": "data/suppliers/drapers/images-by-collection",
+  "by_collection": true,
+  "compare_against": null,
+  "items": [
+    {
+      "fabric_number": "10101",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10101",
+      "ok": true,
+      "filename": "blazon/10101.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-bxym-20220909-tessuto_10015.jpg",
+      "bytes": 604270,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-bxym-20220909-tessuto_10015.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-tfw5-20220909-resa2_10015.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-fupz-20220909-resa10_10015.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-bxym-20220909-tessuto_10015.jpg",
+          "bytes": 604270,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-tfw5-20220909-resa2_10015.jpg",
+          "bytes": 235519,
+          "width": 1500,
+          "height": 1500,
+          "selected": false
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-fupz-20220909-resa10_10015.jpg",
+          "bytes": 321018,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 235519,
+      "zoom_width": 1500,
+      "zoom_height": 1500,
+      "bytes_vs_zoom": 368751
+    },
+    {
+      "fabric_number": "10102",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10102",
+      "ok": true,
+      "filename": "blazon/10102.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-qzb4-20230131-tessuto_10102.jpg",
+      "bytes": 508867,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-qzb4-20230131-tessuto_10102.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-0t7h-20230131-resa2_10102.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-uitw-20230131-resa10_10102.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-qzb4-20230131-tessuto_10102.jpg",
+          "bytes": 508867,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-uitw-20230131-resa10_10102.jpg",
+          "bytes": 233225,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-0t7h-20230131-resa2_10102.jpg",
+          "bytes": 53446,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 53446,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 455421
+    },
+    {
+      "fabric_number": "10103",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10103",
+      "ok": true,
+      "filename": "blazon/10103.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-b1as-20230131-tessuto_10103.jpg",
+      "bytes": 459221,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-b1as-20230131-tessuto_10103.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-2dz8-20230131-resa2_10103.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-kcoq-20230131-resa10_10103.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-b1as-20230131-tessuto_10103.jpg",
+          "bytes": 459221,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-kcoq-20230131-resa10_10103.jpg",
+          "bytes": 206667,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-2dz8-20230131-resa2_10103.jpg",
+          "bytes": 49592,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 49592,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 409629
+    },
+    {
+      "fabric_number": "10104",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10104",
+      "ok": true,
+      "filename": "blazon/10104.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-y5gr-20220909-tessuto_10016.jpg",
+      "bytes": 418934,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-y5gr-20220909-tessuto_10016.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-fngy-20220909-resa2_10016.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-8swt-20220909-resa10_10016.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-y5gr-20220909-tessuto_10016.jpg",
+          "bytes": 418934,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-fngy-20220909-resa2_10016.jpg",
+          "bytes": 205312,
+          "width": 1500,
+          "height": 1500,
+          "selected": false
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-8swt-20220909-resa10_10016.jpg",
+          "bytes": 188781,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 205312,
+      "zoom_width": 1500,
+      "zoom_height": 1500,
+      "bytes_vs_zoom": 213622
+    },
+    {
+      "fabric_number": "10105",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10105",
+      "ok": true,
+      "filename": "blazon/10105.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-aknv-20220909-tessuto_10013.jpg",
+      "bytes": 745827,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-aknv-20220909-tessuto_10013.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-b0jk-20220909-resa2_10013.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-8jcx-20220909-resa10_10013.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-aknv-20220909-tessuto_10013.jpg",
+          "bytes": 745827,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-8jcx-20220909-resa10_10013.jpg",
+          "bytes": 383155,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-b0jk-20220909-resa2_10013.jpg",
+          "bytes": 56847,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 56847,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 688980
+    },
+    {
+      "fabric_number": "10106",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10106",
+      "ok": true,
+      "filename": "blazon/10106.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-zcer-20220909-tessuto_10014.jpg",
+      "bytes": 484076,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-zcer-20220909-tessuto_10014.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-brye-20220909-resa2_10014.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-sn6g-20220909-resa10_10014.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-zcer-20220909-tessuto_10014.jpg",
+          "bytes": 484076,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-sn6g-20220909-resa10_10014.jpg",
+          "bytes": 204860,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-brye-20220909-resa2_10014.jpg",
+          "bytes": 45849,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 45849,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 438227
+    },
+    {
+      "fabric_number": "10107",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10107",
+      "ok": true,
+      "filename": "blazon/10107.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-md43-20230131-tessuto_10107.jpg",
+      "bytes": 667294,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-md43-20230131-tessuto_10107.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-ilhl-20230131-resa2_10107.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-1dax-20230131-resa10_10107.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-md43-20230131-tessuto_10107.jpg",
+          "bytes": 667294,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-1dax-20230131-resa10_10107.jpg",
+          "bytes": 337233,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-ilhl-20230131-resa2_10107.jpg",
+          "bytes": 64150,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 64150,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 603144
+    },
+    {
+      "fabric_number": "10108",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10108",
+      "ok": true,
+      "filename": "blazon/10108.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-ncxy-20230131-tessuto_10108.jpg",
+      "bytes": 637738,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-ncxy-20230131-tessuto_10108.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-5j1r-20230131-resa2_10108.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-f9mg-20230131-resa10_10108.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-ncxy-20230131-tessuto_10108.jpg",
+          "bytes": 637738,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-f9mg-20230131-resa10_10108.jpg",
+          "bytes": 322819,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-5j1r-20230131-resa2_10108.jpg",
+          "bytes": 60893,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 60893,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 576845
+    },
+    {
+      "fabric_number": "10109",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10109",
+      "ok": true,
+      "filename": "blazon/10109.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-oerb-20230131-tessuto_10109.jpg",
+      "bytes": 585337,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-oerb-20230131-tessuto_10109.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-zu37-20230131-resa2_10109.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-qsn6-20230131-resa10_10109.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-oerb-20230131-tessuto_10109.jpg",
+          "bytes": 585337,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-qsn6-20230131-resa10_10109.jpg",
+          "bytes": 297499,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-zu37-20230131-resa2_10109.jpg",
+          "bytes": 56163,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 56163,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 529174
+    },
+    {
+      "fabric_number": "10110",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10110",
+      "ok": true,
+      "filename": "blazon/10110.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-hhlm-20230131-tessuto_10110.jpg",
+      "bytes": 449232,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-hhlm-20230131-tessuto_10110.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-w840-20230131-resa2_10110.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-stiy-20230131-resa10_10110.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-hhlm-20230131-tessuto_10110.jpg",
+          "bytes": 449232,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-stiy-20230131-resa10_10110.jpg",
+          "bytes": 199185,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-w840-20230131-resa2_10110.jpg",
+          "bytes": 49638,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 49638,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 399594
+    },
+    {
+      "fabric_number": "10111",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10111",
+      "ok": true,
+      "filename": "blazon/10111.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-tehz-20230131-tessuto_10111.jpg",
+      "bytes": 491245,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-tehz-20230131-tessuto_10111.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-vma1-20230131-resa2_10111.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-r2fx-20230131-resa10_10111.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-tehz-20230131-tessuto_10111.jpg",
+          "bytes": 491245,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-r2fx-20230131-resa10_10111.jpg",
+          "bytes": 212355,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-vma1-20230131-resa2_10111.jpg",
+          "bytes": 55484,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 55484,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 435761
+    },
+    {
+      "fabric_number": "10112",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10112",
+      "ok": true,
+      "filename": "blazon/10112.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-hwrd-20230131-tessuto_10112.jpg",
+      "bytes": 511839,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-hwrd-20230131-tessuto_10112.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-wdc2-20230131-resa2_10112.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-skfg-20230131-resa10_10112.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-hwrd-20230131-tessuto_10112.jpg",
+          "bytes": 511839,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-skfg-20230131-resa10_10112.jpg",
+          "bytes": 232501,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-wdc2-20230131-resa2_10112.jpg",
+          "bytes": 52736,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 52736,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 459103
+    },
+    {
+      "fabric_number": "10113",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10113",
+      "ok": true,
+      "filename": "blazon/10113.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-mtgv-20230131-tessuto_10113.jpg",
+      "bytes": 437941,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-mtgv-20230131-tessuto_10113.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-5z9v-20230131-resa2_10113.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-c2mp-20230131-resa10_10113.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-mtgv-20230131-tessuto_10113.jpg",
+          "bytes": 437941,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-c2mp-20230131-resa10_10113.jpg",
+          "bytes": 184320,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-5z9v-20230131-resa2_10113.jpg",
+          "bytes": 49437,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 49437,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 388504
+    },
+    {
+      "fabric_number": "10114",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10114",
+      "ok": true,
+      "filename": "blazon/10114.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-rt8s-20230131-tessuto_10114.jpg",
+      "bytes": 359821,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-rt8s-20230131-tessuto_10114.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-f4ue-20230131-resa2_10114.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-magn-20230131-resa10_10114.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-rt8s-20230131-tessuto_10114.jpg",
+          "bytes": 359821,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-magn-20230131-resa10_10114.jpg",
+          "bytes": 134807,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-f4ue-20230131-resa2_10114.jpg",
+          "bytes": 45157,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 45157,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 314664
+    },
+    {
+      "fabric_number": "10115",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10115",
+      "ok": true,
+      "filename": "blazon/10115.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-on7e-20220909-tessuto_10021.jpg",
+      "bytes": 435437,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-on7e-20220909-tessuto_10021.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-mzl6-20220909-resa2_10021.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-1yzd-20220909-resa10_10021.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-on7e-20220909-tessuto_10021.jpg",
+          "bytes": 435437,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-mzl6-20220909-resa2_10021.jpg",
+          "bytes": 211272,
+          "width": 1500,
+          "height": 1500,
+          "selected": false
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-1yzd-20220909-resa10_10021.jpg",
+          "bytes": 199946,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 211272,
+      "zoom_width": 1500,
+      "zoom_height": 1500,
+      "bytes_vs_zoom": 224165
+    },
+    {
+      "fabric_number": "10116",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10116",
+      "ok": true,
+      "filename": "blazon/10116.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-ajyo-20220909-tessuto_10023.jpg",
+      "bytes": 415665,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-ajyo-20220909-tessuto_10023.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-mp0s-20220909-resa2_10023.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-rbdw-20220909-resa10_10023.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-ajyo-20220909-tessuto_10023.jpg",
+          "bytes": 415665,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-mp0s-20220909-resa2_10023.jpg",
+          "bytes": 216406,
+          "width": 1500,
+          "height": 1500,
+          "selected": false
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-rbdw-20220909-resa10_10023.jpg",
+          "bytes": 182806,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 216406,
+      "zoom_width": 1500,
+      "zoom_height": 1500,
+      "bytes_vs_zoom": 199259
+    },
+    {
+      "fabric_number": "10117",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10117",
+      "ok": true,
+      "filename": "blazon/10117.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-ho1i-20220909-tessuto_10022.jpg",
+      "bytes": 447858,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-ho1i-20220909-tessuto_10022.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-az0b-20220909-resa2_10022.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-ze7z-20220909-resa10_10022.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-ho1i-20220909-tessuto_10022.jpg",
+          "bytes": 447858,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-az0b-20220909-resa2_10022.jpg",
+          "bytes": 236986,
+          "width": 1500,
+          "height": 1500,
+          "selected": false
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-ze7z-20220909-resa10_10022.jpg",
+          "bytes": 204753,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 236986,
+      "zoom_width": 1500,
+      "zoom_height": 1500,
+      "bytes_vs_zoom": 210872
+    },
+    {
+      "fabric_number": "10118",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10118",
+      "ok": true,
+      "filename": "blazon/10118.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-xrrj-20220909-tessuto_10024.jpg",
+      "bytes": 420818,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-xrrj-20220909-tessuto_10024.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-oint-20220909-resa2_10024.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-hsit-20220909-resa10_10024.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-xrrj-20220909-tessuto_10024.jpg",
+          "bytes": 420818,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-oint-20220909-resa2_10024.jpg",
+          "bytes": 234458,
+          "width": 1500,
+          "height": 1500,
+          "selected": false
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-hsit-20220909-resa10_10024.jpg",
+          "bytes": 173067,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 234458,
+      "zoom_width": 1500,
+      "zoom_height": 1500,
+      "bytes_vs_zoom": 186360
+    },
+    {
+      "fabric_number": "10119",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10119",
+      "ok": true,
+      "filename": "blazon/10119.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-qhum-20220909-tessuto_10025.jpg",
+      "bytes": 511924,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-qhum-20220909-tessuto_10025.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-fseg-20220909-resa2_10025.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-msjk-20220909-resa10_10025.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-qhum-20220909-tessuto_10025.jpg",
+          "bytes": 511924,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-fseg-20220909-resa2_10025.jpg",
+          "bytes": 238719,
+          "width": 1500,
+          "height": 1500,
+          "selected": false
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-msjk-20220909-resa10_10025.jpg",
+          "bytes": 237465,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 238719,
+      "zoom_width": 1500,
+      "zoom_height": 1500,
+      "bytes_vs_zoom": 273205
+    },
+    {
+      "fabric_number": "10120",
+      "collection": "PE23 - BLAZON",
+      "collection_slug": "blazon",
+      "fabric_code": "10120",
+      "ok": true,
+      "filename": "blazon/10120.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-psxl-20220909-tessuto_10026.jpg",
+      "bytes": 485618,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-psxl-20220909-tessuto_10026.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-sqxp-20220909-resa2_10026.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-ilew-20220909-resa10_10026.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-psxl-20220909-tessuto_10026.jpg",
+          "bytes": 485618,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-ilew-20220909-resa10_10026.jpg",
+          "bytes": 197355,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-sqxp-20220909-resa2_10026.jpg",
+          "bytes": 44565,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 44565,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 441053
+    }
+  ],
+  "collections": {
+    "blazon": {
+      "ok": 20,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "summary": {
+    "ok": 20,
+    "failed": 0,
+    "total": 20,
+    "collection_folders": [
+      "blazon"
+    ]
+  }
+}

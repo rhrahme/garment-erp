@@ -12,6 +12,8 @@
  *   node scripts/download-drapers-fabric-images.mjs --quality best --out data/suppliers/drapers/images-higher
  *   node scripts/download-drapers-fabric-images.mjs --best --limit 10
  *   node scripts/download-drapers-fabric-images.mjs --codes 10101,90640,85119
+ *   node scripts/download-drapers-fabric-images.mjs --by-collection --best --limit 20
+ *   node scripts/download-drapers-fabric-images.mjs --by-collection --best --all
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
@@ -21,6 +23,7 @@ const ROOT = process.cwd();
 const CATALOG_PATH = resolve(ROOT, "src/data/suppliers/drapers-hs-ss26.json");
 const DEFAULT_OUT = resolve(ROOT, "data/suppliers/drapers/images");
 const BEST_OUT = resolve(ROOT, "data/suppliers/drapers/images-higher");
+const BY_COLLECTION_OUT = resolve(ROOT, "data/suppliers/drapers/images-by-collection");
 const BASE = (process.env.DRAPERS_API_BASE_URL || "https://api.drapersitaly.it").replace(/\/$/, "");
 
 function loadEnvLocal() {
@@ -38,12 +41,22 @@ function loadEnvLocal() {
 }
 
 function parseArgs(argv) {
-  const args = { limit: 10, quality: "zoom", out: null, codes: null, delayMs: 200 };
+  const args = {
+    limit: 10,
+    all: false,
+    quality: "zoom",
+    out: null,
+    codes: null,
+    delayMs: 200,
+    byCollection: false,
+  };
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--limit" && argv[i + 1]) args.limit = Number.parseInt(argv[++i], 10);
+    else if (arg === "--all") args.all = true;
     else if (arg === "--quality" && argv[i + 1]) args.quality = argv[++i];
     else if (arg === "--best") args.quality = "best";
+    else if (arg === "--by-collection") args.byCollection = true;
     else if (arg === "--out" && argv[i + 1]) args.out = resolve(ROOT, argv[++i]);
     else if (arg === "--codes" && argv[i + 1]) args.codes = argv[++i].split(/[,\s]+/).filter(Boolean);
     else if (arg === "--delay-ms" && argv[i + 1]) args.delayMs = Number.parseInt(argv[++i], 10);
@@ -51,17 +64,24 @@ function parseArgs(argv) {
       console.log(`Usage: node scripts/download-drapers-fabric-images.mjs [options]
 
 Options:
-  --limit N       Max fabrics to download (default: 10)
+  --limit N       Max fabrics to download (default: 10; use --all for full catalog)
+  --all           Download all fabrics in catalog (overrides --limit)
   --quality TYPE  square | zoom | ruler | best (default: zoom — highest practical swatch)
   --best          Shorthand for --quality best (compares zoom + ruler + square)
-  --out DIR       Output directory (default: images/ or images-higher/ for best)
+  --by-collection Organize into {collection-slug}/{fabric_number}.jpg under images-by-collection/
+  --out DIR       Output directory (default: images/, images-higher/, or images-by-collection/)
   --codes A,B,C   Specific fabric numbers instead of catalog order
   --delay-ms N    Pause between API calls (default: 200)
 `);
       process.exit(0);
     }
   }
-  if (!args.out) args.out = args.quality === "best" ? BEST_OUT : DEFAULT_OUT;
+  if (args.byCollection) {
+    args.quality = "best";
+    if (!args.out) args.out = BY_COLLECTION_OUT;
+  } else if (!args.out) {
+    args.out = args.quality === "best" ? BEST_OUT : DEFAULT_OUT;
+  }
   return args;
 }
 
@@ -221,10 +241,30 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function loadFabricNumbers(codesArg) {
-  if (codesArg?.length) return codesArg;
+/** "PE23 - BLAZON" → blazon; "AI25 - SUPERBIO & BEAUSOLEIL" → superbio-beausoleil */
+function collectionSlug(collection) {
+  if (!collection || !String(collection).trim()) return "uncategorized";
+  let name = String(collection).trim();
+  name = name.replace(/^[A-Z]{2}\d{2}\s*-\s*/i, "");
+  name = name.toLowerCase().replace(/&/g, " ");
+  name = name.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").replace(/-+/g, "-");
+  return name || "uncategorized";
+}
+
+function loadCatalogFabrics(codesArg) {
   const catalog = JSON.parse(readFileSync(CATALOG_PATH, "utf8"));
-  return (catalog.fabrics ?? []).map((f) => String(f.fabric_number)).filter(Boolean);
+  const fabrics = (catalog.fabrics ?? [])
+    .map((f) => ({
+      fabric_number: String(f.fabric_number).trim(),
+      collection: f.collection ?? null,
+    }))
+    .filter((f) => f.fabric_number);
+
+  if (codesArg?.length) {
+    const byNumber = new Map(fabrics.map((f) => [f.fabric_number, f]));
+    return codesArg.map((code) => byNumber.get(code) ?? { fabric_number: code, collection: null });
+  }
+  return fabrics;
 }
 
 loadEnvLocal();
@@ -237,14 +277,14 @@ if (!existsSync(CATALOG_PATH) && !args.codes) {
 
 mkdirSync(args.out, { recursive: true });
 
-const allNumbers = loadFabricNumbers(args.codes);
-const targets = allNumbers.slice(0, args.limit);
+const allFabrics = loadCatalogFabrics(args.codes);
+const targets = args.all ? allFabrics : allFabrics.slice(0, args.limit);
 
 console.log(`Drapers fabric image download`);
-console.log(`  Catalog: ${CATALOG_PATH} (${allNumbers.length} fabrics)`);
+console.log(`  Catalog: ${CATALOG_PATH} (${allFabrics.length} fabrics)`);
 console.log(`  Output:  ${args.out}`);
-console.log(`  Quality: ${args.quality}`);
-console.log(`  Limit:   ${targets.length} fabric(s)\n`);
+console.log(`  Quality: ${args.quality}${args.byCollection ? " (by-collection mode)" : ""}`);
+console.log(`  Limit:   ${args.all ? "all" : targets.length} fabric(s)\n`);
 
 const originalManifestPath = resolve(ROOT, "data/suppliers/drapers/images/manifest.json");
 const originalByFabric = new Map();
@@ -260,20 +300,40 @@ const manifest = {
   source: "Drapers API GET /fabrics/{code}/medias/",
   catalog_path: "src/data/suppliers/drapers-hs-ss26.json",
   quality_requested: args.quality,
+  output_root: args.out.replace(`${ROOT}/`, "").replace(/\\/g, "/"),
+  by_collection: args.byCollection,
   compare_against: existsSync(originalManifestPath) ? "data/suppliers/drapers/images/manifest.json" : null,
   items: [],
+  collections: {},
 };
 
 let okCount = 0;
 let failCount = 0;
 
-for (const fabricNumber of targets) {
-  process.stdout.write(`${fabricNumber} ... `);
+function bumpCollectionCount(slug, field) {
+  if (!manifest.collections[slug]) {
+    manifest.collections[slug] = { ok: 0, failed: 0, skipped: 0 };
+  }
+  manifest.collections[slug][field] += 1;
+}
+
+for (const fabric of targets) {
+  const fabricNumber = fabric.fabric_number;
+  const slug = args.byCollection ? collectionSlug(fabric.collection) : null;
+  const label = args.byCollection ? `${fabricNumber} [${slug}]` : fabricNumber;
+  process.stdout.write(`${label} ... `);
   try {
     const result = await lookupMedias(fabricNumber);
     if (!result.ok) {
       console.log(`SKIP (${result.error})`);
-      manifest.items.push({ fabric_number: fabricNumber, ok: false, error: result.error });
+      manifest.items.push({
+        fabric_number: fabricNumber,
+        collection: fabric.collection,
+        collection_slug: slug,
+        ok: false,
+        error: result.error,
+      });
+      if (args.byCollection) bumpCollectionCount(slug, "failed");
       failCount += 1;
       await sleep(args.delayMs);
       continue;
@@ -290,7 +350,14 @@ for (const fabricNumber of targets) {
       const result_best = await compareMediaCandidates(result.medias);
       if (!result_best) {
         console.log("SKIP (no downloadable image)");
-        manifest.items.push({ fabric_number: fabricNumber, ok: false, error: "no downloadable image" });
+        manifest.items.push({
+          fabric_number: fabricNumber,
+          collection: fabric.collection,
+          collection_slug: slug,
+          ok: false,
+          error: "no downloadable image",
+        });
+        if (args.byCollection) bumpCollectionCount(slug, "failed");
         failCount += 1;
         await sleep(args.delayMs);
         continue;
@@ -306,7 +373,14 @@ for (const fabricNumber of targets) {
       picked = pickImageUrl(result.medias, args.quality);
       if (!picked) {
         console.log("SKIP (no image URL)");
-        manifest.items.push({ fabric_number: fabricNumber, ok: false, error: "no image URL" });
+        manifest.items.push({
+          fabric_number: fabricNumber,
+          collection: fabric.collection,
+          collection_slug: slug,
+          ok: false,
+          error: "no image URL",
+        });
+        if (args.byCollection) bumpCollectionCount(slug, "failed");
         failCount += 1;
         await sleep(args.delayMs);
         continue;
@@ -319,9 +393,13 @@ for (const fabricNumber of targets) {
     }
 
     const ext = extFromUrl(picked.url);
-    const filename = `${normalizeCode(fabricNumber)}${ext}`;
-    const destPath = resolve(args.out, filename);
+    const baseName = `${normalizeCode(fabricNumber)}${ext}`;
+    const destDir = args.byCollection ? resolve(args.out, slug) : args.out;
+    mkdirSync(destDir, { recursive: true });
+    const filename = args.byCollection ? baseName : baseName;
+    const destPath = resolve(destDir, filename);
     writeFileSync(destPath, imageBuf);
+    const relativePath = args.byCollection ? `${slug}/${filename}` : filename;
 
     const zoomItem = compared?.find((c) => c.key === "zoom");
     const zoomRef = args.quality === "best" ? zoomItem : null;
@@ -332,13 +410,15 @@ for (const fabricNumber of targets) {
         : zoomRef?.bytes != null
           ? " (=zoom)"
           : "";
-    console.log(`OK → ${filename} (${picked.quality}, ${bytes} bytes${dimLabel}${vsZoom})`);
+    console.log(`OK → ${relativePath} (${picked.quality}, ${bytes} bytes${dimLabel}${vsZoom})`);
 
     const item = {
       fabric_number: fabricNumber,
+      collection: fabric.collection,
+      collection_slug: slug,
       fabric_code: result.fabric_code,
       ok: true,
-      filename,
+      filename: relativePath,
       quality: picked.quality,
       url: picked.url,
       bytes,
@@ -362,22 +442,39 @@ for (const fabricNumber of targets) {
       item.bytes_vs_original = bytes - original.bytes;
     }
     manifest.items.push(item);
+    if (args.byCollection) bumpCollectionCount(slug, "ok");
     okCount += 1;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.log(`FAIL (${message})`);
-    manifest.items.push({ fabric_number: fabricNumber, ok: false, error: message });
+    manifest.items.push({
+      fabric_number: fabricNumber,
+      collection: fabric.collection,
+      collection_slug: slug,
+      ok: false,
+      error: message,
+    });
+    if (args.byCollection) bumpCollectionCount(slug, "failed");
     failCount += 1;
   }
 
   await sleep(args.delayMs);
 }
 
-manifest.summary = { ok: okCount, failed: failCount, total: targets.length };
+manifest.summary = {
+  ok: okCount,
+  failed: failCount,
+  total: targets.length,
+  collection_folders: args.byCollection ? Object.keys(manifest.collections).sort() : undefined,
+};
 const manifestPath = resolve(args.out, "manifest.json");
 writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 
 console.log(`\nDone: ${okCount} downloaded, ${failCount} failed/skipped`);
+if (args.byCollection) {
+  const folders = Object.keys(manifest.collections).sort();
+  console.log(`Collections: ${folders.length} folder(s) — ${folders.join(", ")}`);
+}
 console.log(`Manifest: ${manifestPath}`);
 
 process.exit(failCount > 0 && okCount === 0 ? 1 : 0);
