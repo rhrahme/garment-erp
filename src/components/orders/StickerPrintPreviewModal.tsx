@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Printer, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { LabelRotationControl } from "@/components/orders/LabelRotationControl";
 import { StickerCell } from "@/components/orders/StickerCell";
+import { useLabelRotation } from "@/hooks/useLabelRotation";
 import type { StickerPreviewItem } from "@/lib/production/sticker-print-selection";
 
 type StickerPrintPreviewModalProps = {
@@ -80,6 +82,7 @@ export function StickerPrintPreviewModal({
     [allCodes, defaultSelectedCodes]
   );
   const [selected, setSelected] = useState<Set<string>>(initialSelection);
+  const { rotation, setRotation } = useLabelRotation();
 
   useEffect(() => {
     if (open) setSelected(new Set(defaultSelectedCodes?.length ? defaultSelectedCodes : allCodes));
@@ -136,6 +139,10 @@ export function StickerPrintPreviewModal({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+          <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+            <LabelRotationControl value={rotation} onChange={setRotation} compact />
+          </div>
+
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-700">
               <input

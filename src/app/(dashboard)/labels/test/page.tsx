@@ -7,8 +7,8 @@ export default function LabelPrinterTestPage() {
     <div>
       <div className="no-print">
         <PageHeader
-          title="Sticker printer test"
-          description={`${labelRollSizeLabel()} roll — calibrate AIMO / LabelLife media, then print one test label`}
+          title="Label printer settings"
+          description={`${labelRollSizeLabel()} roll — set label rotation, calibrate AIMO / LabelLife media, then print a test label`}
         />
       </div>
       <LabelPrinterTest />

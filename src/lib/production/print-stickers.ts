@@ -1,3 +1,8 @@
+import {
+  readLabelRotation,
+  type LabelRotationDeg,
+} from "@/lib/production/label-printer-settings";
+
 export type StickerPdfSheet = "fabric-cuts" | "pieces" | "print-pack" | "test";
 
 export const STICKER_PRINT_HEADERS_HINT_KEY = "sticker-print-headers-hint-seen";
@@ -18,18 +23,27 @@ export type StickerPdfRequest = {
   poId?: string;
   /** When set, only these sticker codes are included in the PDF. */
   codes?: string[];
+  /** Label rotation in degrees (0/90/180/270). Defaults to saved printer setting. */
+  rotationDeg?: LabelRotationDeg;
 };
 
-function buildStickerPdfUrl({ orderId, sheet = "pieces", po, poId, codes }: StickerPdfRequest): string {
+function resolveRotationDeg(request: StickerPdfRequest): LabelRotationDeg {
+  return request.rotationDeg ?? readLabelRotation();
+}
+
+function buildStickerPdfUrl(request: StickerPdfRequest): string {
+  const { orderId, sheet = "pieces", po, poId, codes } = request;
   const params = new URLSearchParams({ sheet });
   if (po) params.set("po", po);
   if (poId) params.set("po_id", poId);
   if (codes && codes.length > 0) params.set("codes", codes.join(","));
+  params.set("rotation", String(resolveRotationDeg(request)));
   return `/api/sales-orders/${orderId}/stickers/pdf?${params.toString()}`;
 }
 
 async function fetchStickerPdf(request: StickerPdfRequest): Promise<Response> {
   const { orderId, sheet = "pieces", po, poId, codes } = request;
+  const rotationDeg = resolveRotationDeg(request);
   const url = `/api/sales-orders/${orderId}/stickers/pdf`;
 
   if (codes && codes.length > 0) {
@@ -41,6 +55,7 @@ async function fetchStickerPdf(request: StickerPdfRequest): Promise<Response> {
         po: po ?? null,
         po_id: poId ?? null,
         codes,
+        rotation: rotationDeg,
       }),
       cache: "no-store",
     });
@@ -56,7 +71,7 @@ function pdfFilename(orderId: string, sheet: StickerPdfSheet): string {
 
 /**
  * Fetch server-generated roll PDF and open the system print dialog.
- * PDF pages are 51×102 mm portrait (LabelLife media); roll layout mapped per element.
+ * PDF pages use the saved label rotation (default 90° portrait for LabelLife media).
  */
 export async function printStickerPdf(
   request: StickerPdfRequest,

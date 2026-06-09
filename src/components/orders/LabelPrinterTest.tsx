@@ -3,7 +3,9 @@
 import { useCallback } from "react";
 import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { LabelRotationControl } from "@/components/orders/LabelRotationControl";
 import { StickerCell } from "@/components/orders/StickerCell";
+import { useLabelRotation } from "@/hooks/useLabelRotation";
 import { useStickerPrint } from "@/hooks/useStickerPrint";
 import { labelPdfMediaLabel, labelPdfMediaMmLabel, labelRollSizeLabel } from "@/lib/production/label-print-config";
 import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
@@ -34,13 +36,18 @@ const TEST_LABEL: PrintableStickerLabel = {
 
 export function LabelPrinterTest() {
   const { printing, requestPrint } = useStickerPrint();
+  const { rotation, setRotation } = useLabelRotation();
 
   const handlePrint = useCallback(() => {
-    requestPrint({ orderId: "test", sheet: "test" });
-  }, [requestPrint]);
+    requestPrint({ orderId: "test", sheet: "test", rotationDeg: rotation });
+  }, [requestPrint, rotation]);
 
   return (
     <div>
+      <div className="no-print mb-6 rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+        <LabelRotationControl value={rotation} onChange={setRotation} />
+      </div>
+
       <div className="no-print mb-6 space-y-3 rounded-xl border border-indigo-200 bg-indigo-50/60 px-4 py-4 text-sm text-slate-700">
         <p className="font-semibold text-slate-900">Before printing</p>
         <ol className="list-decimal space-y-1 pl-5">
@@ -49,10 +56,13 @@ export function LabelPrinterTest() {
             <strong>{labelPdfMediaMmLabel()}</strong> ({labelPdfMediaLabel()}).
           </li>
           <li>
-            Click <strong>Print test label</strong> — a server PDF opens (no browser date/URL headers). Set{" "}
-            <strong>Scale 100%</strong>, <strong>Margins: None</strong>, paper{" "}
-            <strong>{labelPdfMediaMmLabel()}</strong>. Content fills the full{" "}
-            <strong>{labelRollSizeLabel()}</strong> label (QR left, text horizontal).
+            Pick <strong>Label rotation</strong> above, then click <strong>Print test label</strong>. If QR or text
+            prints sideways or upside down, try another rotation and print again until the physical label reads
+            correctly (QR left, text horizontal on the {labelRollSizeLabel()} roll).
+          </li>
+          <li>
+            In the print dialog: <strong>Scale 100%</strong>, <strong>Margins: None</strong>, paper{" "}
+            <strong>{labelPdfMediaMmLabel()}</strong>.
           </li>
           <li>Select your thermal printer (not “Save as PDF” unless testing layout only).</li>
           <li>Scan the QR with Fabric Receiving — it should read <code className="font-mono">L01-SHT</code>.</li>

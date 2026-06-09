@@ -1,9 +1,5 @@
 import { jsPDF } from "jspdf";
 import {
-  LABEL_PDF_FORMAT_MM,
-  LABEL_PDF_ORIENTATION,
-  LABEL_PDF_PAGE_HEIGHT_MM,
-  LABEL_PDF_PAGE_WIDTH_MM,
   LABEL_ROLL_HEIGHT_MM,
   LABEL_ROLL_WIDTH_MM,
   LABEL_STICKER_COLUMN_GAP_MM,
@@ -12,6 +8,12 @@ import {
   LABEL_STICKER_PADDING_V_MM,
   LABEL_STICKER_QR_SIZE_MM,
 } from "@/lib/production/label-print-config";
+import {
+  DEFAULT_LABEL_ROTATION,
+  labelPdfOrientation,
+  labelPdfPageSizeMm,
+  type LabelRotationDeg,
+} from "@/lib/production/label-printer-settings";
 import {
   formatStickerBatchMark,
   formatStickerCutLength,
@@ -25,9 +27,8 @@ import {
 
 const STICKER_RGB = { r: 42, g: 42, b: 42 };
 const LINE_HEIGHT_FACTOR = 1.15;
-/** 90° CCW: landscape roll layout (102×51) → portrait PDF page (51×102). */
-const PORTRAIT_TEXT_ANGLE = -90;
-const PORTRAIT_IMAGE_ROTATION = 270;
+const LAYOUT_W = LABEL_ROLL_WIDTH_MM;
+const LAYOUT_H = LABEL_ROLL_HEIGHT_MM;
 
 /** jsPDF font size is in pt; sticker layout uses mm. */
 function mmToPt(mm: number): number {
@@ -54,17 +55,66 @@ function fitText(doc: jsPDF, text: string, maxWidth: number): string {
   return `${trimmed}…`;
 }
 
-function mapLayoutPoint(x: number, y: number): { x: number; y: number } {
-  return { x: y, y: LABEL_PDF_PAGE_HEIGHT_MM - x };
+function mapLayoutPoint(
+  x: number,
+  y: number,
+  rotation: LabelRotationDeg
+): { x: number; y: number } {
+  switch (rotation) {
+    case 0:
+      return { x, y };
+    case 90:
+      return { x: y, y: LAYOUT_W - x };
+    case 180:
+      return { x: LAYOUT_W - x, y: LAYOUT_H - y };
+    case 270:
+      return { x: LAYOUT_H - y, y: x };
+  }
 }
 
 function mapLayoutImageRect(
   x: number,
   y: number,
   w: number,
-  h: number
+  h: number,
+  rotation: LabelRotationDeg
 ): { x: number; y: number; w: number; h: number } {
-  return { x: y, y: LABEL_PDF_PAGE_HEIGHT_MM - x - w, w: h, h: w };
+  switch (rotation) {
+    case 0:
+      return { x, y, w, h };
+    case 90:
+      return { x: y, y: LAYOUT_W - x - w, w: h, h: w };
+    case 180:
+      return { x: LAYOUT_W - x - w, y: LAYOUT_H - y - h, w, h };
+    case 270:
+      return { x: LAYOUT_H - y - h, y: x, w: h, h: w };
+  }
+}
+
+function textAngleForRotation(rotation: LabelRotationDeg): number {
+  switch (rotation) {
+    case 0:
+      return 0;
+    case 90:
+      return -90;
+    case 180:
+      return 180;
+    case 270:
+      return 90;
+  }
+}
+
+function imageRotationForLayout(rotation: LabelRotationDeg): number {
+  switch (rotation) {
+    case 0:
+      return 0;
+    case 90:
+      return 270;
+    case 180:
+      return 180;
+    case 270:
+      return 90;
+  }
 }
 
 function drawStickerText(
@@ -72,16 +122,14 @@ function drawStickerText(
   text: string,
   layoutX: number,
   layoutY: number,
+  rotation: LabelRotationDeg,
   options: { align?: "left" | "right" | "center"; maxWidth?: number } = {}
 ): void {
-  const { x, y } =
-    LABEL_PDF_ORIENTATION === "portrait"
-      ? mapLayoutPoint(layoutX, layoutY)
-      : { x: layoutX, y: layoutY };
+  const { x, y } = mapLayoutPoint(layoutX, layoutY, rotation);
   doc.text(text, x, y, {
     align: options.align ?? "left",
     baseline: "middle",
-    angle: LABEL_PDF_ORIENTATION === "portrait" ? PORTRAIT_TEXT_ANGLE : 0,
+    angle: textAngleForRotation(rotation),
     maxWidth: options.maxWidth,
   });
 }
@@ -91,10 +139,11 @@ function drawLeftLine(
   text: string,
   x: number,
   y: number,
-  maxWidth: number
+  maxWidth: number,
+  rotation: LabelRotationDeg
 ): void {
   const line = fitText(doc, text, maxWidth);
-  drawStickerText(doc, line, x, y);
+  drawStickerText(doc, line, x, y, rotation);
 }
 
 function formatWeight(weightGsm: number | null): string | null {
@@ -108,19 +157,20 @@ function pieceLabel(label: PrintableStickerLabel): string {
     : label.piece_name;
 }
 
-function createStickerPdfDocument(): jsPDF {
+function createStickerPdfDocument(rotation: LabelRotationDeg): jsPDF {
   const doc = new jsPDF({
     unit: "mm",
-    format: [...LABEL_PDF_FORMAT_MM],
-    orientation: LABEL_PDF_ORIENTATION,
+    format: [LAYOUT_W, LAYOUT_H],
+    orientation: labelPdfOrientation(rotation),
     compress: true,
   });
 
+  const expected = labelPdfPageSizeMm(rotation);
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  if (pageW !== LABEL_PDF_PAGE_WIDTH_MM || pageH !== LABEL_PDF_PAGE_HEIGHT_MM) {
+  if (pageW !== expected.width || pageH !== expected.height) {
     throw new Error(
-      `Sticker PDF page must be ${LABEL_PDF_PAGE_WIDTH_MM}×${LABEL_PDF_PAGE_HEIGHT_MM} mm, got ${pageW}×${pageH} mm.`
+      `Sticker PDF page must be ${expected.width}×${expected.height} mm at ${rotation}°, got ${pageW}×${pageH} mm.`
     );
   }
 
@@ -131,10 +181,11 @@ async function drawStickerPage(
   doc: jsPDF,
   label: PrintableStickerLabel,
   role: StickerRole | undefined,
-  qrCache: Map<string, string>
+  qrCache: Map<string, string>,
+  rotation: LabelRotationDeg
 ): Promise<void> {
-  const pageW = LABEL_ROLL_WIDTH_MM;
-  const pageH = LABEL_ROLL_HEIGHT_MM;
+  const pageW = LAYOUT_W;
+  const pageH = LAYOUT_H;
   const padH = LABEL_STICKER_PADDING_H_MM;
   const padV = LABEL_STICKER_PADDING_V_MM;
   const contentW = pageW - padH * 2;
@@ -172,22 +223,19 @@ async function drawStickerPage(
     qrData = await fetchQrDataUrl(label.qr_payload, 450);
     qrCache.set(label.qr_payload, qrData);
   }
-  if (LABEL_PDF_ORIENTATION === "portrait") {
-    const mapped = mapLayoutImageRect(qrX, qrY, qrSize, qrSize);
-    doc.addImage(
-      qrData,
-      "PNG",
-      mapped.x,
-      mapped.y,
-      mapped.w,
-      mapped.h,
-      undefined,
-      undefined,
-      PORTRAIT_IMAGE_ROTATION
-    );
-  } else {
-    doc.addImage(qrData, "PNG", qrX, qrY, qrSize, qrSize);
-  }
+
+  const mapped = mapLayoutImageRect(qrX, qrY, qrSize, qrSize, rotation);
+  doc.addImage(
+    qrData,
+    "PNG",
+    mapped.x,
+    mapped.y,
+    mapped.w,
+    mapped.h,
+    undefined,
+    undefined,
+    imageRotationForLayout(rotation)
+  );
 
   const gap = LABEL_STICKER_LINE_GAP_MM;
   const headerH = lineHeightMm(headerFontMm);
@@ -199,9 +247,9 @@ async function drawStickerPage(
   let y = padV + (contentH - bodyH) / 2 + headerH / 2;
 
   doc.setFontSize(mmToPt(headerFontMm));
-  drawStickerText(doc, STICKER_ROLE_LABEL[stickerRole], textX, y, { align: "left" });
+  drawStickerText(doc, STICKER_ROLE_LABEL[stickerRole], textX, y, rotation, { align: "left" });
   if (batchMark) {
-    drawStickerText(doc, batchMark, textX + textW, y, { align: "right" });
+    drawStickerText(doc, batchMark, textX + textW, y, rotation, { align: "right" });
   }
 
   y += headerH / 2 + gap;
@@ -209,7 +257,7 @@ async function drawStickerPage(
     const lineH = lineHeightMm(line.fontMm);
     y += lineH / 2;
     doc.setFontSize(mmToPt(line.fontMm));
-    drawLeftLine(doc, line.text, textX, y, textW);
+    drawLeftLine(doc, line.text, textX, y, textW, rotation);
     y += lineH / 2 + gap;
   }
 }
@@ -219,28 +267,38 @@ export type StickerPdfEntry = {
   role?: StickerRole;
 };
 
-/** Server-generated roll PDF — 51×102 mm portrait pages, roll layout mapped per element. */
-export async function generateStickerRollPdf(entries: StickerPdfEntry[]): Promise<Uint8Array> {
+export type StickerPdfOptions = {
+  rotationDeg?: LabelRotationDeg;
+};
+
+/** Server-generated roll PDF — page size and mapping depend on rotation setting. */
+export async function generateStickerRollPdf(
+  entries: StickerPdfEntry[],
+  options: StickerPdfOptions = {}
+): Promise<Uint8Array> {
   if (entries.length === 0) {
     throw new Error("No sticker labels to print.");
   }
 
-  const doc = createStickerPdfDocument();
+  const rotation = options.rotationDeg ?? DEFAULT_LABEL_ROTATION;
+  const doc = createStickerPdfDocument(rotation);
   const qrCache = new Map<string, string>();
 
   for (let index = 0; index < entries.length; index += 1) {
     if (index > 0) {
-      doc.addPage([...LABEL_PDF_FORMAT_MM], LABEL_PDF_ORIENTATION);
+      doc.addPage([LAYOUT_W, LAYOUT_H], labelPdfOrientation(rotation));
     }
     const entry = entries[index]!;
-    await drawStickerPage(doc, entry.label, entry.role, qrCache);
+    await drawStickerPage(doc, entry.label, entry.role, qrCache, rotation);
   }
 
   return new Uint8Array(doc.output("arraybuffer"));
 }
 
-/** Single test label for printer calibration (settings → label printer test). */
-export async function generateTestStickerPdf(): Promise<Uint8Array> {
+/** Single test label for printer calibration (labels/test). */
+export async function generateTestStickerPdf(
+  options: StickerPdfOptions = {}
+): Promise<Uint8Array> {
   const testLabel: PrintableStickerLabel = {
     sticker_code: "TEST-L01-SHT",
     fabric_line_id: "test-line",
@@ -264,5 +322,5 @@ export async function generateTestStickerPdf(): Promise<Uint8Array> {
     sticker_total: 14,
   };
 
-  return generateStickerRollPdf([{ label: testLabel, role: "prep" }]);
+  return generateStickerRollPdf([{ label: testLabel, role: "prep" }], options);
 }

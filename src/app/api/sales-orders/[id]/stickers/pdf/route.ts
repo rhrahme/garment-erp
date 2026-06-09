@@ -4,6 +4,7 @@ import {
   generateStickerRollPdf,
   generateTestStickerPdf,
 } from "@/lib/production/generate-sticker-pdf";
+import { parseLabelRotation } from "@/lib/production/label-printer-settings";
 import { filterEntriesByStickerCodes } from "@/lib/production/sticker-print-selection";
 import { loadStickerPdfEntries, type StickerSheetKind } from "@/lib/production/sticker-sheet-data";
 
@@ -36,6 +37,7 @@ type PdfQuery = {
   poNumber: string | null;
   poId: string | null;
   codes: string[] | null;
+  rotationDeg: ReturnType<typeof parseLabelRotation>;
 };
 
 function queryFromUrl(url: URL): PdfQuery {
@@ -44,14 +46,16 @@ function queryFromUrl(url: URL): PdfQuery {
     poNumber: url.searchParams.get("po"),
     poId: url.searchParams.get("po_id"),
     codes: parseCodesParam(url.searchParams.get("codes")),
+    rotationDeg: parseLabelRotation(url.searchParams.get("rotation")),
   };
 }
 
 async function generatePdfResponse(orderId: string, query: PdfQuery) {
-  const { sheet, poNumber, poId, codes } = query;
+  const { sheet, poNumber, poId, codes, rotationDeg } = query;
+  const pdfOptions = { rotationDeg };
 
   if (sheet === "test") {
-    const pdfBytes = await generateTestStickerPdf();
+    const pdfBytes = await generateTestStickerPdf(pdfOptions);
     return new NextResponse(Buffer.from(pdfBytes), {
       headers: {
         "Content-Type": "application/pdf",
@@ -71,7 +75,7 @@ async function generatePdfResponse(orderId: string, query: PdfQuery) {
     return NextResponse.json({ error: "No sticker labels to print." }, { status: 400 });
   }
 
-  const pdfBytes = await generateStickerRollPdf(entries);
+  const pdfBytes = await generateStickerRollPdf(entries, pdfOptions);
   const suffix = sheet === "print-pack" ? "print-pack" : sheet === "fabric-cuts" ? "prep" : "prod";
 
   return new NextResponse(Buffer.from(pdfBytes), {
@@ -111,6 +115,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       po?: string | null;
       po_id?: string | null;
       codes?: string[];
+      rotation?: string | number | null;
     };
 
     const query: PdfQuery = {
@@ -118,6 +123,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       poNumber: body.po?.trim() || null,
       poId: body.po_id?.trim() || null,
       codes: parseCodesFromBody(body),
+      rotationDeg: parseLabelRotation(body.rotation),
     };
 
     return await generatePdfResponse(id, query);
