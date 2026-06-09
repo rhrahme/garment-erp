@@ -9,8 +9,8 @@ export type LabelRotationDeg = 0 | 90 | 180 | 270;
 export const LABEL_ROTATION_STORAGE_KEY = "label-printer:rotation-deg";
 export const LABEL_SCALE_STORAGE_KEY = "label-printer:scale-pct";
 
-/** Matches prior portrait per-element mapping (LabelLife 51×102 media). */
-export const DEFAULT_LABEL_ROTATION: LabelRotationDeg = 90;
+/** 102×51 mm landscape PDF — QR left, text horizontal, no coordinate remapping. */
+export const DEFAULT_LABEL_ROTATION: LabelRotationDeg = 0;
 
 /** Content scale multiplier for thermal drivers that shrink PDFs to fit. */
 export type LabelScalePct = 100 | 125 | 150;
@@ -72,15 +72,15 @@ export const LABEL_ROTATION_OPTIONS: ReadonlyArray<{
 }> = [
   {
     value: 0,
-    label: "0° — landscape",
+    label: "0° — landscape (default)",
     description:
-      "102×51 mm PDF, no rotation. QR on the left, text horizontal. Use when the driver prints the label as-is.",
+      "102×51 mm PDF, one label per page. QR on the left, text horizontal. Use this for LabelLife / AIMO roll printing.",
   },
   {
     value: 90,
-    label: "90° — portrait (default)",
+    label: "90° — portrait remapped",
     description:
-      "51×102 mm portrait PDF with content mapped for LabelLife/AIMO. QR on the left, text horizontal on the physical 102×51 label.",
+      "51×102 mm portrait PDF with per-element coordinate mapping. Only if 0° prints sideways on your driver.",
   },
   {
     value: 180,

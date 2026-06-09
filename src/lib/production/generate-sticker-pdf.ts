@@ -279,7 +279,7 @@ export type StickerPdfOptions = {
   scalePct?: LabelScalePct;
 };
 
-/** Server-generated roll PDF — page size and mapping depend on rotation setting. */
+/** Server-generated roll PDF — one label per page at exact roll size (102×51 mm at 0°). */
 export async function generateStickerRollPdf(
   entries: StickerPdfEntry[],
   options: StickerPdfOptions = {}
@@ -292,10 +292,11 @@ export async function generateStickerRollPdf(
   const scalePct = options.scalePct ?? DEFAULT_LABEL_SCALE_PCT;
   const doc = createStickerPdfDocument(rotation);
   const qrCache = new Map<string, string>();
+  const pageSize = labelPdfPageSizeMm(rotation);
 
   for (let index = 0; index < entries.length; index += 1) {
     if (index > 0) {
-      doc.addPage([LAYOUT_W, LAYOUT_H], labelPdfOrientation(rotation));
+      doc.addPage([pageSize.width, pageSize.height], labelPdfOrientation(rotation));
     }
     const entry = entries[index]!;
     await drawStickerPage(doc, entry.label, entry.role, qrCache, rotation, scalePct);
@@ -304,32 +305,50 @@ export async function generateStickerRollPdf(
   return new Uint8Array(doc.output("arraybuffer"));
 }
 
-/** Single test label for printer calibration (labels/test). */
+const TEST_LABEL_BASE: Omit<PrintableStickerLabel, "fabric_number" | "sticker_code" | "sticker_index"> = {
+  fabric_line_id: "test-line",
+  production_code: "L01-SHT",
+  fabric_cut_code: "L01-SHT",
+  qr_payload: "L01-SHT",
+  client_code: "FR-0128-0019",
+  client_name: "Ralph Rahme",
+  garment_type: "Shirt",
+  piece_name: "Shirt",
+  supplier_name: "Solbiati",
+  fabric_brand: "Solbiati",
+  composition: "100% COTTON TEST",
+  weight_gsm: 240,
+  cut_quantity: 0.9,
+  cut_unit: "meters",
+  labels_sent: 1,
+  article_number: 1,
+  sticker_total: 2,
+};
+
+/** Two test labels (S10008 + S10009) — one page each for roll calibration. */
 export async function generateTestStickerPdf(
   options: StickerPdfOptions = {}
 ): Promise<Uint8Array> {
-  const testLabel: PrintableStickerLabel = {
-    sticker_code: "TEST-L01-SHT",
-    fabric_line_id: "test-line",
-    production_code: "L01-SHT",
-    fabric_cut_code: "L01-SHT",
-    qr_payload: "L01-SHT",
-    client_code: "FR-0126-0019",
-    client_name: "Ralph Rahme",
-    garment_type: "Shirt",
-    piece_name: "Shirt",
-    fabric_number: "S10009",
-    supplier_name: "Solbiati",
-    fabric_brand: "Solbiati",
-    composition: "100% COTTON TEST",
-    weight_gsm: 240,
-    cut_quantity: 0.9,
-    cut_unit: "meters",
-    labels_sent: 1,
-    article_number: 1,
-    sticker_index: 1,
-    sticker_total: 14,
-  };
+  const entries: StickerPdfEntry[] = [
+    {
+      label: {
+        ...TEST_LABEL_BASE,
+        sticker_code: "TEST-S10008",
+        fabric_number: "S10008",
+        sticker_index: 1,
+      },
+      role: "prep",
+    },
+    {
+      label: {
+        ...TEST_LABEL_BASE,
+        sticker_code: "TEST-S10009",
+        fabric_number: "S10009",
+        sticker_index: 2,
+      },
+      role: "prep",
+    },
+  ];
 
-  return generateStickerRollPdf([{ label: testLabel, role: "prep" }], options);
+  return generateStickerRollPdf(entries, options);
 }

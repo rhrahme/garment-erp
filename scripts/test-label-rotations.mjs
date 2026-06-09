@@ -46,19 +46,19 @@ function textAngleForRotation(rotation) {
 }
 
 function createPdf(rotation) {
+  const pageSize = labelPdfPageSizeMm(rotation);
   const doc = new jsPDF({
     unit: "mm",
-    format: [LAYOUT_W, LAYOUT_H],
+    format: [pageSize.width, pageSize.height],
     orientation: labelPdfOrientation(rotation),
     compress: false,
   });
 
-  const expected = labelPdfPageSizeMm(rotation);
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  if (pageW !== expected.width || pageH !== expected.height) {
+  if (pageW !== pageSize.width || pageH !== pageSize.height) {
     throw new Error(
-      `${rotation}°: expected ${expected.width}×${expected.height}, got ${pageW}×${pageH}`
+      `${rotation}°: expected ${pageSize.width}×${pageSize.height}, got ${pageW}×${pageH}`
     );
   }
 

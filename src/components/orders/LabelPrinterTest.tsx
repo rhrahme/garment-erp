@@ -56,22 +56,29 @@ export function LabelPrinterTest() {
       </div>
 
       <div className="no-print mb-6 space-y-3 rounded-xl border border-indigo-200 bg-indigo-50/60 px-4 py-4 text-sm text-slate-700">
-        <p className="font-semibold text-slate-900">Before printing</p>
-        <ol className="list-decimal space-y-1 pl-5">
+        <p className="font-semibold text-slate-900">LabelLife / AIMO roll printing</p>
+        <ol className="list-decimal space-y-2 pl-5">
           <li>
-            In <strong>LabelLife</strong> or the <strong>AIMO driver</strong>, set media to{" "}
-            <strong>{labelPdfMediaMmLabel()}</strong> ({labelPdfMediaLabel()}).
+            Set media / paper size to <strong>{labelPdfMediaMmLabel()}</strong> (
+            {labelPdfMediaLabel()}) in LabelLife or the AIMO driver.
           </li>
           <li>
-            Pick <strong>Label rotation</strong> and <strong>Label size</strong> above, then click{" "}
-            <strong>Print test label</strong>. If QR or text prints sideways or upside down, try another rotation.
-            If content looks too small with empty margins, try Medium (125%) or Large (150%).
+            Each PDF page is <strong>exactly one label</strong> — the roll advances one page per physical
+            label. Do not use multi-label templates or “N-up” layout.
           </li>
           <li>
-            In the print dialog: <strong>Scale 100%</strong>, <strong>Margins: None</strong>, paper{" "}
-            <strong>{labelPdfMediaMmLabel()}</strong>.
+            In the print dialog: <strong>Scale 100%</strong> (not “Fit to page” or “Shrink oversized”),{" "}
+            <strong>Margins: None</strong>, paper <strong>{labelPdfMediaMmLabel()}</strong>.
           </li>
-          <li>Select your thermal printer (not “Save as PDF” unless testing layout only).</li>
+          <li>
+            Leave rotation at <strong>0° — landscape (default)</strong> above unless QR or text prints
+            sideways or upside down — then try 90°, 180°, or 270°.
+          </li>
+          <li>
+            Click <strong>Print test label</strong> — you should get <strong>2 labels</strong> (S10008, then
+            S10009). If content looks too small, try Medium (125%) or Large (150%).
+          </li>
+          <li>Select your thermal printer (not “Save as PDF” unless checking layout only).</li>
           <li>Scan the QR with Fabric Receiving — it should read <code className="font-mono">L01-SHT</code>.</li>
         </ol>
       </div>
@@ -79,7 +86,7 @@ export function LabelPrinterTest() {
       <div className="no-print mb-4">
         <Button onClick={handlePrint} disabled={printing}>
           <Printer className="mr-2 h-4 w-4" />
-          {printing ? "Preparing PDF…" : "Print test label"}
+          {printing ? "Preparing PDF…" : "Print test labels (2 pages)"}
         </Button>
       </div>
 
