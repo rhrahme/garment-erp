@@ -92,6 +92,31 @@ export function markFabricLinesPrinted(
   );
 }
 
+/** Clear A4 + sticker print timestamps — testing reset only. */
+export function clearFabricLinePrintTimestamps(
+  lines: SalesOrderFabricLine[],
+  lineIds: string[]
+): { lines: SalesOrderFabricLine[]; cleared_line_ids: string[] } {
+  const idSet = new Set(lineIds);
+  const cleared_line_ids: string[] = [];
+
+  const nextLines = lines.map((line) => {
+    if (!idSet.has(line.id)) return line;
+    if (!line.a4_printed_at && !line.prep_stickers_printed_at && !line.prod_stickers_printed_at) {
+      return line;
+    }
+    cleared_line_ids.push(line.id);
+    return {
+      ...line,
+      a4_printed_at: null,
+      prep_stickers_printed_at: null,
+      prod_stickers_printed_at: null,
+    };
+  });
+
+  return { lines: nextLines, cleared_line_ids };
+}
+
 export function resolvePrintLineIds(
   order: Pick<SalesOrder, "fabric_lines">,
   kind: FabricLinePrintKind,

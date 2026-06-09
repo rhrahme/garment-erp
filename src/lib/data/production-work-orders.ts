@@ -34,3 +34,22 @@ export function getProductionWorkOrderBySticker(stickerCode: string): Production
 export function getProductionWorkOrderById(id: string): ProductionWorkOrder | undefined {
   return readProductionWorkOrders().work_orders.find((order) => order.id === id);
 }
+
+/** Remove work orders created from fabric handoff — testing reset only. */
+export async function removeProductionWorkOrdersForLineIds(lineIds: string[]): Promise<string[]> {
+  const lineIdSet = new Set(lineIds);
+  const store = readProductionWorkOrders();
+  const removedIds: string[] = [];
+  const nextWorkOrders = store.work_orders.filter((workOrder) => {
+    if (lineIdSet.has(workOrder.sales_order_line_id)) {
+      removedIds.push(workOrder.id);
+      return false;
+    }
+    return true;
+  });
+
+  if (removedIds.length === 0) return removedIds;
+
+  await writeProductionWorkOrders({ ...store, work_orders: nextWorkOrders });
+  return removedIds;
+}

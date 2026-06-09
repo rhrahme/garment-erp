@@ -9,6 +9,7 @@ import type { ScanStation } from "@/lib/production/stage-scan";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { FabricReceivingWorkList } from "@/components/fabric-receiving/FabricReceivingWorkList";
+import { FabricReceivingTestingReset } from "@/components/fabric-receiving/FabricReceivingTestingReset";
 import { StageScanPanel } from "@/components/production/StageScanPanel";
 import type { StageScanResponse } from "@/components/production/StickerScanInput";
 import {
@@ -234,6 +235,13 @@ export function FabricReceivingWorkspace() {
         onReceiveLine={handleReceiveLine}
         onStartPrep={startFabricPrep}
         onAdvancePrep={advancePrep}
+      />
+
+      <FabricReceivingTestingReset
+        reloadKey={reloadKey}
+        onResetComplete={refreshAll}
+        onMessage={setMessage}
+        onError={setError}
       />
 
       <p className="text-center text-sm text-slate-500">

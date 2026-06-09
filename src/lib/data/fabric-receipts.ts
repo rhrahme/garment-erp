@@ -3,6 +3,7 @@ import {
   invalidateDocumentCache,
   readJsonFile,
   readJsonFileFresh,
+  readJsonFileFreshAsync,
   saveDocument,
 } from "@/lib/data/document-persistence";
 import type { FabricReceipt, FabricReceiptsFile } from "@/lib/types/fabric-receipts";
@@ -38,6 +39,10 @@ export function readFabricReceiptsArchive(): FabricReceiptsFile {
 /** Prefer warmed cache when Supabase is enabled; else read from disk. */
 export function readFabricReceiptsFresh(): FabricReceiptsFile {
   return readJsonFileFresh(STORE_PATH, EMPTY_FABRIC_RECEIPTS);
+}
+
+export async function readFabricReceiptsFreshAsync(): Promise<FabricReceiptsFile> {
+  return readJsonFileFreshAsync(STORE_PATH, EMPTY_FABRIC_RECEIPTS, { force: true });
 }
 
 export async function writeFabricReceipts(data: FabricReceiptsFile): Promise<FabricReceiptsFile> {
@@ -86,4 +91,35 @@ export function getFabricReceiptById(id: string): FabricReceipt | undefined {
 export function invalidateFabricReceiptsCache(): void {
   invalidateDocumentCache(STORE_PATH);
   invalidateDocumentCache(ARCHIVE_PATH);
+}
+
+/** Remove active and archived receipts for fabric lines — testing reset only. */
+export async function removeFabricReceiptsForLineIds(lineIds: string[]): Promise<string[]> {
+  const lineIdSet = new Set(lineIds);
+  const removedIds = new Set<string>();
+
+  await mutateFabricReceipts((store) => {
+    store.receipts = store.receipts.filter((receipt) => {
+      if (lineIdSet.has(receipt.sales_order_line_id)) {
+        removedIds.add(receipt.id);
+        return false;
+      }
+      return true;
+    });
+  });
+
+  const archive = structuredClone(readFabricReceiptsArchive());
+  const nextArchive = archive.receipts.filter((receipt) => {
+    if (lineIdSet.has(receipt.sales_order_line_id)) {
+      removedIds.add(receipt.id);
+      return false;
+    }
+    return true;
+  });
+
+  if (nextArchive.length !== archive.receipts.length) {
+    await writeFabricReceiptsArchive({ ...archive, receipts: nextArchive });
+  }
+
+  return [...removedIds];
 }
