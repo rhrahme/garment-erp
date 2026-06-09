@@ -5,12 +5,12 @@ import {
   DEFAULT_LABEL_ROTATION,
   readLabelRotation,
   writeLabelRotation,
-  type LabelRotationDeg,
+  type LabelPrintMode,
 } from "@/lib/production/label-printer-settings";
 
-/** Persisted label rotation for thermal sticker PDFs (browser localStorage). */
+/** Persisted label print mode for thermal sticker PDFs (browser localStorage). */
 export function useLabelRotation() {
-  const [rotation, setRotationState] = useState<LabelRotationDeg>(DEFAULT_LABEL_ROTATION);
+  const [rotation, setRotationState] = useState<LabelPrintMode>(DEFAULT_LABEL_ROTATION);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -18,7 +18,7 @@ export function useLabelRotation() {
     setHydrated(true);
   }, []);
 
-  const setRotation = useCallback((next: LabelRotationDeg) => {
+  const setRotation = useCallback((next: LabelPrintMode) => {
     setRotationState(next);
     writeLabelRotation(next);
   }, []);

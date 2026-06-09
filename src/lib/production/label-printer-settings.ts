@@ -1,28 +1,40 @@
 import {
+  LABEL_MATCH_PRINTER_PAGE_H_MM,
+  LABEL_MATCH_PRINTER_PAGE_W_MM,
   LABEL_ROLL_HEIGHT_MM,
   LABEL_ROLL_WIDTH_MM,
 } from "@/lib/production/label-print-config";
 
 /**
- * Selects which NATIVE label layout the PDF is drawn in. Each option draws text
- * horizontally (left-to-right) for its own page orientation — nothing is ever
- * turned sideways. The 180°/270° variants are 180° flips for upside-down feed.
- *   - 90°  = LANDSCAPE 100×50  ← DEFAULT. QR on the LEFT, text column on the RIGHT.
- *            For printers whose physical label is landscape (the 100 mm long edge
- *            feeds across the head). This is the AIMO / Phomemo "D550".
- *   - 270° = landscape 100×50, flipped 180° (use if 90° feeds in upside down).
- *   - 0°   = portrait 50×100. QR on top, text stacked below.
+ * Geometric (driver-honest) layouts. Each draws text horizontally for its own
+ * page orientation; nothing is turned sideways. These require the driver media /
+ * scale to match the PDF page. Kept as ALTERNATES for other printers.
+ *   - 90°  = LANDSCAPE 100×50. QR LEFT, text RIGHT.
+ *   - 270° = landscape 100×50, flipped 180°.
+ *   - 0°   = portrait 50×100. QR top, text stacked below.
  *   - 180° = portrait 50×100, flipped 180°.
  */
 export type LabelRotationDeg = 0 | 90 | 180 | 270;
 
-// v2: switched default to native landscape (100×50). Bumping the key ignores any
-// stored portrait value from earlier testing so the landscape default takes effect.
-export const LABEL_ROTATION_STORAGE_KEY = "label-printer:rotation-deg:v2";
+/**
+ * Full set of print modes. `"printer-match"` is the DEFAULT: it ADAPTS the PDF
+ * to the user's D550 (driver media 51×102 portrait, "Fit to paper") instead of
+ * asking them to change driver settings. The page is built at EXACTLY 51×102 mm
+ * (so Fit-to-paper does not rescale or rotate) and the readable landscape design
+ * is drawn pre-rotated 90° CW; the driver's fixed ~90° CCW rasterisation cancels
+ * it, so the physical landscape label reads horizontally (QR left, text right).
+ */
+export const PRINTER_MATCH_MODE = "printer-match" as const;
+export type LabelPrintMode = LabelRotationDeg | typeof PRINTER_MATCH_MODE;
+
+// v3: introduced "printer-match" (adapt PDF to the D550 as-is) as the default.
+// Bumping the key ignores any stored geometric value so the new default takes
+// effect for everyone who printed with the older modes.
+export const LABEL_ROTATION_STORAGE_KEY = "label-printer:mode:v3";
 export const LABEL_SCALE_STORAGE_KEY = "label-printer:scale-pct";
 
-/** Native landscape 100×50 PDF — QR on the left, horizontal text on the right. */
-export const DEFAULT_LABEL_ROTATION: LabelRotationDeg = 90;
+/** Adapt the PDF to the D550's current settings (51×102 portrait, Fit to paper). */
+export const DEFAULT_LABEL_ROTATION: LabelPrintMode = PRINTER_MATCH_MODE;
 
 /** Content scale multiplier for thermal drivers that shrink PDFs to fit. */
 export type LabelScalePct = 100 | 125 | 150;
@@ -78,15 +90,21 @@ export function writeLabelScalePct(scalePct: LabelScalePct): void {
 }
 
 export const LABEL_ROTATION_OPTIONS: ReadonlyArray<{
-  value: LabelRotationDeg;
+  value: LabelPrintMode;
   label: string;
   description: string;
 }> = [
   {
-    value: 90,
-    label: "Landscape 100×50 (default) — QR left, text right",
+    value: PRINTER_MATCH_MODE,
+    label: "Match my printer (51×102, Fit to paper) — DEFAULT",
     description:
-      "DEFAULT. PDF page = 100×50 mm landscape, drawn natively: QR on the LEFT, horizontal text on the RIGHT, reading left-to-right. For printers that feed the 100 mm LONG edge (the physical label is wider than it is tall). Set the driver media / paper size to 100×50 mm (custom if needed), Scale 100% — NEVER “Fit to paper” — margins none.",
+      "DEFAULT. Adapts the PDF to your D550 as-is — DO NOT change any driver settings. Keep the driver media on 51×102 mm portrait, Scale “Fit to paper”, margins none, and just print. The PDF page is built at exactly 51×102 mm (so Fit-to-paper does nothing) with the label pre-rotated to cancel the printer’s built-in rotation, so it comes out reading horizontally on the landscape label: QR on the LEFT, text on the RIGHT.",
+  },
+  {
+    value: 90,
+    label: "Landscape 100×50 — QR left, text right (alternate)",
+    description:
+      "ALTERNATE for other printers. PDF page = 100×50 mm landscape, drawn natively: QR on the LEFT, horizontal text on the RIGHT. Requires the driver media / paper size set to 100×50 mm, Scale 100% — NEVER “Fit to paper” — margins none.",
   },
   {
     value: 270,
@@ -114,31 +132,47 @@ export function isLabelRotationDeg(value: number): value is LabelRotationDeg {
   return VALID_ROTATIONS.has(value as LabelRotationDeg);
 }
 
-export function parseLabelRotation(raw: string | number | null | undefined): LabelRotationDeg {
+export function isLabelPrintMode(value: string | number): value is LabelPrintMode {
+  if (value === PRINTER_MATCH_MODE) return true;
+  return typeof value === "number" && isLabelRotationDeg(value);
+}
+
+/** True for the "Match my printer" mode (pre-rotated 51×102 portrait page). */
+export function isPrinterMatchMode(mode: LabelPrintMode): boolean {
+  return mode === PRINTER_MATCH_MODE;
+}
+
+export function parseLabelRotation(raw: string | number | null | undefined): LabelPrintMode {
+  if (raw === PRINTER_MATCH_MODE) return PRINTER_MATCH_MODE;
   const n = typeof raw === "string" ? Number.parseInt(raw, 10) : raw;
   if (typeof n === "number" && isLabelRotationDeg(n)) return n;
   return DEFAULT_LABEL_ROTATION;
 }
 
-export function readLabelRotation(): LabelRotationDeg {
+export function readLabelRotation(): LabelPrintMode {
   if (typeof window === "undefined") return DEFAULT_LABEL_ROTATION;
   return parseLabelRotation(window.localStorage.getItem(LABEL_ROTATION_STORAGE_KEY));
 }
 
-export function writeLabelRotation(rotation: LabelRotationDeg): void {
+export function writeLabelRotation(rotation: LabelPrintMode): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(LABEL_ROTATION_STORAGE_KEY, String(rotation));
 }
 
-export function labelPdfPageSizeMm(rotation: LabelRotationDeg): { width: number; height: number } {
-  // 90°/270° = native landscape page (100×50, QR left / text right) — the DEFAULT.
+export function labelPdfPageSizeMm(mode: LabelPrintMode): { width: number; height: number } {
+  // printer-match = portrait 51×102 (EXACT driver media; Fit-to-paper is a no-op).
+  if (mode === PRINTER_MATCH_MODE) {
+    return { width: LABEL_MATCH_PRINTER_PAGE_W_MM, height: LABEL_MATCH_PRINTER_PAGE_H_MM };
+  }
+  // 90°/270° = native landscape page (100×50, QR left / text right).
   // 0°/180° = native portrait page (50×100, QR top / text below).
-  if (rotation === 90 || rotation === 270) {
+  if (mode === 90 || mode === 270) {
     return { width: LABEL_ROLL_HEIGHT_MM, height: LABEL_ROLL_WIDTH_MM };
   }
   return { width: LABEL_ROLL_WIDTH_MM, height: LABEL_ROLL_HEIGHT_MM };
 }
 
-export function labelPdfOrientation(rotation: LabelRotationDeg): "portrait" | "landscape" {
-  return rotation === 90 || rotation === 270 ? "landscape" : "portrait";
+export function labelPdfOrientation(mode: LabelPrintMode): "portrait" | "landscape" {
+  // printer-match is a portrait page (the readable content is pre-rotated within it).
+  return mode === 90 || mode === 270 ? "landscape" : "portrait";
 }

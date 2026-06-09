@@ -1,7 +1,7 @@
 import {
   readLabelRotation,
   readLabelScalePct,
-  type LabelRotationDeg,
+  type LabelPrintMode,
   type LabelScalePct,
 } from "@/lib/production/label-printer-settings";
 
@@ -25,13 +25,13 @@ export type StickerPdfRequest = {
   poId?: string;
   /** When set, only these sticker codes are included in the PDF. */
   codes?: string[];
-  /** Label rotation in degrees (0/90/180/270). Defaults to saved printer setting. */
-  rotationDeg?: LabelRotationDeg;
+  /** Print mode: "printer-match" (default) or geometric 0/90/180/270. */
+  rotationDeg?: LabelPrintMode;
   /** Content scale (100/125/150). Defaults to saved printer setting. */
   scalePct?: LabelScalePct;
 };
 
-function resolveRotationDeg(request: StickerPdfRequest): LabelRotationDeg {
+function resolveRotationDeg(request: StickerPdfRequest): LabelPrintMode {
   return request.rotationDeg ?? readLabelRotation();
 }
 

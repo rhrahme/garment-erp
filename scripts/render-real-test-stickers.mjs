@@ -22,7 +22,11 @@ const jiti = createJiti(import.meta.url, {
   interopDefault: true,
 });
 
-const rotation = Number(process.argv[2] ?? "0");
+// Mode may be "printer-match" (default) or a numeric rotation (0/90/180/270).
+const rawMode = process.argv[2] ?? "printer-match";
+const rotation = rawMode === "printer-match" ? "printer-match" : Number(rawMode);
+const isPrinterMatch = rotation === "printer-match";
+const tag = String(rotation);
 
 const { generateTestStickerPdf, generateStickerRollPdf } = await jiti.import(
   resolve(srcDir, "lib/production/generate-sticker-pdf.ts")
@@ -31,15 +35,25 @@ const { generateTestStickerPdf, generateStickerRollPdf } = await jiti.import(
 // --- Full real test PDF (both pages) — proves page count + MediaBox ---
 const bytes = await generateTestStickerPdf({ rotationDeg: rotation, scalePct: 100 });
 const buf = Buffer.from(bytes);
-const pdfPath = resolve(projectRoot, `sticker-test-real-${rotation}.pdf`);
+const pdfPath = resolve(projectRoot, `sticker-test-real-${tag}.pdf`);
 writeFileSync(pdfPath, buf);
 
 const pdfText = buf.toString("latin1");
 const mediaBoxes = [...pdfText.matchAll(/\/MediaBox\s*\[([^\]]+)\]/g)].map((m) => m[1]);
 const pageCount = (pdfText.match(/\/Type\s*\/Page[^s]/g) ?? []).length;
+const MM_PER_PT = 25.4 / 72;
+const mediaBoxMm = mediaBoxes.map((b) =>
+  b
+    .trim()
+    .split(/\s+/)
+    .map((n) => (Number(n) * MM_PER_PT).toFixed(2))
+    .join(" ")
+);
+console.log("Mode:", tag);
 console.log("PDF:", pdfPath);
 console.log("Pages:", pageCount);
 console.log("MediaBox per page (pt):", mediaBoxes.join(" | "));
+console.log("MediaBox per page (mm):", mediaBoxMm.join(" | "));
 
 // --- Per-page single-label PDFs so `sips` (page-1-only) can rasterise each ---
 const baseLabel = {
@@ -67,18 +81,35 @@ const pages = [
 ];
 
 const pngPaths = [];
+const simPaths = [];
 for (let i = 0; i < pages.length; i += 1) {
   const oneBytes = await generateStickerRollPdf([{ label: pages[i], role: "prep" }], {
     rotationDeg: rotation,
     scalePct: 100,
   });
-  const onePdf = resolve(projectRoot, `sticker-test-real-${rotation}-page${i + 1}.pdf`);
+  const onePdf = resolve(projectRoot, `sticker-test-real-${tag}-page${i + 1}.pdf`);
   writeFileSync(onePdf, Buffer.from(oneBytes));
-  const png = resolve(projectRoot, `sticker-test-real-${rotation}-page${i + 1}.png`);
+  const png = resolve(projectRoot, `sticker-test-real-${tag}-page${i + 1}.png`);
   execFileSync("sips", ["-s", "format", "png", "-s", "dpiHeight", "300", "-s", "dpiWidth", "300", onePdf, "--out", png], {
     stdio: "ignore",
   });
   if (existsSync(png)) pngPaths.push(png);
+
+  // Printer SIMULATION: the D550 rasterises with a fixed ~90° CCW turn under
+  // "Fit to paper". CCW 90° == sips clockwise 270°. The simulated PNG is what
+  // physically comes off the printer; for "Match my printer" it MUST read
+  // horizontally (QR left, text right) on a landscape page.
+  if (isPrinterMatch && existsSync(png)) {
+    const sim = resolve(projectRoot, `sticker-test-real-${tag}-page${i + 1}-printsim.png`);
+    execFileSync("cp", [png, sim]);
+    execFileSync("sips", ["--rotate", "270", sim], { stdio: "ignore" });
+    if (existsSync(sim)) simPaths.push(sim);
+  }
 }
 
-console.log("PNGs:\n      " + pngPaths.join("\n      "));
+console.log("PNGs (raw, as the PDF page looks on screen):\n      " + pngPaths.join("\n      "));
+if (simPaths.length > 0) {
+  console.log(
+    "PNGs (printer-simulated, rotated 90° CCW = physical output):\n      " + simPaths.join("\n      ")
+  );
+}

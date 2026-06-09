@@ -9,7 +9,11 @@ import { useLabelRotation } from "@/hooks/useLabelRotation";
 import { useLabelScale } from "@/hooks/useLabelScale";
 import { useStickerPrint } from "@/hooks/useStickerPrint";
 import { labelRollSizeLabel } from "@/lib/production/label-print-config";
-import { labelPdfOrientation, labelPdfPageSizeMm } from "@/lib/production/label-printer-settings";
+import {
+  labelPdfOrientation,
+  labelPdfPageSizeMm,
+  PRINTER_MATCH_MODE,
+} from "@/lib/production/label-printer-settings";
 import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
 import type { PrintableStickerLabel } from "@/lib/production/qr-labels";
 
@@ -44,10 +48,7 @@ export function LabelPrinterTest() {
   const pageSize = labelPdfPageSizeMm(rotation);
   const orientation = labelPdfOrientation(rotation);
   const mediaLabel = `${pageSize.width} × ${pageSize.height} mm ${orientation}`;
-  const altLabel =
-    orientation === "landscape"
-      ? "50 × 100 mm portrait"
-      : "100 × 50 mm landscape (default)";
+  const isPrinterMatch = rotation === PRINTER_MATCH_MODE;
 
   const handlePrint = useCallback(() => {
     requestPrint({ orderId: "test", sheet: "test", rotationDeg: rotation, scalePct });
@@ -66,62 +67,62 @@ export function LabelPrinterTest() {
 
       <div className="no-print mb-6 space-y-3 rounded-xl border border-indigo-200 bg-indigo-50/60 px-4 py-4 text-sm text-slate-700">
         <p className="font-semibold text-slate-900">
-          AIMO / Phomemo “D550” roll printing (landscape 100×50)
+          AIMO / Phomemo “D550” roll printing — “Match my printer” mode
         </p>
-        <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900">
+        <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-emerald-900">
           <p className="font-semibold">
-            This printer’s physical label is LANDSCAPE — 100 mm wide × 50 mm tall. Use the default
-            landscape layout (QR left, text right) and these exact print-dialog settings.
+            Keep your current driver settings (51×102 mm, “Fit to paper”). Just print — don’t change anything.
           </p>
           <ul className="mt-1 list-disc space-y-0.5 pl-5">
             <li>
-              Media / paper size: <strong>100 × 50 mm landscape</strong> (add a{" "}
-              <strong>Custom size 100×50</strong> in the driver if there is no preset).
+              Driver media / paper size: <strong>leave it on 51 × 102 mm portrait</strong> (your D550 preset).
             </li>
             <li>
-              Scale: <strong>100%</strong> — <strong>NEVER “Fit to paper” / “Shrink oversized”</strong>.
-              “Fit to paper” combined with a 51×102 portrait media is exactly what was rotating the label
-              90°: the driver was squeezing a 100×50 design onto a tall 51×102 sheet, so it turned it
-              sideways.
+              Scale: <strong>leave it on “Fit to paper”</strong>. You do NOT need to change it to 100%.
             </li>
             <li>
               Margins: <strong>None</strong>. Headers &amp; footers: <strong>OFF</strong>.
             </li>
           </ul>
           <p className="mt-1">
-            At the current setting the PDF page is <strong>{mediaLabel}</strong>. The driver media must match
-            this exactly. Only switch to <strong>{altLabel}</strong> if your physical label is actually taller
-            than it is wide.
+            The PDF is built at <strong>{mediaLabel}</strong> — exactly your driver media — with the label
+            pre-rotated so it cancels the printer’s built-in 90° turn. It prints reading horizontally on the
+            landscape label: <strong>QR on the left, text on the right</strong>.
           </p>
         </div>
         <ol className="list-decimal space-y-2 pl-5">
           <li>
-            Physical roll label is <strong>{labelRollSizeLabel()}</strong> held LANDSCAPE — 100 mm wide × 50 mm
-            tall (the 100 mm long edge runs across the head). The roll advances{" "}
-            <strong>one label at a time</strong>; each PDF page is <strong>exactly one label</strong>. Never use
-            multi-label or “N-up” templates.
+            Keep the mode on <strong>“Match my printer (51×102, Fit to paper)”</strong> (the default). The
+            screen preview will look sideways — that’s expected; it’s pre-rotated so the physical print comes
+            out straight.
           </li>
           <li>
-            Keep rotation on <strong>Landscape 100×50 (default)</strong> — QR on the left, horizontal text on
-            the right, read left-to-right without turning the label.
+            Physical roll label is <strong>{labelRollSizeLabel()}</strong> held LANDSCAPE — ~100 mm wide × 50 mm
+            tall. The roll advances <strong>one label at a time</strong>; each PDF page is{" "}
+            <strong>exactly one label</strong>.
           </li>
           <li>
-            In the print dialog: <strong>Paper / media size {mediaLabel}</strong>,{" "}
-            <strong>Scale 100%</strong> (NOT “Fit to paper”), <strong>Margins: None</strong>. Matching the
-            media to the PDF page is what stops the driver from auto-rotating.
+            In the print dialog just confirm <strong>your existing D550 settings</strong> (media{" "}
+            {mediaLabel}, Fit to paper, Margins None) and print. No driver changes needed.
           </li>
           <li>
             Click <strong>Print test labels</strong> — you should get <strong>2 labels</strong> (S10008, then
-            S10009), each centred and identical (no drift). If content looks too small, try Medium (125%) or
-            Large (150%).
+            S10009), each reading horizontally. If content looks too small, try Medium (125%) or Large (150%).
           </li>
           <li>
-            If content prints upside down, switch to <strong>Landscape — flipped</strong>. Use the{" "}
-            <strong>Portrait 50×100</strong> options only if your physical label is taller than it is wide.
+            Only if “Match my printer” somehow comes out wrong on a different printer, try the geometric
+            alternates (<strong>Landscape 100×50</strong> or <strong>Portrait 50×100</strong>), which require
+            matching the driver media and Scale 100%.
           </li>
           <li>Select your thermal printer (not “Save as PDF” unless checking layout only).</li>
           <li>Scan the QR with Fabric Receiving — it should read <code className="font-mono">L01-SHT</code>.</li>
         </ol>
+        {!isPrinterMatch ? (
+          <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900">
+            You’re on a geometric alternate, not “Match my printer”. This mode needs the driver media set to{" "}
+            <strong>{mediaLabel}</strong> with <strong>Scale 100% (not “Fit to paper”)</strong>.
+          </p>
+        ) : null}
       </div>
 
       <div className="no-print mb-4">

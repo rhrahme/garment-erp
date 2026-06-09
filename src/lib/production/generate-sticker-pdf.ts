@@ -1,5 +1,7 @@
 import { jsPDF } from "jspdf";
 import {
+  LABEL_MATCH_PRINTER_PAGE_H_MM,
+  LABEL_MATCH_PRINTER_PAGE_W_MM,
   LABEL_ROLL_HEIGHT_MM,
   LABEL_ROLL_WIDTH_MM,
   LABEL_STICKER_COLUMN_GAP_MM,
@@ -15,7 +17,8 @@ import {
   labelPdfOrientation,
   labelPdfPageSizeMm,
   labelScaleMultiplier,
-  type LabelRotationDeg,
+  PRINTER_MATCH_MODE,
+  type LabelPrintMode,
   type LabelScalePct,
 } from "@/lib/production/label-printer-settings";
 import {
@@ -33,37 +36,84 @@ const STICKER_RGB = { r: 42, g: 42, b: 42 };
 const LINE_HEIGHT_FACTOR = 1.15;
 
 /**
- * Two NATIVE designs — each drawn upright for its own page orientation, so text
- * always reads horizontally left-to-right. No element is ever turned sideways.
+ * Designs are always drawn upright in a "design space" so text reads horizontally
+ * left-to-right; a per-mode transform places them onto the PDF page.
  *
- *   - PORTRAIT 50×100  (rotation 0° / 180°): QR on top, text stacked below.
- *   - LANDSCAPE 100×50 (rotation 90° / 270°): QR on the LEFT, text column on the
- *     RIGHT. This is the layout for printers whose physical label is landscape
- *     (the 100 mm long edge feeds across / along the head).
+ *   - PORTRAIT 50×100  (mode 0° / 180°): QR on top, text stacked below.
+ *   - LANDSCAPE 100×50 (mode 90° / 270°): QR LEFT, text column RIGHT.
+ *   - PRINTER-MATCH (default): the LANDSCAPE design (102×51 to fill the media) is
+ *     drawn pre-rotated 90° CW onto a PORTRAIT 51×102 page. The D550 driver
+ *     rasterises with a fixed ~90° CCW turn under "Fit to paper", which cancels
+ *     the pre-rotation, so the physical landscape label reads horizontally.
  *
- * The optional 180° "flip" (rotation 180° or 270°) maps every element through the
+ * The optional 180° "flip" (mode 180° or 270°) maps every element through the
  * page centre for printers that feed the label upside down. It is NOT a 90° turn.
  */
 const PORTRAIT_W = LABEL_ROLL_WIDTH_MM; // 50
 const PORTRAIT_H = LABEL_ROLL_HEIGHT_MM; // 100
 const LANDSCAPE_W = LABEL_ROLL_HEIGHT_MM; // 100
 const LANDSCAPE_H = LABEL_ROLL_WIDTH_MM; // 50
+// printer-match design fills the 51×102 media exactly (landscape 102×51).
+const MATCH_DESIGN_W = LABEL_MATCH_PRINTER_PAGE_H_MM; // 102
+const MATCH_DESIGN_H = LABEL_MATCH_PRINTER_PAGE_W_MM; // 51
 
 type LayoutKind = "portrait" | "landscape";
 
-function layoutKindForRotation(rotation: LabelRotationDeg): LayoutKind {
-  return rotation === 90 || rotation === 270 ? "landscape" : "portrait";
+function layoutKindForMode(mode: LabelPrintMode): LayoutKind {
+  return mode === 90 || mode === 270 || mode === PRINTER_MATCH_MODE ? "landscape" : "portrait";
 }
 
 /** 180° flip through the page centre (upside-down feed), never a 90° turn. */
-function isFlipped(rotation: LabelRotationDeg): boolean {
-  return rotation === 180 || rotation === 270;
+function isFlipped(mode: LabelPrintMode): boolean {
+  return mode === 180 || mode === 270;
 }
 
-function designDims(kind: LayoutKind): { W: number; H: number } {
-  return kind === "landscape"
+function designDims(mode: LabelPrintMode): { W: number; H: number } {
+  if (mode === PRINTER_MATCH_MODE) return { W: MATCH_DESIGN_W, H: MATCH_DESIGN_H };
+  return layoutKindForMode(mode) === "landscape"
     ? { W: LANDSCAPE_W, H: LANDSCAPE_H }
     : { W: PORTRAIT_W, H: PORTRAIT_H };
+}
+
+/**
+ * Maps an upright design point/rect/angle onto the PDF page for the given mode.
+ *   - identity:      portrait/landscape native (no flip).
+ *   - 180° flip:     through the page centre (upside-down feed).
+ *   - printer-match: 90° CW pre-rotation (xp = designH − yd, yp = xd). The text
+ *     angle 270 and image angle 0 were verified by rendering + simulating the
+ *     printer's ~90° CCW turn: QR left, horizontal text right on the label.
+ */
+type StickerTransform = {
+  mapPoint: (x: number, y: number) => { x: number; y: number };
+  mapRect: (x: number, y: number, w: number, h: number) => { x: number; y: number; w: number; h: number };
+  textAngle: number;
+  imageAngle: number;
+};
+
+function buildTransform(mode: LabelPrintMode, dims: { W: number; H: number }): StickerTransform {
+  if (mode === PRINTER_MATCH_MODE) {
+    const Hd = dims.H; // 51
+    return {
+      mapPoint: (x, y) => ({ x: Hd - y, y: x }),
+      mapRect: (x, y, w, h) => ({ x: Hd - y - h, y: x, w: h, h: w }),
+      textAngle: 270,
+      imageAngle: 0,
+    };
+  }
+  if (isFlipped(mode)) {
+    return {
+      mapPoint: (x, y) => ({ x: dims.W - x, y: dims.H - y }),
+      mapRect: (x, y, w, h) => ({ x: dims.W - x - w, y: dims.H - y - h, w, h }),
+      textAngle: 180,
+      imageAngle: 180,
+    };
+  }
+  return {
+    mapPoint: (x, y) => ({ x, y }),
+    mapRect: (x, y, w, h) => ({ x, y, w, h }),
+    textAngle: 0,
+    imageAngle: 0,
+  };
 }
 
 /** jsPDF font size is in pt; sticker layout uses mm. */
@@ -91,44 +141,19 @@ function fitText(doc: jsPDF, text: string, maxWidth: number): string {
   return `${trimmed}…`;
 }
 
-/** Map an upright design point onto the page (identity, or 180° through centre). */
-function mapPoint(
-  x: number,
-  y: number,
-  flip: boolean,
-  W: number,
-  H: number
-): { x: number; y: number } {
-  return flip ? { x: W - x, y: H - y } : { x, y };
-}
-
-/** Map an upright design rectangle (top-left + size) onto the page. */
-function mapRect(
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  flip: boolean,
-  W: number,
-  H: number
-): { x: number; y: number; w: number; h: number } {
-  return flip ? { x: W - x - w, y: H - y - h, w, h } : { x, y, w, h };
-}
-
 function drawStickerText(
   doc: jsPDF,
   text: string,
   layoutX: number,
   layoutY: number,
-  flip: boolean,
-  dims: { W: number; H: number },
+  transform: StickerTransform,
   options: { align?: "left" | "right" | "center" } = {}
 ): void {
-  const { x, y } = mapPoint(layoutX, layoutY, flip, dims.W, dims.H);
+  const { x, y } = transform.mapPoint(layoutX, layoutY);
   doc.text(text, x, y, {
     align: options.align ?? "left",
     baseline: "middle",
-    angle: flip ? 180 : 0,
+    angle: transform.textAngle,
   });
 }
 
@@ -143,12 +168,12 @@ function pieceLabel(label: PrintableStickerLabel): string {
     : label.piece_name;
 }
 
-function createStickerPdfDocument(rotation: LabelRotationDeg): jsPDF {
-  const pageSize = labelPdfPageSizeMm(rotation);
+function createStickerPdfDocument(mode: LabelPrintMode): jsPDF {
+  const pageSize = labelPdfPageSizeMm(mode);
   const doc = new jsPDF({
     unit: "mm",
     format: [pageSize.width, pageSize.height],
-    orientation: labelPdfOrientation(rotation),
+    orientation: labelPdfOrientation(mode),
     compress: true,
   });
 
@@ -159,7 +184,7 @@ function createStickerPdfDocument(rotation: LabelRotationDeg): jsPDF {
   const EPS_MM = 0.01;
   if (Math.abs(pageW - pageSize.width) > EPS_MM || Math.abs(pageH - pageSize.height) > EPS_MM) {
     throw new Error(
-      `Sticker PDF page must be ${pageSize.width}×${pageSize.height} mm at ${rotation}°, got ${pageW}×${pageH} mm.`
+      `Sticker PDF page must be ${pageSize.width}×${pageSize.height} mm for mode ${mode}, got ${pageW}×${pageH} mm.`
     );
   }
 
@@ -171,13 +196,13 @@ async function drawStickerPage(
   label: PrintableStickerLabel,
   role: StickerRole | undefined,
   qrCache: Map<string, string>,
-  rotation: LabelRotationDeg,
+  mode: LabelPrintMode,
   scalePct: LabelScalePct
 ): Promise<void> {
   const scale = labelScaleMultiplier(scalePct);
-  const kind = layoutKindForRotation(rotation);
-  const flip = isFlipped(rotation);
-  const dims = designDims(kind);
+  const kind = layoutKindForMode(mode);
+  const dims = designDims(mode);
+  const transform = buildTransform(mode, dims);
   const padH = LABEL_STICKER_PADDING_H_MM;
   const padV = LABEL_STICKER_PADDING_V_MM;
   const columnGap = LABEL_STICKER_COLUMN_GAP_MM * scale;
@@ -240,7 +265,7 @@ async function drawStickerPage(
     qrCache.set(label.qr_payload, qrData);
   }
 
-  const mapped = mapRect(qrX, qrY, qrSize, qrSize, flip, dims.W, dims.H);
+  const mapped = transform.mapRect(qrX, qrY, qrSize, qrSize);
   doc.addImage(
     qrData,
     "PNG",
@@ -250,7 +275,7 @@ async function drawStickerPage(
     mapped.h,
     undefined,
     undefined,
-    flip ? 180 : 0
+    transform.imageAngle
   );
 
   // --- Text block: horizontal lines, read left-to-right ---
@@ -260,9 +285,9 @@ async function drawStickerPage(
   const headerH = lineHeightMm(headerFontMm);
   y += headerH / 2;
   doc.setFontSize(mmToPt(headerFontMm));
-  drawStickerText(doc, STICKER_ROLE_LABEL[stickerRole], textX, y, flip, dims, { align: "left" });
+  drawStickerText(doc, STICKER_ROLE_LABEL[stickerRole], textX, y, transform, { align: "left" });
   if (batchMark) {
-    drawStickerText(doc, batchMark, textRightX, y, flip, dims, { align: "right" });
+    drawStickerText(doc, batchMark, textRightX, y, transform, { align: "right" });
   }
   y += headerH / 2 + gap;
 
@@ -271,7 +296,7 @@ async function drawStickerPage(
     y += lineH / 2;
     doc.setFontSize(mmToPt(line.fontMm));
     const fitted = fitText(doc, line.text, contentW);
-    drawStickerText(doc, fitted, textX, y, flip, dims, { align: "left" });
+    drawStickerText(doc, fitted, textX, y, transform, { align: "left" });
     y += lineH / 2 + gap;
   }
 }
@@ -282,11 +307,14 @@ export type StickerPdfEntry = {
 };
 
 export type StickerPdfOptions = {
-  rotationDeg?: LabelRotationDeg;
+  rotationDeg?: LabelPrintMode;
   scalePct?: LabelScalePct;
 };
 
-/** Server-generated roll PDF — one label per page, 50×100 mm portrait upright at 0°. */
+/**
+ * Server-generated roll PDF — one label per page. Default mode "printer-match"
+ * outputs a 51×102 mm portrait page with the landscape design pre-rotated 90° CW.
+ */
 export async function generateStickerRollPdf(
   entries: StickerPdfEntry[],
   options: StickerPdfOptions = {}
@@ -295,18 +323,18 @@ export async function generateStickerRollPdf(
     throw new Error("No sticker labels to print.");
   }
 
-  const rotation = options.rotationDeg ?? DEFAULT_LABEL_ROTATION;
+  const mode = options.rotationDeg ?? DEFAULT_LABEL_ROTATION;
   const scalePct = options.scalePct ?? DEFAULT_LABEL_SCALE_PCT;
-  const doc = createStickerPdfDocument(rotation);
+  const doc = createStickerPdfDocument(mode);
   const qrCache = new Map<string, string>();
-  const pageSize = labelPdfPageSizeMm(rotation);
+  const pageSize = labelPdfPageSizeMm(mode);
 
   for (let index = 0; index < entries.length; index += 1) {
     if (index > 0) {
-      doc.addPage([pageSize.width, pageSize.height], labelPdfOrientation(rotation));
+      doc.addPage([pageSize.width, pageSize.height], labelPdfOrientation(mode));
     }
     const entry = entries[index]!;
-    await drawStickerPage(doc, entry.label, entry.role, qrCache, rotation, scalePct);
+    await drawStickerPage(doc, entry.label, entry.role, qrCache, mode, scalePct);
   }
 
   return new Uint8Array(doc.output("arraybuffer"));

@@ -11,6 +11,17 @@ export const LABEL_ROLL_WIDTH_MM = 50;
 export const LABEL_ROLL_HEIGHT_MM = 100;
 
 /**
+ * "Match my printer" media — the EXACT driver media of the user's D550 preset
+ * (51 × 102 mm portrait). The PDF page is built at this size so the print
+ * dialog's "Fit to paper" is a no-op (same aspect → no rescale, no rotation).
+ * The readable landscape design is drawn pre-rotated 90° CW within this page so
+ * that the driver's fixed ~90° CCW rasterisation cancels out and the physical
+ * landscape label reads horizontally (QR left, text right).
+ */
+export const LABEL_MATCH_PRINTER_PAGE_W_MM = 51;
+export const LABEL_MATCH_PRINTER_PAGE_H_MM = 102;
+
+/**
  * PDF convention for LabelLife / AIMO roll printing:
  * - One physical label = one PDF page (never stack multiple labels on one page).
  * - MediaBox matches the roll exactly: 50×100 mm portrait (width × height).
