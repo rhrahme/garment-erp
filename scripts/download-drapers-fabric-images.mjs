@@ -9,6 +9,8 @@
  *   node scripts/download-drapers-fabric-images.mjs
  *   node scripts/download-drapers-fabric-images.mjs --limit 10
  *   node scripts/download-drapers-fabric-images.mjs --quality zoom --out data/suppliers/drapers/images
+ *   node scripts/download-drapers-fabric-images.mjs --quality best --out data/suppliers/drapers/images-higher
+ *   node scripts/download-drapers-fabric-images.mjs --best --limit 10
  *   node scripts/download-drapers-fabric-images.mjs --codes 10101,90640,85119
  */
 
@@ -18,6 +20,7 @@ import { resolve, extname } from "node:path";
 const ROOT = process.cwd();
 const CATALOG_PATH = resolve(ROOT, "src/data/suppliers/drapers-hs-ss26.json");
 const DEFAULT_OUT = resolve(ROOT, "data/suppliers/drapers/images");
+const BEST_OUT = resolve(ROOT, "data/suppliers/drapers/images-higher");
 const BASE = (process.env.DRAPERS_API_BASE_URL || "https://api.drapersitaly.it").replace(/\/$/, "");
 
 function loadEnvLocal() {
@@ -35,11 +38,12 @@ function loadEnvLocal() {
 }
 
 function parseArgs(argv) {
-  const args = { limit: 10, quality: "zoom", out: DEFAULT_OUT, codes: null, delayMs: 200 };
+  const args = { limit: 10, quality: "zoom", out: null, codes: null, delayMs: 200 };
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--limit" && argv[i + 1]) args.limit = Number.parseInt(argv[++i], 10);
     else if (arg === "--quality" && argv[i + 1]) args.quality = argv[++i];
+    else if (arg === "--best") args.quality = "best";
     else if (arg === "--out" && argv[i + 1]) args.out = resolve(ROOT, argv[++i]);
     else if (arg === "--codes" && argv[i + 1]) args.codes = argv[++i].split(/[,\s]+/).filter(Boolean);
     else if (arg === "--delay-ms" && argv[i + 1]) args.delayMs = Number.parseInt(argv[++i], 10);
@@ -48,14 +52,16 @@ function parseArgs(argv) {
 
 Options:
   --limit N       Max fabrics to download (default: 10)
-  --quality TYPE  square | zoom | ruler (default: zoom — highest practical swatch)
-  --out DIR       Output directory (default: data/suppliers/drapers/images)
+  --quality TYPE  square | zoom | ruler | best (default: zoom — highest practical swatch)
+  --best          Shorthand for --quality best (compares zoom + ruler + square)
+  --out DIR       Output directory (default: images/ or images-higher/ for best)
   --codes A,B,C   Specific fabric numbers instead of catalog order
   --delay-ms N    Pause between API calls (default: 200)
 `);
       process.exit(0);
     }
   }
+  if (!args.out) args.out = args.quality === "best" ? BEST_OUT : DEFAULT_OUT;
   return args;
 }
 
@@ -127,12 +133,88 @@ function extFromUrl(url) {
   return ".jpg";
 }
 
-async function downloadImage(url, destPath) {
+async function fetchImageBuffer(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status} downloading ${url}`);
-  const buf = Buffer.from(await res.arrayBuffer());
+  return Buffer.from(await res.arrayBuffer());
+}
+
+async function downloadImage(url, destPath) {
+  const buf = await fetchImageBuffer(url);
   writeFileSync(destPath, buf);
   return buf.length;
+}
+
+function readPngDimensions(buf) {
+  if (buf.length < 24 || buf.toString("ascii", 1, 4) !== "PNG") return null;
+  return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+}
+
+function readJpegDimensions(buf) {
+  if (buf.length < 4 || buf[0] !== 0xff || buf[1] !== 0xd8) return null;
+  let offset = 2;
+  while (offset + 9 < buf.length) {
+    if (buf[offset] !== 0xff) break;
+    const marker = buf[offset + 1];
+    if (marker === 0xc0 || marker === 0xc2) {
+      return { height: buf.readUInt16BE(offset + 5), width: buf.readUInt16BE(offset + 7) };
+    }
+    const segmentLength = buf.readUInt16BE(offset + 2);
+    if (segmentLength < 2) break;
+    offset += 2 + segmentLength;
+  }
+  return null;
+}
+
+function readImageDimensions(buf) {
+  return readPngDimensions(buf) ?? readJpegDimensions(buf);
+}
+
+function candidateKeysForBest(medias) {
+  const keys = ["zoom", "ruler"];
+  if (medias.square) keys.push("square");
+  return keys.filter((key) => medias[key]);
+}
+
+function compareCandidates(a, b) {
+  const aPixels = (a.width ?? 0) * (a.height ?? 0);
+  const bPixels = (b.width ?? 0) * (b.height ?? 0);
+  if (bPixels !== aPixels) return bPixels - aPixels;
+  return b.bytes - a.bytes;
+}
+
+async function compareMediaCandidates(medias) {
+  const candidates = [];
+  for (const key of candidateKeysForBest(medias)) {
+    const url = medias[key];
+    try {
+      const buf = await fetchImageBuffer(url);
+      const dims = readImageDimensions(buf);
+      candidates.push({
+        key,
+        quality: key,
+        url,
+        buf,
+        bytes: buf.length,
+        width: dims?.width ?? null,
+        height: dims?.height ?? null,
+      });
+    } catch {
+      /* try next candidate */
+    }
+  }
+  if (!candidates.length) return null;
+  candidates.sort(compareCandidates);
+  const best = candidates[0];
+  const compared = candidates.map((c, i) => ({
+    key: c.key,
+    url: c.url,
+    bytes: c.bytes,
+    width: c.width,
+    height: c.height,
+    selected: i === 0,
+  }));
+  return { best, compared };
 }
 
 function sleep(ms) {
@@ -164,11 +246,21 @@ console.log(`  Output:  ${args.out}`);
 console.log(`  Quality: ${args.quality}`);
 console.log(`  Limit:   ${targets.length} fabric(s)\n`);
 
+const originalManifestPath = resolve(ROOT, "data/suppliers/drapers/images/manifest.json");
+const originalByFabric = new Map();
+if (existsSync(originalManifestPath)) {
+  const original = JSON.parse(readFileSync(originalManifestPath, "utf8"));
+  for (const item of original.items ?? []) {
+    if (item.ok) originalByFabric.set(item.fabric_number, item);
+  }
+}
+
 const manifest = {
   downloaded_at: new Date().toISOString(),
   source: "Drapers API GET /fabrics/{code}/medias/",
   catalog_path: "src/data/suppliers/drapers-hs-ss26.json",
   quality_requested: args.quality,
+  compare_against: existsSync(originalManifestPath) ? "data/suppliers/drapers/images/manifest.json" : null,
   items: [],
 };
 
@@ -187,22 +279,62 @@ for (const fabricNumber of targets) {
       continue;
     }
 
-    const picked = pickImageUrl(result.medias, args.quality);
-    if (!picked) {
-      console.log("SKIP (no image URL)");
-      manifest.items.push({ fabric_number: fabricNumber, ok: false, error: "no image URL" });
-      failCount += 1;
-      await sleep(args.delayMs);
-      continue;
+    let picked;
+    let bytes;
+    let width = null;
+    let height = null;
+    let compared = null;
+    let imageBuf = null;
+
+    if (args.quality === "best") {
+      const result_best = await compareMediaCandidates(result.medias);
+      if (!result_best) {
+        console.log("SKIP (no downloadable image)");
+        manifest.items.push({ fabric_number: fabricNumber, ok: false, error: "no downloadable image" });
+        failCount += 1;
+        await sleep(args.delayMs);
+        continue;
+      }
+      const { best, compared: comparedCandidates } = result_best;
+      picked = { url: best.url, quality: best.quality };
+      bytes = best.bytes;
+      width = best.width;
+      height = best.height;
+      imageBuf = best.buf;
+      compared = comparedCandidates;
+    } else {
+      picked = pickImageUrl(result.medias, args.quality);
+      if (!picked) {
+        console.log("SKIP (no image URL)");
+        manifest.items.push({ fabric_number: fabricNumber, ok: false, error: "no image URL" });
+        failCount += 1;
+        await sleep(args.delayMs);
+        continue;
+      }
+      imageBuf = await fetchImageBuffer(picked.url);
+      bytes = imageBuf.length;
+      const dims = readImageDimensions(imageBuf);
+      width = dims?.width ?? null;
+      height = dims?.height ?? null;
     }
 
     const ext = extFromUrl(picked.url);
     const filename = `${normalizeCode(fabricNumber)}${ext}`;
     const destPath = resolve(args.out, filename);
-    const bytes = await downloadImage(picked.url, destPath);
+    writeFileSync(destPath, imageBuf);
 
-    console.log(`OK → ${filename} (${picked.quality}, ${bytes} bytes)`);
-    manifest.items.push({
+    const zoomItem = compared?.find((c) => c.key === "zoom");
+    const zoomRef = args.quality === "best" ? zoomItem : null;
+    const dimLabel = width && height ? `, ${width}x${height}` : "";
+    const vsZoom =
+      zoomRef?.bytes != null && zoomRef.bytes !== bytes
+        ? ` (+${bytes - zoomRef.bytes} vs zoom)`
+        : zoomRef?.bytes != null
+          ? " (=zoom)"
+          : "";
+    console.log(`OK → ${filename} (${picked.quality}, ${bytes} bytes${dimLabel}${vsZoom})`);
+
+    const item = {
       fabric_number: fabricNumber,
       fabric_code: result.fabric_code,
       ok: true,
@@ -210,8 +342,26 @@ for (const fabricNumber of targets) {
       quality: picked.quality,
       url: picked.url,
       bytes,
+      width,
+      height,
       medias: result.medias,
-    });
+    };
+    if (compared) {
+      item.compared = compared;
+      if (zoomRef?.bytes != null) {
+        item.zoom_bytes = zoomRef.bytes;
+        item.zoom_width = zoomRef.width;
+        item.zoom_height = zoomRef.height;
+        item.bytes_vs_zoom = bytes - zoomRef.bytes;
+      }
+    }
+    const original = originalByFabric.get(fabricNumber);
+    if (original) {
+      item.original_bytes = original.bytes;
+      item.original_quality = original.quality;
+      item.bytes_vs_original = bytes - original.bytes;
+    }
+    manifest.items.push(item);
     okCount += 1;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

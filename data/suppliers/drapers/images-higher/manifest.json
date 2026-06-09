@@ -1,0 +1,504 @@
+{
+  "downloaded_at": "2026-06-09T05:41:50.163Z",
+  "source": "Drapers API GET /fabrics/{code}/medias/",
+  "catalog_path": "src/data/suppliers/drapers-hs-ss26.json",
+  "quality_requested": "best",
+  "compare_against": "data/suppliers/drapers/images/manifest.json",
+  "items": [
+    {
+      "fabric_number": "10101",
+      "fabric_code": "10101",
+      "ok": true,
+      "filename": "10101.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-bxym-20220909-tessuto_10015.jpg",
+      "bytes": 604270,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-bxym-20220909-tessuto_10015.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-tfw5-20220909-resa2_10015.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-fupz-20220909-resa10_10015.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-bxym-20220909-tessuto_10015.jpg",
+          "bytes": 604270,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-tfw5-20220909-resa2_10015.jpg",
+          "bytes": 235519,
+          "width": 1500,
+          "height": 1500,
+          "selected": false
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-fupz-20220909-resa10_10015.jpg",
+          "bytes": 321018,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 235519,
+      "zoom_width": 1500,
+      "zoom_height": 1500,
+      "bytes_vs_zoom": 368751,
+      "original_bytes": 235519,
+      "original_quality": "zoom",
+      "bytes_vs_original": 368751
+    },
+    {
+      "fabric_number": "10102",
+      "fabric_code": "10102",
+      "ok": true,
+      "filename": "10102.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-qzb4-20230131-tessuto_10102.jpg",
+      "bytes": 508867,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-qzb4-20230131-tessuto_10102.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-0t7h-20230131-resa2_10102.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-uitw-20230131-resa10_10102.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-qzb4-20230131-tessuto_10102.jpg",
+          "bytes": 508867,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-uitw-20230131-resa10_10102.jpg",
+          "bytes": 233225,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-0t7h-20230131-resa2_10102.jpg",
+          "bytes": 53446,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 53446,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 455421,
+      "original_bytes": 53446,
+      "original_quality": "zoom",
+      "bytes_vs_original": 455421
+    },
+    {
+      "fabric_number": "10103",
+      "fabric_code": "10103",
+      "ok": true,
+      "filename": "10103.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-b1as-20230131-tessuto_10103.jpg",
+      "bytes": 459221,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-b1as-20230131-tessuto_10103.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-2dz8-20230131-resa2_10103.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-kcoq-20230131-resa10_10103.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-b1as-20230131-tessuto_10103.jpg",
+          "bytes": 459221,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-kcoq-20230131-resa10_10103.jpg",
+          "bytes": 206667,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-2dz8-20230131-resa2_10103.jpg",
+          "bytes": 49592,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 49592,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 409629,
+      "original_bytes": 49592,
+      "original_quality": "zoom",
+      "bytes_vs_original": 409629
+    },
+    {
+      "fabric_number": "10104",
+      "fabric_code": "10104",
+      "ok": true,
+      "filename": "10104.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-y5gr-20220909-tessuto_10016.jpg",
+      "bytes": 418934,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-y5gr-20220909-tessuto_10016.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-fngy-20220909-resa2_10016.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-8swt-20220909-resa10_10016.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-y5gr-20220909-tessuto_10016.jpg",
+          "bytes": 418934,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-fngy-20220909-resa2_10016.jpg",
+          "bytes": 205312,
+          "width": 1500,
+          "height": 1500,
+          "selected": false
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-8swt-20220909-resa10_10016.jpg",
+          "bytes": 188781,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 205312,
+      "zoom_width": 1500,
+      "zoom_height": 1500,
+      "bytes_vs_zoom": 213622,
+      "original_bytes": 205312,
+      "original_quality": "zoom",
+      "bytes_vs_original": 213622
+    },
+    {
+      "fabric_number": "10105",
+      "fabric_code": "10105",
+      "ok": true,
+      "filename": "10105.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-aknv-20220909-tessuto_10013.jpg",
+      "bytes": 745827,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-aknv-20220909-tessuto_10013.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-b0jk-20220909-resa2_10013.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-8jcx-20220909-resa10_10013.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-aknv-20220909-tessuto_10013.jpg",
+          "bytes": 745827,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-8jcx-20220909-resa10_10013.jpg",
+          "bytes": 383155,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-b0jk-20220909-resa2_10013.jpg",
+          "bytes": 56847,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 56847,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 688980,
+      "original_bytes": 56847,
+      "original_quality": "zoom",
+      "bytes_vs_original": 688980
+    },
+    {
+      "fabric_number": "10106",
+      "fabric_code": "10106",
+      "ok": true,
+      "filename": "10106.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-zcer-20220909-tessuto_10014.jpg",
+      "bytes": 484076,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-zcer-20220909-tessuto_10014.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-brye-20220909-resa2_10014.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-sn6g-20220909-resa10_10014.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-zcer-20220909-tessuto_10014.jpg",
+          "bytes": 484076,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-sn6g-20220909-resa10_10014.jpg",
+          "bytes": 204860,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-brye-20220909-resa2_10014.jpg",
+          "bytes": 45849,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 45849,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 438227,
+      "original_bytes": 45849,
+      "original_quality": "zoom",
+      "bytes_vs_original": 438227
+    },
+    {
+      "fabric_number": "10107",
+      "fabric_code": "10107",
+      "ok": true,
+      "filename": "10107.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-md43-20230131-tessuto_10107.jpg",
+      "bytes": 667294,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-md43-20230131-tessuto_10107.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-ilhl-20230131-resa2_10107.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-1dax-20230131-resa10_10107.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-md43-20230131-tessuto_10107.jpg",
+          "bytes": 667294,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-1dax-20230131-resa10_10107.jpg",
+          "bytes": 337233,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-ilhl-20230131-resa2_10107.jpg",
+          "bytes": 64150,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 64150,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 603144,
+      "original_bytes": 64150,
+      "original_quality": "zoom",
+      "bytes_vs_original": 603144
+    },
+    {
+      "fabric_number": "10108",
+      "fabric_code": "10108",
+      "ok": true,
+      "filename": "10108.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-ncxy-20230131-tessuto_10108.jpg",
+      "bytes": 637738,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-ncxy-20230131-tessuto_10108.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-5j1r-20230131-resa2_10108.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-f9mg-20230131-resa10_10108.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-ncxy-20230131-tessuto_10108.jpg",
+          "bytes": 637738,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-f9mg-20230131-resa10_10108.jpg",
+          "bytes": 322819,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-5j1r-20230131-resa2_10108.jpg",
+          "bytes": 60893,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 60893,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 576845,
+      "original_bytes": 60893,
+      "original_quality": "zoom",
+      "bytes_vs_original": 576845
+    },
+    {
+      "fabric_number": "10109",
+      "fabric_code": "10109",
+      "ok": true,
+      "filename": "10109.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-oerb-20230131-tessuto_10109.jpg",
+      "bytes": 585337,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-oerb-20230131-tessuto_10109.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-zu37-20230131-resa2_10109.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-qsn6-20230131-resa10_10109.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-oerb-20230131-tessuto_10109.jpg",
+          "bytes": 585337,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-qsn6-20230131-resa10_10109.jpg",
+          "bytes": 297499,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-zu37-20230131-resa2_10109.jpg",
+          "bytes": 56163,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 56163,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 529174,
+      "original_bytes": 56163,
+      "original_quality": "zoom",
+      "bytes_vs_original": 529174
+    },
+    {
+      "fabric_number": "10110",
+      "fabric_code": "10110",
+      "ok": true,
+      "filename": "10110.jpg",
+      "quality": "square",
+      "url": "https://drapersitaly.it/public/uploads/drapersmedia-hhlm-20230131-tessuto_10110.jpg",
+      "bytes": 449232,
+      "width": 1500,
+      "height": 1500,
+      "medias": {
+        "square": "https://drapersitaly.it/public/uploads/drapersmedia-hhlm-20230131-tessuto_10110.jpg",
+        "zoom": "https://drapersitaly.it/public/uploads/drapersmedia-w840-20230131-resa2_10110.jpg",
+        "ruler": "https://drapersitaly.it/public/uploads/drapersmedia-stiy-20230131-resa10_10110.jpg"
+      },
+      "compared": [
+        {
+          "key": "square",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-hhlm-20230131-tessuto_10110.jpg",
+          "bytes": 449232,
+          "width": 1500,
+          "height": 1500,
+          "selected": true
+        },
+        {
+          "key": "ruler",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-stiy-20230131-resa10_10110.jpg",
+          "bytes": 199185,
+          "width": 1000,
+          "height": 1000,
+          "selected": false
+        },
+        {
+          "key": "zoom",
+          "url": "https://drapersitaly.it/public/uploads/drapersmedia-w840-20230131-resa2_10110.jpg",
+          "bytes": 49638,
+          "width": 512,
+          "height": 512,
+          "selected": false
+        }
+      ],
+      "zoom_bytes": 49638,
+      "zoom_width": 512,
+      "zoom_height": 512,
+      "bytes_vs_zoom": 399594,
+      "original_bytes": 49638,
+      "original_quality": "zoom",
+      "bytes_vs_original": 399594
+    }
+  ],
+  "summary": {
+    "ok": 10,
+    "failed": 0,
+    "total": 10
+  }
+}

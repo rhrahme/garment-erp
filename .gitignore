@@ -61,3 +61,5 @@ next-env.d.ts
 # Drapers fabric images (local downloads; manifest tracks runs)
 data/suppliers/drapers/images/*
 !data/suppliers/drapers/images/manifest.json
+data/suppliers/drapers/images-higher/*
+!data/suppliers/drapers/images-higher/manifest.json
