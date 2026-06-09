@@ -1,7 +1,17 @@
 import { StickerPrintSheet } from "@/components/orders/StickerPrintSheet";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { getSessionContext } from "@/lib/auth/session";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
 import { notFound } from "next/navigation";
+
+function resolveStickerSheet(
+  sheetParam: string | undefined,
+  isClientManager: boolean
+): "fabric-cuts" | "pieces" {
+  if (sheetParam === "fabric-cuts") return "fabric-cuts";
+  if (sheetParam === "pieces") return "pieces";
+  return isClientManager ? "fabric-cuts" : "pieces";
+}
 
 export default async function OrderStickersPage({
   params,
@@ -12,10 +22,11 @@ export default async function OrderStickersPage({
 }) {
   const { id } = await params;
   const { po, po_id: poId, sheet: sheetParam } = await searchParams;
+  const session = await getSessionContext();
   const order = getSalesOrderById(id);
   if (!order) notFound();
 
-  const sheet = sheetParam === "fabric-cuts" ? "fabric-cuts" : "pieces";
+  const sheet = resolveStickerSheet(sheetParam, session.isClientManager);
 
   return (
     <div>

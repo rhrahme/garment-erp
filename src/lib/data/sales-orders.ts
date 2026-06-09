@@ -75,6 +75,11 @@ export function readSalesOrders(): SalesOrdersFile {
   return readJsonFile(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS);
 }
 
+/** Bypass in-process cache — use before writes that must not clobber a concurrent reset. */
+export async function readSalesOrdersFresh(): Promise<SalesOrdersFile> {
+  return readJsonFileFreshAsync(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS, { force: true });
+}
+
 export async function readSalesOrdersAsync(): Promise<SalesOrdersFile> {
   return loadDocument(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS);
 }

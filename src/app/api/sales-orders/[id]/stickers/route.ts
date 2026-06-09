@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { requireAuthenticated } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
+
+export const dynamic = "force-dynamic";
 import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 import {
   getFabricLineIdsForPrint,
@@ -28,6 +31,11 @@ function printLineIds(order: SalesOrder) {
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const session = await requireAuthenticated();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
     const { id } = await params;
     await ensureDocumentsLoaded(["sales_orders"]);
     const order = await getSalesOrderByIdFresh(id);
@@ -78,7 +86,26 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       }));
 
     if (sheet === "print-pack") {
-      return NextResponse.json({
+      return NextResponse.json(
+        {
+          sheet,
+          order: {
+            id: order.id,
+            so_number: order.so_number,
+            client_code: order.client_code,
+            client_name: order.client_name,
+          },
+          fabric_cut_labels: mapLabels(fabricCutLabels),
+          cutting_piece_labels: mapLabels(cuttingPieceLabels),
+          has_cutting_pack: cuttingPieceLabels.length > 0,
+          unprinted_line_ids: unprintedIds,
+        },
+        { headers: { "Cache-Control": "no-store" } }
+      );
+    }
+
+    return NextResponse.json(
+      {
         sheet,
         order: {
           id: order.id,
@@ -86,41 +113,28 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           client_code: order.client_code,
           client_name: order.client_name,
         },
-        fabric_cut_labels: mapLabels(fabricCutLabels),
-        cutting_piece_labels: mapLabels(cuttingPieceLabels),
-        has_cutting_pack: cuttingPieceLabels.length > 0,
+        labels: mapLabels(activeLabels),
         unprinted_line_ids: unprintedIds,
-      });
-    }
-
-    return NextResponse.json({
-      sheet,
-      order: {
-        id: order.id,
-        so_number: order.so_number,
-        client_code: order.client_code,
-        client_name: order.client_name,
+        po_sheets: sheets.map((poSheet) => {
+          const fabricNumbers = new Set(poSheet.labels.map((label) => label.fabric_number));
+          const unprintedPrepIds = new Set(prepLines.map((line) => line.id));
+          const unprintedProdIds = new Set(prodLines.map((line) => line.id));
+          const filtered =
+            sheet === "fabric-cuts"
+              ? fabricCutLabels.filter(
+                  (label) =>
+                    unprintedPrepIds.has(label.fabric_line_id) &&
+                    fabricNumbers.has(label.fabric_number)
+                )
+              : poSheet.labels.filter((label) => unprintedProdIds.has(label.fabric_line_id));
+          return {
+            ...poSheet,
+            labels: mapLabels(filtered),
+          };
+        }),
       },
-      labels: mapLabels(activeLabels),
-      unprinted_line_ids: unprintedIds,
-      po_sheets: sheets.map((poSheet) => {
-        const fabricNumbers = new Set(poSheet.labels.map((label) => label.fabric_number));
-        const unprintedPrepIds = new Set(prepLines.map((line) => line.id));
-        const unprintedProdIds = new Set(prodLines.map((line) => line.id));
-        const filtered =
-          sheet === "fabric-cuts"
-            ? fabricCutLabels.filter(
-                (label) =>
-                  unprintedPrepIds.has(label.fabric_line_id) &&
-                  fabricNumbers.has(label.fabric_number)
-              )
-            : poSheet.labels.filter((label) => unprintedProdIds.has(label.fabric_line_id));
-        return {
-          ...poSheet,
-          labels: mapLabels(filtered),
-        };
-      }),
-    });
+      { headers: { "Cache-Control": "no-store" } }
+    );
   } catch (error) {
     console.error("Failed to build sticker labels:", error);
     return NextResponse.json({ error: "Failed to load sticker labels." }, { status: 500 });

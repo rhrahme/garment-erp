@@ -116,12 +116,22 @@ export function StickerPrintSheet({
   const [error, setError] = useState<string | null>(null);
   const [printedSheets, setPrintedSheets] = useState<Set<StickerSheetMode>>(() => new Set());
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [canClearPrintTimestamps, setCanClearPrintTimestamps] = useState(false);
+  const [clearingPrintTimestamps, setClearingPrintTimestamps] = useState(false);
+  const [clearMessage, setClearMessage] = useState<string | null>(null);
   const { printing, printError, clearPrintError, requestPrint } = useStickerPrint();
   const { printWithMark } = useMarkFabricLinesPrinted(salesOrderId);
 
   useEffect(() => {
     setPrintedSheets(readPrintedSheets(salesOrderId));
   }, [salesOrderId]);
+
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((res) => res.json())
+      .then((session) => setCanClearPrintTimestamps(Boolean(session.is_admin || session.is_client_manager)))
+      .catch(() => setCanClearPrintTimestamps(false));
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -197,6 +207,44 @@ export function StickerPrintSheet({
       prod_stickers: data.unprinted_line_ids.prod_stickers,
     });
   }, [data, previewItems]);
+
+  const handleClearPrintTimestamps = useCallback(async () => {
+    if (
+      !window.confirm(
+        "Clear A4 + sticker print timestamps on this order so receive / production labels can print again? Fabric lines and sticker codes stay the same."
+      )
+    ) {
+      return;
+    }
+
+    setClearingPrintTimestamps(true);
+    setClearMessage(null);
+    setError(null);
+    try {
+      const res = await fetch(`/api/sales-orders/${salesOrderId}/fabric-lines/clear-print-timestamps`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to clear print timestamps.");
+
+      for (const tab of STICKER_SHEET_TABS) {
+        sessionStorage.removeItem(printedStorageKey(salesOrderId, tab.id));
+      }
+      setPrintedSheets(new Set());
+      setClearMessage(
+        `Cleared print timestamps on ${json.cleared_line_ids?.length ?? 0} fabric line${
+          json.cleared_line_ids?.length === 1 ? "" : "s"
+        }. You can print receive stickers now.`
+      );
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to clear print timestamps.");
+    } finally {
+      setClearingPrintTimestamps(false);
+    }
+  }, [load, salesOrderId]);
 
   const handlePrintSelected = useCallback(
     (selectedCodes: string[]) => {
@@ -311,11 +359,31 @@ export function StickerPrintSheet({
               ? " No fabric lines on this order."
               : null}
           </p>
+          {clearMessage ? (
+            <p className="mt-2 text-sm text-emerald-800">{clearMessage}</p>
+          ) : null}
           {allPrepPrinted ? (
-            <p className="mt-2 text-sm text-amber-800">
-              All receive stickers on this order were already marked printed. Add a new fabric article to print more, or
-              ask an admin to clear sticker print timestamps (Fabric Receiving → testing reset).
-            </p>
+            <div className="mt-2 space-y-2">
+              <p className="text-sm text-amber-800">
+                All receive stickers on this order were already marked printed. Add a new fabric article to print more, or
+                clear print timestamps to reprint existing lines.
+              </p>
+              {canClearPrintTimestamps ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => void handleClearPrintTimestamps()}
+                  disabled={clearingPrintTimestamps || printing}
+                >
+                  {clearingPrintTimestamps ? "Clearing…" : "Clear print timestamps & reprint"}
+                </Button>
+              ) : (
+                <p className="text-sm text-amber-800">
+                  Ask an admin or QC account to clear sticker print timestamps (Fabric Receiving → testing reset).
+                </p>
+              )}
+            </div>
           ) : null}
           {singlePieceProductionEmpty ? (
             <p className="mt-2 text-sm text-slate-600">
