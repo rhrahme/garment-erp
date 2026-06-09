@@ -54,6 +54,8 @@ export function FabricReceivingTestingReset({
     return selectedOrder.lines.filter((line) => line.status !== "pending").length;
   }, [selectedOrder]);
 
+  const canRunReset = resettableLineCount > 0 || clearPrintTimestamps;
+
   if (!canReset) return null;
 
   async function handleReset() {
@@ -63,12 +65,18 @@ export function FabricReceivingTestingReset({
     }
 
     const label = selectedOrder
-      ? `${selectedOrder.so_number} (${resettableLineCount} line${resettableLineCount === 1 ? "" : "s"} with receiving progress)`
+      ? resettableLineCount > 0
+        ? `${selectedOrder.so_number} (${resettableLineCount} line${resettableLineCount === 1 ? "" : "s"} with receiving progress)`
+        : `${selectedOrder.so_number} (sticker print timestamps only)`
       : "this order";
 
     if (
       !window.confirm(
-        `Testing only: reset fabric receiving for ${label}?\n\nThis clears received / prep / handoff state and removes linked production work orders. Fabric lines and sticker codes stay intact.${
+        `Testing only: reset fabric receiving for ${label}?\n\n${
+          resettableLineCount > 0
+            ? "This clears received / prep / handoff state and removes linked production work orders."
+            : "All lines are already pending receive — this run only clears print timestamps."
+        } Fabric lines and sticker codes stay intact.${
           clearPrintTimestamps ? "\n\nPrint timestamps (A4 + stickers) will also be cleared." : ""
         }`
       )
@@ -157,14 +165,23 @@ export function FabricReceivingTestingReset({
               type="button"
               variant="secondary"
               onClick={() => void handleReset()}
-              disabled={resetting || !selectedOrderId || resettableLineCount === 0}
+              disabled={resetting || !selectedOrderId || !canRunReset}
             >
               {resetting ? "Resetting…" : "Reset receiving (testing)"}
             </Button>
           </div>
 
-          {selectedOrder && resettableLineCount === 0 && (
-            <p className="mt-3 text-sm text-amber-800">All lines on this order are already pending receive.</p>
+          {selectedOrder && resettableLineCount === 0 && clearPrintTimestamps && (
+            <p className="mt-3 text-sm text-amber-800">
+              All lines are pending receive — use reset to clear A4 / sticker print timestamps so Preparation stickers
+              can print again.
+            </p>
+          )}
+          {selectedOrder && resettableLineCount === 0 && !clearPrintTimestamps && (
+            <p className="mt-3 text-sm text-amber-800">
+              All lines on this order are already pending receive. Check &quot;Also clear A4 + sticker print
+              timestamps&quot; to re-enable receive sticker printing.
+            </p>
           )}
         </div>
       </div>
