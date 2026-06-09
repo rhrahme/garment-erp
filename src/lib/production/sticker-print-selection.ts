@@ -6,6 +6,28 @@ export type StickerPreviewItem = {
   role: StickerRole;
 };
 
+export type UnprintedStickerLineIds = {
+  prep_stickers: string[];
+  prod_stickers: string[];
+};
+
+/** Sticker codes for lines not yet printed — used as preview modal default selection. */
+export function stickerCodesForUnprintedLines(
+  items: StickerPreviewItem[],
+  unprintedLineIds: UnprintedStickerLineIds
+): string[] {
+  const prepSet = new Set(unprintedLineIds.prep_stickers);
+  const prodSet = new Set(unprintedLineIds.prod_stickers);
+
+  return items
+    .filter((item) => {
+      const lineId = item.label.fabric_line_id;
+      if (!lineId) return false;
+      return item.role === "prep" ? prepSet.has(lineId) : prodSet.has(lineId);
+    })
+    .map((item) => item.label.sticker_code);
+}
+
 const PRINT_KIND_ROLE: Record<"prep_stickers" | "prod_stickers", StickerRole> = {
   prep_stickers: "prep",
   prod_stickers: "prod",

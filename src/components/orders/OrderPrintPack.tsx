@@ -12,6 +12,7 @@ import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 import { labelRollSizeLabel } from "@/lib/production/label-print-config";
 import {
   lineIdsForStickerSelection,
+  stickerCodesForUnprintedLines,
   type StickerPreviewItem,
 } from "@/lib/production/sticker-print-selection";
 import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
@@ -114,6 +115,14 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
     return items;
   }, [data]);
 
+  const defaultSelectedCodes = useMemo(() => {
+    if (!data?.unprinted_line_ids) return undefined;
+    return stickerCodesForUnprintedLines(previewItems, {
+      prep_stickers: data.unprinted_line_ids.prep_stickers,
+      prod_stickers: data.unprinted_line_ids.prod_stickers,
+    });
+  }, [data, previewItems]);
+
   const handlePrintSelected = useCallback(
     (selectedCodes: string[]) => {
       setPreviewOpen(false);
@@ -213,6 +222,7 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
         onClose={() => setPreviewOpen(false)}
         onPrint={handlePrintSelected}
         items={previewItems}
+        defaultSelectedCodes={defaultSelectedCodes}
         title="Print pack sticker preview"
         printing={printing}
       />

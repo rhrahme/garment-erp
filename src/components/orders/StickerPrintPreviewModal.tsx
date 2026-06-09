@@ -11,6 +11,8 @@ type StickerPrintPreviewModalProps = {
   onClose: () => void;
   onPrint: (selectedCodes: string[]) => void;
   items: StickerPreviewItem[];
+  /** Defaults to all items when omitted; pass unprinted sticker codes for incremental print. */
+  defaultSelectedCodes?: string[];
   title?: string;
   printing?: boolean;
 };
@@ -68,15 +70,20 @@ export function StickerPrintPreviewModal({
   onClose,
   onPrint,
   items,
+  defaultSelectedCodes,
   title = "Print sticker preview",
   printing = false,
 }: StickerPrintPreviewModalProps) {
   const allCodes = useMemo(() => items.map((item) => item.label.sticker_code), [items]);
-  const [selected, setSelected] = useState<Set<string>>(() => new Set(allCodes));
+  const initialSelection = useMemo(
+    () => new Set(defaultSelectedCodes ?? allCodes),
+    [allCodes, defaultSelectedCodes]
+  );
+  const [selected, setSelected] = useState<Set<string>>(initialSelection);
 
   useEffect(() => {
-    if (open) setSelected(new Set(allCodes));
-  }, [open, allCodes]);
+    if (open) setSelected(new Set(defaultSelectedCodes ?? allCodes));
+  }, [open, allCodes, defaultSelectedCodes]);
 
   const selectedCount = selected.size;
   const allSelected = selectedCount === items.length && items.length > 0;
@@ -114,7 +121,7 @@ export function StickerPrintPreviewModal({
               {title}
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Uncheck any sticker you do not want to print (e.g. duplicate article or wrong line).
+              Only unprinted stickers are selected by default. Uncheck any you do not want to print.
             </p>
           </div>
           <button

@@ -12,6 +12,7 @@ import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 import { labelPdfMediaMmLabel, labelRollSizeLabel } from "@/lib/production/label-print-config";
 import {
   lineIdsForStickerSelection,
+  stickerCodesForUnprintedLines,
   type StickerPreviewItem,
 } from "@/lib/production/sticker-print-selection";
 import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
@@ -181,6 +182,14 @@ export function StickerPrintSheet({
     [sheets, stickerRole]
   );
 
+  const defaultSelectedCodes = useMemo(() => {
+    if (!data?.unprinted_line_ids) return undefined;
+    return stickerCodesForUnprintedLines(previewItems, {
+      prep_stickers: data.unprinted_line_ids.prep_stickers,
+      prod_stickers: data.unprinted_line_ids.prod_stickers,
+    });
+  }, [data, previewItems]);
+
   const handlePrintSelected = useCallback(
     (selectedCodes: string[]) => {
       setPreviewOpen(false);
@@ -333,6 +342,7 @@ export function StickerPrintSheet({
         onClose={() => setPreviewOpen(false)}
         onPrint={handlePrintSelected}
         items={previewItems}
+        defaultSelectedCodes={defaultSelectedCodes}
         title={copy.title}
         printing={printing}
       />
