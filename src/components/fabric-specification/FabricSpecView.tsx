@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { DrapersFabricSwatch } from "@/components/fabric-specification/DrapersFabricSwatch";
+import { FabricSpecPreview } from "@/components/fabric-specification/FabricSpecPreview";
 import { DataTable } from "@/components/ui/PageHeader";
 import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -104,24 +104,20 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
     [filtered]
   );
 
-  const showDrapersSwatch =
-    brandId === DRAPERS_SUPPLIER_ID ||
-    (brandId === "all" && sortedDisplay.some((f) => f.supplier_id === DRAPERS_SUPPLIER_ID));
-
   const drapersFabricNumbers = useMemo(
     () =>
-      showDrapersSwatch
-        ? sortedDisplay
-            .filter((f) => f.supplier_id === DRAPERS_SUPPLIER_ID)
-            .map((f) => f.fabric_number)
-            .slice(0, 60)
-        : [],
-    [showDrapersSwatch, sortedDisplay]
+      sortedDisplay
+        .filter((f) => f.supplier_id === DRAPERS_SUPPLIER_ID)
+        .map((f) => f.fabric_number)
+        .slice(0, 60),
+    [sortedDisplay]
   );
 
   const drapersSwatchMap = useDrapersSwatchMap(drapersFabricNumbers);
 
   const activeBrand = brands.find((b) => b.id === brandId);
+  const isSolbiatiTab = brandId === "solbiati";
+  const solbiatiBrand = brands.find((b) => b.id === "solbiati");
 
   return (
     <div className="flex gap-6">
@@ -145,25 +141,45 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
               </span>
             </button>
           </li>
-          {brands.map((brand) => (
-            <li key={brand.id}>
-              <button
-                onClick={() => setBrandId(brand.id)}
-                className={cn(
-                  "w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors",
-                  brandId === brand.id
-                    ? "bg-indigo-600 text-white"
-                    : "text-slate-700 hover:bg-slate-100",
-                  brand.count === 0 && "opacity-50"
-                )}
-              >
-                {brand.name}
-                <span className={cn("ml-1 text-xs", brandId === brand.id ? "text-indigo-200" : "text-slate-400")}>
-                  ({brand.count})
-                </span>
-              </button>
-            </li>
-          ))}
+          {brands.map((brand) => {
+            const isSolbiati = brand.id === "solbiati";
+            const isActive = brandId === brand.id;
+            return (
+              <li key={brand.id}>
+                <button
+                  onClick={() => setBrandId(brand.id)}
+                  className={cn(
+                    "w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                    isActive
+                      ? isSolbiati
+                        ? "bg-emerald-600 text-white"
+                        : "bg-indigo-600 text-white"
+                      : "text-slate-700 hover:bg-slate-100",
+                    brand.count === 0 && "opacity-50",
+                    isSolbiati && brand.count > 0 && !isActive && "ring-2 ring-emerald-400/70 ring-offset-1"
+                  )}
+                >
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    {brand.name}
+                    {isSolbiati && brand.count > 0 ? (
+                      <span
+                        className={cn(
+                          "rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                          isActive ? "bg-emerald-500 text-white" : "bg-emerald-100 text-emerald-800"
+                        )}
+                      >
+                        Linen · {brand.count}
+                      </span>
+                    ) : (
+                      <span className={cn("text-xs", isActive ? "text-indigo-200" : "text-slate-400")}>
+                        ({brand.count})
+                      </span>
+                    )}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </aside>
 
@@ -177,7 +193,26 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
             <p className="text-sm text-slate-500">
               {filtered.length.toLocaleString()} fabrics
               {canViewPrices ? " · reference price list, not stock" : " · specs only, prices hidden"}
+              {" · "}
+              <span className="text-slate-600">
+                {isSolbiatiTab
+                  ? "Click the eye icon in Preview for collection & composition — no swatch images in catalog"
+                  : "Click Preview for swatch image (Drapers) or full fabric details"}
+              </span>
             </p>
+            {solbiatiBrand && solbiatiBrand.count > 0 && !isSolbiatiTab && brandId === "all" ? (
+              <p className="mt-1 text-sm text-emerald-700">
+                Solbiati linen ({solbiatiBrand.count} fabrics) has its own tab — select{" "}
+                <button
+                  type="button"
+                  onClick={() => setBrandId("solbiati")}
+                  className="font-medium underline hover:text-emerald-900"
+                >
+                  Solbiati
+                </button>{" "}
+                in the brand list.
+              </p>
+            ) : null}
           </div>
           <input
             type="search"
@@ -191,7 +226,7 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
         <DataTable
           columns={[
             ...(brandId === "all" ? [{ key: "brand", label: "Brand" }] : []),
-            ...(showDrapersSwatch ? [{ key: "swatch", label: "", className: "w-10 px-2" }] : []),
+            { key: "preview", label: "Preview", className: "w-14 px-2" },
             { key: "fabricNo", label: "Fabric No." },
             { key: "composition", label: "Composition" },
             { key: "color", label: "Color" },
@@ -214,20 +249,22 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
                   ),
                 }
               : {}),
-            ...(showDrapersSwatch
-              ? {
-                  swatch:
-                    f.supplier_id === DRAPERS_SUPPLIER_ID ? (
-                      <DrapersFabricSwatch
-                        fabricNumber={f.fabric_number}
-                        src={drapersSwatchMap.get(f.fabric_number)?.square}
-                        zoomSrc={drapersSwatchMap.get(f.fabric_number)?.zoom}
-                      />
-                    ) : (
-                      <span className="inline-block h-7 w-7" aria-hidden />
-                    ),
+            preview: (
+              <FabricSpecPreview
+                fabric={f}
+                swatchSrc={
+                  f.supplier_id === DRAPERS_SUPPLIER_ID
+                    ? drapersSwatchMap.get(f.fabric_number)?.square
+                    : undefined
                 }
-              : {}),
+                zoomSrc={
+                  f.supplier_id === DRAPERS_SUPPLIER_ID
+                    ? drapersSwatchMap.get(f.fabric_number)?.zoom
+                    : undefined
+                }
+                canViewPrices={canViewPrices}
+              />
+            ),
             fabricNo: <span className="font-mono font-medium">{f.fabric_number}</span>,
             composition: <span className="text-xs">{f.composition ?? "—"}</span>,
             color: f.color ?? "—",
