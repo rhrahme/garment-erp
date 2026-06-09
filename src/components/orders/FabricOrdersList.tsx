@@ -12,27 +12,46 @@ import { salesOrderMatchesSearch } from "@/lib/sales-orders/list-search";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { formatDate } from "@/lib/utils";
-import { ordersUiLabels } from "@/lib/orders/ui-labels";
+import { fabricOrderUiLabels } from "@/lib/orders/fabric-order-ui-labels";
 import type { SalesOrderListRow } from "@/lib/data/sales-orders";
 
-type OrdersView = "active" | "archived";
+type FabricOrdersView = "active" | "archived" | "pending";
 
-export function OrdersList({
+function fabricOrderStatusLabel(order: SalesOrderListRow): string {
+  if (order.status === "fabric_pos_created" || order.status === "complete") return "Supplier emailed";
+  if (order.fabric_order_requested_at) return "Pending admin";
+  if (order.fabric_line_count > 0) return "Draft";
+  return "No fabrics";
+}
+
+export function FabricOrdersList({
   orders,
-  productionMode = false,
+  isClientManager = false,
 }: {
   orders: SalesOrderListRow[];
-  productionMode?: boolean;
+  isClientManager?: boolean;
 }) {
-  const labels = ordersUiLabels(productionMode);
+  const labels = fabricOrderUiLabels(isClientManager);
   const { brandId, setBrandId, hydrated } = useFactoryBrandFilter();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 200);
-  const [view, setView] = useState<OrdersView>("active");
+  const [view, setView] = useState<FabricOrdersView>(isClientManager ? "active" : "pending");
 
   const activeOrders = useMemo(() => orders.filter((order) => !order.is_archived), [orders]);
   const archivedOrders = useMemo(() => orders.filter((order) => order.is_archived), [orders]);
-  const viewOrders = view === "archived" ? archivedOrders : activeOrders;
+  const pendingOrders = useMemo(
+    () =>
+      activeOrders.filter(
+        (order) =>
+          order.fabric_order_requested_at &&
+          order.status === "open" &&
+          order.fabric_line_count > 0
+      ),
+    [activeOrders]
+  );
+
+  const viewOrders =
+    view === "archived" ? archivedOrders : view === "pending" ? pendingOrders : activeOrders;
 
   const filteredOrders = useMemo(() => {
     let result = viewOrders;
@@ -58,45 +77,11 @@ export function OrdersList({
   if (orders.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 py-16 text-center">
-        <p className="text-lg font-medium text-slate-700">{labels.emptyTitle}</p>
-        <p className="mt-2 text-sm text-slate-500">{labels.emptyDescription}</p>
-        <Link href="/orders/new" className="mt-4 inline-block">
+        <p className="text-lg font-medium text-slate-700">No fabric orders yet</p>
+        <p className="mt-2 text-sm text-slate-500">Create your first fabric order to request supplier fabric.</p>
+        <Link href="/fabric-orders/new" className="mt-4 inline-block">
           <Button>{labels.newButton}</Button>
         </Link>
-      </div>
-    );
-  }
-
-  if (view === "active" && activeOrders.length === 0 && archivedOrders.length > 0) {
-    return (
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setView("active")}
-            className="rounded-lg border border-indigo-600 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-900"
-          >
-            Active <span className="ml-1.5 text-xs font-normal opacity-80">(0)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setView("archived")}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 hover:border-slate-300"
-          >
-            <Archive className="h-3.5 w-3.5" />
-            Archived <span className="text-xs font-normal opacity-80">({archivedOrders.length})</span>
-          </button>
-        </div>
-        <div className="rounded-xl border border-dashed border-slate-200 py-12 text-center">
-          <p className="text-lg font-medium text-slate-700">No active orders</p>
-          <p className="mt-2 text-sm text-slate-500">
-            All {archivedOrders.length} order{archivedOrders.length !== 1 ? "s are" : " is"} older than{" "}
-            {SALES_ORDER_ARCHIVE_AGE_MONTHS} months and in Archived.
-          </p>
-          <Button variant="secondary" className="mt-4" onClick={() => setView("archived")}>
-            View archived orders
-          </Button>
-        </div>
       </div>
     );
   }
@@ -113,9 +98,23 @@ export function OrdersList({
               : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
           }`}
         >
-          Active
+          All active
           <span className="ml-1.5 text-xs font-normal opacity-80">({activeOrders.length})</span>
         </button>
+        {!isClientManager && (
+          <button
+            type="button"
+            onClick={() => setView("pending")}
+            className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
+              view === "pending"
+                ? "border-amber-600 bg-amber-50 text-amber-900"
+                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+            }`}
+          >
+            Pending QC
+            <span className="ml-1.5 text-xs font-normal opacity-80">({pendingOrders.length})</span>
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setView("archived")}
@@ -164,9 +163,9 @@ export function OrdersList({
               <th className="px-4 py-3">Order #</th>
               <th className="px-4 py-3">Client</th>
               <th className="px-4 py-3">Fabrics</th>
-              {productionMode && <th className="px-4 py-3">Production labels</th>}
+              <th className="px-4 py-3">Labels</th>
               <th className="px-4 py-3">Order Date</th>
-              <th className="px-4 py-3">Delivery</th>
+              <th className="px-4 py-3">Fabric order</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3" />
             </tr>
@@ -174,12 +173,14 @@ export function OrdersList({
           <tbody className="divide-y divide-slate-100">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={productionMode ? 8 : 7} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
                   {hasActiveFilters
                     ? "No orders match your search."
-                    : view === "archived"
-                      ? "No archived orders yet."
-                      : "No orders for this brand."}
+                    : view === "pending"
+                      ? "No pending QC fabric orders."
+                      : view === "archived"
+                        ? "No archived orders yet."
+                        : "No orders for this brand."}
                 </td>
               </tr>
             ) : (
@@ -196,20 +197,21 @@ export function OrdersList({
                   <td className="px-4 py-3">
                     {order.fabric_line_count} line{order.fabric_line_count !== 1 ? "s" : ""}
                   </td>
-                  {productionMode && (
-                    <td className="px-4 py-3">
-                      {order.production_label_count > 0
-                        ? `${order.production_label_count} label${order.production_label_count !== 1 ? "s" : ""}`
-                        : "—"}
-                    </td>
-                  )}
+                  <td className="px-4 py-3">
+                    {order.production_label_count > 0
+                      ? `${order.production_label_count} label${order.production_label_count !== 1 ? "s" : ""}`
+                      : "—"}
+                  </td>
                   <td className="px-4 py-3">{formatDate(order.order_date)}</td>
-                  <td className="px-4 py-3">{order.delivery_date ? formatDate(order.delivery_date) : "—"}</td>
+                  <td className="px-4 py-3 text-slate-600">{fabricOrderStatusLabel(order)}</td>
                   <td className="px-4 py-3">
                     <StatusBadge status={order.status} />
                   </td>
                   <td className="px-4 py-3">
-                    <Link href={`/orders/${order.id}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+                    <Link
+                      href={`/fabric-orders/${order.id}`}
+                      className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                    >
                       Open →
                     </Link>
                   </td>

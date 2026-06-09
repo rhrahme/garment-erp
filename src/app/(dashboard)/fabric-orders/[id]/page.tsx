@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DownloadSalesOrderPdfButton } from "@/components/orders/DownloadSalesOrderPdfButton";
 import { PageHeader, StatusBadge } from "@/components/ui/PageHeader";
 import { SalesOrderActions } from "@/components/orders/SalesOrderActions";
 import {
@@ -14,10 +13,10 @@ import { getCustomerInvoiceBySalesOrderId } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderByIdFresh, isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
-import { ordersUiLabels } from "@/lib/orders/ui-labels";
+import { fabricOrderUiLabels } from "@/lib/orders/fabric-order-ui-labels";
 import { formatDate } from "@/lib/utils";
 
-export default async function SalesOrderDetailPage({
+export default async function FabricOrderDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -27,7 +26,7 @@ export default async function SalesOrderDetailPage({
   const rawOrder = await getSalesOrderByIdFresh(id);
   if (!rawOrder) notFound();
   const session = await getSessionContext();
-  const labels = ordersUiLabels(session.isClientManager);
+  const labels = fabricOrderUiLabels(session.isClientManager);
   const cookieStore = await cookies();
   const canViewFabricPrices = hasFabricPriceAccess(
     session,
@@ -47,12 +46,9 @@ export default async function SalesOrderDetailPage({
             : `${order.client_name} · ${order.client_code}`
         }
         action={
-          <div className="flex flex-wrap items-center gap-3">
-            <DownloadSalesOrderPdfButton orderId={order.id} soNumber={order.so_number} />
-            <Link href="/orders" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
-              {labels.allOrdersLink}
-            </Link>
-          </div>
+          <Link href="/fabric-orders" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+            {labels.allOrdersLink}
+          </Link>
         }
       />
 
@@ -60,11 +56,11 @@ export default async function SalesOrderDetailPage({
         className={`mb-8 grid gap-4 ${
           order.fabric_lines.length > 0
             ? order.product_article
-              ? "sm:grid-cols-2 lg:grid-cols-7"
-              : "sm:grid-cols-2 lg:grid-cols-6"
+              ? "sm:grid-cols-2 lg:grid-cols-6"
+              : "sm:grid-cols-2 lg:grid-cols-5"
             : order.product_article
-              ? "sm:grid-cols-6"
-              : "sm:grid-cols-5"
+              ? "sm:grid-cols-5"
+              : "sm:grid-cols-4"
         }`}
       >
         <div className="rounded-xl border border-slate-200 bg-white p-5">
@@ -84,15 +80,7 @@ export default async function SalesOrderDetailPage({
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-5">
           <p className="text-sm text-slate-500">Ship fabrics to</p>
-          <p className="mt-1 font-semibold text-slate-900">
-            {order.delivery_destination ?? "Not set"}
-          </p>
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-sm text-slate-500">Delivery date</p>
-          <p className="mt-1 font-semibold text-slate-900">
-            {order.delivery_date ? formatDate(order.delivery_date) : "—"}
-          </p>
+          <p className="mt-1 font-semibold text-slate-900">{order.delivery_destination ?? "Not set"}</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-5">
           <p className="text-sm text-slate-500">Status</p>
@@ -103,20 +91,9 @@ export default async function SalesOrderDetailPage({
         {order.fabric_lines.length > 0 && (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-5">
             <p className="text-sm text-emerald-800">Fabric totals</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">
-              {fabricTotals.total_meters.toFixed(1)} m
-              {fabricTotals.total_kg != null ? (
-                <span className="text-slate-700"> · {fabricTotals.total_kg.toFixed(1)} kg</span>
-              ) : null}
-            </p>
+            <p className="mt-1 text-lg font-semibold text-slate-900">{fabricTotals.total_meters.toFixed(1)} m</p>
             <p className="mt-1 text-xs text-slate-600">
               {fabricTotals.line_count} fabric line{fabricTotals.line_count !== 1 ? "s" : ""}
-              {fabricTotals.total_kg != null &&
-              fabricTotals.weighed_line_count < fabricTotals.line_count
-                ? ` · kg from ${fabricTotals.weighed_line_count} lines with width & gsm`
-                : fabricTotals.total_kg == null
-                  ? " · add width & gsm on lines to estimate kg"
-                  : null}
             </p>
           </div>
         )}
@@ -129,7 +106,7 @@ export default async function SalesOrderDetailPage({
         canViewFabricPrices={canViewFabricPrices}
         isClientManager={session.isClientManager}
         productionMode={session.isClientManager}
-        viewMode={session.isClientManager ? "production" : "sales"}
+        viewMode="fabric_order"
       />
     </div>
   );

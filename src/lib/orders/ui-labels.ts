@@ -5,10 +5,10 @@ export function ordersUiLabels(productionMode: boolean) {
       nav: "Production Orders",
       listTitle: "Production Orders",
       listDescription:
-        "Create bespoke client orders with fabrics and garment labels — print stickers and run receiving through production. No pricing shown.",
+        "Print labels and run receiving through production. Add fabrics on the Fabric Orders tab first. No pricing shown.",
       newTitle: "New production order",
       newDescription:
-        "Select a client, add fabrics with meters and garment labels — then print sticker packs and continue on the production floor.",
+        "Select a client — fabrics are added on Fabric Orders. Here you print sticker packs and run the production floor.",
       newButton: "+ New production order",
       createOne: "Create production order",
       createMany: (count: number) => `Create ${count} production orders`,
@@ -16,15 +16,15 @@ export function ordersUiLabels(productionMode: boolean) {
       emptyDescription: "Create your first order to assign fabrics, print labels, and start receiving.",
       workflowTitle: "Production workflow",
       workflowSteps: [
-        "Create an order with client, fabrics, meters, and garment labels",
+        "Open an order with fabrics (added on Fabric Orders) — suits show 2 production labels (jacket + trouser)",
         "Print label packs and fabric-cut stickers from the order page",
         "Receive fabric and scan through wash, iron, cutting, and sewing",
       ],
       allOrdersLink: "← All production orders",
       duplicateTitle: "Duplicate order for another client",
-      fabricsSectionTitle: "Order fabrics",
+      fabricsSectionTitle: "Production labels",
       fabricsSectionDescription:
-        "Fabrics grouped by supplier for reference — pricing is hidden on QC accounts.",
+        "Piece labels per garment — a suit fabric line generates jacket and trouser stickers. Pricing is hidden on QC accounts.",
       detailNewButton: "New production order",
     };
   }

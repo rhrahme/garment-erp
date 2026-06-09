@@ -3,6 +3,7 @@ import type { UserRole } from "@/lib/types/database";
 const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/clients",
   "/fabric-specification",
+  "/fabric-orders",
   "/orders",
   "/fabric-receiving",
   "/production",
@@ -32,6 +33,7 @@ export const CLIENT_MANAGER_ORDERS_NAV_LABEL = "Production Orders";
 
 /** Sidebar pages for QC / client-manager accounts (subset of admin ERP). */
 export const CLIENT_MANAGER_NAV_HREFS = [
+  "/fabric-orders",
   "/orders",
   "/fabric-receiving",
   "/production",

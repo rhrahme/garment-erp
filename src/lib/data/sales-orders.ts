@@ -7,6 +7,7 @@ import {
 } from "@/lib/data/document-persistence";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import { isSalesOrderArchived } from "@/lib/sales-orders/archive";
+import { totalProductionLabels } from "@/lib/sales-orders/label-display";
 import type { SalesOrder, SalesOrdersFile } from "@/lib/types/sales-orders";
 
 const SALES_ORDERS_PATH = path.join(process.cwd(), "src/data/sales-orders.json");
@@ -28,6 +29,8 @@ export interface SalesOrderListRow {
   client_name: string;
   product_article: string | null;
   fabric_line_count: number;
+  production_label_count: number;
+  fabric_order_requested_at: string | null;
   order_date: string;
   delivery_date: string | null;
   status: SalesOrder["status"];
@@ -92,6 +95,8 @@ export function toSalesOrderListRow(order: SalesOrder): SalesOrderListRow {
     client_name: order.client_name,
     product_article: order.product_article ?? null,
     fabric_line_count: order.fabric_lines.length,
+    production_label_count: totalProductionLabels(order.fabric_lines),
+    fabric_order_requested_at: order.fabric_order_requested_at ?? null,
     order_date: order.order_date,
     delivery_date: order.delivery_date,
     status: order.status,

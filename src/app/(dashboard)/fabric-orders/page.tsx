@@ -1,17 +1,16 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
-import { OrdersList } from "@/components/orders/OrdersList";
+import { FabricOrdersList } from "@/components/orders/FabricOrdersList";
 import { getSessionContext } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSalesOrders, listBespokeSalesOrders, toSalesOrderListRow } from "@/lib/data/sales-orders";
 import { dedupeIdenticalSalesOrders } from "@/lib/sales-orders/duplicate-order";
-import { ordersUiLabels } from "@/lib/orders/ui-labels";
+import { fabricOrderUiLabels } from "@/lib/orders/fabric-order-ui-labels";
 
-export default async function OrdersPage() {
+export default async function FabricOrdersPage() {
   const session = await getSessionContext();
-  const productionMode = session.isClientManager;
-  const labels = ordersUiLabels(productionMode);
+  const labels = fabricOrderUiLabels(session.isClientManager);
 
   await ensureDocumentsLoaded(["sales_orders"]);
   const orders = dedupeIdenticalSalesOrders(listBespokeSalesOrders(readSalesOrders().orders)).map(toSalesOrderListRow);
@@ -22,15 +21,9 @@ export default async function OrdersPage() {
         title={labels.listTitle}
         description={labels.listDescription}
         action={
-          productionMode ? (
-            <Link href="/fabric-orders/new">
-              <Button>+ New fabric order</Button>
-            </Link>
-          ) : (
-            <Link href="/orders/new">
-              <Button>{labels.newButton}</Button>
-            </Link>
-          )
+          <Link href="/fabric-orders/new">
+            <Button>{labels.newButton}</Button>
+          </Link>
         }
       />
 
@@ -41,18 +34,9 @@ export default async function OrdersPage() {
             <li key={step}>{step}</li>
           ))}
         </ol>
-        {productionMode && (
-          <p className="mt-3 text-blue-800">
-            Add fabrics on{" "}
-            <Link href="/fabric-orders" className="font-medium underline">
-              Fabric Orders
-            </Link>{" "}
-            first — then return here to print labels.
-          </p>
-        )}
       </div>
 
-      <OrdersList orders={orders} productionMode={productionMode} />
+      <FabricOrdersList orders={orders} isClientManager={session.isClientManager} />
     </div>
   );
 }

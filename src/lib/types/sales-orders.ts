@@ -56,6 +56,9 @@ export interface SalesOrder {
   notes: string | null;
   fabric_lines: SalesOrderFabricLine[];
   fabric_po_ids: string[];
+  /** When QC (or admin) submitted this order for supplier fabric ordering */
+  fabric_order_requested_at?: string | null;
+  fabric_order_requested_by?: string | null;
   /** Ready-made retail brand when not a person client order */
   retail_brand?: string | null;
   /** Garment/article batch name, e.g. "Linen Short", "Regular Group Suits Set" */

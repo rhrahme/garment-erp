@@ -85,11 +85,14 @@ export function SalesOrderForm({
   startFresh = false,
   continueDraft = false,
   productionMode = false,
+  redirectBasePath = "/orders",
 }: {
   duplicateFromOrderId?: string;
   startFresh?: boolean;
   continueDraft?: boolean;
   productionMode?: boolean;
+  /** Where to send the user after create / cancel — `/orders` or `/fabric-orders`. */
+  redirectBasePath?: string;
 } = {}) {
   const labels = ordersUiLabels(productionMode);
   const router = useRouter();
@@ -807,7 +810,7 @@ export function SalesOrderForm({
       }
       clearDraft();
       router.push(
-        createdOrderIds.length === 1 ? `/orders/${createdOrderIds[0]}` : "/orders"
+        createdOrderIds.length === 1 ? `${redirectBasePath}/${createdOrderIds[0]}` : redirectBasePath
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create sales order");
@@ -869,7 +872,7 @@ export function SalesOrderForm({
           </div>
 
           <div className="mt-4 flex justify-center">
-            <Button variant="ghost" size="sm" onClick={() => router.push("/orders")} className="text-slate-500">
+            <Button variant="ghost" size="sm" onClick={() => router.push(redirectBasePath)} className="text-slate-500">
               Back to orders list
             </Button>
           </div>
@@ -1465,7 +1468,7 @@ export function SalesOrderForm({
       </div>
 
       <div className="flex justify-end gap-3">
-        <Button variant="secondary" onClick={() => router.push("/orders")}>
+        <Button variant="secondary" onClick={() => router.push(redirectBasePath)}>
           Cancel
         </Button>
         <Button

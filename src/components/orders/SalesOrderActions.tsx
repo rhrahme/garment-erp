@@ -24,7 +24,12 @@ import { OrderFabricLineEditor } from "@/components/orders/OrderFabricLineEditor
 import { OrderFabricLineRemove } from "@/components/orders/OrderFabricLineRemove";
 import { canAppendFabricLines, canEditFabricLines, fabricLineEditBlockedReason } from "@/lib/sales-orders/fabric-lines-rules";
 import { formatLabelGarmentDescription } from "@/lib/sales-orders/label-codes";
+import { formatFabricLineLabels } from "@/lib/sales-orders/label-display";
+import { FabricOrderSubmitButton } from "@/components/orders/FabricOrderSubmitButton";
+import { fabricOrderUiLabels } from "@/lib/orders/fabric-order-ui-labels";
 import { formatDateTime } from "@/lib/utils";
+
+export type SalesOrderViewMode = "fabric_order" | "production" | "sales";
 
 function formatWidth(line: SalesOrderFabricLine) {
   if (line.width_cm != null) return `${line.width_cm} cm`;
@@ -44,6 +49,7 @@ export function SalesOrderActions({
   canViewFabricPrices = false,
   isClientManager = false,
   productionMode = false,
+  viewMode = "sales",
 }: {
   order: SalesOrder;
   existingInvoiceId?: string | null;
@@ -51,8 +57,18 @@ export function SalesOrderActions({
   canViewFabricPrices?: boolean;
   isClientManager?: boolean;
   productionMode?: boolean;
+  viewMode?: SalesOrderViewMode;
 }) {
-  const labels = ordersUiLabels(productionMode);
+  const effectiveViewMode: SalesOrderViewMode =
+    viewMode !== "sales" ? viewMode : productionMode ? "production" : "sales";
+  const fabricLabels = fabricOrderUiLabels(isClientManager);
+  const labels =
+    effectiveViewMode === "fabric_order" ? fabricLabels : ordersUiLabels(productionMode);
+  const showFabricOrdering = effectiveViewMode === "fabric_order";
+  const showSalesAdmin = effectiveViewMode === "sales";
+  const showProductionLabels = effectiveViewMode === "production" || showSalesAdmin;
+  const showFabricInput = showFabricOrdering || showSalesAdmin;
+  const showSupplierEmailActions = showFabricOrdering || showSalesAdmin;
   const router = useRouter();
   const [liveOrder, setLiveOrder] = useState(order);
   const [creating, setCreating] = useState(false);
@@ -95,6 +111,7 @@ export function SalesOrderActions({
   const fabricTotals = getFabricTotalsSummary(liveOrder.fabric_lines);
   const fabricLinesEditable = canEditFabricLines(liveOrder);
   const fabricEditBlockedReason = fabricLineEditBlockedReason(liveOrder);
+  const fabricsEditable = showFabricInput && fabricLinesEditable;
 
   function handleLineUpdated(updatedLine: SalesOrderFabricLine) {
     setLiveOrder((prev) => ({
@@ -196,21 +213,32 @@ export function SalesOrderActions({
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
       )}
 
-      <DeliveryDestinationTabs
-        value={deliveryDestination}
-        onChange={handleDestinationChange}
-        disabled={savingDestination}
-      />
+      {showFabricInput && (
+        <DeliveryDestinationTabs
+          value={deliveryDestination}
+          onChange={handleDestinationChange}
+          disabled={savingDestination}
+        />
+      )}
 
-      {canAppendFabricLines(liveOrder) && (
+      {showFabricInput && canAppendFabricLines(liveOrder) && (
         <ProductionOrderAddFabrics
           order={liveOrder}
-          productionMode={productionMode}
+          productionMode={isClientManager}
           onOrderUpdated={setLiveOrder}
         />
       )}
 
-      {allStickers.length > 0 && (
+      {showFabricOrdering && (
+        <FabricOrderSubmitButton
+          order={liveOrder}
+          label={fabricLabels.submitButton}
+          hint={fabricLabels.submitHint}
+          submittedBadge={fabricLabels.submittedBadge}
+        />
+      )}
+
+      {showProductionLabels && allStickers.length > 0 && (
         <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -280,14 +308,20 @@ export function SalesOrderActions({
           <div>
             <h2 className="text-lg font-semibold text-slate-900">{labels.fabricsSectionTitle}</h2>
             <p className="mt-1 text-sm text-slate-500">{labels.fabricsSectionDescription}</p>
-            {fabricLinesEditable && (
+            {fabricsEditable && (
               <p className="mt-1 text-xs text-slate-500">
-                {productionMode
+                {isClientManager
                   ? "Edit fabric number, supplier, garment type, or meters on existing articles."
                   : "Edit fabric number, supplier, garment type, or meters on existing lines."}
               </p>
             )}
-            {!fabricLinesEditable && fabricEditBlockedReason && (
+            {effectiveViewMode === "production" && (
+              <p className="mt-1 text-xs text-slate-500">
+                Edit fabrics on the Fabric Orders tab. Multi-piece garments (e.g. suit) show one line with multiple piece
+                labels below.
+              </p>
+            )}
+            {!fabricsEditable && fabricEditBlockedReason && (
               <p className="mt-1 text-xs text-amber-800">{fabricEditBlockedReason}</p>
             )}
             {liveOrder.fabric_lines.length > 0 && (
@@ -333,7 +367,7 @@ export function SalesOrderActions({
                     <p className="mt-0.5 text-xs text-slate-500">
                       {[
                         line.garment_type,
-                        `${line.label_count} label${line.label_count !== 1 ? "s" : ""}`,
+                        formatFabricLineLabels(line),
                         line.composition,
                         line.weight_gsm != null ? `${line.weight_gsm} gsm` : null,
                         formatWidth(line),
@@ -366,18 +400,18 @@ export function SalesOrderActions({
                         ))}
                       </ul>
                     )}
-                    {fabricLinesEditable && (
+                    {fabricsEditable && (
                       <div className="mt-3 flex flex-wrap items-start gap-2">
                         <OrderFabricLineEditor
                           orderId={liveOrder.id}
                           line={line}
-                          productionMode={productionMode}
+                          productionMode={isClientManager}
                           onLineUpdated={handleLineUpdated}
                         />
                         <OrderFabricLineRemove
                           orderId={liveOrder.id}
                           line={line}
-                          productionMode={productionMode}
+                          productionMode={isClientManager}
                           onLineRemoved={handleLineRemoved}
                         />
                       </div>
@@ -391,7 +425,8 @@ export function SalesOrderActions({
       </div>
 
       <div className="flex flex-wrap gap-3">
-        {!isClientManager &&
+        {showSupplierEmailActions &&
+          !isClientManager &&
           (liveOrder.fabric_po_ids.length > 0 ? (
             <Link href={`/supplier-emails?sales_order_id=${liveOrder.id}`}>
               <Button>Send supplier emails</Button>
@@ -404,25 +439,43 @@ export function SalesOrderActions({
               {creating ? "Creating…" : "Create fabric orders for suppliers"}
             </Button>
           ))}
-        {!isClientManager && (
+        {showSupplierEmailActions && !isClientManager && (
           <Link href="/supplier-inbox">
             <Button variant="secondary">Supplier inbox</Button>
           </Link>
         )}
-        {!isClientManager && (
+        {effectiveViewMode === "sales" && !isClientManager && (
           <CreateInvoiceButton
             salesOrderId={liveOrder.id}
             existingInvoiceId={existingInvoiceId}
             isReadyMade={isReadyMade}
           />
         )}
-        <Link href={`/orders/new?duplicate_from=${order.id}`}>
+        {showFabricOrdering && (
+          <Link href={`/orders/${order.id}`}>
+            <Button variant="secondary">Open production order →</Button>
+          </Link>
+        )}
+        {effectiveViewMode === "production" && (
+          <Link href={`/fabric-orders/${order.id}`}>
+            <Button variant="secondary">Edit fabrics on Fabric Orders →</Button>
+          </Link>
+        )}
+        <Link
+          href={
+            effectiveViewMode === "fabric_order"
+              ? `/fabric-orders/new?duplicate_from=${order.id}`
+              : `/orders/new?duplicate_from=${order.id}`
+          }
+        >
           <Button variant="secondary">Duplicate for another client</Button>
         </Link>
-        <Link href="/orders/new">
+        <Link href={effectiveViewMode === "fabric_order" ? "/fabric-orders/new" : "/orders/new"}>
           <Button variant="secondary">{labels.detailNewButton}</Button>
         </Link>
-        <DownloadSalesOrderPdfButton orderId={order.id} soNumber={order.so_number} />
+        {showProductionLabels && (
+          <DownloadSalesOrderPdfButton orderId={order.id} soNumber={order.so_number} />
+        )}
         {isAdmin && liveOrder.status === "open" && liveOrder.fabric_po_ids.length === 0 && (
           <DeleteSalesOrderButton order={liveOrder} />
         )}

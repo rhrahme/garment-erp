@@ -40,6 +40,7 @@ const navItems = [
   { href: "/fabric-specification", label: "Fabric Specification", icon: SwatchBook },
   { href: "/inventory", label: "Inventory", icon: Package },
   { href: "/production", label: "Production", icon: Factory },
+  { href: "/fabric-orders", label: "Fabric Orders", icon: Truck },
   { href: "/orders", label: "Sales Orders", icon: ShoppingCart },
   { href: "/invoices", label: "Invoicing", icon: Receipt },
   { href: "/supplier-emails", label: "Supplier Emails", icon: Mail },
@@ -97,7 +98,11 @@ export function Sidebar({ clientsOnly = false }: { clientsOnly?: boolean }) {
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
-                  {clientsOnly && href === "/orders" ? CLIENT_MANAGER_ORDERS_NAV_LABEL : label}
+                  {clientsOnly && href === "/orders"
+                    ? CLIENT_MANAGER_ORDERS_NAV_LABEL
+                    : clientsOnly && href === "/fabric-orders"
+                      ? "Fabric Orders"
+                      : label}
                 </Link>
               </li>
             );
