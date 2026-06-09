@@ -12,6 +12,7 @@
     "db:seed-canclini": "node --experimental-strip-types --import ./scripts/tsconfig-paths-loader.mjs scripts/seed-canclini-inventory.mjs",
     "db:archive-fabric-receipts": "node scripts/archive-historical-fabric-receipts.mjs",
     "drapers:sync-stock": "node --experimental-strip-types --import ./scripts/tsconfig-paths-loader.mjs scripts/sync-drapers-stock.mjs --open-orders",
+    "verify:fabric-reset": "node scripts/verify-fabric-receiving-reset.mjs",
     "db:types": "supabase gen types typescript --local > src/lib/types/database.generated.ts"
   },
   "dependencies": {

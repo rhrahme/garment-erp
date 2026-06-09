@@ -25,7 +25,7 @@ export type FabricReceivingTestingResetResult = {
   cleared_print_line_ids: string[];
 };
 
-function resolveResetLineIds(order: SalesOrder, lineIds?: string[]): string[] {
+export function resolveResetLineIds(order: SalesOrder, lineIds?: string[]): string[] {
   const orderLineIds = new Set(order.fabric_lines.map((line) => line.id));
 
   if (lineIds && lineIds.length > 0) {
@@ -66,8 +66,8 @@ export async function resetFabricReceivingForTesting(
     throw new Error("No fabric lines selected to reset.");
   }
 
-  const removedReceiptIds = await removeFabricReceiptsForLineIds(resetLineIds);
-  const removedWorkOrderIds = await removeProductionWorkOrdersForLineIds(resetLineIds);
+  const removedReceiptIds = await removeFabricReceiptsForLineIds(resetLineIds, { force: true });
+  const removedWorkOrderIds = await removeProductionWorkOrdersForLineIds(resetLineIds, { force: true });
 
   let clearedPrintLineIds: string[] = [];
   if (input.clear_print_timestamps !== false) {

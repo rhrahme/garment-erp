@@ -1,5 +1,5 @@
 import path from "path";
-import { readJsonFile, saveDocument } from "@/lib/data/document-persistence";
+import { readJsonFile, readJsonFileFreshAsync, saveDocument } from "@/lib/data/document-persistence";
 import type { ProductionWorkOrder, ProductionWorkOrdersFile } from "@/lib/types/production";
 import { productionCodeFromSticker, supplierFabricProductionCode } from "@/lib/sales-orders/label-codes";
 
@@ -8,6 +8,10 @@ const EMPTY_PRODUCTION_WORK_ORDERS: ProductionWorkOrdersFile = { updated_at: nul
 
 export function readProductionWorkOrders(): ProductionWorkOrdersFile {
   return readJsonFile(STORE_PATH, EMPTY_PRODUCTION_WORK_ORDERS);
+}
+
+export async function readProductionWorkOrdersFreshAsync(): Promise<ProductionWorkOrdersFile> {
+  return readJsonFileFreshAsync(STORE_PATH, EMPTY_PRODUCTION_WORK_ORDERS, { force: true });
 }
 
 export async function writeProductionWorkOrders(
@@ -36,9 +40,12 @@ export function getProductionWorkOrderById(id: string): ProductionWorkOrder | un
 }
 
 /** Remove work orders created from fabric handoff — testing reset only. */
-export async function removeProductionWorkOrdersForLineIds(lineIds: string[]): Promise<string[]> {
+export async function removeProductionWorkOrdersForLineIds(
+  lineIds: string[],
+  options?: { force?: boolean }
+): Promise<string[]> {
   const lineIdSet = new Set(lineIds);
-  const store = readProductionWorkOrders();
+  const store = options?.force ? await readProductionWorkOrdersFreshAsync() : readProductionWorkOrders();
   const removedIds: string[] = [];
   const nextWorkOrders = store.work_orders.filter((workOrder) => {
     if (lineIdSet.has(workOrder.sales_order_line_id)) {

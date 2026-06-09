@@ -16,10 +16,13 @@ let mutationQueue: Promise<unknown> = Promise.resolve();
 
 /** Serialize read-modify-write so rapid scans do not drop receipts. */
 export async function mutateFabricReceipts<T>(
-  fn: (store: FabricReceiptsFile) => Promise<T> | T
+  fn: (store: FabricReceiptsFile) => Promise<T> | T,
+  options?: { force?: boolean }
 ): Promise<T> {
   const task = mutationQueue.then(async () => {
-    const store = structuredClone(readFabricReceiptsFresh());
+    const store = structuredClone(
+      options?.force ? await readFabricReceiptsFreshAsync() : readFabricReceiptsFresh()
+    );
     const result = await fn(store);
     await writeFabricReceipts(store);
     return result;
@@ -94,21 +97,29 @@ export function invalidateFabricReceiptsCache(): void {
 }
 
 /** Remove active and archived receipts for fabric lines — testing reset only. */
-export async function removeFabricReceiptsForLineIds(lineIds: string[]): Promise<string[]> {
+export async function removeFabricReceiptsForLineIds(
+  lineIds: string[],
+  options?: { force?: boolean }
+): Promise<string[]> {
   const lineIdSet = new Set(lineIds);
   const removedIds = new Set<string>();
 
-  await mutateFabricReceipts((store) => {
-    store.receipts = store.receipts.filter((receipt) => {
-      if (lineIdSet.has(receipt.sales_order_line_id)) {
-        removedIds.add(receipt.id);
-        return false;
-      }
-      return true;
-    });
-  });
+  await mutateFabricReceipts(
+    (store) => {
+      store.receipts = store.receipts.filter((receipt) => {
+        if (lineIdSet.has(receipt.sales_order_line_id)) {
+          removedIds.add(receipt.id);
+          return false;
+        }
+        return true;
+      });
+    },
+    { force: options?.force }
+  );
 
-  const archive = structuredClone(readFabricReceiptsArchive());
+  const archive = options?.force
+    ? await readJsonFileFreshAsync(ARCHIVE_PATH, EMPTY_FABRIC_RECEIPTS, { force: true })
+    : structuredClone(readFabricReceiptsArchive());
   const nextArchive = archive.receipts.filter((receipt) => {
     if (lineIdSet.has(receipt.sales_order_line_id)) {
       removedIds.add(receipt.id);
