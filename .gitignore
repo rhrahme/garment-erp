@@ -57,3 +57,7 @@ reference-documents/
 *.tsbuildinfo
 next-env.d.ts
 .vercel
+
+# Drapers fabric images (local downloads; manifest tracks runs)
+data/suppliers/drapers/images/*
+!data/suppliers/drapers/images/manifest.json
