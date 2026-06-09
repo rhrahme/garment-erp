@@ -102,9 +102,6 @@ export function clearFabricLinePrintTimestamps(
 
   const nextLines = lines.map((line) => {
     if (!idSet.has(line.id)) return line;
-    if (!line.a4_printed_at && !line.prep_stickers_printed_at && !line.prod_stickers_printed_at) {
-      return line;
-    }
     cleared_line_ids.push(line.id);
     return {
       ...line,

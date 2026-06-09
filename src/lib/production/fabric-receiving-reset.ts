@@ -1,10 +1,14 @@
-import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import path from "path";
+import { ensureDocumentsLoaded, readJsonFileFreshAsync } from "@/lib/data/document-persistence";
 import { removeFabricReceiptsForLineIds } from "@/lib/data/fabric-receipts";
 import { removeProductionWorkOrdersForLineIds } from "@/lib/data/production-work-orders";
-import { readSalesOrders, writeSalesOrders } from "@/lib/data/sales-orders";
+import { writeSalesOrders } from "@/lib/data/sales-orders";
 import { notifyIntegration } from "@/lib/integrations";
 import { clearFabricLinePrintTimestamps } from "@/lib/sales-orders/fabric-lines";
-import type { SalesOrder } from "@/lib/types/sales-orders";
+import type { SalesOrder, SalesOrdersFile } from "@/lib/types/sales-orders";
+
+const SALES_ORDERS_PATH = path.join(process.cwd(), "src/data/sales-orders.json");
+const EMPTY_SALES_ORDERS: SalesOrdersFile = { updated_at: null, orders: [] };
 
 export type FabricReceivingTestingResetInput = {
   sales_order_id: string;
@@ -46,7 +50,7 @@ export async function resetFabricReceivingForTesting(
     throw new Error("Select a sales order to reset.");
   }
 
-  const store = readSalesOrders();
+  const store = await readJsonFileFreshAsync(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS, { force: true });
   const orderIndex = store.orders.findIndex((order) => order.id === salesOrderId);
   if (orderIndex < 0) {
     throw new Error("Sales order not found.");
@@ -69,10 +73,8 @@ export async function resetFabricReceivingForTesting(
   if (input.clear_print_timestamps !== false) {
     const { lines, cleared_line_ids } = clearFabricLinePrintTimestamps(order.fabric_lines, resetLineIds);
     clearedPrintLineIds = cleared_line_ids;
-    if (clearedPrintLineIds.length > 0) {
-      store.orders[orderIndex] = { ...order, fabric_lines: lines };
-      await writeSalesOrders(store);
-    }
+    store.orders[orderIndex] = { ...order, fabric_lines: lines };
+    await writeSalesOrders(store);
   }
 
   const result: FabricReceivingTestingResetResult = {

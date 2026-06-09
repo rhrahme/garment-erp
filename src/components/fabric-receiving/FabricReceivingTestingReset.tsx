@@ -100,7 +100,7 @@ export function FabricReceivingTestingReset({
                 data.cleared_print_line_ids.length === 1 ? "" : "s"
               }`
             : ""
-        }.`
+        }. Re-open Preparation stickers (/orders/…/stickers?sheet=fabric-cuts) to print receive labels again.`
       );
       onResetComplete();
       await loadOverview();
