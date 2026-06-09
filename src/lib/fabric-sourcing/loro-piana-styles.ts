@@ -24,6 +24,8 @@ export function formatLoroPianaMillLineLabel(line: LoroPianaMillLine): string {
 export function normalizeLoroPianaFabricNumber(input: string): string {
   const trimmed = input.trim();
   const upper = trimmed.toUpperCase();
+  // ClickUp Solbiati linen: NS25016 (N prefix + S + 5 digits)
+  if (/^NS/i.test(upper)) return normalizeSolbiatiFabricNumber(upper.slice(1));
   if (/^S\d+$/.test(upper)) return normalizeSolbiatiFabricNumber(upper);
   const withN = upper.match(/^N(\d+)$/);
   if (withN) return withN[1]!;
@@ -56,6 +58,18 @@ export function expandLoroPianaFabricNumberCandidates(input: string): string[] {
     out.add(normalized);
     if (normalized !== upper) out.add(upper);
     return [...out];
+  }
+
+  if (/^NS/i.test(upper)) {
+    const withoutN = upper.slice(1);
+    if (/^S\d+$/.test(withoutN)) {
+      const normalized = normalizeSolbiatiFabricNumber(withoutN);
+      out.add(normalized);
+      out.add(upper);
+      out.add(withoutN);
+      if (normalized !== withoutN) out.add(withoutN);
+      return [...out];
+    }
   }
 
   const nMatch = upper.match(/^N(\d+)$/);
@@ -98,6 +112,11 @@ export function resolveLoroPianaFabricInput(input: string): {
 
   if (/^S\d+$/i.test(trimmed)) {
     const preferredNumber = normalizeSolbiatiFabricNumber(upper);
+    return { candidates, preferredNumber, millLine: "solbiati" };
+  }
+
+  if (/^NS/i.test(upper)) {
+    const preferredNumber = normalizeSolbiatiFabricNumber(upper.slice(1));
     return { candidates, preferredNumber, millLine: "solbiati" };
   }
 
@@ -158,6 +177,7 @@ export function expandLoroPianaStyleQuery(query: string): string[] {
 
   const upper = trimmed.toUpperCase();
   if (/^S\d+$/i.test(trimmed)) return [normalizeSolbiatiFabricNumber(upper)];
+  if (/^NS/i.test(upper)) return [normalizeSolbiatiFabricNumber(upper.slice(1))];
 
   const solbiatiRange = upper.match(/^S(\d+)-S(\d+)$/);
   if (solbiatiRange) {
