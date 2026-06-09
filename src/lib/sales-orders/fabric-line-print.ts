@@ -1,7 +1,6 @@
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { notifyIntegration } from "@/lib/integrations";
 import { readSalesOrdersFresh, writeSalesOrders } from "@/lib/data/sales-orders";
-import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 import {
   clearFabricLinePrintTimestamps,
   markFabricLinesPrinted,
@@ -33,15 +32,6 @@ export async function markSalesOrderFabricLinesPrinted(
   }
 
   const order = store.orders[index]!;
-
-  if (PRINTING_FREE) {
-    return {
-      ok: true,
-      order,
-      marked_line_ids: [],
-      fabric_lines: order.fabric_lines,
-    };
-  }
 
   const ids = resolvePrintLineIds(order, kind, lineIds);
   if (ids.length === 0) {

@@ -63,8 +63,7 @@ export default async function OrderPrintPackPage({ params }: { params: Promise<{
             {PRINTING_FREE ? (
               <>
                 {" "}
-                Full order sheet ({a4PrintLines.length} line{a4PrintLines.length === 1 ? "" : "s"}). Testing mode:
-                reprint anytime. Sticker rolls below include all lines.
+                Full order sheet ({a4PrintLines.length} line{a4PrintLines.length === 1 ? "" : "s"}). Reprint anytime. Sticker rolls below include all lines.
               </>
             ) : a4PrintLines.length > 0 ? (
               <>

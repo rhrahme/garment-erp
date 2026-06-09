@@ -301,7 +301,7 @@ export default async function SalesOrderPrintPage({
           <div className="mt-8 border-t border-slate-200 pt-6 print:mt-0 print:border-0 print:pt-0">
             {PRINTING_FREE ? (
               <p className="no-print mb-4 text-sm text-slate-500">
-                Full order sheet ({a4PrintLines.length} lines) — testing mode: reprint anytime.
+                Full order sheet ({a4PrintLines.length} lines) — reprint anytime.
               </p>
             ) : a4PrintLines.length > 0 ? (
               <p className="no-print mb-4 text-sm text-slate-500">
@@ -340,7 +340,7 @@ export default async function SalesOrderPrintPage({
               Art. # matches fabric table — one row per piece (suit = jacket + trouser)
               {team === "production"
                 ? PRINTING_FREE
-                  ? ` · ${prodPrintLines.length} line${prodPrintLines.length === 1 ? "" : "s"} (testing: reprint anytime)`
+                  ? ` · ${prodPrintLines.length} line${prodPrintLines.length === 1 ? "" : "s"} — reprint anytime`
                   : ` · ${prodPrintLines.length} line${prodPrintLines.length === 1 ? "" : "s"} to print`
                 : ""}
             </p>

@@ -67,15 +67,11 @@ const STICKER_SHEET_TABS: Array<{
 const SHEET_COPY: Record<StickerSheetMode, { title: string; hint: string }> = {
   "fabric-cuts": {
     title: "Fabric cut stickers (receive / wash)",
-    hint: `One ${labelRollSizeLabel()} roll label per fabric line — stick on the roll when fabric arrives. Receiving & washing scan this QR.${
-      PRINTING_FREE ? " Testing: all lines, reprint anytime." : " New lines only."
-    }`,
+    hint: `One ${labelRollSizeLabel()} roll label per fabric line — stick on the roll when fabric arrives. Receiving & washing scan this QR. Reprint anytime.`,
   },
   pieces: {
     title: "Piece stickers (cutting / sewing)",
-    hint: `One ${labelRollSizeLabel()} roll label per garment piece — after prep, stick on jacket, trouser, etc. (e.g. suit = 2 stickers).${
-      PRINTING_FREE ? " Testing: all lines, reprint anytime." : " New lines only."
-    }`,
+    hint: `One ${labelRollSizeLabel()} roll label per garment piece — after prep, stick on jacket, trouser, etc. (e.g. suit = 2 stickers). Reprint anytime.`,
   },
 };
 
@@ -116,22 +112,12 @@ export function StickerPrintSheet({
   const [error, setError] = useState<string | null>(null);
   const [printedSheets, setPrintedSheets] = useState<Set<StickerSheetMode>>(() => new Set());
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [canClearPrintTimestamps, setCanClearPrintTimestamps] = useState(false);
-  const [clearingPrintTimestamps, setClearingPrintTimestamps] = useState(false);
-  const [clearMessage, setClearMessage] = useState<string | null>(null);
   const { printing, printError, clearPrintError, requestPrint } = useStickerPrint();
   const { printWithMark } = useMarkFabricLinesPrinted(salesOrderId);
 
   useEffect(() => {
     setPrintedSheets(readPrintedSheets(salesOrderId));
   }, [salesOrderId]);
-
-  useEffect(() => {
-    fetch("/api/auth/session")
-      .then((res) => res.json())
-      .then((session) => setCanClearPrintTimestamps(Boolean(session.is_admin || session.is_client_manager)))
-      .catch(() => setCanClearPrintTimestamps(false));
-  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -208,44 +194,6 @@ export function StickerPrintSheet({
     });
   }, [data, previewItems]);
 
-  const handleClearPrintTimestamps = useCallback(async () => {
-    if (
-      !window.confirm(
-        "Clear A4 + sticker print timestamps on this order so receive / production labels can print again? Fabric lines and sticker codes stay the same."
-      )
-    ) {
-      return;
-    }
-
-    setClearingPrintTimestamps(true);
-    setClearMessage(null);
-    setError(null);
-    try {
-      const res = await fetch(`/api/sales-orders/${salesOrderId}/fabric-lines/clear-print-timestamps`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to clear print timestamps.");
-
-      for (const tab of STICKER_SHEET_TABS) {
-        sessionStorage.removeItem(printedStorageKey(salesOrderId, tab.id));
-      }
-      setPrintedSheets(new Set());
-      setClearMessage(
-        `Cleared print timestamps on ${json.cleared_line_ids?.length ?? 0} fabric line${
-          json.cleared_line_ids?.length === 1 ? "" : "s"
-        }. You can print receive stickers now.`
-      );
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to clear print timestamps.");
-    } finally {
-      setClearingPrintTimestamps(false);
-    }
-  }, [load, salesOrderId]);
-
   const handlePrintSelected = useCallback(
     (selectedCodes: string[]) => {
       setPreviewOpen(false);
@@ -292,11 +240,6 @@ export function StickerPrintSheet({
   const copy = SHEET_COPY[sheet];
   const labelCount = sheets.reduce((sum, poSheet) => sum + poSheet.labels.length, 0);
   const hasLabelsToPrint = labelCount > 0;
-  const totalFabricLines = data.labels.length;
-  const allPrepPrinted =
-    sheet === "fabric-cuts" &&
-    totalFabricLines === 0 &&
-    (data.unprinted_line_ids?.prep_stickers.length ?? 0) === 0;
   const singlePieceProductionEmpty =
     sheet === "pieces" && !hasLabelsToPrint && (data.unprinted_line_ids?.prod_stickers.length ?? 0) === 0;
 
@@ -355,36 +298,10 @@ export function StickerPrintSheet({
           <p className="mt-1 text-xs text-slate-400">
             Roll printer ({labelRollSizeLabel()} physical) — one label per feed. In LabelLife or the AIMO driver, set media to{" "}
             {labelPdfMediaMmLabel()} before printing. Labels print from a server PDF (no browser date/URL headers).
-            {!hasLabelsToPrint && !allPrepPrinted && !singlePieceProductionEmpty
+            {!hasLabelsToPrint && !singlePieceProductionEmpty
               ? " No fabric lines on this order."
               : null}
           </p>
-          {clearMessage ? (
-            <p className="mt-2 text-sm text-emerald-800">{clearMessage}</p>
-          ) : null}
-          {allPrepPrinted ? (
-            <div className="mt-2 space-y-2">
-              <p className="text-sm text-amber-800">
-                All receive stickers on this order were already marked printed. Add a new fabric article to print more, or
-                clear print timestamps to reprint existing lines.
-              </p>
-              {canClearPrintTimestamps ? (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => void handleClearPrintTimestamps()}
-                  disabled={clearingPrintTimestamps || printing}
-                >
-                  {clearingPrintTimestamps ? "Clearing…" : "Clear print timestamps & reprint"}
-                </Button>
-              ) : (
-                <p className="text-sm text-amber-800">
-                  Ask an admin or QC account to clear sticker print timestamps (Fabric Receiving → testing reset).
-                </p>
-              )}
-            </div>
-          ) : null}
           {singlePieceProductionEmpty ? (
             <p className="mt-2 text-sm text-slate-600">
               Single-piece garments (Short, Trouser, Shirt, …) use the same fabric-cut QR through cutting — switch to{" "}

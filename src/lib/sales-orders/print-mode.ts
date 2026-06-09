@@ -1,2 +1,2 @@
-/** Testing: unlimited reprints — all lines every time. Production: false for incremental print. */
-export const PRINTING_FREE = false;
+/** When true, all fabric lines appear on every print sheet and reprints are never blocked. */
+export const PRINTING_FREE = true;

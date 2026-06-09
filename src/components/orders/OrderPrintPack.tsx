@@ -177,7 +177,7 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
               <>
                 Receiving pack: {data.fabric_cut_labels.length} fabric cut sticker
                 {data.fabric_cut_labels.length === 1 ? "" : "s"}
-                {PRINTING_FREE ? " (testing: all lines)." : " (new lines only)."}{" "}
+                {PRINTING_FREE ? " (reprint anytime)." : " (new lines only)."}{" "}
                 {data.has_cutting_pack
                   ? `Cutting pack: ${data.cutting_piece_labels.length} piece sticker${data.cutting_piece_labels.length === 1 ? "" : "s"} for multi-piece lines.`
                   : "No cutting pack — single-piece lines use the same fabric cut QR through cutting."}

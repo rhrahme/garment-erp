@@ -3,8 +3,6 @@
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { FabricLinePrintKind } from "@/lib/sales-orders/fabric-lines";
-import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
-
 export function useMarkFabricLinesPrinted(
   orderId: string,
   printFn: (onAfterPrint?: () => void) => void = (onAfterPrint) => {
@@ -42,7 +40,7 @@ export function useMarkFabricLinesPrinted(
 
       const onAfterPrint = () => {
         onPrinted?.();
-        if (!PRINTING_FREE && pending.length > 0) {
+        if (pending.length > 0) {
           void Promise.all(pending.map((mark) => markPrinted(mark.kind, mark.lineIds)));
         }
       };

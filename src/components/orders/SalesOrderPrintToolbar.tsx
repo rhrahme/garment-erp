@@ -36,7 +36,7 @@ export function SalesOrderPrintToolbar({
 
   const printHint =
     PRINTING_FREE && printKind && hasLines
-      ? `Testing mode — ${lineCount} line${lineCount === 1 ? "" : "s"}, reprint anytime`
+      ? `${lineCount} line${lineCount === 1 ? "" : "s"} — reprint anytime`
       : team === "receiving" && canPrintReceivingA4
         ? PRINTING_FREE
           ? `Full order sheet (${sheetLineCount} lines)`

@@ -28,12 +28,8 @@ export function PrintPackToolbar({
       </Link>
       <p className="text-xs text-slate-500">
         {canPrintA4
-          ? PRINTING_FREE
-            ? `Full receiving A4 (${a4SheetLineCount} lines) — testing: reprint anytime, then sticker rolls below`
-            : `Receiving A4 (${a4LineIds.length} new line${a4LineIds.length === 1 ? "" : "s"}) — then sticker rolls below`
-          : a4SheetLineCount > 0
-            ? "All fabric lines already printed on A4 — add a new article or print sticker rolls below"
-            : "No fabric lines on this order"}
+          ? `Receiving A4 (${a4SheetLineCount} line${a4SheetLineCount === 1 ? "" : "s"}) — reprint anytime, then sticker rolls below`
+          : "No fabric lines on this order"}
       </p>
       <Button
         onClick={() => printWithMark([{ kind: "a4", lineIds: a4LineIds }])}

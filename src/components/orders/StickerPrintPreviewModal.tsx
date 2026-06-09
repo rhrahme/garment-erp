@@ -8,6 +8,7 @@ import { StickerCell } from "@/components/orders/StickerCell";
 import { useLabelRotation } from "@/hooks/useLabelRotation";
 import { useLabelScale } from "@/hooks/useLabelScale";
 import type { StickerPreviewItem } from "@/lib/production/sticker-print-selection";
+import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 
 type StickerPrintPreviewModalProps = {
   open: boolean;
@@ -126,7 +127,9 @@ export function StickerPrintPreviewModal({
               {title}
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Only unprinted stickers are selected by default. Uncheck any you do not want to print.
+              {PRINTING_FREE
+                ? "All stickers are selected by default. Uncheck any you do not want to print."
+                : "Only unprinted stickers are selected by default. Uncheck any you do not want to print."}
             </p>
           </div>
           <button
