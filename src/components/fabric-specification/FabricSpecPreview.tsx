@@ -6,7 +6,7 @@ import { DrapersFabricSwatch } from "@/components/fabric-specification/DrapersFa
 import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
 import { formatFabricPatternLabel, formatFabricTextLabel } from "@/lib/fabric-sourcing/fabric-display";
 import { fabricStockTone, formatFabricStockLabel } from "@/lib/fabric-sourcing/fabric-stock";
-import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
+import { formatFabricSupplierName, isSolbiatiFabric } from "@/lib/fabric-sourcing/supplier-display";
 import type { SupplierFabric } from "@/lib/types/fabric-sourcing";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +43,7 @@ function FabricSpecDetailModal({
   );
   const pattern = formatFabricPatternLabel(fabric);
   const text = formatFabricTextLabel(fabric);
+  const finish = fabric.finish?.trim() || text;
   const stockLabel = formatFabricStockLabel(fabric);
 
   useEffect(() => {
@@ -85,9 +86,10 @@ function FabricSpecDetailModal({
 
         <dl className="mt-4">
           <DetailRow label="Composition">{fabric.composition ?? "—"}</DetailRow>
+          <DetailRow label="Collection">{pattern ?? "—"}</DetailRow>
           <DetailRow label="Color">{fabric.color ?? "—"}</DetailRow>
-          <DetailRow label="Pattern">{pattern ?? "—"}</DetailRow>
           <DetailRow label="Text">{text ?? "—"}</DetailRow>
+          <DetailRow label="Finish">{finish ?? "—"}</DetailRow>
           <DetailRow label="Weight">
             {fabric.weight_gsm != null ? `${fabric.weight_gsm} gsm` : "—"}
           </DetailRow>
@@ -130,11 +132,46 @@ function FabricSpecDetailModal({
   );
 }
 
-/** Preview cell — Drapers swatch image when available, otherwise click for full spec modal. */
-export function FabricSpecPreview({ fabric, swatchSrc, zoomSrc, canViewPrices = true }: FabricSpecPreviewProps) {
+function FabricSpecPreviewTrigger({
+  fabric,
+  canViewPrices,
+  variant,
+}: {
+  fabric: SupplierFabric;
+  canViewPrices: boolean;
+  variant: "eye" | "linen";
+}) {
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
+  const pattern = formatFabricPatternLabel(fabric);
+  const hoverTitle = [fabric.fabric_number, fabric.composition, pattern].filter(Boolean).join(" · ");
 
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        title={hoverTitle || `${fabric.fabric_number} — view fabric details`}
+        className={cn(
+          "inline-flex shrink-0 cursor-pointer items-center justify-center transition-colors",
+          variant === "linen"
+            ? "rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 hover:bg-amber-200"
+            : "h-7 w-7 rounded border border-slate-200 bg-slate-50 text-slate-500 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600"
+        )}
+        aria-label={`Preview fabric ${fabric.fabric_number}`}
+      >
+        {variant === "linen" ? "Linen" : <Eye className="h-3.5 w-3.5" />}
+      </button>
+
+      {open ? (
+        <FabricSpecDetailModal fabric={fabric} canViewPrices={canViewPrices} onClose={close} />
+      ) : null}
+    </>
+  );
+}
+
+/** Preview cell — Drapers swatch image when available, otherwise click for full spec modal. */
+export function FabricSpecPreview({ fabric, swatchSrc, zoomSrc, canViewPrices = true }: FabricSpecPreviewProps) {
   if (swatchSrc) {
     return (
       <DrapersFabricSwatch
@@ -145,21 +182,9 @@ export function FabricSpecPreview({ fabric, swatchSrc, zoomSrc, canViewPrices = 
     );
   }
 
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        title={`${fabric.fabric_number} — view fabric details`}
-        className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded border border-slate-200 bg-slate-50 text-slate-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600"
-        aria-label={`Preview fabric ${fabric.fabric_number}`}
-      >
-        <Eye className="h-3.5 w-3.5" />
-      </button>
+  const variant = isSolbiatiFabric(fabric.supplier_id, fabric.fabric_number) ? "linen" : "eye";
 
-      {open ? (
-        <FabricSpecDetailModal fabric={fabric} canViewPrices={canViewPrices} onClose={close} />
-      ) : null}
-    </>
+  return (
+    <FabricSpecPreviewTrigger fabric={fabric} canViewPrices={canViewPrices} variant={variant} />
   );
 }

@@ -196,7 +196,7 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
               {" · "}
               <span className="text-slate-600">
                 {isSolbiatiTab
-                  ? "Click the eye icon in Preview for collection & composition — no swatch images in catalog"
+                  ? "Click the Linen badge in Preview for collection & composition — no swatch images in catalog"
                   : "Click Preview for swatch image (Drapers) or full fabric details"}
               </span>
             </p>
@@ -226,12 +226,12 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
         <DataTable
           columns={[
             ...(brandId === "all" ? [{ key: "brand", label: "Brand" }] : []),
-            { key: "preview", label: "Preview", className: "w-14 px-2" },
             { key: "fabricNo", label: "Fabric No." },
-            { key: "composition", label: "Composition" },
-            { key: "color", label: "Color" },
+            { key: "preview", label: "Preview", className: "w-14 px-2" },
             { key: "pattern", label: "Pattern" },
             { key: "text", label: "Text" },
+            { key: "composition", label: "Composition" },
+            { key: "color", label: "Color" },
             { key: "weight", label: "Weight" },
             { key: "width", label: "Width" },
           { key: "hsCode", label: "HS Code" },
