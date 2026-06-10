@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
-import { listStoredFabricOrders, getStoredFabricOrder, markStoredFabricOrderSent } from "@/lib/integrations/fabric-order-store";
+import {
+  ensureFabricOrdersLoaded,
+  listStoredFabricOrders,
+  getStoredFabricOrder,
+  markStoredFabricOrderSent,
+} from "@/lib/integrations/fabric-order-store";
 
 export async function GET(request: Request) {
   try {
+    await ensureFabricOrdersLoaded();
     const url = new URL(request.url);
     const salesOrderId = url.searchParams.get("sales_order_id");
     let orders = listStoredFabricOrders();
@@ -18,6 +24,7 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    await ensureFabricOrdersLoaded();
     const { id } = await context.params;
     const body = (await request.json()) as { emailed_at?: string; email_to?: string };
     const order = getStoredFabricOrder(id);

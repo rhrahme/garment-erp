@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { getSupplierByIdFromContacts } from "@/lib/data/supplier-contacts";
 import { verifyApiKey } from "@/lib/integrations/api-auth";
-import { createStoredFabricOrder, listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
+import {
+  createStoredFabricOrder,
+  ensureFabricOrdersLoaded,
+  listStoredFabricOrders,
+} from "@/lib/integrations/fabric-order-store";
 import { notifyIntegration } from "@/lib/integrations";
 import { getPurchaseOrders } from "@/lib/data/queries";
 
@@ -9,6 +13,7 @@ export async function GET(request: Request) {
   const authError = verifyApiKey(request);
   if (authError) return authError;
 
+  await ensureFabricOrdersLoaded();
   const demoOrders = await getPurchaseOrders();
   const storedOrders = listStoredFabricOrders();
   const orders = [...storedOrders, ...demoOrders.filter((o) => o.supplier?.is_fabric_supplier)];
@@ -48,6 +53,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Unknown supplier: ${supplier_id}` }, { status: 400 });
     }
 
+    await ensureFabricOrdersLoaded();
     const order = createStoredFabricOrder({
       supplier_id,
       client_reference,

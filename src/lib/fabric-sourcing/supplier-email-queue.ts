@@ -1,3 +1,4 @@
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
@@ -9,7 +10,14 @@ export type SupplierEmailQueueItem = PurchaseOrder & {
   delivery_destination: DeliveryDestination | null;
 };
 
-export function listSupplierEmailQueue(salesOrderId?: string | null): SupplierEmailQueueItem[] {
+export async function listSupplierEmailQueue(
+  salesOrderId?: string | null
+): Promise<SupplierEmailQueueItem[]> {
+  // Both documents are Supabase-backed; warm them so a cold serverless instance
+  // doesn't fall back to the empty local JSON (which renders an empty page even
+  // though the sales order shows "Supplier emailed").
+  await ensureDocumentsLoaded(["sales_orders", "fabric_orders"]);
+
   const salesById = new Map(readSalesOrders().orders.map((order) => [order.id, order]));
 
   return listStoredFabricOrders()

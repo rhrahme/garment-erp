@@ -110,13 +110,37 @@ export function SupplierEmailsWorkspace() {
       </div>
 
       {orders.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-500">
-          No supplier emails yet — create fabric orders from a{" "}
-          <Link href="/orders" className="font-medium text-indigo-600 hover:text-indigo-700">
-            sales order
-          </Link>{" "}
-          first.
-        </div>
+        salesOrderFilter ? (
+          <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50 px-6 py-10 text-center text-sm text-amber-900">
+            <p className="font-medium">No supplier emails exist for this order yet.</p>
+            <p className="mt-1 text-amber-800">
+              Open the order and use “Create fabric orders for suppliers” to generate the supplier
+              POs, then come back here to send them.
+            </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-3">
+              <Link
+                href={`/fabric-orders/${salesOrderFilter}`}
+                className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700"
+              >
+                Open this order
+              </Link>
+              <Link
+                href="/supplier-emails"
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 font-medium text-slate-700 hover:bg-slate-50"
+              >
+                View all supplier emails
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-500">
+            No supplier emails yet — create fabric orders from a{" "}
+            <Link href="/orders" className="font-medium text-indigo-600 hover:text-indigo-700">
+              sales order
+            </Link>{" "}
+            first.
+          </div>
+        )
       ) : (
         <>
           {pendingOrders.length > 0 && (

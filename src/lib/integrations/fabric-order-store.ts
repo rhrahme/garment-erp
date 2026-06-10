@@ -1,11 +1,24 @@
 import path from "path";
-import { readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
+import { ensureDocumentsLoaded, readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
 import type { PurchaseOrder, PurchaseOrderLine } from "@/lib/types/fabric-sourcing";
 
 const STORE_PATH = path.join(process.cwd(), "fabric-orders.local.json");
 
 interface FabricOrderStore {
   orders: PurchaseOrder[];
+}
+
+/**
+ * Warm the `fabric_orders` document from Supabase into the in-process cache.
+ *
+ * The fabric-order store is a LAZY Supabase document, so the synchronous
+ * `readStore()` returns the (empty) local fallback on any serverless instance
+ * that hasn't loaded it yet. Reads AND writes must await this first — otherwise
+ * a cold instance reads an empty list (e.g. the empty /supplier-emails page) or,
+ * worse, a create overwrites the whole Supabase document with a single order.
+ */
+export async function ensureFabricOrdersLoaded(): Promise<void> {
+  await ensureDocumentsLoaded(["fabric_orders"]);
 }
 
 function readStore(): FabricOrderStore {

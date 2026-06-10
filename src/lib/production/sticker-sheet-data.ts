@@ -125,7 +125,7 @@ function labelsForSheet(
 }
 
 export async function loadStickerPdfEntries(orderId: string, query: StickerSheetQuery = {}) {
-  await ensureDocumentsLoaded(["sales_orders"]);
+  await ensureDocumentsLoaded(["sales_orders", "fabric_orders"]);
   const order = await getSalesOrderByIdFresh(orderId);
   if (!order) return null;
 

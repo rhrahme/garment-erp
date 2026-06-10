@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
+import { ensureFabricOrdersLoaded, listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 
 export async function GET(request: Request) {
   try {
+    await ensureFabricOrdersLoaded();
     const url = new URL(request.url);
     const salesOrderId = url.searchParams.get("sales_order_id");
     let orders = listStoredFabricOrders();

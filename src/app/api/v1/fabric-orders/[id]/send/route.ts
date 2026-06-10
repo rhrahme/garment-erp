@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { getFactoryOrdersEmail } from "@/lib/data/supplier-catalogs";
 import { verifyApiKey } from "@/lib/integrations/api-auth";
-import { getStoredFabricOrder, markStoredFabricOrderSent } from "@/lib/integrations/fabric-order-store";
+import {
+  ensureFabricOrdersLoaded,
+  getStoredFabricOrder,
+  markStoredFabricOrderSent,
+} from "@/lib/integrations/fabric-order-store";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { notifyIntegration } from "@/lib/integrations";
 import { buildFabricOrderEmail } from "@/lib/fabric-sourcing/email";
 import { getPriceListItems } from "@/lib/data/queries";
@@ -18,6 +23,7 @@ export async function POST(
 
   try {
     const { id } = await params;
+    await Promise.all([ensureFabricOrdersLoaded(), ensureDocumentsLoaded(["sales_orders"])]);
     const order = getStoredFabricOrder(id);
     if (!order || !order.supplier) {
       return NextResponse.json({ error: "Fabric order not found." }, { status: 404 });
