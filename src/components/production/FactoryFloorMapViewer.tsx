@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ExternalLink, GripVertical, Move, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useFactoryFloorStationPositions } from "@/hooks/useFactoryFloorStationPositions";
@@ -13,7 +13,7 @@ import {
   type FactoryFloorStation,
   type FactoryFloorZone,
 } from "@/lib/production/factory-floor-stations";
-import { SCAN_STAGE_LEGEND, scanStageStyles } from "@/lib/production/scan-stage-highlight";
+import { scanStageStyles } from "@/lib/production/scan-stage-highlight";
 import { cn } from "@/lib/utils";
 
 type ZoneFilter = FactoryFloorZone | "all";
@@ -101,6 +101,19 @@ export function FactoryFloorMapViewer() {
 
   const visibleStations = factoryFloorStationsByZone(zone, stations);
   const selected = stations.find((s) => s.id === selectedId) ?? null;
+  const mapLegendStages = useMemo(() => {
+    const seen = new Set<string>();
+    return stations
+      .filter((station) => {
+        if (seen.has(station.scan_stage)) return false;
+        seen.add(station.scan_stage);
+        return true;
+      })
+      .map((station) => ({
+        stage: station.scan_stage,
+        label: `${scanStageStyles(station.scan_stage).label} — ${station.label}`,
+      }));
+  }, [stations]);
 
   const positionFromClient = useCallback((clientX: number, clientY: number) => {
     const rect = mapRef.current?.getBoundingClientRect();
@@ -390,7 +403,7 @@ export function FactoryFloorMapViewer() {
           <div className="rounded-xl border border-slate-200 bg-white p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Colour legend</p>
             <ul className="mt-2 space-y-1.5">
-              {SCAN_STAGE_LEGEND.map((item) => {
+              {mapLegendStages.map((item) => {
                 const { chip } = scanStageStyles(item.stage);
                 return (
                   <li key={item.stage} className="flex items-center gap-2 text-xs text-slate-700">

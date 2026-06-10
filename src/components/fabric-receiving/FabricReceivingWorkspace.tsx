@@ -253,7 +253,7 @@ export function FabricReceivingWorkspace() {
         <Link href="/production/floor-map" className="font-medium text-indigo-600 hover:text-indigo-800">
           Floor map
         </Link>{" "}
-        shows where Receive, Wash, Soak, and Iron stations sit.
+        shows where Receive, Wash, and Iron stations sit.
       </p>
     </div>
   );

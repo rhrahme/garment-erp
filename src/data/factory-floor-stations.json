@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-05T00:00:00.000Z",
+  "updated_at": "2026-06-11T00:00:00.000Z",
   "map_image": "/factory/hagan-factory-layout.png",
   "map_pdf": "/factory/hagan-factory-layout.pdf",
   "notes": "Pin positions are % from top-left of the layout image. Adjust x/y after walking the floor.",
@@ -22,16 +22,6 @@
       "scan_stage": "fabric_wash",
       "erp_href": "/fabric-receiving",
       "x": 13,
-      "y": 22
-    },
-    {
-      "id": "soak",
-      "label": "Soak",
-      "description": "Start or finish soaking (Fabric Receiving).",
-      "zone": "fabric_receiving",
-      "scan_stage": "fabric_soak",
-      "erp_href": "/fabric-receiving",
-      "x": 32,
       "y": 22
     },
     {
@@ -63,16 +53,6 @@
       "erp_href": "/production",
       "x": 56,
       "y": 41
-    },
-    {
-      "id": "garment_wash",
-      "label": "Garment wash",
-      "description": "Finished garments — garment wash stage (Production pipeline).",
-      "zone": "production",
-      "scan_stage": "garment_wash",
-      "erp_href": "/production",
-      "x": 20,
-      "y": 74
     },
     {
       "id": "finishing",
