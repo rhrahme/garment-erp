@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/lib/integrations/api-auth";
+import { createInboundShipmentFromAwb } from "@/lib/integrations/create-inbound-shipment";
+import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
+import { getShipmentByAwb } from "@/lib/integrations/shipment-store";
 import { logSupplierReply } from "@/lib/integrations/supplier-reply-store";
 import { createAvailabilityAlertsFromReply } from "@/lib/integrations/supplier-availability-store";
 import { notifyAdminsOfAvailabilityAlerts } from "@/lib/integrations/supplier-availability-alert";
@@ -17,6 +20,7 @@ export async function POST(request: Request) {
       subject?: string;
       body?: string;
       received_at?: string;
+      awb_numbers?: string[];
       line_updates?: Array<{
         fabric_number: string;
         status: "confirmed" | "temp_unavailable" | "permanently_unavailable" | "substituted";
@@ -30,15 +34,37 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "from_address and subject are required." }, { status: 400 });
     }
 
+    const awb_numbers = [...new Set((body.awb_numbers ?? []).map((value) => value.trim()).filter(Boolean))];
+    const matchedOrder =
+      body.po_number?.trim()
+        ? listStoredFabricOrders().find(
+            (order) => order.po_number.toUpperCase() === body.po_number!.trim().toUpperCase()
+          )
+        : undefined;
+
     const record = logSupplierReply({
-      po_number: body.po_number?.trim() ?? null,
-      supplier_id: body.supplier_id?.trim() ?? null,
+      po_number: body.po_number?.trim() ?? matchedOrder?.po_number ?? null,
+      supplier_id: body.supplier_id?.trim() ?? matchedOrder?.supplier_id ?? null,
       from_address: body.from_address.trim(),
       subject: body.subject.trim(),
       body: body.body?.trim() ?? "",
       received_at: body.received_at ?? new Date().toISOString(),
+      awb_numbers,
+      purchase_order_id: matchedOrder?.id ?? null,
       line_updates: body.line_updates,
     });
+
+    let shipments_created = 0;
+    for (const awb_number of awb_numbers) {
+      if (getShipmentByAwb(awb_number)) continue;
+      const { created } = await createInboundShipmentFromAwb({
+        awb_number,
+        purchase_order_id: matchedOrder?.id ?? null,
+        po_number: record.po_number,
+        supplier_id: record.supplier_id,
+      });
+      if (created) shipments_created += 1;
+    }
 
     const alerts =
       body.line_updates && body.line_updates.length > 0
@@ -79,7 +105,7 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ ok: true, reply: record, alerts }, { status: 201 });
+    return NextResponse.json({ ok: true, reply: record, alerts, shipments_created }, { status: 201 });
   } catch (error) {
     console.error("Supplier reply ingest failed:", error);
     return NextResponse.json({ error: "Failed to log supplier reply." }, { status: 500 });

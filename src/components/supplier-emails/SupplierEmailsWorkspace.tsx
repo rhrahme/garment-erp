@@ -427,10 +427,19 @@ function SentSupplierEmailBatchCard({
             <BatchOrderLinks orders={batch.orders} />
           </div>
         </button>
-        <Button variant="secondary" size="sm" onClick={openFollowUp}>
-          <MessageSquarePlus className="mr-2 h-4 w-4" />
-          Send follow-up
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {batch.orders.length === 1 && (
+            <Link href={`/shipments?po_id=${encodeURIComponent(batch.orders[0]!.id)}`}>
+              <Button variant="secondary" size="sm">
+                Add AWB
+              </Button>
+            </Link>
+          )}
+          <Button variant="secondary" size="sm" onClick={openFollowUp}>
+            <MessageSquarePlus className="mr-2 h-4 w-4" />
+            Send follow-up
+          </Button>
+        </div>
       </div>
 
       {expanded && (

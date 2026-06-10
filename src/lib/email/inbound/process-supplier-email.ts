@@ -7,9 +7,8 @@ import { parseSupplierEmailContent } from "@/lib/email/inbound/parse-supplier-em
 import { parseAvailabilityFromEmail } from "@/lib/email/inbound/parse-availability-from-email";
 import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 import { markEmailProcessed, isEmailProcessed } from "@/lib/integrations/processed-email-store";
-import { createShipment, getShipmentByAwb } from "@/lib/integrations/shipment-store";
-import { registerShipmentWith17Track } from "@/lib/integrations/track17/sync-shipments";
-import { isTrack17Configured } from "@/lib/integrations/track17/config";
+import { createInboundShipmentFromAwb } from "@/lib/integrations/create-inbound-shipment";
+import { getShipmentByAwb } from "@/lib/integrations/shipment-store";
 import { upsertSupplierReply, type SupplierReplyRecord } from "@/lib/integrations/supplier-reply-store";
 import { createAvailabilityAlertsFromReply } from "@/lib/integrations/supplier-availability-store";
 import { notifyAdminsOfAvailabilityAlerts } from "@/lib/integrations/supplier-availability-alert";
@@ -131,22 +130,14 @@ export async function processInboundSupplierEmail(input: InboundEmailInput): Pro
   for (const awb_number of awb_numbers) {
     if (getShipmentByAwb(awb_number)) continue;
 
-    const created = createShipment({
+    const { created } = await createInboundShipmentFromAwb({
       awb_number,
       carrier: shipmentCarrier,
       purchase_order_id: matchedOrder?.id ?? null,
       po_number,
-      status: "in_transit",
-      direction: "inbound",
-      estimated_arrival: null,
+      supplier_id: supplier_id ?? matchedOrder?.supplier_id ?? null,
     });
-    shipments_created += 1;
-
-    if (isTrack17Configured()) {
-      void registerShipmentWith17Track(created).catch((error) => {
-        console.error("17TRACK register failed:", error);
-      });
-    }
+    if (created) shipments_created += 1;
   }
 
   const savedInvoices = await saveInvoiceAttachmentsFromEmail({
@@ -181,14 +172,6 @@ export async function processInboundSupplierEmail(input: InboundEmailInput): Pro
       supplier_id: reply.supplier_id,
       alert_count: availabilityAlerts.length,
       fabrics: availabilityAlerts.map((alert) => alert.fabric_number),
-    });
-  }
-
-  if (shipments_created > 0) {
-    void notifyIntegration("awb.received", {
-      po_number: reply.po_number,
-      awb_numbers: reply.awb_numbers,
-      count: shipments_created,
     });
   }
 

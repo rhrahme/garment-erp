@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { RefreshCw } from "lucide-react";
+import { AddAwbForm, type PendingAwbOption } from "@/components/shipments/AddAwbForm";
 import { PageHeader, DataTable, StatusBadge } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { formatDate } from "@/lib/utils";
@@ -24,7 +26,11 @@ type LocalShipment = {
 };
 
 export function ShipmentsWorkspace() {
+  const searchParams = useSearchParams();
+  const defaultPoId = searchParams.get("po_id");
+
   const [shipments, setShipments] = useState<LocalShipment[]>([]);
+  const [pendingOrders, setPendingOrders] = useState<PendingAwbOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [track17Configured, setTrack17Configured] = useState(false);
@@ -34,9 +40,10 @@ export function ShipmentsWorkspace() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [shipmentsRes, syncRes] = await Promise.all([
+      const [shipmentsRes, syncRes, pendingRes] = await Promise.all([
         fetch("/api/shipments/local"),
         fetch("/api/shipments/sync"),
+        fetch("/api/shipments/pending"),
       ]);
 
       if (!shipmentsRes.ok) throw new Error("Failed to load shipments");
@@ -46,6 +53,11 @@ export function ShipmentsWorkspace() {
       if (syncRes.ok) {
         const syncData = await syncRes.json();
         setTrack17Configured(Boolean(syncData.configured));
+      }
+
+      if (pendingRes.ok) {
+        const pendingData = (await pendingRes.json()) as { pending: PendingAwbOption[] };
+        setPendingOrders(pendingData.pending ?? []);
       }
     } catch {
       setShipments([]);
@@ -90,7 +102,7 @@ export function ShipmentsWorkspace() {
         description={
           track17Configured
             ? "Live status and location via 17TRACK — Drapers shipments use DHL Express."
-            : "Tracking numbers from supplier emails. Add TRACK17_API_KEY for live status and location."
+            : "Tracking numbers from supplier emails or manual entry. Add TRACK17_API_KEY for live status."
         }
         action={
           <div className="flex flex-wrap gap-2">
@@ -107,6 +119,27 @@ export function ShipmentsWorkspace() {
         }
       />
 
+      <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+        <p className="font-medium text-slate-900">How AWB tracking works</p>
+        <ol className="mt-2 list-decimal space-y-1 pl-5">
+          <li>
+            After you send fabric POs, suppliers reply with an AWB — use{" "}
+            <Link href="/supplier-inbox" className="font-medium text-indigo-600 hover:text-indigo-700">
+              Scan supplier inbox
+            </Link>{" "}
+            to auto-parse AWBs from email, or add them manually below.
+          </li>
+          <li>
+            Each AWB links to its fabric PO. With <span className="font-mono text-xs">TRACK17_API_KEY</span> set,
+            click Refresh tracking for live DHL/carrier status.
+          </li>
+          <li>
+            Sent POs still waiting for an AWB appear in{" "}
+            <span className="font-medium">Awaiting AWB</span> below and on the dashboard.
+          </li>
+        </ol>
+      </div>
+
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           {error}
@@ -115,6 +148,48 @@ export function ShipmentsWorkspace() {
       {message && (
         <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
           {message}
+        </div>
+      )}
+
+      {pendingOrders.length > 0 && (
+        <div className="mb-6 space-y-4">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <p className="font-medium text-amber-950">
+              Awaiting AWB — {pendingOrders.length} sent fabric PO{pendingOrders.length === 1 ? "" : "s"}
+            </p>
+            <p className="mt-1 text-sm text-amber-900">
+              These POs were emailed to suppliers but have no tracking number yet.
+            </p>
+          </div>
+          <AddAwbForm
+            pendingOrders={pendingOrders}
+            defaultPoId={defaultPoId}
+            onAdded={() => void load()}
+          />
+          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50">
+                  <th className="px-4 py-3 text-left font-medium text-slate-600">Fabric PO</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-600">Supplier</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-600">Client</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-600">Sent</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {pendingOrders.map((po) => (
+                  <tr key={po.id}>
+                    <td className="px-4 py-3 font-mono font-medium">{po.po_number}</td>
+                    <td className="px-4 py-3">{po.supplier_name ?? "—"}</td>
+                    <td className="px-4 py-3 font-mono text-indigo-700">{po.client_reference ?? "—"}</td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {po.emailed_at ? formatDate(po.emailed_at.slice(0, 10)) : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -132,10 +207,8 @@ export function ShipmentsWorkspace() {
           <p className="mt-1 text-2xl font-bold text-violet-600">{outbound.length}</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-sm text-slate-500">In Transit</p>
-          <p className="mt-1 text-2xl font-bold text-amber-600">
-            {shipments.filter((s) => s.status === "in_transit" || s.status === "out_for_delivery").length}
-          </p>
+          <p className="text-sm text-slate-500">Awaiting AWB</p>
+          <p className="mt-1 text-2xl font-bold text-amber-600">{pendingOrders.length}</p>
         </div>
       </div>
 
@@ -179,7 +252,7 @@ export function ShipmentsWorkspace() {
             po: s.po_number ? <span className="font-mono text-sm">{s.po_number}</span> : "—",
             status: <StatusBadge status={s.status} />,
           }))}
-          emptyMessage="No tracking numbers yet — scan Supplier Inbox after suppliers reply with AWB numbers."
+          emptyMessage="No tracking numbers yet — scan Supplier Inbox after suppliers reply, or add an AWB above."
         />
       )}
     </div>

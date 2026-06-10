@@ -22,12 +22,13 @@ import { getCustomerInvoiceSummary } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { countInvoiceableSalesOrders } from "@/lib/invoicing/invoiceable-orders";
 import { getSessionContext } from "@/lib/auth/session";
+import { countPendingAwbFabricOrders } from "@/lib/integrations/pending-awb";
 import { getTodaysFabricSummary } from "@/lib/sales-orders/todays-fabric";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const session = await getSessionContext();
-  await ensureDocumentsLoaded(["customer_invoices", "sales_orders", "fabric_orders", "costing_rates"]);
+  await ensureDocumentsLoaded(["customer_invoices", "sales_orders", "fabric_orders", "shipments", "costing_rates"]);
 
   const [stats, workOrders, shipments, inventory] = await Promise.all([
     getDashboardStats(),
@@ -39,6 +40,7 @@ export default async function DashboardPage() {
   const invoiceSummary = getCustomerInvoiceSummary();
   const readyToInvoice = countInvoiceableSalesOrders();
   const todaysFabricSummary = session.isAdmin ? await getTodaysFabricSummary() : null;
+  const pendingAwbCount = session.isAdmin ? countPendingAwbFabricOrders() : 0;
 
   const lowStock = inventory.filter(
     (i) => i.material && i.quantity_on_hand <= i.material.reorder_level
@@ -72,6 +74,17 @@ export default async function DashboardPage() {
             accent="bg-indigo-50 text-indigo-600"
           />
         </Link>
+        {session.isAdmin && pendingAwbCount > 0 && (
+          <Link href="/shipments" className="block transition-opacity hover:opacity-90">
+            <StatCard
+              label="Awaiting AWB"
+              value={pendingAwbCount}
+              subtext="Sent fabric POs — add tracking when supplier dispatches"
+              icon={<Plane className="h-5 w-5" />}
+              accent="bg-amber-50 text-amber-600"
+            />
+          </Link>
+        )}
       </div>
 
       {todaysFabricSummary && todaysFabricSummary.order_count > 0 && (
