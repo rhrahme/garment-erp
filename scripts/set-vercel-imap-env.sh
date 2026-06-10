@@ -91,7 +91,9 @@ fi
 echo "   Logged in as: $($VERCEL whoami)"
 
 ensure_vercel_link
-$VERCEL link --yes 2>/dev/null || true
+if [ ! -f .vercel/project.json ]; then
+  $VERCEL link --yes 2>/dev/null || true
+fi
 
 set_vercel_env() {
   local key="$1"
