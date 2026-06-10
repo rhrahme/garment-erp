@@ -1,25 +1,72 @@
 {
-  "updated_at": "2026-05-30T00:00:00.000Z",
-  "currency": "SAR",
   "notes": "Default factory rates per garment stitch type — edit labor, washing, overhead as needed.",
-  "garment_rates": {
-    "Suit": { "labor": 450, "washing": 80, "overhead": 120 },
-    "Jacket": { "labor": 280, "washing": 50, "overhead": 70 },
-    "Trouser": { "labor": 180, "washing": 40, "overhead": 50 },
-    "Short": { "labor": 120, "washing": 30, "overhead": 40 },
-    "Shirt LS": { "labor": 140, "washing": 35, "overhead": 45 },
-    "Shirt SS": { "labor": 130, "washing": 35, "overhead": 45 },
-    "Overshirt": { "labor": 160, "washing": 40, "overhead": 50 },
-    "Overshirt+Trouser": { "labor": 320, "washing": 70, "overhead": 90 },
-    "Overcoat": { "labor": 380, "washing": 60, "overhead": 100 },
-    "Shirt+Trouser": { "labor": 300, "washing": 65, "overhead": 85 },
-    "Shirt+Trouser+Short": { "labor": 360, "washing": 75, "overhead": 95 },
-    "Shirt+Short": { "labor": 240, "washing": 55, "overhead": 70 }
-  },
-  "default_garment_rate": { "labor": 150, "washing": 40, "overhead": 50 },
+  "currency": "SAR",
+  "updated_at": "2026-05-30T00:00:00.000Z",
   "fabric_import": {
-    "customs_duty_rate": 0.05,
+    "notes": "Imported fabrics only (not Gliani warehouse stock). 5% customs duty is a permanent cost. 15% VAT is paid on arrival and reclaimable later — shown separately because it ties up cash for months.",
     "import_vat_rate": 0.15,
-    "notes": "Imported fabrics only (not Gliani warehouse stock). 5% customs duty is a permanent cost. 15% VAT is paid on arrival and reclaimable later — shown separately because it ties up cash for months."
+    "customs_duty_rate": 0.05
+  },
+  "garment_rates": {
+    "Suit": {
+      "labor": 450,
+      "washing": 80,
+      "overhead": 120
+    },
+    "Short": {
+      "labor": 120,
+      "washing": 30,
+      "overhead": 40
+    },
+    "Jacket": {
+      "labor": 280,
+      "washing": 50,
+      "overhead": 70
+    },
+    "Trouser": {
+      "labor": 180,
+      "washing": 40,
+      "overhead": 50
+    },
+    "Overcoat": {
+      "labor": 380,
+      "washing": 60,
+      "overhead": 100
+    },
+    "Shirt LS": {
+      "labor": 140,
+      "washing": 35,
+      "overhead": 45
+    },
+    "Shirt SS": {
+      "labor": 130,
+      "washing": 35,
+      "overhead": 45
+    },
+    "Overshirt": {
+      "labor": 160,
+      "washing": 40,
+      "overhead": 50
+    },
+    "Shirt+Short": {
+      "labor": 240,
+      "washing": 55,
+      "overhead": 70
+    },
+    "Shirt+Trouser": {
+      "labor": 300,
+      "washing": 65,
+      "overhead": 85
+    },
+    "Overshirt+Trouser": {
+      "labor": 320,
+      "washing": 70,
+      "overhead": 90
+    }
+  },
+  "default_garment_rate": {
+    "labor": 150,
+    "washing": 40,
+    "overhead": 50
   }
 }

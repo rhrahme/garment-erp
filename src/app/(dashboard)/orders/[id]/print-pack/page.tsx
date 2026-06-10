@@ -6,6 +6,7 @@ import {
   SalesOrderReceivingCutTable,
 } from "@/components/orders/SalesOrderReceivingCutTable";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
 import {
   buildFabricLineArticleMap,
@@ -19,6 +20,7 @@ import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 
 export default async function OrderPrintPackPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  await ensureDocumentsLoaded(["sales_orders"]);
   const order = getSalesOrderById(id);
   if (!order) notFound();
 

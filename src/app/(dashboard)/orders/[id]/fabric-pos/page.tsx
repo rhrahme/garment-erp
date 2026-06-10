@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FabricPosReview } from "@/components/orders/FabricPosReview";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
 
 export default async function SalesOrderFabricPosPage({
@@ -10,6 +11,7 @@ export default async function SalesOrderFabricPosPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  await ensureDocumentsLoaded(["sales_orders"]);
   const order = getSalesOrderById(id);
   if (!order) notFound();
 

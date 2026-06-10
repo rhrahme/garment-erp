@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireSuperAdmin } from "@/lib/auth/session";
 import { deleteClientById } from "@/lib/data/clients";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import { notifyIntegration } from "@/lib/integrations";
 
@@ -12,6 +13,7 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
     }
 
     const { id } = await context.params;
+    await ensureDocumentsLoaded(["sales_orders", "clients"]);
     const linkedOrders = readSalesOrders().orders.filter((order) => order.client_id === id);
     if (linkedOrders.length > 0) {
       return NextResponse.json(

@@ -6,6 +6,7 @@ import {
   redactSalesOrderFabricPrices,
 } from "@/lib/auth/fabric-price-access";
 import { requireAuthenticated } from "@/lib/auth/session";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
 import { generateSalesOrderPdf } from "@/lib/sales-orders/generate-pdf";
 
@@ -17,6 +18,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     }
 
     const { id } = await context.params;
+    await ensureDocumentsLoaded(["sales_orders"]);
     const rawOrder = getSalesOrderById(id);
     if (!rawOrder) {
       return NextResponse.json({ error: "Sales order not found." }, { status: 404 });

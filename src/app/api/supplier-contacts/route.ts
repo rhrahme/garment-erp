@@ -10,10 +10,12 @@ import {
   type SupplierContactRow,
   type SupplierContactsFile,
 } from "@/lib/data/supplier-contacts";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { notifyIntegration } from "@/lib/integrations";
 
 export async function GET() {
   try {
+    await ensureDocumentsLoaded(["supplier_contacts"]);
     return NextResponse.json(readSupplierContacts());
   } catch (error) {
     console.error("Failed to read supplier contacts:", error);

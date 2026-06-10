@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/lib/integrations/api-auth";
-import { createShipment, listStoredShipments } from "@/lib/integrations/shipment-store";
+import { createShipment, ensureShipmentsLoaded, listStoredShipments } from "@/lib/integrations/shipment-store";
 import { notifyIntegration } from "@/lib/integrations";
 
 export async function GET(request: Request) {
   const authError = verifyApiKey(request);
   if (authError) return authError;
 
+  await ensureShipmentsLoaded();
   return NextResponse.json({ shipments: listStoredShipments() });
 }
 
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "awb_number is required." }, { status: 400 });
     }
 
+    await ensureShipmentsLoaded();
     const shipment = createShipment({
       awb_number: body.awb_number.trim(),
       carrier: body.carrier?.trim() || "DHL",

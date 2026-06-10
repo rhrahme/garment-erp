@@ -175,22 +175,25 @@ export async function saveDocument<T>(filePath: string, data: T): Promise<T> {
 }
 
 /**
- * Sync read — memory cache when warmed, else local JSON mirror (fast, no network).
- * API handlers should call ensureDocumentsLoaded() first when Supabase is source of truth.
+ * Sync read — memory cache when warmed by ensureDocumentsLoaded / loadDocument.
+ * When Supabase is source of truth, never falls back to git-baked local JSON on a cold
+ * cache (that mirror is days behind production). Callers must warm the cache first.
  */
 export function readJsonFile<T>(filePath: string, fallback: T): T {
   if (isSupabaseDocumentsStorage()) {
     const cached = fileCache.get(filePath);
     if (cached) return cached.data as T;
+    return fallback;
   }
   return readLocalJsonFile(filePath, fallback);
 }
 
-/** Read warmed cache when available; otherwise local disk. */
+/** Read warmed cache when available; otherwise local disk (JSON-only mode) or fallback. */
 export function readJsonFileFresh<T>(filePath: string, fallback: T): T {
   if (isSupabaseDocumentsStorage()) {
     const cached = fileCache.get(filePath);
     if (cached) return cached.data as T;
+    return fallback;
   }
   invalidateDocumentCache(filePath);
   return readLocalJsonFile(filePath, fallback);

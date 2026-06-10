@@ -1,56 +1,56 @@
 {
-  "updated_at": "2026-06-05T23:24:21.125Z",
   "invoices": [
     {
       "id": "inv-1780701861123-11x0dl",
-      "invoice_number": "INV-2026-0001",
-      "sales_order_id": "so-1780164354118",
-      "so_number": "SO-2026-0102",
-      "client_id": "cu-ralph-rahme-fouad-rahme",
-      "client_code": "FR-0126-0019",
-      "client_name": "Ralph Rahme",
-      "client_reference": "FR-0126-0019-SO-2026-0102",
-      "client_email": null,
-      "client_address": null,
-      "payment_terms": null,
-      "currency": "SAR",
-      "status": "draft",
-      "invoice_date": "2026-06-05",
-      "due_date": null,
       "lines": [
         {
           "id": "inv-line-so-1780164354118-1",
+          "quantity": 1,
+          "line_total": 438.78,
+          "piece_name": "Short",
+          "unit_price": 438.78,
           "description": "Short — Short · Fabric S10009",
           "garment_type": "Short",
-          "piece_name": "Short",
           "sticker_code": "FR-0126-0019-SO-2026-0102-L01-SH",
-          "fabric_number": "S10009",
-          "quantity": 1,
-          "unit_price": 438.78,
-          "line_total": 438.78,
-          "cost_hint_sar": 438.78
+          "cost_hint_sar": 438.78,
+          "fabric_number": "S10009"
         },
         {
           "id": "inv-line-so-1780164354118-2",
+          "quantity": 1,
+          "line_total": 438.78,
+          "piece_name": "Short",
+          "unit_price": 438.78,
           "description": "Short — Short · Fabric S10008",
           "garment_type": "Short",
-          "piece_name": "Short",
           "sticker_code": "FR-0126-0019-SO-2026-0102-L02-SH",
-          "fabric_number": "S10008",
-          "quantity": 1,
-          "unit_price": 438.78,
-          "line_total": 438.78,
-          "cost_hint_sar": 438.78
+          "cost_hint_sar": 438.78,
+          "fabric_number": "S10008"
         }
       ],
-      "subtotal": 877.56,
-      "total": 877.56,
       "notes": null,
-      "created_at": "2026-06-05T23:24:21.125Z",
-      "sent_at": null,
+      "total": 877.56,
+      "status": "draft",
       "paid_at": null,
-      "factory_brand_name": "Fouad Rahme",
-      "total_cost_sar": 877.56
+      "sent_at": null,
+      "currency": "SAR",
+      "due_date": null,
+      "subtotal": 877.56,
+      "client_id": "cu-ralph-rahme-fouad-rahme",
+      "so_number": "SO-2026-0102",
+      "created_at": "2026-06-05T23:24:21.125Z",
+      "client_code": "FR-0126-0019",
+      "client_name": "Ralph Rahme",
+      "client_email": null,
+      "invoice_date": "2026-06-05",
+      "payment_terms": null,
+      "client_address": null,
+      "invoice_number": "INV-2026-0001",
+      "sales_order_id": "so-1780164354118",
+      "total_cost_sar": 877.56,
+      "client_reference": "FR-0126-0019-SO-2026-0102",
+      "factory_brand_name": "Fouad Rahme"
     }
-  ]
+  ],
+  "updated_at": "2026-06-05T23:24:21.125Z"
 }

@@ -1,5 +1,4 @@
 {
-  "updated_at": "2026-06-05T22:49:34.365Z",
   "receipts": [
     {
       "id": "fr-bulk-1780329003894-1247",
@@ -27544,6 +27543,51 @@
       "fabric_prep_step": null,
       "fabric_prep_type": null,
       "sales_order_line_id": "line-1780073620286-5"
+    },
+    {
+      "id": "fr-1780582824582",
+      "status": "handed_off",
+      "client_id": "new-1780146000000",
+      "so_number": "SO-2026-0101",
+      "updated_at": "2026-06-08T15:55:10.233Z",
+      "weight_gsm": 195,
+      "client_code": "FR-0526-0029",
+      "client_name": "Moiid Al Zahrani",
+      "composition": "STREET LINO DELAVE' ALOE NEW 100% LINEN",
+      "received_at": "2026-06-04T14:20:24.582Z",
+      "supplier_id": "loro-piana",
+      "garment_type": "Shirt LS",
+      "fabric_meters": 1.6,
+      "fabric_number": "S13029",
+      "handed_off_at": "2026-06-08T15:55:10.233Z",
+      "supplier_name": "Solbiati",
+      "sales_order_id": "so-1780164353525",
+      "fabric_prep_step": null,
+      "fabric_prep_type": null,
+      "sales_order_line_id": "line-1780164353525-0"
+    },
+    {
+      "id": "fr-1780688305932",
+      "status": "handed_off",
+      "client_id": "new-1780146000000",
+      "so_number": "SO-2026-0101",
+      "updated_at": "2026-06-08T15:55:18.032Z",
+      "weight_gsm": 195,
+      "client_code": "FR-0526-0029",
+      "client_name": "Moiid Al Zahrani",
+      "composition": "STREET LINO BARRE' CAT.BIANCA ALOE NEW 100% LINEN",
+      "received_at": "2026-06-05T19:38:25.931Z",
+      "supplier_id": "loro-piana",
+      "garment_type": "Shirt LS",
+      "fabric_meters": 1.6,
+      "fabric_number": "S13026",
+      "handed_off_at": "2026-06-08T15:55:18.032Z",
+      "supplier_name": "Solbiati",
+      "sales_order_id": "so-1780164353525",
+      "fabric_prep_step": null,
+      "fabric_prep_type": null,
+      "sales_order_line_id": "line-1780164353525-5"
     }
-  ]
+  ],
+  "updated_at": "2026-06-08T15:55:20.096Z"
 }

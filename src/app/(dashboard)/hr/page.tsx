@@ -1,8 +1,10 @@
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PayrollWorkspace } from "@/components/hr/PayrollWorkspace";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getPayrollSummary, readPayrollEmployees } from "@/lib/data/payroll-employees";
 
-export default function HRPage() {
+export default async function HRPage() {
+  await ensureDocumentsLoaded(["payroll_employees"]);
   const payroll = readPayrollEmployees();
   const summary = getPayrollSummary(payroll);
 

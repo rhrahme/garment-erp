@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth/fabric-price-access";
 import { getSessionContext } from "@/lib/auth/session";
 import { formatSupplierUnitPrice } from "@/lib/currency/format";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
 import {
   buildFabricLineArticleMap,
@@ -85,6 +86,7 @@ export default async function SalesOrderPrintPage({
   const { team: teamParam } = await searchParams;
   const team =
     teamParam === "receiving" || teamParam === "production" ? teamParam : ("full" as const);
+  await ensureDocumentsLoaded(["sales_orders"]);
   const rawOrder = getSalesOrderById(id);
   if (!rawOrder) notFound();
 

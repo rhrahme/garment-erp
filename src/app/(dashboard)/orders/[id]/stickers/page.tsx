@@ -1,6 +1,7 @@
 import { StickerPrintSheet } from "@/components/orders/StickerPrintSheet";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { getSessionContext } from "@/lib/auth/session";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
 import { notFound } from "next/navigation";
 
@@ -23,6 +24,7 @@ export default async function OrderStickersPage({
   const { id } = await params;
   const { po, po_id: poId, sheet: sheetParam } = await searchParams;
   const session = await getSessionContext();
+  await ensureDocumentsLoaded(["sales_orders"]);
   const order = getSalesOrderById(id);
   if (!order) notFound();
 
