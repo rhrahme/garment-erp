@@ -20,6 +20,7 @@ import {
 } from "@/lib/production/qr-labels";
 import type { StickerRole } from "@/lib/production/qr-labels";
 import type { PrintableStickerLabel } from "@/lib/production/qr-labels";
+import { stripBrandPrefixFromProductionCode } from "@/lib/sales-orders/label-codes";
 import { stickerTextLine } from "@/lib/production/sticker-typography";
 
 function formatWeight(weightGsm: number | null): string | null {
@@ -50,6 +51,12 @@ export function StickerCell({
   const labelsLine = formatStickerLabelsSent(label.labels_sent);
   const batchMark = formatStickerBatchMark(label);
   const stickerRole = resolveStickerRole(label, role);
+  // Supplier-facing prep sticker drops the redundant brand from the production
+  // code (the client code already carries it once) → "0104-L07" not "FR-0104-L07".
+  const productionCodeLine =
+    stickerRole === "prep"
+      ? stripBrandPrefixFromProductionCode(label.production_code, label.client_code)
+      : label.production_code;
 
   return (
     <div
@@ -160,7 +167,7 @@ export function StickerCell({
           })}
           spellCheck={false}
         >
-          {label.production_code}
+          {productionCodeLine}
         </p>
 
         <p

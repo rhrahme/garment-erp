@@ -1,5 +1,9 @@
 import type { FabricOrderEmail, PurchaseOrder, Supplier, SupplierFabric } from "@/lib/types/fabric-sourcing";
-import { clientCodeFromReference, supplierFabricProductionCode } from "@/lib/sales-orders/label-codes";
+import {
+  clientCodeFromReference,
+  formatSupplierStickerCode,
+  supplierFabricProductionCode,
+} from "@/lib/sales-orders/label-codes";
 import {
   formatShipToForEmail,
   getDeliveryDestination,
@@ -70,10 +74,12 @@ export function buildFabricOrderEmail(params: {
     .map((line) => {
       const quantityWithUnit = formatQuantityWithUnit(line.quantity, line.unit);
       const firstSticker = line.labelStickers?.[0];
-      const productionCode = firstSticker
-        ? supplierFabricProductionCode(firstSticker.code, clientCode)
-        : "—";
-      return `  ${line.fabricNumber.padEnd(16)} ${clientCode.padEnd(16)} ${productionCode.padEnd(16)} ${String(line.labelCount).padEnd(8)} ${quantityWithUnit}`;
+      // One short code per fabric cut — client code + brand-less production code,
+      // so the brand prefix appears once: e.g. "FR-0626-0032 / 0104-L07".
+      const stickerCode = firstSticker
+        ? formatSupplierStickerCode(clientCode, supplierFabricProductionCode(firstSticker.code, clientCode))
+        : clientCode;
+      return `  ${line.fabricNumber.padEnd(16)} ${stickerCode.padEnd(28)} ${String(line.labelCount).padEnd(8)} ${quantityWithUnit}`;
     })
     .join("\n");
 
@@ -88,9 +94,9 @@ Please supply the following fabrics:
 
 PO: ${poNumber}
 ${deliverySection}
-Print one sticker per fabric cut with client code + production code.
+Print one sticker per fabric cut with the code below (client code / production code).
 
-Fabric No.       Client           Production code  Labels   Quantity
+Fabric No.       Code                         Labels   Quantity
 ────────────────────────────────────────────────────────────────────
 ${lineRows}
 ${lines.some((line) => /^S/i.test(line.fabricNumber)) ? "\nNote: fabrics starting with S are Solbiati (linen line).\n" : ""}

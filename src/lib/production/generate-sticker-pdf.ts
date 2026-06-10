@@ -31,6 +31,7 @@ import {
   type PrintableStickerLabel,
   type StickerRole,
 } from "@/lib/production/qr-labels";
+import { stripBrandPrefixFromProductionCode } from "@/lib/sales-orders/label-codes";
 
 const STICKER_RGB = { r: 42, g: 42, b: 42 };
 const LINE_HEIGHT_FACTOR = 1.15;
@@ -241,6 +242,12 @@ async function drawStickerPage(
   doc.setFont("helvetica", "normal");
 
   const stickerRole = resolveStickerRole(label, role);
+  // Supplier-facing prep sticker drops the redundant brand from the production
+  // code (client code already carries it once) → e.g. "0104-L07" not "FR-0104-L07".
+  const productionCodeLine =
+    stickerRole === "prep"
+      ? stripBrandPrefixFromProductionCode(label.production_code, label.client_code)
+      : label.production_code;
   const batchMark = formatStickerBatchMark(label);
   const fabricLine = `${label.fabric_brand} / ${label.fabric_number}`;
   const specLine = [label.composition, formatWeight(label.weight_gsm)].filter(Boolean).join(" / ");
@@ -251,7 +258,7 @@ async function drawStickerPage(
   const lines: Array<{ text: string; fontMm: number }> = [
     { text: label.client_code, fontMm: LABEL_STICKER_FONT_MM.clientCode * scale },
     { text: label.client_name, fontMm: LABEL_STICKER_FONT_MM.clientName * scale },
-    { text: label.production_code, fontMm: LABEL_STICKER_FONT_MM.productionCode * scale },
+    { text: productionCodeLine, fontMm: LABEL_STICKER_FONT_MM.productionCode * scale },
     { text: fabricLine, fontMm: LABEL_STICKER_FONT_MM.fabric * scale },
     { text: cutLengthLine, fontMm: LABEL_STICKER_FONT_MM.cutLength * scale },
     { text: labelsLine, fontMm: LABEL_STICKER_FONT_MM.labels * scale },

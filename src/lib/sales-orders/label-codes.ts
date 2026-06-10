@@ -1,6 +1,9 @@
 import type { GarmentStitchType } from "@/lib/sales-orders/garment-types";
 import { isGarmentStitchType } from "@/lib/sales-orders/garment-types";
-import { parseClientCodeParts } from "@/lib/clients/codes";
+import { BRAND_CLIENT_CODE_PREFIX, parseClientCodeParts } from "@/lib/clients/codes";
+
+/** All production-brand prefixes (FR, GL, FD, JU, …) — used to drop a redundant brand token. */
+const KNOWN_BRAND_PREFIXES = new Set(Object.values(BRAND_CLIENT_CODE_PREFIX).map((p) => p.toUpperCase()));
 
 export interface FabricLabelSticker {
   code: string;
@@ -117,6 +120,38 @@ export function supplierFabricProductionCode(stickerCode: string, clientCode: st
     return `${brand}-${match[1]}-${match[2]}`;
   }
   return productionCodeFromSticker(stickerCode, clientCode);
+}
+
+/**
+ * Drop the leading brand token (FR/GL/FD/JU…) from a production / fabric-cut code.
+ * Example: FR-0104-L07 → 0104-L07. Uses the client code's brand when known, and
+ * otherwise falls back to any known brand prefix, so it is robust across brands.
+ */
+export function stripBrandPrefixFromProductionCode(productionCode: string, clientCode?: string): string {
+  const trimmed = productionCode.trim();
+
+  if (clientCode) {
+    const brand = brandPrefixFromClientCode(clientCode);
+    if (brand && trimmed.toUpperCase().startsWith(`${brand.toUpperCase()}-`)) {
+      return trimmed.slice(brand.length + 1);
+    }
+  }
+
+  const leadingToken = trimmed.split("-")[0]?.toUpperCase() ?? "";
+  if (KNOWN_BRAND_PREFIXES.has(leadingToken)) {
+    return trimmed.slice(leadingToken.length + 1);
+  }
+
+  return trimmed;
+}
+
+/**
+ * Human-readable supplier sticker code: full client code + " / " + the
+ * production/fabric-cut code with its (redundant) brand prefix dropped, so the
+ * brand appears only ONCE. Example: FR-0626-0032 + FR-0104-L07 → "FR-0626-0032 / 0104-L07".
+ */
+export function formatSupplierStickerCode(clientCode: string, productionCode: string): string {
+  return `${clientCode} / ${stripBrandPrefixFromProductionCode(productionCode, clientCode)}`;
 }
 
 export function stickerCodesMatch(scanInput: string, stickerCode: string, clientCode: string): boolean {
