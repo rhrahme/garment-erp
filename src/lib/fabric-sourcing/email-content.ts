@@ -75,7 +75,7 @@ export function buildFabricOrderEmail(params: {
       const quantityWithUnit = formatQuantityWithUnit(line.quantity, line.unit);
       const firstSticker = line.labelStickers?.[0];
       // One short code per fabric cut — client code + brand-less production code,
-      // so the brand prefix appears once: e.g. "FR-0626-0032 / 0104-L07".
+      // so the brand prefix appears once: e.g. "FR-0626-0032/ 0104-L07".
       const stickerCode = firstSticker
         ? formatSupplierStickerCode(clientCode, supplierFabricProductionCode(firstSticker.code, clientCode))
         : clientCode;

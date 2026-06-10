@@ -146,12 +146,12 @@ export function stripBrandPrefixFromProductionCode(productionCode: string, clien
 }
 
 /**
- * Human-readable supplier sticker code: full client code + " / " + the
+ * Human-readable supplier sticker code: full client code + "/ " + the
  * production/fabric-cut code with its (redundant) brand prefix dropped, so the
- * brand appears only ONCE. Example: FR-0626-0032 + FR-0104-L07 → "FR-0626-0032 / 0104-L07".
+ * brand appears only ONCE. Example: FR-0626-0032 + FR-0104-L07 → "FR-0626-0032/ 0104-L07".
  */
 export function formatSupplierStickerCode(clientCode: string, productionCode: string): string {
-  return `${clientCode} / ${stripBrandPrefixFromProductionCode(productionCode, clientCode)}`;
+  return `${clientCode}/ ${stripBrandPrefixFromProductionCode(productionCode, clientCode)}`;
 }
 
 export function stickerCodesMatch(scanInput: string, stickerCode: string, clientCode: string): boolean {
