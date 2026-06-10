@@ -143,7 +143,10 @@ export function FabricPosReview({ salesOrderId }: FabricPosReviewProps) {
               <EmailPreview
                 email={email}
                 poNumber={po.po_number}
-                onSent={(result) => void handleSent(po.id, result)}
+                sentAt={po.emailed_at}
+                sentTo={po.email_to}
+                allowManualSent={!po.emailed_at}
+                onSent={po.emailed_at ? undefined : (result) => void handleSent(po.id, result)}
               />
             </div>
           );

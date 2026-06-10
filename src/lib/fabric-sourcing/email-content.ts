@@ -305,6 +305,31 @@ export function purchaseOrdersBatchToEmail(
   });
 }
 
+/** Pre-fill a follow-up draft referencing a previously sent supplier email. */
+export function buildFollowUpEmailDraft(
+  original: FabricOrderEmail,
+  sentAtLabel: string
+): FabricOrderEmail {
+  const subject = /^Re:\s/i.test(original.subject) ? original.subject : `Re: ${original.subject}`;
+  const body = [
+    "Following up on our fabric order email below.",
+    "",
+    `Original sent: ${sentAtLabel}`,
+    "",
+    "Please let us know if you need any clarification or an update on availability.",
+    "",
+    "---",
+    "",
+    original.body,
+  ].join("\n");
+
+  return {
+    ...original,
+    subject,
+    body,
+  };
+}
+
 /** Expected columns when importing a supplier price list CSV/Excel */
 export const PRICE_LIST_IMPORT_COLUMNS = [
   { key: "fabric_number", label: "Fabric Number", required: true },

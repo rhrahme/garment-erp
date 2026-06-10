@@ -2,14 +2,22 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { ChevronDown, ChevronRight, MessageSquarePlus } from "lucide-react";
 import { EmailPreview } from "@/components/purchasing/EmailPreview";
-import { purchaseOrdersBatchToEmail, formatDeliveryDestinationForSubject } from "@/lib/fabric-sourcing/email-content";
-import type {
-  SupplierEmailBatch,
-  SupplierEmailQueueItem,
+import { Button } from "@/components/ui/Button";
+import {
+  buildFollowUpEmailDraft,
+  purchaseOrdersBatchToEmail,
+  formatDeliveryDestinationForSubject,
+} from "@/lib/fabric-sourcing/email-content";
+import {
+  groupSupplierEmailBatches,
+  type SupplierEmailBatch,
+  type SupplierEmailQueueItem,
 } from "@/lib/fabric-sourcing/supplier-email-queue";
 import type { SupplierFabric } from "@/lib/types/fabric-sourcing";
+import { formatDateTimeRiyadh } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
 
 export function SupplierEmailsWorkspace() {
   const searchParams = useSearchParams();
@@ -72,8 +80,25 @@ export function SupplierEmailsWorkspace() {
     void load();
   }, [load]);
 
+  const applySentOptimistic = useCallback(
+    (poIds: string[], result: { emailedAt: string; emailTo: string }) => {
+      setBatches((current) => {
+        const allOrders = current.flatMap((batch) => batch.orders);
+        const updatedOrders = allOrders.map((order) =>
+          poIds.includes(order.id)
+            ? { ...order, emailed_at: result.emailedAt, email_to: result.emailTo, status: "sent" as const }
+            : order
+        );
+        return groupSupplierEmailBatches(updatedOrders, { consolidate: !salesOrderFilter });
+      });
+    },
+    [salesOrderFilter]
+  );
+
   async function handleSent(poIds: string[], result: { emailedAt: string; emailTo: string }) {
-    await fetch("/api/fabric-orders/mark-sent", {
+    applySentOptimistic(poIds, result);
+
+    const res = await fetch("/api/fabric-orders/mark-sent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -82,6 +107,15 @@ export function SupplierEmailsWorkspace() {
         email_to: result.emailTo,
       }),
     });
+
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      setFlash(data.error ?? "Failed to mark orders as sent. Refresh and try again.");
+      void load();
+      return;
+    }
+
+    setFlash(`Email sent to supplier · ${result.emailTo}`);
     void load();
   }
 
@@ -172,7 +206,7 @@ export function SupplierEmailsWorkspace() {
             <section className="space-y-6">
               <h2 className="text-lg font-semibold text-slate-900">Ready to send</h2>
               {pendingBatches.map((batch) => (
-                <SupplierEmailBatchCard
+                <PendingSupplierEmailBatchCard
                   key={batch.id}
                   batch={batch}
                   fabrics={fabricsBySupplier[batch.supplier_id] ?? []}
@@ -184,15 +218,14 @@ export function SupplierEmailsWorkspace() {
           )}
 
           {sentBatches.length > 0 && (
-            <section className="space-y-6">
+            <section className="space-y-4">
               <h2 className="text-lg font-semibold text-slate-900">Sent</h2>
               {sentBatches.map((batch) => (
-                <SupplierEmailBatchCard
+                <SentSupplierEmailBatchCard
                   key={batch.id}
                   batch={batch}
                   fabrics={fabricsBySupplier[batch.supplier_id] ?? []}
                   factoryEmail={factoryEmail}
-                  onSent={(poIds, result) => void handleSent(poIds, result)}
                 />
               ))}
             </section>
@@ -203,32 +236,8 @@ export function SupplierEmailsWorkspace() {
   );
 }
 
-function SupplierEmailBatchCard({
-  batch,
-  fabrics,
-  factoryEmail,
-  onSent,
-}: {
-  batch: SupplierEmailBatch;
-  fabrics: SupplierFabric[];
-  factoryEmail: string | null;
-  onSent: (poIds: string[], result: { emailedAt: string; emailTo: string }) => void;
-}) {
-  const showOrderPicker = batch.orders.length > 1 && !batch.emailed_at;
-  const [selectedPoIds, setSelectedPoIds] = useState<Set<string>>(
-    () => new Set(batch.orders.map((order) => order.id))
-  );
-
-  useEffect(() => {
-    setSelectedPoIds(new Set(batch.orders.map((order) => order.id)));
-  }, [batch.id, batch.orders]);
-
-  const selectedOrders = useMemo(
-    () => batch.orders.filter((order) => selectedPoIds.has(order.id)),
-    [batch.orders, selectedPoIds]
-  );
-
-  const emailOptions = useMemo(
+function useBatchEmailOptions(batch: SupplierEmailBatch, factoryEmail: string | null) {
+  return useMemo(
     () => ({
       fromEmail: factoryEmail,
       clientCodeByPoId: Object.fromEntries(
@@ -240,6 +249,34 @@ function SupplierEmailBatchCard({
       ),
     }),
     [batch.orders, factoryEmail]
+  );
+}
+
+function PendingSupplierEmailBatchCard({
+  batch,
+  fabrics,
+  factoryEmail,
+  onSent,
+}: {
+  batch: SupplierEmailBatch;
+  fabrics: SupplierFabric[];
+  factoryEmail: string | null;
+  onSent: (poIds: string[], result: { emailedAt: string; emailTo: string }) => void;
+}) {
+  const showOrderPicker = batch.orders.length > 1;
+  const [selectedPoIds, setSelectedPoIds] = useState<Set<string>>(
+    () => new Set(batch.orders.map((order) => order.id))
+  );
+
+  useEffect(() => {
+    setSelectedPoIds(new Set(batch.orders.map((order) => order.id)));
+  }, [batch.id, batch.orders]);
+
+  const emailOptions = useBatchEmailOptions(batch, factoryEmail);
+
+  const selectedOrders = useMemo(
+    () => batch.orders.filter((order) => selectedPoIds.has(order.id)),
+    [batch.orders, selectedPoIds]
   );
 
   const email = useMemo(() => {
@@ -283,50 +320,186 @@ function SupplierEmailBatchCard({
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h3 className="text-lg font-semibold text-slate-900">
-            {batch.supplier_name}{" "}
-            <span className="font-mono text-sm font-normal text-slate-500">
-              {poNumbers.length === 1 ? poNumbers[0] : `${poNumbers.length} POs`}
-            </span>
-          </h3>
-          <p className="mt-0.5 text-sm text-slate-600">
-            {summaryParts.join(" · ")}
-            {batch.combines_multiple_orders && (
-              <>
-                {" · "}
-                <span className="font-medium text-indigo-700">Combined across clients</span>
-              </>
-            )}
-          </p>
-          {showOrderPicker ? (
-            <BatchOrderPicker
-              supplierName={batch.supplier_name}
-              orders={batch.orders}
-              selectedPoIds={selectedPoIds}
-              onToggle={toggleOrderIncluded}
-            />
-          ) : (
-            <BatchOrderLinks orders={batch.orders} />
-          )}
-        </div>
-        {batch.emailed_at ? (
-          <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
-            Sent {new Date(batch.emailed_at).toLocaleDateString()}
-            {batch.orders[0]?.email_to ? ` · ${batch.orders[0].email_to}` : ""}
-          </span>
-        ) : (
-          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">Not sent yet</span>
-        )}
-      </div>
+    <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+      <BatchHeader
+        batch={batch}
+        poNumbers={poNumbers}
+        summaryParts={summaryParts}
+        status="pending"
+      />
+      {showOrderPicker ? (
+        <BatchOrderPicker
+          supplierName={batch.supplier_name}
+          orders={batch.orders}
+          selectedPoIds={selectedPoIds}
+          onToggle={toggleOrderIncluded}
+        />
+      ) : (
+        <BatchOrderLinks orders={batch.orders} />
+      )}
       <EmailPreview
         email={email}
         poNumber={poNumbers[0]}
         poNumbers={poNumbers}
         onSent={(result) => onSent(selectedPoIdsList, result)}
       />
+    </div>
+  );
+}
+
+function SentSupplierEmailBatchCard({
+  batch,
+  fabrics,
+  factoryEmail,
+}: {
+  batch: SupplierEmailBatch;
+  fabrics: SupplierFabric[];
+  factoryEmail: string | null;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [showFollowUp, setShowFollowUp] = useState(false);
+
+  const emailOptions = useBatchEmailOptions(batch, factoryEmail);
+  const poNumbers = batch.orders.map((order) => order.po_number);
+  const orderCount = new Set(batch.orders.map((order) => order.sales_order_id).filter(Boolean)).size;
+  const fabricLineCount = batch.fabric_line_count;
+  const summaryParts = [
+    orderCount > 0 ? `${orderCount} order${orderCount !== 1 ? "s" : ""}` : null,
+    `${fabricLineCount} fabric line${fabricLineCount !== 1 ? "s" : ""}`,
+  ].filter(Boolean);
+  const sentAtLabel = batch.emailed_at ? formatDateTimeRiyadh(batch.emailed_at) : "—";
+  const sentTo = batch.orders.find((order) => order.email_to)?.email_to ?? null;
+
+  const originalEmail = useMemo(
+    () => purchaseOrdersBatchToEmail(batch.orders, fabrics, emailOptions),
+    [batch.orders, fabrics, emailOptions]
+  );
+
+  const followUpEmail = useMemo(
+    () => buildFollowUpEmailDraft(originalEmail, sentAtLabel),
+    [originalEmail, sentAtLabel]
+  );
+
+  function openFollowUp() {
+    setShowFollowUp(true);
+    setExpanded(true);
+  }
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-4 sm:px-5">
+        <button
+          type="button"
+          className="flex min-w-0 flex-1 items-start gap-2 text-left"
+          onClick={() => setExpanded((current) => !current)}
+          aria-expanded={expanded}
+        >
+          {expanded ? (
+            <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+          ) : (
+            <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+          )}
+          <div className="min-w-0">
+            <h3 className="text-base font-semibold text-slate-900">
+              {batch.supplier_name}{" "}
+              <span className="font-mono text-sm font-normal text-slate-500">
+                {poNumbers.length === 1 ? poNumbers[0] : `${poNumbers.length} POs`}
+              </span>
+            </h3>
+            <p className="mt-0.5 text-sm text-slate-600">
+              {summaryParts.join(" · ")}
+              {batch.combines_multiple_orders && (
+                <>
+                  {" · "}
+                  <span className="font-medium text-indigo-700">Combined across clients</span>
+                </>
+              )}
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              <span className="font-mono text-xs text-slate-500">
+                {poNumbers.length <= 3 ? poNumbers.join(", ") : `${poNumbers.slice(0, 3).join(", ")} +${poNumbers.length - 3} more`}
+              </span>
+            </p>
+            <p className="mt-1 text-sm text-emerald-800">
+              Sent {sentAtLabel}
+              {sentTo ? ` · ${sentTo}` : ""}
+            </p>
+            <BatchOrderLinks orders={batch.orders} />
+          </div>
+        </button>
+        <Button variant="secondary" size="sm" onClick={openFollowUp}>
+          <MessageSquarePlus className="mr-2 h-4 w-4" />
+          Send follow-up
+        </Button>
+      </div>
+
+      {expanded && (
+        <div className="space-y-4 border-t border-slate-100 px-4 pb-4 pt-4 sm:px-5">
+          {showFollowUp ? (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-slate-900">Follow-up email</p>
+              <p className="text-xs text-slate-500">
+                Sends a new email — original POs stay marked as sent.
+              </p>
+              <EmailPreview email={followUpEmail} poNumber={poNumbers[0]} poNumbers={poNumbers} />
+            </div>
+          ) : (
+            <div className="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              <p className="font-medium text-slate-900">Original email sent</p>
+              <p className="mt-1">
+                Subject: <span className="text-slate-800">{originalEmail.subject}</span>
+              </p>
+              <p className="mt-2 whitespace-pre-wrap font-mono text-xs leading-relaxed text-slate-600">
+                {originalEmail.body.slice(0, 400)}
+                {originalEmail.body.length > 400 ? "…" : ""}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BatchHeader({
+  batch,
+  poNumbers,
+  summaryParts,
+  status,
+}: {
+  batch: SupplierEmailBatch;
+  poNumbers: string[];
+  summaryParts: (string | null)[];
+  status: "pending" | "sent";
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <h3 className="text-lg font-semibold text-slate-900">
+          {batch.supplier_name}{" "}
+          <span className="font-mono text-sm font-normal text-slate-500">
+            {poNumbers.length === 1 ? poNumbers[0] : `${poNumbers.length} POs`}
+          </span>
+        </h3>
+        <p className="mt-0.5 text-sm text-slate-600">
+          {summaryParts.join(" · ")}
+          {batch.combines_multiple_orders && (
+            <>
+              {" · "}
+              <span className="font-medium text-indigo-700">Combined across clients</span>
+            </>
+          )}
+        </p>
+      </div>
+      {status === "pending" ? (
+        <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">Ready to send</span>
+      ) : (
+        batch.emailed_at && (
+          <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
+            Sent {formatDateTimeRiyadh(batch.emailed_at)}
+          </span>
+        )
+      )}
     </div>
   );
 }

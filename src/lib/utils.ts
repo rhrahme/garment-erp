@@ -17,14 +17,20 @@ export function formatDate(date: string | Date) {
   }).format(new Date(date));
 }
 
-export function formatDateTime(date: string | Date) {
+export function formatDateTime(date: string | Date, options?: { timeZone?: string }) {
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: options?.timeZone,
   }).format(new Date(date));
+}
+
+/** Datetime in Asia/Riyadh — primary timezone for factory operations. */
+export function formatDateTimeRiyadh(date: string | Date) {
+  return formatDateTime(date, { timeZone: "Asia/Riyadh" });
 }
 
 export function formatNumber(n: number, decimals = 0) {
