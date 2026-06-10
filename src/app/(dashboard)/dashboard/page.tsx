@@ -8,6 +8,7 @@ import {
   Users,
   Receipt,
 } from "lucide-react";
+import { TodaysFabricPanel } from "@/components/dashboard/TodaysFabricPanel";
 import { PageHeader, StatCard } from "@/components/ui/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { StatusBadge, DataTable } from "@/components/ui/PageHeader";
@@ -20,10 +21,13 @@ import {
 import { getCustomerInvoiceSummary } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { countInvoiceableSalesOrders } from "@/lib/invoicing/invoiceable-orders";
-import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
+import { getSessionContext } from "@/lib/auth/session";
+import { getTodaysFabricSummary } from "@/lib/sales-orders/todays-fabric";
+import { formatCurrency, formatNumber } from "@/lib/utils";
 
 export default async function DashboardPage() {
-  await ensureDocumentsLoaded(["customer_invoices", "sales_orders", "costing_rates"]);
+  const session = await getSessionContext();
+  await ensureDocumentsLoaded(["customer_invoices", "sales_orders", "fabric_orders", "costing_rates"]);
 
   const [stats, workOrders, shipments, inventory] = await Promise.all([
     getDashboardStats(),
@@ -34,6 +38,7 @@ export default async function DashboardPage() {
 
   const invoiceSummary = getCustomerInvoiceSummary();
   const readyToInvoice = countInvoiceableSalesOrders();
+  const todaysFabricSummary = session.isAdmin ? await getTodaysFabricSummary() : null;
 
   const lowStock = inventory.filter(
     (i) => i.material && i.quantity_on_hand <= i.material.reorder_level
@@ -68,6 +73,10 @@ export default async function DashboardPage() {
           />
         </Link>
       </div>
+
+      {todaysFabricSummary && todaysFabricSummary.order_count > 0 && (
+        <TodaysFabricPanel initialSummary={todaysFabricSummary} />
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>

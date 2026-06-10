@@ -20,6 +20,14 @@ export function SupplierEmailsWorkspace() {
   const [factoryEmail, setFactoryEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [flash, setFlash] = useState<string | null>(null);
+
+  useEffect(() => {
+    const message = sessionStorage.getItem("todays_fabric_flash");
+    if (!message) return;
+    sessionStorage.removeItem("todays_fabric_flash");
+    setFlash(message);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -97,6 +105,11 @@ export function SupplierEmailsWorkspace() {
 
   return (
     <div className="space-y-8">
+      {flash && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          {flash}
+        </div>
+      )}
       {salesOrderFilter && (
         <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
           Showing emails for one sales order.{" "}
