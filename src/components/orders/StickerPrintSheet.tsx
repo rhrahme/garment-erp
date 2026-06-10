@@ -370,6 +370,10 @@ export function StickerPrintSheet({
         defaultSelectedCodes={defaultSelectedCodes}
         title={copy.title}
         printing={printing}
+        orderId={salesOrderId}
+        sheet={sheet}
+        po={poNumber}
+        poId={poId}
       />
 
       <style dangerouslySetInnerHTML={{ __html: stickerPrintStyles() }} />

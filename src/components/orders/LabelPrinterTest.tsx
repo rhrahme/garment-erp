@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback } from "react";
-import { Printer } from "lucide-react";
+import { useCallback, useState } from "react";
+import { Download, Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { LabelPrinterSettingsControl } from "@/components/orders/LabelRotationControl";
 import { StickerCell } from "@/components/orders/StickerCell";
@@ -9,6 +9,7 @@ import { useLabelRotation } from "@/hooks/useLabelRotation";
 import { useLabelScale } from "@/hooks/useLabelScale";
 import { useStickerPrint } from "@/hooks/useStickerPrint";
 import { labelRollSizeLabel } from "@/lib/production/label-print-config";
+import { downloadStickerPdf } from "@/lib/production/print-stickers";
 import {
   labelPdfOrientation,
   labelPdfPageSizeMm,
@@ -44,6 +45,7 @@ export function LabelPrinterTest() {
   const { printing, requestPrint } = useStickerPrint();
   const { rotation, setRotation } = useLabelRotation();
   const { scalePct, setScalePct } = useLabelScale();
+  const [downloading, setDownloading] = useState(false);
 
   const pageSize = labelPdfPageSizeMm(rotation);
   const orientation = labelPdfOrientation(rotation);
@@ -58,8 +60,22 @@ export function LabelPrinterTest() {
     requestPrint({ orderId: "test", sheet: "calibration" });
   }, [requestPrint]);
 
+  const handleDownload = useCallback(async () => {
+    setDownloading(true);
+    await downloadStickerPdf({ orderId: "test", sheet: "test", rotationDeg: rotation, scalePct });
+    setDownloading(false);
+  }, [rotation, scalePct]);
+
   return (
     <div>
+      <div className="no-print mb-6 rounded-xl border border-amber-300 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+        <p className="text-base font-semibold">If labels print blank from the browser</p>
+        <p className="mt-1">
+          Use <strong>Download PDF</strong> below → open in <strong>Preview.app</strong> → File → Print. That
+          always works on macOS even when Chrome/Safari send a blank page to the thermal printer.
+        </p>
+      </div>
+
       <div className="no-print mb-6 rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
         <LabelPrinterSettingsControl
           rotation={rotation}
@@ -89,16 +105,15 @@ export function LabelPrinterTest() {
             </li>
           </ul>
           <p className="mt-1">
-            The PDF is built at <strong>{mediaLabel}</strong> — exactly your driver media — with the label
-            pre-rotated so it cancels the printer’s built-in 90° turn. It prints reading horizontally on the
-            landscape label: <strong>QR on the left, text on the right</strong>.
+            The PDF is built at <strong>{mediaLabel}</strong> — exactly your driver media — with QR on
+            top and text below (no PDF rotation matrices). The printer’s built-in ~90° CCW turn maps
+            that onto the landscape label: <strong>QR on the left, text on the right</strong>.
           </p>
         </div>
         <ol className="list-decimal space-y-2 pl-5">
           <li>
-            Keep the mode on <strong>“Match my printer (51×102, Fit to paper)”</strong> (the default). The
-            screen preview will look sideways — that’s expected; it’s pre-rotated so the physical print comes
-            out straight.
+            Keep the mode on <strong>“Match my printer (51×102, Fit to paper)”</strong> (the default).
+            The on-screen preview matches the PDF layout (QR on top, text below).
           </li>
           <li>
             Physical roll label is <strong>{labelRollSizeLabel()}</strong> held LANDSCAPE — ~100 mm wide × 50 mm
@@ -130,11 +145,15 @@ export function LabelPrinterTest() {
       </div>
 
       <div className="no-print mb-4 flex flex-wrap gap-3">
-        <Button onClick={handlePrint} disabled={printing}>
+        <Button onClick={handlePrint} disabled={printing || downloading}>
           <Printer className="mr-2 h-4 w-4" />
           {printing ? "Preparing PDF…" : "Print test labels (2 pages)"}
         </Button>
-        <Button variant="secondary" onClick={handleCalibration} disabled={printing}>
+        <Button variant="secondary" onClick={() => void handleDownload()} disabled={printing || downloading}>
+          <Download className="mr-2 h-4 w-4" />
+          {downloading ? "Downloading…" : "Download PDF"}
+        </Button>
+        <Button variant="secondary" onClick={handleCalibration} disabled={printing || downloading}>
           <Printer className="mr-2 h-4 w-4" />
           {printing ? "Preparing PDF…" : "Print rotation calibration (A/B/C/D)"}
         </Button>

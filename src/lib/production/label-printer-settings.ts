@@ -20,9 +20,10 @@ export type LabelRotationDeg = 0 | 90 | 180 | 270;
  * Full set of print modes. `"printer-match"` is the DEFAULT: it ADAPTS the PDF
  * to the user's D550 (driver media 51×102 portrait, "Fit to paper") instead of
  * asking them to change driver settings. The page is built at EXACTLY 51×102 mm
- * (so Fit-to-paper does not rescale or rotate) and the readable landscape design
- * is drawn pre-rotated 90° CW; the driver's fixed ~90° CCW rasterisation cancels
- * it, so the physical landscape label reads horizontally (QR left, text right).
+ * with portrait layout (QR top, text below) and identity transforms only — AIMO
+ * drivers ignore PDF rotation matrices, so content must not use Tm rotation.
+ * The driver's fixed ~90° CCW rasterisation maps that layout onto the physical
+ * landscape label (QR left, horizontal text right).
  */
 export const PRINTER_MATCH_MODE = "printer-match" as const;
 export type LabelPrintMode = LabelRotationDeg | typeof PRINTER_MATCH_MODE;
@@ -98,7 +99,7 @@ export const LABEL_ROTATION_OPTIONS: ReadonlyArray<{
     value: PRINTER_MATCH_MODE,
     label: "Match my printer (51×102, Fit to paper) — DEFAULT",
     description:
-      "DEFAULT. Adapts the PDF to your D550 as-is — DO NOT change any driver settings. Keep the driver media on 51×102 mm portrait, Scale “Fit to paper”, margins none, and just print. The PDF page is built at exactly 51×102 mm (so Fit-to-paper does nothing) with the label pre-rotated to cancel the printer’s built-in rotation, so it comes out reading horizontally on the landscape label: QR on the LEFT, text on the RIGHT.",
+      "DEFAULT. Adapts the PDF to your D550 as-is — DO NOT change any driver settings. Keep the driver media on 51×102 mm portrait, Scale “Fit to paper”, margins none, and just print. The PDF page is exactly 51×102 mm with QR on top and text below (no PDF rotation matrices — the driver ignores them). The printer’s built-in ~90° CCW turn maps that onto the landscape label: QR on the LEFT, text on the RIGHT.",
   },
   {
     value: 90,
@@ -114,9 +115,9 @@ export const LABEL_ROTATION_OPTIONS: ReadonlyArray<{
   },
   {
     value: 0,
-    label: "Portrait 50×100 — QR top, text below",
+    label: "Portrait 50×100 — QR top, text below — try this if blank",
     description:
-      "PDF page = 50×100 mm portrait, drawn upright: QR on top, horizontal text stacked below. For printers whose physical label is TALLER than it is wide (the 50 mm short edge feeds across the head). Set the driver media to 50×100 mm (≈51×102) portrait, Scale 100% (NOT “Fit to paper”), margins none.",
+      "Try this if browser printing comes out blank. PDF page = 50×100 mm portrait, drawn upright: QR on top, horizontal text stacked below. Set the driver media to 50×100 mm (≈51×102) portrait, Scale 100% (NOT “Fit to paper”), margins none. Or download the PDF and print from Preview.app.",
   },
   {
     value: 180,

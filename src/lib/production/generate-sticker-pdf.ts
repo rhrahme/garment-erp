@@ -33,7 +33,8 @@ import {
 } from "@/lib/production/qr-labels";
 import { stripBrandPrefixFromProductionCode } from "@/lib/sales-orders/label-codes";
 
-const STICKER_RGB = { r: 42, g: 42, b: 42 };
+/** Pure black — AIMO / Phomemo drivers may skip non-zero gray fills. */
+const STICKER_RGB = { r: 0, g: 0, b: 0 };
 const LINE_HEIGHT_FACTOR = 1.15;
 
 /**
@@ -42,10 +43,14 @@ const LINE_HEIGHT_FACTOR = 1.15;
  *
  *   - PORTRAIT 50×100  (mode 0° / 180°): QR on top, text stacked below.
  *   - LANDSCAPE 100×50 (mode 90° / 270°): QR LEFT, text column RIGHT.
- *   - PRINTER-MATCH (default): the LANDSCAPE design (102×51 to fill the media) is
- *     drawn pre-rotated 90° CW onto a PORTRAIT 51×102 page. The D550 driver
- *     rasterises with a fixed ~90° CCW turn under "Fit to paper", which cancels
- *     the pre-rotation, so the physical landscape label reads horizontally.
+ *   - PRINTER-MATCH (default): PORTRAIT 51×102 — same layout as 0° (QR top, text
+ *     below) on the exact D550 driver media. Content is drawn with identity
+ *     transforms only (no Tm / CTM rotation). The driver rasterises with a fixed
+ *     ~90° CCW turn under "Fit to paper", so portrait top → landscape left on the
+ *     physical label (QR left, horizontal text right).
+ *
+ * AIMO / LabelLife drivers ignore PDF text/image rotation matrices (Tm). Any mode
+ * that relied on jsPDF `angle` or page-level CTM produced blank labels.
  *
  * The optional 180° "flip" (mode 180° or 270°) maps every element through the
  * page centre for printers that feed the label upside down. It is NOT a 90° turn.
@@ -54,14 +59,11 @@ const PORTRAIT_W = LABEL_ROLL_WIDTH_MM; // 50
 const PORTRAIT_H = LABEL_ROLL_HEIGHT_MM; // 100
 const LANDSCAPE_W = LABEL_ROLL_HEIGHT_MM; // 100
 const LANDSCAPE_H = LABEL_ROLL_WIDTH_MM; // 50
-// printer-match design fills the 51×102 media exactly (landscape 102×51).
-const MATCH_DESIGN_W = LABEL_MATCH_PRINTER_PAGE_H_MM; // 102
-const MATCH_DESIGN_H = LABEL_MATCH_PRINTER_PAGE_W_MM; // 51
 
 type LayoutKind = "portrait" | "landscape";
 
 function layoutKindForMode(mode: LabelPrintMode): LayoutKind {
-  return mode === 90 || mode === 270 || mode === PRINTER_MATCH_MODE ? "landscape" : "portrait";
+  return mode === 90 || mode === 270 ? "landscape" : "portrait";
 }
 
 /** 180° flip through the page centre (upside-down feed), never a 90° turn. */
@@ -70,19 +72,20 @@ function isFlipped(mode: LabelPrintMode): boolean {
 }
 
 function designDims(mode: LabelPrintMode): { W: number; H: number } {
-  if (mode === PRINTER_MATCH_MODE) return { W: MATCH_DESIGN_W, H: MATCH_DESIGN_H };
+  if (mode === PRINTER_MATCH_MODE) {
+    return { W: LABEL_MATCH_PRINTER_PAGE_W_MM, H: LABEL_MATCH_PRINTER_PAGE_H_MM };
+  }
   return layoutKindForMode(mode) === "landscape"
     ? { W: LANDSCAPE_W, H: LANDSCAPE_H }
     : { W: PORTRAIT_W, H: PORTRAIT_H };
 }
 
 /**
- * Maps an upright design point/rect/angle onto the PDF page for the given mode.
- *   - identity:      portrait/landscape native (no flip).
- *   - 180° flip:     through the page centre (upside-down feed).
- *   - printer-match: 90° CW pre-rotation (xp = designH − yd, yp = xd). The text
- *     angle 270 and image angle 0 were verified by rendering + simulating the
- *     printer's ~90° CCW turn: QR left, horizontal text right on the label.
+ * Maps an upright design point/rect onto the PDF page for the given mode.
+ *   - identity:  portrait/landscape native (no flip, no Tm rotation).
+ *   - 180° flip: through the page centre (upside-down feed).
+ *
+ * Never emit jsPDF text/image rotation angles — thermal drivers ignore Tm.
  */
 type StickerTransform = {
   mapPoint: (x: number, y: number) => { x: number; y: number };
@@ -92,15 +95,6 @@ type StickerTransform = {
 };
 
 function buildTransform(mode: LabelPrintMode, dims: { W: number; H: number }): StickerTransform {
-  if (mode === PRINTER_MATCH_MODE) {
-    const Hd = dims.H; // 51
-    return {
-      mapPoint: (x, y) => ({ x: Hd - y, y: x }),
-      mapRect: (x, y, w, h) => ({ x: Hd - y - h, y: x, w: h, h: w }),
-      textAngle: 270,
-      imageAngle: 0,
-    };
-  }
   if (isFlipped(mode)) {
     return {
       mapPoint: (x, y) => ({ x: dims.W - x, y: dims.H - y }),
@@ -320,7 +314,7 @@ export type StickerPdfOptions = {
 
 /**
  * Server-generated roll PDF — one label per page. Default mode "printer-match"
- * outputs a 51×102 mm portrait page with the landscape design pre-rotated 90° CW.
+ * outputs a 51×102 mm portrait page (QR top, text below, identity transforms).
  */
 export async function generateStickerRollPdf(
   entries: StickerPdfEntry[],
@@ -424,9 +418,6 @@ function drawCalibrationPage(
     const ry = dy - DESIGN / 2;
     return { x: cx + rx * cos - ry * sin, y: cy + rx * sin + ry * cos };
   };
-  // jsPDF text angle is CCW-positive; a visual CW turn of θ is (360 − θ).
-  const textAngle = (360 - (rotationDeg % 360)) % 360;
-
   doc.setTextColor(STICKER_RGB.r, STICKER_RGB.g, STICKER_RGB.b);
   doc.setFont("helvetica", "normal");
 
@@ -463,7 +454,8 @@ function drawCalibrationPage(
   ): void => {
     const p = mapPoint(dx, dy);
     doc.setFontSize(mmToPt(fontMm));
-    doc.text(text, p.x, p.y, { align, baseline: "middle", angle: textAngle });
+    // No jsPDF text angle — thermal drivers ignore Tm rotation matrices.
+    doc.text(text, p.x, p.y, { align, baseline: "middle" });
   };
 
   drawText("QR LEFT", 22, 7, 3.6, "left");

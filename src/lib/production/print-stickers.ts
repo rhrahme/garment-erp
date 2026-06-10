@@ -100,44 +100,66 @@ export async function printStickerPdf(
 
     const blob = await res.blob();
     const objectUrl = URL.createObjectURL(blob);
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "fixed";
-    iframe.style.right = "0";
-    iframe.style.bottom = "0";
-    iframe.style.width = "0";
-    iframe.style.height = "0";
-    iframe.style.border = "0";
-    iframe.src = objectUrl;
+    const filename = pdfFilename(request.orderId, sheet);
 
     let finished = false;
 
-    const cleanup = () => {
+    const cleanup = (iframe?: HTMLIFrameElement, printWindow?: Window | null) => {
       window.setTimeout(() => {
-        iframe.remove();
+        iframe?.remove();
+        if (printWindow && !printWindow.closed) printWindow.close();
         URL.revokeObjectURL(objectUrl);
       }, 1000);
     };
 
-    const finishAfterPrint = () => {
+    const finishAfterPrint = (iframe?: HTMLIFrameElement, printWindow?: Window | null) => {
       if (finished) return;
       finished = true;
       onAfterPrint?.();
-      cleanup();
+      cleanup(iframe, printWindow);
     };
 
-    iframe.onload = () => {
+    const triggerPrint = (targetWindow: Window, iframe?: HTMLIFrameElement, printWindow?: Window | null) => {
       try {
-        iframe.contentWindow?.focus();
-        iframe.contentWindow?.print();
+        targetWindow.focus();
+        targetWindow.print();
       } catch {
-        window.open(objectUrl, "_blank");
-        cleanup();
-        return;
+        cleanup(iframe, printWindow);
+        return false;
       }
 
-      iframe.contentWindow?.addEventListener("afterprint", finishAfterPrint, { once: true });
+      targetWindow.addEventListener("afterprint", () => finishAfterPrint(iframe, printWindow), { once: true });
       // Cleanup only — do not mark lines printed on timeout (dialog may still be open).
-      window.setTimeout(cleanup, 120_000);
+      window.setTimeout(() => cleanup(iframe, printWindow), 120_000);
+      return true;
+    };
+
+    // Safari/Chrome often print BLANK PDFs from a zero-size iframe — use non-zero off-screen iframe.
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("title", filename);
+    iframe.style.position = "fixed";
+    iframe.style.left = "-10000px";
+    iframe.style.top = "0";
+    iframe.style.width = "800px";
+    iframe.style.height = "600px";
+    iframe.style.border = "0";
+    iframe.style.margin = "0";
+    iframe.style.padding = "0";
+    iframe.src = objectUrl;
+
+    iframe.onload = () => {
+      const contentWindow = iframe.contentWindow;
+      if (contentWindow && triggerPrint(contentWindow, iframe)) return;
+
+      // Fallback: new tab (works when iframe print is blocked or blank).
+      const printWindow = window.open(objectUrl, "_blank");
+      if (!printWindow) {
+        cleanup(iframe);
+        return;
+      }
+      printWindow.onload = () => {
+        triggerPrint(printWindow, iframe, printWindow);
+      };
     };
 
     document.body.appendChild(iframe);
@@ -151,6 +173,34 @@ export async function printStickerPdf(
 /** @deprecated Browser HTML print added date/URL headers — use printStickerPdf instead. */
 export function printStickerLabels(_onAfterPrint?: () => void): void {
   console.warn("printStickerLabels is deprecated; use printStickerPdf.");
+}
+
+/** Fetch sticker PDF and trigger a file download (Preview.app / manual print fallback). */
+export async function downloadStickerPdf(request: StickerPdfRequest): Promise<boolean> {
+  const sheet = request.sheet ?? "pieces";
+
+  try {
+    const res = await fetchStickerPdf(request);
+    if (!res.ok) {
+      console.error("Sticker PDF download failed:", res.status);
+      return false;
+    }
+
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = pdfFilename(request.orderId, sheet);
+    anchor.rel = "noopener";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    return true;
+  } catch (error) {
+    console.error("Failed to download sticker PDF:", error);
+    return false;
+  }
 }
 
 export { buildStickerPdfUrl, pdfFilename };

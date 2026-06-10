@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Printer, X } from "lucide-react";
+import { Download, Printer, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { LabelPrinterSettingsControl } from "@/components/orders/LabelRotationControl";
 import { StickerCell } from "@/components/orders/StickerCell";
@@ -9,6 +9,7 @@ import { useLabelRotation } from "@/hooks/useLabelRotation";
 import { useLabelScale } from "@/hooks/useLabelScale";
 import type { StickerPreviewItem } from "@/lib/production/sticker-print-selection";
 import { labelRollHeightCss, labelRollWidthCss } from "@/lib/production/label-print-config";
+import { downloadStickerPdf, type StickerPdfSheet } from "@/lib/production/print-stickers";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 
 type StickerPrintPreviewModalProps = {
@@ -20,6 +21,11 @@ type StickerPrintPreviewModalProps = {
   defaultSelectedCodes?: string[];
   title?: string;
   printing?: boolean;
+  /** Required for Download PDF fallback. */
+  orderId: string;
+  sheet?: StickerPdfSheet;
+  po?: string;
+  poId?: string;
 };
 
 function PreviewCard({
@@ -78,6 +84,10 @@ export function StickerPrintPreviewModal({
   defaultSelectedCodes,
   title = "Print sticker preview",
   printing = false,
+  orderId,
+  sheet = "pieces",
+  po,
+  poId,
 }: StickerPrintPreviewModalProps) {
   const allCodes = useMemo(() => items.map((item) => item.label.sticker_code), [items]);
   const initialSelection = useMemo(
@@ -85,6 +95,8 @@ export function StickerPrintPreviewModal({
     [allCodes, defaultSelectedCodes]
   );
   const [selected, setSelected] = useState<Set<string>>(initialSelection);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const { rotation, setRotation } = useLabelRotation();
   const { scalePct, setScalePct } = useLabelScale();
 
@@ -111,6 +123,22 @@ export function StickerPrintPreviewModal({
   const handlePrint = useCallback(() => {
     onPrint([...selected]);
   }, [onPrint, selected]);
+
+  const handleDownload = useCallback(async () => {
+    setDownloading(true);
+    setDownloadError(null);
+    const ok = await downloadStickerPdf({
+      orderId,
+      sheet,
+      po,
+      poId,
+      codes: [...selected],
+      rotationDeg: rotation,
+      scalePct,
+    });
+    setDownloading(false);
+    if (!ok) setDownloadError("PDF download failed — check you are logged in and try again.");
+  }, [orderId, po, poId, rotation, scalePct, selected, sheet]);
 
   if (!open) return null;
 
@@ -145,6 +173,14 @@ export function StickerPrintPreviewModal({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+          <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            <p className="font-semibold">Blank labels from the browser print dialog?</p>
+            <p className="mt-1">
+              Use <strong>Download PDF</strong> below, open in Preview.app, then File → Print. That path always
+              works on macOS.
+            </p>
+          </div>
+
           <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
             <LabelPrinterSettingsControl
               rotation={rotation}
@@ -154,6 +190,10 @@ export function StickerPrintPreviewModal({
               compact
             />
           </div>
+
+          {downloadError ? (
+            <p className="mb-3 text-sm text-red-700">{downloadError}</p>
+          ) : null}
 
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-700">
@@ -183,10 +223,18 @@ export function StickerPrintPreviewModal({
         </div>
 
         <div className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-slate-200 px-5 py-4">
-          <Button variant="secondary" onClick={onClose} disabled={printing}>
+          <Button variant="secondary" onClick={onClose} disabled={printing || downloading}>
             Cancel
           </Button>
-          <Button onClick={handlePrint} disabled={printing || selectedCount === 0}>
+          <Button
+            variant="secondary"
+            onClick={() => void handleDownload()}
+            disabled={printing || downloading || selectedCount === 0}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            {downloading ? "Downloading…" : `Download PDF (${selectedCount})`}
+          </Button>
+          <Button onClick={handlePrint} disabled={printing || downloading || selectedCount === 0}>
             <Printer className="mr-2 h-4 w-4" />
             {printing ? "Preparing PDF…" : `Print selected (${selectedCount})`}
           </Button>

@@ -225,6 +225,8 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
         defaultSelectedCodes={defaultSelectedCodes}
         title="Print pack sticker preview"
         printing={printing}
+        orderId={salesOrderId}
+        sheet="print-pack"
       />
 
       <style dangerouslySetInnerHTML={{ __html: stickerPrintStyles() }} />
