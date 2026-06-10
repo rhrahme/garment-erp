@@ -3,7 +3,7 @@
     {
       "id": "so-1781094874528",
       "notes": null,
-      "status": "open",
+      "status": "fabric_pos_created",
       "client_id": "cu-youssef-al-rashed-fouad-rahme",
       "so_number": "SO-2026-0106",
       "order_date": "2026-06-10",
@@ -108,14 +108,16 @@
         }
       ],
       "delivery_date": null,
-      "fabric_po_ids": [],
+      "fabric_po_ids": [
+        "po-1781098788238-298l1t"
+      ],
       "client_reference": "FR-0526-0002-SO-2026-0106",
       "delivery_destination": "RUH"
     },
     {
       "id": "so-1781094397616",
       "notes": null,
-      "status": "open",
+      "status": "fabric_pos_created",
       "client_id": "new-1781093943358",
       "so_number": "SO-2026-0105",
       "order_date": "2026-06-10",
@@ -385,7 +387,10 @@
         }
       ],
       "delivery_date": null,
-      "fabric_po_ids": [],
+      "fabric_po_ids": [
+        "po-1781098785699-qfh49k",
+        "po-1781098785702-5ugfq2"
+      ],
       "client_reference": "FR-0626-0033-SO-2026-0105",
       "delivery_destination": "RUH"
     },
@@ -34276,5 +34281,5 @@
       "client_reference": "FR-0226-0025-SO-2026-0095"
     }
   ],
-  "updated_at": "2026-06-10T12:34:34.529Z"
+  "updated_at": "2026-06-10T13:39:48.594Z"
 }
