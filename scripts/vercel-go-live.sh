@@ -12,6 +12,26 @@ read_env() {
   grep -m1 "^${1}=" .env.local | sed "s/^${1}=//" | sed 's/^"//;s/"$//'
 }
 
+read_smtp_pass() {
+  local from_env
+  from_env="$(read_env SMTP_PASS 2>/dev/null || true)"
+  if [ -n "$from_env" ]; then
+    printf '%s' "$from_env"
+    return
+  fi
+  if [ -f smtp-secret.local.json ]; then
+    python3 -c "import json; print(json.load(open('smtp-secret.local.json')).get('password','').strip())"
+  fi
+}
+
+env_value() {
+  if [ "$1" = "SMTP_PASS" ]; then
+    read_smtp_pass
+    return
+  fi
+  read_env "$1"
+}
+
 find_npm() {
   if command -v npm >/dev/null 2>&1; then
     command -v npm
@@ -114,7 +134,7 @@ for key in \
   SMTP_HOST SMTP_PORT SMTP_SECURE SMTP_USER SMTP_PASS SMTP_FROM SMTP_FROM_NAME \
   IMAP_HOST IMAP_PORT IMAP_SECURE IMAP_USER IMAP_PASS \
   CLICKUP_API_TOKEN; do
-  val="$(read_env "$key" 2>/dev/null || true)"
+  val="$(env_value "$key" 2>/dev/null || true)"
   if set_vercel_env_optional "$key" "$val"; then
     OPTIONAL_SYNCED+=("$key")
   else
