@@ -7,6 +7,7 @@ import {
   ScanLine,
   Package,
   Factory,
+  Map,
   ShoppingCart,
   Mail,
   Inbox,
@@ -40,6 +41,7 @@ const navItems = [
   { href: "/fabric-specification", label: "Fabric Specification", icon: SwatchBook },
   { href: "/inventory", label: "Inventory", icon: Package },
   { href: "/production", label: "Production", icon: Factory },
+  { href: "/production/floor-map", label: "Factory floor map", icon: Map },
   { href: "/fabric-orders", label: "Fabric Orders", icon: Truck },
   { href: "/orders", label: "Sales Orders", icon: ShoppingCart },
   { href: "/invoices", label: "Invoicing", icon: Receipt },
@@ -57,6 +59,13 @@ const navItems = [
 
 const qcNavHrefs = new Set<string>(CLIENT_MANAGER_NAV_HREFS);
 const qcNavItems = navItems.filter((item) => qcNavHrefs.has(item.href));
+
+function isNavActive(pathname: string, href: string): boolean {
+  if (pathname === href) return true;
+  if (!pathname.startsWith(href + "/")) return false;
+  if (href === "/production" && pathname.startsWith("/production/floor-map")) return false;
+  return true;
+}
 
 export function Sidebar({ clientsOnly = false }: { clientsOnly?: boolean }) {
   const pathname = usePathname();
@@ -85,7 +94,7 @@ export function Sidebar({ clientsOnly = false }: { clientsOnly?: boolean }) {
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         <ul className="space-y-1">
           {items.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || pathname.startsWith(href + "/");
+            const active = isNavActive(pathname, href);
             return (
               <li key={href}>
                 <Link
