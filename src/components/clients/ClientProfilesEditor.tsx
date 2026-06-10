@@ -1,5 +1,6 @@
 "use client";
 
+import type { FocusEvent as ReactFocusEvent, PointerEvent as ReactPointerEvent } from "react";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LayoutGrid, List, Plus, Search, Table2, Trash2, UserCircle, X } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
@@ -69,36 +70,86 @@ function cloneClients(data: ClientsFile): ClientsFile {
   return JSON.parse(JSON.stringify(data)) as ClientsFile;
 }
 
+type ScrollSnapshot = {
+  ancestors: { el: HTMLElement; top: number; left: number }[];
+  winX: number;
+  winY: number;
+};
+
 /**
- * Focus an input without letting the page jump.
+ * Snapshot the scroll position of every scrollable ancestor of `node` (plus the
+ * window) so it can be restored after focus moves.
  *
  * Safari/iOS ignore `focus({ preventScroll: true })` and scroll the nearest
- * scrollable ancestor to bring the field into view. On the dashboard that
- * ancestor is `<main className="overflow-y-auto">`, so auto-focusing the new
- * client's first-name field yanks the page down to the client list while the
- * user is still typing. Snapshot every scrollable ancestor (and the window)
- * and restore their positions right after focusing so nothing moves.
+ * scrollable ancestor to bring the focused field into view. On the dashboard
+ * that ancestor is `<main className="overflow-y-auto">`, so focusing any field
+ * in the new-client row yanks the page down to the client list while the user
+ * is still typing. Capturing the positions and re-applying them right after the
+ * focus keeps everything pinned in place.
  */
-function focusWithoutScroll(input: HTMLElement | null) {
-  if (!input) return;
-
+function snapshotScroll(node: HTMLElement | null): ScrollSnapshot {
   const ancestors: { el: HTMLElement; top: number; left: number }[] = [];
-  for (let node = input.parentElement; node; node = node.parentElement) {
-    const { overflowY, overflowX } = getComputedStyle(node);
+  for (let cur = node; cur; cur = cur.parentElement) {
+    const { overflowY, overflowX } = getComputedStyle(cur);
     if (/(auto|scroll|overlay)/.test(`${overflowY}${overflowX}`)) {
-      ancestors.push({ el: node, top: node.scrollTop, left: node.scrollLeft });
+      ancestors.push({ el: cur, top: cur.scrollTop, left: cur.scrollLeft });
     }
   }
-  const winX = window.scrollX;
-  const winY = window.scrollY;
+  return { ancestors, winX: window.scrollX, winY: window.scrollY };
+}
 
-  input.focus({ preventScroll: true });
-
-  for (const { el, top, left } of ancestors) {
+function applyScroll(snapshot: ScrollSnapshot) {
+  for (const { el, top, left } of snapshot.ancestors) {
     el.scrollTop = top;
     el.scrollLeft = left;
   }
-  window.scrollTo(winX, winY);
+  window.scrollTo(snapshot.winX, snapshot.winY);
+}
+
+/** Focus an element without letting the page jump (programmatic auto-focus). */
+function focusWithoutScroll(input: HTMLElement | null) {
+  if (!input) return;
+  const snapshot = snapshotScroll(input.parentElement);
+  input.focus({ preventScroll: true });
+  applyScroll(snapshot);
+  // iOS Safari applies the scroll-into-view after the focus event, so re-apply
+  // on the next frame to override it.
+  requestAnimationFrame(() => applyScroll(snapshot));
+}
+
+/**
+ * Keep the surrounding scroll containers pinned while the user moves between
+ * fields of a form (tap, click, or keyboard tab). Returns handlers to spread
+ * onto the form container so every field — not just the auto-focused one — is
+ * protected from Safari/iOS's scroll-on-focus behavior.
+ */
+function useStableScrollOnFocus() {
+  const snapshotRef = useRef<ScrollSnapshot | null>(null);
+
+  const capture = useCallback((node: HTMLElement | null) => {
+    // The scrollable ancestors are shared by every field in the container, so
+    // snapshotting from the container itself is sufficient and accurate.
+    snapshotRef.current = snapshotScroll(node);
+  }, []);
+
+  const restore = useCallback(() => {
+    const snapshot = snapshotRef.current;
+    if (!snapshot) return;
+    applyScroll(snapshot);
+    requestAnimationFrame(() => applyScroll(snapshot));
+  }, []);
+
+  return useMemo(
+    () => ({
+      // Pointer down + blur fire before the next field gains focus (and before
+      // the browser scrolls it into view), so the captured positions are the
+      // ones we want to restore.
+      onPointerDownCapture: (event: ReactPointerEvent<HTMLElement>) => capture(event.currentTarget),
+      onBlurCapture: (event: ReactFocusEvent<HTMLElement>) => capture(event.currentTarget),
+      onFocusCapture: () => restore(),
+    }),
+    [capture, restore]
+  );
 }
 
 function sortClients(clients: ClientProfile[], sortBy: ClientSortBy): ClientProfile[] {
@@ -145,6 +196,7 @@ export function ClientProfilesEditor() {
   const [viewMode, setViewMode] = useState<ClientViewMode>("list");
   const [sortBy, setSortBy] = useState<ClientSortBy>("name-asc");
   const firstNameInputRef = useRef<HTMLInputElement>(null);
+  const stableScrollHandlers = useStableScrollOnFocus();
 
   useEffect(() => {
     const storedView = localStorage.getItem(VIEW_STORAGE_KEY);
@@ -408,128 +460,178 @@ export function ClientProfilesEditor() {
   }
 
   function renderClientEditor(client: ClientProfile) {
-    return (
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="md:col-span-2">
-          <p className="text-sm font-medium text-slate-700">Client name</p>
-          <div className="mt-2 grid gap-4 md:grid-cols-3">
-            <label className="block text-sm">
-              <span className="font-medium text-slate-700">First</span>
-              <input
-                ref={editingId === client.id ? firstNameInputRef : undefined}
-                value={client.first_name}
-                onChange={(e) => updateClient(client.id, { first_name: e.target.value })}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-                placeholder="First name"
-                autoComplete="off"
-              />
-            </label>
-            <label className="block text-sm">
-              <span className="font-medium text-slate-700">Middle</span>
-              <input
-                value={client.middle_name ?? ""}
-                onChange={(e) => updateClient(client.id, { middle_name: e.target.value.trim() || null })}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-                placeholder="Optional"
-              />
-            </label>
-            <label className="block text-sm">
-              <span className="font-medium text-slate-700">Last</span>
-              <input
-                value={client.last_name}
-                onChange={(e) => updateClient(client.id, { last_name: e.target.value })}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-                placeholder="Last name"
-              />
-            </label>
-          </div>
+    const isNew = isNewClient(client);
+    const needsBrand = client.brand_ids.length === 0;
+
+    const nameSection = (
+      <div className="md:col-span-2">
+        <p className="text-sm font-medium text-slate-700">Client name</p>
+        <div className="mt-2 grid gap-4 md:grid-cols-3">
+          <label className="block text-sm">
+            <span className="font-medium text-slate-700">First</span>
+            <input
+              ref={editingId === client.id ? firstNameInputRef : undefined}
+              value={client.first_name}
+              onChange={(e) => updateClient(client.id, { first_name: e.target.value })}
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              placeholder="First name"
+              autoComplete="off"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium text-slate-700">Middle</span>
+            <input
+              value={client.middle_name ?? ""}
+              onChange={(e) => updateClient(client.id, { middle_name: e.target.value.trim() || null })}
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              placeholder="Optional"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium text-slate-700">Last</span>
+            <input
+              value={client.last_name}
+              onChange={(e) => updateClient(client.id, { last_name: e.target.value })}
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              placeholder="Last name"
+            />
+          </label>
         </div>
+      </div>
+    );
 
-        {canViewClientContact && (
-          <div className="md:col-span-2">
-            <p className="text-sm font-medium text-slate-700">Referred by</p>
-            <div className="mt-2 grid gap-4 md:grid-cols-3">
-              <label className="block text-sm">
-                <span className="font-medium text-slate-700">First</span>
-                <input
-                  value={client.referred_by_first_name ?? ""}
-                  onChange={(e) =>
-                    updateClient(client.id, { referred_by_first_name: e.target.value.trim() || null })
-                  }
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-                  placeholder="First name"
-                />
-              </label>
-              <label className="block text-sm">
-                <span className="font-medium text-slate-700">Middle</span>
-                <input
-                  value={client.referred_by_middle_name ?? ""}
-                  onChange={(e) =>
-                    updateClient(client.id, { referred_by_middle_name: e.target.value.trim() || null })
-                  }
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-                  placeholder="Optional"
-                />
-              </label>
-              <label className="block text-sm">
-                <span className="font-medium text-slate-700">Last</span>
-                <input
-                  value={client.referred_by_last_name ?? ""}
-                  onChange={(e) =>
-                    updateClient(client.id, { referred_by_last_name: e.target.value.trim() || null })
-                  }
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-                  placeholder="Last name"
-                />
-              </label>
-            </div>
-          </div>
-        )}
+    const referredBySection = canViewClientContact ? (
+      <div className="md:col-span-2">
+        <p className="text-sm font-medium text-slate-700">Referred by</p>
+        <div className="mt-2 grid gap-4 md:grid-cols-3">
+          <label className="block text-sm">
+            <span className="font-medium text-slate-700">First</span>
+            <input
+              value={client.referred_by_first_name ?? ""}
+              onChange={(e) =>
+                updateClient(client.id, { referred_by_first_name: e.target.value.trim() || null })
+              }
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              placeholder="First name"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium text-slate-700">Middle</span>
+            <input
+              value={client.referred_by_middle_name ?? ""}
+              onChange={(e) =>
+                updateClient(client.id, { referred_by_middle_name: e.target.value.trim() || null })
+              }
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              placeholder="Optional"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium text-slate-700">Last</span>
+            <input
+              value={client.referred_by_last_name ?? ""}
+              onChange={(e) =>
+                updateClient(client.id, { referred_by_last_name: e.target.value.trim() || null })
+              }
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              placeholder="Last name"
+            />
+          </label>
+        </div>
+      </div>
+    ) : null;
 
-        <div className="md:col-span-2">
-          <p className="text-sm font-medium text-slate-700">Production brand(s)</p>
-          <p className="mt-1 text-xs text-slate-500">
-            Code prefix uses your first selected brand. Format:{" "}
-            <span className="font-mono">
-              {getBrandClientCodePrefix(client.brand_ids[0] ?? "gliani") ?? "GL"}-{getJoinMonthYear()}-0001
-            </span>{" "}
-            — middle digits are month/year joined; the last 4 digits keep counting for each brand (
-            {getJoinMonthYear().slice(0, 2)}/{getJoinMonthYear().slice(2)}).
+    const brandSection = (
+      <div className="md:col-span-2">
+        <p className="text-sm font-medium text-slate-700">
+          Production brand(s)
+          {isNew && (
+            <span className="ml-1 font-semibold text-red-500" aria-hidden="true">
+              *
+            </span>
+          )}
+          {isNew && (
+            <span className="ml-2 align-middle text-xs font-normal uppercase tracking-wide text-indigo-600">
+              Required — pick this first
+            </span>
+          )}
+        </p>
+        <p className="mt-1 text-xs text-slate-500">
+          Code prefix uses your first selected brand. Format:{" "}
+          <span className="font-mono">
+            {getBrandClientCodePrefix(client.brand_ids[0] ?? "gliani") ?? "GL"}-{getJoinMonthYear()}-0001
+          </span>{" "}
+          — middle digits are month/year joined; the last 4 digits keep counting for each brand (
+          {getJoinMonthYear().slice(0, 2)}/{getJoinMonthYear().slice(2)}).
+        </p>
+        {isNew && needsBrand && (
+          <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+            Select a production brand to begin — the client code is generated from the brand prefix, and the
+            client can&apos;t be saved without one.
           </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {factoryBrands.map((brand) => (
-              <button
-                key={brand.id}
-                type="button"
-                onClick={() => toggleBrand(client.id, brand.id)}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                  client.brand_ids.includes(brand.id)
-                    ? "bg-indigo-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                {brand.name}
-                {getBrandClientCodePrefix(brand.id) ? (
-                  <span className="ml-1 opacity-75">({getBrandClientCodePrefix(brand.id)})</span>
-                ) : null}
-              </button>
-            ))}
-          </div>
+        )}
+        <div
+          className={cn(
+            "mt-2 flex flex-wrap gap-2 rounded-lg",
+            isNew && needsBrand && "p-2 ring-1 ring-amber-300"
+          )}
+        >
+          {factoryBrands.map((brand) => (
+            <button
+              key={brand.id}
+              type="button"
+              onClick={() => toggleBrand(client.id, brand.id)}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                client.brand_ids.includes(brand.id)
+                  ? "bg-indigo-600 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {brand.name}
+              {getBrandClientCodePrefix(brand.id) ? (
+                <span className="ml-1 opacity-75">({getBrandClientCodePrefix(brand.id)})</span>
+              ) : null}
+            </button>
+          ))}
         </div>
+      </div>
+    );
 
-        <div className="block text-sm">
-          <span className="font-medium text-slate-700">Client code</span>
-          <div className="mt-1 flex h-10 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 font-mono text-slate-700">
-            {client.code || (client.brand_ids[0] ? "Assigned when saved" : "Select a brand first")}
-          </div>
-          <span className="mt-1 block text-xs text-slate-500">
-            {isNewClient(client)
-              ? "Auto-assigned on save — month/year reflects join date."
-              : "Permanent — cannot be changed."}
-          </span>
+    const codeSection = (
+      <div className="block text-sm">
+        <span className="font-medium text-slate-700">Client code</span>
+        <div className="mt-1 flex h-10 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 font-mono text-slate-700">
+          {client.code || (client.brand_ids[0] ? "Assigned when saved" : "Select a brand first")}
         </div>
+        <span className="mt-1 block text-xs text-slate-500">
+          {isNew
+            ? "Auto-assigned on save — month/year reflects join date."
+            : "Permanent — cannot be changed."}
+        </span>
+      </div>
+    );
 
-        <div className="md:col-span-2" />
+    return (
+      <div className="grid gap-4 md:grid-cols-2" {...stableScrollHandlers}>
+        {/* For a new client the brand drives the client code, so it comes first
+            and is required before anything can be saved. */}
+        {isNew ? (
+          <>
+            {brandSection}
+            {codeSection}
+            <div className="md:col-span-2" />
+            {nameSection}
+            {referredBySection}
+          </>
+        ) : (
+          <>
+            {nameSection}
+            {referredBySection}
+            {brandSection}
+            {codeSection}
+            <div className="md:col-span-2" />
+          </>
+        )}
 
         {canViewClientContact && (
           <>
