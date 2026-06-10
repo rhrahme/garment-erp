@@ -32,6 +32,13 @@ import { stripBrandPrefixFromProductionCode } from "@/lib/sales-orders/label-cod
 /** 300 DPI — thermal printers are typically 203–300 DPI; bitmap must be sharp at print size. */
 export const STICKER_RASTER_DPI = 300;
 
+/**
+ * D550 / LabelLife drivers fail on PDF images with alpha (/SMask soft masks) and on
+ * anti-aliased gray pixels. Output must be opaque RGB bilevel black-on-white only.
+ */
+const THERMAL_WHITE = "#ffffff";
+const THERMAL_BLACK_THRESHOLD = 128;
+
 const STICKER_COLOR = "#000000";
 const LINE_HEIGHT_FACTOR = 1.15;
 
@@ -222,6 +229,16 @@ export function buildStickerPageSvg(
   return { pageW: dims.W, pageH: dims.H, svg };
 }
 
+/** Opaque 1-bit bilevel PNG — no alpha channel (jsPDF must not emit /SMask). */
+async function finalizeThermalRaster(pipeline: sharp.Sharp): Promise<Buffer> {
+  return pipeline
+    .flatten({ background: THERMAL_WHITE })
+    .greyscale()
+    .threshold(THERMAL_BLACK_THRESHOLD)
+    .png({ compressionLevel: 6, palette: true, colours: 2, dither: 0 })
+    .toBuffer();
+}
+
 /** Rasterize sticker SVG (+ optional 180° flip) to PNG at STICKER_RASTER_DPI. */
 export async function rasterizeStickerSvg(
   svg: string,
@@ -240,7 +257,7 @@ export async function rasterizeStickerSvg(
     pipeline = pipeline.rotate(180);
   }
 
-  return pipeline.png({ compressionLevel: 6 }).toBuffer();
+  return finalizeThermalRaster(pipeline);
 }
 
 export async function renderStickerPagePng(
@@ -328,10 +345,9 @@ export async function renderCalibrationPagePng(
   const widthPx = Math.round(mmToPx(pageW));
   const heightPx = Math.round(mmToPx(pageH));
 
-  return sharp(Buffer.from(svg), { density: STICKER_RASTER_DPI })
-    .resize(widthPx, heightPx, { fit: "fill" })
-    .png({ compressionLevel: 6 })
-    .toBuffer();
+  return finalizeThermalRaster(
+    sharp(Buffer.from(svg), { density: STICKER_RASTER_DPI }).resize(widthPx, heightPx, { fit: "fill" })
+  );
 }
 
 export function pngToDataUrl(png: Buffer): string {

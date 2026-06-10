@@ -54,7 +54,7 @@ function createStickerPdfDocument(mode: LabelPrintMode): jsPDF {
   return doc;
 }
 
-/** Embed one full-page raster — the only content operators on the page. */
+/** Embed one full-page raster — opaque bilevel PNG (no /SMask soft mask). */
 function embedFullPageBitmap(doc: jsPDF, png: Buffer, pageW: number, pageH: number): void {
   doc.addImage(pngToDataUrl(png), "PNG", 0, 0, pageW, pageH);
 }
