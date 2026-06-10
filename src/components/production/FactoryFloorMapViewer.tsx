@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useRef, useState } from "react";
-import { ExternalLink, Move, ZoomIn, ZoomOut } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ExternalLink, GripVertical, Move, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useFactoryFloorStationPositions } from "@/hooks/useFactoryFloorStationPositions";
 import {
@@ -48,21 +48,28 @@ function StationPin({
     >
       <span
         className={cn(
-          "block h-5 w-5 rounded-full border-2 border-white shadow-md",
+          "relative block h-5 w-5 rounded-full border-2 border-white shadow-md",
           bgClass,
           !dragging && "transition-transform group-hover:scale-110",
-          (active || dragging) && "scale-125 ring-2 ring-indigo-500 ring-offset-1"
+          editMode && "h-6 w-6 ring-2 ring-amber-400 ring-offset-1",
+          (active || dragging) && "scale-125 ring-indigo-500",
+          dragging && "ring-amber-500"
         )}
       />
+      {editMode ? (
+        <span className="pointer-events-none absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-white shadow">
+          <GripVertical className="h-2.5 w-2.5" aria-hidden />
+        </span>
+      ) : null}
       <span
         className={cn(
           "pointer-events-none absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-semibold shadow-sm",
           chip,
-          active || dragging ? "opacity-100" : "opacity-90 group-hover:opacity-100"
+          active || dragging ? "opacity-100" : "opacity-90 group-hover:opacity-100",
+          editMode && "ring-1 ring-amber-300"
         )}
       >
         {station.label}
-        {editMode ? <span className="ml-1 opacity-70">↕</span> : null}
       </span>
     </button>
   );
@@ -90,6 +97,7 @@ export function FactoryFloorMapViewer() {
 
   const mapRef = useRef<HTMLDivElement>(null);
   const dragIdRef = useRef<string | null>(null);
+  const dragCleanupRef = useRef<(() => void) | null>(null);
 
   const visibleStations = factoryFloorStationsByZone(zone, stations);
   const selected = stations.find((s) => s.id === selectedId) ?? null;
@@ -102,6 +110,21 @@ export function FactoryFloorMapViewer() {
     return { x, y };
   }, []);
 
+  const clearDragListeners = useCallback(() => {
+    dragCleanupRef.current?.();
+    dragCleanupRef.current = null;
+  }, []);
+
+  const finishDrag = useCallback(() => {
+    clearDragListeners();
+    if (!dragIdRef.current) return;
+    dragIdRef.current = null;
+    setDraggingId(null);
+    saveToBrowser();
+    setSaveMessage("Position saved in this browser.");
+    setTimeout(() => setSaveMessage(null), 2500);
+  }, [clearDragListeners, saveToBrowser]);
+
   const handlePinPointerDown = useCallback(
     (stationId: string, event: React.PointerEvent<HTMLButtonElement>) => {
       if (!editMode) {
@@ -110,33 +133,34 @@ export function FactoryFloorMapViewer() {
       }
       event.preventDefault();
       event.stopPropagation();
+      clearDragListeners();
       dragIdRef.current = stationId;
       setDraggingId(stationId);
       setSelectedId(stationId);
+
+      const onMove = (moveEvent: PointerEvent) => {
+        if (dragIdRef.current !== stationId) return;
+        const pos = positionFromClient(moveEvent.clientX, moveEvent.clientY);
+        if (!pos) return;
+        updatePosition(stationId, pos.x, pos.y);
+      };
+      const onUp = () => finishDrag();
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onUp);
+      dragCleanupRef.current = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointercancel", onUp);
+      };
+
       event.currentTarget.setPointerCapture(event.pointerId);
     },
-    [editMode]
+    [clearDragListeners, editMode, finishDrag, positionFromClient, updatePosition]
   );
 
-  const handleMapPointerMove = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
-      const id = dragIdRef.current;
-      if (!id || !editMode) return;
-      const pos = positionFromClient(event.clientX, event.clientY);
-      if (!pos) return;
-      updatePosition(id, pos.x, pos.y);
-    },
-    [editMode, positionFromClient, updatePosition]
-  );
-
-  const finishDrag = useCallback(() => {
-    if (!dragIdRef.current) return;
-    dragIdRef.current = null;
-    setDraggingId(null);
-    saveToBrowser();
-    setSaveMessage("Position saved in this browser.");
-    setTimeout(() => setSaveMessage(null), 2500);
-  }, [saveToBrowser]);
+  useEffect(() => () => clearDragListeners(), [clearDragListeners]);
 
   async function saveToServer() {
     setSaveError(null);
@@ -168,6 +192,12 @@ export function FactoryFloorMapViewer() {
           <p className="font-medium text-slate-900">Hagan factory layout</p>
           <p className="text-sm text-slate-600">
             Scan stations on the floor plan — colours match Fabric Receiving &amp; Production.
+            {!editMode ? (
+              <span className="mt-1 block text-amber-800">
+                Use <strong>Adjust pin positions</strong> to drag icons (Receive, Iron, Cutting, etc.) onto your
+                layout.
+              </span>
+            ) : null}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -178,7 +208,7 @@ export function FactoryFloorMapViewer() {
             onClick={() => setEditMode((value) => !value)}
           >
             <Move className="mr-1 h-4 w-4" />
-            {editMode ? "Done adjusting" : "Adjust positions"}
+            {editMode ? "Done adjusting" : "Adjust pin positions"}
           </Button>
           <Button
             type="button"
@@ -209,11 +239,14 @@ export function FactoryFloorMapViewer() {
       </div>
 
       {editMode ? (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-          <p className="font-medium">Drag mode on</p>
-          <p className="mt-1">
-            Click and drag any pin to move it. Positions auto-save in this browser when you release. Use{" "}
-            <strong>Save for all users</strong> (admin) to update the shared ERP file.
+        <div className="rounded-xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="flex items-center gap-2 font-semibold">
+            <Move className="h-4 w-4 shrink-0" aria-hidden />
+            Adjust mode — drag icons to match your floor layout
+          </p>
+          <p className="mt-1.5">
+            Click and drag any coloured pin (Receive, Wash, Iron, Cutting, Sewing, …). Positions auto-save in this
+            browser when you release. Admins can use <strong>Save for all users</strong> to update the shared layout.
           </p>
         </div>
       ) : null}
@@ -290,11 +323,11 @@ export function FactoryFloorMapViewer() {
           >
             <div
               ref={mapRef}
-              className={cn("relative w-full", editMode && "ring-2 ring-amber-300 ring-offset-2")}
+              className={cn(
+                "relative w-full",
+                editMode && "cursor-crosshair ring-2 ring-amber-300 ring-offset-2"
+              )}
               style={{ aspectRatio: "2000 / 1414" }}
-              onPointerMove={handleMapPointerMove}
-              onPointerUp={finishDrag}
-              onPointerCancel={finishDrag}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

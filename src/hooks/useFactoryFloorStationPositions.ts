@@ -21,23 +21,43 @@ function readOverrides(): PositionOverride {
   }
 }
 
-function mergeStations(overrides: PositionOverride): FactoryFloorStation[] {
-  return FACTORY_FLOOR_STATIONS.map((station) => {
-    const override = overrides[station.id];
-    if (!override) return station;
-    return { ...station, x: override.x, y: override.y };
-  });
-}
-
 export function useFactoryFloorStationPositions() {
   const [stations, setStations] = useState<FactoryFloorStation[]>(FACTORY_FLOOR_STATIONS);
   const [dirty, setDirty] = useState(false);
   const [hasBrowserOverrides, setHasBrowserOverrides] = useState(false);
 
   useEffect(() => {
-    const overrides = readOverrides();
-    setHasBrowserOverrides(Object.keys(overrides).length > 0);
-    setStations(mergeStations(overrides));
+    let cancelled = false;
+
+    async function loadPositions() {
+      const overrides = readOverrides();
+      setHasBrowserOverrides(Object.keys(overrides).length > 0);
+
+      let baseStations = FACTORY_FLOOR_STATIONS;
+      try {
+        const res = await fetch("/api/factory/floor-stations");
+        if (res.ok) {
+          const data = (await res.json()) as { stations?: FactoryFloorStation[] };
+          if (data.stations?.length) baseStations = data.stations;
+        }
+      } catch {
+        // Fall back to bundled defaults when the API is unavailable.
+      }
+
+      if (cancelled) return;
+
+      const merged = baseStations.map((station) => {
+        const override = overrides[station.id];
+        if (!override) return station;
+        return { ...station, x: override.x, y: override.y };
+      });
+      setStations(merged);
+    }
+
+    void loadPositions();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const updatePosition = useCallback((id: string, x: number, y: number) => {
