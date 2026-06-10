@@ -39,7 +39,7 @@ function resolveScalePct(request: StickerPdfRequest): LabelScalePct {
   return request.scalePct ?? readLabelScalePct();
 }
 
-function buildStickerPdfUrl(request: StickerPdfRequest): string {
+function buildStickerAssetUrl(request: StickerPdfRequest, format: "pdf" | "png"): string {
   const { orderId, sheet = "pieces", po, poId, codes } = request;
   const params = new URLSearchParams({ sheet });
   if (po) params.set("po", po);
@@ -47,14 +47,22 @@ function buildStickerPdfUrl(request: StickerPdfRequest): string {
   if (codes && codes.length > 0) params.set("codes", codes.join(","));
   params.set("rotation", String(resolveRotationDeg(request)));
   params.set("scale", String(resolveScalePct(request)));
-  return `/api/sales-orders/${orderId}/stickers/pdf?${params.toString()}`;
+  return `/api/sales-orders/${orderId}/stickers/${format}?${params.toString()}`;
 }
 
-async function fetchStickerPdf(request: StickerPdfRequest): Promise<Response> {
+function buildStickerPdfUrl(request: StickerPdfRequest): string {
+  return buildStickerAssetUrl(request, "pdf");
+}
+
+function buildStickerPngUrl(request: StickerPdfRequest): string {
+  return buildStickerAssetUrl(request, "png");
+}
+
+async function fetchStickerAsset(request: StickerPdfRequest, format: "pdf" | "png"): Promise<Response> {
   const { orderId, sheet = "pieces", po, poId, codes } = request;
   const rotationDeg = resolveRotationDeg(request);
   const scalePct = resolveScalePct(request);
-  const url = `/api/sales-orders/${orderId}/stickers/pdf`;
+  const url = `/api/sales-orders/${orderId}/stickers/${format}`;
 
   if (codes && codes.length > 0) {
     return fetch(url, {
@@ -72,13 +80,27 @@ async function fetchStickerPdf(request: StickerPdfRequest): Promise<Response> {
     });
   }
 
-  return fetch(buildStickerPdfUrl(request), { cache: "no-store" });
+  return fetch(buildStickerAssetUrl(request, format), { cache: "no-store" });
+}
+
+async function fetchStickerPdf(request: StickerPdfRequest): Promise<Response> {
+  return fetchStickerAsset(request, "pdf");
+}
+
+async function fetchStickerPng(request: StickerPdfRequest): Promise<Response> {
+  return fetchStickerAsset(request, "png");
 }
 
 function pdfFilename(orderId: string, sheet: StickerPdfSheet): string {
   if (sheet === "calibration") return "sticker-rotation-calibration.pdf";
   if (sheet === "test") return "sticker-test.pdf";
   return `stickers-${orderId}-${sheet}.pdf`;
+}
+
+function pngFilename(orderId: string, sheet: StickerPdfSheet, multi = false): string {
+  if (sheet === "calibration") return multi ? "sticker-calibration.zip" : "sticker-calibration-A.png";
+  if (sheet === "test") return multi ? "sticker-test.zip" : "sticker-test-1.png";
+  return multi ? `stickers-${orderId}-${sheet}.zip` : `stickers-${orderId}-${sheet}.png`;
 }
 
 /**
@@ -203,4 +225,37 @@ export async function downloadStickerPdf(request: StickerPdfRequest): Promise<bo
   }
 }
 
-export { buildStickerPdfUrl, pdfFilename };
+/**
+ * Fetch raster sticker PNG(s) — ultimate D550 fallback.
+ * Single label → .png; multiple → .zip. Open in Preview.app, print at 100% on 51×102 mm.
+ */
+export async function downloadStickerPng(request: StickerPdfRequest): Promise<boolean> {
+  const sheet = request.sheet ?? "pieces";
+
+  try {
+    const res = await fetchStickerPng(request);
+    if (!res.ok) {
+      console.error("Sticker PNG download failed:", res.status);
+      return false;
+    }
+
+    const contentType = res.headers.get("Content-Type") ?? "";
+    const multi = contentType.includes("zip");
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = pngFilename(request.orderId, sheet, multi);
+    anchor.rel = "noopener";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    return true;
+  } catch (error) {
+    console.error("Failed to download sticker PNG:", error);
+    return false;
+  }
+}
+
+export { buildStickerPdfUrl, buildStickerPngUrl, pdfFilename, pngFilename };

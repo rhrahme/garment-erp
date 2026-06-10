@@ -9,7 +9,7 @@ import { useLabelRotation } from "@/hooks/useLabelRotation";
 import { useLabelScale } from "@/hooks/useLabelScale";
 import type { StickerPreviewItem } from "@/lib/production/sticker-print-selection";
 import { labelRollHeightCss, labelRollWidthCss } from "@/lib/production/label-print-config";
-import { downloadStickerPdf, type StickerPdfSheet } from "@/lib/production/print-stickers";
+import { downloadStickerPdf, downloadStickerPng, type StickerPdfSheet } from "@/lib/production/print-stickers";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 
 type StickerPrintPreviewModalProps = {
@@ -96,6 +96,7 @@ export function StickerPrintPreviewModal({
   );
   const [selected, setSelected] = useState<Set<string>>(initialSelection);
   const [downloading, setDownloading] = useState(false);
+  const [downloadingPng, setDownloadingPng] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const { rotation, setRotation } = useLabelRotation();
   const { scalePct, setScalePct } = useLabelScale();
@@ -140,6 +141,22 @@ export function StickerPrintPreviewModal({
     if (!ok) setDownloadError("PDF download failed — check you are logged in and try again.");
   }, [orderId, po, poId, rotation, scalePct, selected, sheet]);
 
+  const handleDownloadPng = useCallback(async () => {
+    setDownloadingPng(true);
+    setDownloadError(null);
+    const ok = await downloadStickerPng({
+      orderId,
+      sheet,
+      po,
+      poId,
+      codes: [...selected],
+      rotationDeg: rotation,
+      scalePct,
+    });
+    setDownloadingPng(false);
+    if (!ok) setDownloadError("PNG download failed — check you are logged in and try again.");
+  }, [orderId, po, poId, rotation, scalePct, selected, sheet]);
+
   if (!open) return null;
 
   return (
@@ -174,10 +191,10 @@ export function StickerPrintPreviewModal({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-            <p className="font-semibold">Blank labels from the browser print dialog?</p>
+            <p className="font-semibold">Blank labels from the browser or PDF?</p>
             <p className="mt-1">
-              Use <strong>Download PDF</strong> below, open in Preview.app, then File → Print. That path always
-              works on macOS.
+              PDFs are full-page bitmaps for the D550. If still blank, use <strong>Download PNG</strong>,
+              open in Preview.app, print at <strong>100% scale</strong> on <strong>51×102 mm</strong> media.
             </p>
           </div>
 
@@ -223,18 +240,26 @@ export function StickerPrintPreviewModal({
         </div>
 
         <div className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-slate-200 px-5 py-4">
-          <Button variant="secondary" onClick={onClose} disabled={printing || downloading}>
+          <Button variant="secondary" onClick={onClose} disabled={printing || downloading || downloadingPng}>
             Cancel
           </Button>
           <Button
             variant="secondary"
             onClick={() => void handleDownload()}
-            disabled={printing || downloading || selectedCount === 0}
+            disabled={printing || downloading || downloadingPng || selectedCount === 0}
           >
             <Download className="mr-2 h-4 w-4" />
             {downloading ? "Downloading…" : `Download PDF (${selectedCount})`}
           </Button>
-          <Button onClick={handlePrint} disabled={printing || downloading || selectedCount === 0}>
+          <Button
+            variant="secondary"
+            onClick={() => void handleDownloadPng()}
+            disabled={printing || downloading || downloadingPng || selectedCount === 0}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            {downloadingPng ? "Downloading…" : `Download PNG (${selectedCount})`}
+          </Button>
+          <Button onClick={handlePrint} disabled={printing || downloading || downloadingPng || selectedCount === 0}>
             <Printer className="mr-2 h-4 w-4" />
             {printing ? "Preparing PDF…" : `Print selected (${selectedCount})`}
           </Button>

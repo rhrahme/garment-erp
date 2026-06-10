@@ -11,10 +11,10 @@ export default function LabelPrinterTestPage() {
           description={`${labelRollSizeLabel()} roll — set label rotation, calibrate AIMO / LabelLife media, then print a test label`}
         />
         <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <p className="font-semibold">Blank labels from the browser print dialog?</p>
+          <p className="font-semibold">Blank labels on the D550?</p>
           <p className="mt-1">
-            Use <strong>Download PDF</strong> → open in <strong>Preview.app</strong> → File → Print. That path
-            always works on macOS when Chrome or Safari sends a blank page to the thermal printer.
+            PDFs are now full-page bitmaps. If still blank, use <strong>Download PNG</strong> → Preview.app →
+            Print at <strong>100% scale</strong> on <strong>51×102 mm</strong> media.
           </p>
         </div>
       </div>

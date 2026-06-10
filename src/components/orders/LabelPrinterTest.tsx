@@ -9,7 +9,7 @@ import { useLabelRotation } from "@/hooks/useLabelRotation";
 import { useLabelScale } from "@/hooks/useLabelScale";
 import { useStickerPrint } from "@/hooks/useStickerPrint";
 import { labelRollSizeLabel } from "@/lib/production/label-print-config";
-import { downloadStickerPdf } from "@/lib/production/print-stickers";
+import { downloadStickerPdf, downloadStickerPng } from "@/lib/production/print-stickers";
 import {
   labelPdfOrientation,
   labelPdfPageSizeMm,
@@ -46,6 +46,7 @@ export function LabelPrinterTest() {
   const { rotation, setRotation } = useLabelRotation();
   const { scalePct, setScalePct } = useLabelScale();
   const [downloading, setDownloading] = useState(false);
+  const [downloadingPng, setDownloadingPng] = useState(false);
 
   const pageSize = labelPdfPageSizeMm(rotation);
   const orientation = labelPdfOrientation(rotation);
@@ -66,13 +67,21 @@ export function LabelPrinterTest() {
     setDownloading(false);
   }, [rotation, scalePct]);
 
+  const handleDownloadPng = useCallback(async () => {
+    setDownloadingPng(true);
+    await downloadStickerPng({ orderId: "test", sheet: "test", rotationDeg: rotation, scalePct });
+    setDownloadingPng(false);
+  }, [rotation, scalePct]);
+
   return (
     <div>
       <div className="no-print mb-6 rounded-xl border border-amber-300 bg-amber-50 px-4 py-4 text-sm text-amber-900">
-        <p className="text-base font-semibold">If labels print blank from the browser</p>
+        <p className="text-base font-semibold">If labels still print blank</p>
         <p className="mt-1">
-          Use <strong>Download PDF</strong> below → open in <strong>Preview.app</strong> → File → Print. That
-          always works on macOS even when Chrome/Safari send a blank page to the thermal printer.
+          Stickers are now <strong>full-page bitmaps</strong> inside the PDF (D550 ignores vector text).
+          If the PDF is still blank on the printer, use <strong>Download PNG</strong> → open in{" "}
+          <strong>Preview.app</strong> → File → Print at <strong>100% scale</strong> on{" "}
+          <strong>51×102 mm</strong> media (or import the PNG into LabelLife).
         </p>
       </div>
 
@@ -145,15 +154,27 @@ export function LabelPrinterTest() {
       </div>
 
       <div className="no-print mb-4 flex flex-wrap gap-3">
-        <Button onClick={handlePrint} disabled={printing || downloading}>
+        <Button onClick={handlePrint} disabled={printing || downloading || downloadingPng}>
           <Printer className="mr-2 h-4 w-4" />
           {printing ? "Preparing PDF…" : "Print test labels (2 pages)"}
         </Button>
-        <Button variant="secondary" onClick={() => void handleDownload()} disabled={printing || downloading}>
+        <Button
+          variant="secondary"
+          onClick={() => void handleDownload()}
+          disabled={printing || downloading || downloadingPng}
+        >
           <Download className="mr-2 h-4 w-4" />
           {downloading ? "Downloading…" : "Download PDF"}
         </Button>
-        <Button variant="secondary" onClick={handleCalibration} disabled={printing || downloading}>
+        <Button
+          variant="secondary"
+          onClick={() => void handleDownloadPng()}
+          disabled={printing || downloading || downloadingPng}
+        >
+          <Download className="mr-2 h-4 w-4" />
+          {downloadingPng ? "Downloading…" : "Download PNG"}
+        </Button>
+        <Button variant="secondary" onClick={handleCalibration} disabled={printing || downloading || downloadingPng}>
           <Printer className="mr-2 h-4 w-4" />
           {printing ? "Preparing PDF…" : "Print rotation calibration (A/B/C/D)"}
         </Button>
