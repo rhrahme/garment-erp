@@ -4,15 +4,18 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { EmailPreview } from "@/components/purchasing/EmailPreview";
-import { purchaseOrderToEmail } from "@/lib/fabric-sourcing/email-content";
-import type { SupplierEmailQueueItem } from "@/lib/fabric-sourcing/supplier-email-queue";
+import { purchaseOrdersBatchToEmail } from "@/lib/fabric-sourcing/email-content";
+import type {
+  SupplierEmailBatch,
+  SupplierEmailQueueItem,
+} from "@/lib/fabric-sourcing/supplier-email-queue";
 import type { SupplierFabric } from "@/lib/types/fabric-sourcing";
 
 export function SupplierEmailsWorkspace() {
   const searchParams = useSearchParams();
   const salesOrderFilter = searchParams.get("sales_order_id");
 
-  const [orders, setOrders] = useState<SupplierEmailQueueItem[]>([]);
+  const [batches, setBatches] = useState<SupplierEmailBatch[]>([]);
   const [fabricsBySupplier, setFabricsBySupplier] = useState<Record<string, SupplierFabric[]>>({});
   const [factoryEmail, setFactoryEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,11 +35,11 @@ export function SupplierEmailsWorkspace() {
         const statusData = await statusRes.json();
         setFactoryEmail(statusData.factoryOrdersEmail ?? statusData.from ?? null);
       }
-      const data = (await res.json()) as { orders: SupplierEmailQueueItem[] };
-      const loadedOrders = data.orders;
-      setOrders(loadedOrders);
+      const data = (await res.json()) as { batches: SupplierEmailBatch[] };
+      const loadedBatches = data.batches ?? [];
+      setBatches(loadedBatches);
 
-      const supplierIds = [...new Set(loadedOrders.map((order) => order.supplier_id))];
+      const supplierIds = [...new Set(loadedBatches.map((batch) => batch.supplier_id))];
       const specsMap: Record<string, SupplierFabric[]> = {};
       await Promise.all(
         supplierIds.map(async (supplierId) => {
@@ -61,17 +64,22 @@ export function SupplierEmailsWorkspace() {
     void load();
   }, [load]);
 
-  async function handleSent(poId: string, result: { emailedAt: string; emailTo: string }) {
-    await fetch(`/api/fabric-orders/${poId}`, {
-      method: "PATCH",
+  async function handleSent(poIds: string[], result: { emailedAt: string; emailTo: string }) {
+    await fetch("/api/fabric-orders/mark-sent", {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ emailed_at: result.emailedAt, email_to: result.emailTo }),
+      body: JSON.stringify({
+        ids: poIds,
+        emailed_at: result.emailedAt,
+        email_to: result.emailTo,
+      }),
     });
     void load();
   }
 
-  const pendingOrders = orders.filter((order) => !order.emailed_at);
-  const sentOrders = orders.filter((order) => order.emailed_at);
+  const pendingBatches = batches.filter((batch) => batch.is_pending);
+  const sentBatches = batches.filter((batch) => !batch.is_pending);
+  const pendingPoCount = pendingBatches.reduce((sum, batch) => sum + batch.orders.length, 0);
 
   if (loading) {
     return (
@@ -94,22 +102,26 @@ export function SupplierEmailsWorkspace() {
           Showing emails for one sales order.{" "}
           <Link href="/supplier-emails" className="font-medium underline">
             View all
-          </Link>
+          </Link>{" "}
+          to combine pending orders to the same supplier across clients.
         </div>
       )}
 
       <div className="flex flex-wrap gap-2">
         <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 text-center">
-          <p className="text-2xl font-bold text-slate-900">{pendingOrders.length}</p>
-          <p className="text-xs font-medium text-slate-600">Awaiting send</p>
+          <p className="text-2xl font-bold text-slate-900">{pendingBatches.length}</p>
+          <p className="text-xs font-medium text-slate-600">Suppliers awaiting send</p>
+          {pendingPoCount > pendingBatches.length && (
+            <p className="mt-1 text-xs text-slate-500">{pendingPoCount} POs consolidated</p>
+          )}
         </div>
         <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 text-center">
-          <p className="text-2xl font-bold text-slate-900">{sentOrders.length}</p>
-          <p className="text-xs font-medium text-slate-600">Sent</p>
+          <p className="text-2xl font-bold text-slate-900">{sentBatches.length}</p>
+          <p className="text-xs font-medium text-slate-600">Sent batches</p>
         </div>
       </div>
 
-      {orders.length === 0 ? (
+      {batches.length === 0 ? (
         salesOrderFilter ? (
           <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50 px-6 py-10 text-center text-sm text-amber-900">
             <p className="font-medium">No supplier emails exist for this order yet.</p>
@@ -143,31 +155,31 @@ export function SupplierEmailsWorkspace() {
         )
       ) : (
         <>
-          {pendingOrders.length > 0 && (
+          {pendingBatches.length > 0 && (
             <section className="space-y-6">
               <h2 className="text-lg font-semibold text-slate-900">Ready to send</h2>
-              {pendingOrders.map((po) => (
-                <SupplierEmailCard
-                  key={po.id}
-                  order={po}
-                  fabrics={fabricsBySupplier[po.supplier_id] ?? []}
+              {pendingBatches.map((batch) => (
+                <SupplierEmailBatchCard
+                  key={batch.id}
+                  batch={batch}
+                  fabrics={fabricsBySupplier[batch.supplier_id] ?? []}
                   factoryEmail={factoryEmail}
-                  onSent={(result) => void handleSent(po.id, result)}
+                  onSent={(result) => void handleSent(batch.orders.map((order) => order.id), result)}
                 />
               ))}
             </section>
           )}
 
-          {sentOrders.length > 0 && (
+          {sentBatches.length > 0 && (
             <section className="space-y-6">
               <h2 className="text-lg font-semibold text-slate-900">Sent</h2>
-              {sentOrders.map((po) => (
-                <SupplierEmailCard
-                  key={po.id}
-                  order={po}
-                  fabrics={fabricsBySupplier[po.supplier_id] ?? []}
+              {sentBatches.map((batch) => (
+                <SupplierEmailBatchCard
+                  key={batch.id}
+                  batch={batch}
+                  fabrics={fabricsBySupplier[batch.supplier_id] ?? []}
                   factoryEmail={factoryEmail}
-                  onSent={(result) => void handleSent(po.id, result)}
+                  onSent={(result) => void handleSent(batch.orders.map((order) => order.id), result)}
                 />
               ))}
             </section>
@@ -178,65 +190,101 @@ export function SupplierEmailsWorkspace() {
   );
 }
 
-function SupplierEmailCard({
-  order,
+function SupplierEmailBatchCard({
+  batch,
   fabrics,
   factoryEmail,
   onSent,
 }: {
-  order: SupplierEmailQueueItem;
+  batch: SupplierEmailBatch;
   fabrics: SupplierFabric[];
   factoryEmail: string | null;
   onSent: (result: { emailedAt: string; emailTo: string }) => void;
 }) {
-  const email = purchaseOrderToEmail(order, fabrics, {
-    clientCode: order.client_code ?? undefined,
-    deliveryDestination: order.delivery_destination,
+  const email = purchaseOrdersBatchToEmail(batch.orders, fabrics, {
     fromEmail: factoryEmail,
+    clientCodeByPoId: Object.fromEntries(
+      batch.orders.map((order) => [order.id, order.client_code ?? "—"])
+    ),
+    soNumberByPoId: Object.fromEntries(batch.orders.map((order) => [order.id, order.so_number])),
+    deliveryDestinationByPoId: Object.fromEntries(
+      batch.orders.map((order) => [order.id, order.delivery_destination])
+    ),
   });
+
+  const poNumbers = batch.orders.map((order) => order.po_number);
+  const orderCount = new Set(batch.orders.map((order) => order.sales_order_id).filter(Boolean)).size;
+  const summaryParts = [
+    orderCount > 0 ? `${orderCount} order${orderCount !== 1 ? "s" : ""}` : null,
+    `${batch.fabric_line_count} fabric line${batch.fabric_line_count !== 1 ? "s" : ""}`,
+  ].filter(Boolean);
 
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">
-            {order.supplier?.name ?? order.supplier_id}{" "}
-            <span className="font-mono text-sm font-normal text-slate-500">{order.po_number}</span>
+            {batch.supplier_name}{" "}
+            <span className="font-mono text-sm font-normal text-slate-500">
+              {poNumbers.length === 1 ? poNumbers[0] : `${poNumbers.length} POs`}
+            </span>
           </h3>
           <p className="mt-0.5 text-sm text-slate-600">
-            {order.so_number && (
-              <>
-                {order.so_number}
-                {" · "}
-              </>
-            )}
-            Client: <span className="font-mono text-indigo-700">{order.client_code ?? "—"}</span>
-            {!order.delivery_destination && (
+            {summaryParts.join(" · ")}
+            {batch.combines_multiple_orders && (
               <>
                 {" · "}
-                <span className="font-medium text-amber-700">Ship-to not set on sales order</span>
-              </>
-            )}
-            {order.sales_order_id && (
-              <>
-                {" · "}
-                <Link href={`/orders/${order.sales_order_id}`} className="text-indigo-600 hover:text-indigo-700">
-                  View sales order
-                </Link>
+                <span className="font-medium text-indigo-700">Combined across clients</span>
               </>
             )}
           </p>
+          <BatchOrderLinks orders={batch.orders} />
         </div>
-        {order.emailed_at ? (
+        {batch.emailed_at ? (
           <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
-            Sent {new Date(order.emailed_at).toLocaleDateString()}
-            {order.email_to ? ` · ${order.email_to}` : ""}
+            Sent {new Date(batch.emailed_at).toLocaleDateString()}
+            {batch.orders[0]?.email_to ? ` · ${batch.orders[0].email_to}` : ""}
           </span>
         ) : (
           <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">Not sent yet</span>
         )}
       </div>
-      <EmailPreview email={email} poNumber={order.po_number} onSent={onSent} />
+      <EmailPreview
+        email={email}
+        poNumber={poNumbers[0]}
+        poNumbers={poNumbers}
+        onSent={onSent}
+      />
     </div>
+  );
+}
+
+function BatchOrderLinks({ orders }: { orders: SupplierEmailQueueItem[] }) {
+  const uniqueOrders = orders.filter(
+    (order, index, list) =>
+      order.sales_order_id && list.findIndex((item) => item.sales_order_id === order.sales_order_id) === index
+  );
+
+  if (uniqueOrders.length === 0) return null;
+
+  return (
+    <p className="mt-1 text-sm text-slate-600">
+      {uniqueOrders.map((order, index) => (
+        <span key={order.id}>
+          {index > 0 && " · "}
+          {order.so_number && <span className="font-mono">{order.so_number}</span>}
+          {order.so_number && order.client_code && " — "}
+          {order.client_code && <span className="font-mono text-indigo-700">{order.client_code}</span>}
+          {order.sales_order_id && (
+            <>
+              {" "}
+              <Link href={`/orders/${order.sales_order_id}`} className="text-indigo-600 hover:text-indigo-700">
+                View
+              </Link>
+            </>
+          )}
+        </span>
+      ))}
+    </p>
   );
 }

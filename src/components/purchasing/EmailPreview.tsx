@@ -9,6 +9,8 @@ import type { FabricOrderEmail } from "@/lib/types/fabric-sourcing";
 interface EmailPreviewProps {
   email: FabricOrderEmail;
   poNumber?: string;
+  /** All PO numbers included in a consolidated supplier email. */
+  poNumbers?: string[];
   onSent?: (result: { emailedAt: string; emailTo: string }) => void;
 }
 
@@ -16,7 +18,7 @@ function defaultCc(email: FabricOrderEmail): string {
   return email.cc ?? SUPPLIER_EMAIL_ALWAYS_CC.join(", ");
 }
 
-export function EmailPreview({ email, poNumber, onSent }: EmailPreviewProps) {
+export function EmailPreview({ email, poNumber, poNumbers, onSent }: EmailPreviewProps) {
   const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
   const [canSend, setCanSend] = useState(false);
@@ -106,6 +108,7 @@ export function EmailPreview({ email, poNumber, onSent }: EmailPreviewProps) {
           subject,
           body,
           poNumber,
+          poNumbers: poNumbers ?? (poNumber ? [poNumber] : []),
         }),
       });
       const data = await res.json();

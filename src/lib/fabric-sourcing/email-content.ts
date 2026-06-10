@@ -131,16 +131,8 @@ export function fabricSpecsSummary(fabric: SupplierFabric): string {
   return parts.join(", ") || "—";
 }
 
-export function purchaseOrderToEmail(
-  po: PurchaseOrder,
-  fabrics: SupplierFabric[],
-  options?: { clientCode?: string; deliveryDestination?: DeliveryDestination | null; fromEmail?: string | null }
-): FabricOrderEmail {
-  const clientCode =
-    options?.clientCode ??
-    (po.client_reference ? clientCodeFromReference(po.client_reference) : "—");
-
-  const lines: EmailLine[] = (po.lines ?? []).map((line) => {
+function mapPoLinesToEmailLines(po: PurchaseOrder, fabrics: SupplierFabric[]): EmailLine[] {
+  return (po.lines ?? []).map((line) => {
     const fabric = fabrics.find((f) => f.fabric_number === line.fabric_number);
     return {
       fabricNumber: line.fabric_number ?? "—",
@@ -150,6 +142,97 @@ export function purchaseOrderToEmail(
       labelStickers: line.label_stickers ?? undefined,
     };
   });
+}
+
+export interface BatchOrderSection {
+  clientCode: string;
+  poNumber: string;
+  soNumber?: string | null;
+  deliveryDestination?: DeliveryDestination | null;
+  lines: EmailLine[];
+}
+
+function formatEmailLineRows(lines: EmailLine[], clientCode: string): string {
+  return lines
+    .map((line) => {
+      const quantityWithUnit = formatQuantityWithUnit(line.quantity, line.unit);
+      const firstSticker = line.labelStickers?.[0];
+      const stickerCode = firstSticker
+        ? formatSupplierStickerCode(clientCode, supplierFabricProductionCode(firstSticker.code, clientCode))
+        : clientCode;
+      return `  ${line.fabricNumber.padEnd(16)} ${stickerCode.padEnd(28)} ${String(line.labelCount).padEnd(8)} ${quantityWithUnit}`;
+    })
+    .join("\n");
+}
+
+function solbiatiNote(lines: EmailLine[]): string {
+  return lines.some((line) => /^S/i.test(line.fabricNumber))
+    ? "\nNote: fabrics starting with S are Solbiati (linen line).\n"
+    : "";
+}
+
+export function buildFabricOrderBatchEmail(params: {
+  supplierName: string;
+  supplierEmail?: string;
+  supplierEmails?: string[];
+  fromEmail?: string | null;
+  sections: BatchOrderSection[];
+  notes?: string;
+}): FabricOrderEmail {
+  const { supplierName, supplierEmail, supplierEmails, fromEmail, sections, notes } = params;
+  const to = resolveSupplierEmails(supplierEmail, supplierEmails);
+  const cc = resolveSupplierCc();
+  const from = fromEmail?.trim() || undefined;
+
+  const sectionsText = sections
+    .map((section) => {
+      const destination = section.deliveryDestination
+        ? getDeliveryDestination(section.deliveryDestination)
+        : undefined;
+      const deliveryLine = destination
+        ? formatShipToForEmail(destination)
+        : "Shipping to: (select RUH or DXB on the sales order)";
+      const header = section.soNumber
+        ? `${section.clientCode} · ${section.soNumber} (PO: ${section.poNumber})`
+        : `${section.clientCode} (PO: ${section.poNumber})`;
+
+      return `${header}
+${deliveryLine}
+
+Fabric No.       Code                         Labels   Quantity
+────────────────────────────────────────────────────────────────────
+${formatEmailLineRows(section.lines, section.clientCode)}${solbiatiNote(section.lines)}`;
+    })
+    .join("\n\n");
+
+  const subject =
+    sections.length === 1
+      ? `Fabric Order ${sections[0]!.poNumber} — ${sections[0]!.clientCode}`
+      : `Fabric Orders — ${supplierName} (${sections.length} orders)`;
+
+  const body = `Dear ${supplierName},
+
+Please supply the following fabrics:
+
+${sectionsText}
+
+Please confirm availability and advise expected shipping date.
+Provide AWB once dispatched.
+
+${notes ? `Notes:\n${notes}\n\n` : ""}Thank you,
+${from ?? "[Your Factory Name]"}`;
+
+  return { from, to, cc, subject, body };
+}
+
+export function purchaseOrderToEmail(
+  po: PurchaseOrder,
+  fabrics: SupplierFabric[],
+  options?: { clientCode?: string; deliveryDestination?: DeliveryDestination | null; fromEmail?: string | null }
+): FabricOrderEmail {
+  const clientCode =
+    options?.clientCode ??
+    (po.client_reference ? clientCodeFromReference(po.client_reference) : "—");
 
   return buildFabricOrderEmail({
     supplierName: po.supplier?.name ?? "Supplier",
@@ -159,7 +242,45 @@ export function purchaseOrderToEmail(
     clientCode,
     poNumber: po.po_number,
     deliveryDestination: options?.deliveryDestination,
-    lines,
+    lines: mapPoLinesToEmailLines(po, fabrics),
+  });
+}
+
+export function purchaseOrdersBatchToEmail(
+  orders: PurchaseOrder[],
+  fabrics: SupplierFabric[],
+  options?: {
+    clientCodeByPoId?: Record<string, string>;
+    deliveryDestinationByPoId?: Record<string, DeliveryDestination | null>;
+    soNumberByPoId?: Record<string, string | null>;
+    fromEmail?: string | null;
+  }
+): FabricOrderEmail {
+  const first = orders[0];
+  if (!first) {
+    throw new Error("At least one purchase order is required.");
+  }
+
+  const sections: BatchOrderSection[] = orders.map((po) => {
+    const clientCode =
+      options?.clientCodeByPoId?.[po.id] ??
+      (po.client_reference ? clientCodeFromReference(po.client_reference) : "—");
+
+    return {
+      clientCode,
+      poNumber: po.po_number,
+      soNumber: options?.soNumberByPoId?.[po.id] ?? null,
+      deliveryDestination: options?.deliveryDestinationByPoId?.[po.id] ?? null,
+      lines: mapPoLinesToEmailLines(po, fabrics),
+    };
+  });
+
+  return buildFabricOrderBatchEmail({
+    supplierName: first.supplier?.name ?? "Supplier",
+    supplierEmail: first.email_to ?? first.supplier?.email ?? "",
+    supplierEmails: first.supplier?.emails,
+    fromEmail: options?.fromEmail,
+    sections,
   });
 }
 

@@ -104,3 +104,26 @@ export function markStoredFabricOrderSent(
   writeStore(store);
   return order;
 }
+
+export function markStoredFabricOrdersSent(
+  ids: string[],
+  details: { emailed_at: string; email_to: string; status?: string }
+): PurchaseOrder[] {
+  const store = readStore();
+  const idSet = new Set(ids);
+  const updated: PurchaseOrder[] = [];
+
+  for (const order of store.orders) {
+    if (!idSet.has(order.id)) continue;
+    order.emailed_at = details.emailed_at;
+    order.email_to = details.email_to;
+    order.status = details.status ?? "sent";
+    updated.push(order);
+  }
+
+  if (updated.length > 0) {
+    writeStore(store);
+  }
+
+  return updated;
+}

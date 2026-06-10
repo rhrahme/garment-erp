@@ -14,6 +14,7 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as Partial<FabricOrderEmail> & {
       poNumber?: string;
+      poNumbers?: string[];
     };
 
     const to = parseRecipientList(body.to ?? "");
@@ -61,11 +62,17 @@ export async function POST(request: Request) {
     });
 
     const emailedAt = new Date().toISOString();
+    const poNumbers =
+      body.poNumbers?.filter(Boolean) ??
+      (body.poNumber ? [body.poNumber] : []);
+
     await notifyIntegration("fabric_order.sent", {
-      po_number: body.poNumber ?? null,
+      po_number: poNumbers[0] ?? body.poNumber ?? null,
+      po_numbers: poNumbers.length > 0 ? poNumbers : null,
       email_to: to.join(", "),
       emailed_at: emailedAt,
       message_id: result.messageId,
+      batch_size: poNumbers.length > 1 ? poNumbers.length : undefined,
     });
 
     return NextResponse.json({
@@ -77,7 +84,8 @@ export async function POST(request: Request) {
       emailedAt,
       emailTo: to.join(", "),
       emailFrom: from ?? null,
-      poNumber: body.poNumber ?? null,
+      poNumber: poNumbers[0] ?? body.poNumber ?? null,
+      poNumbers,
     });
   } catch (error) {
     console.error("Failed to send fabric order email:", error);
