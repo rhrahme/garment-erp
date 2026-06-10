@@ -1,6 +1,7 @@
 export type IntegrationEventType =
   | "fabric_order.created"
   | "fabric_order.sent"
+  | "fabric_order.cancelled"
   | "fabric_order.email_failed"
   | "supplier.contacts_updated"
   | "supplier.reply_logged"

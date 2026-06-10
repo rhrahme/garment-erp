@@ -21,6 +21,7 @@ export async function listSupplierEmailQueue(
   const salesById = new Map(readSalesOrders().orders.map((order) => [order.id, order]));
 
   return (await listStoredFabricOrdersFresh())
+    .filter((order) => order.status !== "cancelled")
     .filter((order) => !salesOrderId || order.sales_order_id === salesOrderId)
     .map((order) => {
       const salesOrder = order.sales_order_id ? salesById.get(order.sales_order_id) : undefined;

@@ -134,3 +134,23 @@ export function markStoredFabricOrdersSent(
 
   return updated;
 }
+
+/** Cancel pending (not yet emailed) fabric POs — keeps records with status cancelled. */
+export function cancelStoredFabricOrders(ids: string[]): PurchaseOrder[] {
+  const store = readStore();
+  const idSet = new Set(ids);
+  const updated: PurchaseOrder[] = [];
+
+  for (const order of store.orders) {
+    if (!idSet.has(order.id)) continue;
+    if (order.emailed_at || order.status === "cancelled") continue;
+    order.status = "cancelled";
+    updated.push(order);
+  }
+
+  if (updated.length > 0) {
+    writeStore(store);
+  }
+
+  return updated;
+}

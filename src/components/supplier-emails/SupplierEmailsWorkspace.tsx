@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, ChevronRight, MessageSquarePlus } from "lucide-react";
+import { ChevronDown, ChevronRight, MessageSquarePlus, XCircle } from "lucide-react";
 import { EmailPreview } from "@/components/purchasing/EmailPreview";
 import { Button } from "@/components/ui/Button";
 import {
@@ -29,6 +29,16 @@ export function SupplierEmailsWorkspace() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { is_admin?: boolean } | null) => {
+        if (data) setIsAdmin(Boolean(data.is_admin));
+      })
+      .catch(() => setIsAdmin(false));
+  }, []);
 
   useEffect(() => {
     const message = sessionStorage.getItem("todays_fabric_flash");
@@ -116,6 +126,37 @@ export function SupplierEmailsWorkspace() {
     }
 
     setFlash(`Email sent to supplier · ${result.emailTo}`);
+    void load();
+  }
+
+  async function handleCancel(poIds: string[], supplierName: string, poNumbers: string[]) {
+    const poLabel =
+      poNumbers.length === 1
+        ? `fabric order ${poNumbers[0]}`
+        : `${poNumbers.length} fabric orders (${poNumbers.join(", ")})`;
+
+    const confirmed = window.confirm(
+      `Cancel ${poLabel} for ${supplierName}?\n\nThis removes ${poNumbers.length === 1 ? "it" : "them"} from supplier emails and unlinks ${poNumbers.length === 1 ? "the PO" : "those POs"} from the sales order${poNumbers.length === 1 ? "" : "s"}. You can create new fabric orders later if needed.`
+    );
+    if (!confirmed) return;
+
+    const res = await fetch("/api/fabric-orders/cancel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: poIds }),
+    });
+
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      setFlash(data.error ?? "Failed to cancel fabric order. Refresh and try again.");
+      return;
+    }
+
+    setFlash(
+      poNumbers.length === 1
+        ? `Cancelled ${poNumbers[0]} — removed from supplier emails`
+        : `Cancelled ${poNumbers.length} POs for ${supplierName}`
+    );
     void load();
   }
 
@@ -211,7 +252,9 @@ export function SupplierEmailsWorkspace() {
                   batch={batch}
                   fabrics={fabricsBySupplier[batch.supplier_id] ?? []}
                   factoryEmail={factoryEmail}
+                  isAdmin={isAdmin}
                   onSent={(poIds, result) => void handleSent(poIds, result)}
+                  onCancel={(poIds, poNumbers) => void handleCancel(poIds, batch.supplier_name, poNumbers)}
                 />
               ))}
             </section>
@@ -256,12 +299,16 @@ function PendingSupplierEmailBatchCard({
   batch,
   fabrics,
   factoryEmail,
+  isAdmin,
   onSent,
+  onCancel,
 }: {
   batch: SupplierEmailBatch;
   fabrics: SupplierFabric[];
   factoryEmail: string | null;
+  isAdmin: boolean;
   onSent: (poIds: string[], result: { emailedAt: string; emailTo: string }) => void;
+  onCancel: (poIds: string[], poNumbers: string[]) => void;
 }) {
   const showOrderPicker = batch.orders.length > 1;
   const [selectedPoIds, setSelectedPoIds] = useState<Set<string>>(
@@ -300,6 +347,8 @@ function PendingSupplierEmailBatchCard({
 
   const poNumbers = selectedOrders.map((order) => order.po_number);
   const selectedPoIdsList = selectedOrders.map((order) => order.id);
+  const allPoIds = batch.orders.map((order) => order.id);
+  const allPoNumbers = batch.orders.map((order) => order.po_number);
   const orderCount = new Set(selectedOrders.map((order) => order.sales_order_id).filter(Boolean)).size;
   const fabricLineCount = selectedOrders.reduce((sum, order) => sum + (order.lines?.length ?? 0), 0);
   const summaryParts = [
@@ -321,12 +370,25 @@ function PendingSupplierEmailBatchCard({
 
   return (
     <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-      <BatchHeader
-        batch={batch}
-        poNumbers={poNumbers}
-        summaryParts={summaryParts}
-        status="pending"
-      />
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <BatchHeader
+          batch={batch}
+          poNumbers={poNumbers}
+          summaryParts={summaryParts}
+          status="pending"
+        />
+        {isAdmin && (
+          <Button
+            variant="secondary"
+            size="sm"
+            className="text-red-700 hover:bg-red-50"
+            onClick={() => onCancel(allPoIds, allPoNumbers)}
+          >
+            <XCircle className="mr-2 h-4 w-4" />
+            Cancel
+          </Button>
+        )}
+      </div>
       {showOrderPicker ? (
         <BatchOrderPicker
           supplierName={batch.supplier_name}

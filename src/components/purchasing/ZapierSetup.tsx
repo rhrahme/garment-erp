@@ -6,6 +6,7 @@ import { Zap } from "lucide-react";
 const OUTBOUND_EVENTS = [
   "fabric_order.created",
   "fabric_order.sent",
+  "fabric_order.cancelled",
   "fabric_order.email_failed",
   "supplier.contacts_updated",
   "supplier.reply_logged",
@@ -82,6 +83,7 @@ export function ZapierSetup() {
             <li>GET {baseUrl}/api/v1/suppliers</li>
             <li>GET {baseUrl}/api/v1/price-list-items</li>
             <li>GET/POST {baseUrl}/api/v1/fabric-orders</li>
+            <li>POST {baseUrl}/api/v1/fabric-orders/cancel</li>
             <li>POST {baseUrl}/api/v1/fabric-orders/[id]/send</li>
             <li>POST {baseUrl}/api/v1/supplier-replies</li>
             <li>POST {baseUrl}/api/v1/shipments</li>
