@@ -85,6 +85,7 @@ export interface PurchaseOrder {
 export interface FabricOrderEmail {
   from?: string;
   to: string;
+  cc?: string;
   subject: string;
   body: string;
 }

@@ -17,6 +17,7 @@ export interface SmtpConfig {
 
 export interface SendEmailInput {
   to: string[];
+  cc?: string[];
   subject: string;
   text: string;
   from?: string;
@@ -114,12 +115,17 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
     throw new Error("At least one recipient email is required.");
   }
 
+  const ccRecipients = [
+    ...new Set((input.cc ?? []).map((value) => value.trim()).filter(Boolean)),
+  ].filter((value) => !recipients.includes(value));
+
   const fromAddress = input.from?.trim() || config.from;
   const transport = createTransport(config);
 
   const info = await transport.sendMail({
     from: `"${config.fromName}" <${fromAddress}>`,
     to: recipients.join(", "),
+    cc: ccRecipients.length > 0 ? ccRecipients.join(", ") : undefined,
     replyTo: input.replyTo?.trim() || fromAddress,
     subject: input.subject,
     text: input.text,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getFactoryOrdersEmail } from "@/lib/data/supplier-catalogs";
 import { isValidEmail, normalizeEmail } from "@/lib/data/supplier-contacts";
 import { parseRecipientList, sendEmail } from "@/lib/email/smtp";
+import { resolveSupplierCc } from "@/lib/fabric-sourcing/email-content";
 import { notifyIntegration } from "@/lib/integrations";
 import type { FabricOrderEmail } from "@/lib/types/fabric-sourcing";
 
@@ -16,6 +17,7 @@ export async function POST(request: Request) {
     };
 
     const to = parseRecipientList(body.to ?? "");
+    const cc = parseRecipientList(resolveSupplierCc(body.cc));
     const subject = body.subject?.trim();
     const text = body.body?.trim();
     const factoryEmail = getFactoryOrdersEmail();
@@ -39,12 +41,19 @@ export async function POST(request: Request) {
       }
     }
 
+    for (const address of cc) {
+      if (!isValidAddress(address)) {
+        return NextResponse.json({ error: `Invalid CC email: ${address}` }, { status: 400 });
+      }
+    }
+
     if (from && !isValidAddress(from)) {
       return NextResponse.json({ error: "Invalid sender email." }, { status: 400 });
     }
 
     const result = await sendEmail({
       to,
+      cc,
       subject,
       text,
       from,

@@ -6,6 +6,26 @@ import {
   type DeliveryDestination,
 } from "@/lib/shipping/delivery-destinations";
 
+/**
+ * Addresses that should be CC'd on every supplier fabric-order email.
+ * Change this list to update the always-CC recipients everywhere the email
+ * is assembled (in-app draft, mailto link, copy output, and SMTP send).
+ */
+export const SUPPLIER_EMAIL_ALWAYS_CC = ["rhrahme@gmail.com"] as const;
+
+export function resolveSupplierCc(extra?: string[] | string | null): string {
+  const fromExtra =
+    typeof extra === "string"
+      ? extra.split(/[\n,;]+/)
+      : Array.isArray(extra)
+        ? extra
+        : [];
+  const all = [...SUPPLIER_EMAIL_ALWAYS_CC, ...fromExtra]
+    .map((value) => value.trim())
+    .filter(Boolean);
+  return [...new Set(all)].join(", ");
+}
+
 interface EmailLine {
   fabricNumber: string;
   quantity: number;
@@ -43,6 +63,7 @@ export function buildFabricOrderEmail(params: {
   const { supplierName, supplierEmail, supplierEmails, fromEmail, clientCode, poNumber, deliveryDestination, lines, notes } =
     params;
   const to = resolveSupplierEmails(supplierEmail, supplierEmails);
+  const cc = resolveSupplierCc();
   const from = fromEmail?.trim() || undefined;
 
   const lineRows = lines
@@ -82,6 +103,7 @@ ${from ?? "[Your Factory Name]"}`;
   return {
     from,
     to,
+    cc,
     subject: `Fabric Order ${poNumber} — ${clientCode}`,
     body,
   };
