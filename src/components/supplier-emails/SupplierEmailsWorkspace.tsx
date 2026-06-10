@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { EmailPreview } from "@/components/purchasing/EmailPreview";
@@ -177,7 +177,7 @@ export function SupplierEmailsWorkspace() {
                   batch={batch}
                   fabrics={fabricsBySupplier[batch.supplier_id] ?? []}
                   factoryEmail={factoryEmail}
-                  onSent={(result) => void handleSent(batch.orders.map((order) => order.id), result)}
+                  onSent={(poIds, result) => void handleSent(poIds, result)}
                 />
               ))}
             </section>
@@ -192,7 +192,7 @@ export function SupplierEmailsWorkspace() {
                   batch={batch}
                   fabrics={fabricsBySupplier[batch.supplier_id] ?? []}
                   factoryEmail={factoryEmail}
-                  onSent={(result) => void handleSent(batch.orders.map((order) => order.id), result)}
+                  onSent={(poIds, result) => void handleSent(poIds, result)}
                 />
               ))}
             </section>
@@ -212,25 +212,72 @@ function SupplierEmailBatchCard({
   batch: SupplierEmailBatch;
   fabrics: SupplierFabric[];
   factoryEmail: string | null;
-  onSent: (result: { emailedAt: string; emailTo: string }) => void;
+  onSent: (poIds: string[], result: { emailedAt: string; emailTo: string }) => void;
 }) {
-  const email = purchaseOrdersBatchToEmail(batch.orders, fabrics, {
-    fromEmail: factoryEmail,
-    clientCodeByPoId: Object.fromEntries(
-      batch.orders.map((order) => [order.id, order.client_code ?? "—"])
-    ),
-    soNumberByPoId: Object.fromEntries(batch.orders.map((order) => [order.id, order.so_number])),
-    deliveryDestinationByPoId: Object.fromEntries(
-      batch.orders.map((order) => [order.id, order.delivery_destination])
-    ),
-  });
+  const showOrderPicker = batch.orders.length > 1 && !batch.emailed_at;
+  const [selectedPoIds, setSelectedPoIds] = useState<Set<string>>(
+    () => new Set(batch.orders.map((order) => order.id))
+  );
 
-  const poNumbers = batch.orders.map((order) => order.po_number);
-  const orderCount = new Set(batch.orders.map((order) => order.sales_order_id).filter(Boolean)).size;
+  useEffect(() => {
+    setSelectedPoIds(new Set(batch.orders.map((order) => order.id)));
+  }, [batch.id, batch.orders]);
+
+  const selectedOrders = useMemo(
+    () => batch.orders.filter((order) => selectedPoIds.has(order.id)),
+    [batch.orders, selectedPoIds]
+  );
+
+  const emailOptions = useMemo(
+    () => ({
+      fromEmail: factoryEmail,
+      clientCodeByPoId: Object.fromEntries(
+        batch.orders.map((order) => [order.id, order.client_code ?? "—"])
+      ),
+      soNumberByPoId: Object.fromEntries(batch.orders.map((order) => [order.id, order.so_number])),
+      deliveryDestinationByPoId: Object.fromEntries(
+        batch.orders.map((order) => [order.id, order.delivery_destination])
+      ),
+    }),
+    [batch.orders, factoryEmail]
+  );
+
+  const email = useMemo(() => {
+    if (selectedOrders.length === 0) {
+      const first = batch.orders[0];
+      if (!first) {
+        throw new Error("Batch has no purchase orders.");
+      }
+      const base = purchaseOrdersBatchToEmail([first], fabrics, emailOptions);
+      return {
+        ...base,
+        subject: `Fabric Orders — ${batch.supplier_name}`,
+        body: "Select at least one order above to preview the supplier email.",
+      };
+    }
+    return purchaseOrdersBatchToEmail(selectedOrders, fabrics, emailOptions);
+  }, [selectedOrders, batch.orders, batch.supplier_name, fabrics, emailOptions]);
+
+  const poNumbers = selectedOrders.map((order) => order.po_number);
+  const selectedPoIdsList = selectedOrders.map((order) => order.id);
+  const orderCount = new Set(selectedOrders.map((order) => order.sales_order_id).filter(Boolean)).size;
+  const fabricLineCount = selectedOrders.reduce((sum, order) => sum + (order.lines?.length ?? 0), 0);
   const summaryParts = [
     orderCount > 0 ? `${orderCount} order${orderCount !== 1 ? "s" : ""}` : null,
-    `${batch.fabric_line_count} fabric line${batch.fabric_line_count !== 1 ? "s" : ""}`,
+    `${fabricLineCount} fabric line${fabricLineCount !== 1 ? "s" : ""}`,
   ].filter(Boolean);
+
+  function toggleOrderIncluded(orderId: string, included: boolean) {
+    setSelectedPoIds((current) => {
+      const next = new Set(current);
+      if (included) {
+        next.add(orderId);
+      } else {
+        next.delete(orderId);
+      }
+      return next;
+    });
+  }
 
   return (
     <div className="space-y-2">
@@ -251,7 +298,16 @@ function SupplierEmailBatchCard({
               </>
             )}
           </p>
-          <BatchOrderLinks orders={batch.orders} />
+          {showOrderPicker ? (
+            <BatchOrderPicker
+              supplierName={batch.supplier_name}
+              orders={batch.orders}
+              selectedPoIds={selectedPoIds}
+              onToggle={toggleOrderIncluded}
+            />
+          ) : (
+            <BatchOrderLinks orders={batch.orders} />
+          )}
         </div>
         {batch.emailed_at ? (
           <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
@@ -266,8 +322,85 @@ function SupplierEmailBatchCard({
         email={email}
         poNumber={poNumbers[0]}
         poNumbers={poNumbers}
-        onSent={onSent}
+        onSent={(result) => onSent(selectedPoIdsList, result)}
       />
+    </div>
+  );
+}
+
+function BatchOrderPicker({
+  supplierName,
+  orders,
+  selectedPoIds,
+  onToggle,
+}: {
+  supplierName: string;
+  orders: SupplierEmailQueueItem[];
+  selectedPoIds: Set<string>;
+  onToggle: (orderId: string, included: boolean) => void;
+}) {
+  return (
+    <div className="mt-2 rounded-lg border border-indigo-100 bg-indigo-50/60 px-3 py-2">
+      <p className="text-xs font-medium text-indigo-900">Send together to {supplierName}</p>
+      <ul className="mt-2 space-y-1.5">
+        {orders.map((order) => {
+          const checked = selectedPoIds.has(order.id);
+          const lineCount = order.lines?.length ?? 0;
+          return (
+            <li key={order.id}>
+              <label className="flex cursor-pointer items-start gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={(event) => onToggle(order.id, event.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300"
+                />
+                <span>
+                  <span className="font-medium text-slate-900">Include in this email</span>
+                  {order.so_number && (
+                    <>
+                      {" — "}
+                      <span className="font-mono">{order.so_number}</span>
+                    </>
+                  )}
+                  {order.client_code && (
+                    <>
+                      {" · "}
+                      <span className="font-mono text-indigo-700">{order.client_code}</span>
+                    </>
+                  )}
+                  {order.po_number && (
+                    <>
+                      {" · "}
+                      <span className="font-mono text-slate-500">{order.po_number}</span>
+                    </>
+                  )}
+                  {lineCount > 0 && (
+                    <>
+                      {" · "}
+                      <span className="text-slate-500">
+                        {lineCount} fabric line{lineCount !== 1 ? "s" : ""}
+                      </span>
+                    </>
+                  )}
+                  {order.sales_order_id && (
+                    <>
+                      {" "}
+                      <Link
+                        href={`/orders/${order.sales_order_id}`}
+                        className="text-indigo-600 hover:text-indigo-700"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        View
+                      </Link>
+                    </>
+                  )}
+                </span>
+              </label>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

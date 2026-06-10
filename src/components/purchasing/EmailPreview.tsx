@@ -38,6 +38,9 @@ export function EmailPreview({ email, poNumber, poNumbers, onSent }: EmailPrevie
     setBody(email.body);
   }, [email]);
 
+  const includedPoNumbers = poNumbers ?? (poNumber ? [poNumber] : []);
+  const hasIncludedPos = includedPoNumbers.length > 0;
+
   const isDirty = useMemo(
     () =>
       to !== email.to ||
@@ -107,8 +110,8 @@ export function EmailPreview({ email, poNumber, poNumbers, onSent }: EmailPrevie
           cc,
           subject,
           body,
-          poNumber,
-          poNumbers: poNumbers ?? (poNumber ? [poNumber] : []),
+          poNumber: includedPoNumbers[0],
+          poNumbers: includedPoNumbers,
         }),
       });
       const data = await res.json();
@@ -149,6 +152,7 @@ export function EmailPreview({ email, poNumber, poNumbers, onSent }: EmailPrevie
             <Button
               variant="secondary"
               size="sm"
+              disabled={!hasIncludedPos}
               onClick={() =>
                 onSent({
                   emailedAt: new Date().toISOString(),
@@ -160,7 +164,11 @@ export function EmailPreview({ email, poNumber, poNumbers, onSent }: EmailPrevie
               Already sent
             </Button>
           )}
-          <Button size="sm" onClick={sendEmail} disabled={!canSend || !to.trim() || sending}>
+          <Button
+            size="sm"
+            onClick={sendEmail}
+            disabled={!canSend || !to.trim() || sending || !hasIncludedPos}
+          >
             {sending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -176,6 +184,11 @@ export function EmailPreview({ email, poNumber, poNumbers, onSent }: EmailPrevie
         </div>
       </div>
       <div className="space-y-3 px-6 py-4 text-sm">
+        {!hasIncludedPos && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
+            Select at least one order above to include in this supplier email.
+          </div>
+        )}
         {!canSend && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
             Direct send is not configured yet. Add SMTP settings under Purchasing → Supplier Emails, or use Open in Mail.
