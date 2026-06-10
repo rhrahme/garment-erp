@@ -84,7 +84,7 @@ export function TodaysFabricPanel({ initialSummary }: TodaysFabricPanelProps) {
         resultMessage = "No new POs were created.";
       }
       if (skipped.length > 0) {
-        resultMessage += ` Skipped ${skipped.length}: ${skipped.map((item) => item.so_number).join(", ")}.`;
+        resultMessage += ` Skipped ${skipped.length}: ${skipped.map((item) => `${item.so_number} (${item.reason})`).join("; ")}.`;
       }
       setMessage(resultMessage);
       await refreshSummary();

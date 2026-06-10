@@ -37,7 +37,7 @@ function resolveTargetOrderIds(orderIds: string[] | undefined): string[] {
 export async function prepareFabricPosBatch(
   options: { orderIds?: string[] } = {}
 ): Promise<PrepareFabricPosBatchResult> {
-  await ensureDocumentsLoaded(["sales_orders", "fabric_orders"]);
+  await ensureDocumentsLoaded(["sales_orders", "fabric_orders", "supplier_contacts"]);
 
   let targetIds = resolveTargetOrderIds(options.orderIds);
   if (targetIds.length === 0) {

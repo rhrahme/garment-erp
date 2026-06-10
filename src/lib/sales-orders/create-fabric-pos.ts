@@ -24,7 +24,7 @@ export async function createFabricPosFromSalesOrder(salesOrderId: string): Promi
   // Warm both Supabase documents before reading/writing. Skipping this on a cold
   // instance reads an empty fabric-order store and then overwrites the whole
   // Supabase `fabric_orders` document with only the newly-created POs.
-  await ensureDocumentsLoaded(["sales_orders", "fabric_orders"]);
+  await ensureDocumentsLoaded(["sales_orders", "fabric_orders", "supplier_contacts"]);
 
   const store = readSalesOrders();
   const salesOrder = store.orders.find((order) => order.id === salesOrderId);

@@ -1,6 +1,6 @@
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSalesOrders } from "@/lib/data/sales-orders";
-import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
+import { listStoredFabricOrdersFresh } from "@/lib/integrations/fabric-order-store";
 import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 
@@ -34,7 +34,7 @@ export async function listSupplierEmailQueue(
 
   const salesById = new Map(readSalesOrders().orders.map((order) => [order.id, order]));
 
-  return listStoredFabricOrders()
+  return (await listStoredFabricOrdersFresh())
     .filter((order) => !salesOrderId || order.sales_order_id === salesOrderId)
     .map((order) => {
       const salesOrder = order.sales_order_id ? salesById.get(order.sales_order_id) : undefined;

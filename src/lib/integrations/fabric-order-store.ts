@@ -1,4 +1,5 @@
 import path from "path";
+import { readJsonFileFreshAsync } from "@/lib/data/document-persistence";
 import { ensureDocumentsLoaded, readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
 import type { PurchaseOrder, PurchaseOrderLine } from "@/lib/types/fabric-sourcing";
 
@@ -31,6 +32,12 @@ function writeStore(store: FabricOrderStore): void {
 
 export function listStoredFabricOrders(): PurchaseOrder[] {
   return readStore().orders;
+}
+
+/** Reload from Supabase — use when listing supplier emails after writes on another instance. */
+export async function listStoredFabricOrdersFresh(): Promise<PurchaseOrder[]> {
+  const store = await readJsonFileFreshAsync(STORE_PATH, { orders: [] }, { force: true });
+  return store.orders;
 }
 
 export function getStoredFabricOrder(id: string): PurchaseOrder | undefined {
