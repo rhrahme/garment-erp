@@ -73,6 +73,78 @@
       "erp_href": "/production",
       "x": 80,
       "y": 83
+    },
+    {
+      "id": "line-1",
+      "label": "Line 1",
+      "description": "Production line 1 — closest to the Receive side.",
+      "zone": "production_line",
+      "line_number": 1,
+      "x": 48,
+      "y": 50
+    },
+    {
+      "id": "line-2",
+      "label": "Line 2",
+      "description": "Production line 2.",
+      "zone": "production_line",
+      "line_number": 2,
+      "x": 54,
+      "y": 50
+    },
+    {
+      "id": "line-3",
+      "label": "Line 3",
+      "description": "Production line 3.",
+      "zone": "production_line",
+      "line_number": 3,
+      "x": 60,
+      "y": 50
+    },
+    {
+      "id": "line-4",
+      "label": "Line 4",
+      "description": "Production line 4.",
+      "zone": "production_line",
+      "line_number": 4,
+      "x": 66,
+      "y": 50
+    },
+    {
+      "id": "line-5",
+      "label": "Line 5",
+      "description": "Production line 5.",
+      "zone": "production_line",
+      "line_number": 5,
+      "x": 71,
+      "y": 50
+    },
+    {
+      "id": "line-6",
+      "label": "Line 6",
+      "description": "Production line 6.",
+      "zone": "production_line",
+      "line_number": 6,
+      "x": 77,
+      "y": 50
+    },
+    {
+      "id": "line-7",
+      "label": "Line 7",
+      "description": "Production line 7.",
+      "zone": "production_line",
+      "line_number": 7,
+      "x": 83,
+      "y": 50
+    },
+    {
+      "id": "line-8",
+      "label": "Line 8",
+      "description": "Production line 8 — furthest from the Receive side.",
+      "zone": "production_line",
+      "line_number": 8,
+      "x": 89,
+      "y": 50
     }
   ]
 }

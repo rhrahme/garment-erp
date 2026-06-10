@@ -10,6 +10,8 @@ import {
   FACTORY_FLOOR_MAP_PDF,
   factoryFloorStationStyle,
   factoryFloorStationsByZone,
+  isProductionLineStation,
+  PRODUCTION_LINE_STYLE,
   type FactoryFloorStation,
   type FactoryFloorZone,
 } from "@/lib/production/factory-floor-stations";
@@ -31,8 +33,9 @@ function StationPin({
   dragging: boolean;
   onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => void;
 }) {
-  const { chip } = factoryFloorStationStyle(station);
-  const bgClass = chip.split(" ")[0];
+  const style = factoryFloorStationStyle(station);
+  const isLine = isProductionLineStation(station);
+  const bgClass = style.chip.split(" ")[0];
 
   return (
     <button
@@ -43,19 +46,34 @@ function StationPin({
         editMode ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
       )}
       style={{ left: `${station.x}%`, top: `${station.y}%` }}
-      aria-label={`${station.label} scan station`}
+      aria-label={isLine ? `${station.label} production line` : `${station.label} scan station`}
       aria-pressed={active}
     >
-      <span
-        className={cn(
-          "relative block h-5 w-5 rounded-full border-2 border-white shadow-md",
-          bgClass,
-          !dragging && "transition-transform group-hover:scale-110",
-          editMode && "h-6 w-6 ring-2 ring-amber-400 ring-offset-1",
-          (active || dragging) && "scale-125 ring-indigo-500",
-          dragging && "ring-amber-500"
-        )}
-      />
+      {isLine ? (
+        <span
+          className={cn(
+            "relative flex h-6 w-6 items-center justify-center rounded-md border-2 text-[11px] font-bold shadow-md",
+            PRODUCTION_LINE_STYLE.pin,
+            !dragging && "transition-transform group-hover:scale-110",
+            editMode && "h-7 w-7 ring-2 ring-amber-400 ring-offset-1",
+            (active || dragging) && "scale-125 ring-indigo-500",
+            dragging && "ring-amber-500"
+          )}
+        >
+          {station.line_number}
+        </span>
+      ) : (
+        <span
+          className={cn(
+            "relative block h-5 w-5 rounded-full border-2 border-white shadow-md",
+            bgClass,
+            !dragging && "transition-transform group-hover:scale-110",
+            editMode && "h-6 w-6 ring-2 ring-amber-400 ring-offset-1",
+            (active || dragging) && "scale-125 ring-indigo-500",
+            dragging && "ring-amber-500"
+          )}
+        />
+      )}
       {editMode ? (
         <span className="pointer-events-none absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-white shadow">
           <GripVertical className="h-2.5 w-2.5" aria-hidden />
@@ -64,7 +82,7 @@ function StationPin({
       <span
         className={cn(
           "pointer-events-none absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-semibold shadow-sm",
-          chip,
+          style.chip,
           active || dragging ? "opacity-100" : "opacity-90 group-hover:opacity-100",
           editMode && "ring-1 ring-amber-300"
         )}
@@ -104,7 +122,8 @@ export function FactoryFloorMapViewer() {
   const mapLegendStages = useMemo(() => {
     const seen = new Set<string>();
     return stations
-      .filter((station) => {
+      .filter((station): station is Extract<FactoryFloorStation, { scan_stage: string }> => {
+        if (isProductionLineStation(station)) return false;
         if (seen.has(station.scan_stage)) return false;
         seen.add(station.scan_stage);
         return true;
@@ -114,6 +133,11 @@ export function FactoryFloorMapViewer() {
         label: `${scanStageStyles(station.scan_stage).label} — ${station.label}`,
       }));
   }, [stations]);
+
+  const productionLineCount = useMemo(
+    () => stations.filter(isProductionLineStation).length,
+    [stations]
+  );
 
   const positionFromClient = useCallback((clientX: number, clientY: number) => {
     const rect = mapRef.current?.getBoundingClientRect();
@@ -204,10 +228,10 @@ export function FactoryFloorMapViewer() {
         <div>
           <p className="font-medium text-slate-900">Hagan factory layout</p>
           <p className="text-sm text-slate-600">
-            Scan stations on the floor plan — colours match Fabric Receiving &amp; Production.
+            Scan stations and production lines on the floor plan — colours match Fabric Receiving &amp; Production.
             {!editMode ? (
               <span className="mt-1 block text-amber-800">
-                Use <strong>Adjust pin positions</strong> to drag icons (Receive, Iron, Cutting, etc.) onto your
+                Use <strong>Adjust pin positions</strong> to drag scan stations and numbered line markers onto your
                 layout.
               </span>
             ) : null}
@@ -258,8 +282,9 @@ export function FactoryFloorMapViewer() {
             Adjust mode — drag icons to match your floor layout
           </p>
           <p className="mt-1.5">
-            Click and drag any coloured pin (Receive, Wash, Iron, Cutting, Sewing, …). Positions auto-save in this
-            browser when you release. Admins can use <strong>Save for all users</strong> to update the shared layout.
+            Click and drag any pin — scan stations (coloured dots) or production lines (numbered badges). Positions
+            auto-save in this browser when you release. Admins can use <strong>Save for all users</strong> to update the
+            shared layout.
           </p>
         </div>
       ) : null}
@@ -277,9 +302,10 @@ export function FactoryFloorMapViewer() {
         <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Show</span>
         {(
           [
-            { id: "all", label: "All stations" },
+            { id: "all", label: "All pins" },
             { id: "fabric_receiving", label: "Fabric receiving" },
             { id: "production", label: "Production" },
+            { id: "production_line", label: "Production lines" },
           ] as const
         ).map((item) => (
           <button
@@ -382,15 +408,17 @@ export function FactoryFloorMapViewer() {
                   x {selected.x}% · y {selected.y}%
                 </p>
                 <p className="text-sm text-slate-600">{selected.description}</p>
-                {!editMode ? (
+                {!editMode && !isProductionLineStation(selected) ? (
                   <Link
                     href={selected.erp_href}
                     className="inline-block text-sm font-medium text-indigo-700 hover:text-indigo-900"
                   >
                     Open {selected.zone === "fabric_receiving" ? "Fabric Receiving" : "Production"} →
                   </Link>
-                ) : (
+                ) : editMode ? (
                   <p className="text-xs text-amber-800">Drag the pin on the map to reposition.</p>
+                ) : (
+                  <p className="text-xs text-slate-500">Reference marker — no scan action.</p>
                 )}
               </div>
             ) : (
@@ -401,7 +429,7 @@ export function FactoryFloorMapViewer() {
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Colour legend</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Scan station colours</p>
             <ul className="mt-2 space-y-1.5">
               {mapLegendStages.map((item) => {
                 const { chip } = scanStageStyles(item.stage);
@@ -413,6 +441,24 @@ export function FactoryFloorMapViewer() {
                 );
               })}
             </ul>
+            {productionLineCount > 0 ? (
+              <>
+                <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">Production lines</p>
+                <ul className="mt-2 space-y-1.5">
+                  <li className="flex items-center gap-2 text-xs text-slate-700">
+                    <span
+                      className={cn(
+                        "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border text-[9px] font-bold",
+                        PRODUCTION_LINE_STYLE.pin
+                      )}
+                    >
+                      1
+                    </span>
+                    Numbered badges — Line 1 nearest Receive, through Line {productionLineCount}
+                  </li>
+                </ul>
+              </>
+            ) : null}
           </div>
         </aside>
       </div>
