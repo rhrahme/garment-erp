@@ -272,7 +272,12 @@ export function ClientProfilesEditor() {
     const sorted = sortClients(filtered, sortBy);
     if (!editingId) return sorted;
 
-    const editing = sorted.find((client) => client.id === editingId);
+    // Always keep the row being edited pinned and visible — even if it no
+    // longer matches the active brand filter or search. Looking it up in the
+    // unfiltered list (not `sorted`) means a brand-new row with no brand yet,
+    // or a row whose brand was just changed, never silently disappears while
+    // the user is still filling it in.
+    const editing = personClients.find((client) => client.id === editingId);
     if (!editing) return sorted;
 
     return [editing, ...sorted.filter((client) => client.id !== editingId)];
