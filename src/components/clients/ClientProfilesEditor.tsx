@@ -265,6 +265,19 @@ export function ClientProfilesEditor() {
     [draft.clients]
   );
 
+  // True while the user is filling in a brand-new row that isn't saveable yet
+  // (e.g. just picked a brand, or hasn't entered first + last name). Auto-save
+  // must stay paused during this window: a blank/incomplete new row is excluded
+  // from `clientsToPersist`, so saving the *other* rows and replacing the draft
+  // with the server response would silently drop the row being created.
+  const isEditingIncompleteNewClient = useMemo(() => {
+    if (!editingId) return false;
+    const editing = draft.clients.find((client) => client.id === editingId);
+    if (!editing) return false;
+    const isNew = !saved.clients.some((savedClient) => savedClient.id === editing.id);
+    return isNew && !isClientSaveable(editing);
+  }, [editingId, draft.clients, saved.clients]);
+
   const displayClients = useMemo(() => {
     const filtered = searchClients(filterClientsByBrand(personClients, brandFilter), debouncedSearchQuery, {
       excludeContactFields: !canViewClientContact,
@@ -294,11 +307,22 @@ export function ClientProfilesEditor() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "Failed to save clients");
-    setSaved(data as ClientsFile);
-    setDraft(cloneClients(data as ClientsFile));
+    const savedData = data as ClientsFile;
+    setSaved(savedData);
+    setDraft(() => {
+      const next = cloneClients(savedData);
+      // If a save happened while the user is still creating a row (so it was
+      // excluded from the payload), keep that in-progress row in the draft so
+      // the open editor never vanishes from under them.
+      if (editingId && !next.clients.some((client) => client.id === editingId)) {
+        const inProgress = draft.clients.find((client) => client.id === editingId);
+        if (inProgress) next.clients = [inProgress, ...next.clients];
+      }
+      return next;
+    });
     setIsDirty(false);
     setError(null);
-  }, [clientsToPersist, draft]);
+  }, [clientsToPersist, draft, editingId]);
 
   const autoSaveWaitingMessage = canViewClientContact
     ? "Add first name, last name, and brand to auto-save"
@@ -306,13 +330,24 @@ export function ClientProfilesEditor() {
 
   const { status: autoSaveStatus, error: autoSaveError, isSaving, saveNow } = useAutoSave({
     isDirty,
-    canSave: canAutoSave,
+    canSave: canAutoSave && !isEditingIncompleteNewClient,
     onSave: persistDraft,
     delayMs: 3_000,
     waitingMessage: autoSaveWaitingMessage,
   });
 
   async function closeClientEditor(clientId: string) {
+    const client = draft.clients.find((c) => c.id === clientId);
+    const isNew = client ? !saved.clients.some((s) => s.id === clientId) : false;
+
+    // Closing a brand-new row that was never completed abandons it: drop it
+    // from the draft rather than trying (and failing) to persist it.
+    if (client && isNew && !isClientSaveable(client)) {
+      setDraft((prev) => ({ ...prev, clients: prev.clients.filter((c) => c.id !== clientId) }));
+      setEditingId(null);
+      return;
+    }
+
     if (editingId === clientId && isDirty && canAutoSave) {
       try {
         await persistDraft();
