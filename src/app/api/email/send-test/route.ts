@@ -22,7 +22,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Enter the email password first." }, { status: 400 });
     }
 
-    saveSmtpPassword(password);
+    try {
+      saveSmtpPassword(password);
+    } catch (saveError) {
+      const message = saveError instanceof Error ? saveError.message : "Could not save password.";
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
 
     const from = getFactoryOrdersEmail() ?? "orders.ruh@hagan.pro";
     const result = await sendEmail({

@@ -44,7 +44,29 @@ export function readSmtpPassword(): string | null {
   }
 }
 
+export function isVercelDeployment(): boolean {
+  return process.env.VERCEL === "1";
+}
+
+/** Env var names still required for Direct send (values never returned). */
+export function getSmtpMissingEnvVars(): string[] {
+  const missing: string[] = [];
+  if (!process.env.SMTP_HOST?.trim()) missing.push("SMTP_HOST");
+  if (!process.env.SMTP_USER?.trim()) missing.push("SMTP_USER");
+  if (!readSmtpPassword()) missing.push("SMTP_PASS");
+  const user = process.env.SMTP_USER?.trim();
+  const from = process.env.SMTP_FROM?.trim() || user;
+  if (!from) missing.push("SMTP_FROM");
+  return missing;
+}
+
 export function saveSmtpPassword(password: string): void {
+  if (isVercelDeployment()) {
+    throw new Error(
+      "Password cannot be saved on Vercel. Add SMTP_PASS in the Vercel project Environment Variables, then redeploy."
+    );
+  }
+
   fs.writeFileSync(
     SECRET_PATH,
     `${JSON.stringify({ password: password.trim() }, null, 2)}\n`,
@@ -94,20 +116,52 @@ function createTransport(config: SmtpConfig) {
   return nodemailer.createTransport(options);
 }
 
+function smtpNotConfiguredMessage(): string {
+  const missing = getSmtpMissingEnvVars();
+  if (isVercelDeployment()) {
+    return `SMTP is not configured on Vercel. Add ${missing.join(", ")} in Project Settings → Environment Variables, then redeploy.`;
+  }
+  if (missing.includes("SMTP_PASS")) {
+    return "SMTP is not configured. Set SMTP_PASS in .env.local or paste the password under Purchasing → Supplier Emails.";
+  }
+  return `SMTP is not configured. Add ${missing.join(", ")} to .env.local.`;
+}
+
 export async function verifySmtpConnection(): Promise<void> {
   const config = getSmtpConfig();
   if (!config) {
-    throw new Error("SMTP is not configured. Add SMTP settings to .env.local.");
+    throw new Error(smtpNotConfiguredMessage());
   }
 
   const transport = createTransport(config);
   await transport.verify();
 }
 
-export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
-  const config = getSmtpConfig();
+export async function sendEmail(
+  input: SendEmailInput,
+  options?: { passOverride?: string }
+): Promise<SendEmailResult> {
+  let config = getSmtpConfig();
+  const passOverride = options?.passOverride?.trim();
+  if (!config && passOverride) {
+    const host = process.env.SMTP_HOST?.trim();
+    const user = process.env.SMTP_USER?.trim();
+    const from = process.env.SMTP_FROM?.trim() || user;
+    if (host && user && from) {
+      const port = Number(process.env.SMTP_PORT ?? 587);
+      config = {
+        host,
+        port: Number.isFinite(port) ? port : 587,
+        secure: process.env.SMTP_SECURE === "true",
+        user,
+        pass: passOverride,
+        from,
+        fromName: process.env.SMTP_FROM_NAME?.trim() || "Hagan Fabric Orders",
+      };
+    }
+  }
   if (!config) {
-    throw new Error("SMTP is not configured. Add SMTP settings to .env.local.");
+    throw new Error(smtpNotConfiguredMessage());
   }
 
   const recipients = [...new Set(input.to.map((value) => value.trim()).filter(Boolean))];

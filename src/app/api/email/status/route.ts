@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
-import { getSmtpConfig, isSmtpConfigured, verifySmtpConnection } from "@/lib/email/smtp";
+import {
+  getSmtpConfig,
+  getSmtpMissingEnvVars,
+  isSmtpConfigured,
+  isVercelDeployment,
+  verifySmtpConnection,
+} from "@/lib/email/smtp";
 import { getFactoryOrdersEmail } from "@/lib/data/supplier-catalogs";
 
 export async function GET() {
   const config = getSmtpConfig();
   const factoryEmail = getFactoryOrdersEmail();
+  const missing = getSmtpMissingEnvVars();
 
   return NextResponse.json({
     configured: isSmtpConfigured(),
@@ -14,6 +21,8 @@ export async function GET() {
     port: config?.port ?? null,
     secure: config?.secure ?? false,
     factoryOrdersEmail: factoryEmail,
+    missing,
+    isProduction: isVercelDeployment(),
   });
 }
 

@@ -191,7 +191,8 @@ export function EmailPreview({ email, poNumber, poNumbers, onSent }: EmailPrevie
         )}
         {!canSend && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
-            Direct send is not configured yet. Add SMTP settings under Purchasing → Supplier Emails, or use Open in Mail.
+            Direct send is not configured yet. On production, add SMTP_* environment variables in Vercel
+            (see Purchasing → Supplier Emails). Locally, set them in .env.local or use Open in Mail.
           </div>
         )}
         {email.from && (
