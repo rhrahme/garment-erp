@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { EmailPreview } from "@/components/purchasing/EmailPreview";
-import { purchaseOrdersBatchToEmail } from "@/lib/fabric-sourcing/email-content";
+import { purchaseOrdersBatchToEmail, formatDeliveryDestinationForSubject } from "@/lib/fabric-sourcing/email-content";
 import type {
   SupplierEmailBatch,
   SupplierEmailQueueItem,
@@ -249,9 +249,12 @@ function SupplierEmailBatchCard({
         throw new Error("Batch has no purchase orders.");
       }
       const base = purchaseOrdersBatchToEmail([first], fabrics, emailOptions);
+      const destinationLabel = formatDeliveryDestinationForSubject(
+        batch.orders.map((order) => order.delivery_destination)
+      );
       return {
         ...base,
-        subject: `Fabric Orders — ${batch.supplier_name}`,
+        subject: `Fabric Orders — ${batch.supplier_name}${destinationLabel ? ` — ${destinationLabel}` : ""}`,
         body: "Select at least one order above to preview the supplier email.",
       };
     }

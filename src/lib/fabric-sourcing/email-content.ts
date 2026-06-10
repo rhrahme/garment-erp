@@ -53,6 +53,29 @@ function formatQuantityWithUnit(quantity: number, unit: string): string {
   return `${value} ${unit}`;
 }
 
+function destinationCity(id: DeliveryDestination | null | undefined): string | undefined {
+  return id ? getDeliveryDestination(id)?.city : undefined;
+}
+
+/** City name(s) for email subjects — e.g. "Riyadh" or "Riyadh & Dubai". */
+export function formatDeliveryDestinationForSubject(
+  destinations: Array<DeliveryDestination | null | undefined>
+): string | undefined {
+  const cities = [
+    ...new Set(destinations.map(destinationCity).filter((city): city is string => Boolean(city))),
+  ];
+  if (cities.length === 0) return undefined;
+  if (cities.length === 1) return cities[0];
+  return cities.join(" & ");
+}
+
+function subjectDestinationSuffix(
+  destination: DeliveryDestination | null | undefined
+): string {
+  const city = destinationCity(destination);
+  return city ? ` — ${city}` : "";
+}
+
 export function buildFabricOrderEmail(params: {
   supplierName: string;
   supplierEmail?: string;
@@ -110,7 +133,7 @@ ${from ?? "[Your Factory Name]"}`;
     from,
     to,
     cc,
-    subject: `Fabric Order ${poNumber} — ${clientCode}`,
+    subject: `Fabric Order ${poNumber} — ${clientCode}${subjectDestinationSuffix(deliveryDestination)}`,
     body,
   };
 }
@@ -199,10 +222,14 @@ ${formatEmailLineRows(section.lines, section.clientCode)}`;
     })
     .join("\n\n");
 
+  const batchDestinationLabel = formatDeliveryDestinationForSubject(
+    sections.map((section) => section.deliveryDestination)
+  );
+  const batchDestinationSuffix = batchDestinationLabel ? ` — ${batchDestinationLabel}` : "";
   const subject =
     sections.length === 1
-      ? `Fabric Order ${sections[0]!.poNumber} — ${sections[0]!.clientCode}`
-      : `Fabric Orders — ${supplierName} (${sections.length} orders)`;
+      ? `Fabric Order ${sections[0]!.poNumber} — ${sections[0]!.clientCode}${subjectDestinationSuffix(sections[0]!.deliveryDestination)}`
+      : `Fabric Orders — ${supplierName}${batchDestinationSuffix}`;
 
   const body = `Dear ${supplierName},
 
