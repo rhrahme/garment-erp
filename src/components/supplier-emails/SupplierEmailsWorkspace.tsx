@@ -14,7 +14,7 @@ import {
   groupSupplierEmailBatches,
   type SupplierEmailBatch,
   type SupplierEmailQueueItem,
-} from "@/lib/fabric-sourcing/supplier-email-queue";
+} from "@/lib/fabric-sourcing/supplier-email-batches";
 import type { SupplierFabric } from "@/lib/types/fabric-sourcing";
 import { formatDateTimeRiyadh } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
