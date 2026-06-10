@@ -24,9 +24,25 @@ read_smtp_pass() {
   fi
 }
 
+read_imap_pass() {
+  local from_env
+  from_env="$(read_env IMAP_PASS 2>/dev/null || true)"
+  if [ -n "$from_env" ]; then
+    printf '%s' "$from_env"
+    return
+  fi
+  if [ -f imap-secret.local.json ]; then
+    python3 -c "import json; print(json.load(open('imap-secret.local.json')).get('password','').strip())"
+  fi
+}
+
 env_value() {
   if [ "$1" = "SMTP_PASS" ]; then
     read_smtp_pass
+    return
+  fi
+  if [ "$1" = "IMAP_PASS" ]; then
+    read_imap_pass
     return
   fi
   read_env "$1"
@@ -133,6 +149,7 @@ for key in \
   ZAPIER_WEBHOOK_URL \
   SMTP_HOST SMTP_PORT SMTP_SECURE SMTP_USER SMTP_PASS SMTP_FROM SMTP_FROM_NAME \
   IMAP_HOST IMAP_PORT IMAP_SECURE IMAP_USER IMAP_PASS \
+  TRACK17_API_KEY \
   CLICKUP_API_TOKEN; do
   val="$(env_value "$key" 2>/dev/null || true)"
   if set_vercel_env_optional "$key" "$val"; then

@@ -4,6 +4,7 @@ import {
   INBOX_SCAN_DAYS_DEFAULT,
   INBOX_SCAN_LIMIT_DEFAULT,
 } from "@/lib/email/inbound/scan-inbox-config";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getInboxScanEmail, saveImapPassword } from "@/lib/email/imap-auth";
 import { isImapConfigured } from "@/lib/email/imap-config";
 import { getFactoryOrdersEmail } from "@/lib/data/supplier-catalogs";
@@ -18,6 +19,7 @@ function inboxNotConfiguredMessage(): string {
 
 export async function POST(request: Request) {
   try {
+    await ensureDocumentsLoaded(["supplier_contacts"]);
     const body = (await request.json().catch(() => ({}))) as {
       password?: string;
       days?: number;
@@ -40,6 +42,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
+  await ensureDocumentsLoaded(["supplier_contacts"]);
   return NextResponse.json({
     configured: isImapConfigured(),
     scan_mailbox: getInboxScanEmail(),
