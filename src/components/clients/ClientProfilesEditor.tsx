@@ -69,6 +69,38 @@ function cloneClients(data: ClientsFile): ClientsFile {
   return JSON.parse(JSON.stringify(data)) as ClientsFile;
 }
 
+/**
+ * Focus an input without letting the page jump.
+ *
+ * Safari/iOS ignore `focus({ preventScroll: true })` and scroll the nearest
+ * scrollable ancestor to bring the field into view. On the dashboard that
+ * ancestor is `<main className="overflow-y-auto">`, so auto-focusing the new
+ * client's first-name field yanks the page down to the client list while the
+ * user is still typing. Snapshot every scrollable ancestor (and the window)
+ * and restore their positions right after focusing so nothing moves.
+ */
+function focusWithoutScroll(input: HTMLElement | null) {
+  if (!input) return;
+
+  const ancestors: { el: HTMLElement; top: number; left: number }[] = [];
+  for (let node = input.parentElement; node; node = node.parentElement) {
+    const { overflowY, overflowX } = getComputedStyle(node);
+    if (/(auto|scroll|overlay)/.test(`${overflowY}${overflowX}`)) {
+      ancestors.push({ el: node, top: node.scrollTop, left: node.scrollLeft });
+    }
+  }
+  const winX = window.scrollX;
+  const winY = window.scrollY;
+
+  input.focus({ preventScroll: true });
+
+  for (const { el, top, left } of ancestors) {
+    el.scrollTop = top;
+    el.scrollLeft = left;
+  }
+  window.scrollTo(winX, winY);
+}
+
 function sortClients(clients: ClientProfile[], sortBy: ClientSortBy): ClientProfile[] {
   return [...clients].sort((a, b) => {
     switch (sortBy) {
@@ -289,7 +321,7 @@ export function ClientProfilesEditor() {
 
   useEffect(() => {
     if (!editingId) return;
-    const timer = window.setTimeout(() => firstNameInputRef.current?.focus({ preventScroll: true }), 0);
+    const timer = window.setTimeout(() => focusWithoutScroll(firstNameInputRef.current), 0);
     return () => window.clearTimeout(timer);
   }, [editingId]);
 
