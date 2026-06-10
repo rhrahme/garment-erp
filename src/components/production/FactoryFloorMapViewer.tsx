@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ExternalLink, GripVertical, Move, ZoomIn, ZoomOut } from "lucide-react";
+import { ExternalLink, GripVertical, Move, Printer, QrCode, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useFactoryFloorStationPositions } from "@/hooks/useFactoryFloorStationPositions";
+import { useFactoryWorkstationPositions } from "@/hooks/useFactoryWorkstationPositions";
 import {
   FACTORY_FLOOR_MAP_IMAGE,
   FACTORY_FLOOR_MAP_PDF,
@@ -15,8 +16,10 @@ import {
   type FactoryFloorStation,
   type FactoryFloorZone,
 } from "@/lib/production/factory-floor-stations";
+import type { FactoryWorkstation } from "@/lib/production/factory-workstations";
 import { scanStageStyles } from "@/lib/production/scan-stage-highlight";
 import { cn } from "@/lib/utils";
+import { WorkstationQrDialog } from "@/components/production/WorkstationQrDialog";
 
 type ZoneFilter = FactoryFloorZone | "all";
 
@@ -93,6 +96,54 @@ function StationPin({
   );
 }
 
+function WorkstationPin({
+  workstation,
+  active,
+  editMode,
+  dragging,
+  onPointerDown,
+}: {
+  workstation: FactoryWorkstation;
+  active: boolean;
+  editMode: boolean;
+  dragging: boolean;
+  onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onPointerDown={onPointerDown}
+      className={cn(
+        "group absolute z-[5] touch-none -translate-x-1/2 -translate-y-1/2 focus:outline-none",
+        editMode ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+      )}
+      style={{ left: `${workstation.x}%`, top: `${workstation.y}%` }}
+      aria-label={`${workstation.label} workstation`}
+      aria-pressed={active}
+    >
+      <span
+        className={cn(
+          "relative flex h-4 w-4 items-center justify-center rounded-full border border-white bg-slate-600 text-[8px] font-bold text-white shadow",
+          !dragging && "transition-transform group-hover:scale-110",
+          editMode && "h-5 w-5 ring-2 ring-amber-400 ring-offset-1",
+          (active || dragging) && "scale-125 ring-indigo-500",
+          dragging && "ring-amber-500"
+        )}
+      >
+        {workstation.station_number}
+      </span>
+      <span
+        className={cn(
+          "pointer-events-none absolute left-1/2 top-full mt-0.5 -translate-x-1/2 whitespace-nowrap rounded bg-slate-800 px-1 py-px text-[8px] font-semibold text-white shadow-sm",
+          active || dragging ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        )}
+      >
+        {workstation.id}
+      </span>
+    </button>
+  );
+}
+
 export function FactoryFloorMapViewer() {
   const {
     stations,
@@ -103,22 +154,40 @@ export function FactoryFloorMapViewer() {
     hasBrowserOverrides,
   } = useFactoryFloorStationPositions();
 
+  const {
+    workstations,
+    updatePosition: updateWorkstationPosition,
+    saveToBrowser: saveWorkstationsToBrowser,
+    resetToDefaults: resetWorkstationDefaults,
+    dirty: workstationsDirty,
+    hasBrowserOverrides: hasWorkstationOverrides,
+  } = useFactoryWorkstationPositions();
+
   const [zoom, setZoom] = useState(100);
   const [zone, setZone] = useState<ZoneFilter>("all");
   const [showStations, setShowStations] = useState(true);
+  const [showWorkstations, setShowWorkstations] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedWorkstationId, setSelectedWorkstationId] = useState<string | null>(null);
+  const [qrWorkstation, setQrWorkstation] = useState<FactoryWorkstation | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [draggingWorkstationId, setDraggingWorkstationId] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savingServer, setSavingServer] = useState(false);
 
   const mapRef = useRef<HTMLDivElement>(null);
   const dragIdRef = useRef<string | null>(null);
+  const dragWorkstationIdRef = useRef<string | null>(null);
   const dragCleanupRef = useRef<(() => void) | null>(null);
 
   const visibleStations = factoryFloorStationsByZone(zone, stations);
+  const showWorkstationPins =
+    showWorkstations && (zone === "all" || zone === "production_line") && showStations;
+  const visibleWorkstations = showWorkstationPins ? workstations : [];
   const selected = stations.find((s) => s.id === selectedId) ?? null;
+  const selectedWorkstation = workstations.find((ws) => ws.id === selectedWorkstationId) ?? null;
   const mapLegendStages = useMemo(() => {
     const seen = new Set<string>();
     return stations
@@ -154,18 +223,24 @@ export function FactoryFloorMapViewer() {
 
   const finishDrag = useCallback(() => {
     clearDragListeners();
-    if (!dragIdRef.current) return;
+    const hadStation = Boolean(dragIdRef.current);
+    const hadWorkstation = Boolean(dragWorkstationIdRef.current);
     dragIdRef.current = null;
+    dragWorkstationIdRef.current = null;
     setDraggingId(null);
-    saveToBrowser();
+    setDraggingWorkstationId(null);
+    if (!hadStation && !hadWorkstation) return;
+    if (hadStation) saveToBrowser();
+    if (hadWorkstation) saveWorkstationsToBrowser();
     setSaveMessage("Position saved in this browser.");
     setTimeout(() => setSaveMessage(null), 2500);
-  }, [clearDragListeners, saveToBrowser]);
+  }, [clearDragListeners, saveToBrowser, saveWorkstationsToBrowser]);
 
   const handlePinPointerDown = useCallback(
     (stationId: string, event: React.PointerEvent<HTMLButtonElement>) => {
       if (!editMode) {
         setSelectedId(stationId);
+        setSelectedWorkstationId(null);
         return;
       }
       event.preventDefault();
@@ -197,6 +272,55 @@ export function FactoryFloorMapViewer() {
     [clearDragListeners, editMode, finishDrag, positionFromClient, updatePosition]
   );
 
+  const handleWorkstationPointerDown = useCallback(
+    (workstationId: string, event: React.PointerEvent<HTMLButtonElement>) => {
+      const workstation = workstations.find((ws) => ws.id === workstationId);
+      if (!workstation) return;
+
+      if (!editMode) {
+        setSelectedWorkstationId(workstationId);
+        setSelectedId(null);
+        setQrWorkstation(workstation);
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      clearDragListeners();
+      dragWorkstationIdRef.current = workstationId;
+      setDraggingWorkstationId(workstationId);
+      setSelectedWorkstationId(workstationId);
+      setSelectedId(null);
+
+      const onMove = (moveEvent: PointerEvent) => {
+        if (dragWorkstationIdRef.current !== workstationId) return;
+        const pos = positionFromClient(moveEvent.clientX, moveEvent.clientY);
+        if (!pos) return;
+        updateWorkstationPosition(workstationId, pos.x, pos.y);
+      };
+      const onUp = () => finishDrag();
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onUp);
+      dragCleanupRef.current = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointercancel", onUp);
+      };
+
+      event.currentTarget.setPointerCapture(event.pointerId);
+    },
+    [
+      clearDragListeners,
+      editMode,
+      finishDrag,
+      positionFromClient,
+      updateWorkstationPosition,
+      workstations,
+    ]
+  );
+
   useEffect(() => () => clearDragListeners(), [clearDragListeners]);
 
   async function saveToServer() {
@@ -204,17 +328,31 @@ export function FactoryFloorMapViewer() {
     setSaveMessage(null);
     setSavingServer(true);
     try {
-      const res = await fetch("/api/factory/floor-stations", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          positions: stations.map((s) => ({ id: s.id, x: s.x, y: s.y })),
+      const [stationsRes, workstationsRes] = await Promise.all([
+        fetch("/api/factory/floor-stations", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            positions: stations.map((s) => ({ id: s.id, x: s.x, y: s.y })),
+          }),
         }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to save positions");
+        fetch("/api/factory/workstations", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            positions: workstations.map((ws) => ({ id: ws.id, x: ws.x, y: ws.y })),
+          }),
+        }),
+      ]);
+      const stationsData = await stationsRes.json();
+      const workstationsData = await workstationsRes.json();
+      if (!stationsRes.ok) throw new Error(stationsData.error ?? "Failed to save scan station positions");
+      if (!workstationsRes.ok) {
+        throw new Error(workstationsData.error ?? "Failed to save workstation positions");
+      }
       saveToBrowser();
-      setSaveMessage("Saved for everyone — positions written to ERP data file.");
+      saveWorkstationsToBrowser();
+      setSaveMessage("Saved for everyone — scan stations and workstations written to ERP data.");
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : "Failed to save positions");
     } finally {
@@ -270,6 +408,12 @@ export function FactoryFloorMapViewer() {
             <Button type="button" variant="secondary" size="sm">
               <ExternalLink className="mr-1 h-4 w-4" />
               Open PDF
+            </Button>
+          </a>
+          <a href="/api/factory/workstations?format=pdf" target="_blank" rel="noreferrer">
+            <Button type="button" variant="secondary" size="sm">
+              <Printer className="mr-1 h-4 w-4" />
+              Workstation QRs
             </Button>
           </a>
         </div>
@@ -330,11 +474,22 @@ export function FactoryFloorMapViewer() {
         >
           {showStations ? "Hide pins" : "Show pins"}
         </button>
-        {hasBrowserOverrides || dirty ? (
+        <button
+          type="button"
+          onClick={() => setShowWorkstations((value) => !value)}
+          className={cn(
+            "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+            showWorkstations ? "bg-slate-700 text-white" : "bg-white text-slate-700 ring-1 ring-slate-200"
+          )}
+        >
+          {showWorkstations ? "Hide workstations" : "Show workstations"}
+        </button>
+        {hasBrowserOverrides || dirty || hasWorkstationOverrides || workstationsDirty ? (
           <button
             type="button"
             onClick={() => {
               resetToDefaults();
+              resetWorkstationDefaults();
               setSaveMessage("Reset to default positions.");
               setTimeout(() => setSaveMessage(null), 2500);
             }}
@@ -386,14 +541,47 @@ export function FactoryFloorMapViewer() {
                     onPointerDown={(event) => handlePinPointerDown(station.id, event)}
                   />
                 ))}
+              {visibleWorkstations.map((workstation) => (
+                <WorkstationPin
+                  key={workstation.id}
+                  workstation={workstation}
+                  active={selectedWorkstationId === workstation.id}
+                  editMode={editMode}
+                  dragging={draggingWorkstationId === workstation.id}
+                  onPointerDown={(event) => handleWorkstationPointerDown(workstation.id, event)}
+                />
+              ))}
             </div>
           </div>
         </div>
 
         <aside className="space-y-4">
           <div className="rounded-xl border border-slate-200 bg-white p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Selected station</p>
-            {selected ? (
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Selected</p>
+            {selectedWorkstation && !selected ? (
+              <div className="mt-2 space-y-2">
+                <p className="text-lg font-semibold text-slate-900">{selectedWorkstation.id}</p>
+                <span className="inline-block rounded-full bg-slate-800 px-2 py-0.5 text-xs font-medium text-white">
+                  Workstation · Line {selectedWorkstation.line_number}
+                </span>
+                <p className="font-mono text-xs text-slate-500">
+                  x {selectedWorkstation.x}% · y {selectedWorkstation.y}%
+                </p>
+                <p className="text-sm text-slate-600">{selectedWorkstation.label}</p>
+                {!editMode ? (
+                  <button
+                    type="button"
+                    onClick={() => setQrWorkstation(selectedWorkstation)}
+                    className="inline-flex items-center text-sm font-medium text-indigo-700 hover:text-indigo-900"
+                  >
+                    <QrCode className="mr-1 h-4 w-4" />
+                    Show QR code
+                  </button>
+                ) : (
+                  <p className="text-xs text-amber-800">Drag the pin on the map to reposition.</p>
+                )}
+              </div>
+            ) : selected ? (
               <div className="mt-2 space-y-2">
                 <p className="text-lg font-semibold text-slate-900">{selected.label}</p>
                 <span
@@ -456,12 +644,22 @@ export function FactoryFloorMapViewer() {
                     </span>
                     Numbered badges — Line 1 nearest Receive, through Line {productionLineCount}
                   </li>
+                  <li className="flex items-center gap-2 text-xs text-slate-700">
+                    <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-slate-600 text-[7px] font-bold text-white">
+                      1
+                    </span>
+                    Workstations (L1-W01 … L8-W09) — toggle Show workstations
+                  </li>
                 </ul>
               </>
             ) : null}
           </div>
         </aside>
       </div>
+
+      {qrWorkstation ? (
+        <WorkstationQrDialog workstation={qrWorkstation} onClose={() => setQrWorkstation(null)} />
+      ) : null}
     </div>
   );
 }
