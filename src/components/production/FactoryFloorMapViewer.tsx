@@ -20,6 +20,7 @@ import type { FactoryWorkstation } from "@/lib/production/factory-workstations";
 import { scanStageStyles } from "@/lib/production/scan-stage-highlight";
 import { cn } from "@/lib/utils";
 import { WorkstationQrDialog } from "@/components/production/WorkstationQrDialog";
+import { WorkstationQrPdfPreviewModal } from "@/components/production/WorkstationQrPdfPreviewModal";
 
 type ZoneFilter = FactoryFloorZone | "all";
 
@@ -109,12 +110,14 @@ function WorkstationPin({
   dragging: boolean;
   onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => void;
 }) {
+  const badgeLabel = `${workstation.line_number}·${workstation.station_number}`;
+
   return (
     <button
       type="button"
       onPointerDown={onPointerDown}
       className={cn(
-        "group absolute z-[5] touch-none -translate-x-1/2 -translate-y-1/2 focus:outline-none",
+        "group absolute z-[15] touch-none -translate-x-1/2 -translate-y-1/2 focus:outline-none",
         editMode ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
       )}
       style={{ left: `${workstation.x}%`, top: `${workstation.y}%` }}
@@ -123,22 +126,14 @@ function WorkstationPin({
     >
       <span
         className={cn(
-          "relative flex h-4 w-4 items-center justify-center rounded-full border border-white bg-slate-600 text-[8px] font-bold text-white shadow",
+          "relative flex h-6 min-w-[1.75rem] items-center justify-center rounded-md border-2 border-white bg-slate-900 px-1 text-[10px] font-bold leading-none text-white shadow-md [text-shadow:0_0_1px_rgba(0,0,0,0.8)]",
           !dragging && "transition-transform group-hover:scale-110",
-          editMode && "h-5 w-5 ring-2 ring-amber-400 ring-offset-1",
+          editMode && "h-7 min-w-[2rem] ring-2 ring-amber-400 ring-offset-1",
           (active || dragging) && "scale-125 ring-indigo-500",
           dragging && "ring-amber-500"
         )}
       >
-        {workstation.station_number}
-      </span>
-      <span
-        className={cn(
-          "pointer-events-none absolute left-1/2 top-full mt-0.5 -translate-x-1/2 whitespace-nowrap rounded bg-slate-800 px-1 py-px text-[8px] font-semibold text-white shadow-sm",
-          active || dragging ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-        )}
-      >
-        {workstation.id}
+        {badgeLabel}
       </span>
     </button>
   );
@@ -166,11 +161,12 @@ export function FactoryFloorMapViewer() {
   const [zoom, setZoom] = useState(100);
   const [zone, setZone] = useState<ZoneFilter>("all");
   const [showStations, setShowStations] = useState(true);
-  const [showWorkstations, setShowWorkstations] = useState(false);
+  const [showWorkstations, setShowWorkstations] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedWorkstationId, setSelectedWorkstationId] = useState<string | null>(null);
   const [qrWorkstation, setQrWorkstation] = useState<FactoryWorkstation | null>(null);
+  const [qrPdfPreviewOpen, setQrPdfPreviewOpen] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [draggingWorkstationId, setDraggingWorkstationId] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -183,9 +179,13 @@ export function FactoryFloorMapViewer() {
   const dragCleanupRef = useRef<(() => void) | null>(null);
 
   const visibleStations = factoryFloorStationsByZone(zone, stations);
-  const showWorkstationPins =
-    showWorkstations && (zone === "all" || zone === "production_line") && showStations;
+  const workstationZoneActive = zone === "all" || zone === "production_line";
+  const showWorkstationPins = showWorkstations && workstationZoneActive;
   const visibleWorkstations = showWorkstationPins ? workstations : [];
+
+  useEffect(() => {
+    if (zone === "production_line") setShowWorkstations(true);
+  }, [zone]);
   const selected = stations.find((s) => s.id === selectedId) ?? null;
   const selectedWorkstation = workstations.find((ws) => ws.id === selectedWorkstationId) ?? null;
   const mapLegendStages = useMemo(() => {
@@ -410,12 +410,10 @@ export function FactoryFloorMapViewer() {
               Open PDF
             </Button>
           </a>
-          <a href="/api/factory/workstations?format=pdf" target="_blank" rel="noreferrer">
-            <Button type="button" variant="secondary" size="sm">
-              <Printer className="mr-1 h-4 w-4" />
-              Workstation QRs
-            </Button>
-          </a>
+          <Button type="button" variant="secondary" size="sm" onClick={() => setQrPdfPreviewOpen(true)}>
+            <Printer className="mr-1 h-4 w-4" />
+            Workstation QRs
+          </Button>
         </div>
       </div>
 
@@ -645,10 +643,10 @@ export function FactoryFloorMapViewer() {
                     Numbered badges — Line 1 nearest Receive, through Line {productionLineCount}
                   </li>
                   <li className="flex items-center gap-2 text-xs text-slate-700">
-                    <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-slate-600 text-[7px] font-bold text-white">
-                      1
+                    <span className="flex h-5 min-w-[1.75rem] shrink-0 items-center justify-center rounded-md border border-white bg-slate-900 px-1 text-[9px] font-bold text-white shadow-sm">
+                      1·3
                     </span>
-                    Workstations (L1-W01 … L8-W09) — toggle Show workstations
+                    Workstations (line·table, e.g. 1·3 = Line 1 Table 3) — 72 pins on sewing columns
                   </li>
                 </ul>
               </>
@@ -658,8 +656,16 @@ export function FactoryFloorMapViewer() {
       </div>
 
       {qrWorkstation ? (
-        <WorkstationQrDialog workstation={qrWorkstation} onClose={() => setQrWorkstation(null)} />
+        <WorkstationQrDialog
+          workstation={qrWorkstation}
+          onClose={() => setQrWorkstation(null)}
+          onOpenPdfPreview={() => {
+            setQrWorkstation(null);
+            setQrPdfPreviewOpen(true);
+          }}
+        />
       ) : null}
+      <WorkstationQrPdfPreviewModal open={qrPdfPreviewOpen} onClose={() => setQrPdfPreviewOpen(false)} />
     </div>
   );
 }
