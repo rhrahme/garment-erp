@@ -99,7 +99,7 @@ Print one sticker per fabric cut with the code below (client code / production c
 Fabric No.       Code                         Labels   Quantity
 ────────────────────────────────────────────────────────────────────
 ${lineRows}
-${lines.some((line) => /^S/i.test(line.fabricNumber)) ? "\nNote: fabrics starting with S are Solbiati (linen line).\n" : ""}
+
 Please confirm availability and advise expected shipping date.
 Provide AWB once dispatched.
 
@@ -165,12 +165,6 @@ function formatEmailLineRows(lines: EmailLine[], clientCode: string): string {
     .join("\n");
 }
 
-function solbiatiNote(lines: EmailLine[]): string {
-  return lines.some((line) => /^S/i.test(line.fabricNumber))
-    ? "\nNote: fabrics starting with S are Solbiati (linen line).\n"
-    : "";
-}
-
 export function buildFabricOrderBatchEmail(params: {
   supplierName: string;
   supplierEmail?: string;
@@ -201,7 +195,7 @@ ${deliveryLine}
 
 Fabric No.       Code                         Labels   Quantity
 ────────────────────────────────────────────────────────────────────
-${formatEmailLineRows(section.lines, section.clientCode)}${solbiatiNote(section.lines)}`;
+${formatEmailLineRows(section.lines, section.clientCode)}`;
     })
     .join("\n\n");
 
