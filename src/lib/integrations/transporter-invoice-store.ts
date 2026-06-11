@@ -95,7 +95,7 @@ export function attachTransporterInvoicesToSuppliers(
   }));
 }
 
-export function saveTransporterInvoiceFile(input: {
+export async function saveTransporterInvoiceFile(input: {
   supplier_invoice_id?: string | null;
   carrier: string;
   awb_number: string | null;
