@@ -1,5 +1,5 @@
 import path from "path";
-import { readJsonFile, saveDocument } from "@/lib/data/document-persistence";
+import { readJsonFile, readJsonFileAsync, saveDocument } from "@/lib/data/document-persistence";
 import { recalculateInvoiceTotals } from "@/lib/invoicing/build-invoice";
 import type {
   CustomerInvoice,
@@ -16,6 +16,10 @@ const EMPTY: CustomerInvoicesFile = {
 
 export function readCustomerInvoices(): CustomerInvoicesFile {
   return readJsonFile(INVOICES_PATH, EMPTY);
+}
+
+export async function readCustomerInvoicesAsync(): Promise<CustomerInvoicesFile> {
+  return readJsonFileAsync(INVOICES_PATH, EMPTY);
 }
 
 export async function writeCustomerInvoices(data: CustomerInvoicesFile): Promise<CustomerInvoicesFile> {

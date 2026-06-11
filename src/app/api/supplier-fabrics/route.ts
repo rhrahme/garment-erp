@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const rawSupplierId = url.searchParams.get("supplier_id")?.trim();
   const supplierId = rawSupplierId ? resolveFabricSupplierId(rawSupplierId) : undefined;
 
-  let items = attachLiveSupplierContacts(getAllPriceListItems());
+  let items = await attachLiveSupplierContacts(getAllPriceListItems());
   if (supplierId) {
     items = items.filter((item) => resolveFabricSupplierId(item.supplier_id) === supplierId);
   }

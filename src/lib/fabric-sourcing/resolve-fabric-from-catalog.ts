@@ -1,6 +1,6 @@
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
 import { searchSupplierFabrics } from "@/lib/data/supplier-catalogs";
-import { getSupplierByIdFromContacts } from "@/lib/data/supplier-contacts";
+import { getSupplierByIdFromContactsSync } from "@/lib/data/supplier-contacts";
 import {
   expandLoroPianaStyleQuery,
   getLoroPianaMillLine,
@@ -13,7 +13,7 @@ import { formatFabricSupplierName, normalizeFabricSupplierFields } from "@/lib/f
 import type { SupplierFabric } from "@/lib/types/fabric-sourcing";
 
 function supplierName(supplierId: string): string {
-  return getSupplierByIdFromContacts(supplierId)?.name ?? supplierId;
+  return getSupplierByIdFromContactsSync(supplierId)?.name ?? supplierId;
 }
 
 function toSearchItem(item: SupplierFabric, manual = false): FabricSearchItem {

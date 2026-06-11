@@ -1,6 +1,6 @@
 import path from "path";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
-import { readJsonFile, saveDocument } from "@/lib/data/document-persistence";
+import { readJsonFile, readJsonFileAsync, saveDocument } from "@/lib/data/document-persistence";
 import type { Supplier } from "@/lib/types/fabric-sourcing";
 import type { SupplierContactRow, SupplierContactsFile } from "@/lib/types/supplier-contacts";
 
@@ -15,14 +15,24 @@ const EMPTY_CONTACTS: SupplierContactsFile = {
   suppliers: [],
 };
 
-export function readSupplierContacts(): SupplierContactsFile {
-  const data = readJsonFile(CONTACTS_PATH, EMPTY_CONTACTS);
+function normalizeSupplierContacts(data: SupplierContactsFile): SupplierContactsFile {
   return {
     ...data,
     factory_orders_email: data.factory_orders_email ?? null,
     inbox_scan_email: data.inbox_scan_email ?? null,
     suppliers: data.suppliers.map(normalizeContactRow),
   };
+}
+
+/** Auto-loads supplier_contacts from Supabase when enabled. */
+export async function readSupplierContacts(): Promise<SupplierContactsFile> {
+  const data = await readJsonFileAsync(CONTACTS_PATH, EMPTY_CONTACTS);
+  return normalizeSupplierContacts(data);
+}
+
+/** Sync read — only after ensureDocumentsLoaded(["supplier_contacts"]) or readSupplierContacts(). */
+export function readSupplierContactsSync(): SupplierContactsFile {
+  return normalizeSupplierContacts(readJsonFile(CONTACTS_PATH, EMPTY_CONTACTS));
 }
 
 export async function writeSupplierContacts(data: SupplierContactsFile): Promise<SupplierContactsFile> {
@@ -77,20 +87,32 @@ export function normalizeContactRow(row: SupplierContactRow): SupplierContactRow
   };
 }
 
-export function getAllSuppliersFromContacts(): Supplier[] {
-  return readSupplierContacts().suppliers.map(contactToSupplier);
+export async function getAllSuppliersFromContacts(): Promise<Supplier[]> {
+  const contacts = await readSupplierContacts();
+  return contacts.suppliers.map(contactToSupplier);
 }
 
-export function getSupplierByIdFromContacts(id: string): Supplier | undefined {
+export async function getSupplierByIdFromContacts(id: string): Promise<Supplier | undefined> {
   const canonicalId = resolveFabricSupplierId(id);
-  const row = readSupplierContacts().suppliers.find((s) => s.id === canonicalId);
+  const contacts = await readSupplierContacts();
+  const row = contacts.suppliers.find((s) => s.id === canonicalId);
+  return row ? contactToSupplier(row) : undefined;
+}
+
+/** Sync lookup — only after ensureDocumentsLoaded(["supplier_contacts"]) or readSupplierContacts(). */
+export function getSupplierByIdFromContactsSync(id: string): Supplier | undefined {
+  const canonicalId = resolveFabricSupplierId(id);
+  const row = readSupplierContactsSync().suppliers.find((s) => s.id === canonicalId);
   return row ? contactToSupplier(row) : undefined;
 }
 
 /** Fabric suppliers for sales orders / fabric search — includes brands without a price list yet. */
-export function getFabricSupplierBrands(): Array<{ id: string; name: string; has_price_list: boolean }> {
-  return readSupplierContacts()
-    .suppliers.filter((row) => row.id !== "fab6")
+export async function getFabricSupplierBrands(): Promise<
+  Array<{ id: string; name: string; has_price_list: boolean }>
+> {
+  const contacts = await readSupplierContacts();
+  return contacts.suppliers
+    .filter((row) => row.id !== "fab6")
     .map((row) => ({
       id: row.id,
       name: row.name,

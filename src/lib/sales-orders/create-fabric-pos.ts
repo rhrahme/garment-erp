@@ -1,5 +1,5 @@
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { getSupplierByIdFromContacts } from "@/lib/data/supplier-contacts";
+import { getSupplierByIdFromContactsSync } from "@/lib/data/supplier-contacts";
 import { fabricPoSupplierId } from "@/lib/fabric-sourcing/supplier-display";
 import { buildClientReference, getSalesOrderById, writeSalesOrders, readSalesOrders } from "@/lib/data/sales-orders";
 import { createStoredFabricOrder } from "@/lib/integrations/fabric-order-store";
@@ -40,7 +40,7 @@ export async function createFabricPosFromSalesOrder(salesOrderId: string): Promi
   const fabricOrders: PurchaseOrder[] = [];
 
   for (const [supplierId, lines] of groups) {
-    const supplier = getSupplierByIdFromContacts(supplierId);
+    const supplier = getSupplierByIdFromContactsSync(supplierId);
     if (!supplier) {
       throw new Error(`Unknown supplier: ${supplierId}`);
     }

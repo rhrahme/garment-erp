@@ -107,7 +107,9 @@ export async function POST(request: Request) {
       }
 
       const poSupplierId = fabricPoSupplierId(supplier_id, fabric_number);
-      const supplier = getSupplierByIdFromContacts(poSupplierId) ?? getSupplierByIdFromContacts(supplier_id);
+      const supplier =
+        (await getSupplierByIdFromContacts(poSupplierId)) ??
+        (await getSupplierByIdFromContacts(supplier_id));
       if (!supplier) {
         return NextResponse.json({ error: `Unknown supplier: ${supplier_id}` }, { status: 400 });
       }

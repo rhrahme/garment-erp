@@ -10,7 +10,7 @@ import { getFactoryOrdersEmail } from "@/lib/data/supplier-catalogs";
 
 export async function GET() {
   const config = getSmtpConfig();
-  const factoryEmail = getFactoryOrdersEmail();
+  const factoryEmail = await getFactoryOrdersEmail();
   const missing = getSmtpMissingEnvVars();
 
   return NextResponse.json({

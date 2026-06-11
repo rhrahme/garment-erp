@@ -1,12 +1,12 @@
 import path from "path";
-import { ensureDocumentsLoaded, loadDocument, readJsonFile, saveDocument } from "@/lib/data/document-persistence";
+import { ensureDocumentsLoaded, readJsonFile, readJsonFileAsync, saveDocument } from "@/lib/data/document-persistence";
 import type { ClientProfile, ClientsFile } from "@/lib/types/clients";
 
 const CLIENTS_PATH = path.join(process.cwd(), "src/data/clients.json");
 const EMPTY_CLIENTS: ClientsFile = { updated_at: null, clients: [] };
 
 export async function readClientsAsync(): Promise<ClientsFile> {
-  return loadDocument(CLIENTS_PATH, EMPTY_CLIENTS);
+  return readJsonFileAsync(CLIENTS_PATH, EMPTY_CLIENTS);
 }
 
 export function readClients(): ClientsFile {

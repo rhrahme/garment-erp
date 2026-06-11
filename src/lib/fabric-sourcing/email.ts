@@ -21,13 +21,13 @@ export {
   type PriceListImportRow,
 };
 
-export function purchaseOrderToEmail(
+export async function purchaseOrderToEmail(
   po: PurchaseOrder,
   fabrics: SupplierFabric[],
   options?: { clientCode?: string; deliveryDestination?: import("@/lib/shipping/delivery-destinations").DeliveryDestination | null }
 ) {
   return purchaseOrderToEmailBase(po, fabrics, {
     ...options,
-    fromEmail: getFactoryOrdersEmail(),
+    fromEmail: await getFactoryOrdersEmail(),
   });
 }

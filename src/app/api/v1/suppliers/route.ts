@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   const authError = verifyApiKey(request);
   if (authError) return authError;
 
-  const suppliers = getAllSuppliersFromContacts().map((supplier) => ({
+  const suppliers = (await getAllSuppliersFromContacts()).map((supplier) => ({
     id: supplier.id,
     code: supplier.code,
     name: supplier.name,

@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const cc = parseRecipientList(resolveSupplierCc(body.cc));
     const subject = body.subject?.trim();
     const text = body.body?.trim();
-    const factoryEmail = getFactoryOrdersEmail();
+    const factoryEmail = await getFactoryOrdersEmail();
     const from = normalizeEmail(body.from) ?? normalizeEmail(factoryEmail) ?? undefined;
 
     if (to.length === 0) {

@@ -1,6 +1,6 @@
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSalesOrders, writeSalesOrders } from "@/lib/data/sales-orders";
-import { getSupplierByIdFromContacts } from "@/lib/data/supplier-contacts";
+import { getSupplierByIdFromContactsSync } from "@/lib/data/supplier-contacts";
 import { resolveFabricItemFromCatalog } from "@/lib/fabric-sourcing/resolve-fabric-from-catalog";
 import { fabricPoSupplierId, normalizeFabricSupplierFields } from "@/lib/fabric-sourcing/supplier-display";
 import { generateFabricLabelStickers, getGarmentPieces } from "@/lib/sales-orders/label-codes";
@@ -173,7 +173,7 @@ export function buildFabricLineFromInput(
   }
 
   const poSupplierId = fabricPoSupplierId(supplier_id, fabric_number);
-  const supplier = getSupplierByIdFromContacts(poSupplierId) ?? getSupplierByIdFromContacts(supplier_id);
+  const supplier = getSupplierByIdFromContactsSync(poSupplierId) ?? getSupplierByIdFromContactsSync(supplier_id);
   if (!supplier) {
     return { error: `Unknown supplier: ${supplier_id}` };
   }
@@ -404,7 +404,7 @@ export async function updateSalesOrderFabricLine(
 
   const poSupplierId = fabricPoSupplierId(nextSupplierId, nextFabricNumber);
   const supplier =
-    getSupplierByIdFromContacts(poSupplierId) ?? getSupplierByIdFromContacts(nextSupplierId);
+    getSupplierByIdFromContactsSync(poSupplierId) ?? getSupplierByIdFromContactsSync(nextSupplierId);
   if (!supplier) {
     return { ok: false, status: 400, error: `Unknown supplier: ${nextSupplierId}` };
   }

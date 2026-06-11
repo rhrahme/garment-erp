@@ -19,7 +19,7 @@ export default async function PurchasingPage() {
     supplierName: caccioppoli?.name ?? "Caccioppoli",
     supplierEmail: caccioppoli?.email ?? "",
     supplierEmails: caccioppoli?.emails,
-    fromEmail: getFactoryOrdersEmail(),
+    fromEmail: await getFactoryOrdersEmail(),
     clientCode: "GL-0526-0001",
     poNumber: "PO-2026-001",
     deliveryDestination: "DXB",

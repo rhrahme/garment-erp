@@ -16,7 +16,7 @@ import { notifyIntegration } from "@/lib/integrations";
 export async function GET() {
   try {
     await ensureDocumentsLoaded(["supplier_contacts"]);
-    return NextResponse.json(readSupplierContacts());
+    return NextResponse.json(await readSupplierContacts());
   } catch (error) {
     console.error("Failed to read supplier contacts:", error);
     return NextResponse.json({ error: "Failed to load supplier contacts" }, { status: 500 });

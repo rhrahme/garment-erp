@@ -11,9 +11,10 @@ import {
 } from "@/lib/integrations/supplier-invoice-store";
 import { findSupplierIdByEmail } from "@/lib/email/inbound/process-supplier-email";
 
-function supplierName(supplierId: string | null): string | null {
+async function supplierName(supplierId: string | null): Promise<string | null> {
   if (!supplierId) return null;
-  return getAllSuppliersFromContacts().find((supplier) => supplier.id === supplierId)?.name ?? null;
+  const suppliers = await getAllSuppliersFromContacts();
+  return suppliers.find((supplier) => supplier.id === supplierId)?.name ?? null;
 }
 
 export async function saveInvoiceAttachmentsFromEmail(input: {
@@ -38,7 +39,7 @@ export async function saveInvoiceAttachmentsFromEmail(input: {
 
     const record = await saveSupplierInvoiceFile({
       supplier_id: input.supplier_id,
-      supplier_name: supplierName(input.supplier_id),
+      supplier_name: await supplierName(input.supplier_id),
       invoice_number: pickInvoiceNumber(input.subject, [
         ...input.invoice_numbers,
         ...parsed.invoice_numbers,

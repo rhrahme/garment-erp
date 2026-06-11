@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const supplier = getSupplierByIdFromContacts(supplier_id);
+    const supplier = await getSupplierByIdFromContacts(supplier_id);
     if (!supplier) {
       return NextResponse.json({ error: `Unknown supplier: ${supplier_id}` }, { status: 400 });
     }

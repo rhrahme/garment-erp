@@ -1,5 +1,5 @@
 import path from "path";
-import { readJsonFile, readJsonFileFreshAsync, saveDocument } from "@/lib/data/document-persistence";
+import { readJsonFile, readJsonFileAsync, readJsonFileFreshAsync, saveDocument } from "@/lib/data/document-persistence";
 import type { ProductionWorkOrder, ProductionWorkOrdersFile } from "@/lib/types/production";
 import { productionCodeFromSticker, supplierFabricProductionCode } from "@/lib/sales-orders/label-codes";
 
@@ -8,6 +8,10 @@ const EMPTY_PRODUCTION_WORK_ORDERS: ProductionWorkOrdersFile = { updated_at: nul
 
 export function readProductionWorkOrders(): ProductionWorkOrdersFile {
   return readJsonFile(STORE_PATH, EMPTY_PRODUCTION_WORK_ORDERS);
+}
+
+export async function readProductionWorkOrdersAsync(): Promise<ProductionWorkOrdersFile> {
+  return readJsonFileAsync(STORE_PATH, EMPTY_PRODUCTION_WORK_ORDERS);
 }
 
 export async function readProductionWorkOrdersFreshAsync(): Promise<ProductionWorkOrdersFile> {

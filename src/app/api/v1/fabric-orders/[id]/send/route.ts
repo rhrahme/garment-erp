@@ -39,7 +39,7 @@ export async function POST(
       supplierName: order.supplier.name,
       supplierEmail: order.supplier.email ?? "",
       supplierEmails: order.supplier.emails,
-      fromEmail: getFactoryOrdersEmail(),
+      fromEmail: await getFactoryOrdersEmail(),
       clientCode,
       poNumber: order.po_number,
       deliveryDestination: salesOrder?.delivery_destination ?? null,

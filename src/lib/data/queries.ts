@@ -213,8 +213,8 @@ function catalogItemKey(item: Pick<SupplierFabric, "supplier_id" | "fabric_numbe
   return `${resolveFabricSupplierId(item.supplier_id)}:${item.fabric_number.toLowerCase()}`;
 }
 
-function mergeCatalogPriceListItems(dbItems: SupplierFabric[]): SupplierFabric[] {
-  const catalog = attachLiveSupplierContacts(getAllPriceListItems());
+async function mergeCatalogPriceListItems(dbItems: SupplierFabric[]): Promise<SupplierFabric[]> {
+  const catalog = await attachLiveSupplierContacts(getAllPriceListItems());
   if (dbItems.length === 0) return catalog;
   const keys = new Set(dbItems.map(catalogItemKey));
   const extras = catalog.filter((item) => !keys.has(catalogItemKey(item)));
@@ -222,7 +222,7 @@ function mergeCatalogPriceListItems(dbItems: SupplierFabric[]): SupplierFabric[]
 }
 
 export async function getFabricSuppliers() {
-  if (DEMO_MODE) return getImportedSuppliers();
+  if (DEMO_MODE) return await getImportedSuppliers();
   // Fabric search/spec UIs read JSON catalogs keyed by contact ids (canclini, zegna, …).
   // Supabase warehouse `suppliers` rows may use UUIDs that never match catalog items.
   return getImportedSuppliers();
@@ -230,7 +230,7 @@ export async function getFabricSuppliers() {
 
 export async function getPriceListItems(supplierId?: string) {
   if (DEMO_MODE) {
-    const items = attachLiveSupplierContacts(getAllPriceListItems());
+    const items = await attachLiveSupplierContacts(getAllPriceListItems());
     return supplierId
       ? items.filter((f) => resolveFabricSupplierId(f.supplier_id) === resolveFabricSupplierId(supplierId))
       : items;
@@ -241,7 +241,7 @@ export async function getPriceListItems(supplierId?: string) {
   if (canonicalId) query = query.eq("supplier_id", canonicalId);
   const { data, error } = await query;
   const dbItems = error ? [] : ((data ?? []) as SupplierFabric[]);
-  const merged = mergeCatalogPriceListItems(dbItems);
+  const merged = await mergeCatalogPriceListItems(dbItems);
   return canonicalId
     ? merged.filter((f) => resolveFabricSupplierId(f.supplier_id) === canonicalId)
     : merged;

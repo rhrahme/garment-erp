@@ -9,7 +9,7 @@ import { processTransporterEmail } from "@/lib/email/inbound/process-transporter
 import { isRelevantTransporterEmail, isTrustedTransporterSource } from "@/lib/email/inbound/parse-transporter-email";
 import { extractPoNumbers } from "@/lib/email/inbound/parse-supplier-email";
 import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
-import { normalizeEmailList, readSupplierContacts } from "@/lib/data/supplier-contacts";
+import { normalizeEmailList, readSupplierContactsSync } from "@/lib/data/supplier-contacts";
 import {
   looksLikeSupplierInvoiceSubject,
   resolveInboxScanOptions,
@@ -46,7 +46,7 @@ function isRelevantSupplierEmail(fromAddress: string, subject: string, body: str
 
 function getSupplierFromAddresses(): string[] {
   const addresses = new Set<string>();
-  for (const supplier of readSupplierContacts().suppliers) {
+  for (const supplier of readSupplierContactsSync().suppliers) {
     for (const email of normalizeEmailList(supplier.emails, supplier.email)) {
       addresses.add(email.toLowerCase());
     }

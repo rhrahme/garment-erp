@@ -9,6 +9,7 @@ import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getInboxScanEmail } from "@/lib/email/imap-auth";
 import { isImapConfigured } from "@/lib/email/imap-config";
 import { getFactoryOrdersEmail } from "@/lib/data/supplier-catalogs";
+import { readSupplierContactsSync } from "@/lib/data/supplier-contacts";
 
 const SCAN_INBOX_DOCUMENT_KEYS = [
   "supplier_contacts",
@@ -21,8 +22,12 @@ const SCAN_INBOX_DOCUMENT_KEYS = [
   "supplier_availability_alerts",
 ] as const;
 
+function resolveScanMailbox(): string | null {
+  return getInboxScanEmail() ?? readSupplierContactsSync().inbox_scan_email;
+}
+
 function inboxNotConfiguredMessage(): string {
-  const mailbox = getInboxScanEmail();
+  const mailbox = resolveScanMailbox();
   if (!mailbox) {
     return "Inbox scan is not configured. Set inbox_scan_email under Purchasing → Suppliers and IMAP_USER/IMAP_PASS on Vercel.";
   }
@@ -59,8 +64,8 @@ export async function GET(request: Request) {
   await ensureDocumentsLoaded(["supplier_contacts"]);
   return NextResponse.json({
     configured: isImapConfigured(),
-    scan_mailbox: getInboxScanEmail(),
-    send_mailbox: getFactoryOrdersEmail() ?? process.env.SMTP_USER?.trim() ?? "orders.ruh@hagan.pro",
+    scan_mailbox: resolveScanMailbox(),
+    send_mailbox: (await getFactoryOrdersEmail()) ?? process.env.SMTP_USER?.trim() ?? "orders.ruh@hagan.pro",
     scan_days_default: INBOX_SCAN_DAYS_DEFAULT,
     scan_limit_default: INBOX_SCAN_LIMIT_DEFAULT,
   });

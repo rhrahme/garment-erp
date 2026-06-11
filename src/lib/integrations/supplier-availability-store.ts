@@ -1,6 +1,6 @@
 import path from "path";
 import { readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
-import { getSupplierByIdFromContacts } from "@/lib/data/supplier-contacts";
+import { getSupplierByIdFromContactsSync } from "@/lib/data/supplier-contacts";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
 import { getStoredFabricOrder } from "@/lib/integrations/fabric-order-store";
 import type { SupplierLineUpdate } from "@/lib/integrations/supplier-reply-store";
@@ -109,7 +109,7 @@ export function createAvailabilityAlertsFromReply(input: {
   const existingKeys = new Set(store.alerts.map((alert) => alertKey(alert.reply_id, alert.fabric_number)));
   const po = input.purchase_order_id ? getStoredFabricOrder(input.purchase_order_id) : null;
   const salesOrder = po?.sales_order_id ? getSalesOrderById(po.sales_order_id) : null;
-  const supplier = input.supplier_id ? getSupplierByIdFromContacts(input.supplier_id) : null;
+  const supplier = input.supplier_id ? getSupplierByIdFromContactsSync(input.supplier_id) : null;
   const created: SupplierAvailabilityAlert[] = [];
 
   for (const line of unavailable) {

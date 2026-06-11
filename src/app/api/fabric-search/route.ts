@@ -3,7 +3,7 @@ import { redactSupplierFabricPrices } from "@/lib/auth/fabric-price-access";
 import { getSessionContext } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
-import { getSupplierByIdFromContacts } from "@/lib/data/supplier-contacts";
+import { getSupplierByIdFromContactsSync } from "@/lib/data/supplier-contacts";
 import { searchSupplierFabrics } from "@/lib/data/supplier-catalogs";
 import {
   expandLoroPianaStyleQuery,
@@ -22,7 +22,7 @@ function supplierName(supplierId: string): string {
   if (!supplierNameCache.has(canonicalId)) {
     supplierNameCache.set(
       canonicalId,
-      getSupplierByIdFromContacts(canonicalId)?.name ?? canonicalId
+      getSupplierByIdFromContactsSync(canonicalId)?.name ?? canonicalId
     );
   }
   return supplierNameCache.get(canonicalId)!;
@@ -30,7 +30,7 @@ function supplierName(supplierId: string): string {
 
 function buildManualFabricEntry(supplierId: string, fabricNumber: string): SupplierFabric {
   const trimmed = fabricNumber.trim();
-  const supplier = getSupplierByIdFromContacts(supplierId) ?? {
+  const supplier = getSupplierByIdFromContactsSync(supplierId) ?? {
     id: supplierId,
     code: supplierId.toUpperCase(),
     name: supplierName(supplierId),

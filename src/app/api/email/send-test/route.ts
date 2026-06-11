@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as { password?: string; to?: string };
     const password = body.password?.trim();
-    const defaultTo = getInboxScanEmail() ?? getInboxScanEmailFromContacts();
+    const defaultTo = getInboxScanEmail() ?? (await getInboxScanEmailFromContacts());
     const to = body.to?.trim() || defaultTo;
 
     if (!to) {
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: message }, { status: 400 });
     }
 
-    const from = getFactoryOrdersEmail() ?? "orders.ruh@hagan.pro";
+    const from = (await getFactoryOrdersEmail()) ?? "orders.ruh@hagan.pro";
     const result = await sendEmail({
       to: [to],
       subject: "Garment ERP — test email",

@@ -2,6 +2,7 @@ import path from "path";
 import {
   loadDocument,
   readJsonFile,
+  readJsonFileAsync,
   readJsonFileFreshAsync,
   saveDocument,
 } from "@/lib/data/document-persistence";
@@ -81,7 +82,7 @@ export async function readSalesOrdersFresh(): Promise<SalesOrdersFile> {
 }
 
 export async function readSalesOrdersAsync(): Promise<SalesOrdersFile> {
-  return loadDocument(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS);
+  return readJsonFileAsync(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS);
 }
 
 export async function writeSalesOrders(data: SalesOrdersFile): Promise<SalesOrdersFile> {

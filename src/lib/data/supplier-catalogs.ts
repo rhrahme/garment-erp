@@ -75,8 +75,8 @@ const SOLBIATI_ID = "solbiati";
 const CANCLINI_ID = "canclini";
 const WOOL_STOCK_ID = "wool-stock";
 
-function supplierForCatalog(supplierId: string): Supplier {
-  return getSupplierByIdFromContacts(supplierId) ?? {
+function stubSupplierForCatalog(supplierId: string): Supplier {
+  return {
     id: supplierId,
     code: supplierId.toUpperCase(),
     name: supplierId,
@@ -88,12 +88,18 @@ function supplierForCatalog(supplierId: string): Supplier {
   };
 }
 
-export function getFactoryOrdersEmail(): string | null {
-  return readSupplierContacts().factory_orders_email;
+function supplierForCatalog(supplierId: string): Supplier {
+  return stubSupplierForCatalog(supplierId);
 }
 
-export function getInboxScanEmailFromContacts(): string | null {
-  return readSupplierContacts().inbox_scan_email;
+export async function getFactoryOrdersEmail(): Promise<string | null> {
+  const contacts = await readSupplierContacts();
+  return contacts.factory_orders_email;
+}
+
+export async function getInboxScanEmailFromContacts(): Promise<string | null> {
+  const contacts = await readSupplierContacts();
+  return contacts.inbox_scan_email;
 }
 
 /** Known default carriers per supplier — overrides text-based detection when scanning replies. */
@@ -348,23 +354,24 @@ export const allPriceLists: SupplierPriceList[] = [
   toPriceList(woolStockCatalog, WOOL_STOCK_ID, woolStockSupplier),
 ];
 
-export function getSupplierContacts(): SupplierContactRow[] {
-  return readSupplierContacts().suppliers;
+export async function getSupplierContacts(): Promise<SupplierContactRow[]> {
+  const contacts = await readSupplierContacts();
+  return contacts.suppliers;
 }
 
-export function getSupplierById(id: string): Supplier | undefined {
+export async function getSupplierById(id: string): Promise<Supplier | undefined> {
   return getSupplierByIdFromContacts(id);
 }
 
-export function attachLiveSupplierContacts(fabrics: SupplierFabric[]): SupplierFabric[] {
-  const suppliers = new Map(getAllSuppliersFromContacts().map((supplier) => [supplier.id, supplier]));
+export async function attachLiveSupplierContacts(fabrics: SupplierFabric[]): Promise<SupplierFabric[]> {
+  const suppliers = new Map((await getAllSuppliersFromContacts()).map((supplier) => [supplier.id, supplier]));
   return fabrics.map((fabric) => ({
     ...fabric,
     supplier: suppliers.get(fabric.supplier_id) ?? fabric.supplier,
   }));
 }
 
-export function getImportedSuppliers(): Supplier[] {
+export async function getImportedSuppliers(): Promise<Supplier[]> {
   return getAllSuppliersFromContacts();
 }
 

@@ -1,4 +1,4 @@
-import { normalizeEmailList, readSupplierContacts } from "@/lib/data/supplier-contacts";
+import { normalizeEmailList, readSupplierContactsSync } from "@/lib/data/supplier-contacts";
 
 /** Personal mail domains — never treat as a fabric supplier on domain alone. */
 const GENERIC_MAIL_DOMAINS = new Set([
@@ -30,7 +30,7 @@ export function extractEmailDomain(address: string): string | null {
 function supplierDomainsFromContacts(): Map<string, Set<string>> {
   const domainSuppliers = new Map<string, Set<string>>();
 
-  for (const supplier of readSupplierContacts().suppliers) {
+  for (const supplier of readSupplierContactsSync().suppliers) {
     const domains = new Set<string>();
 
     for (const domain of supplier.reply_domains ?? []) {
@@ -57,7 +57,7 @@ function supplierDomainsFromContacts(): Map<string, Set<string>> {
 
 function allRegisteredReplyDomains(): Set<string> {
   const domains = new Set<string>();
-  for (const supplier of readSupplierContacts().suppliers) {
+  for (const supplier of readSupplierContactsSync().suppliers) {
     for (const domain of supplier.reply_domains ?? []) {
       const cleaned = domain.replace(/^@/, "").trim().toLowerCase();
       if (cleaned) domains.add(cleaned);
@@ -82,7 +82,7 @@ export function getSupplierInboxSearchDomains(): string[] {
   const domainSuppliers = supplierDomainsFromContacts();
   const domains = new Set<string>();
 
-  for (const supplier of readSupplierContacts().suppliers) {
+  for (const supplier of readSupplierContactsSync().suppliers) {
     for (const domain of supplier.reply_domains ?? []) {
       const cleaned = domain.replace(/^@/, "").trim().toLowerCase();
       if (cleaned) domains.add(cleaned);
@@ -109,7 +109,7 @@ export function findSupplierIdByEmail(fromAddress: string): string | null {
   if (!email) return null;
 
   const exactMatches: string[] = [];
-  for (const supplier of readSupplierContacts().suppliers) {
+  for (const supplier of readSupplierContactsSync().suppliers) {
     const addresses = normalizeEmailList(supplier.emails, supplier.email);
     if (addresses.some((item) => item.toLowerCase() === email)) {
       exactMatches.push(supplier.id);
@@ -137,5 +137,5 @@ export function isKnownSupplierSender(fromAddress: string): boolean {
 export function supplierNameForEmail(fromAddress: string): string | null {
   const supplierId = findSupplierIdByEmail(fromAddress);
   if (!supplierId) return null;
-  return readSupplierContacts().suppliers.find((supplier) => supplier.id === supplierId)?.name ?? null;
+  return readSupplierContactsSync().suppliers.find((supplier) => supplier.id === supplierId)?.name ?? null;
 }

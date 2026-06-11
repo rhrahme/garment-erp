@@ -19,6 +19,21 @@ const fileCache = new Map<string, CacheEntry>();
 const loadedKeys = new Set<ErpDocumentKey>();
 const loadingByKey = new Map<ErpDocumentKey, Promise<void>>();
 
+/** Thrown when sync readJsonFile runs before Supabase-backed cache is warmed. */
+export class ColdDocumentCacheError extends Error {
+  readonly documentKey: ErpDocumentKey | null;
+
+  constructor(filePath: string, documentKey: ErpDocumentKey | null) {
+    const keyLabel = documentKey ?? path.basename(filePath);
+    super(
+      `ERP document "${keyLabel}" is not loaded. ` +
+        `Use readJsonFileAsync/loadDocument or ensureDocumentsLoaded(["${documentKey ?? "…"}"]) before sync read.`
+    );
+    this.name = "ColdDocumentCacheError";
+    this.documentKey = documentKey;
+  }
+}
+
 export function isSupabaseDocumentsStorage(): boolean {
   if (process.env.ERP_USE_JSON === "true") return false;
   return isSupabaseConfigured() && isSupabaseAdminConfigured();
@@ -140,6 +155,13 @@ export async function ensureDocumentsLoaded(keys: readonly ErpDocumentKey[]): Pr
   await Promise.all(keys.map((key) => loadDocumentKey(key)));
 }
 
+/** Load the ERP document backing a JSON file path, if mapped. No-op in JSON-only mode. */
+export async function ensureDocumentForPath(filePath: string): Promise<void> {
+  const documentKey = documentKeyForPath(filePath);
+  if (!documentKey) return;
+  await ensureDocumentsLoaded([documentKey]);
+}
+
 /** @deprecated Prefer ensureDocumentsLoaded with explicit keys. Loads core docs only. */
 export async function ensureErpDocumentsLoaded(): Promise<void> {
   return ensureDocumentsLoaded(CORE_ERP_DOCUMENT_KEYS);
@@ -175,17 +197,22 @@ export async function saveDocument<T>(filePath: string, data: T): Promise<T> {
 }
 
 /**
- * Sync read — memory cache when warmed by ensureDocumentsLoaded / loadDocument.
- * When Supabase is source of truth, never falls back to git-baked local JSON on a cold
- * cache (that mirror is days behind production). Callers must warm the cache first.
+ * Sync read — memory cache when warmed by ensureDocumentsLoaded / loadDocument / readJsonFileAsync.
+ * When Supabase is source of truth, throws on a cold cache instead of returning stale git JSON.
  */
 export function readJsonFile<T>(filePath: string, fallback: T): T {
   if (isSupabaseDocumentsStorage()) {
     const cached = fileCache.get(filePath);
     if (cached) return cached.data as T;
-    return fallback;
+    throw new ColdDocumentCacheError(filePath, documentKeyForPath(filePath));
   }
   return readLocalJsonFile(filePath, fallback);
+}
+
+/** Auto-load from Supabase (or local) then read — preferred entry point for document-backed data. */
+export async function readJsonFileAsync<T>(filePath: string, fallback: T): Promise<T> {
+  await ensureDocumentForPath(filePath);
+  return readJsonFile(filePath, fallback);
 }
 
 /** Read warmed cache when available; otherwise local disk (JSON-only mode) or fallback. */

@@ -1,6 +1,5 @@
 import fs from "fs";
 import path from "path";
-import { getInboxScanEmailFromContacts } from "@/lib/data/supplier-catalogs";
 
 const SECRET_PATH = path.join(process.cwd(), "imap-secret.local.json");
 
@@ -27,5 +26,5 @@ export function saveImapPassword(password: string): void {
 }
 
 export function getInboxScanEmail(): string | null {
-  return process.env.IMAP_USER?.trim() || getInboxScanEmailFromContacts() || null;
+  return process.env.IMAP_USER?.trim() || null;
 }

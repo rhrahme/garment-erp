@@ -8,9 +8,14 @@ import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getInboxScanEmail, saveImapPassword } from "@/lib/email/imap-auth";
 import { isImapConfigured } from "@/lib/email/imap-config";
 import { getFactoryOrdersEmail } from "@/lib/data/supplier-catalogs";
+import { readSupplierContactsSync } from "@/lib/data/supplier-contacts";
+
+function resolveScanMailbox(): string | null {
+  return getInboxScanEmail() ?? readSupplierContactsSync().inbox_scan_email;
+}
 
 function inboxNotConfiguredMessage(): string {
-  const mailbox = getInboxScanEmail();
+  const mailbox = resolveScanMailbox();
   if (!mailbox) {
     return "Inbox scan is not configured. Set an inbox to scan under Purchasing → Suppliers, then save a Google App Password on Supplier Inbox (or set IMAP_USER and IMAP_PASS in .env.local).";
   }
@@ -56,8 +61,8 @@ export async function GET() {
   await ensureDocumentsLoaded(["supplier_contacts"]);
   return NextResponse.json({
     configured: isImapConfigured(),
-    scan_mailbox: getInboxScanEmail(),
-    send_mailbox: getFactoryOrdersEmail() ?? process.env.SMTP_USER?.trim() ?? "orders.ruh@hagan.pro",
+    scan_mailbox: resolveScanMailbox(),
+    send_mailbox: (await getFactoryOrdersEmail()) ?? process.env.SMTP_USER?.trim() ?? "orders.ruh@hagan.pro",
     scan_days_default: INBOX_SCAN_DAYS_DEFAULT,
     scan_limit_default: INBOX_SCAN_LIMIT_DEFAULT,
   });
