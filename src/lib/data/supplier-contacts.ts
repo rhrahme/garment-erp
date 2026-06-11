@@ -1,10 +1,22 @@
 import path from "path";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import { readJsonFile, readJsonFileAsync, saveDocument } from "@/lib/data/document-persistence";
+import {
+  getMissingRequiredFabricSuppliers,
+  REQUIRED_FABRIC_SUPPLIER_IDS,
+  validateSupplierContacts,
+  type RequiredFabricSupplierId,
+} from "@/lib/data/required-fabric-suppliers";
 import type { Supplier } from "@/lib/types/fabric-sourcing";
 import type { SupplierContactRow, SupplierContactsFile } from "@/lib/types/supplier-contacts";
 
 export type { SupplierContactRow, SupplierContactsFile };
+export {
+  getMissingRequiredFabricSuppliers,
+  REQUIRED_FABRIC_SUPPLIER_IDS,
+  validateSupplierContacts,
+  type RequiredFabricSupplierId,
+};
 
 const CONTACTS_PATH = path.join(process.cwd(), "src/data/suppliers/contacts.json");
 const EMPTY_CONTACTS: SupplierContactsFile = {
@@ -36,6 +48,7 @@ export function readSupplierContactsSync(): SupplierContactsFile {
 }
 
 export async function writeSupplierContacts(data: SupplierContactsFile): Promise<SupplierContactsFile> {
+  validateSupplierContacts(data, { throwOnMissing: true });
   const payload: SupplierContactsFile = {
     ...data,
     updated_at: new Date().toISOString(),

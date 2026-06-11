@@ -2,6 +2,9 @@
 /**
  * One-time import: upload all local JSON ERP documents to Supabase erp_documents.
  *
+ * supplier_contacts merges with existing Supabase data (never drops remote-only suppliers).
+ * Upload is refused if required fabric supplier IDs would be missing after merge.
+ *
  * Prerequisites:
  *   1. Run supabase/migrations/006_erp_documents.sql in Supabase SQL editor (or supabase db push)
  *   2. Set SUPABASE_SERVICE_ROLE_KEY in .env.local (Settings → API → secret key)
@@ -14,6 +17,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
+import {
+  mergeIncomingWithRemoteSupplierContacts,
+  validateSupplierContacts,
+} from "./lib/supplier-contacts-guard.mjs";
 
 const ERP_DOCUMENT_SPECS = {
   clients: { path: "src/data/clients.json", fallback: { updated_at: null, clients: [] } },
@@ -145,9 +152,30 @@ async function main() {
   let ok = 0;
   let failed = 0;
 
+  const { data: remoteRows } = await admin
+    .from("erp_documents")
+    .select("id, data")
+    .eq("id", "supplier_contacts")
+    .maybeSingle();
+  const remoteContacts = remoteRows?.data ?? null;
+
   for (const row of rows) {
+    let dataToUpload = row.data;
+
+    if (row.id === "supplier_contacts") {
+      dataToUpload = mergeIncomingWithRemoteSupplierContacts(row.data, remoteContacts);
+      try {
+        validateSupplierContacts(dataToUpload, { throwOnMissing: true });
+      } catch (error) {
+        console.error(`✗ supplier_contacts: ${error.message}`);
+        console.error("  Refusing upload — would drop required fabric suppliers.");
+        failed += 1;
+        continue;
+      }
+    }
+
     const { error } = await admin.from("erp_documents").upsert(
-      { id: row.id, data: row.data, updated_at },
+      { id: row.id, data: dataToUpload, updated_at },
       { onConflict: "id" }
     );
     if (error) {

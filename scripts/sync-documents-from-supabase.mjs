@@ -5,6 +5,10 @@
  * Production on Vercel writes only to Supabase — local files are not updated there.
  * Run this after working on production data to refresh src/data/*.json for local dev:
  *
+ * WARNING: supplier_contacts — stale Supabase data will NOT overwrite local required
+ * fabric suppliers (solbiati, canclini, wool-stock, etc.). Missing required IDs are
+ * restored from local contacts.json; sync aborts if they cannot be preserved.
+ *
  *   npm run db:sync-from-supabase
  *   node scripts/sync-documents-from-supabase.mjs
  *   node scripts/sync-documents-from-supabase.mjs --dry-run
@@ -16,6 +20,11 @@
 import { createClient } from "@supabase/supabase-js";
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import {
+  getMissingRequiredFabricSuppliers,
+  protectLocalFromStaleRemoteSupplierContacts,
+  validateSupplierContacts,
+} from "./lib/supplier-contacts-guard.mjs";
 
 const ERP_DOCUMENT_SPECS = {
   clients: { path: "src/data/clients.json", fallback: { updated_at: null, clients: [] } },
@@ -106,6 +115,12 @@ const admin = createClient(url, serviceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
+function readLocalJson(relativePath, fallback) {
+  const fullPath = resolve(process.cwd(), relativePath);
+  if (!existsSync(fullPath)) return fallback;
+  return JSON.parse(readFileSync(fullPath, "utf8"));
+}
+
 async function main() {
   const allKeys = Object.keys(ERP_DOCUMENT_SPECS);
   const keys = onlyKeys?.length
@@ -152,9 +167,34 @@ async function main() {
 
     if (dryRun) continue;
 
+    let payloadToWrite = payload;
+
+    if (id === "supplier_contacts") {
+      const local = readLocalJson(spec.path, spec.fallback);
+      const { merged, missing } = protectLocalFromStaleRemoteSupplierContacts(payload, local);
+      if (missing.length > 0) {
+        console.error(
+          `\n✗ supplier_contacts: refusing to overwrite local file — ` +
+            `still missing required fabric suppliers after merge: ${missing.join(", ")}`
+        );
+        console.error(
+          "  Fix Supabase production data or restore src/data/suppliers/contacts.json before syncing."
+        );
+        process.exit(1);
+      }
+      const restored = getMissingRequiredFabricSuppliers(payload);
+      if (restored.length > 0) {
+        console.warn(
+          `\n⚠ supplier_contacts: Supabase was missing ${restored.join(", ")} — restored from local contacts.json`
+        );
+      }
+      validateSupplierContacts(merged);
+      payloadToWrite = merged;
+    }
+
     const fullPath = resolve(process.cwd(), spec.path);
     mkdirSync(dirname(fullPath), { recursive: true });
-    writeFileSync(fullPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+    writeFileSync(fullPath, `${JSON.stringify(payloadToWrite, null, 2)}\n`, "utf8");
     written += 1;
   }
 

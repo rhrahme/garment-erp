@@ -7,6 +7,11 @@ import {
   ERP_DOCUMENT_SPECS,
   type ErpDocumentKey,
 } from "@/lib/data/document-keys";
+import {
+  getMissingRequiredFabricSuppliers,
+  validateSupplierContacts,
+  type SupplierContactsLike,
+} from "@/lib/data/required-fabric-suppliers";
 import { getSupabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -90,9 +95,35 @@ async function writeToSupabase<T>(documentKey: ErpDocumentKey, payload: T): Prom
   const admin = getSupabaseAdmin();
   if (!admin) return false;
 
+  let dataToWrite = payload;
+
+  if (documentKey === "supplier_contacts") {
+    const incoming = payload as SupplierContactsLike;
+    const remote = await readFromSupabase<SupplierContactsLike>("supplier_contacts");
+    if (remote) {
+      const byId = new Map(remote.suppliers.map((row) => [row.id, row]));
+      for (const row of incoming.suppliers) {
+        byId.set(row.id, row);
+      }
+      dataToWrite = {
+        ...remote,
+        ...incoming,
+        suppliers: [...byId.values()],
+      } as T;
+    }
+
+    const missing = getMissingRequiredFabricSuppliers(dataToWrite as SupplierContactsLike);
+    if (missing.length > 0) {
+      console.error(
+        `[supplier-contacts] Refusing Supabase write — would drop required suppliers: ${missing.join(", ")}`
+      );
+      return false;
+    }
+  }
+
   const updated_at = new Date().toISOString();
   const { error } = await admin.from("erp_documents").upsert(
-    { id: documentKey, data: payload, updated_at },
+    { id: documentKey, data: dataToWrite, updated_at },
     { onConflict: "id" }
   );
 
@@ -148,7 +179,13 @@ export async function ensureErpBootstrap(): Promise<void> {
   if (!isSupabaseDocumentsStorage()) return;
   if (!erpBootstrapPromise) {
     erpBootstrapPromise = Promise.all(ALL_ERP_DOCUMENT_KEYS.map((key) => loadDocumentKey(key))).then(
-      () => undefined
+      () => {
+        const spec = ERP_DOCUMENT_SPECS.supplier_contacts;
+        const cached = fileCache.get(spec.path);
+        if (cached) {
+          validateSupplierContacts(cached.data as SupplierContactsLike);
+        }
+      }
     );
   }
   await erpBootstrapPromise;
