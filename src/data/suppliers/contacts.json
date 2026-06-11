@@ -88,7 +88,7 @@
       "code": "LORO-PIANA",
       "name": "Loro Piana",
       "email": "valentina.cao@loropiana.com, vittorio.osella@loropiana.com",
-      "notes": "SS26 price list imported (EUR, CIP Europe).",
+      "notes": "SS26 price list imported (EUR, CIP Europe). Wool/cashmere only — Solbiati linen (S-prefix) is a separate brand tab.",
       "emails": [
         "valentina.cao@loropiana.com",
         "vittorio.osella@loropiana.com"
@@ -100,6 +100,48 @@
       "contact_person": null,
       "has_price_list": true,
       "lead_time_days": 14
+    },
+    {
+      "id": "solbiati",
+      "code": "SOLBIATI",
+      "name": "Solbiati",
+      "email": "valentina.cao@loropiana.com, vittorio.osella@loropiana.com",
+      "notes": "Linen line from Loro Piana SS26 catalog (S-prefix fabrics). Orders route to the Loro Piana supplier account.",
+      "emails": [
+        "valentina.cao@loropiana.com",
+        "vittorio.osella@loropiana.com"
+      ],
+      "country": "Italy",
+      "reply_domains": [
+        "loropiana.com"
+      ],
+      "contact_person": null,
+      "has_price_list": true,
+      "lead_time_days": 14
+    },
+    {
+      "id": "canclini",
+      "code": "CANCLINI",
+      "name": "Canclini",
+      "email": null,
+      "notes": "HAGAN warehouse stock — Canclini linen (25T/25H) + Luthai cotton shirting. List prices admin-only.",
+      "emails": [],
+      "country": "Italy",
+      "contact_person": null,
+      "has_price_list": true,
+      "lead_time_days": 0
+    },
+    {
+      "id": "wool-stock",
+      "code": "WOOL-STOCK",
+      "name": "Wool Stock",
+      "email": null,
+      "notes": "HAGAN warehouse wool stock — 56 references from Wool Stock .xlsx",
+      "emails": [],
+      "country": null,
+      "contact_person": null,
+      "has_price_list": true,
+      "lead_time_days": 0
     },
     {
       "id": "fab6",
@@ -114,7 +156,7 @@
       "lead_time_days": 14
     }
   ],
-  "updated_at": "2026-05-28T13:45:00.000Z",
+  "updated_at": "2026-06-11T00:00:00.000Z",
   "inbox_scan_email": "rhrahme@gmail.com",
   "factory_orders_email": "orders.ruh@hagan.pro"
 }
