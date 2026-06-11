@@ -23,7 +23,8 @@ export default async function NewFabricOrderPage({
         duplicateFromOrderId={duplicateFromOrderId?.trim() || undefined}
         startFresh={fresh === "1"}
         continueDraft={continueDraft === "1"}
-        productionMode={session.isClientManager}
+        productionMode={false}
+        fabricOrderLabels={session.isClientManager}
         redirectBasePath="/fabric-orders"
       />
     </div>

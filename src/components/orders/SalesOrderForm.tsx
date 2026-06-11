@@ -55,6 +55,7 @@ import {
   salesOrderToDuplicateSeed,
   type SalesOrderDuplicateSeed,
 } from "@/lib/sales-orders/duplicate-draft";
+import { fabricOrderUiLabels } from "@/lib/orders/fabric-order-ui-labels";
 import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import type { SalesOrder } from "@/lib/types/sales-orders";
 
@@ -85,16 +86,21 @@ export function SalesOrderForm({
   startFresh = false,
   continueDraft = false,
   productionMode = false,
+  fabricOrderLabels,
   redirectBasePath = "/orders",
 }: {
   duplicateFromOrderId?: string;
   startFresh?: boolean;
   continueDraft?: boolean;
   productionMode?: boolean;
+  /** When set, use Fabric Orders submit copy (`true` = QC, `false` = admin). */
+  fabricOrderLabels?: boolean;
   /** Where to send the user after create / cancel — `/orders` or `/fabric-orders`. */
   redirectBasePath?: string;
 } = {}) {
   const labels = ordersUiLabels(productionMode);
+  const fabricLabels =
+    fabricOrderLabels === undefined ? null : fabricOrderUiLabels(fabricOrderLabels);
   const router = useRouter();
   const duplicateModeRef = useRef(Boolean(duplicateFromOrderId));
   const duplicateSeedRef = useRef<SalesOrderDuplicateSeed | null>(null);
@@ -391,7 +397,13 @@ export function SalesOrderForm({
 
         if (brandsRes.ok) {
           const brandsData = (await brandsRes.json()) as { brands: FabricBrand[] };
-          setFabricBrands(brandsData.brands);
+          const brands = brandsData.brands ?? [];
+          setFabricBrands(brands);
+          if (brands.length === 0) {
+            setError("No fabric suppliers loaded — refresh the page or contact admin.");
+          }
+        } else {
+          setError("Failed to load fabric suppliers — refresh the page.");
         }
 
         if (duplicateFromOrderId) {
@@ -1034,13 +1046,13 @@ export function SalesOrderForm({
         ) : (
           <>
             <label className="block text-sm">
-              <span className="font-medium text-slate-700">Fabric brand</span>
+              <span className="font-medium text-slate-700">Fabric supplier</span>
               <select
                 value={selectedFabricBrandId}
                 onChange={(e) => handleFabricBrandChange(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 md:max-w-sm"
               >
-                <option value="">Select fabric brand…</option>
+                <option value="">Select fabric supplier…</option>
                 {fabricBrands.map((brand) => (
                   <option key={brand.id} value={brand.id}>
                     {brand.name}
@@ -1477,9 +1489,11 @@ export function SalesOrderForm({
         >
           {submitting
             ? "Creating…"
-            : readyDrafts.length > 1
-              ? labels.createMany(readyDrafts.length)
-              : labels.createOne}
+            : fabricLabels
+              ? fabricLabels.submitButton
+              : readyDrafts.length > 1
+                ? labels.createMany(readyDrafts.length)
+                : labels.createOne}
         </Button>
       </div>
     </div>

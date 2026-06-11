@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { redactSupplierFabricPrices } from "@/lib/auth/fabric-price-access";
 import { getSessionContext } from "@/lib/auth/session";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import { getSupplierByIdFromContacts } from "@/lib/data/supplier-contacts";
 import { searchSupplierFabrics } from "@/lib/data/supplier-catalogs";
@@ -87,6 +88,7 @@ function toSearchItem(item: SupplierFabric, manual = false) {
 }
 
 export async function GET(request: Request) {
+  await ensureDocumentsLoaded(["supplier_contacts"]);
   const session = await getSessionContext();
   const url = new URL(request.url);
   const query = url.searchParams.get("q")?.trim() ?? "";
