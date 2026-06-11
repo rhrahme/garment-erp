@@ -35,7 +35,7 @@ export async function saveTransporterInvoicesFromEmail(input: {
       currency = fromPdf.currency;
     }
 
-    const record = saveTransporterInvoiceFile({
+    const record = await saveTransporterInvoiceFile({
       carrier: parsed.carrier,
       awb_number,
       invoice_number,
@@ -56,7 +56,7 @@ export async function saveTransporterInvoicesFromEmail(input: {
   }
 
   if (saved.length === 0 && parsed.payment_url) {
-    const record = saveTransporterInvoiceFile({
+    const record = await saveTransporterInvoiceFile({
       carrier: parsed.carrier,
       awb_number,
       invoice_number,
@@ -77,7 +77,7 @@ export async function saveTransporterInvoicesFromEmail(input: {
 
   const isPaymentReceipt = isDhlPaymentReceiptEmail(input.from_address, input.subject);
   if (saved.length === 0 && isPaymentReceipt && (parsed.amount || awb_number)) {
-    const record = saveTransporterInvoiceFile({
+    const record = await saveTransporterInvoiceFile({
       carrier: parsed.carrier,
       awb_number,
       invoice_number,

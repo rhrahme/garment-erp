@@ -36,7 +36,7 @@ export async function saveInvoiceAttachmentsFromEmail(input: {
 
     const parsed = await parseInvoicePdfAttachment(attachment);
 
-    const record = saveSupplierInvoiceFile({
+    const record = await saveSupplierInvoiceFile({
       supplier_id: input.supplier_id,
       supplier_name: supplierName(input.supplier_id),
       invoice_number: pickInvoiceNumber(input.subject, [

@@ -1,11 +1,15 @@
-import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import {
+  getLocalInvoiceFilesDir,
+  readInvoiceFile,
+  writeInvoiceFile,
+} from "@/lib/data/invoice-file-storage";
 import { readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
 import { findSupplierIdByEmail } from "@/lib/email/inbound/process-supplier-email";
 
 const STORE_PATH = path.join(process.cwd(), "supplier-invoices.local.json");
-const FILES_DIR = path.join(process.cwd(), "supplier-invoices", "files");
+const FILES_CATEGORY = "supplier" as const;
 
 export interface SupplierInvoiceRecord {
   id: string;
@@ -38,10 +42,6 @@ function writeStore(store: SupplierInvoiceStore): void {
   writeJsonFile(STORE_PATH, store);
 }
 
-function ensureFilesDir(): void {
-  fs.mkdirSync(FILES_DIR, { recursive: true });
-}
-
 function invoiceDedupeKey(messageId: string | null, filename: string): string {
   return `${(messageId ?? "no-message").toLowerCase()}::${filename.toLowerCase()}`;
 }
@@ -57,10 +57,16 @@ export function getSupplierInvoice(id: string): SupplierInvoiceRecord | undefine
 }
 
 export function getSupplierInvoiceFilePath(invoice: SupplierInvoiceRecord): string {
-  return path.join(FILES_DIR, invoice.stored_filename);
+  return path.join(getLocalInvoiceFilesDir(FILES_CATEGORY), invoice.stored_filename);
 }
 
-export function saveSupplierInvoiceFile(input: {
+export async function readSupplierInvoiceFile(
+  invoice: SupplierInvoiceRecord
+): Promise<Buffer | null> {
+  return readInvoiceFile(FILES_CATEGORY, invoice.stored_filename);
+}
+
+export async function saveSupplierInvoiceFile(input: {
   supplier_id: string | null;
   supplier_name: string | null;
   invoice_number: string | null;
@@ -74,10 +80,8 @@ export function saveSupplierInvoiceFile(input: {
   message_id: string | null;
   original_filename: string;
   content: Buffer;
-}): SupplierInvoiceRecord | null {
+}): Promise<SupplierInvoiceRecord | null> {
   if (!input.content.length) return null;
-
-  ensureFilesDir();
 
   const store = readStore();
   const dedupe = invoiceDedupeKey(input.message_id, input.original_filename);
@@ -90,7 +94,7 @@ export function saveSupplierInvoiceFile(input: {
   const safeBase = input.original_filename.replace(/[^\w.-]+/g, "_").replace(/_+/g, "_");
   const stored_filename = `${id}-${safeBase}`;
 
-  fs.writeFileSync(path.join(FILES_DIR, stored_filename), input.content);
+  await writeInvoiceFile(FILES_CATEGORY, stored_filename, input.content);
 
   const record: SupplierInvoiceRecord = {
     id,

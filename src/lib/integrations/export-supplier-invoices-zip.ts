@@ -1,14 +1,12 @@
-import fs from "fs";
-import path from "path";
 import {
   listSupplierInvoices,
-  getSupplierInvoiceFilePath,
+  readSupplierInvoiceFile,
   type SupplierInvoiceRecord,
 } from "@/lib/integrations/supplier-invoice-store";
 import {
   attachTransporterInvoicesToSuppliers,
   listTransporterInvoices,
-  getTransporterInvoiceFilePath,
+  readTransporterInvoiceFile,
   relinkTransporterInvoicesByAwb,
   type TransporterInvoiceRecord,
 } from "@/lib/integrations/transporter-invoice-store";
@@ -144,7 +142,7 @@ function buildManifestCsv(
   return `${rows.map((row) => row.map(escapeCsv).join(",")).join("\n")}\n`;
 }
 
-export function buildSupplierInvoicesExportZip(): Buffer {
+export async function buildSupplierInvoicesExportZip(): Promise<Buffer> {
   relinkTransporterInvoicesByAwb();
 
   const invoices = attachTransporterInvoicesToSuppliers(listSupplierInvoices());
@@ -178,37 +176,37 @@ export function buildSupplierInvoicesExportZip(): Buffer {
 
   for (const invoice of invoices) {
     const folder = `invoices/${supplierFolderName(invoice)}`;
-    const supplierPath = getSupplierInvoiceFilePath(invoice);
-    if (fs.existsSync(supplierPath)) {
+    const supplierContent = await readSupplierInvoiceFile(invoice);
+    if (supplierContent) {
       entries.push({
         name: `${folder}/supplier-invoice_${invoice.original_filename}`,
-        data: fs.readFileSync(supplierPath),
+        data: supplierContent,
       });
     }
 
     for (const doc of invoice.transporter_invoices) {
-      const filePath = getTransporterInvoiceFilePath(doc);
-      if (!filePath || !fs.existsSync(filePath)) continue;
+      const fileContent = await readTransporterInvoiceFile(doc);
+      if (!fileContent) continue;
       entries.push({
         name: `${folder}/${transporterFileName(doc)}`,
-        data: fs.readFileSync(filePath),
+        data: fileContent,
       });
     }
   }
 
   for (const doc of unlinked) {
-    const filePath = getTransporterInvoiceFilePath(doc);
-    if (!filePath || !fs.existsSync(filePath)) continue;
+    const fileContent = await readTransporterInvoiceFile(doc);
+    if (!fileContent) continue;
     entries.push({
       name: `unlinked/${transporterFileName(doc)}`,
-      data: fs.readFileSync(filePath),
+      data: fileContent,
     });
   }
 
   return buildZipBuffer(entries);
 }
 
-export function buildSingleSupplierInvoiceExportZip(invoiceId: string): Buffer | null {
+export async function buildSingleSupplierInvoiceExportZip(invoiceId: string): Promise<Buffer | null> {
   relinkTransporterInvoicesByAwb();
 
   const invoices = attachTransporterInvoicesToSuppliers(listSupplierInvoices());
@@ -223,20 +221,20 @@ export function buildSingleSupplierInvoiceExportZip(invoiceId: string): Buffer |
   ];
 
   const folder = supplierFolderName(invoice);
-  const supplierPath = getSupplierInvoiceFilePath(invoice);
-  if (fs.existsSync(supplierPath)) {
+  const supplierContent = await readSupplierInvoiceFile(invoice);
+  if (supplierContent) {
     entries.push({
       name: `${folder}/supplier-invoice_${invoice.original_filename}`,
-      data: fs.readFileSync(supplierPath),
+      data: supplierContent,
     });
   }
 
   for (const doc of invoice.transporter_invoices) {
-    const filePath = getTransporterInvoiceFilePath(doc);
-    if (!filePath || !fs.existsSync(filePath)) continue;
+    const fileContent = await readTransporterInvoiceFile(doc);
+    if (!fileContent) continue;
     entries.push({
       name: `${folder}/${transporterFileName(doc)}`,
-      data: fs.readFileSync(filePath),
+      data: fileContent,
     });
   }
 

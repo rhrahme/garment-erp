@@ -1,21 +1,14 @@
 import { NextResponse } from "next/server";
+import { verifyApiKey } from "@/lib/integrations/api-auth";
 import { scanSupplierInbox } from "@/lib/email/inbound/scan-inbox";
 import {
   INBOX_SCAN_DAYS_DEFAULT,
   INBOX_SCAN_LIMIT_DEFAULT,
 } from "@/lib/email/inbound/scan-inbox-config";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { getInboxScanEmail, saveImapPassword } from "@/lib/email/imap-auth";
+import { getInboxScanEmail } from "@/lib/email/imap-auth";
 import { isImapConfigured } from "@/lib/email/imap-config";
 import { getFactoryOrdersEmail } from "@/lib/data/supplier-catalogs";
-
-function inboxNotConfiguredMessage(): string {
-  const mailbox = getInboxScanEmail();
-  if (!mailbox) {
-    return "Inbox scan is not configured. Set an inbox to scan under Purchasing → Suppliers, then save a Google App Password on Supplier Inbox (or set IMAP_USER and IMAP_PASS in .env.local).";
-  }
-  return `Inbox scan is not configured. Save a Google App Password for ${mailbox} on Supplier Inbox (or set IMAP_PASS in .env.local).`;
-}
 
 const SCAN_INBOX_DOCUMENT_KEYS = [
   "supplier_contacts",
@@ -28,17 +21,24 @@ const SCAN_INBOX_DOCUMENT_KEYS = [
   "supplier_availability_alerts",
 ] as const;
 
+function inboxNotConfiguredMessage(): string {
+  const mailbox = getInboxScanEmail();
+  if (!mailbox) {
+    return "Inbox scan is not configured. Set inbox_scan_email under Purchasing → Suppliers and IMAP_USER/IMAP_PASS on Vercel.";
+  }
+  return `Inbox scan is not configured. Set IMAP_PASS for ${mailbox} in Vercel environment variables.`;
+}
+
 export async function POST(request: Request) {
+  const authError = verifyApiKey(request);
+  if (authError) return authError;
+
   try {
     await ensureDocumentsLoaded(SCAN_INBOX_DOCUMENT_KEYS);
     const body = (await request.json().catch(() => ({}))) as {
-      password?: string;
       days?: number;
       limit?: number;
     };
-    if (body.password?.trim()) {
-      saveImapPassword(body.password.trim());
-    }
 
     if (!isImapConfigured()) {
       return NextResponse.json({ error: inboxNotConfiguredMessage() }, { status: 400 });
@@ -52,7 +52,10 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const authError = verifyApiKey(request);
+  if (authError) return authError;
+
   await ensureDocumentsLoaded(["supplier_contacts"]);
   return NextResponse.json({
     configured: isImapConfigured(),

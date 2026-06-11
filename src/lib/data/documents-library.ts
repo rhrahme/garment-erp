@@ -8,6 +8,7 @@ import {
 } from "@/lib/data/erp-document-catalog";
 import { ERP_DOCUMENT_SPECS, type ErpDocumentKey } from "@/lib/data/document-keys";
 import { isSupabaseDocumentsStorage, loadDocument } from "@/lib/data/document-persistence";
+import { localInvoiceFilesDirStats } from "@/lib/data/invoice-file-storage";
 import type {
   DocumentsLibrarySnapshot,
   ErpDocumentRow,
@@ -176,10 +177,12 @@ export async function getDocumentsLibrarySnapshot(): Promise<DocumentsLibrarySna
     documents: erpRows.filter((row) => row.category === category.id),
   }));
 
-  const supplierPdfDir = path.join(process.cwd(), "supplier-invoices", "files");
-  const transporterPdfDir = path.join(process.cwd(), "supplier-invoices", "transporter-files");
-  const supplierPdfStats = folderStats(supplierPdfDir);
-  const transporterPdfStats = folderStats(transporterPdfDir);
+  const supplierPdfStats = isSupabaseDocumentsStorage()
+    ? { fileCount: 0, totalBytes: 0 }
+    : localInvoiceFilesDirStats("supplier");
+  const transporterPdfStats = isSupabaseDocumentsStorage()
+    ? { fileCount: 0, totalBytes: 0 }
+    : localInvoiceFilesDirStats("transporter");
   const referenceSource = loadReferenceSourceFiles();
 
   return {

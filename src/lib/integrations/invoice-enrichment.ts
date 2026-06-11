@@ -6,13 +6,13 @@ import {
 } from "@/lib/email/inbound/parse-invoice-amount";
 import {
   getSupplierInvoice,
-  getSupplierInvoiceFilePath,
   listSupplierInvoices,
+  readSupplierInvoiceFile,
   type SupplierInvoiceRecord,
 } from "@/lib/integrations/supplier-invoice-store";
 import {
-  getTransporterInvoiceFilePath,
   listTransporterInvoices,
+  readTransporterInvoiceFile,
   type TransporterInvoiceRecord,
 } from "@/lib/integrations/transporter-invoice-store";
 
@@ -36,10 +36,10 @@ export async function enrichSupplierInvoiceAmounts(): Promise<number> {
   for (const invoice of listSupplierInvoices(500)) {
     if (invoice.amount && invoice.currency) continue;
 
-    const filePath = getSupplierInvoiceFilePath(invoice);
-    if (!fs.existsSync(filePath)) continue;
+    const fileContent = await readSupplierInvoiceFile(invoice);
+    if (!fileContent) continue;
 
-    const text = await extractTextFromPdf(fs.readFileSync(filePath));
+    const text = await extractTextFromPdf(fileContent);
     const parsed = extractSupplierInvoiceTotal(text);
     if (!parsed) continue;
 
@@ -63,10 +63,10 @@ export async function enrichTransporterInvoiceAmounts(): Promise<number> {
   for (const invoice of listTransporterInvoices(500)) {
     if (invoice.amount && invoice.currency) continue;
 
-    const filePath = getTransporterInvoiceFilePath(invoice);
-    if (!filePath || !fs.existsSync(filePath)) continue;
+    const fileContent = await readTransporterInvoiceFile(invoice);
+    if (!fileContent) continue;
 
-    const text = await extractTextFromPdf(fs.readFileSync(filePath));
+    const text = await extractTextFromPdf(fileContent);
     const parsed = extractCustomsInvoiceTotal(text);
     if (!parsed) continue;
 

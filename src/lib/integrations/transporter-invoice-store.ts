@@ -1,11 +1,15 @@
-import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import {
+  getLocalInvoiceFilesDir,
+  readInvoiceFile,
+  writeInvoiceFile,
+} from "@/lib/data/invoice-file-storage";
 import { readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
 import { listSupplierInvoices, type SupplierInvoiceRecord } from "@/lib/integrations/supplier-invoice-store";
 
 const STORE_PATH = path.join(process.cwd(), "transporter-invoices.local.json");
-const FILES_DIR = path.join(process.cwd(), "supplier-invoices", "transporter-files");
+const FILES_CATEGORY = "transporter" as const;
 
 export type TransporterExpenseType = "customs" | "freight" | "other";
 
@@ -42,10 +46,6 @@ function writeStore(store: TransporterInvoiceStore): void {
   writeJsonFile(STORE_PATH, store);
 }
 
-function ensureFilesDir(): void {
-  fs.mkdirSync(FILES_DIR, { recursive: true });
-}
-
 function dedupeKey(messageId: string | null, filename: string): string {
   return `${(messageId ?? "no-message").toLowerCase()}::${filename.toLowerCase()}`;
 }
@@ -75,7 +75,14 @@ export function getTransporterInvoice(id: string): TransporterInvoiceRecord | un
 
 export function getTransporterInvoiceFilePath(invoice: TransporterInvoiceRecord): string | null {
   if (!invoice.stored_filename) return null;
-  return path.join(FILES_DIR, invoice.stored_filename);
+  return path.join(getLocalInvoiceFilesDir(FILES_CATEGORY), invoice.stored_filename);
+}
+
+export async function readTransporterInvoiceFile(
+  invoice: TransporterInvoiceRecord
+): Promise<Buffer | null> {
+  if (!invoice.stored_filename) return null;
+  return readInvoiceFile(FILES_CATEGORY, invoice.stored_filename);
 }
 
 export function attachTransporterInvoicesToSuppliers(
@@ -104,11 +111,9 @@ export function saveTransporterInvoiceFile(input: {
   original_filename: string | null;
   content?: Buffer | null;
   source: "email_scan" | "manual_upload";
-}): TransporterInvoiceRecord | null {
+}): Promise<TransporterInvoiceRecord | null> {
   const hasFile = Boolean(input.content?.length);
   if (!hasFile && !input.payment_url && !input.amount && !input.awb_number) return null;
-
-  ensureFilesDir();
 
   const store = readStore();
   const dedupe = dedupeKey(input.message_id, input.original_filename ?? "payment-link");
@@ -129,7 +134,7 @@ export function saveTransporterInvoiceFile(input: {
       .replace(/[^\w.-]+/g, "_")
       .replace(/_+/g, "_");
     stored_filename = `${id}-${safeBase}`;
-    fs.writeFileSync(path.join(FILES_DIR, stored_filename), input.content);
+    await writeInvoiceFile(FILES_CATEGORY, stored_filename, input.content);
     file_size = input.content.length;
   }
 
