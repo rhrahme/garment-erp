@@ -225,7 +225,7 @@ export async function getFabricSuppliers() {
   if (DEMO_MODE) return await getImportedSuppliers();
   // Fabric search/spec UIs read JSON catalogs keyed by contact ids (canclini, zegna, …).
   // Supabase warehouse `suppliers` rows may use UUIDs that never match catalog items.
-  return getImportedSuppliers();
+  return await getImportedSuppliers();
 }
 
 export async function getPriceListItems(supplierId?: string) {

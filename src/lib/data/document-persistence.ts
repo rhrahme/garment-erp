@@ -118,7 +118,11 @@ async function writeToSupabase<T>(documentKey: ErpDocumentKey, payload: T): Prom
 }
 
 async function loadDocumentKey(documentKey: ErpDocumentKey): Promise<void> {
-  if (loadedKeys.has(documentKey)) return;
+  if (loadedKeys.has(documentKey)) {
+    const spec = ERP_DOCUMENT_SPECS[documentKey];
+    if (fileCache.has(spec.path)) return;
+    loadedKeys.delete(documentKey);
+  }
 
   const pending = loadingByKey.get(documentKey);
   if (pending) {

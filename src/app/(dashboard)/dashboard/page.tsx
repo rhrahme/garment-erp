@@ -28,7 +28,14 @@ import { formatCurrency, formatNumber } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const session = await getSessionContext();
-  await ensureDocumentsLoaded(["customer_invoices", "sales_orders", "fabric_orders", "shipments", "costing_rates"]);
+  await ensureDocumentsLoaded([
+    "customer_invoices",
+    "sales_orders",
+    "fabric_orders",
+    "shipments",
+    "costing_rates",
+    "production_work_orders",
+  ]);
 
   const [stats, workOrders, shipments, inventory] = await Promise.all([
     getDashboardStats(),
