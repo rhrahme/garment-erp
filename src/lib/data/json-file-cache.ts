@@ -1,8 +1,8 @@
 /** @deprecated Import from @/lib/data/document-persistence */
 export {
-  ColdDocumentCacheError,
   ensureDocumentForPath,
   ensureDocumentsLoaded,
+  ensureErpBootstrap,
   ensureErpDocumentsLoaded,
   invalidateDocumentCache,
   loadDocument,

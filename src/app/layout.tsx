@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ensureErpBootstrap } from "@/lib/data/document-persistence";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -6,7 +7,9 @@ export const metadata: Metadata = {
   description: "Enterprise resource planning for garment manufacturing",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  await ensureErpBootstrap();
+
   return (
     <html lang="en">
       <body className="antialiased">{children}</body>

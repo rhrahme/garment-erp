@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 /**
- * Static audit: API routes that read ERP JSON documents must warm the cache first.
+ * Static audit: ERP document reads must not hit a cold Supabase cache on Vercel.
  *
- * Safe patterns (any one per route file):
- * - ensureDocumentsLoaded / ensureDocumentForPath / ensureFabricReceivingDocumentsLoaded
- * - loadDocument / readJsonFileAsync
- * - async supplier-contacts getters (readSupplierContacts, getFabricSupplierBrands, …)
- * - lib helpers that already call ensureDocumentsLoaded internally
+ * Global bootstrap (required):
+ * - src/instrumentation.ts awaits ensureErpBootstrap() on Node cold start
+ * - src/app/layout.tsx awaits ensureErpBootstrap() before any SSR
  *
- * Run: node scripts/audit-document-loads.mjs
- * Exit 1 when risky sync reads are found without a warmup signal.
+ * When global bootstrap is present, per-route warmup markers are optional.
+ * Without it, API routes / server pages with sync reads must declare warmup.
+ *
+ * Run: npm run audit:document-loads
  */
 
 import fs from "fs";
@@ -18,8 +18,10 @@ import { fileURLToPath } from "url";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const API_DIR = path.join(ROOT, "src/app/api");
+const APP_DIR = path.join(ROOT, "src/app");
 
 const WARMUP_MARKERS = [
+  "ensureErpBootstrap",
   "ensureDocumentsLoaded",
   "ensureDocumentForPath",
   "ensureFabricReceivingDocumentsLoaded",
@@ -53,44 +55,93 @@ const RISKY_READ_MARKERS = [
   "readSupplierContactsSync(",
   "getSupplierByIdFromContactsSync(",
   "getFabricSupplierBrandsSync(",
+  "listStoredFabricOrders(",
+  "listStoredShipments(",
+  "countPendingAwbFabricOrders(",
 ];
 
-function walk(dir) {
+function readText(relativePath) {
+  const full = path.join(ROOT, relativePath);
+  if (!fs.existsSync(full)) return "";
+  return fs.readFileSync(full, "utf8");
+}
+
+function hasGlobalBootstrap() {
+  const instrumentation = readText("src/instrumentation.ts");
+  const rootLayout = readText("src/app/layout.tsx");
+  return (
+    instrumentation.includes("ensureErpBootstrap") &&
+    rootLayout.includes("ensureErpBootstrap")
+  );
+}
+
+function walk(dir, filter) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   const files = [];
   for (const entry of entries) {
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) files.push(...walk(full));
-    else if (entry.name === "route.ts") files.push(full);
+    if (entry.isDirectory()) files.push(...walk(full, filter));
+    else if (filter(entry.name, full)) files.push(full);
   }
   return files;
 }
 
-const violations = [];
+function auditServerFiles(label, files) {
+  const violations = [];
+  for (const file of files) {
+    const source = fs.readFileSync(file, "utf8");
+    const rel = path.relative(ROOT, file);
 
-for (const file of walk(API_DIR)) {
-  const source = fs.readFileSync(file, "utf8");
-  const rel = path.relative(ROOT, file);
+    const hasRiskyRead = RISKY_READ_MARKERS.some((marker) => source.includes(marker));
+    if (!hasRiskyRead) continue;
 
-  const hasRiskyRead = RISKY_READ_MARKERS.some((marker) => source.includes(marker));
-  if (!hasRiskyRead) continue;
+    const hasWarmup = WARMUP_MARKERS.some((marker) => source.includes(marker));
+    if (hasWarmup) continue;
 
-  const hasWarmup = WARMUP_MARKERS.some((marker) => source.includes(marker));
-  if (hasWarmup) continue;
-
-  violations.push(rel);
+    violations.push(rel);
+  }
+  return violations;
 }
 
-if (violations.length === 0) {
-  console.log("audit-document-loads: OK — no API routes with risky sync document reads without warmup markers.");
-  process.exit(0);
-}
-
-console.error("audit-document-loads: FAIL — routes may read cold ERP document cache on Vercel:\n");
-for (const file of violations.sort()) {
-  console.error(`  - ${file}`);
-}
-console.error(
-  "\nFix: use readJsonFileAsync / async data getters, or call ensureDocumentsLoaded([...]) before sync reads."
+const globalBootstrap = hasGlobalBootstrap();
+const apiViolations = auditServerFiles(
+  "api",
+  walk(API_DIR, (name) => name === "route.ts")
 );
-process.exit(1);
+const pageViolations = auditServerFiles(
+  "pages",
+  walk(APP_DIR, (name, full) => name === "page.tsx" && !full.includes(`${path.sep}login${path.sep}`))
+);
+
+const violations = globalBootstrap ? [] : [...apiViolations, ...pageViolations];
+
+if (!globalBootstrap) {
+  console.error("audit-document-loads: FAIL — missing global ensureErpBootstrap wiring:\n");
+  if (!readText("src/instrumentation.ts").includes("ensureErpBootstrap")) {
+    console.error("  - src/instrumentation.ts must await ensureErpBootstrap()");
+  }
+  if (!readText("src/app/layout.tsx").includes("ensureErpBootstrap")) {
+    console.error("  - src/app/layout.tsx must await ensureErpBootstrap()");
+  }
+  console.error("");
+}
+
+if (violations.length > 0) {
+  console.error("audit-document-loads: FAIL — server files with risky sync reads and no warmup:\n");
+  for (const file of violations.sort()) {
+    console.error(`  - ${file}`);
+  }
+  console.error(
+    "\nFix: add ensureErpBootstrap to instrumentation + root layout, or use async getters / ensureDocumentsLoaded."
+  );
+  process.exit(1);
+}
+
+if (globalBootstrap) {
+  console.log(
+    "audit-document-loads: OK — ensureErpBootstrap wired globally; sync reads safe after cold-start bootstrap."
+  );
+} else {
+  console.log("audit-document-loads: OK — no risky sync reads without warmup markers.");
+}
+process.exit(0);

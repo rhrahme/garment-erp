@@ -18,21 +18,7 @@ type CacheEntry = {
 const fileCache = new Map<string, CacheEntry>();
 const loadedKeys = new Set<ErpDocumentKey>();
 const loadingByKey = new Map<ErpDocumentKey, Promise<void>>();
-
-/** Thrown when sync readJsonFile runs before Supabase-backed cache is warmed. */
-export class ColdDocumentCacheError extends Error {
-  readonly documentKey: ErpDocumentKey | null;
-
-  constructor(filePath: string, documentKey: ErpDocumentKey | null) {
-    const keyLabel = documentKey ?? path.basename(filePath);
-    super(
-      `ERP document "${keyLabel}" is not loaded. ` +
-        `Use readJsonFileAsync/loadDocument or ensureDocumentsLoaded(["${documentKey ?? "…"}"]) before sync read.`
-    );
-    this.name = "ColdDocumentCacheError";
-    this.documentKey = documentKey;
-  }
-}
+let erpBootstrapPromise: Promise<void> | null = null;
 
 export function isSupabaseDocumentsStorage(): boolean {
   if (process.env.ERP_USE_JSON === "true") return false;
@@ -153,6 +139,21 @@ async function loadDocumentKey(documentKey: ErpDocumentKey): Promise<void> {
   }
 }
 
+/**
+ * Load every ERP document into the in-process cache — once per serverless instance.
+ * Shared promise: instrumentation (cold start), root layout (SSR), and readJsonFileAsync
+ * all await the same work so sync reads never see an empty Supabase fallback.
+ */
+export async function ensureErpBootstrap(): Promise<void> {
+  if (!isSupabaseDocumentsStorage()) return;
+  if (!erpBootstrapPromise) {
+    erpBootstrapPromise = Promise.all(ALL_ERP_DOCUMENT_KEYS.map((key) => loadDocumentKey(key))).then(
+      () => undefined
+    );
+  }
+  await erpBootstrapPromise;
+}
+
 /** Load specific ERP documents from Supabase (or local) — once per process per key. */
 export async function ensureDocumentsLoaded(keys: readonly ErpDocumentKey[]): Promise<void> {
   if (!isSupabaseDocumentsStorage()) return;
@@ -166,9 +167,9 @@ export async function ensureDocumentForPath(filePath: string): Promise<void> {
   await ensureDocumentsLoaded([documentKey]);
 }
 
-/** @deprecated Prefer ensureDocumentsLoaded with explicit keys. Loads core docs only. */
+/** @deprecated Prefer ensureErpBootstrap(). Loads all ERP documents once per process. */
 export async function ensureErpDocumentsLoaded(): Promise<void> {
-  return ensureDocumentsLoaded(CORE_ERP_DOCUMENT_KEYS);
+  return ensureErpBootstrap();
 }
 
 /** Load JSON document — fetches only this document when Supabase is enabled. */
@@ -176,6 +177,7 @@ export async function loadDocument<T>(filePath: string, fallback: T): Promise<T>
   const documentKey = documentKeyForPath(filePath);
 
   if (isSupabaseDocumentsStorage() && documentKey) {
+    await ensureErpBootstrap();
     await loadDocumentKey(documentKey);
     const cached = fileCache.get(filePath);
     if (cached) return cached.data as T;
@@ -201,14 +203,22 @@ export async function saveDocument<T>(filePath: string, data: T): Promise<T> {
 }
 
 /**
- * Sync read — memory cache when warmed by ensureDocumentsLoaded / loadDocument / readJsonFileAsync.
- * When Supabase is source of truth and cache is cold, returns fallback (never stale git JSON).
- * Prefer readJsonFileAsync for server paths that need live Supabase data.
+ * Sync read — returns warmed in-process cache only when Supabase is enabled.
+ * Call sites must run after ensureErpBootstrap() (root layout + instrumentation on Vercel).
+ * Prefer readJsonFileAsync when the caller is already async.
  */
 export function readJsonFile<T>(filePath: string, fallback: T): T {
   if (isSupabaseDocumentsStorage()) {
     const cached = fileCache.get(filePath);
     if (cached) return cached.data as T;
+
+    const documentKey = documentKeyForPath(filePath);
+    if (process.env.NODE_ENV === "development" && documentKey) {
+      console.warn(
+        `[ERP] Sync readJsonFile before cache warm for "${documentKey}". ` +
+          "Await ensureErpBootstrap() or use readJsonFileAsync()."
+      );
+    }
     return fallback;
   }
   return readLocalJsonFile(filePath, fallback);
@@ -216,6 +226,7 @@ export function readJsonFile<T>(filePath: string, fallback: T): T {
 
 /** Auto-load from Supabase (or local) then read — preferred entry point for document-backed data. */
 export async function readJsonFileAsync<T>(filePath: string, fallback: T): Promise<T> {
+  await ensureErpBootstrap();
   await ensureDocumentForPath(filePath);
   return readJsonFile(filePath, fallback);
 }
@@ -294,6 +305,7 @@ export function invalidateDocumentCache(filePath?: string): void {
   fileCache.clear();
   loadedKeys.clear();
   loadingByKey.clear();
+  erpBootstrapPromise = null;
 }
 
 /** Keys currently resident in the in-process cache (for diagnostics). */
