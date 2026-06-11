@@ -198,13 +198,14 @@ export async function saveDocument<T>(filePath: string, data: T): Promise<T> {
 
 /**
  * Sync read — memory cache when warmed by ensureDocumentsLoaded / loadDocument / readJsonFileAsync.
- * When Supabase is source of truth, throws on a cold cache instead of returning stale git JSON.
+ * When Supabase is source of truth and cache is cold, returns fallback (never stale git JSON).
+ * Prefer readJsonFileAsync for server paths that need live Supabase data.
  */
 export function readJsonFile<T>(filePath: string, fallback: T): T {
   if (isSupabaseDocumentsStorage()) {
     const cached = fileCache.get(filePath);
     if (cached) return cached.data as T;
-    throw new ColdDocumentCacheError(filePath, documentKeyForPath(filePath));
+    return fallback;
   }
   return readLocalJsonFile(filePath, fallback);
 }

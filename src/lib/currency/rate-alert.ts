@@ -1,5 +1,5 @@
 import path from "path";
-import { readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
+import { readJsonFileAsync, writeJsonFile } from "@/lib/data/json-file-cache";
 import { parseSuperAdminEmails } from "@/lib/auth/permissions";
 import { EUR_SAR_ALERT_THRESHOLD, EUR_TO_SAR } from "@/lib/currency/config";
 import { fetchMarketEurToSar } from "@/lib/currency/market-rate";
@@ -32,8 +32,8 @@ const EMPTY_EXCHANGE_RATE_STATE: ExchangeRateState = {
   last_alert_rate: null,
 };
 
-function readState(): ExchangeRateState {
-  return readJsonFile(STATE_PATH, EMPTY_EXCHANGE_RATE_STATE);
+async function readState(): Promise<ExchangeRateState> {
+  return readJsonFileAsync(STATE_PATH, EMPTY_EXCHANGE_RATE_STATE);
 }
 
 function writeState(state: ExchangeRateState): void {
@@ -84,7 +84,7 @@ async function notifyAdmins(marketRate: number): Promise<boolean> {
 }
 
 export async function checkEurSarRateAlert(force = false): Promise<RateCheckResult> {
-  const state = readState();
+  const state = await readState();
   const checkedAt = new Date().toISOString();
 
   if (!force && !shouldRefresh(state.last_checked_at)) {

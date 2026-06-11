@@ -4,6 +4,7 @@ import { ExchangeRateBanner } from "@/components/currency/ExchangeRateBanner";
 import { SupplierAvailabilityBanner } from "@/components/supplier-inbox/SupplierAvailabilityBanner";
 import { checkEurSarRateAlert } from "@/lib/currency/rate-alert";
 import { getSessionContext } from "@/lib/auth/session";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 
 const DEFAULT_RATE_STATUS = {
   bookRate: 4.5,
@@ -15,6 +16,7 @@ const DEFAULT_RATE_STATUS = {
 };
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  await ensureDocumentsLoaded(["exchange_rate_state", "supplier_availability_alerts"]);
   const session = await getSessionContext();
   let rateStatus = DEFAULT_RATE_STATUS;
   try {
