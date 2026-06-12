@@ -3,15 +3,12 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, FileEdit } from "lucide-react";
-import { DRAFT_KEYS } from "@/lib/autosave/draft-keys";
-import { readLocalDraft } from "@/lib/autosave/local-draft-storage";
 import {
   countDraftFabricLines,
   describeSalesOrderDraftSummary,
   isSalesOrderDraftEmpty,
-  migrateSalesOrderDraft,
+  readFabricOrderLocalDraft,
   type SalesOrderDraftSummary,
-  type SalesOrderFormDraft,
 } from "@/lib/autosave/sales-order-draft";
 import type { ClientProfile } from "@/lib/types/clients";
 
@@ -91,7 +88,7 @@ export function FabricOrderDraftBanner({
   }, []);
 
   useEffect(() => {
-    const stored = readLocalDraft<SalesOrderFormDraft>(DRAFT_KEYS.fabricOrderNew);
+    const stored = readFabricOrderLocalDraft();
     if (!stored || isSalesOrderDraftEmpty(stored)) {
       setLocalSummary(null);
       return;
@@ -103,8 +100,7 @@ export function FabricOrderDraftBanner({
   useEffect(() => {
     if (!hydrated) return;
 
-    const stored = readLocalDraft<SalesOrderFormDraft>(DRAFT_KEYS.fabricOrderNew);
-    const migrated = stored ? migrateSalesOrderDraft(stored) : null;
+    const migrated = readFabricOrderLocalDraft();
     if (!migrated || isSalesOrderDraftEmpty(migrated)) return;
 
     const localLines = countDraftFabricLines(migrated);

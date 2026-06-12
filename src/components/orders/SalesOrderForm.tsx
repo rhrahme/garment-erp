@@ -15,7 +15,7 @@ import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import { useLocalDraft } from "@/hooks/useLocalDraft";
 import { useServerOrderDraft } from "@/hooks/useServerOrderDraft";
 import { DRAFT_KEYS } from "@/lib/autosave/draft-keys";
-import { readLocalDraft } from "@/lib/autosave/local-draft-storage";
+import { readLocalDraft, writeLocalDraft } from "@/lib/autosave/local-draft-storage";
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
 import {
   normalizeLoroPianaFabricNumber,
@@ -38,6 +38,9 @@ import {
   describeSalesOrderDraftSummary,
   isSalesOrderDraftEmpty,
   migrateSalesOrderDraft,
+  readFabricOrderLocalDraft,
+  resolveBestDraftForServerSave,
+  resolveFabricOrderDraftForServerSave,
   SALES_ORDER_DRAFT_VERSION,
   type SalesOrderFormDraft,
   type SalesOrderLineDraft,
@@ -483,42 +486,89 @@ export function SalesOrderForm({
   );
   const hasUnsavedFabricLines = totalFabricLines > 0;
   const healLocalDraftToServerRef = useRef(false);
+  const legacyDraftMigratedRef = useRef(false);
 
-  /** Push local draft lines to Supabase when browser has fabrics the server missed. */
+  /** Move pre-split drafts from sales-order:new into fabric-order:new. */
+  useEffect(() => {
+    if (redirectBasePath !== "/fabric-orders" || !draftHydrated || legacyDraftMigratedRef.current) return;
+    legacyDraftMigratedRef.current = true;
+
+    const legacy = readLocalDraft<SalesOrderFormDraft>(DRAFT_KEYS.salesOrderNew);
+    const legacyDraft = legacy ? migrateSalesOrderDraft(legacy) : null;
+    if (!legacyDraft || isSalesOrderDraftEmpty(legacyDraft)) return;
+
+    const current = readLocalDraft<SalesOrderFormDraft>(DRAFT_KEYS.fabricOrderNew);
+    const currentDraft = current ? migrateSalesOrderDraft(current) : null;
+    const legacyLines = countDraftFabricLines(legacyDraft);
+    const currentLines = currentDraft ? countDraftFabricLines(currentDraft) : 0;
+    if (legacyLines <= currentLines) return;
+
+    writeLocalDraft(DRAFT_KEYS.fabricOrderNew, legacyDraft);
+    if (currentLines === 0 && totalFabricLines === 0) {
+      restoreDraft(legacyDraft);
+    }
+  }, [draftHydrated, redirectBasePath, restoreDraft, totalFabricLines]);
+
+  useEffect(() => {
+    if (!serverDraftHydrated || !pendingServerDraft) return;
+    setLastServerPersistedLines(countDraftFabricLines(pendingServerDraft));
+  }, [pendingServerDraft, serverDraftHydrated]);
+
+  useEffect(() => {
+    if (serverDraftStatus === "error") {
+      healLocalDraftToServerRef.current = false;
+    }
+    if (serverDraftStatus !== "saved") return;
+    setLastServerPersistedLines(countDraftFabricLines(serverDraftPayload));
+  }, [serverDraftPayload, serverDraftStatus]);
+
+  const serverLinesOutOfSync = totalFabricLines > lastServerPersistedLines;
+
+  /** Push the richest local draft to the server when it has more fabric lines than Supabase. */
   useEffect(() => {
     if (!serverDraftEnabled || !serverDraftHydrated || !draftHydrated || !draftChoiceResolved || loading) {
       return;
     }
     if (healLocalDraftToServerRef.current) return;
 
-    const stored = readLocalDraft<SalesOrderFormDraft>(draftKey);
-    const migrated = stored ? migrateSalesOrderDraft(stored) : null;
-    if (!migrated || isSalesOrderDraftEmpty(migrated)) return;
+    const toSave = resolveDraftForServerSave();
+    const payloadLines = countDraftFabricLines(toSave);
+    if (payloadLines === 0) return;
 
-    const storedLines = countDraftFabricLines(migrated);
-    if (storedLines === 0 && totalFabricLines === 0) return;
+    const serverLines = pendingServerDraft ? countDraftFabricLines(pendingServerDraft) : 0;
+    if (payloadLines <= serverLines) return;
 
     healLocalDraftToServerRef.current = true;
-    void persistServerDraft(migrated);
+    void persistServerDraft(toSave);
   }, [
     draftChoiceResolved,
     draftHydrated,
-    draftKey,
     loading,
+    pendingServerDraft,
     persistServerDraft,
     serverDraftEnabled,
     serverDraftHydrated,
+    serverDraftPayload,
     totalFabricLines,
   ]);
 
   const serverDraftAutoSaveStatus = useMemo(() => {
     if (serverDraftStatus === "saving") return "saving" as const;
-    if (serverDraftStatus === "saved") return "saved" as const;
     if (serverDraftStatus === "error") return "error" as const;
-    if (serverDraftSavedAt && !isSalesOrderDraftEmpty(draftSnapshot)) return "idle" as const;
-    if (!isSalesOrderDraftEmpty(draftSnapshot)) return "pending" as const;
+    if (serverLinesOutOfSync) return "pending" as const;
+    if (serverDraftStatus === "saved") return "saved" as const;
+    if (serverDraftSavedAt && !isSalesOrderDraftEmpty(draftSnapshot) && !serverLinesOutOfSync) {
+      return "idle" as const;
+    }
+    if (!isSalesOrderDraftEmpty(draftSnapshot) || totalFabricLines > 0) return "pending" as const;
     return "idle" as const;
-  }, [draftSnapshot, serverDraftSavedAt, serverDraftStatus]);
+  }, [
+    draftSnapshot,
+    serverDraftSavedAt,
+    serverDraftStatus,
+    serverLinesOutOfSync,
+    totalFabricLines,
+  ]);
 
   useEffect(() => {
     if (!hasUnsavedFabricLines) return;
@@ -1144,7 +1194,11 @@ export function SalesOrderForm({
                 waitingMessage="Waiting to back up to server…"
               />
               {serverDraftStatus === "error" && (
-                <Button variant="secondary" size="sm" onClick={() => void persistServerDraft()}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => void persistServerDraft(resolveDraftForServerSave())}
+                >
                   Retry server backup
                 </Button>
               )}

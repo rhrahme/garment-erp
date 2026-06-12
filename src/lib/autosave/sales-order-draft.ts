@@ -1,4 +1,6 @@
+import { DRAFT_KEYS } from "@/lib/autosave/draft-keys";
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
+import { readLocalDraft } from "@/lib/autosave/local-draft-storage";
 import type { SalesOrderClientDraft } from "@/lib/sales-orders/multi-client-draft";
 
 export const SALES_ORDER_DRAFT_VERSION = 3;
@@ -92,6 +94,49 @@ export function migrateSalesOrderDraft(raw: unknown): SalesOrderFormDraft | null
 
 export function countDraftFabricLines(draft: SalesOrderFormDraft): number {
   return draft.clientDrafts.reduce((sum, entry) => sum + entry.lines.length, 0);
+}
+
+/** Read the richest fabric-order draft from local storage (includes legacy sales-order:new key). */
+export function readFabricOrderLocalDraft(): SalesOrderFormDraft | null {
+  const candidates = [
+    readLocalDraft<unknown>(DRAFT_KEYS.fabricOrderNew),
+    readLocalDraft<unknown>(DRAFT_KEYS.salesOrderNew),
+  ];
+
+  let best: SalesOrderFormDraft | null = null;
+  let bestLines = 0;
+
+  for (const raw of candidates) {
+    const draft = migrateSalesOrderDraft(raw);
+    if (!draft || isSalesOrderDraftEmpty(draft)) continue;
+    const lines = countDraftFabricLines(draft);
+    if (lines > bestLines) {
+      best = draft;
+      bestLines = lines;
+    }
+  }
+
+  return best;
+}
+
+/** Pick the draft with the most fabric lines for server backup (snapshot vs local storage). */
+export function resolveBestDraftForServerSave(
+  snapshot: SalesOrderFormDraft,
+  readLocal: () => SalesOrderFormDraft | null = () => null
+): SalesOrderFormDraft {
+  const stored = readLocal();
+  if (stored && !isSalesOrderDraftEmpty(stored)) {
+    const storedLines = countDraftFabricLines(stored);
+    const snapshotLines = countDraftFabricLines(snapshot);
+    if (storedLines >= snapshotLines) {
+      return stored;
+    }
+  }
+  return snapshot;
+}
+
+export function resolveFabricOrderDraftForServerSave(snapshot: SalesOrderFormDraft): SalesOrderFormDraft {
+  return resolveBestDraftForServerSave(snapshot, readFabricOrderLocalDraft);
 }
 
 /**
