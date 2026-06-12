@@ -2,6 +2,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { ExchangeRateBanner } from "@/components/currency/ExchangeRateBanner";
 import { SupplierAvailabilityBanner } from "@/components/supplier-inbox/SupplierAvailabilityBanner";
+import { DocumentsHealthBanner } from "@/components/layout/DocumentsHealthBanner";
 import { checkEurSarRateAlert } from "@/lib/currency/rate-alert";
 import { getSessionContext } from "@/lib/auth/session";
 import { ensureErpBootstrap } from "@/lib/data/document-persistence";
@@ -59,6 +60,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           />
         )}
         {!clientsOnly && <SupplierAvailabilityBanner />}
+        {session.isAdmin && <DocumentsHealthBanner />}
         <main className="flex-1 overflow-y-auto p-8">{children}</main>
       </div>
     </div>

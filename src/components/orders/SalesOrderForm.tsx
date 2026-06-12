@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { AlertTriangle, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { FabricPicker } from "@/components/fabric/FabricPicker";
 import { Button } from "@/components/ui/Button";
 import { AutoSaveStatusBar } from "@/components/ui/AutoSaveStatus";
@@ -13,7 +13,7 @@ import { filterPersonClients } from "@/lib/clients/filter";
 import { formatClientDisplayName } from "@/lib/clients/names";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import { useLocalDraft } from "@/hooks/useLocalDraft";
-import { useServerFabricOrderDraft } from "@/hooks/useServerFabricOrderDraft";
+import { useServerOrderDraft } from "@/hooks/useServerOrderDraft";
 import { DRAFT_KEYS } from "@/lib/autosave/draft-keys";
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
 import {
@@ -286,7 +286,9 @@ export function SalesOrderForm({
     autoRestore: !promptForDraft,
   });
 
-  const serverDraftEnabled = redirectBasePath === "/fabric-orders" && !duplicateFromOrderId;
+  const serverDraftEnabled = !duplicateFromOrderId;
+  const serverDraftApiPath =
+    redirectBasePath === "/fabric-orders" ? "/api/fabric-order-drafts" : "/api/sales-order-drafts";
   const {
     status: serverDraftStatus,
     error: serverDraftError,
@@ -297,9 +299,10 @@ export function SalesOrderForm({
     persistNow: persistServerDraft,
     clearServerDraft,
     dismissPendingRestore: dismissPendingServerRestore,
-  } = useServerFabricOrderDraft({
+  } = useServerOrderDraft({
     enabled: serverDraftEnabled,
     draft: draftSnapshot,
+    apiPath: serverDraftApiPath,
   });
 
   function saveDraftNow() {
@@ -341,6 +344,13 @@ export function SalesOrderForm({
     }
 
     if (continueDraft && hasPendingServerRestore && pendingServerDraft) {
+      restoreDraft(pendingServerDraft);
+      dismissPendingServerRestore();
+      setDraftChoiceResolved(true);
+      return;
+    }
+
+    if (hasPendingServerRestore && !hasPendingRestore && pendingServerDraft) {
       restoreDraft(pendingServerDraft);
       dismissPendingServerRestore();
       setDraftChoiceResolved(true);
@@ -428,6 +438,33 @@ export function SalesOrderForm({
       applyDuplicateSeed(duplicateSeedRef.current);
     }
   }
+
+  const totalFabricLines = useMemo(
+    () => clientDrafts.reduce((sum, draft) => sum + draft.lines.length, 0),
+    [clientDrafts]
+  );
+  const hasUnsavedFabricLines = totalFabricLines > 0;
+
+  const serverDraftAutoSaveStatus = useMemo(() => {
+    if (serverDraftStatus === "saving") return "saving" as const;
+    if (serverDraftStatus === "saved") return "saved" as const;
+    if (serverDraftStatus === "error") return "error" as const;
+    if (serverDraftSavedAt && !isSalesOrderDraftEmpty(draftSnapshot)) return "idle" as const;
+    if (!isSalesOrderDraftEmpty(draftSnapshot)) return "pending" as const;
+    return "idle" as const;
+  }, [draftSnapshot, serverDraftSavedAt, serverDraftStatus]);
+
+  useEffect(() => {
+    if (!hasUnsavedFabricLines) return;
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedFabricLines]);
 
   useEffect(() => {
     async function loadSession() {
@@ -522,6 +559,12 @@ export function SalesOrderForm({
     () => clientDrafts.filter((draft) => draft.clientId && draft.lines.length > 0),
     [clientDrafts]
   );
+
+  const submitButtonLabel = fabricLabels
+    ? fabricLabels.submitButton
+    : readyDrafts.length > 1
+      ? labels.createMany(readyDrafts.length)
+      : labels.createOne;
 
   function resetAddFlow() {
     setSelectedFabricBrandId("");
@@ -1000,6 +1043,19 @@ export function SalesOrderForm({
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
       )}
 
+      {hasUnsavedFabricLines && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <div className="flex flex-wrap items-start gap-2">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+            <p>
+              <strong>Not saved yet.</strong> You have {totalFabricLines} fabric
+              {totalFabricLines !== 1 ? "s" : ""} in this draft — drafts and server backup do not create an order.
+              Click <strong>{submitButtonLabel}</strong> to save the order.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <AutoSaveStatusBar
@@ -1008,26 +1064,29 @@ export function SalesOrderForm({
             isDirty={draftDirty}
             variant="local"
           />
+          {serverDraftEnabled && !isSalesOrderDraftEmpty(draftSnapshot) && (
+            <>
+              <AutoSaveStatusBar
+                status={serverDraftAutoSaveStatus}
+                error={serverDraftError}
+                isDirty={serverDraftAutoSaveStatus === "pending"}
+                variant="remote"
+                waitingMessage="Waiting to back up to server…"
+              />
+              {serverDraftStatus === "error" && (
+                <Button variant="secondary" size="sm" onClick={() => void persistServerDraft()}>
+                  Retry server backup
+                </Button>
+              )}
+            </>
+          )}
           {draftDirty && (
             <Button variant="secondary" size="sm" onClick={saveDraftNow}>
               Save draft now
             </Button>
           )}
-          {serverDraftEnabled && serverDraftSavedAt && (
-            <span className="text-xs text-slate-500">
-              Server backup{" "}
-              {serverDraftStatus === "saving"
-                ? "saving…"
-                : serverDraftStatus === "error"
-                  ? "failed"
-                  : new Date(serverDraftSavedAt).toLocaleTimeString(undefined, {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-            </span>
-          )}
         </div>
-        {serverDraftError && (
+        {serverDraftError && serverDraftStatus !== "error" && (
           <p className="text-xs text-amber-700">Server backup: {serverDraftError}</p>
         )}
         {draftDirty && (
@@ -1594,13 +1653,7 @@ export function SalesOrderForm({
           onClick={handleSubmit}
           disabled={submitting || !productionBrandId || readyDrafts.length === 0}
         >
-          {submitting
-            ? "Creating…"
-            : fabricLabels
-              ? fabricLabels.submitButton
-              : readyDrafts.length > 1
-                ? labels.createMany(readyDrafts.length)
-                : labels.createOne}
+          {submitting ? "Creating…" : submitButtonLabel}
         </Button>
       </div>
     </div>

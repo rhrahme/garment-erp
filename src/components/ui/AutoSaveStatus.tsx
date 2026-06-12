@@ -19,10 +19,10 @@ export function AutoSaveStatusBar({
   isDirty,
   variant = "remote",
 }: AutoSaveStatusProps) {
-  const savedLabel = variant === "local" ? "Draft saved on this device" : "All changes saved";
+  const savedLabel = variant === "local" ? "Draft saved on this device" : "Draft saved to server";
   const savingLabel = variant === "local" ? "Saving draft…" : "Saving…";
-  const savedFlashLabel = variant === "local" ? "Draft saved" : "Saved";
-  const pendingLabel = variant === "local" ? "Unsaved draft…" : "Unsaved changes…";
+  const savedFlashLabel = variant === "local" ? "Draft saved" : "Draft saved to server";
+  const pendingLabel = variant === "local" ? "Unsaved draft…" : "Waiting to back up…";
 
   if (status === "idle" && !isDirty) {
     return (
@@ -63,7 +63,7 @@ export function AutoSaveStatusBar({
     return (
       <p className="flex items-center gap-1.5 text-xs text-red-600">
         <CloudOff className="h-3.5 w-3.5" />
-        {error ?? "Auto-save failed — keep editing to retry"}
+        {error ?? (variant === "local" ? "Auto-save failed — keep editing to retry" : "Save failed — retry")}
       </p>
     );
   }

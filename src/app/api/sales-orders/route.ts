@@ -6,6 +6,7 @@ import { getClientById } from "@/lib/data/clients";
 import { formatClientDisplayName } from "@/lib/clients/names";
 import {
   generateSoNumber,
+  getSalesOrderByIdFresh,
   readSalesOrders,
   readSalesOrdersFresh,
   writeSalesOrders,
@@ -195,6 +196,17 @@ export async function POST(request: Request) {
 
     store.orders.unshift(order);
     const saved = await writeSalesOrders(store);
+
+    const confirmed = await getSalesOrderByIdFresh(order.id);
+    if (!confirmed) {
+      return NextResponse.json(
+        {
+          error:
+            "Order could not be confirmed in storage. Please retry — do not assume it was saved.",
+        },
+        { status: 503 }
+      );
+    }
 
     await notifyIntegration("sales_order.created", {
       id: order.id,
