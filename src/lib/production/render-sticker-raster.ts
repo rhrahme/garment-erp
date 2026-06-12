@@ -116,10 +116,17 @@ function svgTextLine(line: TextLine): string {
   return `<text x="${line.x}" y="${line.y}" font-family="Helvetica, Arial, sans-serif" font-size="${line.fontMm}" fill="${STICKER_COLOR}" text-anchor="${anchor}" dominant-baseline="middle">${escapeXml(line.text)}</text>`;
 }
 
+export type StickerQrPlacementMm = {
+  x: number;
+  y: number;
+  size: number;
+};
+
 export type StickerRasterLayout = {
   pageW: number;
   pageH: number;
   svg: string;
+  qr: StickerQrPlacementMm;
 };
 
 /** Build full-page SVG for one sticker (upright design space; flip applied after rasterize). */
@@ -127,8 +134,7 @@ export function buildStickerPageSvg(
   label: PrintableStickerLabel,
   role: StickerRole | undefined,
   mode: LabelPrintMode,
-  scalePct: LabelScalePct,
-  qrPngBase64: string
+  scalePct: LabelScalePct
 ): StickerRasterLayout {
   const scale = labelScaleMultiplier(scalePct);
   const kind = layoutKindForMode(mode);
@@ -218,15 +224,17 @@ export function buildStickerPageSvg(
     y += lineH / 2 + gap;
   }
 
+  // QR is composited after SVG rasterize (nearest-neighbor). Embedding the QR PNG in the
+  // SVG and bilevel-thresholding the raster creates hollow module outlines from librsvg
+  // anti-aliasing when the image is scaled to print resolution.
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+<svg xmlns="http://www.w3.org/2000/svg"
   width="${dims.W}mm" height="${dims.H}mm" viewBox="0 0 ${dims.W} ${dims.H}">
   <rect width="${dims.W}" height="${dims.H}" fill="#ffffff"/>
-  <image xlink:href="data:image/png;base64,${qrPngBase64}" x="${qrX}" y="${qrY}" width="${qrSize}" height="${qrSize}"/>
   ${textElements.join("\n  ")}
 </svg>`;
 
-  return { pageW: dims.W, pageH: dims.H, svg };
+  return { pageW: dims.W, pageH: dims.H, svg, qr: { x: qrX, y: qrY, size: qrSize } };
 }
 
 /** Opaque 1-bit bilevel PNG — no alpha channel (jsPDF must not emit /SMask). */
@@ -239,19 +247,42 @@ async function finalizeThermalRaster(pipeline: sharp.Sharp): Promise<Buffer> {
     .toBuffer();
 }
 
+async function compositeQrOnRaster(
+  textLayer: Buffer,
+  qrPng: Buffer,
+  qr: StickerQrPlacementMm
+): Promise<sharp.Sharp> {
+  const qrPx = Math.round(mmToPx(qr.size));
+  const qrX = Math.round(mmToPx(qr.x));
+  const qrY = Math.round(mmToPx(qr.y));
+  const qrResized = await sharp(qrPng)
+    .resize(qrPx, qrPx, { kernel: sharp.kernel.nearest })
+    .png()
+    .toBuffer();
+
+  return sharp(textLayer).composite([{ input: qrResized, left: qrX, top: qrY }]);
+}
+
 /** Rasterize sticker SVG (+ optional 180° flip) to PNG at STICKER_RASTER_DPI. */
 export async function rasterizeStickerSvg(
   svg: string,
   pageW: number,
   pageH: number,
-  mode: LabelPrintMode
+  mode: LabelPrintMode,
+  qrPng?: Buffer,
+  qr?: StickerQrPlacementMm
 ): Promise<Buffer> {
   const widthPx = Math.round(mmToPx(pageW));
   const heightPx = Math.round(mmToPx(pageH));
 
-  let pipeline = sharp(Buffer.from(svg), { density: STICKER_RASTER_DPI }).resize(widthPx, heightPx, {
-    fit: "fill",
-  });
+  const textLayer = await sharp(Buffer.from(svg), { density: STICKER_RASTER_DPI })
+    .resize(widthPx, heightPx, { fit: "fill" })
+    .flatten({ background: THERMAL_WHITE })
+    .png()
+    .toBuffer();
+
+  let pipeline: sharp.Sharp =
+    qrPng && qr ? await compositeQrOnRaster(textLayer, qrPng, qr) : sharp(textLayer);
 
   if (isFlipped(mode)) {
     pipeline = pipeline.rotate(180);
@@ -273,8 +304,8 @@ export async function renderStickerPagePng(
     qrCache.set(label.qr_payload, qrBuf);
   }
 
-  const layout = buildStickerPageSvg(label, role, mode, scalePct, qrBuf.toString("base64"));
-  return rasterizeStickerSvg(layout.svg, layout.pageW, layout.pageH, mode);
+  const layout = buildStickerPageSvg(label, role, mode, scalePct);
+  return rasterizeStickerSvg(layout.svg, layout.pageW, layout.pageH, mode, qrBuf, layout.qr);
 }
 
 /** Calibration page: huge letter + QR + text, whole design box rotated CW about page centre. */

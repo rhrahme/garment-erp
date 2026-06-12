@@ -191,10 +191,12 @@ export function StickerPrintPreviewModal({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-            <p className="font-semibold">Blank labels from the browser or PDF?</p>
+            <p className="font-semibold">Print dialog shows A4 or a black preview?</p>
             <p className="mt-1">
-              PDFs are full-page bitmaps for the D550. If still blank, use <strong>Download PNG</strong>,
-              open in Preview.app, print at <strong>100% scale</strong> on <strong>51×102 mm</strong> media.
+              Use <strong>Print selected</strong> or <strong>Download PDF</strong> — not the browser&apos;s
+              Cmd+P on this page. In the macOS dialog, set the D550 / LabelLife <strong>paper size to 51×102 mm</strong>{" "}
+              (it may default to A4). Scale <strong>100%</strong> or <strong>Fit to paper</strong>, margins none.
+              If still blank, <strong>Download PNG</strong> → Preview.app → print at 100% on 51×102 mm.
             </p>
           </div>
 
