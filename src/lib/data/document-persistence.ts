@@ -15,6 +15,8 @@ import {
 import { getSupabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
+const CORE_DOCUMENT_KEY_SET = new Set<ErpDocumentKey>(CORE_ERP_DOCUMENT_KEYS);
+
 type CacheEntry = {
   mtimeMs: number;
   data: unknown;
@@ -195,7 +197,7 @@ async function loadDocumentKey(documentKey: ErpDocumentKey): Promise<void> {
  * all await the same work so sync reads never see an empty Supabase fallback.
  */
 async function runErpBootstrap(): Promise<void> {
-  await Promise.all(ALL_ERP_DOCUMENT_KEYS.map((key) => loadDocumentKey(key)));
+  await Promise.all(CORE_ERP_DOCUMENT_KEYS.map((key) => loadDocumentKey(key)));
   const spec = ERP_DOCUMENT_SPECS.supplier_contacts;
   const cached = fileCache.get(spec.path);
   if (cached) {
@@ -278,11 +280,15 @@ export function readJsonFile<T>(filePath: string, fallback: T): T {
     if (cached) return cached.data as T;
 
     const documentKey = documentKeyForPath(filePath);
-    if (process.env.NODE_ENV === "development" && documentKey) {
-      console.warn(
+    if (documentKey) {
+      const label =
         `[ERP] Sync readJsonFile before cache warm for "${documentKey}". ` +
-          "Await ensureErpBootstrap() or use readJsonFileAsync()."
-      );
+        "Await ensureErpBootstrap() or use readJsonFileAsync().";
+      if (process.env.VERCEL === "1" && CORE_DOCUMENT_KEY_SET.has(documentKey)) {
+        console.error(`[ERP] ${label} Returning empty fallback on Vercel.`);
+      } else if (process.env.NODE_ENV === "development") {
+        console.warn(label);
+      }
     }
     return fallback;
   }

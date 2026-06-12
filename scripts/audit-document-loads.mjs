@@ -2,12 +2,11 @@
 /**
  * Static audit: ERP document reads must not hit a cold Supabase cache on Vercel.
  *
- * Global bootstrap (required for SSR):
- * - src/app/(dashboard)/layout.tsx awaits ensureErpBootstrap() before dashboard SSR
- * - API routes call ensureErpBootstrap() / readJsonFileAsync() in handlers
+ * Dashboard bootstrap (required for SSR pages):
+ * - src/app/(dashboard)/layout.tsx awaits ensureErpBootstrap() with fail-open try/catch
+ * - Root layout must NOT duplicate bootstrap (blocks /login when Supabase is slow)
  *
- * When global bootstrap is present, per-route warmup markers are optional.
- * Without it, API routes / server pages with sync reads must declare warmup.
+ * API routes call ensureErpBootstrap() / ensureDocumentsLoaded() / readJsonFileAsync().
  *
  * Run: npm run audit:document-loads
  */
@@ -27,7 +26,6 @@ const WARMUP_MARKERS = [
   "ensureFabricReceivingDocumentsLoaded",
   "ensureFabricOrdersLoaded",
   "ensureShipmentsLoaded",
-  "ensureSupplierRepliesLoaded",
   "ensureErpDocumentsLoaded",
   "loadDocument(",
   "readJsonFileAsync(",
@@ -68,13 +66,14 @@ function readText(relativePath) {
   return fs.readFileSync(full, "utf8");
 }
 
-function hasGlobalBootstrap() {
+function hasDashboardBootstrap() {
   const dashboardLayout = readText("src/app/(dashboard)/layout.tsx");
+  return /ensureErpBootstrap\s*\(\)/.test(dashboardLayout);
+}
+
+function hasRootBootstrapConflict() {
   const rootLayout = readText("src/app/layout.tsx");
-  return (
-    /await\s+ensureErpBootstrap\s*\(\)/.test(dashboardLayout) ||
-    /await\s+ensureErpBootstrap\s*\(\)/.test(rootLayout)
-  );
+  return /ensureErpBootstrap\s*\(\)/.test(rootLayout);
 }
 
 function walk(dir, filter) {
@@ -88,7 +87,7 @@ function walk(dir, filter) {
   return files;
 }
 
-function auditServerFiles(label, files) {
+function auditServerFiles(files) {
   const violations = [];
   for (const file of files) {
     const source = fs.readFileSync(file, "utf8");
@@ -105,42 +104,45 @@ function auditServerFiles(label, files) {
   return violations;
 }
 
-const globalBootstrap = hasGlobalBootstrap();
-const apiViolations = auditServerFiles(
-  "api",
-  walk(API_DIR, (name) => name === "route.ts")
-);
+const dashboardBootstrap = hasDashboardBootstrap();
+const rootConflict = hasRootBootstrapConflict();
+const apiViolations = auditServerFiles(walk(API_DIR, (name) => name === "route.ts"));
 const pageViolations = auditServerFiles(
-  "pages",
   walk(APP_DIR, (name, full) => name === "page.tsx" && !full.includes(`${path.sep}login${path.sep}`))
 );
 
-const violations = globalBootstrap ? [] : [...apiViolations, ...pageViolations];
+let failed = false;
 
-if (!globalBootstrap) {
-  console.error("audit-document-loads: FAIL — missing global ensureErpBootstrap wiring:\n");
-  if (!/await\s+ensureErpBootstrap\s*\(\)/.test(readText("src/app/(dashboard)/layout.tsx"))) {
-    console.error("  - src/app/(dashboard)/layout.tsx must await ensureErpBootstrap()");
-  }
+if (rootConflict) {
+  failed = true;
+  console.error("audit-document-loads: FAIL — remove ensureErpBootstrap from src/app/layout.tsx");
+  console.error("  Bootstrap belongs in src/app/(dashboard)/layout.tsx only (keeps /login fast).\n");
+}
+
+if (!dashboardBootstrap) {
+  failed = true;
+  console.error("audit-document-loads: FAIL — missing dashboard ensureErpBootstrap wiring:\n");
+  console.error("  - src/app/(dashboard)/layout.tsx must await ensureErpBootstrap() with fail-open try/catch");
   console.error("");
 }
 
+const violations = [...apiViolations, ...pageViolations];
 if (violations.length > 0) {
+  failed = true;
   console.error("audit-document-loads: FAIL — server files with risky sync reads and no warmup:\n");
   for (const file of violations.sort()) {
     console.error(`  - ${file}`);
   }
   console.error(
-    "\nFix: await ensureErpBootstrap in root layout, or use async getters / ensureDocumentsLoaded."
+    "\nFix: await ensureDocumentsLoaded / readJsonFileAsync in handlers, or ensureErpBootstrap in dashboard layout."
   );
+}
+
+if (failed) {
   process.exit(1);
 }
 
-if (globalBootstrap) {
-  console.log(
-    "audit-document-loads: OK — ensureErpBootstrap wired globally; sync reads safe after cold-start bootstrap."
-  );
-} else {
-  console.log("audit-document-loads: OK — no risky sync reads without warmup markers.");
-}
+console.log(
+  "audit-document-loads: OK — dashboard bootstrap wired; root layout clean; sync reads have warmup markers."
+);
 process.exit(0);

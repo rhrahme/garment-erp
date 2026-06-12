@@ -20,13 +20,13 @@ const REQUIRED_FABRIC_SUPPLIERS = [
   "wool-stock",
 ];
 
-async function fetchCheck(name, path, validate) {
+async function fetchCheck(name, path, validate, options = {}) {
   const url = `${BASE_URL}${path}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
-    const res = await fetch(url, { signal: controller.signal });
+    const res = await fetch(url, { signal: controller.signal, ...options.init });
     const bodyText = await res.text();
     let body;
     try {
@@ -67,6 +67,20 @@ async function main() {
     }),
     fetchCheck("login page", "/login", (status) => {
       if (status !== 200) throw new Error(`expected 200, got ${status}`);
+    }),
+    fetchCheck("login API timeout", "/api/auth/login", (status, body) => {
+      if (status !== 401 && status !== 503) {
+        throw new Error(`expected 401 or 503, got ${status}`);
+      }
+      if (status === 503 && !body?.error) {
+        throw new Error("503 without error message");
+      }
+    }, {
+      init: {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "smoke-test@invalid.local", password: "invalid" }),
+      },
     }),
     fetchCheck("fabric-brands auth gate", "/api/fabric-brands", (status, body) => {
       if (status !== 401) throw new Error(`expected 401 without session, got ${status}`);
