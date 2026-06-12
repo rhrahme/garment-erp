@@ -23,7 +23,7 @@ export type StickerPrintGuide = {
   doNot?: string;
 };
 
-const MEDIA = "51 × 102 mm";
+const DRIVER_MEDIA = "51 × 102 mm portrait";
 const PRINTER = "D550 / LabelLife";
 
 function macGuide(): StickerPrintGuide {
@@ -33,18 +33,19 @@ function macGuide(): StickerPrintGuide {
     steps: [
       {
         title: "Click Print",
-        detail: `A popup opens with one ${MEDIA} bilevel PNG per label, then your system print dialog (no download).`,
+        detail:
+          "A popup opens with one landscape label page per sticker (QR left, text horizontal), then your system print dialog.",
       },
       {
         title: "Choose your thermal printer",
-        detail: `Select ${PRINTER}, turn OFF “Headers and footers”, margins None. Set paper to ${MEDIA} portrait if the preview looks wrong.`,
+        detail: `Select ${PRINTER}. Turn OFF “Headers and footers”. Margins: None. Paper: ${DRIVER_MEDIA}. Scale: 100% — do NOT use Fit to page if the preview clips.`,
       },
       {
         title: "Scan a QR to verify",
-        detail: "One label should feed per page with QR on the left and text horizontal. Scan with Fabric Receiving.",
+        detail: "One label should feed per page with a full QR on the left. Scan with Fabric Receiving.",
       },
     ],
-    fallback: `If the preview is blank or wrong size, use Download PNG → Preview → Print at 100% on ${MEDIA}.`,
+    fallback: `If the preview is blank or clipped, use Download PDF → Preview → Print at 100% on ${DRIVER_MEDIA}, Fit to paper.`,
   };
 }
 
@@ -55,18 +56,19 @@ function windowsGuide(): StickerPrintGuide {
     steps: [
       {
         title: "Click Print",
-        detail: `A popup opens with one ${MEDIA} bilevel PNG per label, then your system print dialog (no download).`,
+        detail:
+          "A popup opens with one landscape label page per sticker (QR left, text horizontal), then your system print dialog.",
       },
       {
         title: "Choose your thermal printer",
-        detail: `Select ${PRINTER}, turn OFF “Headers and footers”, margins None. Set paper to ${MEDIA} portrait if the preview looks wrong.`,
+        detail: `Select ${PRINTER}. Turn OFF “Headers and footers”. Margins: None. Paper: ${DRIVER_MEDIA}. Scale: 100% — not Fit to page.`,
       },
       {
         title: "Scan a QR to verify",
-        detail: "One label feeds per page with QR on the left and text horizontal. Scan with Fabric Receiving.",
+        detail: "One label feeds per page with a full QR on the left. Scan with Fabric Receiving.",
       },
     ],
-    fallback: `If the preview is blank, use Download PNG → open in Photos/Paint → Print at 100% on ${MEDIA}, or import into LabelLife.`,
+    fallback: `If the preview is blank or clipped, use Download PDF → Print at 100% on ${DRIVER_MEDIA}, or import into LabelLife.`,
   };
 }
 
@@ -77,18 +79,18 @@ function otherGuide(): StickerPrintGuide {
     steps: [
       {
         title: "Click Print",
-        detail: `The system print dialog opens with one ${MEDIA} page per label.`,
+        detail: "The system print dialog opens with one landscape label page per sticker.",
       },
       {
         title: "Choose the thermal printer",
-        detail: `Select ${PRINTER}, paper ${MEDIA} portrait, margins None, headers/footers OFF.`,
+        detail: `Select ${PRINTER}, paper ${DRIVER_MEDIA}, margins None, headers/footers OFF, scale 100%.`,
       },
       {
         title: "Verify output",
-        detail: "One label per page; QR on the left, text horizontal.",
+        detail: "One label per page; full QR on the left, text horizontal.",
       },
     ],
-    fallback: "If blank, download PNG and print at 100% on 51×102 mm media.",
+    fallback: "If blank or clipped, download PDF and print at 100% on 51×102 mm media.",
   };
 }
 

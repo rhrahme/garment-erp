@@ -1,5 +1,5 @@
 /**
- * Verify sticker direct-print HTML structure (51×102 mm, one img per page).
+ * Verify sticker direct-print HTML structure (landscape 102×51 for printer-match).
  * Usage: node scripts/verify-sticker-print-html.mjs
  */
 import { createJiti } from "jiti";
@@ -15,20 +15,34 @@ const jiti = createJiti(import.meta.url, {
 
 const {
   buildStickerPrintHtml,
-  STICKER_PRINT_PAGE_H_MM,
-  STICKER_PRINT_PAGE_W_MM,
+  browserPrintPageLayout,
+  browserPrintNeedsLandscapeRotate,
+  STICKER_PRINT_LANDSCAPE_H_MM,
+  STICKER_PRINT_LANDSCAPE_W_MM,
 } = jiti("@/lib/production/sticker-print-html");
+const { PRINTER_MATCH_MODE } = jiti("@/lib/production/label-printer-settings");
+const { STICKER_RASTER_DPI } = jiti("@/lib/production/render-sticker-raster");
 
-const html = buildStickerPrintHtml(["blob:test-1", "blob:test-2"]);
+const dataUrl = "data:image/png;base64,iVBORw0KGgo=";
+const html = buildStickerPrintHtml([dataUrl, dataUrl], { mode: PRINTER_MATCH_MODE });
+const layout = browserPrintPageLayout(PRINTER_MATCH_MODE);
+const imgWpx = Math.round((layout.pageW * STICKER_RASTER_DPI) / 25.4);
+const imgHpx = Math.round((layout.pageH * STICKER_RASTER_DPI) / 25.4);
 
 const checks = [
-  [`@page size: ${STICKER_PRINT_PAGE_W_MM}mm ${STICKER_PRINT_PAGE_H_MM}mm`, html.includes(`size: ${STICKER_PRINT_PAGE_W_MM}mm ${STICKER_PRINT_PAGE_H_MM}mm`)],
+  [
+    `@page landscape ${STICKER_PRINT_LANDSCAPE_W_MM}×${STICKER_PRINT_LANDSCAPE_H_MM}`,
+    html.includes(`size: ${STICKER_PRINT_LANDSCAPE_W_MM}mm ${STICKER_PRINT_LANDSCAPE_H_MM}mm landscape`),
+  ],
   ["margin: 0 in @page", html.includes("margin: 0")],
   ["two label pages", (html.match(/class="label-page"/g) ?? []).length === 2],
-  ["img width/height 100%", html.includes('width="100%" height="100%"')],
+  [`img explicit px ${imgWpx}×${imgHpx}`, html.includes(`width="${imgWpx}" height="${imgHpx}"`)],
+  [`img explicit mm ${layout.pageW}`, html.includes(`width: ${layout.pageW}mm`)],
   ["page-break-after on pages", html.includes("page-break-after: always")],
-  ["object-fit fill on img", html.includes("object-fit: fill")],
+  ["inline data URL src", html.includes('src="data:image/png;base64,')],
+  ["print-color-adjust exact", html.includes("print-color-adjust: exact")],
   ["no document title (avoids print header)", !html.includes("<title>")],
+  ["printer-match needs landscape rotate", browserPrintNeedsLandscapeRotate(PRINTER_MATCH_MODE)],
 ];
 
 let failed = false;

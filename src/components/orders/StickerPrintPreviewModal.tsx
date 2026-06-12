@@ -13,7 +13,10 @@ import {
   detectStickerPrintPlatform,
   stickerPrintGuide,
 } from "@/lib/production/sticker-print-platform";
-import { STICKER_PRINT_PAPER_NOTE } from "@/lib/production/sticker-print-html";
+import {
+  STICKER_PRINT_PAPER_NOTE,
+  STICKER_PRINT_SCALE_NOTE,
+} from "@/lib/production/sticker-print-html";
 import {
   downloadStickerPdf,
   downloadStickerPng,
@@ -216,7 +219,11 @@ export function StickerPrintPreviewModal({
                   <li>
                     Select printer <strong>D550 / LabelLife</strong> (not your office inkjet).
                   </li>
-                  <li>Set paper to 51×102 mm portrait if the preview looks wrong.</li>
+                  <li>
+                    Paper <strong>51×102 mm portrait</strong>, margins <strong>None</strong>, scale{" "}
+                    <strong>100%</strong> — do <strong>not</strong> use Fit to page if the preview
+                    clips the QR.
+                  </li>
                 </ul>
                 <label className="mt-3 flex cursor-pointer items-start gap-2">
                   <input
@@ -239,6 +246,7 @@ export function StickerPrintPreviewModal({
                   ))}
                 </ol>
                 <p className="mt-2 text-xs text-emerald-800">{STICKER_PRINT_PAPER_NOTE}</p>
+                <p className="mt-2 text-xs text-emerald-800">{STICKER_PRINT_SCALE_NOTE}</p>
                 <p className="mt-2 text-xs text-emerald-800">{STICKER_PRINT_HEADERS_HINT}</p>
                 {platformGuide.fallback ? (
                   <p className="mt-2 text-xs text-slate-600">{platformGuide.fallback}</p>

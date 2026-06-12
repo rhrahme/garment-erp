@@ -7,6 +7,7 @@ import {
 import {
   buildStickerPrintHtml,
   extractPngBlobsFromZip,
+  prepareBrowserPrintDataUrl,
   waitForDocumentImages,
 } from "@/lib/production/sticker-print-html";
 
@@ -144,13 +145,23 @@ function triggerBlobDownload(blob: Blob, filename: string): void {
 }
 
 /**
- * Open a dedicated popup with label PNGs only and print from that window.
- * Hidden iframes often print the parent page in Chrome (parent URL in footer).
+ * Open a dedicated popup with inline base64 PNGs and print from that window.
+ * Uses a blob: document URL (not about:blank) so Chrome footers show a blank
+ * title instead of "about:blank" if headers are left on.
  */
-function printStickerImageUrls(imageUrls: string[], onAfterPrint?: () => void): Promise<boolean> {
+function printStickerImageDataUrls(
+  imageDataUrls: string[],
+  mode: LabelPrintMode,
+  onAfterPrint?: () => void
+): Promise<boolean> {
   return new Promise((resolve) => {
-    const popup = window.open("about:blank", "sticker-print", "popup,width=480,height=640");
+    const html = buildStickerPrintHtml(imageDataUrls, { mode });
+    const docBlob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const docUrl = URL.createObjectURL(docBlob);
+
+    const popup = window.open(docUrl, "sticker-print", "popup,width=480,height=640");
     if (!popup) {
+      URL.revokeObjectURL(docUrl);
       resolve(false);
       return;
     }
@@ -164,7 +175,7 @@ function printStickerImageUrls(imageUrls: string[], onAfterPrint?: () => void): 
         } catch {
           /* already closed */
         }
-        for (const url of imageUrls) URL.revokeObjectURL(url);
+        URL.revokeObjectURL(docUrl);
       }, 1000);
     };
 
@@ -176,37 +187,37 @@ function printStickerImageUrls(imageUrls: string[], onAfterPrint?: () => void): 
       resolve(ok);
     };
 
-    try {
-      popup.document.open();
-      popup.document.write(buildStickerPrintHtml(imageUrls));
-      popup.document.close();
-    } catch {
-      finish(false);
-      return;
+    const runPrint = () => {
+      void waitForDocumentImages(popup.document)
+        .then(() => {
+          try {
+            popup.focus();
+            popup.print();
+          } catch {
+            finish(false);
+            return;
+          }
+
+          popup.addEventListener("afterprint", () => finish(true), { once: true });
+          window.setTimeout(() => {
+            if (!finished) finish(true);
+          }, 120_000);
+        })
+        .catch(() => finish(false));
+    };
+
+    if (popup.document.readyState === "complete") {
+      runPrint();
+    } else {
+      popup.addEventListener("load", runPrint, { once: true });
+      popup.addEventListener("error", () => finish(false), { once: true });
     }
-
-    void waitForDocumentImages(popup.document)
-      .then(() => {
-        try {
-          popup.focus();
-          popup.print();
-        } catch {
-          finish(false);
-          return;
-        }
-
-        popup.addEventListener("afterprint", () => finish(true), { once: true });
-        window.setTimeout(() => {
-          if (!finished) finish(true);
-        }, 120_000);
-      })
-      .catch(() => finish(false));
   });
 }
 
 /**
  * Fetch server-generated bilevel PNG(s) and open the system print dialog in a popup.
- * One label per page at 51×102 mm via CSS @page — no PDF download required.
+ * Printer-match mode pre-rotates to landscape 102×51 mm for D550 browser print.
  * Never calls print() on the parent page.
  */
 export async function printStickerPngs(
@@ -214,9 +225,12 @@ export async function printStickerPngs(
   onAfterPrint?: () => void
 ): Promise<StickerPrintResult> {
   try {
+    const mode = resolveRotationDeg(request);
     const pngBlobs = await fetchStickerPngBlobs(request);
-    const imageUrls = pngBlobs.map((blob) => URL.createObjectURL(blob));
-    const ok = await printStickerImageUrls(imageUrls, onAfterPrint);
+    const imageDataUrls = await Promise.all(
+      pngBlobs.map((blob) => prepareBrowserPrintDataUrl(blob, mode))
+    );
+    const ok = await printStickerImageDataUrls(imageDataUrls, mode, onAfterPrint);
     return { ok, pageCount: pngBlobs.length };
   } catch (error) {
     console.error("Failed to print sticker PNGs:", error);

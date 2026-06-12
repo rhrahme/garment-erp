@@ -13,7 +13,7 @@ import {
   detectStickerPrintPlatform,
   stickerPrintGuide,
 } from "@/lib/production/sticker-print-platform";
-import { STICKER_PRINT_PAPER_NOTE } from "@/lib/production/sticker-print-html";
+import { STICKER_PRINT_PAPER_NOTE, STICKER_PRINT_SCALE_NOTE } from "@/lib/production/sticker-print-html";
 import {
   downloadStickerPdf,
   downloadStickerPng,
@@ -97,6 +97,7 @@ export function LabelPrinterTest() {
           ))}
         </ol>
         <p className="mt-2 text-xs text-emerald-800">{STICKER_PRINT_PAPER_NOTE}</p>
+        <p className="mt-2 text-xs text-emerald-800">{STICKER_PRINT_SCALE_NOTE}</p>
         <p className="mt-2 text-xs text-emerald-800">{STICKER_PRINT_HEADERS_HINT}</p>
         {platformGuide.fallback ? (
           <p className="mt-2 text-xs text-emerald-800">{platformGuide.fallback}</p>
