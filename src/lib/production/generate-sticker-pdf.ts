@@ -14,17 +14,16 @@ import {
 } from "@/lib/production/label-printer-settings";
 import type { PrintableStickerLabel } from "@/lib/production/qr-labels";
 import {
-  pngToDataUrl,
+  pngToJpegDataUrl,
   renderCalibrationPagePng,
   renderStickerPagePng,
 } from "@/lib/production/render-sticker-raster";
 
 /**
  * D550 / LabelLife drivers do not reliably print PDF vector text (Tj operators) or
- * separately embedded PNG images (Do/XObject). The only path that survives the
- * driver rasteriser is ONE full-page bitmap per label — no doc.text, no partial
- * addImage transforms. Each page is rendered server-side (SVG → PNG via sharp)
- * and embedded edge-to-edge with a single addImage(0, 0, pageW, pageH).
+ * Indexed 1-bit FlateDecode PNG XObjects (blank labels). Each page is rendered
+ * server-side (SVG → bilevel PNG via sharp), converted to JPEG for jsPDF embed,
+ * and placed edge-to-edge with a single addImage(0, 0, pageW, pageH).
  */
 async function fetchQrPngBase64(payload: string): Promise<string> {
   const { qrImageFetchUrl } = await import("@/lib/production/qr-labels");
@@ -54,9 +53,14 @@ function createStickerPdfDocument(mode: LabelPrintMode): jsPDF {
   return doc;
 }
 
-/** Embed one full-page raster — opaque bilevel PNG (no /SMask soft mask). */
-function embedFullPageBitmap(doc: jsPDF, png: Buffer, pageW: number, pageH: number): void {
-  doc.addImage(pngToDataUrl(png), "PNG", 0, 0, pageW, pageH);
+/** Embed one full-page raster as 8-bit JPEG (DCTDecode) — no /SMask, no Indexed 1-bit PNG. */
+async function embedFullPageBitmap(
+  doc: jsPDF,
+  png: Buffer,
+  pageW: number,
+  pageH: number
+): Promise<void> {
+  doc.addImage(await pngToJpegDataUrl(png), "JPEG", 0, 0, pageW, pageH);
 }
 
 export type StickerPdfEntry = {
@@ -93,7 +97,7 @@ export async function generateStickerRollPdf(
     }
     const entry = entries[index]!;
     const png = await renderStickerPagePng(entry.label, entry.role, qrCache, mode, scalePct);
-    embedFullPageBitmap(doc, png, pageSize.width, pageSize.height);
+    await embedFullPageBitmap(doc, png, pageSize.width, pageSize.height);
   }
 
   return new Uint8Array(doc.output("arraybuffer"));
@@ -192,7 +196,7 @@ export async function generateCalibrationStickerPdf(
     const page = pages[index]!;
     if (index > 0) doc.addPage([pageW, pageH], "portrait");
     const png = await renderCalibrationPagePng(page.letter, page.rotationDeg, qrBase64);
-    embedFullPageBitmap(doc, png, pageW, pageH);
+    await embedFullPageBitmap(doc, png, pageW, pageH);
   }
 
   return new Uint8Array(doc.output("arraybuffer"));
