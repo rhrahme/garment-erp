@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
 import { getSessionContext, requireAdmin, requireAuthenticated } from "@/lib/auth/session";
-import { deleteSalesOrderById, getSalesOrderById, readSalesOrders, writeSalesOrders } from "@/lib/data/sales-orders";
+import {
+  deleteSalesOrderById,
+  getSalesOrderById,
+  readSalesOrdersFresh,
+  writeSalesOrders,
+} from "@/lib/data/sales-orders";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { notifyIntegration } from "@/lib/integrations";
 import { isDeliveryDestination } from "@/lib/shipping/delivery-destinations";
@@ -49,7 +54,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       return NextResponse.json({ error: "Invalid delivery destination." }, { status: 400 });
     }
 
-    const store = readSalesOrders();
+    const store = await readSalesOrdersFresh();
     const index = store.orders.findIndex((order) => order.id === id);
     if (index < 0) {
       return NextResponse.json({ error: "Sales order not found." }, { status: 404 });
@@ -70,7 +75,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return NextResponse.json({ order: safeOrder });
   } catch (error) {
     console.error("Failed to update sales order:", error);
-    return NextResponse.json({ error: "Failed to update sales order." }, { status: 500 });
+    const message =
+      error instanceof Error ? error.message : "Failed to update sales order.";
+    const status = message.includes("Supabase") ? 503 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }
 

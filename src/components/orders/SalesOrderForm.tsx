@@ -257,7 +257,9 @@ export function SalesOrderForm({
 
   const draftKey = duplicateFromOrderId
     ? DRAFT_KEYS.salesOrderDuplicate(duplicateFromOrderId)
-    : DRAFT_KEYS.salesOrderNew;
+    : redirectBasePath === "/fabric-orders"
+      ? DRAFT_KEYS.fabricOrderNew
+      : DRAFT_KEYS.salesOrderNew;
 
   const promptForDraft = !duplicateFromOrderId;
 
@@ -608,6 +610,7 @@ export function SalesOrderForm({
     setPendingFabric(null);
     clearFabricAddEntries();
     setFabricPickerValue("");
+    queueMicrotask(() => saveNow());
   }
 
   function removeClientDraft(draftId: string) {
@@ -816,9 +819,23 @@ export function SalesOrderForm({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload.body),
         });
-        const data = (await res.json()) as { order?: { id: string }; error?: string };
-        if (!res.ok) throw new Error(data.error ?? "Failed to create sales order");
-        if (data.order?.id) createdOrderIds.push(data.order.id);
+        let data: { order?: { id: string }; error?: string };
+        try {
+          data = (await res.json()) as { order?: { id: string }; error?: string };
+        } catch {
+          throw new Error(
+            res.ok
+              ? "Invalid server response — the order may not have been saved. Try again."
+              : `Save failed (${res.status}) — the order was not saved. Check your connection and try again.`
+          );
+        }
+        if (!res.ok) {
+          throw new Error(data.error ?? `Save failed (${res.status}) — the order was not saved.`);
+        }
+        if (!data.order?.id) {
+          throw new Error("Save failed — server did not confirm the order. Try again.");
+        }
+        createdOrderIds.push(data.order.id);
       }
       clearDraft();
       router.push(

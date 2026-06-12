@@ -4,7 +4,13 @@ import { requireAuthenticated } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getClientById } from "@/lib/data/clients";
 import { formatClientDisplayName } from "@/lib/clients/names";
-import { generateSoNumber, readSalesOrders, writeSalesOrders, buildClientReference } from "@/lib/data/sales-orders";
+import {
+  generateSoNumber,
+  readSalesOrders,
+  readSalesOrdersFresh,
+  writeSalesOrders,
+  buildClientReference,
+} from "@/lib/data/sales-orders";
 import { findOpenOrderWithSameArticles } from "@/lib/sales-orders/duplicate-order";
 import { getSupplierByIdFromContacts } from "@/lib/data/supplier-contacts";
 import { normalizeFabricSupplierFields, fabricPoSupplierId } from "@/lib/fabric-sourcing/supplier-display";
@@ -92,7 +98,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Select a fabric delivery destination (Riyadh or Dubai)." }, { status: 400 });
     }
 
-    const store = readSalesOrders();
+    const store = await readSalesOrdersFresh();
     const so_number = generateSoNumber(store.orders);
     const client_reference = buildClientReference(client.code, so_number);
 
@@ -203,6 +209,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ order: safeOrder, updated_at: saved.updated_at }, { status: 201 });
   } catch (error) {
     console.error("Failed to create sales order:", error);
-    return NextResponse.json({ error: "Failed to create sales order." }, { status: 500 });
+    const message =
+      error instanceof Error ? error.message : "Failed to create sales order.";
+    const status = message.includes("Supabase") ? 503 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }
