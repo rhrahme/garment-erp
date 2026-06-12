@@ -36,10 +36,17 @@ function formatSavedAt(savedAt: string | null | undefined): string | null {
   });
 }
 
-export function FabricOrderDraftBanner() {
+export function FabricOrderDraftBanner({
+  initialServerSummary = null,
+  initialServerSavedAt = null,
+}: {
+  /** Server-rendered draft summary — shown immediately before client fetch completes. */
+  initialServerSummary?: SalesOrderDraftSummary | null;
+  initialServerSavedAt?: string | null;
+}) {
   const [clients, setClients] = useState<ClientProfile[]>([]);
-  const [serverSummary, setServerSummary] = useState<SalesOrderDraftSummary | null>(null);
-  const [serverSavedAt, setServerSavedAt] = useState<string | null>(null);
+  const [serverSummary, setServerSummary] = useState<SalesOrderDraftSummary | null>(initialServerSummary);
+  const [serverSavedAt, setServerSavedAt] = useState<string | null>(initialServerSavedAt);
   const [localSummary, setLocalSummary] = useState<SalesOrderDraftSummary | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
@@ -90,11 +97,17 @@ export function FabricOrderDraftBanner() {
   }, [clients, hydrated]);
 
   const activeDraft = useMemo(() => {
-    if (localSummary) {
+    const localTime = localSummary?.savedAt ? Date.parse(localSummary.savedAt) : 0;
+    const serverTime = serverSavedAt ? Date.parse(serverSavedAt) : 0;
+
+    if (localSummary && localSummary.totalFabrics > 0 && localTime >= serverTime) {
       return { source: "local" as DraftSource, summary: localSummary, savedAt: localSummary.savedAt };
     }
-    if (serverSummary) {
+    if (serverSummary && serverSummary.totalFabrics > 0) {
       return { source: "server" as DraftSource, summary: serverSummary, savedAt: serverSavedAt };
+    }
+    if (localSummary && localSummary.totalFabrics > 0) {
+      return { source: "local" as DraftSource, summary: localSummary, savedAt: localSummary.savedAt };
     }
     return null;
   }, [localSummary, serverSavedAt, serverSummary]);

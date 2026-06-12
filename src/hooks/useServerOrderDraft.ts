@@ -12,10 +12,13 @@ export function useServerOrderDraft({
   enabled,
   draft,
   apiPath,
+  debounceMs = 2000,
 }: {
   enabled: boolean;
   draft: SalesOrderFormDraft;
   apiPath: string;
+  /** Delay before persisting draft changes. Default 2s. */
+  debounceMs?: number;
 }) {
   const [status, setStatus] = useState<ServerDraftStatus>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -115,10 +118,30 @@ export function useServerOrderDraft({
 
     const timer = setTimeout(() => {
       void persistNow();
-    }, 5000);
+    }, debounceMs);
 
     return () => clearTimeout(timer);
-  }, [draft, enabled, hydrated, persistNow]);
+  }, [debounceMs, draft, enabled, hydrated, persistNow]);
+
+  /** Best-effort save during tab close — uses keepalive so the request can finish after unload. */
+  const flushKeepalive = useCallback(() => {
+    if (!enabled) return;
+
+    const next = draftRef.current;
+    if (isSalesOrderDraftEmpty(next)) return;
+
+    const serialized = JSON.stringify(next);
+    if (serialized === lastSerializedRef.current) return;
+
+    void fetch(apiPath, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: serialized,
+      keepalive: true,
+    }).catch(() => {
+      // Tab is closing — nothing useful to do with errors.
+    });
+  }, [apiPath, enabled]);
 
   const clearServerDraft = useCallback(async () => {
     if (!enabled) return;
@@ -146,6 +169,7 @@ export function useServerOrderDraft({
     hasPendingRestore: Boolean(pendingDraft),
     pendingDraft,
     persistNow,
+    flushKeepalive,
     clearServerDraft,
     dismissPendingRestore,
   };

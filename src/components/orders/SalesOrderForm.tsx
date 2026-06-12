@@ -147,6 +147,7 @@ export function SalesOrderForm({
   const [lineEditForm, setLineEditForm] = useState<LineEditForm | null>(null);
   const [savingLineEdit, setSavingLineEdit] = useState(false);
   const skipClientResetRef = useRef(false);
+  const flushServerDraftAfterMutationRef = useRef(false);
   const [draftChoiceResolved, setDraftChoiceResolved] = useState(
     () => Boolean(duplicateFromOrderId || startFresh || continueDraft)
   );
@@ -297,6 +298,7 @@ export function SalesOrderForm({
     hasPendingRestore: hasPendingServerRestore,
     pendingDraft: pendingServerDraft,
     persistNow: persistServerDraft,
+    flushKeepalive: flushServerDraftKeepalive,
     clearServerDraft,
     dismissPendingRestore: dismissPendingServerRestore,
   } = useServerOrderDraft({
@@ -311,6 +313,18 @@ export function SalesOrderForm({
       void persistServerDraft();
     }
   }
+
+  function requestServerDraftSaveAfterMutation() {
+    flushServerDraftAfterMutationRef.current = true;
+  }
+
+  useEffect(() => {
+    if (!flushServerDraftAfterMutationRef.current) return;
+    if (!serverDraftEnabled || !serverDraftHydrated) return;
+    flushServerDraftAfterMutationRef.current = false;
+    saveNow();
+    void persistServerDraft();
+  }, [draftSnapshot, persistServerDraft, saveNow, serverDraftEnabled, serverDraftHydrated]);
 
   const serverDraftSummary = useMemo(
     () => (pendingServerDraft ? describeSalesOrderDraftSummary(pendingServerDraft, clients) : null),
@@ -466,13 +480,17 @@ export function SalesOrderForm({
     if (!hasUnsavedFabricLines) return;
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      saveNow();
+      if (serverDraftEnabled) {
+        flushServerDraftKeepalive();
+      }
       event.preventDefault();
       event.returnValue = "";
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [hasUnsavedFabricLines]);
+  }, [flushServerDraftKeepalive, hasUnsavedFabricLines, saveNow, serverDraftEnabled]);
 
   useEffect(() => {
     async function loadSession() {
@@ -722,7 +740,7 @@ export function SalesOrderForm({
     setPendingFabric(null);
     clearFabricAddEntries();
     setFabricPickerValue("");
-    queueMicrotask(() => saveDraftNow());
+    requestServerDraftSaveAfterMutation();
   }
 
   function removeClientDraft(draftId: string) {
@@ -834,7 +852,7 @@ export function SalesOrderForm({
       );
       setEditingLineId(null);
       setLineEditForm(null);
-      queueMicrotask(() => saveDraftNow());
+      requestServerDraftSaveAfterMutation();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update fabric line.");
     } finally {
