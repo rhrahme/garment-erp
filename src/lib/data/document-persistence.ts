@@ -25,6 +25,23 @@ const loadedKeys = new Set<ErpDocumentKey>();
 const loadingByKey = new Map<ErpDocumentKey, Promise<void>>();
 let erpBootstrapPromise: Promise<void> | null = null;
 
+/** Per-read cap so a degraded Supabase never blocks SSR for minutes. */
+const SUPABASE_READ_TIMEOUT_MS = 5_000;
+/** Whole bootstrap cap — fail-open and serve fallbacks when Supabase is slow/down. */
+const ERP_BOOTSTRAP_TIMEOUT_MS = 8_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T | null> {
+  return Promise.race([
+    promise,
+    new Promise<null>((resolve) => {
+      setTimeout(() => {
+        console.warn(`[ERP] ${label} timed out after ${ms}ms`);
+        resolve(null);
+      }, ms);
+    }),
+  ]);
+}
+
 export function isSupabaseDocumentsStorage(): boolean {
   if (process.env.ERP_USE_JSON === "true") return false;
   return isSupabaseConfigured() && isSupabaseAdminConfigured();
@@ -77,12 +94,14 @@ async function readFromSupabase<T>(documentKey: ErpDocumentKey): Promise<T | nul
   const admin = getSupabaseAdmin();
   if (!admin) return null;
 
-  const { data, error } = await admin
-    .from("erp_documents")
-    .select("data")
-    .eq("id", documentKey)
-    .maybeSingle();
+  const result = await withTimeout(
+    admin.from("erp_documents").select("data").eq("id", documentKey).maybeSingle(),
+    SUPABASE_READ_TIMEOUT_MS,
+    `read ${documentKey}`
+  );
+  if (!result) return null;
 
+  const { data, error } = result;
   if (error) {
     console.error(`Supabase read failed for ${documentKey}:`, error.message);
     return null;
@@ -175,22 +194,27 @@ async function loadDocumentKey(documentKey: ErpDocumentKey): Promise<void> {
  * Shared promise: instrumentation (cold start), root layout (SSR), and readJsonFileAsync
  * all await the same work so sync reads never see an empty Supabase fallback.
  */
+async function runErpBootstrap(): Promise<void> {
+  await Promise.all(ALL_ERP_DOCUMENT_KEYS.map((key) => loadDocumentKey(key)));
+  const spec = ERP_DOCUMENT_SPECS.supplier_contacts;
+  const cached = fileCache.get(spec.path);
+  if (cached) {
+    try {
+      validateSupplierContacts(cached.data as SupplierContactsLike);
+    } catch (error) {
+      console.error("[ERP bootstrap] supplier contacts validation failed:", error);
+    }
+  }
+}
+
 export async function ensureErpBootstrap(): Promise<void> {
   if (!isSupabaseDocumentsStorage()) return;
   if (!erpBootstrapPromise) {
-    erpBootstrapPromise = Promise.all(ALL_ERP_DOCUMENT_KEYS.map((key) => loadDocumentKey(key))).then(
-      () => {
-        const spec = ERP_DOCUMENT_SPECS.supplier_contacts;
-        const cached = fileCache.get(spec.path);
-        if (cached) {
-          try {
-            validateSupplierContacts(cached.data as SupplierContactsLike);
-          } catch (error) {
-            console.error("[ERP bootstrap] supplier contacts validation failed:", error);
-          }
-        }
-      }
-    );
+    erpBootstrapPromise = withTimeout(
+      runErpBootstrap(),
+      ERP_BOOTSTRAP_TIMEOUT_MS,
+      "ensureErpBootstrap"
+    ).then(() => undefined);
   }
   await erpBootstrapPromise;
 }
@@ -245,7 +269,7 @@ export async function saveDocument<T>(filePath: string, data: T): Promise<T> {
 
 /**
  * Sync read — returns warmed in-process cache only when Supabase is enabled.
- * Call sites must run after ensureErpBootstrap() (root layout + instrumentation on Vercel).
+ * Call sites must run after ensureErpBootstrap() (dashboard layout on Vercel).
  * Prefer readJsonFileAsync when the caller is already async.
  */
 export function readJsonFile<T>(filePath: string, fallback: T): T {

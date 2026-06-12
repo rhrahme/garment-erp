@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { DEV_IMPERSONATION_COOKIE } from "@/lib/auth/dev-impersonation";
+import { formatAuthError, signInWithPasswordWithTimeout } from "@/lib/auth/format-auth-error";
 import { defaultPathForSession, isClientManagerEmail } from "@/lib/auth/permissions";
 import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/supabase/env";
 
@@ -27,7 +28,19 @@ export async function POST(request: Request) {
       },
     });
 
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    const { error: authError, timedOut } = await signInWithPasswordWithTimeout(() =>
+      supabase.auth.signInWithPassword({ email, password })
+    );
+
+    if (timedOut) {
+      return NextResponse.json(
+        {
+          error:
+            "Authentication service is temporarily unavailable. Please try again in a few minutes.",
+        },
+        { status: 503 }
+      );
+    }
 
     if (!authError) {
       return NextResponse.json({
@@ -52,7 +65,7 @@ export async function POST(request: Request) {
       return response;
     }
 
-    return NextResponse.json({ error: authError.message }, { status: 401 });
+    return NextResponse.json({ error: formatAuthError(authError) }, { status: 401 });
   } catch (error) {
     console.error("Login failed:", error);
     return NextResponse.json({ error: "Sign in failed." }, { status: 500 });
