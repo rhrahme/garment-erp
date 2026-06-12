@@ -90,6 +90,51 @@ export function migrateSalesOrderDraft(raw: unknown): SalesOrderFormDraft | null
   return null;
 }
 
+export function countDraftFabricLines(draft: SalesOrderFormDraft): number {
+  return draft.clientDrafts.reduce((sum, entry) => sum + entry.lines.length, 0);
+}
+
+/**
+ * Prefer the draft with more fabric lines. When incoming has fewer lines than existing
+ * (stale client save), keep existing line data while applying incoming metadata.
+ */
+export function mergeSalesOrderDraftPreservingLines(
+  existing: SalesOrderFormDraft,
+  incoming: SalesOrderFormDraft
+): SalesOrderFormDraft {
+  const existingCount = countDraftFabricLines(existing);
+  const incomingCount = countDraftFabricLines(incoming);
+  if (incomingCount >= existingCount) {
+    return incoming;
+  }
+
+  const mergedClientDrafts = incoming.clientDrafts.map((incomingEntry) => {
+    const existingEntry = existing.clientDrafts.find(
+      (row) =>
+        row.id === incomingEntry.id ||
+        (row.clientId && incomingEntry.clientId && row.clientId === incomingEntry.clientId)
+    );
+    if (!existingEntry || existingEntry.lines.length <= incomingEntry.lines.length) {
+      return incomingEntry;
+    }
+    return { ...incomingEntry, lines: existingEntry.lines };
+  });
+
+  for (const existingEntry of existing.clientDrafts) {
+    if (existingEntry.lines.length === 0) continue;
+    const alreadyMerged = mergedClientDrafts.some(
+      (row) =>
+        row.id === existingEntry.id ||
+        (row.clientId && existingEntry.clientId && row.clientId === existingEntry.clientId)
+    );
+    if (!alreadyMerged) {
+      mergedClientDrafts.push(existingEntry);
+    }
+  }
+
+  return { ...incoming, clientDrafts: mergedClientDrafts };
+}
+
 export function isSalesOrderDraftEmpty(raw: unknown): boolean {
   const draft = migrateSalesOrderDraft(raw);
   if (!draft) return true;

@@ -13,12 +13,15 @@ export function useServerOrderDraft({
   draft,
   apiPath,
   debounceMs = 2000,
+  /** When false, debounced saves are paused (e.g. until form restore finishes). */
+  readyToSave = true,
 }: {
   enabled: boolean;
   draft: SalesOrderFormDraft;
   apiPath: string;
   /** Delay before persisting draft changes. Default 2s. */
   debounceMs?: number;
+  readyToSave?: boolean;
 }) {
   const [status, setStatus] = useState<ServerDraftStatus>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +32,7 @@ export function useServerOrderDraft({
   const draftRef = useRef(draft);
   const lastSerializedRef = useRef<string | null>(null);
   const loadAttemptedRef = useRef(false);
+  const saveGenerationRef = useRef(0);
 
   useEffect(() => {
     draftRef.current = draft;
@@ -64,56 +68,66 @@ export function useServerOrderDraft({
     })();
   }, [apiPath, enabled]);
 
-  const persistNow = useCallback(async () => {
-    if (!enabled) return;
+  const persistNow = useCallback(
+    async (override?: SalesOrderFormDraft) => {
+      if (!enabled) return;
 
-    const next = draftRef.current;
-    if (isSalesOrderDraftEmpty(next)) {
+      const next = override ?? draftRef.current;
+      if (isSalesOrderDraftEmpty(next)) {
+        try {
+          await fetch(apiPath, { method: "DELETE" });
+          lastSerializedRef.current = null;
+          setSavedAt(null);
+          setPendingDraft(null);
+          setStatus("idle");
+          setError(null);
+        } catch {
+          // Best-effort clear — local draft still protects the user.
+        }
+        return;
+      }
+
+      const serialized = JSON.stringify(next);
+      if (serialized === lastSerializedRef.current) {
+        return;
+      }
+
+      const generation = ++saveGenerationRef.current;
+      setStatus("saving");
+      setError(null);
       try {
-        await fetch(apiPath, { method: "DELETE" });
-        lastSerializedRef.current = null;
-        setSavedAt(null);
-        setPendingDraft(null);
-        setStatus("idle");
-        setError(null);
-      } catch {
-        // Best-effort clear — local draft still protects the user.
+        const res = await fetch(apiPath, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: serialized,
+        });
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          saved_at?: string;
+        };
+        if (generation !== saveGenerationRef.current) {
+          return;
+        }
+        if (!res.ok) {
+          throw new Error(data.error ?? `Server draft save failed (${res.status}).`);
+        }
+        lastSerializedRef.current = serialized;
+        setSavedAt(data.saved_at ?? new Date().toISOString());
+        setStatus("saved");
+        setTimeout(() => setStatus("idle"), 2500);
+      } catch (err) {
+        if (generation !== saveGenerationRef.current) {
+          return;
+        }
+        setStatus("error");
+        setError(err instanceof Error ? err.message : "Failed to save server draft.");
       }
-      return;
-    }
-
-    const serialized = JSON.stringify(next);
-    if (serialized === lastSerializedRef.current) {
-      return;
-    }
-
-    setStatus("saving");
-    setError(null);
-    try {
-      const res = await fetch(apiPath, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: serialized,
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        error?: string;
-        saved_at?: string;
-      };
-      if (!res.ok) {
-        throw new Error(data.error ?? `Server draft save failed (${res.status}).`);
-      }
-      lastSerializedRef.current = serialized;
-      setSavedAt(data.saved_at ?? new Date().toISOString());
-      setStatus("saved");
-      setTimeout(() => setStatus("idle"), 2500);
-    } catch (err) {
-      setStatus("error");
-      setError(err instanceof Error ? err.message : "Failed to save server draft.");
-    }
-  }, [apiPath, enabled]);
+    },
+    [apiPath, enabled]
+  );
 
   useEffect(() => {
-    if (!enabled || !hydrated) return;
+    if (!enabled || !hydrated || !readyToSave) return;
     if (isSalesOrderDraftEmpty(draft)) return;
 
     const timer = setTimeout(() => {
@@ -121,7 +135,7 @@ export function useServerOrderDraft({
     }, debounceMs);
 
     return () => clearTimeout(timer);
-  }, [debounceMs, draft, enabled, hydrated, persistNow]);
+  }, [debounceMs, draft, enabled, hydrated, persistNow, readyToSave]);
 
   /** Best-effort save during tab close — uses keepalive so the request can finish after unload. */
   const flushKeepalive = useCallback(() => {
@@ -133,6 +147,7 @@ export function useServerOrderDraft({
     const serialized = JSON.stringify(next);
     if (serialized === lastSerializedRef.current) return;
 
+    ++saveGenerationRef.current;
     void fetch(apiPath, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },

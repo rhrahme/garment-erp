@@ -2,6 +2,7 @@ import path from "path";
 import { readJsonFileAsync, writeJsonFileAsync } from "@/lib/data/document-persistence";
 import {
   isSalesOrderDraftEmpty,
+  mergeSalesOrderDraftPreservingLines,
   migrateSalesOrderDraft,
   type SalesOrderFormDraft,
 } from "@/lib/autosave/sales-order-draft";
@@ -64,11 +65,17 @@ export async function saveServerOrderDraft(
 
   const file = await readOrderDraftsFile(scope);
   const key = draftKeyForUser(userEmail);
+  const existingEntry = file.drafts[key];
+  const existingDraft = existingEntry ? migrateSalesOrderDraft(existingEntry.draft) : null;
+  const mergedDraft =
+    existingDraft && !isSalesOrderDraftEmpty(existingDraft)
+      ? mergeSalesOrderDraftPreservingLines(existingDraft, draft)
+      : draft;
   const now = new Date().toISOString();
   const stored: StoredOrderDraft = {
     saved_at: now,
     saved_by: userEmail,
-    draft: { ...draft, savedAt: now },
+    draft: { ...mergedDraft, savedAt: now },
   };
 
   file.drafts[key] = stored;

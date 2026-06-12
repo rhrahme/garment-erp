@@ -15,6 +15,7 @@ import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import { useLocalDraft } from "@/hooks/useLocalDraft";
 import { useServerOrderDraft } from "@/hooks/useServerOrderDraft";
 import { DRAFT_KEYS } from "@/lib/autosave/draft-keys";
+import { readLocalDraft } from "@/lib/autosave/local-draft-storage";
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
 import {
   normalizeLoroPianaFabricNumber,
@@ -33,6 +34,7 @@ import {
   lineNeedsAvailabilityAttention,
 } from "@/components/fabric/FabricStockBadge";
 import {
+  countDraftFabricLines,
   describeSalesOrderDraftSummary,
   isSalesOrderDraftEmpty,
   migrateSalesOrderDraft,
@@ -305,12 +307,26 @@ export function SalesOrderForm({
     enabled: serverDraftEnabled,
     draft: draftSnapshot,
     apiPath: serverDraftApiPath,
+    readyToSave: draftChoiceResolved && !loading,
   });
+
+  function resolveDraftForServerSave(): SalesOrderFormDraft {
+    const stored = readLocalDraft<SalesOrderFormDraft>(draftKey);
+    const migrated = stored ? migrateSalesOrderDraft(stored) : null;
+    if (migrated && !isSalesOrderDraftEmpty(migrated)) {
+      const storedLines = countDraftFabricLines(migrated);
+      const snapshotLines = countDraftFabricLines(draftSnapshot);
+      if (storedLines >= snapshotLines) {
+        return migrated;
+      }
+    }
+    return draftSnapshot;
+  }
 
   function saveDraftNow() {
     saveNow();
     if (serverDraftEnabled) {
-      void persistServerDraft();
+      void persistServerDraft(resolveDraftForServerSave());
     }
   }
 
@@ -323,7 +339,7 @@ export function SalesOrderForm({
     if (!serverDraftEnabled || !serverDraftHydrated) return;
     flushServerDraftAfterMutationRef.current = false;
     saveNow();
-    void persistServerDraft();
+    void persistServerDraft(resolveDraftForServerSave());
   }, [draftSnapshot, persistServerDraft, saveNow, serverDraftEnabled, serverDraftHydrated]);
 
   const serverDraftSummary = useMemo(
@@ -466,16 +482,30 @@ export function SalesOrderForm({
     [clientDrafts]
   );
   const hasUnsavedFabricLines = totalFabricLines > 0;
-  const syncRestoredDraftToServerRef = useRef(false);
+  const healLocalDraftToServerRef = useRef(false);
 
+  /** Push local draft lines to Supabase when browser has fabrics the server missed. */
   useEffect(() => {
-    if (!serverDraftEnabled || !serverDraftHydrated || !draftChoiceResolved || loading) return;
-    if (totalFabricLines === 0 || syncRestoredDraftToServerRef.current) return;
-    syncRestoredDraftToServerRef.current = true;
-    requestServerDraftSaveAfterMutation();
+    if (!serverDraftEnabled || !serverDraftHydrated || !draftHydrated || !draftChoiceResolved || loading) {
+      return;
+    }
+    if (healLocalDraftToServerRef.current) return;
+
+    const stored = readLocalDraft<SalesOrderFormDraft>(draftKey);
+    const migrated = stored ? migrateSalesOrderDraft(stored) : null;
+    if (!migrated || isSalesOrderDraftEmpty(migrated)) return;
+
+    const storedLines = countDraftFabricLines(migrated);
+    if (storedLines === 0 && totalFabricLines === 0) return;
+
+    healLocalDraftToServerRef.current = true;
+    void persistServerDraft(migrated);
   }, [
     draftChoiceResolved,
+    draftHydrated,
+    draftKey,
     loading,
+    persistServerDraft,
     serverDraftEnabled,
     serverDraftHydrated,
     totalFabricLines,

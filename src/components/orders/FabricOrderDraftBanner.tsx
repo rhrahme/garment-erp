@@ -6,8 +6,10 @@ import { ArrowRight, FileEdit } from "lucide-react";
 import { DRAFT_KEYS } from "@/lib/autosave/draft-keys";
 import { readLocalDraft } from "@/lib/autosave/local-draft-storage";
 import {
+  countDraftFabricLines,
   describeSalesOrderDraftSummary,
   isSalesOrderDraftEmpty,
+  migrateSalesOrderDraft,
   type SalesOrderDraftSummary,
   type SalesOrderFormDraft,
 } from "@/lib/autosave/sales-order-draft";
@@ -99,34 +101,51 @@ export function FabricOrderDraftBanner({
 
   /** Push a richer browser draft to the server so other devices can see it. */
   useEffect(() => {
-    if (!hydrated || healAttemptedRef.current) return;
+    if (!hydrated) return;
 
     const stored = readLocalDraft<SalesOrderFormDraft>(DRAFT_KEYS.fabricOrderNew);
-    if (!stored || isSalesOrderDraftEmpty(stored)) return;
+    const migrated = stored ? migrateSalesOrderDraft(stored) : null;
+    if (!migrated || isSalesOrderDraftEmpty(migrated)) return;
 
-    const localSum = describeSalesOrderDraftSummary(stored, clients);
-    if (!localSum || localSum.totalFabrics === 0) return;
+    const localLines = countDraftFabricLines(migrated);
+    if (localLines === 0) return;
 
-    const serverFabrics = serverSummary?.totalFabrics ?? 0;
-    if (localSum.totalFabrics <= serverFabrics) return;
+    const serverLines = serverSummary?.totalFabrics ?? 0;
+    if (localLines <= serverLines) {
+      healAttemptedRef.current = false;
+      return;
+    }
 
+    if (healAttemptedRef.current) return;
     healAttemptedRef.current = true;
+
     void (async () => {
       try {
         const res = await fetch("/api/fabric-order-drafts", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(stored),
+          body: JSON.stringify(migrated),
         });
         if (!res.ok) {
           healAttemptedRef.current = false;
           return;
         }
         const data = (await res.json()) as { saved_at?: string };
-        const healed = describeSalesOrderDraftSummary(stored, clients);
+        const healed = describeSalesOrderDraftSummary(migrated, clients);
         if (healed) {
           setServerSummary(healed);
           setServerSavedAt(data.saved_at ?? healed.savedAt);
+        }
+
+        const verifyRes = await fetch("/api/fabric-order-drafts");
+        if (verifyRes.ok) {
+          const verifyData = (await verifyRes.json()) as {
+            summary?: SalesOrderDraftSummary | null;
+          };
+          const verifiedLines = verifyData.summary?.totalFabrics ?? 0;
+          if (verifiedLines < localLines) {
+            healAttemptedRef.current = false;
+          }
         }
       } catch {
         healAttemptedRef.current = false;
