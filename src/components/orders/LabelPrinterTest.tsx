@@ -5,7 +5,6 @@ import { Download, Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { LabelPrinterSettingsControl } from "@/components/orders/LabelRotationControl";
 import { StickerCell } from "@/components/orders/StickerCell";
-import { StickerPrintGuideModal } from "@/components/orders/StickerPrintGuideModal";
 import { useLabelRotation } from "@/hooks/useLabelRotation";
 import { useLabelScale } from "@/hooks/useLabelScale";
 import { useStickerPrint } from "@/hooks/useStickerPrint";
@@ -14,7 +13,12 @@ import {
   detectStickerPrintPlatform,
   stickerPrintGuide,
 } from "@/lib/production/sticker-print-platform";
-import { downloadStickerPng } from "@/lib/production/print-stickers";
+import { STICKER_PRINT_PAPER_NOTE } from "@/lib/production/sticker-print-html";
+import {
+  downloadStickerPdf,
+  downloadStickerPng,
+  STICKER_PRINT_HEADERS_HINT,
+} from "@/lib/production/print-stickers";
 import {
   labelPdfOrientation,
   labelPdfPageSizeMm,
@@ -47,16 +51,11 @@ const TEST_LABEL: PrintableStickerLabel = {
 };
 
 export function LabelPrinterTest() {
-  const {
-    printing,
-    requestPrint,
-    printGuideOpen,
-    printGuideFilename,
-    closePrintGuide,
-  } = useStickerPrint();
+  const { printing, requestPrint } = useStickerPrint();
   const { rotation, setRotation } = useLabelRotation();
   const { scalePct, setScalePct } = useLabelScale();
   const [downloadingPng, setDownloadingPng] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const pageSize = labelPdfPageSizeMm(rotation);
   const orientation = labelPdfOrientation(rotation);
@@ -64,7 +63,7 @@ export function LabelPrinterTest() {
   const isPrinterMatch = rotation === PRINTER_MATCH_MODE;
   const platformGuide = useMemo(() => stickerPrintGuide(detectStickerPrintPlatform()), []);
 
-  const handleDownloadAndPrint = useCallback(() => {
+  const handlePrint = useCallback(() => {
     requestPrint({ orderId: "test", sheet: "test", rotationDeg: rotation, scalePct });
   }, [requestPrint, rotation, scalePct]);
 
@@ -78,6 +77,14 @@ export function LabelPrinterTest() {
     setDownloadingPng(false);
   }, [rotation, scalePct]);
 
+  const handleDownloadPdf = useCallback(async () => {
+    setDownloadingPdf(true);
+    await downloadStickerPdf({ orderId: "test", sheet: "test", rotationDeg: rotation, scalePct });
+    setDownloadingPdf(false);
+  }, [rotation, scalePct]);
+
+  const busy = printing || downloadingPng || downloadingPdf;
+
   return (
     <div>
       <div className="no-print mb-6 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
@@ -89,11 +96,8 @@ export function LabelPrinterTest() {
             </li>
           ))}
         </ol>
-        {platformGuide.doNot ? (
-          <p className="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900">
-            {platformGuide.doNot}
-          </p>
-        ) : null}
+        <p className="mt-2 text-xs text-emerald-800">{STICKER_PRINT_PAPER_NOTE}</p>
+        <p className="mt-2 text-xs text-emerald-800">{STICKER_PRINT_HEADERS_HINT}</p>
         {platformGuide.fallback ? (
           <p className="mt-2 text-xs text-emerald-800">{platformGuide.fallback}</p>
         ) : null}
@@ -128,18 +132,17 @@ export function LabelPrinterTest() {
             </li>
           </ul>
           <p className="mt-1">
-            The PDF is built at <strong>{mediaLabel}</strong> — exactly your driver media — with QR on
+            Labels are rasterized at <strong>{mediaLabel}</strong> — exactly your driver media — with QR on
             top and text below (no PDF rotation matrices). The printer’s built-in ~90° CCW turn maps
             that onto the landscape label: <strong>QR on the left, text on the right</strong>.
           </p>
         </div>
         <ol className="list-decimal space-y-2 pl-5">
           <li>
-            Click <strong>Download &amp; print test labels</strong> — the PDF saves to Downloads and step-by-step
-            instructions appear.
+            Click <strong>Print test labels</strong> — the system print dialog opens with 2 pages (no download).
           </li>
           <li>
-            Open the PDF in Preview (Mac) or Edge/Adobe (Windows), confirm D550 at {mediaLabel}, Fit to paper.
+            Confirm D550 at {mediaLabel}, Fit to paper, headers/footers OFF.
           </li>
           <li>
             You should get <strong>2 labels</strong> (S10008, then S10009). Scan the QR — it should read{" "}
@@ -155,21 +158,21 @@ export function LabelPrinterTest() {
       </div>
 
       <div className="no-print mb-4 flex flex-wrap gap-3">
-        <Button onClick={handleDownloadAndPrint} disabled={printing || downloadingPng}>
+        <Button onClick={handlePrint} disabled={busy}>
           <Printer className="mr-2 h-4 w-4" />
-          {printing ? "Preparing PDF…" : "Download & print test labels (2 pages)"}
+          {printing ? "Preparing…" : "Print test labels (2 pages)"}
         </Button>
-        <Button
-          variant="secondary"
-          onClick={() => void handleDownloadPng()}
-          disabled={printing || downloadingPng}
-        >
+        <Button variant="secondary" size="sm" onClick={() => void handleDownloadPdf()} disabled={busy}>
           <Download className="mr-2 h-4 w-4" />
-          {downloadingPng ? "Downloading…" : "Download PNG fallback"}
+          {downloadingPdf ? "Downloading…" : "PDF"}
         </Button>
-        <Button variant="secondary" onClick={handleCalibration} disabled={printing || downloadingPng}>
+        <Button variant="secondary" size="sm" onClick={() => void handleDownloadPng()} disabled={busy}>
+          <Download className="mr-2 h-4 w-4" />
+          {downloadingPng ? "Downloading…" : "PNG"}
+        </Button>
+        <Button variant="secondary" onClick={handleCalibration} disabled={busy}>
           <Printer className="mr-2 h-4 w-4" />
-          {printing ? "Preparing PDF…" : "Download & print calibration (A/B/C/D)"}
+          {printing ? "Preparing…" : "Print calibration (A/B/C/D)"}
         </Button>
       </div>
 
@@ -177,8 +180,8 @@ export function LabelPrinterTest() {
         <p className="font-semibold">One-time rotation calibration (A / B / C / D)</p>
         <p className="mt-1">
           If labels keep coming out rotated 90°, click{" "}
-          <strong>“Download &amp; print calibration (A/B/C/D)”</strong> above. Open the PDF in your system
-          viewer and print with your <strong>current D550 settings</strong> (51×102, Fit to paper).
+          <strong>“Print calibration (A/B/C/D)”</strong> above. Print with your{" "}
+          <strong>current D550 settings</strong> (51×102, Fit to paper).
         </p>
       </div>
 
@@ -189,12 +192,6 @@ export function LabelPrinterTest() {
           </div>
         </div>
       </div>
-
-      <StickerPrintGuideModal
-        open={printGuideOpen}
-        onClose={closePrintGuide}
-        filename={printGuideFilename}
-      />
 
       <style dangerouslySetInnerHTML={{ __html: stickerPrintStyles() }} />
     </div>

@@ -4,6 +4,11 @@ import {
   type LabelPrintMode,
   type LabelScalePct,
 } from "@/lib/production/label-printer-settings";
+import {
+  buildStickerPrintHtml,
+  extractPngBlobsFromZip,
+  waitForDocumentImages,
+} from "@/lib/production/sticker-print-html";
 
 export type StickerPdfSheet = "fabric-cuts" | "pieces" | "print-pack" | "test" | "calibration";
 
@@ -31,9 +36,9 @@ export type StickerPdfRequest = {
   scalePct?: LabelScalePct;
 };
 
-export type StickerDownloadResult = {
+export type StickerPrintResult = {
   ok: boolean;
-  filename?: string;
+  pageCount?: number;
 };
 
 function resolveRotationDeg(request: StickerPdfRequest): LabelPrintMode {
@@ -96,6 +101,24 @@ async function fetchStickerPng(request: StickerPdfRequest): Promise<Response> {
   return fetchStickerAsset(request, "png");
 }
 
+async function fetchStickerPngBlobs(request: StickerPdfRequest): Promise<Blob[]> {
+  const res = await fetchStickerPng(request);
+  if (!res.ok) {
+    throw new Error(`Sticker PNG request failed: ${res.status}`);
+  }
+
+  const contentType = res.headers.get("Content-Type") ?? "";
+  const blob = await res.blob();
+
+  if (contentType.includes("zip")) {
+    const pngs = await extractPngBlobsFromZip(blob);
+    if (pngs.length === 0) throw new Error("Sticker ZIP contained no PNG files");
+    return pngs;
+  }
+
+  return [blob];
+}
+
 function pdfFilename(orderId: string, sheet: StickerPdfSheet): string {
   if (sheet === "calibration") return "sticker-rotation-calibration.pdf";
   if (sheet === "test") return "sticker-test.pdf";
@@ -120,63 +143,136 @@ function triggerBlobDownload(blob: Blob, filename: string): void {
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
 }
 
+function printStickerImageUrls(imageUrls: string[], onAfterPrint?: () => void): Promise<boolean> {
+  return new Promise((resolve) => {
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("title", "Sticker labels");
+    iframe.style.position = "fixed";
+    iframe.style.left = "-10000px";
+    iframe.style.top = "0";
+    iframe.style.width = "51mm";
+    iframe.style.height = "102mm";
+    iframe.style.border = "0";
+    iframe.style.margin = "0";
+    iframe.style.padding = "0";
+
+    let finished = false;
+
+    const cleanup = () => {
+      window.setTimeout(() => {
+        iframe.remove();
+        for (const url of imageUrls) URL.revokeObjectURL(url);
+      }, 1000);
+    };
+
+    const finish = (ok: boolean) => {
+      if (finished) return;
+      finished = true;
+      if (ok) onAfterPrint?.();
+      cleanup();
+      resolve(ok);
+    };
+
+    const triggerPrint = (targetWindow: Window) => {
+      try {
+        targetWindow.focus();
+        targetWindow.print();
+      } catch {
+        finish(false);
+        return;
+      }
+
+      targetWindow.addEventListener("afterprint", () => finish(true), { once: true });
+      window.setTimeout(() => cleanup(), 120_000);
+    };
+
+    iframe.onload = () => {
+      const doc = iframe.contentDocument;
+      const win = iframe.contentWindow;
+      if (!doc || !win) {
+        finish(false);
+        return;
+      }
+
+      void waitForDocumentImages(doc)
+        .then(() => triggerPrint(win))
+        .catch(() => finish(false));
+    };
+
+    iframe.srcdoc = buildStickerPrintHtml(imageUrls);
+    document.body.appendChild(iframe);
+  });
+}
+
 /**
- * Fetch server-generated roll PDF, save to Downloads, and return the filename
- * so the UI can show platform-specific print instructions (Preview / Edge).
- *
- * Browser iframe/window.print() is intentionally NOT used — Mac/Windows print
- * dialogs default to A4/Letter and show a solid-black preview for 51×102 mm PDFs.
+ * Fetch server-generated bilevel PNG(s) and open the system print dialog directly.
+ * One label per page at 51×102 mm via CSS @page — no PDF download required.
  */
-export async function downloadAndPrintStickerPdf(
+export async function printStickerPngs(
   request: StickerPdfRequest,
-  onAfterDownload?: () => void
-): Promise<StickerDownloadResult> {
+  onAfterPrint?: () => void
+): Promise<StickerPrintResult> {
+  try {
+    const pngBlobs = await fetchStickerPngBlobs(request);
+    const imageUrls = pngBlobs.map((blob) => URL.createObjectURL(blob));
+    const ok = await printStickerImageUrls(imageUrls, onAfterPrint);
+    return { ok, pageCount: pngBlobs.length };
+  } catch (error) {
+    console.error("Failed to print sticker PNGs:", error);
+    return { ok: false };
+  }
+}
+
+/** @deprecated Use printStickerPngs — kept as alias for existing call sites. */
+export async function printStickerPdf(
+  request: StickerPdfRequest,
+  onAfterPrint?: () => void
+): Promise<boolean> {
+  const result = await printStickerPngs(request, onAfterPrint);
+  return result.ok;
+}
+
+/**
+ * Fetch server-generated roll PDF and save to Downloads (manual print fallback).
+ */
+export async function downloadStickerPdf(request: StickerPdfRequest): Promise<boolean> {
   const sheet = request.sheet ?? "pieces";
 
   try {
     const res = await fetchStickerPdf(request);
     if (!res.ok) {
       console.error("Sticker PDF request failed:", res.status);
-      return { ok: false };
+      return false;
     }
 
     const blob = await res.blob();
-    const filename = pdfFilename(request.orderId, sheet);
-    triggerBlobDownload(blob, filename);
-    onAfterDownload?.();
-    return { ok: true, filename };
+    triggerBlobDownload(blob, pdfFilename(request.orderId, sheet));
+    return true;
   } catch (error) {
     console.error("Failed to download sticker PDF:", error);
-    return { ok: false };
+    return false;
   }
 }
 
-/**
- * @deprecated Browser PDF print (iframe/window.print) shows A4/black preview on Mac/Windows.
- * Use downloadAndPrintStickerPdf instead.
- */
-export async function printStickerPdf(
+/** @deprecated Use printStickerPngs for direct print or downloadStickerPdf for fallback. */
+export async function downloadAndPrintStickerPdf(
   request: StickerPdfRequest,
-  onAfterPrint?: () => void
-): Promise<boolean> {
-  console.warn("printStickerPdf is deprecated; use downloadAndPrintStickerPdf.");
-  const result = await downloadAndPrintStickerPdf(request, onAfterPrint);
-  return result.ok;
+  onAfterDownload?: () => void
+): Promise<{ ok: boolean; filename?: string }> {
+  const ok = await downloadStickerPdf(request);
+  onAfterDownload?.();
+  if (!ok) return { ok: false };
+  const sheet = request.sheet ?? "pieces";
+  return { ok: true, filename: pdfFilename(request.orderId, sheet) };
 }
 
-/** @deprecated Browser HTML print added date/URL headers — use downloadAndPrintStickerPdf instead. */
+/** @deprecated Browser HTML print from DOM added headers — use printStickerPngs instead. */
 export function printStickerLabels(_onAfterPrint?: () => void): void {
-  console.warn("printStickerLabels is deprecated; use downloadAndPrintStickerPdf.");
-}
-
-/** Fetch sticker PDF and trigger a file download (Preview.app / manual print fallback). */
-export async function downloadStickerPdf(request: StickerPdfRequest): Promise<boolean> {
-  const result = await downloadAndPrintStickerPdf(request);
-  return result.ok;
+  console.warn("printStickerLabels is deprecated; use printStickerPngs.");
 }
 
 /**
- * Fetch raster sticker PNG(s) — ultimate D550 fallback.
+ * Fetch raster sticker PNG(s) — manual print fallback.
  * Single label → .png; multiple → .zip. Open in Preview.app, print at 100% on 51×102 mm.
  */
 export async function downloadStickerPng(request: StickerPdfRequest): Promise<boolean> {
@@ -200,4 +296,4 @@ export async function downloadStickerPng(request: StickerPdfRequest): Promise<bo
   }
 }
 
-export { buildStickerPdfUrl, buildStickerPngUrl, pdfFilename, pngFilename };
+export { buildStickerPdfUrl, buildStickerPngUrl, buildStickerPrintHtml, pdfFilename, pngFilename };

@@ -29,68 +29,65 @@ const PRINTER = "D550 / LabelLife";
 function macGuide(): StickerPrintGuide {
   return {
     platform: "mac",
-    headline: "Print from Preview — not the browser",
+    headline: "One-click print from the browser",
     steps: [
       {
-        title: "Open the PDF in Preview",
-        detail: `Find the downloaded PDF in Downloads and double-click it. Preview opens with the correct ${MEDIA} page size.`,
+        title: "Click Print",
+        detail: `The app opens your system print dialog with one ${MEDIA} page per label (bilevel PNG, no download).`,
       },
       {
-        title: "Print to your thermal printer",
-        detail: `Press ⌘P, choose ${PRINTER}, confirm paper size ${MEDIA} portrait, Scale “Fit to paper”, margins None, then Print.`,
+        title: "Choose your thermal printer",
+        detail: `Select ${PRINTER}, turn OFF “Headers and footers”, margins None. Set paper to ${MEDIA} portrait if the preview looks wrong.`,
       },
       {
         title: "Scan a QR to verify",
         detail: "One label should feed per page with QR on the left and text horizontal. Scan with Fabric Receiving.",
       },
     ],
-    doNot: "Do not use ⌘P on the garment ERP browser tab — it defaults to A4 and prints blank or black.",
-    fallback: `If Preview still prints blank, download PNG instead → Preview → Print at 100% on ${MEDIA}.`,
+    fallback: `If the preview is blank or wrong size, use Download PNG → Preview → Print at 100% on ${MEDIA}.`,
   };
 }
 
 function windowsGuide(): StickerPrintGuide {
   return {
     platform: "windows",
-    headline: "Print from Edge or Adobe Reader — not the browser tab",
+    headline: "One-click print from the browser",
     steps: [
       {
-        title: "Open the downloaded PDF",
-        detail: `In Downloads, double-click the PDF. It opens in Edge or Adobe Reader with ${MEDIA} pages.`,
+        title: "Click Print",
+        detail: `The app opens your system print dialog with one ${MEDIA} page per label (bilevel PNG, no download).`,
       },
       {
-        title: "Print to your thermal printer",
-        detail: `Press Ctrl+P, choose ${PRINTER}, set paper ${MEDIA} portrait, Scale “Fit to paper”, margins None, then Print.`,
+        title: "Choose your thermal printer",
+        detail: `Select ${PRINTER}, turn OFF “Headers and footers”, margins None. Set paper to ${MEDIA} portrait if the preview looks wrong.`,
       },
       {
         title: "Scan a QR to verify",
         detail: "One label feeds per page with QR on the left and text horizontal. Scan with Fabric Receiving.",
       },
     ],
-    doNot: "Do not print from the garment ERP browser tab (Ctrl+P) — paper size defaults to Letter/A4 and labels come out blank.",
-    fallback: `If the PDF prints blank, download PNG → open in Photos/Paint → Print at 100% on ${MEDIA}, or import PNG into LabelLife.`,
+    fallback: `If the preview is blank, use Download PNG → open in Photos/Paint → Print at 100% on ${MEDIA}, or import into LabelLife.`,
   };
 }
 
 function otherGuide(): StickerPrintGuide {
   return {
     platform: "other",
-    headline: "Print from your system PDF viewer",
+    headline: "One-click print from the browser",
     steps: [
       {
-        title: "Open the downloaded PDF",
-        detail: `Open the file from Downloads in your default PDF viewer. Each page is ${MEDIA} portrait.`,
+        title: "Click Print",
+        detail: `The system print dialog opens with one ${MEDIA} page per label.`,
       },
       {
-        title: "Print to the thermal printer",
-        detail: `Select ${PRINTER}, paper ${MEDIA}, Scale “Fit to paper”, margins None.`,
+        title: "Choose the thermal printer",
+        detail: `Select ${PRINTER}, paper ${MEDIA} portrait, margins None, headers/footers OFF.`,
       },
       {
         title: "Verify output",
         detail: "One label per page; QR on the left, text horizontal.",
       },
     ],
-    doNot: "Do not print the HTML page from the browser — use the downloaded PDF only.",
     fallback: "If blank, download PNG and print at 100% on 51×102 mm media.",
   };
 }
