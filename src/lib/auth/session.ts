@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { withSupabaseTimeout } from "@/lib/auth/supabase-timeout";
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/lib/types/database";
 import { DEMO_MODE, DEMO_USER_EMAIL_COOKIE } from "@/lib/auth/demo-mode";
@@ -72,7 +73,11 @@ export async function getSessionContext(): Promise<SessionContext> {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await withSupabaseTimeout(
+    supabase.auth.getUser(),
+    "getSessionContext getUser",
+    { data: { user: null } }
+  );
 
   if (!user) {
     return {
@@ -87,11 +92,11 @@ export async function getSessionContext(): Promise<SessionContext> {
     };
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
+  const { data: profile } = await withSupabaseTimeout(
+    supabase.from("profiles").select("role").eq("id", user.id).maybeSingle(),
+    "getSessionContext profile",
+    { data: null }
+  );
 
   const role = (profile?.role as UserRole | undefined) ?? null;
   const email = user.email?.trim().toLowerCase() ?? null;

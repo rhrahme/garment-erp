@@ -22,7 +22,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
     console.error("[dashboard layout] ERP bootstrap failed:", error);
   }
 
-  const session = await getSessionContext();
+  let session: Awaited<ReturnType<typeof getSessionContext>>;
+  try {
+    session = await getSessionContext();
+  } catch (error) {
+    console.error("[dashboard layout] session lookup failed:", error);
+    session = {
+      userId: null,
+      email: null,
+      role: null,
+      isSuperAdmin: false,
+      isAdmin: false,
+      isClientManager: false,
+      canViewClientContact: false,
+      canViewFabricListPrices: false,
+    };
+  }
   let rateStatus = DEFAULT_RATE_STATUS;
   try {
     rateStatus = await checkEurSarRateAlert();

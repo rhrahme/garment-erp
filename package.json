@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run audit:document-loads && next build",
     "start": "next start",
     "lint": "next lint",
     "sync:clickup": "node --experimental-strip-types scripts/run-clickup-import.mjs",
@@ -15,6 +15,8 @@
     "drapers:sync-stock": "node --experimental-strip-types --import ./scripts/tsconfig-paths-loader.mjs scripts/sync-drapers-stock.mjs --open-orders",
     "verify:fabric-reset": "node scripts/verify-fabric-receiving-reset.mjs",
     "audit:document-loads": "node scripts/audit-document-loads.mjs",
+    "smoke:production": "node scripts/smoke-production.mjs",
+    "verify:deploy": "npm run audit:document-loads && npm run smoke:production",
     "db:types": "supabase gen types typescript --local > src/lib/types/database.generated.ts"
   },
   "dependencies": {

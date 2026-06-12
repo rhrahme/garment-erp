@@ -3,7 +3,7 @@
  * Static audit: ERP document reads must not hit a cold Supabase cache on Vercel.
  *
  * Global bootstrap (required for SSR):
- * - src/app/layout.tsx awaits ensureErpBootstrap() before any SSR
+ * - src/app/(dashboard)/layout.tsx awaits ensureErpBootstrap() before dashboard SSR
  * - API routes call ensureErpBootstrap() / readJsonFileAsync() in handlers
  *
  * When global bootstrap is present, per-route warmup markers are optional.
@@ -26,6 +26,8 @@ const WARMUP_MARKERS = [
   "ensureDocumentForPath",
   "ensureFabricReceivingDocumentsLoaded",
   "ensureFabricOrdersLoaded",
+  "ensureShipmentsLoaded",
+  "ensureSupplierRepliesLoaded",
   "ensureErpDocumentsLoaded",
   "loadDocument(",
   "readJsonFileAsync(",
@@ -67,8 +69,12 @@ function readText(relativePath) {
 }
 
 function hasGlobalBootstrap() {
+  const dashboardLayout = readText("src/app/(dashboard)/layout.tsx");
   const rootLayout = readText("src/app/layout.tsx");
-  return /await\s+ensureErpBootstrap\s*\(\)/.test(rootLayout);
+  return (
+    /await\s+ensureErpBootstrap\s*\(\)/.test(dashboardLayout) ||
+    /await\s+ensureErpBootstrap\s*\(\)/.test(rootLayout)
+  );
 }
 
 function walk(dir, filter) {
@@ -113,8 +119,8 @@ const violations = globalBootstrap ? [] : [...apiViolations, ...pageViolations];
 
 if (!globalBootstrap) {
   console.error("audit-document-loads: FAIL — missing global ensureErpBootstrap wiring:\n");
-  if (!/await\s+ensureErpBootstrap\s*\(\)/.test(readText("src/app/layout.tsx"))) {
-    console.error("  - src/app/layout.tsx must await ensureErpBootstrap()");
+  if (!/await\s+ensureErpBootstrap\s*\(\)/.test(readText("src/app/(dashboard)/layout.tsx"))) {
+    console.error("  - src/app/(dashboard)/layout.tsx must await ensureErpBootstrap()");
   }
   console.error("");
 }

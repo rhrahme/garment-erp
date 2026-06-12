@@ -1,5 +1,5 @@
 import path from "path";
-import { readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
+import { ensureDocumentsLoaded, readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
 
 const STORE_PATH = path.join(process.cwd(), "supplier-replies.local.json");
 
@@ -29,6 +29,11 @@ export interface SupplierReplyRecord {
 
 interface ReplyStore {
   replies: SupplierReplyRecord[];
+}
+
+/** Warm the lazy `supplier_replies` document from Supabase before sync reads/writes. */
+export async function ensureSupplierRepliesLoaded(): Promise<void> {
+  await ensureDocumentsLoaded(["supplier_replies"]);
 }
 
 function readStore(): ReplyStore {

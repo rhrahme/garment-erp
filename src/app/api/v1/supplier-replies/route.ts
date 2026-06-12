@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/lib/integrations/api-auth";
 import { createInboundShipmentFromAwb } from "@/lib/integrations/create-inbound-shipment";
-import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
-import { getShipmentByAwb } from "@/lib/integrations/shipment-store";
-import { logSupplierReply } from "@/lib/integrations/supplier-reply-store";
+import { ensureFabricOrdersLoaded, listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
+import { ensureShipmentsLoaded, getShipmentByAwb } from "@/lib/integrations/shipment-store";
+import {
+  ensureSupplierRepliesLoaded,
+  logSupplierReply,
+} from "@/lib/integrations/supplier-reply-store";
 import { createAvailabilityAlertsFromReply } from "@/lib/integrations/supplier-availability-store";
 import { notifyAdminsOfAvailabilityAlerts } from "@/lib/integrations/supplier-availability-alert";
 import { notifyIntegration } from "@/lib/integrations";
@@ -33,6 +36,12 @@ export async function POST(request: Request) {
     if (!body.from_address?.trim() || !body.subject?.trim()) {
       return NextResponse.json({ error: "from_address and subject are required." }, { status: 400 });
     }
+
+    await Promise.all([
+      ensureFabricOrdersLoaded(),
+      ensureShipmentsLoaded(),
+      ensureSupplierRepliesLoaded(),
+    ]);
 
     const awb_numbers = [...new Set((body.awb_numbers ?? []).map((value) => value.trim()).filter(Boolean))];
     const matchedOrder =
@@ -116,6 +125,7 @@ export async function GET(request: Request) {
   const authError = verifyApiKey(request);
   if (authError) return authError;
 
+  await ensureSupplierRepliesLoaded();
   const { listSupplierReplies } = await import("@/lib/integrations/supplier-reply-store");
   return NextResponse.json({ replies: listSupplierReplies() });
 }

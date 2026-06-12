@@ -10,25 +10,8 @@ import {
   isClientManagerRouteAllowed,
 } from "@/lib/auth/permissions";
 import type { UserRole } from "@/lib/types/database";
+import { withSupabaseTimeout } from "@/lib/auth/supabase-timeout";
 import { getSupabasePublishableKey, getSupabaseUrl, isSupabaseConfigured } from "@/lib/supabase/env";
-
-const AUTH_LOOKUP_MS = 4_000;
-
-async function getUserWithTimeout(
-  supabase: ReturnType<typeof createServerClient>
-): Promise<{ data: { user: { email?: string | null } | null } }> {
-  try {
-    const result = await Promise.race([
-      supabase.auth.getUser(),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Supabase auth timeout")), AUTH_LOOKUP_MS)
-      ),
-    ]);
-    return result;
-  } catch {
-    return { data: { user: null } };
-  }
-}
 
 export async function updateSession(request: NextRequest) {
   if (!isSupabaseConfigured()) {
@@ -54,7 +37,11 @@ export async function updateSession(request: NextRequest) {
 
   const {
     data: { user },
-  } = await getUserWithTimeout(supabase);
+  } = await withSupabaseTimeout(
+    supabase.auth.getUser(),
+    "middleware getUser",
+    { data: { user: null } }
+  );
 
   const impersonatedEmail = resolveDevImpersonationEmail(
     request.cookies.get(DEV_IMPERSONATION_COOKIE)?.value
@@ -85,11 +72,11 @@ export async function updateSession(request: NextRequest) {
   if (impersonatedEmail) {
     isClientManager = isClientManagerAccess("client_manager", impersonatedEmail);
   } else if (user?.id && email) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .maybeSingle();
+    const { data: profile } = await withSupabaseTimeout(
+      supabase.from("profiles").select("role").eq("id", user.id).maybeSingle(),
+      "middleware profile",
+      { data: null }
+    );
     isClientManager = isClientManagerAccess((profile?.role as UserRole | undefined) ?? null, email);
   }
 
