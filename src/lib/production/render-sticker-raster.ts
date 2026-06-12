@@ -385,12 +385,26 @@ export function pngToDataUrl(png: Buffer): string {
   return `data:image/png;base64,${png.toString("base64")}`;
 }
 
+/** Reject anti-aliased gray rasters before JPEG — they print as hollow/fringed text. */
+async function assertBilevelThermalPng(png: Buffer): Promise<void> {
+  const { data, info } = await sharp(png).raw().toBuffer({ resolveWithObject: true });
+  for (let i = 0; i < data.length; i += info.channels) {
+    const v = data[i]!;
+    if (v !== 0 && v !== 255) {
+      throw new Error(
+        "Sticker raster must be bilevel black-on-white before PDF JPEG embed (found anti-aliased gray pixels)."
+      );
+    }
+  }
+}
+
 /**
  * JPEG data URL for jsPDF embed. The D550 / LabelLife driver prints blank pages when
  * jsPDF packs bilevel PNGs as Indexed 1-bit FlateDecode XObjects; 8-bit DCTDecode JPEG
  * is widely supported. PNG downloads still use bilevel PNG for Preview.app printing.
  */
 export async function pngToJpegDataUrl(png: Buffer): Promise<string> {
+  await assertBilevelThermalPng(png);
   const jpeg = await sharp(png).jpeg({ quality: 95, mozjpeg: true }).toBuffer();
   return `data:image/jpeg;base64,${jpeg.toString("base64")}`;
 }

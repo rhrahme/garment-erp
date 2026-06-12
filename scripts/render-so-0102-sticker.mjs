@@ -35,6 +35,12 @@ const bytes = await generateStickerRollPdf([entry], { rotationDeg: "printer-matc
 const pdfPath = resolve(projectRoot, "sticker-test-so-0102.pdf");
 writeFileSync(pdfPath, Buffer.from(bytes));
 
+if (bytes.length < 65_000) {
+  console.error(`FAIL: PDF too small (${bytes.length} bytes) — likely gray/low-quality JPEG embed`);
+  process.exit(1);
+}
+console.log(`OK: PDF ${bytes.length} bytes`);
+
 const pngPath = resolve(projectRoot, "sticker-test-so-0102.png");
 execFileSync("sips", ["-s", "format", "png", "-s", "dpiHeight", "300", "-s", "dpiWidth", "300", pdfPath, "--out", pngPath], {
   stdio: "ignore",

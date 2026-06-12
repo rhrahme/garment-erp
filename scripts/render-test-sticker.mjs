@@ -56,6 +56,23 @@ assertPdf(pdfText.includes("DCTDecode"), "PDF embeds DCTDecode JPEG (not Indexed
 assertPdf(!pdfText.includes("/SMask"), "PDF has no /SMask alpha soft mask");
 assertPdf(!pdfText.includes("/Indexed"), "PDF has no Indexed colour space");
 
+function extractEmbeddedJpegs(bytes) {
+  const text = bytes.toString("latin1");
+  const jpegs = [];
+  let idx = 0;
+  while (true) {
+    const start = text.indexOf("stream\n", idx);
+    if (start === -1) break;
+    const end = text.indexOf("\nendstream", start);
+    const stream = bytes.slice(start + 7, end);
+    if (stream[0] === 0xff && stream[1] === 0xd8) jpegs.push(stream);
+    idx = end + 10;
+  }
+  return jpegs;
+}
+
+const embeddedJpegs = extractEmbeddedJpegs(Buffer.from(pdfBytes));
+
 const mediaBoxMatch = pdfText.match(/\/MediaBox\s*\[\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\]/);
 if (mediaBoxMatch) {
   const w = (Number.parseFloat(mediaBoxMatch[3]) - Number.parseFloat(mediaBoxMatch[1])).toFixed(2);
@@ -87,6 +104,21 @@ for (const [index, png] of pngs.entries()) {
   }
   assertPdf(uniqueGreys.size <= 2, `PNG page ${index + 1} is bilevel (${uniqueGreys.size} grey levels)`);
   assertPdf(uniqueGreys.has(0) && uniqueGreys.has(255), `PNG page ${index + 1} has black and white pixels`);
+}
+
+assertPdf(
+  pdfBytes.length >= pngs.length * 65_000,
+  `PDF is ${pdfBytes.length} bytes (low-quality gray JPEG embeds are ~65k for 2 pages; bilevel q95 is ~140k)`
+);
+assertPdf(
+  embeddedJpegs.length === pngs.length,
+  `PDF has ${embeddedJpegs.length} embedded JPEG page(s) (expected ${pngs.length})`
+);
+for (const [index, jpeg] of embeddedJpegs.entries()) {
+  assertPdf(
+    jpeg.length >= 50_000,
+    `PDF JPEG page ${index + 1} is ${jpeg.length} bytes (expected ≥50k bilevel q95; gray ~q55 mess is ~30k)`
+  );
 }
 
 try {
