@@ -13,6 +13,7 @@ import { filterPersonClients } from "@/lib/clients/filter";
 import { formatClientDisplayName } from "@/lib/clients/names";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import { useLocalDraft } from "@/hooks/useLocalDraft";
+import { useServerFabricOrderDraft } from "@/hooks/useServerFabricOrderDraft";
 import { DRAFT_KEYS } from "@/lib/autosave/draft-keys";
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
 import {
@@ -285,18 +286,50 @@ export function SalesOrderForm({
     autoRestore: !promptForDraft,
   });
 
+  const serverDraftEnabled = redirectBasePath === "/fabric-orders" && !duplicateFromOrderId;
+  const {
+    status: serverDraftStatus,
+    error: serverDraftError,
+    savedAt: serverDraftSavedAt,
+    hydrated: serverDraftHydrated,
+    hasPendingRestore: hasPendingServerRestore,
+    pendingDraft: pendingServerDraft,
+    persistNow: persistServerDraft,
+    clearServerDraft,
+    dismissPendingRestore: dismissPendingServerRestore,
+  } = useServerFabricOrderDraft({
+    enabled: serverDraftEnabled,
+    draft: draftSnapshot,
+  });
+
+  function saveDraftNow() {
+    saveNow();
+    if (serverDraftEnabled) {
+      void persistServerDraft();
+    }
+  }
+
+  const serverDraftSummary = useMemo(
+    () => (pendingServerDraft ? describeSalesOrderDraftSummary(pendingServerDraft, clients) : null),
+    [clients, pendingServerDraft]
+  );
+
   const draftSummary = useMemo(
     () => (pendingDraft ? describeSalesOrderDraftSummary(pendingDraft, clients) : null),
     [clients, pendingDraft]
   );
 
   useEffect(() => {
-    if (loading || !draftHydrated || draftChoiceResolved || !promptForDraft) return;
+    if (loading || !draftHydrated || !serverDraftHydrated || draftChoiceResolved || !promptForDraft) return;
 
-    if (startFresh && hasPendingRestore) {
+    if (startFresh && (hasPendingRestore || hasPendingServerRestore)) {
       clearDraft();
+      if (serverDraftEnabled) {
+        void clearServerDraft();
+      }
       resetClientDrafts();
       dismissPendingRestore();
+      dismissPendingServerRestore();
       setDraftChoiceResolved(true);
       return;
     }
@@ -307,19 +340,33 @@ export function SalesOrderForm({
       return;
     }
 
-    if (!hasPendingRestore) {
+    if (continueDraft && hasPendingServerRestore && pendingServerDraft) {
+      restoreDraft(pendingServerDraft);
+      dismissPendingServerRestore();
+      setDraftChoiceResolved(true);
+      return;
+    }
+
+    if (!hasPendingRestore && !hasPendingServerRestore) {
       setDraftChoiceResolved(true);
     }
   }, [
     clearDraft,
+    clearServerDraft,
     continueDraft,
     dismissPendingRestore,
+    dismissPendingServerRestore,
     draftChoiceResolved,
     draftHydrated,
     hasPendingRestore,
+    hasPendingServerRestore,
     loading,
+    pendingServerDraft,
     promptForDraft,
+    restoreDraft,
     restorePending,
+    serverDraftEnabled,
+    serverDraftHydrated,
     startFresh,
   ]);
 
@@ -328,8 +375,19 @@ export function SalesOrderForm({
     setDraftChoiceResolved(true);
   }
 
+  function continueServerSavedDraft() {
+    if (pendingServerDraft) {
+      restoreDraft(pendingServerDraft);
+      dismissPendingServerRestore();
+      setDraftChoiceResolved(true);
+    }
+  }
+
   function startBlankOrder() {
     clearDraft();
+    if (serverDraftEnabled) {
+      void clearServerDraft();
+    }
     resetClientDrafts();
     resetAddFlow();
     setProductionBrandId(null);
@@ -358,6 +416,9 @@ export function SalesOrderForm({
 
   function discardDraft() {
     clearDraft();
+    if (serverDraftEnabled) {
+      void clearServerDraft();
+    }
     setProductionBrandId(null);
     resetClientDrafts();
     resetAddFlow();
@@ -610,7 +671,7 @@ export function SalesOrderForm({
     setPendingFabric(null);
     clearFabricAddEntries();
     setFabricPickerValue("");
-    queueMicrotask(() => saveNow());
+    queueMicrotask(() => saveDraftNow());
   }
 
   function removeClientDraft(draftId: string) {
@@ -722,7 +783,7 @@ export function SalesOrderForm({
       );
       setEditingLineId(null);
       setLineEditForm(null);
-      queueMicrotask(() => saveNow());
+      queueMicrotask(() => saveDraftNow());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update fabric line.");
     } finally {
@@ -838,6 +899,9 @@ export function SalesOrderForm({
         createdOrderIds.push(data.order.id);
       }
       clearDraft();
+      if (serverDraftEnabled) {
+        await clearServerDraft();
+      }
       router.push(
         createdOrderIds.length === 1 ? `${redirectBasePath}/${createdOrderIds[0]}` : redirectBasePath
       );
@@ -857,30 +921,37 @@ export function SalesOrderForm({
   }
 
   const showDraftChooser =
-    promptForDraft && hasPendingRestore && !draftChoiceResolved && draftHydrated && draftSummary;
+    promptForDraft &&
+    !draftChoiceResolved &&
+    draftHydrated &&
+    serverDraftHydrated &&
+    ((hasPendingRestore && draftSummary) || (hasPendingServerRestore && serverDraftSummary));
 
   if (showDraftChooser) {
-    const savedLabel = draftSummary.savedAt
-      ? new Date(draftSummary.savedAt).toLocaleString(undefined, {
+    const activeSummary = hasPendingRestore && draftSummary ? draftSummary : serverDraftSummary!;
+    const savedLabel = activeSummary.savedAt
+      ? new Date(activeSummary.savedAt).toLocaleString(undefined, {
           dateStyle: "medium",
           timeStyle: "short",
         })
       : null;
+    const draftSource =
+      hasPendingRestore && draftSummary ? "this browser" : "the server (works on any device)";
 
     return (
       <div className="mx-auto max-w-2xl space-y-6">
         <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
           <h2 className="text-xl font-semibold text-slate-900">Continue an unfinished order?</h2>
           <p className="mt-2 text-sm text-slate-600">
-            You have a saved draft that wasn&apos;t submitted yet. Continue where you left off, or start a blank
-            order for a different client.
+            You have a saved draft in {draftSource} that wasn&apos;t submitted yet. Continue where you left off, or
+            start a blank order for a different client.
           </p>
 
           <div className="mt-6 rounded-lg border border-indigo-100 bg-indigo-50/60 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Saved draft</p>
             {savedLabel && <p className="mt-1 text-xs text-slate-500">Last edited {savedLabel}</p>}
             <ul className="mt-3 space-y-2">
-              {draftSummary.clientEntries.map((entry, index) => (
+              {activeSummary.clientEntries.map((entry, index) => (
                 <li key={`${entry.label}-${index}`} className="flex items-center justify-between text-sm">
                   <span className="font-medium text-slate-900">{entry.label}</span>
                   <span className="text-slate-500">
@@ -892,7 +963,10 @@ export function SalesOrderForm({
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button onClick={continueSavedDraft} className="flex-1">
+            <Button
+              onClick={hasPendingRestore && draftSummary ? continueSavedDraft : continueServerSavedDraft}
+              className="flex-1"
+            >
               Continue draft
             </Button>
             <Button variant="secondary" onClick={startBlankOrder} className="flex-1">
@@ -935,11 +1009,27 @@ export function SalesOrderForm({
             variant="local"
           />
           {draftDirty && (
-            <Button variant="secondary" size="sm" onClick={saveNow}>
+            <Button variant="secondary" size="sm" onClick={saveDraftNow}>
               Save draft now
             </Button>
           )}
+          {serverDraftEnabled && serverDraftSavedAt && (
+            <span className="text-xs text-slate-500">
+              Server backup{" "}
+              {serverDraftStatus === "saving"
+                ? "saving…"
+                : serverDraftStatus === "error"
+                  ? "failed"
+                  : new Date(serverDraftSavedAt).toLocaleTimeString(undefined, {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+            </span>
+          )}
         </div>
+        {serverDraftError && (
+          <p className="text-xs text-amber-700">Server backup: {serverDraftError}</p>
+        )}
         {draftDirty && (
           <Button variant="ghost" size="sm" onClick={discardDraft} className="text-slate-500">
             Discard draft
