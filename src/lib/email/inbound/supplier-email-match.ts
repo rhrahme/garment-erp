@@ -2,19 +2,17 @@ import { normalizeEmailList, readSupplierContactsSync } from "@/lib/data/supplie
 import { extractPoNumbers, parseSupplierEmailContent } from "@/lib/email/inbound/parse-supplier-email";
 import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 
-/** Personal mail domains — never treat as a fabric supplier on domain alone. */
-const GENERIC_MAIL_DOMAINS = new Set([
-  "gmail.com",
-  "googlemail.com",
-  "yahoo.com",
-  "hotmail.com",
-  "outlook.com",
-  "live.com",
-  "icloud.com",
-  "me.com",
-  "proton.me",
-  "protonmail.com",
-]);
+/** Fabric supplier domains recognised by the inbox scanner and reply list. */
+export const KNOWN_SUPPLIER_INBOX_DOMAINS = [
+  "loropiana.com",
+  "zegna.com",
+  "stylbiella.it",
+  "drapersitaly.it",
+  "caccioppolinapoli.it",
+  "comoluxuryfabrics.com",
+] as const;
+
+const KNOWN_SUPPLIER_INBOX_DOMAIN_SET = new Set<string>(KNOWN_SUPPLIER_INBOX_DOMAINS);
 
 export function normalizeEmailAddress(value: string): string {
   const match = value.match(/<([^>]+)>/);
@@ -29,82 +27,63 @@ export function extractEmailDomain(address: string): string | null {
   return domain.length > 0 ? domain : null;
 }
 
-function supplierDomainsFromContacts(): Map<string, Set<string>> {
-  const domainSuppliers = new Map<string, Set<string>>();
+function isExactSupplierContactEmail(email: string): boolean {
+  const normalized = email.trim().toLowerCase();
+  for (const supplier of readSupplierContactsSync().suppliers) {
+    const addresses = normalizeEmailList(supplier.emails, supplier.email);
+    if (addresses.some((item) => item.toLowerCase() === normalized)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function supplierIdsForKnownDomain(domain: string): Set<string> {
+  const suppliers = new Set<string>();
+  if (!KNOWN_SUPPLIER_INBOX_DOMAIN_SET.has(domain)) return suppliers;
 
   for (const supplier of readSupplierContactsSync().suppliers) {
     const domains = new Set<string>();
-
-    for (const domain of supplier.reply_domains ?? []) {
-      const cleaned = domain.replace(/^@/, "").trim().toLowerCase();
+    for (const replyDomain of supplier.reply_domains ?? []) {
+      const cleaned = replyDomain.replace(/^@/, "").trim().toLowerCase();
       if (cleaned) domains.add(cleaned);
     }
-
-    for (const email of normalizeEmailList(supplier.emails, supplier.email)) {
-      const domain = extractEmailDomain(email);
-      if (domain && !GENERIC_MAIL_DOMAINS.has(domain)) {
-        domains.add(domain);
-      }
-    }
-
-    for (const domain of domains) {
-      const bucket = domainSuppliers.get(domain) ?? new Set<string>();
-      bucket.add(supplier.id);
-      domainSuppliers.set(domain, bucket);
+    if (domains.has(domain)) {
+      suppliers.add(supplier.id);
     }
   }
 
-  return domainSuppliers;
+  return suppliers;
 }
 
-function allRegisteredReplyDomains(): Set<string> {
-  const domains = new Set<string>();
-  for (const supplier of readSupplierContactsSync().suppliers) {
-    for (const domain of supplier.reply_domains ?? []) {
-      const cleaned = domain.replace(/^@/, "").trim().toLowerCase();
-      if (cleaned) domains.add(cleaned);
-    }
-  }
-  return domains;
-}
-
-export function isRegisteredSupplierReplyDomain(domain: string): boolean {
+export function isKnownSupplierInboxDomain(domain: string): boolean {
   const cleaned = domain.replace(/^@/, "").trim().toLowerCase();
-  if (!cleaned || GENERIC_MAIL_DOMAINS.has(cleaned)) return false;
-  if (allRegisteredReplyDomains().has(cleaned)) return true;
-  const suppliers = supplierDomainsFromContacts().get(cleaned);
-  return Boolean(suppliers && suppliers.size === 1);
+  return cleaned.length > 0 && KNOWN_SUPPLIER_INBOX_DOMAIN_SET.has(cleaned);
 }
 
 /**
  * Domains used for IMAP `from:` searches — any colleague at the mill can reply.
- * Includes explicit reply_domains plus supplier-exclusive domains from contacts.
  */
 export function getSupplierInboxSearchDomains(): string[] {
-  const domainSuppliers = supplierDomainsFromContacts();
-  const domains = new Set<string>();
+  return [...KNOWN_SUPPLIER_INBOX_DOMAINS];
+}
 
+/** Exact supplier contact emails used for IMAP `from:` searches (e.g. personal Gmail). */
+export function getSupplierInboxSearchEmails(): string[] {
+  const emails = new Set<string>();
   for (const supplier of readSupplierContactsSync().suppliers) {
-    for (const domain of supplier.reply_domains ?? []) {
-      const cleaned = domain.replace(/^@/, "").trim().toLowerCase();
-      if (cleaned) domains.add(cleaned);
+    for (const email of normalizeEmailList(supplier.emails, supplier.email)) {
+      emails.add(email.toLowerCase());
     }
   }
-
-  for (const [domain, suppliers] of domainSuppliers) {
-    if (suppliers.size === 1 && !GENERIC_MAIL_DOMAINS.has(domain)) {
-      domains.add(domain);
-    }
-  }
-
-  return [...domains].sort();
+  return [...emails].sort();
 }
 
 /**
  * Match a supplier from the sender address:
- * 1. Exact email in contacts (orders@, valentina.cao@, etc.)
+ * 1. Exact email in contacts (orders@, valentina.cao@, vittorio.prossimo@gmail.com, etc.)
  * 2. Known supplier domain when only one mill uses that domain
- *    (e.g. anyone @loropiana.com → Loro Piana)
+ *    (e.g. anyone @loropiana.com → Loro Piana when unambiguous)
  */
 export function findSupplierIdByEmail(fromAddress: string): string | null {
   const email = normalizeEmailAddress(fromAddress);
@@ -120,20 +99,24 @@ export function findSupplierIdByEmail(fromAddress: string): string | null {
   if (exactMatches.length === 1) return exactMatches[0];
 
   const domain = extractEmailDomain(email);
-  if (!domain || GENERIC_MAIL_DOMAINS.has(domain)) return null;
+  if (!domain || !isKnownSupplierInboxDomain(domain)) return null;
 
-  const suppliers = supplierDomainsFromContacts().get(domain);
-  if (suppliers?.size === 1) {
+  const suppliers = supplierIdsForKnownDomain(domain);
+  if (suppliers.size === 1) {
     return [...suppliers][0];
   }
 
   return null;
 }
 
+/** Whether the sender is on an allowlisted supplier domain or an exact contact email. */
 export function isKnownSupplierSender(fromAddress: string): boolean {
-  if (findSupplierIdByEmail(fromAddress)) return true;
-  const domain = extractEmailDomain(fromAddress);
-  return domain ? isRegisteredSupplierReplyDomain(domain) : false;
+  const email = normalizeEmailAddress(fromAddress);
+  if (!email) return false;
+  if (isExactSupplierContactEmail(email)) return true;
+
+  const domain = extractEmailDomain(email);
+  return domain ? isKnownSupplierInboxDomain(domain) : false;
 }
 
 export function supplierNameForEmail(fromAddress: string): string | null {
@@ -185,16 +168,8 @@ export function hasSupplierReplyContextSignals(
 
 /**
  * Whether an inbound email should be imported as a supplier reply during inbox scan.
- * Known supplier domains/addresses are trusted; unknown senders need a matched fabric PO
- * plus fabric/shipment context (not generic commercial invoice/statement subjects).
+ * Only allowlisted supplier domains and exact contact emails are accepted.
  */
-export function shouldImportSupplierReply(
-  fromAddress: string,
-  subject: string,
-  body: string,
-  hasPdf: boolean
-): boolean {
-  if (isKnownSupplierSender(fromAddress)) return true;
-  if (!hasMatchedFabricPoNumber(subject, body)) return false;
-  return hasSupplierReplyContextSignals(subject, body, hasPdf);
+export function shouldImportSupplierReply(fromAddress: string): boolean {
+  return isKnownSupplierSender(fromAddress);
 }

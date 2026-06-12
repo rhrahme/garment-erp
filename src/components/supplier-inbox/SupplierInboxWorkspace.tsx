@@ -195,16 +195,18 @@ export function SupplierInboxWorkspace() {
                 Fabric orders are <strong>sent from</strong>{" "}
                 <span className="font-mono text-slate-700">{sendMailbox ?? "—"}</span>. This scans{" "}
                 <span className="font-mono text-slate-700">{scanMailbox ?? "—"}</span> for supplier replies.
-                Recognises known supplier domains (
+                Only imports replies from known supplier domains (
                 <span className="font-mono text-slate-600">@loropiana.com</span>,{" "}
                 <span className="font-mono text-slate-600">@zegna.com</span>,{" "}
                 <span className="font-mono text-slate-600">@stylbiella.it</span>,{" "}
                 <span className="font-mono text-slate-600">@drapersitaly.it</span>,{" "}
                 <span className="font-mono text-slate-600">@caccioppolinapoli.it</span>,{" "}
-                <span className="font-mono text-slate-600">@comoluxuryfabrics.com</span>) — so any colleague
-                from the mill counts, not only the order contact. Also matches PO numbers, invoices, tracking,
-                and fabric availability (out of stock / restock dates). When a supplier says an article is
-                unavailable, you&apos;ll get an email alert and can choose to wait or replace the fabric here.
+                <span className="font-mono text-slate-600">@comoluxuryfabrics.com</span>) or exact emails
+                listed under Purchasing → Suppliers — any colleague at the mill counts, not only the order
+                contact. DHL, customs, and other transporter emails are handled separately. From allowed
+                senders, matches PO numbers, invoices, tracking, and fabric availability (out of stock /
+                restock dates). When a supplier says an article is unavailable, you&apos;ll get an email alert
+                and can choose to wait or replace the fabric here.
               </p>
               {!scanMailbox && (
                 <p className="mt-2 text-sm text-amber-800">

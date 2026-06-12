@@ -1,10 +1,6 @@
 import path from "path";
 import { ensureDocumentsLoaded, readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
-import {
-  hasMatchedFabricPoNumber,
-  hasSupplierReplyContextSignals,
-  isKnownSupplierSender,
-} from "@/lib/email/inbound/supplier-email-match";
+import { isKnownSupplierSender } from "@/lib/email/inbound/supplier-email-match";
 
 const STORE_PATH = path.join(process.cwd(), "supplier-replies.local.json");
 
@@ -117,20 +113,7 @@ export function logSupplierReply(input: Omit<SupplierReplyRecord, "id">): Suppli
 }
 
 function isDisplayableSupplierReply(reply: SupplierReplyRecord): boolean {
-  if (isKnownSupplierSender(reply.from_address)) return true;
-
-  const hasPoLink =
-    Boolean(reply.purchase_order_id) ||
-    (reply.po_number != null && hasMatchedFabricPoNumber(reply.subject, reply.body));
-  if (!hasPoLink) return false;
-
-  if (reply.supplier_id) return true;
-  if ((reply.awb_numbers?.length ?? 0) > 0) return true;
-  if ((reply.invoice_numbers?.length ?? 0) > 0) return true;
-  if ((reply.line_updates?.length ?? 0) > 0) return true;
-
-  const hasPdf = (reply.attachment_names ?? []).some((name) => /\.pdf$/i.test(name));
-  return hasSupplierReplyContextSignals(reply.subject, reply.body, hasPdf);
+  return isKnownSupplierSender(reply.from_address);
 }
 
 export function listSupplierReplies(limit = 100): SupplierReplyRecord[] {

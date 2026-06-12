@@ -3,6 +3,7 @@ import { getInboxScanEmail } from "@/lib/email/imap-auth";
 import { processInboundSupplierEmail, type ProcessedInboundEmail } from "@/lib/email/inbound/process-supplier-email";
 import {
   getSupplierInboxSearchDomains,
+  getSupplierInboxSearchEmails,
   isKnownSupplierSender,
   shouldImportSupplierReply,
 } from "@/lib/email/inbound/supplier-email-match";
@@ -12,7 +13,6 @@ import {
   isRelevantTransporterEmail,
   isTrustedTransporterSource,
 } from "@/lib/email/inbound/parse-transporter-email";
-import { normalizeEmailList, readSupplierContactsSync } from "@/lib/data/supplier-contacts";
 import {
   looksLikeSupplierInvoiceSubject,
   resolveInboxScanOptions,
@@ -37,16 +37,6 @@ function normalizeAddress(value: string): string {
   return (match?.[1] ?? value).trim().toLowerCase();
 }
 
-function getSupplierFromAddresses(): string[] {
-  const addresses = new Set<string>();
-  for (const supplier of readSupplierContactsSync().suppliers) {
-    for (const email of normalizeEmailList(supplier.emails, supplier.email)) {
-      addresses.add(email.toLowerCase());
-    }
-  }
-  return [...addresses];
-}
-
 async function collectScanUids(
   client: import("imapflow").ImapFlow,
   since: Date,
@@ -54,7 +44,7 @@ async function collectScanUids(
 ): Promise<number[]> {
   const uidSet = new Set<number>();
 
-  for (const fromAddress of getSupplierFromAddresses()) {
+  for (const fromAddress of getSupplierInboxSearchEmails()) {
     try {
       const supplierUids = await client.search({ since, from: fromAddress }, { uid: true });
       for (const uid of supplierUids) {
@@ -186,7 +176,7 @@ export async function scanSupplierInbox(options: InboxScanOptions = {}): Promise
         const looksLikeInvoice = looksLikeSupplierInvoiceSubject(subject, hasPdfInvoice);
 
         const fromIsSupplier = isKnownSupplierSender(fromAddress);
-        const isSupplier = shouldImportSupplierReply(fromAddress, subject, body, hasPdfInvoice);
+        const isSupplier = shouldImportSupplierReply(fromAddress);
 
         const isTransporter =
           isRelevantTransporterEmail(fromAddress, subject, body, hasPdfInvoice) &&
