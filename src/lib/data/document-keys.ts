@@ -89,6 +89,7 @@ export const ERP_DOCUMENT_SPECS = {
   },
   fabric_order_drafts: {
     path: path.join(ROOT, "fabric-order-drafts.local.json"),
+    // Per-user autosave for /fabric-orders/new — NOT persisted in sales_orders until submit.
     fallback: { updated_at: null, drafts: {} },
   },
   sales_order_drafts: {

@@ -79,7 +79,7 @@ export function FabricOrdersList({
       <div className="rounded-xl border border-dashed border-slate-200 py-16 text-center">
         <p className="text-lg font-medium text-slate-700">No fabric orders yet</p>
         <p className="mt-2 text-sm text-slate-500">Create your first fabric order to request supplier fabric.</p>
-        <Link href="/fabric-orders/new" className="mt-4 inline-block">
+        <Link href="/fabric-orders/new?fresh=1" className="mt-4 inline-block">
           <Button>{labels.newButton}</Button>
         </Link>
       </div>

@@ -350,6 +350,13 @@ export function SalesOrderForm({
       return;
     }
 
+    // Fabric Orders: restore pending drafts without making users discover /new first.
+    if (redirectBasePath === "/fabric-orders" && !startFresh && hasPendingRestore) {
+      restorePending();
+      setDraftChoiceResolved(true);
+      return;
+    }
+
     if (hasPendingServerRestore && !hasPendingRestore && pendingServerDraft) {
       restoreDraft(pendingServerDraft);
       dismissPendingServerRestore();
@@ -373,6 +380,7 @@ export function SalesOrderForm({
     loading,
     pendingServerDraft,
     promptForDraft,
+    redirectBasePath,
     restoreDraft,
     restorePending,
     serverDraftEnabled,
