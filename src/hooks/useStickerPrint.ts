@@ -17,7 +17,9 @@ export function useStickerPrint() {
       }).then((result) => {
         if (!result.ok) {
           setPrinting(false);
-          setPrintError("Sticker print failed — check you are logged in and try again.");
+          setPrintError(
+            "Sticker print failed — allow popups for this site, confirm you are logged in, and try again."
+          );
         }
       });
     },

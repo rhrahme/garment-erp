@@ -143,24 +143,27 @@ function triggerBlobDownload(blob: Blob, filename: string): void {
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
 }
 
+/**
+ * Open a dedicated popup with label PNGs only and print from that window.
+ * Hidden iframes often print the parent page in Chrome (parent URL in footer).
+ */
 function printStickerImageUrls(imageUrls: string[], onAfterPrint?: () => void): Promise<boolean> {
   return new Promise((resolve) => {
-    const iframe = document.createElement("iframe");
-    iframe.setAttribute("title", "Sticker labels");
-    iframe.style.position = "fixed";
-    iframe.style.left = "-10000px";
-    iframe.style.top = "0";
-    iframe.style.width = "51mm";
-    iframe.style.height = "102mm";
-    iframe.style.border = "0";
-    iframe.style.margin = "0";
-    iframe.style.padding = "0";
+    const popup = window.open("about:blank", "sticker-print", "popup,width=480,height=640");
+    if (!popup) {
+      resolve(false);
+      return;
+    }
 
     let finished = false;
 
     const cleanup = () => {
       window.setTimeout(() => {
-        iframe.remove();
+        try {
+          popup.close();
+        } catch {
+          /* already closed */
+        }
         for (const url of imageUrls) URL.revokeObjectURL(url);
       }, 1000);
     };
@@ -173,40 +176,38 @@ function printStickerImageUrls(imageUrls: string[], onAfterPrint?: () => void): 
       resolve(ok);
     };
 
-    const triggerPrint = (targetWindow: Window) => {
-      try {
-        targetWindow.focus();
-        targetWindow.print();
-      } catch {
-        finish(false);
-        return;
-      }
+    try {
+      popup.document.open();
+      popup.document.write(buildStickerPrintHtml(imageUrls));
+      popup.document.close();
+    } catch {
+      finish(false);
+      return;
+    }
 
-      targetWindow.addEventListener("afterprint", () => finish(true), { once: true });
-      window.setTimeout(() => cleanup(), 120_000);
-    };
+    void waitForDocumentImages(popup.document)
+      .then(() => {
+        try {
+          popup.focus();
+          popup.print();
+        } catch {
+          finish(false);
+          return;
+        }
 
-    iframe.onload = () => {
-      const doc = iframe.contentDocument;
-      const win = iframe.contentWindow;
-      if (!doc || !win) {
-        finish(false);
-        return;
-      }
-
-      void waitForDocumentImages(doc)
-        .then(() => triggerPrint(win))
-        .catch(() => finish(false));
-    };
-
-    iframe.srcdoc = buildStickerPrintHtml(imageUrls);
-    document.body.appendChild(iframe);
+        popup.addEventListener("afterprint", () => finish(true), { once: true });
+        window.setTimeout(() => {
+          if (!finished) finish(true);
+        }, 120_000);
+      })
+      .catch(() => finish(false));
   });
 }
 
 /**
- * Fetch server-generated bilevel PNG(s) and open the system print dialog directly.
+ * Fetch server-generated bilevel PNG(s) and open the system print dialog in a popup.
  * One label per page at 51×102 mm via CSS @page — no PDF download required.
+ * Never calls print() on the parent page.
  */
 export async function printStickerPngs(
   request: StickerPdfRequest,

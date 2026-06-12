@@ -33,7 +33,7 @@ function macGuide(): StickerPrintGuide {
     steps: [
       {
         title: "Click Print",
-        detail: `The app opens your system print dialog with one ${MEDIA} page per label (bilevel PNG, no download).`,
+        detail: `A popup opens with one ${MEDIA} bilevel PNG per label, then your system print dialog (no download).`,
       },
       {
         title: "Choose your thermal printer",
@@ -55,7 +55,7 @@ function windowsGuide(): StickerPrintGuide {
     steps: [
       {
         title: "Click Print",
-        detail: `The app opens your system print dialog with one ${MEDIA} page per label (bilevel PNG, no download).`,
+        detail: `A popup opens with one ${MEDIA} bilevel PNG per label, then your system print dialog (no download).`,
       },
       {
         title: "Choose your thermal printer",

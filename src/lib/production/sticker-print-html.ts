@@ -28,7 +28,6 @@ export function buildStickerPrintHtml(imageSrcs: string[]): string {
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Sticker labels</title>
 <style>
 @page {
   size: ${pageW}mm ${pageH}mm;

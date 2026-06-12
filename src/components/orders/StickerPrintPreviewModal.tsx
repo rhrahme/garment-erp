@@ -104,6 +104,7 @@ export function StickerPrintPreviewModal({
     [allCodes, defaultSelectedCodes]
   );
   const [selected, setSelected] = useState<Set<string>>(initialSelection);
+  const [printConfirmed, setPrintConfirmed] = useState(false);
   const [downloadingPng, setDownloadingPng] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -113,7 +114,10 @@ export function StickerPrintPreviewModal({
   const platformGuide = useMemo(() => stickerPrintGuide(detectStickerPrintPlatform()), []);
 
   useEffect(() => {
-    if (open) setSelected(new Set(defaultSelectedCodes?.length ? defaultSelectedCodes : allCodes));
+    if (open) {
+      setSelected(new Set(defaultSelectedCodes?.length ? defaultSelectedCodes : allCodes));
+      setPrintConfirmed(false);
+    }
   }, [open, allCodes, defaultSelectedCodes]);
 
   const selectedCount = selected.size;
@@ -201,6 +205,32 @@ export function StickerPrintPreviewModal({
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+              <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-3 text-sm text-amber-950">
+                <p className="font-semibold">Before you print</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5">
+                  <li>
+                    In the print dialog, open <strong>More settings</strong> and turn{" "}
+                    <strong>OFF</strong> &ldquo;Headers and footers&rdquo; — otherwise Chrome adds
+                    date, title, and URL on every label.
+                  </li>
+                  <li>
+                    Select printer <strong>D550 / LabelLife</strong> (not your office inkjet).
+                  </li>
+                  <li>Set paper to 51×102 mm portrait if the preview looks wrong.</li>
+                </ul>
+                <label className="mt-3 flex cursor-pointer items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={printConfirmed}
+                    onChange={(event) => setPrintConfirmed(event.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-amber-400"
+                  />
+                  <span>
+                    I will turn OFF headers and footers and select the D550 label printer
+                  </span>
+                </label>
+              </div>
+
               <div className="mb-4 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
                 <p className="font-semibold">{platformGuide.headline}</p>
                 <ol className="mt-2 list-decimal space-y-1 pl-5">
@@ -278,7 +308,7 @@ export function StickerPrintPreviewModal({
                 <Download className="mr-2 h-4 w-4" />
                 {downloadingPng ? "Downloading…" : "PNG"}
               </Button>
-              <Button onClick={handlePrint} disabled={busy || selectedCount === 0}>
+              <Button onClick={handlePrint} disabled={busy || selectedCount === 0 || !printConfirmed}>
                 <Printer className="mr-2 h-4 w-4" />
                 {printing ? "Preparing…" : `Print (${selectedCount})`}
               </Button>

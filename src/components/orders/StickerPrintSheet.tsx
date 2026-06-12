@@ -302,8 +302,8 @@ export function StickerPrintSheet({
           <p className="mt-1 text-sm text-slate-500">{copy.hint}</p>
           <p className="mt-1 text-xs text-slate-400">
             Roll printer ({labelRollSizeLabel()} physical) — one label per feed. Click Print to open
-            the system dialog (51×102 mm, one PNG page per label). Use PDF/PNG download only if preview
-            looks wrong.
+            a popup with bilevel PNGs, then the system dialog (51×102 mm, one page per label). Use
+            PDF/PNG download only if preview looks wrong.
             {!hasLabelsToPrint && !singlePieceProductionEmpty
               ? " No fabric lines on this order."
               : null}

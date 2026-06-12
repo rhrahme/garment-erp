@@ -28,6 +28,7 @@ const checks = [
   ["img width/height 100%", html.includes('width="100%" height="100%"')],
   ["page-break-after on pages", html.includes("page-break-after: always")],
   ["object-fit fill on img", html.includes("object-fit: fill")],
+  ["no document title (avoids print header)", !html.includes("<title>")],
 ];
 
 let failed = false;
