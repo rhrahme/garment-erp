@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { FabricPicker } from "@/components/fabric/FabricPicker";
@@ -156,6 +156,7 @@ export function SalesOrderForm({
   const [draftChoiceResolved, setDraftChoiceResolved] = useState(
     () => Boolean(duplicateFromOrderId || startFresh || continueDraft)
   );
+  const [lastServerPersistedLines, setLastServerPersistedLines] = useState(0);
 
   function patchActiveDraft(patch: Partial<SalesOrderClientDraft>) {
     setClientDrafts((prev) =>
@@ -314,17 +315,19 @@ export function SalesOrderForm({
   });
 
   function resolveDraftForServerSave(): SalesOrderFormDraft {
-    const stored = readLocalDraft<SalesOrderFormDraft>(draftKey);
-    const migrated = stored ? migrateSalesOrderDraft(stored) : null;
-    if (migrated && !isSalesOrderDraftEmpty(migrated)) {
-      const storedLines = countDraftFabricLines(migrated);
-      const snapshotLines = countDraftFabricLines(draftSnapshot);
-      if (storedLines >= snapshotLines) {
-        return migrated;
-      }
+    if (redirectBasePath === "/fabric-orders") {
+      return resolveFabricOrderDraftForServerSave(draftSnapshot);
     }
-    return draftSnapshot;
+    return resolveBestDraftForServerSave(draftSnapshot, () => {
+      const stored = readLocalDraft<SalesOrderFormDraft>(draftKey);
+      return stored ? migrateSalesOrderDraft(stored) : null;
+    });
   }
+
+  const serverDraftPayload = useMemo(
+    () => resolveDraftForServerSave(),
+    [draftSnapshot, draftKey, redirectBasePath]
+  );
 
   function saveDraftNow() {
     saveNow();
@@ -488,9 +491,11 @@ export function SalesOrderForm({
   const healLocalDraftToServerRef = useRef(false);
   const legacyDraftMigratedRef = useRef(false);
 
-  /** Move pre-split drafts from sales-order:new into fabric-order:new. */
-  useEffect(() => {
-    if (redirectBasePath !== "/fabric-orders" || !draftHydrated || legacyDraftMigratedRef.current) return;
+  /** Move pre-split drafts from sales-order:new into fabric-order:new before useLocalDraft reads. */
+  useLayoutEffect(() => {
+    if (redirectBasePath !== "/fabric-orders" || duplicateFromOrderId || legacyDraftMigratedRef.current) {
+      return;
+    }
     legacyDraftMigratedRef.current = true;
 
     const legacy = readLocalDraft<SalesOrderFormDraft>(DRAFT_KEYS.salesOrderNew);
@@ -504,10 +509,17 @@ export function SalesOrderForm({
     if (legacyLines <= currentLines) return;
 
     writeLocalDraft(DRAFT_KEYS.fabricOrderNew, legacyDraft);
-    if (currentLines === 0 && totalFabricLines === 0) {
-      restoreDraft(legacyDraft);
-    }
-  }, [draftHydrated, redirectBasePath, restoreDraft, totalFabricLines]);
+  }, [duplicateFromOrderId, redirectBasePath]);
+
+  useEffect(() => {
+    if (redirectBasePath !== "/fabric-orders" || duplicateFromOrderId || !draftHydrated) return;
+
+    const migrated = readFabricOrderLocalDraft();
+    if (!migrated || isSalesOrderDraftEmpty(migrated)) return;
+    if (totalFabricLines > 0) return;
+
+    restoreDraft(migrated);
+  }, [draftHydrated, duplicateFromOrderId, redirectBasePath, restoreDraft, totalFabricLines]);
 
   useEffect(() => {
     if (!serverDraftHydrated || !pendingServerDraft) return;
