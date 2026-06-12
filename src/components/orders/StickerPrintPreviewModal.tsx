@@ -5,11 +5,16 @@ import { Download, Printer, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { LabelPrinterSettingsControl } from "@/components/orders/LabelRotationControl";
 import { StickerCell } from "@/components/orders/StickerCell";
+import { StickerPrintGuideModal } from "@/components/orders/StickerPrintGuideModal";
 import { useLabelRotation } from "@/hooks/useLabelRotation";
 import { useLabelScale } from "@/hooks/useLabelScale";
 import type { StickerPreviewItem } from "@/lib/production/sticker-print-selection";
 import { labelRollHeightCss, labelRollWidthCss } from "@/lib/production/label-print-config";
-import { downloadStickerPdf, downloadStickerPng, type StickerPdfSheet } from "@/lib/production/print-stickers";
+import {
+  detectStickerPrintPlatform,
+  stickerPrintGuide,
+} from "@/lib/production/sticker-print-platform";
+import { downloadStickerPng, type StickerPdfSheet } from "@/lib/production/print-stickers";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 
 type StickerPrintPreviewModalProps = {
@@ -21,11 +26,13 @@ type StickerPrintPreviewModalProps = {
   defaultSelectedCodes?: string[];
   title?: string;
   printing?: boolean;
-  /** Required for Download PDF fallback. */
   orderId: string;
   sheet?: StickerPdfSheet;
   po?: string;
   poId?: string;
+  printGuideOpen?: boolean;
+  printGuideFilename?: string;
+  onClosePrintGuide?: () => void;
 };
 
 function PreviewCard({
@@ -88,6 +95,9 @@ export function StickerPrintPreviewModal({
   sheet = "pieces",
   po,
   poId,
+  printGuideOpen = false,
+  printGuideFilename,
+  onClosePrintGuide,
 }: StickerPrintPreviewModalProps) {
   const allCodes = useMemo(() => items.map((item) => item.label.sticker_code), [items]);
   const initialSelection = useMemo(
@@ -95,11 +105,12 @@ export function StickerPrintPreviewModal({
     [allCodes, defaultSelectedCodes]
   );
   const [selected, setSelected] = useState<Set<string>>(initialSelection);
-  const [downloading, setDownloading] = useState(false);
   const [downloadingPng, setDownloadingPng] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const { rotation, setRotation } = useLabelRotation();
   const { scalePct, setScalePct } = useLabelScale();
+
+  const platformGuide = useMemo(() => stickerPrintGuide(detectStickerPrintPlatform()), []);
 
   useEffect(() => {
     if (open) setSelected(new Set(defaultSelectedCodes?.length ? defaultSelectedCodes : allCodes));
@@ -121,25 +132,9 @@ export function StickerPrintPreviewModal({
     setSelected(allSelected ? new Set() : new Set(allCodes));
   }, [allCodes, allSelected]);
 
-  const handlePrint = useCallback(() => {
+  const handleDownloadAndPrint = useCallback(() => {
     onPrint([...selected]);
   }, [onPrint, selected]);
-
-  const handleDownload = useCallback(async () => {
-    setDownloading(true);
-    setDownloadError(null);
-    const ok = await downloadStickerPdf({
-      orderId,
-      sheet,
-      po,
-      poId,
-      codes: [...selected],
-      rotationDeg: rotation,
-      scalePct,
-    });
-    setDownloading(false);
-    if (!ok) setDownloadError("PDF download failed — check you are logged in and try again.");
-  }, [orderId, po, poId, rotation, scalePct, selected, sheet]);
 
   const handleDownloadPng = useCallback(async () => {
     setDownloadingPng(true);
@@ -157,116 +152,122 @@ export function StickerPrintPreviewModal({
     if (!ok) setDownloadError("PNG download failed — check you are logged in and try again.");
   }, [orderId, po, poId, rotation, scalePct, selected, sheet]);
 
-  if (!open) return null;
-
   return (
-    <div
-      className="no-print fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="sticker-print-preview-title"
-    >
-      <div className="flex max-h-[90vh] w-full max-w-5xl flex-col rounded-xl border border-slate-200 bg-white shadow-xl">
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
-          <div>
-            <h2 id="sticker-print-preview-title" className="text-lg font-semibold text-slate-900">
-              {title}
-            </h2>
-            <p className="mt-1 text-sm text-slate-600">
-              {PRINTING_FREE
-                ? "All stickers are selected by default. Uncheck any you do not want to print."
-                : "Only unprinted stickers are selected by default. Uncheck any you do not want to print."}
-            </p>
+    <>
+      {open ? (
+        <div
+          className="no-print fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="sticker-print-preview-title"
+        >
+          <div className="flex max-h-[90vh] w-full max-w-5xl flex-col rounded-xl border border-slate-200 bg-white shadow-xl">
+            <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
+              <div>
+                <h2 id="sticker-print-preview-title" className="text-lg font-semibold text-slate-900">
+                  {title}
+                </h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  {PRINTING_FREE
+                    ? "All stickers are selected by default. Uncheck any you do not want to print."
+                    : "Only unprinted stickers are selected by default. Uncheck any you do not want to print."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={printing}
+                className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50"
+                aria-label="Close preview"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+              <div className="mb-4 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+                <p className="font-semibold">How to print (Mac &amp; Windows)</p>
+                <p className="mt-1">{platformGuide.headline}</p>
+                <ol className="mt-2 list-decimal space-y-1 pl-5">
+                  {platformGuide.steps.map((step) => (
+                    <li key={step.title}>{step.title}</li>
+                  ))}
+                </ol>
+                {platformGuide.doNot ? (
+                  <p className="mt-2 text-xs text-amber-900">{platformGuide.doNot}</p>
+                ) : null}
+              </div>
+
+              <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+                <LabelPrinterSettingsControl
+                  rotation={rotation}
+                  onRotationChange={setRotation}
+                  scalePct={scalePct}
+                  onScalePctChange={setScalePct}
+                  compact
+                />
+              </div>
+
+              {downloadError ? (
+                <p className="mb-3 text-sm text-red-700">{downloadError}</p>
+              ) : null}
+
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleAll}
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                  Select all ({items.length})
+                </label>
+                <p className="text-sm text-slate-500">
+                  {selectedCount} of {items.length} selected
+                </p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {items.map((item) => (
+                  <PreviewCard
+                    key={item.label.sticker_code}
+                    item={item}
+                    checked={selected.has(item.label.sticker_code)}
+                    onToggle={toggleCode}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-slate-200 px-5 py-4">
+              <Button variant="secondary" onClick={onClose} disabled={printing || downloadingPng}>
+                Cancel
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => void handleDownloadPng()}
+                disabled={printing || downloadingPng || selectedCount === 0}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {downloadingPng ? "Downloading…" : `Download PNG (${selectedCount})`}
+              </Button>
+              <Button
+                onClick={handleDownloadAndPrint}
+                disabled={printing || downloadingPng || selectedCount === 0}
+              >
+                <Printer className="mr-2 h-4 w-4" />
+                {printing ? "Preparing PDF…" : `Download & print (${selectedCount})`}
+              </Button>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={printing}
-            className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50"
-            aria-label="Close preview"
-          >
-            <X className="h-4 w-4" />
-          </button>
         </div>
+      ) : null}
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-          <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-            <p className="font-semibold">Print dialog shows A4 or a black preview?</p>
-            <p className="mt-1">
-              Use <strong>Print selected</strong> or <strong>Download PDF</strong> — not the browser&apos;s
-              Cmd+P on this page. In the macOS dialog, set the D550 / LabelLife <strong>paper size to 51×102 mm</strong>{" "}
-              (it may default to A4). Scale <strong>100%</strong> or <strong>Fit to paper</strong>, margins none.
-              If still blank, <strong>Download PNG</strong> → Preview.app → print at 100% on 51×102 mm.
-            </p>
-          </div>
-
-          <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
-            <LabelPrinterSettingsControl
-              rotation={rotation}
-              onRotationChange={setRotation}
-              scalePct={scalePct}
-              onScalePctChange={setScalePct}
-              compact
-            />
-          </div>
-
-          {downloadError ? (
-            <p className="mb-3 text-sm text-red-700">{downloadError}</p>
-          ) : null}
-
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-700">
-              <input
-                type="checkbox"
-                checked={allSelected}
-                onChange={toggleAll}
-                className="h-4 w-4 rounded border-slate-300"
-              />
-              Select all ({items.length})
-            </label>
-            <p className="text-sm text-slate-500">
-              {selectedCount} of {items.length} selected
-            </p>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((item) => (
-              <PreviewCard
-                key={item.label.sticker_code}
-                item={item}
-                checked={selected.has(item.label.sticker_code)}
-                onToggle={toggleCode}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-slate-200 px-5 py-4">
-          <Button variant="secondary" onClick={onClose} disabled={printing || downloading || downloadingPng}>
-            Cancel
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => void handleDownload()}
-            disabled={printing || downloading || downloadingPng || selectedCount === 0}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            {downloading ? "Downloading…" : `Download PDF (${selectedCount})`}
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => void handleDownloadPng()}
-            disabled={printing || downloading || downloadingPng || selectedCount === 0}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            {downloadingPng ? "Downloading…" : `Download PNG (${selectedCount})`}
-          </Button>
-          <Button onClick={handlePrint} disabled={printing || downloading || downloadingPng || selectedCount === 0}>
-            <Printer className="mr-2 h-4 w-4" />
-            {printing ? "Preparing PDF…" : `Print selected (${selectedCount})`}
-          </Button>
-        </div>
-      </div>
-    </div>
+      <StickerPrintGuideModal
+        open={printGuideOpen}
+        onClose={onClosePrintGuide ?? (() => {})}
+        filename={printGuideFilename}
+      />
+    </>
   );
 }

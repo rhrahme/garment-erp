@@ -9,7 +9,7 @@ import { StickerPrintPreviewModal } from "@/components/orders/StickerPrintPrevie
 import { useMarkFabricLinesPrinted } from "@/components/orders/useMarkFabricLinesPrinted";
 import { useStickerPrint } from "@/hooks/useStickerPrint";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
-import { labelPdfMediaMmLabel, labelRollSizeLabel } from "@/lib/production/label-print-config";
+import { labelRollSizeLabel } from "@/lib/production/label-print-config";
 import {
   lineIdsForStickerSelection,
   stickerCodesForUnprintedLines,
@@ -112,7 +112,15 @@ export function StickerPrintSheet({
   const [error, setError] = useState<string | null>(null);
   const [printedSheets, setPrintedSheets] = useState<Set<StickerSheetMode>>(() => new Set());
   const [previewOpen, setPreviewOpen] = useState(false);
-  const { printing, printError, clearPrintError, requestPrint } = useStickerPrint();
+  const {
+    printing,
+    printError,
+    clearPrintError,
+    requestPrint,
+    printGuideOpen,
+    printGuideFilename,
+    closePrintGuide,
+  } = useStickerPrint();
   const { printWithMark } = useMarkFabricLinesPrinted(salesOrderId);
 
   useEffect(() => {
@@ -296,8 +304,9 @@ export function StickerPrintSheet({
           </p>
           <p className="mt-1 text-sm text-slate-500">{copy.hint}</p>
           <p className="mt-1 text-xs text-slate-400">
-            Roll printer ({labelRollSizeLabel()} physical) — one label per feed. In LabelLife or the AIMO driver, set media to{" "}
-            {labelPdfMediaMmLabel()} before printing. Labels print from a server PDF (no browser date/URL headers).
+            Roll printer ({labelRollSizeLabel()} physical) — one label per feed. Click Download &amp; print,
+            open the PDF in Preview (Mac) or Edge/Adobe (Windows), then print to D550 at 51×102 mm.
+            Do not use the browser&apos;s print command on this page.
             {!hasLabelsToPrint && !singlePieceProductionEmpty
               ? " No fabric lines on this order."
               : null}
@@ -315,7 +324,7 @@ export function StickerPrintSheet({
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => setPreviewOpen(true)} disabled={!hasLabelsToPrint || printing}>
             <Printer className="mr-2 h-4 w-4" />
-            {printing ? "Preparing PDF…" : "Print roll labels"}
+            {printing ? "Preparing PDF…" : "Download & print labels"}
           </Button>
           <Link href={`/orders/${salesOrderId}`}>
             <Button variant="secondary">View order</Button>
@@ -374,6 +383,9 @@ export function StickerPrintSheet({
         sheet={sheet}
         po={poNumber}
         poId={poId}
+        printGuideOpen={printGuideOpen}
+        printGuideFilename={printGuideFilename}
+        onClosePrintGuide={closePrintGuide}
       />
 
       <style dangerouslySetInnerHTML={{ __html: stickerPrintStyles() }} />

@@ -79,7 +79,13 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const { printing, requestPrint } = useStickerPrint();
+  const {
+    printing,
+    requestPrint,
+    printGuideOpen,
+    printGuideFilename,
+    closePrintGuide,
+  } = useStickerPrint();
   const { printWithMark } = useMarkFabricLinesPrinted(salesOrderId);
 
   const load = useCallback(async () => {
@@ -193,7 +199,7 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
             disabled={!hasStickersToPrint || printing}
           >
             <Printer className="mr-2 h-4 w-4" />
-            {printing ? "Preparing PDF…" : "Print sticker rolls"}
+            {printing ? "Preparing PDF…" : "Download & print sticker rolls"}
           </Button>
           <Link href={`/orders/${salesOrderId}`}>
             <Button variant="secondary">View order</Button>
@@ -227,6 +233,9 @@ export function OrderPrintPack({ salesOrderId }: { salesOrderId: string }) {
         printing={printing}
         orderId={salesOrderId}
         sheet="print-pack"
+        printGuideOpen={printGuideOpen}
+        printGuideFilename={printGuideFilename}
+        onClosePrintGuide={closePrintGuide}
       />
 
       <style dangerouslySetInnerHTML={{ __html: stickerPrintStyles() }} />
