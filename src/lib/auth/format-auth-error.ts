@@ -2,15 +2,33 @@ import type { AuthError } from "@supabase/supabase-js";
 
 const AUTH_SIGN_IN_TIMEOUT_MS = 12_000;
 
+export const AUTH_SERVICE_UNAVAILABLE_MESSAGE =
+  "Authentication service temporarily unavailable — try again in a few minutes";
+
+function isEmptyErrorBody(message: string | undefined): boolean {
+  const trimmed = message?.trim();
+  return !trimmed || trimmed === "{}" || trimmed === "[]";
+}
+
+export function isAuthServiceUnavailable(error: AuthError | null | undefined): boolean {
+  if (!error) return false;
+
+  if (error.status === 522 || error.status === 503 || error.name === "AuthRetryableFetchError") {
+    return true;
+  }
+
+  return isEmptyErrorBody(error.message);
+}
+
 export function formatAuthError(error: AuthError | null | undefined): string {
   if (!error) return "Sign in failed.";
 
-  if (error.status === 522 || error.name === "AuthRetryableFetchError") {
-    return "Authentication service is temporarily unavailable. Please try again in a few minutes.";
+  if (isAuthServiceUnavailable(error)) {
+    return AUTH_SERVICE_UNAVAILABLE_MESSAGE;
   }
 
   const message = error.message?.trim();
-  if (message && message !== "{}") return message;
+  if (message) return message;
 
   return "Invalid email or password.";
 }

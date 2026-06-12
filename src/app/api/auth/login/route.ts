@@ -2,7 +2,12 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { DEV_IMPERSONATION_COOKIE } from "@/lib/auth/dev-impersonation";
-import { formatAuthError, signInWithPasswordWithTimeout } from "@/lib/auth/format-auth-error";
+import {
+  AUTH_SERVICE_UNAVAILABLE_MESSAGE,
+  formatAuthError,
+  isAuthServiceUnavailable,
+  signInWithPasswordWithTimeout,
+} from "@/lib/auth/format-auth-error";
 import { defaultPathForSession, isClientManagerEmail } from "@/lib/auth/permissions";
 import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/supabase/env";
 
@@ -32,14 +37,8 @@ export async function POST(request: Request) {
       supabase.auth.signInWithPassword({ email, password })
     );
 
-    if (timedOut) {
-      return NextResponse.json(
-        {
-          error:
-            "Authentication service is temporarily unavailable. Please try again in a few minutes.",
-        },
-        { status: 503 }
-      );
+    if (timedOut || isAuthServiceUnavailable(authError)) {
+      return NextResponse.json({ error: AUTH_SERVICE_UNAVAILABLE_MESSAGE }, { status: 503 });
     }
 
     if (!authError) {

@@ -6,6 +6,18 @@ import { useRouter } from "next/navigation";
 import { Shirt } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { DEMO_MODE, DEMO_USER_EMAIL_COOKIE } from "@/lib/auth/demo-mode";
+import { AUTH_SERVICE_UNAVAILABLE_MESSAGE } from "@/lib/auth/format-auth-error";
+
+function normalizeLoginError(data: { error?: string }, status: number): string {
+  if (status === 503 || status === 522) return AUTH_SERVICE_UNAVAILABLE_MESSAGE;
+
+  const message = data.error?.trim();
+  if (!message || message === "{}" || message === "[]") {
+    return status >= 500 ? AUTH_SERVICE_UNAVAILABLE_MESSAGE : "Sign in failed.";
+  }
+
+  return message;
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,10 +47,14 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = (await res.json()) as { ok?: boolean; redirect?: string; error?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        redirect?: string;
+        error?: string;
+      };
 
       if (!res.ok) {
-        setError(data.error ?? "Sign in failed.");
+        setError(normalizeLoginError(data, res.status));
         setLoading(false);
         return;
       }
