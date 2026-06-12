@@ -144,6 +144,21 @@
       "lead_time_days": 0
     },
     {
+      "id": "gazaba",
+      "code": "GZB",
+      "name": "Gazaba",
+      "email": null,
+      "notes": "Order contact TBD — inbox scan accepts @gazaba.com replies.",
+      "emails": [],
+      "country": "Italy",
+      "reply_domains": [
+        "gazaba.com"
+      ],
+      "contact_person": null,
+      "has_price_list": false,
+      "lead_time_days": 14
+    },
+    {
       "id": "fab6",
       "code": "FAB-006",
       "name": "Fabric Supplier 6",
@@ -156,7 +171,7 @@
       "lead_time_days": 14
     }
   ],
-  "updated_at": "2026-06-11T00:00:00.000Z",
+  "updated_at": "2026-06-12T00:00:00.000Z",
   "inbox_scan_email": "rhrahme@gmail.com",
   "factory_orders_email": "orders.ruh@hagan.pro"
 }

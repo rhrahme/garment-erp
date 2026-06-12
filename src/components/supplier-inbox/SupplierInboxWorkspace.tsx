@@ -201,7 +201,8 @@ export function SupplierInboxWorkspace() {
                 <span className="font-mono text-slate-600">@stylbiella.it</span>,{" "}
                 <span className="font-mono text-slate-600">@drapersitaly.it</span>,{" "}
                 <span className="font-mono text-slate-600">@caccioppolinapoli.it</span>,{" "}
-                <span className="font-mono text-slate-600">@comoluxuryfabrics.com</span>) or exact emails
+                <span className="font-mono text-slate-600">@comoluxuryfabrics.com</span>,{" "}
+                <span className="font-mono text-slate-600">@gazaba.com</span>) or exact emails
                 listed under Purchasing → Suppliers — any colleague at the mill counts, not only the order
                 contact. DHL, customs, and other transporter emails are handled separately. From allowed
                 senders, matches PO numbers, invoices, tracking, and fabric availability (out of stock /

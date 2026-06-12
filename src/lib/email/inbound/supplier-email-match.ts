@@ -10,6 +10,7 @@ export const KNOWN_SUPPLIER_INBOX_DOMAINS = [
   "drapersitaly.it",
   "caccioppolinapoli.it",
   "comoluxuryfabrics.com",
+  "gazaba.com",
 ] as const;
 
 const KNOWN_SUPPLIER_INBOX_DOMAIN_SET = new Set<string>(KNOWN_SUPPLIER_INBOX_DOMAINS);

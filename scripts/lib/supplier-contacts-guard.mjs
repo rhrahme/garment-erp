@@ -10,6 +10,7 @@ export const REQUIRED_FABRIC_SUPPLIER_IDS = [
   "solbiati",
   "canclini",
   "wool-stock",
+  "gazaba",
 ];
 
 export function getMissingRequiredFabricSuppliers(contacts) {

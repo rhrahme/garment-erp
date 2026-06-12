@@ -8,6 +8,7 @@ export const REQUIRED_FABRIC_SUPPLIER_IDS = [
   "solbiati",
   "canclini",
   "wool-stock",
+  "gazaba",
 ] as const;
 
 export type RequiredFabricSupplierId = (typeof REQUIRED_FABRIC_SUPPLIER_IDS)[number];
