@@ -466,6 +466,20 @@ export function SalesOrderForm({
     [clientDrafts]
   );
   const hasUnsavedFabricLines = totalFabricLines > 0;
+  const syncRestoredDraftToServerRef = useRef(false);
+
+  useEffect(() => {
+    if (!serverDraftEnabled || !serverDraftHydrated || !draftChoiceResolved || loading) return;
+    if (totalFabricLines === 0 || syncRestoredDraftToServerRef.current) return;
+    syncRestoredDraftToServerRef.current = true;
+    requestServerDraftSaveAfterMutation();
+  }, [
+    draftChoiceResolved,
+    loading,
+    serverDraftEnabled,
+    serverDraftHydrated,
+    totalFabricLines,
+  ]);
 
   const serverDraftAutoSaveStatus = useMemo(() => {
     if (serverDraftStatus === "saving") return "saving" as const;

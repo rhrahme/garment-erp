@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, FileEdit } from "lucide-react";
 import { DRAFT_KEYS } from "@/lib/autosave/draft-keys";
 import { readLocalDraft } from "@/lib/autosave/local-draft-storage";
@@ -49,6 +49,7 @@ export function FabricOrderDraftBanner({
   const [serverSavedAt, setServerSavedAt] = useState<string | null>(initialServerSavedAt);
   const [localSummary, setLocalSummary] = useState<SalesOrderDraftSummary | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const healAttemptedRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -95,6 +96,43 @@ export function FabricOrderDraftBanner({
     }
     setLocalSummary(describeSalesOrderDraftSummary(stored, clients));
   }, [clients, hydrated]);
+
+  /** Push a richer browser draft to the server so other devices can see it. */
+  useEffect(() => {
+    if (!hydrated || healAttemptedRef.current) return;
+
+    const stored = readLocalDraft<SalesOrderFormDraft>(DRAFT_KEYS.fabricOrderNew);
+    if (!stored || isSalesOrderDraftEmpty(stored)) return;
+
+    const localSum = describeSalesOrderDraftSummary(stored, clients);
+    if (!localSum || localSum.totalFabrics === 0) return;
+
+    const serverFabrics = serverSummary?.totalFabrics ?? 0;
+    if (localSum.totalFabrics <= serverFabrics) return;
+
+    healAttemptedRef.current = true;
+    void (async () => {
+      try {
+        const res = await fetch("/api/fabric-order-drafts", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(stored),
+        });
+        if (!res.ok) {
+          healAttemptedRef.current = false;
+          return;
+        }
+        const data = (await res.json()) as { saved_at?: string };
+        const healed = describeSalesOrderDraftSummary(stored, clients);
+        if (healed) {
+          setServerSummary(healed);
+          setServerSavedAt(data.saved_at ?? healed.savedAt);
+        }
+      } catch {
+        healAttemptedRef.current = false;
+      }
+    })();
+  }, [clients, hydrated, serverSummary]);
 
   const activeDraft = useMemo(() => {
     const localTime = localSummary?.savedAt ? Date.parse(localSummary.savedAt) : 0;
