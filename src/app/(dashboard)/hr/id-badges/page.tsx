@@ -1,19 +1,18 @@
 import { PageHeader } from "@/components/ui/PageHeader";
+import { EmployeeQrWorkspace } from "@/components/hr/EmployeeQrWorkspace";
 import { HrNav } from "@/components/hr/HrNav";
-import { PayrollWorkspace } from "@/components/hr/PayrollWorkspace";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { getPayrollSummary, readPayrollEmployees } from "@/lib/data/payroll-employees";
+import { readPayrollEmployees } from "@/lib/data/payroll-employees";
 
-export default async function HRPage() {
+export default async function HrIdBadgesPage() {
   await ensureDocumentsLoaded(["payroll_employees"]);
   const payroll = readPayrollEmployees();
-  const summary = getPayrollSummary(payroll);
 
   return (
     <div>
       <PageHeader
         title="HR & Payroll"
-        description="Employee salary register — bank details for WPS / payroll transfer"
+        description="Employee ID badges — name, ID number, and scannable QR per employee"
       />
       <HrNav />
       {payroll.employees.length === 0 ? (
@@ -23,12 +22,7 @@ export default async function HRPage() {
           <code className="rounded bg-slate-100 px-1">python3 scripts/import-salary-xlsx.py</code>.
         </div>
       ) : (
-        <PayrollWorkspace
-          employees={payroll.employees}
-          summary={summary}
-          sourceFile={payroll.source_file}
-          updatedAt={payroll.updated_at}
-        />
+        <EmployeeQrWorkspace employees={payroll.employees} />
       )}
     </div>
   );

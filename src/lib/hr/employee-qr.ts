@@ -1,0 +1,11 @@
+import type { PayrollEmployee } from "@/lib/types/hr-payroll";
+
+/** Prefix for employee QR scans — stable across re-imports when ID number unchanged. */
+export const EMPLOYEE_QR_PREFIX = "EMP";
+
+/** Payload encoded in each employee badge QR. */
+export function employeeQrPayload(employee: Pick<PayrollEmployee, "id" | "employee_id_number">): string {
+  const idNumber = employee.employee_id_number.trim();
+  const id = employee.id.trim();
+  return `${EMPLOYEE_QR_PREFIX}:${idNumber || id}`;
+}
