@@ -24,6 +24,13 @@ const PERMANENT_PATTERNS = [
   /\bdiscontinued\b/i,
   /\bnon\s+pi[uù]\s+disponibil/i,
   /\besaurit[oa]\b/i,
+  /\bsold\s+out\b/i,
+  /\btotally\s+sold\s+out\b/i,
+  /\bcompletely\s+sold\s+out\b/i,
+  /\bno\s+availability\b/i,
+  /\bnot\s+available\b/i,
+  /\bno\s+longer\s+available\b/i,
+  /\bnot\s+in\s+stock\b/i,
 ];
 
 const TEMP_PATTERNS = [
@@ -207,7 +214,7 @@ export function parseAvailabilityFromEmail(
 
   const updates: SupplierLineUpdate[] = [];
   const listBlockPermanent =
-    /\b(?:fabrics?|articles?|codes?)\s+(?:totally\s+out|out\s+of\s+stock|not\s+available)[\s\S]{0,400}/i.test(
+    /\b(?:fabrics?|articles?|codes?|items?)\s+(?:totally\s+out|out\s+of\s+stock|sold\s+out|not\s+available)[\s\S]{0,400}/i.test(
       combined
     );
 

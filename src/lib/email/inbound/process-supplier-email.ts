@@ -60,25 +60,6 @@ export async function processInboundSupplierEmail(input: InboundEmailInput): Pro
   const pdfAttachments = hasPdfAttachments(input.attachments);
   const alreadyProcessed = isEmailProcessed(input.message_id);
 
-  if (alreadyProcessed && !pdfAttachments) {
-    const existing = {
-      id: `skipped-${input.message_id}`,
-      po_number: null,
-      supplier_id: null,
-      from_address: input.from_address,
-      subject: input.subject,
-      body: input.body,
-      received_at: input.received_at,
-      message_id: input.message_id,
-      awb_numbers: [],
-      invoice_numbers: [],
-      attachment_names: input.attachment_names ?? [],
-      purchase_order_id: null,
-    } satisfies SupplierReplyRecord;
-
-    return { reply: existing, shipments_created: 0, invoices_saved: 0, availability_alerts_created: 0, skipped: true, reason: "Already processed" };
-  }
-
   const parsed = parseSupplierEmailContent(input.subject, input.body);
   const fromPdfs = await parseInvoiceAttachments(input.attachments ?? []);
   const awb_numbers = unique([...parsed.awb_numbers, ...fromPdfs.awb_numbers]);
@@ -94,6 +75,51 @@ export async function processInboundSupplierEmail(input: InboundEmailInput): Pro
     input.body,
     matchedOrder?.lines ?? []
   );
+
+  if (alreadyProcessed && !pdfAttachments) {
+    const reply = upsertSupplierReply({
+      po_number,
+      supplier_id: supplier_id ?? matchedOrder?.supplier_id ?? null,
+      from_address: input.from_address,
+      subject: input.subject,
+      body: input.body,
+      received_at: input.received_at,
+      message_id: input.message_id,
+      awb_numbers,
+      invoice_numbers,
+      attachment_names: input.attachment_names ?? [],
+      purchase_order_id: matchedOrder?.id ?? null,
+      line_updates,
+    });
+
+    const availabilityAlerts = createAvailabilityAlertsFromReply({
+      reply_id: reply.id,
+      po_number: reply.po_number,
+      purchase_order_id: reply.purchase_order_id ?? null,
+      supplier_id: reply.supplier_id,
+      email_subject: reply.subject,
+      line_updates: reply.line_updates ?? [],
+    });
+
+    if (availabilityAlerts.length > 0) {
+      void notifyAdminsOfAvailabilityAlerts(availabilityAlerts);
+      void notifyIntegration("supplier.availability_detected", {
+        reply_id: reply.id,
+        po_number: reply.po_number,
+        supplier_id: reply.supplier_id,
+        alert_count: availabilityAlerts.length,
+        fabrics: availabilityAlerts.map((alert) => alert.fabric_number),
+      });
+    }
+
+    return {
+      reply,
+      shipments_created: 0,
+      invoices_saved: 0,
+      availability_alerts_created: availabilityAlerts.length,
+      skipped: false,
+    };
+  }
 
   const reply = upsertSupplierReply({
     po_number,
