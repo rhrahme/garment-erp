@@ -2,9 +2,9 @@
 /**
  * Static audit: ERP document reads must not hit a cold Supabase cache on Vercel.
  *
- * Global bootstrap (required):
- * - src/instrumentation.ts awaits ensureErpBootstrap() on Node cold start
+ * Global bootstrap (required for SSR):
  * - src/app/layout.tsx awaits ensureErpBootstrap() before any SSR
+ * - API routes call ensureErpBootstrap() / readJsonFileAsync() in handlers
  *
  * When global bootstrap is present, per-route warmup markers are optional.
  * Without it, API routes / server pages with sync reads must declare warmup.
@@ -67,12 +67,8 @@ function readText(relativePath) {
 }
 
 function hasGlobalBootstrap() {
-  const instrumentation = readText("src/instrumentation.ts");
   const rootLayout = readText("src/app/layout.tsx");
-  return (
-    instrumentation.includes("ensureErpBootstrap") &&
-    rootLayout.includes("ensureErpBootstrap")
-  );
+  return /await\s+ensureErpBootstrap\s*\(\)/.test(rootLayout);
 }
 
 function walk(dir, filter) {
@@ -117,10 +113,7 @@ const violations = globalBootstrap ? [] : [...apiViolations, ...pageViolations];
 
 if (!globalBootstrap) {
   console.error("audit-document-loads: FAIL — missing global ensureErpBootstrap wiring:\n");
-  if (!readText("src/instrumentation.ts").includes("ensureErpBootstrap")) {
-    console.error("  - src/instrumentation.ts must await ensureErpBootstrap()");
-  }
-  if (!readText("src/app/layout.tsx").includes("ensureErpBootstrap")) {
+  if (!/await\s+ensureErpBootstrap\s*\(\)/.test(readText("src/app/layout.tsx"))) {
     console.error("  - src/app/layout.tsx must await ensureErpBootstrap()");
   }
   console.error("");
@@ -132,7 +125,7 @@ if (violations.length > 0) {
     console.error(`  - ${file}`);
   }
   console.error(
-    "\nFix: add ensureErpBootstrap to instrumentation + root layout, or use async getters / ensureDocumentsLoaded."
+    "\nFix: await ensureErpBootstrap in root layout, or use async getters / ensureDocumentsLoaded."
   );
   process.exit(1);
 }

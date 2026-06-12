@@ -8,7 +8,11 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  await ensureErpBootstrap();
+  try {
+    await ensureErpBootstrap();
+  } catch (error) {
+    console.error("[layout] ERP bootstrap failed:", error);
+  }
 
   return (
     <html lang="en">

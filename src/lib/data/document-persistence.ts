@@ -183,7 +183,11 @@ export async function ensureErpBootstrap(): Promise<void> {
         const spec = ERP_DOCUMENT_SPECS.supplier_contacts;
         const cached = fileCache.get(spec.path);
         if (cached) {
-          validateSupplierContacts(cached.data as SupplierContactsLike);
+          try {
+            validateSupplierContacts(cached.data as SupplierContactsLike);
+          } catch (error) {
+            console.error("[ERP bootstrap] supplier contacts validation failed:", error);
+          }
         }
       }
     );

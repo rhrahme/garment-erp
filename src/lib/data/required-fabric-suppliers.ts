@@ -17,7 +17,8 @@ export type SupplierContactsLike = {
 };
 
 export function getMissingRequiredFabricSuppliers(contacts: SupplierContactsLike): string[] {
-  const present = new Set(contacts.suppliers.map((s) => s.id));
+  const suppliers = Array.isArray(contacts?.suppliers) ? contacts.suppliers : [];
+  const present = new Set(suppliers.map((s) => s.id));
   return REQUIRED_FABRIC_SUPPLIER_IDS.filter((id) => !present.has(id));
 }
 
