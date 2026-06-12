@@ -4,11 +4,14 @@ import { processInboundSupplierEmail, type ProcessedInboundEmail } from "@/lib/e
 import {
   getSupplierInboxSearchDomains,
   isKnownSupplierSender,
+  shouldImportSupplierReply,
 } from "@/lib/email/inbound/supplier-email-match";
 import { processTransporterEmail } from "@/lib/email/inbound/process-transporter-email";
-import { isRelevantTransporterEmail, isTrustedTransporterSource } from "@/lib/email/inbound/parse-transporter-email";
-import { extractPoNumbers } from "@/lib/email/inbound/parse-supplier-email";
-import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
+import {
+  getTransporterSearchDomains,
+  isRelevantTransporterEmail,
+  isTrustedTransporterSource,
+} from "@/lib/email/inbound/parse-transporter-email";
 import { normalizeEmailList, readSupplierContactsSync } from "@/lib/data/supplier-contacts";
 import {
   looksLikeSupplierInvoiceSubject,
@@ -34,16 +37,6 @@ function normalizeAddress(value: string): string {
   return (match?.[1] ?? value).trim().toLowerCase();
 }
 
-function isRelevantSupplierEmail(fromAddress: string, subject: string, body: string): boolean {
-  if (isKnownSupplierSender(fromAddress)) return true;
-
-  const sentPoNumbers = new Set(listStoredFabricOrders().map((order) => order.po_number.toUpperCase()));
-  const mentioned = extractPoNumbers(`${subject}\n${body}`);
-  if (mentioned.some((po) => sentPoNumbers.has(po))) return true;
-
-  return looksLikeSupplierInvoiceSubject(subject, false);
-}
-
 function getSupplierFromAddresses(): string[] {
   const addresses = new Set<string>();
   for (const supplier of readSupplierContactsSync().suppliers) {
@@ -60,11 +53,6 @@ async function collectScanUids(
   generalLimit: number
 ): Promise<number[]> {
   const uidSet = new Set<number>();
-
-  const allInWindow = await client.search({ since }, { uid: true });
-  for (const uid of allInWindow.slice(-generalLimit)) {
-    uidSet.add(uid);
-  }
 
   for (const fromAddress of getSupplierFromAddresses()) {
     try {
@@ -88,7 +76,18 @@ async function collectScanUids(
     }
   }
 
-  return [...uidSet].sort((a, b) => b - a);
+  for (const domain of getTransporterSearchDomains()) {
+    try {
+      const domainUids = await client.search({ since, from: domain }, { uid: true });
+      for (const uid of domainUids) {
+        uidSet.add(uid);
+      }
+    } catch {
+      // Domain-wide from search may be unsupported on some providers.
+    }
+  }
+
+  return [...uidSet].sort((a, b) => b - a).slice(0, generalLimit);
 }
 
 export async function scanSupplierInbox(options: InboxScanOptions = {}): Promise<InboxScanResult> {
@@ -187,10 +186,7 @@ export async function scanSupplierInbox(options: InboxScanOptions = {}): Promise
         const looksLikeInvoice = looksLikeSupplierInvoiceSubject(subject, hasPdfInvoice);
 
         const fromIsSupplier = isKnownSupplierSender(fromAddress);
-        const isSupplier =
-          isRelevantSupplierEmail(fromAddress, subject, body) ||
-          (fromIsSupplier && hasPdfInvoice) ||
-          (hasPdfInvoice && looksLikeInvoice);
+        const isSupplier = shouldImportSupplierReply(fromAddress, subject, body, hasPdfInvoice);
 
         const isTransporter =
           isRelevantTransporterEmail(fromAddress, subject, body, hasPdfInvoice) &&

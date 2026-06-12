@@ -83,6 +83,11 @@ export function isCarrierEmailAddress(fromAddress: string): boolean {
   return CARRIER_FROM_PATTERNS.some((pattern) => pattern.test(email));
 }
 
+/** Domains for IMAP `from:` searches — customs/freight invoices from carriers. */
+export function getTransporterSearchDomains(): string[] {
+  return ["dhl.com", "fedex.com", "ups.com", "tnt.com", "dhlexpress.com", "mydhl.com"];
+}
+
 export function isRelevantTransporterEmail(
   fromAddress: string,
   subject: string,

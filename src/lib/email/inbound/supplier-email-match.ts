@@ -1,4 +1,6 @@
 import { normalizeEmailList, readSupplierContactsSync } from "@/lib/data/supplier-contacts";
+import { extractPoNumbers, parseSupplierEmailContent } from "@/lib/email/inbound/parse-supplier-email";
+import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 
 /** Personal mail domains — never treat as a fabric supplier on domain alone. */
 const GENERIC_MAIL_DOMAINS = new Set([
@@ -138,4 +140,61 @@ export function supplierNameForEmail(fromAddress: string): string | null {
   const supplierId = findSupplierIdByEmail(fromAddress);
   if (!supplierId) return null;
   return readSupplierContactsSync().suppliers.find((supplier) => supplier.id === supplierId)?.name ?? null;
+}
+
+export function hasMatchedFabricPoNumber(subject: string, body: string): boolean {
+  const sentPoNumbers = new Set(listStoredFabricOrders().map((order) => order.po_number.toUpperCase()));
+  const mentioned = extractPoNumbers(`${subject}\n${body}`);
+  return mentioned.some((po) => sentPoNumbers.has(po));
+}
+
+/** Fabric/shipment signals — excludes generic commercial "invoice" / "document" subjects. */
+export function hasSupplierReplyContextSignals(
+  subject: string,
+  body: string,
+  hasPdf: boolean
+): boolean {
+  const parsed = parseSupplierEmailContent(subject, body);
+  if (parsed.awb_numbers.length > 0) return true;
+  if (parsed.invoice_numbers.length > 0) return true;
+
+  const combined = `${subject}\n${body}`;
+  if (
+    /fabric|textile|cloth|yarn|swatch|article|composition|lot\s*#|colou?r|meter|metre|availability|out of stock|restock|substitut/i.test(
+      combined
+    )
+  ) {
+    return true;
+  }
+
+  const subjectLower = subject.toLowerCase();
+  if (
+    /proforma|fattura|packing list|packing slip|ddt|delivery note|waybill|awb|dispatch|shipment|spedizione|credit note|nota di credito|order confirmation|bol|bill of lading/.test(
+      subjectLower
+    )
+  ) {
+    return true;
+  }
+
+  if (hasPdf && /proforma|fattura|packing|shipment|dispatch|waybill|awb|spedizione/.test(subjectLower)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Whether an inbound email should be imported as a supplier reply during inbox scan.
+ * Known supplier domains/addresses are trusted; unknown senders need a matched fabric PO
+ * plus fabric/shipment context (not generic commercial invoice/statement subjects).
+ */
+export function shouldImportSupplierReply(
+  fromAddress: string,
+  subject: string,
+  body: string,
+  hasPdf: boolean
+): boolean {
+  if (isKnownSupplierSender(fromAddress)) return true;
+  if (!hasMatchedFabricPoNumber(subject, body)) return false;
+  return hasSupplierReplyContextSignals(subject, body, hasPdf);
 }
