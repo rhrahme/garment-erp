@@ -153,7 +153,7 @@ def parse_packing_list(xlsx_path: Path) -> dict[str, dict]:
         if pattern:
             rec["pattern_no"] = str(pattern).strip()
         if fabric_no:
-            rec["fabric_raw"] = str(fabric_no).strip()
+            rec["fabric_raw"] = normalize_fabric_number(fabric_no) or str(fabric_no).strip()
         if construction:
             rec["construction"] = str(construction).strip()
         if isinstance(qty, (int, float)):

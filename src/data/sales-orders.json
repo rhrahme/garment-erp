@@ -5812,7 +5812,7 @@
           "supplier_id": "gliani-stock",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "Gliani Stock",
           "label_stickers": [
             {
@@ -5831,7 +5831,7 @@
     },
     {
       "id": "so-cu-rm-massimo-dutti-linen-short",
-      "notes": "Ready-made · Linen Short · ClickUp: Massimo Dutti Linen Short (86exddrr6); Massimo Dutti Linen Short (86exddntd)",
+      "notes": "Ready-made \u00b7 Linen Short \u00b7 ClickUp: Massimo Dutti Linen Short (86exddrr6); Massimo Dutti Linen Short (86exddntd)",
       "status": "open",
       "client_id": "cu-retail-massimo-dutti",
       "so_number": "SO-2026-0010",
@@ -6032,7 +6032,7 @@
     },
     {
       "id": "so-cu-rm-massimo-dutti-cotton-short",
-      "notes": "Ready-made · Cotton Short · ClickUp: Massimo Dutti Cotton Short (86exddgzv); Massimo Dutti Cotton Short (86exdba73)",
+      "notes": "Ready-made \u00b7 Cotton Short \u00b7 ClickUp: Massimo Dutti Cotton Short (86exddgzv); Massimo Dutti Cotton Short (86exdba73)",
       "status": "open",
       "client_id": "cu-retail-massimo-dutti",
       "so_number": "SO-2026-0011",
@@ -6325,7 +6325,7 @@
     },
     {
       "id": "so-cu-rm-massimo-dutti-long-trouser",
-      "notes": "Ready-made · Long Trouser · ClickUp: Massimo Dutti Long Trouser (86exdb285); Massimo Dutti Long Trouser (86exdat2r)",
+      "notes": "Ready-made \u00b7 Long Trouser \u00b7 ClickUp: Massimo Dutti Long Trouser (86exdb285); Massimo Dutti Long Trouser (86exdat2r)",
       "status": "open",
       "client_id": "cu-retail-massimo-dutti",
       "so_number": "SO-2026-0012",
@@ -6710,7 +6710,7 @@
     },
     {
       "id": "so-cu-rm-zegna-over-shirt",
-      "notes": "Ready-made · Over Shirt · ClickUp: Zegna Over Shirt (86excxt55)",
+      "notes": "Ready-made \u00b7 Over Shirt \u00b7 ClickUp: Zegna Over Shirt (86excxt55)",
       "status": "open",
       "client_id": "cu-retail-zegna",
       "so_number": "SO-2026-0013",
@@ -6865,7 +6865,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-regular-shirt",
-      "notes": "Ready-made · Regular Shirt · ClickUp: Suit Supply Regular Shirt (86excxjzn)",
+      "notes": "Ready-made \u00b7 Regular Shirt \u00b7 ClickUp: Suit Supply Regular Shirt (86excxjzn)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0014",
@@ -7244,7 +7244,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-chino-cotton-trouser",
-      "notes": "Ready-made · Chino Cotton Trouser · ClickUp: Suit Supply Chino Cotton Trouser (86exa0av6); Suit Supply Chino Cotton Trouser (86exa03dm)",
+      "notes": "Ready-made \u00b7 Chino Cotton Trouser \u00b7 ClickUp: Suit Supply Chino Cotton Trouser (86exa0av6); Suit Supply Chino Cotton Trouser (86exa03dm)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0016",
@@ -7675,7 +7675,7 @@
     },
     {
       "id": "so-cu-rm-massimo-dutti-trouser",
-      "notes": "Ready-made · Trouser · ClickUp: Massimo Dutti Trouser (86ex7r0nb); Massimo Dutti Trouser (86ex7qy4d)",
+      "notes": "Ready-made \u00b7 Trouser \u00b7 ClickUp: Massimo Dutti Trouser (86ex7r0nb); Massimo Dutti Trouser (86ex7qy4d)",
       "status": "open",
       "client_id": "cu-retail-massimo-dutti",
       "so_number": "SO-2026-0017",
@@ -8014,7 +8014,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-long-linen-shirt",
-      "notes": "Ready-made · Long Linen Shirt · ClickUp: Suit Supply long linen Shirt (86ex7qvyp)",
+      "notes": "Ready-made \u00b7 Long Linen Shirt \u00b7 ClickUp: Suit Supply long linen Shirt (86ex7qvyp)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0018",
@@ -8123,7 +8123,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-long-original-linen-sample",
-      "notes": "Ready-made · Long Original Linen Sample · ClickUp: Suit Supply Long Original linen sample (86ex7px9y)",
+      "notes": "Ready-made \u00b7 Long Original Linen Sample \u00b7 ClickUp: Suit Supply Long Original linen sample (86ex7px9y)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0019",
@@ -8232,7 +8232,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-regular-original-linen-sample",
-      "notes": "Ready-made · Regular Original Linen Sample · ClickUp: Suit Supply Regular Original linen sample (86ex7pvxa)",
+      "notes": "Ready-made \u00b7 Regular Original Linen Sample \u00b7 ClickUp: Suit Supply Regular Original linen sample (86ex7pvxa)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0020",
@@ -8387,7 +8387,7 @@
     },
     {
       "id": "so-cu-rm-massimo-dutti-cotton-shirt",
-      "notes": "Ready-made · Cotton Shirt · ClickUp: Massimo Cotton Shirt (86ex7pmve); Massimo Dutti Cotton Shirt (86ex7ph9j)",
+      "notes": "Ready-made \u00b7 Cotton Shirt \u00b7 ClickUp: Massimo Cotton Shirt (86ex7pmve); Massimo Dutti Cotton Shirt (86ex7ph9j)",
       "status": "open",
       "client_id": "cu-retail-massimo-dutti",
       "so_number": "SO-2026-0021",
@@ -8569,7 +8569,7 @@
           "supplier_id": "gliani-stock",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "Gliani Stock",
           "label_stickers": [
             {
@@ -8592,7 +8592,7 @@
           "supplier_id": "gliani-stock",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "Gliani Stock",
           "label_stickers": [
             {
@@ -8615,7 +8615,7 @@
           "supplier_id": "gliani-stock",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "Gliani Stock",
           "label_stickers": [
             {
@@ -8638,7 +8638,7 @@
           "supplier_id": "gliani-stock",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "Gliani Stock",
           "label_stickers": [
             {
@@ -8661,7 +8661,7 @@
           "supplier_id": "gliani-stock",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "Gliani Stock",
           "label_stickers": [
             {
@@ -8684,7 +8684,7 @@
           "supplier_id": "gliani-stock",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "Gliani Stock",
           "label_stickers": [
             {
@@ -8707,7 +8707,7 @@
           "supplier_id": "gliani-stock",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "Gliani Stock",
           "label_stickers": [
             {
@@ -8726,7 +8726,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-without-pleat-cotton-short",
-      "notes": "Ready-made · Without Pleat Cotton Short · ClickUp: Suit Supply without pleat cotton short (86ex7j5ye); Suit Supply without pleat cotton short (86ex7hw7t)",
+      "notes": "Ready-made \u00b7 Without Pleat Cotton Short \u00b7 ClickUp: Suit Supply without pleat cotton short (86ex7j5ye); Suit Supply without pleat cotton short (86ex7hw7t)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0022",
@@ -9111,7 +9111,7 @@
     },
     {
       "id": "so-cu-86ex7hq4e",
-      "notes": "Ready-made · Linen Shirt · ClickUp: Luca Faloni Linen Shirt (86ex7hq4e)",
+      "notes": "Ready-made \u00b7 Linen Shirt \u00b7 ClickUp: Luca Faloni Linen Shirt (86ex7hq4e)",
       "status": "open",
       "client_id": "cu-retail-luca-faloni",
       "so_number": "SO-2026-0023",
@@ -9335,7 +9335,7 @@
     },
     {
       "id": "so-cu-rm-massimo-dutti-linen-shirt",
-      "notes": "Ready-made · Linen Shirt · ClickUp: Massimo Dutti Linen Shirt (86ex6dvh4); Massimo Dutti Linen Shirt (86ex6dkw8)",
+      "notes": "Ready-made \u00b7 Linen Shirt \u00b7 ClickUp: Massimo Dutti Linen Shirt (86ex6dvh4); Massimo Dutti Linen Shirt (86ex6dkw8)",
       "status": "open",
       "client_id": "cu-retail-massimo-dutti",
       "so_number": "SO-2026-0024",
@@ -9471,7 +9471,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -9494,7 +9494,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -9517,7 +9517,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -9540,7 +9540,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -9563,7 +9563,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -9582,7 +9582,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-regular-linen-shirt",
-      "notes": "Ready-made · Regular Linen Shirt · ClickUp: Suit Supply Regular Linen shirt (86ex4zj45)",
+      "notes": "Ready-made \u00b7 Regular Linen Shirt \u00b7 ClickUp: Suit Supply Regular Linen shirt (86ex4zj45)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0025",
@@ -9737,7 +9737,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-pleat-cotton-short",
-      "notes": "Ready-made · Pleat Cotton Short · ClickUp: Suit Supply pleat cotton short (86ex4zdv1)",
+      "notes": "Ready-made \u00b7 Pleat Cotton Short \u00b7 ClickUp: Suit Supply pleat cotton short (86ex4zdv1)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0026",
@@ -9938,7 +9938,7 @@
     },
     {
       "id": "so-cu-rm-massimo-dutti-safari-over-shirt",
-      "notes": "Ready-made · Safari Over Shirt · ClickUp: Massimo Dutti Safari Over Shirt (86ex4yyvg)",
+      "notes": "Ready-made \u00b7 Safari Over Shirt \u00b7 ClickUp: Massimo Dutti Safari Over Shirt (86ex4yyvg)",
       "status": "open",
       "client_id": "cu-retail-massimo-dutti",
       "so_number": "SO-2026-0027",
@@ -10047,7 +10047,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-regular-cotton-shirt",
-      "notes": "Ready-made · Regular Cotton Shirt · ClickUp: Suit Supply Regular Cotton shirt (86ex4j3rz)",
+      "notes": "Ready-made \u00b7 Regular Cotton Shirt \u00b7 ClickUp: Suit Supply Regular Cotton shirt (86ex4j3rz)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0028",
@@ -10068,7 +10068,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -10091,7 +10091,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -10114,7 +10114,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -10137,7 +10137,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -10160,7 +10160,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -10183,7 +10183,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -10206,7 +10206,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -10229,7 +10229,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -10252,7 +10252,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -10275,7 +10275,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -10298,7 +10298,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -10321,7 +10321,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -10340,7 +10340,7 @@
     },
     {
       "id": "so-cu-rm-cafe-cotton-general",
-      "notes": "Ready-made · General · ClickUp: Cafe Cotton (86ewrz0k0)",
+      "notes": "Ready-made \u00b7 General \u00b7 ClickUp: Cafe Cotton (86ewrz0k0)",
       "status": "open",
       "client_id": "cu-retail-cafe-cotton",
       "so_number": "SO-2026-0029",
@@ -11496,7 +11496,7 @@
           "supplier_id": "gliani-stock",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-2",
+          "fabric_number": "1415541-2",
           "supplier_name": "Gliani Stock",
           "label_stickers": [
             {
@@ -11542,7 +11542,7 @@
           "supplier_id": "gliani-stock",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "Gliani Stock",
           "label_stickers": [
             {
@@ -11561,7 +11561,7 @@
     },
     {
       "id": "so-cu-86ewvfyuy",
-      "notes": "Ready-made · Peak Lapel Suits Set Long Group · ClickUp: FR Suit Supply Peak lapel suits set long group (86ewvfyuy)",
+      "notes": "Ready-made \u00b7 Peak Lapel Suits Set Long Group \u00b7 ClickUp: FR Suit Supply Peak lapel suits set long group (86ewvfyuy)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0035",
@@ -11914,7 +11914,7 @@
     },
     {
       "id": "so-cu-86ewvfw5e",
-      "notes": "Ready-made · Short Group Suits Set · ClickUp: FR Suit Supply suits set short group (86ewvfw5e)",
+      "notes": "Ready-made \u00b7 Short Group Suits Set \u00b7 ClickUp: FR Suit Supply suits set short group (86ewvfw5e)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0036",
@@ -12439,7 +12439,7 @@
     },
     {
       "id": "so-cu-86ewuw4eu",
-      "notes": "Ready-made · Regular Group Suits Set · ClickUp: FR Suit Supply Regular group suits set (86ewuw4eu)",
+      "notes": "Ready-made \u00b7 Regular Group Suits Set \u00b7 ClickUp: FR Suit Supply Regular group suits set (86ewuw4eu)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0039",
@@ -13016,7 +13016,7 @@
     },
     {
       "id": "so-cu-86ewhgp4u",
-      "notes": "Ready-made · Comfort Suits Set · ClickUp: FR Comfort Suits set (86ewhgp4u)",
+      "notes": "Ready-made \u00b7 Comfort Suits Set \u00b7 ClickUp: FR Comfort Suits set (86ewhgp4u)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0040",
@@ -13873,7 +13873,7 @@
     },
     {
       "id": "so-cu-rm-boggi-overcoat",
-      "notes": "Ready-made · Overcoat · ClickUp: Boggy Overcoat (86ewpwvyh)",
+      "notes": "Ready-made \u00b7 Overcoat \u00b7 ClickUp: Boggy Overcoat (86ewpwvyh)",
       "status": "open",
       "client_id": "cu-retail-boggi",
       "so_number": "SO-2026-0041",
@@ -14005,7 +14005,7 @@
     },
     {
       "id": "so-cu-rm-blue-mint-general",
-      "notes": "Ready-made · General · ClickUp: Blue Mint (86ewpwqn3)",
+      "notes": "Ready-made \u00b7 General \u00b7 ClickUp: Blue Mint (86ewpwqn3)",
       "status": "open",
       "client_id": "cu-retail-blue-mint",
       "so_number": "SO-2026-0042",
@@ -14977,7 +14977,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-long-group-suits-set",
-      "notes": "Ready-made · Long Group Suits Set · ClickUp: Suit Supply Long group Suits set (86ewhmequ)",
+      "notes": "Ready-made \u00b7 Long Group Suits Set \u00b7 ClickUp: Suit Supply Long group Suits set (86ewhmequ)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0046",
@@ -15270,7 +15270,7 @@
     },
     {
       "id": "so-cu-rm-lebanon-beirut-regular-group-suit-set",
-      "notes": "Ready-made · Regular Group Suit Set · ClickUp: Lebanon Beirut Regular group Suit set (86ewem099); Lebanon Beirut Regular group suit set (86ewfhu1z); Lebanon Beirut Regular group suit set (86ewemzet)",
+      "notes": "Ready-made \u00b7 Regular Group Suit Set \u00b7 ClickUp: Lebanon Beirut Regular group Suit set (86ewem099); Lebanon Beirut Regular group suit set (86ewfhu1z); Lebanon Beirut Regular group suit set (86ewemzet)",
       "status": "open",
       "client_id": "cu-retail-lebanon-beirut",
       "so_number": "SO-2026-0047",
@@ -17134,7 +17134,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-short-group-suits-set",
-      "notes": "Ready-made · Short Group Suits Set · ClickUp: Suit Supply Short group suits set (86ewfhv0n); Suit Supply Short group suits set (86ewenp09)",
+      "notes": "Ready-made \u00b7 Short Group Suits Set \u00b7 ClickUp: Suit Supply Short group suits set (86ewfhv0n); Suit Supply Short group suits set (86ewenp09)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0050",
@@ -17633,7 +17633,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-regular-group-suits-set",
-      "notes": "Ready-made · Regular Group Suits Set · ClickUp: Suit Supply Regular group suits set (86ewfhuq1); Suit Supply Regular group suits set (86ewen99b)",
+      "notes": "Ready-made \u00b7 Regular Group Suits Set \u00b7 ClickUp: Suit Supply Regular group suits set (86ewfhuq1); Suit Supply Regular group suits set (86ewen99b)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0051",
@@ -19078,7 +19078,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-long-group-shirt",
-      "notes": "Ready-made · Long Group Shirt · ClickUp: Suit Supply Long group shirt (86ewfhu15); Suit Supply Long group shirt (86ewennr1)",
+      "notes": "Ready-made \u00b7 Long Group Shirt \u00b7 ClickUp: Suit Supply Long group shirt (86ewfhu15); Suit Supply Long group shirt (86ewennr1)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0053",
@@ -19145,7 +19145,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -19168,7 +19168,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -19191,7 +19191,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -19214,7 +19214,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -19237,7 +19237,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -19260,7 +19260,7 @@
           "supplier_id": "gliani-stock",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "Gliani Stock",
           "label_stickers": [
             {
@@ -20539,7 +20539,7 @@
     },
     {
       "id": "so-cu-rm-boggi-regular-group-suits-set",
-      "notes": "Ready-made · Regular Group Suits Set · ClickUp: Boggi Regular group suits set (86ewfht29); Boggi Regular group suits set (86ewen3xe)",
+      "notes": "Ready-made \u00b7 Regular Group Suits Set \u00b7 ClickUp: Boggi Regular group suits set (86ewfht29); Boggi Regular group suits set (86ewen3xe)",
       "status": "open",
       "client_id": "cu-retail-boggi",
       "so_number": "SO-2026-0059",
@@ -21175,7 +21175,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-regular-group-shirt",
-      "notes": "Ready-made · Regular Group Shirt · ClickUp: Suit Supply Regular group shirt (86ewfhrxb); Suit Supply Regular group shirt (86ewenjt6)",
+      "notes": "Ready-made \u00b7 Regular Group Shirt \u00b7 ClickUp: Suit Supply Regular group shirt (86ewfhrxb); Suit Supply Regular group shirt (86ewenjt6)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0061",
@@ -21449,7 +21449,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -21472,7 +21472,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -21495,7 +21495,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -21518,7 +21518,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -21541,7 +21541,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -21564,7 +21564,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-141551-4",
+          "fabric_number": "141551-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -21587,7 +21587,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -21610,7 +21610,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -21633,7 +21633,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -21656,7 +21656,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -21679,7 +21679,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -21702,7 +21702,7 @@
           "supplier_id": "gliani-stock",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "Gliani Stock",
           "label_stickers": [
             {
@@ -25857,7 +25857,7 @@
           "supplier_id": "gliani-stock",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "Gliani Stock",
           "label_stickers": [
             {
@@ -27084,7 +27084,7 @@
           "supplier_id": "fr",
           "garment_type": "Trouser",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -27107,7 +27107,7 @@
           "supplier_id": "fr",
           "garment_type": "Trouser",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-3",
+          "fabric_number": "1415541-3",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -27130,7 +27130,7 @@
           "supplier_id": "fr",
           "garment_type": "Trouser",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436690-1",
+          "fabric_number": "1436690-1",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -27153,7 +27153,7 @@
           "supplier_id": "fr",
           "garment_type": "Trouser",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1422489-1",
+          "fabric_number": "1422489-1",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -27176,7 +27176,7 @@
           "supplier_id": "fr",
           "garment_type": "Trouser",
           "width_inches": null,
-          "fabric_number": "CAJ04041-1436697-2",
+          "fabric_number": "1436697-2",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -32392,7 +32392,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-4",
+          "fabric_number": "1415541-4",
           "supplier_name": "FR",
           "label_stickers": [
             {
@@ -32438,7 +32438,7 @@
           "supplier_id": "fr",
           "garment_type": "Shirt LS",
           "width_inches": null,
-          "fabric_number": "CAQ04041-1415541-1",
+          "fabric_number": "1415541-1",
           "supplier_name": "FR",
           "label_stickers": [
             {

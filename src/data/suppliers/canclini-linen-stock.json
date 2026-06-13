@@ -35,7 +35,7 @@
       "available_meters": 120.0,
       "source": "luthai-cotton",
       "pattern_no": "C41411635-1",
-      "fabric_raw": "CAQ04044-1411635-1",
+      "fabric_raw": "1411635-1",
       "construction": "57/58*CM80/2XCM80/2*135*135"
     },
     {
@@ -75,7 +75,7 @@
       "available_meters": 238.0,
       "source": "luthai-cotton",
       "pattern_no": "C11415541-2",
-      "fabric_raw": "CAQ04041-1415541-2",
+      "fabric_raw": "1415541-2",
       "construction": "57/58*CM50XCM50*160*110"
     },
     {
@@ -95,7 +95,7 @@
       "available_meters": 160.0,
       "source": "luthai-cotton",
       "pattern_no": "C11415541-3",
-      "fabric_raw": "CAQ04041-1415541-3",
+      "fabric_raw": "1415541-3",
       "construction": "57/58*CM50XCM50*160*110"
     },
     {
@@ -115,7 +115,7 @@
       "available_meters": 202.0,
       "source": "luthai-cotton",
       "pattern_no": "C11415541-4",
-      "fabric_raw": "CAQ04041-1415541-4",
+      "fabric_raw": "1415541-4",
       "construction": "57/58*CM50XCM50*160*110"
     },
     {
@@ -135,7 +135,7 @@
       "available_meters": 120.0,
       "source": "luthai-cotton",
       "pattern_no": "C11415580-1-RM",
-      "fabric_raw": "CAQ04041-1415580-1-RM",
+      "fabric_raw": "1415580-1-RM",
       "construction": "57/58*MLG50XMLG50*120*100"
     },
     {
@@ -155,7 +155,7 @@
       "available_meters": 120.0,
       "source": "luthai-cotton",
       "pattern_no": "C11415580-2-RM",
-      "fabric_raw": "CAQ04041-1415580-2-RM",
+      "fabric_raw": "1415580-2-RM",
       "construction": "57/58*MLG50XMLG50*120*100"
     },
     {
@@ -175,7 +175,7 @@
       "available_meters": 120.0,
       "source": "luthai-cotton",
       "pattern_no": "C11415580-3-RM",
-      "fabric_raw": "CAQ04041-1415580-3-RM",
+      "fabric_raw": "1415580-3-RM",
       "construction": "57/58*MLG50XMLG50*120*100"
     },
     {
@@ -195,7 +195,7 @@
       "available_meters": 48.0,
       "source": "luthai-cotton",
       "pattern_no": "C11422474-1",
-      "fabric_raw": "CAJ04041-1422474-1",
+      "fabric_raw": "1422474-1",
       "construction": "57/58*CPT100XCPT120*240*118"
     },
     {
@@ -215,7 +215,7 @@
       "available_meters": 166.0,
       "source": "luthai-cotton",
       "pattern_no": "C11422476-1",
-      "fabric_raw": "CAJ04041-1422476-1",
+      "fabric_raw": "1422476-1",
       "construction": "57/58*CPT100XCPT120*240*118"
     },
     {
@@ -235,7 +235,7 @@
       "available_meters": 118.0,
       "source": "luthai-cotton",
       "pattern_no": "C11422477-1",
-      "fabric_raw": "CAJ04041-1422477-1",
+      "fabric_raw": "1422477-1",
       "construction": "57/58*CPT100XCPT120*240*118"
     },
     {
@@ -255,7 +255,7 @@
       "available_meters": 214.0,
       "source": "luthai-cotton",
       "pattern_no": "C11422478-2",
-      "fabric_raw": "CAJ04041-1422478-2",
+      "fabric_raw": "1422478-2",
       "construction": "57/58*CPT100XCPT120*240*118"
     },
     {
@@ -295,7 +295,7 @@
       "available_meters": 238.0,
       "source": "luthai-cotton",
       "pattern_no": "C11422487-2",
-      "fabric_raw": "CAJ04041-1422487-2",
+      "fabric_raw": "1422487-2",
       "construction": "57/58*CPT100XCPT120*240*125"
     },
     {
@@ -315,7 +315,7 @@
       "available_meters": 120.0,
       "source": "luthai-cotton",
       "pattern_no": "C11422489-1",
-      "fabric_raw": "CAJ04041-1422489-1",
+      "fabric_raw": "1422489-1",
       "construction": "57/58*CPT100XCPT120*240*125"
     },
     {
@@ -335,7 +335,7 @@
       "available_meters": 228.0,
       "source": "luthai-cotton",
       "pattern_no": "C11436676-1",
-      "fabric_raw": "CAJ04041-1436676-1",
+      "fabric_raw": "1436676-1",
       "construction": "57/58*CPT90XCPT90*235*125"
     },
     {
@@ -355,7 +355,7 @@
       "available_meters": 88.0,
       "source": "luthai-cotton",
       "pattern_no": "C11436677-1",
-      "fabric_raw": "CAJ04041-1436677-1",
+      "fabric_raw": "1436677-1",
       "construction": "57/58*CPT90XCPT90*235*125"
     },
     {
@@ -375,7 +375,7 @@
       "available_meters": 206.0,
       "source": "luthai-cotton",
       "pattern_no": "C11436690-1",
-      "fabric_raw": "CAJ04041-1436690-1",
+      "fabric_raw": "1436690-1",
       "construction": "57/58*CPT90XCPT90*235*125"
     },
     {
@@ -395,7 +395,7 @@
       "available_meters": 178.0,
       "source": "luthai-cotton",
       "pattern_no": "C11436691-1",
-      "fabric_raw": "CAJ04041-1436691-1",
+      "fabric_raw": "1436691-1",
       "construction": "57/58*CPT90XCPT90*235*125"
     },
     {
@@ -415,7 +415,7 @@
       "available_meters": 142.0,
       "source": "luthai-cotton",
       "pattern_no": "C11436693-1",
-      "fabric_raw": "CAJ04041-1436693-1",
+      "fabric_raw": "1436693-1",
       "construction": "57/58*CPT90XCPT90*235*125"
     },
     {
@@ -475,7 +475,7 @@
       "available_meters": 116.0,
       "source": "luthai-cotton",
       "pattern_no": "C11436697-2",
-      "fabric_raw": "CAJ04041-1436697-2",
+      "fabric_raw": "1436697-2",
       "construction": "57/58*CPT80XCPT80*220*130"
     },
     {
@@ -495,7 +495,7 @@
       "available_meters": 120.0,
       "source": "luthai-cotton",
       "pattern_no": "C11436730-1",
-      "fabric_raw": "CAJ04041-1436730-1",
+      "fabric_raw": "1436730-1",
       "construction": "57/58*CPT70XCPT70*190*120"
     },
     {
@@ -515,7 +515,7 @@
       "available_meters": 120.0,
       "source": "luthai-cotton",
       "pattern_no": "C11436730-2",
-      "fabric_raw": "CAJ04041-1436730-2",
+      "fabric_raw": "1436730-2",
       "construction": "57/58*CPT70XCPT70*190*120"
     },
     {
@@ -535,7 +535,7 @@
       "available_meters": 126.0,
       "source": "luthai-cotton",
       "pattern_no": "C11436735-3",
-      "fabric_raw": "CAJ04041-1436735-3",
+      "fabric_raw": "1436735-3",
       "construction": "57/58*CPT70+CPT140/2XCPT70*190*120"
     },
     {
@@ -735,7 +735,7 @@
       "available_meters": 124.0,
       "source": "luthai-cotton",
       "pattern_no": "C11535966-1-RM",
-      "fabric_raw": "CAQ04041-1535966-1-RM",
+      "fabric_raw": "1535966-1-RM",
       "construction": "57/58*MLG50XMLG50*120*100"
     },
     {
@@ -755,7 +755,7 @@
       "available_meters": 120.0,
       "source": "luthai-cotton",
       "pattern_no": "C11535966-3-RM",
-      "fabric_raw": "CAQ04041-1535966-3-RM",
+      "fabric_raw": "1535966-3-RM",
       "construction": "57/58*MLG50XMLG50*120*100"
     },
     {
