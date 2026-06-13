@@ -135,7 +135,7 @@ def parse_packing_list(xlsx_path: Path) -> dict[str, dict]:
             continue
 
         key = normalize_fabric_number(fabric_no) if fabric_no and str(fabric_no).strip() else normalize_fabric_number(pattern)
-        if not key:
+        if not key or not is_valid_luthai_key(key, str(pattern).strip() if pattern else None):
             continue
 
         rec = items.setdefault(
@@ -184,6 +184,8 @@ def parse_invoice(xlsx_path: Path) -> list[dict]:
             price = row[2]
 
         pattern = str(desc).strip()
+        if not is_valid_luthai_key(normalize_fabric_number(pattern), pattern):
+            continue
         unit_price = float(price) if isinstance(price, (int, float)) and price > 0 else None
         comp = str(composition).strip() if composition and not isinstance(composition, (int, float)) else None
 
@@ -210,7 +212,7 @@ def apply_invoice_prices(items: dict[str, dict], invoices: list[dict]) -> None:
             target = items.get(inv["fabric_number"])
         if not target:
             key = inv.get("fabric_number") or normalize_fabric_number(pattern)
-            if not key:
+            if not key or not is_valid_luthai_key(key, pattern):
                 continue
             target = items.setdefault(
                 key,
@@ -232,6 +234,26 @@ def apply_invoice_prices(items: dict[str, dict], invoices: list[dict]) -> None:
             target["pattern_no"] = pattern
 
 
+def is_valid_luthai_key(key: str | None, pattern: str | None = None) -> bool:
+    """Reject packing-list / invoice footer rows that are not fabric codes."""
+    text = (key or pattern or "").strip()
+    if not text:
+        return False
+    upper = text.upper()
+    if any(
+        token in upper
+        for token in ("METERS", "BALES", "VOLUME", "WEIGHT", "THE END", "CBM", "TOTAL")
+    ):
+        return False
+    if any(char in text for char in ("品", "规", "格")):
+        return False
+    if re.match(r"^C?\d{5,}(?:-\d+)?(?:BP|-[A-Z]{1,4})?$", text, re.IGNORECASE):
+        return True
+    if pattern and re.match(r"^C\d{5,}(?:-\d+)?$", str(pattern).strip(), re.IGNORECASE):
+        return True
+    return False
+
+
 def parse_luthai(files: list[Path]) -> list[dict]:
     items: dict[str, dict] = {}
     for path in files:
@@ -250,6 +272,8 @@ def parse_luthai(files: list[Path]) -> list[dict]:
 
     fabrics: list[dict] = []
     for rec in items.values():
+        if not is_valid_luthai_key(rec.get("fabric_number"), rec.get("pattern_no")):
+            continue
         construction = rec.get("construction")
         fabrics.append(
             {
