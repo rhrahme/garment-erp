@@ -10,6 +10,9 @@
 export const LABEL_ROLL_WIDTH_MM = 50;
 export const LABEL_ROLL_HEIGHT_MM = 100;
 
+/** 300 DPI — thermal printers are typically 203–300 DPI. */
+export const STICKER_RASTER_DPI = 300;
+
 /**
  * "Match my printer" media — the EXACT driver media of the user's D550 preset
  * (51 × 102 mm portrait). The PDF page is built at this size so the print

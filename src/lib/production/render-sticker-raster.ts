@@ -4,6 +4,7 @@ import {
   LABEL_MATCH_PRINTER_PAGE_W_MM,
   LABEL_ROLL_HEIGHT_MM,
   LABEL_ROLL_WIDTH_MM,
+  STICKER_RASTER_DPI,
   LABEL_STICKER_COLUMN_GAP_MM,
   LABEL_STICKER_FONT_MM,
   LABEL_STICKER_LINE_GAP_MM,
@@ -28,9 +29,6 @@ import {
   type StickerRole,
 } from "@/lib/production/qr-labels";
 import { stripBrandPrefixFromProductionCode } from "@/lib/sales-orders/label-codes";
-
-/** 300 DPI — thermal printers are typically 203–300 DPI; bitmap must be sharp at print size. */
-export const STICKER_RASTER_DPI = 300;
 
 /**
  * D550 / LabelLife drivers fail on PDF images with alpha (/SMask soft masks) and on

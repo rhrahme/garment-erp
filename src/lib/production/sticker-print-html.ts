@@ -10,7 +10,7 @@ import {
   PRINTER_MATCH_MODE,
   type LabelPrintMode,
 } from "@/lib/production/label-printer-settings";
-import { STICKER_RASTER_DPI } from "@/lib/production/render-sticker-raster";
+import { STICKER_RASTER_DPI } from "@/lib/production/label-print-config";
 
 /** Driver media for D550 PDF / fallback portrait browser print. */
 export const STICKER_PRINT_PORTRAIT_W_MM = LABEL_MATCH_PRINTER_PAGE_W_MM;
