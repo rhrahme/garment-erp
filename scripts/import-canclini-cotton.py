@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Merge Luthai cotton shirting stock into Canclini warehouse catalog JSON."""
+"""Merge Canclini cotton shirting stock into Canclini warehouse catalog JSON."""
 
 from __future__ import annotations
 
@@ -18,7 +18,8 @@ except ImportError:
 ROOT = Path(__file__).resolve().parents[1]
 CANCLINI_JSON = ROOT / "src" / "data" / "suppliers" / "canclini-linen-stock.json"
 LINEN_XLSX = Path.home() / "Desktop" / "Fabrics" / "Linen Stock HAGAN.xlsx"
-LUTHAI_FILES = [
+# Source files live under ~/Desktop/Fabrics/Luthai/ (legacy folder name on disk)
+COTTON_FILES = [
     Path.home() / "Desktop" / "Fabrics" / "Luthai" / "Luth PL& Inv.xlsx",
     Path.home() / "Desktop" / "Fabrics" / "Luthai" / "Luth PL& iNV 2.xlsx",
 ]
@@ -135,7 +136,7 @@ def parse_packing_list(xlsx_path: Path) -> dict[str, dict]:
             continue
 
         key = normalize_fabric_number(fabric_no) if fabric_no and str(fabric_no).strip() else normalize_fabric_number(pattern)
-        if not key or not is_valid_luthai_key(key, str(pattern).strip() if pattern else None):
+        if not key or not is_valid_cotton_key(key, str(pattern).strip() if pattern else None):
             continue
 
         rec = items.setdefault(
@@ -184,7 +185,7 @@ def parse_invoice(xlsx_path: Path) -> list[dict]:
             price = row[2]
 
         pattern = str(desc).strip()
-        if not is_valid_luthai_key(normalize_fabric_number(pattern), pattern):
+        if not is_valid_cotton_key(normalize_fabric_number(pattern), pattern):
             continue
         unit_price = float(price) if isinstance(price, (int, float)) and price > 0 else None
         comp = str(composition).strip() if composition and not isinstance(composition, (int, float)) else None
@@ -212,7 +213,7 @@ def apply_invoice_prices(items: dict[str, dict], invoices: list[dict]) -> None:
             target = items.get(inv["fabric_number"])
         if not target:
             key = inv.get("fabric_number") or normalize_fabric_number(pattern)
-            if not key or not is_valid_luthai_key(key, pattern):
+            if not key or not is_valid_cotton_key(key, pattern):
                 continue
             target = items.setdefault(
                 key,
@@ -234,7 +235,7 @@ def apply_invoice_prices(items: dict[str, dict], invoices: list[dict]) -> None:
             target["pattern_no"] = pattern
 
 
-def is_valid_luthai_key(key: str | None, pattern: str | None = None) -> bool:
+def is_valid_cotton_key(key: str | None, pattern: str | None = None) -> bool:
     """Reject packing-list / invoice footer rows that are not fabric codes."""
     text = (key or pattern or "").strip()
     if not text:
@@ -254,7 +255,7 @@ def is_valid_luthai_key(key: str | None, pattern: str | None = None) -> bool:
     return False
 
 
-def parse_luthai(files: list[Path]) -> list[dict]:
+def parse_canclini_cotton(files: list[Path]) -> list[dict]:
     items: dict[str, dict] = {}
     for path in files:
         if not path.exists():
@@ -272,7 +273,7 @@ def parse_luthai(files: list[Path]) -> list[dict]:
 
     fabrics: list[dict] = []
     for rec in items.values():
-        if not is_valid_luthai_key(rec.get("fabric_number"), rec.get("pattern_no")):
+        if not is_valid_cotton_key(rec.get("fabric_number"), rec.get("pattern_no")):
             continue
         construction = rec.get("construction")
         fabrics.append(
@@ -280,10 +281,10 @@ def parse_luthai(files: list[Path]) -> list[dict]:
                 "fabric_number": rec["fabric_number"],
                 "composition": rec.get("composition") or "Cotton shirting",
                 "color": None,
-                "description": f"Luthai cotton shirting — pattern {rec.get('pattern_no') or rec['fabric_number']}",
+                "description": f"Canclini cotton shirting — pattern {rec.get('pattern_no') or rec['fabric_number']}",
                 "weight_gsm": None,
                 "width_cm": None,
-                "collection": "HAGAN Cotton Stock (Luthai)",
+                "collection": "HAGAN Cotton Stock (Canclini)",
                 "category": "cotton-shirting",
                 "unit_price": rec.get("unit_price"),
                 "unit": "meters",
@@ -291,7 +292,7 @@ def parse_luthai(files: list[Path]) -> list[dict]:
                 "is_active": True,
                 "stock_status": "in_stock",
                 "available_meters": rec.get("available_meters"),
-                "source": "luthai-cotton",
+                "source": "canclini-cotton",
                 "pattern_no": rec.get("pattern_no"),
                 "fabric_raw": rec.get("fabric_raw"),
                 "construction": construction,
@@ -313,14 +314,14 @@ def merge_fabrics(linen: list[dict], cotton: list[dict]) -> list[dict]:
 
 def main() -> None:
     linen_path = Path(sys.argv[1]) if len(sys.argv) > 1 else LINEN_XLSX
-    luthai_paths = LUTHAI_FILES
+    cotton_paths = COTTON_FILES
 
     linen = parse_linen(linen_path) if linen_path.exists() else []
     if not linen and CANCLINI_JSON.exists():
         existing = json.loads(CANCLINI_JSON.read_text(encoding="utf-8"))
-        linen = [f for f in existing.get("fabrics", []) if f.get("source", "linen") != "luthai-cotton"]
+        linen = [f for f in existing.get("fabrics", []) if f.get("source", "linen") != "canclini-cotton"]
 
-    cotton = parse_luthai(luthai_paths)
+    cotton = parse_canclini_cotton(cotton_paths)
     fabrics = merge_fabrics(linen, cotton)
 
     payload = {
@@ -333,10 +334,10 @@ def main() -> None:
             "lead_time_days": 0,
             "currency": "EUR",
         },
-        "price_list_name": "HAGAN Warehouse Stock (Canclini linen + Luthai cotton)",
+        "price_list_name": "HAGAN Warehouse Stock (Canclini linen + cotton)",
         "imported_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "source_file": linen_path.name,
-        "source_files": [linen_path.name] + [p.name for p in luthai_paths if p.exists()],
+        "source_files": [linen_path.name] + [p.name for p in cotton_paths if p.exists()],
         "fabric_count": len(fabrics),
         "fabrics": fabrics,
     }
