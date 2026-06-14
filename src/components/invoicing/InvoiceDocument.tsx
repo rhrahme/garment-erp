@@ -73,7 +73,10 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
             <th className="py-2 pr-3">Weight</th>
             <th className="py-2 pr-3">Qty</th>
             <th className="py-2 pr-3">Unit price</th>
-            <th className="py-2 text-right">Amount</th>
+            <th className="py-2 pr-3 text-right">Amount</th>
+            <th className="py-2 text-right" title="Internal cost per piece — fabric + 5% duty + make cost, excl. recoverable VAT">
+              Cost hint
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -86,16 +89,20 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
               <td className="py-3 pr-3 whitespace-nowrap">{line.weight_label}</td>
               <td className="py-3 pr-3">{line.quantity}</td>
               <td className="py-3 pr-3">{formatSar(line.unit_price)}</td>
-              <td className="py-3 text-right font-medium">{formatSar(line.line_total)}</td>
+              <td className="py-3 pr-3 text-right font-medium">{formatSar(line.line_total)}</td>
+              <td className="py-3 text-right text-xs text-slate-500">
+                {line.cost_hint_sar != null ? formatSar(line.cost_hint_sar) : "—"}
+              </td>
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr>
-            <td colSpan={7} className="py-4 text-right font-semibold">
+            <td colSpan={8} className="py-4 text-right font-semibold">
               Total ({invoice.currency})
             </td>
             <td className="py-4 text-right text-lg font-bold">{formatSar(invoice.total)}</td>
+            <td className="py-4" />
           </tr>
         </tfoot>
       </table>
