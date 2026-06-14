@@ -1,5 +1,6 @@
 import { getSupplierPriceCurrency, toSar } from "@/lib/currency/config";
 import { computeFabricImportCost } from "@/lib/costing/fabric-import";
+import { resolveFabricItemFromCatalog } from "@/lib/fabric-sourcing/resolve-fabric-from-catalog";
 import { listBespokeSalesOrders, readSalesOrders } from "@/lib/data/sales-orders";
 import { dedupeIdenticalSalesOrders } from "@/lib/sales-orders/duplicate-order";
 import { isSalesOrderArchived } from "@/lib/sales-orders/archive";
@@ -84,16 +85,24 @@ export type CostingOverview = {
   orders: SalesOrderCost[];
 };
 
+function effectiveFabricUnitPrice(line: SalesOrderFabricLine): number | null {
+  if (line.unit_price != null && line.unit_price > 0) return line.unit_price;
+  const catalog = resolveFabricItemFromCatalog(line.supplier_id, line.fabric_number);
+  if (catalog.unit_price != null && catalog.unit_price > 0) return catalog.unit_price;
+  return null;
+}
+
 function fabricLineBaseSar(line: SalesOrderFabricLine): number | null {
-  if (line.unit_price == null || line.unit_price <= 0) return null;
+  const unitPrice = effectiveFabricUnitPrice(line);
+  if (unitPrice == null) return null;
   const currency = getSupplierPriceCurrency(line.supplier_id);
-  return toSar(line.unit_price * line.quantity, currency);
+  return toSar(unitPrice * line.quantity, currency);
 }
 
 function buildLineCost(line: SalesOrderFabricLine, articleNumber: number): FabricLineCost {
   const rates = getGarmentCostRate(line.garment_type);
   const fabricBase = fabricLineBaseSar(line);
-  const unitPrice = line.unit_price > 0 ? line.unit_price : null;
+  const unitPrice = effectiveFabricUnitPrice(line);
   const supplierLineTotal =
     unitPrice != null && line.quantity > 0 ? Math.round(unitPrice * line.quantity * 100) / 100 : null;
   const importCost =

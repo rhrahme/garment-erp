@@ -17,6 +17,15 @@ function roundMoney(amount: number): number {
   return Math.round(amount * 100) / 100;
 }
 
+function unitCostHintForFabricLine(
+  fabricLine: SalesOrderFabricLine,
+  lineTotalCost: number | null
+): number | null {
+  if (lineTotalCost == null) return null;
+  const stickerCount = Math.max(fabricLine.label_stickers?.length ?? fabricLine.label_count, 1);
+  return roundMoney(lineTotalCost / stickerCount);
+}
+
 function formatClientAddress(client: {
   address: string | null;
   city: string | null;
@@ -107,6 +116,25 @@ export function enrichInvoiceLinesWithFabricDetails(
   });
 }
 
+/** Recompute internal cost hints from current sales order costing (incl. catalog price fallback). */
+export function enrichInvoiceLinesWithCostHints(
+  lines: CustomerInvoiceLine[],
+  order: SalesOrder | undefined
+): CustomerInvoiceLine[] {
+  if (!order) return lines;
+
+  const orderCost = getSalesOrderCost(order);
+  const costByLineId = new Map(orderCost.lines.map((line) => [line.line_id, line.total_cost_sar]));
+
+  return lines.map((line) => {
+    const fabricLine = findFabricLineForInvoiceLine(order, line);
+    if (!fabricLine) return line;
+    const unitHint = unitCostHintForFabricLine(fabricLine, costByLineId.get(fabricLine.id) ?? null);
+    if (unitHint == null) return line;
+    return { ...line, cost_hint_sar: unitHint };
+  });
+}
+
 export function buildInvoiceLinesFromSalesOrder(order: SalesOrder): CustomerInvoiceLine[] {
   const orderCost = getSalesOrderCost(order);
   const costByLineId = new Map(orderCost.lines.map((line) => [line.line_id, line.total_cost_sar]));
@@ -116,10 +144,7 @@ export function buildInvoiceLinesFromSalesOrder(order: SalesOrder): CustomerInvo
 
   for (const [fabricLineIndex, fabricLine] of order.fabric_lines.entries()) {
     const articleNumber = fabricLineArticleNumber(fabricLineIndex);
-    const lineTotalCost = costByLineId.get(fabricLine.id) ?? null;
-    const stickerCount = Math.max(fabricLine.label_stickers?.length ?? fabricLine.label_count, 1);
-    const unitHint =
-      lineTotalCost != null && stickerCount > 0 ? roundMoney(lineTotalCost / stickerCount) : null;
+    const unitHint = unitCostHintForFabricLine(fabricLine, costByLineId.get(fabricLine.id) ?? null);
 
     const stickers =
       fabricLine.label_stickers?.length > 0

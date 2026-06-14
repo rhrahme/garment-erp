@@ -5,7 +5,11 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { getCustomerInvoiceById } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
-import { enrichInvoiceDeliveryDestination, enrichInvoiceLinesWithFabricDetails } from "@/lib/invoicing/build-invoice";
+import {
+  enrichInvoiceDeliveryDestination,
+  enrichInvoiceLinesWithCostHints,
+  enrichInvoiceLinesWithFabricDetails,
+} from "@/lib/invoicing/build-invoice";
 import { formatInvoiceClientName, resolveInvoiceLines, sortInvoiceLinesByArticle } from "@/lib/invoicing/display";
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -21,7 +25,9 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       ...raw,
       delivery_destination: raw.delivery_destination ?? null,
       lines: sortInvoiceLinesByArticle(
-        resolveInvoiceLines(enrichInvoiceLinesWithFabricDetails(raw.lines, order))
+        resolveInvoiceLines(
+          enrichInvoiceLinesWithCostHints(enrichInvoiceLinesWithFabricDetails(raw.lines, order), order)
+        )
       ),
     },
     order

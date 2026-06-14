@@ -4,7 +4,11 @@ import { InvoicePrintToolbar } from "@/components/invoicing/InvoicePrintToolbar"
 import { getCustomerInvoiceById } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
-import { enrichInvoiceDeliveryDestination, enrichInvoiceLinesWithFabricDetails } from "@/lib/invoicing/build-invoice";
+import {
+  enrichInvoiceDeliveryDestination,
+  enrichInvoiceLinesWithCostHints,
+  enrichInvoiceLinesWithFabricDetails,
+} from "@/lib/invoicing/build-invoice";
 import { resolveInvoiceLines, sortInvoiceLinesByArticle, toInvoiceLineDisplay } from "@/lib/invoicing/display";
 
 export default async function InvoicePrintPage({ params }: { params: Promise<{ id: string }> }) {
@@ -20,7 +24,9 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
       ...raw,
       delivery_destination: raw.delivery_destination ?? null,
       lines: sortInvoiceLinesByArticle(
-        resolveInvoiceLines(enrichInvoiceLinesWithFabricDetails(raw.lines, order))
+        resolveInvoiceLines(
+          enrichInvoiceLinesWithCostHints(enrichInvoiceLinesWithFabricDetails(raw.lines, order), order)
+        )
       ).map(toInvoiceLineDisplay),
     },
     order
