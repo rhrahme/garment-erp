@@ -62,11 +62,7 @@ function buildManualFabricEntry(supplierId: string, fabricNumber: string): Fabri
   };
 }
 
-/** Server-side fabric lookup — mirrors /api/fabric-search for order line updates. */
-export function resolveFabricItemFromCatalog(
-  supplierId: string,
-  fabricNumber: string
-): FabricSearchItem {
+function findExactCatalogMatch(supplierId: string, fabricNumber: string): FabricSearchItem | null {
   const trimmed = fabricNumber.trim();
   const canonicalId = resolveFabricSupplierId(supplierId);
   const catalogMatches = searchSupplierFabrics(canonicalId, trimmed, 20);
@@ -76,10 +72,30 @@ export function resolveFabricItemFromCatalog(
   const lookupNumber = usesLpStyleInput
     ? normalizeLoroPianaFabricNumber(trimmed).toLowerCase()
     : trimmed.toLowerCase();
-  const match =
+  return (
     items.find((item) => !item.manual && item.fabric_number.toLowerCase() === lookupNumber) ??
-    items.find((item) => item.fabric_number.toLowerCase() === trimmed.toLowerCase());
+    items.find((item) => item.fabric_number.toLowerCase() === trimmed.toLowerCase()) ??
+    null
+  );
+}
+
+/** Server-side fabric lookup — mirrors /api/fabric-search for order line updates. */
+export function resolveFabricItemFromCatalog(
+  supplierId: string,
+  fabricNumber: string
+): FabricSearchItem {
+  const trimmed = fabricNumber.trim();
+  const canonicalId = resolveFabricSupplierId(supplierId);
+  const match = findExactCatalogMatch(canonicalId, trimmed);
   if (match) return match;
+
+  // Loro Piana account orders include Solbiati linens (S-prefix) from the same price list.
+  if (canonicalId === "loro-piana" && getLoroPianaMillLine(trimmed) === "solbiati") {
+    const solbiatiMatch = findExactCatalogMatch("solbiati", trimmed);
+    if (solbiatiMatch) return solbiatiMatch;
+  }
+
+  const usesLpStyleInput = isLoroPianaStyleSupplier(canonicalId);
 
   if (trimmed) {
     const rangeMatch = usesLpStyleInput && expandLoroPianaStyleQuery(trimmed).length > 1;
