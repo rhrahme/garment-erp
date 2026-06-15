@@ -185,7 +185,38 @@ function parsePriceList(text) {
   }
 
   fabrics.sort((a, b) => a.fabric_number.localeCompare(b.fabric_number, undefined, { numeric: true }));
-  return fabrics;
+  return expandSkuPlaceholders(fabrics);
+}
+
+/** Expand PDF placeholder SKUs (e.g. PAL.XXX) into orderable fabric numbers. */
+function expandSkuPlaceholders(fabrics) {
+  const EXPANSIONS = {
+    "PAL.XXX": { prefix: "PAL.", from: 1, to: 35 },
+  };
+
+  const out = [];
+  for (const fabric of fabrics) {
+    const pattern = fabric.sku_pattern ?? fabric.fabric_number;
+    const expansion = EXPANSIONS[pattern];
+    if (!expansion) {
+      out.push(fabric);
+      continue;
+    }
+
+    for (let n = expansion.from; n <= expansion.to; n += 1) {
+      const num = String(n).padStart(3, "0");
+      const fabric_number = `${expansion.prefix}${num}`;
+      out.push({
+        ...fabric,
+        fabric_number,
+        sku_pattern: pattern,
+        description: fabric.description?.replace(pattern, fabric_number) ?? fabric.description,
+      });
+    }
+  }
+
+  out.sort((a, b) => a.fabric_number.localeCompare(b.fabric_number, undefined, { numeric: true }));
+  return out;
 }
 
 async function extractPdfText(pdfPath) {
