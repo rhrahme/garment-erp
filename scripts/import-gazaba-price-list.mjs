@@ -192,6 +192,7 @@ function parsePriceList(text) {
 function expandSkuPlaceholders(fabrics) {
   const EXPANSIONS = {
     "PAL.XXX": { prefix: "PAL.", from: 1, to: 35 },
+    "NAP.XXX": { prefix: "NAP", from: 1, to: 35 },
   };
 
   const out = [];
