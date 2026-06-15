@@ -147,9 +147,12 @@
       "id": "gazaba",
       "code": "GZB",
       "name": "Gazaba",
-      "email": null,
-      "notes": "Order contact TBD — inbox scan accepts @gazaba.com replies.",
-      "emails": [],
+      "email": "joshua@gazaba.com, sales@gazaba.com",
+      "notes": "Orders to joshua + sales. Inbox scan accepts @gazaba.com replies.",
+      "emails": [
+        "joshua@gazaba.com",
+        "sales@gazaba.com"
+      ],
       "country": "Italy",
       "reply_domains": [
         "gazaba.com"
@@ -171,7 +174,7 @@
       "lead_time_days": 14
     }
   ],
-  "updated_at": "2026-06-12T00:00:00.000Z",
+  "updated_at": "2026-06-15T00:00:00.000Z",
   "inbox_scan_email": "rhrahme@gmail.com",
   "factory_orders_email": "orders.ruh@hagan.pro"
 }
