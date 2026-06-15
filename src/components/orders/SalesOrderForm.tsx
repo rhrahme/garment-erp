@@ -23,6 +23,7 @@ import {
 } from "@/lib/fabric-sourcing/loro-piana-styles";
 import { resolveFabricItem } from "@/lib/fabric-sourcing/resolve-fabric-item";
 import {
+  fabricBrandAllowsManualEntry,
   fabricSupplierGroupKey,
   formatFabricSupplierName,
   normalizeFabricSupplierFields,
@@ -1350,6 +1351,10 @@ export function SalesOrderForm({
                       onChange={setFabricPickerValue}
                       onSelect={selectFabric}
                       canViewFabricPrices={canViewFabricPrices}
+                      allowManualEntry={fabricBrandAllowsManualEntry(
+                        selectedFabricBrand.has_price_list,
+                        selectedFabricBrandId
+                      )}
                     />
                     {!pendingFabric && (
                       <p className="text-xs text-slate-500">

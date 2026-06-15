@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { FabricPicker } from "@/components/fabric/FabricPicker";
 import { FabricStockBadge } from "@/components/fabric/FabricStockBadge";
 import { formatFabricStockLabel, isFabricUnavailable } from "@/lib/fabric-sourcing/fabric-stock";
+import { fabricBrandAllowsManualEntry } from "@/lib/fabric-sourcing/supplier-display";
 import { resolveFabricItem } from "@/lib/fabric-sourcing/resolve-fabric-item";
 import { GARMENT_STITCH_TYPES, getLabelCountForGarment } from "@/lib/sales-orders/garment-types";
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
@@ -188,6 +189,7 @@ export function ProductionOrderAddFabrics({
                   setPendingFabric(null);
                 }}
                 onSelect={selectFabric}
+                allowManualEntry={fabricBrandAllowsManualEntry(selectedBrand.has_price_list, selectedBrandId)}
                 label="Fabric number"
                 inputClassName="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono md:max-w-md"
               />

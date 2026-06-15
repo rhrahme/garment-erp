@@ -204,6 +204,16 @@
       "notes": "HAGAN warehouse wool — 56 fabric references (composition/weight on 29 lines)"
     },
     {
+      "id": "gazaba-cutlength",
+      "supplier": "Gazaba",
+      "filename": "Gazaba Cutlength General Price List(AED).pdf",
+      "relative_path": "reference-documents/Gazaba/Gazaba Cutlength General Price List(AED).pdf",
+      "type": "price_list",
+      "catalog_id": "gazaba-cutlength-price-list",
+      "import_status": "imported",
+      "notes": "80 cutlength fabrics — AED pricing, composition and weight from general price list PDF"
+    },
+    {
       "id": "hagan-factory-layout",
       "supplier": "Factory",
       "filename": "HAGAN FACTORY LAYOUT.pdf",

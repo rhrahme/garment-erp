@@ -36,10 +36,24 @@ function normalizeSupplierContacts(data: SupplierContactsFile): SupplierContacts
   };
 }
 
+/** Catalog import wins over stale Supabase has_price_list:false flags. */
+async function applyImportedCatalogPriceListFlags(
+  contacts: SupplierContactsFile
+): Promise<SupplierContactsFile> {
+  const { supplierHasImportedCatalog } = await import("@/lib/data/supplier-catalogs");
+  let changed = false;
+  const suppliers = contacts.suppliers.map((row) => {
+    if (row.has_price_list || !supplierHasImportedCatalog(row.id)) return row;
+    changed = true;
+    return { ...row, has_price_list: true };
+  });
+  return changed ? { ...contacts, suppliers } : contacts;
+}
+
 /** Auto-loads supplier_contacts from Supabase when enabled. */
 export async function readSupplierContacts(): Promise<SupplierContactsFile> {
   const data = await readJsonFileAsync(CONTACTS_PATH, EMPTY_CONTACTS);
-  return normalizeSupplierContacts(data);
+  return applyImportedCatalogPriceListFlags(normalizeSupplierContacts(data));
 }
 
 /** Sync read — only after ensureDocumentsLoaded(["supplier_contacts"]) or readSupplierContacts(). */
@@ -124,12 +138,13 @@ export async function getFabricSupplierBrands(): Promise<
   Array<{ id: string; name: string; has_price_list: boolean }>
 > {
   const contacts = await readSupplierContacts();
+  const { supplierHasImportedCatalog } = await import("@/lib/data/supplier-catalogs");
   return contacts.suppliers
     .filter((row) => row.id !== "fab6")
     .map((row) => ({
       id: row.id,
       name: row.name,
-      has_price_list: Boolean(row.has_price_list),
+      has_price_list: Boolean(row.has_price_list) || supplierHasImportedCatalog(row.id),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }

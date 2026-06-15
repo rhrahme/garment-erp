@@ -288,6 +288,11 @@ export function getFabricsBySupplierId(supplierId: string): SupplierFabric[] {
   return fabricsBySupplier.get(resolveFabricSupplierId(supplierId)) ?? [];
 }
 
+/** True when a JSON price-list catalog is registered for this supplier id. */
+export function supplierHasImportedCatalog(supplierId: string): boolean {
+  return getFabricsBySupplierId(supplierId).length > 0;
+}
+
 export function searchSupplierFabrics(supplierId: string, query: string, limit: number): SupplierFabric[] {
   const canonicalId = resolveFabricSupplierId(supplierId);
   const items = getFabricsBySupplierId(canonicalId);

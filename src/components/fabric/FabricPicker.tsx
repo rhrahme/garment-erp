@@ -29,6 +29,7 @@ export function FabricPicker({
   onChange,
   onSelect,
   canViewFabricPrices = true,
+  allowManualEntry = true,
   label = "Fabric",
   inputClassName = "w-full rounded-lg border border-slate-300 bg-white py-2 pl-3 pr-10 text-sm",
 }: {
@@ -38,6 +39,8 @@ export function FabricPicker({
   onChange: (value: string) => void;
   onSelect: (item: FabricSearchItem) => void;
   canViewFabricPrices?: boolean;
+  /** When false, unknown fabric numbers cannot be added without a catalog match. */
+  allowManualEntry?: boolean;
   label?: string;
   inputClassName?: string;
 }) {
@@ -142,7 +145,7 @@ export function FabricPicker({
                   onSelect(match);
                   onChange(match.fabric_number);
                   setOpen(false);
-                } else {
+                } else if (allowManualEntry) {
                   selectManualFabric(value.trim());
                 }
               }
@@ -169,31 +172,35 @@ export function FabricPicker({
           ) : fabrics.length === 0 ? (
             <div className="px-4 py-3 text-sm text-slate-500">
               {value.trim() ? (
-                <>
-                  <p>Not in the imported price list.</p>
-                  <button
-                    type="button"
-                    onClick={() => selectManualFabric(value.trim())}
-                    className="mt-2 font-medium text-indigo-600 hover:text-indigo-700"
-                  >
-                    Use{" "}
-                    {isLoroPianaStyleSupplier(supplierId)
-                      ? resolveLoroPianaFabricInput(value.trim()).preferredNumber
-                      : value.trim()}{" "}
-                    anyway →
-                  </button>
-                  {supplierId === "solbiati" && /^\d{4,5}$/.test(value.trim()) && (
-                    <p className="mt-2 text-xs text-slate-400">
-                      Solbiati linen codes use S + 5 digits — saved as S{value.trim()} (e.g. S23021).
-                    </p>
-                  )}
-                  {supplierId === "loro-piana" && /^\d{4,5}$/.test(value.trim()) && (
-                    <p className="mt-2 text-xs text-slate-400">
-                      Loro Piana wool/cashmere uses 6 digits (e.g. 781050). For Solbiati linen, select the Solbiati
-                      brand.
-                    </p>
-                  )}
-                </>
+                allowManualEntry ? (
+                  <>
+                    <p>Not in the imported price list.</p>
+                    <button
+                      type="button"
+                      onClick={() => selectManualFabric(value.trim())}
+                      className="mt-2 font-medium text-indigo-600 hover:text-indigo-700"
+                    >
+                      Use{" "}
+                      {isLoroPianaStyleSupplier(supplierId)
+                        ? resolveLoroPianaFabricInput(value.trim()).preferredNumber
+                        : value.trim()}{" "}
+                      anyway →
+                    </button>
+                    {supplierId === "solbiati" && /^\d{4,5}$/.test(value.trim()) && (
+                      <p className="mt-2 text-xs text-slate-400">
+                        Solbiati linen codes use S + 5 digits — saved as S{value.trim()} (e.g. S23021).
+                      </p>
+                    )}
+                    {supplierId === "loro-piana" && /^\d{4,5}$/.test(value.trim()) && (
+                      <p className="mt-2 text-xs text-slate-400">
+                        Loro Piana wool/cashmere uses 6 digits (e.g. 781050). For Solbiati linen, select the Solbiati
+                        brand.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p>No match in the {brandName} price list — pick a fabric from the list or adjust your search.</p>
+                )
               ) : supplierId === "solbiati" ? (
                 "Solbiati linen — S-prefix (S23021) or type 23021"
               ) : supplierId === "loro-piana" ? (
