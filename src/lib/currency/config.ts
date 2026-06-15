@@ -6,19 +6,28 @@ export const EUR_TO_SAR =
 export const USD_TO_SAR =
   Number.parseFloat(process.env.USD_TO_SAR ?? "3.75") || 3.75;
 
+/** AED → SAR (both USD-pegged: 3.75 SAR / 3.6725 AED per USD). */
+export const AED_TO_SAR =
+  Number.parseFloat(process.env.AED_TO_SAR ?? "1.021") || 1.021;
+
 /** Alert when live EUR/SAR exceeds this value. */
 export const EUR_SAR_ALERT_THRESHOLD =
   Number.parseFloat(process.env.EUR_SAR_ALERT_THRESHOLD ?? "4.5") || 4.5;
 
-export type PriceCurrency = "USD" | "EUR";
+export type PriceCurrency = "USD" | "EUR" | "AED";
 
-const USD_SUPPLIER_IDS = new Set(["zegna", "stylbiella"]);
+const SUPPLIER_PRICE_CURRENCY: Record<string, PriceCurrency> = {
+  zegna: "USD",
+  stylbiella: "USD",
+  gazaba: "AED",
+};
 
 export function getSupplierPriceCurrency(supplierId: string): PriceCurrency {
-  return USD_SUPPLIER_IDS.has(supplierId) ? "USD" : "EUR";
+  return SUPPLIER_PRICE_CURRENCY[supplierId] ?? "EUR";
 }
 
 export function toSar(amount: number, currency: PriceCurrency): number {
-  const rate = currency === "USD" ? USD_TO_SAR : EUR_TO_SAR;
+  const rate =
+    currency === "USD" ? USD_TO_SAR : currency === "AED" ? AED_TO_SAR : EUR_TO_SAR;
   return amount * rate;
 }

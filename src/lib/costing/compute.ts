@@ -26,6 +26,7 @@ export type FabricLineCost = {
   width_label: string | null;
   color: string | null;
   meters: number;
+  unit: string;
   unit_price: number | null;
   /** Supplier currency total = unit price × meters ordered. */
   supplier_line_total: number | null;
@@ -126,6 +127,7 @@ function buildLineCost(line: SalesOrderFabricLine, articleNumber: number): Fabri
     width_label: formatFabricWidth(line),
     color: line.color,
     meters: line.quantity,
+    unit: line.unit,
     unit_price: unitPrice,
     supplier_line_total: supplierLineTotal,
     fabric_base_sar: importCost?.fabric_base_sar ?? null,

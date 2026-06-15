@@ -48,7 +48,7 @@ function FabricLineRow({ line }: { line: FabricLineCost }) {
       <td className="px-3 py-3 font-medium text-slate-900">{line.meters} m</td>
       <td className="px-3 py-3">
         {line.unit_price != null ? (
-          <DualCurrencyPrice amount={line.unit_price} supplierId={line.supplier_id} unit="m" />
+          <DualCurrencyPrice amount={line.unit_price} supplierId={line.supplier_id} unit={line.unit} />
         ) : (
           <span className="text-amber-600">No price</span>
         )}

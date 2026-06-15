@@ -68,7 +68,7 @@ export function PriceListTable({ suppliers, items }: PriceListTableProps) {
           { key: "color", label: "Color" },
           { key: "description", label: "Pattern" },
           { key: "specs", label: "Weight / Width" },
-          { key: "price", label: "List price/m" },
+          { key: "price", label: "List price" },
         ]}
         rows={display.map((f) => ({
           supplier: f.supplier?.name ?? "—",
@@ -79,7 +79,7 @@ export function PriceListTable({ suppliers, items }: PriceListTableProps) {
           specs: `${f.weight_gsm ?? "—"}gsm · ${f.width_cm ?? "—"}cm`,
           price:
             f.unit_price != null ? (
-              <DualCurrencyPrice amount={f.unit_price} supplierId={f.supplier_id} unit="m" />
+              <DualCurrencyPrice amount={f.unit_price} supplierId={f.supplier_id} unit={f.unit} />
             ) : (
               <span className="text-slate-400">Discontinued</span>
             ),

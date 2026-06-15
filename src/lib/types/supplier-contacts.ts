@@ -10,6 +10,8 @@ export interface SupplierContactRow {
   email?: string | null;
   lead_time_days: number;
   has_price_list: boolean;
+  /** Supplier list-price currency when not EUR (e.g. Gazaba = AED). */
+  currency?: string | null;
   notes: string | null;
   /** Any sender @these domains is treated as this supplier (e.g. loropiana.com). */
   reply_domains?: string[];
