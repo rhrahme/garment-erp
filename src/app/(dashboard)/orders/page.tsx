@@ -23,7 +23,7 @@ export default async function OrdersPage() {
         description={labels.listDescription}
         action={
           productionMode ? (
-            <Link href="/fabric-orders/new">
+            <Link href="/fabric-orders/new?fresh=1">
               <Button>+ New fabric order</Button>
             </Link>
           ) : (

@@ -188,6 +188,9 @@ export function FabricOrderDraftBanner({
               {sourceLabel}
               {savedLabel ? ` · Last edited ${savedLabel}` : null}
             </p>
+            <p className="mt-1 text-xs text-amber-800/80">
+              Use <span className="font-medium">New fabric order</span> above to start one for a different client.
+            </p>
             {localSummary && serverSummary ? (
               <p className="mt-1 text-xs text-amber-800/80">
                 Also found a server copy — continuing will prefer this browser draft.

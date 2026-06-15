@@ -38,7 +38,6 @@ import {
   describeSalesOrderDraftSummary,
   isSalesOrderDraftEmpty,
   migrateSalesOrderDraft,
-  readFabricOrderLocalDraft,
   resolveBestDraftForServerSave,
   resolveFabricOrderDraftForServerSave,
   SALES_ORDER_DRAFT_VERSION,
@@ -361,18 +360,6 @@ export function SalesOrderForm({
   useEffect(() => {
     if (loading || !draftHydrated || !serverDraftHydrated || draftChoiceResolved || !promptForDraft) return;
 
-    if (startFresh && (hasPendingRestore || hasPendingServerRestore)) {
-      clearDraft();
-      if (serverDraftEnabled) {
-        void clearServerDraft();
-      }
-      resetClientDrafts();
-      dismissPendingRestore();
-      dismissPendingServerRestore();
-      setDraftChoiceResolved(true);
-      return;
-    }
-
     if (continueDraft && hasPendingRestore) {
       restorePending();
       setDraftChoiceResolved(true);
@@ -386,14 +373,13 @@ export function SalesOrderForm({
       return;
     }
 
-    // Fabric Orders: restore pending drafts without making users discover /new first.
-    if (redirectBasePath === "/fabric-orders" && !startFresh && hasPendingRestore) {
-      restorePending();
-      setDraftChoiceResolved(true);
-      return;
-    }
-
-    if (hasPendingServerRestore && !hasPendingRestore && pendingServerDraft) {
+    // Sales orders only: auto-restore a server-only draft (fabric orders show the chooser instead).
+    if (
+      redirectBasePath !== "/fabric-orders" &&
+      hasPendingServerRestore &&
+      !hasPendingRestore &&
+      pendingServerDraft
+    ) {
       restoreDraft(pendingServerDraft);
       dismissPendingServerRestore();
       setDraftChoiceResolved(true);
@@ -404,8 +390,6 @@ export function SalesOrderForm({
       setDraftChoiceResolved(true);
     }
   }, [
-    clearDraft,
-    clearServerDraft,
     continueDraft,
     dismissPendingRestore,
     dismissPendingServerRestore,
@@ -419,9 +403,7 @@ export function SalesOrderForm({
     redirectBasePath,
     restoreDraft,
     restorePending,
-    serverDraftEnabled,
     serverDraftHydrated,
-    startFresh,
   ]);
 
   function continueSavedDraft() {
@@ -437,17 +419,19 @@ export function SalesOrderForm({
     }
   }
 
-  function startBlankOrder() {
-    clearDraft();
-    if (serverDraftEnabled) {
-      void clearServerDraft();
-    }
+  /** Blank form without deleting stored drafts (chooser "Start new order" / ?fresh=1). */
+  function beginBlankOrder() {
     resetClientDrafts();
     resetAddFlow();
     setProductionBrandId(null);
     dismissPendingRestore();
+    dismissPendingServerRestore();
     setDraftChoiceResolved(true);
     setError(null);
+  }
+
+  function startBlankOrder() {
+    beginBlankOrder();
   }
 
   function applyDuplicateSeed(seed: SalesOrderDuplicateSeed) {
@@ -510,16 +494,6 @@ export function SalesOrderForm({
 
     writeLocalDraft(DRAFT_KEYS.fabricOrderNew, legacyDraft);
   }, [duplicateFromOrderId, redirectBasePath]);
-
-  useEffect(() => {
-    if (redirectBasePath !== "/fabric-orders" || duplicateFromOrderId || !draftHydrated) return;
-
-    const migrated = readFabricOrderLocalDraft();
-    if (!migrated || isSalesOrderDraftEmpty(migrated)) return;
-    if (totalFabricLines > 0) return;
-
-    restoreDraft(migrated);
-  }, [draftHydrated, duplicateFromOrderId, redirectBasePath, restoreDraft, totalFabricLines]);
 
   useEffect(() => {
     if (!serverDraftHydrated || !pendingServerDraft) return;

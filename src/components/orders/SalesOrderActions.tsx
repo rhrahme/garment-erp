@@ -470,7 +470,7 @@ export function SalesOrderActions({
         >
           <Button variant="secondary">Duplicate for another client</Button>
         </Link>
-        <Link href={effectiveViewMode === "fabric_order" ? "/fabric-orders/new" : "/orders/new"}>
+        <Link href={effectiveViewMode === "fabric_order" ? "/fabric-orders/new?fresh=1" : "/orders/new"}>
           <Button variant="secondary">{labels.detailNewButton}</Button>
         </Link>
         {showProductionLabels && (
