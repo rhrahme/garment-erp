@@ -193,6 +193,7 @@ function expandSkuPlaceholders(fabrics) {
   const EXPANSIONS = {
     "PAL.XXX": { prefix: "PAL.", from: 1, to: 35 },
     "NAP.XXX": { prefix: "NAP", from: 1, to: 35 },
+    "BOL.XXX": { prefix: "BOL", from: 1, to: 50 },
   };
 
   const out = [];
