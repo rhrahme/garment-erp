@@ -8,6 +8,7 @@ import stylbiellaSs26Catalog from "@/data/suppliers/stylbiella-ss26.json";
 import loroPianaCatalog from "@/data/suppliers/loro-piana-ss26.json";
 import cancliniLinenStock from "@/data/suppliers/canclini-linen-stock.json";
 import woolStock from "@/data/suppliers/wool-stock.json";
+import gazabaCutlength from "@/data/suppliers/gazaba-cutlength-price-list.json";
 import {
   expandLoroPianaStyleQuery,
   getLoroPianaMillLine,
@@ -74,6 +75,7 @@ const LORO_PIANA_ID = "loro-piana";
 const SOLBIATI_ID = "solbiati";
 const CANCLINI_ID = "canclini";
 const WOOL_STOCK_ID = "wool-stock";
+const GAZABA_ID = "gazaba";
 
 function stubSupplierForCatalog(supplierId: string): Supplier {
   return {
@@ -190,6 +192,7 @@ export const loroPianaSupplier: Supplier = supplierForCatalog(LORO_PIANA_ID);
 export const solbiatiSupplier: Supplier = supplierForCatalog(SOLBIATI_ID);
 export const cancliniSupplier: Supplier = supplierForCatalog(CANCLINI_ID);
 export const woolStockSupplier: Supplier = supplierForCatalog(WOOL_STOCK_ID);
+export const gazabaSupplier: Supplier = supplierForCatalog(GAZABA_ID);
 
 const jackets = caccioppoliJackets as RawCatalog;
 const shirting = caccioppoliShirting as RawCatalog;
@@ -202,6 +205,7 @@ const stylbiellaCatalogs = [stylbiellaAw25, stylbiellaSs25, stylbiellaSs26];
 const loroPiana = loroPianaCatalog as RawCatalog;
 const cancliniStock = cancliniLinenStock as RawCatalog;
 const woolStockCatalog = woolStock as RawCatalog;
+const gazabaCatalog = gazabaCutlength as RawCatalog;
 
 export const caccioppoliFabrics: SupplierFabric[] = [
   ...toFabrics(jackets, CACCIOPPOLI_ID, caccioppoliSupplier, "cac-j"),
@@ -251,6 +255,12 @@ export const woolStockFabrics: SupplierFabric[] = toFabrics(
   woolStockSupplier,
   "wool"
 );
+export const gazabaFabrics: SupplierFabric[] = toFabrics(
+  gazabaCatalog,
+  GAZABA_ID,
+  gazabaSupplier,
+  "gzb"
+);
 
 export const allPriceListItems: SupplierFabric[] = [
   ...caccioppoliFabrics,
@@ -261,6 +271,7 @@ export const allPriceListItems: SupplierFabric[] = [
   ...solbiatiFabrics,
   ...cancliniFabrics,
   ...woolStockFabrics,
+  ...gazabaFabrics,
 ];
 
 const fabricsBySupplier = new Map<string, SupplierFabric[]>();
@@ -352,6 +363,7 @@ export const allPriceLists: SupplierPriceList[] = [
   },
   toPriceList(cancliniStock, CANCLINI_ID, cancliniSupplier),
   toPriceList(woolStockCatalog, WOOL_STOCK_ID, woolStockSupplier),
+  toPriceList(gazabaCatalog, GAZABA_ID, gazabaSupplier),
 ];
 
 export async function getSupplierContacts(): Promise<SupplierContactRow[]> {

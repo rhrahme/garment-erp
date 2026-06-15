@@ -158,7 +158,7 @@
         "gazaba.com"
       ],
       "contact_person": null,
-      "has_price_list": false,
+      "has_price_list": true,
       "lead_time_days": 14
     },
     {
