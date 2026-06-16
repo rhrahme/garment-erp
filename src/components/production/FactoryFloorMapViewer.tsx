@@ -13,6 +13,7 @@ import {
   factoryFloorStationsByZone,
   isProductionLineStation,
   PRODUCTION_LINE_STYLE,
+  type FactoryFloorProductionLine,
   type FactoryFloorStation,
   type FactoryFloorZone,
 } from "@/lib/production/factory-floor-stations";
@@ -24,6 +25,7 @@ import { WorkstationQrDialog } from "@/components/production/WorkstationQrDialog
 import { WorkstationQrPdfPreviewModal } from "@/components/production/WorkstationQrPdfPreviewModal";
 
 type ZoneFilter = FactoryFloorZone | "all";
+type MapView = "interactive" | "labeled";
 
 function StationPin({
   station,
@@ -103,15 +105,31 @@ function WorkstationPin({
   active,
   editMode,
   dragging,
+  labelMap,
   onPointerDown,
 }: {
   workstation: FactoryWorkstation;
   active: boolean;
   editMode: boolean;
   dragging: boolean;
+  labelMap?: boolean;
   onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => void;
 }) {
   const badgeLabel = workstationId(workstation.line_number, workstation.station_number);
+
+  if (labelMap) {
+    return (
+      <div
+        className="pointer-events-none absolute z-[15] -translate-x-1/2 -translate-y-1/2"
+        style={{ left: `${workstation.x}%`, top: `${workstation.y}%` }}
+        aria-hidden
+      >
+        <span className="flex min-w-[2.75rem] items-center justify-center rounded-md border-2 border-slate-900 bg-white px-1 py-0.5 text-[11px] font-bold leading-none text-slate-900 shadow print:border-black print:shadow-none">
+          {badgeLabel}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <button
@@ -140,6 +158,25 @@ function WorkstationPin({
   );
 }
 
+function LabelMapLinePin({ station }: { station: FactoryFloorProductionLine }) {
+  return (
+    <div
+      className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2"
+      style={{ left: `${station.x}%`, top: `${station.y}%` }}
+      aria-hidden
+    >
+      <span
+        className={cn(
+          "flex h-7 min-w-[2.5rem] items-center justify-center rounded-md border-2 px-1 text-[11px] font-bold shadow print:border-black print:shadow-none",
+          PRODUCTION_LINE_STYLE.pin
+        )}
+      >
+        {productionLineLabel(station.line_number)}
+      </span>
+    </div>
+  );
+}
+
 export function FactoryFloorMapViewer() {
   const {
     stations,
@@ -160,6 +197,7 @@ export function FactoryFloorMapViewer() {
   } = useFactoryWorkstationPositions();
 
   const [zoom, setZoom] = useState(100);
+  const [mapView, setMapView] = useState<MapView>("interactive");
   const [zone, setZone] = useState<ZoneFilter>("all");
   const [showStations, setShowStations] = useState(true);
   const [showWorkstations, setShowWorkstations] = useState(true);
@@ -207,6 +245,20 @@ export function FactoryFloorMapViewer() {
   const productionLineCount = useMemo(
     () => stations.filter(isProductionLineStation).length,
     [stations]
+  );
+
+  const productionLineStations = useMemo(
+    () => stations.filter(isProductionLineStation),
+    [stations]
+  );
+
+  const labelMapWorkstations = useMemo(
+    () =>
+      [...workstations].sort((a, b) => {
+        if (a.line_number !== b.line_number) return a.line_number - b.line_number;
+        return a.station_number - b.station_number;
+      }),
+    [workstations]
   );
 
   const positionFromClient = useCallback((clientX: number, clientY: number) => {
@@ -363,63 +415,110 @@ export function FactoryFloorMapViewer() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+      <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 print:hidden">
         <div>
           <p className="font-medium text-slate-900">Hagan factory layout</p>
           <p className="text-sm text-slate-600">
-            Scan stations and production lines on the floor plan — colours match Fabric Receiving &amp; Production.
-            {!editMode ? (
-              <span className="mt-1 block text-amber-800">
-                Use <strong>Adjust pin positions</strong> to drag scan stations and numbered line markers onto your
-                layout.
-              </span>
-            ) : null}
+            {mapView === "labeled" ? (
+              <>
+                Print-friendly duplicate of the floor plan with every machine labelled{" "}
+                <strong>PL-{"{line}"}-{"{machine}"}</strong> (e.g. PL-1-1, PL-8-9).
+              </>
+            ) : (
+              <>
+                Scan stations and production lines on the floor plan — colours match Fabric Receiving &amp; Production.
+                {!editMode ? (
+                  <span className="mt-1 block text-amber-800">
+                    Use <strong>Adjust pin positions</strong> to drag scan stations and PL line markers onto your
+                    layout.
+                  </span>
+                ) : null}
+              </>
+            )}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant={editMode ? "primary" : "secondary"}
-            size="sm"
-            onClick={() => setEditMode((value) => !value)}
-          >
-            <Move className="mr-1 h-4 w-4" />
-            {editMode ? "Done adjusting" : "Adjust pin positions"}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={() => setZoom((value) => Math.max(60, value - 15))}
-            aria-label="Zoom out"
-          >
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          <span className="min-w-[3.5rem] text-center text-sm font-medium text-slate-700">{zoom}%</span>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={() => setZoom((value) => Math.min(180, value + 15))}
-            aria-label="Zoom in"
-          >
-            <ZoomIn className="h-4 w-4" />
-          </Button>
+          <div className="flex rounded-lg bg-white p-0.5 ring-1 ring-slate-200">
+            <button
+              type="button"
+              onClick={() => {
+                setMapView("interactive");
+              }}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                mapView === "interactive" ? "bg-indigo-600 text-white" : "text-slate-700 hover:bg-slate-50"
+              )}
+            >
+              Interactive map
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMapView("labeled");
+                setEditMode(false);
+              }}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                mapView === "labeled" ? "bg-indigo-600 text-white" : "text-slate-700 hover:bg-slate-50"
+              )}
+            >
+              Label map
+            </button>
+          </div>
+          {mapView === "interactive" ? (
+            <>
+              <Button
+                type="button"
+                variant={editMode ? "primary" : "secondary"}
+                size="sm"
+                onClick={() => setEditMode((value) => !value)}
+              >
+                <Move className="mr-1 h-4 w-4" />
+                {editMode ? "Done adjusting" : "Adjust pin positions"}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setZoom((value) => Math.max(60, value - 15))}
+                aria-label="Zoom out"
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <span className="min-w-[3.5rem] text-center text-sm font-medium text-slate-700">{zoom}%</span>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setZoom((value) => Math.min(180, value + 15))}
+                aria-label="Zoom in"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <Button type="button" variant="secondary" size="sm" onClick={() => window.print()}>
+              <Printer className="mr-1 h-4 w-4" />
+              Print label map
+            </Button>
+          )}
           <a href={FACTORY_FLOOR_MAP_PDF} target="_blank" rel="noreferrer">
             <Button type="button" variant="secondary" size="sm">
               <ExternalLink className="mr-1 h-4 w-4" />
               Open PDF
             </Button>
           </a>
-          <Button type="button" variant="secondary" size="sm" onClick={() => setQrPdfPreviewOpen(true)}>
-            <Printer className="mr-1 h-4 w-4" />
-            Workstation QRs
-          </Button>
+          {mapView === "interactive" ? (
+            <Button type="button" variant="secondary" size="sm" onClick={() => setQrPdfPreviewOpen(true)}>
+              <Printer className="mr-1 h-4 w-4" />
+              Workstation QRs
+            </Button>
+          ) : null}
         </div>
       </div>
 
-      {editMode ? (
-        <div className="rounded-xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+      {mapView === "interactive" && editMode ? (
+        <div className="rounded-xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 print:hidden">
           <p className="flex items-center gap-2 font-semibold">
             <Move className="h-4 w-4 shrink-0" aria-hidden />
             Adjust mode — drag icons to match your floor layout
@@ -433,15 +532,18 @@ export function FactoryFloorMapViewer() {
       ) : null}
 
       {saveMessage ? (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800 print:hidden">
           {saveMessage}
         </div>
       ) : null}
       {saveError ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">{saveError}</div>
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800 print:hidden">
+          {saveError}
+        </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-2">
+      {mapView === "interactive" ? (
+        <div className="flex flex-wrap items-center gap-2 print:hidden">
         <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Show</span>
         {(
           [
@@ -507,7 +609,51 @@ export function FactoryFloorMapViewer() {
           {savingServer ? "Saving…" : "Save for all users"}
         </Button>
       </div>
+      ) : (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-950 print:hidden">
+          <p className="font-semibold">Label map — duplicate floor plan with PL machine codes</p>
+          <p className="mt-1 text-indigo-900/90">
+            All 72 sewing machines show as <strong>PL-1-1</strong> through <strong>PL-8-9</strong>. Production line
+            columns are marked <strong>PL1</strong>–<strong>PL8</strong>. Use Print to hang a copy on the floor.
+          </p>
+        </div>
+      )}
 
+      {mapView === "labeled" ? (
+        <div id="factory-label-map" className="rounded-xl border border-slate-200 bg-white p-4 print:border-0 print:p-0">
+          <p className="mb-3 text-center text-sm font-semibold text-slate-900 print:mb-2 print:text-base">
+            Hagan factory — production line machine labels
+          </p>
+          <div className="mx-auto max-w-5xl">
+            <div className="relative w-full" style={{ aspectRatio: "2000 / 1414" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={FACTORY_FLOOR_MAP_IMAGE}
+                alt="Hagan factory floor layout with PL machine labels"
+                className="h-full w-full select-none object-contain print:object-cover"
+                draggable={false}
+              />
+              {productionLineStations.map((station) => (
+                <LabelMapLinePin key={station.id} station={station} />
+              ))}
+              {labelMapWorkstations.map((workstation) => (
+                <WorkstationPin
+                  key={workstation.id}
+                  workstation={workstation}
+                  active={false}
+                  editMode={false}
+                  dragging={false}
+                  labelMap
+                  onPointerDown={() => undefined}
+                />
+              ))}
+            </div>
+          </div>
+          <p className="mt-3 text-center text-xs text-slate-500 print:mt-2">
+            PL1 nearest Receive · 8 lines × 9 machines · PL-{"{line}"}-{"{machine}"}
+          </p>
+        </div>
+      ) : (
       <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
         <div className="overflow-auto rounded-xl border border-slate-200 bg-slate-100 p-2">
           <div
@@ -655,8 +801,9 @@ export function FactoryFloorMapViewer() {
           </div>
         </aside>
       </div>
+      )}
 
-      {qrWorkstation ? (
+      {mapView === "interactive" && qrWorkstation ? (
         <WorkstationQrDialog
           workstation={qrWorkstation}
           onClose={() => setQrWorkstation(null)}
@@ -666,7 +813,9 @@ export function FactoryFloorMapViewer() {
           }}
         />
       ) : null}
-      <WorkstationQrPdfPreviewModal open={qrPdfPreviewOpen} onClose={() => setQrPdfPreviewOpen(false)} />
+      {mapView === "interactive" ? (
+        <WorkstationQrPdfPreviewModal open={qrPdfPreviewOpen} onClose={() => setQrPdfPreviewOpen(false)} />
+      ) : null}
     </div>
   );
 }

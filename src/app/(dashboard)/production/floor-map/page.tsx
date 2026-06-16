@@ -7,7 +7,7 @@ export default function FactoryFloorMapPage() {
     <div>
       <PageHeader
         title="Factory floor map"
-        description="Hagan layout with scan station pins — colours match Fabric Receiving and Production."
+        description="Hagan layout with scan station pins and PL machine labels (PL-1-1 … PL-8-9)."
         action={
           <Link
             href="/production"
