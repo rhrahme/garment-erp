@@ -3,13 +3,38 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { employeeQrPayload } from "@/lib/hr/employee-qr";
-import { sortPayrollEmployees } from "@/lib/hr/payroll-utils";
+import { sortPayrollEmployees, type IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 
 const QR_SIZE = 120;
 
-export function EmployeeQrWorkspace({ employees }: { employees: PayrollEmployee[] }) {
+const GROUP_COPY: Record<
+  IdBadgeGroup,
+  { title: string; description: string; emptyHint: string }
+> = {
+  saudi: {
+    title: "Saudi employee ID badges",
+    description:
+      "National ID holders (Emp. ID No. starting with 1). Each QR encodes a unique employee identifier for attendance, access control, or floor scanning.",
+    emptyHint: "No active Saudi employees on the payroll register.",
+  },
+  expat: {
+    title: "Expat employee ID badges",
+    description:
+      "Iqama holders (Emp. ID No. starting with 2). Each QR encodes a unique employee identifier for attendance, access control, or floor scanning.",
+    emptyHint: "No active expat employees on the payroll register.",
+  },
+};
+
+export function EmployeeQrWorkspace({
+  employees,
+  group,
+}: {
+  employees: PayrollEmployee[];
+  group: IdBadgeGroup;
+}) {
+  const copy = GROUP_COPY[group];
   const [searchQuery, setSearchQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -24,11 +49,8 @@ export function EmployeeQrWorkspace({ employees }: { employees: PayrollEmployee[
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-950">
-        <p className="font-medium">Employee ID badges</p>
-        <p className="mt-1 text-emerald-900">
-          Each QR encodes a unique employee identifier for attendance, access control, or floor scanning. Active
-          employees only — same list as the payroll register.
-        </p>
+        <p className="font-medium">{copy.title}</p>
+        <p className="mt-1 text-emerald-900">{copy.description} Active employees only.</p>
       </div>
 
       <label className="relative block max-w-md text-sm">
@@ -45,7 +67,7 @@ export function EmployeeQrWorkspace({ employees }: { employees: PayrollEmployee[
 
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-500">
-          No employees match your search.
+          {searchQuery.trim() ? "No employees match your search." : copy.emptyHint}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

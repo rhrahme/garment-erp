@@ -5,18 +5,17 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { href: "/hr", label: "Payroll Register" },
-  { href: "/hr/id-badges", label: "ID Badges" },
+  { href: "/hr/id-badges/saudis", label: "Saudis" },
+  { href: "/hr/id-badges/expats", label: "Expats" },
 ];
 
-export function HrNav() {
+export function IdBadgesNav() {
   const pathname = usePathname();
 
   return (
     <div className="mb-6 flex gap-1 rounded-lg border border-slate-200 bg-white p-1">
       {tabs.map(({ href, label }) => {
-        const active =
-          pathname === href || (href === "/hr/id-badges" && pathname.startsWith("/hr/id-badges/"));
+        const active = pathname === href;
         return (
           <Link
             key={href}
