@@ -1,11 +1,28 @@
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 
-/** Saudi national ID vs Iqama (expat residency) — first digit of Emp. ID. No. from payroll. */
+/** ID badge tabs — expats are paid via BSF or ANB; all other banks (or missing bank) are Saudi. */
 export type IdBadgeGroup = "saudi" | "expat";
 
-export function idBadgeGroup(employee: Pick<PayrollEmployee, "employee_id_number">): IdBadgeGroup {
-  const idNumber = employee.employee_id_number.trim();
-  return idNumber.startsWith("2") ? "expat" : "saudi";
+const EXPAT_BANK_PATTERNS = [
+  /\b(?:banque\s+)?saudi\s+fransi\b/i,
+  /\bbsf\b/i,
+  /\barab\s+national(?:\s+bank)?\b/i,
+  /\banb\b/i,
+];
+
+function normalizeBankName(bankName: string): string {
+  return bankName.trim().replace(/\s+/g, " ");
+}
+
+/** Expats: Banque Saudi Fransi / BSF or Arab National Bank / ANB. Missing bank defaults to Saudi. */
+export function isExpatEmployee(employee: Pick<PayrollEmployee, "bank_name">): boolean {
+  const bank = normalizeBankName(employee.bank_name ?? "");
+  if (!bank) return false;
+  return EXPAT_BANK_PATTERNS.some((pattern) => pattern.test(bank));
+}
+
+export function idBadgeGroup(employee: Pick<PayrollEmployee, "bank_name">): IdBadgeGroup {
+  return isExpatEmployee(employee) ? "expat" : "saudi";
 }
 
 export function filterPayrollEmployeesByGroup(

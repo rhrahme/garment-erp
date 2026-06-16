@@ -16,13 +16,13 @@ const GROUP_COPY: Record<
   saudi: {
     title: "Saudi employee ID badges",
     description:
-      "National ID holders (Emp. ID No. starting with 1). Each QR encodes a unique employee identifier for attendance, access control, or floor scanning.",
+      "Payroll bank is not BSF or ANB (e.g. Al Rajhi, SNB, Bilad). Each QR encodes a unique employee identifier for attendance, access control, or floor scanning.",
     emptyHint: "No active Saudi employees on the payroll register.",
   },
   expat: {
     title: "Expat employee ID badges",
     description:
-      "Iqama holders (Emp. ID No. starting with 2). Each QR encodes a unique employee identifier for attendance, access control, or floor scanning.",
+      "Payroll bank is Banque Saudi Fransi (BSF) or Arab National Bank (ANB). Each QR encodes a unique employee identifier for attendance, access control, or floor scanning.",
     emptyHint: "No active expat employees on the payroll register.",
   },
 };
