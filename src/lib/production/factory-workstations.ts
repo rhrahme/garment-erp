@@ -47,9 +47,9 @@ export function workstationScanUrl(id: string, baseUrl?: string): string {
   return `${appUrl.replace(/\/$/, "")}/production/workstation/${encodeURIComponent(normalized)}`;
 }
 
-/** Vertical spread within the sewing block — table 1 near receive flow (top). */
+/** Vertical spread within the sewing block — machine 1 at line start (bottom of column on layout). */
 export function defaultStationY(stationNumber: number): number {
-  return Math.round((35 + (stationNumber - 1) * (30 / 8)) * 10) / 10;
+  return Math.round((35 + (9 - stationNumber) * (30 / 8)) * 10) / 10;
 }
 
 /** Full layout image size — matches public/factory/hagan-factory-layout.png. */

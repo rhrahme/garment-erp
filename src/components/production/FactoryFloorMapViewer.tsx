@@ -13,14 +13,11 @@ import {
   factoryFloorStationsByZone,
   isProductionLineStation,
   PRODUCTION_LINE_STYLE,
-  type FactoryFloorProductionLine,
   type FactoryFloorStation,
   type FactoryFloorZone,
 } from "@/lib/production/factory-floor-stations";
 import type { FactoryWorkstation } from "@/lib/production/factory-workstations";
 import {
-  FACTORY_FLOOR_MAP_ASPECT,
-  factoryMapCropLayout,
   productionLineLabel,
   workstationId,
 } from "@/lib/production/factory-workstations";
@@ -163,62 +160,36 @@ function WorkstationPin({
   );
 }
 
-function LabelMapLinePin({ station }: { station: FactoryFloorProductionLine }) {
+/** Fixed grid for print — machine 1 at top (line start), machine 9 at bottom, per line. */
+function LabelMapGrid() {
   return (
-    <div
-      className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2"
-      style={{ left: `${station.x}%`, top: `${station.y}%` }}
-      aria-hidden
-    >
-      <span
-        className={cn(
-          "flex h-7 min-w-[2.5rem] items-center justify-center rounded-md border-2 px-1 text-[11px] font-bold shadow print:border-black print:shadow-none",
-          PRODUCTION_LINE_STYLE.pin
-        )}
-      >
-        {productionLineLabel(station.line_number)}
-      </span>
-    </div>
-  );
-}
-
-const labelMapCrop = factoryMapCropLayout();
-
-function LabelMapCanvas({
-  productionLineStations,
-  labelMapWorkstations,
-}: {
-  productionLineStations: FactoryFloorProductionLine[];
-  labelMapWorkstations: FactoryWorkstation[];
-}) {
-  const { viewportAspectRatio, inner } = labelMapCrop;
-
-  return (
-    <div
-      className="relative w-full overflow-hidden print:h-[190mm] print:w-[277mm] print:max-w-none"
-      style={{ aspectRatio: viewportAspectRatio }}
-    >
-      <div className="absolute bg-white" style={inner}>
-        <div
-          className="relative w-full bg-white"
-          style={{ aspectRatio: `${FACTORY_FLOOR_MAP_ASPECT.width} / ${FACTORY_FLOOR_MAP_ASPECT.height}` }}
-        >
-          {productionLineStations.map((station) => (
-            <LabelMapLinePin key={station.id} station={station} />
-          ))}
-          {labelMapWorkstations.map((workstation) => (
-            <WorkstationPin
-              key={workstation.id}
-              workstation={workstation}
-              active={false}
-              editMode={false}
-              dragging={false}
-              labelMap
-              onPointerDown={() => undefined}
-            />
-          ))}
-        </div>
-      </div>
+    <div className="grid grid-cols-8 gap-x-1 print:grid-cols-8 print:gap-x-2">
+      {Array.from({ length: 8 }, (_, index) => {
+        const lineNumber = index + 1;
+        return (
+          <div key={lineNumber} className="flex flex-col items-center gap-0.5 print:gap-1">
+            <span
+              className={cn(
+                "mb-0.5 flex h-7 min-w-[2.5rem] items-center justify-center rounded-md border-2 px-1 text-[11px] font-bold print:mb-1 print:border-black",
+                PRODUCTION_LINE_STYLE.pin
+              )}
+            >
+              {productionLineLabel(lineNumber)}
+            </span>
+            {Array.from({ length: 9 }, (_, machineIndex) => {
+              const stationNumber = machineIndex + 1;
+              return (
+                <span
+                  key={stationNumber}
+                  className="flex min-w-[2.75rem] items-center justify-center rounded-md border-2 border-slate-900 bg-white px-0.5 py-0.5 text-[10px] font-bold leading-none text-slate-900 print:border-black print:text-[11px]"
+                >
+                  {workstationId(lineNumber, stationNumber)}
+                </span>
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -291,20 +262,6 @@ export function FactoryFloorMapViewer() {
   const productionLineCount = useMemo(
     () => stations.filter(isProductionLineStation).length,
     [stations]
-  );
-
-  const productionLineStations = useMemo(
-    () => stations.filter(isProductionLineStation),
-    [stations]
-  );
-
-  const labelMapWorkstations = useMemo(
-    () =>
-      [...workstations].sort((a, b) => {
-        if (a.line_number !== b.line_number) return a.line_number - b.line_number;
-        return a.station_number - b.station_number;
-      }),
-    [workstations]
   );
 
   const positionFromClient = useCallback((clientX: number, clientY: number) => {
@@ -695,14 +652,11 @@ export function FactoryFloorMapViewer() {
             <p className="mb-3 text-center text-sm font-semibold text-slate-900 print:mb-2 print:text-base">
               Hagan factory — production line machine labels
             </p>
-            <div className="mx-auto max-w-4xl print:max-w-none">
-              <LabelMapCanvas
-                productionLineStations={productionLineStations}
-                labelMapWorkstations={labelMapWorkstations}
-              />
+            <div className="mx-auto max-w-4xl print:max-w-none print:px-2">
+              <LabelMapGrid />
             </div>
             <p className="mt-3 text-center text-xs text-slate-500 print:mt-2">
-              PL1 nearest Receive · 8 lines × 9 machines · PL-{"{line}"}-{"{machine}"}
+              PL1 nearest Receive · machine 1 at top of each column · PL-{"{line}"}-{"{machine}"}
             </p>
           </div>
         </>
