@@ -160,7 +160,7 @@ function WorkstationPin({
   );
 }
 
-/** Fixed grid for print — PL badge at top; machine 1 at line start (bottom), machine 9 at top of column. */
+/** Fixed grid for print — machines 9→1; PL badge at line start beside PL-X-1 (bottom). */
 function LabelMapGrid() {
   return (
     <div className="grid grid-cols-8 gap-x-1 print:grid-cols-8 print:gap-x-2">
@@ -168,14 +168,6 @@ function LabelMapGrid() {
         const lineNumber = index + 1;
         return (
           <div key={lineNumber} className="flex flex-col items-center gap-0.5 print:gap-1">
-            <span
-              className={cn(
-                "mb-0.5 flex h-7 min-w-[2.5rem] items-center justify-center rounded-md border-2 px-1 text-[11px] font-bold print:mb-1 print:border-black",
-                PRODUCTION_LINE_STYLE.pin
-              )}
-            >
-              {productionLineLabel(lineNumber)}
-            </span>
             {Array.from({ length: 9 }, (_, machineIndex) => {
               const stationNumber = 9 - machineIndex;
               return (
@@ -187,6 +179,14 @@ function LabelMapGrid() {
                 </span>
               );
             })}
+            <span
+              className={cn(
+                "mt-0.5 flex h-7 min-w-[2.5rem] items-center justify-center rounded-md border-2 px-1 text-[11px] font-bold print:mt-1 print:border-black",
+                PRODUCTION_LINE_STYLE.pin
+              )}
+            >
+              {productionLineLabel(lineNumber)}
+            </span>
           </div>
         );
       })}
