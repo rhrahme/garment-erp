@@ -8,7 +8,7 @@ export default function FactoryFloorMapPage() {
       <PageHeader
         className="print:hidden"
         title="Factory floor map"
-        description="Hagan layout with scan station pins and PL machine labels (PL-1-1 … PL-8-9)."
+        description="Interactive floor plan with scan pins, or switch to Label map (PDF) to download or print PL machine stickers (PL-1-1 … PL-8-9)."
         action={
           <Link
             href="/production"

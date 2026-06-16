@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ExternalLink, GripVertical, Move, Printer, QrCode, ZoomIn, ZoomOut } from "lucide-react";
+import { Download, ExternalLink, GripVertical, Move, Printer, QrCode, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useFactoryFloorStationPositions } from "@/hooks/useFactoryFloorStationPositions";
 import { useFactoryWorkstationPositions } from "@/hooks/useFactoryWorkstationPositions";
@@ -28,6 +28,69 @@ import { WorkstationQrPdfPreviewModal } from "@/components/production/Workstatio
 
 type ZoneFilter = FactoryFloorZone | "all";
 type MapView = "interactive" | "labeled";
+type LabelMapLayout = "all" | "pairs";
+
+const LABEL_MAP_PDF_URL = "/api/factory/label-map";
+
+function labelMapPdfUrl(layout: LabelMapLayout): string {
+  return layout === "pairs" ? `${LABEL_MAP_PDF_URL}?layout=pairs` : LABEL_MAP_PDF_URL;
+}
+
+function labelMapPdfFilename(layout: LabelMapLayout): string {
+  return layout === "pairs" ? "factory-label-map-pairs.pdf" : "factory-label-map.pdf";
+}
+
+async function fetchLabelMapPdfBlob(layout: LabelMapLayout): Promise<Blob | null> {
+  const res = await fetch(labelMapPdfUrl(layout));
+  if (!res.ok) return null;
+  return res.blob();
+}
+
+async function downloadLabelMapPdf(layout: LabelMapLayout): Promise<boolean> {
+  const blob = await fetchLabelMapPdfBlob(layout);
+  if (!blob) return false;
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = labelMapPdfFilename(layout);
+  anchor.click();
+  URL.revokeObjectURL(url);
+  return true;
+}
+
+async function printLabelMapPdf(layout: LabelMapLayout): Promise<boolean> {
+  const blob = await fetchLabelMapPdfBlob(layout);
+  if (!blob) return false;
+  const url = URL.createObjectURL(blob);
+  const iframe = document.createElement("iframe");
+  iframe.style.position = "fixed";
+  iframe.style.right = "0";
+  iframe.style.bottom = "0";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.style.border = "0";
+  iframe.src = url;
+  document.body.appendChild(iframe);
+
+  return new Promise((resolve) => {
+    iframe.onload = () => {
+      const printWindow = iframe.contentWindow;
+      if (!printWindow) {
+        document.body.removeChild(iframe);
+        URL.revokeObjectURL(url);
+        resolve(false);
+        return;
+      }
+      printWindow.focus();
+      printWindow.print();
+      window.setTimeout(() => {
+        document.body.removeChild(iframe);
+        URL.revokeObjectURL(url);
+        resolve(true);
+      }, 1000);
+    };
+  });
+}
 
 function StationPin({
   station,
@@ -228,6 +291,10 @@ export function FactoryFloorMapViewer() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savingServer, setSavingServer] = useState(false);
+  const [labelMapLayout, setLabelMapLayout] = useState<LabelMapLayout>("all");
+  const [downloadingLabelMapPdf, setDownloadingLabelMapPdf] = useState(false);
+  const [printingLabelMapPdf, setPrintingLabelMapPdf] = useState(false);
+  const [labelMapDownloadError, setLabelMapDownloadError] = useState<string | null>(null);
 
   const mapRef = useRef<HTMLDivElement>(null);
   const dragIdRef = useRef<string | null>(null);
@@ -379,6 +446,31 @@ export function FactoryFloorMapViewer() {
 
   useEffect(() => () => clearDragListeners(), [clearDragListeners]);
 
+  const handleDownloadLabelMapPdf = useCallback(() => {
+    setLabelMapDownloadError(null);
+    setDownloadingLabelMapPdf(true);
+    void downloadLabelMapPdf(labelMapLayout)
+      .then((ok) => {
+        if (!ok) setLabelMapDownloadError("PDF download failed — try again.");
+      })
+      .finally(() => setDownloadingLabelMapPdf(false));
+  }, [labelMapLayout]);
+
+  const handlePrintLabelMapPdf = useCallback(() => {
+    setLabelMapDownloadError(null);
+    setPrintingLabelMapPdf(true);
+    void printLabelMapPdf(labelMapLayout)
+      .then((ok) => {
+        if (!ok) setLabelMapDownloadError("PDF print failed — try again.");
+      })
+      .finally(() => setPrintingLabelMapPdf(false));
+  }, [labelMapLayout]);
+
+  const switchToLabelMap = useCallback(() => {
+    setMapView("labeled");
+    setEditMode(false);
+  }, []);
+
   async function saveToServer() {
     setSaveError(null);
     setSaveMessage(null);
@@ -465,7 +557,7 @@ export function FactoryFloorMapViewer() {
                 mapView === "labeled" ? "bg-indigo-600 text-white" : "text-slate-700 hover:bg-slate-50"
               )}
             >
-              Label map
+              Label map (PDF)
             </button>
           </div>
           {mapView === "interactive" ? (
@@ -500,17 +592,37 @@ export function FactoryFloorMapViewer() {
               </Button>
             </>
           ) : (
-            <Button type="button" variant="secondary" size="sm" onClick={() => window.print()}>
-              <Printer className="mr-1 h-4 w-4" />
-              Print label map
-            </Button>
+            <>
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                disabled={downloadingLabelMapPdf || printingLabelMapPdf}
+                onClick={handleDownloadLabelMapPdf}
+              >
+                <Download className="mr-1 h-4 w-4" />
+                {downloadingLabelMapPdf ? "Downloading…" : "Download PDF"}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={printingLabelMapPdf || downloadingLabelMapPdf}
+                onClick={handlePrintLabelMapPdf}
+              >
+                <Printer className="mr-1 h-4 w-4" />
+                {printingLabelMapPdf ? "Preparing…" : "Print label map"}
+              </Button>
+            </>
           )}
-          <a href={FACTORY_FLOOR_MAP_PDF} target="_blank" rel="noreferrer">
-            <Button type="button" variant="secondary" size="sm">
-              <ExternalLink className="mr-1 h-4 w-4" />
-              Open PDF
-            </Button>
-          </a>
+          {mapView === "interactive" ? (
+            <a href={FACTORY_FLOOR_MAP_PDF} target="_blank" rel="noreferrer">
+              <Button type="button" variant="secondary" size="sm">
+                <ExternalLink className="mr-1 h-4 w-4" />
+                Floor plan PDF
+              </Button>
+            </a>
+          ) : null}
           {mapView === "interactive" ? (
             <Button type="button" variant="secondary" size="sm" onClick={() => setQrPdfPreviewOpen(true)}>
               <Printer className="mr-1 h-4 w-4" />
@@ -519,6 +631,24 @@ export function FactoryFloorMapViewer() {
           ) : null}
         </div>
       </div>
+
+      {mapView === "interactive" ? (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-950 print:hidden">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-semibold">Machine label map (PDF)</p>
+              <p className="mt-1 text-indigo-900/90">
+                Download or print PL-1-1 … PL-8-9 stickers for the sewing block. Switch to{" "}
+                <strong>Label map (PDF)</strong> above, then choose a layout and download.
+              </p>
+            </div>
+            <Button type="button" variant="secondary" size="sm" onClick={switchToLabelMap}>
+              <Download className="mr-1 h-4 w-4" />
+              Open Label map
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       {mapView === "interactive" && editMode ? (
         <div className="rounded-xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 print:hidden">
@@ -617,49 +747,117 @@ export function FactoryFloorMapViewer() {
           <p className="font-semibold">Label map — sewing block only</p>
           <p className="mt-1 text-indigo-900/90">
             Cropped to the 8 production lines (PL1–PL8) and 72 machines (PL-1-1 through PL-8-9). Receive, wash,
-            cutting, finishing, and storage areas are hidden. Use <strong>Print label map</strong> for an A4
-            landscape sheet.
+            cutting, finishing, and storage areas are hidden.
           </p>
+          <div className="mt-4 flex flex-wrap items-end justify-between gap-4 border-t border-indigo-200/80 pt-4">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-indigo-800/80">Choose PDF layout</p>
+              <div className="inline-flex rounded-lg border border-indigo-200 bg-white p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setLabelMapLayout("all")}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                    labelMapLayout === "all"
+                      ? "bg-indigo-600 text-white"
+                      : "text-slate-700 hover:bg-indigo-50"
+                  )}
+                >
+                  All 8 lines (1 page)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLabelMapLayout("pairs")}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                    labelMapLayout === "pairs"
+                      ? "bg-indigo-600 text-white"
+                      : "text-slate-700 hover:bg-indigo-50"
+                  )}
+                >
+                  2 lines per page (4 pages)
+                </button>
+              </div>
+              <p className="text-xs text-indigo-900/80">
+                {labelMapLayout === "all"
+                  ? "Compact overview — all 8 columns on one A4 landscape sheet."
+                  : "Handwriting layout — taller cells with blank space below each machine ID (PL1+PL2, PL3+PL4, …)."}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                disabled={downloadingLabelMapPdf || printingLabelMapPdf}
+                onClick={handleDownloadLabelMapPdf}
+              >
+                <Download className="mr-1 h-4 w-4" />
+                {downloadingLabelMapPdf ? "Downloading…" : "Download PDF"}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={printingLabelMapPdf || downloadingLabelMapPdf}
+                onClick={handlePrintLabelMapPdf}
+              >
+                <Printer className="mr-1 h-4 w-4" />
+                {printingLabelMapPdf ? "Preparing…" : "Print label map"}
+              </Button>
+            </div>
+          </div>
+          {labelMapDownloadError ? (
+            <p className="mt-3 text-sm font-medium text-red-700">{labelMapDownloadError}</p>
+          ) : null}
         </div>
       )}
 
       {mapView === "labeled" ? (
-        <>
-          <style>{`
-            @page {
-              size: A4 landscape;
-              margin: 10mm;
-            }
-            @media print {
-              body * {
-                visibility: hidden;
-              }
-              #factory-label-map,
-              #factory-label-map * {
-                visibility: visible;
-              }
-              #factory-label-map {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                break-inside: avoid;
-                page-break-inside: avoid;
-              }
-            }
-          `}</style>
-          <div id="factory-label-map" className="rounded-xl border border-slate-200 bg-white p-4 print:border-0 print:p-0">
-            <p className="mb-3 text-center text-sm font-semibold text-slate-900 print:mb-2 print:text-base">
-              Hagan factory — production line machine labels
-            </p>
-            <div className="mx-auto max-w-4xl print:max-w-none print:px-2">
-              <LabelMapGrid />
-            </div>
-            <p className="mt-3 text-center text-xs text-slate-500 print:mt-2">
-              PL1 nearest Receive · machine 1 at top of each column · PL-{"{line}"}-{"{machine}"}
-            </p>
+        <div className="sticky top-0 z-10 flex flex-wrap items-center justify-center gap-3 rounded-xl border-2 border-indigo-400 bg-indigo-600 px-4 py-4 shadow-md print:hidden">
+          <p className="w-full text-center text-sm font-semibold text-white sm:w-auto sm:text-left">
+            Ready to print machine stickers
+          </p>
+          <Button
+            type="button"
+            variant="secondary"
+            size="md"
+            className="min-h-11 border-0 bg-white px-8 text-base font-semibold text-indigo-700 shadow-sm hover:bg-indigo-50"
+            disabled={downloadingLabelMapPdf || printingLabelMapPdf}
+            onClick={handleDownloadLabelMapPdf}
+          >
+            <Download className="mr-2 h-5 w-5" />
+            {downloadingLabelMapPdf ? "Downloading…" : "Download PDF"}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="md"
+            className="min-h-11 px-6 text-base text-white hover:bg-indigo-500/80"
+            disabled={printingLabelMapPdf || downloadingLabelMapPdf}
+            onClick={handlePrintLabelMapPdf}
+          >
+            <Printer className="mr-2 h-5 w-5" />
+            {printingLabelMapPdf ? "Preparing…" : "Print label map"}
+          </Button>
+        </div>
+      ) : null}
+
+      {mapView === "labeled" ? (
+        <div
+          id="factory-label-map"
+          className="rounded-xl border border-slate-200 bg-white p-4"
+        >
+          <p className="mb-3 text-center text-sm font-semibold text-slate-900">
+            Hagan factory — production line machine labels
+          </p>
+          <p className="mb-3 text-center text-xs text-slate-500">
+            On-screen preview (compact). PDF download and print use the layout selected above.
+          </p>
+          <div className="mx-auto max-w-4xl">
+            <LabelMapGrid />
           </div>
-        </>
+        </div>
       ) : (
       <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
         <div className="overflow-auto rounded-xl border border-slate-200 bg-slate-100 p-2">
