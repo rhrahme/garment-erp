@@ -18,7 +18,12 @@ import {
   type FactoryFloorZone,
 } from "@/lib/production/factory-floor-stations";
 import type { FactoryWorkstation } from "@/lib/production/factory-workstations";
-import { productionLineLabel, workstationId } from "@/lib/production/factory-workstations";
+import {
+  FACTORY_FLOOR_MAP_ASPECT,
+  factoryMapCropLayout,
+  productionLineLabel,
+  workstationId,
+} from "@/lib/production/factory-workstations";
 import { scanStageStyles } from "@/lib/production/scan-stage-highlight";
 import { cn } from "@/lib/utils";
 import { WorkstationQrDialog } from "@/components/production/WorkstationQrDialog";
@@ -173,6 +178,54 @@ function LabelMapLinePin({ station }: { station: FactoryFloorProductionLine }) {
       >
         {productionLineLabel(station.line_number)}
       </span>
+    </div>
+  );
+}
+
+const labelMapCrop = factoryMapCropLayout();
+
+function LabelMapCanvas({
+  productionLineStations,
+  labelMapWorkstations,
+}: {
+  productionLineStations: FactoryFloorProductionLine[];
+  labelMapWorkstations: FactoryWorkstation[];
+}) {
+  const { viewportAspectRatio, inner } = labelMapCrop;
+
+  return (
+    <div
+      className="relative w-full overflow-hidden print:h-[190mm] print:w-[277mm] print:max-w-none"
+      style={{ aspectRatio: viewportAspectRatio }}
+    >
+      <div className="absolute" style={inner}>
+        <div
+          className="relative w-full"
+          style={{ aspectRatio: `${FACTORY_FLOOR_MAP_ASPECT.width} / ${FACTORY_FLOOR_MAP_ASPECT.height}` }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={FACTORY_FLOOR_MAP_IMAGE}
+            alt="Sewing floor — production line machine labels"
+            className="h-full w-full select-none object-contain print:object-cover"
+            draggable={false}
+          />
+          {productionLineStations.map((station) => (
+            <LabelMapLinePin key={station.id} station={station} />
+          ))}
+          {labelMapWorkstations.map((workstation) => (
+            <WorkstationPin
+              key={workstation.id}
+              workstation={workstation}
+              active={false}
+              editMode={false}
+              dragging={false}
+              labelMap
+              onPointerDown={() => undefined}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -421,8 +474,8 @@ export function FactoryFloorMapViewer() {
           <p className="text-sm text-slate-600">
             {mapView === "labeled" ? (
               <>
-                Print-friendly duplicate of the floor plan with every machine labelled{" "}
-                <strong>PL-{"{line}"}-{"{machine}"}</strong> (e.g. PL-1-1, PL-8-9).
+                Sewing block only — PL1–PL8 columns with PL-{"{line}"}-{"{machine}"} labels (A4 landscape
+                print).
               </>
             ) : (
               <>
@@ -611,48 +664,55 @@ export function FactoryFloorMapViewer() {
       </div>
       ) : (
         <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-950 print:hidden">
-          <p className="font-semibold">Label map — duplicate floor plan with PL machine codes</p>
+          <p className="font-semibold">Label map — sewing block only</p>
           <p className="mt-1 text-indigo-900/90">
-            All 72 sewing machines show as <strong>PL-1-1</strong> through <strong>PL-8-9</strong>. Production line
-            columns are marked <strong>PL1</strong>–<strong>PL8</strong>. Use Print to hang a copy on the floor.
+            Cropped to the 8 production lines (PL1–PL8) and 72 machines (PL-1-1 through PL-8-9). Receive, wash,
+            cutting, finishing, and storage areas are hidden. Use <strong>Print label map</strong> for an A4
+            landscape sheet.
           </p>
         </div>
       )}
 
       {mapView === "labeled" ? (
-        <div id="factory-label-map" className="rounded-xl border border-slate-200 bg-white p-4 print:border-0 print:p-0">
-          <p className="mb-3 text-center text-sm font-semibold text-slate-900 print:mb-2 print:text-base">
-            Hagan factory — production line machine labels
-          </p>
-          <div className="mx-auto max-w-5xl">
-            <div className="relative w-full" style={{ aspectRatio: "2000 / 1414" }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={FACTORY_FLOOR_MAP_IMAGE}
-                alt="Hagan factory floor layout with PL machine labels"
-                className="h-full w-full select-none object-contain print:object-cover"
-                draggable={false}
+        <>
+          <style>{`
+            @page {
+              size: A4 landscape;
+              margin: 10mm;
+            }
+            @media print {
+              body * {
+                visibility: hidden;
+              }
+              #factory-label-map,
+              #factory-label-map * {
+                visibility: visible;
+              }
+              #factory-label-map {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                break-inside: avoid;
+                page-break-inside: avoid;
+              }
+            }
+          `}</style>
+          <div id="factory-label-map" className="rounded-xl border border-slate-200 bg-white p-4 print:border-0 print:p-0">
+            <p className="mb-3 text-center text-sm font-semibold text-slate-900 print:mb-2 print:text-base">
+              Hagan factory — production line machine labels
+            </p>
+            <div className="mx-auto max-w-4xl print:max-w-none">
+              <LabelMapCanvas
+                productionLineStations={productionLineStations}
+                labelMapWorkstations={labelMapWorkstations}
               />
-              {productionLineStations.map((station) => (
-                <LabelMapLinePin key={station.id} station={station} />
-              ))}
-              {labelMapWorkstations.map((workstation) => (
-                <WorkstationPin
-                  key={workstation.id}
-                  workstation={workstation}
-                  active={false}
-                  editMode={false}
-                  dragging={false}
-                  labelMap
-                  onPointerDown={() => undefined}
-                />
-              ))}
             </div>
+            <p className="mt-3 text-center text-xs text-slate-500 print:mt-2">
+              PL1 nearest Receive · 8 lines × 9 machines · PL-{"{line}"}-{"{machine}"}
+            </p>
           </div>
-          <p className="mt-3 text-center text-xs text-slate-500 print:mt-2">
-            PL1 nearest Receive · 8 lines × 9 machines · PL-{"{line}"}-{"{machine}"}
-          </p>
-        </div>
+        </>
       ) : (
       <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
         <div className="overflow-auto rounded-xl border border-slate-200 bg-slate-100 p-2">

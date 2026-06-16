@@ -6,6 +6,7 @@ export default function FactoryFloorMapPage() {
   return (
     <div>
       <PageHeader
+        className="print:hidden"
         title="Factory floor map"
         description="Hagan layout with scan station pins and PL machine labels (PL-1-1 … PL-8-9)."
         action={

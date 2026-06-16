@@ -52,6 +52,36 @@ export function defaultStationY(stationNumber: number): number {
   return Math.round((35 + (stationNumber - 1) * (30 / 8)) * 10) / 10;
 }
 
+/** Full layout image size — matches public/factory/hagan-factory-layout.png. */
+export const FACTORY_FLOOR_MAP_ASPECT = { width: 2000, height: 1414 } as const;
+
+/**
+ * Crop region (% of full floor plan) covering only the 8 sewing columns × 9 machines.
+ * Excludes receive, wash, iron, cutting, finishing, packed, and storage areas.
+ */
+export const FACTORY_SEWING_BLOCK_CROP = {
+  left: 43,
+  top: 30,
+  width: 51,
+  height: 40,
+} as const;
+
+export type FactoryMapCrop = typeof FACTORY_SEWING_BLOCK_CROP;
+
+/** Viewport + inner pan styles to zoom the full map into a crop region. Pin % coords stay on the full map. */
+export function factoryMapCropLayout(crop: FactoryMapCrop = FACTORY_SEWING_BLOCK_CROP) {
+  const { width: mapW, height: mapH } = FACTORY_FLOOR_MAP_ASPECT;
+  return {
+    viewportAspectRatio: `${(crop.width / 100) * mapW} / ${(crop.height / 100) * mapH}`,
+    inner: {
+      width: `${(100 / crop.width) * 100}%`,
+      height: `${(100 / crop.height) * 100}%`,
+      left: `${(-crop.left / crop.width) * 100}%`,
+      top: `${(-crop.top / crop.height) * 100}%`,
+    },
+  };
+}
+
 /** Line column x positions (% from left) — matches factory-floor-stations.json. */
 export const PRODUCTION_LINE_X: Record<number, number> = {
   1: 48,
