@@ -91,9 +91,20 @@ export default async function FabricOrderDetailPage({
         {order.fabric_lines.length > 0 && (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-5">
             <p className="text-sm text-emerald-800">Fabric totals</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">{fabricTotals.total_meters.toFixed(1)} m</p>
+            <p className="mt-1 text-lg font-semibold text-slate-900">
+              {fabricTotals.total_meters.toFixed(1)} m
+              {fabricTotals.total_kg != null ? (
+                <span className="text-slate-700"> · {fabricTotals.total_kg.toFixed(1)} kg</span>
+              ) : null}
+            </p>
             <p className="mt-1 text-xs text-slate-600">
               {fabricTotals.line_count} fabric line{fabricTotals.line_count !== 1 ? "s" : ""}
+              {fabricTotals.total_kg != null &&
+              fabricTotals.weighed_line_count < fabricTotals.line_count
+                ? ` · kg from ${fabricTotals.weighed_line_count} lines with width & gsm`
+                : fabricTotals.total_kg == null
+                  ? " · add width & gsm on lines to estimate kg"
+                  : null}
             </p>
           </div>
         )}
