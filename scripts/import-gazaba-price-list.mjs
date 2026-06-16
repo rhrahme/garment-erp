@@ -195,6 +195,11 @@ function expandSkuPlaceholders(fabrics) {
     "NAP.XXX": { prefix: "NAP", from: 1, to: 35 },
     "BOL.XXX": { prefix: "BOL", from: 1, to: 50 },
     "CAP.XXX": { prefix: "CAP", from: 1, to: 43 },
+    // 97% Cotton 3% Lycra chinos — same range as NAPOLI (user confirmed NAP001–NAP035)
+    "FIR.XXX": { prefix: "FIR", from: 1, to: 35 },
+    "GEN.XXX": { prefix: "GEN", from: 1, to: 35 },
+    "ROM.XXX": { prefix: "ROM", from: 1, to: 35 },
+    "SAL.XXX": { prefix: "SAL", from: 1, to: 35 },
   };
 
   const out = [];
