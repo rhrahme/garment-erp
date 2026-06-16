@@ -56,7 +56,7 @@ export function WorkstationQrPdfPreviewModal({ open, onClose }: WorkstationQrPdf
               Workstation QR placards
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              A4 landscape sheet — 72 QR codes (8 lines × 9 tables). Print and place one placard on each sewing table.
+              A4 landscape sheet — 72 QR codes (8 production lines × 9 machines). Print and place one placard on each sewing machine.
             </p>
           </div>
           <button

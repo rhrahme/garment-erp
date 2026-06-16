@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import {
   getWorkstationById,
+  normalizeWorkstationId,
   parseWorkstationId,
   workstationLabel,
   workstationScanUrl,
@@ -16,10 +17,15 @@ type PageProps = {
 
 export default async function WorkstationPage({ params }: PageProps) {
   const { id: rawId } = await params;
-  const parsed = parseWorkstationId(rawId);
-  if (!parsed) notFound();
+  if (!parseWorkstationId(rawId)) notFound();
 
-  const workstation = getWorkstationById(rawId);
+  const canonicalId = normalizeWorkstationId(rawId);
+  if (!canonicalId) notFound();
+  if (rawId.trim().toUpperCase() !== canonicalId.toUpperCase()) {
+    redirect(`/production/workstation/${encodeURIComponent(canonicalId)}`);
+  }
+
+  const workstation = getWorkstationById(canonicalId);
   if (!workstation) notFound();
 
   const scanUrl = workstationScanUrl(workstation.id);

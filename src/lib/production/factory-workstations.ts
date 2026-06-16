@@ -1,22 +1,44 @@
 import workstationsData from "@/data/factory-workstations.json";
 
-/** Stable workstation ID — e.g. L1-W01 (line 1, table 1). */
-export function workstationId(lineNumber: number, stationNumber: number): string {
-  return `L${lineNumber}-W${String(stationNumber).padStart(2, "0")}`;
+/** Production line label — e.g. PL1 (production line 1). */
+export function productionLineLabel(lineNumber: number): string {
+  return `PL${lineNumber}`;
 }
 
-export function parseWorkstationId(id: string): { lineNumber: number; stationNumber: number } | null {
-  const match = /^L(\d+)-W(\d{2})$/i.exec(id.trim());
-  if (!match) return null;
-  const lineNumber = Number(match[1]);
-  const stationNumber = Number(match[2]);
+/** Stable workstation / machine ID — e.g. PL-1-1 (line 1, machine 1). */
+export function workstationId(lineNumber: number, stationNumber: number): string {
+  return `PL-${lineNumber}-${stationNumber}`;
+}
+
+function parseWorkstationParts(lineNumber: number, stationNumber: number): { lineNumber: number; stationNumber: number } | null {
   if (!Number.isFinite(lineNumber) || !Number.isFinite(stationNumber)) return null;
   if (lineNumber < 1 || lineNumber > 8 || stationNumber < 1 || stationNumber > 9) return null;
   return { lineNumber, stationNumber };
 }
 
+/** Accepts canonical PL-{line}-{machine} and legacy L{line}-W{machine} IDs. */
+export function parseWorkstationId(id: string): { lineNumber: number; stationNumber: number } | null {
+  const trimmed = id.trim();
+  const canonical = /^PL-(\d+)-(\d+)$/i.exec(trimmed);
+  if (canonical) {
+    return parseWorkstationParts(Number(canonical[1]), Number(canonical[2]));
+  }
+  const legacy = /^L(\d+)-W(\d{2})$/i.exec(trimmed);
+  if (legacy) {
+    return parseWorkstationParts(Number(legacy[1]), Number(legacy[2]));
+  }
+  return null;
+}
+
+/** Canonical PL-{line}-{machine} ID, or null when unrecognised. */
+export function normalizeWorkstationId(id: string): string | null {
+  const parsed = parseWorkstationId(id);
+  if (!parsed) return null;
+  return workstationId(parsed.lineNumber, parsed.stationNumber);
+}
+
 export function workstationLabel(lineNumber: number, stationNumber: number): string {
-  return `Line ${lineNumber} · Table ${stationNumber}`;
+  return `${productionLineLabel(lineNumber)} · Machine ${stationNumber}`;
 }
 
 export function workstationScanUrl(id: string, baseUrl?: string): string {
@@ -75,6 +97,7 @@ export const FACTORY_WORKSTATIONS: FactoryWorkstation[] =
   workstationsData.workstations as FactoryWorkstation[];
 
 export function getWorkstationById(id: string): FactoryWorkstation | undefined {
-  const normalized = id.trim().toUpperCase();
-  return FACTORY_WORKSTATIONS.find((ws) => ws.id.toUpperCase() === normalized);
+  const normalized = normalizeWorkstationId(id);
+  if (!normalized) return undefined;
+  return FACTORY_WORKSTATIONS.find((ws) => ws.id.toUpperCase() === normalized.toUpperCase());
 }

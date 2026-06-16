@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FACTORY_WORKSTATIONS,
+  normalizeWorkstationId,
   type FactoryWorkstation,
 } from "@/lib/production/factory-workstations";
 
@@ -15,7 +16,13 @@ function readOverrides(): PositionOverride {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};
-    return JSON.parse(raw) as PositionOverride;
+    const parsed = JSON.parse(raw) as PositionOverride;
+    const migrated: PositionOverride = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      const normalized = normalizeWorkstationId(key);
+      migrated[normalized ?? key] = value;
+    }
+    return migrated;
   } catch {
     return {};
   }

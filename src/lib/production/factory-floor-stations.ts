@@ -42,7 +42,7 @@ export const FACTORY_FLOOR_STATIONS: FactoryFloorStation[] = floorStations.stati
 export const PRODUCTION_LINE_STYLE = {
   chip: "bg-slate-800 text-white",
   pin: "bg-slate-800 text-white border-white",
-  label: "Production line",
+  label: "PL",
 } as const;
 
 export function isProductionLineStation(

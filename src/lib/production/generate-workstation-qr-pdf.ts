@@ -2,6 +2,7 @@ import { jsPDF } from "jspdf";
 import { qrImageFetchUrl } from "@/lib/production/qr-labels";
 import {
   type FactoryWorkstation,
+  productionLineLabel,
   workstationScanUrl,
 } from "@/lib/production/factory-workstations";
 
@@ -37,7 +38,7 @@ export async function generateWorkstationQrPdf(
   doc.text("Hagan production workstations — scan QR to open ERP", margin, margin + 4);
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
-  doc.text("Place one placard on each sewing table. Line 1 nearest Receive.", margin, margin + 9);
+  doc.text("Place one placard on each sewing machine. PL1 nearest Receive.", margin, margin + 9);
 
   const qrCache = new Map<string, string>();
 
@@ -62,9 +63,12 @@ export async function generateWorkstationQrPdf(
     doc.text(ws.id, x + cellW / 2, qrY + qrSize + 3, { align: "center" });
     doc.setFont("helvetica", "normal");
     doc.setFontSize(6);
-    doc.text(`L${ws.line_number} · T${ws.station_number}`, x + cellW / 2, qrY + qrSize + 6.5, {
-      align: "center",
-    });
+    doc.text(
+      `${productionLineLabel(ws.line_number)} · M${ws.station_number}`,
+      x + cellW / 2,
+      qrY + qrSize + 6.5,
+      { align: "center" }
+    );
   }
 
   return new Uint8Array(doc.output("arraybuffer"));

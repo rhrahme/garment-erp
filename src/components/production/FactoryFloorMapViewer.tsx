@@ -17,6 +17,7 @@ import {
   type FactoryFloorZone,
 } from "@/lib/production/factory-floor-stations";
 import type { FactoryWorkstation } from "@/lib/production/factory-workstations";
+import { productionLineLabel, workstationId } from "@/lib/production/factory-workstations";
 import { scanStageStyles } from "@/lib/production/scan-stage-highlight";
 import { cn } from "@/lib/utils";
 import { WorkstationQrDialog } from "@/components/production/WorkstationQrDialog";
@@ -56,7 +57,7 @@ function StationPin({
       {isLine ? (
         <span
           className={cn(
-            "relative flex h-6 w-6 items-center justify-center rounded-md border-2 text-[11px] font-bold shadow-md",
+            "relative flex h-6 min-w-[2.25rem] items-center justify-center rounded-md border-2 px-0.5 text-[9px] font-bold shadow-md",
             PRODUCTION_LINE_STYLE.pin,
             !dragging && "transition-transform group-hover:scale-110",
             editMode && "h-7 w-7 ring-2 ring-amber-400 ring-offset-1",
@@ -64,7 +65,7 @@ function StationPin({
             dragging && "ring-amber-500"
           )}
         >
-          {station.line_number}
+          {productionLineLabel(station.line_number)}
         </span>
       ) : (
         <span
@@ -110,7 +111,7 @@ function WorkstationPin({
   dragging: boolean;
   onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => void;
 }) {
-  const badgeLabel = `${workstation.line_number}·${workstation.station_number}`;
+  const badgeLabel = workstationId(workstation.line_number, workstation.station_number);
 
   return (
     <button
@@ -560,7 +561,7 @@ export function FactoryFloorMapViewer() {
               <div className="mt-2 space-y-2">
                 <p className="text-lg font-semibold text-slate-900">{selectedWorkstation.id}</p>
                 <span className="inline-block rounded-full bg-slate-800 px-2 py-0.5 text-xs font-medium text-white">
-                  Workstation · Line {selectedWorkstation.line_number}
+                  {productionLineLabel(selectedWorkstation.line_number)}
                 </span>
                 <p className="font-mono text-xs text-slate-500">
                   x {selectedWorkstation.x}% · y {selectedWorkstation.y}%
@@ -634,19 +635,19 @@ export function FactoryFloorMapViewer() {
                   <li className="flex items-center gap-2 text-xs text-slate-700">
                     <span
                       className={cn(
-                        "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border text-[9px] font-bold",
+                        "flex h-4 min-w-[1.75rem] shrink-0 items-center justify-center rounded-sm border px-0.5 text-[8px] font-bold",
                         PRODUCTION_LINE_STYLE.pin
                       )}
                     >
-                      1
+                      PL1
                     </span>
-                    Numbered badges — Line 1 nearest Receive, through Line {productionLineCount}
+                    PL badges — PL1 nearest Receive, through PL{productionLineCount}
                   </li>
                   <li className="flex items-center gap-2 text-xs text-slate-700">
-                    <span className="flex h-5 min-w-[1.75rem] shrink-0 items-center justify-center rounded-md border border-white bg-slate-900 px-1 text-[9px] font-bold text-white shadow-sm">
-                      1·3
+                    <span className="flex h-5 min-w-[2.5rem] shrink-0 items-center justify-center rounded-md border border-white bg-slate-900 px-1 text-[8px] font-bold text-white shadow-sm">
+                      PL-1-3
                     </span>
-                    Workstations (line·table, e.g. 1·3 = Line 1 Table 3) — 72 pins on sewing columns
+                    Machines (PL-{"{line}"}-{"{machine}"}, e.g. PL-1-3) — 72 pins on sewing columns
                   </li>
                 </ul>
               </>
