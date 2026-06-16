@@ -198,18 +198,11 @@ function LabelMapCanvas({
       className="relative w-full overflow-hidden print:h-[190mm] print:w-[277mm] print:max-w-none"
       style={{ aspectRatio: viewportAspectRatio }}
     >
-      <div className="absolute" style={inner}>
+      <div className="absolute bg-white" style={inner}>
         <div
-          className="relative w-full"
+          className="relative w-full bg-white"
           style={{ aspectRatio: `${FACTORY_FLOOR_MAP_ASPECT.width} / ${FACTORY_FLOOR_MAP_ASPECT.height}` }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={FACTORY_FLOOR_MAP_IMAGE}
-            alt="Sewing floor — production line machine labels"
-            className="h-full w-full select-none object-contain print:object-cover"
-            draggable={false}
-          />
           {productionLineStations.map((station) => (
             <LabelMapLinePin key={station.id} station={station} />
           ))}
