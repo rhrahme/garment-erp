@@ -160,7 +160,7 @@ function WorkstationPin({
   );
 }
 
-/** Fixed grid for print — machine 1 at top (line start), machine 9 at bottom, per line. */
+/** Fixed grid for print — PL badge at top; machine 1 at line start (bottom), machine 9 at top of column. */
 function LabelMapGrid() {
   return (
     <div className="grid grid-cols-8 gap-x-1 print:grid-cols-8 print:gap-x-2">
@@ -177,7 +177,7 @@ function LabelMapGrid() {
               {productionLineLabel(lineNumber)}
             </span>
             {Array.from({ length: 9 }, (_, machineIndex) => {
-              const stationNumber = machineIndex + 1;
+              const stationNumber = 9 - machineIndex;
               return (
                 <span
                   key={stationNumber}
