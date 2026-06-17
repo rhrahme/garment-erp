@@ -1,13 +1,15 @@
 import { readPatternJobsAsync } from "@/lib/data/pattern-jobs";
 import { readSalesOrdersAsync } from "@/lib/data/sales-orders";
+import { jobMatchesTab } from "@/lib/pattern/work-tabs";
 import type {
   PatternAwaitingLinesOrder,
   PatternJob,
   PatternJobRow,
   PatternJobStatus,
   PatternOverview,
-  PatternWorkTab,
 } from "@/lib/types/pattern";
+
+export { jobMatchesTab };
 
 const ACTIVE_STATUSES: PatternJobStatus[] = [
   "pending",
@@ -18,27 +20,6 @@ const ACTIVE_STATUSES: PatternJobStatus[] = [
   "ready_for_cutting",
   "blocked",
 ];
-
-export function jobMatchesTab(status: PatternJobStatus, tab: PatternWorkTab): boolean {
-  switch (tab) {
-    case "new":
-      return status === "pending" || status === "assigned";
-    case "drafting":
-      return status === "drafting";
-    case "in_fittings":
-      return status === "awaiting_fitting";
-    case "revising":
-      return status === "revising";
-    case "ready_for_cutting":
-      return status === "ready_for_cutting";
-    case "blocked":
-      return status === "blocked";
-    case "completed":
-      return status === "completed" || status === "cancelled";
-    default:
-      return false;
-  }
-}
 
 export async function listPatternOverview(): Promise<PatternOverview> {
   const [jobsFile, ordersFile] = await Promise.all([readPatternJobsAsync(), readSalesOrdersAsync()]);

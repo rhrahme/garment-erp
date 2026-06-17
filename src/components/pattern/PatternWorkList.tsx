@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Star } from "lucide-react";
-import { jobMatchesTab } from "@/lib/pattern/overview";
+import { jobMatchesTab } from "@/lib/pattern/work-tabs";
 import type { PatternOverview, PatternWorkTab } from "@/lib/types/pattern";
 import { cn } from "@/lib/utils";
 
