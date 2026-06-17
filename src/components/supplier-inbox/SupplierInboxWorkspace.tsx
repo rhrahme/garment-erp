@@ -22,6 +22,28 @@ function lineUpdateLabel(status: SupplierLineUpdate["status"]): string {
   }
 }
 
+function FabricPoLabel({
+  poNumber,
+  clientName,
+  mono = true,
+}: {
+  poNumber: string;
+  clientName?: string | null;
+  mono?: boolean;
+}) {
+  return (
+    <>
+      <span className={mono ? "font-mono font-semibold" : "font-semibold"}>{poNumber}</span>
+      {clientName ? (
+        <>
+          {" · "}
+          <span className="font-medium">{clientName}</span>
+        </>
+      ) : null}
+    </>
+  );
+}
+
 function AvailabilityAlertCard({
   alert,
   onResolved,
@@ -62,13 +84,12 @@ function AvailabilityAlertCard({
               Suggested replacement: <span className="font-mono">{alert.substitute_fabric_number}</span>
             </p>
           )}
-          {(alert.client_name || alert.sales_order_number) && (
+          {alert.po_number && (
             <p className="mt-2 text-sm text-amber-900">
-              {alert.client_name}
+              Fabric PO: <FabricPoLabel poNumber={alert.po_number} clientName={alert.client_name} />
               {alert.sales_order_number ? (
                 <>
-                  {" "}
-                  ·{" "}
+                  {" · "}
                   <Link href={`/orders/${alert.sales_order_id}`} className="font-medium underline">
                     {alert.sales_order_number}
                   </Link>
@@ -76,9 +97,17 @@ function AvailabilityAlertCard({
               ) : null}
             </p>
           )}
-          {alert.po_number && (
-            <p className="mt-1 text-xs text-amber-800">
-              Fabric PO: <span className="font-mono">{alert.po_number}</span>
+          {!alert.po_number && (alert.client_name || alert.sales_order_number) && (
+            <p className="mt-2 text-sm text-amber-900">
+              {alert.client_name}
+              {alert.sales_order_number ? (
+                <>
+                  {alert.client_name ? " · " : null}
+                  <Link href={`/orders/${alert.sales_order_id}`} className="font-medium underline">
+                    {alert.sales_order_number}
+                  </Link>
+                </>
+              ) : null}
             </p>
           )}
           {alert.note && <p className="mt-2 text-xs text-amber-800">{alert.note}</p>}
@@ -323,7 +352,7 @@ export function SupplierInboxWorkspace() {
                   <p className="mt-0.5 text-xs text-slate-500">Received {formatDate(reply.received_at.slice(0, 10))}</p>
                   {reply.po_number && (
                     <p className="mt-2 text-sm text-indigo-800">
-                      Matched PO: <span className="font-mono font-semibold">{reply.po_number}</span>
+                      Matched PO: <FabricPoLabel poNumber={reply.po_number} clientName={reply.client_name} />
                     </p>
                   )}
                 </div>

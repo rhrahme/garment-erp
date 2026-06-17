@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { ensureFabricOrdersLoaded } from "@/lib/integrations/fabric-order-store";
 import { listSupplierReplies } from "@/lib/integrations/supplier-reply-store";
 
 export async function GET() {
   try {
-    await ensureDocumentsLoaded(["supplier_replies"]);
+    await Promise.all([
+      ensureDocumentsLoaded(["supplier_replies"]),
+      ensureFabricOrdersLoaded(),
+    ]);
     const replies = listSupplierReplies();
     return NextResponse.json({ replies });
   } catch (error) {

@@ -2,6 +2,7 @@ import path from "path";
 import { readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
 import { getSupplierByIdFromContactsSync } from "@/lib/data/supplier-contacts";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
+import { resolveClientNameForFabricPo } from "@/lib/integrations/fabric-po-client";
 import { getStoredFabricOrder } from "@/lib/integrations/fabric-order-store";
 import type { SupplierLineUpdate } from "@/lib/integrations/supplier-reply-store";
 
@@ -45,6 +46,15 @@ function writeStore(store: AvailabilityStore): void {
   writeJsonFile(STORE_PATH, store);
 }
 
+function enrichAvailabilityAlertClientName(alert: SupplierAvailabilityAlert): SupplierAvailabilityAlert {
+  if (alert.client_name) return alert;
+  const client_name = resolveClientNameForFabricPo({
+    purchase_order_id: alert.purchase_order_id,
+    po_number: alert.po_number,
+  });
+  return client_name ? { ...alert, client_name } : alert;
+}
+
 export function listSupplierAvailabilityAlerts(options?: {
   pendingOnly?: boolean;
   limit?: number;
@@ -54,7 +64,7 @@ export function listSupplierAvailabilityAlerts(options?: {
   if (options?.pendingOnly) {
     alerts = alerts.filter((alert) => alert.resolution === "pending");
   }
-  return alerts.slice(0, limit);
+  return alerts.slice(0, limit).map(enrichAvailabilityAlertClientName);
 }
 
 export function countPendingAvailabilityAlerts(): number {

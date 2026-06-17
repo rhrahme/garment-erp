@@ -125,7 +125,7 @@ export async function GET(request: Request) {
   const authError = verifyApiKey(request);
   if (authError) return authError;
 
-  await ensureSupplierRepliesLoaded();
+  await Promise.all([ensureSupplierRepliesLoaded(), ensureFabricOrdersLoaded()]);
   const { listSupplierReplies } = await import("@/lib/integrations/supplier-reply-store");
   return NextResponse.json({ replies: listSupplierReplies() });
 }

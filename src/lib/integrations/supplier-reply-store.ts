@@ -1,6 +1,7 @@
 import path from "path";
 import { ensureDocumentsLoaded, readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
 import { isKnownSupplierSender } from "@/lib/email/inbound/supplier-email-match";
+import { resolveClientNameForFabricPo } from "@/lib/integrations/fabric-po-client";
 
 const STORE_PATH = path.join(process.cwd(), "supplier-replies.local.json");
 
@@ -26,6 +27,8 @@ export interface SupplierReplyRecord {
   attachment_names?: string[];
   purchase_order_id?: string | null;
   line_updates?: SupplierLineUpdate[];
+  /** Populated when listing replies — not persisted. */
+  client_name?: string | null;
 }
 
 interface ReplyStore {
@@ -116,6 +119,19 @@ function isDisplayableSupplierReply(reply: SupplierReplyRecord): boolean {
   return isKnownSupplierSender(reply.from_address);
 }
 
+function enrichSupplierReplyClientName(reply: SupplierReplyRecord): SupplierReplyRecord {
+  const client_name =
+    reply.client_name ??
+    resolveClientNameForFabricPo({
+      purchase_order_id: reply.purchase_order_id,
+      po_number: reply.po_number,
+    });
+  return client_name ? { ...reply, client_name } : reply;
+}
+
 export function listSupplierReplies(limit = 100): SupplierReplyRecord[] {
-  return readStore().replies.filter(isDisplayableSupplierReply).slice(0, limit);
+  return readStore()
+    .replies.filter(isDisplayableSupplierReply)
+    .slice(0, limit)
+    .map(enrichSupplierReplyClientName);
 }
