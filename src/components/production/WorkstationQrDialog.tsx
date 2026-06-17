@@ -102,13 +102,7 @@ export function WorkstationQrDialog({
             <Button type="button" variant="secondary" className="w-full" size="sm" onClick={onOpenPdfPreview}>
               Print all placards (PDF)
             </Button>
-          ) : (
-            <a href="/api/factory/workstations?format=pdf" target="_blank" rel="noreferrer">
-              <Button type="button" variant="secondary" className="w-full" size="sm">
-                Print all placards (PDF)
-              </Button>
-            </a>
-          )}
+          ) : null}
           <Button type="button" variant="ghost" className="w-full" size="sm" onClick={handleClose}>
             Close
           </Button>

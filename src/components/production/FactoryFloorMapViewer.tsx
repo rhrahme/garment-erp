@@ -619,110 +619,56 @@ export function FactoryFloorMapViewer() {
         <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-3">
           <div>
             <p className="font-medium text-slate-900">Hagan factory layout</p>
-            <p className="text-sm text-slate-600">
-              {mapView === "label-map" ? (
-                <>
-                  Sewing block only — PL1–PL8 columns with PL-{"{line}"}-{"{machine}"} labels (A4 landscape
-                  print).
-                </>
-              ) : mapView === "workstation-details" ? (
-                <>
-                  Printable cards with full machine use and model/reference for every PL-1-1 … PL-8-9 station.
-                  Machines listed 9→1 with a production line badge at the bottom of each column.
-                </>
-              ) : (
-                <>
-                  Scan stations and production lines on the floor plan — colours match Fabric Receiving &amp; Production.
-                  {!editMode ? (
-                    <span className="mt-1 block text-amber-800">
-                      Use <strong>Adjust pin positions</strong> to drag scan stations and PL line markers onto your
-                      layout.
-                    </span>
-                  ) : null}
-                </>
-              )}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
             {mapView === "interactive" ? (
-              <>
-                <Button
-                  type="button"
-                  variant={editMode ? "primary" : "secondary"}
-                  size="sm"
-                  onClick={() => setEditMode((value) => !value)}
-                >
-                  <Move className="mr-1 h-4 w-4" />
-                  {editMode ? "Done adjusting" : "Adjust pin positions"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setZoom((value) => Math.max(60, value - 15))}
-                  aria-label="Zoom out"
-                >
-                  <ZoomOut className="h-4 w-4" />
-                </Button>
-                <span className="min-w-[3.5rem] text-center text-sm font-medium text-slate-700">{zoom}%</span>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setZoom((value) => Math.min(180, value + 15))}
-                  aria-label="Zoom in"
-                >
-                  <ZoomIn className="h-4 w-4" />
-                </Button>
-                <a href={FACTORY_FLOOR_MAP_PDF} target="_blank" rel="noreferrer">
-                  <Button type="button" variant="secondary" size="sm">
-                    <ExternalLink className="mr-1 h-4 w-4" />
-                    Floor plan PDF
-                  </Button>
-                </a>
-              </>
-            ) : mapView === "label-map" ? (
-              <>
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="sm"
-                  disabled={downloadingLabelMapPdf || printingLabelMapPdf}
-                  onClick={handleDownloadLabelMapPdf}
-                >
-                  <Download className="mr-1 h-4 w-4" />
-                  {downloadingLabelMapPdf ? "Downloading…" : "Download PDF"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  disabled={printingLabelMapPdf || downloadingLabelMapPdf}
-                  onClick={handlePrintLabelMapPdf}
-                >
-                  <Printer className="mr-1 h-4 w-4" />
-                  {printingLabelMapPdf ? "Preparing…" : "Print label map"}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="sm"
-                  disabled={downloadingWorkstationDetailPdf}
-                  onClick={handleDownloadWorkstationDetailPdf}
-                >
-                  <Download className="mr-1 h-4 w-4" />
-                  {downloadingWorkstationDetailPdf ? "Downloading…" : "Download PDF"}
-                </Button>
-                <Button type="button" variant="secondary" size="sm" onClick={() => setQrPdfPreviewOpen(true)}>
-                  <Printer className="mr-1 h-4 w-4" />
-                  Workstation QRs
-                </Button>
-              </>
-            )}
+              <p className="text-sm text-slate-600">
+                Scan stations and production lines on the floor plan — colours match Fabric Receiving &amp; Production.
+                {!editMode ? (
+                  <span className="mt-1 block text-amber-800">
+                    Use <strong>Adjust pin positions</strong> to drag scan stations and PL line markers onto your
+                    layout.
+                  </span>
+                ) : null}
+              </p>
+            ) : null}
           </div>
+          {mapView === "interactive" ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant={editMode ? "primary" : "secondary"}
+                size="sm"
+                onClick={() => setEditMode((value) => !value)}
+              >
+                <Move className="mr-1 h-4 w-4" />
+                {editMode ? "Done adjusting" : "Adjust pin positions"}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setZoom((value) => Math.max(60, value - 15))}
+                aria-label="Zoom out"
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <span className="min-w-[3.5rem] text-center text-sm font-medium text-slate-700">{zoom}%</span>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setZoom((value) => Math.min(180, value + 15))}
+                aria-label="Zoom in"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <a href={FACTORY_FLOOR_MAP_PDF} target="_blank" rel="noreferrer">
+                <Button type="button" variant="secondary" size="sm">
+                  <ExternalLink className="mr-1 h-4 w-4" />
+                  Floor plan PDF
+                </Button>
+              </a>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -862,6 +808,28 @@ export function FactoryFloorMapViewer() {
                   : "Handwriting layout — taller cells with extra space below each machine (PL1+PL2, PL3+PL4, …)."}
               </p>
             </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                disabled={downloadingLabelMapPdf || printingLabelMapPdf}
+                onClick={handleDownloadLabelMapPdf}
+              >
+                <Download className="mr-1 h-4 w-4" />
+                {downloadingLabelMapPdf ? "Downloading…" : "Download PDF"}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={printingLabelMapPdf || downloadingLabelMapPdf}
+                onClick={handlePrintLabelMapPdf}
+              >
+                <Printer className="mr-1 h-4 w-4" />
+                {printingLabelMapPdf ? "Preparing…" : "Print label map"}
+              </Button>
+            </div>
           </div>
           {labelMapDownloadError ? (
             <p className="mt-3 text-sm font-medium text-red-700">{labelMapDownloadError}</p>
@@ -869,71 +837,59 @@ export function FactoryFloorMapViewer() {
         </div>
       ) : mapView === "workstation-details" ? (
         <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 print:hidden">
-          <div className="space-y-2">
-            <p className="font-semibold">Workstation details — printable cards</p>
-            <p className="text-slate-600">
-              Full-detail cards (large ID, machine use, model/reference) for every PL-1-1 … PL-8-9 station.
-            </p>
-            <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
-              <button
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="space-y-2">
+              <p className="font-semibold">Workstation details — printable cards</p>
+              <p className="text-slate-600">
+                Full-detail cards (large ID, machine use, model/reference) for every PL-1-1 … PL-8-9 station.
+              </p>
+              <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setWorkstationDetailLayout("pairs")}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                    workstationDetailLayout === "pairs"
+                      ? "bg-slate-800 text-white"
+                      : "text-slate-700 hover:bg-white"
+                  )}
+                >
+                  2 lines per page (4 pages)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWorkstationDetailLayout("all")}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                    workstationDetailLayout === "all"
+                      ? "bg-slate-800 text-white"
+                      : "text-slate-700 hover:bg-white"
+                  )}
+                >
+                  1 line per page (8 pages)
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
                 type="button"
-                onClick={() => setWorkstationDetailLayout("pairs")}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                  workstationDetailLayout === "pairs"
-                    ? "bg-slate-800 text-white"
-                    : "text-slate-700 hover:bg-white"
-                )}
+                variant="primary"
+                size="sm"
+                disabled={downloadingWorkstationDetailPdf}
+                onClick={handleDownloadWorkstationDetailPdf}
               >
-                2 lines per page (4 pages)
-              </button>
-              <button
-                type="button"
-                onClick={() => setWorkstationDetailLayout("all")}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                  workstationDetailLayout === "all"
-                    ? "bg-slate-800 text-white"
-                    : "text-slate-700 hover:bg-white"
-                )}
-              >
-                1 line per page (8 pages)
-              </button>
+                <Download className="mr-1 h-4 w-4" />
+                {downloadingWorkstationDetailPdf ? "Downloading…" : "Download PDF"}
+              </Button>
+              <Button type="button" variant="secondary" size="sm" onClick={() => setQrPdfPreviewOpen(true)}>
+                <Printer className="mr-1 h-4 w-4" />
+                Workstation QRs
+              </Button>
             </div>
           </div>
           {workstationDetailDownloadError ? (
             <p className="mt-3 text-sm font-medium text-red-700">{workstationDetailDownloadError}</p>
           ) : null}
-        </div>
-      ) : null}
-
-      {mapView === "label-map" ? (
-        <div className="sticky top-0 z-10 flex flex-wrap items-center justify-center gap-3 rounded-xl border-2 border-indigo-400 bg-indigo-600 px-4 py-4 shadow-md print:hidden">
-          <p className="w-full text-center text-sm font-semibold text-white sm:w-auto sm:text-left">
-            Ready to print machine stickers
-          </p>
-          <Button
-            type="button"
-            variant="secondary"
-            size="md"
-            className="min-h-11 border-0 bg-white px-8 text-base font-semibold text-indigo-700 shadow-sm hover:bg-indigo-50"
-            disabled={downloadingLabelMapPdf || printingLabelMapPdf}
-            onClick={handleDownloadLabelMapPdf}
-          >
-            <Download className="mr-2 h-5 w-5" />
-            {downloadingLabelMapPdf ? "Downloading…" : "Download PDF"}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="md"
-            className="min-h-11 px-6 text-base text-white hover:bg-indigo-500/80"
-            disabled={printingLabelMapPdf || downloadingLabelMapPdf}
-            onClick={handlePrintLabelMapPdf}
-          >
-            <Printer className="mr-2 h-5 w-5" />
-            {printingLabelMapPdf ? "Preparing…" : "Print label map"}
-          </Button>
         </div>
       ) : null}
 
@@ -1115,16 +1071,9 @@ export function FactoryFloorMapViewer() {
       ) : null}
 
       {mapView === "interactive" && qrWorkstation ? (
-        <WorkstationQrDialog
-          workstation={qrWorkstation}
-          onClose={() => setQrWorkstation(null)}
-          onOpenPdfPreview={() => {
-            setQrWorkstation(null);
-            setQrPdfPreviewOpen(true);
-          }}
-        />
+        <WorkstationQrDialog workstation={qrWorkstation} onClose={() => setQrWorkstation(null)} />
       ) : null}
-      {mapView === "interactive" || mapView === "workstation-details" ? (
+      {mapView === "workstation-details" ? (
         <WorkstationQrPdfPreviewModal open={qrPdfPreviewOpen} onClose={() => setQrPdfPreviewOpen(false)} />
       ) : null}
     </div>
