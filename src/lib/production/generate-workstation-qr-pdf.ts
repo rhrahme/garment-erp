@@ -69,6 +69,21 @@ export async function generateWorkstationQrPdf(
       qrY + qrSize + 6.5,
       { align: "center" }
     );
+
+    let detailY = qrY + qrSize + 9;
+    if (ws.machine_use) {
+      doc.setFontSize(4.5);
+      doc.setFont("helvetica", "normal");
+      const useLines = doc.splitTextToSize(ws.machine_use, cellW - 2);
+      doc.text(useLines.slice(0, 2), x + cellW / 2, detailY, { align: "center" });
+      detailY += useLines.slice(0, 2).length * 2;
+    }
+    if (ws.machine_reference) {
+      doc.setFontSize(4);
+      doc.setFont("helvetica", "bold");
+      const refLines = doc.splitTextToSize(ws.machine_reference, cellW - 2);
+      doc.text(refLines.slice(0, 2), x + cellW / 2, detailY, { align: "center" });
+    }
   }
 
   return new Uint8Array(doc.output("arraybuffer"));

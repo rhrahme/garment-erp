@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-16T20:36:34.696Z",
+  "updated_at": "2026-06-17T15:06:03.691Z",
   "workstations": [
     {
       "id": "PL-1-1",
@@ -7,7 +7,9 @@
       "station_number": 1,
       "label": "PL1 · Machine 1",
       "x": 48,
-      "y": 65
+      "y": 65,
+      "machine_use": null,
+      "machine_reference": null
     },
     {
       "id": "PL-1-2",
@@ -15,7 +17,9 @@
       "station_number": 2,
       "label": "PL1 · Machine 2",
       "x": 48,
-      "y": 61.3
+      "y": 61.3,
+      "machine_use": null,
+      "machine_reference": null
     },
     {
       "id": "PL-1-3",
@@ -23,7 +27,9 @@
       "station_number": 3,
       "label": "PL1 · Machine 3",
       "x": 48,
-      "y": 57.5
+      "y": 57.5,
+      "machine_use": null,
+      "machine_reference": null
     },
     {
       "id": "PL-1-4",
@@ -31,7 +37,9 @@
       "station_number": 4,
       "label": "PL1 · Machine 4",
       "x": 48,
-      "y": 53.8
+      "y": 53.8,
+      "machine_use": null,
+      "machine_reference": null
     },
     {
       "id": "PL-1-5",
@@ -39,7 +47,9 @@
       "station_number": 5,
       "label": "PL1 · Machine 5",
       "x": 48,
-      "y": 50
+      "y": 50,
+      "machine_use": null,
+      "machine_reference": null
     },
     {
       "id": "PL-1-6",
@@ -47,7 +57,9 @@
       "station_number": 6,
       "label": "PL1 · Machine 6",
       "x": 48,
-      "y": 46.3
+      "y": 46.3,
+      "machine_use": null,
+      "machine_reference": null
     },
     {
       "id": "PL-1-7",
@@ -55,7 +67,9 @@
       "station_number": 7,
       "label": "PL1 · Machine 7",
       "x": 48,
-      "y": 42.5
+      "y": 42.5,
+      "machine_use": null,
+      "machine_reference": null
     },
     {
       "id": "PL-1-8",
@@ -63,7 +77,9 @@
       "station_number": 8,
       "label": "PL1 · Machine 8",
       "x": 48,
-      "y": 38.8
+      "y": 38.8,
+      "machine_use": null,
+      "machine_reference": null
     },
     {
       "id": "PL-1-9",
@@ -71,7 +87,9 @@
       "station_number": 9,
       "label": "PL1 · Machine 9",
       "x": 48,
-      "y": 35
+      "y": 35,
+      "machine_use": null,
+      "machine_reference": null
     },
     {
       "id": "PL-2-1",
@@ -79,7 +97,9 @@
       "station_number": 1,
       "label": "PL2 · Machine 1",
       "x": 54,
-      "y": 65
+      "y": 65,
+      "machine_use": "ZHE JIANG Sote Sewing Machine",
+      "machine_reference": "ST-360L"
     },
     {
       "id": "PL-2-2",
@@ -87,7 +107,9 @@
       "station_number": 2,
       "label": "PL2 · Machine 2",
       "x": 54,
-      "y": 61.3
+      "y": 61.3,
+      "machine_use": "ELASTIC Machine Belt",
+      "machine_reference": "JK-8009VCDi-12064PR"
     },
     {
       "id": "PL-2-3",
@@ -95,7 +117,9 @@
       "station_number": 3,
       "label": "PL2 · Machine 3",
       "x": 54,
-      "y": 57.5
+      "y": 57.5,
+      "machine_use": "Joining Machine OVER COAT",
+      "machine_reference": "ST-313L"
     },
     {
       "id": "PL-2-4",
@@ -103,7 +127,9 @@
       "station_number": 4,
       "label": "PL2 · Machine 4",
       "x": 54,
-      "y": 53.8
+      "y": 53.8,
+      "machine_use": "LAPEL Extra fabric Cutting Cutter",
+      "machine_reference": "ST-70P"
     },
     {
       "id": "PL-2-5",
@@ -111,7 +137,9 @@
       "station_number": 5,
       "label": "PL2 · Machine 5",
       "x": 54,
-      "y": 50
+      "y": 50,
+      "machine_use": null,
+      "machine_reference": "ST-103D"
     },
     {
       "id": "PL-2-6",
@@ -119,7 +147,9 @@
       "station_number": 6,
       "label": "PL2 · Machine 6",
       "x": 54,
-      "y": 46.3
+      "y": 46.3,
+      "machine_use": "DOUBLE NEEDLE CHAIN STITCH",
+      "machine_reference": "JK-8558G-WZ"
     },
     {
       "id": "PL-2-7",
@@ -127,7 +157,9 @@
       "station_number": 7,
       "label": "PL2 · Machine 7",
       "x": 54,
-      "y": 42.5
+      "y": 42.5,
+      "machine_use": "METAL BUTTON MACHINE",
+      "machine_reference": "XD-818D"
     },
     {
       "id": "PL-2-8",
@@ -135,7 +167,9 @@
       "station_number": 8,
       "label": "PL2 · Machine 8",
       "x": 54,
-      "y": 38.8
+      "y": 38.8,
+      "machine_use": "METAL BUTTON MACHINE",
+      "machine_reference": "XD-818D"
     },
     {
       "id": "PL-2-9",
@@ -143,7 +177,9 @@
       "station_number": 9,
       "label": "PL2 · Machine 9",
       "x": 54,
-      "y": 35
+      "y": 35,
+      "machine_use": "BONE POCKET MACHINE",
+      "machine_reference": "ZJAPW-2520-SJ"
     },
     {
       "id": "PL-3-1",
@@ -151,7 +187,9 @@
       "station_number": 1,
       "label": "PL3 · Machine 1",
       "x": 60,
-      "y": 65
+      "y": 65,
+      "machine_use": "Pocket Making Machine Trousers",
+      "machine_reference": "ZJ-M3-S500-SF-V2"
     },
     {
       "id": "PL-3-2",
@@ -159,7 +197,9 @@
       "station_number": 2,
       "label": "PL3 · Machine 2",
       "x": 60,
-      "y": 61.3
+      "y": 61.3,
+      "machine_use": "Vacuum Table Ironing",
+      "machine_reference": "JN-1190P-GH"
     },
     {
       "id": "PL-3-3",
@@ -167,7 +207,9 @@
       "station_number": 3,
       "label": "PL3 · Machine 3",
       "x": 60,
-      "y": 57.5
+      "y": 57.5,
+      "machine_use": "Flat Machine",
+      "machine_reference": "KSE-UT-33AB"
     },
     {
       "id": "PL-3-4",
@@ -175,7 +217,9 @@
       "station_number": 4,
       "label": "PL3 · Machine 4",
       "x": 60,
-      "y": 53.8
+      "y": 53.8,
+      "machine_use": "Flat Machine",
+      "machine_reference": "KSE-UT-35ACx356/Z"
     },
     {
       "id": "PL-3-5",
@@ -183,7 +227,9 @@
       "station_number": 5,
       "label": "PL3 · Machine 5",
       "x": 60,
-      "y": 50
+      "y": 50,
+      "machine_use": "Triple Needle Chain Stitch",
+      "machine_reference": "ZJ3800-BD"
     },
     {
       "id": "PL-3-6",
@@ -191,7 +237,9 @@
       "station_number": 6,
       "label": "PL3 · Machine 6",
       "x": 60,
-      "y": 46.3
+      "y": 46.3,
+      "machine_use": "Double Needle Chain Stitch",
+      "machine_reference": "ZJ-3830H-P-PLB-J-BD"
     },
     {
       "id": "PL-3-7",
@@ -199,7 +247,9 @@
       "station_number": 7,
       "label": "PL3 · Machine 7",
       "x": 60,
-      "y": 42.5
+      "y": 42.5,
+      "machine_use": "Elastic Machine",
+      "machine_reference": "JK-8009VC-04064PR/WL"
     },
     {
       "id": "PL-3-8",
@@ -207,7 +257,9 @@
       "station_number": 8,
       "label": "PL3 · Machine 8",
       "x": 60,
-      "y": 38.8
+      "y": 38.8,
+      "machine_use": "Double Needle Machine",
+      "machine_reference": "ZJ-2875PA-5-BD-B3-AF-3/02"
     },
     {
       "id": "PL-3-9",
@@ -215,7 +267,9 @@
       "station_number": 9,
       "label": "PL3 · Machine 9",
       "x": 60,
-      "y": 35
+      "y": 35,
+      "machine_use": null,
+      "machine_reference": null
     },
     {
       "id": "PL-4-1",
@@ -223,7 +277,9 @@
       "station_number": 1,
       "label": "PL4 · Machine 1",
       "x": 66,
-      "y": 65
+      "y": 65,
+      "machine_use": "Fedo Machine",
+      "machine_reference": "JK-T9270D-12-2PL"
     },
     {
       "id": "PL-4-2",
@@ -231,7 +287,9 @@
       "station_number": 2,
       "label": "PL4 · Machine 2",
       "x": 66,
-      "y": 61.3
+      "y": 61.3,
+      "machine_use": "Coller Adjustment Machine",
+      "machine_reference": "EW-2000-02"
     },
     {
       "id": "PL-4-3",
@@ -239,7 +297,9 @@
       "station_number": 3,
       "label": "PL4 · Machine 3",
       "x": 66,
-      "y": 57.5
+      "y": 57.5,
+      "machine_use": "Stitching Machine",
+      "machine_reference": "DDL-5550"
     },
     {
       "id": "PL-4-4",
@@ -247,7 +307,9 @@
       "station_number": 4,
       "label": "PL4 · Machine 4",
       "x": 66,
-      "y": 53.8
+      "y": 53.8,
+      "machine_use": "Stitching Machine",
+      "machine_reference": "288A00349"
     },
     {
       "id": "PL-4-5",
@@ -255,7 +317,9 @@
       "station_number": 5,
       "label": "PL4 · Machine 5",
       "x": 66,
-      "y": 50
+      "y": 50,
+      "machine_use": "Stitching Machine",
+      "machine_reference": "ASE-A"
     },
     {
       "id": "PL-4-6",
@@ -263,7 +327,9 @@
       "station_number": 6,
       "label": "PL4 · Machine 6",
       "x": 66,
-      "y": 46.3
+      "y": 46.3,
+      "machine_use": "Stitching Machine",
+      "machine_reference": "ASE-A"
     },
     {
       "id": "PL-4-7",
@@ -271,7 +337,9 @@
       "station_number": 7,
       "label": "PL4 · Machine 7",
       "x": 66,
-      "y": 42.5
+      "y": 42.5,
+      "machine_use": "Stitching Machine",
+      "machine_reference": "ASE-A"
     },
     {
       "id": "PL-4-8",
@@ -279,7 +347,9 @@
       "station_number": 8,
       "label": "PL4 · Machine 8",
       "x": 66,
-      "y": 38.8
+      "y": 38.8,
+      "machine_use": "Stitching Machine",
+      "machine_reference": "ASE-A"
     },
     {
       "id": "PL-4-9",
@@ -287,7 +357,9 @@
       "station_number": 9,
       "label": "PL4 · Machine 9",
       "x": 66,
-      "y": 35
+      "y": 35,
+      "machine_use": null,
+      "machine_reference": null
     },
     {
       "id": "PL-5-1",
@@ -295,7 +367,9 @@
       "station_number": 1,
       "label": "PL5 · Machine 1",
       "x": 71,
-      "y": 65
+      "y": 65,
+      "machine_use": "POCKET Ironing Plant",
+      "machine_reference": "TB-58"
     },
     {
       "id": "PL-5-2",
@@ -303,7 +377,9 @@
       "station_number": 2,
       "label": "PL5 · Machine 2",
       "x": 71,
-      "y": 61.3
+      "y": 61.3,
+      "machine_use": "Vaccum Table Ironing",
+      "machine_reference": "JN-1190J-GH"
     },
     {
       "id": "PL-5-3",
@@ -311,7 +387,9 @@
       "station_number": 3,
       "label": "PL5 · Machine 3",
       "x": 71,
-      "y": 57.5
+      "y": 57.5,
+      "machine_use": "Vaccum Table Ironing",
+      "machine_reference": "JN-VBSH-P"
     },
     {
       "id": "PL-5-4",
@@ -319,7 +397,9 @@
       "station_number": 4,
       "label": "PL5 · Machine 4",
       "x": 71,
-      "y": 53.8
+      "y": 53.8,
+      "machine_use": "Stitching Machine",
+      "machine_reference": "ASE-A"
     },
     {
       "id": "PL-5-5",
@@ -327,7 +407,9 @@
       "station_number": 5,
       "label": "PL5 · Machine 5",
       "x": 71,
-      "y": 50
+      "y": 50,
+      "machine_use": "Stitching Machine",
+      "machine_reference": "ASE-A"
     },
     {
       "id": "PL-5-6",
@@ -335,7 +417,9 @@
       "station_number": 6,
       "label": "PL5 · Machine 6",
       "x": 71,
-      "y": 46.3
+      "y": 46.3,
+      "machine_use": "Stitching Machine",
+      "machine_reference": "ASE-A"
     },
     {
       "id": "PL-5-7",
@@ -343,7 +427,9 @@
       "station_number": 7,
       "label": "PL5 · Machine 7",
       "x": 71,
-      "y": 42.5
+      "y": 42.5,
+      "machine_use": "Stitching Machine",
+      "machine_reference": "ASE-A"
     },
     {
       "id": "PL-5-8",
@@ -351,7 +437,9 @@
       "station_number": 8,
       "label": "PL5 · Machine 8",
       "x": 71,
-      "y": 38.8
+      "y": 38.8,
+      "machine_use": "Stitching Machine",
+      "machine_reference": "A9200L-D4S-W-CP/02"
     },
     {
       "id": "PL-5-9",
@@ -359,7 +447,9 @@
       "station_number": 9,
       "label": "PL5 · Machine 9",
       "x": 71,
-      "y": 35
+      "y": 35,
+      "machine_use": null,
+      "machine_reference": null
     },
     {
       "id": "PL-6-1",
@@ -367,7 +457,9 @@
       "station_number": 1,
       "label": "PL6 · Machine 1",
       "x": 77,
-      "y": 65
+      "y": 65,
+      "machine_use": "Trial Showing Thread Machine",
+      "machine_reference": "HT-1000"
     },
     {
       "id": "PL-6-2",
@@ -375,7 +467,9 @@
       "station_number": 2,
       "label": "PL6 · Machine 2",
       "x": 77,
-      "y": 61.3
+      "y": 61.3,
+      "machine_use": "Safty over lock",
+      "machine_reference": "B9500-70-02"
     },
     {
       "id": "PL-6-3",
@@ -383,7 +477,9 @@
       "station_number": 3,
       "label": "PL6 · Machine 3",
       "x": 77,
-      "y": 57.5
+      "y": 57.5,
+      "machine_use": "Stitching Machine",
+      "machine_reference": "ASE-A"
     },
     {
       "id": "PL-6-4",
@@ -391,7 +487,9 @@
       "station_number": 4,
       "label": "PL6 · Machine 4",
       "x": 77,
-      "y": 53.8
+      "y": 53.8,
+      "machine_use": "Stitching Machine",
+      "machine_reference": "ASE-A"
     },
     {
       "id": "PL-6-5",
@@ -399,7 +497,9 @@
       "station_number": 5,
       "label": "PL6 · Machine 5",
       "x": 77,
-      "y": 50
+      "y": 50,
+      "machine_use": "Stitching Machine",
+      "machine_reference": "ASE-A"
     },
     {
       "id": "PL-6-6",
@@ -407,7 +507,9 @@
       "station_number": 6,
       "label": "PL6 · Machine 6",
       "x": 77,
-      "y": 46.3
+      "y": 46.3,
+      "machine_use": "Stitching Machine",
+      "machine_reference": "A9200L-D4S-W-CP/02"
     },
     {
       "id": "PL-6-7",
@@ -415,7 +517,9 @@
       "station_number": 7,
       "label": "PL6 · Machine 7",
       "x": 77,
-      "y": 42.5
+      "y": 42.5,
+      "machine_use": "Stitching Machine",
+      "machine_reference": "ASE-A"
     },
     {
       "id": "PL-6-8",
@@ -423,7 +527,9 @@
       "station_number": 8,
       "label": "PL6 · Machine 8",
       "x": 77,
-      "y": 38.8
+      "y": 38.8,
+      "machine_use": "Inerbelt Stitching Machine",
+      "machine_reference": "FX-160-20"
     },
     {
       "id": "PL-6-9",
@@ -431,7 +537,9 @@
       "station_number": 9,
       "label": "PL6 · Machine 9",
       "x": 77,
-      "y": 35
+      "y": 35,
+      "machine_use": null,
+      "machine_reference": null
     },
     {
       "id": "PL-7-1",
@@ -439,7 +547,9 @@
       "station_number": 1,
       "label": "PL7 · Machine 1",
       "x": 83,
-      "y": 65
+      "y": 65,
+      "machine_use": "Zigzag Machine",
+      "machine_reference": "PI-720-1.3M"
     },
     {
       "id": "PL-7-2",
@@ -447,7 +557,9 @@
       "station_number": 2,
       "label": "PL7 · Machine 2",
       "x": 83,
-      "y": 61.3
+      "y": 61.3,
+      "machine_use": "Zigzag Machine",
+      "machine_reference": "20U457-D"
     },
     {
       "id": "PL-7-3",
@@ -455,7 +567,9 @@
       "station_number": 3,
       "label": "PL7 · Machine 3",
       "x": 83,
-      "y": 57.5
+      "y": 57.5,
+      "machine_use": "Vaccum Table Ironing",
+      "machine_reference": "JW-VBSP-H"
     },
     {
       "id": "PL-7-4",
@@ -463,7 +577,9 @@
       "station_number": 4,
       "label": "PL7 · Machine 4",
       "x": 83,
-      "y": 53.8
+      "y": 53.8,
+      "machine_use": "Vaccum Table Ironing",
+      "machine_reference": "JW-110P-GH"
     },
     {
       "id": "PL-7-5",
@@ -471,7 +587,9 @@
       "station_number": 5,
       "label": "PL7 · Machine 5",
       "x": 83,
-      "y": 50
+      "y": 50,
+      "machine_use": "Stitching machine",
+      "machine_reference": "DDL-5550"
     },
     {
       "id": "PL-7-6",
@@ -479,7 +597,9 @@
       "station_number": 6,
       "label": "PL7 · Machine 6",
       "x": 83,
-      "y": 46.3
+      "y": 46.3,
+      "machine_use": "Baby overlock",
+      "machine_reference": "ZJ-9528-13-BD"
     },
     {
       "id": "PL-7-7",
@@ -487,7 +607,9 @@
       "station_number": 7,
       "label": "PL7 · Machine 7",
       "x": 83,
-      "y": 42.5
+      "y": 42.5,
+      "machine_use": "Lata Machine",
+      "machine_reference": "ZJ101-BD"
     },
     {
       "id": "PL-7-8",
@@ -495,7 +617,9 @@
       "station_number": 8,
       "label": "PL7 · Machine 8",
       "x": 83,
-      "y": 38.8
+      "y": 38.8,
+      "machine_use": "Sefty overlock",
+      "machine_reference": "MO-6716S"
     },
     {
       "id": "PL-7-9",
@@ -503,7 +627,9 @@
       "station_number": 9,
       "label": "PL7 · Machine 9",
       "x": 83,
-      "y": 35
+      "y": 35,
+      "machine_use": null,
+      "machine_reference": null
     },
     {
       "id": "PL-8-1",
@@ -511,7 +637,9 @@
       "station_number": 1,
       "label": "PL8 · Machine 1",
       "x": 89,
-      "y": 65
+      "y": 65,
+      "machine_use": "Alite Machine Button Hole",
+      "machine_reference": "ZJ5821A"
     },
     {
       "id": "PL-8-2",
@@ -519,7 +647,9 @@
       "station_number": 2,
       "label": "PL8 · Machine 2",
       "x": 89,
-      "y": 61.3
+      "y": 61.3,
+      "machine_use": "Arravi Machine Button Hole",
+      "machine_reference": "LBH-781"
     },
     {
       "id": "PL-8-3",
@@ -527,7 +657,9 @@
       "station_number": 3,
       "label": "PL8 · Machine 3",
       "x": 89,
-      "y": 57.5
+      "y": 57.5,
+      "machine_use": "Button Machine Shirt",
+      "machine_reference": "MB-1373"
     },
     {
       "id": "PL-8-4",
@@ -535,7 +667,9 @@
       "station_number": 4,
       "label": "PL8 · Machine 4",
       "x": 89,
-      "y": 53.8
+      "y": 53.8,
+      "machine_use": "Button Machine",
+      "machine_reference": "ZJ1903D-301-3/04-V4"
     },
     {
       "id": "PL-8-5",
@@ -543,7 +677,9 @@
       "station_number": 5,
       "label": "PL8 · Machine 5",
       "x": 89,
-      "y": 50
+      "y": 50,
+      "machine_use": "CHAMPA Machine OUT SIDE",
+      "machine_reference": "781-E"
     },
     {
       "id": "PL-8-6",
@@ -551,7 +687,9 @@
       "station_number": 6,
       "label": "PL8 · Machine 6",
       "x": 89,
-      "y": 46.3
+      "y": 46.3,
+      "machine_use": "CHAMPA Machine INSIDE",
+      "machine_reference": "ZJ200"
     },
     {
       "id": "PL-8-7",
@@ -559,7 +697,9 @@
       "station_number": 7,
       "label": "PL8 · Machine 7",
       "x": 89,
-      "y": 42.5
+      "y": 42.5,
+      "machine_use": "D-BRTAK",
+      "machine_reference": "ZJ1900DSS-3/04-V4"
     },
     {
       "id": "PL-8-8",
@@ -567,7 +707,9 @@
       "station_number": 8,
       "label": "PL8 · Machine 8",
       "x": 89,
-      "y": 38.8
+      "y": 38.8,
+      "machine_use": "Lupe Machine",
+      "machine_reference": "CM-861D"
     },
     {
       "id": "PL-8-9",
@@ -575,7 +717,9 @@
       "station_number": 9,
       "label": "PL8 · Machine 9",
       "x": 89,
-      "y": 35
+      "y": 35,
+      "machine_use": "Lata Machine",
+      "machine_reference": "BS-352"
     }
   ]
 }

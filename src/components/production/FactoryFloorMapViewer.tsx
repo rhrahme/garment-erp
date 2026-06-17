@@ -18,6 +18,8 @@ import {
 } from "@/lib/production/factory-floor-stations";
 import type { FactoryWorkstation } from "@/lib/production/factory-workstations";
 import {
+  hasMachineInfo,
+  machineInfoLines,
   productionLineLabel,
   workstationId,
 } from "@/lib/production/factory-workstations";
@@ -181,6 +183,7 @@ function WorkstationPin({
   onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => void;
 }) {
   const badgeLabel = workstationId(workstation.line_number, workstation.station_number);
+  const machineLines = machineInfoLines(workstation);
 
   if (labelMap) {
     return (
@@ -219,6 +222,21 @@ function WorkstationPin({
       >
         {badgeLabel}
       </span>
+      {hasMachineInfo(workstation) ? (
+        <span
+          className={cn(
+            "pointer-events-none absolute left-1/2 top-full z-20 mt-1 max-w-[9rem] -translate-x-1/2 rounded border border-slate-200 bg-white px-1.5 py-1 text-left text-[9px] font-medium leading-tight text-slate-700 shadow-md",
+            active || dragging ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+            editMode && "opacity-100"
+          )}
+        >
+          {machineLines.map((line) => (
+            <span key={line} className="block truncate">
+              {line}
+            </span>
+          ))}
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -918,6 +936,18 @@ export function FactoryFloorMapViewer() {
                   x {selectedWorkstation.x}% · y {selectedWorkstation.y}%
                 </p>
                 <p className="text-sm text-slate-600">{selectedWorkstation.label}</p>
+                {hasMachineInfo(selectedWorkstation) ? (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                    {selectedWorkstation.machine_use ? (
+                      <p className="font-medium text-slate-900">{selectedWorkstation.machine_use}</p>
+                    ) : null}
+                    {selectedWorkstation.machine_reference ? (
+                      <p className="font-mono text-xs text-slate-600">{selectedWorkstation.machine_reference}</p>
+                    ) : null}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500">No machine use recorded on factory sheet.</p>
+                )}
                 {!editMode ? (
                   <button
                     type="button"

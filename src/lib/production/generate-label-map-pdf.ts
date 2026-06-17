@@ -1,5 +1,9 @@
 import { jsPDF } from "jspdf";
-import { productionLineLabel, workstationId } from "@/lib/production/factory-workstations";
+import {
+  FACTORY_WORKSTATIONS,
+  productionLineLabel,
+  workstationId,
+} from "@/lib/production/factory-workstations";
 
 const LINE_COUNT = 8;
 const MACHINE_COUNT = 9;
@@ -23,6 +27,10 @@ function drawTitle(doc: jsPDF, pageW: number, margin: number, text: string) {
   doc.setFont("helvetica", "bold");
   doc.setTextColor(0);
   doc.text(text, pageW / 2, margin + 4, { align: "center" });
+}
+
+function workstationMachineInfo(id: string) {
+  return FACTORY_WORKSTATIONS.find((ws) => ws.id === id);
 }
 
 function drawColumn(
@@ -52,9 +60,35 @@ function drawColumn(
     if (metrics.labelAtTop) {
       doc.setFontSize(10);
       doc.text(label, x + w / 2, y + 5, { align: "center" });
+
+      const ws = workstationMachineInfo(label);
+      if (ws?.machine_use || ws?.machine_reference) {
+        doc.setFontSize(6.5);
+        doc.setFont("helvetica", "normal");
+        let textY = y + 9;
+        if (ws.machine_use) {
+          const useLines = doc.splitTextToSize(ws.machine_use, w - 2);
+          doc.text(useLines.slice(0, 2), x + w / 2, textY, { align: "center" });
+          textY += useLines.slice(0, 2).length * 2.8;
+        }
+        if (ws.machine_reference) {
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(6);
+          const refLines = doc.splitTextToSize(ws.machine_reference, w - 2);
+          doc.text(refLines.slice(0, 2), x + w / 2, textY, { align: "center" });
+        }
+      }
     } else {
       doc.setFontSize(8);
       doc.text(label, x + w / 2, y + h / 2 + 1, { align: "center" });
+
+      const ws = workstationMachineInfo(label);
+      if (ws?.machine_reference) {
+        doc.setFontSize(4.5);
+        doc.setFont("helvetica", "normal");
+        const refLines = doc.splitTextToSize(ws.machine_reference, w - 1);
+        doc.text(refLines[0], x + w / 2, y + h - 1.5, { align: "center" });
+      }
     }
   }
 

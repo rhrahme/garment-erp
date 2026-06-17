@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { workstationScanUrl } from "@/lib/production/factory-workstations";
+import { hasMachineInfo, workstationScanUrl } from "@/lib/production/factory-workstations";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 import type { FactoryWorkstation } from "@/lib/production/factory-workstations";
 
@@ -60,6 +60,14 @@ export function WorkstationQrDialog({
               {workstation.id}
             </p>
             <p className="text-sm text-slate-600">{workstation.label}</p>
+            {hasMachineInfo(workstation) ? (
+              <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5 text-left text-xs text-slate-700">
+                {workstation.machine_use ? <p className="font-medium text-slate-900">{workstation.machine_use}</p> : null}
+                {workstation.machine_reference ? (
+                  <p className="font-mono text-[10px] text-slate-600">{workstation.machine_reference}</p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
           <button
             type="button"

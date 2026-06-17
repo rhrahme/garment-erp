@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import {
   getWorkstationById,
+  hasMachineInfo,
   normalizeWorkstationId,
   parseWorkstationId,
   workstationLabel,
@@ -49,6 +50,18 @@ export default async function WorkstationPage({ params }: PageProps) {
           <p className="mt-1 text-3xl font-bold text-slate-900">{workstation.id}</p>
           <p className="mt-1 text-sm text-slate-600">{workstation.label}</p>
         </div>
+
+        {hasMachineInfo(workstation) ? (
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-center">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Machine</p>
+            {workstation.machine_use ? (
+              <p className="mt-1 text-base font-semibold text-slate-900">{workstation.machine_use}</p>
+            ) : null}
+            {workstation.machine_reference ? (
+              <p className="mt-1 font-mono text-sm text-slate-600">{workstation.machine_reference}</p>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="flex justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -103,6 +103,21 @@ export interface FactoryWorkstation {
   x: number;
   /** 0–100, from top edge of layout image */
   y: number;
+  /** Machine use / function from factory floor sheets (null when blank). */
+  machine_use: string | null;
+  /** Machine model or reference code from factory floor sheets (null when blank). */
+  machine_reference: string | null;
+}
+
+export function hasMachineInfo(workstation: FactoryWorkstation): boolean {
+  return Boolean(workstation.machine_use || workstation.machine_reference);
+}
+
+export function machineInfoLines(workstation: FactoryWorkstation): string[] {
+  const lines: string[] = [];
+  if (workstation.machine_use) lines.push(workstation.machine_use);
+  if (workstation.machine_reference) lines.push(workstation.machine_reference);
+  return lines;
 }
 
 export function buildDefaultWorkstations(): FactoryWorkstation[] {
@@ -117,6 +132,8 @@ export function buildDefaultWorkstations(): FactoryWorkstation[] {
         label: workstationLabel(lineNumber, stationNumber),
         x: PRODUCTION_LINE_X[lineNumber] ?? 50,
         y: defaultStationY(stationNumber),
+        machine_use: null,
+        machine_reference: null,
       });
     }
   }
