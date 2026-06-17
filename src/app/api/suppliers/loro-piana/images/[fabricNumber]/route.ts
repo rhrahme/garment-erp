@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticated } from "@/lib/auth/session";
-import { readLoroPianaSwatchFile } from "@/lib/fabric-sourcing/loro-piana-swatches";
+import { readLoroPianaSwatchFileAsync } from "@/lib/fabric-sourcing/loro-piana-swatches";
 
 export async function GET(
   _request: Request,
@@ -13,7 +13,7 @@ export async function GET(
     }
 
     const { fabricNumber } = await context.params;
-    const file = readLoroPianaSwatchFile(fabricNumber);
+    const file = await readLoroPianaSwatchFileAsync(fabricNumber);
     if (!file) {
       return NextResponse.json({ error: "Swatch image not found." }, { status: 404 });
     }

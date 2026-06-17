@@ -1,6 +1,7 @@
 import { readFileSync, existsSync, statSync } from "node:fs";
 import path from "node:path";
 import { normalizeLoroPianaFabricNumber } from "@/lib/fabric-sourcing/loro-piana-styles";
+import { readLoroPianaSwatchFromStorage } from "@/lib/fabric-sourcing/loro-piana-swatch-storage";
 
 export const LORO_PIANA_SWATCH_SUPPLIER_ID = "loro-piana";
 export const LORO_PIANA_IMAGES_ROOT = path.join(process.cwd(), "data/suppliers/loro-piana/images");
@@ -47,6 +48,20 @@ export function loroPianaSwatchImageUrl(fabricNumber: string): string {
   return `/api/suppliers/loro-piana/images/${encodeURIComponent(normalized)}`;
 }
 
+function localSwatchFilename(normalized: string): string | null {
+  for (const ext of [".jpg", ".jpeg", ".png", ".webp"]) {
+    const filePath = path.join(LORO_PIANA_IMAGES_ROOT, `${normalized}${ext}`);
+    if (existsSync(filePath)) return `${normalized}${ext}`;
+  }
+  return null;
+}
+
+function manifestSwatchFilename(normalized: string): string | null {
+  const manifest = readManifest();
+  const item = manifest.items.find((entry) => entry.ok && entry.fabric_number === normalized);
+  return item?.filename ?? null;
+}
+
 export function lookupLoroPianaSwatch(fabricNumber: string): {
   ok: boolean;
   fabric_number: string;
@@ -62,8 +77,9 @@ export function lookupLoroPianaSwatch(fabricNumber: string): {
   );
 
   if (!item?.filename) {
-    const filePath = path.join(LORO_PIANA_IMAGES_ROOT, `${normalized}.jpg`);
-    if (existsSync(filePath)) {
+    const localName = localSwatchFilename(normalized);
+    if (localName) {
+      const filePath = path.join(LORO_PIANA_IMAGES_ROOT, localName);
       return {
         ok: true,
         fabric_number: normalized,
@@ -88,6 +104,13 @@ export function lookupLoroPianaSwatches(fabricNumbers: string[]) {
   return fabricNumbers.map((code) => lookupLoroPianaSwatch(code));
 }
 
+function contentTypeForFilename(filename: string): string {
+  const ext = path.extname(filename).toLowerCase();
+  if (ext === ".png") return "image/png";
+  if (ext === ".webp") return "image/webp";
+  return "image/jpeg";
+}
+
 export function readLoroPianaSwatchFile(fabricNumber: string): {
   buffer: Buffer;
   contentType: string;
@@ -99,9 +122,32 @@ export function readLoroPianaSwatchFile(fabricNumber: string): {
     if (!existsSync(filePath)) continue;
     return {
       buffer: readFileSync(filePath),
-      contentType: ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg",
+      contentType: contentTypeForFilename(`${normalized}${ext}`),
       filename: `${normalized}${ext}`,
     };
   }
   return null;
+}
+
+/** Local filesystem first, then Supabase storage (production). */
+export async function readLoroPianaSwatchFileAsync(fabricNumber: string): Promise<{
+  buffer: Buffer;
+  contentType: string;
+  filename: string;
+} | null> {
+  const local = readLoroPianaSwatchFile(fabricNumber);
+  if (local) return local;
+
+  const normalized = normalizeLoroPianaFabricNumber(fabricNumber);
+  const filename =
+    manifestSwatchFilename(normalized) ?? localSwatchFilename(normalized) ?? `${normalized}.jpg`;
+
+  const buffer = await readLoroPianaSwatchFromStorage(filename);
+  if (!buffer) return null;
+
+  return {
+    buffer,
+    contentType: contentTypeForFilename(filename),
+    filename,
+  };
 }
