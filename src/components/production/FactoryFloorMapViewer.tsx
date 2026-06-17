@@ -18,7 +18,7 @@ import {
 } from "@/lib/production/factory-floor-stations";
 import type { FactoryWorkstation } from "@/lib/production/factory-workstations";
 import {
-  hasMachineInfo,
+  FACTORY_WORKSTATIONS,
   machineInfoLines,
   productionLineLabel,
   workstationId,
@@ -243,6 +243,11 @@ function WorkstationPin({
 
 /** Fixed grid for print — machines 9→1; PL badge at line start beside PL-X-1 (bottom). */
 function LabelMapGrid() {
+  const workstationById = useMemo(
+    () => new Map(FACTORY_WORKSTATIONS.map((ws) => [ws.id, ws])),
+    []
+  );
+
   return (
     <div className="grid grid-cols-8 gap-x-1 print:grid-cols-8 print:gap-x-2">
       {Array.from({ length: 8 }, (_, index) => {
@@ -251,12 +256,28 @@ function LabelMapGrid() {
           <div key={lineNumber} className="flex flex-col items-center gap-0.5 print:gap-1">
             {Array.from({ length: 9 }, (_, machineIndex) => {
               const stationNumber = 9 - machineIndex;
+              const id = workstationId(lineNumber, stationNumber);
+              const ws = workstationById.get(id);
+              const infoLines = ws ? machineInfoLines(ws) : [];
               return (
                 <span
                   key={stationNumber}
-                  className="flex min-w-[2.75rem] items-center justify-center rounded-md border-2 border-slate-900 bg-white px-0.5 py-0.5 text-[10px] font-bold leading-none text-slate-900 print:border-black print:text-[11px]"
+                  className="flex min-h-[2.75rem] min-w-[2.75rem] flex-col items-center justify-start rounded-md border-2 border-slate-900 bg-white px-0.5 py-0.5 text-center leading-tight text-slate-900 print:min-h-[3rem] print:border-black"
                 >
-                  {workstationId(lineNumber, stationNumber)}
+                  <span className="text-[9px] font-bold leading-none print:text-[10px]">{id}</span>
+                  {infoLines.map((line, lineIndex) => (
+                    <span
+                      key={lineIndex}
+                      className={cn(
+                        "mt-0.5 line-clamp-2 text-[7px] leading-tight print:text-[8px]",
+                        lineIndex === infoLines.length - 1 && ws?.machine_reference === line
+                          ? "font-semibold"
+                          : "font-normal"
+                      )}
+                    >
+                      {line}
+                    </span>
+                  ))}
                 </span>
               );
             })}
@@ -798,8 +819,8 @@ export function FactoryFloorMapViewer() {
               </div>
               <p className="text-xs text-indigo-900/80">
                 {labelMapLayout === "all"
-                  ? "Compact overview — all 8 columns on one A4 landscape sheet."
-                  : "Handwriting layout — taller cells with blank space below each machine ID (PL1+PL2, PL3+PL4, …)."}
+                  ? "All 8 columns on one A4 landscape sheet — each cell shows PL-X-Y, machine use, and reference code."
+                  : "Handwriting layout — taller cells with extra space below each machine (PL1+PL2, PL3+PL4, …)."}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -870,7 +891,7 @@ export function FactoryFloorMapViewer() {
             Hagan factory — production line machine labels
           </p>
           <p className="mb-3 text-center text-xs text-slate-500">
-            On-screen preview (compact). PDF download and print use the layout selected above.
+            On-screen preview. PDF download and print use the layout selected above (machine use + reference included).
           </p>
           <div className="mx-auto max-w-4xl">
             <LabelMapGrid />

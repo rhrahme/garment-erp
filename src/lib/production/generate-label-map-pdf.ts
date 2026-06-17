@@ -19,7 +19,12 @@ type GridMetrics = {
   plGap: number;
   cols: number;
   colGap: number;
-  labelAtTop: boolean;
+  idFontSize: number;
+  useFontSize: number;
+  refFontSize: number;
+  lineHeight: number;
+  maxUseLines: number;
+  maxRefLines: number;
 };
 
 function drawTitle(doc: jsPDF, pageW: number, margin: number, text: string) {
@@ -42,6 +47,8 @@ function drawColumn(
   cellW: number,
   cellH: number
 ) {
+  const { idFontSize, useFontSize, refFontSize, lineHeight, maxUseLines, maxRefLines } = metrics;
+
   for (let machineIndex = 0; machineIndex < MACHINE_COUNT; machineIndex += 1) {
     const stationNumber = MACHINE_COUNT - machineIndex;
     const label = workstationId(lineNumber, stationNumber);
@@ -56,39 +63,26 @@ function drawColumn(
     doc.rect(x, y, w, h, "FD");
 
     doc.setFont("helvetica", "bold");
+    doc.setFontSize(idFontSize);
     doc.setTextColor(0);
-    if (metrics.labelAtTop) {
-      doc.setFontSize(10);
-      doc.text(label, x + w / 2, y + 5, { align: "center" });
+    doc.text(label, x + w / 2, y + idFontSize * 0.38, { align: "center" });
 
-      const ws = workstationMachineInfo(label);
-      if (ws?.machine_use || ws?.machine_reference) {
-        doc.setFontSize(6.5);
-        doc.setFont("helvetica", "normal");
-        let textY = y + 9;
-        if (ws.machine_use) {
-          const useLines = doc.splitTextToSize(ws.machine_use, w - 2);
-          doc.text(useLines.slice(0, 2), x + w / 2, textY, { align: "center" });
-          textY += useLines.slice(0, 2).length * 2.8;
-        }
-        if (ws.machine_reference) {
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(6);
-          const refLines = doc.splitTextToSize(ws.machine_reference, w - 2);
-          doc.text(refLines.slice(0, 2), x + w / 2, textY, { align: "center" });
-        }
-      }
-    } else {
-      doc.setFontSize(8);
-      doc.text(label, x + w / 2, y + h / 2 + 1, { align: "center" });
+    const ws = workstationMachineInfo(label);
+    let textY = y + idFontSize * 0.38 + lineHeight;
 
-      const ws = workstationMachineInfo(label);
-      if (ws?.machine_reference) {
-        doc.setFontSize(4.5);
-        doc.setFont("helvetica", "normal");
-        const refLines = doc.splitTextToSize(ws.machine_reference, w - 1);
-        doc.text(refLines[0], x + w / 2, y + h - 1.5, { align: "center" });
-      }
+    if (ws?.machine_use) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(useFontSize);
+      const useLines = doc.splitTextToSize(ws.machine_use, w - 2);
+      doc.text(useLines.slice(0, maxUseLines), x + w / 2, textY, { align: "center" });
+      textY += Math.min(useLines.length, maxUseLines) * lineHeight;
+    }
+
+    if (ws?.machine_reference) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(refFontSize);
+      const refLines = doc.splitTextToSize(ws.machine_reference, w - 2);
+      doc.text(refLines.slice(0, maxRefLines), x + w / 2, textY, { align: "center" });
     }
   }
 
@@ -100,7 +94,7 @@ function drawColumn(
   doc.setFillColor(PL_FILL.r, PL_FILL.g, PL_FILL.b);
   doc.rect(plX, plY, plW, metrics.plBadgeH, "FD");
 
-  doc.setFontSize(metrics.labelAtTop ? 10 : 9);
+  doc.setFontSize(metrics.cols >= 8 ? 8 : 10);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(255, 255, 255);
   doc.text(
@@ -134,23 +128,28 @@ function drawGridPage(
   });
 }
 
-/** A4 landscape — all 8 columns on one page (compact overview). */
+/** A4 landscape — all 8 columns on one page with machine use + reference. */
 function drawAllLayout(doc: jsPDF) {
   const metrics: GridMetrics = {
-    margin: 10,
-    titleH: 10,
-    plBadgeH: 7,
-    plGap: 1.5,
+    margin: 8,
+    titleH: 8,
+    plBadgeH: 6,
+    plGap: 1,
     cols: LINE_COUNT,
-    colGap: 0,
-    labelAtTop: false,
+    colGap: 0.5,
+    idFontSize: 7,
+    useFontSize: 4.5,
+    refFontSize: 4.5,
+    lineHeight: 2.1,
+    maxUseLines: 2,
+    maxRefLines: 1,
   };
 
   drawGridPage(
     doc,
     Array.from({ length: LINE_COUNT }, (_, i) => i + 1),
     metrics,
-    "Hagan factory — production line machine labels"
+    "Hagan factory — all 8 production lines (machine labels & references)"
   );
 }
 
@@ -163,7 +162,12 @@ function drawPairsLayout(doc: jsPDF) {
     plGap: 1.5,
     cols: 2,
     colGap: 14,
-    labelAtTop: true,
+    idFontSize: 10,
+    useFontSize: 6.5,
+    refFontSize: 6,
+    lineHeight: 2.8,
+    maxUseLines: 2,
+    maxRefLines: 2,
   };
 
   const pagePairs: [number, number][] = [
