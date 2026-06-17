@@ -6,7 +6,9 @@ import { DataTable } from "@/components/ui/PageHeader";
 import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useDrapersSwatchMap } from "@/hooks/useDrapersSwatchMap";
+import { useLoroPianaSwatchMap } from "@/hooks/useLoroPianaSwatchMap";
 import { DRAPERS_SUPPLIER_ID } from "@/lib/integrations/drapers/config";
+import { LORO_PIANA_SWATCH_SUPPLIER_ID } from "@/lib/fabric-sourcing/loro-piana-swatches";
 import {
   expandLoroPianaStyleQuery,
   isLoroPianaStyleSupplier,
@@ -113,7 +115,17 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
     [sortedDisplay]
   );
 
+  const loroPianaFabricNumbers = useMemo(
+    () =>
+      sortedDisplay
+        .filter((f) => f.supplier_id === LORO_PIANA_SWATCH_SUPPLIER_ID)
+        .map((f) => f.fabric_number)
+        .slice(0, 60),
+    [sortedDisplay]
+  );
+
   const drapersSwatchMap = useDrapersSwatchMap(drapersFabricNumbers);
+  const loroPianaSwatchMap = useLoroPianaSwatchMap(loroPianaFabricNumbers);
 
   const activeBrand = brands.find((b) => b.id === brandId);
   const isSolbiatiTab = brandId === "solbiati";
@@ -197,7 +209,7 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
               <span className="text-slate-600">
                 {isSolbiatiTab
                   ? "Click the Linen badge in Preview for collection & composition — no swatch images in catalog"
-                  : "Click Preview for swatch image (Drapers) or full fabric details"}
+                  : "Click Preview for swatch image (Drapers, Loro Piana) or full fabric details"}
               </span>
             </p>
             {solbiatiBrand && solbiatiBrand.count > 0 && !isSolbiatiTab && brandId === "all" ? (
@@ -255,12 +267,16 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
                 swatchSrc={
                   f.supplier_id === DRAPERS_SUPPLIER_ID
                     ? drapersSwatchMap.get(f.fabric_number)?.square
-                    : undefined
+                    : f.supplier_id === LORO_PIANA_SWATCH_SUPPLIER_ID
+                      ? loroPianaSwatchMap.get(f.fabric_number)?.square
+                      : undefined
                 }
                 zoomSrc={
                   f.supplier_id === DRAPERS_SUPPLIER_ID
                     ? drapersSwatchMap.get(f.fabric_number)?.zoom
-                    : undefined
+                    : f.supplier_id === LORO_PIANA_SWATCH_SUPPLIER_ID
+                      ? loroPianaSwatchMap.get(f.fabric_number)?.zoom
+                      : undefined
                 }
                 canViewPrices={canViewPrices}
               />
