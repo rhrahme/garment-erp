@@ -3,7 +3,7 @@ import path from "node:path";
 import { normalizeLoroPianaFabricNumber } from "@/lib/fabric-sourcing/loro-piana-styles";
 import { readLoroPianaSwatchFromStorage } from "@/lib/fabric-sourcing/loro-piana-swatch-storage";
 
-export const LORO_PIANA_SWATCH_SUPPLIER_ID = "loro-piana";
+export { LORO_PIANA_SWATCH_SUPPLIER_ID } from "@/lib/fabric-sourcing/loro-piana-styles";
 export const LORO_PIANA_IMAGES_ROOT = path.join(process.cwd(), "data/suppliers/loro-piana/images");
 export const LORO_PIANA_MANIFEST_PATH = path.join(LORO_PIANA_IMAGES_ROOT, "manifest.json");
 

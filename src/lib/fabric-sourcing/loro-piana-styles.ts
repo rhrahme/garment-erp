@@ -2,6 +2,8 @@
 
 export type LoroPianaMillLine = "loro_piana" | "solbiati";
 
+export const LORO_PIANA_SWATCH_SUPPLIER_ID = "loro-piana";
+
 export const LORO_PIANA_STYLE_SUPPLIER_IDS = ["loro-piana", "solbiati"] as const;
 
 export function isLoroPianaStyleSupplier(supplierId: string): boolean {

@@ -8,10 +8,10 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useDrapersSwatchMap } from "@/hooks/useDrapersSwatchMap";
 import { useLoroPianaSwatchMap } from "@/hooks/useLoroPianaSwatchMap";
 import { DRAPERS_SUPPLIER_ID } from "@/lib/integrations/drapers/config";
-import { LORO_PIANA_SWATCH_SUPPLIER_ID } from "@/lib/fabric-sourcing/loro-piana-swatches";
 import {
   expandLoroPianaStyleQuery,
   isLoroPianaStyleSupplier,
+  LORO_PIANA_SWATCH_SUPPLIER_ID,
   normalizeLoroPianaFabricNumber,
 } from "@/lib/fabric-sourcing/loro-piana-styles";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
