@@ -21,7 +21,12 @@ export type IntegrationEventType =
   | "sales_order.fabric_lines_printed"
   | "sales_order.fabric_lines_print_cleared"
   | "sales_order.fabric_order_requested"
-  | "fabric_receiving.testing_reset";
+  | "fabric_receiving.testing_reset"
+  | "pattern_job.created"
+  | "pattern_job.updated"
+  | "pattern_fitting.completed"
+  | "pattern_revision.created"
+  | "pattern_job.ready_for_cutting";
 
 export interface IntegrationEvent<T = Record<string, unknown>> {
   event: IntegrationEventType;

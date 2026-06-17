@@ -122,3 +122,11 @@ export function isClientManagerRouteAllowed(pathname: string): boolean {
 export function defaultPathForSession(isClientManager: boolean): string {
   return isClientManager ? "/orders" : "/dashboard";
 }
+
+export function canAccessPatternModule(
+  role: UserRole | null | undefined,
+  isAdmin: boolean
+): boolean {
+  if (isAdmin) return true;
+  return role === "production_manager" || role === "pattern_maker";
+}

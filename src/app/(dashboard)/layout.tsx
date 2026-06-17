@@ -37,6 +37,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       isClientManager: false,
       canViewClientContact: false,
       canViewFabricListPrices: false,
+      canAccessPattern: false,
     };
   }
   let rateStatus = DEFAULT_RATE_STATUS;
@@ -49,7 +50,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
-      <Sidebar clientsOnly={clientsOnly} />
+      <Sidebar clientsOnly={clientsOnly} canAccessPattern={session.canAccessPattern} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header session={session} />
         {!clientsOnly && rateStatus.aboveThreshold && rateStatus.marketRate != null && (

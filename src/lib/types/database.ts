@@ -3,6 +3,7 @@ export type UserRole =
   | "admin"
   | "client_manager"
   | "production_manager"
+  | "pattern_maker"
   | "inventory_clerk"
   | "purchasing"
   | "qc_inspector"

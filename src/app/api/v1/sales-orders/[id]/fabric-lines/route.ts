@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { notifyIntegration } from "@/lib/integrations";
 import { verifyApiKey } from "@/lib/integrations/api-auth";
+import { syncPatternJobsFromSalesOrder } from "@/lib/pattern/sync-from-sales-order";
 import {
   appendSalesOrderFabricLines,
   deleteSalesOrderFabricLine,
@@ -35,6 +36,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       added_by: addedBy,
       source: "api",
     });
+
+    await syncPatternJobsFromSalesOrder(result.order);
 
     return NextResponse.json({
       order: result.order,
@@ -74,6 +77,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       source: "api",
     });
 
+    await syncPatternJobsFromSalesOrder(result.order);
+
     return NextResponse.json({
       order: result.order,
       updated_line: result.updated_line,
@@ -109,6 +114,8 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       removed_by: removedBy,
       source: "api",
     });
+
+    await syncPatternJobsFromSalesOrder(result.order);
 
     return NextResponse.json({
       order: result.order,

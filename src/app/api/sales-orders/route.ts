@@ -18,6 +18,7 @@ import { normalizeFabricSupplierFields, fabricPoSupplierId } from "@/lib/fabric-
 import { isGarmentStitchType } from "@/lib/sales-orders/garment-types";
 import { generateFabricLabelStickers } from "@/lib/sales-orders/label-codes";
 import { notifyIntegration } from "@/lib/integrations";
+import { syncPatternJobsFromSalesOrder } from "@/lib/pattern/sync-from-sales-order";
 import { isDeliveryDestination } from "@/lib/shipping/delivery-destinations";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
@@ -215,6 +216,8 @@ export async function POST(request: Request) {
       client_code: order.client_code,
       line_count: order.fabric_lines.length,
     });
+
+    await syncPatternJobsFromSalesOrder(confirmed, { notify: true });
 
     const safeOrder = session.canViewFabricListPrices ? order : redactSalesOrderFabricPrices(order);
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
 import { requireAuthenticated } from "@/lib/auth/session";
 import { notifyIntegration } from "@/lib/integrations";
+import { syncPatternJobsFromSalesOrder } from "@/lib/pattern/sync-from-sales-order";
 import {
   appendSalesOrderFabricLines,
   deleteSalesOrderFabricLine,
@@ -33,6 +34,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       added_count: result.added_lines.length,
       added_by: session.email,
     });
+
+    await syncPatternJobsFromSalesOrder(result.order);
 
     const safeOrder = session.canViewFabricListPrices
       ? result.order
@@ -68,6 +71,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       line_id: result.updated_line.id,
       updated_by: session.email,
     });
+
+    await syncPatternJobsFromSalesOrder(result.order);
 
     const safeOrder = session.canViewFabricListPrices
       ? result.order
@@ -105,6 +110,8 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       line_id: result.removed_line.id,
       removed_by: session.email,
     });
+
+    await syncPatternJobsFromSalesOrder(result.order);
 
     const safeOrder = session.canViewFabricListPrices
       ? result.order

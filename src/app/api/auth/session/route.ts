@@ -20,6 +20,7 @@ export async function GET() {
       can_view_client_contact: session.canViewClientContact,
       can_view_fabric_list_prices: session.canViewFabricListPrices,
       can_view_fabric_prices: canViewFabricPrices,
+      can_access_pattern: session.canAccessPattern,
     });
   } catch (error) {
     console.error("Failed to read session:", error);

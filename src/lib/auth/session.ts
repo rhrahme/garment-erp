@@ -6,6 +6,7 @@ import { DEMO_MODE, DEMO_USER_EMAIL_COOKIE } from "@/lib/auth/demo-mode";
 import { DEV_IMPERSONATION_COOKIE, resolveDevImpersonationEmail } from "@/lib/auth/dev-impersonation";
 import {
   canViewClientContact,
+  canAccessPatternModule,
   isAdminEmail,
   isAdminRole,
   isClientManagerAccess,
@@ -22,6 +23,7 @@ export interface SessionContext {
   isClientManager: boolean;
   canViewClientContact: boolean;
   canViewFabricListPrices: boolean;
+  canAccessPattern: boolean;
 }
 
 function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<SessionContext, "userId" | "email"> {
@@ -44,6 +46,7 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
     isClientManager,
     canViewClientContact: canViewClientContact(role, email, isSuperAdmin),
     canViewFabricListPrices: isAdmin,
+    canAccessPattern: canAccessPatternModule(effectiveRole, isAdmin),
   };
 }
 
@@ -89,6 +92,7 @@ export async function getSessionContext(): Promise<SessionContext> {
       isClientManager: false,
       canViewClientContact: false,
       canViewFabricListPrices: false,
+      canAccessPattern: false,
     };
   }
 
@@ -123,5 +127,11 @@ export async function requireAdmin(): Promise<SessionContext | null> {
 export async function requireSuperAdmin(): Promise<SessionContext | null> {
   const session = await getSessionContext();
   if (!session.isSuperAdmin) return null;
+  return session;
+}
+
+export async function requirePatternAccess(): Promise<SessionContext | null> {
+  const session = await getSessionContext();
+  if (!session.canAccessPattern) return null;
   return session;
 }

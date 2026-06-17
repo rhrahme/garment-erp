@@ -26,6 +26,7 @@ import {
   UsersRound,
   Store,
   FolderArchive,
+  Ruler,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -39,6 +40,7 @@ const navItems = [
   { href: "/clients", label: "Clients", icon: UsersRound },
   { href: "/ready-made", label: "Ready-Made", icon: Store },
   { href: "/fabric-specification", label: "Fabric Specification", icon: SwatchBook },
+  { href: "/pattern", label: "Pattern", icon: Ruler, patternOnly: true },
   { href: "/inventory", label: "Inventory", icon: Package },
   { href: "/production", label: "Production", icon: Factory },
   { href: "/production/floor-map", label: "Factory floor map", icon: Map },
@@ -67,10 +69,18 @@ function isNavActive(pathname: string, href: string): boolean {
   return true;
 }
 
-export function Sidebar({ clientsOnly = false }: { clientsOnly?: boolean }) {
+export function Sidebar({
+  clientsOnly = false,
+  canAccessPattern = true,
+}: {
+  clientsOnly?: boolean;
+  canAccessPattern?: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
-  const items = clientsOnly ? qcNavItems : navItems;
+  const items = (clientsOnly ? qcNavItems : navItems).filter(
+    (item) => !("patternOnly" in item && item.patternOnly) || canAccessPattern
+  );
 
   async function handleLogout() {
     const supabase = createClient();

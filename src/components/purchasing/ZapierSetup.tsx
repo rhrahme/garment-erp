@@ -25,6 +25,11 @@ const OUTBOUND_EVENTS = [
   "sales_order.fabric_lines_print_cleared",
   "sales_order.fabric_order_requested",
   "fabric_receiving.testing_reset",
+  "pattern_job.created",
+  "pattern_job.updated",
+  "pattern_fitting.completed",
+  "pattern_revision.created",
+  "pattern_job.ready_for_cutting",
 ];
 
 export function ZapierSetup() {
@@ -89,6 +94,9 @@ export function ZapierSetup() {
             <li>POST {baseUrl}/api/v1/shipments</li>
             <li>GET/POST {baseUrl}/api/v1/follow-ups</li>
             <li>POST/PATCH/DELETE {baseUrl}/api/v1/sales-orders/[id]/fabric-lines</li>
+            <li>GET/PATCH {baseUrl}/api/v1/pattern/jobs/[id]</li>
+            <li>POST {baseUrl}/api/v1/pattern/jobs/[id]/fittings</li>
+            <li>POST {baseUrl}/api/v1/pattern/jobs/[id]/revisions</li>
             <li>POST {baseUrl}/api/v1/sales-orders/[id]/fabric-lines/print</li>
             <li>POST {baseUrl}/api/v1/fabric-receiving/reset-testing</li>
             <li>GET {baseUrl}/api/v1/events</li>
