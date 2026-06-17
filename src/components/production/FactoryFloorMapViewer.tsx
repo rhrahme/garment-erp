@@ -31,8 +31,10 @@ import { WorkstationQrPdfPreviewModal } from "@/components/production/Workstatio
 type ZoneFilter = FactoryFloorZone | "all";
 type MapView = "interactive" | "labeled";
 type LabelMapLayout = "all" | "pairs";
+type WorkstationDetailLayout = "all" | "pairs";
 
 const LABEL_MAP_PDF_URL = "/api/factory/label-map";
+const WORKSTATION_DETAIL_PDF_URL = "/api/factory/workstation-details";
 
 function labelMapPdfUrl(layout: LabelMapLayout): string {
   return layout === "pairs" ? `${LABEL_MAP_PDF_URL}?layout=pairs` : LABEL_MAP_PDF_URL;
@@ -40,6 +42,18 @@ function labelMapPdfUrl(layout: LabelMapLayout): string {
 
 function labelMapPdfFilename(layout: LabelMapLayout): string {
   return layout === "pairs" ? "factory-label-map-pairs.pdf" : "factory-label-map.pdf";
+}
+
+function workstationDetailPdfUrl(layout: WorkstationDetailLayout): string {
+  return layout === "all"
+    ? `${WORKSTATION_DETAIL_PDF_URL}?layout=all`
+    : `${WORKSTATION_DETAIL_PDF_URL}?layout=pairs`;
+}
+
+function workstationDetailPdfFilename(layout: WorkstationDetailLayout): string {
+  return layout === "all"
+    ? "factory-workstation-details-all.pdf"
+    : "factory-workstation-details-pairs.pdf";
 }
 
 async function fetchLabelMapPdfBlob(layout: LabelMapLayout): Promise<Blob | null> {
@@ -55,6 +69,24 @@ async function downloadLabelMapPdf(layout: LabelMapLayout): Promise<boolean> {
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = labelMapPdfFilename(layout);
+  anchor.click();
+  URL.revokeObjectURL(url);
+  return true;
+}
+
+async function fetchWorkstationDetailPdfBlob(layout: WorkstationDetailLayout): Promise<Blob | null> {
+  const res = await fetch(workstationDetailPdfUrl(layout));
+  if (!res.ok) return null;
+  return res.blob();
+}
+
+async function downloadWorkstationDetailPdf(layout: WorkstationDetailLayout): Promise<boolean> {
+  const blob = await fetchWorkstationDetailPdfBlob(layout);
+  if (!blob) return false;
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = workstationDetailPdfFilename(layout);
   anchor.click();
   URL.revokeObjectURL(url);
   return true;
@@ -331,9 +363,12 @@ export function FactoryFloorMapViewer() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savingServer, setSavingServer] = useState(false);
   const [labelMapLayout, setLabelMapLayout] = useState<LabelMapLayout>("all");
+  const [workstationDetailLayout, setWorkstationDetailLayout] = useState<WorkstationDetailLayout>("pairs");
   const [downloadingLabelMapPdf, setDownloadingLabelMapPdf] = useState(false);
   const [printingLabelMapPdf, setPrintingLabelMapPdf] = useState(false);
+  const [downloadingWorkstationDetailPdf, setDownloadingWorkstationDetailPdf] = useState(false);
   const [labelMapDownloadError, setLabelMapDownloadError] = useState<string | null>(null);
+  const [workstationDetailDownloadError, setWorkstationDetailDownloadError] = useState<string | null>(null);
 
   const mapRef = useRef<HTMLDivElement>(null);
   const dragIdRef = useRef<string | null>(null);
@@ -505,6 +540,16 @@ export function FactoryFloorMapViewer() {
       .finally(() => setPrintingLabelMapPdf(false));
   }, [labelMapLayout]);
 
+  const handleDownloadWorkstationDetailPdf = useCallback(() => {
+    setWorkstationDetailDownloadError(null);
+    setDownloadingWorkstationDetailPdf(true);
+    void downloadWorkstationDetailPdf(workstationDetailLayout)
+      .then((ok) => {
+        if (!ok) setWorkstationDetailDownloadError("PDF download failed — try again.");
+      })
+      .finally(() => setDownloadingWorkstationDetailPdf(false));
+  }, [workstationDetailLayout]);
+
   const switchToLabelMap = useCallback(() => {
     setMapView("labeled");
     setEditMode(false);
@@ -663,6 +708,18 @@ export function FactoryFloorMapViewer() {
             </a>
           ) : null}
           {mapView === "interactive" ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={downloadingWorkstationDetailPdf}
+              onClick={handleDownloadWorkstationDetailPdf}
+            >
+              <Download className="mr-1 h-4 w-4" />
+              {downloadingWorkstationDetailPdf ? "Downloading…" : "Workstation details PDF"}
+            </Button>
+          ) : null}
+          {mapView === "interactive" ? (
             <Button type="button" variant="secondary" size="sm" onClick={() => setQrPdfPreviewOpen(true)}>
               <Printer className="mr-1 h-4 w-4" />
               Workstation QRs
@@ -686,6 +743,59 @@ export function FactoryFloorMapViewer() {
               Open Label map
             </Button>
           </div>
+        </div>
+      ) : null}
+
+      {mapView === "interactive" ? (
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 print:hidden">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="space-y-2">
+              <p className="font-semibold">Workstation details (PDF)</p>
+              <p className="text-slate-600">
+                Printable cards with full machine use and model/reference for every PL-1-1 … PL-8-9
+                station. Machines listed 9→1 with a production line badge at the bottom of each column.
+              </p>
+              <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setWorkstationDetailLayout("pairs")}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                    workstationDetailLayout === "pairs"
+                      ? "bg-slate-800 text-white"
+                      : "text-slate-700 hover:bg-white"
+                  )}
+                >
+                  2 lines per page (4 pages)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWorkstationDetailLayout("all")}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                    workstationDetailLayout === "all"
+                      ? "bg-slate-800 text-white"
+                      : "text-slate-700 hover:bg-white"
+                  )}
+                >
+                  1 line per page (8 pages)
+                </button>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              disabled={downloadingWorkstationDetailPdf}
+              onClick={handleDownloadWorkstationDetailPdf}
+            >
+              <Download className="mr-1 h-4 w-4" />
+              {downloadingWorkstationDetailPdf ? "Downloading…" : "Download workstation details PDF"}
+            </Button>
+          </div>
+          {workstationDetailDownloadError ? (
+            <p className="mt-3 text-sm font-medium text-red-700">{workstationDetailDownloadError}</p>
+          ) : null}
         </div>
       ) : null}
 
@@ -848,6 +958,56 @@ export function FactoryFloorMapViewer() {
           </div>
           {labelMapDownloadError ? (
             <p className="mt-3 text-sm font-medium text-red-700">{labelMapDownloadError}</p>
+          ) : null}
+          <div className="mt-4 flex flex-wrap items-end justify-between gap-4 border-t border-indigo-200/80 pt-4">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-indigo-800/80">
+                Workstation details PDF
+              </p>
+              <p className="text-xs text-indigo-900/80">
+                Full-detail cards (large ID, machine use, model/reference) — not the compact sticker
+                layout above.
+              </p>
+              <div className="inline-flex rounded-lg border border-indigo-200 bg-white p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setWorkstationDetailLayout("pairs")}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                    workstationDetailLayout === "pairs"
+                      ? "bg-indigo-600 text-white"
+                      : "text-slate-700 hover:bg-indigo-50"
+                  )}
+                >
+                  2 lines per page
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWorkstationDetailLayout("all")}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                    workstationDetailLayout === "all"
+                      ? "bg-indigo-600 text-white"
+                      : "text-slate-700 hover:bg-indigo-50"
+                  )}
+                >
+                  1 line per page
+                </button>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={downloadingWorkstationDetailPdf}
+              onClick={handleDownloadWorkstationDetailPdf}
+            >
+              <Download className="mr-1 h-4 w-4" />
+              {downloadingWorkstationDetailPdf ? "Downloading…" : "Download workstation details PDF"}
+            </Button>
+          </div>
+          {workstationDetailDownloadError ? (
+            <p className="mt-3 text-sm font-medium text-red-700">{workstationDetailDownloadError}</p>
           ) : null}
         </div>
       )}
