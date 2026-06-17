@@ -124,9 +124,10 @@ export function defaultPathForSession(isClientManager: boolean): string {
 }
 
 export function canAccessPatternModule(
-  role: UserRole | null | undefined,
+  isClientManager: boolean,
   isAdmin: boolean
 ): boolean {
   if (isAdmin) return true;
-  return role === "production_manager" || role === "pattern_maker";
+  if (isClientManager) return false;
+  return true;
 }

@@ -46,7 +46,7 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
     isClientManager,
     canViewClientContact: canViewClientContact(role, email, isSuperAdmin),
     canViewFabricListPrices: isAdmin,
-    canAccessPattern: canAccessPatternModule(effectiveRole, isAdmin),
+    canAccessPattern: canAccessPatternModule(isClientManager, isAdmin),
   };
 }
 

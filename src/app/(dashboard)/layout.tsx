@@ -50,7 +50,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
-      <Sidebar clientsOnly={clientsOnly} canAccessPattern={session.canAccessPattern} />
+      <Sidebar clientsOnly={clientsOnly} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header session={session} />
         {!clientsOnly && rateStatus.aboveThreshold && rateStatus.marketRate != null && (
