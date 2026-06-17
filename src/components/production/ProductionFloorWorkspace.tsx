@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { ArrowRight, Map } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { CompletedProductionHistory } from "@/components/production/CompletedProductionHistory";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/PageHeader";
@@ -93,16 +92,6 @@ export function ProductionFloorWorkspace() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
-        <p className="text-sm text-slate-600">Shop-floor reference for where cutting, sewing, and prep stations sit.</p>
-        <Link href="/production/floor-map">
-          <Button variant="secondary" size="sm">
-            <Map className="mr-1.5 h-4 w-4" />
-            Factory floor map
-          </Button>
-        </Link>
-      </div>
-
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
       )}
