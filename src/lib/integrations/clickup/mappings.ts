@@ -71,11 +71,14 @@ export function mapClickUpItemToGarmentType(item: string | null): string {
     "thobes summer (fr)": "House Thobe",
     "thobes winter (fr)": "Formal Thobe",
     "thobes winter (fd)": "Formal Thobe",
+    "jacket for thobe": "Thobe+Jacket",
   };
 
   if (exact[normalized]) return exact[normalized];
 
   if (normalized.includes("suit")) return "Suit";
+  if (normalized.includes("thobe") && normalized.includes("jacket")) return "Thobe+Jacket";
+  if (normalized.includes("thobe") && normalized.includes("vest")) return "Thobe+Vest";
   if (normalized.includes("blazer") || normalized.includes("jacket")) return "Jacket";
   if (normalized.includes("trouser")) return "Trouser";
   if (normalized.includes("short")) return "Short";

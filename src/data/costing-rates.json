@@ -72,6 +72,16 @@
       "labor": 320,
       "washing": 70,
       "overhead": 90
+    },
+    "Thobe+Jacket": {
+      "labor": 460,
+      "washing": 90,
+      "overhead": 120
+    },
+    "Thobe+Vest": {
+      "labor": 360,
+      "washing": 80,
+      "overhead": 100
     }
   },
   "default_garment_rate": {

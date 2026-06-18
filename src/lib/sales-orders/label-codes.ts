@@ -18,6 +18,8 @@ const GARMENT_PIECES: Partial<Record<GarmentStitchType, string[]>> = {
   "Shirt+Trouser": ["Shirt", "Trouser"],
   "Shirt+Trouser+Short": ["Shirt", "Trouser", "Short"],
   "Shirt+Short": ["Shirt", "Short"],
+  "Thobe+Jacket": ["Thobe", "Jacket"],
+  "Thobe+Vest": ["Thobe", "Vest"],
   "Fabric only": [],
 };
 
@@ -32,6 +34,8 @@ const PIECE_ABBREV: Record<string, string> = {
   Overcoat: "OC",
   "Formal Thobe": "FTHB",
   "House Thobe": "HTHB",
+  Thobe: "THB",
+  Vest: "VST",
 };
 
 export function getGarmentPieces(garmentType: string): string[] {
