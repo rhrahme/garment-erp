@@ -15,7 +15,7 @@
             "clientId": "cu-abdullah-al-moussa-fouad-rahme",
             "deliveryDestination": "",
             "deliveryDate": "",
-            "notes": "Handwritten order (S.B = Stylbiella) — meters TBD on all lines.\n43401/619: suggest cotton shirt light beige.\n43233/160: Thobe + Jacket — fabric only (verify book: catalog has 43233/638, not /160).\n71493/052: Thobe + Jacket.",
+            "notes": "Handwritten order (S.B = Stylbiella) — meters TBD on all lines.\n43401/619: suggest cotton shirt light beige.\n43233/160: fabric only on paper (catalog has 43233/638, not /160).\n71493/052: Thobe + Jacket on paper — entered as Jacket.",
             "lines": [
               {
                 "id": "sty-43529/657",
@@ -203,7 +203,7 @@
                 "mill_line": null,
                 "lineId": "line-1781818139972-8-cu-abdullah-al-moussa-fouad-rahme-71493-052",
                 "garment_type": "Jacket",
-                "label_count": 2,
+                "label_count": 1,
                 "meters": ""
               }
             ]
