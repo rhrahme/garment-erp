@@ -11,7 +11,8 @@ import { fabricBrandAllowsManualEntry } from "@/lib/fabric-sourcing/supplier-dis
 import { resolveFabricItem } from "@/lib/fabric-sourcing/resolve-fabric-item";
 import { GARMENT_STITCH_TYPES, getLabelCountForGarment } from "@/lib/sales-orders/garment-types";
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
-import type { SalesOrder } from "@/lib/types/sales-orders";
+import { MetersInput } from "@/components/orders/MetersInput";
+import { parseDecimalInput } from "@/lib/utils/decimal-input";
 
 type FabricBrand = { id: string; name: string; has_price_list?: boolean };
 
@@ -65,7 +66,7 @@ export function ProductionOrderAddFabrics({
     setError(null);
   }
 
-  const quantity = Number(meters);
+  const quantity = parseDecimalInput(meters);
   const formValid =
     Boolean(selectedBrand && fabricQuery.trim()) &&
     Boolean(garmentType) &&
@@ -237,14 +238,10 @@ export function ProductionOrderAddFabrics({
                 </label>
                 <label className="block text-sm">
                   <span className="font-medium text-slate-700">Meters</span>
-                  <input
-                    type="number"
-                    min={0.1}
-                    step={0.1}
+                  <MetersInput
                     value={meters}
-                    onChange={(e) => setMeters(e.target.value)}
+                    onChange={setMeters}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-                    placeholder="e.g. 3.5"
                   />
                 </label>
               </div>

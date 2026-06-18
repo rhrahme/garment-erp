@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { FabricPicker } from "@/components/fabric/FabricPicker";
+import { MetersInput } from "@/components/orders/MetersInput";
 import { Button } from "@/components/ui/Button";
 import { AutoSaveStatusBar } from "@/components/ui/AutoSaveStatus";
 import {
@@ -26,6 +27,7 @@ import {
   resolveLoroPianaFabricInput,
 } from "@/lib/fabric-sourcing/loro-piana-styles";
 import { resolveFabricItem } from "@/lib/fabric-sourcing/resolve-fabric-item";
+import { parseDecimalInput } from "@/lib/utils/decimal-input";
 import {
   fabricBrandAllowsManualEntry,
   fabricSupplierGroupKey,
@@ -859,7 +861,7 @@ export function SalesOrderForm({
         setActiveFabricAddId(entry.id);
         return;
       }
-      const meters = Number(entry.meters);
+      const meters = parseDecimalInput(entry.meters);
       if (!Number.isFinite(meters) || meters <= 0) {
         setError(`Enter meters for ${clientIdTabLabel(entry.clientId, index, clients)}.`);
         setActiveFabricAddId(entry.id);
@@ -904,7 +906,7 @@ export function SalesOrderForm({
           lineId: `line-${stamp}-${index}-${entry.clientId}-${pendingFabric.fabric_number}`,
           garment_type: entry.garmentType,
           label_count: labelCount,
-          meters: String(Number(entry.meters)),
+          meters: String(meters),
           stock_status: pendingFabric.stock_status ?? null,
           restock_date: pendingFabric.restock_date ?? null,
           needs_replacement: pendingFabric.stock_status === "permanently_unavailable",
@@ -979,7 +981,7 @@ export function SalesOrderForm({
   async function saveEditLine(line: DraftLine) {
     if (!lineEditForm) return;
 
-    const meters = Number(lineEditForm.meters);
+    const meters = parseDecimalInput(lineEditForm.meters);
     if (!Number.isFinite(meters) || meters <= 0) {
       setError("Enter valid meters for this fabric line.");
       return;
@@ -1052,7 +1054,7 @@ export function SalesOrderForm({
 
   function mapDraftLinesToPayload(draftLines: DraftLine[]) {
     return draftLines.map((line) => {
-      const quantity = Number(line.meters);
+      const quantity = parseDecimalInput(line.meters);
       if (!Number.isFinite(quantity) || quantity <= 0) {
         throw new Error(`Enter meters for fabric ${line.fabric_number}.`);
       }
@@ -1675,14 +1677,10 @@ export function SalesOrderForm({
                             </label>
                             <label className="block text-sm">
                               <span className="font-medium text-slate-700">Meters to order</span>
-                              <input
-                                type="number"
-                                min={0.1}
-                                step={0.1}
+                              <MetersInput
                                 value={activeFabricAdd.meters}
-                                onChange={(e) => patchActiveFabricAdd({ meters: e.target.value })}
+                                onChange={(next) => patchActiveFabricAdd({ meters: next })}
                                 className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
-                                placeholder="e.g. 3.5"
                               />
                             </label>
                           </div>
@@ -1842,14 +1840,11 @@ export function SalesOrderForm({
                                 </label>
                                 <label className="block text-sm">
                                   <span className="font-medium text-slate-700">Meters</span>
-                                  <input
-                                    type="number"
-                                    min={0.1}
-                                    step={0.1}
+                                  <MetersInput
                                     value={lineEditForm.meters}
-                                    onChange={(e) =>
+                                    onChange={(next) =>
                                       setLineEditForm((prev) =>
-                                        prev ? { ...prev, meters: e.target.value } : prev
+                                        prev ? { ...prev, meters: next } : prev
                                       )
                                     }
                                     className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
@@ -1900,12 +1895,9 @@ export function SalesOrderForm({
                           </td>
                         ) : null}
                         <td className="px-3 py-2">
-                          <input
-                            type="number"
-                            min={0.1}
-                            step={0.1}
+                          <MetersInput
                             value={line.meters}
-                            onChange={(e) => updateMeters(line.lineId, e.target.value)}
+                            onChange={(next) => updateMeters(line.lineId, next)}
                             className="w-24 rounded-lg border border-slate-300 px-2 py-1.5"
                           />
                         </td>

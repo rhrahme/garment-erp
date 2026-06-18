@@ -1,4 +1,4 @@
-import { getLoroPianaMillLine, isLoroPianaStyleSupplier } from "@/lib/fabric-sourcing/loro-piana-styles";
+import { getLoroPianaMillLine } from "@/lib/fabric-sourcing/loro-piana-styles";
 import {
   resolveFabricSupplierDisplayName,
   resolveFabricSupplierId,
@@ -48,10 +48,10 @@ export function fabricSupplierGroupKey(supplierId: string, fabricNumber: string)
   return `${poId}:${line}`;
 }
 
-/** Manual fabric entry is only for suppliers without an imported catalog (plus Loro Piana edge cases). */
+/** Allow manual fabric entry when a number is not found in the catalog search. */
 export function fabricBrandAllowsManualEntry(
-  hasPriceList: boolean | undefined,
-  supplierId: string
+  _hasPriceList: boolean | undefined,
+  _supplierId: string
 ): boolean {
-  return hasPriceList === false || isLoroPianaStyleSupplier(supplierId);
+  return true;
 }

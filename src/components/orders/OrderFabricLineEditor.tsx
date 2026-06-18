@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { FabricPicker } from "@/components/fabric/FabricPicker";
+import { MetersInput } from "@/components/orders/MetersInput";
 import { FabricStockBadge } from "@/components/fabric/FabricStockBadge";
 import { fabricBrandAllowsManualEntry } from "@/lib/fabric-sourcing/supplier-display";
 import { resolveFabricItem } from "@/lib/fabric-sourcing/resolve-fabric-item";
 import { GARMENT_STITCH_TYPES, getLabelCountForGarment } from "@/lib/sales-orders/garment-types";
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
-import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
+import { parseDecimalInput } from "@/lib/utils/decimal-input";
 
 type FabricBrand = { id: string; name: string; has_price_list?: boolean };
 
@@ -76,7 +77,7 @@ export function OrderFabricLineEditor({
     setError(null);
   }
 
-  const quantity = Number(meters);
+  const quantity = parseDecimalInput(meters);
   const formValid =
     Boolean(selectedBrandId && fabricQuery.trim()) &&
     Boolean(garmentType) &&
@@ -222,12 +223,9 @@ export function OrderFabricLineEditor({
 
         <label className="block text-sm">
           <span className="font-medium text-slate-700">Meters</span>
-          <input
-            type="number"
-            min={0.1}
-            step={0.1}
+          <MetersInput
             value={meters}
-            onChange={(e) => setMeters(e.target.value)}
+            onChange={setMeters}
             className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
           />
         </label>

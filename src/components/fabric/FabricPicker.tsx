@@ -91,6 +91,36 @@ export function FabricPicker({
     setOpen(Boolean(supplierId));
   }, [supplierId]);
 
+  function fabricLookupKey(fabricNumber: string) {
+    return isLoroPianaStyleSupplier(supplierId)
+      ? resolveLoroPianaFabricInput(fabricNumber).preferredNumber.toLowerCase()
+      : fabricNumber.toLowerCase();
+  }
+
+  function hasExactMatch(items: FabricSearchItem[], fabricNumber: string) {
+    const lookup = fabricLookupKey(fabricNumber);
+    return items.some((item) => item.fabric_number.toLowerCase() === lookup);
+  }
+
+  function manualEntryLabel(fabricNumber: string) {
+    return isLoroPianaStyleSupplier(supplierId)
+      ? resolveLoroPianaFabricInput(fabricNumber).preferredNumber
+      : fabricNumber;
+  }
+
+  function ManualEntryButton({ fabricNumber }: { fabricNumber: string }) {
+    const label = manualEntryLabel(fabricNumber);
+    return (
+      <button
+        type="button"
+        onClick={() => selectManualFabric(fabricNumber)}
+        className="font-medium text-indigo-600 hover:text-indigo-700"
+      >
+        Add {label} manually →
+      </button>
+    );
+  }
+
   function selectManualFabric(fabricNumber: string) {
     const resolved = isLoroPianaStyleSupplier(supplierId)
       ? resolveLoroPianaFabricInput(fabricNumber)
@@ -137,10 +167,9 @@ export function FabricPicker({
             onKeyDown={(e) => {
               if (e.key === "Enter" && value.trim()) {
                 e.preventDefault();
-                const lookup = isLoroPianaStyleSupplier(supplierId)
-                  ? resolveLoroPianaFabricInput(value.trim()).preferredNumber.toLowerCase()
-                  : value.trim().toLowerCase();
-                const match = fabrics.find((item) => item.fabric_number.toLowerCase() === lookup);
+                const match = fabrics.find(
+                  (item) => item.fabric_number.toLowerCase() === fabricLookupKey(value.trim())
+                );
                 if (match) {
                   onSelect(match);
                   onChange(match.fabric_number);
@@ -174,18 +203,10 @@ export function FabricPicker({
               {value.trim() ? (
                 allowManualEntry ? (
                   <>
-                    <p>Not in the imported price list.</p>
-                    <button
-                      type="button"
-                      onClick={() => selectManualFabric(value.trim())}
-                      className="mt-2 font-medium text-indigo-600 hover:text-indigo-700"
-                    >
-                      Use{" "}
-                      {isLoroPianaStyleSupplier(supplierId)
-                        ? resolveLoroPianaFabricInput(value.trim()).preferredNumber
-                        : value.trim()}{" "}
-                      anyway →
-                    </button>
+                    <p>Not in the {brandName} price list.</p>
+                    <div className="mt-2">
+                      <ManualEntryButton fabricNumber={value.trim()} />
+                    </div>
                     {supplierId === "solbiati" && /^\d{4,5}$/.test(value.trim()) && (
                       <p className="mt-2 text-xs text-slate-400">
                         Solbiati linen codes use S + 5 digits — saved as S{value.trim()} (e.g. S23021).
@@ -258,6 +279,14 @@ export function FabricPicker({
                   );
                 })}
               </ul>
+              {value.trim() && allowManualEntry && !hasExactMatch(fabrics, value.trim()) && (
+                <div className="border-t border-slate-100 px-4 py-3 text-sm text-slate-500">
+                  <p>No exact match for &ldquo;{manualEntryLabel(value.trim())}&rdquo;.</p>
+                  <div className="mt-2">
+                    <ManualEntryButton fabricNumber={value.trim()} />
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>

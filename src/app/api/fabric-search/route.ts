@@ -4,7 +4,7 @@ import { getSessionContext } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import { getSupplierByIdFromContactsSync } from "@/lib/data/supplier-contacts";
-import { searchSupplierFabrics, supplierHasImportedCatalog } from "@/lib/data/supplier-catalogs";
+import { searchSupplierFabrics } from "@/lib/data/supplier-catalogs";
 import {
   expandLoroPianaStyleQuery,
   resolveLoroPianaFabricInput,
@@ -123,7 +123,7 @@ export async function GET(request: Request) {
           manualEntry.mill_line = resolved.millLine;
           items.unshift(toSearchItem(manualEntry, true));
         }
-      } else if (!supplierHasImportedCatalog(supplierId)) {
+      } else {
         items.unshift(toSearchItem(buildManualFabricEntry(supplierId, query), true));
       }
     }
