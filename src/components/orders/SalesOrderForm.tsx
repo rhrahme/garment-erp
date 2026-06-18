@@ -6,7 +6,11 @@ import { AlertTriangle, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { FabricPicker } from "@/components/fabric/FabricPicker";
 import { Button } from "@/components/ui/Button";
 import { AutoSaveStatusBar } from "@/components/ui/AutoSaveStatus";
-import { GARMENT_STITCH_TYPES, getLabelCountForGarment } from "@/lib/sales-orders/garment-types";
+import {
+  GARMENT_STITCH_TYPES,
+  getLabelCountForGarment,
+  getMinLabelCountForGarment,
+} from "@/lib/sales-orders/garment-types";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { ClientSearchSelect } from "@/components/clients/ClientSearchSelect";
 import { filterPersonClients } from "@/lib/clients/filter";
@@ -763,7 +767,8 @@ export function SalesOrderForm({
         return;
       }
       const labelCount = Number(entry.labelCount);
-      if (!Number.isInteger(labelCount) || labelCount < 1) {
+      const minLabelCount = getMinLabelCountForGarment(entry.garmentType);
+      if (!Number.isInteger(labelCount) || labelCount < minLabelCount) {
         setError(`Enter a valid label count for ${clientIdTabLabel(entry.clientId, index, clients)}.`);
         setActiveFabricAddId(entry.id);
         return;
@@ -882,8 +887,13 @@ export function SalesOrderForm({
     }
 
     const labelCount = Number(lineEditForm.label_count);
-    if (!Number.isInteger(labelCount) || labelCount < 1) {
-      setError("Enter a valid label count (at least 1).");
+    const minLabelCount = getMinLabelCountForGarment(lineEditForm.garment_type);
+    if (!Number.isInteger(labelCount) || labelCount < minLabelCount) {
+      setError(
+        minLabelCount === 0
+          ? "Fabric-only lines cannot have factory labels."
+          : "Enter a valid label count (at least 1)."
+      );
       return;
     }
 
@@ -1479,7 +1489,7 @@ export function SalesOrderForm({
                               <span className="font-medium text-slate-700">Factory labels</span>
                               <input
                                 type="number"
-                                min={1}
+                                min={getMinLabelCountForGarment(activeFabricAdd.garmentType)}
                                 step={1}
                                 value={activeFabricAdd.labelCount}
                                 onChange={(e) => patchActiveFabricAdd({ labelCount: e.target.value })}
@@ -1617,11 +1627,20 @@ export function SalesOrderForm({
                                   <span className="font-medium text-slate-700">Garment</span>
                                   <select
                                     value={lineEditForm.garment_type}
-                                    onChange={(e) =>
+                                    onChange={(e) => {
+                                      const next = e.target.value;
                                       setLineEditForm((prev) =>
-                                        prev ? { ...prev, garment_type: e.target.value } : prev
-                                      )
-                                    }
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              garment_type: next,
+                                              label_count: next
+                                                ? String(getLabelCountForGarment(next))
+                                                : prev.label_count,
+                                            }
+                                          : prev
+                                      );
+                                    }}
                                     className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
                                   >
                                     <option value="">Select garment type…</option>
@@ -1636,7 +1655,7 @@ export function SalesOrderForm({
                                   <span className="font-medium text-slate-700">Labels</span>
                                   <input
                                     type="number"
-                                    min={1}
+                                    min={getMinLabelCountForGarment(lineEditForm.garment_type)}
                                     step={1}
                                     value={lineEditForm.label_count}
                                     onChange={(e) =>

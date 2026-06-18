@@ -11,6 +11,7 @@ export const GARMENT_STITCH_TYPES = [
   "Shirt+Trouser",
   "Shirt+Trouser+Short",
   "Shirt+Short",
+  "Fabric only",
 ] as const;
 
 export type GarmentStitchType = (typeof GARMENT_STITCH_TYPES)[number];
@@ -33,6 +34,7 @@ export const GARMENT_LABEL_COUNTS: Record<GarmentStitchType, number> = {
   "Shirt+Trouser": 2,
   "Shirt+Trouser+Short": 3,
   "Shirt+Short": 2,
+  "Fabric only": 0,
 };
 
 export function getLabelCountForGarment(garmentType: string): number {
@@ -40,4 +42,8 @@ export function getLabelCountForGarment(garmentType: string): number {
     return GARMENT_LABEL_COUNTS[garmentType];
   }
   return 1;
+}
+
+export function getMinLabelCountForGarment(garmentType: string): number {
+  return getLabelCountForGarment(garmentType) === 0 ? 0 : 1;
 }

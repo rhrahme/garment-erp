@@ -18,6 +18,7 @@ const GARMENT_PIECES: Partial<Record<GarmentStitchType, string[]>> = {
   "Shirt+Trouser": ["Shirt", "Trouser"],
   "Shirt+Trouser+Short": ["Shirt", "Trouser", "Short"],
   "Shirt+Short": ["Shirt", "Short"],
+  "Fabric only": [],
 };
 
 const PIECE_ABBREV: Record<string, string> = {
