@@ -5,6 +5,7 @@ import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Shirt } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { AuthHealthBanner } from "@/components/layout/AuthHealthBanner";
 import { DEMO_MODE, DEMO_USER_EMAIL_COOKIE } from "@/lib/auth/demo-mode";
 import { AUTH_SERVICE_UNAVAILABLE_MESSAGE } from "@/lib/auth/format-auth-error";
 
@@ -69,7 +70,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-900 px-4">
+    <>
+      <AuthHealthBanner />
+      <div className="flex min-h-screen items-center justify-center bg-slate-900 px-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500">
@@ -127,5 +130,6 @@ export default function LoginPage() {
         </form>
       </div>
     </div>
+    </>
   );
 }

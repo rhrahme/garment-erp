@@ -1,6 +1,7 @@
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { ExchangeRateBanner } from "@/components/currency/ExchangeRateBanner";
 import { SupplierAvailabilityBanner } from "@/components/supplier-inbox/SupplierAvailabilityBanner";
+import { AuthHealthBanner } from "@/components/layout/AuthHealthBanner";
 import { DocumentsHealthBanner } from "@/components/layout/DocumentsHealthBanner";
 import { checkEurSarRateAlert } from "@/lib/currency/rate-alert";
 import { getSessionContext } from "@/lib/auth/session";
@@ -55,6 +56,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         />
       )}
       {!session.isClientManager && <SupplierAvailabilityBanner />}
+      <AuthHealthBanner />
       {session.isAdmin && <DocumentsHealthBanner />}
     </>
   );

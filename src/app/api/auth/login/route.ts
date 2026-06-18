@@ -6,7 +6,7 @@ import {
   AUTH_SERVICE_UNAVAILABLE_MESSAGE,
   formatAuthError,
   isAuthServiceUnavailable,
-  signInWithPasswordWithTimeout,
+  signInWithPasswordWithRetry,
 } from "@/lib/auth/format-auth-error";
 import { defaultPathForSession, isClientManagerEmail } from "@/lib/auth/permissions";
 import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/supabase/env";
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       },
     });
 
-    const { error: authError, timedOut } = await signInWithPasswordWithTimeout(() =>
+    const { error: authError, timedOut } = await signInWithPasswordWithRetry(() =>
       supabase.auth.signInWithPassword({ email, password })
     );
 

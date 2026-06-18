@@ -60,6 +60,10 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+### Supabase Auth resilience (production)
+
+If GoTrue returns 522/timeouts, configure Vercel cron + optional auto-restart — see [docs/supabase-auth-resilience.md](docs/supabase-auth-resilience.md).
+
 ### Demo Mode
 
 Without Supabase configured, the app runs in **demo mode** with sample factory data. Just open the app and click Sign In on the login page.
