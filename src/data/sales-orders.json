@@ -1,6 +1,329 @@
 {
   "orders": [
     {
+      "id": "so-moussa-stylbiella-handwritten",
+      "notes": "Handwritten order (S.B = Stylbiella) — meters TBD on all lines.\n43401/619: suggest cotton shirt light beige.\n43233/160: fabric only on paper (catalog has 43233/638, not /160).\n71493/052: Thobe + Jacket on paper — entered as Jacket.",
+      "status": "open",
+      "client_id": "cu-abdullah-al-moussa-fouad-rahme",
+      "so_number": "SO-2026-0107",
+      "order_date": "2026-06-18",
+      "client_code": "FR-0226-0024",
+      "client_name": "Abdullah Al Moussa",
+      "client_reference": "FR-0226-0024-SO-2026-0107",
+      "delivery_date": null,
+      "delivery_destination": null,
+      "fabric_lines": [
+        {
+          "id": "line-moussa-stylbiella-0",
+          "unit": "meters",
+          "color": null,
+          "quantity": 1,
+          "width_cm": 130,
+          "unit_price": 58.7,
+          "weight_gsm": 250,
+          "composition": "100% LINEN",
+          "label_count": 2,
+          "supplier_id": "stylbiella",
+          "garment_type": "Overshirt+Trouser",
+          "width_inches": null,
+          "fabric_number": "43529/657",
+          "supplier_name": "Stylbiella",
+          "label_stickers": [
+            {
+              "code": "FR-0226-0024-SO-2026-0107-L01-OS",
+              "piece_name": "Overshirt",
+              "sequence": 1
+            },
+            {
+              "code": "FR-0226-0024-SO-2026-0107-L01-TR",
+              "piece_name": "Trouser",
+              "sequence": 2
+            }
+          ],
+          "added_at": "2026-06-18T21:32:57.530Z",
+          "added_by": "info@hagan.pro",
+          "a4_printed_at": null,
+          "prep_stickers_printed_at": null,
+          "prod_stickers_printed_at": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null,
+          "stock_status": null,
+          "restock_date": null
+        },
+        {
+          "id": "line-moussa-stylbiella-1",
+          "unit": "meters",
+          "color": null,
+          "quantity": 1,
+          "width_cm": 130,
+          "unit_price": 58.7,
+          "weight_gsm": 250,
+          "composition": "100% LINEN",
+          "label_count": 2,
+          "supplier_id": "stylbiella",
+          "garment_type": "Overshirt+Trouser",
+          "width_inches": null,
+          "fabric_number": "43525/657",
+          "supplier_name": "Stylbiella",
+          "label_stickers": [
+            {
+              "code": "FR-0226-0024-SO-2026-0107-L02-OS",
+              "piece_name": "Overshirt",
+              "sequence": 1
+            },
+            {
+              "code": "FR-0226-0024-SO-2026-0107-L02-TR",
+              "piece_name": "Trouser",
+              "sequence": 2
+            }
+          ],
+          "added_at": "2026-06-18T21:32:57.530Z",
+          "added_by": "info@hagan.pro",
+          "a4_printed_at": null,
+          "prep_stickers_printed_at": null,
+          "prod_stickers_printed_at": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null,
+          "stock_status": null,
+          "restock_date": null
+        },
+        {
+          "id": "line-moussa-stylbiella-2",
+          "unit": "meters",
+          "color": null,
+          "quantity": 1,
+          "width_cm": 130,
+          "unit_price": 58.7,
+          "weight_gsm": 250,
+          "composition": "100% LINEN",
+          "label_count": 2,
+          "supplier_id": "stylbiella",
+          "garment_type": "Overshirt+Trouser",
+          "width_inches": null,
+          "fabric_number": "43524/657",
+          "supplier_name": "Stylbiella",
+          "label_stickers": [
+            {
+              "code": "FR-0226-0024-SO-2026-0107-L03-OS",
+              "piece_name": "Overshirt",
+              "sequence": 1
+            },
+            {
+              "code": "FR-0226-0024-SO-2026-0107-L03-TR",
+              "piece_name": "Trouser",
+              "sequence": 2
+            }
+          ],
+          "added_at": "2026-06-18T21:32:57.530Z",
+          "added_by": "info@hagan.pro",
+          "a4_printed_at": null,
+          "prep_stickers_printed_at": null,
+          "prod_stickers_printed_at": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null,
+          "stock_status": null,
+          "restock_date": null
+        },
+        {
+          "id": "line-moussa-stylbiella-3",
+          "unit": "meters",
+          "color": null,
+          "quantity": 1,
+          "width_cm": 130,
+          "unit_price": 58.7,
+          "weight_gsm": 250,
+          "composition": "100% LINEN",
+          "label_count": 2,
+          "supplier_id": "stylbiella",
+          "garment_type": "Overshirt+Trouser",
+          "width_inches": null,
+          "fabric_number": "43528/657",
+          "supplier_name": "Stylbiella",
+          "label_stickers": [
+            {
+              "code": "FR-0226-0024-SO-2026-0107-L04-OS",
+              "piece_name": "Overshirt",
+              "sequence": 1
+            },
+            {
+              "code": "FR-0226-0024-SO-2026-0107-L04-TR",
+              "piece_name": "Trouser",
+              "sequence": 2
+            }
+          ],
+          "added_at": "2026-06-18T21:32:57.530Z",
+          "added_by": "info@hagan.pro",
+          "a4_printed_at": null,
+          "prep_stickers_printed_at": null,
+          "prod_stickers_printed_at": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null,
+          "stock_status": null,
+          "restock_date": null
+        },
+        {
+          "id": "line-moussa-stylbiella-4",
+          "unit": "meters",
+          "color": null,
+          "quantity": 1,
+          "width_cm": 130,
+          "unit_price": 58.7,
+          "weight_gsm": 250,
+          "composition": "100% LINEN",
+          "label_count": 2,
+          "supplier_id": "stylbiella",
+          "garment_type": "Overshirt+Trouser",
+          "width_inches": null,
+          "fabric_number": "43527/657",
+          "supplier_name": "Stylbiella",
+          "label_stickers": [
+            {
+              "code": "FR-0226-0024-SO-2026-0107-L05-OS",
+              "piece_name": "Overshirt",
+              "sequence": 1
+            },
+            {
+              "code": "FR-0226-0024-SO-2026-0107-L05-TR",
+              "piece_name": "Trouser",
+              "sequence": 2
+            }
+          ],
+          "added_at": "2026-06-18T21:32:57.530Z",
+          "added_by": "info@hagan.pro",
+          "a4_printed_at": null,
+          "prep_stickers_printed_at": null,
+          "prod_stickers_printed_at": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null,
+          "stock_status": null,
+          "restock_date": null
+        },
+        {
+          "id": "line-moussa-stylbiella-5",
+          "unit": "meters",
+          "color": null,
+          "quantity": 1,
+          "width_cm": 150,
+          "unit_price": 45.3,
+          "weight_gsm": 270,
+          "composition": "96% WOOL 4% ELASTANE",
+          "label_count": 1,
+          "supplier_id": "stylbiella",
+          "garment_type": "Trouser",
+          "width_inches": null,
+          "fabric_number": "43416/619",
+          "supplier_name": "Stylbiella",
+          "label_stickers": [
+            {
+              "code": "FR-0226-0024-SO-2026-0107-L06-TR",
+              "piece_name": "Trouser",
+              "sequence": 1
+            }
+          ],
+          "added_at": "2026-06-18T21:32:57.530Z",
+          "added_by": "info@hagan.pro",
+          "a4_printed_at": null,
+          "prep_stickers_printed_at": null,
+          "prod_stickers_printed_at": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null,
+          "stock_status": null,
+          "restock_date": null
+        },
+        {
+          "id": "line-moussa-stylbiella-6",
+          "unit": "meters",
+          "color": null,
+          "quantity": 1,
+          "width_cm": 150,
+          "unit_price": 45.3,
+          "weight_gsm": 270,
+          "composition": "96% WOOL 4% ELASTANE",
+          "label_count": 1,
+          "supplier_id": "stylbiella",
+          "garment_type": "Trouser",
+          "width_inches": null,
+          "fabric_number": "43401/619",
+          "supplier_name": "Stylbiella",
+          "label_stickers": [
+            {
+              "code": "FR-0226-0024-SO-2026-0107-L07-TR",
+              "piece_name": "Trouser",
+              "sequence": 1
+            }
+          ],
+          "added_at": "2026-06-18T21:32:57.530Z",
+          "added_by": "info@hagan.pro",
+          "a4_printed_at": null,
+          "prep_stickers_printed_at": null,
+          "prod_stickers_printed_at": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null,
+          "stock_status": null,
+          "restock_date": null
+        },
+        {
+          "id": "line-moussa-stylbiella-7",
+          "unit": "meters",
+          "color": null,
+          "quantity": 1,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": null,
+          "label_count": 0,
+          "supplier_id": "stylbiella",
+          "garment_type": "Fabric only",
+          "width_inches": null,
+          "fabric_number": "43233/160",
+          "supplier_name": "Stylbiella",
+          "label_stickers": [],
+          "added_at": "2026-06-18T21:32:57.530Z",
+          "added_by": "info@hagan.pro",
+          "a4_printed_at": null,
+          "prep_stickers_printed_at": null,
+          "prod_stickers_printed_at": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null,
+          "stock_status": null,
+          "restock_date": null
+        },
+        {
+          "id": "line-moussa-stylbiella-8",
+          "unit": "meters",
+          "color": null,
+          "quantity": 1,
+          "width_cm": 150,
+          "unit_price": 30,
+          "weight_gsm": 135,
+          "composition": "100/1,120/1-100% COTTON",
+          "label_count": 1,
+          "supplier_id": "stylbiella",
+          "garment_type": "Jacket",
+          "width_inches": null,
+          "fabric_number": "71493/052",
+          "supplier_name": "Stylbiella",
+          "label_stickers": [
+            {
+              "code": "FR-0226-0024-SO-2026-0107-L09-JKT",
+              "piece_name": "Jacket",
+              "sequence": 1
+            }
+          ],
+          "added_at": "2026-06-18T21:32:57.530Z",
+          "added_by": "info@hagan.pro",
+          "a4_printed_at": null,
+          "prep_stickers_printed_at": null,
+          "prod_stickers_printed_at": null,
+          "needs_replacement": false,
+          "replacement_fabric_number": null,
+          "stock_status": null,
+          "restock_date": null
+        }
+      ],
+      "fabric_po_ids": []
+    },
+    {
       "id": "so-1781094874528",
       "notes": null,
       "status": "fabric_pos_created",
@@ -5831,7 +6154,7 @@
     },
     {
       "id": "so-cu-rm-massimo-dutti-linen-short",
-      "notes": "Ready-made \u00b7 Linen Short \u00b7 ClickUp: Massimo Dutti Linen Short (86exddrr6); Massimo Dutti Linen Short (86exddntd)",
+      "notes": "Ready-made · Linen Short · ClickUp: Massimo Dutti Linen Short (86exddrr6); Massimo Dutti Linen Short (86exddntd)",
       "status": "open",
       "client_id": "cu-retail-massimo-dutti",
       "so_number": "SO-2026-0010",
@@ -6032,7 +6355,7 @@
     },
     {
       "id": "so-cu-rm-massimo-dutti-cotton-short",
-      "notes": "Ready-made \u00b7 Cotton Short \u00b7 ClickUp: Massimo Dutti Cotton Short (86exddgzv); Massimo Dutti Cotton Short (86exdba73)",
+      "notes": "Ready-made · Cotton Short · ClickUp: Massimo Dutti Cotton Short (86exddgzv); Massimo Dutti Cotton Short (86exdba73)",
       "status": "open",
       "client_id": "cu-retail-massimo-dutti",
       "so_number": "SO-2026-0011",
@@ -6325,7 +6648,7 @@
     },
     {
       "id": "so-cu-rm-massimo-dutti-long-trouser",
-      "notes": "Ready-made \u00b7 Long Trouser \u00b7 ClickUp: Massimo Dutti Long Trouser (86exdb285); Massimo Dutti Long Trouser (86exdat2r)",
+      "notes": "Ready-made · Long Trouser · ClickUp: Massimo Dutti Long Trouser (86exdb285); Massimo Dutti Long Trouser (86exdat2r)",
       "status": "open",
       "client_id": "cu-retail-massimo-dutti",
       "so_number": "SO-2026-0012",
@@ -6710,7 +7033,7 @@
     },
     {
       "id": "so-cu-rm-zegna-over-shirt",
-      "notes": "Ready-made \u00b7 Over Shirt \u00b7 ClickUp: Zegna Over Shirt (86excxt55)",
+      "notes": "Ready-made · Over Shirt · ClickUp: Zegna Over Shirt (86excxt55)",
       "status": "open",
       "client_id": "cu-retail-zegna",
       "so_number": "SO-2026-0013",
@@ -6865,7 +7188,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-regular-shirt",
-      "notes": "Ready-made \u00b7 Regular Shirt \u00b7 ClickUp: Suit Supply Regular Shirt (86excxjzn)",
+      "notes": "Ready-made · Regular Shirt · ClickUp: Suit Supply Regular Shirt (86excxjzn)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0014",
@@ -7244,7 +7567,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-chino-cotton-trouser",
-      "notes": "Ready-made \u00b7 Chino Cotton Trouser \u00b7 ClickUp: Suit Supply Chino Cotton Trouser (86exa0av6); Suit Supply Chino Cotton Trouser (86exa03dm)",
+      "notes": "Ready-made · Chino Cotton Trouser · ClickUp: Suit Supply Chino Cotton Trouser (86exa0av6); Suit Supply Chino Cotton Trouser (86exa03dm)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0016",
@@ -7675,7 +7998,7 @@
     },
     {
       "id": "so-cu-rm-massimo-dutti-trouser",
-      "notes": "Ready-made \u00b7 Trouser \u00b7 ClickUp: Massimo Dutti Trouser (86ex7r0nb); Massimo Dutti Trouser (86ex7qy4d)",
+      "notes": "Ready-made · Trouser · ClickUp: Massimo Dutti Trouser (86ex7r0nb); Massimo Dutti Trouser (86ex7qy4d)",
       "status": "open",
       "client_id": "cu-retail-massimo-dutti",
       "so_number": "SO-2026-0017",
@@ -8014,7 +8337,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-long-linen-shirt",
-      "notes": "Ready-made \u00b7 Long Linen Shirt \u00b7 ClickUp: Suit Supply long linen Shirt (86ex7qvyp)",
+      "notes": "Ready-made · Long Linen Shirt · ClickUp: Suit Supply long linen Shirt (86ex7qvyp)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0018",
@@ -8123,7 +8446,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-long-original-linen-sample",
-      "notes": "Ready-made \u00b7 Long Original Linen Sample \u00b7 ClickUp: Suit Supply Long Original linen sample (86ex7px9y)",
+      "notes": "Ready-made · Long Original Linen Sample · ClickUp: Suit Supply Long Original linen sample (86ex7px9y)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0019",
@@ -8232,7 +8555,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-regular-original-linen-sample",
-      "notes": "Ready-made \u00b7 Regular Original Linen Sample \u00b7 ClickUp: Suit Supply Regular Original linen sample (86ex7pvxa)",
+      "notes": "Ready-made · Regular Original Linen Sample · ClickUp: Suit Supply Regular Original linen sample (86ex7pvxa)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0020",
@@ -8387,7 +8710,7 @@
     },
     {
       "id": "so-cu-rm-massimo-dutti-cotton-shirt",
-      "notes": "Ready-made \u00b7 Cotton Shirt \u00b7 ClickUp: Massimo Cotton Shirt (86ex7pmve); Massimo Dutti Cotton Shirt (86ex7ph9j)",
+      "notes": "Ready-made · Cotton Shirt · ClickUp: Massimo Cotton Shirt (86ex7pmve); Massimo Dutti Cotton Shirt (86ex7ph9j)",
       "status": "open",
       "client_id": "cu-retail-massimo-dutti",
       "so_number": "SO-2026-0021",
@@ -8726,7 +9049,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-without-pleat-cotton-short",
-      "notes": "Ready-made \u00b7 Without Pleat Cotton Short \u00b7 ClickUp: Suit Supply without pleat cotton short (86ex7j5ye); Suit Supply without pleat cotton short (86ex7hw7t)",
+      "notes": "Ready-made · Without Pleat Cotton Short · ClickUp: Suit Supply without pleat cotton short (86ex7j5ye); Suit Supply without pleat cotton short (86ex7hw7t)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0022",
@@ -9111,7 +9434,7 @@
     },
     {
       "id": "so-cu-86ex7hq4e",
-      "notes": "Ready-made \u00b7 Linen Shirt \u00b7 ClickUp: Luca Faloni Linen Shirt (86ex7hq4e)",
+      "notes": "Ready-made · Linen Shirt · ClickUp: Luca Faloni Linen Shirt (86ex7hq4e)",
       "status": "open",
       "client_id": "cu-retail-luca-faloni",
       "so_number": "SO-2026-0023",
@@ -9335,7 +9658,7 @@
     },
     {
       "id": "so-cu-rm-massimo-dutti-linen-shirt",
-      "notes": "Ready-made \u00b7 Linen Shirt \u00b7 ClickUp: Massimo Dutti Linen Shirt (86ex6dvh4); Massimo Dutti Linen Shirt (86ex6dkw8)",
+      "notes": "Ready-made · Linen Shirt · ClickUp: Massimo Dutti Linen Shirt (86ex6dvh4); Massimo Dutti Linen Shirt (86ex6dkw8)",
       "status": "open",
       "client_id": "cu-retail-massimo-dutti",
       "so_number": "SO-2026-0024",
@@ -9582,7 +9905,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-regular-linen-shirt",
-      "notes": "Ready-made \u00b7 Regular Linen Shirt \u00b7 ClickUp: Suit Supply Regular Linen shirt (86ex4zj45)",
+      "notes": "Ready-made · Regular Linen Shirt · ClickUp: Suit Supply Regular Linen shirt (86ex4zj45)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0025",
@@ -9737,7 +10060,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-pleat-cotton-short",
-      "notes": "Ready-made \u00b7 Pleat Cotton Short \u00b7 ClickUp: Suit Supply pleat cotton short (86ex4zdv1)",
+      "notes": "Ready-made · Pleat Cotton Short · ClickUp: Suit Supply pleat cotton short (86ex4zdv1)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0026",
@@ -9938,7 +10261,7 @@
     },
     {
       "id": "so-cu-rm-massimo-dutti-safari-over-shirt",
-      "notes": "Ready-made \u00b7 Safari Over Shirt \u00b7 ClickUp: Massimo Dutti Safari Over Shirt (86ex4yyvg)",
+      "notes": "Ready-made · Safari Over Shirt · ClickUp: Massimo Dutti Safari Over Shirt (86ex4yyvg)",
       "status": "open",
       "client_id": "cu-retail-massimo-dutti",
       "so_number": "SO-2026-0027",
@@ -10047,7 +10370,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-regular-cotton-shirt",
-      "notes": "Ready-made \u00b7 Regular Cotton Shirt \u00b7 ClickUp: Suit Supply Regular Cotton shirt (86ex4j3rz)",
+      "notes": "Ready-made · Regular Cotton Shirt · ClickUp: Suit Supply Regular Cotton shirt (86ex4j3rz)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0028",
@@ -10340,7 +10663,7 @@
     },
     {
       "id": "so-cu-rm-cafe-cotton-general",
-      "notes": "Ready-made \u00b7 General \u00b7 ClickUp: Cafe Cotton (86ewrz0k0)",
+      "notes": "Ready-made · General · ClickUp: Cafe Cotton (86ewrz0k0)",
       "status": "open",
       "client_id": "cu-retail-cafe-cotton",
       "so_number": "SO-2026-0029",
@@ -11561,7 +11884,7 @@
     },
     {
       "id": "so-cu-86ewvfyuy",
-      "notes": "Ready-made \u00b7 Peak Lapel Suits Set Long Group \u00b7 ClickUp: FR Suit Supply Peak lapel suits set long group (86ewvfyuy)",
+      "notes": "Ready-made · Peak Lapel Suits Set Long Group · ClickUp: FR Suit Supply Peak lapel suits set long group (86ewvfyuy)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0035",
@@ -11914,7 +12237,7 @@
     },
     {
       "id": "so-cu-86ewvfw5e",
-      "notes": "Ready-made \u00b7 Short Group Suits Set \u00b7 ClickUp: FR Suit Supply suits set short group (86ewvfw5e)",
+      "notes": "Ready-made · Short Group Suits Set · ClickUp: FR Suit Supply suits set short group (86ewvfw5e)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0036",
@@ -12439,7 +12762,7 @@
     },
     {
       "id": "so-cu-86ewuw4eu",
-      "notes": "Ready-made \u00b7 Regular Group Suits Set \u00b7 ClickUp: FR Suit Supply Regular group suits set (86ewuw4eu)",
+      "notes": "Ready-made · Regular Group Suits Set · ClickUp: FR Suit Supply Regular group suits set (86ewuw4eu)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0039",
@@ -13016,7 +13339,7 @@
     },
     {
       "id": "so-cu-86ewhgp4u",
-      "notes": "Ready-made \u00b7 Comfort Suits Set \u00b7 ClickUp: FR Comfort Suits set (86ewhgp4u)",
+      "notes": "Ready-made · Comfort Suits Set · ClickUp: FR Comfort Suits set (86ewhgp4u)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0040",
@@ -13873,7 +14196,7 @@
     },
     {
       "id": "so-cu-rm-boggi-overcoat",
-      "notes": "Ready-made \u00b7 Overcoat \u00b7 ClickUp: Boggy Overcoat (86ewpwvyh)",
+      "notes": "Ready-made · Overcoat · ClickUp: Boggy Overcoat (86ewpwvyh)",
       "status": "open",
       "client_id": "cu-retail-boggi",
       "so_number": "SO-2026-0041",
@@ -14005,7 +14328,7 @@
     },
     {
       "id": "so-cu-rm-blue-mint-general",
-      "notes": "Ready-made \u00b7 General \u00b7 ClickUp: Blue Mint (86ewpwqn3)",
+      "notes": "Ready-made · General · ClickUp: Blue Mint (86ewpwqn3)",
       "status": "open",
       "client_id": "cu-retail-blue-mint",
       "so_number": "SO-2026-0042",
@@ -14977,7 +15300,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-long-group-suits-set",
-      "notes": "Ready-made \u00b7 Long Group Suits Set \u00b7 ClickUp: Suit Supply Long group Suits set (86ewhmequ)",
+      "notes": "Ready-made · Long Group Suits Set · ClickUp: Suit Supply Long group Suits set (86ewhmequ)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0046",
@@ -15270,7 +15593,7 @@
     },
     {
       "id": "so-cu-rm-lebanon-beirut-regular-group-suit-set",
-      "notes": "Ready-made \u00b7 Regular Group Suit Set \u00b7 ClickUp: Lebanon Beirut Regular group Suit set (86ewem099); Lebanon Beirut Regular group suit set (86ewfhu1z); Lebanon Beirut Regular group suit set (86ewemzet)",
+      "notes": "Ready-made · Regular Group Suit Set · ClickUp: Lebanon Beirut Regular group Suit set (86ewem099); Lebanon Beirut Regular group suit set (86ewfhu1z); Lebanon Beirut Regular group suit set (86ewemzet)",
       "status": "open",
       "client_id": "cu-retail-lebanon-beirut",
       "so_number": "SO-2026-0047",
@@ -17134,7 +17457,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-short-group-suits-set",
-      "notes": "Ready-made \u00b7 Short Group Suits Set \u00b7 ClickUp: Suit Supply Short group suits set (86ewfhv0n); Suit Supply Short group suits set (86ewenp09)",
+      "notes": "Ready-made · Short Group Suits Set · ClickUp: Suit Supply Short group suits set (86ewfhv0n); Suit Supply Short group suits set (86ewenp09)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0050",
@@ -17633,7 +17956,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-regular-group-suits-set",
-      "notes": "Ready-made \u00b7 Regular Group Suits Set \u00b7 ClickUp: Suit Supply Regular group suits set (86ewfhuq1); Suit Supply Regular group suits set (86ewen99b)",
+      "notes": "Ready-made · Regular Group Suits Set · ClickUp: Suit Supply Regular group suits set (86ewfhuq1); Suit Supply Regular group suits set (86ewen99b)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0051",
@@ -19078,7 +19401,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-long-group-shirt",
-      "notes": "Ready-made \u00b7 Long Group Shirt \u00b7 ClickUp: Suit Supply Long group shirt (86ewfhu15); Suit Supply Long group shirt (86ewennr1)",
+      "notes": "Ready-made · Long Group Shirt · ClickUp: Suit Supply Long group shirt (86ewfhu15); Suit Supply Long group shirt (86ewennr1)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0053",
@@ -20539,7 +20862,7 @@
     },
     {
       "id": "so-cu-rm-boggi-regular-group-suits-set",
-      "notes": "Ready-made \u00b7 Regular Group Suits Set \u00b7 ClickUp: Boggi Regular group suits set (86ewfht29); Boggi Regular group suits set (86ewen3xe)",
+      "notes": "Ready-made · Regular Group Suits Set · ClickUp: Boggi Regular group suits set (86ewfht29); Boggi Regular group suits set (86ewen3xe)",
       "status": "open",
       "client_id": "cu-retail-boggi",
       "so_number": "SO-2026-0059",
@@ -21175,7 +21498,7 @@
     },
     {
       "id": "so-cu-rm-suit-supply-regular-group-shirt",
-      "notes": "Ready-made \u00b7 Regular Group Shirt \u00b7 ClickUp: Suit Supply Regular group shirt (86ewfhrxb); Suit Supply Regular group shirt (86ewenjt6)",
+      "notes": "Ready-made · Regular Group Shirt · ClickUp: Suit Supply Regular group shirt (86ewfhrxb); Suit Supply Regular group shirt (86ewenjt6)",
       "status": "open",
       "client_id": "cu-retail-suit-supply",
       "so_number": "SO-2026-0061",
@@ -34281,5 +34604,5 @@
       "client_reference": "FR-0226-0025-SO-2026-0095"
     }
   ],
-  "updated_at": "2026-06-10T13:39:48.594Z"
+  "updated_at": "2026-06-18T21:32:57.531Z"
 }
