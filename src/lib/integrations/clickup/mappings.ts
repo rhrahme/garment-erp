@@ -68,6 +68,9 @@ export function mapClickUpItemToGarmentType(item: string | null): string {
     "trouser + shirt (fr)": "Shirt+Trouser",
     "overcoats (fr)": "Overcoat",
     "overcoats (g)": "Overcoat",
+    "thobes summer (fr)": "House Thobe",
+    "thobes winter (fr)": "Formal Thobe",
+    "thobes winter (fd)": "Formal Thobe",
   };
 
   if (exact[normalized]) return exact[normalized];
@@ -79,7 +82,11 @@ export function mapClickUpItemToGarmentType(item: string | null): string {
   if (normalized.includes("overshirt") || normalized.includes("over shirt")) return "Overshirt";
   if (normalized.includes("shirt")) return "Shirt LS";
   if (normalized.includes("overcoat")) return "Overcoat";
-  if (normalized.includes("thobe") || normalized.includes("serwal") || normalized.includes("balto")) return "Trouser";
+  if (normalized.includes("thobe")) {
+    if (normalized.includes("summer") || normalized.includes("house")) return "House Thobe";
+    return "Formal Thobe";
+  }
+  if (normalized.includes("serwal") || normalized.includes("balto")) return "Trouser";
 
   return item.replace(/\s*\([^)]*\)\s*$/, "").trim() || "Trouser";
 }

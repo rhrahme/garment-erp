@@ -30,6 +30,8 @@ const PIECE_ABBREV: Record<string, string> = {
   Overshirt: "OS",
   Short: "SH",
   Overcoat: "OC",
+  "Formal Thobe": "FTHB",
+  "House Thobe": "HTHB",
 };
 
 export function getGarmentPieces(garmentType: string): string[] {

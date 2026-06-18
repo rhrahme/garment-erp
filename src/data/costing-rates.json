@@ -33,6 +33,16 @@
       "washing": 60,
       "overhead": 100
     },
+    "Formal Thobe": {
+      "labor": 200,
+      "washing": 40,
+      "overhead": 55
+    },
+    "House Thobe": {
+      "labor": 180,
+      "washing": 40,
+      "overhead": 50
+    },
     "Shirt LS": {
       "labor": 140,
       "washing": 35,
