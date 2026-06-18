@@ -1,6 +1,10 @@
 import { DRAFT_KEYS } from "@/lib/autosave/draft-keys";
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
-import { readLocalDraft } from "@/lib/autosave/local-draft-storage";
+import {
+  clearLocalDraft,
+  readLocalDraft,
+  writeLocalDraft,
+} from "@/lib/autosave/local-draft-storage";
 import type { SalesOrderClientDraft } from "@/lib/sales-orders/multi-client-draft";
 
 export const SALES_ORDER_DRAFT_VERSION = 3;
@@ -216,12 +220,7 @@ export function describeSalesOrderDraftSummary(
   if (!draft || isSalesOrderDraftEmpty(draft)) return null;
 
   const clientEntries = draft.clientDrafts.map((entry, index) => {
-    const client = clients.find((row) => row.id === entry.clientId);
-    const label = client
-      ? [client.first_name, client.middle_name, client.last_name].filter(Boolean).join(" ").trim()
-      : entry.clientId
-        ? "Unnamed client"
-        : `Client ${index + 1}`;
+    const label = clientDraftLabel(entry, index, clients);
     return { label, fabricCount: entry.lines.length };
   });
 
@@ -230,4 +229,210 @@ export function describeSalesOrderDraftSummary(
     clientEntries,
     totalFabrics: clientEntries.reduce((total, entry) => total + entry.fabricCount, 0),
   };
+}
+
+export function clientDraftHasContinueContent(entry: SalesOrderClientDraft): boolean {
+  return (
+    entry.lines.length > 0 ||
+    Boolean(entry.clientId) ||
+    Boolean(entry.deliveryDestination) ||
+    Boolean(entry.deliveryDate) ||
+    Boolean(entry.notes.trim())
+  );
+}
+
+export function clientDraftLabel(
+  entry: SalesOrderClientDraft,
+  index: number,
+  clients: Array<{ id: string; first_name: string; last_name: string; middle_name?: string | null }>
+): string {
+  const client = clients.find((row) => row.id === entry.clientId);
+  if (client) {
+    return [client.first_name, client.middle_name, client.last_name].filter(Boolean).join(" ").trim();
+  }
+  return entry.clientId ? "Unnamed client" : `Client ${index + 1}`;
+}
+
+export function filterDraftToClientDraft(
+  draft: SalesOrderFormDraft,
+  clientDraftId: string
+): SalesOrderFormDraft | null {
+  const entry = draft.clientDrafts.find((row) => row.id === clientDraftId);
+  if (!entry) return null;
+  return {
+    ...draft,
+    savedAt: new Date().toISOString(),
+    clientDrafts: [entry],
+    activeClientDraftId: entry.id,
+  };
+}
+
+export function removeClientDraftFromFormDraft(
+  draft: SalesOrderFormDraft,
+  clientDraftId: string
+): SalesOrderFormDraft | null {
+  const remaining = draft.clientDrafts.filter((row) => row.id !== clientDraftId);
+  if (remaining.length === 0) return null;
+  const activeId =
+    draft.activeClientDraftId !== clientDraftId &&
+    remaining.some((row) => row.id === draft.activeClientDraftId)
+      ? draft.activeClientDraftId
+      : remaining[0]!.id;
+  return {
+    ...draft,
+    savedAt: new Date().toISOString(),
+    clientDrafts: remaining,
+    activeClientDraftId: activeId,
+  };
+}
+
+export type FabricOrderDraftQueue = {
+  version: 1;
+  entries: SalesOrderFormDraft[];
+};
+
+export function readFabricOrderDraftQueue(): SalesOrderFormDraft[] {
+  const raw = readLocalDraft<FabricOrderDraftQueue>(DRAFT_KEYS.fabricOrderQueue);
+  if (!raw || raw.version !== 1 || !Array.isArray(raw.entries)) return [];
+  return raw.entries
+    .map((entry) => migrateSalesOrderDraft(entry))
+    .filter((entry): entry is SalesOrderFormDraft => Boolean(entry && !isSalesOrderDraftEmpty(entry)));
+}
+
+export function writeFabricOrderDraftQueue(entries: SalesOrderFormDraft[]): void {
+  const nonEmpty = entries.filter((entry) => !isSalesOrderDraftEmpty(entry));
+  if (nonEmpty.length === 0) {
+    clearLocalDraft(DRAFT_KEYS.fabricOrderQueue);
+    return;
+  }
+  writeLocalDraft(DRAFT_KEYS.fabricOrderQueue, {
+    version: 1,
+    entries: nonEmpty,
+  });
+}
+
+export function enqueueFabricOrderDrafts(drafts: SalesOrderFormDraft[]): void {
+  const queue = readFabricOrderDraftQueue();
+  writeFabricOrderDraftQueue([...queue, ...drafts]);
+}
+
+/** Primary local fabric-order draft (not the legacy sales-order key unless it is the only one). */
+export function readFabricOrderMainLocalDraft(): SalesOrderFormDraft | null {
+  const raw = readLocalDraft<unknown>(DRAFT_KEYS.fabricOrderNew);
+  const draft = migrateSalesOrderDraft(raw);
+  if (draft && !isSalesOrderDraftEmpty(draft)) return draft;
+
+  const legacyRaw = readLocalDraft<unknown>(DRAFT_KEYS.salesOrderNew);
+  const legacy = migrateSalesOrderDraft(legacyRaw);
+  if (legacy && !isSalesOrderDraftEmpty(legacy)) return legacy;
+
+  return null;
+}
+
+export type FabricOrderContinueOption = {
+  optionId: string;
+  source: "local-main" | "local-queue" | "server";
+  clientDraftId: string;
+  label: string;
+  fabricCount: number;
+  savedAt: string;
+  queueIndex?: number;
+};
+
+function pushContinueOptionsFromDraft(
+  draft: SalesOrderFormDraft,
+  source: FabricOrderContinueOption["source"],
+  clients: Array<{ id: string; first_name: string; last_name: string; middle_name?: string | null }>,
+  options: FabricOrderContinueOption[],
+  queueIndex?: number
+): void {
+  draft.clientDrafts.forEach((entry, index) => {
+    if (!clientDraftHasContinueContent(entry)) return;
+    options.push({
+      optionId: `${source}-${queueIndex ?? "main"}-${entry.id}`,
+      source,
+      clientDraftId: entry.id,
+      label: clientDraftLabel(entry, index, clients),
+      fabricCount: entry.lines.length,
+      savedAt: draft.savedAt,
+      queueIndex,
+    });
+  });
+}
+
+export function buildFabricOrderContinueOptions(
+  clients: Array<{ id: string; first_name: string; last_name: string; middle_name?: string | null }>,
+  serverDraft: SalesOrderFormDraft | null
+): FabricOrderContinueOption[] {
+  const mainLocalDraft = readFabricOrderMainLocalDraft();
+  const queueDrafts = readFabricOrderDraftQueue();
+  const localLines = mainLocalDraft ? countDraftFabricLines(mainLocalDraft) : 0;
+  const queueLines = queueDrafts.reduce((sum, draft) => sum + countDraftFabricLines(draft), 0);
+  const serverLines = serverDraft ? countDraftFabricLines(serverDraft) : 0;
+  const totalLocalLines = localLines + queueLines;
+  const preferServer = serverLines > 0 && serverLines > totalLocalLines;
+
+  const options: FabricOrderContinueOption[] = [];
+
+  if (!preferServer) {
+    if (mainLocalDraft) {
+      pushContinueOptionsFromDraft(mainLocalDraft, "local-main", clients, options);
+    }
+  } else if (serverDraft) {
+    pushContinueOptionsFromDraft(serverDraft, "server", clients, options);
+  }
+
+  queueDrafts.forEach((draft, queueIndex) => {
+    pushContinueOptionsFromDraft(draft, "local-queue", clients, options, queueIndex);
+  });
+
+  return options;
+}
+
+export function applyFabricOrderContinuePick(
+  option: FabricOrderContinueOption,
+  ctx: {
+    mainLocalDraft: SalesOrderFormDraft | null;
+    queueDrafts: SalesOrderFormDraft[];
+    serverDraft: SalesOrderFormDraft | null;
+  }
+): { picked: SalesOrderFormDraft; serverRemaining?: SalesOrderFormDraft | null } | null {
+  if (option.source === "local-queue" && option.queueIndex != null) {
+    const entry = ctx.queueDrafts[option.queueIndex];
+    if (!entry) return null;
+    const picked =
+      filterDraftToClientDraft(entry, option.clientDraftId) ??
+      (entry.clientDrafts.length === 1 ? entry : null);
+    if (!picked) return null;
+    const nextQueue = ctx.queueDrafts.filter((_, index) => index !== option.queueIndex);
+    writeFabricOrderDraftQueue(nextQueue);
+    return { picked };
+  }
+
+  if (option.source === "local-main" && ctx.mainLocalDraft) {
+    const picked = filterDraftToClientDraft(ctx.mainLocalDraft, option.clientDraftId);
+    if (!picked) return null;
+    const remaining = removeClientDraftFromFormDraft(ctx.mainLocalDraft, option.clientDraftId);
+    if (remaining && !isSalesOrderDraftEmpty(remaining)) {
+      const toEnqueue = remaining.clientDrafts
+        .filter(clientDraftHasContinueContent)
+        .map((client) => filterDraftToClientDraft(remaining, client.id))
+        .filter((draft): draft is SalesOrderFormDraft => Boolean(draft));
+      enqueueFabricOrderDrafts(toEnqueue);
+    }
+    clearLocalDraft(DRAFT_KEYS.fabricOrderNew);
+    clearLocalDraft(DRAFT_KEYS.salesOrderNew);
+    return { picked };
+  }
+
+  if (option.source === "server" && ctx.serverDraft) {
+    const picked = filterDraftToClientDraft(ctx.serverDraft, option.clientDraftId);
+    if (!picked) return null;
+    const remaining = removeClientDraftFromFormDraft(ctx.serverDraft, option.clientDraftId);
+    const serverRemaining =
+      remaining && !isSalesOrderDraftEmpty(remaining) ? remaining : null;
+    return { picked, serverRemaining };
+  }
+
+  return null;
 }

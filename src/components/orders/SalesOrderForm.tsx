@@ -39,13 +39,19 @@ import {
   lineNeedsAvailabilityAttention,
 } from "@/components/fabric/FabricStockBadge";
 import {
+  applyFabricOrderContinuePick,
+  buildFabricOrderContinueOptions,
   countDraftFabricLines,
   describeSalesOrderDraftSummary,
   isSalesOrderDraftEmpty,
   migrateSalesOrderDraft,
+  readFabricOrderDraftQueue,
+  readFabricOrderLocalDraft,
+  readFabricOrderMainLocalDraft,
   resolveBestDraftForServerSave,
   resolveFabricOrderDraftForServerSave,
   SALES_ORDER_DRAFT_VERSION,
+  type FabricOrderContinueOption,
   type SalesOrderFormDraft,
   type SalesOrderLineDraft,
 } from "@/lib/autosave/sales-order-draft";
@@ -157,8 +163,12 @@ export function SalesOrderForm({
   const [savingLineEdit, setSavingLineEdit] = useState(false);
   const skipClientResetRef = useRef(false);
   const flushServerDraftAfterMutationRef = useRef(false);
+  const continueAttemptedRef = useRef(false);
   const [draftChoiceResolved, setDraftChoiceResolved] = useState(
     () => Boolean(duplicateFromOrderId || startFresh)
+  );
+  const [fabricContinueOptions, setFabricContinueOptions] = useState<FabricOrderContinueOption[] | null>(
+    null
   );
   const [lastServerPersistedLines, setLastServerPersistedLines] = useState(0);
 
@@ -366,8 +376,56 @@ export function SalesOrderForm({
     [clients, pendingDraft]
   );
 
+  const isFabricOrderForm = redirectBasePath === "/fabric-orders";
+
+  function finishContinueWithDraft(
+    picked: SalesOrderFormDraft,
+    serverRemaining?: SalesOrderFormDraft | null
+  ) {
+    restoreDraft(picked);
+    dismissPendingRestore();
+    dismissPendingServerRestore();
+    setFabricContinueOptions(null);
+    setDraftChoiceResolved(true);
+
+    if (!serverDraftEnabled || serverRemaining === undefined) return;
+
+    if (serverRemaining && !isSalesOrderDraftEmpty(serverRemaining)) {
+      void persistServerDraft(serverRemaining);
+    } else {
+      void fetch(serverDraftApiPath, { method: "DELETE" });
+    }
+  }
+
+  function continueFabricOrderOption(option: FabricOrderContinueOption) {
+    const result = applyFabricOrderContinuePick(option, {
+      mainLocalDraft: readFabricOrderMainLocalDraft(),
+      queueDrafts: readFabricOrderDraftQueue(),
+      serverDraft: pendingServerDraft,
+    });
+    if (!result) return;
+    finishContinueWithDraft(result.picked, result.serverRemaining);
+  }
+
   useEffect(() => {
     if (loading || !draftHydrated || !serverDraftHydrated || draftChoiceResolved || !promptForDraft) return;
+
+    if (continueDraft && isFabricOrderForm) {
+      if (continueAttemptedRef.current) return;
+      continueAttemptedRef.current = true;
+
+      const options = buildFabricOrderContinueOptions(clients, pendingServerDraft);
+      if (options.length === 1) {
+        continueFabricOrderOption(options[0]!);
+        return;
+      }
+      if (options.length > 1) {
+        setFabricContinueOptions(options);
+        return;
+      }
+      setDraftChoiceResolved(true);
+      return;
+    }
 
     if (continueDraft) {
       if (hasPendingRestore) {
@@ -412,6 +470,7 @@ export function SalesOrderForm({
       setDraftChoiceResolved(true);
     }
   }, [
+    clients,
     continueDraft,
     dismissPendingRestore,
     dismissPendingServerRestore,
@@ -419,6 +478,7 @@ export function SalesOrderForm({
     draftHydrated,
     hasPendingRestore,
     hasPendingServerRestore,
+    isFabricOrderForm,
     loading,
     pendingServerDraft,
     promptForDraft,
@@ -429,11 +489,33 @@ export function SalesOrderForm({
   ]);
 
   function continueSavedDraft() {
+    if (isFabricOrderForm) {
+      const options = buildFabricOrderContinueOptions(clients, null);
+      if (options.length > 1) {
+        setFabricContinueOptions(options);
+        return;
+      }
+      if (options.length === 1) {
+        continueFabricOrderOption(options[0]!);
+        return;
+      }
+    }
     restorePending();
     setDraftChoiceResolved(true);
   }
 
   function continueServerSavedDraft() {
+    if (isFabricOrderForm && pendingServerDraft) {
+      const options = buildFabricOrderContinueOptions(clients, pendingServerDraft);
+      if (options.length > 1) {
+        setFabricContinueOptions(options);
+        return;
+      }
+      if (options.length === 1) {
+        continueFabricOrderOption(options[0]!);
+        return;
+      }
+    }
     if (pendingServerDraft) {
       restoreDraft(pendingServerDraft);
       dismissPendingServerRestore();
@@ -1103,6 +1185,81 @@ export function SalesOrderForm({
     draftHydrated &&
     serverDraftHydrated &&
     ((hasPendingRestore && draftSummary) || (hasPendingServerRestore && serverDraftSummary));
+
+  const showFabricContinuePicker =
+    isFabricOrderForm &&
+    !draftChoiceResolved &&
+    draftHydrated &&
+    serverDraftHydrated &&
+    fabricContinueOptions &&
+    fabricContinueOptions.length > 0;
+
+  function formatContinueSavedAt(savedAt: string): string | null {
+    if (!savedAt) return null;
+    return new Date(savedAt).toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }
+
+  if (showFabricContinuePicker) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-6">
+        <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+          <h2 className="text-xl font-semibold text-slate-900">Which draft should we open?</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            You have {fabricContinueOptions.length} unfinished fabric order
+            {fabricContinueOptions.length === 1 ? "" : "s"}. Pick one to continue, or start a blank order for a
+            different client.
+          </p>
+
+          <ul className="mt-6 space-y-3">
+            {fabricContinueOptions.map((option) => {
+              const savedLabel = formatContinueSavedAt(option.savedAt);
+              const sourceLabel =
+                option.source === "server"
+                  ? "Server draft"
+                  : option.source === "local-queue"
+                    ? "Queued on this browser"
+                    : "Saved on this browser";
+              return (
+                <li key={option.optionId}>
+                  <button
+                    type="button"
+                    onClick={() => continueFabricOrderOption(option)}
+                    className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 text-left transition-colors hover:border-indigo-300 hover:bg-indigo-50/40"
+                  >
+                    <div>
+                      <p className="font-medium text-slate-900">{option.label}</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {sourceLabel}
+                        {savedLabel ? ` · Last edited ${savedLabel}` : null}
+                      </p>
+                    </div>
+                    <span className="text-sm text-slate-500">
+                      {option.fabricCount} fabric{option.fabricCount !== 1 ? "s" : ""}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Button variant="secondary" onClick={startBlankOrder} className="flex-1">
+              Start new order
+            </Button>
+          </div>
+
+          <div className="mt-4 flex justify-center">
+            <Button variant="ghost" size="sm" onClick={() => router.push(redirectBasePath)} className="text-slate-500">
+              Back to orders list
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (showDraftChooser) {
     const activeSummary = hasPendingRestore && draftSummary ? draftSummary : serverDraftSummary!;

@@ -4,11 +4,14 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, FileEdit } from "lucide-react";
 import {
+  buildFabricOrderContinueOptions,
   countDraftFabricLines,
   describeSalesOrderDraftSummary,
   isSalesOrderDraftEmpty,
+  migrateSalesOrderDraft,
   readFabricOrderLocalDraft,
   type SalesOrderDraftSummary,
+  type SalesOrderFormDraft,
 } from "@/lib/autosave/sales-order-draft";
 import type { ClientProfile } from "@/lib/types/clients";
 
@@ -25,6 +28,22 @@ function formatDraftHeadline(summary: SalesOrderDraftSummary): string {
   const others = summary.clientEntries.length - 1;
   const otherWord = others === 1 ? "other client" : "other clients";
   return `${primary} + ${others} ${otherWord}, ${summary.totalFabrics} ${fabricWord}`;
+}
+
+function formatContinueOptionsHeadline(
+  options: Array<{ label: string; fabricCount: number }>
+): string {
+  if (options.length <= 1) {
+    const only = options[0];
+    if (!only) return "Unfinished order";
+    const fabricWord = only.fabricCount === 1 ? "fabric" : "fabrics";
+    return `${only.label}, ${only.fabricCount} ${fabricWord}`;
+  }
+
+  const totalFabrics = options.reduce((sum, option) => sum + option.fabricCount, 0);
+  const fabricWord = totalFabrics === 1 ? "fabric" : "fabrics";
+  const orderWord = options.length === 1 ? "order" : "orders";
+  return `${options.length} unfinished ${orderWord}, ${totalFabrics} ${fabricWord}`;
 }
 
 function formatSavedAt(savedAt: string | null | undefined): string | null {
@@ -46,6 +65,7 @@ export function FabricOrderDraftBanner({
   const [clients, setClients] = useState<ClientProfile[]>([]);
   const [serverSummary, setServerSummary] = useState<SalesOrderDraftSummary | null>(initialServerSummary);
   const [serverSavedAt, setServerSavedAt] = useState<string | null>(initialServerSavedAt);
+  const [serverDraft, setServerDraft] = useState<SalesOrderFormDraft | null>(null);
   const [localSummary, setLocalSummary] = useState<SalesOrderDraftSummary | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const healAttemptedRef = useRef(false);
@@ -69,11 +89,13 @@ export function FabricOrderDraftBanner({
 
         if (draftRes.ok) {
           const data = (await draftRes.json()) as {
+            draft?: SalesOrderFormDraft | null;
             summary?: SalesOrderDraftSummary | null;
             saved_at?: string | null;
           };
           setServerSummary(data.summary ?? null);
           setServerSavedAt(data.saved_at ?? null);
+          setServerDraft(data.draft ? migrateSalesOrderDraft(data.draft) : null);
         }
       } catch {
         // Non-fatal — banner simply stays hidden.
@@ -152,18 +174,24 @@ export function FabricOrderDraftBanner({
   const activeDraft = useMemo(() => {
     const localTime = localSummary?.savedAt ? Date.parse(localSummary.savedAt) : 0;
     const serverTime = serverSavedAt ? Date.parse(serverSavedAt) : 0;
+    const localLines = localSummary?.totalFabrics ?? 0;
+    const serverLines = serverSummary?.totalFabrics ?? 0;
+    const preferLocal = localLines > 0 && (localLines > serverLines || localTime >= serverTime);
 
-    if (localSummary && localSummary.totalFabrics > 0 && localTime >= serverTime) {
-      return { source: "local" as DraftSource, summary: localSummary, savedAt: localSummary.savedAt };
-    }
-    if (serverSummary && serverSummary.totalFabrics > 0) {
-      return { source: "server" as DraftSource, summary: serverSummary, savedAt: serverSavedAt };
-    }
-    if (localSummary && localSummary.totalFabrics > 0) {
-      return { source: "local" as DraftSource, summary: localSummary, savedAt: localSummary.savedAt };
-    }
-    return null;
-  }, [localSummary, serverSavedAt, serverSummary]);
+    const continueOptions = buildFabricOrderContinueOptions(
+      clients,
+      preferLocal ? null : serverDraft
+    );
+    if (continueOptions.length === 0) return null;
+
+    const summary = preferLocal ? localSummary : serverSummary ?? localSummary;
+    if (!summary) return null;
+
+    const savedAt = preferLocal ? localSummary?.savedAt ?? null : serverSavedAt ?? localSummary?.savedAt ?? null;
+    const source: DraftSource = preferLocal ? "local" : "server";
+
+    return { source, summary, savedAt, continueOptions };
+  }, [clients, localSummary, serverDraft, serverSavedAt, serverSummary]);
 
   if (!hydrated || !activeDraft) return null;
 
@@ -172,6 +200,14 @@ export function FabricOrderDraftBanner({
     activeDraft.source === "local"
       ? "Saved on this browser"
       : "Saved on the server (works on any device)";
+  const headline =
+    activeDraft.continueOptions.length > 1
+      ? formatContinueOptionsHeadline(activeDraft.continueOptions)
+      : formatDraftHeadline(activeDraft.summary);
+  const continueHint =
+    activeDraft.continueOptions.length > 1
+      ? "Choose which draft to continue when you click below."
+      : null;
 
   return (
     <div className="rounded-xl border border-amber-300 bg-amber-50 px-5 py-4 shadow-sm">
@@ -181,13 +217,14 @@ export function FabricOrderDraftBanner({
             <FileEdit className="h-5 w-5" />
           </div>
           <div>
-            <p className="font-semibold text-amber-950">
-              Unfinished order: {formatDraftHeadline(activeDraft.summary)}
-            </p>
+            <p className="font-semibold text-amber-950">Unfinished order: {headline}</p>
             <p className="mt-1 text-sm text-amber-900/80">
               {sourceLabel}
               {savedLabel ? ` · Last edited ${savedLabel}` : null}
             </p>
+            {continueHint ? (
+              <p className="mt-1 text-xs text-amber-800/80">{continueHint}</p>
+            ) : null}
             <p className="mt-1 text-xs text-amber-800/80">
               Use <span className="font-medium">New fabric order</span> above to start one for a different client.
             </p>
