@@ -20,7 +20,7 @@ export function DeliveryDestinationTabs({
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium text-slate-700">{label}</p>
-      <div className="inline-flex gap-1 rounded-lg border border-slate-200 bg-white p-1">
+      <div className="flex w-full flex-col gap-1 rounded-lg border border-slate-200 bg-white p-1 sm:inline-flex sm:w-auto sm:flex-row">
         {destinations.map((destination) => {
           const active = value === destination.id;
           return (
@@ -29,7 +29,7 @@ export function DeliveryDestinationTabs({
               type="button"
               disabled={disabled}
               onClick={() => onChange(destination.id)}
-              className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+              className={`min-h-[44px] flex-1 rounded-md px-4 py-2.5 text-sm font-medium transition-colors sm:min-h-0 sm:flex-none sm:py-2 ${
                 active
                   ? "bg-indigo-600 text-white"
                   : "text-slate-600 hover:bg-slate-50 disabled:opacity-60"

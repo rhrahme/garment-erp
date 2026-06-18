@@ -20,6 +20,8 @@ type UseLocalDraftOptions<T> = {
   autoRestore?: boolean;
   /** Optional override for reading stored drafts (e.g. merge legacy localStorage keys). */
   readStored?: () => T | null;
+  /** When false, an empty form will not erase a previously saved draft. Default true. */
+  clearOnEmpty?: boolean;
 };
 
 export function useLocalDraft<T>({
@@ -32,6 +34,7 @@ export function useLocalDraft<T>({
   isEmpty,
   autoRestore = true,
   readStored,
+  clearOnEmpty = true,
 }: UseLocalDraftOptions<T>) {
   const [status, setStatus] = useState<AutoSaveStatus>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -131,7 +134,7 @@ export function useLocalDraft<T>({
     }
 
     if (!canSave || isEmpty?.(value)) {
-      if (isEmpty?.(value) && lastWrittenRef.current) {
+      if (clearOnEmpty && isEmpty?.(value) && lastWrittenRef.current) {
         clearLocalDraft(draftKey);
         lastWrittenRef.current = null;
       }
@@ -147,7 +150,7 @@ export function useLocalDraft<T>({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [canSave, delayMs, draftKey, enabled, hydrated, isEmpty, persistNow, value]);
+  }, [canSave, clearOnEmpty, delayMs, draftKey, enabled, hydrated, isEmpty, persistNow, value]);
 
   useEffect(() => {
     if (!enabled || !hydrated || !canSave || isEmpty?.(value)) return;

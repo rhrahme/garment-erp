@@ -69,7 +69,16 @@ function isNavActive(pathname: string, href: string): boolean {
   return true;
 }
 
-export function Sidebar({ clientsOnly = false }: { clientsOnly?: boolean }) {
+export function Sidebar({
+  clientsOnly = false,
+  mobileOpen = false,
+  onNavigate,
+}: {
+  clientsOnly?: boolean;
+  /** Slide-over nav open state (mobile only). */
+  mobileOpen?: boolean;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const items = clientsOnly ? qcNavItems : navItems;
@@ -82,7 +91,12 @@ export function Sidebar({ clientsOnly = false }: { clientsOnly?: boolean }) {
   }
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r border-slate-200 bg-slate-900 text-white">
+    <aside
+      className={cn(
+        "fixed inset-y-0 left-0 z-50 flex h-screen w-64 flex-col border-r border-slate-200 bg-slate-900 text-white transition-transform duration-200 ease-in-out md:relative md:translate-x-0",
+        mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      )}
+    >
       <div className="flex items-center gap-3 border-b border-slate-700 px-6 py-5">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500">
           <Shirt className="h-5 w-5" />
@@ -101,8 +115,9 @@ export function Sidebar({ clientsOnly = false }: { clientsOnly?: boolean }) {
               <li key={href}>
                 <Link
                   href={href}
+                  onClick={onNavigate}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    "flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                     active
                       ? "bg-indigo-600 text-white"
                       : "text-slate-300 hover:bg-slate-800 hover:text-white"

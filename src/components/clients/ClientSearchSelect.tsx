@@ -139,7 +139,7 @@ export function ClientSearchSelect({
           onFocus={() => !blocked && setOpen(true)}
           placeholder={blocked ? "Select a production brand first…" : placeholder}
           className={cn(
-            "w-full rounded-lg border border-slate-300 py-2 pl-10 pr-10 text-sm",
+            "w-full min-h-[44px] rounded-lg border border-slate-300 py-2.5 pl-10 pr-10 text-base sm:text-sm",
             blocked && "cursor-not-allowed bg-slate-50 text-slate-400"
           )}
           autoComplete="off"
@@ -148,7 +148,7 @@ export function ClientSearchSelect({
           type="button"
           disabled={blocked}
           onClick={() => setOpen((prev) => !prev)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:text-slate-600 disabled:opacity-40"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-2 text-slate-400 hover:text-slate-600 disabled:opacity-40"
           aria-label="Toggle client list"
         >
           <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
@@ -183,7 +183,7 @@ export function ClientSearchSelect({
                         setOpen(false);
                       }}
                       className={cn(
-                        "flex w-full flex-col gap-0.5 border-b border-slate-100 px-4 py-2.5 text-left last:border-0 hover:bg-slate-50",
+                        "flex w-full min-h-[44px] flex-col gap-0.5 border-b border-slate-100 px-4 py-3 text-left last:border-0 hover:bg-slate-50",
                         active && "bg-indigo-50"
                       )}
                     >

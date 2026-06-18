@@ -33,7 +33,7 @@ export function FactoryBrandTabs({
             type="button"
             onClick={() => onChange(null)}
             className={cn(
-              "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "min-h-[44px] rounded-md px-3 py-2.5 text-sm font-medium transition-colors sm:min-h-0 sm:py-2",
               value === null ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100"
             )}
           >
@@ -49,7 +49,7 @@ export function FactoryBrandTabs({
               type="button"
               onClick={() => onChange(brand.id)}
               className={cn(
-                "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "min-h-[44px] rounded-md px-3 py-2.5 text-sm font-medium transition-colors sm:min-h-0 sm:py-2",
                 active ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100"
               )}
             >

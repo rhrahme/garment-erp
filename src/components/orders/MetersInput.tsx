@@ -1,6 +1,7 @@
 "use client";
 
 import { formatDecimalDisplay, parseDecimalInput } from "@/lib/utils/decimal-input";
+import { cn } from "@/lib/utils";
 
 export function MetersInput({
   value,
@@ -17,6 +18,7 @@ export function MetersInput({
     <input
       type="text"
       inputMode="decimal"
+      enterKeyHint="done"
       value={value}
       onChange={(e) => onChange(e.target.value)}
       onBlur={() => {
@@ -26,7 +28,7 @@ export function MetersInput({
         }
       }}
       placeholder={placeholder}
-      className={className}
+      className={cn("min-h-[44px] text-base sm:min-h-0 sm:text-sm", className)}
     />
   );
 }

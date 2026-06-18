@@ -238,7 +238,7 @@ export function FabricOrderDraftBanner({
 
         <Link
           href="/fabric-orders/new?continue=1"
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-800"
+          className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-amber-700 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-amber-800 sm:w-auto sm:py-2.5"
         >
           Continue editing
           <ArrowRight className="h-4 w-4" />

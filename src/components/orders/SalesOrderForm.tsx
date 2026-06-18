@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AlertTriangle, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { FabricPicker } from "@/components/fabric/FabricPicker";
 import { MetersInput } from "@/components/orders/MetersInput";
+import { SalesOrderFabricLineCards } from "@/components/orders/SalesOrderFabricLineCards";
 import { Button } from "@/components/ui/Button";
 import { AutoSaveStatusBar } from "@/components/ui/AutoSaveStatus";
 import {
@@ -169,18 +170,26 @@ export function SalesOrderForm({
   const [draftChoiceResolved, setDraftChoiceResolved] = useState(
     () => Boolean(duplicateFromOrderId || startFresh)
   );
+  /** Blank form (?fresh=1 / Start new order) should not wipe a stored draft on autosave. */
+  const [retainStoredDraftOnBlank, setRetainStoredDraftOnBlank] = useState(() => startFresh);
   const [fabricContinueOptions, setFabricContinueOptions] = useState<FabricOrderContinueOption[] | null>(
     null
   );
   const [lastServerPersistedLines, setLastServerPersistedLines] = useState(0);
 
+  function resumeDraftAutosave() {
+    setRetainStoredDraftOnBlank(false);
+  }
+
   function patchActiveDraft(patch: Partial<SalesOrderClientDraft>) {
+    resumeDraftAutosave();
     setClientDrafts((prev) =>
       prev.map((draft) => (draft.id === activeDraftId ? { ...draft, ...patch } : draft))
     );
   }
 
   function updateActiveLines(updater: (current: DraftLine[]) => DraftLine[]) {
+    resumeDraftAutosave();
     setClientDrafts((prev) =>
       prev.map((draft) =>
         draft.id === activeDraftId ? { ...draft, lines: updater(draft.lines) } : draft
@@ -241,6 +250,7 @@ export function SalesOrderForm({
 
   const restoreDraft = useCallback(
     (raw: unknown) => {
+      resumeDraftAutosave();
       const draft = migrateSalesOrderDraft(raw);
       if (!draft || isSalesOrderDraftEmpty(draft)) return;
       skipClientResetRef.current = true;
@@ -311,6 +321,7 @@ export function SalesOrderForm({
       redirectBasePath === "/fabric-orders"
         ? () => readFabricOrderLocalDraft()
         : undefined,
+    clearOnEmpty: !retainStoredDraftOnBlank,
   });
 
   const serverDraftEnabled = !duplicateFromOrderId;
@@ -527,6 +538,7 @@ export function SalesOrderForm({
 
   /** Blank form without deleting stored drafts (chooser "Start new order" / ?fresh=1). */
   function beginBlankOrder() {
+    setRetainStoredDraftOnBlank(true);
     resetClientDrafts();
     resetAddFlow();
     setProductionBrandId(null);
@@ -559,6 +571,7 @@ export function SalesOrderForm({
   }
 
   function discardDraft() {
+    setRetainStoredDraftOnBlank(false);
     clearDraft();
     if (serverDraftEnabled) {
       void clearServerDraft();
@@ -786,6 +799,7 @@ export function SalesOrderForm({
   }
 
   function handleProductionBrandChange(nextBrandId: string | null) {
+    resumeDraftAutosave();
     setProductionBrandId(nextBrandId);
     if (skipClientResetRef.current || duplicateModeRef.current) return;
     resetClientDrafts();
@@ -836,6 +850,7 @@ export function SalesOrderForm({
   }
 
   function selectFabric(item: FabricSearchItem) {
+    resumeDraftAutosave();
     setPendingFabric(item);
     resetFabricAddEntries(clientId);
     setFabricPickerValue(item.fabric_number);
@@ -877,6 +892,7 @@ export function SalesOrderForm({
     }
 
     setError(null);
+    resumeDraftAutosave();
     const normalized = normalizeFabricSupplierFields(
       pendingFabric.supplier_id,
       pendingFabric.supplier_name,
@@ -1207,7 +1223,7 @@ export function SalesOrderForm({
   if (showFabricContinuePicker) {
     return (
       <div className="mx-auto max-w-2xl space-y-6">
-        <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-slate-900">Which draft should we open?</h2>
           <p className="mt-2 text-sm text-slate-600">
             You have {fabricContinueOptions.length} unfinished fabric order
@@ -1276,7 +1292,7 @@ export function SalesOrderForm({
 
     return (
       <div className="mx-auto max-w-2xl space-y-6">
-        <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-slate-900">Continue an unfinished order?</h2>
           <p className="mt-2 text-sm text-slate-600">
             You have a saved draft in {draftSource} that wasn&apos;t submitted yet. Continue where you left off, or
@@ -1393,7 +1409,7 @@ export function SalesOrderForm({
         )}
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-5">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6 space-y-5">
         {brandFilterHydrated && (
           <FactoryBrandTabs
             value={productionBrandId}
@@ -1413,7 +1429,7 @@ export function SalesOrderForm({
                     <button
                       type="button"
                       onClick={() => switchClientDraft(draft.id)}
-                      className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                      className={`min-h-[44px] rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
                         isActive
                           ? "border-indigo-600 bg-indigo-50 text-indigo-900"
                           : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
@@ -1474,7 +1490,7 @@ export function SalesOrderForm({
               type="date"
               value={deliveryDate}
               onChange={(e) => patchActiveDraft({ deliveryDate: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              className="mt-1 w-full min-h-[44px] rounded-lg border border-slate-300 px-3 py-2.5 text-base sm:text-sm"
             />
           </label>
           <label className="block text-sm md:col-span-2">
@@ -1483,14 +1499,14 @@ export function SalesOrderForm({
               value={notes}
               onChange={(e) => patchActiveDraft({ notes: e.target.value })}
               rows={2}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              className="mt-1 w-full min-h-[44px] rounded-lg border border-slate-300 px-3 py-2.5 text-base sm:text-sm"
               placeholder="Optional order notes"
             />
           </label>
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-5">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6 space-y-5">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Fabrics for this order</h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -1513,7 +1529,7 @@ export function SalesOrderForm({
               <select
                 value={selectedFabricBrandId}
                 onChange={(e) => handleFabricBrandChange(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 md:max-w-sm"
+                className="mt-1 w-full min-h-[44px] rounded-lg border border-slate-300 px-3 py-2.5 text-base sm:max-w-sm sm:text-sm"
               >
                 <option value="">Select fabric supplier…</option>
                 {fabricBrands.map((brand) => (
@@ -1600,7 +1616,7 @@ export function SalesOrderForm({
                                 <button
                                   type="button"
                                   onClick={() => setActiveFabricAddId(entry.id)}
-                                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
+                                  className={`min-h-[44px] rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
                                     isActive
                                       ? "border-indigo-600 bg-indigo-50 text-indigo-900"
                                       : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
@@ -1651,7 +1667,7 @@ export function SalesOrderForm({
                                       : activeFabricAdd.labelCount,
                                   });
                                 }}
-                                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                                className="mt-1 w-full min-h-[44px] rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base sm:text-sm"
                               >
                                 <option value="">Select garment type…</option>
                                 {GARMENT_STITCH_TYPES.map((type) => (
@@ -1665,11 +1681,12 @@ export function SalesOrderForm({
                               <span className="font-medium text-slate-700">Factory labels</span>
                               <input
                                 type="number"
+                                inputMode="numeric"
                                 min={getMinLabelCountForGarment(activeFabricAdd.garmentType)}
                                 step={1}
                                 value={activeFabricAdd.labelCount}
                                 onChange={(e) => patchActiveFabricAdd({ labelCount: e.target.value })}
-                                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                                className="mt-1 w-full min-h-[44px] rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base sm:text-sm"
                               />
                               <span className="mt-1 block text-xs text-slate-500">
                                 Pieces to track (e.g. suit = 2 labels).
@@ -1680,7 +1697,7 @@ export function SalesOrderForm({
                               <MetersInput
                                 value={activeFabricAdd.meters}
                                 onChange={(next) => patchActiveFabricAdd({ meters: next })}
-                                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                                className="mt-1 w-full min-h-[44px] rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base sm:text-sm"
                               />
                             </label>
                           </div>
@@ -1704,9 +1721,10 @@ export function SalesOrderForm({
                         </p>
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                         <Button
                           onClick={addLine}
+                          className="min-h-[44px] w-full sm:w-auto"
                           disabled={
                             fabricAddEntries.length === 0 ||
                             fabricAddEntries.some(
@@ -1720,6 +1738,7 @@ export function SalesOrderForm({
                         </Button>
                         <Button
                           variant="secondary"
+                          className="min-h-[44px] w-full sm:w-auto"
                           onClick={() => {
                             setPendingFabric(null);
                             clearFabricAddEntries();
@@ -1740,7 +1759,24 @@ export function SalesOrderForm({
         {lines.length > 0 && (
           <div className="space-y-4">
             {[...linesByFabricBrand.entries()].map(([supplierId, group]) => (
-              <div key={supplierId} className="overflow-x-auto rounded-lg border border-slate-200">
+              <div key={supplierId}>
+                <SalesOrderFabricLineCards
+                  groupName={group.name}
+                  lines={group.lines}
+                  canViewFabricPrices={canViewFabricPrices}
+                  editingLineId={editingLineId}
+                  lineEditForm={lineEditForm}
+                  savingLineEdit={savingLineEdit}
+                  onUpdateMeters={updateMeters}
+                  onStartEdit={startEditLine}
+                  onCancelEdit={cancelEditLine}
+                  onSaveEdit={saveEditLine}
+                  onRemove={removeLine}
+                  onMarkFindReplacement={markFindReplacement}
+                  setLineEditForm={setLineEditForm}
+                />
+
+                <div className="hidden overflow-x-auto rounded-lg border border-slate-200 md:block">
                 <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
                   <h3 className="text-sm font-semibold text-slate-900">{group.name}</h3>
                 </div>
@@ -1933,6 +1969,7 @@ export function SalesOrderForm({
                     })}
                   </tbody>
                 </table>
+                </div>
               </div>
             ))}
           </div>
@@ -1945,11 +1982,12 @@ export function SalesOrderForm({
         )}
       </div>
 
-      <div className="flex justify-end gap-3">
-        <Button variant="secondary" onClick={() => router.push(redirectBasePath)}>
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <Button variant="secondary" className="min-h-[44px] w-full sm:w-auto" onClick={() => router.push(redirectBasePath)}>
           Cancel
         </Button>
         <Button
+          className="min-h-[44px] w-full sm:w-auto"
           onClick={handleSubmit}
           disabled={submitting || !productionBrandId || readyDrafts.length === 0}
         >

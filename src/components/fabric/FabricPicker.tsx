@@ -31,7 +31,7 @@ export function FabricPicker({
   canViewFabricPrices = true,
   allowManualEntry = true,
   label = "Fabric",
-  inputClassName = "w-full rounded-lg border border-slate-300 bg-white py-2 pl-3 pr-10 text-sm",
+  inputClassName = "w-full min-h-[44px] rounded-lg border border-slate-300 bg-white py-2.5 pl-3 pr-10 text-base sm:text-sm",
 }: {
   brandName: string;
   supplierId: string;
@@ -186,7 +186,7 @@ export function FabricPicker({
           <button
             type="button"
             onClick={() => setOpen((prev) => !prev)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:text-slate-600"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-2 text-slate-400 hover:text-slate-600"
             aria-label="Toggle fabric list"
           >
             <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -249,7 +249,7 @@ export function FabricPicker({
                           onChange(item.fabric_number);
                           setOpen(false);
                         }}
-                        className={`flex w-full flex-col gap-0.5 border-b border-slate-100 px-4 py-2.5 text-left hover:bg-slate-50 last:border-0 ${
+                        className={`flex w-full flex-col gap-0.5 border-b border-slate-100 px-4 py-3 text-left hover:bg-slate-50 last:border-0 ${
                           soldOut ? "bg-red-50/40" : ""
                         }`}
                       >
