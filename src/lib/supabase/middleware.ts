@@ -52,7 +52,11 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isAuthPage = pathname.startsWith("/login");
   const isApiRoute = pathname.startsWith("/api/");
-  const isPublicApiRoute = pathname.startsWith("/api/v1/") || pathname.startsWith("/api/webhooks/");
+  const isPublicApiRoute =
+    pathname.startsWith("/api/v1/") ||
+    pathname.startsWith("/api/webhooks/") ||
+    pathname.startsWith("/api/cron/") ||
+    pathname === "/api/health/auth";
   const isOpenAuthRoute =
     pathname.startsWith("/api/auth/login") ||
     pathname.startsWith("/api/auth/dev-impersonate") ||
