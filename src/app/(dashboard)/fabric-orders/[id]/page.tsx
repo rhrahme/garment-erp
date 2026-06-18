@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PageHeader, StatusBadge } from "@/components/ui/PageHeader";
 import { SalesOrderActions } from "@/components/orders/SalesOrderActions";
 import {
@@ -13,6 +13,7 @@ import { getCustomerInvoiceBySalesOrderId } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderByIdFresh, isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
+import { getRemovedSalesOrderRedirectForKey } from "@/lib/sales-orders/removed-order-redirects";
 import { fabricOrderUiLabels } from "@/lib/orders/fabric-order-ui-labels";
 import { formatDate } from "@/lib/utils";
 
@@ -22,6 +23,8 @@ export default async function FabricOrderDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const removedRedirect = getRemovedSalesOrderRedirectForKey(id);
+  if (removedRedirect) redirect(removedRedirect);
   await ensureDocumentsLoaded(["sales_orders", "customer_invoices"]);
   const rawOrder = await getSalesOrderByIdFresh(id);
   if (!rawOrder) notFound();

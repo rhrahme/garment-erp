@@ -11,6 +11,7 @@ import {
 } from "@/lib/auth/permissions";
 import type { UserRole } from "@/lib/types/database";
 import { withSupabaseTimeout } from "@/lib/auth/supabase-timeout";
+import { getRemovedSalesOrderRedirect } from "@/lib/sales-orders/removed-order-redirects";
 import { getSupabasePublishableKey, getSupabaseUrl, isSupabaseConfigured } from "@/lib/supabase/env";
 
 export async function updateSession(request: NextRequest) {
@@ -105,6 +106,17 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = defaultPathForSession(true);
     return NextResponse.redirect(url);
+  }
+
+  if (isAuthenticated && !isApiRoute) {
+    const removedRedirect = getRemovedSalesOrderRedirect(pathname);
+    if (removedRedirect) {
+      const url = request.nextUrl.clone();
+      const [path, search = ""] = removedRedirect.split("?");
+      url.pathname = path;
+      url.search = search ? `?${search}` : "";
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;
