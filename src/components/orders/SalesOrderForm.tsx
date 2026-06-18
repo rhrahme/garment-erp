@@ -158,7 +158,7 @@ export function SalesOrderForm({
   const skipClientResetRef = useRef(false);
   const flushServerDraftAfterMutationRef = useRef(false);
   const [draftChoiceResolved, setDraftChoiceResolved] = useState(
-    () => Boolean(duplicateFromOrderId || startFresh || continueDraft)
+    () => Boolean(duplicateFromOrderId || startFresh)
   );
   const [lastServerPersistedLines, setLastServerPersistedLines] = useState(0);
 
@@ -295,6 +295,10 @@ export function SalesOrderForm({
     isEmpty: isSalesOrderDraftEmpty,
     onRestore: restoreDraft,
     autoRestore: !promptForDraft,
+    readStored:
+      redirectBasePath === "/fabric-orders"
+        ? () => readFabricOrderLocalDraft()
+        : undefined,
   });
 
   const serverDraftEnabled = !duplicateFromOrderId;
@@ -365,17 +369,30 @@ export function SalesOrderForm({
   useEffect(() => {
     if (loading || !draftHydrated || !serverDraftHydrated || draftChoiceResolved || !promptForDraft) return;
 
-    if (continueDraft && hasPendingRestore) {
-      restorePending();
-      setDraftChoiceResolved(true);
-      return;
-    }
+    if (continueDraft) {
+      if (hasPendingRestore) {
+        restorePending();
+        setDraftChoiceResolved(true);
+        return;
+      }
 
-    if (continueDraft && hasPendingServerRestore && pendingServerDraft) {
-      restoreDraft(pendingServerDraft);
-      dismissPendingServerRestore();
-      setDraftChoiceResolved(true);
-      return;
+      const localDraft = readFabricOrderLocalDraft();
+      const localLines = localDraft ? countDraftFabricLines(localDraft) : 0;
+      const serverLines = pendingServerDraft ? countDraftFabricLines(pendingServerDraft) : 0;
+
+      if (localDraft && localLines > 0 && localLines >= serverLines) {
+        restoreDraft(localDraft);
+        dismissPendingServerRestore();
+        setDraftChoiceResolved(true);
+        return;
+      }
+
+      if (hasPendingServerRestore && pendingServerDraft) {
+        restoreDraft(pendingServerDraft);
+        dismissPendingServerRestore();
+        setDraftChoiceResolved(true);
+        return;
+      }
     }
 
     // Sales orders only: auto-restore a server-only draft (fabric orders show the chooser instead).

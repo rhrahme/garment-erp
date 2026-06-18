@@ -18,6 +18,8 @@ type UseLocalDraftOptions<T> = {
   isEmpty?: (value: T) => boolean;
   /** When false, stored drafts are held until restorePending() is called. Default true. */
   autoRestore?: boolean;
+  /** Optional override for reading stored drafts (e.g. merge legacy localStorage keys). */
+  readStored?: () => T | null;
 };
 
 export function useLocalDraft<T>({
@@ -29,6 +31,7 @@ export function useLocalDraft<T>({
   onRestore,
   isEmpty,
   autoRestore = true,
+  readStored,
 }: UseLocalDraftOptions<T>) {
   const [status, setStatus] = useState<AutoSaveStatus>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -88,7 +91,7 @@ export function useLocalDraft<T>({
     restoreAttemptedRef.current = true;
     setHydrated(true);
 
-    const stored = readLocalDraft<T>(draftKey);
+    const stored = readStored?.() ?? readLocalDraft<T>(draftKey);
     if (stored && !(isEmpty?.(stored) ?? false)) {
       if (autoRestore && onRestoreRef.current) {
         onRestoreRef.current(stored);
@@ -100,10 +103,10 @@ export function useLocalDraft<T>({
         setHasPendingRestore(true);
       }
     }
-  }, [autoRestore, draftKey, enabled, isEmpty]);
+  }, [autoRestore, draftKey, enabled, isEmpty, readStored]);
 
   const restorePending = useCallback(() => {
-    const stored = pendingDraftRef.current ?? readLocalDraft<T>(draftKey);
+    const stored = pendingDraftRef.current ?? readStored?.() ?? readLocalDraft<T>(draftKey);
     if (!stored || (isEmpty?.(stored) ?? false) || !onRestoreRef.current) return;
     onRestoreRef.current(stored);
     lastWrittenRef.current = JSON.stringify(stored);
@@ -111,7 +114,7 @@ export function useLocalDraft<T>({
     setHasPendingRestore(false);
     pendingDraftRef.current = null;
     setPendingDraft(null);
-  }, [draftKey, isEmpty]);
+  }, [draftKey, isEmpty, readStored]);
 
   const dismissPendingRestore = useCallback(() => {
     pendingDraftRef.current = null;
