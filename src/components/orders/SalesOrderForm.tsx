@@ -28,7 +28,7 @@ import {
   resolveLoroPianaFabricInput,
 } from "@/lib/fabric-sourcing/loro-piana-styles";
 import { resolveFabricItem } from "@/lib/fabric-sourcing/resolve-fabric-item";
-import { parseDecimalInput } from "@/lib/utils/decimal-input";
+import { formatDecimalDisplay, isValidPositiveDecimal, parseDecimalInput } from "@/lib/utils/decimal-input";
 import {
   fabricBrandAllowsManualEntry,
   fabricSupplierGroupKey,
@@ -155,7 +155,9 @@ export function SalesOrderForm({
   const activeFabricAdd =
     fabricAddEntries.find((entry) => entry.id === activeFabricAddId) ?? fabricAddEntries[0];
   const garmentType = activeFabricAdd?.garmentType ?? "";
-  const draftLabelCount = activeFabricAdd?.labelCount ?? "1";
+  const draftLabelCount = activeFabricAdd?.garmentType
+    ? String(getLabelCountForGarment(activeFabricAdd.garmentType))
+    : (activeFabricAdd?.labelCount ?? "1");
   const draftMeters = activeFabricAdd?.meters ?? "";
 
   const [loading, setLoading] = useState(true);
@@ -882,13 +884,6 @@ export function SalesOrderForm({
         setActiveFabricAddId(entry.id);
         return;
       }
-      const labelCount = Number(entry.labelCount);
-      const minLabelCount = getMinLabelCountForGarment(entry.garmentType);
-      if (!Number.isInteger(labelCount) || labelCount < minLabelCount) {
-        setError(`Enter a valid label count for ${clientIdTabLabel(entry.clientId, index, clients)}.`);
-        setActiveFabricAddId(entry.id);
-        return;
-      }
     }
 
     setError(null);
@@ -915,14 +910,15 @@ export function SalesOrderForm({
           draftIndex = next.length - 1;
         }
 
-        const labelCount = Number(entry.labelCount);
+        const entryMeters = parseDecimalInput(entry.meters);
+        const labelCount = getLabelCountForGarment(entry.garmentType);
         const line: DraftLine = {
           ...pendingFabric,
           ...normalized,
           lineId: `line-${stamp}-${index}-${entry.clientId}-${pendingFabric.fabric_number}`,
           garment_type: entry.garmentType,
           label_count: labelCount,
-          meters: String(meters),
+          meters: formatDecimalDisplay(entryMeters),
           stock_status: pendingFabric.stock_status ?? null,
           restock_date: pendingFabric.restock_date ?? null,
           needs_replacement: pendingFabric.stock_status === "permanently_unavailable",
@@ -1653,7 +1649,7 @@ export function SalesOrderForm({
                             />
                           </label>
 
-                          <div className="grid gap-4 sm:grid-cols-3">
+                          <div className="grid gap-4 sm:grid-cols-2">
                             <label className="block text-sm">
                               <span className="font-medium text-slate-700">Garment to stitch</span>
                               <select
@@ -1676,21 +1672,13 @@ export function SalesOrderForm({
                                   </option>
                                 ))}
                               </select>
-                            </label>
-                            <label className="block text-sm">
-                              <span className="font-medium text-slate-700">Factory labels</span>
-                              <input
-                                type="number"
-                                inputMode="numeric"
-                                min={getMinLabelCountForGarment(activeFabricAdd.garmentType)}
-                                step={1}
-                                value={activeFabricAdd.labelCount}
-                                onChange={(e) => patchActiveFabricAdd({ labelCount: e.target.value })}
-                                className="mt-1 w-full min-h-[44px] rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base sm:text-sm"
-                              />
-                              <span className="mt-1 block text-xs text-slate-500">
-                                Pieces to track (e.g. suit = 2 labels).
-                              </span>
+                              {activeFabricAdd.garmentType ? (
+                                <span className="mt-1 block text-xs text-slate-500">
+                                  {getLabelCountForGarment(activeFabricAdd.garmentType)} factory label
+                                  {getLabelCountForGarment(activeFabricAdd.garmentType) === 1 ? "" : "s"} — auto
+                                  from garment type
+                                </span>
+                              ) : null}
                             </label>
                             <label className="block text-sm">
                               <span className="font-medium text-slate-700">Meters to order</span>
@@ -1728,7 +1716,10 @@ export function SalesOrderForm({
                           disabled={
                             fabricAddEntries.length === 0 ||
                             fabricAddEntries.some(
-                              (entry) => !entry.clientId || !entry.garmentType || !entry.meters || !entry.labelCount
+                              (entry) =>
+                                !entry.clientId ||
+                                !entry.garmentType ||
+                                !isValidPositiveDecimal(entry.meters)
                             )
                           }
                         >
