@@ -129,6 +129,7 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
 
   const activeBrand = brands.find((b) => b.id === brandId);
   const isSolbiatiTab = brandId === "solbiati";
+  const isLoroPianaStyleTab = isLoroPianaStyleSupplier(brandId);
   const solbiatiBrand = brands.find((b) => b.id === "solbiati");
 
   return (
@@ -226,13 +227,25 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
               </p>
             ) : null}
           </div>
-          <input
-            type="search"
-            placeholder="Search fabric no., HS code, color…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="ml-auto w-full max-w-sm rounded-lg border border-slate-300 px-3 py-2 text-sm sm:w-72"
-          />
+          <div className="ml-auto flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            {isLoroPianaStyleTab ? (
+              <a
+                href="/api/suppliers/loro-piana/missing-swatches-pdf"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+              >
+                Download missing swatches PDF
+              </a>
+            ) : null}
+            <input
+              type="search"
+              placeholder="Search fabric no., HS code, color…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm sm:w-72"
+            />
+          </div>
         </div>
 
         <DataTable
