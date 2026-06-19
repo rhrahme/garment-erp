@@ -1,6 +1,6 @@
 {
-  "imported_at": "2026-06-19T10:36:13.319Z",
-  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml  + /Users/ralphrahme/Desktop/Loro Piana Bunches/Events + /Users/ralphrahme/Desktop/Loro Piana Bunches/Frescolino - S16. 200 grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS",
+  "imported_at": "2026-06-19T10:43:42.971Z",
+  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml  + /Users/ralphrahme/Desktop/Loro Piana Bunches/Events + /Users/ralphrahme/Desktop/Loro Piana Bunches/Frescolino - S16. 200 grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781",
   "catalog_path": "src/data/suppliers/loro-piana-ss26.json",
   "output_root": "data/suppliers/loro-piana/images",
   "filters": {
@@ -8,7 +8,8 @@
       "Australis 270gr",
       "Events 735",
       "Frescolino S16 (book 782)",
-      "Graffiti S24 (book 782, NS→S)"
+      "Graffiti S24 (book 782, NS→S)",
+      "Proposte Abiti SS26 (book 781)"
     ],
     "note": "Merged manifest from multiple imports"
   },
@@ -1131,6 +1132,668 @@
       "weight_gsm": 370,
       "ok": true,
       "bytes": 1319213
+    },
+    {
+      "fabric_number": "781001",
+      "source_filename": "N781001.jpg",
+      "filename": "781001.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 4314790
+    },
+    {
+      "fabric_number": "781002",
+      "source_filename": "N781002.jpg",
+      "filename": "781002.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 4243022
+    },
+    {
+      "fabric_number": "781003",
+      "source_filename": "N781003.jpg",
+      "filename": "781003.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3155211
+    },
+    {
+      "fabric_number": "781004",
+      "source_filename": "N781004.jpg",
+      "filename": "781004.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3522988
+    },
+    {
+      "fabric_number": "781005",
+      "source_filename": "N781005.jpg",
+      "filename": "781005.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3377675
+    },
+    {
+      "fabric_number": "781006",
+      "source_filename": "N781006.jpg",
+      "filename": "781006.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 2905569
+    },
+    {
+      "fabric_number": "781007",
+      "source_filename": "N781007.jpg",
+      "filename": "781007.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3736745
+    },
+    {
+      "fabric_number": "781008",
+      "source_filename": "N781008.jpg",
+      "filename": "781008.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3630052
+    },
+    {
+      "fabric_number": "781009",
+      "source_filename": "N781009.jpg",
+      "filename": "781009.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3617079
+    },
+    {
+      "fabric_number": "781010",
+      "source_filename": "N781010.jpg",
+      "filename": "781010.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3781253
+    },
+    {
+      "fabric_number": "781011",
+      "source_filename": "N781011.jpg",
+      "filename": "781011.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3517707
+    },
+    {
+      "fabric_number": "781012",
+      "source_filename": "N781012.jpg",
+      "filename": "781012.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 360,
+      "ok": true,
+      "bytes": 3666403
+    },
+    {
+      "fabric_number": "781013",
+      "source_filename": "N781013.jpg",
+      "filename": "781013.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 360,
+      "ok": true,
+      "bytes": 3121127
+    },
+    {
+      "fabric_number": "781014",
+      "source_filename": "N781014.jpg",
+      "filename": "781014.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 360,
+      "ok": true,
+      "bytes": 3132990
+    },
+    {
+      "fabric_number": "781015",
+      "source_filename": "N781015.jpg",
+      "filename": "781015.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 360,
+      "ok": true,
+      "bytes": 2920673
+    },
+    {
+      "fabric_number": "781016",
+      "source_filename": "N781016.jpg",
+      "filename": "781016.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 360,
+      "ok": true,
+      "bytes": 3389068
+    },
+    {
+      "fabric_number": "781017",
+      "source_filename": "N781017.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781/N781017.jpg",
+      "filename": "781017.jpg",
+      "ok": false,
+      "error": "No matching catalog entry for filters"
+    },
+    {
+      "fabric_number": "781018",
+      "source_filename": "N781018.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781/N781018.jpg",
+      "filename": "781018.jpg",
+      "ok": false,
+      "error": "No matching catalog entry for filters"
+    },
+    {
+      "fabric_number": "781019",
+      "source_filename": "N781019.jpg",
+      "filename": "781019.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 360,
+      "ok": true,
+      "bytes": 3629694
+    },
+    {
+      "fabric_number": "781020",
+      "source_filename": "N781020.jpg",
+      "filename": "781020.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 360,
+      "ok": true,
+      "bytes": 3542442
+    },
+    {
+      "fabric_number": "781021",
+      "source_filename": "N781021.jpg",
+      "filename": "781021.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 360,
+      "ok": true,
+      "bytes": 3436089
+    },
+    {
+      "fabric_number": "781022",
+      "source_filename": "N781022.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781/N781022.jpg",
+      "filename": "781022.jpg",
+      "ok": false,
+      "error": "No matching catalog entry for filters"
+    },
+    {
+      "fabric_number": "781023",
+      "source_filename": "N781023.jpg",
+      "filename": "781023.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 360,
+      "ok": true,
+      "bytes": 3192979
+    },
+    {
+      "fabric_number": "781024",
+      "source_filename": "N781024.jpg",
+      "filename": "781024.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3655871
+    },
+    {
+      "fabric_number": "781025",
+      "source_filename": "N781025.jpg",
+      "filename": "781025.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3990829
+    },
+    {
+      "fabric_number": "781026",
+      "source_filename": "N781026.jpg",
+      "filename": "781026.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3375506
+    },
+    {
+      "fabric_number": "781027",
+      "source_filename": "N781027.jpg",
+      "filename": "781027.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3846515
+    },
+    {
+      "fabric_number": "781028",
+      "source_filename": "N781028.jpg",
+      "filename": "781028.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 2891574
+    },
+    {
+      "fabric_number": "781029",
+      "source_filename": "N781029.jpg",
+      "filename": "781029.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3816265
+    },
+    {
+      "fabric_number": "781030",
+      "source_filename": "N781030.jpg",
+      "filename": "781030.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3499291
+    },
+    {
+      "fabric_number": "781031",
+      "source_filename": "N781031.jpg",
+      "filename": "781031.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3571914
+    },
+    {
+      "fabric_number": "781032",
+      "source_filename": "N781032.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781/N781032.jpg",
+      "filename": "781032.jpg",
+      "ok": false,
+      "error": "No matching catalog entry for filters"
+    },
+    {
+      "fabric_number": "781033",
+      "source_filename": "N781033.jpg",
+      "filename": "781033.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3334111
+    },
+    {
+      "fabric_number": "781034",
+      "source_filename": "N781034.jpg",
+      "filename": "781034.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 230,
+      "ok": true,
+      "bytes": 1630695
+    },
+    {
+      "fabric_number": "781035",
+      "source_filename": "N781035.jpg",
+      "filename": "781035.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 230,
+      "ok": true,
+      "bytes": 2771331
+    },
+    {
+      "fabric_number": "781036",
+      "source_filename": "N781036.jpg",
+      "filename": "781036.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 230,
+      "ok": true,
+      "bytes": 2279774
+    },
+    {
+      "fabric_number": "781037",
+      "source_filename": "N781037.jpg",
+      "filename": "781037.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 230,
+      "ok": true,
+      "bytes": 2027327
+    },
+    {
+      "fabric_number": "781038",
+      "source_filename": "N781038.jpg",
+      "filename": "781038.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3658035
+    },
+    {
+      "fabric_number": "781039",
+      "source_filename": "N781039.jpg",
+      "filename": "781039.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3141916
+    },
+    {
+      "fabric_number": "781040",
+      "source_filename": "N781040.jpg",
+      "filename": "781040.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2897247
+    },
+    {
+      "fabric_number": "781041",
+      "source_filename": "N781041.jpg",
+      "filename": "781041.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3081295
+    },
+    {
+      "fabric_number": "781042",
+      "source_filename": "N781042.jpg",
+      "filename": "781042.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 4986039
+    },
+    {
+      "fabric_number": "781043",
+      "source_filename": "N781043.jpg",
+      "filename": "781043.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3420754
+    },
+    {
+      "fabric_number": "781044",
+      "source_filename": "N781044.jpg",
+      "filename": "781044.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3203272
+    },
+    {
+      "fabric_number": "781045",
+      "source_filename": "N781045.jpg",
+      "filename": "781045.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3423620
+    },
+    {
+      "fabric_number": "781046",
+      "source_filename": "N781046.jpg",
+      "filename": "781046.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3830227
+    },
+    {
+      "fabric_number": "781047",
+      "source_filename": "N781047.jpg",
+      "filename": "781047.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3560865
+    },
+    {
+      "fabric_number": "781048",
+      "source_filename": "N781048.jpg",
+      "filename": "781048.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3214545
+    },
+    {
+      "fabric_number": "781049",
+      "source_filename": "N781049.jpg",
+      "filename": "781049.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3473468
+    },
+    {
+      "fabric_number": "781050",
+      "source_filename": "N781050.jpg",
+      "filename": "781050.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 2693791
+    },
+    {
+      "fabric_number": "781051",
+      "source_filename": "N781051.jpg",
+      "filename": "781051.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 2694921
+    },
+    {
+      "fabric_number": "781052",
+      "source_filename": "N781052.jpg",
+      "filename": "781052.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 2919057
+    },
+    {
+      "fabric_number": "781053",
+      "source_filename": "N781053.jpg",
+      "filename": "781053.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 2420071
+    },
+    {
+      "fabric_number": "781054",
+      "source_filename": "N781054.jpg",
+      "filename": "781054.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 2073632
+    },
+    {
+      "fabric_number": "781055",
+      "source_filename": "N781055.jpg",
+      "filename": "781055.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 1980317
+    },
+    {
+      "fabric_number": "781056",
+      "source_filename": "N781056.jpg",
+      "filename": "781056.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 2323639
+    },
+    {
+      "fabric_number": "781057",
+      "source_filename": "N781057.jpg",
+      "filename": "781057.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 2064730
+    },
+    {
+      "fabric_number": "781058",
+      "source_filename": "N781058.jpg",
+      "filename": "781058.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 2327380
+    },
+    {
+      "fabric_number": "781059",
+      "source_filename": "N781059.jpg",
+      "filename": "781059.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 2036530
+    },
+    {
+      "fabric_number": "781060",
+      "source_filename": "N781060.jpg",
+      "filename": "781060.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 2055040
+    },
+    {
+      "fabric_number": "781061",
+      "source_filename": "N781061.jpg",
+      "filename": "781061.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 1887366
+    },
+    {
+      "fabric_number": "781062",
+      "source_filename": "N781062.jpg",
+      "filename": "781062.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 200,
+      "ok": true,
+      "bytes": 2577576
+    },
+    {
+      "fabric_number": "781063",
+      "source_filename": "N781063.jpg",
+      "filename": "781063.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 200,
+      "ok": true,
+      "bytes": 2346800
+    },
+    {
+      "fabric_number": "781064",
+      "source_filename": "N781064.jpg",
+      "filename": "781064.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 200,
+      "ok": true,
+      "bytes": 2982879
+    },
+    {
+      "fabric_number": "781065",
+      "source_filename": "N781065.jpg",
+      "filename": "781065.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 200,
+      "ok": true,
+      "bytes": 2735221
+    },
+    {
+      "fabric_number": "781066",
+      "source_filename": "N781066.jpg",
+      "filename": "781066.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 200,
+      "ok": true,
+      "bytes": 2829436
+    },
+    {
+      "fabric_number": "781067",
+      "source_filename": "N781067.jpg",
+      "filename": "781067.jpg",
+      "collection": "PROPOSTE ABITI SS26",
+      "book_number": "781",
+      "weight_gsm": 200,
+      "ok": true,
+      "bytes": 2231419
     },
     {
       "fabric_number": "S16001",
