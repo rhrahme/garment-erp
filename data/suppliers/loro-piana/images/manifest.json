@@ -1,6 +1,6 @@
 {
-  "imported_at": "2026-06-19T10:43:42.971Z",
-  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml  + /Users/ralphrahme/Desktop/Loro Piana Bunches/Events + /Users/ralphrahme/Desktop/Loro Piana Bunches/Frescolino - S16. 200 grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781",
+  "imported_at": "2026-06-19T10:55:04.024Z",
+  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml  + /Users/ralphrahme/Desktop/Loro Piana Bunches/Events + /Users/ralphrahme/Desktop/Loro Piana Bunches/Frescolino - S16. 200 grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Suitmate",
   "catalog_path": "src/data/suppliers/loro-piana-ss26.json",
   "output_root": "data/suppliers/loro-piana/images",
   "filters": {
@@ -9,7 +9,8 @@
       "Events 735",
       "Frescolino S16 (book 782)",
       "Graffiti S24 (book 782, NS→S)",
-      "Proposte Abiti SS26 (book 781)"
+      "Proposte Abiti SS26 (book 781)",
+      "Suitmate (book 726)"
     ],
     "note": "Merged manifest from multiple imports"
   },
@@ -544,6 +545,596 @@
       "weight_gsm": 270,
       "ok": true,
       "bytes": 2455852
+    },
+    {
+      "fabric_number": "726001",
+      "source_filename": "N726001.jpeg",
+      "filename": "726001.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 1206705
+    },
+    {
+      "fabric_number": "726002",
+      "source_filename": "N726002.jpeg",
+      "filename": "726002.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3928124
+    },
+    {
+      "fabric_number": "726003",
+      "source_filename": "N726003.jpeg",
+      "filename": "726003.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 1318374
+    },
+    {
+      "fabric_number": "726004",
+      "source_filename": "N726004.jpeg",
+      "filename": "726004.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 1744758
+    },
+    {
+      "fabric_number": "726005",
+      "source_filename": "N726005.jpeg",
+      "filename": "726005.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 1350250
+    },
+    {
+      "fabric_number": "726006",
+      "source_filename": "N726006.jpeg",
+      "filename": "726006.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 1422004
+    },
+    {
+      "fabric_number": "726007",
+      "source_filename": "N726007.jpeg",
+      "filename": "726007.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 1288631
+    },
+    {
+      "fabric_number": "726008",
+      "source_filename": "N726008.jpeg",
+      "filename": "726008.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 1260131
+    },
+    {
+      "fabric_number": "726009",
+      "source_filename": "N726009.jpeg",
+      "filename": "726009.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3993662
+    },
+    {
+      "fabric_number": "726010",
+      "source_filename": "N726010.jpeg",
+      "filename": "726010.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3754255
+    },
+    {
+      "fabric_number": "726011",
+      "source_filename": "N726011.jpeg",
+      "filename": "726011.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3131903
+    },
+    {
+      "fabric_number": "726012",
+      "source_filename": "N726012.jpeg",
+      "filename": "726012.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3610199
+    },
+    {
+      "fabric_number": "726013",
+      "source_filename": "N726013.jpeg",
+      "filename": "726013.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3474879
+    },
+    {
+      "fabric_number": "726014",
+      "source_filename": "N726014.jpeg",
+      "filename": "726014.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3573857
+    },
+    {
+      "fabric_number": "726015",
+      "source_filename": "N726015.jpeg",
+      "filename": "726015.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 1202032
+    },
+    {
+      "fabric_number": "726016",
+      "source_filename": "N726016.jpeg",
+      "filename": "726016.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 1325882
+    },
+    {
+      "fabric_number": "726017",
+      "source_filename": "N726017.jpeg",
+      "filename": "726017.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3627878
+    },
+    {
+      "fabric_number": "726018",
+      "source_filename": "N726018.jpeg",
+      "filename": "726018.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3627878
+    },
+    {
+      "fabric_number": "726019",
+      "source_filename": "N726019.jpeg",
+      "filename": "726019.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3005638
+    },
+    {
+      "fabric_number": "726020",
+      "source_filename": "N726020.jpeg",
+      "filename": "726020.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3323343
+    },
+    {
+      "fabric_number": "726021",
+      "source_filename": "N726021.jpeg",
+      "filename": "726021.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3070803
+    },
+    {
+      "fabric_number": "726022",
+      "source_filename": "N726022.jpeg",
+      "filename": "726022.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 2665222
+    },
+    {
+      "fabric_number": "726023",
+      "source_filename": "N726023.jpeg",
+      "filename": "726023.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3892260
+    },
+    {
+      "fabric_number": "726024",
+      "source_filename": "N726024.jpeg",
+      "filename": "726024.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3255266
+    },
+    {
+      "fabric_number": "726025",
+      "source_filename": "N726025.jpeg",
+      "filename": "726025.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3138335
+    },
+    {
+      "fabric_number": "726026",
+      "source_filename": "N726026.jpeg",
+      "filename": "726026.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 4379496
+    },
+    {
+      "fabric_number": "726027",
+      "source_filename": "N726027.jpeg",
+      "filename": "726027.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 4069839
+    },
+    {
+      "fabric_number": "726028",
+      "source_filename": "N726028.jpeg",
+      "filename": "726028.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3486995
+    },
+    {
+      "fabric_number": "726029",
+      "source_filename": "N726029.jpeg",
+      "filename": "726029.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 2900750
+    },
+    {
+      "fabric_number": "726030",
+      "source_filename": "N726030.jpeg",
+      "filename": "726030.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3124849
+    },
+    {
+      "fabric_number": "726031",
+      "source_filename": "N726031.jpeg",
+      "filename": "726031.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3554978
+    },
+    {
+      "fabric_number": "726032",
+      "source_filename": "N726032.jpeg",
+      "filename": "726032.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3179032
+    },
+    {
+      "fabric_number": "726033",
+      "source_filename": "N726033.jpeg",
+      "filename": "726033.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 2945366
+    },
+    {
+      "fabric_number": "726034",
+      "source_filename": "N726034.jpeg",
+      "filename": "726034.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 2793494
+    },
+    {
+      "fabric_number": "726035",
+      "source_filename": "N726035.jpeg",
+      "filename": "726035.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3178664
+    },
+    {
+      "fabric_number": "726036",
+      "source_filename": "N726036.jpeg",
+      "filename": "726036.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3121294
+    },
+    {
+      "fabric_number": "726037",
+      "source_filename": "N726037.jpeg",
+      "filename": "726037.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 2568771
+    },
+    {
+      "fabric_number": "726038",
+      "source_filename": "N726038.jpeg",
+      "filename": "726038.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 2379017
+    },
+    {
+      "fabric_number": "726039",
+      "source_filename": "N726039.jpeg",
+      "filename": "726039.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 4046634
+    },
+    {
+      "fabric_number": "726040",
+      "source_filename": "N726040.jpeg",
+      "filename": "726040.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3333189
+    },
+    {
+      "fabric_number": "726041",
+      "source_filename": "N726041.jpeg",
+      "filename": "726041.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3469593
+    },
+    {
+      "fabric_number": "726042",
+      "source_filename": "N726042.jpeg",
+      "filename": "726042.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 2921835
+    },
+    {
+      "fabric_number": "726043",
+      "source_filename": "N726043.jpeg",
+      "filename": "726043.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3034778
+    },
+    {
+      "fabric_number": "726044",
+      "source_filename": "N726044.jpeg",
+      "filename": "726044.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 1533153
+    },
+    {
+      "fabric_number": "726045",
+      "source_filename": "N726045.jpeg",
+      "filename": "726045.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 1290747
+    },
+    {
+      "fabric_number": "726046",
+      "source_filename": "N726046.jpeg",
+      "filename": "726046.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 1432111
+    },
+    {
+      "fabric_number": "726047",
+      "source_filename": "N726047.jpeg",
+      "filename": "726047.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 933536
+    },
+    {
+      "fabric_number": "726048",
+      "source_filename": "N726048.jpeg",
+      "filename": "726048.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 4427794
+    },
+    {
+      "fabric_number": "726049",
+      "source_filename": "N726049.jpeg",
+      "filename": "726049.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3778066
+    },
+    {
+      "fabric_number": "726050",
+      "source_filename": "N726050.jpeg",
+      "filename": "726050.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 1227369
+    },
+    {
+      "fabric_number": "726051",
+      "source_filename": "N726051.jpeg",
+      "filename": "726051.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3001085
+    },
+    {
+      "fabric_number": "726052",
+      "source_filename": "N726052.jpeg",
+      "filename": "726052.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 2511884
+    },
+    {
+      "fabric_number": "726053",
+      "source_filename": "N726053.jpeg",
+      "filename": "726053.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 953724
+    },
+    {
+      "fabric_number": "726054",
+      "source_filename": "N726054.jpeg",
+      "filename": "726054.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 895770
+    },
+    {
+      "fabric_number": "726055",
+      "source_filename": "N726055.jpeg",
+      "filename": "726055.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 1124324
+    },
+    {
+      "fabric_number": "726056",
+      "source_filename": "N726056.jpeg",
+      "filename": "726056.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 3302709
+    },
+    {
+      "fabric_number": "726057",
+      "source_filename": "N726057.jpeg",
+      "filename": "726057.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 2763665
+    },
+    {
+      "fabric_number": "726058",
+      "source_filename": "N726058.jpeg",
+      "filename": "726058.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 1230912
+    },
+    {
+      "fabric_number": "726059",
+      "source_filename": "N726059.jpeg",
+      "filename": "726059.jpeg",
+      "collection": "SUITMATE",
+      "book_number": "726",
+      "weight_gsm": 270,
+      "ok": true,
+      "bytes": 755944
     },
     {
       "fabric_number": "735001",
@@ -1132,6 +1723,1246 @@
       "weight_gsm": 370,
       "ok": true,
       "bytes": 1319213
+    },
+    {
+      "fabric_number": "738001",
+      "source_filename": "N738001.jpg",
+      "filename": "738001.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3825396
+    },
+    {
+      "fabric_number": "738002",
+      "source_filename": "N738002.jpg",
+      "filename": "738002.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3580026
+    },
+    {
+      "fabric_number": "738003",
+      "source_filename": "N738003.jpg",
+      "filename": "738003.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3962537
+    },
+    {
+      "fabric_number": "738004",
+      "source_filename": "N738004.jpg",
+      "filename": "738004.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3894097
+    },
+    {
+      "fabric_number": "738005",
+      "source_filename": "N738005.jpg",
+      "filename": "738005.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3498976
+    },
+    {
+      "fabric_number": "738006",
+      "source_filename": "N738006.jpg",
+      "filename": "738006.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2919328
+    },
+    {
+      "fabric_number": "738007",
+      "source_filename": "N738007.jpg",
+      "filename": "738007.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3419579
+    },
+    {
+      "fabric_number": "738008",
+      "source_filename": "N738008.jpg",
+      "filename": "738008.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3296824
+    },
+    {
+      "fabric_number": "738009",
+      "source_filename": "N738009.jpg",
+      "filename": "738009.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3705281
+    },
+    {
+      "fabric_number": "738010",
+      "source_filename": "N738010.jpg",
+      "filename": "738010.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2765018
+    },
+    {
+      "fabric_number": "738011",
+      "source_filename": "N738011.jpg",
+      "filename": "738011.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 4232493
+    },
+    {
+      "fabric_number": "738012",
+      "source_filename": "N738012.jpg",
+      "filename": "738012.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3279984
+    },
+    {
+      "fabric_number": "738013",
+      "source_filename": "N738013.jpg",
+      "filename": "738013.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2422432
+    },
+    {
+      "fabric_number": "738014",
+      "source_filename": "N738014.jpg",
+      "filename": "738014.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3737761
+    },
+    {
+      "fabric_number": "738015",
+      "source_filename": "N738015.jpg",
+      "filename": "738015.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3136229
+    },
+    {
+      "fabric_number": "738016",
+      "source_filename": "N738016.jpg",
+      "filename": "738016.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2933643
+    },
+    {
+      "fabric_number": "738017",
+      "source_filename": "N738017.jpg",
+      "filename": "738017.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3539844
+    },
+    {
+      "fabric_number": "738018",
+      "source_filename": "N738018.jpg",
+      "filename": "738018.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 4810116
+    },
+    {
+      "fabric_number": "738019",
+      "source_filename": "N738019.jpg",
+      "filename": "738019.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2374585
+    },
+    {
+      "fabric_number": "738020",
+      "source_filename": "N738020.jpg",
+      "filename": "738020.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3430769
+    },
+    {
+      "fabric_number": "738021",
+      "source_filename": "N738021.jpg",
+      "filename": "738021.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2712219
+    },
+    {
+      "fabric_number": "738022",
+      "source_filename": "N738022.jpg",
+      "filename": "738022.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2585437
+    },
+    {
+      "fabric_number": "738023",
+      "source_filename": "N738023.jpg",
+      "filename": "738023.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2415124
+    },
+    {
+      "fabric_number": "738024",
+      "source_filename": "N738024.jpg",
+      "filename": "738024.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 1942494
+    },
+    {
+      "fabric_number": "738025",
+      "source_filename": "N738025.jpg",
+      "filename": "738025.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2161980
+    },
+    {
+      "fabric_number": "738026",
+      "source_filename": "N738026.jpg",
+      "filename": "738026.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2427953
+    },
+    {
+      "fabric_number": "738027",
+      "source_filename": "N738027.jpg",
+      "filename": "738027.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2916099
+    },
+    {
+      "fabric_number": "738028",
+      "source_filename": "N738028.jpg",
+      "filename": "738028.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2846767
+    },
+    {
+      "fabric_number": "738029",
+      "source_filename": "N738029.jpg",
+      "filename": "738029.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3527247
+    },
+    {
+      "fabric_number": "738030",
+      "source_filename": "N738030.jpg",
+      "filename": "738030.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3271559
+    },
+    {
+      "fabric_number": "738031",
+      "source_filename": "N738031.jpg",
+      "filename": "738031.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2695982
+    },
+    {
+      "fabric_number": "738032",
+      "source_filename": "N738032.jpg",
+      "filename": "738032.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2858800
+    },
+    {
+      "fabric_number": "738033",
+      "source_filename": "N738033.jpg",
+      "filename": "738033.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3555954
+    },
+    {
+      "fabric_number": "738034",
+      "source_filename": "N738034.jpg",
+      "filename": "738034.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3320195
+    },
+    {
+      "fabric_number": "738035",
+      "source_filename": "N738035.jpg",
+      "filename": "738035.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2502378
+    },
+    {
+      "fabric_number": "738036",
+      "source_filename": "N738036.jpg",
+      "filename": "738036.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3489500
+    },
+    {
+      "fabric_number": "738037",
+      "source_filename": "N738037.jpg",
+      "filename": "738037.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3130047
+    },
+    {
+      "fabric_number": "738038",
+      "source_filename": "N738038.jpg",
+      "filename": "738038.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3102898
+    },
+    {
+      "fabric_number": "738039",
+      "source_filename": "N738039.jpg",
+      "filename": "738039.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3175910
+    },
+    {
+      "fabric_number": "738040",
+      "source_filename": "N738040.jpg",
+      "filename": "738040.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3230337
+    },
+    {
+      "fabric_number": "738041",
+      "source_filename": "N738041.jpg",
+      "filename": "738041.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2798963
+    },
+    {
+      "fabric_number": "738042",
+      "source_filename": "N738042.jpg",
+      "filename": "738042.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 1984753
+    },
+    {
+      "fabric_number": "738043",
+      "source_filename": "N738043.jpg",
+      "filename": "738043.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3846706
+    },
+    {
+      "fabric_number": "738044",
+      "source_filename": "N738044.jpg",
+      "filename": "738044.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3372787
+    },
+    {
+      "fabric_number": "738045",
+      "source_filename": "N738045.jpg",
+      "filename": "738045.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2569740
+    },
+    {
+      "fabric_number": "738046",
+      "source_filename": "N738046.jpg",
+      "filename": "738046.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2775091
+    },
+    {
+      "fabric_number": "738047",
+      "source_filename": "N738047.jpg",
+      "filename": "738047.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2395831
+    },
+    {
+      "fabric_number": "738048",
+      "source_filename": "N738048.jpg",
+      "filename": "738048.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2585914
+    },
+    {
+      "fabric_number": "738049",
+      "source_filename": "N738049.jpg",
+      "filename": "738049.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2637651
+    },
+    {
+      "fabric_number": "738050",
+      "source_filename": "N738050.jpg",
+      "filename": "738050.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2824872
+    },
+    {
+      "fabric_number": "738051",
+      "source_filename": "N738051.jpg",
+      "filename": "738051.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2701168
+    },
+    {
+      "fabric_number": "738052",
+      "source_filename": "N738052.jpg",
+      "filename": "738052.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2561824
+    },
+    {
+      "fabric_number": "738053",
+      "source_filename": "N738053.jpg",
+      "filename": "738053.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2295327
+    },
+    {
+      "fabric_number": "738054",
+      "source_filename": "N738054.jpg",
+      "filename": "738054.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2464220
+    },
+    {
+      "fabric_number": "738055",
+      "source_filename": "N738055.jpg",
+      "filename": "738055.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2362352
+    },
+    {
+      "fabric_number": "738056",
+      "source_filename": "N738056.jpg",
+      "filename": "738056.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3550982
+    },
+    {
+      "fabric_number": "738057",
+      "source_filename": "N738057.jpg",
+      "filename": "738057.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3341295
+    },
+    {
+      "fabric_number": "738058",
+      "source_filename": "N738058.jpg",
+      "filename": "738058.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 230,
+      "ok": true,
+      "bytes": 2752150
+    },
+    {
+      "fabric_number": "738059",
+      "source_filename": "N738059.jpg",
+      "filename": "738059.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 230,
+      "ok": true,
+      "bytes": 2694186
+    },
+    {
+      "fabric_number": "738060",
+      "source_filename": "N738060.jpg",
+      "filename": "738060.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 230,
+      "ok": true,
+      "bytes": 2671459
+    },
+    {
+      "fabric_number": "738061",
+      "source_filename": "N738061.jpg",
+      "filename": "738061.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 230,
+      "ok": true,
+      "bytes": 2063164
+    },
+    {
+      "fabric_number": "738062",
+      "source_filename": "N738062.jpg",
+      "filename": "738062.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 230,
+      "ok": true,
+      "bytes": 2198431
+    },
+    {
+      "fabric_number": "738063",
+      "source_filename": "N738063.jpg",
+      "filename": "738063.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 230,
+      "ok": true,
+      "bytes": 2563746
+    },
+    {
+      "fabric_number": "738064",
+      "source_filename": "N738064.jpg",
+      "filename": "738064.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 230,
+      "ok": true,
+      "bytes": 2568332
+    },
+    {
+      "fabric_number": "738065",
+      "source_filename": "N738065.jpg",
+      "filename": "738065.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 230,
+      "ok": true,
+      "bytes": 2367070
+    },
+    {
+      "fabric_number": "738066",
+      "source_filename": "N738066.jpg",
+      "filename": "738066.jpg",
+      "collection": "ROYAL WISH®",
+      "book_number": "738",
+      "weight_gsm": 230,
+      "ok": true,
+      "bytes": 2211533
+    },
+    {
+      "fabric_number": "771001",
+      "source_filename": "N771001.jpg",
+      "filename": "771001.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3591604
+    },
+    {
+      "fabric_number": "771002",
+      "source_filename": "N771002.jpg",
+      "filename": "771002.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3683494
+    },
+    {
+      "fabric_number": "771003",
+      "source_filename": "N771003.jpg",
+      "filename": "771003.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3868511
+    },
+    {
+      "fabric_number": "771004",
+      "source_filename": "N771004.jpg",
+      "filename": "771004.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3676314
+    },
+    {
+      "fabric_number": "771005",
+      "source_filename": "N771005.jpg",
+      "filename": "771005.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3387163
+    },
+    {
+      "fabric_number": "771006",
+      "source_filename": "N771006.jpg",
+      "filename": "771006.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3212722
+    },
+    {
+      "fabric_number": "771007",
+      "source_filename": "N771007.jpg",
+      "filename": "771007.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3049320
+    },
+    {
+      "fabric_number": "771008",
+      "source_filename": "N771008.jpg",
+      "filename": "771008.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3818688
+    },
+    {
+      "fabric_number": "771009",
+      "source_filename": "N771009.jpg",
+      "filename": "771009.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3939688
+    },
+    {
+      "fabric_number": "771010",
+      "source_filename": "N771010.jpg",
+      "filename": "771010.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 4192364
+    },
+    {
+      "fabric_number": "771011",
+      "source_filename": "N771011.jpg",
+      "filename": "771011.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3396153
+    },
+    {
+      "fabric_number": "771012",
+      "source_filename": "N771012.jpg",
+      "filename": "771012.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3454855
+    },
+    {
+      "fabric_number": "771013",
+      "source_filename": "N771013.jpg",
+      "filename": "771013.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3152967
+    },
+    {
+      "fabric_number": "771014",
+      "source_filename": "N771014.jpg",
+      "filename": "771014.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3472567
+    },
+    {
+      "fabric_number": "771015",
+      "source_filename": "N771015.jpg",
+      "filename": "771015.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3152883
+    },
+    {
+      "fabric_number": "771016",
+      "source_filename": "N771016.jpg",
+      "filename": "771016.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3322256
+    },
+    {
+      "fabric_number": "771017",
+      "source_filename": "N771017.jpg",
+      "filename": "771017.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3532030
+    },
+    {
+      "fabric_number": "771018",
+      "source_filename": "N771018.jpg",
+      "filename": "771018.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3786035
+    },
+    {
+      "fabric_number": "771019",
+      "source_filename": "N771019.jpg",
+      "filename": "771019.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 2835972
+    },
+    {
+      "fabric_number": "771020",
+      "source_filename": "N771020.jpg",
+      "filename": "771020.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3421788
+    },
+    {
+      "fabric_number": "771021",
+      "source_filename": "N771021.jpg",
+      "filename": "771021.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3631177
+    },
+    {
+      "fabric_number": "771022",
+      "source_filename": "N771022.jpg",
+      "filename": "771022.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3625076
+    },
+    {
+      "fabric_number": "771023",
+      "source_filename": "N771023.jpg",
+      "filename": "771023.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3736220
+    },
+    {
+      "fabric_number": "771024",
+      "source_filename": "N771024.jpg",
+      "filename": "771024.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3081376
+    },
+    {
+      "fabric_number": "771025",
+      "source_filename": "N771025.jpg",
+      "filename": "771025.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3461557
+    },
+    {
+      "fabric_number": "771026",
+      "source_filename": "N771026.jpg",
+      "filename": "771026.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3565447
+    },
+    {
+      "fabric_number": "771027",
+      "source_filename": "N771027.jpg",
+      "filename": "771027.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3661926
+    },
+    {
+      "fabric_number": "771028",
+      "source_filename": "N771028.jpg",
+      "filename": "771028.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3509605
+    },
+    {
+      "fabric_number": "771029",
+      "source_filename": "N771029.jpg",
+      "filename": "771029.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3520400
+    },
+    {
+      "fabric_number": "771030",
+      "source_filename": "N771030.jpg",
+      "filename": "771030.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3866306
+    },
+    {
+      "fabric_number": "771031",
+      "source_filename": "N771031.jpg",
+      "filename": "771031.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3746001
+    },
+    {
+      "fabric_number": "771032",
+      "source_filename": "N771032.jpg",
+      "filename": "771032.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3085440
+    },
+    {
+      "fabric_number": "771033",
+      "source_filename": "N771033.jpg",
+      "filename": "771033.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3489483
+    },
+    {
+      "fabric_number": "771034",
+      "source_filename": "N771034.jpg",
+      "filename": "771034.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3389127
+    },
+    {
+      "fabric_number": "771035",
+      "source_filename": "N771035.jpg",
+      "filename": "771035.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3292911
+    },
+    {
+      "fabric_number": "771036",
+      "source_filename": "N771036.jpg",
+      "filename": "771036.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3829707
+    },
+    {
+      "fabric_number": "771037",
+      "source_filename": "N771037.jpg",
+      "filename": "771037.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3430890
+    },
+    {
+      "fabric_number": "771038",
+      "source_filename": "N771038.jpg",
+      "filename": "771038.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 4844319
+    },
+    {
+      "fabric_number": "771039",
+      "source_filename": "N771039.jpg",
+      "filename": "771039.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3810648
+    },
+    {
+      "fabric_number": "771040",
+      "source_filename": "N771040.jpg",
+      "filename": "771040.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3665086
+    },
+    {
+      "fabric_number": "771041",
+      "source_filename": "N771041.jpg",
+      "filename": "771041.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 4079659
+    },
+    {
+      "fabric_number": "771042",
+      "source_filename": "N771042.jpg",
+      "filename": "771042.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3669341
+    },
+    {
+      "fabric_number": "771043",
+      "source_filename": "N771043.jpg",
+      "filename": "771043.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3464530
+    },
+    {
+      "fabric_number": "771044",
+      "source_filename": "N771044.jpg",
+      "filename": "771044.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3339259
+    },
+    {
+      "fabric_number": "771045",
+      "source_filename": "N771045.jpg",
+      "filename": "771045.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3314825
+    },
+    {
+      "fabric_number": "771046",
+      "source_filename": "N771046.jpg",
+      "filename": "771046.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3812427
+    },
+    {
+      "fabric_number": "771047",
+      "source_filename": "N771047.jpg",
+      "filename": "771047.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3508297
+    },
+    {
+      "fabric_number": "771048",
+      "source_filename": "N771048.jpg",
+      "filename": "771048.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3433578
+    },
+    {
+      "fabric_number": "771049",
+      "source_filename": "N771049.jpg",
+      "filename": "771049.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3819581
+    },
+    {
+      "fabric_number": "771050",
+      "source_filename": "N771050.jpg",
+      "filename": "771050.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3276212
+    },
+    {
+      "fabric_number": "771051",
+      "source_filename": "N771051.jpg",
+      "filename": "771051.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3438743
+    },
+    {
+      "fabric_number": "771052",
+      "source_filename": "N771052.jpg",
+      "filename": "771052.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3703588
+    },
+    {
+      "fabric_number": "771053",
+      "source_filename": "N771053.jpg",
+      "filename": "771053.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 2724643
+    },
+    {
+      "fabric_number": "771054",
+      "source_filename": "N771054.jpg",
+      "filename": "771054.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3659802
+    },
+    {
+      "fabric_number": "771055",
+      "source_filename": "N771055.jpg",
+      "filename": "771055.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3718316
+    },
+    {
+      "fabric_number": "771056",
+      "source_filename": "N771056.jpg",
+      "filename": "771056.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3592159
+    },
+    {
+      "fabric_number": "771057",
+      "source_filename": "N771057.jpg",
+      "filename": "771057.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3161230
+    },
+    {
+      "fabric_number": "771058",
+      "source_filename": "N771058.jpg",
+      "filename": "771058.jpg",
+      "collection": "SUMMERTIME",
+      "book_number": "771",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3323495
     },
     {
       "fabric_number": "781001",
@@ -2124,6 +3955,376 @@
       "weight_gsm": 190,
       "ok": true,
       "bytes": 1720437
+    },
+    {
+      "fabric_number": "S23001",
+      "source_filename": "NS23001.jpg",
+      "filename": "S23001.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2530468
+    },
+    {
+      "fabric_number": "S23002",
+      "source_filename": "NS23002.jpg",
+      "filename": "S23002.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2948156
+    },
+    {
+      "fabric_number": "S23003",
+      "source_filename": "NS23003.jpg",
+      "filename": "S23003.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2517605
+    },
+    {
+      "fabric_number": "S23004",
+      "source_filename": "NS23004.jpg",
+      "filename": "S23004.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 1550500
+    },
+    {
+      "fabric_number": "S23005",
+      "source_filename": "NS23005.jpg",
+      "filename": "S23005.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 1620450
+    },
+    {
+      "fabric_number": "S23006",
+      "source_filename": "NS23006.jpg",
+      "filename": "S23006.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2458780
+    },
+    {
+      "fabric_number": "S23007",
+      "source_filename": "NS23007.jpg",
+      "filename": "S23007.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2803886
+    },
+    {
+      "fabric_number": "S23008",
+      "source_filename": "NS23008.jpg",
+      "filename": "S23008.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 1374186
+    },
+    {
+      "fabric_number": "S23009",
+      "source_filename": "NS23009.jpg",
+      "filename": "S23009.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2029002
+    },
+    {
+      "fabric_number": "S23010",
+      "source_filename": "NS23010.jpg",
+      "filename": "S23010.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 1461806
+    },
+    {
+      "fabric_number": "S23011",
+      "source_filename": "NS23011.jpg",
+      "filename": "S23011.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 1369583
+    },
+    {
+      "fabric_number": "S23012",
+      "source_filename": "NS23012.jpg",
+      "filename": "S23012.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 1761844
+    },
+    {
+      "fabric_number": "S23013",
+      "source_filename": "NS23013.jpg",
+      "filename": "S23013.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2145983
+    },
+    {
+      "fabric_number": "S23014",
+      "source_filename": "NS23014.jpg",
+      "filename": "S23014.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2630813
+    },
+    {
+      "fabric_number": "S23015",
+      "source_filename": "NS23015.jpg",
+      "filename": "S23015.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2058904
+    },
+    {
+      "fabric_number": "S23016",
+      "source_filename": "NS23016.jpg",
+      "filename": "S23016.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 1633040
+    },
+    {
+      "fabric_number": "S23017",
+      "source_filename": "NS23017.jpg",
+      "filename": "S23017.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2776300
+    },
+    {
+      "fabric_number": "S23018",
+      "source_filename": "NS23018.jpg",
+      "filename": "S23018.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2879346
+    },
+    {
+      "fabric_number": "S23019",
+      "source_filename": "NS23019.jpg",
+      "filename": "S23019.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 1852187
+    },
+    {
+      "fabric_number": "S23020",
+      "source_filename": "NS23020.jpg",
+      "filename": "S23020.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 1826293
+    },
+    {
+      "fabric_number": "S23021",
+      "source_filename": "NS23021.jpg",
+      "filename": "S23021.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2591812
+    },
+    {
+      "fabric_number": "S23022",
+      "source_filename": "NS23022.jpg",
+      "filename": "S23022.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 1774806
+    },
+    {
+      "fabric_number": "S23023",
+      "source_filename": "NS23023.jpg",
+      "filename": "S23023.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 1363287
+    },
+    {
+      "fabric_number": "S23024",
+      "source_filename": "NS23024.jpg",
+      "filename": "S23024.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 1301859
+    },
+    {
+      "fabric_number": "S23025",
+      "source_filename": "NS23025.jpg",
+      "filename": "S23025.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 500,
+      "ok": true,
+      "bytes": 1824953
+    },
+    {
+      "fabric_number": "S23026",
+      "source_filename": "NS23026.jpg",
+      "filename": "S23026.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 500,
+      "ok": true,
+      "bytes": 1708372
+    },
+    {
+      "fabric_number": "S23027",
+      "source_filename": "NS23027.jpg",
+      "filename": "S23027.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 500,
+      "ok": true,
+      "bytes": 1630816
+    },
+    {
+      "fabric_number": "S23028",
+      "source_filename": "NS23028.jpg",
+      "filename": "S23028.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 500,
+      "ok": true,
+      "bytes": 2434873
+    },
+    {
+      "fabric_number": "S23029",
+      "source_filename": "NS23029.jpg",
+      "filename": "S23029.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 500,
+      "ok": true,
+      "bytes": 2424760
+    },
+    {
+      "fabric_number": "S23030",
+      "source_filename": "NS23030.jpg",
+      "filename": "S23030.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 500,
+      "ok": true,
+      "bytes": 2840942
+    },
+    {
+      "fabric_number": "S23031",
+      "source_filename": "NS23031.jpg",
+      "filename": "S23031.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 500,
+      "ok": true,
+      "bytes": 2664955
+    },
+    {
+      "fabric_number": "S23032",
+      "source_filename": "NS23032.jpg",
+      "filename": "S23032.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 500,
+      "ok": true,
+      "bytes": 2469221
+    },
+    {
+      "fabric_number": "S23033",
+      "source_filename": "NS23033.jpg",
+      "filename": "S23033.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 500,
+      "ok": true,
+      "bytes": 259330
+    },
+    {
+      "fabric_number": "S23034",
+      "source_filename": "NS23034.jpg",
+      "filename": "S23034.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 500,
+      "ok": true,
+      "bytes": 2058969
+    },
+    {
+      "fabric_number": "S23035",
+      "source_filename": "NS23035.jpg",
+      "filename": "S23035.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 500,
+      "ok": true,
+      "bytes": 2547037
+    },
+    {
+      "fabric_number": "S23036",
+      "source_filename": "NS23036.jpg",
+      "filename": "S23036.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 500,
+      "ok": true,
+      "bytes": 2985257
+    },
+    {
+      "fabric_number": "S23037",
+      "source_filename": "NS23037.jpg",
+      "filename": "S23037.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 500,
+      "ok": true,
+      "bytes": 2550893
     },
     {
       "fabric_number": "S24001",
