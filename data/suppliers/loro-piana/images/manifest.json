@@ -1,6 +1,6 @@
 {
-  "imported_at": "2026-06-19T11:00:19.480Z",
-  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml  + /Users/ralphrahme/Desktop/Loro Piana Bunches/Events + /Users/ralphrahme/Desktop/Loro Piana Bunches/Frescolino - S16. 200 grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Suitmate + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/DRESANO 340 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams",
+  "imported_at": "2026-06-19T11:07:24.307Z",
+  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml  + /Users/ralphrahme/Desktop/Loro Piana Bunches/Events + /Users/ralphrahme/Desktop/Loro Piana Bunches/Frescolino - S16. 200 grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Suitmate + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/DRESANO 340 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Art Du Lin II - S23 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Gabardilia S05. 240 GRAMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro",
   "catalog_path": "src/data/suppliers/loro-piana-ss26.json",
   "output_root": "data/suppliers/loro-piana/images",
   "filters": {
@@ -12,7 +12,10 @@
       "Proposte Abiti SS26 (book 781)",
       "Suitmate (book 726)",
       "DRESANO 340 GRMS (book 782, NS→S, S140xx)",
-      "Proposte Giacche SS26 (book 780)"
+      "Proposte Giacche SS26 (book 780)",
+      "Art Du Lin II S23 (book 782, NS→S)",
+      "Gabardilia S05 (book 782, NS→S)",
+      "Zefiro S10 (book 782, NS→S)"
     ],
     "note": "Merged manifest from multiple imports"
   },
@@ -2967,6 +2970,666 @@
       "bytes": 3323495
     },
     {
+      "fabric_number": "780002",
+      "source_filename": "N780002.jpg",
+      "filename": "780002.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3531689
+    },
+    {
+      "fabric_number": "780003",
+      "source_filename": "N780003.jpg",
+      "filename": "780003.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3697260
+    },
+    {
+      "fabric_number": "780005",
+      "source_filename": "N780005.jpg",
+      "filename": "780005.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3745176
+    },
+    {
+      "fabric_number": "780006",
+      "source_filename": "N780006.jpg",
+      "filename": "780006.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3342289
+    },
+    {
+      "fabric_number": "780007",
+      "source_filename": "N780007.jpg",
+      "filename": "780007.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3876338
+    },
+    {
+      "fabric_number": "780008",
+      "source_filename": "N780008.jpg",
+      "filename": "780008.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3839960
+    },
+    {
+      "fabric_number": "780010",
+      "source_filename": "N780010.jpg",
+      "filename": "780010.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3539176
+    },
+    {
+      "fabric_number": "780011",
+      "source_filename": "N780011.jpg",
+      "filename": "780011.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 2712398
+    },
+    {
+      "fabric_number": "780012",
+      "source_filename": "N780012.jpg",
+      "filename": "780012.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3397426
+    },
+    {
+      "fabric_number": "780013",
+      "source_filename": "N780013.jpg",
+      "filename": "780013.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3279436
+    },
+    {
+      "fabric_number": "780014",
+      "source_filename": "N780014.jpg",
+      "filename": "780014.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3416825
+    },
+    {
+      "fabric_number": "780015",
+      "source_filename": "N780015.jpg",
+      "filename": "780015.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3003441
+    },
+    {
+      "fabric_number": "780016",
+      "source_filename": "N780016.jpg",
+      "filename": "780016.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3513053
+    },
+    {
+      "fabric_number": "780017",
+      "source_filename": "N780017.jpg",
+      "filename": "780017.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3639755
+    },
+    {
+      "fabric_number": "780018",
+      "source_filename": "N780018.jpg",
+      "filename": "780018.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3200670
+    },
+    {
+      "fabric_number": "780019",
+      "source_filename": "N780019.jpg",
+      "filename": "780019.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 5052757
+    },
+    {
+      "fabric_number": "780020",
+      "source_filename": "N780020.jpg",
+      "filename": "780020.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3817585
+    },
+    {
+      "fabric_number": "780021",
+      "source_filename": "N780021.jpg",
+      "filename": "780021.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3328755
+    },
+    {
+      "fabric_number": "780022",
+      "source_filename": "N780022.jpg",
+      "filename": "780022.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 3344970
+    },
+    {
+      "fabric_number": "780023",
+      "source_filename": "N780023.jpg",
+      "filename": "780023.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 4210152
+    },
+    {
+      "fabric_number": "780025",
+      "source_filename": "N780025.jpg",
+      "filename": "780025.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 2909082
+    },
+    {
+      "fabric_number": "780026",
+      "source_filename": "N780026.jpg",
+      "filename": "780026.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 290,
+      "ok": true,
+      "bytes": 3512901
+    },
+    {
+      "fabric_number": "780027",
+      "source_filename": "N780027.jpg",
+      "filename": "780027.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 290,
+      "ok": true,
+      "bytes": 3787223
+    },
+    {
+      "fabric_number": "780028",
+      "source_filename": "N780028.jpg",
+      "filename": "780028.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 290,
+      "ok": true,
+      "bytes": 3509122
+    },
+    {
+      "fabric_number": "780029",
+      "source_filename": "N780029.jpg",
+      "filename": "780029.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 290,
+      "ok": true,
+      "bytes": 3607219
+    },
+    {
+      "fabric_number": "780030",
+      "source_filename": "N780030.jpg",
+      "filename": "780030.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 290,
+      "ok": true,
+      "bytes": 3240862
+    },
+    {
+      "fabric_number": "780033",
+      "source_filename": "N780033.jpg",
+      "filename": "780033.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 290,
+      "ok": true,
+      "bytes": 3526577
+    },
+    {
+      "fabric_number": "780034",
+      "source_filename": "N780034.jpg",
+      "filename": "780034.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 290,
+      "ok": true,
+      "bytes": 3152774
+    },
+    {
+      "fabric_number": "780035",
+      "source_filename": "N780035.jpg",
+      "filename": "780035.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 290,
+      "ok": true,
+      "bytes": 3820395
+    },
+    {
+      "fabric_number": "780036",
+      "source_filename": "N780036.jpg",
+      "filename": "780036.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 290,
+      "ok": true,
+      "bytes": 3390714
+    },
+    {
+      "fabric_number": "780037",
+      "source_filename": "N780037.jpg",
+      "filename": "780037.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 290,
+      "ok": true,
+      "bytes": 3881561
+    },
+    {
+      "fabric_number": "780038",
+      "source_filename": "N780038.jpg",
+      "filename": "780038.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 290,
+      "ok": true,
+      "bytes": 3318563
+    },
+    {
+      "fabric_number": "780039",
+      "source_filename": "N780039.jpg",
+      "filename": "780039.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3698398
+    },
+    {
+      "fabric_number": "780040",
+      "source_filename": "N780040.jpg",
+      "filename": "780040.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3882852
+    },
+    {
+      "fabric_number": "780041",
+      "source_filename": "N780041.jpg",
+      "filename": "780041.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3256724
+    },
+    {
+      "fabric_number": "780042",
+      "source_filename": "N780042.jpg",
+      "filename": "780042.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3731737
+    },
+    {
+      "fabric_number": "780043",
+      "source_filename": "N780043.jpg",
+      "filename": "780043.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3778126
+    },
+    {
+      "fabric_number": "780045",
+      "source_filename": "N780045.jpg",
+      "filename": "780045.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3447372
+    },
+    {
+      "fabric_number": "780046",
+      "source_filename": "N780046.jpg",
+      "filename": "780046.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3658984
+    },
+    {
+      "fabric_number": "780047",
+      "source_filename": "N780047.jpg",
+      "filename": "780047.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3165471
+    },
+    {
+      "fabric_number": "780048",
+      "source_filename": "N780048.jpg",
+      "filename": "780048.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2978001
+    },
+    {
+      "fabric_number": "780049",
+      "source_filename": "N780049.jpg",
+      "filename": "780049.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3285632
+    },
+    {
+      "fabric_number": "780050",
+      "source_filename": "N780050.jpg",
+      "filename": "780050.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3351580
+    },
+    {
+      "fabric_number": "780051",
+      "source_filename": "N780051.jpg",
+      "filename": "780051.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3698127
+    },
+    {
+      "fabric_number": "780052",
+      "source_filename": "N780052.jpg",
+      "filename": "780052.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 1459265
+    },
+    {
+      "fabric_number": "780053",
+      "source_filename": "N780053.jpg",
+      "filename": "780053.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 1576258
+    },
+    {
+      "fabric_number": "780054",
+      "source_filename": "N780054.jpg",
+      "filename": "780054.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 1464811
+    },
+    {
+      "fabric_number": "780058",
+      "source_filename": "N780058.jpg",
+      "filename": "780058.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 280,
+      "ok": true,
+      "bytes": 3576766
+    },
+    {
+      "fabric_number": "780059",
+      "source_filename": "N780059.jpg",
+      "filename": "780059.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 280,
+      "ok": true,
+      "bytes": 3879071
+    },
+    {
+      "fabric_number": "780060",
+      "source_filename": "N780060.jpg",
+      "filename": "780060.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 280,
+      "ok": true,
+      "bytes": 3452108
+    },
+    {
+      "fabric_number": "780061",
+      "source_filename": "N780061.jpg",
+      "filename": "780061.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 280,
+      "ok": true,
+      "bytes": 3172471
+    },
+    {
+      "fabric_number": "780062",
+      "source_filename": "N780062.jpg",
+      "filename": "780062.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 280,
+      "ok": true,
+      "bytes": 3753748
+    },
+    {
+      "fabric_number": "780063",
+      "source_filename": "N780063.jpg",
+      "filename": "780063.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 280,
+      "ok": true,
+      "bytes": 3031930
+    },
+    {
+      "fabric_number": "780064",
+      "source_filename": "N780064.jpg",
+      "filename": "780064.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 280,
+      "ok": true,
+      "bytes": 3345681
+    },
+    {
+      "fabric_number": "780065",
+      "source_filename": "N780065.jpg",
+      "filename": "780065.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 280,
+      "ok": true,
+      "bytes": 2869002
+    },
+    {
+      "fabric_number": "780066",
+      "source_filename": "N780066.jpg",
+      "filename": "780066.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 290,
+      "ok": true,
+      "bytes": 2813872
+    },
+    {
+      "fabric_number": "780067",
+      "source_filename": "N780067.jpg",
+      "filename": "780067.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 280,
+      "ok": true,
+      "bytes": 3200234
+    },
+    {
+      "fabric_number": "780068",
+      "source_filename": "N780068.jpg",
+      "filename": "780068.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 280,
+      "ok": true,
+      "bytes": 3419728
+    },
+    {
+      "fabric_number": "780069",
+      "source_filename": "N780069.jpg",
+      "filename": "780069.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 280,
+      "ok": true,
+      "bytes": 2892532
+    },
+    {
+      "fabric_number": "780070",
+      "source_filename": "N780070.jpg",
+      "filename": "780070.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 280,
+      "ok": true,
+      "bytes": 3150892
+    },
+    {
+      "fabric_number": "780072",
+      "source_filename": "N780072.jpg",
+      "filename": "780072.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 280,
+      "ok": true,
+      "bytes": 1480812
+    },
+    {
+      "fabric_number": "780073",
+      "source_filename": "N780073.jpg",
+      "filename": "780073.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 340,
+      "ok": true,
+      "bytes": 2212752
+    },
+    {
+      "fabric_number": "780074",
+      "source_filename": "N780074.jpg",
+      "filename": "780074.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 340,
+      "ok": true,
+      "bytes": 2447195
+    },
+    {
+      "fabric_number": "780075",
+      "source_filename": "N780075.jpg",
+      "filename": "780075.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 340,
+      "ok": true,
+      "bytes": 2871036
+    },
+    {
+      "fabric_number": "780076",
+      "source_filename": "N780076.jpg",
+      "filename": "780076.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 340,
+      "ok": true,
+      "bytes": 2855371
+    },
+    {
+      "fabric_number": "780077",
+      "source_filename": "N780077.jpg",
+      "filename": "780077.jpg",
+      "collection": "PROPOSTE GIACCHE SS26",
+      "book_number": "780",
+      "weight_gsm": 340,
+      "ok": true,
+      "bytes": 2625256
+    },
+    {
       "fabric_number": "781001",
       "source_filename": "N781001.jpg",
       "filename": "781001.jpg",
@@ -3627,6 +4290,730 @@
       "weight_gsm": 200,
       "ok": true,
       "bytes": 2231419
+    },
+    {
+      "fabric_number": "S05001",
+      "source_filename": "NS05001.jpg",
+      "filename": "S05001.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2525450
+    },
+    {
+      "fabric_number": "S05002",
+      "source_filename": "NS05002.jpg",
+      "filename": "S05002.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 710198
+    },
+    {
+      "fabric_number": "S05003",
+      "source_filename": "NS05003.jpg",
+      "filename": "S05003.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 1429414
+    },
+    {
+      "fabric_number": "S05004",
+      "source_filename": "NS05004.jpg",
+      "filename": "S05004.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2719718
+    },
+    {
+      "fabric_number": "S05005",
+      "source_filename": "NS05005.jpg",
+      "filename": "S05005.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3064271
+    },
+    {
+      "fabric_number": "S05006",
+      "source_filename": "NS05006.jpg",
+      "filename": "S05006.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3518800
+    },
+    {
+      "fabric_number": "S05007",
+      "source_filename": "NS05007.jpg",
+      "filename": "S05007.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2893718
+    },
+    {
+      "fabric_number": "S05008",
+      "source_filename": "NS05008.jpg",
+      "filename": "S05008.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3229874
+    },
+    {
+      "fabric_number": "S05009",
+      "source_filename": "NS05009.jpg",
+      "filename": "S05009.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3066087
+    },
+    {
+      "fabric_number": "S05010",
+      "source_filename": "NS05010.jpg",
+      "filename": "S05010.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 4230637
+    },
+    {
+      "fabric_number": "S05011",
+      "source_filename": "NS05011.jpg",
+      "filename": "S05011.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3540136
+    },
+    {
+      "fabric_number": "S05012",
+      "source_filename": "NS05012.jpg",
+      "filename": "S05012.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3310192
+    },
+    {
+      "fabric_number": "S05013",
+      "source_filename": "NS05013.jpg",
+      "filename": "S05013.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2354777
+    },
+    {
+      "fabric_number": "S05014",
+      "source_filename": "NS05014.jpg",
+      "filename": "S05014.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2478146
+    },
+    {
+      "fabric_number": "S05015",
+      "source_filename": "NS05015.jpg",
+      "filename": "S05015.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2464394
+    },
+    {
+      "fabric_number": "S05016",
+      "source_filename": "NS05016.jpg",
+      "filename": "S05016.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 4009289
+    },
+    {
+      "fabric_number": "S05017",
+      "source_filename": "NS05017.jpg",
+      "filename": "S05017.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3424881
+    },
+    {
+      "fabric_number": "S05018",
+      "source_filename": "NS05018.jpg",
+      "filename": "S05018.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2824802
+    },
+    {
+      "fabric_number": "S05019",
+      "source_filename": "NS05019.jpg",
+      "filename": "S05019.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2941573
+    },
+    {
+      "fabric_number": "S05020",
+      "source_filename": "NS05020.jpg",
+      "filename": "S05020.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2682893
+    },
+    {
+      "fabric_number": "S05021",
+      "source_filename": "NS05021.jpg",
+      "filename": "S05021.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3207264
+    },
+    {
+      "fabric_number": "S05022",
+      "source_filename": "NS05022.jpg",
+      "filename": "S05022.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2859255
+    },
+    {
+      "fabric_number": "S05023",
+      "source_filename": "NS05023.jpg",
+      "filename": "S05023.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3121303
+    },
+    {
+      "fabric_number": "S05024",
+      "source_filename": "NS05024.jpg",
+      "filename": "S05024.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3348281
+    },
+    {
+      "fabric_number": "S05025",
+      "source_filename": "NS05025.jpg",
+      "filename": "S05025.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3409715
+    },
+    {
+      "fabric_number": "S05026",
+      "source_filename": "NS05026.jpg",
+      "filename": "S05026.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3541593
+    },
+    {
+      "fabric_number": "S05027",
+      "source_filename": "NS05027.jpg",
+      "filename": "S05027.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3172162
+    },
+    {
+      "fabric_number": "S05028",
+      "source_filename": "NS05028.jpg",
+      "filename": "S05028.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3580102
+    },
+    {
+      "fabric_number": "S05029",
+      "source_filename": "NS05029.jpg",
+      "filename": "S05029.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3031742
+    },
+    {
+      "fabric_number": "S05030",
+      "source_filename": "NS05030.jpg",
+      "filename": "S05030.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3842027
+    },
+    {
+      "fabric_number": "S05031",
+      "source_filename": "NS05031.jpg",
+      "filename": "S05031.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2655536
+    },
+    {
+      "fabric_number": "S05032",
+      "source_filename": "NS05032.jpg",
+      "filename": "S05032.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3308493
+    },
+    {
+      "fabric_number": "S05033",
+      "source_filename": "NS05033.jpg",
+      "filename": "S05033.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3469892
+    },
+    {
+      "fabric_number": "S05034",
+      "source_filename": "NS05034.jpg",
+      "filename": "S05034.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3767601
+    },
+    {
+      "fabric_number": "S05035",
+      "source_filename": "NS05035.jpg",
+      "filename": "S05035.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3721059
+    },
+    {
+      "fabric_number": "S10001",
+      "source_filename": "NS10001.jpg",
+      "filename": "S10001.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2578269,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10001.jpg"
+    },
+    {
+      "fabric_number": "S10002",
+      "source_filename": "NS10002.jpg",
+      "filename": "S10002.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2368809,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10002.jpg"
+    },
+    {
+      "fabric_number": "S10003",
+      "source_filename": "NS10003.jpg",
+      "filename": "S10003.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2611845,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10003.jpg"
+    },
+    {
+      "fabric_number": "S10004",
+      "source_filename": "NS10004.jpg",
+      "filename": "S10004.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2631838,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10004.jpg"
+    },
+    {
+      "fabric_number": "S10005",
+      "source_filename": "NS10005.jpg",
+      "filename": "S10005.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3747955,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10005.jpg"
+    },
+    {
+      "fabric_number": "S10006",
+      "source_filename": "NS10006.jpg",
+      "filename": "S10006.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3777091,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10006.jpg"
+    },
+    {
+      "fabric_number": "S10007",
+      "source_filename": "NS10007.jpg",
+      "filename": "S10007.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3822740,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10007.jpg"
+    },
+    {
+      "fabric_number": "S10008",
+      "source_filename": "NS10008.jpg",
+      "filename": "S10008.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3122990,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10008.jpg"
+    },
+    {
+      "fabric_number": "S10009",
+      "source_filename": "NS10009.jpg",
+      "filename": "S10009.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2973429,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10009.jpg"
+    },
+    {
+      "fabric_number": "S10010",
+      "source_filename": "NS10010.jpg",
+      "filename": "S10010.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3078688,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10010.jpg"
+    },
+    {
+      "fabric_number": "S10011",
+      "source_filename": "NS10011.jpg",
+      "filename": "S10011.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2248167,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10011.jpg"
+    },
+    {
+      "fabric_number": "S10012",
+      "source_filename": "NS10012.jpg",
+      "filename": "S10012.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2871868,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10012.jpg"
+    },
+    {
+      "fabric_number": "S10013",
+      "source_filename": "NS10013.jpg",
+      "filename": "S10013.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2788721,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10013.jpg"
+    },
+    {
+      "fabric_number": "S10014",
+      "source_filename": "NS10014.jpg",
+      "filename": "S10014.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2914514,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10014.jpg"
+    },
+    {
+      "fabric_number": "S10015",
+      "source_filename": "NS10015.jpg",
+      "filename": "S10015.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2253363,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10015.jpg"
+    },
+    {
+      "fabric_number": "S10016",
+      "source_filename": "NS10016.jpg",
+      "filename": "S10016.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2584529,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10016.jpg"
+    },
+    {
+      "fabric_number": "S10021",
+      "source_filename": "NS10021.jpg",
+      "filename": "S10021.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2685830,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10021.jpg"
+    },
+    {
+      "fabric_number": "S10022",
+      "source_filename": "NS10022.jpg",
+      "filename": "S10022.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3266223,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10022.jpg"
+    },
+    {
+      "fabric_number": "S10023",
+      "source_filename": "NS10023.jpg",
+      "filename": "S10023.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 1928993,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10023.jpg"
+    },
+    {
+      "fabric_number": "S10024",
+      "source_filename": "NS10024.jpg",
+      "filename": "S10024.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2622132,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10024.jpg"
+    },
+    {
+      "fabric_number": "S10025",
+      "source_filename": "NS10025.jpg",
+      "filename": "S10025.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2833514,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10025.jpg"
+    },
+    {
+      "fabric_number": "S10026",
+      "source_filename": "NS10026.jpg",
+      "filename": "S10026.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2718606,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10026.jpg"
+    },
+    {
+      "fabric_number": "S10027",
+      "source_filename": "NS10027.jpg",
+      "filename": "S10027.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2515138,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10027.jpg"
+    },
+    {
+      "fabric_number": "S10028",
+      "source_filename": "NS10028.jpg",
+      "filename": "S10028.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3119349,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10028.jpg"
+    },
+    {
+      "fabric_number": "S10029",
+      "source_filename": "NS10029.jpg",
+      "filename": "S10029.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2436348,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10029.jpg"
+    },
+    {
+      "fabric_number": "S10030",
+      "source_filename": "NS10030.jpg",
+      "filename": "S10030.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3023401,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10030.jpg"
+    },
+    {
+      "fabric_number": "S10031",
+      "source_filename": "NS10031.jpg",
+      "filename": "S10031.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 1429414,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10031.jpg"
+    },
+    {
+      "fabric_number": "S10032",
+      "source_filename": "NS10032.jpg",
+      "filename": "S10032.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 710198,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10032.jpg"
+    },
+    {
+      "fabric_number": "S10033",
+      "source_filename": "NS10033.jpg",
+      "filename": "S10033.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2719718,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10033.jpg"
+    },
+    {
+      "fabric_number": "S10034",
+      "source_filename": "NS10034.jpg",
+      "filename": "S10034.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3064271,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10034.jpg"
+    },
+    {
+      "fabric_number": "S10035",
+      "source_filename": "NS10035.jpg",
+      "filename": "S10035.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 4230637,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10035.jpg"
+    },
+    {
+      "fabric_number": "S10036",
+      "source_filename": "NS10036.jpg",
+      "filename": "S10036.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3540136,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10036.jpg"
+    },
+    {
+      "fabric_number": "S10037",
+      "source_filename": "NS10037.jpg",
+      "filename": "S10037.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 2354777,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10037.jpg"
+    },
+    {
+      "fabric_number": "S10038",
+      "source_filename": "NS10038.jpg",
+      "filename": "S10038.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 240,
+      "ok": true,
+      "bytes": 3767601,
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro/NS10038.jpg"
     },
     {
       "fabric_number": "S14001",
@@ -5313,666 +6700,6 @@
       "weight_gsm": 430,
       "ok": true,
       "bytes": 2748368
-    },
-    {
-      "fabric_number": "780002",
-      "source_filename": "N780002.jpg",
-      "filename": "780002.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 3531689
-    },
-    {
-      "fabric_number": "780003",
-      "source_filename": "N780003.jpg",
-      "filename": "780003.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 3697260
-    },
-    {
-      "fabric_number": "780005",
-      "source_filename": "N780005.jpg",
-      "filename": "780005.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 3745176
-    },
-    {
-      "fabric_number": "780006",
-      "source_filename": "N780006.jpg",
-      "filename": "780006.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 3342289
-    },
-    {
-      "fabric_number": "780007",
-      "source_filename": "N780007.jpg",
-      "filename": "780007.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 3876338
-    },
-    {
-      "fabric_number": "780008",
-      "source_filename": "N780008.jpg",
-      "filename": "780008.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 3839960
-    },
-    {
-      "fabric_number": "780010",
-      "source_filename": "N780010.jpg",
-      "filename": "780010.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 3539176
-    },
-    {
-      "fabric_number": "780011",
-      "source_filename": "N780011.jpg",
-      "filename": "780011.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 2712398
-    },
-    {
-      "fabric_number": "780012",
-      "source_filename": "N780012.jpg",
-      "filename": "780012.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 3397426
-    },
-    {
-      "fabric_number": "780013",
-      "source_filename": "N780013.jpg",
-      "filename": "780013.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 3279436
-    },
-    {
-      "fabric_number": "780014",
-      "source_filename": "N780014.jpg",
-      "filename": "780014.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 3416825
-    },
-    {
-      "fabric_number": "780015",
-      "source_filename": "N780015.jpg",
-      "filename": "780015.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 3003441
-    },
-    {
-      "fabric_number": "780016",
-      "source_filename": "N780016.jpg",
-      "filename": "780016.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 3513053
-    },
-    {
-      "fabric_number": "780017",
-      "source_filename": "N780017.jpg",
-      "filename": "780017.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 3639755
-    },
-    {
-      "fabric_number": "780018",
-      "source_filename": "N780018.jpg",
-      "filename": "780018.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 3200670
-    },
-    {
-      "fabric_number": "780019",
-      "source_filename": "N780019.jpg",
-      "filename": "780019.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 5052757
-    },
-    {
-      "fabric_number": "780020",
-      "source_filename": "N780020.jpg",
-      "filename": "780020.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 3817585
-    },
-    {
-      "fabric_number": "780021",
-      "source_filename": "N780021.jpg",
-      "filename": "780021.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 3328755
-    },
-    {
-      "fabric_number": "780022",
-      "source_filename": "N780022.jpg",
-      "filename": "780022.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 3344970
-    },
-    {
-      "fabric_number": "780023",
-      "source_filename": "N780023.jpg",
-      "filename": "780023.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 4210152
-    },
-    {
-      "fabric_number": "780025",
-      "source_filename": "N780025.jpg",
-      "filename": "780025.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 250,
-      "ok": true,
-      "bytes": 2909082
-    },
-    {
-      "fabric_number": "780026",
-      "source_filename": "N780026.jpg",
-      "filename": "780026.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 290,
-      "ok": true,
-      "bytes": 3512901
-    },
-    {
-      "fabric_number": "780027",
-      "source_filename": "N780027.jpg",
-      "filename": "780027.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 290,
-      "ok": true,
-      "bytes": 3787223
-    },
-    {
-      "fabric_number": "780028",
-      "source_filename": "N780028.jpg",
-      "filename": "780028.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 290,
-      "ok": true,
-      "bytes": 3509122
-    },
-    {
-      "fabric_number": "780029",
-      "source_filename": "N780029.jpg",
-      "filename": "780029.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 290,
-      "ok": true,
-      "bytes": 3607219
-    },
-    {
-      "fabric_number": "780030",
-      "source_filename": "N780030.jpg",
-      "filename": "780030.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 290,
-      "ok": true,
-      "bytes": 3240862
-    },
-    {
-      "fabric_number": "780033",
-      "source_filename": "N780033.jpg",
-      "filename": "780033.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 290,
-      "ok": true,
-      "bytes": 3526577
-    },
-    {
-      "fabric_number": "780034",
-      "source_filename": "N780034.jpg",
-      "filename": "780034.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 290,
-      "ok": true,
-      "bytes": 3152774
-    },
-    {
-      "fabric_number": "780035",
-      "source_filename": "N780035.jpg",
-      "filename": "780035.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 290,
-      "ok": true,
-      "bytes": 3820395
-    },
-    {
-      "fabric_number": "780036",
-      "source_filename": "N780036.jpg",
-      "filename": "780036.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 290,
-      "ok": true,
-      "bytes": 3390714
-    },
-    {
-      "fabric_number": "780037",
-      "source_filename": "N780037.jpg",
-      "filename": "780037.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 290,
-      "ok": true,
-      "bytes": 3881561
-    },
-    {
-      "fabric_number": "780038",
-      "source_filename": "N780038.jpg",
-      "filename": "780038.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 290,
-      "ok": true,
-      "bytes": 3318563
-    },
-    {
-      "fabric_number": "780039",
-      "source_filename": "N780039.jpg",
-      "filename": "780039.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 240,
-      "ok": true,
-      "bytes": 3698398
-    },
-    {
-      "fabric_number": "780040",
-      "source_filename": "N780040.jpg",
-      "filename": "780040.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 240,
-      "ok": true,
-      "bytes": 3882852
-    },
-    {
-      "fabric_number": "780041",
-      "source_filename": "N780041.jpg",
-      "filename": "780041.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 240,
-      "ok": true,
-      "bytes": 3256724
-    },
-    {
-      "fabric_number": "780042",
-      "source_filename": "N780042.jpg",
-      "filename": "780042.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 240,
-      "ok": true,
-      "bytes": 3731737
-    },
-    {
-      "fabric_number": "780043",
-      "source_filename": "N780043.jpg",
-      "filename": "780043.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 240,
-      "ok": true,
-      "bytes": 3778126
-    },
-    {
-      "fabric_number": "780045",
-      "source_filename": "N780045.jpg",
-      "filename": "780045.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 240,
-      "ok": true,
-      "bytes": 3447372
-    },
-    {
-      "fabric_number": "780046",
-      "source_filename": "N780046.jpg",
-      "filename": "780046.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 240,
-      "ok": true,
-      "bytes": 3658984
-    },
-    {
-      "fabric_number": "780047",
-      "source_filename": "N780047.jpg",
-      "filename": "780047.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 240,
-      "ok": true,
-      "bytes": 3165471
-    },
-    {
-      "fabric_number": "780048",
-      "source_filename": "N780048.jpg",
-      "filename": "780048.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 240,
-      "ok": true,
-      "bytes": 2978001
-    },
-    {
-      "fabric_number": "780049",
-      "source_filename": "N780049.jpg",
-      "filename": "780049.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 240,
-      "ok": true,
-      "bytes": 3285632
-    },
-    {
-      "fabric_number": "780050",
-      "source_filename": "N780050.jpg",
-      "filename": "780050.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 240,
-      "ok": true,
-      "bytes": 3351580
-    },
-    {
-      "fabric_number": "780051",
-      "source_filename": "N780051.jpg",
-      "filename": "780051.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 240,
-      "ok": true,
-      "bytes": 3698127
-    },
-    {
-      "fabric_number": "780052",
-      "source_filename": "N780052.jpg",
-      "filename": "780052.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 240,
-      "ok": true,
-      "bytes": 1459265
-    },
-    {
-      "fabric_number": "780053",
-      "source_filename": "N780053.jpg",
-      "filename": "780053.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 240,
-      "ok": true,
-      "bytes": 1576258
-    },
-    {
-      "fabric_number": "780054",
-      "source_filename": "N780054.jpg",
-      "filename": "780054.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 240,
-      "ok": true,
-      "bytes": 1464811
-    },
-    {
-      "fabric_number": "780058",
-      "source_filename": "N780058.jpg",
-      "filename": "780058.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 280,
-      "ok": true,
-      "bytes": 3576766
-    },
-    {
-      "fabric_number": "780059",
-      "source_filename": "N780059.jpg",
-      "filename": "780059.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 280,
-      "ok": true,
-      "bytes": 3879071
-    },
-    {
-      "fabric_number": "780060",
-      "source_filename": "N780060.jpg",
-      "filename": "780060.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 280,
-      "ok": true,
-      "bytes": 3452108
-    },
-    {
-      "fabric_number": "780061",
-      "source_filename": "N780061.jpg",
-      "filename": "780061.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 280,
-      "ok": true,
-      "bytes": 3172471
-    },
-    {
-      "fabric_number": "780062",
-      "source_filename": "N780062.jpg",
-      "filename": "780062.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 280,
-      "ok": true,
-      "bytes": 3753748
-    },
-    {
-      "fabric_number": "780063",
-      "source_filename": "N780063.jpg",
-      "filename": "780063.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 280,
-      "ok": true,
-      "bytes": 3031930
-    },
-    {
-      "fabric_number": "780064",
-      "source_filename": "N780064.jpg",
-      "filename": "780064.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 280,
-      "ok": true,
-      "bytes": 3345681
-    },
-    {
-      "fabric_number": "780065",
-      "source_filename": "N780065.jpg",
-      "filename": "780065.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 280,
-      "ok": true,
-      "bytes": 2869002
-    },
-    {
-      "fabric_number": "780066",
-      "source_filename": "N780066.jpg",
-      "filename": "780066.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 290,
-      "ok": true,
-      "bytes": 2813872
-    },
-    {
-      "fabric_number": "780067",
-      "source_filename": "N780067.jpg",
-      "filename": "780067.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 280,
-      "ok": true,
-      "bytes": 3200234
-    },
-    {
-      "fabric_number": "780068",
-      "source_filename": "N780068.jpg",
-      "filename": "780068.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 280,
-      "ok": true,
-      "bytes": 3419728
-    },
-    {
-      "fabric_number": "780069",
-      "source_filename": "N780069.jpg",
-      "filename": "780069.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 280,
-      "ok": true,
-      "bytes": 2892532
-    },
-    {
-      "fabric_number": "780070",
-      "source_filename": "N780070.jpg",
-      "filename": "780070.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 280,
-      "ok": true,
-      "bytes": 3150892
-    },
-    {
-      "fabric_number": "780072",
-      "source_filename": "N780072.jpg",
-      "filename": "780072.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 280,
-      "ok": true,
-      "bytes": 1480812
-    },
-    {
-      "fabric_number": "780073",
-      "source_filename": "N780073.jpg",
-      "filename": "780073.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 340,
-      "ok": true,
-      "bytes": 2212752
-    },
-    {
-      "fabric_number": "780074",
-      "source_filename": "N780074.jpg",
-      "filename": "780074.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 340,
-      "ok": true,
-      "bytes": 2447195
-    },
-    {
-      "fabric_number": "780075",
-      "source_filename": "N780075.jpg",
-      "filename": "780075.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 340,
-      "ok": true,
-      "bytes": 2871036
-    },
-    {
-      "fabric_number": "780076",
-      "source_filename": "N780076.jpg",
-      "filename": "780076.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 340,
-      "ok": true,
-      "bytes": 2855371
-    },
-    {
-      "fabric_number": "780077",
-      "source_filename": "N780077.jpg",
-      "filename": "780077.jpg",
-      "collection": "PROPOSTE GIACCHE SS26",
-      "book_number": "780",
-      "weight_gsm": 340,
-      "ok": true,
-      "bytes": 2625256
     }
   ]
 }
