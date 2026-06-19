@@ -23,11 +23,6 @@
       "washing": 50,
       "overhead": 70
     },
-    "Vest": {
-      "labor": 220,
-      "washing": 45,
-      "overhead": 60
-    },
     "Trouser": {
       "labor": 180,
       "washing": 40,
@@ -37,16 +32,6 @@
       "labor": 380,
       "washing": 60,
       "overhead": 100
-    },
-    "Formal Thobe": {
-      "labor": 200,
-      "washing": 40,
-      "overhead": 55
-    },
-    "House Thobe": {
-      "labor": 180,
-      "washing": 40,
-      "overhead": 50
     },
     "Shirt LS": {
       "labor": 140,
@@ -77,16 +62,6 @@
       "labor": 320,
       "washing": 70,
       "overhead": 90
-    },
-    "Thobe+Jacket": {
-      "labor": 460,
-      "washing": 90,
-      "overhead": 120
-    },
-    "Thobe+Vest": {
-      "labor": 360,
-      "washing": 80,
-      "overhead": 100
     }
   },
   "default_garment_rate": {

@@ -190,7 +190,7 @@
       "bank_name": "Banque Saudi Fransi",
       "deduction": 0,
       "full_name": "MD SHAKHAWAT HOSSAIN RAJU",
-      "is_active": false,
+      "is_active": true,
       "basic_salary": 2200,
       "salary_amount": 2500,
       "account_number": "SA82550000000Q2083900166",
@@ -596,6 +596,6 @@
       "payment_description": "SALARY"
     }
   ],
-  "updated_at": "2026-06-16T18:44:35.000000+00:00",
+  "updated_at": "2026-05-31T10:45:30.061388+00:00",
   "source_file": "src/data/hr/salary-details-revised.xlsx"
 }

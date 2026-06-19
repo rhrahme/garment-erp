@@ -144,6 +144,18 @@
       "lead_time_days": 0
     },
     {
+      "id": "fab6",
+      "code": "FAB-006",
+      "name": "Fabric Supplier 6",
+      "email": null,
+      "notes": null,
+      "emails": [],
+      "country": null,
+      "contact_person": null,
+      "has_price_list": false,
+      "lead_time_days": 14
+    },
+    {
       "id": "gazaba",
       "code": "GZB",
       "name": "Gazaba",
@@ -160,18 +172,6 @@
       ],
       "contact_person": null,
       "has_price_list": true,
-      "lead_time_days": 14
-    },
-    {
-      "id": "fab6",
-      "code": "FAB-006",
-      "name": "Fabric Supplier 6",
-      "email": null,
-      "notes": null,
-      "emails": [],
-      "country": null,
-      "contact_person": null,
-      "has_price_list": false,
       "lead_time_days": 14
     }
   ],
