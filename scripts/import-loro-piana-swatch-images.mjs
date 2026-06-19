@@ -42,6 +42,9 @@ Options:
 
 function normalizeFabricNumberFromFilename(filename) {
   const stem = basename(filename, extname(filename)).trim().toUpperCase();
+  // NS prefix on paper = Solbiati S prefix (e.g. NS16001 → S16001)
+  const withNs = stem.match(/^NS(\d+)$/);
+  if (withNs) return `S${withNs[1]}`;
   const withN = stem.match(/^N(\d+)$/);
   if (withN) return withN[1];
   if (/^S\d+$/.test(stem)) return stem;
@@ -132,7 +135,8 @@ const manifest = {
     weight_gsm: args.weight,
     book_number: args.book,
   },
-  naming: "N-prefixed order codes (N721001.jpg) normalize to fabric_number (721001.jpg)",
+  naming:
+    "N-prefixed order codes (N721001.jpg → 721001.jpg); NS-prefixed Solbiati (NS16001.jpg → S16001.jpg)",
   items,
 };
 
