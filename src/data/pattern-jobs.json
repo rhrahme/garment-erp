@@ -789,13 +789,13 @@
       "revisions": [],
       "so_number": "SO-2026-0109",
       "created_at": "2026-06-19T00:25:37.676Z",
-      "piece_name": "Fabric only",
-      "updated_at": "2026-06-19T09:59:46.569Z",
+      "piece_name": "Shirt",
+      "updated_at": "2026-06-19T10:01:59.632Z",
       "assigned_to": null,
       "client_code": "FR-0226-0024",
       "client_name": "Abdullah Al Moussa",
       "composition": "100% WOOL",
-      "garment_type": "Fabric only",
+      "garment_type": "Shirt+Trouser+Short",
       "pattern_code": null,
       "width_inches": null,
       "fabric_number": "43293/160",
@@ -11998,5 +11998,5 @@
       "sales_order_line_id": "line-1781653037821-0"
     }
   ],
-  "updated_at": "2026-06-19T09:59:46.569Z"
+  "updated_at": "2026-06-19T10:01:59.632Z"
 }
