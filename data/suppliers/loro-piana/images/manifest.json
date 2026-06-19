@@ -1,14 +1,17 @@
 {
-  "imported_at": "2026-06-17T16:11:01.407Z",
-  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml ",
+  "imported_at": "2026-06-19T10:33:28.731Z",
+  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml  + /Users/ralphrahme/Desktop/Loro Piana Bunches/Events + /Users/ralphrahme/Desktop/Loro Piana Bunches/Frescolino - S16. 200 grams",
   "catalog_path": "src/data/suppliers/loro-piana-ss26.json",
   "output_root": "data/suppliers/loro-piana/images",
   "filters": {
-    "collection": "Australis",
-    "weight_gsm": 270,
-    "book_number": null
+    "collections": [
+      "Australis 270gr",
+      "Events 735",
+      "Frescolino S16 (book 782)"
+    ],
+    "note": "Merged manifest from multiple imports"
   },
-  "naming": "N-prefixed order codes (N721001.jpg) normalize to fabric_number (721001.jpg)",
+  "naming": "N-prefixed order codes (N721001.jpg → 721001.jpg); NS-prefixed Solbiati (NS16001.jpg → S16001.jpg)",
   "items": [
     {
       "fabric_number": "721001",
@@ -539,6 +542,924 @@
       "weight_gsm": 270,
       "ok": true,
       "bytes": 2455852
+    },
+    {
+      "fabric_number": "735001",
+      "source_filename": "N735001.jpg",
+      "filename": "735001.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2908213
+    },
+    {
+      "fabric_number": "735002",
+      "source_filename": "N735002.jpg",
+      "filename": "735002.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2800904
+    },
+    {
+      "fabric_number": "735003",
+      "source_filename": "N735003.jpg",
+      "filename": "735003.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2479121
+    },
+    {
+      "fabric_number": "735004",
+      "source_filename": "N735004.jpg",
+      "filename": "735004.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 3064645
+    },
+    {
+      "fabric_number": "735005",
+      "source_filename": "N735005.jpg",
+      "filename": "735005.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2876786
+    },
+    {
+      "fabric_number": "735006",
+      "source_filename": "N735006.jpg",
+      "filename": "735006.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2452968
+    },
+    {
+      "fabric_number": "735007",
+      "source_filename": "N735007.jpg",
+      "filename": "735007.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 3000202
+    },
+    {
+      "fabric_number": "735008",
+      "source_filename": "N735008.jpg",
+      "filename": "735008.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2814786
+    },
+    {
+      "fabric_number": "735009",
+      "source_filename": "N735009.jpg",
+      "filename": "735009.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2978067
+    },
+    {
+      "fabric_number": "735010",
+      "source_filename": "N735010.jpg",
+      "filename": "735010.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 3103131
+    },
+    {
+      "fabric_number": "735011",
+      "source_filename": "N735011.jpg",
+      "filename": "735011.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 3012646
+    },
+    {
+      "fabric_number": "735012",
+      "source_filename": "N735012.jpg",
+      "filename": "735012.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2669539
+    },
+    {
+      "fabric_number": "735013",
+      "source_filename": "N735013.jpg",
+      "filename": "735013.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2655179
+    },
+    {
+      "fabric_number": "735014",
+      "source_filename": "N735014.jpg",
+      "filename": "735014.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 1507950
+    },
+    {
+      "fabric_number": "735015",
+      "source_filename": "N735015.jpg",
+      "filename": "735015.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 1551411
+    },
+    {
+      "fabric_number": "735016",
+      "source_filename": "N735016.jpg",
+      "filename": "735016.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 1486327
+    },
+    {
+      "fabric_number": "735017",
+      "source_filename": "N735017.jpg",
+      "filename": "735017.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 931548
+    },
+    {
+      "fabric_number": "735018",
+      "source_filename": "N735018.jpg",
+      "filename": "735018.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 2591387
+    },
+    {
+      "fabric_number": "735019",
+      "source_filename": "N735019.jpg",
+      "filename": "735019.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 2411530
+    },
+    {
+      "fabric_number": "735020",
+      "source_filename": "N735020.jpg",
+      "filename": "735020.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 340,
+      "ok": true,
+      "bytes": 1459393
+    },
+    {
+      "fabric_number": "735021",
+      "source_filename": "N735021.jpg",
+      "filename": "735021.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 340,
+      "ok": true,
+      "bytes": 2680940
+    },
+    {
+      "fabric_number": "735022",
+      "source_filename": "N735022.jpg",
+      "filename": "735022.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 220,
+      "ok": true,
+      "bytes": 2116504
+    },
+    {
+      "fabric_number": "735023",
+      "source_filename": "N735023.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Events/N735023.jpg",
+      "filename": "735023.jpg",
+      "ok": false,
+      "error": "No matching catalog entry for filters"
+    },
+    {
+      "fabric_number": "735024",
+      "source_filename": "N735024.jpg",
+      "filename": "735024.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 220,
+      "ok": true,
+      "bytes": 2887077
+    },
+    {
+      "fabric_number": "735025",
+      "source_filename": "N735025.jpg",
+      "filename": "735025.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 1002109
+    },
+    {
+      "fabric_number": "735026",
+      "source_filename": "N735026.jpg",
+      "filename": "735026.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2468882
+    },
+    {
+      "fabric_number": "735027",
+      "source_filename": "N735027.jpg",
+      "filename": "735027.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2199513
+    },
+    {
+      "fabric_number": "735028",
+      "source_filename": "N735028.jpg",
+      "filename": "735028.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2820952
+    },
+    {
+      "fabric_number": "735029",
+      "source_filename": "N735029.jpg",
+      "filename": "735029.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2766908
+    },
+    {
+      "fabric_number": "735030",
+      "source_filename": "N735030.jpg",
+      "filename": "735030.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2417771
+    },
+    {
+      "fabric_number": "735031",
+      "source_filename": "N735031.jpg",
+      "filename": "735031.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2408494
+    },
+    {
+      "fabric_number": "735032",
+      "source_filename": "N735032.jpg",
+      "filename": "735032.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2187983
+    },
+    {
+      "fabric_number": "735033",
+      "source_filename": "N735033.jpg",
+      "filename": "735033.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 360,
+      "ok": true,
+      "bytes": 2364590
+    },
+    {
+      "fabric_number": "735034",
+      "source_filename": "N735034.jpg",
+      "filename": "735034.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 280,
+      "ok": true,
+      "bytes": 2123419
+    },
+    {
+      "fabric_number": "735035",
+      "source_filename": "N735035.jpg",
+      "filename": "735035.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 250,
+      "ok": true,
+      "bytes": 2087017
+    },
+    {
+      "fabric_number": "735036",
+      "source_filename": "N735036.jpg",
+      "filename": "735036.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3313447
+    },
+    {
+      "fabric_number": "735037",
+      "source_filename": "N735037.jpg",
+      "filename": "735037.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3164983
+    },
+    {
+      "fabric_number": "735038",
+      "source_filename": "N735038.jpg",
+      "filename": "735038.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3503068
+    },
+    {
+      "fabric_number": "735039",
+      "source_filename": "N735039.jpg",
+      "filename": "735039.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3444976
+    },
+    {
+      "fabric_number": "735040",
+      "source_filename": "N735040.jpg",
+      "filename": "735040.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3119357
+    },
+    {
+      "fabric_number": "735041",
+      "source_filename": "N735041.jpg",
+      "filename": "735041.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 211,
+      "ok": true,
+      "bytes": 2319285
+    },
+    {
+      "fabric_number": "735042",
+      "source_filename": "N735042.jpg",
+      "filename": "735042.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2156430
+    },
+    {
+      "fabric_number": "735043",
+      "source_filename": "N735043.jpg",
+      "filename": "735043.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 157,
+      "ok": true,
+      "bytes": 3456876
+    },
+    {
+      "fabric_number": "735044",
+      "source_filename": "N735044.jpg",
+      "filename": "735044.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2885204
+    },
+    {
+      "fabric_number": "735045",
+      "source_filename": "N735045.jpg",
+      "filename": "735045.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2662968
+    },
+    {
+      "fabric_number": "735046",
+      "source_filename": "N735046.jpg",
+      "filename": "735046.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 3180095
+    },
+    {
+      "fabric_number": "735047",
+      "source_filename": "N735047.jpg",
+      "filename": "735047.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2701365
+    },
+    {
+      "fabric_number": "735048",
+      "source_filename": "N735048.jpg",
+      "filename": "735048.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2048855
+    },
+    {
+      "fabric_number": "735049",
+      "source_filename": "N735049.jpg",
+      "filename": "735049.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2473647
+    },
+    {
+      "fabric_number": "735050",
+      "source_filename": "N735050.jpg",
+      "filename": "735050.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 210,
+      "ok": true,
+      "bytes": 2308421
+    },
+    {
+      "fabric_number": "735051",
+      "source_filename": "N735051.jpg",
+      "filename": "735051.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 370,
+      "ok": true,
+      "bytes": 538515
+    },
+    {
+      "fabric_number": "735052",
+      "source_filename": "N735052.jpg",
+      "filename": "735052.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 370,
+      "ok": true,
+      "bytes": 591092
+    },
+    {
+      "fabric_number": "735053",
+      "source_filename": "N735053.jpg",
+      "filename": "735053.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 370,
+      "ok": true,
+      "bytes": 452045
+    },
+    {
+      "fabric_number": "735054",
+      "source_filename": "N735054.jpg",
+      "filename": "735054.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 370,
+      "ok": true,
+      "bytes": 2760682
+    },
+    {
+      "fabric_number": "735055",
+      "source_filename": "N735055.jpg",
+      "filename": "735055.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 370,
+      "ok": true,
+      "bytes": 1440933
+    },
+    {
+      "fabric_number": "735056",
+      "source_filename": "N735056.jpg",
+      "filename": "735056.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 370,
+      "ok": true,
+      "bytes": 704158
+    },
+    {
+      "fabric_number": "735057",
+      "source_filename": "N735057.jpg",
+      "filename": "735057.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 370,
+      "ok": true,
+      "bytes": 344194
+    },
+    {
+      "fabric_number": "735058",
+      "source_filename": "N735058.jpg",
+      "filename": "735058.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 370,
+      "ok": true,
+      "bytes": 938645
+    },
+    {
+      "fabric_number": "735059",
+      "source_filename": "N735059.jpg",
+      "filename": "735059.jpg",
+      "collection": "EVENTS",
+      "book_number": "735",
+      "weight_gsm": 370,
+      "ok": true,
+      "bytes": 1319213
+    },
+    {
+      "fabric_number": "S16001",
+      "source_filename": "NS16001.jpg",
+      "filename": "S16001.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2950962
+    },
+    {
+      "fabric_number": "S16002",
+      "source_filename": "NS16002.jpg",
+      "filename": "S16002.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2922376
+    },
+    {
+      "fabric_number": "S16003",
+      "source_filename": "NS16003.jpg",
+      "filename": "S16003.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2832264
+    },
+    {
+      "fabric_number": "S16004",
+      "source_filename": "NS16004.jpg",
+      "filename": "S16004.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2105393
+    },
+    {
+      "fabric_number": "S16005",
+      "source_filename": "NS16005.jpg",
+      "filename": "S16005.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2541340
+    },
+    {
+      "fabric_number": "S16006",
+      "source_filename": "NS16006.jpg",
+      "filename": "S16006.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 4182079
+    },
+    {
+      "fabric_number": "S16007",
+      "source_filename": "NS16007.jpg",
+      "filename": "S16007.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 3481830
+    },
+    {
+      "fabric_number": "S16008",
+      "source_filename": "NS16008.jpg",
+      "filename": "S16008.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2836357
+    },
+    {
+      "fabric_number": "S16009",
+      "source_filename": "NS16009.jpg",
+      "filename": "S16009.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2337483
+    },
+    {
+      "fabric_number": "S16010",
+      "source_filename": "NS16010.jpg",
+      "filename": "S16010.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 1521014
+    },
+    {
+      "fabric_number": "S16011",
+      "source_filename": "NS16011.jpg",
+      "filename": "S16011.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 3751518
+    },
+    {
+      "fabric_number": "S16012",
+      "source_filename": "NS16012.jpg",
+      "filename": "S16012.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2527714
+    },
+    {
+      "fabric_number": "S16013",
+      "source_filename": "NS16013.jpg",
+      "filename": "S16013.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 3484145
+    },
+    {
+      "fabric_number": "S16014",
+      "source_filename": "NS16014.jpg",
+      "filename": "S16014.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2148308
+    },
+    {
+      "fabric_number": "S16015",
+      "source_filename": "NS16015.jpg",
+      "filename": "S16015.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2440093
+    },
+    {
+      "fabric_number": "S16016",
+      "source_filename": "NS16016.jpg",
+      "filename": "S16016.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2674564
+    },
+    {
+      "fabric_number": "S16017",
+      "source_filename": "NS16017.jpg",
+      "filename": "S16017.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2317866
+    },
+    {
+      "fabric_number": "S16018",
+      "source_filename": "NS16018.jpg",
+      "filename": "S16018.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2256275
+    },
+    {
+      "fabric_number": "S16019",
+      "source_filename": "NS16019.jpg",
+      "filename": "S16019.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2028383
+    },
+    {
+      "fabric_number": "S16020",
+      "source_filename": "NS16020.jpg",
+      "filename": "S16020.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2146646
+    },
+    {
+      "fabric_number": "S16021",
+      "source_filename": "NS16021.jpg",
+      "filename": "S16021.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2337743
+    },
+    {
+      "fabric_number": "S16022",
+      "source_filename": "NS16022.jpg",
+      "filename": "S16022.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2270660
+    },
+    {
+      "fabric_number": "S16023",
+      "source_filename": "NS16023.jpg",
+      "filename": "S16023.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2618689
+    },
+    {
+      "fabric_number": "S16024",
+      "source_filename": "NS16024.jpg",
+      "filename": "S16024.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2955189
+    },
+    {
+      "fabric_number": "S16025",
+      "source_filename": "NS16025.jpg",
+      "filename": "S16025.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2910650
+    },
+    {
+      "fabric_number": "S16026",
+      "source_filename": "NS16026.jpg",
+      "filename": "S16026.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2956889
+    },
+    {
+      "fabric_number": "S16027",
+      "source_filename": "NS16027.jpg",
+      "filename": "S16027.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 3079399
+    },
+    {
+      "fabric_number": "S16028",
+      "source_filename": "NS16028.jpg",
+      "filename": "S16028.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 1648795
+    },
+    {
+      "fabric_number": "S16029",
+      "source_filename": "NS16029.jpg",
+      "filename": "S16029.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2940261
+    },
+    {
+      "fabric_number": "S16030",
+      "source_filename": "NS16030.jpg",
+      "filename": "S16030.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 2881344
+    },
+    {
+      "fabric_number": "S16031",
+      "source_filename": "NS16031.jpg",
+      "filename": "S16031.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 1897122
+    },
+    {
+      "fabric_number": "S16032",
+      "source_filename": "NS16032.jpg",
+      "filename": "S16032.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 1887760
+    },
+    {
+      "fabric_number": "S16033",
+      "source_filename": "NS16033.jpg",
+      "filename": "S16033.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 190,
+      "ok": true,
+      "bytes": 1720437
     }
   ]
 }
