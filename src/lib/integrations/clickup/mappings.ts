@@ -49,6 +49,10 @@ export function mapClickUpItemToGarmentType(item: string | null): string {
     "blazers (fr)": "Jacket",
     "blazers (g)": "Jacket",
     "blazers (ju)": "Jacket",
+    "vest (fr)": "Vest",
+    "vests (fd)": "Vest",
+    "vests (ju)": "Vest",
+    "vest (g)": "Vest",
     "trousers (fr)": "Trouser",
     "trousers (g)": "Trouser",
     "trousers (ju)": "Trouser",
@@ -79,6 +83,7 @@ export function mapClickUpItemToGarmentType(item: string | null): string {
   if (normalized.includes("suit")) return "Suit";
   if (normalized.includes("thobe") && normalized.includes("jacket")) return "Thobe+Jacket";
   if (normalized.includes("thobe") && normalized.includes("vest")) return "Thobe+Vest";
+  if (normalized.includes("vest")) return "Vest";
   if (normalized.includes("blazer") || normalized.includes("jacket")) return "Jacket";
   if (normalized.includes("trouser")) return "Trouser";
   if (normalized.includes("short")) return "Short";

@@ -1,6 +1,7 @@
 export const GARMENT_STITCH_TYPES = [
   "Suit",
   "Jacket",
+  "Vest",
   "Trouser",
   "Short",
   "Shirt LS",
@@ -28,6 +29,7 @@ export function isGarmentStitchType(value: string): value is GarmentStitchType {
 export const GARMENT_LABEL_COUNTS: Record<GarmentStitchType, number> = {
   Suit: 2,
   Jacket: 1,
+  Vest: 1,
   Trouser: 1,
   Short: 1,
   "Shirt LS": 1,

@@ -23,6 +23,11 @@
       "washing": 50,
       "overhead": 70
     },
+    "Vest": {
+      "labor": 220,
+      "washing": 45,
+      "overhead": 60
+    },
     "Trouser": {
       "labor": 180,
       "washing": 40,
