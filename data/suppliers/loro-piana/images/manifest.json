@@ -1,6 +1,6 @@
 {
-  "imported_at": "2026-06-19T11:07:24.307Z",
-  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml  + /Users/ralphrahme/Desktop/Loro Piana Bunches/Events + /Users/ralphrahme/Desktop/Loro Piana Bunches/Frescolino - S16. 200 grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Suitmate + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/DRESANO 340 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Art Du Lin II - S23 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Gabardilia S05. 240 GRAMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro",
+  "imported_at": "2026-06-19T11:08:00.783Z",
+  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml  + /Users/ralphrahme/Desktop/Loro Piana Bunches/Events + /Users/ralphrahme/Desktop/Loro Piana Bunches/Frescolino - S16. 200 grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Suitmate + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/DRESANO 340 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Art Du Lin II - S23 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Gabardilia S05. 240 GRAMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml",
   "catalog_path": "src/data/suppliers/loro-piana-ss26.json",
   "output_root": "data/suppliers/loro-piana/images",
   "filters": {
@@ -15,7 +15,8 @@
       "Proposte Giacche SS26 (book 780)",
       "Art Du Lin II S23 (book 782, NS→S)",
       "Gabardilia S05 (book 782, NS→S)",
-      "Zefiro S10 (book 782, NS→S)"
+      "Zefiro S10 (book 782, NS→S)",
+      "Graffiti Shirts S25 (book 782, NS→S, 180-200gr)"
     ],
     "note": "Merged manifest from multiple imports"
   },
@@ -6700,6 +6701,146 @@
       "weight_gsm": 430,
       "ok": true,
       "bytes": 2748368
+    },
+    {
+      "fabric_number": "S25001",
+      "source_filename": "NS25001.jpg",
+      "filename": "S25001.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 195,
+      "ok": true,
+      "bytes": 2448831
+    },
+    {
+      "fabric_number": "S25002",
+      "source_filename": "NS25002.jpg",
+      "filename": "S25002.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 195,
+      "ok": true,
+      "bytes": 2140473
+    },
+    {
+      "fabric_number": "S25003",
+      "source_filename": "NS25003.jpg",
+      "filename": "S25003.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 195,
+      "ok": true,
+      "bytes": 2289932
+    },
+    {
+      "fabric_number": "S25004",
+      "source_filename": "NS25004.jpg",
+      "filename": "S25004.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 195,
+      "ok": true,
+      "bytes": 2113794
+    },
+    {
+      "fabric_number": "S25005",
+      "source_filename": "NS25005.jpg",
+      "filename": "S25005.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 195,
+      "ok": true,
+      "bytes": 2886856
+    },
+    {
+      "fabric_number": "S25008",
+      "source_filename": "NS25008.jpg",
+      "filename": "S25008.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 195,
+      "ok": true,
+      "bytes": 3962486
+    },
+    {
+      "fabric_number": "S25009",
+      "source_filename": "NS25009.jpg",
+      "filename": "S25009.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 195,
+      "ok": true,
+      "bytes": 3292533
+    },
+    {
+      "fabric_number": "S25016",
+      "source_filename": "NS25016.jpg",
+      "filename": "S25016.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 195,
+      "ok": true,
+      "bytes": 2991779
+    },
+    {
+      "fabric_number": "S25019",
+      "source_filename": "NS25019.jpg",
+      "filename": "S25019.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 195,
+      "ok": true,
+      "bytes": 2940247
+    },
+    {
+      "fabric_number": "S25020",
+      "source_filename": "NS25020.jpg",
+      "filename": "S25020.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 195,
+      "ok": true,
+      "bytes": 2690508
+    },
+    {
+      "fabric_number": "S25021",
+      "source_filename": "NS25021.jpg",
+      "filename": "S25021.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 195,
+      "ok": true,
+      "bytes": 3192343
+    },
+    {
+      "fabric_number": "S25022",
+      "source_filename": "NS25022.jpg",
+      "filename": "S25022.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 195,
+      "ok": true,
+      "bytes": 2616282
+    },
+    {
+      "fabric_number": "S25028",
+      "source_filename": "NS25028.jpg",
+      "filename": "S25028.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 180,
+      "ok": true,
+      "bytes": 3257996
+    },
+    {
+      "fabric_number": "S25031",
+      "source_filename": "NS25031.jpg",
+      "filename": "S25031.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 180,
+      "ok": true,
+      "bytes": 2314622
     }
   ]
 }
