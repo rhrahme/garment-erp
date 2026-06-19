@@ -23,6 +23,10 @@ export const ERP_DOCUMENT_SPECS = {
     path: path.join(ROOT, "src/data/production-work-orders.json"),
     fallback: { updated_at: null, work_orders: [] },
   },
+  production_scan_events: {
+    path: path.join(ROOT, "src/data/production-scan-events.json"),
+    fallback: { updated_at: null, events: [] },
+  },
   production_work_orders_archive: {
     path: path.join(ROOT, "src/data/production-work-orders-archive.json"),
     fallback: { updated_at: null, work_orders: [] },
@@ -129,6 +133,7 @@ export const LAZY_ERP_DOCUMENT_KEYS = [
   "integration_events",
   "fabric_receipts_archive",
   "production_work_orders_archive",
+  "production_scan_events",
   "factory_floor_map",
   "factory_workstations",
   "fabric_order_drafts",

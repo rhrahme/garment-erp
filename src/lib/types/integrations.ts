@@ -27,6 +27,7 @@ export type IntegrationEventType =
   | "pattern_fitting.completed"
   | "pattern_revision.created"
   | "pattern_job.ready_for_cutting"
+  | "production.scan"
   | "supabase.auth_unhealthy";
 
 export interface IntegrationEvent<T = Record<string, unknown>> {

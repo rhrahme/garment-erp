@@ -137,7 +137,8 @@ export function ProductionFloorWorkspace() {
         {tab === "pipeline" ? (
           <div className="space-y-6 p-5">
             <StageScanPanel
-              stations={["cutting", "sewing", "garment_wash", "finishing"]}
+              stations={["cutting", "sewing", "garment_wash", "finishing", "packed"]}
+              scanContext="production"
               onRefresh={load}
             />
 

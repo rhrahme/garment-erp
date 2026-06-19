@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Building2, Search, Users, Wallet } from "lucide-react";
 import { StatCard } from "@/components/ui/PageHeader";
 import { maskAccountNumber, sortPayrollEmployees } from "@/lib/hr/payroll-utils";
+import { FACTORY_WORKSTATIONS } from "@/lib/production/factory-workstations";
 import type { PayrollEmployee, PayrollSummary } from "@/lib/types/hr-payroll";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -11,8 +12,68 @@ function formatSar(amount: number): string {
   return formatCurrency(amount, "SAR");
 }
 
+function WorkstationEditor({
+  employee,
+  onUpdated,
+}: {
+  employee: PayrollEmployee;
+  onUpdated: (employee: PayrollEmployee) => void;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function patch(patch: Partial<Pick<PayrollEmployee, "assigned_workstation_id" | "is_mobile_floater">>) {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/hr/payroll-employees/${encodeURIComponent(employee.id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Save failed");
+      onUpdated(data.employee as PayrollEmployee);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-1">
+      <select
+        value={employee.assigned_workstation_id ?? ""}
+        disabled={saving}
+        onChange={(e) =>
+          void patch({ assigned_workstation_id: e.target.value || null })
+        }
+        className="w-full min-w-[8rem] rounded border border-slate-300 bg-white px-2 py-1 text-xs"
+      >
+        <option value="">None</option>
+        {FACTORY_WORKSTATIONS.map((ws) => (
+          <option key={ws.id} value={ws.id}>
+            {ws.id}
+          </option>
+        ))}
+      </select>
+      <label className="flex items-center gap-1.5 text-xs text-slate-600">
+        <input
+          type="checkbox"
+          checked={Boolean(employee.is_mobile_floater)}
+          disabled={saving}
+          onChange={(e) => void patch({ is_mobile_floater: e.target.checked })}
+        />
+        Floater
+      </label>
+      {error && <p className="text-xs text-red-600">{error}</p>}
+    </div>
+  );
+}
+
 export function PayrollWorkspace({
-  employees,
+  employees: initialEmployees,
   summary,
   sourceFile,
   updatedAt,
@@ -22,6 +83,7 @@ export function PayrollWorkspace({
   sourceFile: string;
   updatedAt: string | null;
 }) {
+  const [employees, setEmployees] = useState(initialEmployees);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -32,6 +94,7 @@ export function PayrollWorkspace({
       [
         employee.full_name,
         employee.employee_id_number,
+        employee.assigned_workstation_id,
         employee.bank_name,
         employee.account_number,
         employee.payment_description,
@@ -44,15 +107,19 @@ export function PayrollWorkspace({
 
   const filteredTotal = filtered.reduce((sum, employee) => sum + employee.salary_amount, 0);
 
+  function updateEmployee(updated: PayrollEmployee) {
+    setEmployees((current) => current.map((row) => (row.id === updated.id ? updated : row)));
+  }
+
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-950">
         <p className="font-medium">Payroll register imported</p>
         <p className="mt-1 text-emerald-900">
           Loaded from <span className="font-mono text-xs">{sourceFile || "salary spreadsheet"}</span>
-          {updatedAt ? ` · updated ${formatDate(updatedAt.slice(0, 10))}` : ""}. Re-import after editing the Excel
-          file with{" "}
-          <span className="font-mono text-xs">python3 scripts/import-salary-xlsx.py</span>.
+          {updatedAt ? ` · updated ${formatDate(updatedAt.slice(0, 10))}` : ""}. Salary fields re-import from Excel
+          with <span className="font-mono text-xs">python3 scripts/import-salary-xlsx.py</span> — workstation
+          assignments below are saved in ERP.
         </p>
       </div>
 
@@ -97,7 +164,7 @@ export function PayrollWorkspace({
           type="search"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Name, ID, bank, account…"
+          placeholder="Name, ID, station, bank…"
           className="mt-1 block w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3"
         />
       </label>
@@ -114,6 +181,7 @@ export function PayrollWorkspace({
                 <th className="px-4 py-3">#</th>
                 <th className="px-4 py-3">Employee</th>
                 <th className="px-4 py-3">ID No.</th>
+                <th className="px-4 py-3">Workstation</th>
                 <th className="px-4 py-3">Bank</th>
                 <th className="px-4 py-3">Account</th>
                 <th className="px-4 py-3">Basic</th>
@@ -129,6 +197,9 @@ export function PayrollWorkspace({
                   <td className="px-4 py-3 text-slate-500">{employee.s_no}</td>
                   <td className="px-4 py-3 font-medium text-slate-900">{employee.full_name}</td>
                   <td className="px-4 py-3 font-mono text-xs text-slate-600">{employee.employee_id_number}</td>
+                  <td className="px-4 py-3">
+                    <WorkstationEditor employee={employee} onUpdated={updateEmployee} />
+                  </td>
                   <td className="px-4 py-3 text-slate-600">{employee.bank_name}</td>
                   <td className="px-4 py-3 font-mono text-xs text-slate-500" title={employee.account_number}>
                     {maskAccountNumber(employee.account_number)}
@@ -149,7 +220,7 @@ export function PayrollWorkspace({
             </tbody>
             <tfoot>
               <tr className="border-t border-slate-200 bg-slate-50 font-medium">
-                <td className="px-4 py-3" colSpan={9}>
+                <td className="px-4 py-3" colSpan={10}>
                   {filtered.length} employee{filtered.length !== 1 ? "s" : ""} shown
                 </td>
                 <td className="px-4 py-3">{formatSar(filteredTotal)}</td>

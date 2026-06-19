@@ -10,6 +10,8 @@ import {
 } from "@/lib/production/scan-feedback";
 import { postStageScan } from "@/lib/production/scan-fetch";
 import { normalizeScannerInput, splitScanInput } from "@/lib/production/scan-input";
+import type { ScanEmployeeSession } from "@/lib/production/scan-employee-session";
+import { effectiveWorkstationId } from "@/lib/production/scan-employee-session";
 import type { ScanStation, StageScanNotice } from "@/lib/production/stage-scan";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +34,9 @@ type StickerScanInputProps = {
   stationLabel: string;
   scanContext?: "fabric-receiving" | "production";
   voiceFeedback?: boolean;
+  employeeSession?: ScanEmployeeSession | null;
+  requireEmployee?: boolean;
+  stickerScanEnabled?: boolean;
   onSuccess?: (result: StageScanResponse) => void;
   onRefresh?: () => void | Promise<void>;
   autoFocus?: boolean;
@@ -61,6 +66,9 @@ export function StickerScanInput({
   stationLabel,
   scanContext,
   voiceFeedback = false,
+  employeeSession = null,
+  requireEmployee = true,
+  stickerScanEnabled = true,
   onSuccess,
   onRefresh,
   autoFocus = true,
@@ -82,11 +90,11 @@ export function StickerScanInput({
   }, [autoFocus]);
 
   useEffect(() => {
-    focusInput();
+    if (stickerScanEnabled) focusInput();
     return () => {
       if (flushTimerRef.current) window.clearTimeout(flushTimerRef.current);
     };
-  }, [focusInput, station]);
+  }, [focusInput, station, stickerScanEnabled]);
 
   function clearInput() {
     if (inputRef.current) inputRef.current.value = "";
@@ -129,6 +137,13 @@ export function StickerScanInput({
             code,
             station,
             ...(scanContext ? { context: scanContext } : {}),
+            ...(requireEmployee && employeeSession
+              ? {
+                  employee_id: employeeSession.employee_id,
+                  workstation_id: effectiveWorkstationId(employeeSession),
+                }
+              : {}),
+            require_employee: requireEmployee,
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error ?? "Scan failed");
@@ -240,39 +255,71 @@ export function StickerScanInput({
 
   const headline = result ? scanFeedbackHeadline(result.notice) : null;
   const isFabricFloor = scanContext === "fabric-receiving";
+  const waitingForBadge = requireEmployee && !employeeSession;
+  const waitingForStation = requireEmployee && employeeSession && !stickerScanEnabled;
 
   return (
-    <div className="rounded-xl border-2 border-indigo-300 bg-indigo-50/50 p-5">
+    <div
+      className={cn(
+        "rounded-xl border-2 p-5",
+        waitingForBadge || waitingForStation
+          ? "border-slate-200 bg-slate-50/80 opacity-90"
+          : "border-indigo-300 bg-indigo-50/50"
+      )}
+    >
       <div className="flex items-start gap-3">
-        <div className="rounded-lg bg-indigo-600 p-2.5 text-white">
+        <div
+          className={cn(
+            "rounded-lg p-2.5 text-white",
+            waitingForBadge || waitingForStation ? "bg-slate-400" : "bg-indigo-600"
+          )}
+        >
           <ScanLine className="h-6 w-6" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-lg font-semibold text-slate-900">Scan here — {stationLabel}</h3>
+          <h3 className="text-lg font-semibold text-slate-900">
+            {waitingForBadge
+              ? "Step 2 — Scan garment sticker"
+              : waitingForStation
+                ? "Step 2 — Confirm station first"
+                : `Step 2 — Scan here — ${stationLabel}`}
+          </h3>
           <p className="mt-1 text-sm text-slate-600">
-            {isFabricFloor
-              ? "USB scanners act like a keyboard — click the dashed box once, then scan. Beeps + voice confirm."
-              : "Click the dashed box once, then scan the sticker QR."}
+            {waitingForBadge
+              ? "Scan your employee badge above to unlock sticker scanning."
+              : waitingForStation
+                ? "Pick your workstation above, then scan the garment sticker."
+                : isFabricFloor
+                  ? "USB scanners act like a keyboard — click the dashed box once, then scan. Beeps + voice confirm."
+                  : "Click the dashed box once, then scan the sticker QR."}
           </p>
 
           <div
             className={cn(
-              "relative mt-4 w-full cursor-pointer rounded-xl border-2 border-dashed bg-white py-10 text-center shadow-sm transition-colors",
-              isFocused
-                ? "border-emerald-500 ring-4 ring-emerald-100"
-                : "border-indigo-400 ring-4 ring-indigo-100"
+              "relative mt-4 w-full rounded-xl border-2 border-dashed bg-white py-10 text-center shadow-sm transition-colors",
+              waitingForBadge || waitingForStation
+                ? "cursor-not-allowed border-slate-200 opacity-60"
+                : "cursor-pointer",
+              !waitingForBadge &&
+                !waitingForStation &&
+                (isFocused
+                  ? "border-emerald-500 ring-4 ring-emerald-100"
+                  : "border-indigo-400 ring-4 ring-indigo-100")
             )}
-            onPointerDown={activateScanZone}
-            onClick={activateScanZone}
+            onPointerDown={waitingForBadge || waitingForStation ? undefined : activateScanZone}
+            onClick={waitingForBadge || waitingForStation ? undefined : activateScanZone}
             role="button"
-            tabIndex={-1}
+            tabIndex={waitingForBadge || waitingForStation ? -1 : -1}
             aria-label={`Activate scanner for ${stationLabel}`}
+            aria-disabled={Boolean(waitingForBadge || waitingForStation)}
           >
             {processing ? (
               <span className="pointer-events-none inline-flex items-center gap-2 text-base font-semibold text-indigo-700">
                 <Loader2 className="h-5 w-5 animate-spin" />
                 Saving scan…
               </span>
+            ) : waitingForBadge || waitingForStation ? (
+              <span className="pointer-events-none text-base font-semibold text-slate-500">Waiting for step 1…</span>
             ) : isFocused ? (
               <span className="pointer-events-none text-base font-semibold text-emerald-700">
                 Ready — scan sticker
@@ -291,11 +338,12 @@ export function StickerScanInput({
               ref={inputRef}
               type="text"
               name="sticker-scan"
+              disabled={Boolean(waitingForBadge || waitingForStation)}
               onKeyDown={handleKeyDown}
               onInput={handleInput}
               onFocus={() => setIsFocused(true)}
               onBlur={handleBlur}
-              className="absolute inset-0 cursor-default opacity-0"
+              className="absolute inset-0 cursor-default opacity-0 disabled:cursor-not-allowed"
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="characters"

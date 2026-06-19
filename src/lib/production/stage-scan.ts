@@ -33,7 +33,8 @@ export type ScanStation =
   | "cutting"
   | "sewing"
   | "garment_wash"
-  | "finishing";
+  | "finishing"
+  | "packed";
 
 export type StageScanNotice =
   | "created"
@@ -304,6 +305,31 @@ export async function scanAtStation(scanInput: string, station: ScanStation): Pr
     };
   }
 
+  if (station === "packed") {
+    if (workOrder.status === "finishing") {
+      const updated = await advanceProductionWorkOrder(workOrder.id);
+      return {
+        ...base,
+        message: `Finishing done — moved to packed (${sticker.piece_name}).`,
+        work_order: updated,
+        notice: "advanced",
+      };
+    }
+    if (workOrder.status === "packed") {
+      return {
+        ...base,
+        message: `Packed — ${sticker.piece_name} (${production_code}).`,
+        work_order: workOrder,
+        notice: "checked_in",
+      };
+    }
+    return {
+      ...base,
+      message: `At ${workOrder.status.replace(/_/g, " ")} — ${sticker.piece_name}.`,
+      work_order: workOrder,
+    };
+  }
+
   throw new Error("Unknown station.");
 }
 
@@ -332,4 +358,23 @@ export async function scanAtFabricReceivingStation(
   }
 
   return scanAtStation(scanInput, station);
+}
+
+/** Status before a scan mutates receipt or work order — for audit events. */
+export function statusBeforeScan(scanInput: string, station: ScanStation): string | null {
+  const lookup = resolveScanToLine(scanInput);
+  if (!lookup) return null;
+
+  if (station === "receive") {
+    const receipt = getFabricReceiptByLineId(lookup.line.id);
+    return receipt ? receipt.status : "pending";
+  }
+
+  if (isFabricReceivingStation(station)) {
+    const receipt = getFabricReceiptByLineId(lookup.line.id);
+    return receipt?.status ?? null;
+  }
+
+  const workOrder = getProductionWorkOrderBySticker(lookup.sticker.code);
+  return workOrder?.status ?? null;
 }

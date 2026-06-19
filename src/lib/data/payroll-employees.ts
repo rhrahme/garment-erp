@@ -1,5 +1,6 @@
 import path from "path";
 import { readJsonFile } from "@/lib/data/json-file-cache";
+import { saveDocument } from "@/lib/data/document-persistence";
 import type { PayrollEmployee, PayrollEmployeesFile, PayrollSummary } from "@/lib/types/hr-payroll";
 
 const PAYROLL_PATH = path.join(process.cwd(), "src/data/payroll-employees.json");
@@ -13,6 +14,35 @@ const EMPTY: PayrollEmployeesFile = {
 
 export function readPayrollEmployees(): PayrollEmployeesFile {
   return readJsonFile(PAYROLL_PATH, EMPTY);
+}
+
+export async function writePayrollEmployees(data: PayrollEmployeesFile): Promise<PayrollEmployeesFile> {
+  const payload: PayrollEmployeesFile = {
+    ...data,
+    updated_at: new Date().toISOString(),
+  };
+  return saveDocument(PAYROLL_PATH, payload);
+}
+
+export async function updatePayrollEmployee(
+  id: string,
+  patch: Partial<Pick<PayrollEmployee, "assigned_workstation_id" | "is_mobile_floater">>
+): Promise<PayrollEmployee> {
+  const store = readPayrollEmployees();
+  const index = store.employees.findIndex(
+    (employee) => employee.id === id || employee.employee_id_number === id
+  );
+  if (index < 0) {
+    throw new Error("Employee not found.");
+  }
+
+  const updated: PayrollEmployee = {
+    ...store.employees[index]!,
+    ...patch,
+  };
+  store.employees[index] = updated;
+  await writePayrollEmployees(store);
+  return updated;
 }
 
 export function getPayrollSummary(file: PayrollEmployeesFile = readPayrollEmployees()): PayrollSummary {

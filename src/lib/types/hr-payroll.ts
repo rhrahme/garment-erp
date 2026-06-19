@@ -15,6 +15,10 @@ export type PayrollEmployee = {
   address_2: string;
   address_3: string;
   is_active: boolean;
+  /** Floor map workstation ID, e.g. PL-3-5 */
+  assigned_workstation_id?: string | null;
+  /** Floater — may pick a station once per shift when scanning */
+  is_mobile_floater?: boolean;
 };
 
 export type PayrollEmployeesFile = {

@@ -2,11 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
+import {
+  EmployeeScanSession,
+  stickerScanReady,
+} from "@/components/production/EmployeeScanSession";
 import { StickerScanInput, type StageScanResponse } from "@/components/production/StickerScanInput";
 import {
   readVoiceFeedbackEnabled,
   writeVoiceFeedbackEnabled,
 } from "@/lib/production/scan-feedback";
+import type { ScanEmployeeSession } from "@/lib/production/scan-employee-session";
 import type { ScanStation } from "@/lib/production/stage-scan";
 import { cn } from "@/lib/utils";
 
@@ -19,20 +24,30 @@ const STATION_OPTIONS: { id: ScanStation; label: string }[] = [
   { id: "sewing", label: "Sewing" },
   { id: "garment_wash", label: "Garment wash" },
   { id: "finishing", label: "Finishing" },
+  { id: "packed", label: "Packed" },
 ];
 
 type StageScanPanelProps = {
   stations: ScanStation[];
   scanContext?: "fabric-receiving" | "production";
+  requireEmployee?: boolean;
   onRefresh?: () => void | Promise<void>;
   onScanMessage?: (message: string) => void;
   onScanResult?: (result: StageScanResponse) => void;
 };
 
-export function StageScanPanel({ stations, scanContext, onRefresh, onScanMessage, onScanResult }: StageScanPanelProps) {
+export function StageScanPanel({
+  stations,
+  scanContext,
+  requireEmployee = true,
+  onRefresh,
+  onScanMessage,
+  onScanResult,
+}: StageScanPanelProps) {
   const options = STATION_OPTIONS.filter((option) => stations.includes(option.id));
   const [station, setStation] = useState<ScanStation>(options[0]?.id ?? "receive");
   const [voiceFeedback, setVoiceFeedback] = useState(true);
+  const [employeeSession, setEmployeeSession] = useState<ScanEmployeeSession | null>(null);
   const active = options.find((option) => option.id === station) ?? options[0]!;
 
   useEffect(() => {
@@ -49,6 +64,8 @@ export function StageScanPanel({ stations, scanContext, onRefresh, onScanMessage
 
   return (
     <div className="space-y-4">
+      {requireEmployee && <EmployeeScanSession onSessionChange={setEmployeeSession} />}
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         {options.length > 1 ? (
           <div className="flex flex-wrap gap-2">
@@ -95,6 +112,9 @@ export function StageScanPanel({ stations, scanContext, onRefresh, onScanMessage
         stationLabel={active.label}
         scanContext={scanContext}
         voiceFeedback={scanContext === "fabric-receiving" && voiceFeedback}
+        employeeSession={employeeSession}
+        requireEmployee={requireEmployee}
+        stickerScanEnabled={!requireEmployee || stickerScanReady(employeeSession)}
         onRefresh={onRefresh}
         onSuccess={(result) => {
           onScanMessage?.(result.message);
@@ -103,10 +123,15 @@ export function StageScanPanel({ stations, scanContext, onRefresh, onScanMessage
       />
       {scanContext === "fabric-receiving" && (
         <p className="text-sm text-slate-600">
-          <span className="font-medium text-slate-800">USB wireless scanner:</span> click the dashed scan box once
-          (turns green), keep this browser window focused, then scan. Pick <strong>Receive</strong>,{" "}
-          <strong>Wash</strong>, <strong>Soak</strong>, or <strong>Iron</strong> to match where the fabric is on the
-          floor.
+          <span className="font-medium text-slate-800">Two-step scan:</span> badge first, then fabric sticker. Pick{" "}
+          <strong>Receive</strong>, <strong>Wash</strong>, <strong>Soak</strong>, or <strong>Iron</strong> to match
+          where the fabric is on the floor.
+        </p>
+      )}
+      {scanContext === "production" && requireEmployee && (
+        <p className="text-sm text-slate-600">
+          <span className="font-medium text-slate-800">Two-step scan:</span> badge first, then garment sticker. Session
+          lasts 8 hours — sign out when your shift ends.
         </p>
       )}
     </div>

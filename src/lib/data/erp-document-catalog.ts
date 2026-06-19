@@ -95,6 +95,14 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/production-work-orders.json",
   },
   {
+    key: "production_scan_events",
+    label: "Production scan events",
+    description: "Employee + sticker scan audit trail on fabric receiving and production floor",
+    category: "production",
+    appHref: "/production",
+    sourcePath: "src/data/production-scan-events.json",
+  },
+  {
     key: "factory_floor_map",
     label: "Factory floor map",
     description: "Hagan factory layout PDF for shop-floor stations",

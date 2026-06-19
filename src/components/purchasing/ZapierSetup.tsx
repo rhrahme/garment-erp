@@ -30,6 +30,7 @@ const OUTBOUND_EVENTS = [
   "pattern_fitting.completed",
   "pattern_revision.created",
   "pattern_job.ready_for_cutting",
+  "production.scan",
 ];
 
 export function ZapierSetup() {
