@@ -3,8 +3,10 @@ import autoTable from "jspdf-autotable";
 import loroPianaCatalog from "@/data/suppliers/loro-piana-ss26.json";
 import { readLoroPianaSwatchManifest } from "@/lib/fabric-sourcing/loro-piana-swatches";
 
-export const LORO_PIANA_MISSING_SWATCHES_PDF_URL = "/api/suppliers/loro-piana/missing-swatches-pdf";
-export const LORO_PIANA_MISSING_SWATCHES_PDF_FILENAME = "loro-piana-swatches-not-uploaded.pdf";
+export {
+  LORO_PIANA_MISSING_SWATCHES_PDF_FILENAME,
+  LORO_PIANA_MISSING_SWATCHES_PDF_URL,
+} from "@/lib/fabric-sourcing/loro-piana-missing-swatches-pdf-meta";
 
 const BOOK_LABELS: Record<string, { book: string }> = {
   "735023": { book: "Events (735)" },

@@ -5,7 +5,7 @@ import { FileDown } from "lucide-react";
 import {
   LORO_PIANA_MISSING_SWATCHES_PDF_FILENAME,
   LORO_PIANA_MISSING_SWATCHES_PDF_URL,
-} from "@/lib/fabric-sourcing/generate-loro-piana-missing-swatches-pdf";
+} from "@/lib/fabric-sourcing/loro-piana-missing-swatches-pdf-meta";
 
 export function DownloadLoroPianaMissingSwatchesPdfButton() {
   const [downloading, setDownloading] = useState(false);

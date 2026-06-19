@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import {
-  generateLoroPianaMissingSwatchesPdf,
-  LORO_PIANA_MISSING_SWATCHES_PDF_FILENAME,
-} from "@/lib/fabric-sourcing/generate-loro-piana-missing-swatches-pdf";
+import { generateLoroPianaMissingSwatchesPdf } from "@/lib/fabric-sourcing/generate-loro-piana-missing-swatches-pdf";
+import { LORO_PIANA_MISSING_SWATCHES_PDF_FILENAME } from "@/lib/fabric-sourcing/loro-piana-missing-swatches-pdf-meta";
 
 export async function GET() {
   try {
