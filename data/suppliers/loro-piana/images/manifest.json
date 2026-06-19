@@ -1,13 +1,14 @@
 {
-  "imported_at": "2026-06-19T10:33:28.731Z",
-  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml  + /Users/ralphrahme/Desktop/Loro Piana Bunches/Events + /Users/ralphrahme/Desktop/Loro Piana Bunches/Frescolino - S16. 200 grams",
+  "imported_at": "2026-06-19T10:36:13.319Z",
+  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml  + /Users/ralphrahme/Desktop/Loro Piana Bunches/Events + /Users/ralphrahme/Desktop/Loro Piana Bunches/Frescolino - S16. 200 grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS",
   "catalog_path": "src/data/suppliers/loro-piana-ss26.json",
   "output_root": "data/suppliers/loro-piana/images",
   "filters": {
     "collections": [
       "Australis 270gr",
       "Events 735",
-      "Frescolino S16 (book 782)"
+      "Frescolino S16 (book 782)",
+      "Graffiti S24 (book 782, NS→S)"
     ],
     "note": "Merged manifest from multiple imports"
   },
@@ -1460,6 +1461,602 @@
       "weight_gsm": 190,
       "ok": true,
       "bytes": 1720437
+    },
+    {
+      "fabric_number": "S24001",
+      "source_filename": "NS24001.jpg",
+      "filename": "S24001.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2909037
+    },
+    {
+      "fabric_number": "S24002",
+      "source_filename": "NS24002.jpg",
+      "filename": "S24002.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2971826
+    },
+    {
+      "fabric_number": "S24003",
+      "source_filename": "NS24003.jpg",
+      "filename": "S24003.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2787871
+    },
+    {
+      "fabric_number": "S24004",
+      "source_filename": "NS24004.jpg",
+      "filename": "S24004.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 3149993
+    },
+    {
+      "fabric_number": "S24005",
+      "source_filename": "NS24005.jpg",
+      "filename": "S24005.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 3145844
+    },
+    {
+      "fabric_number": "S24006",
+      "source_filename": "NS24006.jpg",
+      "filename": "S24006.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 3356739
+    },
+    {
+      "fabric_number": "S24008",
+      "source_filename": "NS24008.jpg",
+      "filename": "S24008.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 3260140
+    },
+    {
+      "fabric_number": "S24009",
+      "source_filename": "NS24009.jpg",
+      "filename": "S24009.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 3400147
+    },
+    {
+      "fabric_number": "S24010",
+      "source_filename": "NS24010.jpg",
+      "filename": "S24010.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 3564607
+    },
+    {
+      "fabric_number": "S24011",
+      "source_filename": "NS24011.jpg",
+      "filename": "S24011.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 3196014
+    },
+    {
+      "fabric_number": "S24012",
+      "source_filename": "NS24012.jpg",
+      "filename": "S24012.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 3430403
+    },
+    {
+      "fabric_number": "S24013",
+      "source_filename": "NS24013.jpg",
+      "filename": "S24013.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 3355050
+    },
+    {
+      "fabric_number": "S24014",
+      "source_filename": "NS24014.jpg",
+      "filename": "S24014.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2398033
+    },
+    {
+      "fabric_number": "S24015",
+      "source_filename": "NS24015.jpg",
+      "filename": "S24015.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2884070
+    },
+    {
+      "fabric_number": "S24016",
+      "source_filename": "NS24016.jpg",
+      "filename": "S24016.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2995755
+    },
+    {
+      "fabric_number": "S24017",
+      "source_filename": "NS24017.jpg",
+      "filename": "S24017.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 1864006
+    },
+    {
+      "fabric_number": "S24018",
+      "source_filename": "NS24018.jpg",
+      "filename": "S24018.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2531559
+    },
+    {
+      "fabric_number": "S24019",
+      "source_filename": "NS24019.jpg",
+      "filename": "S24019.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2801786
+    },
+    {
+      "fabric_number": "S24020",
+      "source_filename": "NS24020.jpg",
+      "filename": "S24020.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 330,
+      "ok": true,
+      "bytes": 2959908
+    },
+    {
+      "fabric_number": "S24021",
+      "source_filename": "NS24021.jpg",
+      "filename": "S24021.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 460,
+      "ok": true,
+      "bytes": 2684182
+    },
+    {
+      "fabric_number": "S24022",
+      "source_filename": "NS24022.jpg",
+      "filename": "S24022.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 460,
+      "ok": true,
+      "bytes": 3100318
+    },
+    {
+      "fabric_number": "S24023",
+      "source_filename": "NS24023.jpg",
+      "filename": "S24023.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 460,
+      "ok": true,
+      "bytes": 3133312
+    },
+    {
+      "fabric_number": "S24024",
+      "source_filename": "NS24024.jpg",
+      "filename": "S24024.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 450,
+      "ok": true,
+      "bytes": 2842284
+    },
+    {
+      "fabric_number": "S24025",
+      "source_filename": "NS24025.jpg",
+      "filename": "S24025.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 450,
+      "ok": true,
+      "bytes": 2624736
+    },
+    {
+      "fabric_number": "S24026",
+      "source_filename": "NS24026.jpg",
+      "filename": "S24026.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 450,
+      "ok": true,
+      "bytes": 2453504
+    },
+    {
+      "fabric_number": "S24027",
+      "source_filename": "NS24027.jpg",
+      "filename": "S24027.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 450,
+      "ok": true,
+      "bytes": 1897883
+    },
+    {
+      "fabric_number": "S24028",
+      "source_filename": "NS24028.jpg",
+      "filename": "S24028.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 450,
+      "ok": true,
+      "bytes": 2504993
+    },
+    {
+      "fabric_number": "S24029",
+      "source_filename": "NS24029.jpg",
+      "filename": "S24029.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 450,
+      "ok": true,
+      "bytes": 2275567
+    },
+    {
+      "fabric_number": "S24030",
+      "source_filename": "NS24030.jpg",
+      "filename": "S24030.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2488256
+    },
+    {
+      "fabric_number": "S24031",
+      "source_filename": "NS24031.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS/NS24031.jpg",
+      "filename": "S24031.jpg",
+      "ok": false,
+      "error": "No matching catalog entry for filters"
+    },
+    {
+      "fabric_number": "S24032",
+      "source_filename": "NS24032.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS/NS24032.jpg",
+      "filename": "S24032.jpg",
+      "ok": false,
+      "error": "No matching catalog entry for filters"
+    },
+    {
+      "fabric_number": "S24033",
+      "source_filename": "NS24033.jpg",
+      "filename": "S24033.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 3018721
+    },
+    {
+      "fabric_number": "S24034",
+      "source_filename": "NS24034.jpg",
+      "filename": "S24034.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 3447107
+    },
+    {
+      "fabric_number": "S24035",
+      "source_filename": "NS24035.jpg",
+      "filename": "S24035.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 3467665
+    },
+    {
+      "fabric_number": "S24036",
+      "source_filename": "NS24036.jpg",
+      "filename": "S24036.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 3093507
+    },
+    {
+      "fabric_number": "S24037",
+      "source_filename": "NS24037.jpg",
+      "filename": "S24037.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 3956553
+    },
+    {
+      "fabric_number": "S24038",
+      "source_filename": "NS24038.jpg",
+      "filename": "S24038.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 3505026
+    },
+    {
+      "fabric_number": "S24039",
+      "source_filename": "NS24039.jpg",
+      "filename": "S24039.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 3055917
+    },
+    {
+      "fabric_number": "S24040",
+      "source_filename": "NS24040.jpg",
+      "filename": "S24040.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 3105440
+    },
+    {
+      "fabric_number": "S24041",
+      "source_filename": "NS24041.jpg",
+      "filename": "S24041.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 4251103
+    },
+    {
+      "fabric_number": "S24042",
+      "source_filename": "NS24042.jpg",
+      "filename": "S24042.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 3061201
+    },
+    {
+      "fabric_number": "S24043",
+      "source_filename": "NS24043.jpg",
+      "filename": "S24043.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2384472
+    },
+    {
+      "fabric_number": "S24044",
+      "source_filename": "NS24044.jpg",
+      "filename": "S24044.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 3153230
+    },
+    {
+      "fabric_number": "S24045",
+      "source_filename": "NS24045.jpg",
+      "filename": "S24045.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2379632
+    },
+    {
+      "fabric_number": "S24046",
+      "source_filename": "NS24046.jpg",
+      "filename": "S24046.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2923004
+    },
+    {
+      "fabric_number": "S24047",
+      "source_filename": "NS24047.jpg",
+      "filename": "S24047.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 3624561
+    },
+    {
+      "fabric_number": "S24048",
+      "source_filename": "NS24048.jpg",
+      "filename": "S24048.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 3479466
+    },
+    {
+      "fabric_number": "S24049",
+      "source_filename": "NS24049.jpg",
+      "filename": "S24049.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2872915
+    },
+    {
+      "fabric_number": "S24050",
+      "source_filename": "NS24050.jpg",
+      "filename": "S24050.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2918387
+    },
+    {
+      "fabric_number": "S24051",
+      "source_filename": "NS24051.jpg",
+      "filename": "S24051.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 3435556
+    },
+    {
+      "fabric_number": "S24052",
+      "source_filename": "NS24052.jpg",
+      "filename": "S24052.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 260,
+      "ok": true,
+      "bytes": 2933293
+    },
+    {
+      "fabric_number": "S24053",
+      "source_filename": "NS24053.jpg",
+      "filename": "S24053.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 510,
+      "ok": true,
+      "bytes": 2992069
+    },
+    {
+      "fabric_number": "S24054",
+      "source_filename": "NS24054.jpg",
+      "filename": "S24054.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 510,
+      "ok": true,
+      "bytes": 3819136
+    },
+    {
+      "fabric_number": "S24055",
+      "source_filename": "NS24055.jpg",
+      "filename": "S24055.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 510,
+      "ok": true,
+      "bytes": 2729856
+    },
+    {
+      "fabric_number": "S24056",
+      "source_filename": "NS24056.jpg",
+      "filename": "S24056.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 510,
+      "ok": true,
+      "bytes": 2618674
+    },
+    {
+      "fabric_number": "S24057",
+      "source_filename": "NS24057.jpg",
+      "filename": "S24057.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 430,
+      "ok": true,
+      "bytes": 2137464
+    },
+    {
+      "fabric_number": "S24058",
+      "source_filename": "NS24058.jpg",
+      "filename": "S24058.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 430,
+      "ok": true,
+      "bytes": 2844739
+    },
+    {
+      "fabric_number": "S24059",
+      "source_filename": "NS24059.jpg",
+      "filename": "S24059.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 430,
+      "ok": true,
+      "bytes": 2982897
+    },
+    {
+      "fabric_number": "S24060",
+      "source_filename": "NS24060.jpg",
+      "filename": "S24060.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 430,
+      "ok": true,
+      "bytes": 2628032
+    },
+    {
+      "fabric_number": "S24061",
+      "source_filename": "NS24061.jpg",
+      "filename": "S24061.jpg",
+      "collection": "AUSTRALIS JACKETS",
+      "book_number": "782",
+      "weight_gsm": 430,
+      "ok": true,
+      "bytes": 2748368
     }
   ]
 }
