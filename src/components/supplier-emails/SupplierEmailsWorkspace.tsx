@@ -284,7 +284,9 @@ function useBatchEmailOptions(batch: SupplierEmailBatch, factoryEmail: string | 
     () => ({
       fromEmail: factoryEmail,
       clientCodeByPoId: Object.fromEntries(
-        batch.orders.map((order) => [order.id, order.client_code ?? "—"])
+        batch.orders.flatMap((order) =>
+          order.client_code ? [[order.id, order.client_code] as const] : []
+        )
       ),
       soNumberByPoId: Object.fromEntries(batch.orders.map((order) => [order.id, order.so_number])),
       deliveryDestinationByPoId: Object.fromEntries(

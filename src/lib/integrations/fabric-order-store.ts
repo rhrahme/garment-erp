@@ -30,6 +30,15 @@ function writeStore(store: FabricOrderStore): void {
   writeJsonFile(STORE_PATH, store);
 }
 
+export function updateStoredFabricOrders(
+  updater: (orders: PurchaseOrder[]) => PurchaseOrder[]
+): PurchaseOrder[] {
+  const store = readStore();
+  store.orders = updater(store.orders);
+  writeStore(store);
+  return store.orders;
+}
+
 export function listStoredFabricOrders(): PurchaseOrder[] {
   return readStore().orders;
 }
