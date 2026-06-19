@@ -1,6 +1,6 @@
 {
   "imported_at": "2026-06-19T11:08:00.783Z",
-  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml  + /Users/ralphrahme/Desktop/Loro Piana Bunches/Events + /Users/ralphrahme/Desktop/Loro Piana Bunches/Frescolino - S16. 200 grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Suitmate + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/DRESANO 340 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Art Du Lin II - S23 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Gabardilia S05. 240 GRAMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml",
+  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml  + /Users/ralphrahme/Desktop/Loro Piana Bunches/Events + /Users/ralphrahme/Desktop/Loro Piana Bunches/Frescolino - S16. 200 grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Royal Wish  738 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Summertime 771 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Suitmate + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/DRESANO 340 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Art Du Lin II - S23 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Gabardilia S05. 240 GRAMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml",
   "catalog_path": "src/data/suppliers/loro-piana-ss26.json",
   "output_root": "data/suppliers/loro-piana/images",
   "filters": {
@@ -10,6 +10,8 @@
       "Frescolino S16 (book 782)",
       "Graffiti S24 (book 782, NS→S)",
       "Proposte Abiti SS26 (book 781)",
+      "Royal Wish (book 738)",
+      "Summertime (book 771)",
       "Suitmate (book 726)",
       "DRESANO 340 GRMS (book 782, NS→S, S140xx)",
       "Proposte Giacche SS26 (book 780)",
