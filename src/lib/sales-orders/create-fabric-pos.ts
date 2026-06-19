@@ -1,6 +1,9 @@
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSupplierByIdFromContactsSync } from "@/lib/data/supplier-contacts";
-import { fabricPoSupplierId } from "@/lib/fabric-sourcing/supplier-display";
+import {
+  fabricPoSupplierIdForGroup,
+  fabricSupplierGroupKey,
+} from "@/lib/fabric-sourcing/supplier-display";
 import { buildClientReference, getSalesOrderById, writeSalesOrders, readSalesOrders } from "@/lib/data/sales-orders";
 import { createStoredFabricOrder } from "@/lib/integrations/fabric-order-store";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
@@ -9,10 +12,10 @@ import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders"
 function groupLinesBySupplier(lines: SalesOrderFabricLine[]): Map<string, SalesOrderFabricLine[]> {
   const groups = new Map<string, SalesOrderFabricLine[]>();
   for (const line of lines) {
-    const poSupplierId = fabricPoSupplierId(line.supplier_id, line.fabric_number);
-    const bucket = groups.get(poSupplierId) ?? [];
+    const groupKey = fabricSupplierGroupKey(line.supplier_id, line.fabric_number);
+    const bucket = groups.get(groupKey) ?? [];
     bucket.push(line);
-    groups.set(poSupplierId, bucket);
+    groups.set(groupKey, bucket);
   }
   return groups;
 }
@@ -39,7 +42,8 @@ export async function createFabricPosFromSalesOrder(salesOrderId: string): Promi
   const groups = groupLinesBySupplier(salesOrder.fabric_lines);
   const fabricOrders: PurchaseOrder[] = [];
 
-  for (const [supplierId, lines] of groups) {
+  for (const [groupKey, lines] of groups) {
+    const supplierId = fabricPoSupplierIdForGroup(groupKey);
     const supplier = getSupplierByIdFromContactsSync(supplierId);
     if (!supplier) {
       throw new Error(`Unknown supplier: ${supplierId}`);

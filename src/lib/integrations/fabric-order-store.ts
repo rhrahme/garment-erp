@@ -1,6 +1,11 @@
 import path from "path";
 import { readJsonFileFreshAsync } from "@/lib/data/document-persistence";
-import { ensureDocumentsLoaded, readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
+import {
+  ensureDocumentsLoaded,
+  readJsonFile,
+  writeJsonFile,
+  writeJsonFileAsync,
+} from "@/lib/data/json-file-cache";
 import type { PurchaseOrder, PurchaseOrderLine } from "@/lib/types/fabric-sourcing";
 
 const STORE_PATH = path.join(process.cwd(), "fabric-orders.local.json");
@@ -106,25 +111,19 @@ export function createStoredFabricOrder(input: {
   return order;
 }
 
-export function markStoredFabricOrderSent(
+export async function markStoredFabricOrderSent(
   id: string,
   details: { emailed_at: string; email_to: string; status?: string }
-): PurchaseOrder | undefined {
-  const store = readStore();
-  const order = store.orders.find((item) => item.id === id);
-  if (!order) return undefined;
-
-  order.emailed_at = details.emailed_at;
-  order.email_to = details.email_to;
-  order.status = details.status ?? "sent";
-  writeStore(store);
-  return order;
+): Promise<PurchaseOrder | undefined> {
+  const updated = await markStoredFabricOrdersSent([id], details);
+  return updated[0];
 }
 
-export function markStoredFabricOrdersSent(
+/** Await Supabase persistence so the next list refresh cannot read stale sent state. */
+export async function markStoredFabricOrdersSent(
   ids: string[],
   details: { emailed_at: string; email_to: string; status?: string }
-): PurchaseOrder[] {
+): Promise<PurchaseOrder[]> {
   const store = readStore();
   const idSet = new Set(ids);
   const updated: PurchaseOrder[] = [];
@@ -138,7 +137,7 @@ export function markStoredFabricOrdersSent(
   }
 
   if (updated.length > 0) {
-    writeStore(store);
+    await writeJsonFileAsync(STORE_PATH, store);
   }
 
   return updated;

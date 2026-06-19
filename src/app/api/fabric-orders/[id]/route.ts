@@ -32,7 +32,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       return NextResponse.json({ error: "Fabric order not found." }, { status: 404 });
     }
 
-    const updated = markStoredFabricOrderSent(id, {
+    const updated = await markStoredFabricOrderSent(id, {
       emailed_at: body.emailed_at ?? new Date().toISOString(),
       email_to: body.email_to ?? order.supplier?.email ?? "",
       status: "sent",

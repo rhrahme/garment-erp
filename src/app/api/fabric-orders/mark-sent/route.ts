@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const emailedAt = body.emailed_at ?? new Date().toISOString();
     const emailTo = body.email_to?.trim() ?? "";
 
-    const updated = markStoredFabricOrdersSent(ids, {
+    const updated = await markStoredFabricOrdersSent(ids, {
       emailed_at: emailedAt,
       email_to: emailTo,
       status: "sent",

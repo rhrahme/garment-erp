@@ -48,6 +48,12 @@ export function fabricSupplierGroupKey(supplierId: string, fabricNumber: string)
   return `${poId}:${line}`;
 }
 
+/** PO supplier id for a fabric group — Solbiati gets its own PO/email even though it shares Loro Piana contacts. */
+export function fabricPoSupplierIdForGroup(groupKey: string): string {
+  const [poSupplierId, millLine] = groupKey.split(":");
+  return millLine === "solbiati" ? "solbiati" : poSupplierId;
+}
+
 /** Allow manual fabric entry when a number is not found in the catalog search. */
 export function fabricBrandAllowsManualEntry(
   _hasPriceList: boolean | undefined,

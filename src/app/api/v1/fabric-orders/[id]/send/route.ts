@@ -65,7 +65,7 @@ export async function POST(
     });
 
     const emailedAt = new Date().toISOString();
-    const updated = markStoredFabricOrderSent(id, {
+    const updated = await markStoredFabricOrderSent(id, {
       emailed_at: emailedAt,
       email_to: recipients.join(", "),
     });
