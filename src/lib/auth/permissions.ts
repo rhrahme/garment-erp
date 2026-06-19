@@ -13,6 +13,7 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/api/fabric-search",
   "/api/fabric-brands",
   "/api/fabric-receiving",
+  "/api/suppliers/loro-piana",
   "/api/qr",
   "/api/integrations/drapers/medias",
   "/api/factory/floor-stations",

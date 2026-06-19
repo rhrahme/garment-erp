@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { requireAuthenticated } from "@/lib/auth/session";
 import {
   generateLoroPianaMissingSwatchesPdf,
   LORO_PIANA_MISSING_SWATCHES_PDF_FILENAME,
@@ -7,11 +6,6 @@ import {
 
 export async function GET() {
   try {
-    const session = await requireAuthenticated();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-    }
-
     const pdfBytes = generateLoroPianaMissingSwatchesPdf();
 
     return new NextResponse(Buffer.from(pdfBytes), {

@@ -30,7 +30,7 @@ export type LoroPianaSwatchManifest = {
 let cachedManifest: LoroPianaSwatchManifest | null = null;
 let cachedAt = 0;
 
-function readManifest(): LoroPianaSwatchManifest {
+export function readLoroPianaSwatchManifest(): LoroPianaSwatchManifest {
   const now = Date.now();
   if (cachedManifest && now - cachedAt < 5_000) return cachedManifest;
   if (!existsSync(LORO_PIANA_MANIFEST_PATH)) {
@@ -57,7 +57,7 @@ function localSwatchFilename(normalized: string): string | null {
 }
 
 function manifestSwatchFilename(normalized: string): string | null {
-  const manifest = readManifest();
+  const manifest = readLoroPianaSwatchManifest();
   const item = manifest.items.find((entry) => entry.ok && entry.fabric_number === normalized);
   return item?.filename ?? null;
 }
@@ -71,7 +71,7 @@ export function lookupLoroPianaSwatch(fabricNumber: string): {
 } {
   const requested = fabricNumber.trim();
   const normalized = normalizeLoroPianaFabricNumber(requested);
-  const manifest = readManifest();
+  const manifest = readLoroPianaSwatchManifest();
   const item = manifest.items.find(
     (entry) => entry.ok && entry.fabric_number === normalized
   );

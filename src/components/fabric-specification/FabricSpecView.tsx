@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { DownloadLoroPianaMissingSwatchesPdfButton } from "@/components/fabric-specification/DownloadLoroPianaMissingSwatchesPdfButton";
 import { FabricSpecPreview } from "@/components/fabric-specification/FabricSpecPreview";
 import { DataTable } from "@/components/ui/PageHeader";
 import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
@@ -228,16 +229,7 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
             ) : null}
           </div>
           <div className="ml-auto flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-            {isLoroPianaStyleTab ? (
-              <a
-                href="/api/suppliers/loro-piana/missing-swatches-pdf"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
-              >
-                Download missing swatches PDF
-              </a>
-            ) : null}
+            {isLoroPianaStyleTab ? <DownloadLoroPianaMissingSwatchesPdfButton /> : null}
             <input
               type="search"
               placeholder="Search fabric no., HS code, color…"

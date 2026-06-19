@@ -1,11 +1,7 @@
-import { readFileSync } from "node:fs";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import loroPianaCatalog from "@/data/suppliers/loro-piana-ss26.json";
-import {
-  LORO_PIANA_MANIFEST_PATH,
-  type LoroPianaSwatchManifest,
-} from "@/lib/fabric-sourcing/loro-piana-swatches";
+import { readLoroPianaSwatchManifest } from "@/lib/fabric-sourcing/loro-piana-swatches";
 
 export const LORO_PIANA_MISSING_SWATCHES_PDF_URL = "/api/suppliers/loro-piana/missing-swatches-pdf";
 export const LORO_PIANA_MISSING_SWATCHES_PDF_FILENAME = "loro-piana-swatches-not-uploaded.pdf";
@@ -51,10 +47,6 @@ type CatalogFabric = {
   book_number?: string | null;
 };
 
-function readManifest(): LoroPianaSwatchManifest {
-  return JSON.parse(readFileSync(LORO_PIANA_MANIFEST_PATH, "utf8")) as LoroPianaSwatchManifest;
-}
-
 function catalogBook(fabrics: CatalogFabric[], fabricNumber: string): string | null {
   const entry = fabrics.find((f) => f.fabric_number === fabricNumber);
   if (!entry) return null;
@@ -62,7 +54,7 @@ function catalogBook(fabrics: CatalogFabric[], fabricNumber: string): string | n
 }
 
 export function compileLoroPianaMissingSwatchRows(): LoroPianaMissingSwatchRow[] {
-  const manifest = readManifest();
+  const manifest = readLoroPianaSwatchManifest();
   const catalog = (loroPianaCatalog as { fabrics?: CatalogFabric[] }).fabrics ?? [];
   const byFabric = new Map<string, LoroPianaMissingSwatchRow>();
 
@@ -112,7 +104,7 @@ export function compileLoroPianaMissingSwatchRows(): LoroPianaMissingSwatchRow[]
 
 export function generateLoroPianaMissingSwatchesPdf(): Uint8Array {
   const rows = compileLoroPianaMissingSwatchRows();
-  const manifest = readManifest();
+  const manifest = readLoroPianaSwatchManifest();
   const importedAt = manifest.imported_at ?? new Date().toISOString();
   const noCatalog = rows.filter((r) => r.reason === "No catalog entry").length;
   const missingImage = rows.filter((r) => r.reason === "Image missing from folder").length;
