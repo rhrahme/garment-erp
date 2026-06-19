@@ -3,9 +3,12 @@
  * to where users should land instead (avoids 404 from stale bookmarks/links).
  */
 const REMOVED_SALES_ORDER_REDIRECTS: Record<string, string> = {
-  // Moussa Stylbiella handwritten order — lives in fabric order draft, not a submitted SO.
-  "so-moussa-stylbiella-handwritten": "/fabric-orders/new?continue=1",
-  "SO-2026-0107": "/fabric-orders/new?continue=1",
+  // Moussa duplicate orders consolidated into SO-2026-0109.
+  "so-moussa-stylbiella-handwritten": "/orders/so-1781828734583",
+  "so-1781821780944": "/orders/so-1781828734583",
+  "SO-2026-0107": "/orders/so-1781828734583",
+  "so-1781826697158": "/orders/so-1781828734583",
+  "SO-2026-0108": "/orders/so-1781828734583",
 };
 
 const REMOVED_ORDER_PATH = /^\/(?:orders|fabric-orders|pattern\/orders)\/([^/]+)/;
