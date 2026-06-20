@@ -43,6 +43,9 @@ export interface CustomerInvoice {
   due_date: string | null;
   lines: CustomerInvoiceLine[];
   subtotal: number;
+  /** e.g. 0.15 for 15% VAT — applied to subtotal when set */
+  vat_rate: number | null;
+  vat_amount: number;
   total: number;
   notes: string | null;
   created_at: string;

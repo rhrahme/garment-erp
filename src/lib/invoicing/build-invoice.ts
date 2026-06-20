@@ -181,9 +181,13 @@ export function buildInvoiceLinesFromSalesOrder(order: SalesOrder): CustomerInvo
   return lines;
 }
 
-export function recalculateInvoiceTotals(lines: CustomerInvoiceLine[]): {
+export function recalculateInvoiceTotals(
+  lines: CustomerInvoiceLine[],
+  vatRate?: number | null
+): {
   lines: CustomerInvoiceLine[];
   subtotal: number;
+  vat_amount: number;
   total: number;
 } {
   const normalized = lines.map((line) => {
@@ -191,7 +195,10 @@ export function recalculateInvoiceTotals(lines: CustomerInvoiceLine[]): {
     return { ...line, line_total: lineTotal };
   });
   const subtotal = roundMoney(normalized.reduce((sum, line) => sum + line.line_total, 0));
-  return { lines: normalized, subtotal, total: subtotal };
+  const rate = vatRate != null && vatRate > 0 ? vatRate : 0;
+  const vat_amount = rate > 0 ? roundMoney(subtotal * rate) : 0;
+  const total = roundMoney(subtotal + vat_amount);
+  return { lines: normalized, subtotal, vat_amount, total };
 }
 
 export function buildDraftInvoiceFromSalesOrder(
@@ -205,7 +212,7 @@ export function buildDraftInvoiceFromSalesOrder(
 
   const client = getClientById(order.client_id);
   const lines = buildInvoiceLinesFromSalesOrder(order);
-  const { lines: pricedLines, subtotal, total } = recalculateInvoiceTotals(lines);
+  const { lines: pricedLines, subtotal, vat_amount, total } = recalculateInvoiceTotals(lines);
   const orderCost = getSalesOrderCost(order);
   const today = new Date().toISOString().slice(0, 10);
   const paymentTerms = client?.payment_terms ?? null;
@@ -230,6 +237,8 @@ export function buildDraftInvoiceFromSalesOrder(
     due_date: computeDueDate(today, paymentTerms),
     lines: pricedLines,
     subtotal,
+    vat_rate: null,
+    vat_amount,
     total,
     notes: order.notes,
     created_at: new Date().toISOString(),

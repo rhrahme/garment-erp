@@ -42,6 +42,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       notes?: string | null;
       client_email?: string | null;
       client_address?: string | null;
+      vat_rate?: number | null;
       lines?: Array<Partial<CustomerInvoiceLine> & { id: string }>;
     };
 
@@ -53,6 +54,11 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     if (body.notes !== undefined) next.notes = normalizeText(body.notes);
     if (body.client_email !== undefined) next.client_email = normalizeText(body.client_email);
     if (body.client_address !== undefined) next.client_address = normalizeText(body.client_address);
+
+    if (body.vat_rate !== undefined) {
+      const rate = body.vat_rate == null ? null : Number(body.vat_rate);
+      next.vat_rate = rate != null && Number.isFinite(rate) && rate >= 0 ? rate : null;
+    }
 
     if (Array.isArray(body.lines)) {
       next.lines = invoice.lines.map((line) => {
@@ -68,7 +74,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
           unit_price: Number.isFinite(unitPrice) && unitPrice >= 0 ? unitPrice : line.unit_price,
         };
       });
-      const totals = recalculateInvoiceTotals(next.lines);
+      const totals = recalculateInvoiceTotals(next.lines, next.vat_rate);
+      next = { ...next, ...totals };
+    } else if (body.vat_rate !== undefined) {
+      const totals = recalculateInvoiceTotals(next.lines, next.vat_rate);
       next = { ...next, ...totals };
     }
 

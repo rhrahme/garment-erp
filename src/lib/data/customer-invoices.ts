@@ -81,8 +81,11 @@ export function generateInvoiceId(): string {
 export async function saveCustomerInvoice(invoice: CustomerInvoice): Promise<CustomerInvoice> {
   const store = await readCustomerInvoicesFresh();
   const index = store.invoices.findIndex((row) => row.id === invoice.id);
-  const { lines, subtotal, total } = recalculateInvoiceTotals(invoice.lines);
-  const normalized: CustomerInvoice = { ...invoice, lines, subtotal, total };
+  const { lines, subtotal, vat_amount, total } = recalculateInvoiceTotals(
+    invoice.lines,
+    invoice.vat_rate
+  );
+  const normalized: CustomerInvoice = { ...invoice, lines, subtotal, vat_amount, total };
 
   if (index >= 0) {
     store.invoices[index] = normalized;

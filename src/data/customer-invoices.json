@@ -49,7 +49,9 @@
       "sales_order_id": "so-1780164354118",
       "total_cost_sar": 877.56,
       "client_reference": "FR-0126-0019-SO-2026-0102",
-      "factory_brand_name": "Fouad Rahme"
+      "factory_brand_name": "Fouad Rahme",
+      "vat_rate": null,
+      "vat_amount": 0
     },
     {
       "id": "inv-1781422159438-lv5fxw",
@@ -451,7 +453,9 @@
       "total_cost_sar": null,
       "client_reference": "FR-0626-0034-SO-2026-0108",
       "factory_brand_name": "Fouad Rahme",
-      "delivery_destination": "DXB"
+      "delivery_destination": "DXB",
+      "vat_rate": null,
+      "vat_amount": 0
     },
     {
       "id": "inv-1781972630770-t9oifi",
@@ -459,9 +463,9 @@
         {
           "id": "inv-line-so-1781953079630-1",
           "quantity": 1,
-          "line_total": 0,
+          "line_total": 1750,
           "piece_name": "Jacket",
-          "unit_price": 0,
+          "unit_price": 1750,
           "weight_gsm": null,
           "composition": null,
           "description": "Suit — Jacket",
@@ -476,9 +480,9 @@
         {
           "id": "inv-line-so-1781953079630-2",
           "quantity": 1,
-          "line_total": 0,
+          "line_total": 1750,
           "piece_name": "Trouser",
-          "unit_price": 0,
+          "unit_price": 1750,
           "weight_gsm": null,
           "composition": null,
           "description": "Suit — Trouser",
@@ -493,9 +497,9 @@
         {
           "id": "inv-line-so-1781953079630-3",
           "quantity": 1,
-          "line_total": 0,
+          "line_total": 1750,
           "piece_name": "Jacket",
-          "unit_price": 0,
+          "unit_price": 1750,
           "weight_gsm": null,
           "composition": null,
           "description": "Suit — Jacket",
@@ -510,9 +514,9 @@
         {
           "id": "inv-line-so-1781953079630-4",
           "quantity": 1,
-          "line_total": 0,
+          "line_total": 1750,
           "piece_name": "Trouser",
-          "unit_price": 0,
+          "unit_price": 1750,
           "weight_gsm": null,
           "composition": null,
           "description": "Suit — Trouser",
@@ -527,9 +531,9 @@
         {
           "id": "inv-line-so-1781953079630-5",
           "quantity": 1,
-          "line_total": 245.58,
+          "line_total": 600,
           "piece_name": "Shirt LS",
-          "unit_price": 245.58,
+          "unit_price": 600,
           "weight_gsm": null,
           "composition": "Cotton shirting",
           "description": "Shirt LS",
@@ -544,9 +548,9 @@
         {
           "id": "inv-line-so-1781953079630-6",
           "quantity": 1,
-          "line_total": 245.58,
+          "line_total": 600,
           "piece_name": "Shirt LS",
-          "unit_price": 245.58,
+          "unit_price": 600,
           "weight_gsm": null,
           "composition": "Cotton shirting",
           "description": "Shirt LS",
@@ -561,9 +565,9 @@
         {
           "id": "inv-line-so-1781953079630-7",
           "quantity": 1,
-          "line_total": 245.58,
+          "line_total": 600,
           "piece_name": "Shirt LS",
-          "unit_price": 245.58,
+          "unit_price": 600,
           "weight_gsm": null,
           "composition": "Cotton shirting",
           "description": "Shirt LS",
@@ -577,13 +581,13 @@
         }
       ],
       "notes": null,
-      "total": 736.74,
+      "total": 10120,
       "status": "draft",
       "paid_at": null,
       "sent_at": null,
       "currency": "SAR",
       "due_date": null,
-      "subtotal": 736.74,
+      "subtotal": 8800,
       "client_id": "new-1780850106220",
       "so_number": "SO-2026-0110",
       "created_at": "2026-06-20T16:23:50.775Z",
@@ -598,8 +602,10 @@
       "total_cost_sar": 2036.74,
       "client_reference": "GL-0626-0011-SO-2026-0110",
       "factory_brand_name": "Gliani",
-      "delivery_destination": "RUH"
+      "delivery_destination": "RUH",
+      "vat_rate": 0.15,
+      "vat_amount": 1320
     }
   ],
-  "updated_at": "2026-06-20T16:23:50.776Z"
+  "updated_at": "2026-06-20T20:15:59.316Z"
 }

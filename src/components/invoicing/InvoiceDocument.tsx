@@ -23,6 +23,9 @@ export type InvoiceDocumentData = {
   client_reference: string | null;
   payment_terms: string | null;
   currency: "SAR";
+  subtotal: number;
+  vat_rate: number | null;
+  vat_amount: number;
   total: number;
   notes: string | null;
   factory_brand_name: string | null;
@@ -97,6 +100,22 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
           ))}
         </tbody>
         <tfoot>
+          <tr>
+            <td colSpan={8} className="py-2 text-right text-slate-600">
+              Subtotal ({invoice.currency})
+            </td>
+            <td className="py-2 text-right font-medium">{formatSar(invoice.subtotal)}</td>
+            <td className="py-2" />
+          </tr>
+          {invoice.vat_rate != null && invoice.vat_rate > 0 && (
+            <tr>
+              <td colSpan={8} className="py-2 text-right text-slate-600">
+                VAT ({Math.round(invoice.vat_rate * 100)}%)
+              </td>
+              <td className="py-2 text-right font-medium">{formatSar(invoice.vat_amount)}</td>
+              <td className="py-2" />
+            </tr>
+          )}
           <tr>
             <td colSpan={8} className="py-4 text-right font-semibold">
               Total ({invoice.currency})
