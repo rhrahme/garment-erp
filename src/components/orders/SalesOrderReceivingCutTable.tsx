@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
+import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
 import { cn } from "@/lib/utils";
 import { FabricCutQrImage } from "@/components/orders/FabricCutQrImage";
 import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
@@ -155,7 +156,12 @@ export function SalesOrderReceivingCutTable({
                 />
               </td>
               <td className={cell("font-mono font-medium text-indigo-800")}>{row.fabric_cut_code}</td>
-              <td className={cell("font-mono")}>{row.fabric_number}</td>
+              <td className={cell("font-mono")}>
+                <span className="inline-flex items-center gap-1.5">
+                  <FabricSwatchPreview supplierId={row.supplier_id} fabricNumber={row.fabric_number} />
+                  {row.fabric_number}
+                </span>
+              </td>
               <td className={cell("max-w-[24mm] whitespace-normal text-slate-700")}>{fabricBrandLabel(row)}</td>
               <CompositionCell composition={row.composition} className={highlight} />
               <td className={cell("text-slate-600")}>{fabricWeightLabel(row)}</td>

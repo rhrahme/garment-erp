@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { FabricPicker } from "@/components/fabric/FabricPicker";
 import { FabricStockBadge } from "@/components/fabric/FabricStockBadge";
+import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
 import { formatFabricStockLabel, isFabricUnavailable } from "@/lib/fabric-sourcing/fabric-stock";
 import { fabricBrandAllowsManualEntry } from "@/lib/fabric-sourcing/supplier-display";
 import { resolveFabricItem } from "@/lib/fabric-sourcing/resolve-fabric-item";
@@ -199,9 +200,14 @@ export function ProductionOrderAddFabrics({
 
               {pendingFabric && (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
-                  <p className="font-mono font-medium text-slate-900">
-                    {pendingFabric.fabric_number}
-                    <FabricStockBadge fabric={pendingFabric} />
+                  <p className="text-sm text-slate-900">
+                    <FabricNumberWithSwatch
+                      supplierId={pendingFabric.supplier_id}
+                      fabricNumber={pendingFabric.fabric_number}
+                      highlight={isFabricUnavailable(pendingFabric.stock_status)}
+                    >
+                      <FabricStockBadge fabric={pendingFabric} />
+                    </FabricNumberWithSwatch>
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
                     {[pendingFabric.composition, pendingFabric.weight_gsm != null ? `${pendingFabric.weight_gsm} gsm` : null]

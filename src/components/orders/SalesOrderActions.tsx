@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { DownloadSalesOrderPdfButton } from "@/components/orders/DownloadSalesOrderPdfButton";
@@ -11,7 +11,9 @@ import { FabricPriceRevealToggle, MaskedFabricPrice } from "@/components/orders/
 import { CreateInvoiceButton } from "@/components/invoicing/CreateInvoiceButton";
 import { DeliveryDestinationTabs } from "@/components/shipping/DeliveryDestinationTabs";
 import { FabricReplacementBadge, FabricStockBadge } from "@/components/fabric/FabricStockBadge";
-import { formatFabricStockLabel } from "@/lib/fabric-sourcing/fabric-stock";
+import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
+import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
+import { isFabricUnavailable, formatFabricStockLabel } from "@/lib/fabric-sourcing/fabric-stock";
 import { FabricSupplierName } from "@/components/fabric/FabricSupplierName";
 import { fabricSupplierGroupKey, formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
@@ -107,6 +109,15 @@ export function SalesOrderActions({
     acc[key] = bucket;
     return acc;
   }, {});
+
+  const swatchFabrics = useMemo(
+    () =>
+      liveOrder.fabric_lines.map((line) => ({
+        supplier_id: line.supplier_id,
+        fabric_number: line.fabric_number,
+      })),
+    [liveOrder.fabric_lines]
+  );
 
   const fabricTotals = getFabricTotalsSummary(liveOrder.fabric_lines);
   const fabricLinesEditable = canEditFabricLines(liveOrder);
@@ -208,6 +219,7 @@ export function SalesOrderActions({
   }
 
   return (
+    <FabricSwatchProvider fabrics={swatchFabrics}>
     <div className="space-y-6">
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
@@ -287,7 +299,13 @@ export function SalesOrderActions({
                     <td className="px-3 py-2 text-slate-700">
                       {formatLabelGarmentDescription(sticker.garment_type, sticker.piece_name)}
                     </td>
-                    <td className="px-3 py-2 font-mono text-slate-700">{sticker.fabric_number}</td>
+                    <td className="px-3 py-2 text-slate-700">
+                      <FabricNumberWithSwatch
+                        supplierId={sticker.supplier_id}
+                        fabricNumber={sticker.fabric_number}
+                        numberClassName="text-sm text-slate-700"
+                      />
+                    </td>
                     <td className="px-3 py-2 text-slate-600">
                       <FabricSupplierName
                         supplierId={sticker.supplier_id}
@@ -349,10 +367,15 @@ export function SalesOrderActions({
                           : "border-slate-200"
                     }`}
                   >
-                    <p className="font-mono font-medium text-slate-900">
-                      {line.fabric_number}
-                      <FabricStockBadge fabric={line} />
-                      <FabricReplacementBadge needsReplacement={line.needs_replacement} />
+                    <p className="text-slate-900">
+                      <FabricNumberWithSwatch
+                        supplierId={line.supplier_id}
+                        fabricNumber={line.fabric_number}
+                        highlight={isFabricUnavailable(line.stock_status) || line.needs_replacement}
+                      >
+                        <FabricStockBadge fabric={line} />
+                        <FabricReplacementBadge needsReplacement={line.needs_replacement} />
+                      </FabricNumberWithSwatch>
                       <span className="font-sans text-slate-600">
                         {" "}
                         — {line.quantity} {line.unit === "meters" ? "m" : line.unit}
@@ -489,5 +512,6 @@ export function SalesOrderActions({
 
       <Badge className="bg-slate-100 text-slate-700">Status: {liveOrder.status.replace(/_/g, " ")}</Badge>
     </div>
+    </FabricSwatchProvider>
   );
 }

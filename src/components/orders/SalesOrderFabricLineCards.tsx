@@ -9,6 +9,8 @@ import {
   FabricStockBadge,
   lineNeedsAvailabilityAttention,
 } from "@/components/fabric/FabricStockBadge";
+import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
+import { isFabricUnavailable } from "@/lib/fabric-sourcing/fabric-stock";
 import {
   GARMENT_STITCH_TYPES,
   getLabelCountForGarment,
@@ -191,10 +193,16 @@ export function SalesOrderFabricLineCards({
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="font-mono text-base font-semibold text-slate-900">
-                  {line.fabric_number}
-                  <FabricStockBadge fabric={line} />
-                  <FabricReplacementBadge needsReplacement={line.needs_replacement} />
+                <p className="text-base font-semibold text-slate-900">
+                  <FabricNumberWithSwatch
+                    supplierId={line.supplier_id}
+                    fabricNumber={line.fabric_number}
+                    highlight={lineNeedsAvailabilityAttention(line)}
+                    numberClassName="text-base"
+                  >
+                    <FabricStockBadge fabric={line} />
+                    <FabricReplacementBadge needsReplacement={line.needs_replacement} />
+                  </FabricNumberWithSwatch>
                 </p>
                 {line.manual ? (
                   <span className="mt-1 inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-sans font-medium uppercase tracking-wide text-amber-800">

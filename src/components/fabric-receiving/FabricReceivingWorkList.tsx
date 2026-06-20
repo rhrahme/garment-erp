@@ -9,6 +9,7 @@ import {
   type ReceivingCutTableRow,
 } from "@/components/orders/SalesOrderReceivingCutTable";
 import { ScanStageLegend } from "@/components/production/ScanStageLegend";
+import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
 import {
   FABRIC_PREP_TYPES,
   completeFabricPrepActionLabel,
@@ -371,7 +372,19 @@ export function FabricReceivingWorkList({
     return [...pinned, ...rest];
   }, [overview, tab, search, highlightCutCodes]);
 
+  const swatchFabrics = useMemo(
+    () =>
+      (overview?.orders ?? []).flatMap((order) =>
+        order.lines.map((line) => ({
+          supplier_id: line.supplier_id,
+          fabric_number: line.fabric_number,
+        }))
+      ),
+    [overview]
+  );
+
   return (
+    <FabricSwatchProvider fabrics={swatchFabrics}>
     <section className="rounded-xl border border-slate-200 bg-white">
       <div className="border-b border-slate-100 px-5 py-4">
         <h2 className="text-lg font-semibold text-slate-900">Work list</h2>
@@ -461,5 +474,6 @@ export function FabricReceivingWorkList({
         </div>
       )}
     </section>
+    </FabricSwatchProvider>
   );
 }

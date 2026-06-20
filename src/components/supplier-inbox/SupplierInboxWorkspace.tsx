@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Inbox, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
+import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
 import { StatusBadge } from "@/components/ui/PageHeader";
 import type { SupplierReplyRecord, SupplierLineUpdate } from "@/lib/integrations/supplier-reply-store";
 import type { SupplierAvailabilityAlert } from "@/lib/integrations/supplier-availability-store";
@@ -72,7 +74,14 @@ function AvailabilityAlertCard({
     <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-mono text-base font-semibold text-amber-950">{alert.fabric_number}</p>
+          <p className="text-base font-semibold text-amber-950">
+            <FabricNumberWithSwatch
+              supplierId={alert.supplier_id ?? ""}
+              fabricNumber={alert.fabric_number}
+              highlight
+              numberClassName="text-base font-semibold text-amber-950"
+            />
+          </p>
           <p className="mt-1 text-sm text-amber-900">
             {alert.supplier_name ?? alert.supplier_id ?? "Supplier"} · {lineUpdateLabel(alert.status)}
           </p>
@@ -81,7 +90,12 @@ function AvailabilityAlertCard({
           )}
           {alert.substitute_fabric_number && (
             <p className="mt-1 text-sm text-amber-800">
-              Suggested replacement: <span className="font-mono">{alert.substitute_fabric_number}</span>
+              Suggested replacement:{" "}
+              <FabricNumberWithSwatch
+                supplierId={alert.supplier_id ?? ""}
+                fabricNumber={alert.substitute_fabric_number}
+                numberClassName="text-sm text-amber-800"
+              />
             </p>
           )}
           {alert.po_number && (
@@ -210,7 +224,30 @@ export function SupplierInboxWorkspace() {
   const withInvoices = replies.filter((reply) => (reply.invoice_numbers?.length ?? 0) > 0);
   const withAvailability = replies.filter((reply) => (reply.line_updates?.length ?? 0) > 0);
 
+  const swatchFabrics = useMemo(() => {
+    const keys: { supplier_id: string; fabric_number: string }[] = [];
+    for (const alert of alerts) {
+      if (alert.supplier_id && alert.fabric_number) {
+        keys.push({ supplier_id: alert.supplier_id, fabric_number: alert.fabric_number });
+      }
+      if (alert.supplier_id && alert.substitute_fabric_number) {
+        keys.push({ supplier_id: alert.supplier_id, fabric_number: alert.substitute_fabric_number });
+      }
+    }
+    for (const reply of replies) {
+      if (!reply.supplier_id) continue;
+      for (const update of reply.line_updates ?? []) {
+        keys.push({ supplier_id: reply.supplier_id, fabric_number: update.fabric_number });
+        if (update.substitute_fabric_number) {
+          keys.push({ supplier_id: reply.supplier_id, fabric_number: update.substitute_fabric_number });
+        }
+      }
+    }
+    return keys;
+  }, [alerts, replies]);
+
   return (
+    <FabricSwatchProvider fabrics={swatchFabrics}>
     <div className="space-y-8">
       <div className="rounded-xl border border-slate-200 bg-white p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -369,14 +406,26 @@ export function SupplierInboxWorkspace() {
                   <ul className="mt-2 space-y-2">
                     {reply.line_updates!.map((update) => (
                       <li key={`${reply.id}-${update.fabric_number}`} className="rounded border border-amber-100 bg-white px-3 py-2">
-                        <p className="font-mono font-semibold text-amber-950">{update.fabric_number}</p>
+                        <p className="text-amber-950">
+                          <FabricNumberWithSwatch
+                            supplierId={reply.supplier_id ?? ""}
+                            fabricNumber={update.fabric_number}
+                            highlight
+                            numberClassName="font-semibold text-amber-950"
+                          />
+                        </p>
                         <p className="text-xs text-amber-900">{lineUpdateLabel(update.status)}</p>
                         {update.restock_date && (
                           <p className="text-xs text-amber-800">Available from {formatDate(update.restock_date)}</p>
                         )}
                         {update.substitute_fabric_number && (
                           <p className="text-xs text-amber-800">
-                            Suggested replacement: {update.substitute_fabric_number}
+                            Suggested replacement:{" "}
+                            <FabricNumberWithSwatch
+                              supplierId={reply.supplier_id ?? ""}
+                              fabricNumber={update.substitute_fabric_number}
+                              numberClassName="text-xs text-amber-800"
+                            />
                           </p>
                         )}
                         {update.note && <p className="mt-1 text-xs text-slate-600">{update.note}</p>}
@@ -428,5 +477,6 @@ export function SupplierInboxWorkspace() {
         </div>
       )}
     </div>
+    </FabricSwatchProvider>
   );
 }

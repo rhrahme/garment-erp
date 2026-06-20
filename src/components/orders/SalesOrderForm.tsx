@@ -43,6 +43,8 @@ import {
   FabricStockBadge,
   lineNeedsAvailabilityAttention,
 } from "@/components/fabric/FabricStockBadge";
+import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
+import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
 import {
   applyFabricOrderContinuePick,
   buildFabricOrderContinueOptions,
@@ -798,6 +800,20 @@ export function SalesOrderForm({
     return groups;
   }, [lines]);
 
+  const swatchFabrics = useMemo(() => {
+    const keys = lines.map((line) => ({
+      supplier_id: line.supplier_id,
+      fabric_number: line.fabric_number,
+    }));
+    if (pendingFabric) {
+      keys.push({
+        supplier_id: pendingFabric.supplier_id,
+        fabric_number: pendingFabric.fabric_number,
+      });
+    }
+    return keys;
+  }, [lines, pendingFabric]);
+
   const readyDrafts = useMemo(
     () => clientDrafts.filter((draft) => draft.clientId && draft.lines.length > 0),
     [clientDrafts]
@@ -1518,6 +1534,7 @@ export function SalesOrderForm({
         </div>
       </div>
 
+      <FabricSwatchProvider fabrics={swatchFabrics}>
       <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6 space-y-5">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Fabrics for this order</h2>
@@ -1589,9 +1606,14 @@ export function SalesOrderForm({
                     <div className="mt-3 space-y-4">
                       <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
                         <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Selected fabric</p>
-                        <p className="mt-1 font-mono font-medium text-slate-900">
-                          {pendingFabric.fabric_number}
-                          <FabricStockBadge fabric={pendingFabric} />
+                        <p className="mt-1 text-sm text-slate-900">
+                          <FabricNumberWithSwatch
+                            supplierId={pendingFabric.supplier_id}
+                            fabricNumber={pendingFabric.fabric_number}
+                            highlight={isFabricUnavailable(pendingFabric.stock_status)}
+                          >
+                            <FabricStockBadge fabric={pendingFabric} />
+                          </FabricNumberWithSwatch>
                         </p>
                         <p className="mt-0.5 text-xs text-slate-500">{selectedFabricBrand.name}</p>
                       </div>
@@ -1910,15 +1932,20 @@ export function SalesOrderForm({
                           </td>
                         ) : (
                           <>
-                        <td className="px-3 py-2 font-mono font-medium text-slate-900">
-                          {line.fabric_number}
-                          <FabricStockBadge fabric={line} />
-                          <FabricReplacementBadge needsReplacement={line.needs_replacement} />
-                          {line.manual ? (
-                            <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-sans font-medium uppercase tracking-wide text-amber-800">
-                              Manual
-                            </span>
-                          ) : null}
+                        <td className="px-3 py-2 text-slate-900">
+                          <FabricNumberWithSwatch
+                            supplierId={line.supplier_id}
+                            fabricNumber={line.fabric_number}
+                            highlight={lineNeedsAvailabilityAttention(line)}
+                          >
+                            <FabricStockBadge fabric={line} />
+                            <FabricReplacementBadge needsReplacement={line.needs_replacement} />
+                            {line.manual ? (
+                              <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-sans font-medium uppercase tracking-wide text-amber-800">
+                                Manual
+                              </span>
+                            ) : null}
+                          </FabricNumberWithSwatch>
                         </td>
                         <td className="px-3 py-2 text-slate-600">{line.garment_type}</td>
                         <td className="px-3 py-2 text-slate-600">{resolveFabricLineLabelCount(line)}</td>
@@ -1985,6 +2012,7 @@ export function SalesOrderForm({
           </p>
         )}
       </div>
+      </FabricSwatchProvider>
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <Button variant="secondary" className="min-h-[44px] w-full sm:w-auto" onClick={() => router.push(redirectBasePath)}>

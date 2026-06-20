@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { DataTable } from "@/components/ui/PageHeader";
 import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
+import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
+import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
 import type { Supplier, SupplierFabric } from "@/lib/types/fabric-sourcing";
 
 interface PriceListTableProps {
@@ -32,7 +34,17 @@ export function PriceListTable({ suppliers, items }: PriceListTableProps) {
 
   const display = filtered.slice(0, 100);
 
+  const swatchFabrics = useMemo(
+    () =>
+      display.map((f) => ({
+        supplier_id: f.supplier_id,
+        fabric_number: f.fabric_number,
+      })),
+    [display]
+  );
+
   return (
+    <FabricSwatchProvider fabrics={swatchFabrics}>
     <div>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
         <select
@@ -62,6 +74,7 @@ export function PriceListTable({ suppliers, items }: PriceListTableProps) {
 
       <DataTable
         columns={[
+          { key: "preview", label: "" },
           { key: "supplier", label: "Supplier" },
           { key: "fabricNo", label: "Fabric No." },
           { key: "composition", label: "Composition" },
@@ -71,6 +84,13 @@ export function PriceListTable({ suppliers, items }: PriceListTableProps) {
           { key: "price", label: "List price" },
         ]}
         rows={display.map((f) => ({
+          preview: (
+            <FabricSwatchPreview
+              supplierId={f.supplier_id}
+              fabricNumber={f.fabric_number}
+              highlight={f.stock_status != null && f.stock_status !== "in_stock"}
+            />
+          ),
           supplier: f.supplier?.name ?? "—",
           fabricNo: <span className="font-mono font-medium">{f.fabric_number}</span>,
           composition: <span className="text-xs">{f.composition ?? "—"}</span>,
@@ -87,5 +107,6 @@ export function PriceListTable({ suppliers, items }: PriceListTableProps) {
         emptyMessage="No fabrics match your search."
       />
     </div>
+    </FabricSwatchProvider>
   );
 }

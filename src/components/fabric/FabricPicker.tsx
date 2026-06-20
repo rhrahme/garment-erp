@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
+import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
 import { formatSupplierUnitPrice } from "@/lib/currency/format";
 import { formatFabricStockLabel } from "@/lib/fabric-sourcing/fabric-stock";
@@ -85,6 +87,15 @@ export function FabricPicker({
       clearTimeout(timer);
     };
   }, [open, supplierId, value]);
+
+  const swatchFabrics = useMemo(
+    () =>
+      fabrics.map((item) => ({
+        supplier_id: item.supplier_id,
+        fabric_number: item.fabric_number,
+      })),
+    [fabrics]
+  );
 
   useEffect(() => {
     setFabrics([]);
@@ -231,6 +242,7 @@ export function FabricPicker({
               )}
             </div>
           ) : (
+            <FabricSwatchProvider fabrics={swatchFabrics}>
             <>
               <p className="border-b border-slate-100 px-4 py-2 text-xs text-slate-400">
                 {value.trim()
@@ -249,10 +261,17 @@ export function FabricPicker({
                           onChange(item.fabric_number);
                           setOpen(false);
                         }}
-                        className={`flex w-full flex-col gap-0.5 border-b border-slate-100 px-4 py-3 text-left hover:bg-slate-50 last:border-0 ${
+                        className={`flex w-full items-start gap-2 border-b border-slate-100 px-4 py-3 text-left hover:bg-slate-50 last:border-0 ${
                           soldOut ? "bg-red-50/40" : ""
                         }`}
                       >
+                        <FabricSwatchPreview
+                          supplierId={item.supplier_id}
+                          fabricNumber={item.fabric_number}
+                          highlight={soldOut || item.stock_status === "temp_unavailable"}
+                          className="mt-0.5"
+                        />
+                        <span className="min-w-0 flex-1">
                         <span className="font-mono font-medium text-slate-900">
                           {item.fabric_number}
                           {item.manual ? (
@@ -274,6 +293,7 @@ export function FabricPicker({
                                 .filter(Boolean)
                                 .join(" · ")}
                         </span>
+                        </span>
                       </button>
                     </li>
                   );
@@ -288,6 +308,7 @@ export function FabricPicker({
                 </div>
               )}
             </>
+            </FabricSwatchProvider>
           )}
         </div>
       )}

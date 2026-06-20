@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { EmailPreview } from "@/components/purchasing/EmailPreview";
 import { Button } from "@/components/ui/Button";
 import { FabricStockBadge } from "@/components/fabric/FabricStockBadge";
+import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
+import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
 import { formatFabricStockLabel } from "@/lib/fabric-sourcing/fabric-stock";
 import { purchaseOrderToEmail } from "@/lib/fabric-sourcing/email-content";
 import type { PurchaseOrder, SupplierFabric } from "@/lib/types/fabric-sourcing";
@@ -62,6 +64,19 @@ export function FabricPosReview({ salesOrderId }: FabricPosReviewProps) {
     void load();
   }, [load]);
 
+  const swatchFabrics = useMemo(() => {
+    const keys: { supplier_id: string; fabric_number: string }[] = [];
+    for (const po of fabricOrders) {
+      for (const line of po.lines ?? []) {
+        keys.push({ supplier_id: po.supplier_id, fabric_number: line.fabric_number });
+        if (line.substitute_fabric_number) {
+          keys.push({ supplier_id: po.supplier_id, fabric_number: line.substitute_fabric_number });
+        }
+      }
+    }
+    return keys;
+  }, [fabricOrders]);
+
   async function handleSent(poId: string, result: { emailedAt: string; emailTo: string }) {
     await fetch(`/api/fabric-orders/${poId}`, {
       method: "PATCH",
@@ -88,6 +103,7 @@ export function FabricPosReview({ salesOrderId }: FabricPosReviewProps) {
   if (!salesOrder) return null;
 
   return (
+    <FabricSwatchProvider fabrics={swatchFabrics}>
     <div className="space-y-8">
       <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-4 text-sm text-indigo-900">
         <p className="font-medium">
@@ -151,8 +167,13 @@ export function FabricPosReview({ salesOrderId }: FabricPosReviewProps) {
                         line.stock_status && line.stock_status !== "in_stock" ? "text-amber-950" : "text-slate-700"
                       }`}
                     >
-                      <span className="font-mono font-medium">{line.fabric_number}</span>
-                      <FabricStockBadge fabric={line} />
+                      <FabricNumberWithSwatch
+                        supplierId={po.supplier_id}
+                        fabricNumber={line.fabric_number}
+                        highlight={Boolean(line.stock_status && line.stock_status !== "in_stock")}
+                      >
+                        <FabricStockBadge fabric={line} />
+                      </FabricNumberWithSwatch>
                       <span className="text-slate-500">
                         {line.quantity_ordered} m
                       </span>
@@ -160,8 +181,13 @@ export function FabricPosReview({ salesOrderId }: FabricPosReviewProps) {
                         <span className="text-xs text-amber-800">{formatFabricStockLabel(line)}</span>
                       )}
                       {line.substitute_fabric_number && (
-                        <span className="text-xs text-violet-800">
-                          Substitute: {line.substitute_fabric_number}
+                        <span className="inline-flex items-center gap-1 text-xs text-violet-800">
+                          Substitute:{" "}
+                          <FabricNumberWithSwatch
+                            supplierId={po.supplier_id}
+                            fabricNumber={line.substitute_fabric_number}
+                            numberClassName="text-xs text-violet-800"
+                          />
                         </span>
                       )}
                     </li>
@@ -181,5 +207,6 @@ export function FabricPosReview({ salesOrderId }: FabricPosReviewProps) {
         })
       )}
     </div>
+    </FabricSwatchProvider>
   );
 }

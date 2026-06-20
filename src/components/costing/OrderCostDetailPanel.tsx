@@ -1,4 +1,9 @@
+"use client";
+
+import { useMemo } from "react";
 import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
+import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
+import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
 import { getSupplierPriceCurrency, toSar } from "@/lib/currency/config";
 import type { FabricLineCost, SalesOrderCost } from "@/lib/costing/compute";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -38,7 +43,9 @@ function FabricLineRow({ line }: { line: FabricLineCost }) {
   return (
     <tr className="border-b border-slate-100 align-top">
       <td className="px-3 py-3 text-center font-semibold text-slate-900">{formatArticle(line.article_number)}</td>
-      <td className="px-3 py-3 font-mono font-medium text-slate-900">{line.fabric_number}</td>
+      <td className="px-3 py-3 text-slate-900">
+        <FabricNumberWithSwatch supplierId={line.supplier_id} fabricNumber={line.fabric_number} />
+      </td>
       <td className="px-3 py-3 text-slate-700">{line.supplier_name}</td>
       <td className="px-3 py-3 text-slate-800">{line.garment_type}</td>
       <td className="px-3 py-3 text-slate-600">{line.composition ?? "—"}</td>
@@ -69,12 +76,22 @@ function FabricLineRow({ line }: { line: FabricLineCost }) {
 }
 
 export function OrderCostDetailPanel({ order }: { order: SalesOrderCost }) {
+  const swatchFabrics = useMemo(
+    () =>
+      order.lines.map((line) => ({
+        supplier_id: line.supplier_id,
+        fabric_number: line.fabric_number,
+      })),
+    [order.lines]
+  );
+
   const supplierFabricTotal = order.lines.reduce((sum, line) => {
     if (line.supplier_line_total == null) return sum;
     return sum + toSar(line.supplier_line_total, getSupplierPriceCurrency(line.supplier_id));
   }, 0);
 
   return (
+    <FabricSwatchProvider fabrics={swatchFabrics}>
     <div className="border-t border-indigo-100 bg-indigo-50/40 px-4 py-4">
       <div className="mb-4">
         <p className="text-sm font-semibold text-slate-900">
@@ -154,5 +171,6 @@ export function OrderCostDetailPanel({ order }: { order: SalesOrderCost }) {
         </table>
       </div>
     </div>
+    </FabricSwatchProvider>
   );
 }

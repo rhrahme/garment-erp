@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/Button";
 import { FabricPicker } from "@/components/fabric/FabricPicker";
 import { MetersInput } from "@/components/orders/MetersInput";
 import { FabricStockBadge } from "@/components/fabric/FabricStockBadge";
+import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
+import { isFabricUnavailable } from "@/lib/fabric-sourcing/fabric-stock";
 import { fabricBrandAllowsManualEntry } from "@/lib/fabric-sourcing/supplier-display";
 import { resolveFabricItem } from "@/lib/fabric-sourcing/resolve-fabric-item";
 import { FactoryLabelsField } from "@/components/orders/FactoryLabelsField";
@@ -231,9 +233,14 @@ export function OrderFabricLineEditor({
 
       {pendingFabric && (
         <div className="mt-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm">
-          <p className="font-mono font-medium text-slate-900">
-            {pendingFabric.fabric_number}
-            <FabricStockBadge fabric={pendingFabric} />
+          <p className="text-sm text-slate-900">
+            <FabricNumberWithSwatch
+              supplierId={pendingFabric.supplier_id}
+              fabricNumber={pendingFabric.fabric_number}
+              highlight={isFabricUnavailable(pendingFabric.stock_status)}
+            >
+              <FabricStockBadge fabric={pendingFabric} />
+            </FabricNumberWithSwatch>
           </p>
         </div>
       )}
