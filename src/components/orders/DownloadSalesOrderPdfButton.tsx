@@ -10,12 +10,14 @@ export function DownloadSalesOrderPdfButton({
   variant = "secondary",
   size = "md",
   compact = false,
+  label = "Download PDF",
 }: {
   orderId: string;
   soNumber: string;
   variant?: "primary" | "secondary" | "ghost";
   size?: "sm" | "md";
   compact?: boolean;
+  label?: string;
 }) {
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export function DownloadSalesOrderPdfButton({
         aria-label={downloading ? "Downloading PDF" : "Download PDF"}
       >
         <FileDown className="h-4 w-4 shrink-0" />
-        {compact ? null : downloading ? "Downloading…" : "Download PDF"}
+        {compact ? null : downloading ? "Downloading…" : label}
       </Button>
       {error ? <span className="text-xs text-red-600">{error}</span> : null}
     </div>

@@ -183,15 +183,18 @@ export function FabricOrdersList({
               <th className="px-4 py-3">Order Date</th>
               <th className="px-4 py-3">Fabric order</th>
               <th className="px-4 py-3">Status</th>
+              <th className="sticky right-[5.5rem] z-10 bg-slate-50 px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.15)]">
+                Download
+              </th>
               <th className="sticky right-0 z-10 bg-slate-50 px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.15)]">
-                Actions
+                Open
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={10} className="px-4 py-10 text-center text-slate-500">
                   {hasActiveFilters
                     ? searching
                       ? "No fabric orders match your search."
@@ -239,21 +242,22 @@ export function FabricOrdersList({
                   <td className="px-4 py-3">
                     <StatusBadge status={order.status} />
                   </td>
+                  <td className={`sticky right-[5.5rem] z-10 px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.15)] ${rowBg}`}>
+                    <DownloadSalesOrderPdfButton
+                      orderId={order.id}
+                      soNumber={order.so_number}
+                      variant="secondary"
+                      size="sm"
+                      label="Download"
+                    />
+                  </td>
                   <td className={`sticky right-0 z-10 px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.15)] ${rowBg}`}>
-                    <div className="flex min-w-[11rem] items-center gap-2">
-                      <DownloadSalesOrderPdfButton
-                        orderId={order.id}
-                        soNumber={order.so_number}
-                        variant="secondary"
-                        size="sm"
-                      />
-                      <Link
-                        href={`/fabric-orders/${order.id}`}
-                        className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
-                      >
-                        Open →
-                      </Link>
-                    </div>
+                    <Link
+                      href={`/fabric-orders/${order.id}`}
+                      className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                    >
+                      Open →
+                    </Link>
                   </td>
                 </tr>
               );

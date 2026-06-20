@@ -170,13 +170,14 @@ export function OrdersList({
               <th className="px-4 py-3">Order Date</th>
               <th className="px-4 py-3">Delivery</th>
               <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Actions</th>
+              <th className="px-4 py-3">Download</th>
+              <th className="px-4 py-3">Open</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={productionMode ? 9 : 8} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={productionMode ? 10 : 9} className="px-4 py-10 text-center text-slate-500">
                   {hasActiveFilters
                     ? "No orders match your search."
                     : view === "archived"
@@ -220,17 +221,18 @@ export function OrdersList({
                     <StatusBadge status={order.status} />
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <DownloadSalesOrderPdfButton
-                        orderId={order.id}
-                        soNumber={order.so_number}
-                        variant="secondary"
-                        size="sm"
-                      />
-                      <Link href={`/orders/${order.id}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
-                        Open →
-                      </Link>
-                    </div>
+                    <DownloadSalesOrderPdfButton
+                      orderId={order.id}
+                      soNumber={order.so_number}
+                      variant="secondary"
+                      size="sm"
+                      label="Download"
+                    />
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link href={`/orders/${order.id}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+                      Open →
+                    </Link>
                   </td>
                 </tr>
               ))
