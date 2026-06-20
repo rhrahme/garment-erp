@@ -9,10 +9,12 @@ import { FabricStockBadge } from "@/components/fabric/FabricStockBadge";
 import { formatFabricStockLabel, isFabricUnavailable } from "@/lib/fabric-sourcing/fabric-stock";
 import { fabricBrandAllowsManualEntry } from "@/lib/fabric-sourcing/supplier-display";
 import { resolveFabricItem } from "@/lib/fabric-sourcing/resolve-fabric-item";
-import { GARMENT_STITCH_TYPES, getLabelCountForGarment } from "@/lib/sales-orders/garment-types";
+import { FactoryLabelsField } from "@/components/orders/FactoryLabelsField";
+import { GARMENT_STITCH_TYPES } from "@/lib/sales-orders/garment-types";
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
 import { MetersInput } from "@/components/orders/MetersInput";
 import { parseDecimalInput } from "@/lib/utils/decimal-input";
+import type { SalesOrder } from "@/lib/types/sales-orders";
 
 type FabricBrand = { id: string; name: string; has_price_list?: boolean };
 
@@ -214,7 +216,7 @@ export function ProductionOrderAddFabrics({
                 </div>
               )}
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <label className="block text-sm">
                   <span className="font-medium text-slate-700">Garment to stitch</span>
                   <select
@@ -229,13 +231,8 @@ export function ProductionOrderAddFabrics({
                       </option>
                     ))}
                   </select>
-                  {garmentType && (
-                    <p className="mt-1 text-xs text-slate-500">
-                      {getLabelCountForGarment(garmentType)} factory label
-                      {getLabelCountForGarment(garmentType) === 1 ? "" : "s"} — auto from garment type
-                    </p>
-                  )}
                 </label>
+                <FactoryLabelsField garmentType={garmentType} />
                 <label className="block text-sm">
                   <span className="font-medium text-slate-700">Meters</span>
                   <MetersInput

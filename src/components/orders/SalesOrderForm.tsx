@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { FabricPicker } from "@/components/fabric/FabricPicker";
+import { FactoryLabelsField } from "@/components/orders/FactoryLabelsField";
 import { MetersInput } from "@/components/orders/MetersInput";
 import { SalesOrderFabricLineCards } from "@/components/orders/SalesOrderFabricLineCards";
 import { Button } from "@/components/ui/Button";
@@ -13,6 +14,7 @@ import {
   getLabelCountForGarment,
   getMinLabelCountForGarment,
 } from "@/lib/sales-orders/garment-types";
+import { resolveFabricLineLabelCount } from "@/lib/sales-orders/label-display";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { ClientSearchSelect } from "@/components/clients/ClientSearchSelect";
 import { filterPersonClients } from "@/lib/clients/filter";
@@ -200,9 +202,11 @@ export function SalesOrderForm({
   }
 
   function patchActiveFabricAdd(patch: Partial<FabricAddClientEntry>) {
-    if (!activeFabricAddId) return;
+    const targetId = activeFabricAddId || fabricAddEntries[0]?.id;
+    if (!targetId) return;
+    if (!activeFabricAddId) setActiveFabricAddId(targetId);
     setFabricAddEntries((prev) =>
-      prev.map((entry) => (entry.id === activeFabricAddId ? { ...entry, ...patch } : entry))
+      prev.map((entry) => (entry.id === targetId ? { ...entry, ...patch } : entry))
     );
   }
 
@@ -257,8 +261,20 @@ export function SalesOrderForm({
       if (!draft || isSalesOrderDraftEmpty(draft)) return;
       skipClientResetRef.current = true;
       setProductionBrandId(draft.productionBrandId);
-      const restoredDrafts =
-        draft.clientDrafts.length > 0 ? draft.clientDrafts : [createClientDraft()];
+      const restoredDrafts = (draft.clientDrafts.length > 0 ? draft.clientDrafts : [createClientDraft()]).map(
+        (clientDraft) => ({
+          ...clientDraft,
+          lines: clientDraft.lines.map((line) => ({
+            ...line,
+            label_count:
+              line.label_count != null
+                ? line.label_count
+                : line.garment_type
+                  ? getLabelCountForGarment(line.garment_type)
+                  : 1,
+          })),
+        })
+      );
       setClientDrafts(restoredDrafts);
       setActiveDraftId(
         restoredDrafts.some((entry) => entry.id === draft.activeClientDraftId)
@@ -978,7 +994,7 @@ export function SalesOrderForm({
     setLineEditForm({
       fabric_number: line.fabric_number,
       garment_type: line.garment_type,
-      label_count: String(line.label_count),
+      label_count: String(resolveFabricLineLabelCount(line)),
       meters: line.meters,
     });
     setError(null);
@@ -1649,7 +1665,7 @@ export function SalesOrderForm({
                             />
                           </label>
 
-                          <div className="grid gap-4 sm:grid-cols-2">
+                          <div className="grid gap-4 sm:grid-cols-3">
                             <label className="block text-sm">
                               <span className="font-medium text-slate-700">Garment to stitch</span>
                               <select
@@ -1672,14 +1688,11 @@ export function SalesOrderForm({
                                   </option>
                                 ))}
                               </select>
-                              {activeFabricAdd.garmentType ? (
-                                <span className="mt-1 block text-xs text-slate-500">
-                                  {getLabelCountForGarment(activeFabricAdd.garmentType)} factory label
-                                  {getLabelCountForGarment(activeFabricAdd.garmentType) === 1 ? "" : "s"} — auto
-                                  from garment type
-                                </span>
-                              ) : null}
                             </label>
+                            <FactoryLabelsField
+                              garmentType={activeFabricAdd.garmentType}
+                              valueClassName="py-2.5 text-base sm:text-sm"
+                            />
                             <label className="block text-sm">
                               <span className="font-medium text-slate-700">Meters to order</span>
                               <MetersInput
@@ -1908,7 +1921,7 @@ export function SalesOrderForm({
                           ) : null}
                         </td>
                         <td className="px-3 py-2 text-slate-600">{line.garment_type}</td>
-                        <td className="px-3 py-2 text-slate-600">{line.label_count}</td>
+                        <td className="px-3 py-2 text-slate-600">{resolveFabricLineLabelCount(line)}</td>
                         <td className="px-3 py-2 text-slate-600">{line.composition ?? "—"}</td>
                         <td className="px-3 py-2 text-slate-600">{formatWeight(line.weight_gsm)}</td>
                         <td className="px-3 py-2 text-slate-600">{formatWidth(line)}</td>

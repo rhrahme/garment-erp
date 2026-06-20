@@ -8,9 +8,11 @@ import { MetersInput } from "@/components/orders/MetersInput";
 import { FabricStockBadge } from "@/components/fabric/FabricStockBadge";
 import { fabricBrandAllowsManualEntry } from "@/lib/fabric-sourcing/supplier-display";
 import { resolveFabricItem } from "@/lib/fabric-sourcing/resolve-fabric-item";
-import { GARMENT_STITCH_TYPES, getLabelCountForGarment } from "@/lib/sales-orders/garment-types";
+import { FactoryLabelsField } from "@/components/orders/FactoryLabelsField";
+import { GARMENT_STITCH_TYPES } from "@/lib/sales-orders/garment-types";
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
 import { parseDecimalInput } from "@/lib/utils/decimal-input";
+import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
 type FabricBrand = { id: string; name: string; has_price_list?: boolean };
 
@@ -159,7 +161,7 @@ export function OrderFabricLineEditor({
         </div>
       )}
 
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
         <label className="block text-sm sm:col-span-2">
           <span className="font-medium text-slate-700">Fabric brand</span>
           <select
@@ -213,13 +215,9 @@ export function OrderFabricLineEditor({
               </option>
             ))}
           </select>
-          {garmentType && (
-            <p className="mt-1 text-xs text-slate-500">
-              {getLabelCountForGarment(garmentType)} factory label
-              {getLabelCountForGarment(garmentType) === 1 ? "" : "s"} — auto from garment type
-            </p>
-          )}
         </label>
+
+        <FactoryLabelsField garmentType={garmentType} />
 
         <label className="block text-sm">
           <span className="font-medium text-slate-700">Meters</span>

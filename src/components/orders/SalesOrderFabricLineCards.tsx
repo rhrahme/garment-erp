@@ -14,7 +14,7 @@ import {
   getLabelCountForGarment,
   getMinLabelCountForGarment,
 } from "@/lib/sales-orders/garment-types";
-import { isFabricUnavailable } from "@/lib/fabric-sourcing/fabric-stock";
+import { resolveFabricLineLabelCount } from "@/lib/sales-orders/label-display";
 import type { SalesOrderLineDraft } from "@/lib/autosave/sales-order-draft";
 
 type LineEditForm = {
@@ -216,7 +216,7 @@ export function SalesOrderFabricLineCards({
             <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
               <div>
                 <dt className="text-xs text-slate-500">Labels</dt>
-                <dd className="font-medium text-slate-800">{line.label_count}</dd>
+                <dd className="font-medium text-slate-800">{resolveFabricLineLabelCount(line)}</dd>
               </div>
               <div>
                 <dt className="text-xs text-slate-500">Weight</dt>
