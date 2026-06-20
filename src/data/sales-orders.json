@@ -1,6 +1,192 @@
 {
   "orders": [
     {
+      "id": "so-1781953079630",
+      "notes": null,
+      "status": "open",
+      "client_id": "new-1780850106220",
+      "so_number": "SO-2026-0110",
+      "order_date": "2026-06-20",
+      "client_code": "GL-0626-0011",
+      "client_name": "Michari Al Kadhi",
+      "fabric_lines": [
+        {
+          "id": "line-1781953079629-0",
+          "unit": "meters",
+          "color": null,
+          "added_at": "2026-06-20T10:57:59.629Z",
+          "added_by": "hagan.qc@gmail.com",
+          "quantity": 3,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": null,
+          "label_count": 2,
+          "supplier_id": "canclini",
+          "garment_type": "Suit",
+          "restock_date": null,
+          "stock_status": null,
+          "width_inches": null,
+          "a4_printed_at": null,
+          "fabric_number": "10005.169/22",
+          "supplier_name": "Canclini",
+          "label_stickers": [
+            {
+              "code": "GL-0626-0011-SO-2026-0110-L01-JKT",
+              "sequence": 1,
+              "piece_name": "Jacket"
+            },
+            {
+              "code": "GL-0626-0011-SO-2026-0110-L01-TR",
+              "sequence": 2,
+              "piece_name": "Trouser"
+            }
+          ],
+          "needs_replacement": false,
+          "prep_stickers_printed_at": null,
+          "prod_stickers_printed_at": null,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781953079630-1",
+          "unit": "meters",
+          "color": null,
+          "added_at": "2026-06-20T10:57:59.630Z",
+          "added_by": "hagan.qc@gmail.com",
+          "quantity": 3,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": null,
+          "label_count": 2,
+          "supplier_id": "canclini",
+          "garment_type": "Suit",
+          "restock_date": null,
+          "stock_status": null,
+          "width_inches": null,
+          "a4_printed_at": null,
+          "fabric_number": "1005.043/2",
+          "supplier_name": "Canclini",
+          "label_stickers": [
+            {
+              "code": "GL-0626-0011-SO-2026-0110-L02-JKT",
+              "sequence": 1,
+              "piece_name": "Jacket"
+            },
+            {
+              "code": "GL-0626-0011-SO-2026-0110-L02-TR",
+              "sequence": 2,
+              "piece_name": "Trouser"
+            }
+          ],
+          "needs_replacement": false,
+          "prep_stickers_printed_at": null,
+          "prod_stickers_printed_at": null,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781953079630-2",
+          "unit": "meters",
+          "color": null,
+          "added_at": "2026-06-20T10:57:59.630Z",
+          "added_by": "hagan.qc@gmail.com",
+          "quantity": 1.5,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": "Cotton shirting",
+          "label_count": 1,
+          "supplier_id": "canclini",
+          "garment_type": "Shirt LS",
+          "restock_date": null,
+          "stock_status": "in_stock",
+          "width_inches": null,
+          "a4_printed_at": null,
+          "fabric_number": "1415541-1",
+          "supplier_name": "Canclini",
+          "label_stickers": [
+            {
+              "code": "GL-0626-0011-SO-2026-0110-L03-SHT-LS",
+              "sequence": 1,
+              "piece_name": "Shirt LS"
+            }
+          ],
+          "needs_replacement": false,
+          "prep_stickers_printed_at": null,
+          "prod_stickers_printed_at": null,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781953079630-3",
+          "unit": "meters",
+          "color": null,
+          "added_at": "2026-06-20T10:57:59.630Z",
+          "added_by": "hagan.qc@gmail.com",
+          "quantity": 1.5,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": "Cotton shirting",
+          "label_count": 1,
+          "supplier_id": "canclini",
+          "garment_type": "Shirt LS",
+          "restock_date": null,
+          "stock_status": "in_stock",
+          "width_inches": null,
+          "a4_printed_at": null,
+          "fabric_number": "1415541-4",
+          "supplier_name": "Canclini",
+          "label_stickers": [
+            {
+              "code": "GL-0626-0011-SO-2026-0110-L04-SHT-LS",
+              "sequence": 1,
+              "piece_name": "Shirt LS"
+            }
+          ],
+          "needs_replacement": false,
+          "prep_stickers_printed_at": null,
+          "prod_stickers_printed_at": null,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781953079630-4",
+          "unit": "meters",
+          "color": null,
+          "added_at": "2026-06-20T10:57:59.630Z",
+          "added_by": "hagan.qc@gmail.com",
+          "quantity": 1.5,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": "Cotton shirting",
+          "label_count": 1,
+          "supplier_id": "canclini",
+          "garment_type": "Shirt LS",
+          "restock_date": null,
+          "stock_status": "in_stock",
+          "width_inches": null,
+          "a4_printed_at": null,
+          "fabric_number": "1415541-2",
+          "supplier_name": "Canclini",
+          "label_stickers": [
+            {
+              "code": "GL-0626-0011-SO-2026-0110-L05-SHT-LS",
+              "sequence": 1,
+              "piece_name": "Shirt LS"
+            }
+          ],
+          "needs_replacement": false,
+          "prep_stickers_printed_at": null,
+          "prod_stickers_printed_at": null,
+          "replacement_fabric_number": null
+        }
+      ],
+      "delivery_date": null,
+      "fabric_po_ids": [],
+      "client_reference": "GL-0626-0011-SO-2026-0110",
+      "delivery_destination": "RUH"
+    },
+    {
       "id": "so-1781828734583",
       "notes": "Handwritten order (S.B = Stylbiella) — meters TBD on all lines.\n43401/619: suggest cotton shirt light beige.\n43293/160: Shirt+Trouser+Short (corrected from misread 43233/160).\n71493/052: Thobe + Jacket on paper — entered as Jacket.\n\nHandwritten order (Cacciop = Caccioppoli) — skipped GLC .323 and GLC .143 shirt lines.\n360215: Shirt+Trouser — 2 pockets up & side open (meters TBD).\n206225: Shirt+Trouser — Doctor, very long biceps, side shirt opening, upper pocket (meters TBD).\n350333: trouser fabric not in catalog (manual entry).\n\nHandwritten order (Loro Piana + Solbiati):\n781006: Suit — find matching Blue/Navy trouser fabric.\n722001, 722005: Shirt LS — wide collar.\nClient note: Find cotton shirt fabric light Brown series.\nS25032: Shirt+Trouser — 2 upper pockets & side open — not in SS26 catalog (manual).\nS13028: Shirt+Trouser — 2 upper pocket + side open.\nS23014: Shirt LS — the linen one (long sleeve).\n780037: Fabric only — Thobe + Jacket on paper (only fabric).\nS05007: Trouser — set with DP S0878 & find shirt.\nS05006: Trouser — set with DP S0803 & find shirt.\nS10008 + 722026: same line on paper — S10008 Shirt 2.2m // 722026 House Thobe.\n\nHandwritten order (Drapers / DP):\n50878 (paper S0878): Jacket — half or no lining. Set with Solbiati S05007 trouser.\n50803 (paper S0803): Jacket — half or no lining. Set with Solbiati S05006 trouser.",
       "status": "fabric_pos_created",
@@ -1329,7 +1515,7 @@
           "supplier_id": "loro-piana",
           "garment_type": "Overshirt",
           "restock_date": null,
-          "stock_status": "permanently_unavailable",
+          "stock_status": null,
           "width_inches": null,
           "a4_printed_at": null,
           "fabric_number": "781032",
@@ -1341,7 +1527,7 @@
               "piece_name": "Overshirt"
             }
           ],
-          "needs_replacement": true,
+          "needs_replacement": false,
           "prep_stickers_printed_at": null,
           "prod_stickers_printed_at": null,
           "replacement_fabric_number": null
@@ -1393,7 +1579,7 @@
           "supplier_id": "loro-piana",
           "garment_type": "Overshirt+Trouser",
           "restock_date": null,
-          "stock_status": "permanently_unavailable",
+          "stock_status": null,
           "width_inches": null,
           "a4_printed_at": null,
           "fabric_number": "S24031",
@@ -1410,7 +1596,7 @@
               "piece_name": "Trouser"
             }
           ],
-          "needs_replacement": true,
+          "needs_replacement": false,
           "prep_stickers_printed_at": null,
           "prod_stickers_printed_at": null,
           "replacement_fabric_number": null
@@ -1545,7 +1731,7 @@
           "supplier_id": "caccioppoli",
           "garment_type": "Shirt SS",
           "restock_date": null,
-          "stock_status": "permanently_unavailable",
+          "stock_status": null,
           "width_inches": null,
           "a4_printed_at": null,
           "fabric_number": "206210",
@@ -1557,7 +1743,7 @@
               "piece_name": "Shirt SS"
             }
           ],
-          "needs_replacement": true,
+          "needs_replacement": false,
           "prep_stickers_printed_at": null,
           "prod_stickers_printed_at": null,
           "replacement_fabric_number": null
@@ -5792,31 +5978,35 @@
         {
           "id": "line-cu-86exexf56-0",
           "unit": "meters",
-          "color": "Black",
-          "quantity": 1,
+          "color": null,
+          "quantity": 2.75,
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": null,
-          "composition": "Composition",
+          "composition": null,
           "label_count": 1,
-          "supplier_id": "gliani-stock",
+          "supplier_id": "canclini",
           "garment_type": "Overcoat",
+          "restock_date": null,
+          "stock_status": null,
           "width_inches": null,
           "fabric_number": "505050",
-          "supplier_name": "Gliani Stock",
+          "supplier_name": "Canclini",
           "label_stickers": [
             {
               "code": "FR-0426-0006-SO-2026-0008-L01-OC",
               "sequence": 1,
               "piece_name": "Overcoats"
             }
-          ]
+          ],
+          "needs_replacement": false,
+          "replacement_fabric_number": null
         },
         {
           "id": "line-cu-86exexf56-1",
           "unit": "meters",
           "color": "Brown",
-          "quantity": 1,
+          "quantity": 2.75,
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": 480,
@@ -5839,7 +6029,7 @@
           "id": "line-cu-86exexf56-2",
           "unit": "meters",
           "color": "Black",
-          "quantity": 1,
+          "quantity": 2.75,
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": 550,
@@ -5862,7 +6052,7 @@
           "id": "line-cu-86exexf56-3",
           "unit": "meters",
           "color": "Navy blue dark",
-          "quantity": 1,
+          "quantity": 2.75,
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": 550,
@@ -5882,56 +6072,10 @@
           ]
         },
         {
-          "id": "line-cu-86exexf56-4",
-          "unit": "meters",
-          "color": "Black",
-          "quantity": 1,
-          "width_cm": null,
-          "unit_price": 0,
-          "weight_gsm": 270,
-          "composition": "100% WS",
-          "label_count": 1,
-          "supplier_id": "zegna",
-          "garment_type": "Trouser",
-          "width_inches": null,
-          "fabric_number": "99216",
-          "supplier_name": "Zegna",
-          "label_stickers": [
-            {
-              "code": "FR-0426-0006-SO-2026-0008-L05-TR",
-              "sequence": 1,
-              "piece_name": "Trousers"
-            }
-          ]
-        },
-        {
-          "id": "line-cu-86exexf56-5",
-          "unit": "meters",
-          "color": "Black",
-          "quantity": 1,
-          "width_cm": null,
-          "unit_price": 0,
-          "weight_gsm": 270,
-          "composition": "100% WS",
-          "label_count": 1,
-          "supplier_id": "zegna",
-          "garment_type": "Overshirt",
-          "width_inches": null,
-          "fabric_number": "99216",
-          "supplier_name": "Zegna",
-          "label_stickers": [
-            {
-              "code": "FR-0426-0006-SO-2026-0008-L06-OS",
-              "sequence": 1,
-              "piece_name": "Overshirts"
-            }
-          ]
-        },
-        {
           "id": "line-cu-86exexf56-6",
           "unit": "meters",
           "color": "Mole dusty dark",
-          "quantity": 1,
+          "quantity": 1.5,
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": 175,
@@ -5954,7 +6098,7 @@
           "id": "line-cu-86exexf56-7",
           "unit": "meters",
           "color": "Off White",
-          "quantity": 1,
+          "quantity": 1.5,
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": 175,
@@ -5977,7 +6121,7 @@
           "id": "line-cu-86exexf56-8",
           "unit": "meters",
           "color": "Pink",
-          "quantity": 1,
+          "quantity": 1.5,
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": 175,
@@ -5999,71 +6143,83 @@
         {
           "id": "line-cu-86exexf56-9",
           "unit": "meters",
-          "color": "Light pink",
-          "quantity": 1,
+          "color": null,
+          "quantity": 1.5,
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": null,
-          "composition": "100% Cotton",
+          "composition": null,
           "label_count": 1,
-          "supplier_id": "gliani-stock",
+          "supplier_id": "canclini",
           "garment_type": "Shirt LS",
+          "restock_date": null,
+          "stock_status": null,
           "width_inches": null,
           "fabric_number": "C1415541-2",
-          "supplier_name": "Gliani Stock",
+          "supplier_name": "Canclini",
           "label_stickers": [
             {
               "code": "FR-0426-0006-SO-2026-0008-L10-SHT-LS",
               "sequence": 1,
               "piece_name": "Shirts"
             }
-          ]
+          ],
+          "needs_replacement": false,
+          "replacement_fabric_number": null
         },
         {
           "id": "line-cu-86exexf56-10",
           "unit": "meters",
-          "color": "Light Blue",
-          "quantity": 1,
+          "color": null,
+          "quantity": 1.5,
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": null,
-          "composition": "100% Cotton",
+          "composition": null,
           "label_count": 1,
-          "supplier_id": "gliani-stock",
+          "supplier_id": "canclini",
           "garment_type": "Shirt LS",
+          "restock_date": null,
+          "stock_status": null,
           "width_inches": null,
           "fabric_number": "C11436697-2",
-          "supplier_name": "Gliani Stock",
+          "supplier_name": "Canclini",
           "label_stickers": [
             {
               "code": "FR-0426-0006-SO-2026-0008-L11-SHT-LS",
               "sequence": 1,
               "piece_name": "Shirts"
             }
-          ]
+          ],
+          "needs_replacement": false,
+          "replacement_fabric_number": null
         },
         {
           "id": "line-cu-86exexf56-11",
           "unit": "meters",
-          "color": "White",
-          "quantity": 3,
+          "color": null,
+          "quantity": 4.5,
           "width_cm": null,
           "unit_price": 0,
-          "weight_gsm": 260,
-          "composition": "100% WV",
+          "weight_gsm": null,
+          "composition": null,
           "label_count": 1,
-          "supplier_id": "gliani-stock",
+          "supplier_id": "canclini",
           "garment_type": "Shirt LS",
+          "restock_date": null,
+          "stock_status": null,
           "width_inches": null,
           "fabric_number": "C11436697-1",
-          "supplier_name": "Gliani Stock",
+          "supplier_name": "Canclini",
           "label_stickers": [
             {
               "code": "FR-0426-0006-SO-2026-0008-L12-SHT-LS",
               "sequence": 1,
               "piece_name": "Shirts"
             }
-          ]
+          ],
+          "needs_replacement": false,
+          "replacement_fabric_number": null
         },
         {
           "id": "line-cu-86exexf56-12",
@@ -6207,22 +6363,27 @@
           "id": "line-cu-86exexf56-18",
           "unit": "meters",
           "color": "Black",
-          "quantity": 1,
+          "quantity": 3,
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": 260,
           "composition": "100% WV",
-          "label_count": 1,
+          "label_count": 2,
           "supplier_id": "drapers",
-          "garment_type": "Trouser",
+          "garment_type": "Suit",
           "width_inches": null,
           "fabric_number": "60087",
           "supplier_name": "Drapers",
           "label_stickers": [
             {
-              "code": "FR-0426-0006-SO-2026-0008-L19-TR",
+              "code": "FR-0426-0006-SO-2026-0008-L19-JKT",
               "sequence": 1,
-              "piece_name": "Trousers"
+              "piece_name": "Jacket"
+            },
+            {
+              "code": "FR-0426-0006-SO-2026-0008-L19-TR",
+              "sequence": 2,
+              "piece_name": "Trouser"
             }
           ]
         },
@@ -6230,22 +6391,27 @@
           "id": "line-cu-86exexf56-19",
           "unit": "meters",
           "color": "Brown",
-          "quantity": 1,
+          "quantity": 3,
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": 260,
           "composition": "100% WV",
-          "label_count": 1,
+          "label_count": 2,
           "supplier_id": "drapers",
-          "garment_type": "Trouser",
+          "garment_type": "Suit",
           "width_inches": null,
           "fabric_number": "60082",
           "supplier_name": "Drapers",
           "label_stickers": [
             {
-              "code": "FR-0426-0006-SO-2026-0008-L20-TR",
+              "code": "FR-0426-0006-SO-2026-0008-L20-JKT",
               "sequence": 1,
-              "piece_name": "Trousers"
+              "piece_name": "Jacket"
+            },
+            {
+              "code": "FR-0426-0006-SO-2026-0008-L20-TR",
+              "sequence": 2,
+              "piece_name": "Trouser"
             }
           ]
         },
@@ -6253,22 +6419,27 @@
           "id": "line-cu-86exexf56-20",
           "unit": "meters",
           "color": "Blue dark",
-          "quantity": 1,
+          "quantity": 3,
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": 260,
           "composition": "100% WV",
-          "label_count": 1,
+          "label_count": 2,
           "supplier_id": "drapers",
-          "garment_type": "Trouser",
+          "garment_type": "Suit",
           "width_inches": null,
           "fabric_number": "60048",
           "supplier_name": "Drapers",
           "label_stickers": [
             {
-              "code": "FR-0426-0006-SO-2026-0008-L21-TR",
+              "code": "FR-0426-0006-SO-2026-0008-L21-JKT",
               "sequence": 1,
-              "piece_name": "Trousers"
+              "piece_name": "Jacket"
+            },
+            {
+              "code": "FR-0426-0006-SO-2026-0008-L21-TR",
+              "sequence": 2,
+              "piece_name": "Trouser"
             }
           ]
         },
@@ -6276,22 +6447,27 @@
           "id": "line-cu-86exexf56-21",
           "unit": "meters",
           "color": "Grey solid dark",
-          "quantity": 1,
+          "quantity": 3,
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": 260,
           "composition": "100% WV",
-          "label_count": 1,
+          "label_count": 2,
           "supplier_id": "drapers",
-          "garment_type": "Trouser",
+          "garment_type": "Suit",
           "width_inches": null,
           "fabric_number": "60080",
           "supplier_name": "Drapers",
           "label_stickers": [
             {
-              "code": "FR-0426-0006-SO-2026-0008-L22-TR",
+              "code": "FR-0426-0006-SO-2026-0008-L22-JKT",
               "sequence": 1,
-              "piece_name": "Trousers"
+              "piece_name": "Jacket"
+            },
+            {
+              "code": "FR-0426-0006-SO-2026-0008-L22-TR",
+              "sequence": 2,
+              "piece_name": "Trouser"
             }
           ]
         },
@@ -6299,22 +6475,27 @@
           "id": "line-cu-86exexf56-22",
           "unit": "meters",
           "color": "Navy blue dark",
-          "quantity": 1,
+          "quantity": 3,
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": 260,
           "composition": "100% WV",
-          "label_count": 1,
+          "label_count": 2,
           "supplier_id": "drapers",
-          "garment_type": "Trouser",
+          "garment_type": "Suit",
           "width_inches": null,
           "fabric_number": "60058",
           "supplier_name": "Drapers",
           "label_stickers": [
             {
-              "code": "FR-0426-0006-SO-2026-0008-L23-TR",
+              "code": "FR-0426-0006-SO-2026-0008-L23-JKT",
               "sequence": 1,
-              "piece_name": "Trousers"
+              "piece_name": "Jacket"
+            },
+            {
+              "code": "FR-0426-0006-SO-2026-0008-L23-TR",
+              "sequence": 2,
+              "piece_name": "Trouser"
             }
           ]
         },
@@ -6322,160 +6503,27 @@
           "id": "line-cu-86exexf56-23",
           "unit": "meters",
           "color": "Navy blue dark",
-          "quantity": 1,
+          "quantity": 3,
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": 260,
           "composition": "100% WV",
-          "label_count": 1,
+          "label_count": 2,
           "supplier_id": "drapers",
-          "garment_type": "Trouser",
+          "garment_type": "Suit",
           "width_inches": null,
           "fabric_number": "60045",
           "supplier_name": "Drapers",
           "label_stickers": [
+            {
+              "code": "FR-0426-0006-SO-2026-0008-L24-JKT",
+              "sequence": 1,
+              "piece_name": "Jacket"
+            },
             {
               "code": "FR-0426-0006-SO-2026-0008-L24-TR",
-              "sequence": 1,
-              "piece_name": "Trousers"
-            }
-          ]
-        },
-        {
-          "id": "line-cu-86exexf56-24",
-          "unit": "meters",
-          "color": "Black",
-          "quantity": 1,
-          "width_cm": null,
-          "unit_price": 0,
-          "weight_gsm": 260,
-          "composition": "100% WV",
-          "label_count": 1,
-          "supplier_id": "drapers",
-          "garment_type": "Jacket",
-          "width_inches": null,
-          "fabric_number": "60087",
-          "supplier_name": "Drapers",
-          "label_stickers": [
-            {
-              "code": "FR-0426-0006-SO-2026-0008-L25-JKT",
-              "sequence": 1,
-              "piece_name": "Blazers"
-            }
-          ]
-        },
-        {
-          "id": "line-cu-86exexf56-25",
-          "unit": "meters",
-          "color": "Brown",
-          "quantity": 1,
-          "width_cm": null,
-          "unit_price": 0,
-          "weight_gsm": 260,
-          "composition": "100% WV",
-          "label_count": 1,
-          "supplier_id": "drapers",
-          "garment_type": "Jacket",
-          "width_inches": null,
-          "fabric_number": "60082",
-          "supplier_name": "Drapers",
-          "label_stickers": [
-            {
-              "code": "FR-0426-0006-SO-2026-0008-L26-JKT",
-              "sequence": 1,
-              "piece_name": "Blazers"
-            }
-          ]
-        },
-        {
-          "id": "line-cu-86exexf56-26",
-          "unit": "meters",
-          "color": "Blue dark",
-          "quantity": 1,
-          "width_cm": null,
-          "unit_price": 0,
-          "weight_gsm": 260,
-          "composition": "100% WV",
-          "label_count": 1,
-          "supplier_id": "drapers",
-          "garment_type": "Jacket",
-          "width_inches": null,
-          "fabric_number": "60048",
-          "supplier_name": "Drapers",
-          "label_stickers": [
-            {
-              "code": "FR-0426-0006-SO-2026-0008-L27-JKT",
-              "sequence": 1,
-              "piece_name": "Blazers"
-            }
-          ]
-        },
-        {
-          "id": "line-cu-86exexf56-27",
-          "unit": "meters",
-          "color": "Grey solid dark",
-          "quantity": 1,
-          "width_cm": null,
-          "unit_price": 0,
-          "weight_gsm": 260,
-          "composition": "100% WV",
-          "label_count": 1,
-          "supplier_id": "drapers",
-          "garment_type": "Jacket",
-          "width_inches": null,
-          "fabric_number": "60080",
-          "supplier_name": "Drapers",
-          "label_stickers": [
-            {
-              "code": "FR-0426-0006-SO-2026-0008-L28-JKT",
-              "sequence": 1,
-              "piece_name": "Blazers"
-            }
-          ]
-        },
-        {
-          "id": "line-cu-86exexf56-28",
-          "unit": "meters",
-          "color": "Navy blue dark",
-          "quantity": 1,
-          "width_cm": null,
-          "unit_price": 0,
-          "weight_gsm": 260,
-          "composition": "100% WV",
-          "label_count": 1,
-          "supplier_id": "drapers",
-          "garment_type": "Jacket",
-          "width_inches": null,
-          "fabric_number": "60058",
-          "supplier_name": "Drapers",
-          "label_stickers": [
-            {
-              "code": "FR-0426-0006-SO-2026-0008-L29-JKT",
-              "sequence": 1,
-              "piece_name": "Blazers"
-            }
-          ]
-        },
-        {
-          "id": "line-cu-86exexf56-29",
-          "unit": "meters",
-          "color": "Navy blue dark",
-          "quantity": 1,
-          "width_cm": null,
-          "unit_price": 0,
-          "weight_gsm": 260,
-          "composition": "100% WV",
-          "label_count": 1,
-          "supplier_id": "drapers",
-          "garment_type": "Jacket",
-          "width_inches": null,
-          "fabric_number": "60045",
-          "supplier_name": "Drapers",
-          "label_stickers": [
-            {
-              "code": "FR-0426-0006-SO-2026-0008-L30-JKT",
-              "sequence": 1,
-              "piece_name": "Blazers"
+              "sequence": 2,
+              "piece_name": "Trouser"
             }
           ]
         }
@@ -35407,5 +35455,5 @@
       "client_reference": "FR-0226-0025-SO-2026-0095"
     }
   ],
-  "updated_at": "2026-06-20T11:48:39.101Z"
+  "updated_at": "2026-06-20T10:57:59.630Z"
 }
