@@ -31,6 +31,8 @@ export interface SalesOrderListRow {
   client_name: string;
   product_article: string | null;
   fabric_line_count: number;
+  /** Supplier + fabric number pairs for list swatch previews. */
+  fabric_preview_lines: Array<{ supplier_id: string; fabric_number: string }>;
   /** Fabric lines flagged out of stock / needing replacement from supplier replies. */
   fabric_stock_alert_count: number;
   production_label_count: number;
@@ -106,6 +108,10 @@ export function toSalesOrderListRow(order: SalesOrder): SalesOrderListRow {
     client_name: order.client_name,
     product_article: order.product_article ?? null,
     fabric_line_count: order.fabric_lines.length,
+    fabric_preview_lines: order.fabric_lines.map((line) => ({
+      supplier_id: line.supplier_id,
+      fabric_number: line.fabric_number,
+    })),
     fabric_stock_alert_count: order.fabric_lines.filter((line) => orderLineHasStockAlert(line)).length,
     production_label_count: totalProductionLabels(order.fabric_lines),
     fabric_order_requested_at: order.fabric_order_requested_at ?? null,

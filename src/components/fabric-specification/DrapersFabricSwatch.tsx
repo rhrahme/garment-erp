@@ -33,14 +33,18 @@ export function DrapersFabricSwatch({ fabricNumber, src, zoomSrc, className }: D
   }, [open, close]);
 
   if (!src) {
+    const fallbackLabel = fabricNumber.replace(/[^a-z0-9]/gi, "").slice(-3).toUpperCase() || "?";
     return (
       <span
         className={cn(
-          "inline-block h-7 w-7 shrink-0 rounded border border-slate-200 bg-slate-100",
+          "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-dashed border-slate-300 bg-slate-50 text-[9px] font-semibold uppercase tracking-tight text-slate-400",
           className
         )}
-        aria-hidden
-      />
+        title={`No swatch image for ${fabricNumber}`}
+        aria-label={`No swatch preview for fabric ${fabricNumber}`}
+      >
+        {fallbackLabel}
+      </span>
     );
   }
 

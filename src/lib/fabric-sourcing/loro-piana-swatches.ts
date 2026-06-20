@@ -1,7 +1,10 @@
 import { readFileSync, existsSync, statSync } from "node:fs";
 import path from "node:path";
 import { normalizeLoroPianaFabricNumber } from "@/lib/fabric-sourcing/loro-piana-styles";
-import { readLoroPianaSwatchFromStorage } from "@/lib/fabric-sourcing/loro-piana-swatch-storage";
+import {
+  isSupabaseLoroPianaSwatchStorage,
+  readLoroPianaSwatchFromStorage,
+} from "@/lib/fabric-sourcing/loro-piana-swatch-storage";
 
 export { LORO_PIANA_SWATCH_SUPPLIER_ID } from "@/lib/fabric-sourcing/loro-piana-styles";
 export const LORO_PIANA_IMAGES_ROOT = path.join(process.cwd(), "data/suppliers/loro-piana/images");
@@ -100,6 +103,16 @@ export function lookupLoroPianaSwatch(fabricNumber: string): {
       requested_code: requested,
       url: loroPianaSwatchImageUrl(normalized),
       bytes: statSync(filePath).size,
+    };
+  }
+
+  // Production stores swatch JPEGs in Supabase — the manifest is the source of truth for URLs.
+  if (isSupabaseLoroPianaSwatchStorage() && item?.ok && item.filename) {
+    return {
+      ok: true,
+      fabric_number: normalized,
+      requested_code: requested,
+      url: loroPianaSwatchImageUrl(normalized),
     };
   }
 

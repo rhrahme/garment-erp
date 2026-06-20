@@ -7,6 +7,8 @@ import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { StatusBadge } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { DownloadSalesOrderPdfButton } from "@/components/orders/DownloadSalesOrderPdfButton";
+import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
+import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
 import { SALES_ORDER_ARCHIVE_AGE_MONTHS } from "@/lib/sales-orders/archive";
 import { salesOrderMatchesSearch } from "@/lib/sales-orders/list-search";
@@ -82,6 +84,17 @@ export function FabricOrdersList({
   const hasActiveFilters = Boolean(searchQuery.trim() || brandId);
   const listCountLabel = searching ? searchOrders.length : viewOrders.length;
 
+  const swatchFabrics = useMemo(
+    () =>
+      filteredOrders.flatMap((order) =>
+        order.fabric_preview_lines.map((line) => ({
+          supplier_id: line.supplier_id,
+          fabric_number: line.fabric_number,
+        }))
+      ),
+    [filteredOrders]
+  );
+
   if (orders.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 py-16 text-center">
@@ -95,6 +108,7 @@ export function FabricOrdersList({
   }
 
   return (
+    <FabricSwatchProvider fabrics={swatchFabrics}>
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <button
@@ -218,7 +232,27 @@ export function FabricOrdersList({
                     <p className="font-mono text-xs text-slate-400">{order.client_code}</p>
                   </td>
                   <td className="px-4 py-3">
-                    {order.fabric_line_count} line{order.fabric_line_count !== 1 ? "s" : ""}
+                    {order.fabric_preview_lines.length === 0 ? (
+                      <span className="text-slate-400">—</span>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {order.fabric_preview_lines.slice(0, 5).map((line, index) => (
+                          <FabricSwatchPreview
+                            key={`${line.supplier_id}-${line.fabric_number}-${index}`}
+                            supplierId={line.supplier_id}
+                            fabricNumber={line.fabric_number}
+                          />
+                        ))}
+                        {order.fabric_preview_lines.length > 5 ? (
+                          <span className="text-xs text-slate-500">
+                            +{order.fabric_preview_lines.length - 5}
+                          </span>
+                        ) : null}
+                        <span className="text-xs text-slate-500">
+                          {order.fabric_line_count} line{order.fabric_line_count !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     {order.fabric_stock_alert_count > 0 ? (
@@ -281,5 +315,6 @@ export function FabricOrdersList({
         </table>
       </div>
     </div>
+    </FabricSwatchProvider>
   );
 }
