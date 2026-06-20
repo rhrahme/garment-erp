@@ -98,21 +98,24 @@ for (const sourcePath of sourceFiles.sort()) {
   const destFilename = `${fabricNumber}${extname(sourceFilename).toLowerCase() || ".jpg"}`;
   const destPath = join(args.out, destFilename);
 
+  copyFileSync(sourcePath, destPath);
+  const stat = statSync(destPath);
+  copied += 1;
+
   if (!catalogEntry) {
     items.push({
       fabric_number: fabricNumber,
       source_filename: sourceFilename,
       source_path: sourcePath,
       filename: destFilename,
-      ok: false,
-      error: "No matching catalog entry for filters",
+      ok: true,
+      catalog_match: false,
+      bytes: stat.size,
+      note: "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out).",
     });
     continue;
   }
 
-  copyFileSync(sourcePath, destPath);
-  const stat = statSync(destPath);
-  copied += 1;
   items.push({
     fabric_number: fabricNumber,
     source_filename: sourceFilename,
@@ -121,6 +124,7 @@ for (const sourcePath of sourceFiles.sort()) {
     book_number: catalogEntry.book_number ?? null,
     weight_gsm: catalogEntry.weight_gsm ?? null,
     ok: true,
+    catalog_match: true,
     bytes: stat.size,
   });
 }

@@ -1369,8 +1369,10 @@
       "source_filename": "N735023.jpg",
       "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Events/N735023.jpg",
       "filename": "735023.jpg",
-      "ok": false,
-      "error": "No matching catalog entry for filters"
+      "ok": true,
+      "bytes": 2409296,
+      "catalog_match": false,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "735024",
@@ -3797,16 +3799,20 @@
       "source_filename": "N781017.jpg",
       "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781/N781017.jpg",
       "filename": "781017.jpg",
-      "ok": false,
-      "error": "No matching catalog entry for filters"
+      "ok": true,
+      "bytes": 3254674,
+      "catalog_match": false,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "781018",
       "source_filename": "N781018.jpg",
       "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781/N781018.jpg",
       "filename": "781018.jpg",
-      "ok": false,
-      "error": "No matching catalog entry for filters"
+      "ok": true,
+      "bytes": 3574401,
+      "catalog_match": false,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "781019",
@@ -3843,8 +3849,10 @@
       "source_filename": "N781022.jpg",
       "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781/N781022.jpg",
       "filename": "781022.jpg",
-      "ok": false,
-      "error": "No matching catalog entry for filters"
+      "ok": true,
+      "bytes": 2911972,
+      "catalog_match": false,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "781023",
@@ -3941,8 +3949,10 @@
       "source_filename": "N781032.jpg",
       "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781/N781032.jpg",
       "filename": "781032.jpg",
-      "ok": false,
-      "error": "No matching catalog entry for filters"
+      "ok": true,
+      "bytes": 3659464,
+      "catalog_match": false,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "781033",
@@ -6403,16 +6413,20 @@
       "source_filename": "NS24031.jpg",
       "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS/NS24031.jpg",
       "filename": "S24031.jpg",
-      "ok": false,
-      "error": "No matching catalog entry for filters"
+      "ok": true,
+      "bytes": 3158332,
+      "catalog_match": false,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "S24032",
       "source_filename": "NS24032.jpg",
       "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS/NS24032.jpg",
       "filename": "S24032.jpg",
-      "ok": false,
-      "error": "No matching catalog entry for filters"
+      "ok": true,
+      "bytes": 4153679,
+      "catalog_match": false,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "S24033",

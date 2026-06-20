@@ -56,10 +56,17 @@ function localSwatchFilename(normalized: string): string | null {
   return null;
 }
 
-function manifestSwatchFilename(normalized: string): string | null {
+function manifestSwatchEntry(normalized: string): LoroPianaSwatchManifestItem | undefined {
   const manifest = readLoroPianaSwatchManifest();
-  const item = manifest.items.find((entry) => entry.ok && entry.fabric_number === normalized);
-  return item?.filename ?? null;
+  return manifest.items.find((entry) => entry.fabric_number === normalized);
+}
+
+function manifestSwatchFilename(normalized: string): string | null {
+  return manifestSwatchEntry(normalized)?.filename ?? null;
+}
+
+function swatchFileIsAvailable(filename: string): boolean {
+  return existsSync(path.join(LORO_PIANA_IMAGES_ROOT, filename));
 }
 
 export function lookupLoroPianaSwatch(fabricNumber: string): {
@@ -71,33 +78,32 @@ export function lookupLoroPianaSwatch(fabricNumber: string): {
 } {
   const requested = fabricNumber.trim();
   const normalized = normalizeLoroPianaFabricNumber(requested);
-  const manifest = readLoroPianaSwatchManifest();
-  const item = manifest.items.find(
-    (entry) => entry.ok && entry.fabric_number === normalized
-  );
 
-  if (!item?.filename) {
-    const localName = localSwatchFilename(normalized);
-    if (localName) {
-      const filePath = path.join(LORO_PIANA_IMAGES_ROOT, localName);
-      return {
-        ok: true,
-        fabric_number: normalized,
-        requested_code: requested,
-        url: loroPianaSwatchImageUrl(normalized),
-        bytes: statSync(filePath).size,
-      };
-    }
-    return { ok: false, fabric_number: normalized, requested_code: requested };
+  const localName = localSwatchFilename(normalized);
+  if (localName) {
+    const filePath = path.join(LORO_PIANA_IMAGES_ROOT, localName);
+    return {
+      ok: true,
+      fabric_number: normalized,
+      requested_code: requested,
+      url: loroPianaSwatchImageUrl(normalized),
+      bytes: statSync(filePath).size,
+    };
   }
 
-  return {
-    ok: true,
-    fabric_number: normalized,
-    requested_code: requested,
-    url: loroPianaSwatchImageUrl(normalized),
-    bytes: item.bytes,
-  };
+  const item = manifestSwatchEntry(normalized);
+  if (item?.filename && swatchFileIsAvailable(item.filename)) {
+    const filePath = path.join(LORO_PIANA_IMAGES_ROOT, item.filename);
+    return {
+      ok: true,
+      fabric_number: normalized,
+      requested_code: requested,
+      url: loroPianaSwatchImageUrl(normalized),
+      bytes: statSync(filePath).size,
+    };
+  }
+
+  return { ok: false, fabric_number: normalized, requested_code: requested };
 }
 
 export function lookupLoroPianaSwatches(fabricNumbers: string[]) {
