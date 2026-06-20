@@ -16,7 +16,7 @@
           "color": null,
           "added_at": "2026-06-17T02:11:35.647Z",
           "added_by": "info@hagan.pro",
-          "quantity": 1.2,
+          "quantity": 1.35,
           "width_cm": 150,
           "unit_price": 0,
           "weight_gsm": 280,
@@ -33,8 +33,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L01-TR",
-              "piece_name": "Trouser",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Trouser"
             }
           ],
           "needs_replacement": false,
@@ -48,7 +48,7 @@
           "color": null,
           "added_at": "2026-06-17T02:11:35.647Z",
           "added_by": "info@hagan.pro",
-          "quantity": 1.2,
+          "quantity": 1.35,
           "width_cm": 150,
           "unit_price": 0,
           "weight_gsm": 280,
@@ -65,8 +65,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L02-TR",
-              "piece_name": "Trouser",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Trouser"
             }
           ],
           "needs_replacement": false,
@@ -80,7 +80,7 @@
           "color": null,
           "added_at": "2026-06-17T02:11:35.647Z",
           "added_by": "info@hagan.pro",
-          "quantity": 1.2,
+          "quantity": 1.35,
           "width_cm": 150,
           "unit_price": 0,
           "weight_gsm": 280,
@@ -97,8 +97,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L03-TR",
-              "piece_name": "Trouser",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Trouser"
             }
           ],
           "needs_replacement": false,
@@ -112,7 +112,7 @@
           "color": null,
           "added_at": "2026-06-17T02:11:35.647Z",
           "added_by": "info@hagan.pro",
-          "quantity": 1.2,
+          "quantity": 1.35,
           "width_cm": 150,
           "unit_price": 0,
           "weight_gsm": 280,
@@ -129,8 +129,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L04-TR",
-              "piece_name": "Trouser",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Trouser"
             }
           ],
           "needs_replacement": false,
@@ -144,7 +144,7 @@
           "color": null,
           "added_at": "2026-06-17T02:11:35.647Z",
           "added_by": "info@hagan.pro",
-          "quantity": 1.2,
+          "quantity": 1.35,
           "width_cm": 150,
           "unit_price": 0,
           "weight_gsm": 235,
@@ -161,8 +161,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L05-TR",
-              "piece_name": "Trouser",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Trouser"
             }
           ],
           "needs_replacement": false,
@@ -176,7 +176,7 @@
           "color": null,
           "added_at": "2026-06-17T02:11:35.647Z",
           "added_by": "info@hagan.pro",
-          "quantity": 1.2,
+          "quantity": 1.35,
           "width_cm": 150,
           "unit_price": 0,
           "weight_gsm": 235,
@@ -193,8 +193,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L06-TR",
-              "piece_name": "Trouser",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Trouser"
             }
           ],
           "needs_replacement": false,
@@ -208,7 +208,7 @@
           "color": null,
           "added_at": "2026-06-17T02:11:35.647Z",
           "added_by": "info@hagan.pro",
-          "quantity": 1.2,
+          "quantity": 1.35,
           "width_cm": 150,
           "unit_price": 0,
           "weight_gsm": 235,
@@ -225,8 +225,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L07-TR",
-              "piece_name": "Trouser",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Trouser"
             }
           ],
           "needs_replacement": false,
@@ -257,8 +257,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L08-TR",
-              "piece_name": "Trouser",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Trouser"
             }
           ],
           "needs_replacement": false,
@@ -289,8 +289,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L09-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -321,8 +321,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L10-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -353,8 +353,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L11-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -385,8 +385,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L12-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -400,7 +400,7 @@
           "color": null,
           "added_at": "2026-06-17T02:11:35.647Z",
           "added_by": "info@hagan.pro",
-          "quantity": 1.2,
+          "quantity": 1.35,
           "width_cm": 146,
           "unit_price": 0,
           "weight_gsm": 210,
@@ -417,8 +417,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L13-TR",
-              "piece_name": "Trouser",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Trouser"
             }
           ],
           "needs_replacement": false,
@@ -432,7 +432,7 @@
           "color": null,
           "added_at": "2026-06-17T02:11:35.647Z",
           "added_by": "info@hagan.pro",
-          "quantity": 1.2,
+          "quantity": 1.35,
           "width_cm": 146,
           "unit_price": 0,
           "weight_gsm": 210,
@@ -449,8 +449,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L14-TR",
-              "piece_name": "Trouser",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Trouser"
             }
           ],
           "needs_replacement": false,
@@ -481,8 +481,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L15-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -513,8 +513,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L16-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -545,8 +545,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L17-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -577,8 +577,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L18-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -609,8 +609,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L19-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -624,7 +624,7 @@
           "color": null,
           "added_at": "2026-06-17T02:11:35.647Z",
           "added_by": "info@hagan.pro",
-          "quantity": 1.2,
+          "quantity": 1.6,
           "width_cm": 150,
           "unit_price": 0,
           "weight_gsm": 250,
@@ -641,8 +641,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L20-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -656,7 +656,7 @@
           "color": null,
           "added_at": "2026-06-17T02:11:35.647Z",
           "added_by": "info@hagan.pro",
-          "quantity": 2.8,
+          "quantity": 3,
           "width_cm": 150,
           "unit_price": 0,
           "weight_gsm": 250,
@@ -673,13 +673,13 @@
           "label_stickers": [
             {
               "code": "FR-0626-0034-SO-2026-0108-L21-SHT",
-              "piece_name": "Shirt",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt"
             },
             {
               "code": "FR-0626-0034-SO-2026-0108-L21-TR",
-              "piece_name": "Trouser",
-              "sequence": 2
+              "sequence": 2,
+              "piece_name": "Trouser"
             }
           ],
           "needs_replacement": false,
@@ -726,8 +726,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0035-SO-2026-0107-L01-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -758,8 +758,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0035-SO-2026-0107-L02-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -790,8 +790,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0035-SO-2026-0107-L03-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -822,8 +822,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0035-SO-2026-0107-L04-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -854,8 +854,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0035-SO-2026-0107-L05-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -886,8 +886,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0035-SO-2026-0107-L06-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -918,8 +918,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0035-SO-2026-0107-L07-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -950,8 +950,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0035-SO-2026-0107-L08-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -982,8 +982,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0035-SO-2026-0107-L09-SHT-LS",
-              "piece_name": "Shirt LS",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirt LS"
             }
           ],
           "needs_replacement": false,
@@ -1014,8 +1014,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0035-SO-2026-0107-L10-JKT",
-              "piece_name": "Jacket",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Jacket"
             }
           ],
           "needs_replacement": false,
@@ -1046,8 +1046,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0035-SO-2026-0107-L11-JKT",
-              "piece_name": "Jacket",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Jacket"
             }
           ],
           "needs_replacement": false,
@@ -1078,8 +1078,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0035-SO-2026-0107-L12-TR",
-              "piece_name": "Trouser",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Trouser"
             }
           ],
           "needs_replacement": false,
@@ -1110,8 +1110,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0035-SO-2026-0107-L13-TR",
-              "piece_name": "Trouser",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Trouser"
             }
           ],
           "needs_replacement": false,
@@ -1142,8 +1142,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0035-SO-2026-0107-L14-JKT",
-              "piece_name": "Jacket",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Jacket"
             }
           ],
           "needs_replacement": false,
@@ -1174,8 +1174,8 @@
           "label_stickers": [
             {
               "code": "FR-0626-0035-SO-2026-0107-L15-JKT",
-              "piece_name": "Jacket",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Jacket"
             }
           ],
           "needs_replacement": false,
@@ -36644,5 +36644,5 @@
       "client_reference": "FR-0226-0025-SO-2026-0095"
     }
   ],
-  "updated_at": "2026-06-20T12:41:01.213Z"
+  "updated_at": "2026-06-20T16:22:15.679Z"
 }
