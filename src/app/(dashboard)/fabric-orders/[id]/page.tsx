@@ -16,6 +16,7 @@ import { getSalesOrderByIdFresh, isReadyMadeSalesOrder } from "@/lib/data/sales-
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
 import { getRemovedSalesOrderRedirectForKey } from "@/lib/sales-orders/removed-order-redirects";
 import { fabricOrderUiLabels } from "@/lib/orders/fabric-order-ui-labels";
+import { OrderShipmentTracking } from "@/components/orders/OrderShipmentTracking";
 import { formatDate } from "@/lib/utils";
 
 export default async function FabricOrderDetailPage({
@@ -129,6 +130,8 @@ export default async function FabricOrderDetailPage({
         />
         <span className="text-sm text-slate-500">Sales order summary PDF with fabric lines and label codes.</span>
       </div>
+
+      <OrderShipmentTracking salesOrderId={order.id} fabricPoIds={order.fabric_po_ids} />
 
       <SalesOrderActions
         order={order}

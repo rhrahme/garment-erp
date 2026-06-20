@@ -29,6 +29,7 @@ type LocalShipment = {
 export function ShipmentsWorkspace() {
   const searchParams = useSearchParams();
   const defaultPoId = searchParams.get("po_id");
+  const defaultAwb = searchParams.get("awb");
 
   const [shipments, setShipments] = useState<LocalShipment[]>([]);
   const [pendingOrders, setPendingOrders] = useState<PendingAwbOption[]>([]);
@@ -71,6 +72,12 @@ export function ShipmentsWorkspace() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (defaultAwb?.trim()) {
+      setHighlightedAwb(defaultAwb.trim().toUpperCase());
+    }
+  }, [defaultAwb]);
 
   async function syncTracking() {
     setSyncing(true);

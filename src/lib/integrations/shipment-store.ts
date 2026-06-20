@@ -9,6 +9,7 @@ export interface ShipmentRecord {
   carrier: string;
   purchase_order_id: string | null;
   po_number: string | null;
+  sales_order_id?: string | null;
   status: string;
   direction: "inbound" | "outbound";
   estimated_arrival: string | null;

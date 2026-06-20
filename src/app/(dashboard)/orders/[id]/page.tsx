@@ -16,6 +16,7 @@ import { getSalesOrderByIdFresh, isReadyMadeSalesOrder } from "@/lib/data/sales-
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
 import { getRemovedSalesOrderRedirectForKey } from "@/lib/sales-orders/removed-order-redirects";
 import { ordersUiLabels } from "@/lib/orders/ui-labels";
+import { OrderShipmentTracking } from "@/components/orders/OrderShipmentTracking";
 import { formatDate } from "@/lib/utils";
 
 export default async function SalesOrderDetailPage({
@@ -128,6 +129,8 @@ export default async function SalesOrderDetailPage({
           </div>
         )}
       </div>
+
+      <OrderShipmentTracking salesOrderId={order.id} fabricPoIds={order.fabric_po_ids} />
 
       <SalesOrderActions
         order={order}
