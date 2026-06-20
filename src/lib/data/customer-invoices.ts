@@ -115,10 +115,24 @@ function roundMoney(amount: number): number {
   return Math.round(amount * 100) / 100;
 }
 
-export function listCustomerInvoicesSorted(): CustomerInvoice[] {
-  return [...readCustomerInvoices().invoices].sort((a, b) => {
+function sortCustomerInvoices(invoices: CustomerInvoice[]): CustomerInvoice[] {
+  return [...invoices].sort((a, b) => {
     const dateCompare = b.invoice_date.localeCompare(a.invoice_date);
     if (dateCompare !== 0) return dateCompare;
     return b.invoice_number.localeCompare(a.invoice_number);
   });
+}
+
+export function listCustomerInvoicesSorted(): CustomerInvoice[] {
+  return sortCustomerInvoices(readCustomerInvoices().invoices);
+}
+
+export function listCustomerInvoicesSortedFromFile(file: CustomerInvoicesFile): CustomerInvoice[] {
+  return sortCustomerInvoices(file.invoices);
+}
+
+/** Bypass in-process cache — use on invoice list after create (multi-instance safe). */
+export async function listCustomerInvoicesSortedFresh(): Promise<CustomerInvoice[]> {
+  const store = await readCustomerInvoicesFresh();
+  return sortCustomerInvoices(store.invoices);
 }

@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
 import {
   getCustomerInvoiceSummary,
-  listCustomerInvoicesSorted,
-  readCustomerInvoices,
+  listCustomerInvoicesSortedFromFile,
+  readCustomerInvoicesFresh,
 } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 
 export async function GET() {
   try {
     await ensureDocumentsLoaded(["customer_invoices"]);
-    const file = readCustomerInvoices();
+    const file = await readCustomerInvoicesFresh();
     return NextResponse.json({
       ...file,
-      invoices: listCustomerInvoicesSorted(),
+      invoices: listCustomerInvoicesSortedFromFile(file),
       summary: getCustomerInvoiceSummary(file),
     });
   } catch (error) {

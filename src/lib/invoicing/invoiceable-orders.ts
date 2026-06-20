@@ -1,16 +1,21 @@
 import { getSalesOrderCost } from "@/lib/costing/compute";
-import { getCustomerInvoiceBySalesOrderId } from "@/lib/data/customer-invoices";
+import {
+  readCustomerInvoices,
+  type CustomerInvoicesFile,
+} from "@/lib/data/customer-invoices";
 import { isReadyMadeSalesOrder, listBespokeSalesOrders, readSalesOrders } from "@/lib/data/sales-orders";
 import { isSalesOrderArchived } from "@/lib/sales-orders/archive";
 import type { InvoiceableSalesOrder } from "@/lib/types/invoiceable-orders";
 
-export function getInvoiceableSalesOrders(limit = 25): InvoiceableSalesOrder[] {
-  const invoicedOrderIds = new Set(
-    readSalesOrders()
-      .orders.map((order) => getCustomerInvoiceBySalesOrderId(order.id))
-      .filter(Boolean)
-      .map((invoice) => invoice!.sales_order_id)
-  );
+function invoicedSalesOrderIds(invoicesFile: CustomerInvoicesFile): Set<string> {
+  return new Set(invoicesFile.invoices.map((invoice) => invoice.sales_order_id));
+}
+
+export function getInvoiceableSalesOrders(
+  limit = 25,
+  invoicesFile: CustomerInvoicesFile = readCustomerInvoices()
+): InvoiceableSalesOrder[] {
+  const invoicedOrderIds = invoicedSalesOrderIds(invoicesFile);
 
   const orders = listBespokeSalesOrders(readSalesOrders().orders)
     .filter((order) => !isReadyMadeSalesOrder(order))
@@ -41,13 +46,10 @@ export function getInvoiceableSalesOrders(limit = 25): InvoiceableSalesOrder[] {
   });
 }
 
-export function countInvoiceableSalesOrders(): number {
-  const invoicedIds = new Set(
-    readSalesOrders()
-      .orders.map((order) => getCustomerInvoiceBySalesOrderId(order.id))
-      .filter(Boolean)
-      .map((invoice) => invoice!.sales_order_id)
-  );
+export function countInvoiceableSalesOrders(
+  invoicesFile: CustomerInvoicesFile = readCustomerInvoices()
+): number {
+  const invoicedIds = invoicedSalesOrderIds(invoicesFile);
 
   return listBespokeSalesOrders(readSalesOrders().orders).filter(
     (order) =>
