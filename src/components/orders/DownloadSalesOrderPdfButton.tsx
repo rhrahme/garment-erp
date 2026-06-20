@@ -8,10 +8,14 @@ export function DownloadSalesOrderPdfButton({
   orderId,
   soNumber,
   variant = "secondary",
+  size = "md",
+  compact = false,
 }: {
   orderId: string;
   soNumber: string;
   variant?: "primary" | "secondary" | "ghost";
+  size?: "sm" | "md";
+  compact?: boolean;
 }) {
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,9 +45,15 @@ export function DownloadSalesOrderPdfButton({
 
   return (
     <div className="inline-flex flex-col items-start gap-1">
-      <Button variant={variant} onClick={() => void handleDownload()} disabled={downloading}>
+      <Button
+        variant={variant}
+        size={size}
+        onClick={() => void handleDownload()}
+        disabled={downloading}
+        title={compact ? (downloading ? "Downloading…" : "Download PDF") : undefined}
+      >
         <FileDown className="h-4 w-4" />
-        {downloading ? "Downloading…" : "Download PDF"}
+        {compact ? null : downloading ? "Downloading…" : "Download PDF"}
       </Button>
       {error ? <span className="text-xs text-red-600">{error}</span> : null}
     </div>

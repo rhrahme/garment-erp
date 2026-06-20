@@ -473,7 +473,7 @@ export function SalesOrderActions({
         <Link href={effectiveViewMode === "fabric_order" ? "/fabric-orders/new?fresh=1" : "/orders/new"}>
           <Button variant="secondary">{labels.detailNewButton}</Button>
         </Link>
-        {showProductionLabels && (
+        {(showProductionLabels || effectiveViewMode === "fabric_order") && (
           <DownloadSalesOrderPdfButton orderId={order.id} soNumber={order.so_number} />
         )}
         {isAdmin && liveOrder.status === "open" && liveOrder.fabric_po_ids.length === 0 && (

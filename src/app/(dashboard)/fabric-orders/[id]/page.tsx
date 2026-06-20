@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { DownloadSalesOrderPdfButton } from "@/components/orders/DownloadSalesOrderPdfButton";
 import { PageHeader, StatusBadge } from "@/components/ui/PageHeader";
 import { SalesOrderActions } from "@/components/orders/SalesOrderActions";
 import {
@@ -49,9 +50,12 @@ export default async function FabricOrderDetailPage({
             : `${order.client_name} · ${order.client_code}`
         }
         action={
-          <Link href="/fabric-orders" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
-            {labels.allOrdersLink}
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <DownloadSalesOrderPdfButton orderId={order.id} soNumber={order.so_number} />
+            <Link href="/fabric-orders" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+              {labels.allOrdersLink}
+            </Link>
+          </div>
         }
       />
 

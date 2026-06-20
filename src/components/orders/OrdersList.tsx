@@ -6,6 +6,7 @@ import { Archive, Search } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { StatusBadge } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
+import { DownloadSalesOrderPdfButton } from "@/components/orders/DownloadSalesOrderPdfButton";
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
 import { SALES_ORDER_ARCHIVE_AGE_MONTHS } from "@/lib/sales-orders/archive";
 import { salesOrderMatchesSearch } from "@/lib/sales-orders/list-search";
@@ -219,9 +220,18 @@ export function OrdersList({
                     <StatusBadge status={order.status} />
                   </td>
                   <td className="px-4 py-3">
-                    <Link href={`/orders/${order.id}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
-                      Open →
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <DownloadSalesOrderPdfButton
+                        orderId={order.id}
+                        soNumber={order.so_number}
+                        variant="ghost"
+                        size="sm"
+                        compact
+                      />
+                      <Link href={`/orders/${order.id}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+                        Open →
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))
