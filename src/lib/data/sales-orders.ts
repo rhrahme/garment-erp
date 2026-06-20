@@ -121,6 +121,16 @@ export function getSalesOrderById(id: string): SalesOrder | undefined {
   return readSalesOrders().orders.find((order) => order.id === id);
 }
 
+/** Resolve a sales order when the fabric PO record is missing but the SO still references it. */
+export function findSalesOrderByFabricPoId(
+  fabricPoId: string,
+  orders: SalesOrder[] = readSalesOrders().orders
+): SalesOrder | undefined {
+  const id = fabricPoId.trim();
+  if (!id) return undefined;
+  return orders.find((order) => order.fabric_po_ids?.includes(id));
+}
+
 /** Bypass in-process cache — use on order detail after mutations (multi-instance safe). */
 export async function getSalesOrderByIdFresh(id: string): Promise<SalesOrder | undefined> {
   const store = await readJsonFileFreshAsync(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS, { force: true });

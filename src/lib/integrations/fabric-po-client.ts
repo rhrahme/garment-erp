@@ -1,4 +1,4 @@
-import { getSalesOrderById } from "@/lib/data/sales-orders";
+import { findSalesOrderByFabricPoId, getSalesOrderById } from "@/lib/data/sales-orders";
 import { getStoredFabricOrder, listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 
 /** Resolve sales-order client name from a fabric PO id or number. */
@@ -14,6 +14,8 @@ export function resolveClientNameForFabricPo(input: {
         )
       : undefined;
 
-  if (!po?.sales_order_id) return null;
-  return getSalesOrderById(po.sales_order_id)?.client_name ?? null;
+  const salesOrder =
+    (po?.sales_order_id ? getSalesOrderById(po.sales_order_id) : undefined) ??
+    (input.purchase_order_id ? findSalesOrderByFabricPoId(input.purchase_order_id) : undefined);
+  return salesOrder?.client_name ?? null;
 }

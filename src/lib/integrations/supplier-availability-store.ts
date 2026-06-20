@@ -1,7 +1,7 @@
 import path from "path";
 import { readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
 import { getSupplierByIdFromContactsSync } from "@/lib/data/supplier-contacts";
-import { getSalesOrderById } from "@/lib/data/sales-orders";
+import { findSalesOrderByFabricPoId, getSalesOrderById } from "@/lib/data/sales-orders";
 import { resolveClientNameForFabricPo } from "@/lib/integrations/fabric-po-client";
 import { getStoredFabricOrder } from "@/lib/integrations/fabric-order-store";
 import type { SupplierLineUpdate } from "@/lib/integrations/supplier-reply-store";
@@ -118,7 +118,9 @@ export function createAvailabilityAlertsFromReply(input: {
   const store = readStore();
   const existingKeys = new Set(store.alerts.map((alert) => alertKey(alert.reply_id, alert.fabric_number)));
   const po = input.purchase_order_id ? getStoredFabricOrder(input.purchase_order_id) : null;
-  const salesOrder = po?.sales_order_id ? getSalesOrderById(po.sales_order_id) : null;
+  const salesOrder =
+    (po?.sales_order_id ? getSalesOrderById(po.sales_order_id) : undefined) ??
+    (input.purchase_order_id ? findSalesOrderByFabricPoId(input.purchase_order_id) : undefined);
   const supplier = input.supplier_id ? getSupplierByIdFromContactsSync(input.supplier_id) : null;
   const created: SupplierAvailabilityAlert[] = [];
 
@@ -131,7 +133,7 @@ export function createAvailabilityAlertsFromReply(input: {
       reply_id: input.reply_id,
       po_number: input.po_number,
       purchase_order_id: input.purchase_order_id,
-      sales_order_id: po?.sales_order_id ?? null,
+      sales_order_id: po?.sales_order_id ?? salesOrder?.id ?? null,
       sales_order_number: salesOrder?.so_number ?? null,
       client_reference: po?.client_reference ?? salesOrder?.client_reference ?? null,
       client_name: salesOrder?.client_name ?? null,

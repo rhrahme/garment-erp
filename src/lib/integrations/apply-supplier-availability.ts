@@ -1,5 +1,9 @@
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { readSalesOrdersFresh, writeSalesOrders } from "@/lib/data/sales-orders";
+import {
+  findSalesOrderByFabricPoId,
+  readSalesOrdersFresh,
+  writeSalesOrders,
+} from "@/lib/data/sales-orders";
 import { normalizeFabricToken } from "@/lib/email/inbound/parse-availability-from-email";
 import {
   ensureFabricOrdersLoaded,
@@ -164,10 +168,14 @@ export async function applySupplierAvailabilityUpdates(input: {
     );
   }
 
-  const salesOrderId = purchaseOrder?.sales_order_id ?? null;
+  const store = await readSalesOrdersFresh();
+  const salesOrderId =
+    purchaseOrder?.sales_order_id ??
+    (input.purchase_order_id
+      ? findSalesOrderByFabricPoId(input.purchase_order_id, store.orders)?.id ?? null
+      : null);
   if (!salesOrderId) return { ...empty, fabric_pos_updated, fabric_po_lines_updated };
 
-  const store = await readSalesOrdersFresh();
   const orderIndex = store.orders.findIndex((order) => order.id === salesOrderId);
   if (orderIndex < 0) return { ...empty, fabric_pos_updated, fabric_po_lines_updated };
 
