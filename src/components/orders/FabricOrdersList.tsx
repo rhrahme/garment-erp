@@ -237,7 +237,24 @@ export function FabricOrdersList({
                   <td className="px-4 py-3">{formatDate(order.order_date)}</td>
                   <td className="px-4 py-3 text-slate-600">{fabricOrderStatusLabel(order)}</td>
                   <td className="px-4 py-3">
-                    <StatusBadge status={order.status} />
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <DownloadSalesOrderPdfButton
+                          orderId={order.id}
+                          soNumber={order.so_number}
+                          variant="secondary"
+                          size="sm"
+                          label="Download"
+                        />
+                        <Link
+                          href={`/fabric-orders/${order.id}`}
+                          className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                        >
+                          Open →
+                        </Link>
+                      </div>
+                      <StatusBadge status={order.status} />
+                    </div>
                   </td>
                   <td className={`sticky right-0 z-10 px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.15)] ${rowBg}`}>
                     <div className="flex min-w-[12.5rem] items-center gap-2 whitespace-nowrap">
