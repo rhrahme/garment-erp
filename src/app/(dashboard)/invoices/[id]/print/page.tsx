@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { InvoiceDocument } from "@/components/invoicing/InvoiceDocument";
 import { InvoicePrintToolbar } from "@/components/invoicing/InvoicePrintToolbar";
-import { getCustomerInvoiceById } from "@/lib/data/customer-invoices";
+import { getCustomerInvoiceByIdFresh } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { getSalesOrderById } from "@/lib/data/sales-orders";
+import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import {
   enrichInvoiceDeliveryDestination,
   enrichInvoiceLinesWithCostHints,
@@ -15,10 +15,10 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
   await ensureDocumentsLoaded(["customer_invoices", "sales_orders"]);
 
   const { id } = await params;
-  const raw = getCustomerInvoiceById(id);
+  const raw = await getCustomerInvoiceByIdFresh(id);
   if (!raw) notFound();
 
-  const order = getSalesOrderById(raw.sales_order_id);
+  const order = await getSalesOrderByIdFresh(raw.sales_order_id);
   const invoice = enrichInvoiceDeliveryDestination(
     {
       ...raw,

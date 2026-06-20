@@ -2,9 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { InvoiceEditor } from "@/components/invoicing/InvoiceEditor";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { getCustomerInvoiceById } from "@/lib/data/customer-invoices";
+import { getCustomerInvoiceByIdFresh } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { getSalesOrderById } from "@/lib/data/sales-orders";
+import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import {
   enrichInvoiceDeliveryDestination,
   enrichInvoiceLinesWithCostHints,
@@ -16,10 +16,10 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   await ensureDocumentsLoaded(["customer_invoices", "sales_orders"]);
 
   const { id } = await params;
-  const raw = getCustomerInvoiceById(id);
+  const raw = await getCustomerInvoiceByIdFresh(id);
   if (!raw) notFound();
 
-  const order = getSalesOrderById(raw.sales_order_id);
+  const order = await getSalesOrderByIdFresh(raw.sales_order_id);
   const invoice = enrichInvoiceDeliveryDestination(
     {
       ...raw,

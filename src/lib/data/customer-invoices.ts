@@ -1,5 +1,10 @@
 import path from "path";
-import { readJsonFile, readJsonFileAsync, saveDocument } from "@/lib/data/document-persistence";
+import {
+  readJsonFile,
+  readJsonFileAsync,
+  readJsonFileFreshAsync,
+  saveDocument,
+} from "@/lib/data/document-persistence";
 import { recalculateInvoiceTotals } from "@/lib/invoicing/build-invoice";
 import type {
   CustomerInvoice,
@@ -22,6 +27,11 @@ export async function readCustomerInvoicesAsync(): Promise<CustomerInvoicesFile>
   return readJsonFileAsync(INVOICES_PATH, EMPTY);
 }
 
+/** Bypass in-process cache — use on invoice detail after mutations (multi-instance safe). */
+export async function readCustomerInvoicesFresh(): Promise<CustomerInvoicesFile> {
+  return readJsonFileFreshAsync(INVOICES_PATH, EMPTY, { force: true });
+}
+
 export async function writeCustomerInvoices(data: CustomerInvoicesFile): Promise<CustomerInvoicesFile> {
   const payload: CustomerInvoicesFile = {
     ...data,
@@ -32,6 +42,12 @@ export async function writeCustomerInvoices(data: CustomerInvoicesFile): Promise
 
 export function getCustomerInvoiceById(id: string): CustomerInvoice | undefined {
   return readCustomerInvoices().invoices.find((invoice) => invoice.id === id);
+}
+
+/** Bypass in-process cache — use on invoice detail after create/update (multi-instance safe). */
+export async function getCustomerInvoiceByIdFresh(id: string): Promise<CustomerInvoice | undefined> {
+  const store = await readCustomerInvoicesFresh();
+  return store.invoices.find((invoice) => invoice.id === id);
 }
 
 export function getCustomerInvoiceBySalesOrderId(salesOrderId: string): CustomerInvoice | undefined {
@@ -55,7 +71,7 @@ export function generateInvoiceId(): string {
 }
 
 export async function saveCustomerInvoice(invoice: CustomerInvoice): Promise<CustomerInvoice> {
-  const store = readCustomerInvoices();
+  const store = await readCustomerInvoicesFresh();
   const index = store.invoices.findIndex((row) => row.id === invoice.id);
   const { lines, subtotal, total } = recalculateInvoiceTotals(invoice.lines);
   const normalized: CustomerInvoice = { ...invoice, lines, subtotal, total };

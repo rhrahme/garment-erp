@@ -2,11 +2,10 @@ import { NextResponse } from "next/server";
 import {
   generateInvoiceId,
   generateInvoiceNumber,
-  getCustomerInvoiceBySalesOrderId,
-  readCustomerInvoices,
+  readCustomerInvoicesFresh,
   saveCustomerInvoice,
 } from "@/lib/data/customer-invoices";
-import { getSalesOrderById } from "@/lib/data/sales-orders";
+import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import { buildDraftInvoiceFromSalesOrder } from "@/lib/invoicing/build-invoice";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 
@@ -20,12 +19,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "sales_order_id is required." }, { status: 400 });
     }
 
-    const order = getSalesOrderById(salesOrderId);
+    const order = await getSalesOrderByIdFresh(salesOrderId);
     if (!order) {
       return NextResponse.json({ error: "Sales order not found." }, { status: 404 });
     }
 
-    const existing = getCustomerInvoiceBySalesOrderId(salesOrderId);
+    const store = await readCustomerInvoicesFresh();
+    const existing = store.invoices.find((invoice) => invoice.sales_order_id === salesOrderId);
     if (existing) {
       return NextResponse.json(
         { error: "An invoice already exists for this sales order.", invoice: existing },
@@ -33,7 +33,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const store = readCustomerInvoices();
     const invoiceNumber = generateInvoiceNumber(store.invoices);
     const invoiceId = generateInvoiceId();
     const draft = buildDraftInvoiceFromSalesOrder(order, invoiceNumber, invoiceId);

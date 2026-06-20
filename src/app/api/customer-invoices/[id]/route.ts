@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCustomerInvoiceById, saveCustomerInvoice } from "@/lib/data/customer-invoices";
+import { getCustomerInvoiceByIdFresh, saveCustomerInvoice } from "@/lib/data/customer-invoices";
 import { readSalesOrders, writeSalesOrders } from "@/lib/data/sales-orders";
 import { recalculateInvoiceTotals } from "@/lib/invoicing/build-invoice";
 import type { CustomerInvoice, CustomerInvoiceLine, CustomerInvoiceStatus } from "@/lib/types/customer-invoices";
@@ -14,7 +14,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   try {
     await ensureDocumentsLoaded(["customer_invoices"]);
     const { id } = await context.params;
-    const invoice = getCustomerInvoiceById(id);
+    const invoice = await getCustomerInvoiceByIdFresh(id);
     if (!invoice) {
       return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
     }
@@ -29,7 +29,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   try {
     await ensureDocumentsLoaded(["customer_invoices", "sales_orders"]);
     const { id } = await context.params;
-    const invoice = getCustomerInvoiceById(id);
+    const invoice = await getCustomerInvoiceByIdFresh(id);
     if (!invoice) {
       return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
     }
