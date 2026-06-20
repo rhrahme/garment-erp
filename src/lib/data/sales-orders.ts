@@ -7,6 +7,7 @@ import {
   saveDocument,
 } from "@/lib/data/document-persistence";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
+import { orderLineHasStockAlert } from "@/lib/fabric-sourcing/fabric-stock";
 import { isSalesOrderArchived } from "@/lib/sales-orders/archive";
 import { totalProductionLabels } from "@/lib/sales-orders/label-display";
 import type { SalesOrder, SalesOrdersFile } from "@/lib/types/sales-orders";
@@ -30,6 +31,8 @@ export interface SalesOrderListRow {
   client_name: string;
   product_article: string | null;
   fabric_line_count: number;
+  /** Fabric lines flagged out of stock / needing replacement from supplier replies. */
+  fabric_stock_alert_count: number;
   production_label_count: number;
   fabric_order_requested_at: string | null;
   order_date: string;
@@ -62,6 +65,8 @@ function buildSalesOrderSearchText(order: SalesOrder): string {
       line.garment_type,
       line.composition,
       line.color,
+      line.stock_status ?? null,
+      line.replacement_fabric_number,
       ...(line.label_stickers ?? []).map((sticker) => sticker.code)
     );
   }
@@ -101,6 +106,7 @@ export function toSalesOrderListRow(order: SalesOrder): SalesOrderListRow {
     client_name: order.client_name,
     product_article: order.product_article ?? null,
     fabric_line_count: order.fabric_lines.length,
+    fabric_stock_alert_count: order.fabric_lines.filter((line) => orderLineHasStockAlert(line)).length,
     production_label_count: totalProductionLabels(order.fabric_lines),
     fabric_order_requested_at: order.fabric_order_requested_at ?? null,
     order_date: order.order_date,

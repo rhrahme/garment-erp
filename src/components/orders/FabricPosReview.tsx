@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { EmailPreview } from "@/components/purchasing/EmailPreview";
 import { Button } from "@/components/ui/Button";
+import { FabricStockBadge } from "@/components/fabric/FabricStockBadge";
+import { formatFabricStockLabel } from "@/lib/fabric-sourcing/fabric-stock";
 import { purchaseOrderToEmail } from "@/lib/fabric-sourcing/email-content";
 import type { PurchaseOrder, SupplierFabric } from "@/lib/types/fabric-sourcing";
 import type { SalesOrder } from "@/lib/types/sales-orders";
@@ -140,6 +142,32 @@ export function FabricPosReview({ salesOrderId }: FabricPosReviewProps) {
                   )}
                 </div>
               </div>
+              {(po.lines ?? []).length > 0 && (
+                <ul className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm">
+                  {(po.lines ?? []).map((line) => (
+                    <li
+                      key={line.id}
+                      className={`flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-slate-100 py-2 last:border-b-0 ${
+                        line.stock_status && line.stock_status !== "in_stock" ? "text-amber-950" : "text-slate-700"
+                      }`}
+                    >
+                      <span className="font-mono font-medium">{line.fabric_number}</span>
+                      <FabricStockBadge fabric={line} />
+                      <span className="text-slate-500">
+                        {line.quantity_ordered} m
+                      </span>
+                      {formatFabricStockLabel(line) && (
+                        <span className="text-xs text-amber-800">{formatFabricStockLabel(line)}</span>
+                      )}
+                      {line.substitute_fabric_number && (
+                        <span className="text-xs text-violet-800">
+                          Substitute: {line.substitute_fabric_number}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
               <EmailPreview
                 email={email}
                 poNumber={po.po_number}

@@ -12,8 +12,10 @@ import { getShipmentByAwb } from "@/lib/integrations/shipment-store";
 import { upsertSupplierReply, type SupplierReplyRecord } from "@/lib/integrations/supplier-reply-store";
 import { createAvailabilityAlertsFromReply } from "@/lib/integrations/supplier-availability-store";
 import { notifyAdminsOfAvailabilityAlerts } from "@/lib/integrations/supplier-availability-alert";
+import { applySupplierAvailabilityUpdates } from "@/lib/integrations/apply-supplier-availability";
 import { saveInvoiceAttachmentsFromEmail } from "@/lib/email/inbound/save-invoice-attachments";
 import { notifyIntegration } from "@/lib/integrations";
+import type { IntegrationEventType } from "@/lib/types/integrations";
 import { findSupplierIdByEmail } from "@/lib/email/inbound/supplier-email-match";
 
 export { findSupplierIdByEmail } from "@/lib/email/inbound/supplier-email-match";
@@ -101,6 +103,13 @@ export async function processInboundSupplierEmail(input: InboundEmailInput): Pro
       line_updates: reply.line_updates ?? [],
     });
 
+    const availabilityApplied = await applySupplierAvailabilityUpdates({
+      line_updates: reply.line_updates ?? [],
+      purchase_order_id: reply.purchase_order_id,
+      po_number: reply.po_number,
+      supplier_id: reply.supplier_id,
+    });
+
     if (availabilityAlerts.length > 0) {
       void notifyAdminsOfAvailabilityAlerts(availabilityAlerts);
       void notifyIntegration("supplier.availability_detected", {
@@ -109,6 +118,8 @@ export async function processInboundSupplierEmail(input: InboundEmailInput): Pro
         supplier_id: reply.supplier_id,
         alert_count: availabilityAlerts.length,
         fabrics: availabilityAlerts.map((alert) => alert.fabric_number),
+        sales_order_lines_updated: availabilityApplied.sales_order_lines_updated,
+        fabric_po_lines_updated: availabilityApplied.fabric_po_lines_updated,
       });
     }
 
@@ -143,6 +154,13 @@ export async function processInboundSupplierEmail(input: InboundEmailInput): Pro
     supplier_id: reply.supplier_id,
     email_subject: reply.subject,
     line_updates: reply.line_updates ?? [],
+  });
+
+  const availabilityApplied = await applySupplierAvailabilityUpdates({
+    line_updates: reply.line_updates ?? [],
+    purchase_order_id: reply.purchase_order_id,
+    po_number: reply.po_number,
+    supplier_id: reply.supplier_id,
   });
 
   if (availabilityAlerts.length > 0) {
@@ -198,11 +216,13 @@ export async function processInboundSupplierEmail(input: InboundEmailInput): Pro
       supplier_id: reply.supplier_id,
       alert_count: availabilityAlerts.length,
       fabrics: availabilityAlerts.map((alert) => alert.fabric_number),
+      sales_order_lines_updated: availabilityApplied.sales_order_lines_updated,
+      fabric_po_lines_updated: availabilityApplied.fabric_po_lines_updated,
     });
   }
 
   if (savedInvoices.length > 0) {
-    void notifyIntegration("supplier.invoice_saved", {
+    void notifyIntegration("supplier.invoice_saved" as IntegrationEventType, {
       count: savedInvoices.length,
       invoice_ids: savedInvoices.map((invoice) => invoice.id),
       supplier_id: reply.supplier_id,

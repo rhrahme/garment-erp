@@ -62,6 +62,11 @@ export interface PurchaseOrderLine {
   label_stickers?: Array<{ code: string; piece_name: string; sequence: number }> | null;
   garment_type?: string | null;
   client_reference: string | null;
+  /** Supplier reply availability — out of stock, restock date, substitute. */
+  stock_status?: "in_stock" | "temp_unavailable" | "permanently_unavailable" | null;
+  restock_date?: string | null;
+  availability_note?: string | null;
+  substitute_fabric_number?: string | null;
   supplier_fabric?: SupplierFabric;
 }
 

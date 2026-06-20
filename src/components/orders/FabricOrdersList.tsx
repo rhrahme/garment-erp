@@ -163,6 +163,7 @@ export function FabricOrdersList({
               <th className="px-4 py-3">Order #</th>
               <th className="px-4 py-3">Client</th>
               <th className="px-4 py-3">Fabrics</th>
+              <th className="px-4 py-3">Availability</th>
               <th className="px-4 py-3">Labels</th>
               <th className="px-4 py-3">Order Date</th>
               <th className="px-4 py-3">Fabric order</th>
@@ -173,7 +174,7 @@ export function FabricOrdersList({
           <tbody className="divide-y divide-slate-100">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={9} className="px-4 py-10 text-center text-slate-500">
                   {hasActiveFilters
                     ? "No orders match your search."
                     : view === "pending"
@@ -196,6 +197,15 @@ export function FabricOrdersList({
                   </td>
                   <td className="px-4 py-3">
                     {order.fabric_line_count} line{order.fabric_line_count !== 1 ? "s" : ""}
+                  </td>
+                  <td className="px-4 py-3">
+                    {order.fabric_stock_alert_count > 0 ? (
+                      <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-900">
+                        {order.fabric_stock_alert_count} issue{order.fabric_stock_alert_count !== 1 ? "s" : ""}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     {order.production_label_count > 0

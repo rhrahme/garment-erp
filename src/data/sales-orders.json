@@ -1329,7 +1329,7 @@
           "supplier_id": "loro-piana",
           "garment_type": "Overshirt",
           "restock_date": null,
-          "stock_status": null,
+          "stock_status": "permanently_unavailable",
           "width_inches": null,
           "a4_printed_at": null,
           "fabric_number": "781032",
@@ -1341,7 +1341,7 @@
               "piece_name": "Overshirt"
             }
           ],
-          "needs_replacement": false,
+          "needs_replacement": true,
           "prep_stickers_printed_at": null,
           "prod_stickers_printed_at": null,
           "replacement_fabric_number": null
@@ -1393,7 +1393,7 @@
           "supplier_id": "loro-piana",
           "garment_type": "Overshirt+Trouser",
           "restock_date": null,
-          "stock_status": null,
+          "stock_status": "permanently_unavailable",
           "width_inches": null,
           "a4_printed_at": null,
           "fabric_number": "S24031",
@@ -1410,7 +1410,7 @@
               "piece_name": "Trouser"
             }
           ],
-          "needs_replacement": false,
+          "needs_replacement": true,
           "prep_stickers_printed_at": null,
           "prod_stickers_printed_at": null,
           "replacement_fabric_number": null
@@ -1545,7 +1545,7 @@
           "supplier_id": "caccioppoli",
           "garment_type": "Shirt SS",
           "restock_date": null,
-          "stock_status": null,
+          "stock_status": "permanently_unavailable",
           "width_inches": null,
           "a4_printed_at": null,
           "fabric_number": "206210",
@@ -1557,7 +1557,7 @@
               "piece_name": "Shirt SS"
             }
           ],
-          "needs_replacement": false,
+          "needs_replacement": true,
           "prep_stickers_printed_at": null,
           "prod_stickers_printed_at": null,
           "replacement_fabric_number": null
@@ -35407,5 +35407,5 @@
       "client_reference": "FR-0226-0025-SO-2026-0095"
     }
   ],
-  "updated_at": "2026-06-19T20:28:02.373Z"
+  "updated_at": "2026-06-20T11:48:39.101Z"
 }

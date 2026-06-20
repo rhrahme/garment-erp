@@ -9,6 +9,7 @@ import {
 } from "@/lib/integrations/supplier-reply-store";
 import { createAvailabilityAlertsFromReply } from "@/lib/integrations/supplier-availability-store";
 import { notifyAdminsOfAvailabilityAlerts } from "@/lib/integrations/supplier-availability-alert";
+import { applySupplierAvailabilityUpdates } from "@/lib/integrations/apply-supplier-availability";
 import { notifyIntegration } from "@/lib/integrations";
 
 export async function POST(request: Request) {
@@ -87,6 +88,21 @@ export async function POST(request: Request) {
           })
         : [];
 
+    const availabilityApplied =
+      body.line_updates && body.line_updates.length > 0
+        ? await applySupplierAvailabilityUpdates({
+            line_updates: body.line_updates,
+            purchase_order_id: record.purchase_order_id,
+            po_number: record.po_number,
+            supplier_id: record.supplier_id,
+          })
+        : {
+            sales_orders_updated: 0,
+            sales_order_lines_updated: 0,
+            fabric_pos_updated: 0,
+            fabric_po_lines_updated: 0,
+          };
+
     if (alerts.length > 0) {
       void notifyAdminsOfAvailabilityAlerts(alerts);
     }
@@ -109,12 +125,17 @@ export async function POST(request: Request) {
           supplier_id: record.supplier_id,
           alert_count: alerts.length,
           fabrics: alerts.map((alert) => alert.fabric_number),
+          sales_order_lines_updated: availabilityApplied.sales_order_lines_updated,
+          fabric_po_lines_updated: availabilityApplied.fabric_po_lines_updated,
         },
         "zapier"
       );
     }
 
-    return NextResponse.json({ ok: true, reply: record, alerts, shipments_created }, { status: 201 });
+    return NextResponse.json(
+      { ok: true, reply: record, alerts, shipments_created, availability_applied: availabilityApplied },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Supplier reply ingest failed:", error);
     return NextResponse.json({ error: "Failed to log supplier reply." }, { status: 500 });
