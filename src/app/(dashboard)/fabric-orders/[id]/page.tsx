@@ -121,6 +121,15 @@ export default async function FabricOrderDetailPage({
         )}
       </div>
 
+      <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+        <DownloadSalesOrderPdfButton
+          orderId={order.id}
+          soNumber={order.so_number}
+          variant="secondary"
+        />
+        <span className="text-sm text-slate-500">Sales order summary PDF with fabric lines and label codes.</span>
+      </div>
+
       <SalesOrderActions
         order={order}
         existingInvoiceId={existingInvoice?.id ?? null}

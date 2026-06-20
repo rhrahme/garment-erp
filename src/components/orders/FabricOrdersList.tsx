@@ -36,7 +36,7 @@ export function FabricOrdersList({
   const { brandId, setBrandId, hydrated } = useFactoryBrandFilter();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 200);
-  const [view, setView] = useState<FabricOrdersView>(isClientManager ? "active" : "pending");
+  const [view, setView] = useState<FabricOrdersView>("active");
 
   const activeOrders = useMemo(() => orders.filter((order) => !order.is_archived), [orders]);
   const archivedOrders = useMemo(() => orders.filter((order) => order.is_archived), [orders]);
@@ -53,9 +53,15 @@ export function FabricOrdersList({
 
   const viewOrders =
     view === "archived" ? archivedOrders : view === "pending" ? pendingOrders : activeOrders;
+  const searching = debouncedSearchQuery.trim().length > 0;
+  const searchOrders = useMemo(
+    () => [...activeOrders, ...archivedOrders],
+    [activeOrders, archivedOrders]
+  );
+  const listOrders = searching ? searchOrders : viewOrders;
 
   const filteredOrders = useMemo(() => {
-    let result = viewOrders;
+    let result = listOrders;
 
     if (brandId) {
       const prefix = getBrandClientCodePrefix(brandId);
@@ -71,9 +77,10 @@ export function FabricOrdersList({
     }
 
     return result;
-  }, [brandId, debouncedSearchQuery, viewOrders]);
+  }, [brandId, debouncedSearchQuery, listOrders]);
 
   const hasActiveFilters = Boolean(searchQuery.trim() || brandId);
+  const listCountLabel = searching ? searchOrders.length : viewOrders.length;
 
   if (orders.length === 0) {
     return (
@@ -148,10 +155,17 @@ export function FabricOrdersList({
         </label>
         {hasActiveFilters && (
           <p className="text-sm text-slate-500">
-            {filteredOrders.length} of {viewOrders.length} order{viewOrders.length !== 1 ? "s" : ""}
+            {filteredOrders.length} of {listCountLabel} order{listCountLabel !== 1 ? "s" : ""}
+            {searching ? " (searching all fabric orders)" : ""}
           </p>
         )}
       </div>
+
+      {searching && (
+        <p className="text-xs text-slate-500">
+          Search includes all active and archived orders, not just the current tab.
+        </p>
+      )}
 
       {hydrated && (
         <FactoryBrandTabs value={brandId} onChange={setBrandId} showAll allLabel="All brands" label="Filter by brand" />
@@ -169,7 +183,9 @@ export function FabricOrdersList({
               <th className="px-4 py-3">Order Date</th>
               <th className="px-4 py-3">Fabric order</th>
               <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Actions</th>
+              <th className="sticky right-0 z-10 bg-slate-50 px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.15)]">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -177,19 +193,24 @@ export function FabricOrdersList({
               <tr>
                 <td colSpan={9} className="px-4 py-10 text-center text-slate-500">
                   {hasActiveFilters
-                    ? "No orders match your search."
+                    ? searching
+                      ? "No fabric orders match your search."
+                      : "No orders match your filters."
                     : view === "pending"
-                      ? "No pending QC fabric orders."
+                      ? "No pending QC fabric orders. Draft orders waiting to be submitted appear under All active."
                       : view === "archived"
                         ? "No archived orders yet."
                         : "No orders for this brand."}
                 </td>
               </tr>
             ) : (
-              filteredOrders.map((order) => (
+              filteredOrders.map((order) => {
+                const archivedRow = order.is_archived;
+                const rowBg = archivedRow ? "bg-slate-50/40 hover:bg-slate-50" : "bg-white hover:bg-slate-50/60";
+                return (
                 <tr
                   key={order.id}
-                  className={view === "archived" ? "bg-slate-50/40 hover:bg-slate-50" : "hover:bg-slate-50/60"}
+                  className={archivedRow ? "bg-slate-50/40 hover:bg-slate-50" : "hover:bg-slate-50/60"}
                 >
                   <td className="px-4 py-3 font-medium">{order.so_number}</td>
                   <td className="px-4 py-3">
@@ -218,8 +239,8 @@ export function FabricOrdersList({
                   <td className="px-4 py-3">
                     <StatusBadge status={order.status} />
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
+                  <td className={`sticky right-0 z-10 px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.15)] ${rowBg}`}>
+                    <div className="flex min-w-[11rem] items-center gap-2">
                       <DownloadSalesOrderPdfButton
                         orderId={order.id}
                         soNumber={order.so_number}
@@ -235,7 +256,8 @@ export function FabricOrdersList({
                     </div>
                   </td>
                 </tr>
-              ))
+              );
+              })
             )}
           </tbody>
         </table>
