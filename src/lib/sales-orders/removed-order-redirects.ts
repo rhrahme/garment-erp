@@ -4,11 +4,10 @@
  */
 const REMOVED_SALES_ORDER_REDIRECTS: Record<string, string> = {
   // Moussa duplicate orders consolidated into SO-2026-0109.
+  // SO-2026-0107 → Ajlan Mohamad (FR-0626-0035); SO-2026-0108 → Mohamad Abdulaziz Al Ajlan Skheikh (FR-0626-0034).
   "so-moussa-stylbiella-handwritten": "/orders/so-1781828734583",
   "so-1781821780944": "/orders/so-1781828734583",
-  "SO-2026-0107": "/orders/so-1781828734583",
   "so-1781826697158": "/orders/so-1781828734583",
-  "SO-2026-0108": "/orders/so-1781828734583",
 };
 
 const REMOVED_ORDER_PATH = /^\/(?:orders|fabric-orders|pattern\/orders)\/([^/]+)/;
