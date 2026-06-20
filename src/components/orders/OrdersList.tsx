@@ -170,14 +170,15 @@ export function OrdersList({
               <th className="px-4 py-3">Order Date</th>
               <th className="px-4 py-3">Delivery</th>
               <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Download</th>
-              <th className="px-4 py-3">Open</th>
+              <th className="sticky right-0 z-10 bg-slate-50 px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.15)]">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={productionMode ? 10 : 9} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={productionMode ? 9 : 8} className="px-4 py-10 text-center text-slate-500">
                   {hasActiveFilters
                     ? "No orders match your search."
                     : view === "archived"
@@ -186,10 +187,13 @@ export function OrdersList({
                 </td>
               </tr>
             ) : (
-              filteredOrders.map((order) => (
+              filteredOrders.map((order) => {
+                const archivedRow = view === "archived" || order.is_archived;
+                const rowBg = archivedRow ? "bg-slate-50/40 hover:bg-slate-50" : "bg-white hover:bg-slate-50/60";
+                return (
                 <tr
                   key={order.id}
-                  className={view === "archived" ? "bg-slate-50/40 hover:bg-slate-50" : "hover:bg-slate-50/60"}
+                  className={archivedRow ? "bg-slate-50/40 hover:bg-slate-50" : "hover:bg-slate-50/60"}
                 >
                   <td className="px-4 py-3 font-medium">{order.so_number}</td>
                   <td className="px-4 py-3">
@@ -220,22 +224,23 @@ export function OrdersList({
                   <td className="px-4 py-3">
                     <StatusBadge status={order.status} />
                   </td>
-                  <td className="px-4 py-3">
-                    <DownloadSalesOrderPdfButton
-                      orderId={order.id}
-                      soNumber={order.so_number}
-                      variant="secondary"
-                      size="sm"
-                      label="Download"
-                    />
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link href={`/orders/${order.id}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
-                      Open →
-                    </Link>
+                  <td className={`sticky right-0 z-10 px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.15)] ${rowBg}`}>
+                    <div className="flex min-w-[12.5rem] items-center gap-2 whitespace-nowrap">
+                      <DownloadSalesOrderPdfButton
+                        orderId={order.id}
+                        soNumber={order.so_number}
+                        variant="secondary"
+                        size="sm"
+                        label="Download"
+                      />
+                      <Link href={`/orders/${order.id}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+                        Open →
+                      </Link>
+                    </div>
                   </td>
                 </tr>
-              ))
+              );
+              })
             )}
           </tbody>
         </table>
