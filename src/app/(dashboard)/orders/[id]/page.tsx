@@ -51,7 +51,11 @@ export default async function SalesOrderDetailPage({
         }
         action={
           <div className="flex flex-wrap items-center gap-3">
-            <DownloadSalesOrderPdfButton orderId={order.id} soNumber={order.so_number} />
+            <DownloadSalesOrderPdfButton
+              orderId={order.id}
+              soNumber={order.so_number}
+              variant="secondary"
+            />
             <Link href="/orders" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
               {labels.allOrdersLink}
             </Link>

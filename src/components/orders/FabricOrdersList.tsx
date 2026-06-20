@@ -169,7 +169,7 @@ export function FabricOrdersList({
               <th className="px-4 py-3">Order Date</th>
               <th className="px-4 py-3">Fabric order</th>
               <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3" />
+              <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -223,9 +223,8 @@ export function FabricOrdersList({
                       <DownloadSalesOrderPdfButton
                         orderId={order.id}
                         soNumber={order.so_number}
-                        variant="ghost"
+                        variant="secondary"
                         size="sm"
-                        compact
                       />
                       <Link
                         href={`/fabric-orders/${order.id}`}

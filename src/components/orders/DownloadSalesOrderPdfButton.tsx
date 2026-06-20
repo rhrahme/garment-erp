@@ -48,11 +48,13 @@ export function DownloadSalesOrderPdfButton({
       <Button
         variant={variant}
         size={size}
+        className="gap-2"
         onClick={() => void handleDownload()}
         disabled={downloading}
         title={compact ? (downloading ? "Downloading…" : "Download PDF") : undefined}
+        aria-label={downloading ? "Downloading PDF" : "Download PDF"}
       >
-        <FileDown className="h-4 w-4" />
+        <FileDown className="h-4 w-4 shrink-0" />
         {compact ? null : downloading ? "Downloading…" : "Download PDF"}
       </Button>
       {error ? <span className="text-xs text-red-600">{error}</span> : null}
