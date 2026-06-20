@@ -27,7 +27,16 @@ export function InvoiceableOrdersPanel({ orders }: { orders: InvoiceableSalesOrd
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sales_order_id: salesOrderId }),
       });
-      const data = (await res.json()) as { id?: string; error?: string };
+      const data = (await res.json()) as {
+        id?: string;
+        error?: string;
+        invoice?: { id: string };
+      };
+      if (res.status === 409 && data.invoice?.id) {
+        router.push(`/invoices/${data.invoice.id}`);
+        router.refresh();
+        return;
+      }
       if (!res.ok) throw new Error(data.error ?? "Failed to create invoice.");
       router.push(`/invoices/${data.id}`);
       router.refresh();

@@ -10,7 +10,7 @@ import {
   redactSalesOrderFabricPrices,
 } from "@/lib/auth/fabric-price-access";
 import { getSessionContext } from "@/lib/auth/session";
-import { getCustomerInvoiceBySalesOrderId } from "@/lib/data/customer-invoices";
+import { getCustomerInvoiceBySalesOrderIdFresh } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderByIdFresh, isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
@@ -37,7 +37,7 @@ export default async function FabricOrderDetailPage({
     cookieStore.get(FABRIC_PRICE_UNLOCK_COOKIE)?.value
   );
   const order = canViewFabricPrices ? rawOrder : redactSalesOrderFabricPrices(rawOrder);
-  const existingInvoice = getCustomerInvoiceBySalesOrderId(order.id);
+  const existingInvoice = await getCustomerInvoiceBySalesOrderIdFresh(order.id);
   const fabricTotals = getFabricTotalsSummary(order.fabric_lines);
 
   return (

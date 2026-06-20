@@ -54,6 +54,14 @@ export function getCustomerInvoiceBySalesOrderId(salesOrderId: string): Customer
   return readCustomerInvoices().invoices.find((invoice) => invoice.sales_order_id === salesOrderId);
 }
 
+/** Bypass in-process cache — use on order detail when invoice may exist in Supabase but not local cache. */
+export async function getCustomerInvoiceBySalesOrderIdFresh(
+  salesOrderId: string
+): Promise<CustomerInvoice | undefined> {
+  const store = await readCustomerInvoicesFresh();
+  return store.invoices.find((invoice) => invoice.sales_order_id === salesOrderId);
+}
+
 export function generateInvoiceNumber(invoices: CustomerInvoice[]): string {
   const year = new Date().getFullYear();
   const prefix = `INV-${year}-`;
