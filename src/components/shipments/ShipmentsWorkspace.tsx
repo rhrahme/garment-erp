@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 import { AddAwbForm, type PendingAwbOption } from "@/components/shipments/AddAwbForm";
+import { AwbScanInput } from "@/components/shipments/AwbScanInput";
 import { PageHeader, DataTable, StatusBadge } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { formatDate } from "@/lib/utils";
@@ -36,6 +37,7 @@ export function ShipmentsWorkspace() {
   const [track17Configured, setTrack17Configured] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [highlightedAwb, setHighlightedAwb] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -113,21 +115,26 @@ export function ShipmentsWorkspace() {
               </Button>
             )}
             <Link href="/supplier-inbox">
-              <Button variant="secondary">Scan supplier inbox</Button>
+              <Button variant="secondary">Scan email inbox</Button>
             </Link>
           </div>
         }
+      />
+
+      <AwbScanInput
+        onFound={(awbNumber) => setHighlightedAwb(awbNumber.toUpperCase())}
+        onRefresh={load}
       />
 
       <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
         <p className="font-medium text-slate-900">How AWB tracking works</p>
         <ol className="mt-2 list-decimal space-y-1 pl-5">
           <li>
-            After you send fabric POs, suppliers reply with an AWB — use{" "}
+            Scan the carrier label above to look up a shipment, or after suppliers email an AWB use{" "}
             <Link href="/supplier-inbox" className="font-medium text-indigo-600 hover:text-indigo-700">
-              Scan supplier inbox
+              Scan email inbox
             </Link>{" "}
-            to auto-parse AWBs from email, or add them manually below.
+            to auto-parse AWBs from email. You can also add them manually below.
           </li>
           <li>
             Each AWB links to its fabric PO. With <span className="font-mono text-xs">TRACK17_API_KEY</span> set,
@@ -224,35 +231,42 @@ export function ShipmentsWorkspace() {
             { key: "po", label: "Fabric PO" },
             { key: "status", label: "Status" },
           ]}
-          rows={shipments.map((s) => ({
-            awb: s.tracking_url ? (
-              <a
-                href={s.tracking_url}
-                target="_blank"
-                rel="noreferrer"
-                className="font-mono font-medium text-indigo-600 hover:text-indigo-700"
-              >
-                {s.awb_number}
-              </a>
-            ) : (
-              <span className="font-mono font-medium">{s.awb_number}</span>
-            ),
-            carrier: s.carrier ?? "—",
-            location: s.current_location ?? "—",
-            latest: s.latest_event ? (
-              <div className="max-w-xs">
-                <p className="truncate text-sm text-slate-700">{s.latest_event}</p>
-                {s.latest_event_at && (
-                  <p className="text-xs text-slate-400">{formatDate(s.latest_event_at.slice(0, 10))}</p>
-                )}
-              </div>
-            ) : (
-              "—"
-            ),
-            po: s.po_number ? <span className="font-mono text-sm">{s.po_number}</span> : "—",
-            status: <StatusBadge status={s.status} />,
-          }))}
-          emptyMessage="No tracking numbers yet — scan Supplier Inbox after suppliers reply, or add an AWB above."
+          rows={shipments.map((s) => {
+            const isHighlighted =
+              highlightedAwb !== null && s.awb_number.toUpperCase() === highlightedAwb;
+            const rowClassName = isHighlighted ? "bg-emerald-50 ring-1 ring-inset ring-emerald-300" : undefined;
+
+            return {
+              rowClassName,
+              awb: s.tracking_url ? (
+                <a
+                  href={s.tracking_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-mono font-medium text-indigo-600 hover:text-indigo-700"
+                >
+                  {s.awb_number}
+                </a>
+              ) : (
+                <span className="font-mono font-medium">{s.awb_number}</span>
+              ),
+              carrier: s.carrier ?? "—",
+              location: s.current_location ?? "—",
+              latest: s.latest_event ? (
+                <div className="max-w-xs">
+                  <p className="truncate text-sm text-slate-700">{s.latest_event}</p>
+                  {s.latest_event_at && (
+                    <p className="text-xs text-slate-400">{formatDate(s.latest_event_at.slice(0, 10))}</p>
+                  )}
+                </div>
+              ) : (
+                "—"
+              ),
+              po: s.po_number ? <span className="font-mono text-sm">{s.po_number}</span> : "—",
+              status: <StatusBadge status={s.status} />,
+            };
+          })}
+          emptyMessage="No tracking numbers yet — scan an AWB label above, scan email inbox after suppliers reply, or add an AWB manually."
         />
       )}
     </div>

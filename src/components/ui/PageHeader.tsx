@@ -48,7 +48,7 @@ export function StatCard({ label, value, subtext, icon, accent = "bg-indigo-50 t
 
 interface DataTableProps {
   columns: { key: string; label: string; className?: string }[];
-  rows: Record<string, React.ReactNode>[];
+  rows: Array<Record<string, React.ReactNode> & { rowClassName?: string }>;
   emptyMessage?: string;
 }
 
@@ -78,7 +78,7 @@ export function DataTable({ columns, rows, emptyMessage = "No records found." }:
         </thead>
         <tbody className="divide-y divide-slate-100 bg-white">
           {rows.map((row, i) => (
-            <tr key={i} className="hover:bg-slate-50/50">
+            <tr key={i} className={cn("hover:bg-slate-50/50", row.rowClassName)}>
               {columns.map((col) => (
                 <td key={col.key} className={cn("px-4 py-3 text-slate-700", col.className)}>
                   {row[col.key]}
