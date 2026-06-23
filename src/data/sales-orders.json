@@ -1728,7 +1728,7 @@
           "supplier_id": "caccioppoli",
           "garment_type": "Shirt+Trouser",
           "restock_date": null,
-          "stock_status": "in_stock",
+          "stock_status": "permanently_unavailable",
           "width_inches": null,
           "a4_printed_at": null,
           "fabric_number": "360215",
@@ -1745,7 +1745,7 @@
               "piece_name": "Trouser"
             }
           ],
-          "needs_replacement": false,
+          "needs_replacement": true,
           "prep_stickers_printed_at": null,
           "prod_stickers_printed_at": null,
           "replacement_fabric_number": null
@@ -1867,7 +1867,7 @@
               "piece_name": "Jacket"
             }
           ],
-          "needs_replacement": false,
+          "needs_replacement": true,
           "prep_stickers_printed_at": null,
           "prod_stickers_printed_at": null,
           "replacement_fabric_number": null
@@ -36644,5 +36644,5 @@
       "client_reference": "FR-0226-0025-SO-2026-0095"
     }
   ],
-  "updated_at": "2026-06-20T17:08:21.833Z"
+  "updated_at": "2026-06-23T19:23:46.750Z"
 }
