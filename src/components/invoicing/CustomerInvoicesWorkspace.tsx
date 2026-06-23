@@ -7,6 +7,7 @@ import { StatCard, StatusBadge } from "@/components/ui/PageHeader";
 import type { CustomerInvoice, CustomerInvoiceSummary } from "@/lib/types/customer-invoices";
 import type { InvoiceableSalesOrder } from "@/lib/types/invoiceable-orders";
 import { formatInvoiceClientName } from "@/lib/invoicing/display";
+import { customerInvoiceMatchesSearch } from "@/lib/invoicing/list-search";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { InvoiceableOrdersPanel } from "@/components/invoicing/InvoiceableOrdersPanel";
 
@@ -29,21 +30,9 @@ export function CustomerInvoicesWorkspace({
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTER_OPTIONS)[number]>("all");
 
   const filtered = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
     return invoices.filter((invoice) => {
       if (statusFilter !== "all" && invoice.status !== statusFilter) return false;
-      if (!query) return true;
-      return [
-        invoice.invoice_number,
-        invoice.so_number,
-        invoice.client_name,
-        invoice.client_code,
-        invoice.client_reference,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(query);
+      return customerInvoiceMatchesSearch(invoice, searchQuery);
     });
   }, [invoices, searchQuery, statusFilter]);
 

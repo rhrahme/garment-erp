@@ -8,6 +8,8 @@ import {
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getInvoiceableSalesOrders } from "@/lib/invoicing/invoiceable-orders";
 
+export const dynamic = "force-dynamic";
+
 export default async function InvoicesPage() {
   await ensureDocumentsLoaded(["customer_invoices", "sales_orders", "costing_rates", "clients"]);
 
