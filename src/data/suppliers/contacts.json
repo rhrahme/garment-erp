@@ -6,7 +6,7 @@
       "code": "CACCIOPPOLI",
       "name": "Caccioppoli",
       "email": "info@caccioppolinapoli.it, orders@comoluxuryfabrics.com, ragheed@comoluxuryfabrics.com",
-      "notes": "Jackets + shirting price lists imported",
+      "notes": "Jackets + shirting price lists imported. Live stock via GR Sistemi API (CACCIOPPOLI_API_TOKEN).",
       "emails": [
         "info@caccioppolinapoli.it",
         "orders@comoluxuryfabrics.com",

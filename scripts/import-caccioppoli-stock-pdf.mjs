@@ -1,6 +1,10 @@
 /**
  * Import Caccioppoli "Esauriti" stock-update PDFs into local catalog JSON.
  *
+ * Prefer live API sync when CACCIOPPOLI_API_TOKEN is set:
+ *   Purchasing → Supplier Emails → Caccioppoli live stock API → Sync full SS26 catalogs
+ *   or POST /api/integrations/caccioppoli/sync-stock { "scope": "catalog" }
+ *
  * Usage:
  *   node scripts/import-caccioppoli-stock-pdf.mjs [pdf...]
  *   node scripts/import-caccioppoli-stock-pdf.mjs "/path/to/Esauriti-Camiceria-E.pdf"
