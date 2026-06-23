@@ -13,7 +13,6 @@ export interface CustomerInvoiceLine {
   piece_name: string | null;
   /** Internal — not shown on client invoice */
   sticker_code: string | null;
-  /** Internal — not shown on client invoice */
   fabric_number: string | null;
   fabric_brand: string | null;
   composition: string | null;

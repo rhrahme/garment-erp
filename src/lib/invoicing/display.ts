@@ -30,8 +30,16 @@ export function formatInvoiceComposition(composition: string | null | undefined)
   return composition?.trim() || "—";
 }
 
-export function formatInvoiceFabricBrand(brand: string | null | undefined): string {
-  return brand?.trim() || "—";
+/** Fabric supplier + number, e.g. "Loro Piana 760002". */
+export function formatInvoiceFabricBrand(
+  brand: string | null | undefined,
+  fabricNumber?: string | null | undefined
+): string {
+  const label = brand?.trim();
+  const number = fabricNumber?.trim();
+  if (label && number) return `${label} ${number}`;
+  if (number) return number;
+  return label || "—";
 }
 
 export function formatInvoiceArticle(articleNumber: number | null | undefined): string {
@@ -65,7 +73,7 @@ export function toInvoiceLineDisplay(line: CustomerInvoiceLine): CustomerInvoice
   return {
     ...resolved,
     article_label: formatInvoiceArticle(resolved.article_number),
-    fabric_brand_label: formatInvoiceFabricBrand(resolved.fabric_brand),
+    fabric_brand_label: formatInvoiceFabricBrand(resolved.fabric_brand, resolved.fabric_number),
     composition_label: formatInvoiceComposition(resolved.composition),
     weight_label: formatInvoiceWeight(resolved.weight_gsm),
   };

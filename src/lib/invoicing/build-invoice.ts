@@ -109,6 +109,7 @@ export function enrichInvoiceLinesWithFabricDetails(
       ...line,
       piece_name: pieceName,
       description: lineDescription(fabricLine.garment_type, pieceName),
+      fabric_number: line.fabric_number ?? fabricLine.fabric_number,
       fabric_brand: line.fabric_brand ?? fabricBrandLabel(fabricLine),
       composition: line.composition ?? fabricLine.composition,
       weight_gsm: line.weight_gsm ?? fabricLine.weight_gsm,
