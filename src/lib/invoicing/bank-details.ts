@@ -6,6 +6,7 @@ export type InvoiceBankDetailsBlock = {
   bank_name: string;
   branch_name: string;
   swift_code: string;
+  currency?: string;
 };
 
 export type InvoiceIssuerDetails = {
@@ -29,6 +30,7 @@ export const DUBAI_INVOICE_BANK_DETAILS: InvoiceBankDetailsBlock = {
   bank_name: "Emirates NBD",
   branch_name: "Business Bay",
   swift_code: "EBILAEADXXX",
+  currency: "UAE Dirhams (DHS)",
 };
 
 export const DUBAI_INVOICE_ISSUER: InvoiceIssuerDetails = {

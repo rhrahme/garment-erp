@@ -33,6 +33,12 @@ export function InvoiceBankDetails({
           <dt className="text-xs text-slate-500">Swift code</dt>
           <dd className="font-mono">{bank.swift_code}</dd>
         </div>
+        {bank.currency && (
+          <div>
+            <dt className="text-xs text-slate-500">Currency</dt>
+            <dd>{bank.currency}</dd>
+          </div>
+        )}
       </dl>
     </div>
   );
