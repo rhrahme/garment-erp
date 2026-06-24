@@ -535,7 +535,7 @@
           "piece_name": "Shirt LS",
           "unit_price": 600,
           "weight_gsm": null,
-          "composition": "Cotton shirting",
+          "composition": "100% cotton",
           "description": "Shirt LS",
           "fabric_brand": "Canclini",
           "garment_type": "Shirt LS",
@@ -552,7 +552,7 @@
           "piece_name": "Shirt LS",
           "unit_price": 600,
           "weight_gsm": null,
-          "composition": "Cotton shirting",
+          "composition": "100% cotton",
           "description": "Shirt LS",
           "fabric_brand": "Canclini",
           "garment_type": "Shirt LS",
@@ -569,7 +569,7 @@
           "piece_name": "Shirt LS",
           "unit_price": 600,
           "weight_gsm": null,
-          "composition": "Cotton shirting",
+          "composition": "100% cotton",
           "description": "Shirt LS",
           "fabric_brand": "Canclini",
           "garment_type": "Shirt LS",
@@ -735,7 +735,7 @@
           "piece_name": "Shirts",
           "unit_price": 0,
           "weight_gsm": null,
-          "composition": null,
+          "composition": "100% cotton",
           "description": "Shirt LS",
           "fabric_brand": "Canclini",
           "garment_type": "Shirt LS",
@@ -752,7 +752,7 @@
           "piece_name": "Shirts",
           "unit_price": 0,
           "weight_gsm": null,
-          "composition": null,
+          "composition": "100% cotton",
           "description": "Shirt LS",
           "fabric_brand": "Canclini",
           "garment_type": "Shirt LS",
@@ -769,7 +769,7 @@
           "piece_name": "Shirts",
           "unit_price": 0,
           "weight_gsm": null,
-          "composition": null,
+          "composition": "100% cotton",
           "description": "Shirt LS",
           "fabric_brand": "Canclini",
           "garment_type": "Shirt LS",
@@ -1009,5 +1009,5 @@
       "vat_amount": 0
     }
   ],
-  "updated_at": "2026-06-24T10:39:57.812Z"
+  "updated_at": "2026-06-24T10:51:23.293Z"
 }
