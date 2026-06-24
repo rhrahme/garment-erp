@@ -174,9 +174,7 @@ export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
               <th className="px-4 py-3 text-center">Art.</th>
               <th className="px-4 py-3">Garment</th>
-              <th className="px-4 py-3">Fabric</th>
               <th className="px-4 py-3">Composition</th>
-              <th className="px-4 py-3">Weight</th>
               <th className="px-4 py-3">Qty</th>
               <th className="px-4 py-3">Unit price (SAR)</th>
               <th className="px-4 py-3">Line total</th>
@@ -198,9 +196,7 @@ export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }
                     className="w-full min-w-[12rem] rounded border border-slate-200 px-2 py-1.5"
                   />
                 </td>
-                <td className="px-4 py-3 text-slate-800">{display.fabric_brand_label}</td>
                 <td className="px-4 py-3 text-sm text-slate-700">{display.composition_label}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-slate-700">{display.weight_label}</td>
                 <td className="px-4 py-3">{line.quantity}</td>
                 <td className="px-4 py-3">
                   <input
@@ -222,7 +218,7 @@ export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }
           </tbody>
           <tfoot>
             <tr className="border-t border-slate-200 text-slate-600">
-              <td className="px-4 py-2" colSpan={7}>
+              <td className="px-4 py-2" colSpan={5}>
                 Subtotal
               </td>
               <td className="px-4 py-2">{formatSar(liveSubtotal)}</td>
@@ -230,7 +226,7 @@ export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }
             </tr>
             {invoice.vat_rate != null && invoice.vat_rate > 0 && (
               <tr className="text-slate-600">
-                <td className="px-4 py-2" colSpan={7}>
+                <td className="px-4 py-2" colSpan={5}>
                   VAT ({Math.round(invoice.vat_rate * 100)}%)
                 </td>
                 <td className="px-4 py-2">{formatSar(liveVatAmount)}</td>
@@ -238,7 +234,7 @@ export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }
               </tr>
             )}
             <tr className="border-t border-slate-200 bg-slate-50 font-semibold">
-              <td className="px-4 py-3" colSpan={7}>
+              <td className="px-4 py-3" colSpan={5}>
                 Total
               </td>
               <td className="px-4 py-3">{formatSar(liveTotal)}</td>

@@ -73,9 +73,7 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
           <tr className="border-b border-slate-300 text-left text-xs uppercase tracking-wide text-slate-500">
             <th className="py-2 pr-3 text-center">Art.</th>
             <th className="py-2 pr-3">Garment</th>
-            <th className="py-2 pr-3">Fabric</th>
             <th className="py-2 pr-3">Composition</th>
-            <th className="py-2 pr-3">Weight</th>
             <th className="py-2 pr-3">Qty</th>
             <th className="py-2 pr-3">Unit price</th>
             <th className="py-2 pr-3 text-right">Amount</th>
@@ -86,9 +84,7 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
             <tr key={line.id} className="border-b border-slate-100 align-top">
               <td className="py-3 pr-3 text-center font-semibold text-slate-900">{line.article_label}</td>
               <td className="py-3 pr-3">{line.description}</td>
-              <td className="py-3 pr-3">{line.fabric_brand_label}</td>
               <td className="py-3 pr-3 text-slate-700">{line.composition_label}</td>
-              <td className="py-3 pr-3 whitespace-nowrap">{line.weight_label}</td>
               <td className="py-3 pr-3">{line.quantity}</td>
               <td className="py-3 pr-3">{formatSar(line.unit_price)}</td>
               <td className="py-3 pr-3 text-right font-medium">{formatSar(line.line_total)}</td>
@@ -97,21 +93,21 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
         </tbody>
         <tfoot>
           <tr>
-            <td colSpan={7} className="py-2 text-right text-slate-600">
+            <td colSpan={5} className="py-2 text-right text-slate-600">
               Subtotal ({invoice.currency})
             </td>
             <td className="py-2 text-right font-medium">{formatSar(invoice.subtotal)}</td>
           </tr>
           {invoice.vat_rate != null && invoice.vat_rate > 0 && (
             <tr>
-              <td colSpan={7} className="py-2 text-right text-slate-600">
+              <td colSpan={5} className="py-2 text-right text-slate-600">
                 VAT ({Math.round(invoice.vat_rate * 100)}%)
               </td>
               <td className="py-2 text-right font-medium">{formatSar(invoice.vat_amount)}</td>
             </tr>
           )}
           <tr>
-            <td colSpan={7} className="py-4 text-right font-semibold">
+            <td colSpan={5} className="py-4 text-right font-semibold">
               Total ({invoice.currency})
             </td>
             <td className="py-4 text-right text-lg font-bold">{formatSar(invoice.total)}</td>

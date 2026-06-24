@@ -31,6 +31,43 @@ export function formatInvoiceWeight(weightGsm: number | null | undefined): strin
   return `${weightGsm} gsm`;
 }
 
+const FABRIC_BRAND_ABBREVIATIONS: Record<string, string> = {
+  drapers: "DP",
+  "loro piana": "LP",
+  canclini: "CC",
+  stylbiella: "SB",
+};
+
+/** Client invoice fabric prefix — known mills only; unknown brands omit the prefix. */
+export function formatInvoiceFabricBrandAbbreviation(
+  brand: string | null | undefined
+): string | null {
+  const key = brand?.trim().toLowerCase();
+  if (!key) return null;
+  return FABRIC_BRAND_ABBREVIATIONS[key] ?? null;
+}
+
+function formatInvoiceWeightGrams(weightGsm: number | null | undefined): string | null {
+  if (weightGsm == null || !Number.isFinite(weightGsm)) return null;
+  return `${weightGsm}g`;
+}
+
+/** Combined composition cell: "{brand_abbr} {composition} {weight}" e.g. "DP 100% cashmere 480g". */
+export function formatInvoiceCompositionLine(
+  brand: string | null | undefined,
+  composition: string | null | undefined,
+  weightGsm?: number | null | undefined
+): string {
+  const parts: string[] = [];
+  const abbr = formatInvoiceFabricBrandAbbreviation(brand);
+  if (abbr) parts.push(abbr);
+  const comp = composition?.trim();
+  if (comp) parts.push(comp);
+  const weight = formatInvoiceWeightGrams(weightGsm);
+  if (weight) parts.push(weight);
+  return parts.length > 0 ? parts.join(" ") : "—";
+}
+
 export function formatInvoiceComposition(composition: string | null | undefined): string {
   return composition?.trim() || "—";
 }
@@ -90,9 +127,7 @@ export function resolveInvoiceLines(lines: CustomerInvoiceLine[]): CustomerInvoi
 
 export type CustomerInvoiceLineDisplay = CustomerInvoiceLine & {
   article_label: string;
-  fabric_brand_label: string;
   composition_label: string;
-  weight_label: string;
 };
 
 export function toInvoiceLineDisplay(line: CustomerInvoiceLine): CustomerInvoiceLineDisplay {
@@ -103,9 +138,11 @@ export function toInvoiceLineDisplay(line: CustomerInvoiceLine): CustomerInvoice
     composition,
     description: resolveInvoiceLineDescription(resolved),
     article_label: formatInvoiceArticle(resolved.article_number),
-    fabric_brand_label: formatInvoiceFabricBrand(resolved.fabric_brand, resolved.fabric_number),
-    composition_label: formatInvoiceComposition(composition),
-    weight_label: formatInvoiceWeight(resolved.weight_gsm),
+    composition_label: formatInvoiceCompositionLine(
+      resolved.fabric_brand,
+      composition,
+      resolved.weight_gsm
+    ),
   };
 }
 
