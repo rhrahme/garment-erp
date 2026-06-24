@@ -20,7 +20,7 @@ export interface CustomerInvoiceLine {
   quantity: number;
   unit_price: number;
   line_total: number;
-  /** Internal cost hint (SAR) — shown on invoice print/PDF for staff */
+  /** Internal cost hint (SAR) — admin editor only, not on client print/PDF */
   cost_hint_sar: number | null;
 }
 

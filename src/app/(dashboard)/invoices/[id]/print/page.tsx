@@ -5,7 +5,6 @@ import { getCustomerInvoiceByIdFresh } from "@/lib/data/customer-invoices";
 import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import {
   enrichInvoiceDeliveryDestination,
-  enrichInvoiceLinesWithCostHints,
   enrichInvoiceLinesWithFabricDetails,
 } from "@/lib/invoicing/build-invoice";
 import { resolveInvoiceLines, sortInvoiceLinesByArticle, toInvoiceLineDisplay } from "@/lib/invoicing/display";
@@ -25,7 +24,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
       delivery_destination: raw.delivery_destination ?? null,
       lines: sortInvoiceLinesByArticle(
         resolveInvoiceLines(
-          enrichInvoiceLinesWithCostHints(enrichInvoiceLinesWithFabricDetails(raw.lines, order), order)
+          enrichInvoiceLinesWithFabricDetails(raw.lines, order)
         )
       ).map(toInvoiceLineDisplay),
     },
