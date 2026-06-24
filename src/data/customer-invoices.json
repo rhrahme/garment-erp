@@ -638,7 +638,7 @@
           "fabric_brand": "Drapers",
           "garment_type": "Overcoat",
           "sticker_code": "FR-0426-0006-SO-2026-0008-L02-OC",
-          "cost_hint_sar": null,
+          "cost_hint_sar": 3828.6,
           "fabric_number": "85125",
           "article_number": 2,
           "sales_order_line_id": "line-cu-86exexf56-1"
@@ -655,7 +655,7 @@
           "fabric_brand": "Drapers",
           "garment_type": "Overcoat",
           "sticker_code": "FR-0426-0006-SO-2026-0008-L03-OC",
-          "cost_hint_sar": null,
+          "cost_hint_sar": 3965.63,
           "fabric_number": "85132",
           "article_number": 3,
           "sales_order_line_id": "line-cu-86exexf56-2"
@@ -672,7 +672,7 @@
           "fabric_brand": "Drapers",
           "garment_type": "Overcoat",
           "sticker_code": "FR-0426-0006-SO-2026-0008-L04-OC",
-          "cost_hint_sar": null,
+          "cost_hint_sar": 3828.6,
           "fabric_number": "85131",
           "article_number": 4,
           "sales_order_line_id": "line-cu-86exexf56-3"
@@ -1105,10 +1105,10 @@
       "client_address": null,
       "invoice_number": "INV-2026-0004",
       "sales_order_id": "so-cu-86exexf56",
-      "total_cost_sar": 14371.41,
+      "total_cost_sar": 21982.67,
       "client_reference": "FR-0426-0006-SO-2026-0008",
       "factory_brand_name": "Fouad Rahme"
     }
   ],
-  "updated_at": "2026-06-23T19:42:30.030Z"
+  "updated_at": "2026-06-24T10:02:51.012Z"
 }
