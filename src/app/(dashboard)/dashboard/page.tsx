@@ -24,7 +24,8 @@ import { countInvoiceableSalesOrders } from "@/lib/invoicing/invoiceable-orders"
 import { getSessionContext } from "@/lib/auth/session";
 import { countPendingAwbFabricOrders } from "@/lib/integrations/pending-awb";
 import { getTodaysFabricSummary } from "@/lib/sales-orders/todays-fabric";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
+import { formatNumber } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const session = await getSessionContext();
@@ -76,7 +77,7 @@ export default async function DashboardPage() {
           <StatCard
             label="Ready to invoice"
             value={readyToInvoice}
-            subtext={`${invoiceSummary.draft_count} draft · ${formatCurrency(invoiceSummary.outstanding_sar, "SAR")} outstanding`}
+            subtext={`${invoiceSummary.draft_count} draft · ${formatInvoiceSar(invoiceSummary.outstanding_sar)} outstanding`}
             icon={<Receipt className="h-5 w-5" />}
             accent="bg-indigo-50 text-indigo-600"
           />

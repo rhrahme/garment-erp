@@ -6,12 +6,8 @@ import { FilePlus2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/PageHeader";
 import type { InvoiceableSalesOrder } from "@/lib/types/invoiceable-orders";
-import { formatCurrency, formatDate } from "@/lib/utils";
-
-function formatSar(amount: number | null): string {
-  if (amount == null) return "—";
-  return formatCurrency(amount, "SAR");
-}
+import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
+import { formatDate } from "@/lib/utils";
 
 export function InvoiceableOrdersPanel({ orders }: { orders: InvoiceableSalesOrder[] }) {
   const router = useRouter();
@@ -99,7 +95,9 @@ export function InvoiceableOrdersPanel({ orders }: { orders: InvoiceableSalesOrd
                   {order.piece_count} pc · {order.fabric_line_count} fabric
                   {order.fabric_line_count !== 1 ? "s" : ""}
                 </td>
-                <td className="px-4 py-3 text-slate-700">{formatSar(order.estimated_cost_sar)}</td>
+                <td className="px-4 py-3 text-slate-700">
+                  {order.estimated_cost_sar != null ? formatInvoiceSar(order.estimated_cost_sar) : "—"}
+                </td>
                 <td className="px-4 py-3">
                   <StatusBadge status={order.status} />
                 </td>

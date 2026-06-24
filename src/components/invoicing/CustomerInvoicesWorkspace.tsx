@@ -7,13 +7,10 @@ import { StatCard, StatusBadge } from "@/components/ui/PageHeader";
 import type { CustomerInvoice, CustomerInvoiceSummary } from "@/lib/types/customer-invoices";
 import type { InvoiceableSalesOrder } from "@/lib/types/invoiceable-orders";
 import { formatInvoiceClientName } from "@/lib/invoicing/display";
+import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
 import { customerInvoiceMatchesSearch } from "@/lib/invoicing/list-search";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { InvoiceableOrdersPanel } from "@/components/invoicing/InvoiceableOrdersPanel";
-
-function formatSar(amount: number): string {
-  return formatCurrency(amount, "SAR");
-}
 
 const STATUS_FILTER_OPTIONS = ["all", "draft", "sent", "paid"] as const;
 
@@ -60,14 +57,14 @@ export function CustomerInvoicesWorkspace({
         />
         <StatCard
           label="Outstanding"
-          value={formatSar(summary.outstanding_sar)}
+          value={formatInvoiceSar(summary.outstanding_sar)}
           subtext={`${summary.sent_count} sent · ${summary.draft_count} draft`}
           icon={<Wallet className="h-5 w-5" />}
           accent="bg-amber-50 text-amber-600"
         />
         <StatCard
           label="Paid"
-          value={formatSar(summary.paid_sar)}
+          value={formatInvoiceSar(summary.paid_sar)}
           subtext={`${summary.paid_count} invoice${summary.paid_count !== 1 ? "s" : ""}`}
           accent="bg-emerald-50 text-emerald-600"
         />
@@ -143,7 +140,7 @@ export function CustomerInvoicesWorkspace({
                   <td className="px-4 py-3 font-mono text-xs text-indigo-700">{invoice.so_number}</td>
                   <td className="px-4 py-3">{formatDate(invoice.invoice_date)}</td>
                   <td className="px-4 py-3">{invoice.due_date ? formatDate(invoice.due_date) : "—"}</td>
-                  <td className="px-4 py-3 font-semibold">{formatSar(invoice.total)}</td>
+                  <td className="px-4 py-3 font-semibold">{formatInvoiceSar(invoice.total)}</td>
                   <td className="px-4 py-3">
                     <StatusBadge status={invoice.status} />
                   </td>
