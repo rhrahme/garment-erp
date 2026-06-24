@@ -7172,7 +7172,7 @@
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": null,
-          "composition": null,
+          "composition": "100% cashmere",
           "label_count": 1,
           "supplier_id": "canclini",
           "garment_type": "Overcoat",
@@ -7199,7 +7199,7 @@
           "width_cm": null,
           "unit_price": 290,
           "weight_gsm": 480,
-          "composition": "100% WS",
+          "composition": "100% cashmere",
           "label_count": 1,
           "supplier_id": "drapers",
           "garment_type": "Overcoat",
@@ -7222,7 +7222,7 @@
           "width_cm": null,
           "unit_price": 290,
           "weight_gsm": 550,
-          "composition": "100% WS",
+          "composition": "100% cashmere",
           "label_count": 1,
           "supplier_id": "drapers",
           "garment_type": "Overcoat",
@@ -7245,7 +7245,7 @@
           "width_cm": null,
           "unit_price": 290,
           "weight_gsm": 550,
-          "composition": "100% WS",
+          "composition": "100% cashmere",
           "label_count": 1,
           "supplier_id": "drapers",
           "garment_type": "Overcoat",
@@ -36644,5 +36644,5 @@
       "client_reference": "FR-0226-0025-SO-2026-0095"
     }
   ],
-  "updated_at": "2026-06-24T10:51:23.293Z"
+  "updated_at": "2026-06-24T18:00:00.000Z"
 }

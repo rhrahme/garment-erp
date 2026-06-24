@@ -616,7 +616,7 @@
           "piece_name": "Overcoats",
           "unit_price": 16500,
           "weight_gsm": null,
-          "composition": null,
+          "composition": "100% cashmere",
           "description": "Overcoat",
           "fabric_brand": "Canclini",
           "garment_type": "Overcoat",
@@ -633,7 +633,7 @@
           "piece_name": "Overcoats",
           "unit_price": 16500,
           "weight_gsm": 480,
-          "composition": "100% WS",
+          "composition": "100% cashmere",
           "description": "Overcoat",
           "fabric_brand": "Drapers",
           "garment_type": "Overcoat",
@@ -650,7 +650,7 @@
           "piece_name": "Overcoats",
           "unit_price": 16500,
           "weight_gsm": 550,
-          "composition": "100% WS",
+          "composition": "100% cashmere",
           "description": "Overcoat",
           "fabric_brand": "Drapers",
           "garment_type": "Overcoat",
@@ -667,7 +667,7 @@
           "piece_name": "Overcoats",
           "unit_price": 16500,
           "weight_gsm": 550,
-          "composition": "100% WS",
+          "composition": "100% cashmere",
           "description": "Overcoat",
           "fabric_brand": "Drapers",
           "garment_type": "Overcoat",
@@ -1009,5 +1009,5 @@
       "vat_amount": 0
     }
   ],
-  "updated_at": "2026-06-24T12:21:43.664Z"
+  "updated_at": "2026-06-24T18:00:00.000Z"
 }
