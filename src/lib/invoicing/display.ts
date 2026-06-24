@@ -52,6 +52,31 @@ function formatInvoiceWeightGrams(weightGsm: number | null | undefined): string 
   return `${weightGsm}g`;
 }
 
+/** Mill yarn-count prefix before fibre content, e.g. "80-2,100-1-" or "80/2,100/1-". */
+const INVOICE_YARN_PREFIX_RE =
+  /^(?:\d+[-/]\d+)(?:[,.\s]+(?:\d+[-/]\d+))*-?(?=\d+%)/;
+
+const INVOICE_FIBER_NAME_FIXES: [RegExp, string][] = [[/\bPolymide\b/gi, "Polyamide"]];
+
+/** Client-facing composition — strip yarn notation and space out mashed fibre percentages. */
+function formatClientInvoiceComposition(composition: string): string {
+  let text = composition.trim();
+  const yarnPrefix = text.match(INVOICE_YARN_PREFIX_RE);
+  if (yarnPrefix) text = text.slice(yarnPrefix[0].length);
+
+  text = text
+    .replace(/(\d+%)([A-Za-z])/g, "$1 $2")
+    .replace(/([A-Za-z])(\d+%)/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  for (const [pattern, replacement] of INVOICE_FIBER_NAME_FIXES) {
+    text = text.replace(pattern, replacement);
+  }
+
+  return text;
+}
+
 /** Combined composition cell: "{brand_abbr} {composition} {weight}" e.g. "DP 100% cashmere 480g". */
 export function formatInvoiceCompositionLine(
   brand: string | null | undefined,
@@ -62,14 +87,16 @@ export function formatInvoiceCompositionLine(
   const abbr = formatInvoiceFabricBrandAbbreviation(brand);
   if (abbr) parts.push(abbr);
   const comp = composition?.trim();
-  if (comp) parts.push(comp);
+  if (comp) parts.push(formatClientInvoiceComposition(comp));
   const weight = formatInvoiceWeightGrams(weightGsm);
   if (weight) parts.push(weight);
   return parts.length > 0 ? parts.join(" ") : "—";
 }
 
 export function formatInvoiceComposition(composition: string | null | undefined): string {
-  return composition?.trim() || "—";
+  const raw = composition?.trim();
+  if (!raw) return "—";
+  return formatClientInvoiceComposition(raw);
 }
 
 /** Prefer stored invoice line composition; fall back to linked sales-order fabric line. */
