@@ -43,8 +43,7 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
     <div className="invoice-document mx-auto max-w-3xl bg-white p-8 text-slate-900">
       <div className="mb-8 flex items-start justify-between border-b border-slate-200 pb-6">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Tax invoice</p>
-          <h1 className="mt-1 text-3xl font-bold">{invoice.invoice_number}</h1>
+          <h1 className="text-3xl font-bold">{invoice.invoice_number}</h1>
           <p className="mt-2 text-sm text-slate-600">Date: {formatDate(invoice.invoice_date)}</p>
           {invoice.due_date && <p className="text-sm text-slate-600">Due: {formatDate(invoice.due_date)}</p>}
         </div>
