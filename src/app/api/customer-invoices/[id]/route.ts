@@ -65,19 +65,37 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     }
 
     if (Array.isArray(body.lines)) {
-      next.lines = invoice.lines.map((line) => {
-        const patch = body.lines!.find((row) => row.id === line.id);
-        if (!patch) return line;
-        const quantity = patch.quantity != null ? Number(patch.quantity) : line.quantity;
-        const unitPrice = patch.unit_price != null ? Number(patch.unit_price) : line.unit_price;
-        const description = patch.description != null ? String(patch.description).trim() : line.description;
-        return {
-          ...line,
-          description,
-          quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : line.quantity,
-          unit_price: Number.isFinite(unitPrice) && unitPrice >= 0 ? unitPrice : line.unit_price,
-        };
-      });
+      const isFullReplacement = body.lines.every(
+        (row) =>
+          row.id &&
+          row.description != null &&
+          row.quantity != null &&
+          row.unit_price != null &&
+          row.garment_type != null
+      );
+
+      if (isFullReplacement) {
+        next.lines = body.lines.map((row) => ({
+          ...row,
+          description: String(row.description).trim(),
+          quantity: Number(row.quantity),
+          unit_price: Number(row.unit_price),
+        })) as CustomerInvoiceLine[];
+      } else {
+        next.lines = invoice.lines.map((line) => {
+          const patch = body.lines!.find((row) => row.id === line.id);
+          if (!patch) return line;
+          const quantity = patch.quantity != null ? Number(patch.quantity) : line.quantity;
+          const unitPrice = patch.unit_price != null ? Number(patch.unit_price) : line.unit_price;
+          const description = patch.description != null ? String(patch.description).trim() : line.description;
+          return {
+            ...line,
+            description,
+            quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : line.quantity,
+            unit_price: Number.isFinite(unitPrice) && unitPrice >= 0 ? unitPrice : line.unit_price,
+          };
+        });
+      }
       const totals = recalculateInvoiceTotals(next.lines, next.vat_rate);
       next = { ...next, ...totals };
     } else if (body.vat_rate !== undefined) {
