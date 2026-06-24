@@ -87,9 +87,13 @@ function formatBytes(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
+/** Full-blob docs edited on production — skip when Supabase is newer than local unless --force. */
+const PRODUCTION_EDITABLE_KEYS = new Set(["customer_invoices", "sales_orders"]);
+
 loadEnvLocal();
 
 const dryRun = process.argv.includes("--dry-run");
+const forceUpload = process.argv.includes("--force");
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 const serviceKey =
   process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? process.env.SUPABASE_SECRET_KEY?.trim();
@@ -151,16 +155,31 @@ async function main() {
   const updated_at = new Date().toISOString();
   let ok = 0;
   let failed = 0;
+  let skipped = 0;
 
   const { data: remoteRows } = await admin
     .from("erp_documents")
-    .select("id, data")
-    .eq("id", "supplier_contacts")
-    .maybeSingle();
-  const remoteContacts = remoteRows?.data ?? null;
+    .select("id, data, updated_at")
+    .in("id", rows.map((row) => row.id));
+  const remoteById = new Map((remoteRows ?? []).map((row) => [row.id, row]));
+  const remoteContacts = remoteById.get("supplier_contacts")?.data ?? null;
 
   for (const row of rows) {
     let dataToUpload = row.data;
+
+    if (PRODUCTION_EDITABLE_KEYS.has(row.id) && !forceUpload) {
+      const remote = remoteById.get(row.id);
+      const localStamp = row.data?.updated_at ? Date.parse(row.data.updated_at) : NaN;
+      const remoteStamp = remote?.updated_at ? Date.parse(remote.updated_at) : NaN;
+      if (remote && Number.isFinite(remoteStamp) && (!Number.isFinite(localStamp) || remoteStamp > localStamp)) {
+        console.warn(
+          `⚠ ${row.id}: skipping — Supabase (${remote.updated_at}) is newer than local ` +
+            `(${row.data?.updated_at ?? "no timestamp"}). Use --force to overwrite production edits.`
+        );
+        skipped += 1;
+        continue;
+      }
+    }
 
     if (row.id === "supplier_contacts") {
       dataToUpload = mergeIncomingWithRemoteSupplierContacts(row.data, remoteContacts);
@@ -187,7 +206,7 @@ async function main() {
     }
   }
 
-  console.log(`\nDone: ${ok} uploaded, ${failed} failed.`);
+  console.log(`\nDone: ${ok} uploaded, ${skipped} skipped (newer on Supabase), ${failed} failed.`);
   if (failed > 0) process.exit(1);
 }
 

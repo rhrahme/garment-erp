@@ -12,6 +12,8 @@ import {
 } from "@/lib/invoicing/build-invoice";
 import { formatInvoiceClientName, resolveInvoiceLines, sortInvoiceLinesByArticle } from "@/lib/invoicing/display";
 
+export const dynamic = "force-dynamic";
+
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await ensureDocumentsLoaded(["customer_invoices", "sales_orders"]);
 
@@ -44,7 +46,10 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           </Link>
         }
       />
-      <InvoiceEditor invoice={invoice} />
+      <InvoiceEditor
+        key={`${invoice.id}-${invoice.subtotal}-${invoice.total}-${invoice.lines.map((l) => l.unit_price).join(",")}`}
+        invoice={invoice}
+      />
     </div>
   );
 }

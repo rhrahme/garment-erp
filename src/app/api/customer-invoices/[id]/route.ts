@@ -3,7 +3,8 @@ import { getCustomerInvoiceByIdFresh, saveCustomerInvoice } from "@/lib/data/cus
 import { readSalesOrders, writeSalesOrders } from "@/lib/data/sales-orders";
 import { recalculateInvoiceTotals } from "@/lib/invoicing/build-invoice";
 import type { CustomerInvoice, CustomerInvoiceLine, CustomerInvoiceStatus } from "@/lib/types/customer-invoices";
-import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { ensureDocumentsLoaded, invalidateDocumentCache } from "@/lib/data/document-persistence";
+import path from "path";
 
 function normalizeText(value: unknown): string | null {
   const trimmed = String(value ?? "").trim();
@@ -106,6 +107,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     }
 
     const saved = await saveCustomerInvoice(next);
+    invalidateDocumentCache(path.join(process.cwd(), "src/data/customer-invoices.json"));
     return NextResponse.json(saved);
   } catch (error) {
     console.error("Failed to update customer invoice:", error);
