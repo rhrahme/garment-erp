@@ -1,5 +1,5 @@
 import { InvoiceBankDetails } from "@/components/invoicing/InvoiceBankDetails";
-import { sarToDhs } from "@/lib/currency/config";
+import { InvoiceTotalsFooter } from "@/components/invoicing/InvoiceTotalsFooter";
 import {
   formatInvoiceClientName,
   formatInvoiceClientRef,
@@ -7,14 +7,10 @@ import {
 } from "@/lib/invoicing/display";
 import { getInvoiceIssuerDetails, isDubaiFabricDelivery } from "@/lib/invoicing/bank-details";
 import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
-import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 function formatSar(amount: number): string {
   return formatCurrency(amount, "SAR");
-}
-
-function formatDhs(amount: number): string {
-  return `${formatNumber(amount, 2)} DHS`;
 }
 
 export type InvoiceDocumentData = {
@@ -43,12 +39,6 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
   const clientRef = formatInvoiceClientRef(invoice.client_code, invoice.client_reference);
   const issuer = getInvoiceIssuerDetails(invoice.delivery_destination, invoice.factory_brand_name);
   const showDhsEquivalent = isDubaiFabricDelivery(invoice.delivery_destination);
-  const dhsSubtotal = showDhsEquivalent ? sarToDhs(invoice.subtotal) : null;
-  const dhsVatAmount =
-    showDhsEquivalent && invoice.vat_rate != null && invoice.vat_rate > 0
-      ? sarToDhs(invoice.vat_amount)
-      : null;
-  const dhsTotal = showDhsEquivalent ? sarToDhs(invoice.total) : null;
 
   return (
     <div className="invoice-document mx-auto max-w-3xl bg-white p-8 text-slate-900">
@@ -104,50 +94,15 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
           ))}
         </tbody>
         <tfoot>
-          <tr>
-            <td colSpan={5} className="py-2 text-right text-slate-600">
-              Subtotal ({invoice.currency})
-            </td>
-            <td className="py-2 text-right font-medium">{formatSar(invoice.subtotal)}</td>
-          </tr>
-          {dhsSubtotal != null && (
-            <tr>
-              <td colSpan={5} className="pb-2 text-right text-slate-500">
-                Subtotal (DHS)
-              </td>
-              <td className="pb-2 text-right font-medium text-slate-600">{formatDhs(dhsSubtotal)}</td>
-            </tr>
-          )}
-          {invoice.vat_rate != null && invoice.vat_rate > 0 && (
-            <tr>
-              <td colSpan={5} className="py-2 text-right text-slate-600">
-                VAT ({Math.round(invoice.vat_rate * 100)}%)
-              </td>
-              <td className="py-2 text-right font-medium">{formatSar(invoice.vat_amount)}</td>
-            </tr>
-          )}
-          {dhsVatAmount != null && (
-            <tr>
-              <td colSpan={5} className="pb-2 text-right text-slate-500">
-                VAT (DHS)
-              </td>
-              <td className="pb-2 text-right font-medium text-slate-600">{formatDhs(dhsVatAmount)}</td>
-            </tr>
-          )}
-          <tr>
-            <td colSpan={5} className="py-4 text-right font-semibold">
-              Total ({invoice.currency})
-            </td>
-            <td className="py-4 text-right text-lg font-bold">{formatSar(invoice.total)}</td>
-          </tr>
-          {dhsTotal != null && (
-            <tr>
-              <td colSpan={5} className="pb-4 text-right font-semibold text-slate-700">
-                Equivalent in UAE Dirhams (DHS)
-              </td>
-              <td className="pb-4 text-right text-lg font-bold text-slate-800">{formatDhs(dhsTotal)}</td>
-            </tr>
-          )}
+          <InvoiceTotalsFooter
+            currency={invoice.currency}
+            subtotal={invoice.subtotal}
+            vatRate={invoice.vat_rate}
+            vatAmount={invoice.vat_amount}
+            total={invoice.total}
+            showDhsEquivalent={showDhsEquivalent}
+            variant="print"
+          />
         </tfoot>
       </table>
 
