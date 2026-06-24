@@ -24,7 +24,7 @@ export const RIYADH_INVOICE_BANK_DETAILS: InvoiceBankDetailsBlock = {
 
 /** Shown on client invoices when fabric is received in Dubai (DXB). */
 export const DUBAI_INVOICE_BANK_DETAILS: InvoiceBankDetailsBlock = {
-  beneficiary: "Vitasartoria",
+  beneficiary: "Vitasartoria Ltd",
   iban: "AE360260000515898736901",
   bank_name: "Emirates NBD",
   branch_name: "Business Bay",
@@ -32,7 +32,7 @@ export const DUBAI_INVOICE_BANK_DETAILS: InvoiceBankDetailsBlock = {
 };
 
 export const DUBAI_INVOICE_ISSUER: InvoiceIssuerDetails = {
-  company_name: "Vitasartoria",
+  company_name: "Vitasartoria Ltd",
   location_line: "Dubai, United Arab Emirates",
 };
 
