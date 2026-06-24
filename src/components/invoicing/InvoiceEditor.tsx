@@ -16,11 +16,8 @@ import {
 import { DownloadInvoicePdfButton } from "@/components/invoicing/DownloadInvoicePdfButton";
 import { InvoiceTotalsFooter } from "@/components/invoicing/InvoiceTotalsFooter";
 import { isDubaiFabricDelivery } from "@/lib/invoicing/bank-details";
-import { formatCurrency, formatDate } from "@/lib/utils";
-
-function formatSar(amount: number): string {
-  return formatCurrency(amount, "SAR");
-}
+import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
+import { formatDate } from "@/lib/utils";
 
 export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }) {
   const router = useRouter();
@@ -218,9 +215,9 @@ export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }
                     className="w-28 rounded border border-slate-200 px-2 py-1.5"
                   />
                 </td>
-                <td className="px-4 py-3 font-medium">{formatSar(line.quantity * line.unit_price)}</td>
+                <td className="px-4 py-3 font-medium">{formatInvoiceSar(line.quantity * line.unit_price)}</td>
                 <td className="px-4 py-3 text-xs text-slate-500">
-                  {line.cost_hint_sar != null ? formatSar(line.cost_hint_sar) : "—"}
+                  {line.cost_hint_sar != null ? formatInvoiceSar(line.cost_hint_sar) : "—"}
                 </td>
               </tr>
             );

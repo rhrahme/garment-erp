@@ -1,13 +1,5 @@
 import { sarToDhs } from "@/lib/currency/config";
-import { formatCurrency, formatNumber } from "@/lib/utils";
-
-function formatSar(amount: number): string {
-  return formatCurrency(amount, "SAR");
-}
-
-function formatDhs(amount: number): string {
-  return `${formatNumber(amount, 2)} DHS`;
-}
+import { formatInvoiceDhs, formatInvoiceSar } from "@/lib/invoicing/format-amount";
 
 const DHS_TOTAL_LABEL = "Equivalent in UAE Dirhams (DHS)";
 /** Highlight the payable DHS amount in editor, print, and PDF. */
@@ -51,7 +43,7 @@ export function InvoiceTotalsFooter({
         <td colSpan={labelColSpan} className={`${pad}py-2 ${labelAlign} text-slate-600`}>
           Subtotal ({currency})
         </td>
-        <td className={`${pad}py-2 ${amountAlign} font-medium`}>{formatSar(subtotal)}</td>
+        <td className={`${pad}py-2 ${amountAlign} font-medium`}>{formatInvoiceSar(subtotal)}</td>
         {!isPrint && <td className={`${pad}py-2`} />}
       </tr>
       {dhsSubtotal != null && (
@@ -60,7 +52,7 @@ export function InvoiceTotalsFooter({
             Subtotal (DHS)
           </td>
           <td className={`${pad}pb-2 ${amountAlign} font-medium text-slate-600`}>
-            {formatDhs(dhsSubtotal)}
+            {formatInvoiceDhs(dhsSubtotal)}
           </td>
           {!isPrint && <td className={`${pad}pb-2`} />}
         </tr>
@@ -70,7 +62,7 @@ export function InvoiceTotalsFooter({
           <td colSpan={labelColSpan} className={`${pad}py-2 ${labelAlign} text-slate-600`}>
             VAT ({Math.round(vatRate * 100)}%)
           </td>
-          <td className={`${pad}py-2 ${amountAlign} font-medium`}>{formatSar(vatAmount)}</td>
+          <td className={`${pad}py-2 ${amountAlign} font-medium`}>{formatInvoiceSar(vatAmount)}</td>
           {!isPrint && <td className={`${pad}py-2`} />}
         </tr>
       )}
@@ -80,7 +72,7 @@ export function InvoiceTotalsFooter({
             VAT (DHS)
           </td>
           <td className={`${pad}pb-2 ${amountAlign} font-medium text-slate-600`}>
-            {formatDhs(dhsVatAmount)}
+            {formatInvoiceDhs(dhsVatAmount)}
           </td>
           {!isPrint && <td className={`${pad}pb-2`} />}
         </tr>
@@ -95,7 +87,7 @@ export function InvoiceTotalsFooter({
         <td
           className={`${pad}${isPrint ? "py-4" : "border-t border-slate-200 bg-slate-50 py-3"} ${amountAlign} ${isPrint ? "text-lg" : ""} font-bold`}
         >
-          {formatSar(total)}
+          {formatInvoiceSar(total)}
         </td>
         {!isPrint && <td className={`${pad}border-t border-slate-200 bg-slate-50 py-3`} />}
       </tr>
@@ -110,7 +102,7 @@ export function InvoiceTotalsFooter({
           <td
             className={`${pad}${DHS_TOTAL_ROW_CELL} ${isPrint ? "pb-4" : "pb-3"} ${amountAlign} whitespace-nowrap ${isPrint ? "text-lg" : ""} font-bold text-slate-800`}
           >
-            {formatDhs(dhsTotal)}
+            {formatInvoiceDhs(dhsTotal)}
           </td>
           {!isPrint && <td className={`${pad}${DHS_TOTAL_ROW_CELL} pb-3`} />}
         </tr>

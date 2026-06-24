@@ -7,11 +7,8 @@ import {
 } from "@/lib/invoicing/display";
 import { getInvoiceIssuerDetails, isDubaiFabricDelivery } from "@/lib/invoicing/bank-details";
 import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
-import { formatCurrency, formatDate } from "@/lib/utils";
-
-function formatSar(amount: number): string {
-  return formatCurrency(amount, "SAR");
-}
+import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
+import { formatDate } from "@/lib/utils";
 
 export type InvoiceDocumentData = {
   invoice_number: string;
@@ -86,8 +83,8 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
               <td className="py-3 pr-3">{line.description}</td>
               <td className="py-3 pr-3 text-slate-700">{line.composition_label}</td>
               <td className="py-3 pr-3">{line.quantity}</td>
-              <td className="py-3 pr-3">{formatSar(line.unit_price)}</td>
-              <td className="py-3 pr-3 text-right font-medium">{formatSar(line.line_total)}</td>
+              <td className="py-3 pr-3">{formatInvoiceSar(line.unit_price)}</td>
+              <td className="py-3 pr-3 text-right font-medium">{formatInvoiceSar(line.line_total)}</td>
             </tr>
           ))}
         </tbody>

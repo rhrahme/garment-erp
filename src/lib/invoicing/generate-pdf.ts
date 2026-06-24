@@ -11,15 +11,8 @@ import {
   getInvoiceIssuerDetails,
   isDubaiFabricDelivery,
 } from "@/lib/invoicing/bank-details";
-import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
-
-function formatSar(amount: number): string {
-  return formatCurrency(amount, "SAR");
-}
-
-function formatDhs(amount: number): string {
-  return `${formatNumber(amount, 2)} DHS`;
-}
+import { formatInvoiceDhs, formatInvoiceSar } from "@/lib/invoicing/format-amount";
+import { formatDate } from "@/lib/utils";
 
 export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): Promise<Uint8Array> {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
@@ -104,8 +97,8 @@ export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): 
       line.description,
       line.composition_label,
       String(line.quantity),
-      formatSar(line.unit_price),
-      formatSar(line.line_total),
+      formatInvoiceSar(line.unit_price),
+      formatInvoiceSar(line.line_total),
     ]),
     styles: { fontSize: 8, cellPadding: 4, valign: "top" },
     headStyles: { fillColor: [255, 255, 255], textColor: [100, 100, 100], fontStyle: "bold" },
@@ -124,20 +117,20 @@ export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): 
   y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
 
   const totalsBody: string[][] = [
-    [`Subtotal (${invoice.currency})`, formatSar(invoice.subtotal)],
+    [`Subtotal (${invoice.currency})`, formatInvoiceSar(invoice.subtotal)],
   ];
   if (showDhsEquivalent) {
-    totalsBody.push(["Subtotal (DHS)", formatDhs(sarToDhs(invoice.subtotal))]);
+    totalsBody.push(["Subtotal (DHS)", formatInvoiceDhs(sarToDhs(invoice.subtotal))]);
   }
   if (invoice.vat_rate != null && invoice.vat_rate > 0) {
-    totalsBody.push([`VAT (${Math.round(invoice.vat_rate * 100)}%)`, formatSar(invoice.vat_amount)]);
+    totalsBody.push([`VAT (${Math.round(invoice.vat_rate * 100)}%)`, formatInvoiceSar(invoice.vat_amount)]);
     if (showDhsEquivalent) {
-      totalsBody.push(["VAT (DHS)", formatDhs(sarToDhs(invoice.vat_amount))]);
+      totalsBody.push(["VAT (DHS)", formatInvoiceDhs(sarToDhs(invoice.vat_amount))]);
     }
   }
-  totalsBody.push([`Total (${invoice.currency})`, formatSar(invoice.total)]);
+  totalsBody.push([`Total (${invoice.currency})`, formatInvoiceSar(invoice.total)]);
   if (showDhsEquivalent) {
-    totalsBody.push(["Equivalent in UAE Dirhams (DHS)", formatDhs(sarToDhs(invoice.total))]);
+    totalsBody.push(["Equivalent in UAE Dirhams (DHS)", formatInvoiceDhs(sarToDhs(invoice.total))]);
   }
 
   autoTable(doc, {
