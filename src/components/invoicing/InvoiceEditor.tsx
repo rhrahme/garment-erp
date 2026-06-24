@@ -13,10 +13,16 @@ import {
   sortInvoiceLinesByArticle,
   toInvoiceLineDisplay,
 } from "@/lib/invoicing/display";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { sarToDhs } from "@/lib/currency/config";
+import { isDubaiFabricDelivery } from "@/lib/invoicing/bank-details";
+import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
 
 function formatSar(amount: number): string {
   return formatCurrency(amount, "SAR");
+}
+
+function formatDhs(amount: number): string {
+  return `${formatNumber(amount, 2)} DHS`;
 }
 
 export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }) {
@@ -80,6 +86,14 @@ export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }
       ? Math.round(liveSubtotal * invoice.vat_rate * 100) / 100
       : 0;
   const liveTotal = Math.round((liveSubtotal + liveVatAmount) * 100) / 100;
+
+  const showDhsEquivalent = isDubaiFabricDelivery(invoice.delivery_destination);
+  const dhsSubtotal = showDhsEquivalent ? sarToDhs(liveSubtotal) : null;
+  const dhsVatAmount =
+    showDhsEquivalent && invoice.vat_rate != null && invoice.vat_rate > 0
+      ? sarToDhs(liveVatAmount)
+      : null;
+  const dhsTotal = showDhsEquivalent ? sarToDhs(liveTotal) : null;
 
   const previewInvoice = useMemo(
     () => ({
@@ -225,6 +239,15 @@ export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }
               <td className="px-4 py-2">{formatSar(liveSubtotal)}</td>
               <td className="px-4 py-2" />
             </tr>
+            {dhsSubtotal != null && (
+              <tr className="text-slate-500">
+                <td className="px-4 pb-2" colSpan={5}>
+                  Subtotal (DHS)
+                </td>
+                <td className="px-4 pb-2 font-medium text-slate-600">{formatDhs(dhsSubtotal)}</td>
+                <td className="px-4 pb-2" />
+              </tr>
+            )}
             {invoice.vat_rate != null && invoice.vat_rate > 0 && (
               <tr className="text-slate-600">
                 <td className="px-4 py-2" colSpan={5}>
@@ -234,6 +257,15 @@ export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }
                 <td className="px-4 py-2" />
               </tr>
             )}
+            {dhsVatAmount != null && (
+              <tr className="text-slate-500">
+                <td className="px-4 pb-2" colSpan={5}>
+                  VAT (DHS)
+                </td>
+                <td className="px-4 pb-2 font-medium text-slate-600">{formatDhs(dhsVatAmount)}</td>
+                <td className="px-4 pb-2" />
+              </tr>
+            )}
             <tr className="border-t border-slate-200 bg-slate-50 font-semibold">
               <td className="px-4 py-3" colSpan={5}>
                 Total
@@ -241,6 +273,15 @@ export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }
               <td className="px-4 py-3">{formatSar(liveTotal)}</td>
               <td className="px-4 py-3" />
             </tr>
+            {dhsTotal != null && (
+              <tr className="bg-slate-50 font-semibold text-slate-700">
+                <td className="px-4 pb-3" colSpan={5}>
+                  Equivalent in UAE Dirhams (DHS)
+                </td>
+                <td className="px-4 pb-3 font-bold text-slate-800">{formatDhs(dhsTotal)}</td>
+                <td className="px-4 pb-3" />
+              </tr>
+            )}
           </tfoot>
         </table>
       </div>
