@@ -4,6 +4,7 @@ import {
   formatInvoiceClientRef,
   type CustomerInvoiceLineDisplay,
 } from "@/lib/invoicing/display";
+import { getInvoiceIssuerDetails } from "@/lib/invoicing/bank-details";
 import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -35,6 +36,7 @@ export type InvoiceDocumentData = {
 
 export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
   const clientRef = formatInvoiceClientRef(invoice.client_code, invoice.client_reference);
+  const issuer = getInvoiceIssuerDetails(invoice.delivery_destination, invoice.factory_brand_name);
 
   return (
     <div className="invoice-document mx-auto max-w-3xl bg-white p-8 text-slate-900">
@@ -46,8 +48,8 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
           {invoice.due_date && <p className="text-sm text-slate-600">Due: {formatDate(invoice.due_date)}</p>}
         </div>
         <div className="text-right text-sm">
-          <p className="font-semibold">{invoice.factory_brand_name ?? "Garment Factory"}</p>
-          <p className="text-slate-600">Riyadh, Saudi Arabia</p>
+          <p className="font-semibold">{issuer.company_name}</p>
+          <p className="text-slate-600">{issuer.location_line}</p>
         </div>
       </div>
 

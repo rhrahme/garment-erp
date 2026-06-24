@@ -7721,7 +7721,8 @@
       "delivery_date": "2026-05-07",
       "fabric_po_ids": [],
       "product_article": null,
-      "client_reference": "FR-0426-0006-SO-2026-0008"
+      "client_reference": "FR-0426-0006-SO-2026-0008",
+      "delivery_destination": "DXB"
     },
     {
       "id": "so-cu-86ewrz18x",
@@ -36644,5 +36645,5 @@
       "client_reference": "FR-0226-0025-SO-2026-0095"
     }
   ],
-  "updated_at": "2026-06-24T18:00:00.000Z"
+  "updated_at": "2026-06-24T19:15:00.000Z"
 }

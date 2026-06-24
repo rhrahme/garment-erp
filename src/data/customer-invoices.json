@@ -1006,8 +1006,9 @@
       "total_cost_sar": 21982.67,
       "client_reference": "FR-0426-0006-SO-2026-0008",
       "factory_brand_name": "Fouad Rahme",
-      "vat_amount": 0
+      "vat_amount": 0,
+      "delivery_destination": "DXB"
     }
   ],
-  "updated_at": "2026-06-24T18:00:00.000Z"
+  "updated_at": "2026-06-24T19:15:00.000Z"
 }

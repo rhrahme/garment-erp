@@ -1,7 +1,4 @@
-import {
-  RIYADH_INVOICE_BANK_DETAILS,
-  shouldShowRiyadhInvoiceBankDetails,
-} from "@/lib/invoicing/bank-details";
+import { getInvoiceBankDetails } from "@/lib/invoicing/bank-details";
 import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
 
 export function InvoiceBankDetails({
@@ -9,9 +6,8 @@ export function InvoiceBankDetails({
 }: {
   deliveryDestination: DeliveryDestination | null | undefined;
 }) {
-  if (!shouldShowRiyadhInvoiceBankDetails(deliveryDestination)) return null;
-
-  const bank = RIYADH_INVOICE_BANK_DETAILS;
+  const bank = getInvoiceBankDetails(deliveryDestination);
+  if (!bank) return null;
 
   return (
     <div className="border-t border-slate-200 pt-4 text-sm text-slate-700">
