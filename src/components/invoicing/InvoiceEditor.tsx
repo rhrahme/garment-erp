@@ -84,6 +84,7 @@ export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }
   const previewInvoice = useMemo(
     () => ({
       ...invoice,
+      delivery_destination: invoice.delivery_destination ?? null,
       subtotal: liveSubtotal,
       vat_amount: liveVatAmount,
       total: liveTotal,

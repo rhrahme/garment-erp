@@ -7,6 +7,7 @@ import { invalidateDocumentCache } from "@/lib/data/document-persistence";
 import path from "path";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 function normalizeText(value: unknown): string | null {
   const trimmed = String(value ?? "").trim();

@@ -1,5 +1,6 @@
 import path from "path";
 import {
+  invalidateDocumentCache,
   loadDocument,
   readJsonFile,
   readJsonFileAsync,
@@ -85,6 +86,7 @@ export function readSalesOrders(): SalesOrdersFile {
 
 /** Bypass in-process cache — use before writes that must not clobber a concurrent reset. */
 export async function readSalesOrdersFresh(): Promise<SalesOrdersFile> {
+  invalidateDocumentCache(SALES_ORDERS_PATH);
   return readJsonFileFreshAsync(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS, { force: true });
 }
 
