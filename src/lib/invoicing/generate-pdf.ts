@@ -11,6 +11,7 @@ import {
   getInvoiceIssuerDetails,
   isDubaiFabricDelivery,
 } from "@/lib/invoicing/bank-details";
+import { DHS_TOTAL_LABEL } from "@/components/invoicing/InvoiceTotalsFooter";
 import { formatInvoiceDhs, formatInvoiceSar } from "@/lib/invoicing/format-amount";
 import { formatDate } from "@/lib/utils";
 
@@ -129,9 +130,13 @@ export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): 
     }
   }
   totalsBody.push([`Total (${invoice.currency})`, formatInvoiceSar(invoice.total)]);
+  const dhsTotalRowIndex = showDhsEquivalent ? totalsBody.length : -1;
   if (showDhsEquivalent) {
-    totalsBody.push(["Equivalent in UAE Dirhams (DHS)", formatInvoiceDhs(sarToDhs(invoice.total))]);
+    totalsBody.push([DHS_TOTAL_LABEL, formatInvoiceDhs(sarToDhs(invoice.total))]);
   }
+
+  /** Tailwind slate-200 — highlight payable DHS total in generated PDFs. */
+  const dhsTotalRowFill: [number, number, number] = [226, 232, 240];
 
   autoTable(doc, {
     startY: y,
@@ -143,6 +148,11 @@ export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): 
       1: { halign: "right", fontStyle: "bold" },
     },
     theme: "plain",
+    didParseCell: (data) => {
+      if (data.section === "body" && data.row.index === dhsTotalRowIndex) {
+        data.cell.styles.fillColor = dhsTotalRowFill;
+      }
+    },
   });
 
   y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 16;

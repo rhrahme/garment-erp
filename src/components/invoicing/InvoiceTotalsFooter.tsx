@@ -1,10 +1,10 @@
 import { sarToDhs } from "@/lib/currency/config";
 import { formatInvoiceDhs, formatInvoiceSar } from "@/lib/invoicing/format-amount";
 
-const DHS_TOTAL_LABEL = "Equivalent in UAE Dirhams (DHS)";
-/** Highlight the payable DHS amount in editor, print, and PDF. */
-const DHS_TOTAL_ROW_CELL =
-  "bg-slate-100 py-2 print:bg-slate-100 [print-color-adjust:exact]";
+export const DHS_TOTAL_LABEL = "Equivalent in UAE Dirhams (DHS)";
+/** Highlight the payable DHS amount in editor, print, and browser PDF. */
+const DHS_TOTAL_ROW_CLASS =
+  "bg-slate-200 print:bg-slate-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]";
 
 export type InvoiceTotalsFooterProps = {
   currency: "SAR";
@@ -92,19 +92,19 @@ export function InvoiceTotalsFooter({
         {!isPrint && <td className={`${pad}border-t border-slate-200 bg-slate-50 py-3`} />}
       </tr>
       {dhsTotal != null && (
-        <tr>
+        <tr className={DHS_TOTAL_ROW_CLASS}>
           <td
             colSpan={labelColSpan}
-            className={`${pad}${DHS_TOTAL_ROW_CELL} ${isPrint ? "pb-4" : "pb-3"} ${labelAlign} whitespace-nowrap font-semibold text-slate-700`}
+            className={`${pad}${DHS_TOTAL_ROW_CLASS} py-2 ${isPrint ? "pb-4" : "pb-3"} ${labelAlign} whitespace-nowrap font-semibold text-slate-700`}
           >
             {DHS_TOTAL_LABEL}
           </td>
           <td
-            className={`${pad}${DHS_TOTAL_ROW_CELL} ${isPrint ? "pb-4" : "pb-3"} ${amountAlign} whitespace-nowrap ${isPrint ? "text-lg" : ""} font-bold text-slate-800`}
+            className={`${pad}${DHS_TOTAL_ROW_CLASS} py-2 ${isPrint ? "pb-4" : "pb-3"} ${amountAlign} whitespace-nowrap ${isPrint ? "text-lg" : ""} font-bold text-slate-800`}
           >
             {formatInvoiceDhs(dhsTotal)}
           </td>
-          {!isPrint && <td className={`${pad}${DHS_TOTAL_ROW_CELL} pb-3`} />}
+          {!isPrint && <td className={`${pad}${DHS_TOTAL_ROW_CLASS} py-2 pb-3`} />}
         </tr>
       )}
     </>
