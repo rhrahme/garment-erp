@@ -7,7 +7,9 @@ import { isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
 import { computeDueDate } from "@/lib/invoicing/pricing";
 import {
   fabricLineArticleNumber,
+  formatCombinedGarmentDescription,
   formatLabelGarmentDescription,
+  getGarmentPieces,
   lineArticleFromStickerCode,
 } from "@/lib/sales-orders/label-codes";
 import type { CustomerInvoice, CustomerInvoiceLine } from "@/lib/types/customer-invoices";
@@ -35,8 +37,106 @@ function formatClientAddress(client: {
   return parts.length > 0 ? parts.join(", ") : null;
 }
 
+function orderedPieceNames(garmentType: string, pieceNames: string[]): string[] {
+  const order = getGarmentPieces(garmentType);
+  return [...pieceNames].sort((a, b) => {
+    const indexA = order.indexOf(a);
+    const indexB = order.indexOf(b);
+    return (indexA === -1 ? order.length : indexA) - (indexB === -1 ? order.length : indexB);
+  });
+}
+
+function pieceNamesFromLine(pieceName: string | null): string[] {
+  if (!pieceName?.trim()) return [];
+  if (pieceName.includes(" + ")) return pieceName.split(" + ").map((name) => name.trim());
+  return [pieceName.trim()];
+}
+
+function isMultiPieceGarment(garmentType: string): boolean {
+  return getGarmentPieces(garmentType).length > 1;
+}
+
+function isCombinedInvoiceLine(line: CustomerInvoiceLine): boolean {
+  return pieceNamesFromLine(line.piece_name).length > 1;
+}
+
 function lineDescription(garmentType: string, pieceName: string | null): string {
+  const pieceNames = pieceNamesFromLine(pieceName);
+  if (pieceNames.length > 1) return formatCombinedGarmentDescription(garmentType, pieceNames);
   return formatLabelGarmentDescription(garmentType, pieceName ?? garmentType);
+}
+
+function invoiceLineGroupKey(line: CustomerInvoiceLine): string | null {
+  if (line.sales_order_line_id) return `sol:${line.sales_order_line_id}`;
+  if (line.article_number != null) return `art:${line.article_number}:${line.garment_type}`;
+  const fabricNumber = line.fabric_number?.trim();
+  const fabricBrand = line.fabric_brand?.trim();
+  if (fabricNumber && fabricBrand) {
+    return `fab:${fabricBrand}|${fabricNumber}|${line.garment_type}`;
+  }
+  return null;
+}
+
+function mergeInvoiceLineGroup(group: CustomerInvoiceLine[]): CustomerInvoiceLine {
+  const first = group[0]!;
+  const garmentType = first.garment_type;
+  const pieceNames = orderedPieceNames(
+    garmentType,
+    group.flatMap((line) => pieceNamesFromLine(line.piece_name))
+  );
+  const unitPrice = roundMoney(group.reduce((sum, line) => sum + line.unit_price, 0));
+  const lineTotal = roundMoney(group.reduce((sum, line) => sum + line.line_total, 0));
+  const costHints = group.map((line) => line.cost_hint_sar).filter((hint): hint is number => hint != null);
+  const costHint = costHints.length > 0 ? roundMoney(costHints.reduce((sum, hint) => sum + hint, 0)) : null;
+
+  return {
+    ...first,
+    description: formatCombinedGarmentDescription(garmentType, pieceNames),
+    piece_name: pieceNames.join(" + "),
+    sticker_code: first.sticker_code,
+    quantity: 1,
+    unit_price: unitPrice,
+    line_total: lineTotal,
+    cost_hint_sar: costHint,
+  };
+}
+
+/** Combine jacket+trouser (and similar sets) that share the same fabric line on an invoice. */
+export function combineInvoiceLines(lines: CustomerInvoiceLine[]): CustomerInvoiceLine[] {
+  const firstIndex = new Map<string, number>();
+  const groups = new Map<string, CustomerInvoiceLine[]>();
+  const standalone: { index: number; line: CustomerInvoiceLine }[] = [];
+
+  lines.forEach((line, index) => {
+    if (!isMultiPieceGarment(line.garment_type) || isCombinedInvoiceLine(line)) {
+      standalone.push({ index, line });
+      return;
+    }
+
+    const key = invoiceLineGroupKey(line);
+    if (!key) {
+      standalone.push({ index, line });
+      return;
+    }
+
+    if (!firstIndex.has(key)) firstIndex.set(key, index);
+    const bucket = groups.get(key) ?? [];
+    bucket.push(line);
+    groups.set(key, bucket);
+  });
+
+  const output: { index: number; line: CustomerInvoiceLine }[] = [...standalone];
+
+  for (const [key, group] of groups) {
+    const index = firstIndex.get(key) ?? 0;
+    if (group.length > 1) {
+      output.push({ index, line: mergeInvoiceLineGroup(group) });
+    } else {
+      output.push({ index, line: group[0]! });
+    }
+  }
+
+  return output.sort((a, b) => a.index - b.index).map((row) => row.line);
 }
 
 function fabricBrandLabel(line: SalesOrderFabricLine): string {
@@ -130,7 +230,10 @@ export function enrichInvoiceLinesWithCostHints(
   return lines.map((line) => {
     const fabricLine = findFabricLineForInvoiceLine(order, line);
     if (!fabricLine) return line;
-    const unitHint = unitCostHintForFabricLine(fabricLine, costByLineId.get(fabricLine.id) ?? null);
+    const lineTotalCost = costByLineId.get(fabricLine.id) ?? null;
+    const unitHint = isCombinedInvoiceLine(line)
+      ? lineTotalCost
+      : unitCostHintForFabricLine(fabricLine, lineTotalCost);
     if (unitHint == null) return line;
     return { ...line, cost_hint_sar: unitHint };
   });
@@ -155,6 +258,36 @@ export function buildInvoiceLinesFromSalesOrder(order: SalesOrder): CustomerInvo
             piece_name: fabricLine.garment_type,
             sequence: i + 1,
           }));
+
+    const garmentPieces = getGarmentPieces(fabricLine.garment_type);
+    if (garmentPieces.length > 1 && stickers.length > 1) {
+      index += 1;
+      const pieceNames = orderedPieceNames(
+        fabricLine.garment_type,
+        stickers.map((sticker) => sticker.piece_name)
+      );
+      const perPiecePrice = unitHint ?? 0;
+      const setUnitPrice = roundMoney(perPiecePrice * stickers.length);
+      const setCostHint = unitHint != null ? roundMoney(unitHint * stickers.length) : null;
+      lines.push({
+        id: `inv-line-${order.id}-${index}`,
+        article_number: articleNumber,
+        sales_order_line_id: fabricLine.id,
+        description: formatCombinedGarmentDescription(fabricLine.garment_type, pieceNames),
+        garment_type: fabricLine.garment_type,
+        piece_name: pieceNames.join(" + "),
+        sticker_code: stickers[0]!.code,
+        fabric_number: fabricLine.fabric_number,
+        fabric_brand: fabricBrandLabel(fabricLine),
+        composition: fabricLine.composition,
+        weight_gsm: fabricLine.weight_gsm,
+        quantity: 1,
+        unit_price: setUnitPrice,
+        line_total: setUnitPrice,
+        cost_hint_sar: setCostHint,
+      });
+      continue;
+    }
 
     for (const sticker of stickers) {
       index += 1;

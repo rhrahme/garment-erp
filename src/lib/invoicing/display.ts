@@ -1,4 +1,9 @@
-import { clientCodeFromReference, lineArticleFromStickerCode } from "@/lib/sales-orders/label-codes";
+import {
+  clientCodeFromReference,
+  formatCombinedGarmentDescription,
+  getGarmentPieces,
+  lineArticleFromStickerCode,
+} from "@/lib/sales-orders/label-codes";
 import type { CustomerInvoiceLine } from "@/lib/types/customer-invoices";
 
 /** Client name on printed invoices — formal Mr prefix for bespoke clients. */
@@ -57,6 +62,17 @@ export function resolveInvoiceLineArticle(line: CustomerInvoiceLine): CustomerIn
   return line;
 }
 
+function resolveInvoiceLineDescription(line: CustomerInvoiceLine): string {
+  const pieceName = line.piece_name?.trim();
+  if (pieceName?.includes(" + ") && getGarmentPieces(line.garment_type).length > 1) {
+    return formatCombinedGarmentDescription(
+      line.garment_type,
+      pieceName.split(" + ").map((name) => name.trim())
+    );
+  }
+  return line.description;
+}
+
 export function resolveInvoiceLines(lines: CustomerInvoiceLine[]): CustomerInvoiceLine[] {
   return lines.map(resolveInvoiceLineArticle);
 }
@@ -72,6 +88,7 @@ export function toInvoiceLineDisplay(line: CustomerInvoiceLine): CustomerInvoice
   const resolved = resolveInvoiceLineArticle(line);
   return {
     ...resolved,
+    description: resolveInvoiceLineDescription(resolved),
     article_label: formatInvoiceArticle(resolved.article_number),
     fabric_brand_label: formatInvoiceFabricBrand(resolved.fabric_brand, resolved.fabric_number),
     composition_label: formatInvoiceComposition(resolved.composition),

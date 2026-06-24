@@ -71,6 +71,14 @@ export function formatLabelGarmentDescription(garmentType: string, pieceName: st
   return `${garmentType} — ${pieceName}`;
 }
 
+/** Invoice display for a multi-piece garment sold as one set (e.g. Suit (Jacket + Trouser)). */
+export function formatCombinedGarmentDescription(garmentType: string, pieceNames: string[]): string {
+  if (pieceNames.length <= 1) {
+    return formatLabelGarmentDescription(garmentType, pieceNames[0] ?? garmentType);
+  }
+  return `${garmentType} (${pieceNames.join(" + ")})`;
+}
+
 /** Client code from a full client reference (e.g. FR-0526-0027-SO-2026-0096 → FR-0526-0027). */
 export function clientCodeFromReference(clientReference: string): string {
   const match = clientReference.match(/^(.+)-SO-\d{4}-\d{4,}$/);
