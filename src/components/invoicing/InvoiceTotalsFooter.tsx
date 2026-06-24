@@ -10,6 +10,9 @@ function formatDhs(amount: number): string {
 }
 
 const DHS_TOTAL_LABEL = "Equivalent in UAE Dirhams (DHS)";
+/** Highlight the payable DHS amount in editor, print, and PDF. */
+const DHS_TOTAL_ROW_CELL =
+  "bg-slate-100 py-2 print:bg-slate-100 [print-color-adjust:exact]";
 
 export type InvoiceTotalsFooterProps = {
   currency: "SAR";
@@ -100,16 +103,16 @@ export function InvoiceTotalsFooter({
         <tr>
           <td
             colSpan={labelColSpan}
-            className={`${pad}${isPrint ? "pb-4" : "bg-slate-50 pb-3"} ${labelAlign} whitespace-nowrap font-semibold text-slate-700`}
+            className={`${pad}${DHS_TOTAL_ROW_CELL} ${isPrint ? "pb-4" : "pb-3"} ${labelAlign} whitespace-nowrap font-semibold text-slate-700`}
           >
             {DHS_TOTAL_LABEL}
           </td>
           <td
-            className={`${pad}${isPrint ? "pb-4" : "bg-slate-50 pb-3"} ${amountAlign} whitespace-nowrap ${isPrint ? "text-lg" : ""} font-bold text-slate-800`}
+            className={`${pad}${DHS_TOTAL_ROW_CELL} ${isPrint ? "pb-4" : "pb-3"} ${amountAlign} whitespace-nowrap ${isPrint ? "text-lg" : ""} font-bold text-slate-800`}
           >
             {formatDhs(dhsTotal)}
           </td>
-          {!isPrint && <td className={`${pad}bg-slate-50 pb-3`} />}
+          {!isPrint && <td className={`${pad}${DHS_TOTAL_ROW_CELL} pb-3`} />}
         </tr>
       )}
     </>
