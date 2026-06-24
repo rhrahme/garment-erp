@@ -10,6 +10,14 @@ export const USD_TO_SAR =
 export const AED_TO_SAR =
   Number.parseFloat(process.env.AED_TO_SAR ?? "1.021") || 1.021;
 
+/** SAR → AED/DHS at the book rate (inverse of AED_TO_SAR). */
+export const SAR_TO_AED = 1 / AED_TO_SAR;
+
+/** Convert a SAR invoice amount to UAE dirhams (DHS) for Dubai client payments. */
+export function sarToDhs(amountSar: number): number {
+  return Math.round(amountSar * SAR_TO_AED * 100) / 100;
+}
+
 /** Alert when live EUR/SAR exceeds this value. */
 export const EUR_SAR_ALERT_THRESHOLD =
   Number.parseFloat(process.env.EUR_SAR_ALERT_THRESHOLD ?? "4.5") || 4.5;
