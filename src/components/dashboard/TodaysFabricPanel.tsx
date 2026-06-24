@@ -157,6 +157,7 @@ export function TodaysFabricPanel({ initialSummary }: TodaysFabricPanelProps) {
                   <Link href={`/orders/${order.id}`} className="font-medium underline">
                     {order.so_number}
                   </Link>
+                  <span className="font-medium text-amber-950"> ({order.client_name})</span>
                   {" — "}
                   {order.block_reason}
                 </li>

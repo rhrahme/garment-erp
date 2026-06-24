@@ -162,8 +162,8 @@ export function OrdersList({
         <table className="min-w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
-              <th className="px-4 py-3">Order #</th>
-              <th className="px-4 py-3">Client</th>
+              <th className="px-4 py-3">Order / client</th>
+              <th className="px-4 py-3">Client code</th>
               <th className="px-4 py-3">Fabrics</th>
               <th className="px-4 py-3">Availability</th>
               {productionMode && <th className="px-4 py-3">Production labels</th>}
@@ -195,10 +195,12 @@ export function OrdersList({
                   key={order.id}
                   className={archivedRow ? "bg-slate-50/40 hover:bg-slate-50" : "hover:bg-slate-50/60"}
                 >
-                  <td className="px-4 py-3 font-medium">{order.so_number}</td>
                   <td className="px-4 py-3">
-                    <p className="font-medium">{order.client_name}</p>
-                    <p className="font-mono text-xs text-slate-400">{order.client_code}</p>
+                    <p className="font-medium text-slate-900">{order.so_number}</p>
+                    <p className="mt-0.5 text-sm font-medium text-slate-700">{order.client_name}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="font-mono text-xs text-slate-500">{order.client_code}</p>
                   </td>
                   <td className="px-4 py-3">
                     {order.fabric_line_count} line{order.fabric_line_count !== 1 ? "s" : ""}

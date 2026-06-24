@@ -691,7 +691,7 @@
       "delivery_date": null,
       "fabric_po_ids": [],
       "client_reference": "FR-0626-0034-SO-2026-0108",
-      "delivery_destination": null
+      "delivery_destination": "DXB"
     },
     {
       "id": "so-1781358783222",
@@ -1187,7 +1187,7 @@
       "delivery_date": null,
       "fabric_po_ids": [],
       "client_reference": "FR-0626-0035-SO-2026-0107",
-      "delivery_destination": null
+      "delivery_destination": "RUH"
     },
     {
       "id": "so-1781953079630",
