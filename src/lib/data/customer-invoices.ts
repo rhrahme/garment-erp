@@ -1,5 +1,6 @@
 import path from "path";
 import {
+  invalidateDocumentCache,
   readJsonFile,
   readJsonFileAsync,
   readJsonFileFreshAsync,
@@ -29,6 +30,7 @@ export async function readCustomerInvoicesAsync(): Promise<CustomerInvoicesFile>
 
 /** Bypass in-process cache — use on invoice detail after mutations (multi-instance safe). */
 export async function readCustomerInvoicesFresh(): Promise<CustomerInvoicesFile> {
+  invalidateDocumentCache(INVOICES_PATH);
   return readJsonFileFreshAsync(INVOICES_PATH, EMPTY, { force: true });
 }
 

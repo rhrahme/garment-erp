@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { InvoiceDocument } from "@/components/invoicing/InvoiceDocument";
 import { InvoicePrintToolbar } from "@/components/invoicing/InvoicePrintToolbar";
 import { getCustomerInvoiceByIdFresh } from "@/lib/data/customer-invoices";
-import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import {
   enrichInvoiceDeliveryDestination,
@@ -11,9 +10,10 @@ import {
 } from "@/lib/invoicing/build-invoice";
 import { resolveInvoiceLines, sortInvoiceLinesByArticle, toInvoiceLineDisplay } from "@/lib/invoicing/display";
 
-export default async function InvoicePrintPage({ params }: { params: Promise<{ id: string }> }) {
-  await ensureDocumentsLoaded(["customer_invoices", "sales_orders"]);
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
+export default async function InvoicePrintPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const raw = await getCustomerInvoiceByIdFresh(id);
   if (!raw) notFound();

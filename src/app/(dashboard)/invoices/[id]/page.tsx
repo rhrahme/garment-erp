@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { InvoiceEditor } from "@/components/invoicing/InvoiceEditor";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { getCustomerInvoiceByIdFresh } from "@/lib/data/customer-invoices";
-import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import {
   enrichInvoiceDeliveryDestination,
@@ -13,10 +12,9 @@ import {
 import { formatInvoiceClientName, resolveInvoiceLines, sortInvoiceLinesByArticle } from "@/lib/invoicing/display";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  await ensureDocumentsLoaded(["customer_invoices", "sales_orders"]);
-
   const { id } = await params;
   const raw = await getCustomerInvoiceByIdFresh(id);
   if (!raw) notFound();

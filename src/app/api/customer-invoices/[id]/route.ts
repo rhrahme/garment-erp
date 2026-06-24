@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { getCustomerInvoiceByIdFresh, saveCustomerInvoice } from "@/lib/data/customer-invoices";
-import { readSalesOrders, writeSalesOrders } from "@/lib/data/sales-orders";
+import { readSalesOrdersFresh, writeSalesOrders } from "@/lib/data/sales-orders";
 import { recalculateInvoiceTotals } from "@/lib/invoicing/build-invoice";
 import type { CustomerInvoice, CustomerInvoiceLine, CustomerInvoiceStatus } from "@/lib/types/customer-invoices";
-import { ensureDocumentsLoaded, invalidateDocumentCache } from "@/lib/data/document-persistence";
+import { invalidateDocumentCache } from "@/lib/data/document-persistence";
 import path from "path";
+
+export const dynamic = "force-dynamic";
 
 function normalizeText(value: unknown): string | null {
   const trimmed = String(value ?? "").trim();
@@ -13,7 +15,7 @@ function normalizeText(value: unknown): string | null {
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    await ensureDocumentsLoaded(["customer_invoices"]);
+    invalidateDocumentCache(path.join(process.cwd(), "src/data/customer-invoices.json"));
     const { id } = await context.params;
     const invoice = await getCustomerInvoiceByIdFresh(id);
     if (!invoice) {
@@ -28,7 +30,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    await ensureDocumentsLoaded(["customer_invoices", "sales_orders"]);
+    invalidateDocumentCache(path.join(process.cwd(), "src/data/customer-invoices.json"));
     const { id } = await context.params;
     const invoice = await getCustomerInvoiceByIdFresh(id);
     if (!invoice) {
@@ -97,7 +99,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       }
 
       if (body.status === "sent" || body.status === "paid") {
-        const store = readSalesOrders();
+        const store = await readSalesOrdersFresh();
         const orderIndex = store.orders.findIndex((order) => order.id === invoice.sales_order_id);
         if (orderIndex >= 0) {
           store.orders[orderIndex] = { ...store.orders[orderIndex]!, status: "complete" };

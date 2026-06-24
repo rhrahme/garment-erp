@@ -112,6 +112,18 @@ async function readFromSupabase<T>(documentKey: ErpDocumentKey): Promise<T | nul
   return data.data as T;
 }
 
+/** Retry once on forced reads — avoids serving bundled JSON after a transient Supabase timeout. */
+async function readFromSupabaseForced<T>(documentKey: ErpDocumentKey): Promise<T | null> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const remote = await readFromSupabase<T>(documentKey);
+    if (remote != null) return remote;
+    if (attempt === 0) {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+  }
+  return null;
+}
+
 async function writeToSupabase<T>(documentKey: ErpDocumentKey, payload: T): Promise<boolean> {
   const admin = getSupabaseAdmin();
   if (!admin) return false;
@@ -326,11 +338,19 @@ export async function readJsonFileFreshAsync<T>(
       const cached = fileCache.get(filePath);
       if (cached) return cached.data as T;
     }
-    const remote = await readFromSupabase<T>(documentKey);
+    const remote = options?.force
+      ? await readFromSupabaseForced<T>(documentKey)
+      : await readFromSupabase<T>(documentKey);
     if (remote != null) {
       fileCache.set(filePath, { mtimeMs: Date.now(), data: remote });
       loadedKeys.add(documentKey);
       return remote;
+    }
+    if (options?.force) {
+      console.error(
+        `[ERP] Forced Supabase read failed for "${documentKey}" — refusing bundled JSON fallback.`
+      );
+      return fallback;
     }
   }
 
