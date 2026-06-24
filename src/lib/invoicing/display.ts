@@ -58,6 +58,25 @@ const INVOICE_YARN_PREFIX_RE =
 
 const INVOICE_FIBER_NAME_FIXES: [RegExp, string][] = [[/\bPolymide\b/gi, "Polyamide"]];
 
+/** Factory yarn codes → client-facing fibre names (invoice display only). */
+const INVOICE_FACTORY_FIBER_CODES: Record<string, string> = {
+  WV: "Wool",
+  WS: "Cashmere",
+};
+
+/** Expand factory abbreviations (WV, WS, C) to readable fibre names. */
+function expandInvoiceFactoryFiberCodes(text: string): string {
+  let result = text.replace(/\b(WV|WS)\b/gi, (match) => {
+    return INVOICE_FACTORY_FIBER_CODES[match.toUpperCase()] ?? match;
+  });
+
+  // Cotton "C" only in composition context — after/before a percentage, not inside "CC" etc.
+  result = result.replace(/(\d+%)\s+C\b/gi, "$1 Cotton");
+  result = result.replace(/\bC\s+(\d+%)/gi, "Cotton $1");
+
+  return result;
+}
+
 /** Client-facing composition — strip yarn notation and space out mashed fibre percentages. */
 function formatClientInvoiceComposition(composition: string): string {
   let text = composition.trim();
@@ -74,7 +93,7 @@ function formatClientInvoiceComposition(composition: string): string {
     text = text.replace(pattern, replacement);
   }
 
-  return text;
+  return expandInvoiceFactoryFiberCodes(text);
 }
 
 /** Combined composition cell: "{brand_abbr} {composition} {weight}" e.g. "DP 100% cashmere 480g". */
