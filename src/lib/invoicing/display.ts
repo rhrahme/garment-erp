@@ -35,6 +35,17 @@ export function formatInvoiceComposition(composition: string | null | undefined)
   return composition?.trim() || "—";
 }
 
+/** Prefer stored invoice line composition; fall back to linked sales-order fabric line. */
+export function resolveInvoiceComposition(
+  line: Pick<CustomerInvoiceLine, "composition">,
+  fabricLine?: { composition?: string | null } | null
+): string | null {
+  const fromLine = line.composition?.trim();
+  if (fromLine) return fromLine;
+  const fromFabric = fabricLine?.composition?.trim();
+  return fromFabric || null;
+}
+
 /** Fabric supplier + number, e.g. "Loro Piana 760002". */
 export function formatInvoiceFabricBrand(
   brand: string | null | undefined,
@@ -86,12 +97,14 @@ export type CustomerInvoiceLineDisplay = CustomerInvoiceLine & {
 
 export function toInvoiceLineDisplay(line: CustomerInvoiceLine): CustomerInvoiceLineDisplay {
   const resolved = resolveInvoiceLineArticle(line);
+  const composition = resolveInvoiceComposition(resolved);
   return {
     ...resolved,
+    composition,
     description: resolveInvoiceLineDescription(resolved),
     article_label: formatInvoiceArticle(resolved.article_number),
     fabric_brand_label: formatInvoiceFabricBrand(resolved.fabric_brand, resolved.fabric_number),
-    composition_label: formatInvoiceComposition(resolved.composition),
+    composition_label: formatInvoiceComposition(composition),
     weight_label: formatInvoiceWeight(resolved.weight_gsm),
   };
 }

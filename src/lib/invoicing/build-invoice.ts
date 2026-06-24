@@ -12,6 +12,7 @@ import {
   getGarmentPieces,
   lineArticleFromStickerCode,
 } from "@/lib/sales-orders/label-codes";
+import { resolveInvoiceComposition } from "@/lib/invoicing/display";
 import type { CustomerInvoice, CustomerInvoiceLine } from "@/lib/types/customer-invoices";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
@@ -88,12 +89,17 @@ function mergeInvoiceLineGroup(group: CustomerInvoiceLine[]): CustomerInvoiceLin
   const lineTotal = roundMoney(group.reduce((sum, line) => sum + line.line_total, 0));
   const costHints = group.map((line) => line.cost_hint_sar).filter((hint): hint is number => hint != null);
   const costHint = costHints.length > 0 ? roundMoney(costHints.reduce((sum, hint) => sum + hint, 0)) : null;
+  const composition =
+    group.map((line) => line.composition?.trim()).find((value): value is string => Boolean(value)) ?? null;
+  const weightGsm = group.find((line) => line.weight_gsm != null)?.weight_gsm ?? null;
 
   return {
     ...first,
     description: formatCombinedGarmentDescription(garmentType, pieceNames),
     piece_name: pieceNames.join(" + "),
     sticker_code: first.sticker_code,
+    composition,
+    weight_gsm: weightGsm,
     quantity: 1,
     unit_price: unitPrice,
     line_total: lineTotal,
@@ -211,7 +217,7 @@ export function enrichInvoiceLinesWithFabricDetails(
       description: lineDescription(fabricLine.garment_type, pieceName),
       fabric_number: line.fabric_number ?? fabricLine.fabric_number,
       fabric_brand: line.fabric_brand ?? fabricBrandLabel(fabricLine),
-      composition: line.composition ?? fabricLine.composition,
+      composition: resolveInvoiceComposition(line, fabricLine),
       weight_gsm: line.weight_gsm ?? fabricLine.weight_gsm,
     };
   });
