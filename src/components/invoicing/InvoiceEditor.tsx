@@ -14,6 +14,7 @@ import {
   toInvoiceLineDisplay,
 } from "@/lib/invoicing/display";
 import { DownloadInvoicePdfButton } from "@/components/invoicing/DownloadInvoicePdfButton";
+import { InvoiceLineConsolidationSuggestions } from "@/components/invoicing/InvoiceLineConsolidationSuggestions";
 import { InvoiceTotalsFooter } from "@/components/invoicing/InvoiceTotalsFooter";
 import { isDubaiFabricDelivery } from "@/lib/invoicing/bank-details";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
@@ -174,6 +175,15 @@ export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }
           />
         </label>
       </div>
+
+      <InvoiceLineConsolidationSuggestions
+        lines={lines}
+        saving={saving}
+        onApply={async (nextLines) => {
+          setLines(nextLines);
+          await savePatch({ lines: resolveInvoiceLines(nextLines) });
+        }}
+      />
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="min-w-full text-sm">
