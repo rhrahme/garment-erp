@@ -13,6 +13,7 @@ import {
   sortInvoiceLinesByArticle,
   toInvoiceLineDisplay,
 } from "@/lib/invoicing/display";
+import { DownloadInvoicePdfButton } from "@/components/invoicing/DownloadInvoicePdfButton";
 import { InvoiceTotalsFooter } from "@/components/invoicing/InvoiceTotalsFooter";
 import { isDubaiFabricDelivery } from "@/lib/invoicing/bank-details";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -122,6 +123,10 @@ export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <DownloadInvoicePdfButton
+            invoiceId={invoice.id}
+            invoiceNumber={invoice.invoice_number}
+          />
           <Link href={`/invoices/${invoice.id}/print`} target="_blank">
             <Button variant="secondary">Open print page</Button>
           </Link>

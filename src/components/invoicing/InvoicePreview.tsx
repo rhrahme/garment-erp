@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { ExternalLink, Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { DownloadInvoicePdfButton } from "@/components/invoicing/DownloadInvoicePdfButton";
 import {
   InvoiceDocument,
   type InvoiceDocumentData,
 } from "@/components/invoicing/InvoiceDocument";
+import { INVOICE_PRINT_CSS } from "@/lib/invoicing/print-styles";
 
 export function InvoicePreview({
   invoice,
@@ -21,10 +23,15 @@ export function InvoicePreview({
         <div>
           <p className="font-medium text-slate-900">Invoice preview</p>
           <p className="text-xs text-slate-500">
-            Matches the printed PDF — save line prices first, then Print → Save as PDF
+            Matches the printed PDF — save line prices first, then download or print
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <DownloadInvoicePdfButton
+            invoiceId={invoiceId}
+            invoiceNumber={invoice.invoice_number}
+            size="sm"
+          />
           <Link href={`/invoices/${invoiceId}/print`} target="_blank">
             <Button variant="secondary" size="sm">
               <ExternalLink className="mr-1.5 h-4 w-4" />
@@ -33,7 +40,7 @@ export function InvoicePreview({
           </Link>
           <Button size="sm" onClick={() => window.print()}>
             <Printer className="mr-1.5 h-4 w-4" />
-            Print / PDF
+            Print
           </Button>
         </div>
       </div>
@@ -45,6 +52,7 @@ export function InvoicePreview({
       </div>
 
       <style>{`
+        ${INVOICE_PRINT_CSS}
         @media print {
           body * {
             visibility: hidden;
@@ -61,11 +69,6 @@ export function InvoicePreview({
             padding: 0;
             margin: 0;
           }
-          .no-print,
-          aside,
-          header {
-            display: none !important;
-          }
           .invoice-preview-frame {
             border: none;
             background: white;
@@ -76,9 +79,6 @@ export function InvoicePreview({
             box-shadow: none;
             ring: none;
             max-width: none;
-          }
-          .invoice-document {
-            padding: 0;
           }
         }
       `}</style>
