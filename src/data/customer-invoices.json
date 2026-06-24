@@ -678,7 +678,7 @@
           "sales_order_line_id": "line-cu-86exexf56-18"
         }
       ],
-      "notes": "ClickUp: Abdel Aziz Fahd Al Ajlan (86exexf56)",
+      "notes": null,
       "total": 141300,
       "status": "draft",
       "paid_at": null,
@@ -704,5 +704,5 @@
       "delivery_destination": "DXB"
     }
   ],
-  "updated_at": "2026-06-24T14:30:00.000Z"
+  "updated_at": "2026-06-24T18:00:00.000Z"
 }

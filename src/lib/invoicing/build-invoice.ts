@@ -380,7 +380,7 @@ export function buildDraftInvoiceFromSalesOrder(
     vat_rate: null,
     vat_amount,
     total,
-    notes: order.notes,
+    notes: null,
     created_at: new Date().toISOString(),
     sent_at: null,
     paid_at: null,

@@ -29,7 +29,6 @@ export type InvoiceDocumentData = {
   vat_rate: number | null;
   vat_amount: number;
   total: number;
-  notes: string | null;
   factory_brand_name: string | null;
   delivery_destination: DeliveryDestination | null;
   lines: CustomerInvoiceLineDisplay[];
@@ -105,13 +104,6 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
           />
         </tfoot>
       </table>
-
-      {invoice.notes && (
-        <div className="border-t border-slate-200 pt-4 text-sm text-slate-600">
-          <p className="font-medium text-slate-700">Notes</p>
-          <p className="mt-1 whitespace-pre-wrap">{invoice.notes}</p>
-        </div>
-      )}
 
       <InvoiceBankDetails deliveryDestination={invoice.delivery_destination} />
     </div>
