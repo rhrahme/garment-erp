@@ -17,15 +17,22 @@ const DEFAULT_RATE_STATUS = {
 };
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  try {
-    await ensureErpBootstrap();
-  } catch (error) {
+  // Warm ERP cache in the background — pages load only the documents they need.
+  void ensureErpBootstrap().catch((error) => {
     console.error("[dashboard layout] ERP bootstrap failed:", error);
-  }
+  });
 
   let session: Awaited<ReturnType<typeof getSessionContext>>;
+  let rateStatus = DEFAULT_RATE_STATUS;
+
   try {
-    session = await getSessionContext();
+    [session, rateStatus] = await Promise.all([
+      getSessionContext(),
+      checkEurSarRateAlert().catch((error) => {
+        console.error("EUR/SAR rate check failed:", error);
+        return DEFAULT_RATE_STATUS;
+      }),
+    ]);
   } catch (error) {
     console.error("[dashboard layout] session lookup failed:", error);
     session = {
@@ -39,12 +46,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
       canViewFabricListPrices: false,
       canAccessPattern: false,
     };
-  }
-  let rateStatus = DEFAULT_RATE_STATUS;
-  try {
-    rateStatus = await checkEurSarRateAlert();
-  } catch (error) {
-    console.error("EUR/SAR rate check failed:", error);
   }
   const headerExtra = (
     <>

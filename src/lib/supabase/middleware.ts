@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { resolveAuthUser } from "@/lib/auth/resolve-auth-user";
 import {
   DEV_IMPERSONATION_COOKIE,
   resolveDevImpersonationEmail,
@@ -14,8 +15,39 @@ import { withSupabaseTimeout } from "@/lib/auth/supabase-timeout";
 import { getRemovedSalesOrderRedirect } from "@/lib/sales-orders/removed-order-redirects";
 import { getSupabasePublishableKey, getSupabaseUrl, isSupabaseConfigured } from "@/lib/supabase/env";
 
+function hasSupabaseAuthCookie(request: NextRequest): boolean {
+  return request.cookies.getAll().some((cookie) => cookie.name.includes("-auth-token"));
+}
+
 export async function updateSession(request: NextRequest) {
   if (!isSupabaseConfigured()) {
+    return NextResponse.next({ request });
+  }
+
+  const pathname = request.nextUrl.pathname;
+  const isAuthPage = pathname.startsWith("/login");
+  const isApiRoute = pathname.startsWith("/api/");
+  const isPublicApiRoute =
+    pathname.startsWith("/api/v1/") ||
+    pathname.startsWith("/api/webhooks/") ||
+    pathname.startsWith("/api/cron/") ||
+    pathname === "/api/health/auth";
+  const isOpenAuthRoute =
+    pathname.startsWith("/api/auth/login") ||
+    pathname.startsWith("/api/auth/dev-impersonate") ||
+    pathname.startsWith("/api/auth/confirm-client-manager") ||
+    pathname.startsWith("/api/qr");
+
+  const impersonatedEmail = resolveDevImpersonationEmail(
+    request.cookies.get(DEV_IMPERSONATION_COOKIE)?.value
+  );
+
+  // Anonymous hits to login/health/open routes skip GoTrue when no session cookie exists.
+  if (
+    !impersonatedEmail &&
+    !hasSupabaseAuthCookie(request) &&
+    (isAuthPage || isPublicApiRoute || isOpenAuthRoute)
+  ) {
     return NextResponse.next({ request });
   }
 
@@ -36,32 +68,8 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await withSupabaseTimeout(
-    supabase.auth.getUser(),
-    "middleware getUser",
-    { data: { user: null } }
-  );
-
-  const impersonatedEmail = resolveDevImpersonationEmail(
-    request.cookies.get(DEV_IMPERSONATION_COOKIE)?.value
-  );
+  const user = await resolveAuthUser(supabase);
   const isAuthenticated = Boolean(impersonatedEmail || user);
-
-  const pathname = request.nextUrl.pathname;
-  const isAuthPage = pathname.startsWith("/login");
-  const isApiRoute = pathname.startsWith("/api/");
-  const isPublicApiRoute =
-    pathname.startsWith("/api/v1/") ||
-    pathname.startsWith("/api/webhooks/") ||
-    pathname.startsWith("/api/cron/") ||
-    pathname === "/api/health/auth";
-  const isOpenAuthRoute =
-    pathname.startsWith("/api/auth/login") ||
-    pathname.startsWith("/api/auth/dev-impersonate") ||
-    pathname.startsWith("/api/auth/confirm-client-manager") ||
-    pathname.startsWith("/api/qr");
 
   if (!isAuthenticated && !isAuthPage && !isPublicApiRoute && !isOpenAuthRoute) {
     if (isApiRoute) {

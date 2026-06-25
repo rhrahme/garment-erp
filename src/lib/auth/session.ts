@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { withSupabaseTimeout } from "@/lib/auth/supabase-timeout";
+import { resolveAuthUser } from "@/lib/auth/resolve-auth-user";
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/lib/types/database";
 import { DEMO_MODE, DEMO_USER_EMAIL_COOKIE } from "@/lib/auth/demo-mode";
@@ -74,13 +75,7 @@ export async function getSessionContext(): Promise<SessionContext> {
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await withSupabaseTimeout(
-    supabase.auth.getUser(),
-    "getSessionContext getUser",
-    { data: { user: null } }
-  );
+  const user = await resolveAuthUser(supabase);
 
   if (!user) {
     return {
