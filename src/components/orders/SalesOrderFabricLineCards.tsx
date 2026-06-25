@@ -17,6 +17,7 @@ import {
   getMinLabelCountForGarment,
 } from "@/lib/sales-orders/garment-types";
 import { resolveFabricLineLabelCount } from "@/lib/sales-orders/label-display";
+import { formatFabricLineArticle } from "@/lib/sales-orders/label-codes";
 import type { SalesOrderLineDraft } from "@/lib/autosave/sales-order-draft";
 
 type LineEditForm = {
@@ -40,6 +41,7 @@ function formatWeight(weight_gsm: number | null | undefined) {
 export function SalesOrderFabricLineCards({
   groupName,
   lines,
+  articleByLineId,
   canViewFabricPrices,
   editingLineId,
   lineEditForm,
@@ -54,6 +56,7 @@ export function SalesOrderFabricLineCards({
 }: {
   groupName: string;
   lines: SalesOrderLineDraft[];
+  articleByLineId: Map<string, number>;
   canViewFabricPrices: boolean;
   editingLineId: string | null;
   lineEditForm: LineEditForm | null;
@@ -193,6 +196,9 @@ export function SalesOrderFabricLineCards({
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {formatFabricLineArticle(articleByLineId.get(line.lineId))}
+                </p>
                 <p className="text-base font-semibold text-slate-900">
                   <FabricNumberWithSwatch
                     supplierId={line.supplier_id}

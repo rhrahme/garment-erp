@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { DownloadSalesOrderPdfButton } from "@/components/orders/DownloadSalesOrderPdfButton";
 import { Badge } from "@/components/ui/Badge";
 import { DeleteSalesOrderButton } from "@/components/orders/DeleteSalesOrderButton";
-import { FabricPriceRevealToggle, MaskedFabricPrice } from "@/components/orders/FabricPriceRevealToggle";
+import { FabricPriceRevealToggle } from "@/components/orders/FabricPriceRevealToggle";
 import { CreateInvoiceButton } from "@/components/invoicing/CreateInvoiceButton";
 import { DeliveryDestinationTabs } from "@/components/shipping/DeliveryDestinationTabs";
 import { FabricReplacementBadge, FabricStockBadge } from "@/components/fabric/FabricStockBadge";
@@ -25,7 +25,12 @@ import { ProductionOrderAddFabrics } from "@/components/orders/ProductionOrderAd
 import { OrderFabricLineEditor } from "@/components/orders/OrderFabricLineEditor";
 import { OrderFabricLineRemove } from "@/components/orders/OrderFabricLineRemove";
 import { canAppendFabricLines, canEditFabricLines, fabricLineEditBlockedReason } from "@/lib/sales-orders/fabric-lines-rules";
-import { formatLabelGarmentDescription } from "@/lib/sales-orders/label-codes";
+import {
+  buildSoArticleMapFromFabricLines,
+  formatFabricLineArticle,
+  formatLabelGarmentDescription,
+} from "@/lib/sales-orders/label-codes";
+import { salesOrderFabricLineAnchor } from "@/lib/sales-orders/line-cross-reference";
 import { formatFabricLineLabels } from "@/lib/sales-orders/label-display";
 import { FabricOrderSubmitButton } from "@/components/orders/FabricOrderSubmitButton";
 import { fabricOrderUiLabels } from "@/lib/orders/fabric-order-ui-labels";
@@ -116,6 +121,11 @@ export function SalesOrderActions({
         supplier_id: line.supplier_id,
         fabric_number: line.fabric_number,
       })),
+    [liveOrder.fabric_lines]
+  );
+
+  const articleByLineId = useMemo(
+    () => buildSoArticleMapFromFabricLines(liveOrder.fabric_lines),
     [liveOrder.fabric_lines]
   );
 
@@ -351,97 +361,167 @@ export function SalesOrderActions({
           </div>
           {!productionMode && <FabricPriceRevealToggle canViewFabricPrices={canViewFabricPrices} />}
         </div>
-        <div className="mt-4 space-y-4">
-          {Object.entries(supplierGroups).map(([groupKey, group]) => (
-            <div key={groupKey} className="rounded-lg border border-slate-100 bg-slate-50 p-4">
-              <p className="font-medium text-slate-900">{group.name}</p>
-              <ul className="mt-2 space-y-2 text-sm text-slate-600">
-                {group.lines.map((line) => (
-                  <li
+        {liveOrder.fabric_lines.length > 0 && (
+          <div className="mt-4 overflow-x-auto rounded-lg border border-slate-200">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <th className="px-3 py-2 text-center">Art.</th>
+                  <th className="px-3 py-2">Fabric</th>
+                  <th className="px-3 py-2">Garment</th>
+                  <th className="px-3 py-2">Meters</th>
+                  <th className="px-3 py-2">Sticker</th>
+                </tr>
+              </thead>
+              <tbody>
+                {liveOrder.fabric_lines.map((line) => (
+                  <tr
                     key={line.id}
-                    className={`rounded border bg-white px-3 py-2 ${
-                      line.needs_replacement || line.stock_status === "permanently_unavailable"
-                        ? "border-amber-200 bg-amber-50/30"
-                        : line.stock_status === "temp_unavailable"
-                          ? "border-amber-100"
-                          : "border-slate-200"
-                    }`}
+                    id={salesOrderFabricLineAnchor(line.id)}
+                    className="scroll-mt-24 border-b border-slate-100 last:border-0"
                   >
-                    <p className="text-slate-900">
+                    <td className="px-3 py-2 text-center font-semibold text-slate-900">
+                      {formatFabricLineArticle(articleByLineId.get(line.id))}
+                    </td>
+                    <td className="px-3 py-2 text-slate-900">
                       <FabricNumberWithSwatch
                         supplierId={line.supplier_id}
                         fabricNumber={line.fabric_number}
-                        highlight={isFabricUnavailable(line.stock_status) || line.needs_replacement}
-                      >
-                        <FabricStockBadge fabric={line} />
-                        <FabricReplacementBadge needsReplacement={line.needs_replacement} />
-                      </FabricNumberWithSwatch>
-                      <span className="font-sans text-slate-600">
-                        {" "}
-                        — {line.quantity} {line.unit === "meters" ? "m" : line.unit}
-                      </span>
-                    </p>
-                    {line.needs_replacement && (
-                      <p className="mt-1 text-xs text-violet-800">Replacement still needed — update fabric before supplier emails.</p>
-                    )}
-                    {!line.needs_replacement && formatFabricStockLabel(line) && (
-                      <p className="mt-1 text-xs text-amber-800">{formatFabricStockLabel(line)}</p>
-                    )}
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      {[
-                        line.garment_type,
-                        formatFabricLineLabels(line),
-                        line.composition,
-                        line.weight_gsm != null ? `${line.weight_gsm} gsm` : null,
-                        formatWidth(line),
-                        canViewFabricPrices ? formatLinePrice(line) : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                      {!canViewFabricPrices && (
-                        <>
-                          {" · "}
-                          <MaskedFabricPrice />
-                        </>
-                      )}
-                    </p>
-                    {line.added_at && (
-                      <p className="mt-1 text-xs text-slate-400">
-                        Added {formatDateTime(line.added_at)}
-                        {line.added_by ? ` by ${line.added_by}` : ""}
-                      </p>
-                    )}
-                    {(line.label_stickers ?? []).length > 0 && (
-                      <ul className="mt-2 space-y-1 border-t border-slate-100 pt-2">
-                        {line.label_stickers.map((sticker) => (
-                          <li key={sticker.code} className="font-mono text-xs text-indigo-700">
-                            {sticker.code}
-                            <span className="ml-2 font-sans text-slate-500">
-                              {formatLabelGarmentDescription(line.garment_type, sticker.piece_name)}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    {fabricsEditable && (
-                      <div className="mt-3 flex flex-wrap items-start gap-2">
-                        <OrderFabricLineEditor
-                          orderId={liveOrder.id}
-                          line={line}
-                          productionMode={isClientManager}
-                          onLineUpdated={handleLineUpdated}
-                        />
-                        <OrderFabricLineRemove
-                          orderId={liveOrder.id}
-                          line={line}
-                          productionMode={isClientManager}
-                          onLineRemoved={handleLineRemoved}
-                        />
-                      </div>
-                    )}
-                  </li>
+                        numberClassName="text-sm"
+                      />
+                    </td>
+                    <td className="px-3 py-2 text-slate-600">{line.garment_type}</td>
+                    <td className="px-3 py-2 text-slate-600">
+                      {line.quantity} {line.unit === "meters" ? "m" : line.unit}
+                    </td>
+                    <td className="px-3 py-2 font-mono text-xs text-indigo-700">
+                      {(line.label_stickers ?? [])[0]?.code ?? "—"}
+                    </td>
+                  </tr>
                 ))}
-              </ul>
+              </tbody>
+            </table>
+          </div>
+        )}
+        <div className="mt-4 space-y-4">
+          {Object.entries(supplierGroups).map(([groupKey, group]) => (
+            <div key={groupKey} className="overflow-x-auto rounded-lg border border-slate-100 bg-slate-50">
+              <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
+                <p className="font-medium text-slate-900">{group.name}</p>
+              </div>
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-white text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                    <th className="px-3 py-2 text-center">Art.</th>
+                    <th className="px-3 py-2">Fabric</th>
+                    <th className="px-3 py-2">Garment</th>
+                    <th className="px-3 py-2">Labels</th>
+                    <th className="px-3 py-2">Composition</th>
+                    <th className="px-3 py-2">Weight</th>
+                    <th className="px-3 py-2">Width</th>
+                    <th className="px-3 py-2">Meters</th>
+                    {canViewFabricPrices ? <th className="px-3 py-2">Price</th> : null}
+                    {fabricsEditable ? <th className="px-3 py-2 w-28" /> : null}
+                  </tr>
+                </thead>
+                <tbody>
+                  {group.lines.map((line) => (
+                    <tr
+                      key={line.id}
+                      id={salesOrderFabricLineAnchor(line.id)}
+                      className={`scroll-mt-24 border-b border-slate-100 last:border-0 align-top ${
+                        line.needs_replacement || line.stock_status === "permanently_unavailable"
+                          ? "bg-amber-50/40"
+                          : line.stock_status === "temp_unavailable"
+                            ? "bg-amber-50/20"
+                            : "bg-white"
+                      }`}
+                    >
+                      <td className="px-3 py-2 text-center font-semibold text-slate-900">
+                        {formatFabricLineArticle(articleByLineId.get(line.id))}
+                      </td>
+                      <td className="px-3 py-2 text-slate-900">
+                        <FabricNumberWithSwatch
+                          supplierId={line.supplier_id}
+                          fabricNumber={line.fabric_number}
+                          highlight={isFabricUnavailable(line.stock_status) || line.needs_replacement}
+                        >
+                          <FabricStockBadge fabric={line} />
+                          <FabricReplacementBadge needsReplacement={line.needs_replacement} />
+                        </FabricNumberWithSwatch>
+                        {line.needs_replacement && (
+                          <p className="mt-1 text-xs text-violet-800">
+                            Replacement still needed — update fabric before supplier emails.
+                          </p>
+                        )}
+                        {!line.needs_replacement && formatFabricStockLabel(line) && (
+                          <p className="mt-1 text-xs text-amber-800">{formatFabricStockLabel(line)}</p>
+                        )}
+                        {line.added_at && (
+                          <p className="mt-1 text-xs text-slate-400">
+                            Added {formatDateTime(line.added_at)}
+                            {line.added_by ? ` by ${line.added_by}` : ""}
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-slate-600">{line.garment_type}</td>
+                      <td className="px-3 py-2 text-slate-600">{formatFabricLineLabels(line)}</td>
+                      <td className="px-3 py-2 text-slate-600">{line.composition ?? "—"}</td>
+                      <td className="px-3 py-2 text-slate-600">
+                        {line.weight_gsm != null ? `${line.weight_gsm} gsm` : "—"}
+                      </td>
+                      <td className="px-3 py-2 text-slate-600">{formatWidth(line)}</td>
+                      <td className="px-3 py-2 font-medium text-slate-900">
+                        {line.quantity} {line.unit === "meters" ? "m" : line.unit}
+                      </td>
+                      {canViewFabricPrices ? (
+                        <td className="px-3 py-2 text-slate-600">{formatLinePrice(line)}</td>
+                      ) : null}
+                      {fabricsEditable ? (
+                        <td className="px-3 py-2">
+                          <div className="flex flex-col items-end gap-2">
+                            <OrderFabricLineEditor
+                              orderId={liveOrder.id}
+                              line={line}
+                              productionMode={isClientManager}
+                              onLineUpdated={handleLineUpdated}
+                            />
+                            <OrderFabricLineRemove
+                              orderId={liveOrder.id}
+                              line={line}
+                              productionMode={isClientManager}
+                              onLineRemoved={handleLineRemoved}
+                            />
+                          </div>
+                        </td>
+                      ) : null}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {group.lines.some((line) => (line.label_stickers ?? []).length > 0) && (
+                <div className="border-t border-slate-200 bg-white px-3 py-2">
+                  {group.lines.map((line) =>
+                    (line.label_stickers ?? []).length > 0 ? (
+                      <div key={`stickers-${line.id}`} className="py-1">
+                        <p className="text-xs font-semibold text-slate-500">
+                          {formatFabricLineArticle(articleByLineId.get(line.id))} stickers
+                        </p>
+                        <ul className="mt-1 space-y-1">
+                          {line.label_stickers!.map((sticker) => (
+                            <li key={sticker.code} className="font-mono text-xs text-indigo-700">
+                              {sticker.code}
+                              <span className="ml-2 font-sans text-slate-500">
+                                {formatLabelGarmentDescription(line.garment_type, sticker.piece_name)}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

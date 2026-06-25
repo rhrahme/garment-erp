@@ -11,6 +11,7 @@ import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display
 import { orderLineHasStockAlert } from "@/lib/fabric-sourcing/fabric-stock";
 import { isSalesOrderArchived } from "@/lib/sales-orders/archive";
 import { totalProductionLabels } from "@/lib/sales-orders/label-display";
+import { formatFabricLineArticle, resolveSoArticleForFabricLine } from "@/lib/sales-orders/label-codes";
 import type { SalesOrder, SalesOrdersFile } from "@/lib/types/sales-orders";
 
 const SALES_ORDERS_PATH = path.join(process.cwd(), "src/data/sales-orders.json");
@@ -31,6 +32,8 @@ export interface SalesOrderListRow {
   client_code: string;
   client_name: string;
   product_article: string | null;
+  /** L01, L02… — one per fabric line, matches stickers and invoices. */
+  fabric_article_labels: string[];
   fabric_line_count: number;
   /** Supplier + fabric number pairs for list swatch previews. */
   fabric_preview_lines: Array<{ supplier_id: string; fabric_number: string }>;
@@ -109,6 +112,9 @@ export function toSalesOrderListRow(order: SalesOrder): SalesOrderListRow {
     client_code: order.client_code,
     client_name: order.client_name,
     product_article: order.product_article ?? null,
+    fabric_article_labels: order.fabric_lines.map((line, index) =>
+      formatFabricLineArticle(resolveSoArticleForFabricLine(line, index))
+    ),
     fabric_line_count: order.fabric_lines.length,
     fabric_preview_lines: order.fabric_lines.map((line) => ({
       supplier_id: line.supplier_id,

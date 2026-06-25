@@ -182,12 +182,59 @@ export function fabricLineArticleNumber(zeroBasedLineIndex: number): number {
   return zeroBasedLineIndex + 1;
 }
 
+/** Sticker / invoice article label — e.g. L01, L02. */
+export function formatFabricLineArticle(articleNumber: number | null | undefined): string {
+  if (articleNumber == null || !Number.isFinite(articleNumber)) return "—";
+  return `L${String(articleNumber).padStart(2, "0")}`;
+}
+
 export function lineArticleFromStickerCode(stickerCode: string): number | null {
   const match = stickerCode.match(/-L(\d{2})(?:-|$)/i);
   if (!match) return null;
   return Number.parseInt(match[1], 10);
 }
 
+/** SO article from label stickers — L07 on sticker, not array index when lines were deleted. */
+export function soArticleFromFabricLine(
+  line: { label_stickers?: Array<{ code: string }> | null }
+): number | null {
+  for (const sticker of line.label_stickers ?? []) {
+    const article = lineArticleFromStickerCode(sticker.code);
+    if (article != null) return article;
+  }
+  return null;
+}
+
+export function resolveSoArticleForFabricLine(
+  line: { label_stickers?: Array<{ code: string }> | null },
+  fallbackIndex: number
+): number {
+  return soArticleFromFabricLine(line) ?? fabricLineArticleNumber(fallbackIndex);
+}
+
+export function buildSoArticleMapFromFabricLines(
+  lines: Array<{ id: string; label_stickers?: Array<{ code: string }> | null }>
+): Map<string, number> {
+  return new Map(
+    lines.map((line, index) => [line.id, resolveSoArticleForFabricLine(line, index)])
+  );
+}
+
+/** Draft / list rows keyed by lineId — sticker when present, else position in order. */
+export function buildSoArticleMapFromDraftLines(
+  lines: Array<{ lineId: string; label_stickers?: Array<{ code: string }> | null }>
+): Map<string, number> {
+  return new Map(
+    lines.map((line, index) => [line.lineId, resolveSoArticleForFabricLine(line, index)])
+  );
+}
+
 export function buildFabricLineArticleMap(fabricLineIds: string[]): Map<string, number> {
   return new Map(fabricLineIds.map((id, index) => [id, fabricLineArticleNumber(index)]));
+}
+
+/** Tail of sticker code after client ref — e.g. L07-SHT-LS from FR-0426-0006-SO-2026-0008-L07-SHT-LS. */
+export function stickerCodeArticleSuffix(stickerCode: string): string | null {
+  const match = stickerCode.match(/L\d{2}(?:-.+)?$/i);
+  return match ? match[0].toUpperCase() : null;
 }
