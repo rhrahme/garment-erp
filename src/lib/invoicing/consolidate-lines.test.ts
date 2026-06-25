@@ -24,6 +24,7 @@ function line(overrides: Partial<CustomerInvoiceLine> & Pick<CustomerInvoiceLine
     unit_price: 4500,
     line_total: 4500,
     cost_hint_sar: null,
+    fabric_cost_hint_sar: null,
     ...overrides,
   };
 }

@@ -219,6 +219,12 @@ export function InvoiceEditor({
               <th className="px-4 py-3">Qty</th>
               <th className="px-4 py-3">Unit price (SAR)</th>
               <th className="px-4 py-3">Line total</th>
+              <th
+                className="px-4 py-3"
+                title="Fabric cost per piece — fabric base + 5% import duty, excl. recoverable VAT and make"
+              >
+                Fabric cost
+              </th>
               <th className="px-4 py-3" title="Internal cost per piece — fabric + 5% duty + make cost, excl. recoverable VAT">
                 Cost hint
               </th>
@@ -279,6 +285,9 @@ export function InvoiceEditor({
                   />
                 </td>
                 <td className="px-4 py-3 font-medium">{formatInvoiceSar(line.quantity * line.unit_price)}</td>
+                <td className="px-4 py-3 text-xs text-slate-500">
+                  {line.fabric_cost_hint_sar != null ? formatInvoiceSar(line.fabric_cost_hint_sar) : "—"}
+                </td>
                 <td className="px-4 py-3 text-xs text-slate-500">
                   {line.cost_hint_sar != null ? formatInvoiceSar(line.cost_hint_sar) : "—"}
                 </td>

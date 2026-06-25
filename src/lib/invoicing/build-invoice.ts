@@ -90,6 +90,11 @@ function mergeInvoiceLineGroup(group: CustomerInvoiceLine[]): CustomerInvoiceLin
   const lineTotal = roundMoney(group.reduce((sum, line) => sum + line.line_total, 0));
   const costHints = group.map((line) => line.cost_hint_sar).filter((hint): hint is number => hint != null);
   const costHint = costHints.length > 0 ? roundMoney(costHints.reduce((sum, hint) => sum + hint, 0)) : null;
+  const fabricCostHints = group
+    .map((line) => line.fabric_cost_hint_sar)
+    .filter((hint): hint is number => hint != null);
+  const fabricCostHint =
+    fabricCostHints.length > 0 ? roundMoney(fabricCostHints.reduce((sum, hint) => sum + hint, 0)) : null;
   const composition =
     group.map((line) => line.composition?.trim()).find((value): value is string => Boolean(value)) ?? null;
   const weightGsm = group.find((line) => line.weight_gsm != null)?.weight_gsm ?? null;
@@ -105,6 +110,7 @@ function mergeInvoiceLineGroup(group: CustomerInvoiceLine[]): CustomerInvoiceLin
     unit_price: unitPrice,
     line_total: lineTotal,
     cost_hint_sar: costHint,
+    fabric_cost_hint_sar: fabricCostHint,
   };
 }
 
@@ -205,22 +211,36 @@ export function enrichInvoiceLinesWithCostHints(
 
   const orderCost = getSalesOrderCost(order);
   const costByLineId = new Map(orderCost.lines.map((line) => [line.line_id, line.total_cost_sar]));
+  const fabricCostByLineId = new Map(
+    orderCost.lines.map((line) => [line.line_id, line.fabric_cost_sar])
+  );
 
   return lines.map((line) => {
     const fabricLine = findFabricLineForInvoiceLine(order, line);
     if (!fabricLine) return line;
     const lineTotalCost = costByLineId.get(fabricLine.id) ?? null;
+    const lineFabricCost = fabricCostByLineId.get(fabricLine.id) ?? null;
     const unitHint = isCombinedInvoiceLine(line)
       ? lineTotalCost
       : unitCostHintForFabricLine(fabricLine, lineTotalCost);
-    if (unitHint == null) return line;
-    return { ...line, cost_hint_sar: unitHint };
+    const fabricUnitHint = isCombinedInvoiceLine(line)
+      ? lineFabricCost
+      : unitCostHintForFabricLine(fabricLine, lineFabricCost);
+    if (unitHint == null && fabricUnitHint == null) return line;
+    return {
+      ...line,
+      ...(unitHint != null ? { cost_hint_sar: unitHint } : {}),
+      ...(fabricUnitHint != null ? { fabric_cost_hint_sar: fabricUnitHint } : {}),
+    };
   });
 }
 
 export function buildInvoiceLinesFromSalesOrder(order: SalesOrder): CustomerInvoiceLine[] {
   const orderCost = getSalesOrderCost(order);
   const costByLineId = new Map(orderCost.lines.map((line) => [line.line_id, line.total_cost_sar]));
+  const fabricCostByLineId = new Map(
+    orderCost.lines.map((line) => [line.line_id, line.fabric_cost_sar])
+  );
 
   const lines: CustomerInvoiceLine[] = [];
   let index = 0;
@@ -228,6 +248,10 @@ export function buildInvoiceLinesFromSalesOrder(order: SalesOrder): CustomerInvo
   for (const [fabricLineIndex, fabricLine] of order.fabric_lines.entries()) {
     const articleNumber = fabricLineArticleNumber(fabricLineIndex);
     const unitHint = unitCostHintForFabricLine(fabricLine, costByLineId.get(fabricLine.id) ?? null);
+    const fabricUnitHint = unitCostHintForFabricLine(
+      fabricLine,
+      fabricCostByLineId.get(fabricLine.id) ?? null
+    );
 
     const stickers =
       fabricLine.label_stickers?.length > 0
@@ -248,6 +272,8 @@ export function buildInvoiceLinesFromSalesOrder(order: SalesOrder): CustomerInvo
       const perPiecePrice = unitHint ?? 0;
       const setUnitPrice = roundMoney(perPiecePrice * stickers.length);
       const setCostHint = unitHint != null ? roundMoney(unitHint * stickers.length) : null;
+      const setFabricCostHint =
+        fabricUnitHint != null ? roundMoney(fabricUnitHint * stickers.length) : null;
       lines.push({
         id: `inv-line-${order.id}-${index}`,
         article_number: articleNumber,
@@ -264,6 +290,7 @@ export function buildInvoiceLinesFromSalesOrder(order: SalesOrder): CustomerInvo
         unit_price: setUnitPrice,
         line_total: setUnitPrice,
         cost_hint_sar: setCostHint,
+        fabric_cost_hint_sar: setFabricCostHint,
       });
       continue;
     }
@@ -287,6 +314,7 @@ export function buildInvoiceLinesFromSalesOrder(order: SalesOrder): CustomerInvo
         unit_price: unitPrice,
         line_total: unitPrice,
         cost_hint_sar: unitHint,
+        fabric_cost_hint_sar: fabricUnitHint,
       });
     }
   }

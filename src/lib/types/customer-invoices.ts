@@ -22,6 +22,8 @@ export interface CustomerInvoiceLine {
   line_total: number;
   /** Internal cost hint (SAR) — admin editor only, not on client print/PDF */
   cost_hint_sar: number | null;
+  /** Fabric-only cost hint (SAR) — base + duty, excl. VAT and make; editor only */
+  fabric_cost_hint_sar: number | null;
 }
 
 export interface CustomerInvoice {
