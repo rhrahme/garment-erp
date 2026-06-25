@@ -78,7 +78,7 @@ function expandInvoiceFactoryFiberCodes(text: string): string {
 }
 
 /** Client-facing composition — strip yarn notation and space out mashed fibre percentages. */
-function formatClientInvoiceComposition(composition: string): string {
+export function formatClientInvoiceComposition(composition: string): string {
   let text = composition.trim();
   const yarnPrefix = text.match(INVOICE_YARN_PREFIX_RE);
   if (yarnPrefix) text = text.slice(yarnPrefix[0].length);

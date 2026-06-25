@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getCustomerInvoiceByIdFresh, saveCustomerInvoice } from "@/lib/data/customer-invoices";
 import { readSalesOrdersFresh, writeSalesOrders } from "@/lib/data/sales-orders";
 import { recalculateInvoiceTotals } from "@/lib/invoicing/build-invoice";
+import {
+  applyAllConsolidations,
+  applyConsolidation,
+} from "@/lib/invoicing/consolidate-lines";
 import type { CustomerInvoice, CustomerInvoiceLine, CustomerInvoiceStatus } from "@/lib/types/customer-invoices";
 import { invalidateDocumentCache } from "@/lib/data/document-persistence";
 import path from "path";
@@ -48,6 +52,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       client_address?: string | null;
       vat_rate?: number | null;
       lines?: Array<Partial<CustomerInvoiceLine> & { id: string }>;
+      consolidate?: { group_keys?: string[] } | "all";
     };
 
     let next: CustomerInvoice = { ...invoice };
@@ -64,7 +69,23 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       next.vat_rate = rate != null && Number.isFinite(rate) && rate >= 0 ? rate : null;
     }
 
-    if (Array.isArray(body.lines)) {
+    if (body.consolidate) {
+      const groupKeys =
+        body.consolidate === "all"
+          ? undefined
+          : Array.isArray(body.consolidate.group_keys)
+            ? body.consolidate.group_keys.filter((key) => typeof key === "string" && key.trim())
+            : [];
+      if (body.consolidate !== "all" && groupKeys?.length === 0) {
+        return NextResponse.json({ error: "No consolidation group keys provided." }, { status: 400 });
+      }
+      next.lines =
+        body.consolidate === "all"
+          ? applyAllConsolidations(invoice.lines)
+          : applyConsolidation(invoice.lines, groupKeys!);
+      const totals = recalculateInvoiceTotals(next.lines, next.vat_rate);
+      next = { ...next, ...totals };
+    } else if (Array.isArray(body.lines)) {
       const isFullReplacement = body.lines.every(
         (row) =>
           row.id &&
