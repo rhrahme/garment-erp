@@ -65,8 +65,6 @@ export function CustomerInvoicesWorkspace({
 
   return (
     <div className="space-y-6">
-      <InvoiceableOrdersPanel orders={invoiceableOrders} />
-
       <div className="rounded-xl border border-violet-200 bg-violet-50 px-5 py-4 text-sm text-violet-950">
         <p className="font-medium">How invoicing works</p>
         <p className="mt-1 text-violet-900">
@@ -158,7 +156,7 @@ export function CustomerInvoicesWorkspace({
         <div className="rounded-xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-500">
           {invoices.length === 0 ? (
             <>
-              No invoices yet. Use <span className="font-medium">Create invoice</span> in the table above, or open a
+              No invoices yet. Use <span className="font-medium">Create invoice</span> in Ready to invoice below, or open a
               sales order.
             </>
           ) : (
@@ -210,6 +208,8 @@ export function CustomerInvoicesWorkspace({
           </table>
         </div>
       )}
+
+      <InvoiceableOrdersPanel orders={invoiceableOrders} />
     </div>
   );
 }
