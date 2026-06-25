@@ -3,13 +3,16 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { FileText, Search, Wallet } from "lucide-react";
+import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { StatCard, StatusBadge } from "@/components/ui/PageHeader";
 import type { CustomerInvoice, CustomerInvoiceSummary } from "@/lib/types/customer-invoices";
 import type { InvoiceableSalesOrder } from "@/lib/types/invoiceable-orders";
+import { getBrandClientCodePrefix } from "@/lib/clients/codes";
 import { formatInvoiceClientName } from "@/lib/invoicing/display";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
 import { customerInvoiceMatchesSearch } from "@/lib/invoicing/list-search";
 import { formatDate, cn } from "@/lib/utils";
+import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import { InvoiceableOrdersPanel } from "@/components/invoicing/InvoiceableOrdersPanel";
 
 const STATUS_TABS = [
@@ -28,25 +31,37 @@ export function CustomerInvoicesWorkspace({
   summary: CustomerInvoiceSummary;
   invoiceableOrders: InvoiceableSalesOrder[];
 }) {
+  const { brandId, setBrandId, hydrated } = useFactoryBrandFilter();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_TABS)[number]["id"]>("all");
 
+  const brandFilteredInvoices = useMemo(() => {
+    if (!brandId) return invoices;
+    const prefix = getBrandClientCodePrefix(brandId);
+    if (!prefix) return invoices;
+    return invoices.filter(
+      (invoice) => invoice.client_code.startsWith(`${prefix}-`) || invoice.client_code === prefix
+    );
+  }, [brandId, invoices]);
+
   const tabCounts = useMemo(
     () => ({
-      all: summary.invoice_count,
-      draft: summary.draft_count,
-      sent: summary.sent_count,
-      paid: summary.paid_count,
+      all: brandFilteredInvoices.length,
+      draft: brandFilteredInvoices.filter((invoice) => invoice.status === "draft").length,
+      sent: brandFilteredInvoices.filter((invoice) => invoice.status === "sent").length,
+      paid: brandFilteredInvoices.filter((invoice) => invoice.status === "paid").length,
     }),
-    [summary]
+    [brandFilteredInvoices]
   );
 
   const filtered = useMemo(() => {
-    return invoices.filter((invoice) => {
+    return brandFilteredInvoices.filter((invoice) => {
       if (statusFilter !== "all" && invoice.status !== statusFilter) return false;
       return customerInvoiceMatchesSearch(invoice, searchQuery);
     });
-  }, [invoices, searchQuery, statusFilter]);
+  }, [brandFilteredInvoices, searchQuery, statusFilter]);
+
+  const hasActiveFilters = Boolean(searchQuery.trim() || brandId || statusFilter !== "all");
 
   return (
     <div className="space-y-6">
@@ -91,6 +106,16 @@ export function CustomerInvoicesWorkspace({
         />
       </div>
 
+      {hydrated && (
+        <FactoryBrandTabs
+          value={brandId}
+          onChange={setBrandId}
+          showAll
+          allLabel="All brands"
+          label="Filter by brand"
+        />
+      )}
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-wrap gap-2">
           {STATUS_TABS.map((tab) => (
@@ -121,6 +146,12 @@ export function CustomerInvoicesWorkspace({
             className="mt-1 block w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3"
           />
         </label>
+        {hasActiveFilters && invoices.length > 0 && (
+          <p className="text-sm text-slate-500">
+            {filtered.length} of {brandFilteredInvoices.length} invoice
+            {brandFilteredInvoices.length !== 1 ? "s" : ""}
+          </p>
+        )}
       </div>
 
       {filtered.length === 0 ? (
