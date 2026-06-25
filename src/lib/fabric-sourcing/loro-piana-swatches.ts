@@ -69,7 +69,12 @@ function manifestSwatchFilename(normalized: string): string | null {
 }
 
 function swatchFileIsAvailable(filename: string): boolean {
+  if (isSupabaseLoroPianaSwatchStorage()) return false;
   return existsSync(path.join(LORO_PIANA_IMAGES_ROOT, filename));
+}
+
+function localSwatchFilesystemEnabled(): boolean {
+  return !isSupabaseLoroPianaSwatchStorage();
 }
 
 export function lookupLoroPianaSwatch(fabricNumber: string): {
@@ -82,7 +87,7 @@ export function lookupLoroPianaSwatch(fabricNumber: string): {
   const requested = fabricNumber.trim();
   const normalized = normalizeLoroPianaFabricNumber(requested);
 
-  const localName = localSwatchFilename(normalized);
+  const localName = localSwatchFilesystemEnabled() ? localSwatchFilename(normalized) : null;
   if (localName) {
     const filePath = path.join(LORO_PIANA_IMAGES_ROOT, localName);
     return {
@@ -135,6 +140,7 @@ export function readLoroPianaSwatchFile(fabricNumber: string): {
   contentType: string;
   filename: string;
 } | null {
+  if (!localSwatchFilesystemEnabled()) return null;
   const normalized = normalizeLoroPianaFabricNumber(fabricNumber);
   for (const ext of [".jpg", ".jpeg", ".png", ".webp"]) {
     const filePath = path.join(LORO_PIANA_IMAGES_ROOT, `${normalized}${ext}`);
