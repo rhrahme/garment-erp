@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { FileText, Search, Wallet } from "lucide-react";
+import { Search } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
-import { StatCard, StatusBadge } from "@/components/ui/PageHeader";
+import { StatusBadge } from "@/components/ui/PageHeader";
+import { InvoiceSummaryCards } from "@/components/invoicing/InvoiceSummaryCards";
 import type { CustomerInvoice, CustomerInvoiceSummary } from "@/lib/types/customer-invoices";
 import type { InvoiceableSalesOrder } from "@/lib/types/invoiceable-orders";
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
@@ -75,34 +76,7 @@ export function CustomerInvoicesWorkspace({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Invoices"
-          value={summary.invoice_count}
-          subtext={`${summary.draft_count} draft`}
-          icon={<FileText className="h-5 w-5" />}
-          accent="bg-indigo-50 text-indigo-600"
-        />
-        <StatCard
-          label="Outstanding"
-          value={formatInvoiceSar(summary.outstanding_sar)}
-          subtext={`${summary.sent_count} sent · ${summary.draft_count} draft`}
-          icon={<Wallet className="h-5 w-5" />}
-          accent="bg-amber-50 text-amber-600"
-        />
-        <StatCard
-          label="Paid"
-          value={formatInvoiceSar(summary.paid_sar)}
-          subtext={`${summary.paid_count} invoice${summary.paid_count !== 1 ? "s" : ""}`}
-          accent="bg-emerald-50 text-emerald-600"
-        />
-        <StatCard
-          label="Currency"
-          value="SAR"
-          subtext="Client billing"
-          accent="bg-sky-50 text-sky-600"
-        />
-      </div>
+      <InvoiceSummaryCards summary={summary} />
 
       {hydrated && (
         <FactoryBrandTabs
