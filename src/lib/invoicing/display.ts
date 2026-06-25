@@ -96,15 +96,18 @@ export function formatClientInvoiceComposition(composition: string): string {
   return expandInvoiceFactoryFiberCodes(text);
 }
 
-/** Combined composition cell: "{brand_abbr} {composition} {weight}" e.g. "DP 100% cashmere 480g". */
+/** Combined composition cell: "{brand_abbr} {fabric#} {composition} {weight}" e.g. "DP 60058 100% Wool 260g". */
 export function formatInvoiceCompositionLine(
   brand: string | null | undefined,
   composition: string | null | undefined,
-  weightGsm?: number | null | undefined
+  weightGsm?: number | null | undefined,
+  fabricNumber?: string | null | undefined
 ): string {
   const parts: string[] = [];
   const abbr = formatInvoiceFabricBrandAbbreviation(brand);
   if (abbr) parts.push(abbr);
+  const number = fabricNumber?.trim();
+  if (number) parts.push(number);
   const comp = composition?.trim();
   if (comp) parts.push(formatClientInvoiceComposition(comp));
   const weight = formatInvoiceWeightGrams(weightGsm);
@@ -187,7 +190,8 @@ export function toInvoiceLineDisplay(line: CustomerInvoiceLine): CustomerInvoice
     composition_label: formatInvoiceCompositionLine(
       resolved.fabric_brand,
       composition,
-      resolved.weight_gsm
+      resolved.weight_gsm,
+      resolved.fabric_number
     ),
   };
 }
