@@ -29,6 +29,7 @@ import {
   buildSoArticleMapFromFabricLines,
   formatFabricLineArticle,
   formatLabelGarmentDescription,
+  lineArticleFromStickerCode,
 } from "@/lib/sales-orders/label-codes";
 import { salesOrderFabricLineAnchor } from "@/lib/sales-orders/line-cross-reference";
 import { formatFabricLineLabels } from "@/lib/sales-orders/label-display";
@@ -292,6 +293,7 @@ export function SalesOrderActions({
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <th className="px-3 py-2 text-center">Art.</th>
                   <th className="px-3 py-2">Sticker code</th>
                   <th className="px-3 py-2">Client</th>
                   <th className="px-3 py-2">Garment</th>
@@ -302,6 +304,9 @@ export function SalesOrderActions({
               <tbody>
                 {allStickers.map((sticker) => (
                   <tr key={sticker.code} className="border-b border-slate-100 last:border-0">
+                    <td className="px-3 py-2 text-center font-semibold text-slate-900">
+                      {formatFabricLineArticle(lineArticleFromStickerCode(sticker.code))}
+                    </td>
                     <td className="px-3 py-2 font-mono font-medium text-indigo-800" spellCheck={false}>
                       {sticker.code}
                     </td>
