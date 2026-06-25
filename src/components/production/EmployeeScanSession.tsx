@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, LogOut, ScanLine, UserRound } from "lucide-react";
+import { EmployeeBadgeSelect } from "@/components/production/EmployeeBadgeSelect";
 import { FACTORY_WORKSTATIONS } from "@/lib/production/factory-workstations";
 import { normalizeScannerInput, splitScanInput } from "@/lib/production/scan-input";
 import {
@@ -219,9 +220,10 @@ export function EmployeeScanSession({ onSessionChange }: EmployeeScanSessionProp
           <ScanLine className="h-6 w-6" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-lg font-semibold text-slate-900">Step 1 — Scan your badge</h3>
+          <h3 className="text-lg font-semibold text-slate-900">Step 1 — Scan or select your badge</h3>
           <p className="mt-1 text-sm text-slate-600">
-            Scan your employee QR badge first. Your session stays active for 8 hours on this device.
+            Scan your employee QR badge or pick your name from the list below. Your session stays active for 8 hours on
+            this device.
           </p>
 
           <div
@@ -257,6 +259,19 @@ export function EmployeeScanSession({ onSessionChange }: EmployeeScanSessionProp
               aria-label="Scan employee badge"
             />
           </div>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center" aria-hidden>
+              <div className="w-full border-t border-violet-200" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-violet-50/50 px-3 text-xs font-medium uppercase tracking-wide text-violet-700">
+                or select from list
+              </span>
+            </div>
+          </div>
+
+          <EmployeeBadgeSelect onSelect={lookupBadge} disabled={loading} loading={loading} />
 
           {error && (
             <div className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-3 text-sm text-red-900" role="alert">
