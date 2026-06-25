@@ -7,31 +7,28 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["sharp"],
   // Local supplier image folders can be multi-GB on dev machines; production uses Supabase storage.
   outputFileTracingIncludes: {
-    "/api/suppliers/loro-piana/images/*": [
-      "./data/suppliers/loro-piana/images/manifest.json",
-    ],
-    "/api/suppliers/loro-piana/images": [
+    "/api/suppliers/loro-piana/images/**": [
       "./data/suppliers/loro-piana/images/manifest.json",
     ],
   },
   outputFileTracingExcludes: {
-    "/api/suppliers/loro-piana/images/*": [
-      "./data/suppliers/loro-piana/images/**/*",
-      "!./data/suppliers/loro-piana/images/manifest.json",
-    ],
-    "/api/suppliers/loro-piana/images": [
-      "./data/suppliers/loro-piana/images/**/*",
-      "!./data/suppliers/loro-piana/images/manifest.json",
+    "/api/suppliers/loro-piana/images/**": [
+      "./data/suppliers/loro-piana/images/*.jpg",
+      "./data/suppliers/loro-piana/images/*.jpeg",
+      "./data/suppliers/loro-piana/images/*.png",
+      "./data/suppliers/loro-piana/images/*.webp",
     ],
     "*": [
-      "./data/suppliers/loro-piana/images/**/*",
-      "!./data/suppliers/loro-piana/images/manifest.json",
-      "./data/suppliers/drapers/images/**/*",
-      "!./data/suppliers/drapers/images/manifest.json",
-      "./data/suppliers/drapers/images-higher/**/*",
-      "!./data/suppliers/drapers/images-higher/manifest.json",
-      "./data/suppliers/drapers/images-by-collection/**/*",
-      "!./data/suppliers/drapers/images-by-collection/manifest.json",
+      "./data/suppliers/loro-piana/images/*.jpg",
+      "./data/suppliers/loro-piana/images/*.jpeg",
+      "./data/suppliers/loro-piana/images/*.png",
+      "./data/suppliers/loro-piana/images/*.webp",
+      "./data/suppliers/drapers/images/*.jpg",
+      "./data/suppliers/drapers/images/*.jpeg",
+      "./data/suppliers/drapers/images/*.png",
+      "./data/suppliers/drapers/images/*.webp",
+      "./data/suppliers/drapers/images-higher/**",
+      "./data/suppliers/drapers/images-by-collection/**",
     ],
   },
 };
