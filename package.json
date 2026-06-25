@@ -18,6 +18,7 @@
     "verify:label-counts": "node scripts/verify-factory-label-counts.mjs",
     "audit:document-loads": "node scripts/audit-document-loads.mjs",
     "test:consolidate-lines": "node --experimental-strip-types scripts/test-consolidate-lines.mjs",
+    "test:invoice-vat": "node --experimental-strip-types scripts/test-invoice-vat.mjs",
     "smoke:production": "node scripts/smoke-production.mjs",
     "verify:deploy": "npm run audit:document-loads && npm run smoke:production",
     "db:types": "supabase gen types typescript --local > src/lib/types/database.generated.ts"

@@ -13,6 +13,7 @@ import {
   lineArticleFromStickerCode,
 } from "@/lib/sales-orders/label-codes";
 import { resolveInvoiceComposition } from "@/lib/invoicing/display";
+import { resolveInvoiceVatRate } from "@/lib/invoicing/vat";
 import { findFabricLineForInvoiceLine } from "@/lib/sales-orders/line-cross-reference";
 import type { CustomerInvoice, CustomerInvoiceLine } from "@/lib/types/customer-invoices";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
@@ -353,7 +354,8 @@ export function buildDraftInvoiceFromSalesOrder(
 
   const client = getClientById(order.client_id);
   const lines = buildInvoiceLinesFromSalesOrder(order);
-  const { lines: pricedLines, subtotal, vat_amount, total } = recalculateInvoiceTotals(lines);
+  const vat_rate = resolveInvoiceVatRate(order.delivery_destination);
+  const { lines: pricedLines, subtotal, vat_amount, total } = recalculateInvoiceTotals(lines, vat_rate);
   const orderCost = getSalesOrderCost(order);
   const today = new Date().toISOString().slice(0, 10);
   const paymentTerms = client?.payment_terms ?? null;
@@ -378,7 +380,7 @@ export function buildDraftInvoiceFromSalesOrder(
     due_date: computeDueDate(today, paymentTerms),
     lines: pricedLines,
     subtotal,
-    vat_rate: null,
+    vat_rate,
     vat_amount,
     total,
     notes: null,
@@ -398,4 +400,11 @@ export function enrichInvoiceDeliveryDestination<T extends CustomerInvoice>(
   if (invoice.delivery_destination) return invoice;
   if (!order?.delivery_destination) return { ...invoice, delivery_destination: null };
   return { ...invoice, delivery_destination: order.delivery_destination };
+}
+
+/** Apply Saudi VAT (15% on subtotal) when delivery destination is RUH; recalculate totals. */
+export function enrichInvoiceVat<T extends CustomerInvoice>(invoice: T): T {
+  const vat_rate = resolveInvoiceVatRate(invoice.delivery_destination);
+  const { lines, subtotal, vat_amount, total } = recalculateInvoiceTotals(invoice.lines, vat_rate);
+  return { ...invoice, lines, subtotal, vat_rate, vat_amount, total };
 }

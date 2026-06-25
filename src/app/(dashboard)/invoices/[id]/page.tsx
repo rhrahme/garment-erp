@@ -9,6 +9,7 @@ import {
   enrichInvoiceDeliveryDestination,
   enrichInvoiceLinesWithCostHints,
   enrichInvoiceLinesWithFabricDetails,
+  enrichInvoiceVat,
 } from "@/lib/invoicing/build-invoice";
 import { formatInvoiceClientName, resolveInvoiceLines, sortInvoiceLinesByArticle } from "@/lib/invoicing/display";
 import { buildInvoiceLineCrossRefs, buildInvoiceLineSwatchKeys } from "@/lib/sales-orders/line-cross-reference";
@@ -38,13 +39,15 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   );
   const lineCrossRefs = buildInvoiceLineCrossRefs(resolvedLines, order, fabricPos);
   const lineSwatchKeys = buildInvoiceLineSwatchKeys(resolvedLines, order);
-  const invoice = enrichInvoiceDeliveryDestination(
-    {
-      ...raw,
-      delivery_destination: raw.delivery_destination ?? null,
-      lines: resolvedLines,
-    },
-    order
+  const invoice = enrichInvoiceVat(
+    enrichInvoiceDeliveryDestination(
+      {
+        ...raw,
+        delivery_destination: raw.delivery_destination ?? null,
+        lines: resolvedLines,
+      },
+      order
+    )
   );
 
   return (
