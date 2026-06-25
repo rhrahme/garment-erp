@@ -6,6 +6,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/PageHeader";
 import { InvoicePreview } from "@/components/invoicing/InvoicePreview";
+import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
+import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
+import type { FabricSwatchKey } from "@/lib/fabric-sourcing/fabric-swatch-keys";
 import type { CustomerInvoice, CustomerInvoiceLine, CustomerInvoiceStatus } from "@/lib/types/customer-invoices";
 import {
   formatInvoiceClientName,
@@ -25,9 +28,11 @@ import { formatDate } from "@/lib/utils";
 export function InvoiceEditor({
   invoice: initial,
   lineCrossRefs,
+  lineSwatchKeys,
 }: {
   invoice: CustomerInvoice;
   lineCrossRefs: Map<string, InvoiceLineCrossRef>;
+  lineSwatchKeys: Map<string, FabricSwatchKey>;
 }) {
   const router = useRouter();
   const [invoice, setInvoice] = useState(initial);
@@ -91,6 +96,8 @@ export function InvoiceEditor({
   const liveTotal = Math.round((liveSubtotal + liveVatAmount) * 100) / 100;
 
   const showDhsEquivalent = isDubaiFabricDelivery(invoice.delivery_destination);
+
+  const swatchFabrics = useMemo(() => [...lineSwatchKeys.values()], [lineSwatchKeys]);
 
   const previewInvoice = useMemo(
     () => ({
@@ -198,6 +205,7 @@ export function InvoiceEditor({
         }}
       />
 
+      <FabricSwatchProvider fabrics={swatchFabrics}>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="min-w-full text-sm">
           <thead>
@@ -220,6 +228,7 @@ export function InvoiceEditor({
             {sortInvoiceLinesByArticle(resolveInvoiceLines(lines)).map((line) => {
               const display = toInvoiceLineDisplay(line);
               const crossRef = lineCrossRefs.get(line.id);
+              const swatchKey = lineSwatchKeys.get(line.id);
               return (
               <tr key={line.id}>
                 <td className="px-4 py-3 text-center font-semibold text-slate-900">{display.article_label}</td>
@@ -247,8 +256,15 @@ export function InvoiceEditor({
                     className="w-full min-w-[12rem] rounded border border-slate-200 px-2 py-1.5"
                   />
                 </td>
-                <td className="px-4 py-3 font-mono text-sm text-slate-700">
-                  {line.fabric_number?.trim() || "—"}
+                <td className="px-4 py-3 text-sm text-slate-700">
+                  {swatchKey ? (
+                    <FabricNumberWithSwatch
+                      supplierId={swatchKey.supplier_id}
+                      fabricNumber={swatchKey.fabric_number}
+                    />
+                  ) : (
+                    <span className="font-mono">{line.fabric_number?.trim() || "—"}</span>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-sm text-slate-700">{display.composition_label}</td>
                 <td className="px-4 py-3">{line.quantity}</td>
@@ -283,6 +299,7 @@ export function InvoiceEditor({
           </tfoot>
         </table>
       </div>
+      </FabricSwatchProvider>
 
       <div className="flex flex-wrap gap-3">
         <Button onClick={() => void saveLines()} disabled={saving}>
