@@ -164,7 +164,6 @@ export function OrdersList({
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
               <th className="px-4 py-3">Order / client</th>
               <th className="px-4 py-3">Client code</th>
-              <th className="px-4 py-3 text-center">Art.</th>
               <th className="px-4 py-3">Fabrics</th>
               <th className="px-4 py-3">Availability</th>
               {productionMode && <th className="px-4 py-3">Production labels</th>}
@@ -179,7 +178,7 @@ export function OrdersList({
           <tbody className="divide-y divide-slate-100">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={productionMode ? 10 : 9} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={productionMode ? 9 : 8} className="px-4 py-10 text-center text-slate-500">
                   {hasActiveFilters
                     ? "No orders match your search."
                     : view === "archived"
@@ -202,9 +201,6 @@ export function OrdersList({
                   </td>
                   <td className="px-4 py-3">
                     <p className="font-mono text-xs text-slate-500">{order.client_code}</p>
-                  </td>
-                  <td className="px-4 py-3 text-center font-mono text-xs font-semibold text-slate-700">
-                    {order.fabric_article_labels.length > 0 ? order.fabric_article_labels.join(" · ") : "—"}
                   </td>
                   <td className="px-4 py-3">
                     {order.fabric_line_count} line{order.fabric_line_count !== 1 ? "s" : ""}
