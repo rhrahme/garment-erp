@@ -14,13 +14,21 @@ import {
   toInvoiceLineDisplay,
 } from "@/lib/invoicing/display";
 import { DownloadInvoicePdfButton } from "@/components/invoicing/DownloadInvoicePdfButton";
+import { InvoiceLineFabricPoLink, InvoiceLineSoLink } from "@/components/invoicing/InvoiceLineCrossRefLinks";
 import { ConsolidationSuggestionsPanel } from "@/components/invoicing/ConsolidationSuggestionsPanel";
 import { InvoiceTotalsFooter } from "@/components/invoicing/InvoiceTotalsFooter";
 import { isDubaiFabricDelivery } from "@/lib/invoicing/bank-details";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
+import type { InvoiceLineCrossRef } from "@/lib/sales-orders/line-cross-reference";
 import { formatDate } from "@/lib/utils";
 
-export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }) {
+export function InvoiceEditor({
+  invoice: initial,
+  lineCrossRefs,
+}: {
+  invoice: CustomerInvoice;
+  lineCrossRefs: Map<string, InvoiceLineCrossRef>;
+}) {
   const router = useRouter();
   const [invoice, setInvoice] = useState(initial);
   const [lines, setLines] = useState<CustomerInvoiceLine[]>(initial.lines);
@@ -195,6 +203,8 @@ export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
               <th className="px-4 py-3 text-center">Art.</th>
+              <th className="px-4 py-3 text-center">SO line</th>
+              <th className="px-4 py-3">Fabric PO</th>
               <th className="px-4 py-3">Garment</th>
               <th className="px-4 py-3">Composition</th>
               <th className="px-4 py-3">Qty</th>
@@ -208,9 +218,27 @@ export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }
           <tbody className="divide-y divide-slate-100">
             {sortInvoiceLinesByArticle(resolveInvoiceLines(lines)).map((line) => {
               const display = toInvoiceLineDisplay(line);
+              const crossRef = lineCrossRefs.get(line.id);
               return (
               <tr key={line.id}>
                 <td className="px-4 py-3 text-center font-semibold text-slate-900">{display.article_label}</td>
+                <td className="px-4 py-3 text-center">
+                  {crossRef ? (
+                    <InvoiceLineSoLink salesOrderId={invoice.sales_order_id} crossRef={crossRef} />
+                  ) : (
+                    <span className="text-slate-400">—</span>
+                  )}
+                  {crossRef?.sticker_suffix && crossRef.so_article_label !== display.article_label ? (
+                    <p className="mt-0.5 font-mono text-[10px] text-slate-400">{crossRef.sticker_suffix}</p>
+                  ) : null}
+                </td>
+                <td className="px-4 py-3">
+                  {crossRef ? (
+                    <InvoiceLineFabricPoLink salesOrderId={invoice.sales_order_id} crossRef={crossRef} />
+                  ) : (
+                    <span className="text-slate-400">—</span>
+                  )}
+                </td>
                 <td className="px-4 py-3">
                   <input
                     value={line.description}

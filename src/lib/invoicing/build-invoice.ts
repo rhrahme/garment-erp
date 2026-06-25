@@ -13,6 +13,7 @@ import {
   lineArticleFromStickerCode,
 } from "@/lib/sales-orders/label-codes";
 import { resolveInvoiceComposition } from "@/lib/invoicing/display";
+import { findFabricLineForInvoiceLine } from "@/lib/sales-orders/line-cross-reference";
 import type { CustomerInvoice, CustomerInvoiceLine } from "@/lib/types/customer-invoices";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
@@ -166,34 +167,6 @@ function resolveArticleNumber(
     if (fromSticker != null) return fromSticker;
   }
   return null;
-}
-
-function findFabricLineForInvoiceLine(
-  order: SalesOrder,
-  invoiceLine: CustomerInvoiceLine
-): SalesOrderFabricLine | undefined {
-  if (invoiceLine.sales_order_line_id) {
-    const byId = order.fabric_lines.find((line) => line.id === invoiceLine.sales_order_line_id);
-    if (byId) return byId;
-  }
-  if (invoiceLine.sticker_code) {
-    const bySticker = order.fabric_lines.find((line) =>
-      line.label_stickers?.some((sticker) => sticker.code === invoiceLine.sticker_code)
-    );
-    if (bySticker) return bySticker;
-  }
-
-  if (invoiceLine.fabric_number) {
-    const byFabric = order.fabric_lines.find((line) => line.fabric_number === invoiceLine.fabric_number);
-    if (byFabric) return byFabric;
-  }
-
-  return order.fabric_lines.find(
-    (line) =>
-      line.garment_type === invoiceLine.garment_type &&
-      (invoiceLine.piece_name == null ||
-        line.label_stickers?.some((sticker) => sticker.piece_name === invoiceLine.piece_name))
-  );
 }
 
 export function enrichInvoiceLinesWithFabricDetails(
