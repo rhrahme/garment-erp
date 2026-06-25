@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import {
   AUTH_UNHEALTHY_BANNER_TTL_MS,
   isAuthRecentlyUnhealthy,
@@ -19,7 +20,9 @@ export async function GET() {
     bannerTtlMs: AUTH_UNHEALTHY_BANNER_TTL_MS,
   };
 
-  try {
+  const cookieStore = await cookies();
+  const hasAuthCookie = cookieStore.getAll().some((cookie) => cookie.name.includes("-auth-token"));
+  if (hasAuthCookie) {
     const session = await requireAuthenticated();
     if (session?.isAdmin) {
       return NextResponse.json({
@@ -38,8 +41,6 @@ export async function GET() {
         },
       });
     }
-  } catch {
-    // Public status only for unauthenticated callers.
   }
 
   return NextResponse.json(publicPayload);

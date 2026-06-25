@@ -3,6 +3,7 @@ import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 const AUTH_HEALTH_DOCUMENT_ID = "auth_health_monitor";
 const AUTH_HEALTH_TIMEOUT_MS = 10_000;
+const AUTH_HEALTH_READ_TIMEOUT_MS = 3_000;
 const RESTART_COOLDOWN_MS = 30 * 60 * 1000;
 const ALERT_COOLDOWN_MS = 60 * 60 * 1000;
 export const AUTH_UNHEALTHY_BANNER_TTL_MS = 15 * 60 * 1000;
@@ -55,12 +56,23 @@ export async function readAuthHealthRecord(): Promise<AuthHealthRecord> {
   if (!admin) return { ...DEFAULT_RECORD };
 
   try {
-    const { data, error } = await admin
+    const readPromise = admin
       .from("erp_documents")
       .select("data")
       .eq("id", AUTH_HEALTH_DOCUMENT_ID)
       .maybeSingle();
 
+    const result = await Promise.race([
+      readPromise,
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), AUTH_HEALTH_READ_TIMEOUT_MS)),
+    ]);
+
+    if (!result) {
+      console.warn("[auth-health] readAuthHealthRecord timed out — using default");
+      return { ...DEFAULT_RECORD };
+    }
+
+    const { data, error } = result;
     if (error || !data?.data) {
       return { ...DEFAULT_RECORD };
     }

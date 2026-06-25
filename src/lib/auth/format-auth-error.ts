@@ -1,8 +1,10 @@
 import type { AuthError } from "@supabase/supabase-js";
 
-const AUTH_SIGN_IN_TIMEOUT_MS = 15_000;
-const AUTH_SIGN_IN_MAX_ATTEMPTS = 3;
-const AUTH_SIGN_IN_RETRY_BASE_MS = 1_000;
+/** Per-attempt cap — fail fast when GoTrue is down instead of blocking the UI for ~45s. */
+const AUTH_SIGN_IN_TIMEOUT_MS = 8_000;
+/** Only retry transient timeouts; 522/503 are definitive outages. */
+const AUTH_SIGN_IN_MAX_ATTEMPTS = 2;
+const AUTH_SIGN_IN_RETRY_BASE_MS = 750;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -16,10 +18,16 @@ function isEmptyErrorBody(message: string | undefined): boolean {
   return !trimmed || trimmed === "{}" || trimmed === "[]";
 }
 
+/** Cloudflare / gateway errors — retrying wastes ~20s per attempt. */
+export function isDefinitiveAuthOutage(error: AuthError | null | undefined): boolean {
+  if (!error) return false;
+  return error.status === 522 || error.status === 503;
+}
+
 export function isAuthServiceUnavailable(error: AuthError | null | undefined): boolean {
   if (!error) return false;
 
-  if (error.status === 522 || error.status === 503 || error.name === "AuthRetryableFetchError") {
+  if (isDefinitiveAuthOutage(error) || error.name === "AuthRetryableFetchError") {
     return true;
   }
 
@@ -55,7 +63,17 @@ export async function signInWithPasswordWithTimeout(
   return { error: result.error, timedOut };
 }
 
-/** Retry sign-in when Auth/GoTrue is degraded (522, timeout, empty body). */
+function shouldRetrySignIn(result: {
+  error: AuthError | null;
+  timedOut: boolean;
+}): boolean {
+  if (isDefinitiveAuthOutage(result.error)) return false;
+  if (result.timedOut) return true;
+  if (!result.error) return false;
+  return result.error.name === "AuthRetryableFetchError" || isEmptyErrorBody(result.error.message);
+}
+
+/** Retry sign-in only on transient timeouts — not on 522/503 outages. */
 export async function signInWithPasswordWithRetry(
   signIn: () => Promise<{ error: AuthError | null }>
 ): Promise<{ error: AuthError | null; timedOut: boolean; attempts: number }> {
@@ -64,15 +82,20 @@ export async function signInWithPasswordWithRetry(
 
   for (let attempt = 1; attempt <= AUTH_SIGN_IN_MAX_ATTEMPTS; attempt++) {
     const result = await signInWithPasswordWithTimeout(signIn);
-    if (!result.timedOut && !isAuthServiceUnavailable(result.error)) {
+    if (!result.timedOut && !isAuthServiceUnavailable(result.error) && !result.error) {
+      return { error: null, timedOut: false, attempts: attempt };
+    }
+    if (!result.timedOut && result.error && !shouldRetrySignIn(result)) {
       return { error: result.error, timedOut: false, attempts: attempt };
     }
 
     lastError = result.error;
     timedOut = timedOut || result.timedOut;
 
-    if (attempt < AUTH_SIGN_IN_MAX_ATTEMPTS) {
+    if (attempt < AUTH_SIGN_IN_MAX_ATTEMPTS && shouldRetrySignIn(result)) {
       await sleep(AUTH_SIGN_IN_RETRY_BASE_MS * attempt);
+    } else {
+      break;
     }
   }
 

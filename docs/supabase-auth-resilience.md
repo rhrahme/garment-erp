@@ -6,14 +6,17 @@ GoTrue (`/auth/v1/*`) can occasionally return **522 / timeout** while Postgres a
 
 | Component | Behavior |
 |-----------|----------|
-| **Vercel Cron** | `GET /api/cron/supabase-auth-health` every **5 minutes** |
+| **GitHub Actions** (primary) | `.github/workflows/supabase-auth-health.yml` — `GET /api/cron/supabase-auth-health` every **5 minutes** |
+| **Vercel Cron** (backup) | Same endpoint once daily (`0 0 * * *`) — Hobby plan limit |
 | **Health probe** | `GET {SUPABASE_URL}/auth/v1/health` with publishable/anon key |
 | **Auto-restart** | `POST https://api.supabase.com/v1/projects/{ref}/restart` when unhealthy (30 min cooldown) |
 | **Alerts** | Email to `SUPER_ADMIN_EMAILS` + optional Zapier webhook (max 1/hour) |
-| **Login** | Up to **3** sign-in attempts with backoff before returning 503 |
+| **Login** | Fails fast on **522/503**; retries only transient timeouts/empty responses |
 | **Banner** | Amber warning in the app for ~15 min after a failed health check |
 
-## Required Vercel environment variables
+## Required environment variables
+
+### Vercel (production app)
 
 | Variable | Required | Purpose |
 |----------|----------|---------|
@@ -29,7 +32,18 @@ Generate `CRON_SECRET` (example):
 openssl rand -hex 32
 ```
 
-Add it in **Vercel → Project → Settings → Environment Variables**, then redeploy so `vercel.json` crons are active.
+Add it in **Vercel → Project → Settings → Environment Variables**, then redeploy.
+
+### GitHub (5-minute monitor)
+
+In **GitHub → garment-erp → Settings → Secrets and variables → Actions**, add:
+
+| Secret | Required | Purpose |
+|--------|----------|---------|
+| `CRON_SECRET` | **Yes** | Must match the Vercel value exactly |
+| `ERP_APP_URL` | No | Defaults to `https://erp.hagan.pro` |
+
+After adding secrets, open **Actions → Supabase Auth health monitor → Run workflow** once to confirm HTTP 200.
 
 ## Optional: automatic project restart
 
@@ -69,3 +83,12 @@ Admins see extra fields when signed in.
 ## Upgrade note
 
 If Auth outages persist on the free tier, consider upgrading the Supabase project compute tier — restarts recover GoTrue but do not fix underlying capacity limits.
+
+## Troubleshooting
+
+**User message:** `Authentication service temporarily unavailable — try again in a few minutes`
+
+- **Source:** `src/lib/auth/format-auth-error.ts` — returned when Supabase Auth returns **522/503**, an empty error body, a fetch timeout, or after retries are exhausted.
+- **Typical cause:** GoTrue intermittently unreachable (Cloudflare **522**) while Postgres and REST stay up.
+- **Manual restart now:** `curl -H "Authorization: Bearer $CRON_SECRET" https://erp.hagan.pro/api/cron/supabase-auth-health` — triggers health check + restart if unhealthy (requires `SUPABASE_ACCESS_TOKEN` on Vercel).
+- **Dashboard:** Supabase → Project Settings → **Infrastructure** → Restart project.
