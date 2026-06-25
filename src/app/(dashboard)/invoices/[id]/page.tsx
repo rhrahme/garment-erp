@@ -11,7 +11,7 @@ import {
   enrichInvoiceLinesWithFabricDetails,
 } from "@/lib/invoicing/build-invoice";
 import { formatInvoiceClientName, resolveInvoiceLines, sortInvoiceLinesByArticle } from "@/lib/invoicing/display";
-import { buildInvoiceLineCrossRefs } from "@/lib/sales-orders/line-cross-reference";
+import { buildInvoiceLineCrossRefs, buildInvoiceLineSwatchKeys } from "@/lib/sales-orders/line-cross-reference";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -37,6 +37,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     )
   );
   const lineCrossRefs = buildInvoiceLineCrossRefs(resolvedLines, order, fabricPos);
+  const lineSwatchKeys = buildInvoiceLineSwatchKeys(resolvedLines, order);
   const invoice = enrichInvoiceDeliveryDestination(
     {
       ...raw,
@@ -61,6 +62,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         key={`${invoice.id}-${invoice.subtotal}-${invoice.total}-${invoice.lines.map((l) => l.unit_price).join(",")}`}
         invoice={invoice}
         lineCrossRefs={lineCrossRefs}
+        lineSwatchKeys={lineSwatchKeys}
       />
     </div>
   );

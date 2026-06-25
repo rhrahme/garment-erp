@@ -1,3 +1,5 @@
+import type { FabricSwatchKey } from "@/lib/fabric-sourcing/fabric-swatch-keys";
+import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import type { CustomerInvoiceLine } from "@/lib/types/customer-invoices";
 import type { PurchaseOrder, PurchaseOrderLine } from "@/lib/types/fabric-sourcing";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
@@ -103,6 +105,56 @@ export function buildInvoiceLineCrossRefs(
 ): Map<string, InvoiceLineCrossRef> {
   return new Map(
     lines.map((line) => [line.id, buildInvoiceLineCrossRef(line, order, fabricPos)])
+  );
+}
+
+/** Known invoice fabric_brand display labels → catalog supplier id (swatch fallback). */
+const FABRIC_BRAND_TO_SUPPLIER_ID: Record<string, string> = {
+  caccioppoli: "caccioppoli",
+  canclini: "canclini",
+  drapers: "drapers",
+  gazaba: "gazaba",
+  "loro piana": "loro-piana",
+  solbiati: "solbiati",
+  stylbiella: "stylbiella",
+  "wool stock": "wool-stock",
+  zegna: "zegna",
+};
+
+function resolveInvoiceLineSwatchKey(
+  line: CustomerInvoiceLine,
+  order: SalesOrder | undefined
+): FabricSwatchKey | null {
+  const fabricNumber = line.fabric_number?.trim();
+  if (!fabricNumber) return null;
+
+  const fabricLine = order ? findFabricLineForInvoiceLine(order, line) : undefined;
+  if (fabricLine?.supplier_id) {
+    return {
+      supplier_id: resolveFabricSupplierId(fabricLine.supplier_id),
+      fabric_number: fabricNumber,
+    };
+  }
+
+  const brand = line.fabric_brand?.trim().toLowerCase();
+  if (!brand) return null;
+  const supplierId = FABRIC_BRAND_TO_SUPPLIER_ID[brand];
+  if (!supplierId) return null;
+  return { supplier_id: supplierId, fabric_number: fabricNumber };
+}
+
+/** Supplier + fabric number per invoice line — for editor swatch thumbnails only. */
+export function buildInvoiceLineSwatchKeys(
+  lines: CustomerInvoiceLine[],
+  order: SalesOrder | undefined
+): Map<string, FabricSwatchKey> {
+  return new Map(
+    lines
+      .map((line) => {
+        const key = resolveInvoiceLineSwatchKey(line, order);
+        return key ? ([line.id, key] as const) : null;
+      })
+      .filter((entry): entry is [string, FabricSwatchKey] => entry != null)
   );
 }
 
