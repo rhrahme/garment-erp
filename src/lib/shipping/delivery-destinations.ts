@@ -24,7 +24,13 @@ export function isDeliveryDestination(value: string): value is DeliveryDestinati
   return value === "RUH" || value === "DXB";
 }
 
+/** Supplier-facing ship-to name — may differ from internal destination labels. */
+function supplierShipToLabel(destination: DeliveryDestinationInfo): string {
+  if (destination.id === "DXB") return "VITA S LTD Dubai";
+  return destination.label;
+}
+
 /** One line for supplier emails — suppliers already have the full address on file. */
 export function formatShipToForEmail(destination: DeliveryDestinationInfo): string {
-  return `Shipping to ${destination.label}`;
+  return `Shipping to ${supplierShipToLabel(destination)}`;
 }
