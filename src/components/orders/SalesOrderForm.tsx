@@ -15,6 +15,7 @@ import {
   getMinLabelCountForGarment,
 } from "@/lib/sales-orders/garment-types";
 import { resolveFabricLineLabelCount } from "@/lib/sales-orders/label-display";
+import { buildSoArticleMapFromDraftLines, formatFabricLineArticle } from "@/lib/sales-orders/label-codes";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { ClientSearchSelect } from "@/components/clients/ClientSearchSelect";
 import { filterPersonClients } from "@/lib/clients/filter";
@@ -799,6 +800,8 @@ export function SalesOrderForm({
     }
     return groups;
   }, [lines]);
+
+  const articleByLineId = useMemo(() => buildSoArticleMapFromDraftLines(lines), [lines]);
 
   const swatchFabrics = useMemo(() => {
     const keys = lines.map((line) => ({
@@ -1789,6 +1792,7 @@ export function SalesOrderForm({
                 <SalesOrderFabricLineCards
                   groupName={group.name}
                   lines={group.lines}
+                  articleByLineId={articleByLineId}
                   canViewFabricPrices={canViewFabricPrices}
                   editingLineId={editingLineId}
                   lineEditForm={lineEditForm}
@@ -1809,6 +1813,7 @@ export function SalesOrderForm({
                 <table className="min-w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 bg-white text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                      <th className="px-3 py-2 text-center">Art.</th>
                       <th className="px-3 py-2">Fabric</th>
                       <th className="px-3 py-2">Garment</th>
                       <th className="px-3 py-2">Labels</th>
@@ -1833,7 +1838,7 @@ export function SalesOrderForm({
                         }
                       >
                         {isEditing && lineEditForm ? (
-                          <td colSpan={canViewFabricPrices ? 9 : 8} className="px-3 py-4">
+                          <td colSpan={canViewFabricPrices ? 10 : 9} className="px-3 py-4">
                             <div className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
                               <p className="text-sm font-medium text-slate-900">
                                 {line.needs_replacement ? "Pick replacement fabric" : "Edit fabric line"}
@@ -1932,6 +1937,9 @@ export function SalesOrderForm({
                           </td>
                         ) : (
                           <>
+                        <td className="px-3 py-2 text-center font-semibold text-slate-900">
+                          {formatFabricLineArticle(articleByLineId.get(line.lineId))}
+                        </td>
                         <td className="px-3 py-2 text-slate-900">
                           <FabricNumberWithSwatch
                             supplierId={line.supplier_id}

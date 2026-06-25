@@ -191,6 +191,7 @@ export function FabricOrdersList({
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
               <th className="px-4 py-3">Order #</th>
               <th className="px-4 py-3">Client</th>
+              <th className="px-4 py-3 text-center">Art.</th>
               <th className="px-4 py-3">Fabrics</th>
               <th className="px-4 py-3">Availability</th>
               <th className="px-4 py-3">Labels</th>
@@ -205,7 +206,7 @@ export function FabricOrdersList({
           <tbody className="divide-y divide-slate-100">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={10} className="px-4 py-10 text-center text-slate-500">
                   {hasActiveFilters
                     ? searching
                       ? "No fabric orders match your search."
@@ -230,6 +231,9 @@ export function FabricOrdersList({
                   <td className="px-4 py-3">
                     <p className="font-medium">{order.client_name}</p>
                     <p className="font-mono text-xs text-slate-400">{order.client_code}</p>
+                  </td>
+                  <td className="px-4 py-3 text-center font-mono text-xs font-semibold text-slate-700">
+                    {order.fabric_article_labels.length > 0 ? order.fabric_article_labels.join(" · ") : "—"}
                   </td>
                   <td className="px-4 py-3">
                     {order.fabric_preview_lines.length === 0 ? (
