@@ -29,18 +29,18 @@
         }
       ],
       "notes": null,
-      "total": 877.56,
+      "total": 1009.19,
       "status": "draft",
       "paid_at": null,
       "sent_at": null,
       "currency": "SAR",
       "due_date": null,
       "subtotal": 877.56,
-      "vat_rate": null,
+      "vat_rate": 0.15,
       "client_id": "cu-ralph-rahme-fouad-rahme",
       "so_number": "SO-2026-0102",
       "created_at": "2026-06-05T23:24:21.125Z",
-      "vat_amount": 0,
+      "vat_amount": 131.63,
       "client_code": "FR-0126-0019",
       "client_name": "Ralph Rahme",
       "client_email": null,
@@ -51,7 +51,8 @@
       "sales_order_id": "so-1780164354118",
       "total_cost_sar": 877.56,
       "client_reference": "FR-0126-0019-SO-2026-0102",
-      "factory_brand_name": "Fouad Rahme"
+      "factory_brand_name": "Fouad Rahme",
+      "delivery_destination": "RUH"
     },
     {
       "id": "inv-1781422159438-lv5fxw",

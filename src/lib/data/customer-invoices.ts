@@ -6,7 +6,11 @@ import {
   readJsonFileFreshAsync,
   saveDocument,
 } from "@/lib/data/document-persistence";
-import { recalculateInvoiceTotals } from "@/lib/invoicing/build-invoice";
+import {
+  enrichInvoiceDeliveryDestination,
+  enrichInvoiceVat,
+} from "@/lib/invoicing/build-invoice";
+import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import type {
   CustomerInvoice,
   CustomerInvoiceSummary,
@@ -83,11 +87,13 @@ export function generateInvoiceId(): string {
 export async function saveCustomerInvoice(invoice: CustomerInvoice): Promise<CustomerInvoice> {
   const store = await readCustomerInvoicesFresh();
   const index = store.invoices.findIndex((row) => row.id === invoice.id);
-  const { lines, subtotal, vat_amount, total } = recalculateInvoiceTotals(
-    invoice.lines,
-    invoice.vat_rate
-  );
-  const normalized: CustomerInvoice = { ...invoice, lines, subtotal, vat_amount, total };
+
+  let next = invoice;
+  if (!next.delivery_destination) {
+    const order = await getSalesOrderByIdFresh(next.sales_order_id);
+    next = enrichInvoiceDeliveryDestination(next, order);
+  }
+  const normalized = enrichInvoiceVat(next);
 
   if (index >= 0) {
     store.invoices[index] = normalized;

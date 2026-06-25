@@ -3,6 +3,7 @@ import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import {
   enrichInvoiceDeliveryDestination,
   enrichInvoiceLinesWithFabricDetails,
+  enrichInvoiceVat,
 } from "@/lib/invoicing/build-invoice";
 import type { InvoiceDocumentData } from "@/components/invoicing/InvoiceDocument";
 import { resolveInvoiceLines, sortInvoiceLinesByArticle, toInvoiceLineDisplay } from "@/lib/invoicing/display";
@@ -15,15 +16,17 @@ export async function prepareCustomerInvoiceDocument(
   if (!raw) return null;
 
   const order = await getSalesOrderByIdFresh(raw.sales_order_id);
-  const invoice = enrichInvoiceDeliveryDestination(
-    {
-      ...raw,
-      delivery_destination: raw.delivery_destination ?? null,
-      lines: sortInvoiceLinesByArticle(
-        resolveInvoiceLines(enrichInvoiceLinesWithFabricDetails(raw.lines, order))
-      ).map(toInvoiceLineDisplay),
-    },
-    order
+  const invoice = enrichInvoiceVat(
+    enrichInvoiceDeliveryDestination(
+      {
+        ...raw,
+        delivery_destination: raw.delivery_destination ?? null,
+        lines: sortInvoiceLinesByArticle(
+          resolveInvoiceLines(enrichInvoiceLinesWithFabricDetails(raw.lines, order))
+        ).map(toInvoiceLineDisplay),
+      },
+      order
+    )
   );
 
   return { invoice, invoiceNumber: raw.invoice_number };
