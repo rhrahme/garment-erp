@@ -206,6 +206,7 @@ export function InvoiceEditor({
               <th className="px-4 py-3 text-center">SO line</th>
               <th className="px-4 py-3">Fabric PO</th>
               <th className="px-4 py-3">Garment</th>
+              <th className="px-4 py-3">Fabric #</th>
               <th className="px-4 py-3">Composition</th>
               <th className="px-4 py-3">Qty</th>
               <th className="px-4 py-3">Unit price (SAR)</th>
@@ -245,6 +246,9 @@ export function InvoiceEditor({
                     onChange={(e) => updateLine(line.id, "description", e.target.value)}
                     className="w-full min-w-[12rem] rounded border border-slate-200 px-2 py-1.5"
                   />
+                </td>
+                <td className="px-4 py-3 font-mono text-sm text-slate-700">
+                  {line.fabric_number?.trim() || "—"}
                 </td>
                 <td className="px-4 py-3 text-sm text-slate-700">{display.composition_label}</td>
                 <td className="px-4 py-3">{line.quantity}</td>
