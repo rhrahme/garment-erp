@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCustomerInvoiceByIdFresh, saveCustomerInvoice } from "@/lib/data/customer-invoices";
-import { readSalesOrdersFresh, writeSalesOrders } from "@/lib/data/sales-orders";
 import { recalculateInvoiceTotals } from "@/lib/invoicing/build-invoice";
+import { applyCustomerInvoiceStatusChange } from "@/lib/invoicing/customer-invoice-mutations";
 import {
   applyAllConsolidations,
   applyConsolidation,
@@ -44,6 +44,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
     const body = (await request.json()) as {
       status?: CustomerInvoiceStatus;
+      sent_at?: string | null;
+      paid_at?: string | null;
       invoice_date?: string;
       due_date?: string | null;
       payment_terms?: string | null;
@@ -124,28 +126,35 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       next = { ...next, ...totals };
     }
 
-    if (body.status && body.status !== invoice.status) {
+    if (body.status) {
       const allowed: CustomerInvoiceStatus[] = ["draft", "sent", "paid"];
       if (!allowed.includes(body.status)) {
         return NextResponse.json({ error: "Invalid invoice status." }, { status: 400 });
       }
-      next.status = body.status;
-      if (body.status === "sent" && !next.sent_at) {
-        next.sent_at = new Date().toISOString();
-      }
-      if (body.status === "paid" && !next.paid_at) {
-        next.paid_at = new Date().toISOString();
-        if (!next.sent_at) next.sent_at = next.paid_at;
+
+      const statusChanged = body.status !== invoice.status;
+      const timestampsTouched = body.sent_at !== undefined || body.paid_at !== undefined;
+
+      if (statusChanged || timestampsTouched) {
+        const saved = await applyCustomerInvoiceStatusChange(
+          { ...next, status: invoice.status },
+          body.status,
+          {
+            sent_at: body.sent_at,
+            paid_at: body.paid_at,
+            source: "erp",
+          }
+        );
+        invalidateDocumentCache(path.join(process.cwd(), "src/data/customer-invoices.json"));
+        return NextResponse.json(saved);
       }
 
-      if (body.status === "sent" || body.status === "paid") {
-        const store = await readSalesOrdersFresh();
-        const orderIndex = store.orders.findIndex((order) => order.id === invoice.sales_order_id);
-        if (orderIndex >= 0) {
-          store.orders[orderIndex] = { ...store.orders[orderIndex]!, status: "complete" };
-          await writeSalesOrders(store);
-        }
-      }
+      next.status = body.status;
+      if (body.sent_at !== undefined) next.sent_at = body.sent_at;
+      if (body.paid_at !== undefined) next.paid_at = body.paid_at;
+    } else {
+      if (body.sent_at !== undefined) next.sent_at = body.sent_at;
+      if (body.paid_at !== undefined) next.paid_at = body.paid_at;
     }
 
     const saved = await saveCustomerInvoice(next);

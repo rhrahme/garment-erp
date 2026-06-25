@@ -31,6 +31,7 @@ const OUTBOUND_EVENTS = [
   "pattern_revision.created",
   "pattern_job.ready_for_cutting",
   "production.scan",
+  "invoice.sent",
 ];
 
 export function ZapierSetup() {
@@ -100,6 +101,7 @@ export function ZapierSetup() {
             <li>POST {baseUrl}/api/v1/pattern/jobs/[id]/revisions</li>
             <li>POST {baseUrl}/api/v1/sales-orders/[id]/fabric-lines/print</li>
             <li>POST {baseUrl}/api/v1/fabric-receiving/reset-testing</li>
+            <li>POST {baseUrl}/api/v1/customer-invoices/[id]/mark-sent</li>
             <li>GET {baseUrl}/api/v1/events</li>
           </ul>
         </div>

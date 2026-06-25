@@ -130,8 +130,13 @@ export function InvoiceEditor({ invoice: initial }: { invoice: CustomerInvoice }
           </Link>
           {invoice.status === "draft" && (
             <Button onClick={() => void updateStatus("sent")} disabled={saving}>
-              Mark sent
+              Mark as sent
             </Button>
+          )}
+          {invoice.status === "sent" && (
+            <span className="self-center text-sm text-slate-500">
+              Sent {invoice.sent_at ? formatDate(invoice.sent_at.slice(0, 10)) : "—"}
+            </span>
           )}
           {invoice.status !== "paid" && (
             <Button variant="secondary" onClick={() => void updateStatus("paid")} disabled={saving}>
