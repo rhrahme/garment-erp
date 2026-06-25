@@ -81,6 +81,11 @@ function mergeConsolidationGroup(group: CustomerInvoiceLine[]): CustomerInvoiceL
   const costHints = group.map((line) => line.cost_hint_sar).filter((hint): hint is number => hint != null);
   const costHint =
     costHints.length > 0 ? roundMoney(costHints.reduce((sum, hint) => sum + hint, 0)) : null;
+  const fabricCostHints = group
+    .map((line) => line.fabric_cost_hint_sar)
+    .filter((hint): hint is number => hint != null);
+  const fabricCostHint =
+    fabricCostHints.length > 0 ? roundMoney(fabricCostHints.reduce((sum, hint) => sum + hint, 0)) : null;
 
   const fabricNumbers = new Set(
     group.map((line) => line.fabric_number?.trim()).filter((value): value is string => Boolean(value))
@@ -92,6 +97,7 @@ function mergeConsolidationGroup(group: CustomerInvoiceLine[]): CustomerInvoiceL
     unit_price: first.unit_price,
     line_total: lineTotal,
     cost_hint_sar: costHint,
+    fabric_cost_hint_sar: fabricCostHint,
     fabric_number: fabricNumbers.size <= 1 ? (first.fabric_number?.trim() || null) : null,
   };
 }
