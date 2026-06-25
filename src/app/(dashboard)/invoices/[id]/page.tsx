@@ -4,12 +4,14 @@ import { InvoiceEditor } from "@/components/invoicing/InvoiceEditor";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { getCustomerInvoiceByIdFresh } from "@/lib/data/customer-invoices";
 import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
+import { ensureFabricOrdersLoaded, listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 import {
   enrichInvoiceDeliveryDestination,
   enrichInvoiceLinesWithCostHints,
   enrichInvoiceLinesWithFabricDetails,
 } from "@/lib/invoicing/build-invoice";
 import { formatInvoiceClientName, resolveInvoiceLines, sortInvoiceLinesByArticle } from "@/lib/invoicing/display";
+import { buildInvoiceLineCrossRefs } from "@/lib/sales-orders/line-cross-reference";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -20,15 +22,26 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   if (!raw) notFound();
 
   const order = await getSalesOrderByIdFresh(raw.sales_order_id);
+  await ensureFabricOrdersLoaded();
+  const fabricPos = order
+    ? listStoredFabricOrders().filter(
+        (po) =>
+          po.sales_order_id === order.id ||
+          order.fabric_po_ids.includes(po.id) ||
+          po.client_reference?.includes(order.so_number)
+      )
+    : [];
+  const resolvedLines = sortInvoiceLinesByArticle(
+    resolveInvoiceLines(
+      enrichInvoiceLinesWithCostHints(enrichInvoiceLinesWithFabricDetails(raw.lines, order), order)
+    )
+  );
+  const lineCrossRefs = buildInvoiceLineCrossRefs(resolvedLines, order, fabricPos);
   const invoice = enrichInvoiceDeliveryDestination(
     {
       ...raw,
       delivery_destination: raw.delivery_destination ?? null,
-      lines: sortInvoiceLinesByArticle(
-        resolveInvoiceLines(
-          enrichInvoiceLinesWithCostHints(enrichInvoiceLinesWithFabricDetails(raw.lines, order), order)
-        )
-      ),
+      lines: resolvedLines,
     },
     order
   );
@@ -47,6 +60,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       <InvoiceEditor
         key={`${invoice.id}-${invoice.subtotal}-${invoice.total}-${invoice.lines.map((l) => l.unit_price).join(",")}`}
         invoice={invoice}
+        lineCrossRefs={lineCrossRefs}
       />
     </div>
   );
