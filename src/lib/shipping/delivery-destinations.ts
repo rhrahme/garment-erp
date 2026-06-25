@@ -27,6 +27,7 @@ export function isDeliveryDestination(value: string): value is DeliveryDestinati
 /** Supplier-facing ship-to name — may differ from internal destination labels. */
 function supplierShipToLabel(destination: DeliveryDestinationInfo): string {
   if (destination.id === "DXB") return "VITA S LTD Dubai";
+  if (destination.id === "RUH") return "HAGAN INDUSTRIAL COMPANY Saudi";
   return destination.label;
 }
 
