@@ -44,7 +44,7 @@ processed-emails.local.json
 src/data/drafts/
 src/data/clickup-import-cache.json
 supplier-invoices.local.json
-supplier-invoices/
+/supplier-invoices/
 transporter-invoices.local.json
 reference-documents/
 

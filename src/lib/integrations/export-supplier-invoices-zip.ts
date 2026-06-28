@@ -11,6 +11,7 @@ import {
   type TransporterInvoiceRecord,
 } from "@/lib/integrations/transporter-invoice-store";
 import { computeCustomsSummary } from "@/lib/integrations/customs-summary";
+import { buildZipBuffer, type ZipEntryInput } from "@/lib/utils/create-zip";
 
 function sanitizeFolderName(value: string): string {
   return value.replace(/[^\w.-]+/g, "_").replace(/_+/g, "_").slice(0, 80) || "invoice";
