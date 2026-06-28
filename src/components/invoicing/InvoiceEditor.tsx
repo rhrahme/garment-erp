@@ -18,7 +18,7 @@ import {
 } from "@/lib/invoicing/display";
 import { DownloadInvoicePdfButton } from "@/components/invoicing/DownloadInvoicePdfButton";
 import { InvoiceLineFabricPoLink, InvoiceLineSoLink } from "@/components/invoicing/InvoiceLineCrossRefLinks";
-import { ConsolidationSuggestionsPanel } from "@/components/invoicing/ConsolidationSuggestionsPanel";
+import { LineReductionSuggestionsPanel } from "@/components/invoicing/LineReductionSuggestionsPanel";
 import { InvoiceTotalsFooter } from "@/components/invoicing/InvoiceTotalsFooter";
 import { isDubaiFabricDelivery } from "@/lib/invoicing/bank-details";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
@@ -196,9 +196,12 @@ export function InvoiceEditor({
         </label>
       </div>
 
-      <ConsolidationSuggestionsPanel
+      <LineReductionSuggestionsPanel
         lines={lines}
         saving={saving}
+        onApplyViaApi={async (patch) => {
+          await savePatch(patch);
+        }}
         onApply={async (nextLines) => {
           setLines(nextLines);
           await savePatch({ lines: resolveInvoiceLines(nextLines) });
