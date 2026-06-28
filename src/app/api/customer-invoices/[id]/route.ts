@@ -2,10 +2,15 @@ import { NextResponse } from "next/server";
 import { getCustomerInvoiceByIdFresh, saveCustomerInvoice } from "@/lib/data/customer-invoices";
 import { recalculateInvoiceTotals } from "@/lib/invoicing/build-invoice";
 import { applyCustomerInvoiceStatusChange } from "@/lib/invoicing/customer-invoice-mutations";
+import { applySuitCombine } from "@/lib/invoicing/suit-combine-lines";
 import {
   applyAllConsolidations,
   applyConsolidation,
 } from "@/lib/invoicing/consolidate-lines";
+import {
+  applyAllInvoiceLineReductions,
+  applyInvoiceLineReductionsByKeys,
+} from "@/lib/invoicing/line-reduction-suggestions";
 import type { CustomerInvoice, CustomerInvoiceLine, CustomerInvoiceStatus } from "@/lib/types/customer-invoices";
 import { invalidateDocumentCache } from "@/lib/data/document-persistence";
 import path from "path";
@@ -55,6 +60,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       vat_rate?: number | null;
       lines?: Array<Partial<CustomerInvoiceLine> & { id: string }>;
       consolidate?: { group_keys?: string[] } | "all";
+      reduce_lines?: { group_keys?: string[] } | "all";
     };
 
     let next: CustomerInvoice = { ...invoice };
@@ -71,7 +77,21 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       next.vat_rate = rate != null && Number.isFinite(rate) && rate >= 0 ? rate : null;
     }
 
-    if (body.consolidate) {
+    if (body.reduce_lines) {
+      if (body.reduce_lines === "all") {
+        next.lines = applyAllInvoiceLineReductions(invoice.lines);
+      } else {
+        const groupKeys = Array.isArray(body.reduce_lines.group_keys)
+          ? body.reduce_lines.group_keys.filter((key) => typeof key === "string" && key.trim())
+          : [];
+        if (groupKeys.length === 0) {
+          return NextResponse.json({ error: "No line reduction group keys provided." }, { status: 400 });
+        }
+        next.lines = applyInvoiceLineReductionsByKeys(invoice.lines, groupKeys);
+      }
+      const totals = recalculateInvoiceTotals(next.lines, next.vat_rate);
+      next = { ...next, ...totals };
+    } else if (body.consolidate) {
       const groupKeys =
         body.consolidate === "all"
           ? undefined
@@ -81,10 +101,11 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       if (body.consolidate !== "all" && groupKeys?.length === 0) {
         return NextResponse.json({ error: "No consolidation group keys provided." }, { status: 400 });
       }
+      const afterSuitCombine = applySuitCombine(invoice.lines);
       next.lines =
         body.consolidate === "all"
-          ? applyAllConsolidations(invoice.lines)
-          : applyConsolidation(invoice.lines, groupKeys!);
+          ? applyAllConsolidations(afterSuitCombine)
+          : applyConsolidation(afterSuitCombine, groupKeys!);
       const totals = recalculateInvoiceTotals(next.lines, next.vat_rate);
       next = { ...next, ...totals };
     } else if (Array.isArray(body.lines)) {

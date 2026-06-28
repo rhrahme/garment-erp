@@ -119,6 +119,15 @@ export function suggestConsolidationGroups(
   const groups: ConsolidationGroup[] = [];
   for (const [key, bucket] of buckets) {
     if (bucket.length < 2) continue;
+    const solIds = new Set(
+      bucket.map((line) => line.sales_order_line_id?.trim()).filter((value): value is string => Boolean(value))
+    );
+    if (
+      solIds.size > 1 &&
+      bucket.every((line) => isMultiPieceGarment(line.garment_type) && isCombinedInvoiceLine(line))
+    ) {
+      continue;
+    }
     const sorted = sortInvoiceLinesByArticle(bucket);
     groups.push({
       key,
