@@ -79,6 +79,42 @@ export function formatCombinedGarmentDescription(garmentType: string, pieceNames
   return `${garmentType} (${pieceNames.join(" + ")})`;
 }
 
+function normalizeInvoicePieceName(name: string): string {
+  const trimmed = name.trim();
+  if (/^trousers?$/i.test(trimmed)) return "Trouser";
+  if (/^blazers?$/i.test(trimmed)) return "Jacket";
+  return trimmed;
+}
+
+export function pieceNamesFromInvoicePieceField(pieceName: string | null | undefined): string[] {
+  if (!pieceName?.trim()) return [];
+  if (pieceName.includes(" + ")) return pieceName.split(" + ").map((name) => name.trim());
+  return [pieceName.trim()];
+}
+
+/** True when piece names represent a jacket + trouser set sold as one suit line. */
+export function isJacketTrouserPieceSet(pieceNames: string[]): boolean {
+  const normalized = new Set(pieceNames.map(normalizeInvoicePieceName));
+  return normalized.has("Jacket") && normalized.has("Trouser");
+}
+
+/** Use Suit for combined jacket/trouser lines even when garment_type is still Jacket or Trouser. */
+export function resolveCombinedGarmentType(garmentType: string, pieceNames: string[]): string {
+  if (isJacketTrouserPieceSet(pieceNames)) return "Suit";
+  return garmentType;
+}
+
+/** Client-facing invoice garment description — shared by build, display, and combine paths. */
+export function resolveInvoiceGarmentDescription(
+  garmentType: string,
+  pieceName: string | null | undefined
+): string {
+  const pieceNames = pieceNamesFromInvoicePieceField(pieceName);
+  const effectiveType = resolveCombinedGarmentType(garmentType, pieceNames);
+  if (pieceNames.length > 1) return formatCombinedGarmentDescription(effectiveType, pieceNames);
+  return formatLabelGarmentDescription(effectiveType, pieceName ?? garmentType);
+}
+
 /** Client code from a full client reference (e.g. FR-0526-0027-SO-2026-0096 → FR-0526-0027). */
 export function clientCodeFromReference(clientReference: string): string {
   const match = clientReference.match(/^(.+)-SO-\d{4}-\d{4,}$/);

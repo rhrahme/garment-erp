@@ -1,4 +1,8 @@
-import { formatCombinedGarmentDescription, getGarmentPieces } from "@/lib/sales-orders/label-codes";
+import {
+  formatCombinedGarmentDescription,
+  getGarmentPieces,
+  resolveCombinedGarmentType,
+} from "@/lib/sales-orders/label-codes";
 import type { CustomerInvoiceLine } from "@/lib/types/customer-invoices";
 
 function roundMoney(amount: number): number {
@@ -41,11 +45,11 @@ export function invoiceLineGroupKey(line: CustomerInvoiceLine): string | null {
 
 function mergeInvoiceLineGroup(group: CustomerInvoiceLine[]): CustomerInvoiceLine {
   const first = group[0]!;
-  const garmentType = first.garment_type;
   const pieceNames = orderedPieceNames(
-    garmentType,
+    first.garment_type,
     group.flatMap((line) => pieceNamesFromLine(line.piece_name))
   );
+  const garmentType = resolveCombinedGarmentType(first.garment_type, pieceNames);
   const unitPrice = roundMoney(group.reduce((sum, line) => sum + line.unit_price, 0));
   const lineTotal = roundMoney(group.reduce((sum, line) => sum + line.line_total, 0));
   const costHints = group.map((line) => line.cost_hint_sar).filter((hint): hint is number => hint != null);
@@ -61,6 +65,7 @@ function mergeInvoiceLineGroup(group: CustomerInvoiceLine[]): CustomerInvoiceLin
 
   return {
     ...first,
+    garment_type: garmentType,
     description: formatCombinedGarmentDescription(garmentType, pieceNames),
     piece_name: pieceNames.join(" + "),
     sticker_code: first.sticker_code,
