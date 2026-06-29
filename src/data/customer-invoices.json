@@ -676,9 +676,9 @@
         {
           "id": "inv-line-so-cu-86exaff6e-1",
           "quantity": 1,
-          "line_total": 0,
+          "line_total": 7500,
           "piece_name": "Jacket + Trouser",
-          "unit_price": 0,
+          "unit_price": 7500,
           "weight_gsm": null,
           "composition": "100% WV",
           "description": "Suit (Jacket + Trouser)",
@@ -694,16 +694,16 @@
         {
           "id": "inv-line-so-cu-86exaff6e-3",
           "quantity": 2,
-          "line_total": 491.16,
+          "line_total": 1800,
           "piece_name": "Shirt LS",
-          "unit_price": 245.58,
+          "unit_price": 900,
           "weight_gsm": null,
           "composition": "100% cotton",
           "description": "Shirt LS",
           "fabric_brand": "Canclini",
           "garment_type": "Shirt LS",
           "sticker_code": "FR-0426-0007-SO-2026-0015-L04-SHT-LS",
-          "cost_hint_sar": 491.16,
+          "cost_hint_sar": 1800,
           "fabric_number": "C1415541-1",
           "article_number": 2,
           "sales_order_line_id": "line-1782644353237-4",
@@ -711,18 +711,19 @@
         }
       ],
       "notes": null,
-      "total": 491.16,
+      "total": 10695,
       "status": "draft",
       "paid_at": null,
       "sent_at": null,
       "currency": "SAR",
       "due_date": null,
-      "subtotal": 491.16,
-      "vat_rate": null,
+      "subtotal": 9300,
+      "vat_rate": 0.15,
       "client_id": "cu-khaled-al-moussa-fouad-rahme",
       "so_number": "SO-2026-0015",
       "created_at": "2026-06-29T16:00:24.226Z",
-      "vat_amount": 0,
+      "updated_at": "2026-06-29T16:30:25.326Z",
+      "vat_amount": 1395,
       "client_code": "FR-0426-0007",
       "client_name": "Khaled Al Moussa",
       "client_email": null,
@@ -734,8 +735,8 @@
       "total_cost_sar": 1135.58,
       "client_reference": "FR-0426-0007-SO-2026-0015",
       "factory_brand_name": "Fouad Rahme",
-      "delivery_destination": null
+      "delivery_destination": "RUH"
     }
   ],
-  "updated_at": "2026-06-29T16:06:12.319Z"
+  "updated_at": "2026-06-29T16:30:25.327Z"
 }
