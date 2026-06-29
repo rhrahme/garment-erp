@@ -1209,7 +1209,7 @@
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": null,
-          "composition": null,
+          "composition": "100% WV",
           "label_count": 2,
           "supplier_id": "canclini",
           "garment_type": "Suit",
@@ -1246,7 +1246,7 @@
           "width_cm": null,
           "unit_price": 0,
           "weight_gsm": null,
-          "composition": null,
+          "composition": "100% WV",
           "label_count": 2,
           "supplier_id": "canclini",
           "garment_type": "Suit",
@@ -36659,5 +36659,5 @@
       "client_reference": "FR-0226-0025-SO-2026-0095"
     }
   ],
-  "updated_at": "2026-06-24T19:15:00.000Z"
+  "updated_at": "2026-06-29T19:12:43.656Z"
 }

@@ -468,7 +468,7 @@
           "piece_name": "Jacket + Trouser",
           "unit_price": 3500,
           "weight_gsm": null,
-          "composition": null,
+          "composition": "100% WV",
           "description": "Suit (Jacket + Trouser)",
           "fabric_brand": "Canclini",
           "garment_type": "Suit",
@@ -485,7 +485,7 @@
           "piece_name": "Jacket + Trouser",
           "unit_price": 3500,
           "weight_gsm": null,
-          "composition": null,
+          "composition": "100% WV",
           "description": "Suit (Jacket + Trouser)",
           "fabric_brand": "Canclini",
           "garment_type": "Suit",
@@ -738,5 +738,5 @@
       "delivery_destination": "RUH"
     }
   ],
-  "updated_at": "2026-06-29T16:30:25.327Z"
+  "updated_at": "2026-06-29T19:12:43.656Z"
 }

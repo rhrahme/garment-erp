@@ -112,7 +112,7 @@
       "assigned_to": null,
       "client_code": "GL-0626-0011",
       "client_name": "Michari Al Kadhi",
-      "composition": null,
+      "composition": "100% WV",
       "garment_type": "Suit",
       "pattern_code": null,
       "width_inches": null,
@@ -143,7 +143,7 @@
       "assigned_to": null,
       "client_code": "GL-0626-0011",
       "client_name": "Michari Al Kadhi",
-      "composition": null,
+      "composition": "100% WV",
       "garment_type": "Suit",
       "pattern_code": null,
       "width_inches": null,
@@ -12153,5 +12153,5 @@
       "sales_order_line_id": "line-1781653037821-0"
     }
   ],
-  "updated_at": "2026-06-21T15:53:04.389Z"
+  "updated_at": "2026-06-29T19:12:43.656Z"
 }
