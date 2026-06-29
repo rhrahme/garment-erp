@@ -196,9 +196,11 @@ export function InvoiceEditor({
         </label>
       </div>
 
+      <FabricSwatchProvider fabrics={swatchFabrics}>
       <LineReductionSuggestionsPanel
         lines={lines}
         saving={saving}
+        enabled={invoice.status === "draft"}
         onApplyViaApi={async (patch) => {
           await savePatch(patch);
         }}
@@ -208,7 +210,6 @@ export function InvoiceEditor({
         }}
       />
 
-      <FabricSwatchProvider fabrics={swatchFabrics}>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="min-w-full text-sm">
           <thead>
