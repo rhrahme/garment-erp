@@ -12,11 +12,15 @@ import {
 import { getSessionContext } from "@/lib/auth/session";
 import { getCustomerInvoiceBySalesOrderIdFresh } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { readPatternJobsFresh } from "@/lib/data/pattern-jobs";
 import { getSalesOrderByIdFresh, isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
+import { activePatternJobsForLine } from "@/lib/pattern/sync-guard";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
+import { detectPatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mismatch";
 import { getRemovedSalesOrderRedirectForKey } from "@/lib/sales-orders/removed-order-redirects";
 import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import { OrderShipmentTracking } from "@/components/orders/OrderShipmentTracking";
+import { PatternMismatchBanner } from "@/components/pattern/PatternMismatchBanner";
 import { formatDate } from "@/lib/utils";
 
 export default async function SalesOrderDetailPage({
@@ -27,9 +31,14 @@ export default async function SalesOrderDetailPage({
   const { id } = await params;
   const removedRedirect = getRemovedSalesOrderRedirectForKey(id);
   if (removedRedirect) redirect(removedRedirect);
-  await ensureDocumentsLoaded(["sales_orders", "customer_invoices"]);
+  await ensureDocumentsLoaded(["sales_orders", "customer_invoices", "pattern_jobs"]);
   const rawOrder = await getSalesOrderByIdFresh(id);
   if (!rawOrder) notFound();
+  const patternJobs = (await readPatternJobsFresh()).jobs;
+  const patternMismatch = detectPatternSalesOrderMismatch(rawOrder, patternJobs);
+  const patternJobsByLineId = Object.fromEntries(
+    rawOrder.fabric_lines.map((line) => [line.id, activePatternJobsForLine(rawOrder.id, line.id)])
+  );
   const session = await getSessionContext();
   const labels = ordersUiLabels(session.isClientManager);
   const cookieStore = await cookies();
@@ -63,6 +72,8 @@ export default async function SalesOrderDetailPage({
           </div>
         }
       />
+
+      <PatternMismatchBanner mismatch={patternMismatch} />
 
       <div
         className={`mb-8 grid gap-4 ${
@@ -134,6 +145,8 @@ export default async function SalesOrderDetailPage({
 
       <SalesOrderActions
         order={order}
+        patternMismatch={patternMismatch}
+        patternJobsByLineId={patternJobsByLineId}
         existingInvoiceId={existingInvoice?.id ?? null}
         isReadyMade={isReadyMadeSalesOrder(order)}
         canViewFabricPrices={canViewFabricPrices}

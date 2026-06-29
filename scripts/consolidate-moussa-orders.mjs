@@ -11,6 +11,7 @@ import { resolve } from "node:path";
 const CLIENT_ID = "cu-abdullah-al-moussa-fouad-rahme";
 const KEEP_SO = "SO-2026-0109";
 const REMOVE_SOS = ["SO-2026-0107", "SO-2026-0108"];
+const force = process.argv.includes("--force");
 
 function loadEnvLocal() {
   const envPath = resolve(process.cwd(), ".env.local");
@@ -86,6 +87,19 @@ async function main() {
   writeFileSync(soPath, `${JSON.stringify(soStore, null, 2)}\n`);
 
   let cancelledJobs = 0;
+  const jobsToCancel = [];
+  for (const job of pjStore.jobs) {
+    if (!removeIds.has(job.sales_order_id)) continue;
+    if (job.status === "cancelled" || job.status === "completed") continue;
+    jobsToCancel.push(job.id);
+  }
+
+  if (jobsToCancel.length > 0 && !force) {
+    throw new Error(
+      `Would cancel ${jobsToCancel.length} pattern job(s): ${jobsToCancel.join(", ")}. Re-run with --force to confirm.`
+    );
+  }
+
   for (const job of pjStore.jobs) {
     if (!removeIds.has(job.sales_order_id)) continue;
     if (job.status === "cancelled" || job.status === "completed") continue;

@@ -26,6 +26,7 @@ const CLICKUP_SUBTASKS = [
   "86exu59x9",
 ];
 const INVOICE_NUMBER = "INV-2026-0006";
+const force = process.argv.includes("--force");
 
 function loadEnvLocal() {
   const envPath = resolve(process.cwd(), ".env.local");
@@ -311,6 +312,13 @@ async function main() {
     (j) => j.sales_order_id === SO_ID && j.status !== "cancelled"
   );
   const pjResult = syncPatternJobs(pjStore, restoredOrder);
+
+  if (pjResult.cancelled.length > 0 && !force) {
+    throw new Error(
+      `Would cancel ${pjResult.cancelled.length} pattern job(s): ${pjResult.cancelled.join(", ")}. Re-run with --force to confirm.`
+    );
+  }
+
   const afterJobs = pjStore.jobs.filter(
     (j) => j.sales_order_id === SO_ID && j.status !== "cancelled"
   );

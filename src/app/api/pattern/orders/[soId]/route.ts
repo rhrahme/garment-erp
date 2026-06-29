@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { requirePatternAccess } from "@/lib/auth/session";
-import { ensurePatternDocumentsLoaded, listPatternJobsForOrder } from "@/lib/data/pattern-jobs";
+import { ensurePatternDocumentsLoaded, listPatternJobsForOrder, readPatternJobs } from "@/lib/data/pattern-jobs";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
+import { detectPatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mismatch";
 import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 
@@ -23,11 +24,13 @@ export async function GET(_request: Request, context: { params: Promise<{ soId: 
 
     const jobs = listPatternJobsForOrder(soId);
     const safeOrder = session.canViewFabricListPrices ? order : redactSalesOrderFabricPrices(order);
+    const mismatch = detectPatternSalesOrderMismatch(order, readPatternJobs().jobs);
 
     return NextResponse.json({
       order: safeOrder,
       jobs,
       awaiting_lines: order.fabric_lines.length === 0,
+      mismatch,
     });
   } catch (error) {
     console.error("Failed to load pattern order board:", error);
