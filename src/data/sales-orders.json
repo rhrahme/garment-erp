@@ -9531,29 +9531,6 @@
       "client_name": "Khaled Al Moussa",
       "fabric_lines": [
         {
-          "id": "line-cu-86exaff6e-0",
-          "unit": "meters",
-          "color": "White",
-          "quantity": 2,
-          "width_cm": null,
-          "unit_price": 0,
-          "weight_gsm": null,
-          "composition": "100% Cotton",
-          "label_count": 1,
-          "supplier_id": "gliani-stock",
-          "garment_type": "Shirt LS",
-          "width_inches": null,
-          "fabric_number": "C1415541-1",
-          "supplier_name": "Gliani Stock",
-          "label_stickers": [
-            {
-              "code": "FR-0426-0007-SO-2026-0015-L01-SHT-LS",
-              "sequence": 1,
-              "piece_name": "Shirts"
-            }
-          ]
-        },
-        {
           "id": "line-cu-86exaff6e-1",
           "unit": "meters",
           "color": "Khaki light",
@@ -9598,6 +9575,43 @@
               "piece_name": "Blazers"
             }
           ]
+        },
+        {
+          "id": "line-1782644353237-4",
+          "unit": "meters",
+          "color": null,
+          "added_at": "2026-06-28T10:59:13.237Z",
+          "added_by": "hagan.qc@gmail.com",
+          "quantity": 3,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": "100% cotton",
+          "label_count": 2,
+          "supplier_id": "canclini",
+          "garment_type": "Shirt LS",
+          "restock_date": null,
+          "stock_status": "in_stock",
+          "width_inches": null,
+          "a4_printed_at": null,
+          "fabric_number": "C1415541-1",
+          "supplier_name": "Canclini",
+          "label_stickers": [
+            {
+              "code": "FR-0426-0007-SO-2026-0015-L04-SHT-LS",
+              "sequence": 1,
+              "piece_name": "Shirt LS"
+            },
+            {
+              "code": "FR-0426-0007-SO-2026-0015-L04-SHT-LS",
+              "sequence": 2,
+              "piece_name": "Shirt LS"
+            }
+          ],
+          "needs_replacement": false,
+          "prep_stickers_printed_at": null,
+          "prod_stickers_printed_at": null,
+          "replacement_fabric_number": null
         }
       ],
       "retail_brand": null,
