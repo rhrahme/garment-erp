@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { CustomerInvoiceLine } from "@/lib/types/customer-invoices";
 import { resolveInvoiceGarmentDescription } from "@/lib/sales-orders/label-codes";
-import { toInvoiceLineDisplay } from "./display.ts";
+import { normalizeInvoiceLine, resolveInvoiceLines, toInvoiceLineDisplay } from "./display.ts";
 
 function line(overrides: Partial<CustomerInvoiceLine> & Pick<CustomerInvoiceLine, "id">): CustomerInvoiceLine {
   return {
@@ -38,5 +38,21 @@ describe("toInvoiceLineDisplay", () => {
   it("shows Suit (Jacket + Trouser) when stored line has Trouser garment_type", () => {
     const display = toInvoiceLineDisplay(line({ id: "suit-cross-fabric" }));
     assert.equal(display.description, "Suit (Jacket + Trouser)");
+  });
+});
+
+describe("normalizeInvoiceLine", () => {
+  it("rewrites Trouser garment_type to Suit for jacket + trouser piece_name", () => {
+    const normalized = normalizeInvoiceLine(line({ id: "suit-normalize" }));
+    assert.equal(normalized.garment_type, "Suit");
+    assert.equal(normalized.description, "Suit (Jacket + Trouser)");
+  });
+});
+
+describe("resolveInvoiceLines", () => {
+  it("normalizes all lines in a batch", () => {
+    const [normalized] = resolveInvoiceLines([line({ id: "batch-suit" })]);
+    assert.equal(normalized!.garment_type, "Suit");
+    assert.equal(normalized!.description, "Suit (Jacket + Trouser)");
   });
 });

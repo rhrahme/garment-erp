@@ -9,6 +9,7 @@ import {
   fabricLineArticleNumber,
   formatCombinedGarmentDescription,
   getGarmentPieces,
+  pieceNamesFromInvoicePieceField,
   resolveCombinedGarmentType,
   resolveInvoiceGarmentDescription,
   lineArticleFromStickerCode,
@@ -101,10 +102,16 @@ export function enrichInvoiceLinesWithFabricDetails(
       line.piece_name ??
       fabricLine.label_stickers?.find((sticker) => sticker.code === line.sticker_code)?.piece_name ??
       null;
+    const pieceNames = pieceNamesFromInvoicePieceField(pieceName);
+    const garmentType = resolveCombinedGarmentType(
+      line.garment_type ?? fabricLine.garment_type,
+      pieceNames
+    );
 
     return {
       ...line,
       piece_name: pieceName,
+      garment_type: garmentType,
       description: lineDescription(fabricLine.garment_type, pieceName),
       fabric_number: line.fabric_number ?? fabricLine.fabric_number,
       fabric_brand: line.fabric_brand ?? fabricBrandLabel(fabricLine),

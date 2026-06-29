@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCustomerInvoiceByIdFresh, saveCustomerInvoice } from "@/lib/data/customer-invoices";
 import { recalculateInvoiceTotals } from "@/lib/invoicing/build-invoice";
+import { resolveInvoiceLines } from "@/lib/invoicing/display";
 import { applyCustomerInvoiceStatusChange } from "@/lib/invoicing/customer-invoice-mutations";
 import { applySuitCombine } from "@/lib/invoicing/suit-combine-lines";
 import {
@@ -31,7 +32,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     if (!invoice) {
       return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
     }
-    return NextResponse.json(invoice);
+    return NextResponse.json({ ...invoice, lines: resolveInvoiceLines(invoice.lines) });
   } catch (error) {
     console.error("Failed to read customer invoice:", error);
     return NextResponse.json({ error: "Failed to load invoice." }, { status: 500 });
@@ -79,7 +80,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
     if (body.reduce_lines) {
       if (body.reduce_lines === "all") {
-        next.lines = applyAllInvoiceLineReductions(invoice.lines);
+        next.lines = resolveInvoiceLines(applyAllInvoiceLineReductions(invoice.lines));
       } else {
         const groupKeys = Array.isArray(body.reduce_lines.group_keys)
           ? body.reduce_lines.group_keys.filter((key) => typeof key === "string" && key.trim())
@@ -87,7 +88,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         if (groupKeys.length === 0) {
           return NextResponse.json({ error: "No line reduction group keys provided." }, { status: 400 });
         }
-        next.lines = applyInvoiceLineReductionsByKeys(invoice.lines, groupKeys);
+        next.lines = resolveInvoiceLines(applyInvoiceLineReductionsByKeys(invoice.lines, groupKeys));
       }
       const totals = recalculateInvoiceTotals(next.lines, next.vat_rate);
       next = { ...next, ...totals };
@@ -102,10 +103,11 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         return NextResponse.json({ error: "No consolidation group keys provided." }, { status: 400 });
       }
       const afterSuitCombine = applySuitCombine(invoice.lines);
-      next.lines =
+      next.lines = resolveInvoiceLines(
         body.consolidate === "all"
           ? applyAllConsolidations(afterSuitCombine)
-          : applyConsolidation(afterSuitCombine, groupKeys!);
+          : applyConsolidation(afterSuitCombine, groupKeys!)
+      );
       const totals = recalculateInvoiceTotals(next.lines, next.vat_rate);
       next = { ...next, ...totals };
     } else if (Array.isArray(body.lines)) {
@@ -119,26 +121,30 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       );
 
       if (isFullReplacement) {
-        next.lines = body.lines.map((row) => ({
-          ...row,
-          description: String(row.description).trim(),
-          quantity: Number(row.quantity),
-          unit_price: Number(row.unit_price),
-        })) as CustomerInvoiceLine[];
+        next.lines = resolveInvoiceLines(
+          body.lines.map((row) => ({
+            ...row,
+            description: String(row.description).trim(),
+            quantity: Number(row.quantity),
+            unit_price: Number(row.unit_price),
+          })) as CustomerInvoiceLine[]
+        );
       } else {
-        next.lines = invoice.lines.map((line) => {
-          const patch = body.lines!.find((row) => row.id === line.id);
-          if (!patch) return line;
-          const quantity = patch.quantity != null ? Number(patch.quantity) : line.quantity;
-          const unitPrice = patch.unit_price != null ? Number(patch.unit_price) : line.unit_price;
-          const description = patch.description != null ? String(patch.description).trim() : line.description;
-          return {
-            ...line,
-            description,
-            quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : line.quantity,
-            unit_price: Number.isFinite(unitPrice) && unitPrice >= 0 ? unitPrice : line.unit_price,
-          };
-        });
+        next.lines = resolveInvoiceLines(
+          invoice.lines.map((line) => {
+            const patch = body.lines!.find((row) => row.id === line.id);
+            if (!patch) return line;
+            const quantity = patch.quantity != null ? Number(patch.quantity) : line.quantity;
+            const unitPrice = patch.unit_price != null ? Number(patch.unit_price) : line.unit_price;
+            const description = patch.description != null ? String(patch.description).trim() : line.description;
+            return {
+              ...line,
+              description,
+              quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : line.quantity,
+              unit_price: Number.isFinite(unitPrice) && unitPrice >= 0 ? unitPrice : line.unit_price,
+            };
+          })
+        );
       }
       const totals = recalculateInvoiceTotals(next.lines, next.vat_rate);
       next = { ...next, ...totals };
