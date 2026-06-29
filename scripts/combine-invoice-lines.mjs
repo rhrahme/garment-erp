@@ -33,6 +33,23 @@ function getGarmentPieces(garmentType) {
   return GARMENT_PIECES[garmentType] ?? [garmentType];
 }
 
+function isJacketTrouserPieceSet(pieceNames) {
+  const normalized = new Set(
+    pieceNames.map((name) => {
+      const trimmed = name.trim();
+      if (/^trousers?$/i.test(trimmed)) return "Trouser";
+      if (/^blazers?$/i.test(trimmed)) return "Jacket";
+      return trimmed;
+    })
+  );
+  return normalized.has("Jacket") && normalized.has("Trouser");
+}
+
+function resolveCombinedGarmentType(garmentType, pieceNames) {
+  if (isJacketTrouserPieceSet(pieceNames)) return "Suit";
+  return garmentType;
+}
+
 function formatCombinedGarmentDescription(garmentType, pieceNames) {
   if (pieceNames.length <= 1) return garmentType;
   return `${garmentType} (${pieceNames.join(" + ")})`;
@@ -74,11 +91,11 @@ function invoiceLineGroupKey(line) {
 
 function mergeInvoiceLineGroup(group) {
   const first = group[0];
-  const garmentType = first.garment_type;
   const pieceNames = orderedPieceNames(
-    garmentType,
+    first.garment_type,
     group.flatMap((line) => pieceNamesFromLine(line.piece_name))
   );
+  const garmentType = resolveCombinedGarmentType(first.garment_type, pieceNames);
   const unitPrice = roundMoney(group.reduce((sum, line) => sum + line.unit_price, 0));
   const lineTotal = roundMoney(group.reduce((sum, line) => sum + line.line_total, 0));
   const costHints = group.map((line) => line.cost_hint_sar).filter((hint) => hint != null);
@@ -86,6 +103,7 @@ function mergeInvoiceLineGroup(group) {
 
   return {
     ...first,
+    garment_type: garmentType,
     description: formatCombinedGarmentDescription(garmentType, pieceNames),
     piece_name: pieceNames.join(" + "),
     sticker_code: first.sticker_code,

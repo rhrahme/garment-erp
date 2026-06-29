@@ -4,7 +4,6 @@ import {
   pieceNamesFromInvoicePieceField,
   resolveCombinedGarmentType,
   resolveInvoiceGarmentDescription,
-  formatCombinedGarmentDescription,
 } from "@/lib/sales-orders/label-codes";
 import type { CustomerInvoiceLine } from "@/lib/types/customer-invoices";
 
@@ -158,17 +157,20 @@ export function resolveInvoiceLineArticle(line: CustomerInvoiceLine): CustomerIn
   return line;
 }
 
-function resolveInvoiceLineDescription(line: CustomerInvoiceLine): string {
-  const pieceNames = pieceNamesFromInvoicePieceField(line.piece_name);
-  if (pieceNames.length > 1) {
-    const garmentType = resolveCombinedGarmentType(line.garment_type, pieceNames);
-    return formatCombinedGarmentDescription(garmentType, pieceNames);
-  }
-  return line.description;
+/** Normalize article, garment_type, and description for stored/API invoice lines. */
+export function normalizeInvoiceLine(line: CustomerInvoiceLine): CustomerInvoiceLine {
+  const resolved = resolveInvoiceLineArticle(line);
+  const pieceNames = pieceNamesFromInvoicePieceField(resolved.piece_name);
+  const garmentType = resolveCombinedGarmentType(resolved.garment_type, pieceNames);
+  return {
+    ...resolved,
+    garment_type: garmentType,
+    description: resolveInvoiceGarmentDescription(resolved.garment_type, resolved.piece_name),
+  };
 }
 
 export function resolveInvoiceLines(lines: CustomerInvoiceLine[]): CustomerInvoiceLine[] {
-  return lines.map(resolveInvoiceLineArticle);
+  return lines.map(normalizeInvoiceLine);
 }
 
 export type CustomerInvoiceLineDisplay = CustomerInvoiceLine & {
@@ -177,12 +179,11 @@ export type CustomerInvoiceLineDisplay = CustomerInvoiceLine & {
 };
 
 export function toInvoiceLineDisplay(line: CustomerInvoiceLine): CustomerInvoiceLineDisplay {
-  const resolved = resolveInvoiceLineArticle(line);
+  const resolved = normalizeInvoiceLine(line);
   const composition = resolveInvoiceComposition(resolved);
   return {
     ...resolved,
     composition,
-    description: resolveInvoiceLineDescription(resolved),
     article_label: formatInvoiceArticle(resolved.article_number),
     composition_label: formatInvoiceCompositionLine(
       resolved.fabric_brand,
