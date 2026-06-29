@@ -13,6 +13,7 @@ import {
   lineArticleFromStickerCode,
 } from "@/lib/sales-orders/label-codes";
 import { resolveInvoiceComposition } from "@/lib/invoicing/display";
+import { applyAllInvoiceLineReductions } from "@/lib/invoicing/line-reduction-suggestions";
 import { isCombinedInvoiceLine, pieceNamesFromLine } from "@/lib/invoicing/suit-combine-lines";
 import { resolveInvoiceVatRate } from "@/lib/invoicing/vat";
 import { findFabricLineForInvoiceLine } from "@/lib/sales-orders/line-cross-reference";
@@ -264,7 +265,7 @@ export function buildDraftInvoiceFromSalesOrder(
   }
 
   const client = getClientById(order.client_id);
-  const lines = buildInvoiceLinesFromSalesOrder(order);
+  const lines = applyAllInvoiceLineReductions(buildInvoiceLinesFromSalesOrder(order));
   const vat_rate = resolveInvoiceVatRate(order.delivery_destination);
   const { lines: pricedLines, subtotal, vat_amount, total } = recalculateInvoiceTotals(lines, vat_rate);
   const orderCost = getSalesOrderCost(order);
