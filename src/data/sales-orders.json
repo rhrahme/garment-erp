@@ -3240,38 +3240,6 @@
           "replacement_fabric_number": null
         },
         {
-          "id": "line-1780928622877-3",
-          "unit": "meters",
-          "color": null,
-          "added_at": "2026-06-08T14:23:42.877Z",
-          "added_by": "hagan.qc@gmail.com",
-          "quantity": 1.8,
-          "width_cm": null,
-          "unit_price": 0,
-          "weight_gsm": null,
-          "composition": "100% cotton",
-          "label_count": 1,
-          "supplier_id": "canclini",
-          "garment_type": "Shirt LS",
-          "restock_date": null,
-          "stock_status": null,
-          "width_inches": null,
-          "a4_printed_at": null,
-          "fabric_number": "T003",
-          "supplier_name": "Canclini",
-          "label_stickers": [
-            {
-              "code": "GL-0326-0003-SO-2026-0103-L03-SHT-LS",
-              "sequence": 1,
-              "piece_name": "Shirt LS"
-            }
-          ],
-          "needs_replacement": false,
-          "prep_stickers_printed_at": null,
-          "prod_stickers_printed_at": null,
-          "replacement_fabric_number": null
-        },
-        {
           "id": "line-1780928880788-4",
           "unit": "meters",
           "color": null,
@@ -3293,7 +3261,7 @@
           "supplier_name": "Canclini",
           "label_stickers": [
             {
-              "code": "GL-0326-0003-SO-2026-0103-L04-SHT-LS",
+              "code": "GL-0326-0003-SO-2026-0103-L03-SHT-LS",
               "sequence": 1,
               "piece_name": "Shirt LS"
             }
@@ -3321,7 +3289,34 @@
           "stock_status": "in_stock",
           "width_inches": null,
           "a4_printed_at": null,
-          "fabric_number": "25T001",
+          "fabric_number": "25T001/Chines Collar Shirt",
+          "supplier_name": "Canclini",
+          "label_stickers": [
+            {
+              "code": "GL-0326-0003-SO-2026-0103-L04-SHT-LS",
+              "sequence": 1,
+              "piece_name": "Shirt LS"
+            }
+          ],
+          "needs_replacement": false,
+          "prep_stickers_printed_at": null,
+          "prod_stickers_printed_at": null,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781341364896-6",
+          "unit": "meters",
+          "color": null,
+          "quantity": 1.5,
+          "width_cm": 135,
+          "unit_price": 0,
+          "weight_gsm": 145,
+          "composition": "100% Linen",
+          "label_count": 1,
+          "supplier_id": "canclini",
+          "garment_type": "Shirt LS",
+          "width_inches": null,
+          "fabric_number": "25T232",
           "supplier_name": "Canclini",
           "label_stickers": [
             {
@@ -3331,15 +3326,353 @@
             }
           ],
           "needs_replacement": false,
-          "prep_stickers_printed_at": null,
-          "prod_stickers_printed_at": null,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781341412537-7",
+          "unit": "meters",
+          "color": null,
+          "quantity": 1.5,
+          "width_cm": 135,
+          "unit_price": 0,
+          "weight_gsm": 145,
+          "composition": "100% Linen",
+          "label_count": 1,
+          "supplier_id": "canclini",
+          "garment_type": "Shirt LS",
+          "width_inches": null,
+          "fabric_number": "25T142",
+          "supplier_name": "Canclini",
+          "label_stickers": [
+            {
+              "code": "GL-0326-0003-SO-2026-0103-L06-SHT-LS",
+              "sequence": 1,
+              "piece_name": "Shirt LS"
+            }
+          ],
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781341481922-8",
+          "unit": "meters",
+          "color": null,
+          "quantity": 1.5,
+          "width_cm": 135,
+          "unit_price": 0,
+          "weight_gsm": 145,
+          "composition": "100% Linen",
+          "label_count": 1,
+          "supplier_id": "canclini",
+          "garment_type": "Shirt LS",
+          "width_inches": null,
+          "fabric_number": "25T003",
+          "supplier_name": "Canclini",
+          "label_stickers": [
+            {
+              "code": "GL-0326-0003-SO-2026-0103-L07-SHT-LS",
+              "sequence": 1,
+              "piece_name": "Shirt LS"
+            }
+          ],
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781342135720-8",
+          "unit": "meters",
+          "color": null,
+          "quantity": 1.5,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": null,
+          "label_count": 1,
+          "supplier_id": "canclini",
+          "garment_type": "Shirt LS",
+          "width_inches": null,
+          "fabric_number": "25T003/Chines Collar Shirt",
+          "supplier_name": "Canclini",
+          "label_stickers": [
+            {
+              "code": "GL-0326-0003-SO-2026-0103-L08-SHT-LS",
+              "sequence": 1,
+              "piece_name": "Shirt LS"
+            }
+          ],
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781342378142-9",
+          "unit": "meters",
+          "color": null,
+          "quantity": 1.5,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": null,
+          "label_count": 1,
+          "supplier_id": "canclini",
+          "garment_type": "Shirt LS",
+          "width_inches": null,
+          "fabric_number": "25T232/Chines Collar Shirt",
+          "supplier_name": "Canclini",
+          "label_stickers": [
+            {
+              "code": "GL-0326-0003-SO-2026-0103-L09-SHT-LS",
+              "sequence": 1,
+              "piece_name": "Shirt LS"
+            }
+          ],
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781342472073-10",
+          "unit": "meters",
+          "color": null,
+          "quantity": 1.5,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": null,
+          "label_count": 1,
+          "supplier_id": "canclini",
+          "garment_type": "Shirt LS",
+          "width_inches": null,
+          "fabric_number": "25T142/Chines Collar Shirt",
+          "supplier_name": "Canclini",
+          "label_stickers": [
+            {
+              "code": "GL-0326-0003-SO-2026-0103-L10-SHT-LS",
+              "sequence": 1,
+              "piece_name": "Shirt LS"
+            }
+          ],
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781344592989-11",
+          "unit": "meters",
+          "color": null,
+          "quantity": 4.5,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": null,
+          "label_count": 1,
+          "supplier_id": "canclini",
+          "garment_type": "Shirt LS",
+          "width_inches": null,
+          "fabric_number": "C1415541-4 (Use for 3 Shirt)",
+          "supplier_name": "Canclini",
+          "label_stickers": [
+            {
+              "code": "GL-0326-0003-SO-2026-0103-L11-SHT-LS",
+              "sequence": 1,
+              "piece_name": "Shirt LS"
+            }
+          ],
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781345959245-12",
+          "unit": "meters",
+          "color": null,
+          "quantity": 4.5,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": null,
+          "label_count": 1,
+          "supplier_id": "canclini",
+          "garment_type": "Shirt LS",
+          "width_inches": null,
+          "fabric_number": "C1415541-1 (Use for 3 Shirt)",
+          "supplier_name": "Canclini",
+          "label_stickers": [
+            {
+              "code": "GL-0326-0003-SO-2026-0103-L12-SHT-LS",
+              "sequence": 1,
+              "piece_name": "Shirt LS"
+            }
+          ],
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781346044433-13-tr",
+          "garment_type": "Trouser",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "GL-0326-0003-SO-2026-0103-L16-TR",
+              "piece_name": "Trouser",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "gliani-stock",
+          "supplier_name": "Gliani Stock",
+          "fabric_number": "10005. 001/204D",
+          "quantity": 3,
+          "unit": "meters",
+          "unit_price": 0,
+          "composition": null,
+          "weight_gsm": null,
+          "width_cm": null,
+          "width_inches": null,
+          "color": "Light Blue",
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781346044433-13",
+          "unit": "meters",
+          "color": null,
+          "quantity": 3,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": null,
+          "label_count": 2,
+          "supplier_id": "gliani-stock",
+          "garment_type": "Suit",
+          "width_inches": null,
+          "fabric_number": "10005. 001/204D",
+          "supplier_name": "Gliani Stock",
+          "label_stickers": [
+            {
+              "code": "GL-0326-0003-SO-2026-0103-L13-JKT",
+              "piece_name": "Jacket",
+              "sequence": 1
+            },
+            {
+              "code": "GL-0326-0003-SO-2026-0103-L13-TR",
+              "piece_name": "Trouser",
+              "sequence": 2
+            }
+          ],
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781346098118-14-tr",
+          "garment_type": "Trouser",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "GL-0326-0003-SO-2026-0103-L17-TR",
+              "piece_name": "Trouser",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "gliani-stock",
+          "supplier_name": "Gliani Stock",
+          "fabric_number": "10025.015/12",
+          "quantity": 3,
+          "unit": "meters",
+          "unit_price": 0,
+          "composition": "SUPER150SW 100%",
+          "weight_gsm": 265,
+          "width_cm": null,
+          "width_inches": null,
+          "color": "Black",
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781346098118-14",
+          "unit": "meters",
+          "color": null,
+          "quantity": 3,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": 265,
+          "composition": "SUPER150SW 100%",
+          "label_count": 2,
+          "supplier_id": "gliani-stock",
+          "garment_type": "Suit",
+          "width_inches": null,
+          "fabric_number": "10025.015/12",
+          "supplier_name": "Gliani Stock",
+          "label_stickers": [
+            {
+              "code": "GL-0326-0003-SO-2026-0103-L14-JKT",
+              "piece_name": "Jacket",
+              "sequence": 1
+            },
+            {
+              "code": "GL-0326-0003-SO-2026-0103-L14-TR",
+              "piece_name": "Trouser",
+              "sequence": 2
+            }
+          ],
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781346204015-15-tr",
+          "garment_type": "Trouser",
+          "label_count": 1,
+          "label_stickers": [
+            {
+              "code": "GL-0326-0003-SO-2026-0103-L18-TR",
+              "piece_name": "Trouser",
+              "sequence": 1
+            }
+          ],
+          "supplier_id": "gliani-stock",
+          "supplier_name": "Gliani Stock",
+          "fabric_number": "10577.001/4",
+          "quantity": 3,
+          "unit": "meters",
+          "unit_price": 0,
+          "composition": "SUPER180S W100%",
+          "weight_gsm": 265,
+          "width_cm": null,
+          "width_inches": null,
+          "color": "Blue dark",
+          "needs_replacement": false,
+          "replacement_fabric_number": null
+        },
+        {
+          "id": "line-1781346204015-15",
+          "unit": "meters",
+          "color": null,
+          "quantity": 3,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": 265,
+          "composition": "SUPER180S W100%",
+          "label_count": 2,
+          "supplier_id": "gliani-stock",
+          "garment_type": "Suit",
+          "width_inches": null,
+          "fabric_number": "10577.001/4",
+          "supplier_name": "Gliani Stock",
+          "label_stickers": [
+            {
+              "code": "GL-0326-0003-SO-2026-0103-L15-JKT",
+              "piece_name": "Jacket",
+              "sequence": 1
+            },
+            {
+              "code": "GL-0326-0003-SO-2026-0103-L15-TR",
+              "piece_name": "Trouser",
+              "sequence": 2
+            }
+          ],
+          "needs_replacement": false,
           "replacement_fabric_number": null
         }
       ],
       "delivery_date": null,
       "fabric_po_ids": [],
       "client_reference": "GL-0326-0003-SO-2026-0103",
-      "delivery_destination": "DXB"
+      "delivery_destination": "RUH"
     },
     {
       "id": "so-1780164354118",
@@ -6277,302 +6610,302 @@
       "fabric_lines": [
         {
           "id": "line-cu-86exhyjr1",
-          "garment_type": "Jacket",
+          "unit": "meters",
+          "color": "Blue dark",
+          "quantity": 1,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": "70% Wool, 20% Silk, 10% Linen",
           "label_count": 1,
+          "supplier_id": "stylbiella",
+          "garment_type": "Jacket",
+          "width_inches": null,
+          "fabric_number": "50799/206",
+          "supplier_name": "Stylbiella",
           "label_stickers": [
             {
               "code": "GL-0526-0002-SO-2026-0005-L01-JKT",
-              "piece_name": "Blazers",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Blazers"
             }
-          ],
-          "supplier_id": "stylbiella",
-          "supplier_name": "Stylbiella",
-          "fabric_number": "50799/206",
-          "quantity": 1,
-          "unit": "meters",
-          "unit_price": 0,
-          "composition": "70% Wool, 20% Silk, 10% Linen",
-          "weight_gsm": null,
-          "width_cm": null,
-          "width_inches": null,
-          "color": "Blue dark"
+          ]
         },
         {
           "id": "line-cu-86exhyjrz",
-          "garment_type": "Jacket",
+          "unit": "meters",
+          "color": "Red",
+          "quantity": 1,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": "70% Wool, 20% Silk, 10% Linen",
           "label_count": 1,
+          "supplier_id": "stylbiella",
+          "garment_type": "Jacket",
+          "width_inches": null,
+          "fabric_number": "50777/206",
+          "supplier_name": "Stylbiella",
           "label_stickers": [
             {
               "code": "GL-0526-0002-SO-2026-0005-L02-JKT",
-              "piece_name": "Blazers",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Blazers"
             }
-          ],
-          "supplier_id": "stylbiella",
-          "supplier_name": "Stylbiella",
-          "fabric_number": "50777/206",
-          "quantity": 1,
-          "unit": "meters",
-          "unit_price": 0,
-          "composition": "70% Wool, 20% Silk, 10% Linen",
-          "weight_gsm": null,
-          "width_cm": null,
-          "width_inches": null,
-          "color": "Red"
+          ]
         },
         {
           "id": "line-cu-86exhyjt6",
-          "garment_type": "Shirt LS",
+          "unit": "meters",
+          "color": "Sky Blue",
+          "quantity": 1,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": "100% Cotton",
           "label_count": 1,
+          "supplier_id": "stylbiella",
+          "garment_type": "Shirt LS",
+          "width_inches": null,
+          "fabric_number": "63374/120",
+          "supplier_name": "Stylbiella",
           "label_stickers": [
             {
               "code": "GL-0526-0002-SO-2026-0005-L03-SHT-LS",
-              "piece_name": "Shirts",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirts"
             }
-          ],
-          "supplier_id": "stylbiella",
-          "supplier_name": "Stylbiella",
-          "fabric_number": "63374/120",
-          "quantity": 1,
-          "unit": "meters",
-          "unit_price": 0,
-          "composition": "100% Cotton",
-          "weight_gsm": null,
-          "width_cm": null,
-          "width_inches": null,
-          "color": "Sky Blue"
+          ]
         },
         {
           "id": "line-cu-86exhyjtb",
-          "garment_type": "Trouser",
+          "unit": "meters",
+          "color": "Grey solid dark",
+          "quantity": 1,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": "70% Wool, 20% Silk, 10% Linen",
           "label_count": 1,
+          "supplier_id": "gliani-stock",
+          "garment_type": "Trouser",
+          "width_inches": null,
+          "fabric_number": "C1411635-1",
+          "supplier_name": "Gliani Stock",
           "label_stickers": [
             {
               "code": "GL-0526-0002-SO-2026-0005-L04-TR",
-              "piece_name": "Trousers",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Trousers"
             }
-          ],
-          "supplier_id": "gliani-stock",
-          "supplier_name": "Gliani Stock",
-          "fabric_number": "C1411635-1",
-          "quantity": 1,
-          "unit": "meters",
-          "unit_price": 0,
-          "composition": "70% Wool, 20% Silk, 10% Linen",
-          "weight_gsm": null,
-          "width_cm": null,
-          "width_inches": null,
-          "color": "Grey solid dark"
+          ]
         },
         {
           "id": "line-cu-86extb6b6",
-          "garment_type": "Jacket",
+          "unit": "meters",
+          "color": "Yellow",
+          "quantity": 1,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": 240,
+          "composition": "65% Wool 21% Silk 14% Linen",
           "label_count": 1,
+          "supplier_id": "stylbiella",
+          "garment_type": "Jacket",
+          "width_inches": null,
+          "fabric_number": "50821/207",
+          "supplier_name": "Stylbiella",
           "label_stickers": [
             {
               "code": "GL-0526-0002-SO-2026-0005-L05-JKT",
-              "piece_name": "Single Breasted Jacket",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Single Breasted Jacket"
             }
-          ],
-          "supplier_id": "stylbiella",
-          "supplier_name": "Stylbiella",
-          "fabric_number": "50821/207",
-          "quantity": 1,
-          "unit": "meters",
-          "unit_price": 0,
-          "composition": "65% Wool 21% Silk 14% Linen",
-          "weight_gsm": 240,
-          "width_cm": null,
-          "width_inches": null,
-          "color": "Yellow"
+          ]
         },
         {
           "id": "line-cu-86extb6b9",
-          "garment_type": "Jacket",
+          "unit": "meters",
+          "color": "Brown dark",
+          "quantity": 1,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": 280,
+          "composition": "70% Wool, 20% Silk, 10% Linen",
           "label_count": 1,
+          "supplier_id": "stylbiella",
+          "garment_type": "Jacket",
+          "width_inches": null,
+          "fabric_number": "50781/206",
+          "supplier_name": "Stylbiella",
           "label_stickers": [
             {
               "code": "GL-0526-0002-SO-2026-0005-L06-JKT",
-              "piece_name": "Single Breasted Jacket",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Single Breasted Jacket"
             }
-          ],
-          "supplier_id": "stylbiella",
-          "supplier_name": "Stylbiella",
-          "fabric_number": "50781/206",
-          "quantity": 1,
-          "unit": "meters",
-          "unit_price": 0,
-          "composition": "70% Wool, 20% Silk, 10% Linen",
-          "weight_gsm": 280,
-          "width_cm": null,
-          "width_inches": null,
-          "color": "Brown dark"
+          ]
         },
         {
           "id": "line-cu-86extb6h0",
-          "garment_type": "Jacket",
+          "unit": "meters",
+          "color": "Light Brown",
+          "quantity": 1,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": 240,
+          "composition": "65% Wool 21% Silk 14% Linen",
           "label_count": 1,
+          "supplier_id": "stylbiella",
+          "garment_type": "Jacket",
+          "width_inches": null,
+          "fabric_number": "50828/207",
+          "supplier_name": "Stylbiella",
           "label_stickers": [
             {
               "code": "GL-0526-0002-SO-2026-0005-L07-JKT",
-              "piece_name": "Double Breasted Jacket",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Double Breasted Jacket"
             }
-          ],
-          "supplier_id": "stylbiella",
-          "supplier_name": "Stylbiella",
-          "fabric_number": "50828/207",
-          "quantity": 1,
-          "unit": "meters",
-          "unit_price": 0,
-          "composition": "65% Wool 21% Silk 14% Linen",
-          "weight_gsm": 240,
-          "width_cm": null,
-          "width_inches": null,
-          "color": "Light Brown"
+          ]
         },
         {
           "id": "line-cu-86extb6h7",
-          "garment_type": "Jacket",
+          "unit": "meters",
+          "color": "Green",
+          "quantity": 1,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": 280,
+          "composition": "70% Wool, 20% Silk, 10% Linen",
           "label_count": 1,
+          "supplier_id": "stylbiella",
+          "garment_type": "Jacket",
+          "width_inches": null,
+          "fabric_number": "50790/206",
+          "supplier_name": "Stylbiella",
           "label_stickers": [
             {
               "code": "GL-0526-0002-SO-2026-0005-L08-JKT",
-              "piece_name": "Double Breasted Jacket",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Double Breasted Jacket"
             }
-          ],
-          "supplier_id": "stylbiella",
-          "supplier_name": "Stylbiella",
-          "fabric_number": "50790/206",
-          "quantity": 1,
-          "unit": "meters",
-          "unit_price": 0,
-          "composition": "70% Wool, 20% Silk, 10% Linen",
-          "weight_gsm": 280,
-          "width_cm": null,
-          "width_inches": null,
-          "color": "Green"
+          ]
         },
         {
           "id": "line-cu-86extb6hd",
-          "garment_type": "Trouser",
+          "unit": "meters",
+          "color": "Black",
+          "quantity": 1,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": 210,
+          "composition": "97% Cotton 3% EA",
           "label_count": 1,
+          "supplier_id": "drapers",
+          "garment_type": "Trouser",
+          "width_inches": null,
+          "fabric_number": "26111",
+          "supplier_name": "Drapers",
           "label_stickers": [
             {
               "code": "GL-0526-0002-SO-2026-0005-L09-TR",
-              "piece_name": "Trousers",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Trousers"
             }
-          ],
-          "supplier_id": "drapers",
-          "supplier_name": "Drapers",
-          "fabric_number": "26111",
-          "quantity": 1,
-          "unit": "meters",
-          "unit_price": 0,
-          "composition": "97% Cotton 3% EA",
-          "weight_gsm": 210,
-          "width_cm": null,
-          "width_inches": null,
-          "color": "Black"
+          ]
         },
         {
           "id": "line-cu-86extb6j3",
-          "garment_type": "Trouser",
+          "unit": "meters",
+          "color": "Grey solid dark",
+          "quantity": 1,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": 240,
+          "composition": "100% Wool",
           "label_count": 1,
+          "supplier_id": "stylbiella",
+          "garment_type": "Trouser",
+          "width_inches": null,
+          "fabric_number": "63376/120",
+          "supplier_name": "Stylbiella",
           "label_stickers": [
             {
               "code": "GL-0526-0002-SO-2026-0005-L10-TR",
-              "piece_name": "Trousers",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Trousers"
             }
-          ],
-          "supplier_id": "stylbiella",
-          "supplier_name": "Stylbiella",
-          "fabric_number": "63376/120",
-          "quantity": 1,
-          "unit": "meters",
-          "unit_price": 0,
-          "composition": "100% Wool",
-          "weight_gsm": 240,
-          "width_cm": null,
-          "width_inches": null,
-          "color": "Grey solid dark"
+          ]
         },
         {
           "id": "line-cu-86extb6jq",
-          "garment_type": "Shirt LS",
+          "unit": "meters",
+          "color": "White",
+          "quantity": 4,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": "100% Cotton",
           "label_count": 1,
+          "supplier_id": "canclini",
+          "garment_type": "Shirt LS",
+          "width_inches": null,
+          "fabric_number": "C11513221-1",
+          "supplier_name": "Canclini",
           "label_stickers": [
             {
               "code": "GL-0526-0002-SO-2026-0005-L11-SHT-LS",
-              "piece_name": "Shirts",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirts"
             }
-          ],
-          "supplier_id": "canclini",
-          "supplier_name": "Canclini",
-          "fabric_number": "C11513221-1",
-          "quantity": 4,
-          "unit": "meters",
-          "unit_price": 0,
-          "composition": "100% Cotton",
-          "weight_gsm": null,
-          "width_cm": null,
-          "width_inches": null,
-          "color": "White"
+          ]
         },
         {
           "id": "line-cu-86extb6ka",
-          "garment_type": "Shirt LS",
+          "unit": "meters",
+          "color": "Blue Stripe",
+          "quantity": 1,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": null,
+          "composition": "100% Cotton",
           "label_count": 1,
+          "supplier_id": "canclini",
+          "garment_type": "Shirt LS",
+          "width_inches": null,
+          "fabric_number": "C11422477-1",
+          "supplier_name": "Canclini",
           "label_stickers": [
             {
               "code": "GL-0526-0002-SO-2026-0005-L12-SHT-LS",
-              "piece_name": "Shirts",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Shirts"
             }
-          ],
-          "supplier_id": "canclini",
-          "supplier_name": "Canclini",
-          "fabric_number": "C11422477-1",
-          "quantity": 1,
-          "unit": "meters",
-          "unit_price": 0,
-          "composition": "100% Cotton",
-          "weight_gsm": null,
-          "width_cm": null,
-          "width_inches": null,
-          "color": "Blue Stripe"
+          ]
         },
         {
           "id": "line-cu-86exu59x9",
-          "garment_type": "Trouser",
+          "unit": "meters",
+          "color": "Off White",
+          "quantity": 1,
+          "width_cm": null,
+          "unit_price": 0,
+          "weight_gsm": 280,
+          "composition": "Composition",
           "label_count": 1,
+          "supplier_id": "stylbiella",
+          "garment_type": "Trouser",
+          "width_inches": null,
+          "fabric_number": "63366/100",
+          "supplier_name": "Stylbiella",
           "label_stickers": [
             {
               "code": "GL-0526-0002-SO-2026-0005-L13-TR",
-              "piece_name": "Trousers",
-              "sequence": 1
+              "sequence": 1,
+              "piece_name": "Trousers"
             }
-          ],
-          "supplier_id": "stylbiella",
-          "supplier_name": "Stylbiella",
-          "fabric_number": "63366/100",
-          "quantity": 1,
-          "unit": "meters",
-          "unit_price": 0,
-          "composition": "Composition",
-          "weight_gsm": 280,
-          "width_cm": null,
-          "width_inches": null,
-          "color": "Off White"
+          ]
         }
       ],
       "retail_brand": null,
@@ -36866,5 +37199,5 @@
       "client_reference": "FR-0226-0025-SO-2026-0095"
     }
   ],
-  "updated_at": "2026-06-29T19:19:21.024Z"
+  "updated_at": "2026-06-29T20:56:08.895Z"
 }
