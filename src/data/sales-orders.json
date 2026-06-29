@@ -1254,7 +1254,7 @@
           "stock_status": null,
           "width_inches": null,
           "a4_printed_at": null,
-          "fabric_number": "1005.043/2",
+          "fabric_number": "10005.043/2",
           "supplier_name": "Canclini",
           "label_stickers": [
             {
@@ -36659,5 +36659,5 @@
       "client_reference": "FR-0226-0025-SO-2026-0095"
     }
   ],
-  "updated_at": "2026-06-29T19:12:43.656Z"
+  "updated_at": "2026-06-29T19:14:35.961Z"
 }

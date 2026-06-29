@@ -491,7 +491,7 @@
           "garment_type": "Suit",
           "sticker_code": "GL-0626-0011-SO-2026-0110-L02-JKT",
           "cost_hint_sar": null,
-          "fabric_number": "1005.043/2",
+          "fabric_number": "10005.043/2",
           "article_number": 2,
           "sales_order_line_id": "line-1781953079630-1"
         },
@@ -738,5 +738,5 @@
       "delivery_destination": "RUH"
     }
   ],
-  "updated_at": "2026-06-29T19:12:43.656Z"
+  "updated_at": "2026-06-29T19:14:35.961Z"
 }
