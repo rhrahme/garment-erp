@@ -1,4 +1,5 @@
 import { readPatternJobsFresh, writePatternJobs } from "@/lib/data/pattern-jobs";
+import { orphanPatternJobsToCancel } from "@/lib/sales-orders/pattern-so-mismatch";
 import { fabricLineArticleNumber, getGarmentPieces } from "@/lib/sales-orders/label-codes";
 import type { PatternJob } from "@/lib/types/pattern";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
@@ -41,20 +42,24 @@ export type PatternSyncResult = {
   created: string[];
   updated: string[];
   cancelled: string[];
+  /** Orphan jobs that were not cancelled because forceCancelOrphans was false. */
+  skipped_cancellations: string[];
 };
 
 export async function syncPatternJobsFromSalesOrder(
   order: SalesOrder,
-  options: { notify?: boolean } = {}
+  options: { notify?: boolean; forceCancelOrphans?: boolean } = {}
 ): Promise<PatternSyncResult> {
   const store = await readPatternJobsFresh();
   const now = new Date().toISOString();
   const created: string[] = [];
   const updated: string[] = [];
   const cancelled: string[] = [];
+  const skipped_cancellations: string[] = [];
 
   const existingForOrder = store.jobs.filter((job) => job.sales_order_id === order.id);
   const lineIds = new Set(order.fabric_lines.map((line) => line.id));
+  const orphansToCancel = orphanPatternJobsToCancel(order, store.jobs);
 
   for (const [index, line] of order.fabric_lines.entries()) {
     const articleNumber = fabricLineArticleNumber(index);
@@ -118,22 +123,23 @@ export async function syncPatternJobsFromSalesOrder(
     }
   }
 
-  for (const job of existingForOrder) {
-    if (lineIds.has(job.sales_order_line_id)) continue;
-    if (job.status === "cancelled" || job.status === "completed") continue;
+  if (orphansToCancel.length > 0 && !options.forceCancelOrphans) {
+    skipped_cancellations.push(...orphansToCancel.map((job) => job.id));
+  } else {
+    for (const job of orphansToCancel) {
+      const jobIndex = store.jobs.findIndex((item) => item.id === job.id);
+      if (jobIndex < 0) continue;
 
-    const jobIndex = store.jobs.findIndex((item) => item.id === job.id);
-    if (jobIndex < 0) continue;
-
-    store.jobs[jobIndex] = {
-      ...store.jobs[jobIndex]!,
-      status: "cancelled",
-      updated_at: now,
-    };
-    cancelled.push(job.id);
+      store.jobs[jobIndex] = {
+        ...store.jobs[jobIndex]!,
+        status: "cancelled",
+        updated_at: now,
+      };
+      cancelled.push(job.id);
+    }
   }
 
   await writePatternJobs(store);
 
-  return { created, updated, cancelled };
+  return { created, updated, cancelled, skipped_cancellations };
 }

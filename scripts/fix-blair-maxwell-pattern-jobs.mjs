@@ -10,6 +10,7 @@ import { resolve } from "node:path";
 
 const SO_ID = "so-cu-86exhyjr1";
 const SO_NUMBER = "SO-2026-0005";
+const force = process.argv.includes("--force");
 
 function loadEnvLocal() {
   const envPath = resolve(process.cwd(), ".env.local");
@@ -177,6 +178,12 @@ async function main() {
   );
 
   const result = syncPatternJobsFromSalesOrder(pjStore, order);
+
+  if (result.cancelled.length > 0 && !force) {
+    throw new Error(
+      `Would cancel ${result.cancelled.length} pattern job(s): ${result.cancelled.join(", ")}. Re-run with --force to confirm.`
+    );
+  }
 
   const after = pjStore.jobs.filter(
     (j) => j.sales_order_id === order.id && j.status !== "cancelled"

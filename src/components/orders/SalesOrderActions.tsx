@@ -18,6 +18,7 @@ import { FabricSupplierName } from "@/components/fabric/FabricSupplierName";
 import { fabricSupplierGroupKey, formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
+import type { PatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mismatch";
 import { formatSupplierUnitPrice } from "@/lib/currency/format";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
 import { ordersUiLabels } from "@/lib/orders/ui-labels";
@@ -52,6 +53,8 @@ function formatLinePrice(line: SalesOrderFabricLine) {
 
 export function SalesOrderActions({
   order,
+  patternMismatch = null,
+  patternJobsByLineId = {},
   existingInvoiceId = null,
   isReadyMade = false,
   canViewFabricPrices = false,
@@ -60,6 +63,8 @@ export function SalesOrderActions({
   viewMode = "sales",
 }: {
   order: SalesOrder;
+  patternMismatch?: PatternSalesOrderMismatch | null;
+  patternJobsByLineId?: Record<string, number>;
   existingInvoiceId?: string | null;
   isReadyMade?: boolean;
   canViewFabricPrices?: boolean;
@@ -495,6 +500,8 @@ export function SalesOrderActions({
                               orderId={liveOrder.id}
                               line={line}
                               productionMode={isClientManager}
+                              patternMismatch={patternMismatch}
+                              patternJobsForLine={patternJobsByLineId[line.id] ?? 0}
                               onLineRemoved={handleLineRemoved}
                             />
                           </div>

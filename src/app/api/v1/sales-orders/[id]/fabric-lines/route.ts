@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { notifyIntegration } from "@/lib/integrations";
 import { verifyApiKey } from "@/lib/integrations/api-auth";
+import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import { syncPatternJobsFromSalesOrder } from "@/lib/pattern/sync-from-sales-order";
+import {
+  guardLineRemovalPatternSync,
+  syncPatternAfterLineRemoval,
+} from "@/lib/pattern/sync-guard";
 import {
   appendSalesOrderFabricLines,
   deleteSalesOrderFabricLine,
@@ -95,10 +100,25 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
 
   try {
     const { id } = await context.params;
-    const body = (await request.json()) as { line_id?: string; removed_by?: string };
+    const body = (await request.json()) as {
+      line_id?: string;
+      removed_by?: string;
+      force_cancel_orphan_jobs?: boolean;
+    };
     const lineId = body.line_id?.trim() ?? "";
     if (!lineId) {
       return NextResponse.json({ error: "line_id is required." }, { status: 400 });
+    }
+
+    const forceCancel = body.force_cancel_orphan_jobs === true;
+    const orderBefore = await getSalesOrderByIdFresh(id);
+    if (!orderBefore) {
+      return NextResponse.json({ error: "Sales order not found." }, { status: 404 });
+    }
+
+    const guard = guardLineRemovalPatternSync(orderBefore, lineId, forceCancel);
+    if (!guard.ok) {
+      return NextResponse.json(guard.body, { status: guard.status });
     }
 
     const removedBy = body.removed_by?.trim() || "api";
@@ -115,7 +135,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       source: "api",
     });
 
-    await syncPatternJobsFromSalesOrder(result.order);
+    await syncPatternAfterLineRemoval(result.order, forceCancel || guard.pendingCount > 0);
 
     return NextResponse.json({
       order: result.order,

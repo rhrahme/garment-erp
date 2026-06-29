@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
 import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
 import { requireAuthenticated } from "@/lib/auth/session";
+import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import { notifyIntegration } from "@/lib/integrations";
 import { syncPatternJobsFromSalesOrder } from "@/lib/pattern/sync-from-sales-order";
+import {
+  guardLineRemovalPatternSync,
+  syncPatternAfterLineRemoval,
+} from "@/lib/pattern/sync-guard";
 import {
   appendSalesOrderFabricLines,
   deleteSalesOrderFabricLine,
@@ -93,10 +98,24 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     }
 
     const { id } = await context.params;
-    const body = (await request.json()) as { line_id?: string };
+    const body = (await request.json()) as {
+      line_id?: string;
+      force_cancel_orphan_jobs?: boolean;
+    };
     const lineId = body.line_id?.trim() ?? "";
     if (!lineId) {
       return NextResponse.json({ error: "line_id is required." }, { status: 400 });
+    }
+
+    const forceCancel = body.force_cancel_orphan_jobs === true;
+    const orderBefore = await getSalesOrderByIdFresh(id);
+    if (!orderBefore) {
+      return NextResponse.json({ error: "Sales order not found." }, { status: 404 });
+    }
+
+    const guard = guardLineRemovalPatternSync(orderBefore, lineId, forceCancel);
+    if (!guard.ok) {
+      return NextResponse.json(guard.body, { status: guard.status });
     }
 
     const result = await deleteSalesOrderFabricLine(id, lineId, { removedBy: session.email });
@@ -104,14 +123,14 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
+    await syncPatternAfterLineRemoval(result.order, forceCancel || guard.pendingCount > 0);
+
     await notifyIntegration("sales_order.fabric_lines_removed", {
       order_id: result.order.id,
       so_number: result.order.so_number,
       line_id: result.removed_line.id,
       removed_by: session.email,
     });
-
-    await syncPatternJobsFromSalesOrder(result.order);
 
     const safeOrder = session.canViewFabricListPrices
       ? result.order

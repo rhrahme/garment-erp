@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Star } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { PatternMismatchBanner } from "@/components/pattern/PatternMismatchBanner";
+import type { PatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mismatch";
 import type { PatternJob } from "@/lib/types/pattern";
 import type { SalesOrder } from "@/lib/types/sales-orders";
 
@@ -18,6 +20,7 @@ type PatternOrderBoardProps = {
 export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
   const [order, setOrder] = useState<SalesOrder | null>(null);
   const [jobs, setJobs] = useState<PatternJob[]>([]);
+  const [mismatch, setMismatch] = useState<PatternSalesOrderMismatch | null>(null);
   const [awaitingLines, setAwaitingLines] = useState(false);
   const [loading, setLoading] = useState(true);
   const [actingId, setActingId] = useState<string | null>(null);
@@ -32,6 +35,7 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
       if (!res.ok) throw new Error(data.error ?? "Failed to load");
       setOrder(data.order);
       setJobs(data.jobs ?? []);
+      setMismatch(data.mismatch ?? null);
       setAwaitingLines(Boolean(data.awaiting_lines));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
@@ -96,6 +100,8 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
           </p>
         ) : null}
       </div>
+
+      {mismatch ? <PatternMismatchBanner mismatch={mismatch} /> : null}
 
       {garmentTypes.length > 0 ? (
         <div className="rounded-xl border border-violet-100 bg-violet-50 p-4 text-sm text-violet-900">
