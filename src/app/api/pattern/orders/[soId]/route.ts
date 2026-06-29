@@ -21,7 +21,7 @@ export async function GET(_request: Request, context: { params: Promise<{ soId: 
       return NextResponse.json({ error: "Sales order not found." }, { status: 404 });
     }
 
-    const jobs = listPatternJobsForOrder(soId);
+    const jobs = listPatternJobsForOrder(soId).filter((job) => job.status !== "cancelled");
     const safeOrder = session.canViewFabricListPrices ? order : redactSalesOrderFabricPrices(order);
 
     return NextResponse.json({
