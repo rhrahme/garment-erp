@@ -116,7 +116,7 @@
       "garment_type": "Suit",
       "pattern_code": null,
       "width_inches": null,
-      "fabric_number": "1005.043/2",
+      "fabric_number": "10005.043/2",
       "article_number": 2,
       "blocked_reason": null,
       "sales_order_id": "so-1781953079630",
@@ -12153,5 +12153,5 @@
       "sales_order_line_id": "line-1781653037821-0"
     }
   ],
-  "updated_at": "2026-06-29T19:12:43.656Z"
+  "updated_at": "2026-06-29T19:14:35.961Z"
 }
