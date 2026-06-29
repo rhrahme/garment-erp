@@ -1,8 +1,10 @@
 import {
   clientCodeFromReference,
-  formatCombinedGarmentDescription,
-  getGarmentPieces,
   lineArticleFromStickerCode,
+  pieceNamesFromInvoicePieceField,
+  resolveCombinedGarmentType,
+  resolveInvoiceGarmentDescription,
+  formatCombinedGarmentDescription,
 } from "@/lib/sales-orders/label-codes";
 import type { CustomerInvoiceLine } from "@/lib/types/customer-invoices";
 
@@ -157,12 +159,10 @@ export function resolveInvoiceLineArticle(line: CustomerInvoiceLine): CustomerIn
 }
 
 function resolveInvoiceLineDescription(line: CustomerInvoiceLine): string {
-  const pieceName = line.piece_name?.trim();
-  if (pieceName?.includes(" + ") && getGarmentPieces(line.garment_type).length > 1) {
-    return formatCombinedGarmentDescription(
-      line.garment_type,
-      pieceName.split(" + ").map((name) => name.trim())
-    );
+  const pieceNames = pieceNamesFromInvoicePieceField(line.piece_name);
+  if (pieceNames.length > 1) {
+    const garmentType = resolveCombinedGarmentType(line.garment_type, pieceNames);
+    return formatCombinedGarmentDescription(garmentType, pieceNames);
   }
   return line.description;
 }

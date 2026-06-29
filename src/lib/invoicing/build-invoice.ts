@@ -8,13 +8,14 @@ import { computeDueDate } from "@/lib/invoicing/pricing";
 import {
   fabricLineArticleNumber,
   formatCombinedGarmentDescription,
-  formatLabelGarmentDescription,
   getGarmentPieces,
+  resolveCombinedGarmentType,
+  resolveInvoiceGarmentDescription,
   lineArticleFromStickerCode,
 } from "@/lib/sales-orders/label-codes";
 import { resolveInvoiceComposition } from "@/lib/invoicing/display";
 import { applyAllInvoiceLineReductions } from "@/lib/invoicing/line-reduction-suggestions";
-import { isCombinedInvoiceLine, pieceNamesFromLine } from "@/lib/invoicing/suit-combine-lines";
+import { isCombinedInvoiceLine } from "@/lib/invoicing/suit-combine-lines";
 import { resolveInvoiceVatRate } from "@/lib/invoicing/vat";
 import { findFabricLineForInvoiceLine } from "@/lib/sales-orders/line-cross-reference";
 import type { CustomerInvoice, CustomerInvoiceLine } from "@/lib/types/customer-invoices";
@@ -52,9 +53,7 @@ function orderedPieceNames(garmentType: string, pieceNames: string[]): string[] 
 }
 
 function lineDescription(garmentType: string, pieceName: string | null): string {
-  const pieceNames = pieceNamesFromLine(pieceName);
-  if (pieceNames.length > 1) return formatCombinedGarmentDescription(garmentType, pieceNames);
-  return formatLabelGarmentDescription(garmentType, pieceName ?? garmentType);
+  return resolveInvoiceGarmentDescription(garmentType, pieceName);
 }
 
 export {
@@ -191,8 +190,11 @@ export function buildInvoiceLinesFromSalesOrder(order: SalesOrder): CustomerInvo
         id: `inv-line-${order.id}-${index}`,
         article_number: articleNumber,
         sales_order_line_id: fabricLine.id,
-        description: formatCombinedGarmentDescription(fabricLine.garment_type, pieceNames),
-        garment_type: fabricLine.garment_type,
+        description: formatCombinedGarmentDescription(
+          resolveCombinedGarmentType(fabricLine.garment_type, pieceNames),
+          pieceNames
+        ),
+        garment_type: resolveCombinedGarmentType(fabricLine.garment_type, pieceNames),
         piece_name: pieceNames.join(" + "),
         sticker_code: stickers[0]!.code,
         fabric_number: fabricLine.fabric_number,
