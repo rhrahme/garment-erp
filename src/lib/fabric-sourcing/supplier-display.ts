@@ -42,16 +42,40 @@ export function normalizeFabricSupplierFields(
   };
 }
 
+/** Solbiati + Loro Piana share one factory inbox — one PO and one supplier email. */
+export const LORO_PIANA_FACTORY_SUPPLIER_IDS = ["loro-piana", "solbiati"] as const;
+
+export function isLoroPianaFactorySupplier(supplierId: string): boolean {
+  return (LORO_PIANA_FACTORY_SUPPLIER_IDS as readonly string[]).includes(supplierId);
+}
+
+/** Email batch grouping — merges Solbiati POs with Loro Piana. */
+export function supplierEmailBatchKey(supplierId: string): string {
+  return isLoroPianaFactorySupplier(supplierId) ? "loro-piana" : supplierId;
+}
+
+/** Price-list supplier ids to load when building a supplier email batch. */
+export function fabricCatalogSupplierIdsForEmail(supplierId: string): string[] {
+  if (isLoroPianaFactorySupplier(supplierId)) {
+    return [...LORO_PIANA_FACTORY_SUPPLIER_IDS];
+  }
+  return [supplierId];
+}
+
+/** UI/PDF grouping by brand tab — Solbiati vs Loro Piana wool/cashmere. */
 export function fabricSupplierGroupKey(supplierId: string, fabricNumber: string): string {
   const poId = fabricPoSupplierId(supplierId, fabricNumber);
   const line = isSolbiatiFabric(supplierId, fabricNumber) ? "solbiati" : "main";
   return `${poId}:${line}`;
 }
 
-/** PO supplier id for a fabric group — Solbiati gets its own PO/email even though it shares Loro Piana contacts. */
+/** @deprecated Legacy mill-line group keys — always resolves to the Loro Piana PO account. */
 export function fabricPoSupplierIdForGroup(groupKey: string): string {
   const [poSupplierId, millLine] = groupKey.split(":");
-  return millLine === "solbiati" ? "solbiati" : poSupplierId;
+  if (millLine === "solbiati" || millLine === "main") {
+    return "loro-piana";
+  }
+  return poSupplierId ?? groupKey;
 }
 
 /** Allow manual fabric entry when a number is not found in the catalog search. */

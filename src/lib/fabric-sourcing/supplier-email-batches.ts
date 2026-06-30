@@ -1,3 +1,4 @@
+import { supplierEmailBatchKey } from "@/lib/fabric-sourcing/supplier-display";
 import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 
@@ -22,13 +23,31 @@ export type SupplierEmailBatch = {
 };
 
 function batchGroupKey(order: SupplierEmailQueueItem, consolidate: boolean): string {
+  const supplierKey = supplierEmailBatchKey(order.supplier_id);
   if (!consolidate) {
-    return order.id;
+    // One email per supplier per sales order — Solbiati + Loro Piana share the factory inbox.
+    const salesOrderKey = order.sales_order_id ?? order.id;
+    return `so:${salesOrderKey}:${supplierKey}`;
   }
   if (!order.emailed_at) {
-    return `pending:${order.supplier_id}`;
+    return `pending:${supplierKey}`;
   }
-  return `sent:${order.supplier_id}:${order.emailed_at}`;
+  return `sent:${supplierKey}:${order.emailed_at}`;
+}
+
+function resolveBatchSupplierMetadata(orders: SupplierEmailQueueItem[]): {
+  supplier_id: string;
+  supplier_name: string;
+} {
+  const supplier_id = supplierEmailBatchKey(orders[0]!.supplier_id);
+  const preferred =
+    orders.find((order) => order.supplier_id === "loro-piana") ??
+    orders.find((order) => order.supplier?.name === "Loro Piana") ??
+    orders[0]!;
+  return {
+    supplier_id,
+    supplier_name: preferred.supplier?.name ?? preferred.supplier_id,
+  };
 }
 
 export function groupSupplierEmailBatches(
@@ -57,10 +76,12 @@ export function groupSupplierEmailBatches(
         ? sorted.find((order) => order.emailed_at)?.emailed_at ?? null
         : null;
 
+    const { supplier_id, supplier_name } = resolveBatchSupplierMetadata(sorted);
+
     batches.push({
       id: key,
-      supplier_id: sorted[0]!.supplier_id,
-      supplier_name: sorted[0]!.supplier?.name ?? sorted[0]!.supplier_id,
+      supplier_id,
+      supplier_name,
       orders: sorted,
       combines_multiple_orders: salesOrderIds.size > 1,
       fabric_line_count: fabricLineCount,

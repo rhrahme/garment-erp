@@ -10,6 +10,7 @@ import {
   purchaseOrdersBatchToEmail,
   formatDeliveryDestinationForSubject,
 } from "@/lib/fabric-sourcing/email-content";
+import { fabricCatalogSupplierIdsForEmail } from "@/lib/fabric-sourcing/supplier-display";
 import {
   groupSupplierEmailBatches,
   type SupplierEmailBatch,
@@ -18,6 +19,24 @@ import {
 import type { SupplierFabric } from "@/lib/types/fabric-sourcing";
 import { formatDateTimeRiyadh } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
+
+function fabricsForEmailBatch(
+  batch: SupplierEmailBatch,
+  fabricsBySupplier: Record<string, SupplierFabric[]>
+): SupplierFabric[] {
+  const catalogIds = fabricCatalogSupplierIdsForEmail(batch.supplier_id);
+  const seen = new Set<string>();
+  const merged: SupplierFabric[] = [];
+  for (const supplierId of catalogIds) {
+    for (const fabric of fabricsBySupplier[supplierId] ?? []) {
+      const key = `${fabric.supplier_id}:${fabric.fabric_number}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      merged.push(fabric);
+    }
+  }
+  return merged;
+}
 
 export function SupplierEmailsWorkspace() {
   const searchParams = useSearchParams();
@@ -65,7 +84,9 @@ export function SupplierEmailsWorkspace() {
       const loadedBatches = data.batches ?? [];
       setBatches(loadedBatches);
 
-      const supplierIds = [...new Set(loadedBatches.map((batch) => batch.supplier_id))];
+      const supplierIds = [
+        ...new Set(loadedBatches.flatMap((batch) => fabricCatalogSupplierIdsForEmail(batch.supplier_id))),
+      ];
       const specsMap: Record<string, SupplierFabric[]> = {};
       await Promise.all(
         supplierIds.map(async (supplierId) => {
@@ -250,7 +271,7 @@ export function SupplierEmailsWorkspace() {
                 <PendingSupplierEmailBatchCard
                   key={batch.id}
                   batch={batch}
-                  fabrics={fabricsBySupplier[batch.supplier_id] ?? []}
+                  fabrics={fabricsForEmailBatch(batch, fabricsBySupplier)}
                   factoryEmail={factoryEmail}
                   isAdmin={isAdmin}
                   onSent={(poIds, result) => void handleSent(poIds, result)}
@@ -267,7 +288,7 @@ export function SupplierEmailsWorkspace() {
                 <SentSupplierEmailBatchCard
                   key={batch.id}
                   batch={batch}
-                  fabrics={fabricsBySupplier[batch.supplier_id] ?? []}
+                  fabrics={fabricsForEmailBatch(batch, fabricsBySupplier)}
                   factoryEmail={factoryEmail}
                 />
               ))}

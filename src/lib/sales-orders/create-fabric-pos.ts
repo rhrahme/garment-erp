@@ -1,21 +1,18 @@
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSupplierByIdFromContactsSync } from "@/lib/data/supplier-contacts";
-import {
-  fabricPoSupplierIdForGroup,
-  fabricSupplierGroupKey,
-} from "@/lib/fabric-sourcing/supplier-display";
+import { fabricPoSupplierId } from "@/lib/fabric-sourcing/supplier-display";
 import { buildClientReference, getSalesOrderById, writeSalesOrders, readSalesOrders } from "@/lib/data/sales-orders";
 import { createStoredFabricOrder } from "@/lib/integrations/fabric-order-store";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
-function groupLinesBySupplier(lines: SalesOrderFabricLine[]): Map<string, SalesOrderFabricLine[]> {
+function groupLinesByPoSupplier(lines: SalesOrderFabricLine[]): Map<string, SalesOrderFabricLine[]> {
   const groups = new Map<string, SalesOrderFabricLine[]>();
   for (const line of lines) {
-    const groupKey = fabricSupplierGroupKey(line.supplier_id, line.fabric_number);
-    const bucket = groups.get(groupKey) ?? [];
+    const supplierId = fabricPoSupplierId(line.supplier_id, line.fabric_number);
+    const bucket = groups.get(supplierId) ?? [];
     bucket.push(line);
-    groups.set(groupKey, bucket);
+    groups.set(supplierId, bucket);
   }
   return groups;
 }
@@ -39,11 +36,10 @@ export async function createFabricPosFromSalesOrder(salesOrderId: string): Promi
   }
 
   const clientReference = buildClientReference(salesOrder.client_code, salesOrder.so_number);
-  const groups = groupLinesBySupplier(salesOrder.fabric_lines);
+  const groups = groupLinesByPoSupplier(salesOrder.fabric_lines);
   const fabricOrders: PurchaseOrder[] = [];
 
-  for (const [groupKey, lines] of groups) {
-    const supplierId = fabricPoSupplierIdForGroup(groupKey);
+  for (const [supplierId, lines] of groups) {
     const supplier = getSupplierByIdFromContactsSync(supplierId);
     if (!supplier) {
       throw new Error(`Unknown supplier: ${supplierId}`);
