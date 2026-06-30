@@ -15,6 +15,7 @@ import { customerInvoiceMatchesSearch } from "@/lib/invoicing/list-search";
 import { formatDate, cn } from "@/lib/utils";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import { InvoiceableOrdersPanel } from "@/components/invoicing/InvoiceableOrdersPanel";
+import { RiyadhBankDetailsPdfLink } from "@/components/invoicing/RiyadhBankDetailsPdfLink";
 
 const STATUS_TABS = [
   { id: "all" as const, label: "All" },
@@ -67,13 +68,18 @@ export function CustomerInvoicesWorkspace({
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-violet-200 bg-violet-50 px-5 py-4 text-sm text-violet-950">
-        <p className="font-medium">How invoicing works</p>
-        <p className="mt-1 text-violet-900">
-          Create a draft from <span className="font-medium">Ready to invoice</span> or a sales order page.
-          One invoice per bespoke order — lines are one per garment piece. Prices prefill from costing (fabric +
-          5% duty + make cost). Adjust before <span className="font-medium">Mark as sent</span>, then{" "}
-          <span className="font-medium">Mark paid</span> when collected.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="font-medium">How invoicing works</p>
+            <p className="mt-1 text-violet-900">
+              Create a draft from <span className="font-medium">Ready to invoice</span> or a sales order page.
+              One invoice per bespoke order — lines are one per garment piece. Prices prefill from costing (fabric +
+              5% duty + make cost). Adjust before <span className="font-medium">Mark as sent</span>, then{" "}
+              <span className="font-medium">Mark paid</span> when collected.
+            </p>
+          </div>
+          <RiyadhBankDetailsPdfLink variant="button" className="shrink-0 border-violet-200 text-violet-900 hover:border-violet-300 hover:text-violet-950" />
+        </div>
       </div>
 
       <InvoiceSummaryCards summary={summary} />

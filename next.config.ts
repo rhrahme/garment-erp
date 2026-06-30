@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
     "/api/suppliers/loro-piana/images/**": [
       "./data/suppliers/loro-piana/images/manifest.json",
     ],
+    "/api/reference-documents/[id]": [
+      "./documents-and-data/riyadh-bank-details.pdf",
+      "./src/data/reference-source-files.json",
+    ],
   },
   outputFileTracingExcludes: {
     "/api/suppliers/loro-piana/images/**": [

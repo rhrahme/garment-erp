@@ -4,6 +4,8 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { getSessionContext } from "@/lib/auth/session";
 import { getDocumentsLibrarySnapshot } from "@/lib/data/documents-library";
 
+export const dynamic = "force-dynamic";
+
 export default async function DocumentsPage() {
   const session = await getSessionContext();
   if (!session.isAdmin) {

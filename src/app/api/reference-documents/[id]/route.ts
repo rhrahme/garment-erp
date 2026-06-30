@@ -1,24 +1,30 @@
 import fs from "fs";
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth/session";
+import { requireAdmin, requireAuthenticated } from "@/lib/auth/session";
 import { generateRiyadhBankDetailsPdf } from "@/lib/invoicing/generate-riyadh-bank-details-pdf";
 import {
   contentTypeForReferenceFilename,
   getReferenceSourceFileById,
+  isAuthenticatedCompanyDocument,
   isDynamicallyGeneratedReferenceFile,
+  RIYADH_BANK_DETAILS_DOCUMENT_ID,
 } from "@/lib/data/reference-source-files";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const session = await requireAdmin();
+    const { id } = await context.params;
+
+    const session = isAuthenticatedCompanyDocument(id)
+      ? await requireAuthenticated()
+      : await requireAdmin();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    const { id } = await context.params;
-
     if (isDynamicallyGeneratedReferenceFile(id)) {
-      if (id === "riyadh-bank-details") {
+      if (id === RIYADH_BANK_DETAILS_DOCUMENT_ID) {
         const pdfBytes = generateRiyadhBankDetailsPdf();
         return new NextResponse(Buffer.from(pdfBytes), {
           headers: {

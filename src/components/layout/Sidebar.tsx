@@ -71,17 +71,21 @@ function isNavActive(pathname: string, href: string): boolean {
 
 export function Sidebar({
   clientsOnly = false,
+  isAdmin = true,
   mobileOpen = false,
   onNavigate,
 }: {
   clientsOnly?: boolean;
+  isAdmin?: boolean;
   /** Slide-over nav open state (mobile only). */
   mobileOpen?: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const items = clientsOnly ? qcNavItems : navItems;
+  const items = (clientsOnly ? qcNavItems : navItems).filter(
+    (item) => isAdmin || item.href !== "/documents"
+  );
 
   async function handleLogout() {
     const supabase = createClient();

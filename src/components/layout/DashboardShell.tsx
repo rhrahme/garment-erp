@@ -30,6 +30,7 @@ export function DashboardShell({
 
       <Sidebar
         clientsOnly={clientsOnly}
+        isAdmin={session.isAdmin}
         mobileOpen={mobileNavOpen}
         onNavigate={() => setMobileNavOpen(false)}
       />

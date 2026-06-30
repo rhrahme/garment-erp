@@ -12,7 +12,10 @@ interface ReferenceSourceManifest {
 }
 
 /** Reference files generated on demand — always available in production without a disk copy. */
-const DYNAMIC_REFERENCE_FILE_IDS = new Set(["riyadh-bank-details"]);
+export const RIYADH_BANK_DETAILS_DOCUMENT_ID = "riyadh-bank-details";
+export const RIYADH_BANK_DETAILS_PDF_HREF = `/api/reference-documents/${RIYADH_BANK_DETAILS_DOCUMENT_ID}`;
+
+const DYNAMIC_REFERENCE_FILE_IDS = new Set([RIYADH_BANK_DETAILS_DOCUMENT_ID]);
 
 function loadManifest(): ReferenceSourceManifest {
   const manifestPath = path.join(process.cwd(), "src/data/reference-source-files.json");
@@ -22,6 +25,11 @@ function loadManifest(): ReferenceSourceManifest {
 
 export function isDynamicallyGeneratedReferenceFile(id: string): boolean {
   return DYNAMIC_REFERENCE_FILE_IDS.has(id);
+}
+
+/** Company wire-instruction PDFs — any logged-in ERP user may download. */
+export function isAuthenticatedCompanyDocument(id: string): boolean {
+  return isDynamicallyGeneratedReferenceFile(id);
 }
 
 export function isReferenceSourceFileAvailable(id: string): boolean {

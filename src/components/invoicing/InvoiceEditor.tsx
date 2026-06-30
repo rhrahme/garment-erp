@@ -20,7 +20,8 @@ import { DownloadInvoicePdfButton } from "@/components/invoicing/DownloadInvoice
 import { InvoiceLineFabricPoLink, InvoiceLineSoLink } from "@/components/invoicing/InvoiceLineCrossRefLinks";
 import { LineReductionSuggestionsPanel } from "@/components/invoicing/LineReductionSuggestionsPanel";
 import { InvoiceTotalsFooter } from "@/components/invoicing/InvoiceTotalsFooter";
-import { isDubaiFabricDelivery } from "@/lib/invoicing/bank-details";
+import { isDubaiFabricDelivery, isRiyadhFabricDelivery } from "@/lib/invoicing/bank-details";
+import { RiyadhBankDetailsPdfLink } from "@/components/invoicing/RiyadhBankDetailsPdfLink";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
 import type { InvoiceLineCrossRef } from "@/lib/sales-orders/line-cross-reference";
 import { formatDate } from "@/lib/utils";
@@ -96,6 +97,7 @@ export function InvoiceEditor({
   const liveTotal = Math.round((liveSubtotal + liveVatAmount) * 100) / 100;
 
   const showDhsEquivalent = isDubaiFabricDelivery(invoice.delivery_destination);
+  const showRiyadhBankPdf = isRiyadhFabricDelivery(invoice.delivery_destination);
 
   const swatchFabrics = useMemo(() => [...lineSwatchKeys.values()], [lineSwatchKeys]);
 
@@ -324,6 +326,13 @@ export function InvoiceEditor({
       </div>
 
       <InvoicePreview invoice={previewInvoice} invoiceId={invoice.id} />
+
+      {showRiyadhBankPdf ? (
+        <p className="text-sm text-slate-600">
+          Payment details are shown in the preview above. Need a standalone file for clients?{" "}
+          <RiyadhBankDetailsPdfLink />
+        </p>
+      ) : null}
 
       {(invoice.sent_at || invoice.paid_at) && (
         <p className="text-xs text-slate-500">
