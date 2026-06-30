@@ -41,6 +41,8 @@ export interface ReferenceSourceFileRow {
   notes: string | null;
   fileBytes: number;
   existsOnDisk: boolean;
+  /** True when the file exists on disk or can be generated/served by the API. */
+  isAvailable: boolean;
   downloadHref: string;
 }
 

@@ -15,6 +15,9 @@ import type {
   PriceCatalogRow,
   ReferenceSourceFileRow,
 } from "@/lib/data/documents-library-shared";
+import {
+  isDynamicallyGeneratedReferenceFile,
+} from "@/lib/data/reference-source-files";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 export type {
@@ -128,6 +131,8 @@ function loadReferenceSourceFiles(): {
     const files = (raw.files ?? []).map((entry) => {
       const fullPath = path.join(process.cwd(), entry.relative_path);
       const existsOnDisk = fs.existsSync(fullPath);
+      const isGenerated = isDynamicallyGeneratedReferenceFile(entry.id);
+      const isAvailable = existsOnDisk || isGenerated;
       const fileBytes = existsOnDisk ? fs.statSync(fullPath).size : 0;
       return {
         id: entry.id,
@@ -140,6 +145,7 @@ function loadReferenceSourceFiles(): {
         notes: entry.notes ?? null,
         fileBytes,
         existsOnDisk,
+        isAvailable,
         downloadHref: `/api/reference-documents/${entry.id}`,
       };
     });

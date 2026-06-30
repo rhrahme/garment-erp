@@ -20,7 +20,7 @@ export function DocumentsLibrary({ snapshot }: { snapshot: DocumentsLibrarySnaps
   const scannedFiles = snapshot.scannedFiles.reduce((sum, row) => sum + row.fileCount, 0);
   const scannedBytes = snapshot.scannedFiles.reduce((sum, row) => sum + row.totalBytes, 0);
   const referenceBytes = snapshot.referenceSourceFiles.reduce((sum, row) => sum + row.fileBytes, 0);
-  const referenceOnDisk = snapshot.referenceSourceFiles.filter((row) => row.existsOnDisk).length;
+  const referenceOnDisk = snapshot.referenceSourceFiles.filter((row) => row.isAvailable).length;
   const companyDocuments = snapshot.referenceSourceFiles.filter((row) => row.supplier === "Company");
   const supplierSourceFiles = snapshot.referenceSourceFiles.filter((row) => row.supplier !== "Company");
 
@@ -212,16 +212,18 @@ export function DocumentsLibrary({ snapshot }: { snapshot: DocumentsLibrarySnaps
                     <td className="px-4 py-3 align-top">
                       <p className="font-medium text-slate-900">{file.filename}</p>
                       {file.notes ? <p className="mt-0.5 text-xs text-slate-500">{file.notes}</p> : null}
-                      {!file.existsOnDisk ? (
+                      {!file.isAvailable ? (
                         <p className="mt-0.5 text-xs text-rose-600">Missing on disk</p>
+                      ) : !file.existsOnDisk ? (
+                        <p className="mt-0.5 text-xs text-slate-500">Generated on request</p>
                       ) : null}
                     </td>
                     <td className="px-4 py-3 capitalize text-slate-600">{file.type.replace(/_/g, " ")}</td>
                     <td className="px-4 py-3 text-slate-600">
-                      {file.existsOnDisk ? formatDataSize(file.fileBytes) : "—"}
+                      {file.existsOnDisk ? formatDataSize(file.fileBytes) : file.isAvailable ? "Generated" : "—"}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {file.existsOnDisk ? (
+                      {file.isAvailable ? (
                         <a
                           href={file.downloadHref}
                           target="_blank"
@@ -272,7 +274,7 @@ export function DocumentsLibrary({ snapshot }: { snapshot: DocumentsLibrarySnaps
                   <td className="px-4 py-3 align-top">
                     <p className="text-slate-800">{file.filename}</p>
                     {file.notes ? <p className="mt-0.5 text-xs text-slate-500">{file.notes}</p> : null}
-                    {!file.existsOnDisk ? (
+                    {!file.isAvailable ? (
                       <p className="mt-0.5 text-xs text-rose-600">Missing from reference-documents/</p>
                     ) : null}
                   </td>
@@ -289,7 +291,7 @@ export function DocumentsLibrary({ snapshot }: { snapshot: DocumentsLibrarySnaps
                     {file.existsOnDisk ? formatDataSize(file.fileBytes) : "—"}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {file.existsOnDisk ? (
+                    {file.isAvailable ? (
                       <a
                         href={file.downloadHref}
                         target="_blank"

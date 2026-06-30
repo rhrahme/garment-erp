@@ -1,9 +1,11 @@
 import fs from "fs";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/session";
+import { generateRiyadhBankDetailsPdf } from "@/lib/invoicing/generate-riyadh-bank-details-pdf";
 import {
   contentTypeForReferenceFilename,
   getReferenceSourceFileById,
+  isDynamicallyGeneratedReferenceFile,
 } from "@/lib/data/reference-source-files";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
@@ -14,6 +16,21 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     }
 
     const { id } = await context.params;
+
+    if (isDynamicallyGeneratedReferenceFile(id)) {
+      if (id === "riyadh-bank-details") {
+        const pdfBytes = generateRiyadhBankDetailsPdf();
+        return new NextResponse(Buffer.from(pdfBytes), {
+          headers: {
+            "Content-Type": "application/pdf",
+            "Content-Disposition": 'attachment; filename="Riyadh bank details.pdf"',
+            "Cache-Control": "private, max-age=3600",
+          },
+        });
+      }
+      return NextResponse.json({ error: "Reference document not found." }, { status: 404 });
+    }
+
     const file = getReferenceSourceFileById(id);
     if (!file) {
       return NextResponse.json({ error: "Reference document not found." }, { status: 404 });
@@ -22,13 +39,14 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     const content = fs.readFileSync(file.absolutePath);
     return new NextResponse(content, {
       headers: {
-        "Content-Type": contentTypeForReferenceFilename(file.absolutePath),
-        "Content-Disposition": `inline; filename="${file.filename}"`,
+        "Content-Type": contentTypeForReferenceFilename(file.filename),
+        "Content-Disposition": `attachment; filename="${file.filename}"`,
         "Content-Length": String(content.length),
+        "Cache-Control": "private, max-age=3600",
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to open reference document.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Failed to serve reference document:", error);
+    return NextResponse.json({ error: "Failed to open reference document." }, { status: 500 });
   }
 }
