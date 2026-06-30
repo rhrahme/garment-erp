@@ -21,6 +21,8 @@ export function DocumentsLibrary({ snapshot }: { snapshot: DocumentsLibrarySnaps
   const scannedBytes = snapshot.scannedFiles.reduce((sum, row) => sum + row.totalBytes, 0);
   const referenceBytes = snapshot.referenceSourceFiles.reduce((sum, row) => sum + row.fileBytes, 0);
   const referenceOnDisk = snapshot.referenceSourceFiles.filter((row) => row.existsOnDisk).length;
+  const companyDocuments = snapshot.referenceSourceFiles.filter((row) => row.supplier === "Company");
+  const supplierSourceFiles = snapshot.referenceSourceFiles.filter((row) => row.supplier !== "Company");
 
   function importStatusLabel(status: string): string {
     if (status === "imported") return "Imported";
@@ -188,6 +190,57 @@ export function DocumentsLibrary({ snapshot }: { snapshot: DocumentsLibrarySnaps
         </div>
       </section>
 
+      {companyDocuments.length > 0 ? (
+        <section>
+          <div className="mb-3">
+            <h2 className="text-lg font-semibold text-slate-900">Company documents</h2>
+            <p className="text-sm text-slate-500">Internal company reference files — bank details, policies, and similar</p>
+          </div>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3">Document</th>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3">Size</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {companyDocuments.map((file) => (
+                  <tr key={file.id} className="border-b border-slate-100 last:border-0">
+                    <td className="px-4 py-3 align-top">
+                      <p className="font-medium text-slate-900">{file.filename}</p>
+                      {file.notes ? <p className="mt-0.5 text-xs text-slate-500">{file.notes}</p> : null}
+                      {!file.existsOnDisk ? (
+                        <p className="mt-0.5 text-xs text-rose-600">Missing on disk</p>
+                      ) : null}
+                    </td>
+                    <td className="px-4 py-3 capitalize text-slate-600">{file.type.replace(/_/g, " ")}</td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {file.existsOnDisk ? formatDataSize(file.fileBytes) : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {file.existsOnDisk ? (
+                        <a
+                          href={file.downloadHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                        >
+                          Download
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+
       <section>
         <div className="mb-3">
           <h2 className="text-lg font-semibold text-slate-900">Original supplier source files</h2>
@@ -213,7 +266,7 @@ export function DocumentsLibrary({ snapshot }: { snapshot: DocumentsLibrarySnaps
               </tr>
             </thead>
             <tbody>
-              {snapshot.referenceSourceFiles.map((file) => (
+              {supplierSourceFiles.map((file) => (
                 <tr key={file.id} className="border-b border-slate-100 last:border-0">
                   <td className="px-4 py-3 font-medium text-slate-900">{file.supplier}</td>
                   <td className="px-4 py-3 align-top">

@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-02T00:00:00.000Z",
+  "updated_at": "2026-07-01T00:00:00.000Z",
   "notes": "Original supplier price lists and product info — copied from ~/Desktop/Fabrics/",
   "files": [
     {
@@ -222,6 +222,16 @@
       "catalog_id": null,
       "import_status": "imported",
       "notes": "Hagan factory layout — shown in ERP at /production/floor-map"
+    },
+    {
+      "id": "riyadh-bank-details",
+      "supplier": "Company",
+      "filename": "Riyadh bank details.pdf",
+      "relative_path": "documents-and-data/riyadh-bank-details.pdf",
+      "type": "company_document",
+      "catalog_id": null,
+      "import_status": "imported",
+      "notes": "Wire transfer instructions for Hagan Riyadh account (Banque Saudi Fransi)"
     }
   ]
 }
