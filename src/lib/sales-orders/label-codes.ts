@@ -205,12 +205,54 @@ export function formatSupplierStickerCode(clientCode: string, productionCode: st
   return `${clientCode}/ ${stripBrandPrefixFromProductionCode(productionCode, clientCode)}`;
 }
 
+/** Client code prefix — FR-0226-0024, GL-0326-0003, etc. */
+const CLIENT_CODE_PATTERN = /^[A-Z]{2}-\d{4}-\d{4}$/;
+
+/**
+ * Expand pasted / scanned fabric labels into canonical codes the scan pipeline understands.
+ * Handles supplier format (FR-0226-0024/ 0109-L32), full piece stickers, and shorthand cut codes.
+ */
+export function expandFabricLabelScanInput(raw: string): string[] {
+  const normalized = raw.trim().toUpperCase();
+  if (!normalized) return [];
+
+  const candidates: string[] = [normalized];
+
+  const supplierSplit = normalized.match(/^([A-Z]{2}-\d{4}-\d{4})\s*\/\s*(.+)$/);
+  if (supplierSplit) {
+    const clientCode = supplierSplit[1]!;
+    const shortProd = supplierSplit[2]!.trim();
+    const brand = brandPrefixFromClientCode(clientCode);
+    if (shortProd && CLIENT_CODE_PATTERN.test(clientCode)) {
+      const withBrand = shortProd.startsWith(`${brand}-`) ? shortProd : `${brand}-${shortProd}`;
+      candidates.push(withBrand);
+    }
+  }
+
+  return [...new Set(candidates.filter(Boolean))];
+}
+
+/** True when input looks like a fabric label, not an employee name or badge ID. */
+export function looksLikeFabricLabelInput(raw: string): boolean {
+  const normalized = raw.trim().toUpperCase();
+  if (!normalized || normalized.length < 8) return false;
+
+  if (/^[A-Z]{2}-\d{4}-\d{4}\s*\/\s*.+/.test(normalized)) return true;
+  if (/^[A-Z]{2}-\d{4}-\d{4}-SO-\d{4}-\d{4,}-L\d{2}/.test(normalized)) return true;
+  if (/^[A-Z]{2}-\d{4}-L\d{2}(?:-|$)/.test(normalized)) return true;
+
+  return false;
+}
+
 export function stickerCodesMatch(scanInput: string, stickerCode: string, clientCode: string): boolean {
-  const normalized = scanInput.trim().toUpperCase();
-  if (!normalized) return false;
-  if (stickerCode.toUpperCase() === normalized) return true;
-  if (productionCodeFromSticker(stickerCode, clientCode).toUpperCase() === normalized) return true;
-  return supplierFabricProductionCode(stickerCode, clientCode).toUpperCase() === normalized;
+  for (const candidate of expandFabricLabelScanInput(scanInput)) {
+    const normalized = candidate.trim().toUpperCase();
+    if (!normalized) continue;
+    if (stickerCode.toUpperCase() === normalized) return true;
+    if (productionCodeFromSticker(stickerCode, clientCode).toUpperCase() === normalized) return true;
+    if (supplierFabricProductionCode(stickerCode, clientCode).toUpperCase() === normalized) return true;
+  }
+  return false;
 }
 
 /** 1-based article # for a fabric line — matches L01, L02… on sticker codes. */

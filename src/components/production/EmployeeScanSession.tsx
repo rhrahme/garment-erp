@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, LogOut, ScanLine, UserRound } from "lucide-react";
 import { EmployeeBadgeSelect } from "@/components/production/EmployeeBadgeSelect";
 import { FACTORY_WORKSTATIONS } from "@/lib/production/factory-workstations";
+import { looksLikeFabricLabelInput } from "@/lib/sales-orders/label-codes";
 import { normalizeScannerInput, splitScanInput } from "@/lib/production/scan-input";
 import {
   clearScanEmployeeSession,
@@ -31,9 +32,13 @@ type EmployeeLookupResponse = {
 
 type EmployeeScanSessionProps = {
   onSessionChange: (session: ScanEmployeeSession | null) => void;
+  fabricReceivingContext?: boolean;
 };
 
-export function EmployeeScanSession({ onSessionChange }: EmployeeScanSessionProps) {
+export function EmployeeScanSession({
+  onSessionChange,
+  fabricReceivingContext = false,
+}: EmployeeScanSessionProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const flushTimerRef = useRef<number | null>(null);
   const [session, setSession] = useState<ScanEmployeeSession | null>(null);
@@ -104,6 +109,14 @@ export function EmployeeScanSession({ onSessionChange }: EmployeeScanSessionProp
     const codes = splitScanInput(raw);
     const code = codes[0];
     if (!code) return;
+    if (looksLikeFabricLabelInput(code)) {
+      setError(
+        fabricReceivingContext
+          ? "That looks like a fabric label, not an employee badge. Use the “Paste fabric label” box at the top, or scan it at step 2 after your badge."
+          : "That looks like a fabric label, not an employee badge. Scan it at step 2 after your badge."
+      );
+      return;
+    }
     void lookupBadge(code);
   }
 
@@ -271,7 +284,12 @@ export function EmployeeScanSession({ onSessionChange }: EmployeeScanSessionProp
             </div>
           </div>
 
-          <EmployeeBadgeSelect onSelect={lookupBadge} disabled={loading} loading={loading} />
+          <EmployeeBadgeSelect
+            onSelect={lookupBadge}
+            disabled={loading}
+            loading={loading}
+            fabricReceivingContext={fabricReceivingContext}
+          />
 
           {error && (
             <div className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-3 text-sm text-red-900" role="alert">

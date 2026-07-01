@@ -379,7 +379,7 @@ export function StickerScanInput({
                       submitManual();
                     }
                   }}
-                  placeholder="FR-0526-0101-L04"
+                  placeholder="FR-0226-0024/ 0109-L32"
                   className="min-w-[14rem] flex-1 rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm uppercase"
                 />
                 <button

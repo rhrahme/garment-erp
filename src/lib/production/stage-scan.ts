@@ -11,6 +11,7 @@ import {
   findStickerInSalesOrders,
 } from "@/lib/production/sticker-scan";
 import {
+  expandFabricLabelScanInput,
   fabricLineArticleNumber,
   productionCodeFromSticker,
   supplierFabricProductionCode,
@@ -66,18 +67,20 @@ function normalizeScan(code: string): string {
 
 /** Resolve scan to a fabric line — piece code or line-level fabric cut code. */
 export function resolveScanToLine(scanInput: string) {
-  const direct = findStickerInSalesOrders(scanInput);
-  if (direct) return direct;
+  for (const candidate of expandFabricLabelScanInput(scanInput)) {
+    const direct = findStickerInSalesOrders(candidate);
+    if (direct) return direct;
 
-  const normalized = normalizeScan(scanInput);
-  if (!normalized) return null;
+    const normalized = normalizeScan(candidate);
+    if (!normalized) continue;
 
-  for (const order of readSalesOrders().orders) {
-    for (const line of order.fabric_lines) {
-      for (const sticker of line.label_stickers ?? []) {
-        const cutCode = supplierFabricProductionCode(sticker.code, order.client_code).toUpperCase();
-        if (cutCode === normalized || fabricCutCodesMatch(normalized, cutCode)) {
-          return { order, line, sticker };
+    for (const order of readSalesOrders().orders) {
+      for (const line of order.fabric_lines) {
+        for (const sticker of line.label_stickers ?? []) {
+          const cutCode = supplierFabricProductionCode(sticker.code, order.client_code).toUpperCase();
+          if (cutCode === normalized || fabricCutCodesMatch(normalized, cutCode)) {
+            return { order, line, sticker };
+          }
         }
       }
     }

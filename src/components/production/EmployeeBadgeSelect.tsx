@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Loader2, Search, UserRound } from "lucide-react";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { looksLikeFabricLabelInput } from "@/lib/sales-orders/label-codes";
 import { cn } from "@/lib/utils";
 
 type EmployeeOption = {
@@ -15,6 +16,8 @@ type EmployeeBadgeSelectProps = {
   onSelect: (badgeCode: string) => void;
   disabled?: boolean;
   loading?: boolean;
+  /** When true, hint points to Fabric Receiving label lookup. */
+  fabricReceivingContext?: boolean;
 };
 
 function searchEmployees(employees: EmployeeOption[], query: string): EmployeeOption[] {
@@ -28,7 +31,12 @@ function searchEmployees(employees: EmployeeOption[], query: string): EmployeeOp
   );
 }
 
-export function EmployeeBadgeSelect({ onSelect, disabled = false, loading = false }: EmployeeBadgeSelectProps) {
+export function EmployeeBadgeSelect({
+  onSelect,
+  disabled = false,
+  loading = false,
+  fabricReceivingContext = false,
+}: EmployeeBadgeSelectProps) {
   const [employees, setEmployees] = useState<EmployeeOption[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [fetching, setFetching] = useState(true);
@@ -77,6 +85,7 @@ export function EmployeeBadgeSelect({ onSelect, disabled = false, loading = fals
   }, []);
 
   const blocked = disabled || loading || fetching;
+  const fabricLabelQuery = looksLikeFabricLabelInput(debouncedQuery);
 
   function handlePick(employee: EmployeeOption) {
     setQuery(`${employee.full_name} — ID ${employee.employee_id_number}`);
@@ -127,14 +136,24 @@ export function EmployeeBadgeSelect({ onSelect, disabled = false, loading = fals
 
       {!fetchError && !fetching && (
         <p className="mt-1 text-xs text-slate-500">
-          {filteredEmployees.length} active employee{filteredEmployees.length !== 1 ? "s" : ""}
-          {debouncedQuery.trim() ? " match your search" : ""}
+          {fabricLabelQuery ? (
+            <span className="font-medium text-teal-800">
+              {fabricReceivingContext
+                ? "That looks like a fabric label — use the “Paste fabric label” box above instead of the employee list."
+                : "That looks like a fabric label, not an employee. Scan it at step 2 after your badge."}
+            </span>
+          ) : (
+            <>
+              {filteredEmployees.length} active employee{filteredEmployees.length !== 1 ? "s" : ""}
+              {debouncedQuery.trim() ? " match your search" : ""}
+            </>
+          )}
         </p>
       )}
 
       {fetchError && <p className="mt-1 text-xs text-red-600">{fetchError}</p>}
 
-      {open && !blocked && (
+      {open && !blocked && !fabricLabelQuery && (
         <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
           {filteredEmployees.length === 0 ? (
             <p className="px-4 py-3 text-sm text-slate-500">

@@ -8,6 +8,7 @@ import {
 import type { ScanStation } from "@/lib/production/stage-scan";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { FabricLabelLookup } from "@/components/fabric-receiving/FabricLabelLookup";
 import { FabricReceivingWorkList } from "@/components/fabric-receiving/FabricReceivingWorkList";
 import { FabricReceivingTestingReset } from "@/components/fabric-receiving/FabricReceivingTestingReset";
 import { StageScanPanel } from "@/components/production/StageScanPanel";
@@ -164,6 +165,8 @@ export function FabricReceivingWorkspace() {
 
   return (
     <div className="space-y-6">
+      <FabricLabelLookup onReceiveLine={handleReceiveLine} actingId={actingId} />
+
       <StageScanPanel
         stations={["receive", "wash", "soak", "iron"]}
         scanContext="fabric-receiving"

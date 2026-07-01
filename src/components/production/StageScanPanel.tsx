@@ -64,7 +64,12 @@ export function StageScanPanel({
 
   return (
     <div className="space-y-4">
-      {requireEmployee && <EmployeeScanSession onSessionChange={setEmployeeSession} />}
+      {requireEmployee && (
+        <EmployeeScanSession
+          onSessionChange={setEmployeeSession}
+          fabricReceivingContext={scanContext === "fabric-receiving"}
+        />
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         {options.length > 1 ? (
