@@ -92,6 +92,33 @@ function normFabricKey(raw) {
   return normalizeFabricNumber(raw).replace(/^C/i, "").toLowerCase();
 }
 
+function lineMatchKey(line) {
+  return `${normFabricKey(line.fabric_number)}|${line.garment_type ?? ""}`;
+}
+
+function indexExistingLines(lines) {
+  const byLineId = new Map();
+  const byMatch = new Map();
+  for (const line of lines ?? []) {
+    byLineId.set(line.id, line);
+    byMatch.set(lineMatchKey(line), line);
+  }
+  return { byLineId, byMatch };
+}
+
+function findExistingLine(existing, candidate) {
+  return (
+    existing.byLineId.get(candidate.id) ??
+    existing.byMatch.get(lineMatchKey(candidate)) ??
+    null
+  );
+}
+
+function preservedUnitPrice(existingLine) {
+  const price = existingLine?.unit_price;
+  return typeof price === "number" && price > 0 ? price : 0;
+}
+
 const PIECE_ABBREV = {
   Jacket: "JKT",
   Trouser: "TR",
@@ -110,7 +137,7 @@ function generateFabricLabelStickers(clientReference, lineIndex, garmentType, pi
   ];
 }
 
-function buildFabricLine(task, clientReference, lineIndex) {
+function buildFabricLine(task, clientReference, lineIndex, existingLine) {
   const item = getDropdown(task.custom_fields, "Item");
   const garment_type = mapClickUpItemToGarmentType(item);
   const fabric_number = normalizeFabricNumber(getText(task.custom_fields, "Fabric Number")) || "TBD";
@@ -118,7 +145,7 @@ function buildFabricLine(task, clientReference, lineIndex) {
   if (fabric_number === "C1411635-1") {
     supplier = { id: "gliani-stock", name: "Gliani Stock" };
   }
-  const quantity = getNumber(task.custom_fields, "Unit") ?? 1;
+  const quantity = getNumber(task.custom_fields, "Unit") ?? existingLine?.quantity ?? 1;
   const label_stickers = generateFabricLabelStickers(
     clientReference,
     lineIndex,
@@ -126,6 +153,7 @@ function buildFabricLine(task, clientReference, lineIndex) {
     item ?? garment_type
   );
   return {
+    ...(existingLine ?? {}),
     id: `line-cu-${task.id}`,
     garment_type,
     label_count: label_stickers.length,
@@ -135,12 +163,12 @@ function buildFabricLine(task, clientReference, lineIndex) {
     fabric_number,
     quantity,
     unit: "meters",
-    unit_price: 0,
-    composition: getText(task.custom_fields, "Composition"),
-    weight_gsm: getNumber(task.custom_fields, "Weight (grms)"),
-    width_cm: null,
-    width_inches: null,
-    color: getDropdown(task.custom_fields, "Color"),
+    unit_price: preservedUnitPrice(existingLine),
+    composition: getText(task.custom_fields, "Composition") ?? existingLine?.composition ?? null,
+    weight_gsm: getNumber(task.custom_fields, "Weight (grms)") ?? existingLine?.weight_gsm ?? null,
+    width_cm: existingLine?.width_cm ?? null,
+    width_inches: existingLine?.width_inches ?? null,
+    color: getDropdown(task.custom_fields, "Color") ?? existingLine?.color ?? null,
   };
 }
 
@@ -301,9 +329,18 @@ async function main() {
 
   const order = soStore.orders[orderIndex];
   const clientReference = order.client_reference ?? `${order.client_code}-${SO_NUMBER}`;
-  const fabric_lines = clickupTasks.map((task, index) =>
-    buildFabricLine(task, clientReference, index + 1)
-  );
+  const existingSoLines = indexExistingLines(order.fabric_lines);
+  const fabric_lines = clickupTasks.map((task, index) => {
+    const draft = {
+      id: `line-cu-${task.id}`,
+      garment_type: mapClickUpItemToGarmentType(getDropdown(task.custom_fields, "Item")),
+      fabric_number:
+        normalizeFabricNumber(getText(task.custom_fields, "Fabric Number")) || "TBD",
+    };
+    const existingLine = findExistingLine(existingSoLines, draft);
+    return buildFabricLine(task, clientReference, index + 1, existingLine);
+  });
+  const preservedSoPrices = fabric_lines.filter((line) => line.unit_price > 0).length;
 
   const restoredOrder = { ...order, fabric_lines };
   soStore.orders[orderIndex] = restoredOrder;
@@ -325,16 +362,33 @@ async function main() {
 
   const invIndex = invStore.invoices.findIndex((i) => i.invoice_number === INVOICE_NUMBER);
   let invoiceNote = "not found";
+  let preservedInvPrices = 0;
   if (invIndex >= 0) {
     const inv = invStore.invoices[invIndex];
-    invStore.invoices[invIndex] = {
-      ...inv,
-      lines: inv.lines?.map((line) => {
+    const existingInvLines = indexExistingLines(
+      inv.lines?.map((line) => ({
+        ...line,
+        garment_type: line.garment_type,
+        fabric_number: line.fabric_number,
+      })) ?? []
+    );
+    const relinkedLines =
+      inv.lines?.map((line) => {
         const fabricLine = restoredOrder.fabric_lines.find(
-          (fl) => fl.id === line.sales_order_line_id || normFabricKey(fl.fabric_number) === normFabricKey(line.fabric_number)
+          (fl) =>
+            fl.id === line.sales_order_line_id ||
+            normFabricKey(fl.fabric_number) === normFabricKey(line.fabric_number)
         );
         if (!fabricLine) return line;
         const articleIndex = restoredOrder.fabric_lines.findIndex((fl) => fl.id === fabricLine.id);
+        const existingInvLine = findExistingLine(existingInvLines, {
+          id: line.id,
+          garment_type: line.garment_type,
+          fabric_number: line.fabric_number,
+        });
+        const unit_price = preservedUnitPrice(existingInvLine ?? line);
+        const quantity = line.quantity ?? 1;
+        if (unit_price > 0) preservedInvPrices += 1;
         return {
           ...line,
           sales_order_line_id: fabricLine.id,
@@ -342,10 +396,24 @@ async function main() {
           sticker_code: fabricLine.label_stickers?.[0]?.code ?? line.sticker_code,
           fabric_number: fabricLine.fabric_number,
           composition: fabricLine.composition ?? line.composition,
+          unit_price,
+          line_total: Math.round(unit_price * quantity * 100) / 100,
         };
-      }),
+      }) ?? [];
+    const subtotal = Math.round(
+      relinkedLines.reduce((sum, line) => sum + (line.line_total ?? 0), 0) * 100
+    ) / 100;
+    const vatRate = inv.vat_rate ?? 0;
+    const vat_amount =
+      vatRate > 0 ? Math.round(subtotal * vatRate * 100) / 100 : inv.vat_amount ?? 0;
+    invStore.invoices[invIndex] = {
+      ...inv,
+      lines: relinkedLines,
+      subtotal,
+      vat_amount,
+      total: Math.round((subtotal + vat_amount) * 100) / 100,
     };
-    invoiceNote = `invoice lines ${invStore.invoices[invIndex].lines?.length} (manual relink — regenerate in UI for full pricing)`;
+    invoiceNote = `invoice lines ${relinkedLines.length} (${preservedInvPrices} priced lines preserved)`;
   }
 
   await syncDoc(admin, "sales_orders", soStore);
@@ -381,6 +449,8 @@ async function main() {
         pattern_jobs_after: afterJobs.length,
         pattern_jobs_reactivated: pjResult.reactivated.length,
         pattern_jobs_created: pjResult.created.length,
+        preserved_so_unit_prices: preservedSoPrices,
+        preserved_invoice_unit_prices: preservedInvPrices,
         invoice: invoiceNote,
         fabric_lines: fabric_lines.map((l, i) => ({
           article: i + 1,

@@ -46,6 +46,38 @@ function mapSupplier(name) {
   return map[normalized] ?? { id: normalized.replace(/\s+/g, "-"), name: name.trim() };
 }
 
+function normFabricKey(raw) {
+  if (!raw) return "";
+  return raw.trim().replace(/^N/i, "").replace(/^C/i, "").toLowerCase();
+}
+
+function lineMatchKey(line) {
+  return `${normFabricKey(line.fabric_number)}|${line.garment_type ?? ""}`;
+}
+
+function indexExistingLines(lines) {
+  const byLineId = new Map();
+  const byMatch = new Map();
+  for (const line of lines ?? []) {
+    byLineId.set(line.id, line);
+    byMatch.set(lineMatchKey(line), line);
+  }
+  return { byLineId, byMatch };
+}
+
+function findExistingLine(existing, candidate) {
+  return (
+    existing.byLineId.get(candidate.id) ??
+    existing.byMatch.get(lineMatchKey(candidate)) ??
+    null
+  );
+}
+
+function preservedUnitPrice(existingLine) {
+  const price = existingLine?.unit_price;
+  return typeof price === "number" && price > 0 ? price : 0;
+}
+
 /** Match src/lib/sales-orders/label-codes.ts — Suit gets JKT + TR, not piece_name alone. */
 function generateFabricLabelStickers(clientReference, lineIndex, garmentType, pieceName) {
   const linePart = `L${String(lineIndex).padStart(2, "0")}`;
@@ -84,7 +116,7 @@ function fabricLineFromJob(job, clientReference, articleNumber, existingLine) {
     fabric_number: job.fabric_number,
     quantity: job.meters ?? existingLine?.quantity ?? 1,
     unit: "meters",
-    unit_price: existingLine?.unit_price ?? 0,
+    unit_price: preservedUnitPrice(existingLine),
     composition: job.composition ?? existingLine?.composition ?? null,
     weight_gsm: job.gsm ?? existingLine?.weight_gsm ?? null,
     width_cm: job.width_cm ?? existingLine?.width_cm ?? null,
@@ -128,7 +160,7 @@ async function main() {
 
   const order = soStore.orders[orderIndex];
   const clientReference = order.client_reference ?? `${order.client_code}-${SO_NUMBER}`;
-  const existingByLineId = new Map(order.fabric_lines.map((line) => [line.id, line]));
+  const existingSoLines = indexExistingLines(order.fabric_lines);
 
   const activeJobs = pjStore.jobs
     .filter((job) => job.sales_order_id === SO_ID && job.status !== "cancelled")
@@ -139,14 +171,16 @@ async function main() {
   const jobLineIds = new Set(activeJobs.map((job) => job.sales_order_line_id));
   const removedLines = order.fabric_lines.filter((line) => !jobLineIds.has(line.id));
 
-  const fabric_lines = activeJobs.map((job) =>
-    fabricLineFromJob(
-      job,
-      clientReference,
-      job.article_number,
-      existingByLineId.get(job.sales_order_line_id)
-    )
-  );
+  const fabric_lines = activeJobs.map((job) => {
+    const candidate = {
+      id: job.sales_order_line_id,
+      garment_type: job.garment_type,
+      fabric_number: job.fabric_number,
+    };
+    const existingLine = findExistingLine(existingSoLines, candidate);
+    return fabricLineFromJob(job, clientReference, job.article_number, existingLine);
+  });
+  const preservedSoPrices = fabric_lines.filter((line) => line.unit_price > 0).length;
 
   const restoredOrder = { ...order, fabric_lines };
   soStore.orders[orderIndex] = restoredOrder;
@@ -182,6 +216,7 @@ async function main() {
           fabric: l.fabric_number,
         })),
         garment_breakdown: breakdown,
+        preserved_so_unit_prices: preservedSoPrices,
         fabric_lines: fabric_lines.map((l, i) => ({
           article: i + 1,
           id: l.id,
