@@ -54,6 +54,23 @@ export function supplierEmailBatchKey(supplierId: string): string {
   return isLoroPianaFactorySupplier(supplierId) ? "loro-piana" : supplierId;
 }
 
+type SupplierOrderRef = { supplier_id: string; supplier?: { name?: string | null } | null };
+
+/** Greeting/subject name for supplier emails — Loro Piana inbox covers Solbiati lines too. */
+export function resolveFactoryEmailSupplierName(orders: SupplierOrderRef[]): string {
+  if (orders.length === 0) return "Supplier";
+
+  if (orders.some((order) => isLoroPianaFactorySupplier(order.supplier_id))) {
+    const loroPiana =
+      orders.find((order) => order.supplier_id === "loro-piana") ??
+      orders.find((order) => order.supplier?.name === "Loro Piana");
+    return loroPiana?.supplier?.name ?? "Loro Piana";
+  }
+
+  const first = orders[0]!;
+  return first.supplier?.name ?? first.supplier_id;
+}
+
 /** Price-list supplier ids to load when building a supplier email batch. */
 export function fabricCatalogSupplierIdsForEmail(supplierId: string): string[] {
   if (isLoroPianaFactorySupplier(supplierId)) {

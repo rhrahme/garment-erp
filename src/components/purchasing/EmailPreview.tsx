@@ -12,8 +12,10 @@ interface EmailPreviewProps {
   poNumber?: string;
   /** All PO numbers included in a consolidated supplier email. */
   poNumbers?: string[];
+  /** Fabric order ids to mark sent after a successful SMTP send. */
+  poIds?: string[];
   /** Called after a successful send to persist sent state on fabric orders. Omit for follow-ups. */
-  onSent?: (result: { emailedAt: string; emailTo: string }) => void;
+  onSent?: (result: { emailedAt: string; emailTo: string; persisted?: boolean }) => void;
   /** When set, the email is treated as already sent — send is disabled. */
   sentAt?: string | null;
   sentTo?: string | null;
@@ -29,6 +31,7 @@ export function EmailPreview({
   email,
   poNumber,
   poNumbers,
+  poIds,
   onSent,
   sentAt,
   sentTo,
@@ -64,6 +67,7 @@ export function EmailPreview({
   }, [email]);
 
   const includedPoNumbers = poNumbers ?? (poNumber ? [poNumber] : []);
+  const includedPoIds = poIds ?? [];
   const hasIncludedPos = includedPoNumbers.length > 0;
 
   const isDirty = useMemo(
@@ -138,6 +142,7 @@ export function EmailPreview({
           body,
           poNumber: includedPoNumbers[0],
           poNumbers: includedPoNumbers,
+          ids: includedPoIds,
         }),
       });
       const data = await res.json();
@@ -149,7 +154,7 @@ export function EmailPreview({
       setJustSentAt(emailedAt);
       setJustSentTo(emailTo);
       setMessage(data.message ?? "Email sent.");
-      onSent?.({ emailedAt, emailTo });
+      onSent?.({ emailedAt, emailTo, persisted: Boolean(data.markedSent) });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send email");
     } finally {

@@ -4,7 +4,7 @@ import { findMatchingSalesOrderForOrphanPos } from "@/lib/fabric-sourcing/suppli
 import {
   ensureFabricOrdersLoaded,
   listStoredFabricOrders,
-  updateStoredFabricOrders,
+  updateStoredFabricOrdersAsync,
 } from "@/lib/integrations/fabric-order-store";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 
@@ -51,7 +51,7 @@ export async function reconcileOrphanedFabricPos(): Promise<boolean> {
 
   if (relinks.length === 0) return false;
 
-  updateStoredFabricOrders((orders) => {
+  await updateStoredFabricOrdersAsync((orders) => {
     for (const relink of relinks) {
       for (const order of orders) {
         if (!relink.poIds.includes(order.id)) continue;

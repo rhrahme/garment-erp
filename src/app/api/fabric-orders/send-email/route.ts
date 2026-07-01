@@ -4,6 +4,10 @@ import { isValidEmail, normalizeEmail } from "@/lib/data/supplier-contacts";
 import { parseRecipientList, sendEmail } from "@/lib/email/smtp";
 import { resolveSupplierCc } from "@/lib/fabric-sourcing/email-content";
 import { notifyIntegration } from "@/lib/integrations";
+import {
+  ensureFabricOrdersLoaded,
+  markStoredFabricOrdersSent,
+} from "@/lib/integrations/fabric-order-store";
 import type { FabricOrderEmail } from "@/lib/types/fabric-sourcing";
 
 function isValidAddress(value: string): boolean {
@@ -15,6 +19,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as Partial<FabricOrderEmail> & {
       poNumber?: string;
       poNumbers?: string[];
+      ids?: string[];
     };
 
     const to = parseRecipientList(body.to ?? "");
@@ -62,18 +67,56 @@ export async function POST(request: Request) {
     });
 
     const emailedAt = new Date().toISOString();
+    const emailTo = to.join(", ");
     const poNumbers =
       body.poNumbers?.filter(Boolean) ??
       (body.poNumber ? [body.poNumber] : []);
+    const ids = (body.ids ?? []).filter(Boolean);
 
-    await notifyIntegration("fabric_order.sent", {
-      po_number: poNumbers[0] ?? body.poNumber ?? null,
-      po_numbers: poNumbers.length > 0 ? poNumbers : null,
-      email_to: to.join(", "),
-      emailed_at: emailedAt,
-      message_id: result.messageId,
-      batch_size: poNumbers.length > 1 ? poNumbers.length : undefined,
-    });
+    let markedOrders: Awaited<ReturnType<typeof markStoredFabricOrdersSent>> = [];
+    if (ids.length > 0) {
+      await ensureFabricOrdersLoaded();
+      markedOrders = await markStoredFabricOrdersSent(ids, {
+        emailed_at: emailedAt,
+        email_to: emailTo,
+        status: "sent",
+      });
+      if (markedOrders.length === 0) {
+        return NextResponse.json(
+          {
+            error:
+              "Email was sent but fabric orders could not be marked as sent. Refresh and use “Already sent”, or contact support.",
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    const notifyPayload = markedOrders.length > 0
+      ? markedOrders.map((order) =>
+          notifyIntegration("fabric_order.sent", {
+            id: order.id,
+            po_number: order.po_number,
+            supplier_id: order.supplier_id,
+            supplier_name: order.supplier?.name ?? null,
+            email_to: emailTo,
+            emailed_at: emailedAt,
+            message_id: result.messageId,
+            batch_size: markedOrders.length,
+          })
+        )
+      : [
+          notifyIntegration("fabric_order.sent", {
+            po_number: poNumbers[0] ?? body.poNumber ?? null,
+            po_numbers: poNumbers.length > 0 ? poNumbers : null,
+            email_to: emailTo,
+            emailed_at: emailedAt,
+            message_id: result.messageId,
+            batch_size: poNumbers.length > 1 ? poNumbers.length : undefined,
+          }),
+        ];
+
+    await Promise.all(notifyPayload);
 
     return NextResponse.json({
       ok: true,
@@ -82,10 +125,12 @@ export async function POST(request: Request) {
       accepted: result.accepted,
       rejected: result.rejected,
       emailedAt,
-      emailTo: to.join(", "),
+      emailTo,
       emailFrom: from ?? null,
       poNumber: poNumbers[0] ?? body.poNumber ?? null,
       poNumbers,
+      markedSent: markedOrders.length > 0,
+      markedCount: markedOrders.length,
     });
   } catch (error) {
     console.error("Failed to send fabric order email:", error);

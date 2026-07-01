@@ -1,4 +1,7 @@
-import { supplierEmailBatchKey } from "@/lib/fabric-sourcing/supplier-display";
+import {
+  resolveFactoryEmailSupplierName,
+  supplierEmailBatchKey,
+} from "@/lib/fabric-sourcing/supplier-display";
 import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 
@@ -39,14 +42,9 @@ function resolveBatchSupplierMetadata(orders: SupplierEmailQueueItem[]): {
   supplier_id: string;
   supplier_name: string;
 } {
-  const supplier_id = supplierEmailBatchKey(orders[0]!.supplier_id);
-  const preferred =
-    orders.find((order) => order.supplier_id === "loro-piana") ??
-    orders.find((order) => order.supplier?.name === "Loro Piana") ??
-    orders[0]!;
   return {
-    supplier_id,
-    supplier_name: preferred.supplier?.name ?? preferred.supplier_id,
+    supplier_id: supplierEmailBatchKey(orders[0]!.supplier_id),
+    supplier_name: resolveFactoryEmailSupplierName(orders),
   };
 }
 

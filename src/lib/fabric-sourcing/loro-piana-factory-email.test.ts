@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { purchaseOrdersBatchToEmail } from "@/lib/fabric-sourcing/email-content";
 import {
   fabricPoSupplierId,
   fabricPoSupplierIdForGroup,
@@ -117,5 +118,21 @@ describe("Loro Piana factory email grouping", () => {
     const cacBatch = batches.find((batch) => batch.supplier_id === "caccioppoli");
     assert.equal(loroBatch?.orders.length, 2);
     assert.equal(cacBatch?.orders.length, 1);
+  });
+
+  it("uses Loro Piana greeting for legacy Solbiati-only factory POs", () => {
+    const email = purchaseOrdersBatchToEmail(
+      [
+        po({
+          id: "po-sol-only",
+          supplier_id: "solbiati",
+          lines: [{ fabric_number: "S13028", quantity_ordered: 3.6, unit_price: 34.5 }],
+        }),
+      ],
+      []
+    );
+
+    assert.match(email.body, /^Dear Loro Piana,/m);
+    assert.match(email.subject, /Fabric Order PO-po-sol-only/);
   });
 });

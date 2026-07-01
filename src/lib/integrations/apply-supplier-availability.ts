@@ -9,7 +9,7 @@ import {
   ensureFabricOrdersLoaded,
   getStoredFabricOrder,
   listStoredFabricOrders,
-  updateStoredFabricOrders,
+  updateStoredFabricOrdersAsync,
 } from "@/lib/integrations/fabric-order-store";
 import type { SupplierLineUpdate } from "@/lib/integrations/supplier-reply-store";
 import { listSupplierReplies } from "@/lib/integrations/supplier-reply-store";
@@ -146,7 +146,7 @@ export async function applySupplierAvailabilityUpdates(input: {
   let fabric_po_lines_updated = 0;
 
   if (purchaseOrder) {
-    updateStoredFabricOrders((orders) =>
+    await updateStoredFabricOrdersAsync((orders) =>
       orders.map((po) => {
         if (po.id !== purchaseOrder.id) return po;
 

@@ -1,3 +1,4 @@
+import { resolveFactoryEmailSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import type { FabricOrderEmail, PurchaseOrder, Supplier, SupplierFabric } from "@/lib/types/fabric-sourcing";
 import {
   clientCodeFromReference,
@@ -296,10 +297,12 @@ export function purchaseOrdersBatchToEmail(
     };
   });
 
+  const factorySupplier = orders.find((po) => po.supplier_id === "loro-piana") ?? first;
+
   return buildFabricOrderBatchEmail({
-    supplierName: first.supplier?.name ?? "Supplier",
-    supplierEmail: first.email_to ?? first.supplier?.email ?? "",
-    supplierEmails: first.supplier?.emails,
+    supplierName: resolveFactoryEmailSupplierName(orders),
+    supplierEmail: factorySupplier.email_to ?? factorySupplier.supplier?.email ?? "",
+    supplierEmails: factorySupplier.supplier?.emails,
     fromEmail: options?.fromEmail,
     sections,
   });

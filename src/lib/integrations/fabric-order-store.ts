@@ -31,6 +31,11 @@ function readStore(): FabricOrderStore {
   return readJsonFile(STORE_PATH, { orders: [] });
 }
 
+async function readStoreFresh(): Promise<FabricOrderStore> {
+  await ensureFabricOrdersLoaded();
+  return readJsonFileFreshAsync(STORE_PATH, { orders: [] }, { force: true });
+}
+
 function writeStore(store: FabricOrderStore): void {
   writeJsonFile(STORE_PATH, store);
 }
@@ -41,6 +46,16 @@ export function updateStoredFabricOrders(
   const store = readStore();
   store.orders = updater(store.orders);
   writeStore(store);
+  return store.orders;
+}
+
+/** Read-modify-write against Supabase — avoids clobbering emailed_at from stale cache. */
+export async function updateStoredFabricOrdersAsync(
+  updater: (orders: PurchaseOrder[]) => PurchaseOrder[]
+): Promise<PurchaseOrder[]> {
+  const store = await readStoreFresh();
+  store.orders = updater(store.orders);
+  await writeJsonFileAsync(STORE_PATH, store);
   return store.orders;
 }
 
@@ -124,7 +139,7 @@ export async function markStoredFabricOrdersSent(
   ids: string[],
   details: { emailed_at: string; email_to: string; status?: string }
 ): Promise<PurchaseOrder[]> {
-  const store = readStore();
+  const store = await readStoreFresh();
   const idSet = new Set(ids);
   const updated: PurchaseOrder[] = [];
 

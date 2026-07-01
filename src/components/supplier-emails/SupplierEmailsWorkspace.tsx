@@ -126,24 +126,29 @@ export function SupplierEmailsWorkspace() {
     [salesOrderFilter]
   );
 
-  async function handleSent(poIds: string[], result: { emailedAt: string; emailTo: string }) {
+  async function handleSent(
+    poIds: string[],
+    result: { emailedAt: string; emailTo: string; persisted?: boolean }
+  ) {
     applySentOptimistic(poIds, result);
 
-    const res = await fetch("/api/fabric-orders/mark-sent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ids: poIds,
-        emailed_at: result.emailedAt,
-        email_to: result.emailTo,
-      }),
-    });
+    if (!result.persisted) {
+      const res = await fetch("/api/fabric-orders/mark-sent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ids: poIds,
+          emailed_at: result.emailedAt,
+          email_to: result.emailTo,
+        }),
+      });
 
-    if (!res.ok) {
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
-      setFlash(data.error ?? "Failed to mark orders as sent. Refresh and try again.");
-      void load();
-      return;
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setFlash(data.error ?? "Failed to mark orders as sent. Refresh and try again.");
+        void load();
+        return;
+      }
     }
 
     setFlash(`Email sent to supplier · ${result.emailTo}`);
@@ -330,7 +335,7 @@ function PendingSupplierEmailBatchCard({
   fabrics: SupplierFabric[];
   factoryEmail: string | null;
   isAdmin: boolean;
-  onSent: (poIds: string[], result: { emailedAt: string; emailTo: string }) => void;
+  onSent: (poIds: string[], result: { emailedAt: string; emailTo: string; persisted?: boolean }) => void;
   onCancel: (poIds: string[], poNumbers: string[]) => void;
 }) {
   const showOrderPicker = batch.orders.length > 1;
@@ -426,6 +431,7 @@ function PendingSupplierEmailBatchCard({
         email={email}
         poNumber={poNumbers[0]}
         poNumbers={poNumbers}
+        poIds={selectedPoIdsList}
         onSent={(result) => onSent(selectedPoIdsList, result)}
       />
     </div>
