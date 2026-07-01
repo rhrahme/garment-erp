@@ -139,7 +139,7 @@ export function EmployeeBadgeSelect({
           {fabricLabelQuery ? (
             <span className="font-medium text-teal-800">
               {fabricReceivingContext
-                ? "That looks like a fabric label — use the “Paste fabric label” box above instead of the employee list."
+                ? "That looks like a fabric label — paste it in the “Receive fabric” box at the top of the page."
                 : "That looks like a fabric label, not an employee. Scan it at step 2 after your badge."}
             </span>
           ) : (

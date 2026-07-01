@@ -49,6 +49,9 @@ export function StageScanPanel({
   const [voiceFeedback, setVoiceFeedback] = useState(true);
   const [employeeSession, setEmployeeSession] = useState<ScanEmployeeSession | null>(null);
   const active = options.find((option) => option.id === station) ?? options[0]!;
+  const employeeOptional = scanContext === "fabric-receiving";
+  const showEmployeeSession = requireEmployee || employeeOptional;
+  const stickerRequiresBadge = requireEmployee && !employeeOptional;
 
   useEffect(() => {
     setVoiceFeedback(readVoiceFeedbackEnabled());
@@ -64,10 +67,11 @@ export function StageScanPanel({
 
   return (
     <div className="space-y-4">
-      {requireEmployee && (
+      {showEmployeeSession && (
         <EmployeeScanSession
           onSessionChange={setEmployeeSession}
-          fabricReceivingContext={scanContext === "fabric-receiving"}
+          fabricReceivingContext={employeeOptional}
+          autoFocus={!employeeOptional}
         />
       )}
 
@@ -118,8 +122,9 @@ export function StageScanPanel({
         scanContext={scanContext}
         voiceFeedback={scanContext === "fabric-receiving" && voiceFeedback}
         employeeSession={employeeSession}
-        requireEmployee={requireEmployee}
-        stickerScanEnabled={!requireEmployee || stickerScanReady(employeeSession)}
+        requireEmployee={stickerRequiresBadge}
+        stickerScanEnabled={!stickerRequiresBadge || stickerScanReady(employeeSession)}
+        autoFocus={!employeeOptional}
         onRefresh={onRefresh}
         onSuccess={(result) => {
           onScanMessage?.(result.message);
@@ -128,9 +133,9 @@ export function StageScanPanel({
       />
       {scanContext === "fabric-receiving" && (
         <p className="text-sm text-slate-600">
-          <span className="font-medium text-slate-800">Two-step scan:</span> badge first, then fabric sticker. Pick{" "}
-          <strong>Receive</strong>, <strong>Wash</strong>, <strong>Soak</strong>, or <strong>Iron</strong> to match
-          where the fabric is on the floor.
+          <span className="font-medium text-slate-800">Floor workflow:</span> scan badge (optional), pick{" "}
+          <strong>Receive</strong>, <strong>Wash</strong>, <strong>Soak</strong>, or <strong>Iron</strong>, then scan
+          the fabric sticker. To mark received without a badge, paste the code in the box at the top of the page.
         </p>
       )}
       {scanContext === "production" && requireEmployee && (

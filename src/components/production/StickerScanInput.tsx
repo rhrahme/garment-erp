@@ -137,7 +137,7 @@ export function StickerScanInput({
             code,
             station,
             ...(scanContext ? { context: scanContext } : {}),
-            ...(requireEmployee && employeeSession
+            ...(employeeSession
               ? {
                   employee_id: employeeSession.employee_id,
                   workstation_id: effectiveWorkstationId(employeeSession),
@@ -279,14 +279,20 @@ export function StickerScanInput({
         <div className="min-w-0 flex-1">
           <h3 className="text-lg font-semibold text-slate-900">
             {waitingForBadge
-              ? "Step 2 — Scan garment sticker"
+              ? isFabricFloor
+                ? "Scan fabric sticker — badge optional"
+                : "Step 2 — Scan garment sticker"
               : waitingForStation
                 ? "Step 2 — Confirm station first"
-                : `Step 2 — Scan here — ${stationLabel}`}
+                : isFabricFloor
+                  ? `Scan fabric sticker — ${stationLabel}`
+                  : `Step 2 — Scan here — ${stationLabel}`}
           </h3>
           <p className="mt-1 text-sm text-slate-600">
             {waitingForBadge
-              ? "Scan your employee badge above to unlock sticker scanning."
+              ? isFabricFloor
+                ? "Scan your badge above to record who handled the fabric, or paste the code at the top to receive without a badge."
+                : "Scan your employee badge above to unlock sticker scanning."
               : waitingForStation
                 ? "Pick your workstation above, then scan the garment sticker."
                 : isFabricFloor
@@ -319,7 +325,9 @@ export function StickerScanInput({
                 Saving scan…
               </span>
             ) : waitingForBadge || waitingForStation ? (
-              <span className="pointer-events-none text-base font-semibold text-slate-500">Waiting for step 1…</span>
+              <span className="pointer-events-none text-base font-semibold text-slate-500">
+                {isFabricFloor ? "Scan badge to record handler, or use paste box above" : "Waiting for step 1…"}
+              </span>
             ) : isFocused ? (
               <span className="pointer-events-none text-base font-semibold text-emerald-700">
                 Ready — scan sticker

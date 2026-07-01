@@ -33,11 +33,13 @@ type EmployeeLookupResponse = {
 type EmployeeScanSessionProps = {
   onSessionChange: (session: ScanEmployeeSession | null) => void;
   fabricReceivingContext?: boolean;
+  autoFocus?: boolean;
 };
 
 export function EmployeeScanSession({
   onSessionChange,
   fabricReceivingContext = false,
+  autoFocus = true,
 }: EmployeeScanSessionProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const flushTimerRef = useRef<number | null>(null);
@@ -71,8 +73,8 @@ export function EmployeeScanSession({
   }, [session]);
 
   useEffect(() => {
-    focusInput();
-  }, [focusInput, session]);
+    if (autoFocus) focusInput();
+  }, [autoFocus, focusInput, session]);
 
   async function lookupBadge(code: string) {
     setLoading(true);
@@ -112,7 +114,7 @@ export function EmployeeScanSession({
     if (looksLikeFabricLabelInput(code)) {
       setError(
         fabricReceivingContext
-          ? "That looks like a fabric label, not an employee badge. Use the “Paste fabric label” box at the top, or scan it at step 2 after your badge."
+          ? "That looks like a fabric label, not an employee badge. Paste it in the “Receive fabric” box at the top instead."
           : "That looks like a fabric label, not an employee badge. Scan it at step 2 after your badge."
       );
       return;
@@ -233,10 +235,13 @@ export function EmployeeScanSession({
           <ScanLine className="h-6 w-6" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-lg font-semibold text-slate-900">Step 1 — Scan or select your badge</h3>
+          <h3 className="text-lg font-semibold text-slate-900">
+            {fabricReceivingContext ? "Employee badge" : "Step 1 — Scan or select your badge"}
+          </h3>
           <p className="mt-1 text-sm text-slate-600">
-            Scan your employee QR badge or pick your name from the list below. Your session stays active for 8 hours on
-            this device.
+            {fabricReceivingContext
+              ? "Optional — identifies who scanned at the floor station. Not required when you paste the fabric code above."
+              : "Scan your employee QR badge or pick your name from the list below. Your session stays active for 8 hours on this device."}
           </p>
 
           <div

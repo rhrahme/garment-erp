@@ -209,15 +209,10 @@ export function FabricLabelLookup({
                 </Link>
               </div>
 
-              {result.receive_status === "pending" && (
-                <p className="mt-2 text-xs">
-                  Or scan your badge (step 1), then scan this label at <strong>Receive</strong> (step 2).
-                </p>
-              )}
               {result.receive_status === "received" && (
                 <p className="mt-2 text-xs">
-                  Fabric is on the work list. Scan at <strong>Wash</strong>, <strong>Soak</strong>, or{" "}
-                  <strong>Iron</strong> to start prep.
+                  Fabric is on the work list. Start prep from the list below, or expand{" "}
+                  <strong>Floor scanner</strong> to scan at Wash, Soak, or Iron.
                 </p>
               )}
             </div>
