@@ -1,5 +1,11 @@
 import fs from "fs";
 import path from "path";
+import { RIYADH_BANK_DETAILS_DOCUMENT_ID } from "@/lib/data/reference-source-files-shared";
+
+export {
+  RIYADH_BANK_DETAILS_DOCUMENT_ID,
+  RIYADH_BANK_DETAILS_PDF_HREF,
+} from "@/lib/data/reference-source-files-shared";
 
 interface ReferenceSourceManifestEntry {
   id: string;
@@ -10,10 +16,6 @@ interface ReferenceSourceManifestEntry {
 interface ReferenceSourceManifest {
   files?: ReferenceSourceManifestEntry[];
 }
-
-/** Reference files generated on demand — always available in production without a disk copy. */
-export const RIYADH_BANK_DETAILS_DOCUMENT_ID = "riyadh-bank-details";
-export const RIYADH_BANK_DETAILS_PDF_HREF = `/api/reference-documents/${RIYADH_BANK_DETAILS_DOCUMENT_ID}`;
 
 const DYNAMIC_REFERENCE_FILE_IDS = new Set([RIYADH_BANK_DETAILS_DOCUMENT_ID]);
 

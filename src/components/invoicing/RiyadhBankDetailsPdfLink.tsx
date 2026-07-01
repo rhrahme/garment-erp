@@ -1,5 +1,5 @@
 import { ExternalLink } from "lucide-react";
-import { RIYADH_BANK_DETAILS_PDF_HREF } from "@/lib/data/reference-source-files";
+import { RIYADH_BANK_DETAILS_PDF_HREF } from "@/lib/data/reference-source-files-shared";
 import { cn } from "@/lib/utils";
 
 export function RiyadhBankDetailsPdfLink({

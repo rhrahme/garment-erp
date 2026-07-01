@@ -12,4 +12,5 @@ export {
   saveDocument,
   isSupabaseDocumentsStorage,
   writeJsonFile,
+  writeJsonFileAsync,
 } from "@/lib/data/document-persistence";
