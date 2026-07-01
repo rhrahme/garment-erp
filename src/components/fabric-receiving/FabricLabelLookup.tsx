@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Search, Tag } from "lucide-react";
 import Link from "next/link";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 type FabricLabelLookupProps = {
   onReceiveLine?: (salesOrderLineId: string) => void | Promise<void>;
   actingId?: string | null;
+  /** Bump after receive / list refresh so lookup status stays in sync. */
+  reloadKey?: number;
 };
 
 function formatArticle(articleNumber: number): string {
@@ -47,12 +49,21 @@ function statusClass(status: FabricLabelLookupResult["receive_status"]): string 
   }
 }
 
-export function FabricLabelLookup({ onReceiveLine, actingId = null }: FabricLabelLookupProps) {
+export function FabricLabelLookup({
+  onReceiveLine,
+  actingId = null,
+  reloadKey = 0,
+}: FabricLabelLookupProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 350);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<FabricLabelLookupResult | null>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus({ preventScroll: true });
+  }, []);
 
   const runLookup = useCallback(async (code: string) => {
     const trimmed = code.trim();
@@ -90,6 +101,11 @@ export function FabricLabelLookup({ onReceiveLine, actingId = null }: FabricLabe
     void runLookup(debouncedQuery);
   }, [debouncedQuery, runLookup]);
 
+  useEffect(() => {
+    if (!query.trim() || !result) return;
+    void runLookup(query);
+  }, [reloadKey]); // eslint-disable-line react-hooks/exhaustive-deps -- refresh status after receive
+
   const looksLikeLabel = looksLikeFabricLabelInput(query);
 
   return (
@@ -99,17 +115,18 @@ export function FabricLabelLookup({ onReceiveLine, actingId = null }: FabricLabe
           <Tag className="h-6 w-6" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-lg font-semibold text-slate-900">Paste fabric label</h3>
+          <h3 className="text-lg font-semibold text-slate-900">Receive fabric — paste sticker code</h3>
           <p className="mt-1 text-sm text-slate-600">
-            Paste the code from the supplier sticker here — no employee badge needed. Works with formats like{" "}
-            <code className="rounded bg-white px-1 font-mono text-xs">FR-0226-0024/ 0109-L32</code> or full QR
-            codes.
+            Paste or type the unique code from the supplier sticker. No employee badge needed. Formats like{" "}
+            <code className="rounded bg-white px-1 font-mono text-xs">FR-0226-0024/ 0109-L32</code> and full QR codes
+            both work.
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
             <div className="relative min-w-[16rem] flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
+                ref={inputRef}
                 type="text"
                 value={query}
                 onChange={(e) => {

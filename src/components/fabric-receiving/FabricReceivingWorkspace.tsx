@@ -165,15 +165,29 @@ export function FabricReceivingWorkspace() {
 
   return (
     <div className="space-y-6">
-      <FabricLabelLookup onReceiveLine={handleReceiveLine} actingId={actingId} />
-
-      <StageScanPanel
-        stations={["receive", "wash", "soak", "iron"]}
-        scanContext="fabric-receiving"
-        onRefresh={refreshAll}
-        onScanMessage={setMessage}
-        onScanResult={handleScanResult}
+      <FabricLabelLookup
+        reloadKey={reloadKey}
+        onReceiveLine={handleReceiveLine}
+        actingId={actingId}
       />
+
+      <details className="group rounded-xl border border-slate-200 bg-slate-50/60">
+        <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium text-slate-700 marker:content-none [&::-webkit-details-marker]:hidden">
+          <span className="text-slate-900">Floor scanner</span>
+          <span className="ml-2 font-normal text-slate-500">
+            — badge + scan at Receive, Wash, Soak, or Iron (optional if you pasted the code above)
+          </span>
+        </summary>
+        <div className="border-t border-slate-200 px-5 pb-5 pt-4">
+          <StageScanPanel
+            stations={["receive", "wash", "soak", "iron"]}
+            scanContext="fabric-receiving"
+            onRefresh={refreshAll}
+            onScanMessage={setMessage}
+            onScanResult={handleScanResult}
+          />
+        </div>
+      </details>
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
