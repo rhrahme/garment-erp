@@ -387,7 +387,7 @@ export function SalesOrderActions({
                   Order total: {fabricTotals.total_meters.toFixed(1)} m
                   {fabricTotals.total_kg != null ? ` · ${fabricTotals.total_kg.toFixed(1)} kg` : null}
                 </p>
-                {fabricCost && fabricCost.priced_line_count > 0 && (
+                {fabricCost && (
                   <p>
                     Fabric cost: {formatFabricCostSummary(fabricCost)}
                     {formatFabricCostHint(fabricCost) ? (

@@ -139,7 +139,7 @@ export default async function SalesOrderDetailPage({
                   ? " · add width & gsm on lines to estimate kg"
                   : null}
             </p>
-            {fabricCost && fabricCost.priced_line_count > 0 && (
+            {fabricCost && (
               <>
                 <p className="mt-3 text-sm text-emerald-800">Fabric cost (supplier)</p>
                 <p className="mt-0.5 text-lg font-semibold text-slate-900">

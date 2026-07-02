@@ -1,4 +1,5 @@
 import { getSupplierPriceCurrency, toSar, type PriceCurrency } from "@/lib/currency/config";
+import { resolveFabricItemFromCatalog } from "@/lib/fabric-sourcing/resolve-fabric-from-catalog";
 import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import { formatCurrency } from "@/lib/utils";
 
@@ -12,10 +13,17 @@ export interface FabricCostSummary {
   totals_by_currency: Partial<Record<PriceCurrency, number>>;
 }
 
+function effectiveFabricUnitPrice(line: SalesOrderFabricLine): number | null {
+  if (line.unit_price != null && line.unit_price > 0) return line.unit_price;
+  const catalog = resolveFabricItemFromCatalog(line.supplier_id, line.fabric_number);
+  if (catalog.unit_price != null && catalog.unit_price > 0) return catalog.unit_price;
+  return null;
+}
+
 export function fabricLineSupplierTotal(line: SalesOrderFabricLine): number | null {
-  if (line.unit_price == null || line.unit_price <= 0) return null;
-  if (line.quantity <= 0) return null;
-  return Math.round(line.unit_price * line.quantity * 100) / 100;
+  const unitPrice = effectiveFabricUnitPrice(line);
+  if (unitPrice == null || line.quantity <= 0) return null;
+  return Math.round(unitPrice * line.quantity * 100) / 100;
 }
 
 export function getFabricCostSummary(lines: SalesOrderFabricLine[]): FabricCostSummary {
@@ -57,8 +65,12 @@ export function formatFabricCostSummary(summary: FabricCostSummary): string {
 }
 
 export function formatFabricCostHint(summary: FabricCostSummary): string | null {
-  if (summary.priced_line_count === 0) return null;
+  if (summary.priced_line_count === 0) {
+    return summary.line_count === 0
+      ? null
+      : "No supplier prices found — fill Price on lines or check supplier catalogs";
+  }
   if (summary.missing_price_line_count === 0) return null;
   const missingWord = summary.missing_price_line_count === 1 ? "line" : "lines";
-  return `${summary.missing_price_line_count} ${missingWord} without price`;
+  return `${summary.missing_price_line_count} ${missingWord} without price (from line or catalog)`;
 }
