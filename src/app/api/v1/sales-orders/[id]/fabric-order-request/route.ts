@@ -26,6 +26,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       fabric_line_count: result.order.fabric_lines.length,
       delivery_destination: result.order.delivery_destination,
       requested_by: body.requested_by?.trim() || "api",
+      requested_at: result.order.fabric_order_requested_at,
       source: "api",
     });
 

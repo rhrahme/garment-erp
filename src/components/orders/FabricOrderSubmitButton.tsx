@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import type { SalesOrder } from "@/lib/types/sales-orders";
+import { formatDateTimeRiyadh } from "@/lib/utils";
 
 export function FabricOrderSubmitButton({
   order,
@@ -46,8 +47,12 @@ export function FabricOrderSubmitButton({
     return (
       <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
         <p className="font-medium">{submittedBadge}</p>
-        {order.fabric_order_requested_by && (
-          <p className="mt-1 text-xs text-amber-800">Submitted by {order.fabric_order_requested_by}</p>
+        {(order.fabric_order_requested_by || order.fabric_order_requested_at) && (
+          <p className="mt-1 text-xs text-amber-800">
+            {order.fabric_order_requested_by && <>Submitted by {order.fabric_order_requested_by}</>}
+            {order.fabric_order_requested_by && order.fabric_order_requested_at && " · "}
+            {order.fabric_order_requested_at && formatDateTimeRiyadh(order.fabric_order_requested_at)}
+          </p>
         )}
       </div>
     );

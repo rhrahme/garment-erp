@@ -26,6 +26,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
       fabric_line_count: result.order.fabric_lines.length,
       delivery_destination: result.order.delivery_destination,
       requested_by: session.email,
+      requested_at: result.order.fabric_order_requested_at,
     });
 
     const safeOrder = session.canViewFabricListPrices
