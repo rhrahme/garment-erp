@@ -44,9 +44,8 @@ export default async function FabricOrderDetailPage({
   const order = canViewFabricPrices ? rawOrder : redactSalesOrderFabricPrices(rawOrder);
   const existingInvoice = await getCustomerInvoiceBySalesOrderIdFresh(order.id);
   const fabricTotals = getFabricTotalsSummary(order.fabric_lines);
-  const fabricCostResult = canViewFabricPrices
-    ? resolveFabricCostForOrderLines(rawOrder.fabric_lines)
-    : null;
+  const fabricCostResult =
+    !session.isClientManager ? resolveFabricCostForOrderLines(rawOrder.fabric_lines) : null;
   const fabricCost = fabricCostResult?.summary ?? null;
 
   return (
@@ -126,7 +125,7 @@ export default async function FabricOrderDetailPage({
                   ? " · add width & gsm on lines to estimate kg"
                   : null}
             </p>
-            {canViewFabricPrices && fabricCostResult ? (
+            {fabricCostResult ? (
               <FabricCostSummaryBlock
                 summary={fabricCostResult.summary}
                 error={fabricCostResult.error}
