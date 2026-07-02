@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { DownloadSalesOrderPdfButton } from "@/components/orders/DownloadSalesOrderPdfButton";
@@ -37,6 +37,13 @@ import { formatFabricLineLabels } from "@/lib/sales-orders/label-display";
 import { FabricOrderSubmitButton } from "@/components/orders/FabricOrderSubmitButton";
 import { fabricOrderUiLabels } from "@/lib/orders/fabric-order-ui-labels";
 import { formatDateTime } from "@/lib/utils";
+import { SortableTableHeader } from "@/components/ui/SortableTableHeader";
+import {
+  nextFabricLineSort,
+  sortFabricLines,
+  type FabricLineSortKey,
+  type FabricLineSortState,
+} from "@/lib/sales-orders/fabric-line-sort";
 
 export type SalesOrderViewMode = "fabric_order" | "production" | "sales";
 
@@ -91,6 +98,7 @@ export function SalesOrderActions({
   );
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [lineSort, setLineSort] = useState<FabricLineSortState | null>(null);
 
   useEffect(() => {
     setLiveOrder(order);
@@ -134,6 +142,15 @@ export function SalesOrderActions({
     () => buildSoArticleMapFromFabricLines(liveOrder.fabric_lines),
     [liveOrder.fabric_lines]
   );
+
+  const sortedFabricLines = useMemo(
+    () => sortFabricLines(liveOrder.fabric_lines, lineSort, articleByLineId),
+    [liveOrder.fabric_lines, lineSort, articleByLineId]
+  );
+
+  const handleLineSort = useCallback((key: string) => {
+    setLineSort((prev) => nextFabricLineSort(prev, key as FabricLineSortKey));
+  }, []);
 
   const fabricTotals = getFabricTotalsSummary(liveOrder.fabric_lines);
   const fabricLinesEditable = canEditFabricLines(liveOrder);
@@ -376,15 +393,40 @@ export function SalesOrderActions({
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
-                  <th className="px-3 py-2 text-center">Art.</th>
-                  <th className="px-3 py-2">Fabric</th>
-                  <th className="px-3 py-2">Garment</th>
-                  <th className="px-3 py-2">Meters</th>
+                  <SortableTableHeader
+                    label="Art."
+                    sortKey="article"
+                    activeSortKey={lineSort?.key ?? null}
+                    direction={lineSort?.direction ?? null}
+                    onSort={handleLineSort}
+                    align="center"
+                  />
+                  <SortableTableHeader
+                    label="Fabric"
+                    sortKey="fabric"
+                    activeSortKey={lineSort?.key ?? null}
+                    direction={lineSort?.direction ?? null}
+                    onSort={handleLineSort}
+                  />
+                  <SortableTableHeader
+                    label="Garment"
+                    sortKey="garment"
+                    activeSortKey={lineSort?.key ?? null}
+                    direction={lineSort?.direction ?? null}
+                    onSort={handleLineSort}
+                  />
+                  <SortableTableHeader
+                    label="Meters"
+                    sortKey="meters"
+                    activeSortKey={lineSort?.key ?? null}
+                    direction={lineSort?.direction ?? null}
+                    onSort={handleLineSort}
+                  />
                   <th className="px-3 py-2">Sticker</th>
                 </tr>
               </thead>
               <tbody>
-                {liveOrder.fabric_lines.map((line) => (
+                {sortedFabricLines.map((line) => (
                   <tr
                     key={line.id}
                     id={salesOrderFabricLineAnchor(line.id)}
@@ -414,7 +456,174 @@ export function SalesOrderActions({
           </div>
         )}
         <div className="mt-4 space-y-4">
-          {Object.entries(supplierGroups).map(([groupKey, group]) => (
+          {lineSort ? (
+            <div className="overflow-x-auto rounded-lg border border-slate-100 bg-slate-50">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-white text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                    <SortableTableHeader
+                      label="Art."
+                      sortKey="article"
+                      activeSortKey={lineSort.key}
+                      direction={lineSort.direction}
+                      onSort={handleLineSort}
+                      align="center"
+                    />
+                    <SortableTableHeader
+                      label="Supplier"
+                      sortKey="supplier"
+                      activeSortKey={lineSort.key}
+                      direction={lineSort.direction}
+                      onSort={handleLineSort}
+                    />
+                    <SortableTableHeader
+                      label="Fabric"
+                      sortKey="fabric"
+                      activeSortKey={lineSort.key}
+                      direction={lineSort.direction}
+                      onSort={handleLineSort}
+                    />
+                    <SortableTableHeader
+                      label="Garment"
+                      sortKey="garment"
+                      activeSortKey={lineSort.key}
+                      direction={lineSort.direction}
+                      onSort={handleLineSort}
+                    />
+                    <SortableTableHeader
+                      label="Labels"
+                      sortKey="labels"
+                      activeSortKey={lineSort.key}
+                      direction={lineSort.direction}
+                      onSort={handleLineSort}
+                    />
+                    <SortableTableHeader
+                      label="Composition"
+                      sortKey="composition"
+                      activeSortKey={lineSort.key}
+                      direction={lineSort.direction}
+                      onSort={handleLineSort}
+                    />
+                    <SortableTableHeader
+                      label="Weight"
+                      sortKey="weight"
+                      activeSortKey={lineSort.key}
+                      direction={lineSort.direction}
+                      onSort={handleLineSort}
+                    />
+                    <SortableTableHeader
+                      label="Width"
+                      sortKey="width"
+                      activeSortKey={lineSort.key}
+                      direction={lineSort.direction}
+                      onSort={handleLineSort}
+                    />
+                    <SortableTableHeader
+                      label="Meters"
+                      sortKey="meters"
+                      activeSortKey={lineSort.key}
+                      direction={lineSort.direction}
+                      onSort={handleLineSort}
+                    />
+                    {canViewFabricPrices ? (
+                      <SortableTableHeader
+                        label="Price"
+                        sortKey="price"
+                        activeSortKey={lineSort.key}
+                        direction={lineSort.direction}
+                        onSort={handleLineSort}
+                      />
+                    ) : null}
+                    {fabricsEditable ? <th className="px-3 py-2 w-28" /> : null}
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedFabricLines.map((line) => (
+                    <tr
+                      key={line.id}
+                      id={salesOrderFabricLineAnchor(line.id)}
+                      className={`scroll-mt-24 border-b border-slate-100 last:border-0 align-top ${
+                        line.needs_replacement || line.stock_status === "permanently_unavailable"
+                          ? "bg-amber-50/40"
+                          : line.stock_status === "temp_unavailable"
+                            ? "bg-amber-50/20"
+                            : "bg-white"
+                      }`}
+                    >
+                      <td className="px-3 py-2 text-center font-semibold text-slate-900">
+                        {formatFabricLineArticle(articleByLineId.get(line.id))}
+                      </td>
+                      <td className="px-3 py-2 text-slate-600">
+                        <FabricSupplierName
+                          supplierId={line.supplier_id}
+                          supplierName={line.supplier_name}
+                          fabricNumber={line.fabric_number}
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-slate-900">
+                        <FabricNumberWithSwatch
+                          supplierId={line.supplier_id}
+                          fabricNumber={line.fabric_number}
+                          highlight={isFabricUnavailable(line.stock_status) || line.needs_replacement}
+                        >
+                          <FabricStockBadge fabric={line} />
+                          <FabricReplacementBadge needsReplacement={line.needs_replacement} />
+                        </FabricNumberWithSwatch>
+                        {line.needs_replacement && (
+                          <p className="mt-1 text-xs text-violet-800">
+                            Replacement still needed — update fabric before supplier emails.
+                          </p>
+                        )}
+                        {!line.needs_replacement && formatFabricStockLabel(line) && (
+                          <p className="mt-1 text-xs text-amber-800">{formatFabricStockLabel(line)}</p>
+                        )}
+                        {line.added_at && (
+                          <p className="mt-1 text-xs text-slate-400">
+                            Added {formatDateTime(line.added_at)}
+                            {line.added_by ? ` by ${line.added_by}` : ""}
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-slate-600">{line.garment_type}</td>
+                      <td className="px-3 py-2 text-slate-600">{formatFabricLineLabels(line)}</td>
+                      <td className="px-3 py-2 text-slate-600">{line.composition ?? "—"}</td>
+                      <td className="px-3 py-2 text-slate-600">
+                        {line.weight_gsm != null ? `${line.weight_gsm} gsm` : "—"}
+                      </td>
+                      <td className="px-3 py-2 text-slate-600">{formatWidth(line)}</td>
+                      <td className="px-3 py-2 font-medium text-slate-900">
+                        {line.quantity} {line.unit === "meters" ? "m" : line.unit}
+                      </td>
+                      {canViewFabricPrices ? (
+                        <td className="px-3 py-2 text-slate-600">{formatLinePrice(line)}</td>
+                      ) : null}
+                      {fabricsEditable ? (
+                        <td className="px-3 py-2">
+                          <div className="flex flex-col items-end gap-2">
+                            <OrderFabricLineEditor
+                              orderId={liveOrder.id}
+                              line={line}
+                              productionMode={isClientManager}
+                              onLineUpdated={handleLineUpdated}
+                            />
+                            <OrderFabricLineRemove
+                              orderId={liveOrder.id}
+                              line={line}
+                              productionMode={isClientManager}
+                              patternMismatch={patternMismatch}
+                              patternJobsForLine={patternJobsByLineId[line.id] ?? 0}
+                              onLineRemoved={handleLineRemoved}
+                            />
+                          </div>
+                        </td>
+                      ) : null}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+          Object.entries(supplierGroups).map(([groupKey, group]) => (
             <div key={groupKey} className="overflow-x-auto rounded-lg border border-slate-100 bg-slate-50">
               <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
                 <p className="font-medium text-slate-900">{group.name}</p>
@@ -422,15 +631,72 @@ export function SalesOrderActions({
               <table className="min-w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 bg-white text-left text-xs font-medium uppercase tracking-wide text-slate-500">
-                    <th className="px-3 py-2 text-center">Art.</th>
-                    <th className="px-3 py-2">Fabric</th>
-                    <th className="px-3 py-2">Garment</th>
-                    <th className="px-3 py-2">Labels</th>
-                    <th className="px-3 py-2">Composition</th>
-                    <th className="px-3 py-2">Weight</th>
-                    <th className="px-3 py-2">Width</th>
-                    <th className="px-3 py-2">Meters</th>
-                    {canViewFabricPrices ? <th className="px-3 py-2">Price</th> : null}
+                    <SortableTableHeader
+                      label="Art."
+                      sortKey="article"
+                      activeSortKey={lineSort?.key ?? null}
+                      direction={lineSort?.direction ?? null}
+                      onSort={handleLineSort}
+                      align="center"
+                    />
+                    <SortableTableHeader
+                      label="Fabric"
+                      sortKey="fabric"
+                      activeSortKey={lineSort?.key ?? null}
+                      direction={lineSort?.direction ?? null}
+                      onSort={handleLineSort}
+                    />
+                    <SortableTableHeader
+                      label="Garment"
+                      sortKey="garment"
+                      activeSortKey={lineSort?.key ?? null}
+                      direction={lineSort?.direction ?? null}
+                      onSort={handleLineSort}
+                    />
+                    <SortableTableHeader
+                      label="Labels"
+                      sortKey="labels"
+                      activeSortKey={lineSort?.key ?? null}
+                      direction={lineSort?.direction ?? null}
+                      onSort={handleLineSort}
+                    />
+                    <SortableTableHeader
+                      label="Composition"
+                      sortKey="composition"
+                      activeSortKey={lineSort?.key ?? null}
+                      direction={lineSort?.direction ?? null}
+                      onSort={handleLineSort}
+                    />
+                    <SortableTableHeader
+                      label="Weight"
+                      sortKey="weight"
+                      activeSortKey={lineSort?.key ?? null}
+                      direction={lineSort?.direction ?? null}
+                      onSort={handleLineSort}
+                    />
+                    <SortableTableHeader
+                      label="Width"
+                      sortKey="width"
+                      activeSortKey={lineSort?.key ?? null}
+                      direction={lineSort?.direction ?? null}
+                      onSort={handleLineSort}
+                    />
+                    <SortableTableHeader
+                      label="Meters"
+                      sortKey="meters"
+                      activeSortKey={lineSort?.key ?? null}
+                      direction={lineSort?.direction ?? null}
+                      onSort={handleLineSort}
+                    />
+                    {canViewFabricPrices ? (
+                      <SortableTableHeader
+                        label="Price"
+                        sortKey="price"
+                        activeSortKey={lineSort?.key ?? null}
+                        direction={lineSort?.direction ?? null}
+                        onSort={handleLineSort}
+                      />
+                    ) : null}
                     {fabricsEditable ? <th className="px-3 py-2 w-28" /> : null}
                   </tr>
                 </thead>
@@ -535,7 +801,8 @@ export function SalesOrderActions({
                 </div>
               )}
             </div>
-          ))}
+          ))
+          )}
         </div>
       </div>
 
