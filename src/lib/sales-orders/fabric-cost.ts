@@ -1,9 +1,45 @@
 import { getSupplierPriceCurrency, toSar, type PriceCurrency } from "@/lib/currency/config";
 import { formatSupplierUnitPrice } from "@/lib/currency/format";
-import { loroPianaFabrics, solbiatiFabrics } from "@/lib/data/supplier-catalogs";
-import { resolveFabricItemFromCatalog } from "@/lib/fabric-sourcing/resolve-fabric-from-catalog";
+import { loroPianaFabrics, searchSupplierFabrics, solbiatiFabrics } from "@/lib/data/supplier-catalog-data";
+import {
+  getLoroPianaMillLine,
+  isLoroPianaStyleSupplier,
+  normalizeLoroPianaFabricNumber,
+} from "@/lib/fabric-sourcing/loro-piana-styles";
+import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import { formatCurrency } from "@/lib/utils";
+
+/** Client-safe catalog price lookup — avoids supplier-contacts/fs via resolve-fabric-from-catalog. */
+function catalogUnitPrice(supplierId: string, fabricNumber: string): number | null {
+  const trimmed = fabricNumber.trim();
+  if (!trimmed) return null;
+
+  function findPrice(id: string, number: string): number | null {
+    const canonicalId = resolveFabricSupplierId(id);
+    const usesLpStyle = isLoroPianaStyleSupplier(canonicalId);
+    const lookupNumber = usesLpStyle
+      ? normalizeLoroPianaFabricNumber(number).toLowerCase()
+      : number.toLowerCase();
+    const matches = searchSupplierFabrics(canonicalId, number, 20);
+    const match =
+      matches.find((item) => item.fabric_number.toLowerCase() === lookupNumber) ??
+      matches.find((item) => item.fabric_number.toLowerCase() === number.toLowerCase());
+    const price = match?.unit_price;
+    return price != null && price > 0 ? price : null;
+  }
+
+  const canonicalId = resolveFabricSupplierId(supplierId);
+  const direct = findPrice(canonicalId, trimmed);
+  if (direct != null) return direct;
+
+  // Loro Piana account orders include Solbiati linens (S-prefix) from the same price list.
+  if (canonicalId === "loro-piana" && getLoroPianaMillLine(trimmed) === "solbiati") {
+    return findPrice("solbiati", trimmed);
+  }
+
+  return null;
+}
 
 export interface FabricCostSummary {
   line_count: number;
@@ -17,9 +53,7 @@ export interface FabricCostSummary {
 
 function effectiveFabricUnitPrice(line: SalesOrderFabricLine): number | null {
   if (line.unit_price != null && line.unit_price > 0) return line.unit_price;
-  const catalog = resolveFabricItemFromCatalog(line.supplier_id, line.fabric_number);
-  if (catalog.unit_price != null && catalog.unit_price > 0) return catalog.unit_price;
-  return null;
+  return catalogUnitPrice(line.supplier_id, line.fabric_number);
 }
 
 /** Unit price from the line or supplier catalog — for display on order detail tables. */
