@@ -20,6 +20,7 @@ import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import type { PatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mismatch";
 import { formatSupplierUnitPrice } from "@/lib/currency/format";
+import { formatFabricCostHint, formatFabricCostSummary, getFabricCostSummary } from "@/lib/sales-orders/fabric-cost";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
 import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import { ProductionOrderAddFabrics } from "@/components/orders/ProductionOrderAddFabrics";
@@ -153,6 +154,7 @@ export function SalesOrderActions({
   }, []);
 
   const fabricTotals = getFabricTotalsSummary(liveOrder.fabric_lines);
+  const fabricCost = canViewFabricPrices ? getFabricCostSummary(liveOrder.fabric_lines) : null;
   const fabricLinesEditable = canEditFabricLines(liveOrder);
   const fabricEditBlockedReason = fabricLineEditBlockedReason(liveOrder);
   const fabricsEditable = showFabricInput && fabricLinesEditable;
@@ -380,10 +382,22 @@ export function SalesOrderActions({
               <p className="mt-1 text-xs text-amber-800">{fabricEditBlockedReason}</p>
             )}
             {liveOrder.fabric_lines.length > 0 && (
-              <p className="mt-2 text-sm font-medium text-slate-800">
-                Order total: {fabricTotals.total_meters.toFixed(1)} m
-                {fabricTotals.total_kg != null ? ` · ${fabricTotals.total_kg.toFixed(1)} kg` : null}
-              </p>
+              <div className="mt-2 space-y-1 text-sm font-medium text-slate-800">
+                <p>
+                  Order total: {fabricTotals.total_meters.toFixed(1)} m
+                  {fabricTotals.total_kg != null ? ` · ${fabricTotals.total_kg.toFixed(1)} kg` : null}
+                </p>
+                {fabricCost && fabricCost.priced_line_count > 0 && (
+                  <p>
+                    Fabric cost: {formatFabricCostSummary(fabricCost)}
+                    {formatFabricCostHint(fabricCost) ? (
+                      <span className="ml-1 text-xs font-normal text-slate-500">
+                        ({formatFabricCostHint(fabricCost)})
+                      </span>
+                    ) : null}
+                  </p>
+                )}
+              </div>
             )}
           </div>
           {!productionMode && <FabricPriceRevealToggle canViewFabricPrices={canViewFabricPrices} />}

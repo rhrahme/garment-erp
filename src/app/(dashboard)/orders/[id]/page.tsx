@@ -15,6 +15,7 @@ import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readPatternJobsFresh } from "@/lib/data/pattern-jobs";
 import { getSalesOrderByIdFresh, isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
 import { activePatternJobsForLine } from "@/lib/pattern/sync-guard";
+import { formatFabricCostHint, formatFabricCostSummary, getFabricCostSummary } from "@/lib/sales-orders/fabric-cost";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
 import { detectPatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mismatch";
 import { getRemovedSalesOrderRedirectForKey } from "@/lib/sales-orders/removed-order-redirects";
@@ -49,6 +50,7 @@ export default async function SalesOrderDetailPage({
   const order = canViewFabricPrices ? rawOrder : redactSalesOrderFabricPrices(rawOrder);
   const existingInvoice = await getCustomerInvoiceBySalesOrderIdFresh(order.id);
   const fabricTotals = getFabricTotalsSummary(order.fabric_lines);
+  const fabricCost = canViewFabricPrices ? getFabricCostSummary(order.fabric_lines) : null;
 
   return (
     <div>
@@ -137,6 +139,17 @@ export default async function SalesOrderDetailPage({
                   ? " · add width & gsm on lines to estimate kg"
                   : null}
             </p>
+            {fabricCost && fabricCost.priced_line_count > 0 && (
+              <>
+                <p className="mt-3 text-sm text-emerald-800">Fabric cost (supplier)</p>
+                <p className="mt-0.5 text-lg font-semibold text-slate-900">
+                  {formatFabricCostSummary(fabricCost)}
+                </p>
+                {formatFabricCostHint(fabricCost) && (
+                  <p className="mt-1 text-xs text-slate-600">{formatFabricCostHint(fabricCost)}</p>
+                )}
+              </>
+            )}
           </div>
         )}
       </div>
