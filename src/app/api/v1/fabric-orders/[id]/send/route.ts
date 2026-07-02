@@ -4,6 +4,7 @@ import { verifyApiKey } from "@/lib/integrations/api-auth";
 import {
   ensureFabricOrdersLoaded,
   getStoredFabricOrder,
+  markStoredFabricOrderLinesSent,
   markStoredFabricOrderSent,
 } from "@/lib/integrations/fabric-order-store";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
@@ -23,10 +24,22 @@ export async function POST(
 
   try {
     const { id } = await params;
+    const requestBody = (await request.json().catch(() => ({}))) as { line_ids?: string[] };
     await Promise.all([ensureFabricOrdersLoaded(), ensureDocumentsLoaded(["sales_orders"])]);
     const order = getStoredFabricOrder(id);
     if (!order || !order.supplier) {
       return NextResponse.json({ error: "Fabric order not found." }, { status: 404 });
+    }
+
+    const lineIds = (requestBody.line_ids ?? []).filter(Boolean);
+    const orderLines = order.lines ?? [];
+    const linesToSend =
+      lineIds.length > 0
+        ? orderLines.filter((line) => lineIds.includes(line.id))
+        : orderLines;
+
+    if (linesToSend.length === 0) {
+      return NextResponse.json({ error: "At least one fabric line is required." }, { status: 400 });
     }
 
     const fabrics = await getPriceListItems(order.supplier_id);
@@ -43,7 +56,7 @@ export async function POST(
       clientCode,
       poNumber: order.po_number,
       deliveryDestination: salesOrder?.delivery_destination ?? null,
-      lines: (order.lines ?? []).map((line) => {
+      lines: linesToSend.map((line) => {
         const fabric = fabrics.find((f) => f.fabric_number === line.fabric_number);
         return {
           fabricNumber: line.fabric_number ?? "—",
@@ -65,19 +78,31 @@ export async function POST(
     });
 
     const emailedAt = new Date().toISOString();
-    const updated = await markStoredFabricOrderSent(id, {
-      emailed_at: emailedAt,
-      email_to: recipients.join(", "),
-    });
+    const emailTo = recipients.join(", ");
+    const updated =
+      lineIds.length > 0
+        ? (
+            await markStoredFabricOrderLinesSent({ [id]: lineIds }, {
+              emailed_at: emailedAt,
+              email_to: emailTo,
+            })
+          )[0]
+        : await markStoredFabricOrderSent(id, {
+            emailed_at: emailedAt,
+            email_to: emailTo,
+          });
 
     await notifyIntegration("fabric_order.sent", {
       id: order.id,
       po_number: order.po_number,
       supplier_id: order.supplier_id,
       supplier_name: order.supplier.name,
-      email_to: recipients.join(", "),
+      email_to: emailTo,
       emailed_at: emailedAt,
       message_id: result.messageId,
+      line_ids: lineIds.length > 0 ? lineIds : null,
+      lines_sent: linesToSend.length,
+      partial: lineIds.length > 0 && lineIds.length < orderLines.length,
     });
 
     return NextResponse.json({

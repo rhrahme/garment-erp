@@ -1,6 +1,7 @@
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import { listStoredFabricOrdersFresh } from "@/lib/integrations/fabric-order-store";
+import { isFabricOrderPending } from "@/lib/fabric-sourcing/fabric-order-line-status";
 import {
   findMatchingSalesOrderForOrphanPos,
   resolveSupplierEmailMetadata,
@@ -64,8 +65,8 @@ export async function listSupplierEmailQueue(
   return rawOrders
     .map((order) => enrichQueueItem(order, salesById, salesStore.orders, orphanPosByMissingId))
     .sort((a, b) => {
-      const aPending = a.emailed_at ? 1 : 0;
-      const bPending = b.emailed_at ? 1 : 0;
+      const aPending = isFabricOrderPending(a) ? 0 : 1;
+      const bPending = isFabricOrderPending(b) ? 0 : 1;
       if (aPending !== bPending) return aPending - bPending;
       return b.order_date.localeCompare(a.order_date) * -1;
     });

@@ -7,6 +7,7 @@ import {
   writeJsonFileAsync,
 } from "@/lib/data/json-file-cache";
 import type { PurchaseOrder, PurchaseOrderLine } from "@/lib/types/fabric-sourcing";
+import { isFabricOrderFullySent } from "@/lib/fabric-sourcing/fabric-order-line-status";
 
 const STORE_PATH = path.join(process.cwd(), "fabric-orders.local.json");
 
@@ -148,6 +149,48 @@ export async function markStoredFabricOrdersSent(
     order.emailed_at = details.emailed_at;
     order.email_to = details.email_to;
     order.status = details.status ?? "sent";
+    for (const line of order.lines ?? []) {
+      line.emailed_at = details.emailed_at;
+    }
+    updated.push(order);
+  }
+
+  if (updated.length > 0) {
+    await writeJsonFileAsync(STORE_PATH, store);
+  }
+
+  return updated;
+}
+
+/** Mark specific PO lines as sent; completes the PO when all lines are sent. */
+export async function markStoredFabricOrderLinesSent(
+  lineIdsByPoId: Record<string, string[]>,
+  details: { emailed_at: string; email_to: string; status?: string }
+): Promise<PurchaseOrder[]> {
+  const store = await readStoreFresh();
+  const updated: PurchaseOrder[] = [];
+
+  for (const order of store.orders) {
+    const lineIds = lineIdsByPoId[order.id];
+    if (!lineIds?.length) continue;
+
+    const lineIdSet = new Set(lineIds);
+    let touched = false;
+
+    for (const line of order.lines ?? []) {
+      if (!lineIdSet.has(line.id)) continue;
+      line.emailed_at = details.emailed_at;
+      touched = true;
+    }
+
+    if (!touched) continue;
+
+    if (isFabricOrderFullySent(order)) {
+      order.emailed_at = details.emailed_at;
+      order.email_to = details.email_to;
+      order.status = details.status ?? "sent";
+    }
+
     updated.push(order);
   }
 

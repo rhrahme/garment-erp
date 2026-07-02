@@ -10,13 +10,21 @@ import {
   purchaseOrdersBatchToEmail,
   formatDeliveryDestinationForSubject,
 } from "@/lib/fabric-sourcing/email-content";
+import {
+  getPendingFabricOrderLines,
+  lineIdsByPoIdFromSelection,
+} from "@/lib/fabric-sourcing/fabric-order-line-status";
 import { fabricCatalogSupplierIdsForEmail } from "@/lib/fabric-sourcing/supplier-display";
 import {
   groupSupplierEmailBatches,
   type SupplierEmailBatch,
   type SupplierEmailQueueItem,
 } from "@/lib/fabric-sourcing/supplier-email-batches";
-import type { SupplierFabric } from "@/lib/types/fabric-sourcing";
+import type { PurchaseOrderLine, SupplierFabric } from "@/lib/types/fabric-sourcing";
+import {
+  formatFabricLineArticle,
+  resolveSoArticleForFabricLine,
+} from "@/lib/sales-orders/label-codes";
 import { formatDateTimeRiyadh } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 
@@ -128,16 +136,21 @@ export function SupplierEmailsWorkspace() {
 
   async function handleSent(
     poIds: string[],
-    result: { emailedAt: string; emailTo: string; persisted?: boolean }
+    result: { emailedAt: string; emailTo: string; persisted?: boolean },
+    lineIdsByPoId?: Record<string, string[]>
   ) {
-    applySentOptimistic(poIds, result);
+    const hasLineSelection = lineIdsByPoId && Object.values(lineIdsByPoId).some((ids) => ids.length > 0);
+    if (!hasLineSelection) {
+      applySentOptimistic(poIds, result);
+    }
 
     if (!result.persisted) {
       const res = await fetch("/api/fabric-orders/mark-sent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ids: poIds,
+          ids: hasLineSelection ? undefined : poIds,
+          lineIdsByPoId: hasLineSelection ? lineIdsByPoId : undefined,
           emailed_at: result.emailedAt,
           email_to: result.emailTo,
         }),
@@ -279,7 +292,7 @@ export function SupplierEmailsWorkspace() {
                   fabrics={fabricsForEmailBatch(batch, fabricsBySupplier)}
                   factoryEmail={factoryEmail}
                   isAdmin={isAdmin}
-                  onSent={(poIds, result) => void handleSent(poIds, result)}
+                  onSent={(poIds, result, lineIdsByPoId) => void handleSent(poIds, result, lineIdsByPoId)}
                   onCancel={(poIds, poNumbers) => void handleCancel(poIds, batch.supplier_name, poNumbers)}
                 />
               ))}
@@ -335,7 +348,11 @@ function PendingSupplierEmailBatchCard({
   fabrics: SupplierFabric[];
   factoryEmail: string | null;
   isAdmin: boolean;
-  onSent: (poIds: string[], result: { emailedAt: string; emailTo: string; persisted?: boolean }) => void;
+  onSent: (
+    poIds: string[],
+    result: { emailedAt: string; emailTo: string; persisted?: boolean },
+    lineIdsByPoId?: Record<string, string[]>
+  ) => void;
   onCancel: (poIds: string[], poNumbers: string[]) => void;
 }) {
   const showOrderPicker = batch.orders.length > 1;
@@ -343,9 +360,31 @@ function PendingSupplierEmailBatchCard({
     () => new Set(batch.orders.map((order) => order.id))
   );
 
+  const pendingLinesByOrder = useMemo(() => {
+    const map = new Map<string, PurchaseOrderLine[]>();
+    for (const order of batch.orders) {
+      map.set(order.id, getPendingFabricOrderLines(order));
+    }
+    return map;
+  }, [batch.orders]);
+
+  const defaultLineIds = useMemo(
+    () =>
+      new Set(
+        batch.orders.flatMap((order) => (pendingLinesByOrder.get(order.id) ?? []).map((line) => line.id))
+      ),
+    [batch.orders, pendingLinesByOrder]
+  );
+
+  const [selectedLineIds, setSelectedLineIds] = useState<Set<string>>(() => new Set(defaultLineIds));
+
   useEffect(() => {
     setSelectedPoIds(new Set(batch.orders.map((order) => order.id)));
   }, [batch.id, batch.orders]);
+
+  useEffect(() => {
+    setSelectedLineIds(new Set(defaultLineIds));
+  }, [batch.id, defaultLineIds]);
 
   const emailOptions = useBatchEmailOptions(batch, factoryEmail);
 
@@ -354,8 +393,43 @@ function PendingSupplierEmailBatchCard({
     [batch.orders, selectedPoIds]
   );
 
+  const selectableLines = useMemo(
+    () =>
+      selectedOrders.flatMap((order) => {
+        const pendingLines = pendingLinesByOrder.get(order.id) ?? [];
+        return pendingLines.map((line, index) => ({
+          order,
+          line,
+          article: resolveSoArticleForFabricLine(line, index),
+          unit: fabrics.find((fabric) => fabric.fabric_number === line.fabric_number)?.unit ?? "meters",
+        }));
+      }),
+    [selectedOrders, pendingLinesByOrder, fabrics]
+  );
+
+  useEffect(() => {
+    setSelectedLineIds((current) => {
+      const validIds = new Set(selectableLines.map((row) => row.line.id));
+      const next = new Set([...current].filter((id) => validIds.has(id)));
+      if (next.size === 0 && validIds.size > 0) {
+        return validIds;
+      }
+      return next;
+    });
+  }, [selectableLines]);
+
+  const lineIdsByPoId = useMemo(
+    () => lineIdsByPoIdFromSelection(selectedOrders, selectedLineIds),
+    [selectedOrders, selectedLineIds]
+  );
+
+  const hasSelectedLines = useMemo(
+    () => Object.values(lineIdsByPoId).some((lineIds) => lineIds.length > 0),
+    [lineIdsByPoId]
+  );
+
   const email = useMemo(() => {
-    if (selectedOrders.length === 0) {
+    if (selectedOrders.length === 0 || !hasSelectedLines) {
       const first = batch.orders[0];
       if (!first) {
         throw new Error("Batch has no purchase orders.");
@@ -367,18 +441,32 @@ function PendingSupplierEmailBatchCard({
       return {
         ...base,
         subject: `Fabric Orders — ${batch.supplier_name}${destinationLabel ? ` — ${destinationLabel}` : ""}`,
-        body: "Select at least one order above to preview the supplier email.",
+        body:
+          selectedOrders.length === 0
+            ? "Select at least one order above to preview the supplier email."
+            : "Select at least one fabric line above to preview the supplier email.",
       };
     }
-    return purchaseOrdersBatchToEmail(selectedOrders, fabrics, emailOptions);
-  }, [selectedOrders, batch.orders, batch.supplier_name, fabrics, emailOptions]);
+    return purchaseOrdersBatchToEmail(selectedOrders, fabrics, {
+      ...emailOptions,
+      lineIdsByPoId,
+    });
+  }, [
+    selectedOrders,
+    hasSelectedLines,
+    batch.orders,
+    batch.supplier_name,
+    fabrics,
+    emailOptions,
+    lineIdsByPoId,
+  ]);
 
   const poNumbers = selectedOrders.map((order) => order.po_number);
   const selectedPoIdsList = selectedOrders.map((order) => order.id);
   const allPoIds = batch.orders.map((order) => order.id);
   const allPoNumbers = batch.orders.map((order) => order.po_number);
   const orderCount = new Set(selectedOrders.map((order) => order.sales_order_id).filter(Boolean)).size;
-  const fabricLineCount = selectedOrders.reduce((sum, order) => sum + (order.lines?.length ?? 0), 0);
+  const fabricLineCount = selectableLines.filter((row) => selectedLineIds.has(row.line.id)).length;
   const summaryParts = [
     orderCount > 0 ? `${orderCount} order${orderCount !== 1 ? "s" : ""}` : null,
     `${fabricLineCount} fabric line${fabricLineCount !== 1 ? "s" : ""}`,
@@ -394,6 +482,22 @@ function PendingSupplierEmailBatchCard({
       }
       return next;
     });
+  }
+
+  function toggleLineIncluded(lineId: string, included: boolean) {
+    setSelectedLineIds((current) => {
+      const next = new Set(current);
+      if (included) {
+        next.add(lineId);
+      } else {
+        next.delete(lineId);
+      }
+      return next;
+    });
+  }
+
+  function setAllLinesIncluded(included: boolean) {
+    setSelectedLineIds(included ? new Set(selectableLines.map((row) => row.line.id)) : new Set());
   }
 
   return (
@@ -427,12 +531,21 @@ function PendingSupplierEmailBatchCard({
       ) : (
         <BatchOrderLinks orders={batch.orders} />
       )}
+      {selectableLines.length > 0 && (
+        <BatchLinePicker
+          rows={selectableLines}
+          selectedLineIds={selectedLineIds}
+          onToggle={toggleLineIncluded}
+          onSelectAll={setAllLinesIncluded}
+        />
+      )}
       <EmailPreview
         email={email}
         poNumber={poNumbers[0]}
         poNumbers={poNumbers}
         poIds={selectedPoIdsList}
-        onSent={(result) => onSent(selectedPoIdsList, result)}
+        lineIdsByPoId={lineIdsByPoId}
+        onSent={(result) => onSent(selectedPoIdsList, result, lineIdsByPoId)}
       />
     </div>
   );
@@ -602,6 +715,106 @@ function BatchHeader({
       )}
     </div>
   );
+}
+
+function BatchLinePicker({
+  rows,
+  selectedLineIds,
+  onToggle,
+  onSelectAll,
+}: {
+  rows: Array<{
+    order: SupplierEmailQueueItem;
+    line: PurchaseOrderLine;
+    article: number;
+    unit: string;
+  }>;
+  selectedLineIds: Set<string>;
+  onToggle: (lineId: string, included: boolean) => void;
+  onSelectAll: (included: boolean) => void;
+}) {
+  const allSelected = rows.length > 0 && rows.every((row) => selectedLineIds.has(row.line.id));
+  const someSelected = rows.some((row) => selectedLineIds.has(row.line.id));
+
+  return (
+    <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-medium text-slate-900">Fabric lines to include</p>
+        <div className="flex gap-3 text-xs">
+          <button
+            type="button"
+            className="font-medium text-indigo-600 hover:text-indigo-700 disabled:text-slate-400"
+            disabled={allSelected}
+            onClick={() => onSelectAll(true)}
+          >
+            Select all
+          </button>
+          <button
+            type="button"
+            className="font-medium text-indigo-600 hover:text-indigo-700 disabled:text-slate-400"
+            disabled={!someSelected}
+            onClick={() => onSelectAll(false)}
+          >
+            Deselect all
+          </button>
+        </div>
+      </div>
+      <div className="mt-2 overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="w-8 py-1.5 pr-2" aria-label="Include" />
+              <th className="py-1.5 pr-3">Art.</th>
+              <th className="py-1.5 pr-3">Fabric no.</th>
+              <th className="py-1.5 pr-3">Garment</th>
+              <th className="py-1.5 pr-3 text-right">Qty</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(({ order, line, article, unit }) => {
+              const checked = selectedLineIds.has(line.id);
+              const qty =
+                Number.isFinite(line.quantity_ordered) && line.quantity_ordered === Math.floor(line.quantity_ordered)
+                  ? String(Math.floor(line.quantity_ordered))
+                  : String(line.quantity_ordered);
+              return (
+                <tr key={line.id} className="border-t border-slate-200/80 text-slate-700">
+                  <td className="py-1.5 pr-2 align-top">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(event) => onToggle(line.id, event.target.checked)}
+                      className="h-4 w-4 rounded border-slate-300"
+                      aria-label={`Include ${line.fabric_number ?? "fabric line"}`}
+                    />
+                  </td>
+                  <td className="py-1.5 pr-3 align-top font-mono text-slate-900">
+                    {formatFabricLineArticle(article)}
+                  </td>
+                  <td className="py-1.5 pr-3 align-top font-mono">{line.fabric_number ?? "—"}</td>
+                  <td className="py-1.5 pr-3 align-top">{line.garment_type ?? "—"}</td>
+                  <td className="py-1.5 pr-3 align-top text-right whitespace-nowrap">
+                    {qty} {unit}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {rows.length > 1 && orderCountHint(rows) && (
+        <p className="mt-2 text-xs text-slate-500">{orderCountHint(rows)}</p>
+      )}
+    </div>
+  );
+}
+
+function orderCountHint(
+  rows: Array<{ order: SupplierEmailQueueItem; line: PurchaseOrderLine }>
+): string | null {
+  const orderIds = new Set(rows.map((row) => row.order.id));
+  if (orderIds.size <= 1) return null;
+  return `${orderIds.size} orders — unselected lines stay pending for a later email.`;
 }
 
 function BatchOrderPicker({

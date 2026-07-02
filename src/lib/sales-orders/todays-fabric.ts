@@ -5,6 +5,7 @@ import {
   listSupplierEmailQueue,
 } from "@/lib/fabric-sourcing/supplier-email-queue";
 import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
+import { isFabricOrderPending } from "@/lib/fabric-sourcing/fabric-order-line-status";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 import type { SalesOrder, SalesOrderStatus } from "@/lib/types/sales-orders";
 
@@ -68,7 +69,7 @@ function orderHasPendingSupplierEmails(
 ): boolean {
   const pos = fabricOrdersBySalesOrderId.get(order.id) ?? [];
   if (pos.length === 0) return false;
-  return pos.some((po) => !po.emailed_at);
+  return pos.some((po) => isFabricOrderPending(po));
 }
 
 function orderNeedsFabricAction(
@@ -147,7 +148,7 @@ async function countPendingSuppliersForOrderIds(orderIds: string[]): Promise<num
   const orderIdSet = new Set(orderIds);
   const queue = await listSupplierEmailQueue();
   const pending = queue.filter(
-    (item) => item.sales_order_id && orderIdSet.has(item.sales_order_id) && !item.emailed_at
+    (item) => item.sales_order_id && orderIdSet.has(item.sales_order_id) && isFabricOrderPending(item)
   );
   return groupSupplierEmailBatches(pending, { consolidate: true }).filter((batch) => batch.is_pending).length;
 }
@@ -178,7 +179,7 @@ export async function getTodaysFabricSummary(referenceDate = new Date()): Promis
 export async function countAllPendingSupplierBatches(): Promise<number> {
   const batches = await listSupplierEmailQueue().then((queue) =>
     groupSupplierEmailBatches(
-      queue.filter((item) => !item.emailed_at),
+      queue.filter((item) => isFabricOrderPending(item)),
       { consolidate: true }
     )
   );

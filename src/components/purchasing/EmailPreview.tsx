@@ -14,6 +14,8 @@ interface EmailPreviewProps {
   poNumbers?: string[];
   /** Fabric order ids to mark sent after a successful SMTP send. */
   poIds?: string[];
+  /** When set, only these line ids per PO are marked sent (partial send). */
+  lineIdsByPoId?: Record<string, string[]>;
   /** Called after a successful send to persist sent state on fabric orders. Omit for follow-ups. */
   onSent?: (result: { emailedAt: string; emailTo: string; persisted?: boolean }) => void;
   /** When set, the email is treated as already sent — send is disabled. */
@@ -32,6 +34,7 @@ export function EmailPreview({
   poNumber,
   poNumbers,
   poIds,
+  lineIdsByPoId,
   onSent,
   sentAt,
   sentTo,
@@ -69,6 +72,9 @@ export function EmailPreview({
   const includedPoNumbers = poNumbers ?? (poNumber ? [poNumber] : []);
   const includedPoIds = poIds ?? [];
   const hasIncludedPos = includedPoNumbers.length > 0;
+  const hasIncludedLines =
+    !lineIdsByPoId || Object.values(lineIdsByPoId).some((lineIds) => lineIds.length > 0);
+  const canSubmitSend = hasIncludedPos && hasIncludedLines;
 
   const isDirty = useMemo(
     () =>
@@ -143,6 +149,7 @@ export function EmailPreview({
           poNumber: includedPoNumbers[0],
           poNumbers: includedPoNumbers,
           ids: includedPoIds,
+          lineIdsByPoId,
         }),
       });
       const data = await res.json();
@@ -209,7 +216,7 @@ export function EmailPreview({
             <Button
               size="sm"
               onClick={sendEmail}
-              disabled={!canSend || !to.trim() || sending || !hasIncludedPos}
+              disabled={!canSend || !to.trim() || sending || !canSubmitSend}
             >
               {sending ? (
                 <>
@@ -227,9 +234,11 @@ export function EmailPreview({
         </div>
       </div>
       <div className="space-y-3 px-6 py-4 text-sm">
-        {!hasIncludedPos && (
+        {!canSubmitSend && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
-            Select at least one order above to include in this supplier email.
+            {hasIncludedPos
+              ? "Select at least one fabric line above to include in this supplier email."
+              : "Select at least one order above to include in this supplier email."}
           </div>
         )}
         {!canSend && !isSent && (

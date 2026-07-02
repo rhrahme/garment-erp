@@ -6,6 +6,7 @@ import { resolveSupplierCc } from "@/lib/fabric-sourcing/email-content";
 import { notifyIntegration } from "@/lib/integrations";
 import {
   ensureFabricOrdersLoaded,
+  markStoredFabricOrderLinesSent,
   markStoredFabricOrdersSent,
 } from "@/lib/integrations/fabric-order-store";
 import type { FabricOrderEmail } from "@/lib/types/fabric-sourcing";
@@ -20,6 +21,8 @@ export async function POST(request: Request) {
       poNumber?: string;
       poNumbers?: string[];
       ids?: string[];
+      /** When set, only these PO line ids are marked sent (partial send). */
+      lineIdsByPoId?: Record<string, string[]>;
     };
 
     const to = parseRecipientList(body.to ?? "");
@@ -72,9 +75,27 @@ export async function POST(request: Request) {
       body.poNumbers?.filter(Boolean) ??
       (body.poNumber ? [body.poNumber] : []);
     const ids = (body.ids ?? []).filter(Boolean);
+    const lineIdsByPoId = body.lineIdsByPoId ?? {};
+    const hasLineSelection = Object.values(lineIdsByPoId).some((lineIds) => lineIds.length > 0);
 
     let markedOrders: Awaited<ReturnType<typeof markStoredFabricOrdersSent>> = [];
-    if (ids.length > 0) {
+    if (hasLineSelection) {
+      await ensureFabricOrdersLoaded();
+      markedOrders = await markStoredFabricOrderLinesSent(lineIdsByPoId, {
+        emailed_at: emailedAt,
+        email_to: emailTo,
+        status: "sent",
+      });
+      if (markedOrders.length === 0) {
+        return NextResponse.json(
+          {
+            error:
+              "Email was sent but fabric order lines could not be marked as sent. Refresh and use “Already sent”, or contact support.",
+          },
+          { status: 500 }
+        );
+      }
+    } else if (ids.length > 0) {
       await ensureFabricOrdersLoaded();
       markedOrders = await markStoredFabricOrdersSent(ids, {
         emailed_at: emailedAt,
@@ -93,8 +114,10 @@ export async function POST(request: Request) {
     }
 
     const notifyPayload = markedOrders.length > 0
-      ? markedOrders.map((order) =>
-          notifyIntegration("fabric_order.sent", {
+      ? markedOrders.flatMap((order) => {
+          const selectedLineIds = lineIdsByPoId[order.id];
+          const lineCount = selectedLineIds?.length ?? order.lines?.length ?? 0;
+          return notifyIntegration("fabric_order.sent", {
             id: order.id,
             po_number: order.po_number,
             supplier_id: order.supplier_id,
@@ -103,8 +126,11 @@ export async function POST(request: Request) {
             emailed_at: emailedAt,
             message_id: result.messageId,
             batch_size: markedOrders.length,
-          })
-        )
+            line_ids: selectedLineIds ?? null,
+            lines_sent: lineCount,
+            partial: selectedLineIds ? selectedLineIds.length < (order.lines?.length ?? 0) : false,
+          });
+        })
       : [
           notifyIntegration("fabric_order.sent", {
             po_number: poNumbers[0] ?? body.poNumber ?? null,

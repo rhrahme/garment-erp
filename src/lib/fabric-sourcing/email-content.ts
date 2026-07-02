@@ -155,17 +155,23 @@ export function fabricSpecsSummary(fabric: SupplierFabric): string {
   return parts.join(", ") || "—";
 }
 
-function mapPoLinesToEmailLines(po: PurchaseOrder, fabrics: SupplierFabric[]): EmailLine[] {
-  return (po.lines ?? []).map((line) => {
-    const fabric = fabrics.find((f) => f.fabric_number === line.fabric_number);
-    return {
-      fabricNumber: line.fabric_number ?? "—",
-      quantity: line.quantity_ordered,
-      unit: fabric?.unit ?? "meters",
-      labelCount: line.label_count ?? line.label_stickers?.length ?? 1,
-      labelStickers: line.label_stickers ?? undefined,
-    };
-  });
+function mapPoLinesToEmailLines(
+  po: PurchaseOrder,
+  fabrics: SupplierFabric[],
+  lineIds?: Set<string>
+): EmailLine[] {
+  return (po.lines ?? [])
+    .filter((line) => !lineIds || lineIds.has(line.id))
+    .map((line) => {
+      const fabric = fabrics.find((f) => f.fabric_number === line.fabric_number);
+      return {
+        fabricNumber: line.fabric_number ?? "—",
+        quantity: line.quantity_ordered,
+        unit: fabric?.unit ?? "meters",
+        labelCount: line.label_count ?? line.label_stickers?.length ?? 1,
+        labelStickers: line.label_stickers ?? undefined,
+      };
+    });
 }
 
 export interface BatchOrderSection {
@@ -250,11 +256,17 @@ ${from ?? "[Your Factory Name]"}`;
 export function purchaseOrderToEmail(
   po: PurchaseOrder,
   fabrics: SupplierFabric[],
-  options?: { clientCode?: string; deliveryDestination?: DeliveryDestination | null; fromEmail?: string | null }
+  options?: {
+    clientCode?: string;
+    deliveryDestination?: DeliveryDestination | null;
+    fromEmail?: string | null;
+    lineIds?: string[];
+  }
 ): FabricOrderEmail {
   const clientCode =
     options?.clientCode ??
     (po.client_reference ? clientCodeFromReference(po.client_reference) : "—");
+  const lineIdSet = options?.lineIds ? new Set(options.lineIds) : undefined;
 
   return buildFabricOrderEmail({
     supplierName: po.supplier?.name ?? "Supplier",
@@ -264,7 +276,7 @@ export function purchaseOrderToEmail(
     clientCode,
     poNumber: po.po_number,
     deliveryDestination: options?.deliveryDestination,
-    lines: mapPoLinesToEmailLines(po, fabrics),
+    lines: mapPoLinesToEmailLines(po, fabrics, lineIdSet),
   });
 }
 
@@ -276,6 +288,8 @@ export function purchaseOrdersBatchToEmail(
     deliveryDestinationByPoId?: Record<string, DeliveryDestination | null>;
     soNumberByPoId?: Record<string, string | null>;
     fromEmail?: string | null;
+    /** Include only these line ids per PO — omit to include all lines. */
+    lineIdsByPoId?: Record<string, string[]>;
   }
 ): FabricOrderEmail {
   const first = orders[0];
@@ -283,19 +297,27 @@ export function purchaseOrdersBatchToEmail(
     throw new Error("At least one purchase order is required.");
   }
 
-  const sections: BatchOrderSection[] = orders.map((po) => {
-    const clientCode =
-      options?.clientCodeByPoId?.[po.id] ??
-      (po.client_reference ? clientCodeFromReference(po.client_reference) : "—");
+  const sections: BatchOrderSection[] = orders
+    .map((po) => {
+      const clientCode =
+        options?.clientCodeByPoId?.[po.id] ??
+        (po.client_reference ? clientCodeFromReference(po.client_reference) : "—");
+      const lineIds = options?.lineIdsByPoId?.[po.id];
+      const lineIdSet = lineIds ? new Set(lineIds) : undefined;
 
-    return {
-      clientCode,
-      poNumber: po.po_number,
-      soNumber: options?.soNumberByPoId?.[po.id] ?? null,
-      deliveryDestination: options?.deliveryDestinationByPoId?.[po.id] ?? null,
-      lines: mapPoLinesToEmailLines(po, fabrics),
-    };
-  });
+      return {
+        clientCode,
+        poNumber: po.po_number,
+        soNumber: options?.soNumberByPoId?.[po.id] ?? null,
+        deliveryDestination: options?.deliveryDestinationByPoId?.[po.id] ?? null,
+        lines: mapPoLinesToEmailLines(po, fabrics, lineIdSet),
+      };
+    })
+    .filter((section) => section.lines.length > 0);
+
+  if (sections.length === 0) {
+    throw new Error("At least one fabric line is required.");
+  }
 
   const factorySupplier = orders.find((po) => po.supplier_id === "loro-piana") ?? first;
 

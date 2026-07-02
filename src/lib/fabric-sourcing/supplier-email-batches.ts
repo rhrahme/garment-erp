@@ -2,6 +2,11 @@ import {
   resolveFactoryEmailSupplierName,
   supplierEmailBatchKey,
 } from "@/lib/fabric-sourcing/supplier-display";
+import {
+  getPendingFabricOrderLines,
+  isFabricOrderFullySent,
+  isFabricOrderPending,
+} from "@/lib/fabric-sourcing/fabric-order-line-status";
 import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 
@@ -32,7 +37,7 @@ function batchGroupKey(order: SupplierEmailQueueItem, consolidate: boolean): str
     const salesOrderKey = order.sales_order_id ?? order.id;
     return `so:${salesOrderKey}:${supplierKey}`;
   }
-  if (!order.emailed_at) {
+  if (isFabricOrderPending(order)) {
     return `pending:${supplierKey}`;
   }
   return `sent:${supplierKey}:${order.emailed_at}`;
@@ -67,9 +72,12 @@ export function groupSupplierEmailBatches(
   for (const [key, batchOrders] of groups) {
     const sorted = [...batchOrders].sort((a, b) => a.order_date.localeCompare(b.order_date));
     const salesOrderIds = new Set(sorted.map((order) => order.sales_order_id).filter(Boolean));
-    const fabricLineCount = sorted.reduce((sum, order) => sum + (order.lines?.length ?? 0), 0);
-    const emailedAt = sorted.every((order) => order.emailed_at)
-      ? sorted.map((order) => order.emailed_at!).sort().at(-1) ?? null
+    const batchPending = sorted.some((order) => isFabricOrderPending(order));
+    const fabricLineCount = batchPending
+      ? sorted.reduce((sum, order) => sum + getPendingFabricOrderLines(order).length, 0)
+      : sorted.reduce((sum, order) => sum + (order.lines?.length ?? 0), 0);
+    const emailedAt = sorted.every((order) => isFabricOrderFullySent(order))
+      ? sorted.map((order) => order.emailed_at!).filter(Boolean).sort().at(-1) ?? null
       : sorted.some((order) => order.emailed_at)
         ? sorted.find((order) => order.emailed_at)?.emailed_at ?? null
         : null;
@@ -84,7 +92,7 @@ export function groupSupplierEmailBatches(
       combines_multiple_orders: salesOrderIds.size > 1,
       fabric_line_count: fabricLineCount,
       emailed_at: emailedAt,
-      is_pending: sorted.some((order) => !order.emailed_at),
+      is_pending: sorted.some((order) => isFabricOrderPending(order)),
     });
   }
 
