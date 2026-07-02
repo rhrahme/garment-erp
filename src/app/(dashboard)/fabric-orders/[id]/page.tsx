@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { FabricCostSummaryBlock } from "@/components/orders/FabricCostSummaryBlock";
 import { DownloadSalesOrderPdfButton } from "@/components/orders/DownloadSalesOrderPdfButton";
 import { PageHeader, StatusBadge } from "@/components/ui/PageHeader";
 import { SalesOrderActions } from "@/components/orders/SalesOrderActions";
@@ -13,12 +14,14 @@ import { getSessionContext } from "@/lib/auth/session";
 import { getCustomerInvoiceBySalesOrderIdFresh } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderByIdFresh, isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
-import { formatFabricCostHint, formatFabricCostSummary, getFabricCostSummary } from "@/lib/sales-orders/fabric-cost";
+import { resolveFabricCostForOrderLines } from "@/lib/sales-orders/fabric-cost";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
 import { getRemovedSalesOrderRedirectForKey } from "@/lib/sales-orders/removed-order-redirects";
 import { fabricOrderUiLabels } from "@/lib/orders/fabric-order-ui-labels";
 import { OrderShipmentTracking } from "@/components/orders/OrderShipmentTracking";
 import { formatDate } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
 
 export default async function FabricOrderDetailPage({
   params,
@@ -41,7 +44,10 @@ export default async function FabricOrderDetailPage({
   const order = canViewFabricPrices ? rawOrder : redactSalesOrderFabricPrices(rawOrder);
   const existingInvoice = await getCustomerInvoiceBySalesOrderIdFresh(order.id);
   const fabricTotals = getFabricTotalsSummary(order.fabric_lines);
-  const fabricCost = canViewFabricPrices ? getFabricCostSummary(order.fabric_lines) : null;
+  const fabricCostResult = canViewFabricPrices
+    ? resolveFabricCostForOrderLines(rawOrder.fabric_lines)
+    : null;
+  const fabricCost = fabricCostResult?.summary ?? null;
 
   return (
     <div>
@@ -120,17 +126,12 @@ export default async function FabricOrderDetailPage({
                   ? " · add width & gsm on lines to estimate kg"
                   : null}
             </p>
-            {canViewFabricPrices && fabricCost && (
-              <>
-                <p className="mt-3 text-sm text-emerald-800">Fabric cost (supplier)</p>
-                <p className="mt-0.5 text-lg font-semibold text-slate-900">
-                  {formatFabricCostSummary(fabricCost)}
-                </p>
-                {formatFabricCostHint(fabricCost) && (
-                  <p className="mt-1 text-xs text-slate-600">{formatFabricCostHint(fabricCost)}</p>
-                )}
-              </>
-            )}
+            {canViewFabricPrices && fabricCostResult ? (
+              <FabricCostSummaryBlock
+                summary={fabricCostResult.summary}
+                error={fabricCostResult.error}
+              />
+            ) : null}
           </div>
         )}
       </div>

@@ -399,16 +399,16 @@ export function SalesOrderActions({
                   Order total: {fabricTotals.total_meters.toFixed(1)} m
                   {fabricTotals.total_kg != null ? ` · ${fabricTotals.total_kg.toFixed(1)} kg` : null}
                 </p>
-                {canViewFabricPrices && fabricCost && (
-                  <p>
-                    Fabric cost: {formatFabricCostSummary(fabricCost)}
-                    {formatFabricCostHint(fabricCost) ? (
+                {canViewFabricPrices ? (
+                  <p className="font-semibold text-emerald-900">
+                    Fabric cost: {fabricCost ? formatFabricCostSummary(fabricCost) : "—"}
+                    {fabricCost && formatFabricCostHint(fabricCost) ? (
                       <span className="ml-1 text-xs font-normal text-slate-500">
                         ({formatFabricCostHint(fabricCost)})
                       </span>
                     ) : null}
                   </p>
-                )}
+                ) : null}
               </div>
             )}
           </div>

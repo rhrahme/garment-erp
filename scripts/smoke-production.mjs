@@ -65,6 +65,17 @@ async function main() {
         }
       }
     }),
+    fetchCheck("health/fabric-catalog", "/api/v1/health/fabric-catalog", (status, body) => {
+      if (status !== 200) throw new Error(`expected 200, got ${status}`);
+      if (!body?.ok) {
+        throw new Error(
+          `catalog not ready (ready=${body?.catalog_ready}, S10005=${body?.sample?.solbiati_unit_price})`
+        );
+      }
+      if (body.sample?.solbiati_unit_price == null) {
+        throw new Error("S10005 missing from Solbiati catalog on server");
+      }
+    }),
     fetchCheck("login page", "/login", (status) => {
       if (status !== 200) throw new Error(`expected 200, got ${status}`);
     }),

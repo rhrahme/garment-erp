@@ -1,5 +1,6 @@
 import { getSupplierPriceCurrency, toSar, type PriceCurrency } from "@/lib/currency/config";
 import { formatSupplierUnitPrice } from "@/lib/currency/format";
+import { loroPianaFabrics, solbiatiFabrics } from "@/lib/data/supplier-catalogs";
 import { resolveFabricItemFromCatalog } from "@/lib/fabric-sourcing/resolve-fabric-from-catalog";
 import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import { formatCurrency } from "@/lib/utils";
@@ -85,4 +86,40 @@ export function formatFabricCostHint(summary: FabricCostSummary): string | null 
   if (summary.missing_price_line_count === 0) return null;
   const missingWord = summary.missing_price_line_count === 1 ? "line" : "lines";
   return `${summary.missing_price_line_count} ${missingWord} without price (from line or catalog)`;
+}
+
+/** True when bundled supplier catalog JSON is present (Solbiati + Loro Piana). */
+export function isSupplierCatalogReady(): boolean {
+  return solbiatiFabrics.length > 0 && loroPianaFabrics.length > 0;
+}
+
+export interface FabricCostResolution {
+  summary: FabricCostSummary;
+  catalogReady: boolean;
+  error: string | null;
+}
+
+/** Server-side fabric cost — always uses raw lines and bundled supplier catalogs. */
+export function resolveFabricCostForOrderLines(lines: SalesOrderFabricLine[]): FabricCostResolution {
+  try {
+    const catalogReady = isSupplierCatalogReady();
+    const summary = getFabricCostSummary(lines);
+    const error =
+      lines.length > 0 && summary.priced_line_count === 0 && !catalogReady
+        ? "Supplier catalog not loaded on server — contact support"
+        : null;
+    return { summary, catalogReady, error };
+  } catch (err) {
+    return {
+      summary: {
+        line_count: lines.length,
+        priced_line_count: 0,
+        missing_price_line_count: lines.length,
+        total_sar: 0,
+        totals_by_currency: {},
+      },
+      catalogReady: false,
+      error: err instanceof Error ? err.message : "Fabric cost calculation failed",
+    };
+  }
 }

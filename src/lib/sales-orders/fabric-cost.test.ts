@@ -7,6 +7,8 @@ import {
   formatFabricCostSummary,
   formatFabricLineSupplierPrice,
   getFabricCostSummary,
+  isSupplierCatalogReady,
+  resolveFabricCostForOrderLines,
 } from "./fabric-cost.ts";
 import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
@@ -149,5 +151,26 @@ describe("catalog fallback for Solbiati on Loro Piana account lines", () => {
     assert.equal(summary.missing_price_line_count, 0);
     assert.ok(summary.total_sar > 0);
     assert.match(formatFabricCostSummary(summary), /€/);
+  });
+});
+
+describe("resolveFabricCostForOrderLines", () => {
+  it("reports catalog readiness and prices Solbiati lines", () => {
+    assert.equal(isSupplierCatalogReady(), true);
+    const lines = [
+      line({
+        id: "sol-10005",
+        supplier_id: "loro-piana",
+        supplier_name: "Loro Piana",
+        fabric_number: "S10005",
+        unit_price: 0,
+        quantity: 1.2,
+      }),
+    ];
+    const result = resolveFabricCostForOrderLines(lines);
+    assert.equal(result.catalogReady, true);
+    assert.equal(result.error, null);
+    assert.equal(result.summary.priced_line_count, 1);
+    assert.ok(result.summary.total_sar > 0);
   });
 });
