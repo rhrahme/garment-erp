@@ -83,6 +83,11 @@ describe("formatFabricCostSummary", () => {
     ]);
     assert.equal(formatFabricCostSummary(summary), "SAR 82.50");
   });
+
+  it("shows zero SAR when no lines have prices", () => {
+    const summary = getFabricCostSummary([line({ unit_price: 0 }), line({ id: "b", unit_price: 0 })]);
+    assert.equal(formatFabricCostSummary(summary), "SAR 0.00");
+  });
 });
 
 describe("formatFabricCostHint", () => {
@@ -91,8 +96,16 @@ describe("formatFabricCostHint", () => {
     assert.equal(formatFabricCostHint(summary), null);
   });
 
+  it("notes when every line is missing a price", () => {
+    const summary = getFabricCostSummary([line({ unit_price: 0 }), line({ id: "b", unit_price: 0 })]);
+    assert.equal(
+      formatFabricCostHint(summary),
+      "No supplier prices found — fill Price on lines or check supplier catalogs"
+    );
+  });
+
   it("notes missing priced lines", () => {
     const summary = getFabricCostSummary([line(), line({ id: "b", unit_price: 0 })]);
-    assert.equal(formatFabricCostHint(summary), "1 line without price");
+    assert.equal(formatFabricCostHint(summary), "1 line without price (from line or catalog)");
   });
 });

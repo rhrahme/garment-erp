@@ -51,7 +51,7 @@ export function getFabricCostSummary(lines: SalesOrderFabricLine[]): FabricCostS
 }
 
 export function formatFabricCostSummary(summary: FabricCostSummary): string {
-  if (summary.priced_line_count === 0) return "—";
+  if (summary.priced_line_count === 0) return formatCurrency(0, "SAR");
 
   const sar = formatCurrency(summary.total_sar, "SAR");
   const currencyTotals = Object.entries(summary.totals_by_currency) as [PriceCurrency, number][];
