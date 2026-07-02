@@ -19,8 +19,7 @@ import { fabricSupplierGroupKey, formatFabricSupplierName } from "@/lib/fabric-s
 import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import type { PatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mismatch";
-import { formatSupplierUnitPrice } from "@/lib/currency/format";
-import { formatFabricCostHint, formatFabricCostSummary, getFabricCostSummary } from "@/lib/sales-orders/fabric-cost";
+import { formatFabricCostHint, formatFabricCostSummary, formatFabricLineSupplierPrice, getFabricCostSummary, type FabricCostSummary } from "@/lib/sales-orders/fabric-cost";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
 import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import { ProductionOrderAddFabrics } from "@/components/orders/ProductionOrderAddFabrics";
@@ -55,8 +54,13 @@ function formatWidth(line: SalesOrderFabricLine) {
 }
 
 function formatLinePrice(line: SalesOrderFabricLine) {
-  if (!line.unit_price) return "—";
-  return formatSupplierUnitPrice(line.unit_price, line.supplier_id, line.unit);
+  return formatFabricLineSupplierPrice(line);
+}
+
+function fabricLinesCostKey(lines: SalesOrderFabricLine[]): string {
+  return JSON.stringify(
+    lines.map((line) => [line.id, line.quantity, line.unit_price, line.fabric_number, line.supplier_id])
+  );
 }
 
 export function SalesOrderActions({
@@ -66,6 +70,7 @@ export function SalesOrderActions({
   existingInvoiceId = null,
   isReadyMade = false,
   canViewFabricPrices = false,
+  fabricCostSummary = null,
   isClientManager = false,
   productionMode = false,
   viewMode = "sales",
@@ -76,6 +81,7 @@ export function SalesOrderActions({
   existingInvoiceId?: string | null;
   isReadyMade?: boolean;
   canViewFabricPrices?: boolean;
+  fabricCostSummary?: FabricCostSummary | null;
   isClientManager?: boolean;
   productionMode?: boolean;
   viewMode?: SalesOrderViewMode;
@@ -154,7 +160,13 @@ export function SalesOrderActions({
   }, []);
 
   const fabricTotals = getFabricTotalsSummary(liveOrder.fabric_lines);
-  const fabricCost = canViewFabricPrices ? getFabricCostSummary(liveOrder.fabric_lines) : null;
+  const serverFabricCostKey = useMemo(() => fabricLinesCostKey(order.fabric_lines), [order.fabric_lines]);
+  const liveFabricCostKey = useMemo(() => fabricLinesCostKey(liveOrder.fabric_lines), [liveOrder.fabric_lines]);
+  const fabricCost = canViewFabricPrices
+    ? liveFabricCostKey === serverFabricCostKey && fabricCostSummary
+      ? fabricCostSummary
+      : getFabricCostSummary(liveOrder.fabric_lines)
+    : null;
   const fabricLinesEditable = canEditFabricLines(liveOrder);
   const fabricEditBlockedReason = fabricLineEditBlockedReason(liveOrder);
   const fabricsEditable = showFabricInput && fabricLinesEditable;
@@ -387,7 +399,7 @@ export function SalesOrderActions({
                   Order total: {fabricTotals.total_meters.toFixed(1)} m
                   {fabricTotals.total_kg != null ? ` · ${fabricTotals.total_kg.toFixed(1)} kg` : null}
                 </p>
-                {fabricCost && (
+                {canViewFabricPrices && fabricCost && (
                   <p>
                     Fabric cost: {formatFabricCostSummary(fabricCost)}
                     {formatFabricCostHint(fabricCost) ? (

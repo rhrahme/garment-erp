@@ -1,4 +1,5 @@
 import { getSupplierPriceCurrency, toSar, type PriceCurrency } from "@/lib/currency/config";
+import { formatSupplierUnitPrice } from "@/lib/currency/format";
 import { resolveFabricItemFromCatalog } from "@/lib/fabric-sourcing/resolve-fabric-from-catalog";
 import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import { formatCurrency } from "@/lib/utils";
@@ -18,6 +19,17 @@ function effectiveFabricUnitPrice(line: SalesOrderFabricLine): number | null {
   const catalog = resolveFabricItemFromCatalog(line.supplier_id, line.fabric_number);
   if (catalog.unit_price != null && catalog.unit_price > 0) return catalog.unit_price;
   return null;
+}
+
+/** Unit price from the line or supplier catalog — for display on order detail tables. */
+export function fabricLineEffectiveUnitPrice(line: SalesOrderFabricLine): number | null {
+  return effectiveFabricUnitPrice(line);
+}
+
+export function formatFabricLineSupplierPrice(line: SalesOrderFabricLine): string {
+  const unitPrice = effectiveFabricUnitPrice(line);
+  if (unitPrice == null) return "—";
+  return formatSupplierUnitPrice(unitPrice, line.supplier_id, line.unit);
 }
 
 export function fabricLineSupplierTotal(line: SalesOrderFabricLine): number | null {

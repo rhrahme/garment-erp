@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  fabricLineEffectiveUnitPrice,
   fabricLineSupplierTotal,
   formatFabricCostHint,
   formatFabricCostSummary,
+  formatFabricLineSupplierPrice,
   getFabricCostSummary,
 } from "./fabric-cost.ts";
 import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
@@ -107,5 +109,45 @@ describe("formatFabricCostHint", () => {
   it("notes missing priced lines", () => {
     const summary = getFabricCostSummary([line(), line({ id: "b", unit_price: 0 })]);
     assert.equal(formatFabricCostHint(summary), "1 line without price (from line or catalog)");
+  });
+});
+
+describe("catalog fallback for Solbiati on Loro Piana account lines", () => {
+  it("resolves S-prefix fabrics from supplier catalog when line unit_price is zero", () => {
+    const solbiatiLine = line({
+      id: "sol-10005",
+      supplier_id: "loro-piana",
+      supplier_name: "Loro Piana",
+      fabric_number: "S10005",
+      unit_price: 0,
+      quantity: 1.2,
+    });
+
+    assert.equal(fabricLineEffectiveUnitPrice(solbiatiLine), 58.5);
+    assert.equal(fabricLineSupplierTotal(solbiatiLine), 70.2);
+    assert.match(formatFabricLineSupplierPrice(solbiatiLine), /€58\.50/);
+  });
+
+  it("prices all 68 Solbiati lines like SO-2026-0116", () => {
+    const lines = [];
+    for (let i = 10005; i <= 10072; i++) {
+      lines.push(
+        line({
+          id: `sol-${i}`,
+          supplier_id: "loro-piana",
+          supplier_name: "Loro Piana",
+          fabric_number: `S${i}`,
+          unit_price: 0,
+          quantity: 1.2,
+        })
+      );
+    }
+
+    const summary = getFabricCostSummary(lines);
+    assert.equal(summary.line_count, 68);
+    assert.equal(summary.priced_line_count, 68);
+    assert.equal(summary.missing_price_line_count, 0);
+    assert.ok(summary.total_sar > 0);
+    assert.match(formatFabricCostSummary(summary), /€/);
   });
 });

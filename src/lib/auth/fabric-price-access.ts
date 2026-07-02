@@ -31,7 +31,7 @@ export function hasFabricPriceAccess(
   session: SessionContext,
   _unlockedCookie: string | undefined | null
 ): boolean {
-  return session.isAdmin;
+  return session.isSuperAdmin || session.isAdmin;
 }
 
 export function redactSupplierFabricPrice<T extends { unit_price?: number | null }>(item: T): T {

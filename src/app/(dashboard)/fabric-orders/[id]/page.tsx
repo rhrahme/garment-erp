@@ -120,7 +120,7 @@ export default async function FabricOrderDetailPage({
                   ? " · add width & gsm on lines to estimate kg"
                   : null}
             </p>
-            {fabricCost && (
+            {canViewFabricPrices && fabricCost && (
               <>
                 <p className="mt-3 text-sm text-emerald-800">Fabric cost (supplier)</p>
                 <p className="mt-0.5 text-lg font-semibold text-slate-900">
@@ -151,6 +151,7 @@ export default async function FabricOrderDetailPage({
         existingInvoiceId={existingInvoice?.id ?? null}
         isReadyMade={isReadyMadeSalesOrder(order)}
         canViewFabricPrices={canViewFabricPrices}
+        fabricCostSummary={fabricCost}
         isClientManager={session.isClientManager}
         productionMode={session.isClientManager}
         viewMode="fabric_order"
