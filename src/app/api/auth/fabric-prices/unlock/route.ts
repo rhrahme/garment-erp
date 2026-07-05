@@ -14,6 +14,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 403 });
     }
 
+    if (!isFabricPriceUnlockConfigured()) {
+      return NextResponse.json(
+        {
+          error:
+            "Fabric price unlock is not configured on the server. Add FABRIC_PRICE_ACCESS_CODES=1122 in Vercel env vars and redeploy.",
+        },
+        { status: 503 }
+      );
+    }
+
     const body = (await request.json()) as { code?: string; password?: string };
     const code = (body.password ?? body.code)?.trim() ?? "";
 
