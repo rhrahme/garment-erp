@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { DownloadSalesOrderPdfButton } from "@/components/orders/DownloadSalesOrderPdfButton";
 import { Badge } from "@/components/ui/Badge";
 import { DeleteSalesOrderButton } from "@/components/orders/DeleteSalesOrderButton";
-import { FabricPriceRevealToggle } from "@/components/orders/FabricPriceRevealToggle";
+import { FabricPriceRevealToggle, MaskedFabricCost, MaskedFabricPrice } from "@/components/orders/FabricPriceRevealToggle";
 import { CreateInvoiceButton } from "@/components/invoicing/CreateInvoiceButton";
 import { DeliveryDestinationTabs } from "@/components/shipping/DeliveryDestinationTabs";
 import { FabricReplacementBadge, FabricStockBadge } from "@/components/fabric/FabricStockBadge";
@@ -70,6 +70,7 @@ export function SalesOrderActions({
   existingInvoiceId = null,
   isReadyMade = false,
   canViewFabricPrices = false,
+  showFabricPriceControls = false,
   fabricCostSummary = null,
   isClientManager = false,
   productionMode = false,
@@ -81,6 +82,7 @@ export function SalesOrderActions({
   existingInvoiceId?: string | null;
   isReadyMade?: boolean;
   canViewFabricPrices?: boolean;
+  showFabricPriceControls?: boolean;
   fabricCostSummary?: FabricCostSummary | null;
   isClientManager?: boolean;
   productionMode?: boolean;
@@ -162,6 +164,7 @@ export function SalesOrderActions({
   const fabricTotals = getFabricTotalsSummary(liveOrder.fabric_lines);
   const serverFabricCostKey = useMemo(() => fabricLinesCostKey(order.fabric_lines), [order.fabric_lines]);
   const liveFabricCostKey = useMemo(() => fabricLinesCostKey(liveOrder.fabric_lines), [liveOrder.fabric_lines]);
+  const showFabricPricesColumn = showFabricPriceControls && showSalesAdmin;
   const fabricCost = canViewFabricPrices
     ? liveFabricCostKey === serverFabricCostKey && fabricCostSummary
       ? fabricCostSummary
@@ -399,20 +402,29 @@ export function SalesOrderActions({
                   Order total: {fabricTotals.total_meters.toFixed(1)} m
                   {fabricTotals.total_kg != null ? ` · ${fabricTotals.total_kg.toFixed(1)} kg` : null}
                 </p>
-                {canViewFabricPrices ? (
+                {showFabricPricesColumn ? (
                   <p className="font-semibold text-emerald-900">
-                    Fabric cost: {fabricCost ? formatFabricCostSummary(fabricCost) : "—"}
-                    {fabricCost && formatFabricCostHint(fabricCost) ? (
-                      <span className="ml-1 text-xs font-normal text-slate-500">
-                        ({formatFabricCostHint(fabricCost)})
-                      </span>
-                    ) : null}
+                    Fabric cost:{" "}
+                    {canViewFabricPrices ? (
+                      <>
+                        {fabricCost ? formatFabricCostSummary(fabricCost) : "—"}
+                        {fabricCost && formatFabricCostHint(fabricCost) ? (
+                          <span className="ml-1 text-xs font-normal text-slate-500">
+                            ({formatFabricCostHint(fabricCost)})
+                          </span>
+                        ) : null}
+                      </>
+                    ) : (
+                      <MaskedFabricCost />
+                    )}
                   </p>
                 ) : null}
               </div>
             )}
           </div>
-          {!productionMode && <FabricPriceRevealToggle canViewFabricPrices={canViewFabricPrices} />}
+          {showFabricPricesColumn && (
+            <FabricPriceRevealToggle canViewFabricPrices={canViewFabricPrices} compact />
+          )}
         </div>
         {liveOrder.fabric_lines.length > 0 && (
           <div className="mt-4 overflow-x-auto rounded-lg border border-slate-200">
@@ -551,7 +563,7 @@ export function SalesOrderActions({
                       direction={lineSort.direction}
                       onSort={handleLineSort}
                     />
-                    {canViewFabricPrices ? (
+                    {showFabricPricesColumn ? (
                       <SortableTableHeader
                         label="Price"
                         sortKey="price"
@@ -620,8 +632,10 @@ export function SalesOrderActions({
                       <td className="px-3 py-2 font-medium text-slate-900">
                         {line.quantity} {line.unit === "meters" ? "m" : line.unit}
                       </td>
-                      {canViewFabricPrices ? (
-                        <td className="px-3 py-2 text-slate-600">{formatLinePrice(line)}</td>
+                      {showFabricPricesColumn ? (
+                        <td className="px-3 py-2 text-slate-600">
+                          {canViewFabricPrices ? formatLinePrice(line) : <MaskedFabricPrice />}
+                        </td>
                       ) : null}
                       {fabricsEditable ? (
                         <td className="px-3 py-2">
@@ -714,7 +728,7 @@ export function SalesOrderActions({
                       direction={lineSort?.direction ?? null}
                       onSort={handleLineSort}
                     />
-                    {canViewFabricPrices ? (
+                    {showFabricPricesColumn ? (
                       <SortableTableHeader
                         label="Price"
                         sortKey="price"
@@ -776,8 +790,10 @@ export function SalesOrderActions({
                       <td className="px-3 py-2 font-medium text-slate-900">
                         {line.quantity} {line.unit === "meters" ? "m" : line.unit}
                       </td>
-                      {canViewFabricPrices ? (
-                        <td className="px-3 py-2 text-slate-600">{formatLinePrice(line)}</td>
+                      {showFabricPricesColumn ? (
+                        <td className="px-3 py-2 text-slate-600">
+                          {canViewFabricPrices ? formatLinePrice(line) : <MaskedFabricPrice />}
+                        </td>
                       ) : null}
                       {fabricsEditable ? (
                         <td className="px-3 py-2">

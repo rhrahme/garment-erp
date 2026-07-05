@@ -1,5 +1,10 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
+import {
+  FABRIC_PRICE_UNLOCK_COOKIE,
+  hasFabricPriceAccess,
+  redactSalesOrderFabricPrices,
+} from "@/lib/auth/fabric-price-access";
 import { getSessionContext, requireAdmin, requireAuthenticated } from "@/lib/auth/session";
 import {
   deleteSalesOrderById,
@@ -25,7 +30,12 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     if (!order) {
       return NextResponse.json({ error: "Sales order not found." }, { status: 404 });
     }
-    const safeOrder = session.canViewFabricListPrices ? order : redactSalesOrderFabricPrices(order);
+    const cookieStore = await cookies();
+    const canViewFabricPrices = hasFabricPriceAccess(
+      session,
+      cookieStore.get(FABRIC_PRICE_UNLOCK_COOKIE)?.value
+    );
+    const safeOrder = canViewFabricPrices ? order : redactSalesOrderFabricPrices(order);
     return NextResponse.json({ order: safeOrder });
   } catch (error) {
     console.error("Failed to read sales order:", error);
@@ -66,7 +76,12 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     };
     const saved = await writeSalesOrders(store);
     const order = saved.orders.find((item) => item.id === id);
-    const safeOrder = session.canViewFabricListPrices && order
+    const cookieStore = await cookies();
+    const canViewFabricPrices = hasFabricPriceAccess(
+      session,
+      cookieStore.get(FABRIC_PRICE_UNLOCK_COOKIE)?.value
+    );
+    const safeOrder = canViewFabricPrices && order
       ? order
       : order
         ? redactSalesOrderFabricPrices(order)

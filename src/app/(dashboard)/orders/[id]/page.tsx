@@ -7,6 +7,7 @@ import { PageHeader, StatusBadge } from "@/components/ui/PageHeader";
 import { SalesOrderActions } from "@/components/orders/SalesOrderActions";
 import {
   FABRIC_PRICE_UNLOCK_COOKIE,
+  canRevealFabricPrices,
   hasFabricPriceAccess,
   redactSalesOrderFabricPrices,
 } from "@/lib/auth/fabric-price-access";
@@ -50,11 +51,12 @@ export default async function SalesOrderDetailPage({
     session,
     cookieStore.get(FABRIC_PRICE_UNLOCK_COOKIE)?.value
   );
+  const showFabricCostToAdmin = canRevealFabricPrices(session);
   const order = canViewFabricPrices ? rawOrder : redactSalesOrderFabricPrices(rawOrder);
   const existingInvoice = await getCustomerInvoiceBySalesOrderIdFresh(order.id);
   const fabricTotals = getFabricTotalsSummary(order.fabric_lines);
   const fabricCostResult =
-    !session.isClientManager ? resolveFabricCostForOrderLines(rawOrder.fabric_lines) : null;
+    showFabricCostToAdmin ? resolveFabricCostForOrderLines(rawOrder.fabric_lines) : null;
   const fabricCost = fabricCostResult?.summary ?? null;
 
   return (
@@ -148,6 +150,7 @@ export default async function SalesOrderDetailPage({
               <FabricCostSummaryBlock
                 summary={fabricCostResult.summary}
                 error={fabricCostResult.error}
+                hidden={!canViewFabricPrices}
               />
             ) : null}
           </div>
@@ -163,6 +166,7 @@ export default async function SalesOrderDetailPage({
         existingInvoiceId={existingInvoice?.id ?? null}
         isReadyMade={isReadyMadeSalesOrder(order)}
         canViewFabricPrices={canViewFabricPrices}
+        showFabricPriceControls={showFabricCostToAdmin}
         fabricCostSummary={fabricCost}
         isClientManager={session.isClientManager}
         productionMode={session.isClientManager}

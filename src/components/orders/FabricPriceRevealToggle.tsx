@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { MASKED_FABRIC_COST, MASKED_FABRIC_PRICE } from "@/lib/auth/fabric-price-access";
 
 type FabricPriceRevealToggleProps = {
   canViewFabricPrices: boolean;
@@ -16,7 +17,7 @@ export function FabricPriceRevealToggle({
 }: FabricPriceRevealToggleProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,7 +37,7 @@ export function FabricPriceRevealToggle({
 
   async function revealPrices(event: React.FormEvent) {
     event.preventDefault();
-    if (!code.trim() || submitting) return;
+    if (!password.trim() || submitting) return;
 
     setSubmitting(true);
     setError(null);
@@ -44,16 +45,16 @@ export function FabricPriceRevealToggle({
       const res = await fetch("/api/auth/fabric-prices/unlock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ password }),
       });
       const data = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(data.error ?? "Invalid access code");
+      if (!res.ok) throw new Error(data.error ?? "Incorrect password");
 
       setOpen(false);
-      setCode("");
+      setPassword("");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Invalid access code");
+      setError(err instanceof Error ? err.message : "Incorrect password");
     } finally {
       setSubmitting(false);
     }
@@ -62,7 +63,7 @@ export function FabricPriceRevealToggle({
   function closeModal() {
     if (submitting) return;
     setOpen(false);
-    setCode("");
+    setPassword("");
     setError(null);
   }
 
@@ -74,23 +75,14 @@ export function FabricPriceRevealToggle({
         disabled={submitting}
         className={
           compact
-            ? "inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            ? "inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50 disabled:opacity-50"
             : "inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
         }
         title={canViewFabricPrices ? "Hide fabric prices" : "Show fabric prices"}
         aria-label={canViewFabricPrices ? "Hide fabric prices" : "Show fabric prices"}
       >
-        {canViewFabricPrices ? (
-          <>
-            <EyeOff className="h-4 w-4" />
-            {!compact && "Hide prices"}
-          </>
-        ) : (
-          <>
-            <Eye className="h-4 w-4" />
-            {!compact && "Show prices"}
-          </>
-        )}
+        {canViewFabricPrices ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        {canViewFabricPrices ? "Hide" : "Show"}
       </button>
 
       {open && (
@@ -104,19 +96,19 @@ export function FabricPriceRevealToggle({
               View fabric prices
             </h2>
             <p className="mt-2 text-sm text-slate-600">
-              Fabric list prices are restricted. Enter the access code to show them on this order.
+              Fabric prices and cost totals are hidden for privacy. Enter the password to reveal them.
             </p>
 
             <form onSubmit={(event) => void revealPrices(event)} className="mt-4">
               <label className="block text-sm">
-                <span className="font-medium text-slate-700">Access code</span>
+                <span className="font-medium text-slate-700">Password</span>
                 <input
                   type="password"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm"
-                  placeholder="Enter code"
-                  autoComplete="off"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  placeholder="Enter password"
+                  autoComplete="current-password"
                   autoFocus
                   disabled={submitting}
                 />
@@ -132,7 +124,7 @@ export function FabricPriceRevealToggle({
                 <Button type="button" variant="secondary" onClick={closeModal} disabled={submitting}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={submitting || !code.trim()}>
+                <Button type="submit" disabled={submitting || !password.trim()}>
                   {submitting ? "Checking…" : "Show prices"}
                 </Button>
               </div>
@@ -145,5 +137,9 @@ export function FabricPriceRevealToggle({
 }
 
 export function MaskedFabricPrice() {
-  return <span className="text-slate-400">Hidden</span>;
+  return <span className="text-slate-400">{MASKED_FABRIC_PRICE}</span>;
+}
+
+export function MaskedFabricCost() {
+  return <span className="text-slate-400">{MASKED_FABRIC_COST}</span>;
 }
