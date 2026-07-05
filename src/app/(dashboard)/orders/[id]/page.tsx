@@ -151,6 +151,8 @@ export default async function SalesOrderDetailPage({
                 summary={fabricCostResult.summary}
                 error={fabricCostResult.error}
                 hidden={!canViewFabricPrices}
+                showRevealToggle={showFabricCostToAdmin}
+                canViewFabricPrices={canViewFabricPrices}
               />
             ) : null}
           </div>

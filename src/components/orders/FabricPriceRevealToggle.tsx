@@ -9,11 +9,13 @@ import { MASKED_FABRIC_COST, MASKED_FABRIC_PRICE } from "@/lib/auth/fabric-price
 type FabricPriceRevealToggleProps = {
   canViewFabricPrices: boolean;
   compact?: boolean;
+  iconOnly?: boolean;
 };
 
 export function FabricPriceRevealToggle({
   canViewFabricPrices,
   compact = false,
+  iconOnly = false,
 }: FabricPriceRevealToggleProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -74,15 +76,17 @@ export function FabricPriceRevealToggle({
         onClick={() => (canViewFabricPrices ? void hidePrices() : setOpen(true))}
         disabled={submitting}
         className={
-          compact
-            ? "inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50 disabled:opacity-50"
-            : "inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          iconOnly
+            ? "inline-flex shrink-0 items-center justify-center rounded-lg border border-emerald-300 bg-white p-1.5 text-emerald-800 shadow-sm hover:bg-emerald-50 disabled:opacity-50"
+            : compact
+              ? "inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50 disabled:opacity-50"
+              : "inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
         }
         title={canViewFabricPrices ? "Hide fabric prices" : "Show fabric prices"}
         aria-label={canViewFabricPrices ? "Hide fabric prices" : "Show fabric prices"}
       >
         {canViewFabricPrices ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        {canViewFabricPrices ? "Hide" : "Show"}
+        {!iconOnly && (canViewFabricPrices ? "Hide" : "Show")}
       </button>
 
       {open && (

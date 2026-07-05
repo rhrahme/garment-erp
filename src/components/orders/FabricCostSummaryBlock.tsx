@@ -1,4 +1,5 @@
 import { MASKED_FABRIC_COST } from "@/lib/auth/fabric-price-access";
+import { FabricPriceRevealToggle } from "@/components/orders/FabricPriceRevealToggle";
 import {
   formatFabricCostHint,
   formatFabricCostSummary,
@@ -9,18 +10,30 @@ export function FabricCostSummaryBlock({
   summary,
   error = null,
   hidden = false,
+  showRevealToggle = false,
+  canViewFabricPrices = false,
 }: {
   summary: FabricCostSummary;
   error?: string | null;
   hidden?: boolean;
+  showRevealToggle?: boolean;
+  canViewFabricPrices?: boolean;
 }) {
   const hint = error ?? formatFabricCostHint(summary);
 
   return (
     <div className="mt-3 border-t border-emerald-300/70 pt-3">
-      <p className="text-sm font-semibold uppercase tracking-wide text-emerald-900">
-        Fabric cost (supplier)
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold uppercase tracking-wide text-emerald-900">
+          Fabric cost (supplier)
+        </p>
+        {showRevealToggle ? (
+          <FabricPriceRevealToggle
+            canViewFabricPrices={canViewFabricPrices}
+            iconOnly
+          />
+        ) : null}
+      </div>
       {hidden ? (
         <p className="mt-1 text-xl font-bold text-slate-400">{MASKED_FABRIC_COST}</p>
       ) : error ? (
