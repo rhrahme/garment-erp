@@ -17,12 +17,17 @@ export {
   MASKED_FABRIC_PRICE,
 };
 
+/** Default when FABRIC_PRICE_ACCESS_CODES is unset (override via Vercel env). */
+const DEFAULT_FABRIC_PRICE_ACCESS_CODES = ["1122"];
+
 export function parseFabricPriceAccessCodes(): string[] {
   const raw = process.env.FABRIC_PRICE_ACCESS_CODES?.trim() ?? "";
-  return raw
+  const fromEnv = raw
     .split(",")
     .map((code) => code.trim())
     .filter(Boolean);
+  if (fromEnv.length > 0) return fromEnv;
+  return DEFAULT_FABRIC_PRICE_ACCESS_CODES;
 }
 
 function codesMatch(input: string, expected: string): boolean {
