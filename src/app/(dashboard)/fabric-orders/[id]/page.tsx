@@ -129,6 +129,7 @@ export default async function FabricOrderDetailPage({
               <FabricCostSummaryBlock
                 summary={fabricCostResult.summary}
                 error={fabricCostResult.error}
+                hidden={!canViewFabricPrices}
               />
             ) : null}
           </div>

@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { FABRIC_PRICE_UNLOCK_COOKIE, hasFabricPriceAccess } from "@/lib/auth/fabric-price-access";
+import { FABRIC_PRICE_UNLOCK_COOKIE, canRevealFabricPrices, hasFabricPriceAccess } from "@/lib/auth/fabric-price-access";
 import { getSessionContext } from "@/lib/auth/session";
 
 export async function GET() {
@@ -19,6 +19,7 @@ export async function GET() {
       is_client_manager: session.isClientManager,
       can_view_client_contact: session.canViewClientContact,
       can_view_fabric_list_prices: session.canViewFabricListPrices,
+      can_reveal_fabric_prices: canRevealFabricPrices(session),
       can_view_fabric_prices: canViewFabricPrices,
       can_access_pattern: session.canAccessPattern,
     });
