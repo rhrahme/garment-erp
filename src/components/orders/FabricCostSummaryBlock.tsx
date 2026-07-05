@@ -1,4 +1,4 @@
-import { MASKED_FABRIC_COST } from "@/lib/auth/fabric-price-access";
+import { MASKED_FABRIC_COST } from "@/lib/auth/fabric-price.constants";
 import { FabricPriceRevealToggle } from "@/components/orders/FabricPriceRevealToggle";
 import {
   formatFabricCostHint,

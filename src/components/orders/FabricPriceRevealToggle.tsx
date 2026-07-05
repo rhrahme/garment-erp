@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { MASKED_FABRIC_COST, MASKED_FABRIC_PRICE } from "@/lib/auth/fabric-price-access";
+import { MASKED_FABRIC_COST, MASKED_FABRIC_PRICE } from "@/lib/auth/fabric-price.constants";
 
 type FabricPriceRevealToggleProps = {
   canViewFabricPrices: boolean;

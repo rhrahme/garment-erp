@@ -1,13 +1,21 @@
 import { timingSafeEqual } from "crypto";
+import {
+  FABRIC_PRICE_UNLOCK_COOKIE,
+  FABRIC_PRICE_UNLOCK_MAX_AGE_SEC,
+  MASKED_FABRIC_COST,
+  MASKED_FABRIC_PRICE,
+} from "@/lib/auth/fabric-price.constants";
 import { getInvoiceAmountsPassword, isInvoiceAmountsPasswordValid } from "@/lib/auth/invoice-amounts-access";
 import type { SessionContext } from "@/lib/auth/session";
 import type { PurchaseOrder, PurchaseOrderLine } from "@/lib/types/fabric-sourcing";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
-export const FABRIC_PRICE_UNLOCK_COOKIE = "fabric_prices_unlocked";
-export const FABRIC_PRICE_UNLOCK_MAX_AGE_SEC = 60 * 60 * 12;
-export const MASKED_FABRIC_PRICE = "••••••";
-export const MASKED_FABRIC_COST = "SAR ••••••";
+export {
+  FABRIC_PRICE_UNLOCK_COOKIE,
+  FABRIC_PRICE_UNLOCK_MAX_AGE_SEC,
+  MASKED_FABRIC_COST,
+  MASKED_FABRIC_PRICE,
+};
 
 export function parseFabricPriceAccessCodes(): string[] {
   const raw = process.env.FABRIC_PRICE_ACCESS_CODES?.trim() ?? "";
