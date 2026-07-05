@@ -4,6 +4,7 @@ import {
   FABRIC_PRICE_UNLOCK_COOKIE,
   FABRIC_PRICE_UNLOCK_MAX_AGE_SEC,
   isFabricPriceAccessCodeValid,
+  isFabricPriceUnlockConfigured,
 } from "@/lib/auth/fabric-price-access";
 import { getSessionContext } from "@/lib/auth/session";
 
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Fabric price unlock is not configured on the server. Add FABRIC_PRICE_ACCESS_CODES=1122 in Vercel env vars and redeploy.",
+            "Fabric price unlock is not configured on the server. In Vercel → Settings → Environment Variables, add FABRIC_PRICE_ACCESS_CODES=1122 (or reuse INVOICE_AMOUNTS_PASSWORD), then redeploy.",
         },
         { status: 503 }
       );

@@ -717,8 +717,8 @@ export function SalesOrderForm({
       try {
         const res = await fetch("/api/auth/session");
         if (!res.ok) return;
-        const data = (await res.json()) as { can_view_fabric_list_prices?: boolean };
-        setCanViewFabricPrices(Boolean(data.can_view_fabric_list_prices));
+        const data = (await res.json()) as { can_view_fabric_prices?: boolean };
+        setCanViewFabricPrices(Boolean(data.can_view_fabric_prices));
       } catch {
         /* ignore */
       }
