@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
+import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server";
 import { requireAuthenticated } from "@/lib/auth/session";
 import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import { notifyIntegration } from "@/lib/integrations";
@@ -42,7 +43,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
     await syncPatternJobsFromSalesOrder(result.order);
 
-    const safeOrder = session.canViewFabricListPrices
+    const canViewFabricPrices = await resolveFabricPriceAccess(session);
+    const safeOrder = canViewFabricPrices
       ? result.order
       : redactSalesOrderFabricPrices(result.order);
 
@@ -79,7 +81,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
     await syncPatternJobsFromSalesOrder(result.order);
 
-    const safeOrder = session.canViewFabricListPrices
+    const canViewFabricPrices = await resolveFabricPriceAccess(session);
+    const safeOrder = canViewFabricPrices
       ? result.order
       : redactSalesOrderFabricPrices(result.order);
 
@@ -132,7 +135,8 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       removed_by: session.email,
     });
 
-    const safeOrder = session.canViewFabricListPrices
+    const canViewFabricPrices = await resolveFabricPriceAccess(session);
+    const safeOrder = canViewFabricPrices
       ? result.order
       : redactSalesOrderFabricPrices(result.order);
 

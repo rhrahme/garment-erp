@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
+import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server";
 import { requireAuthenticated } from "@/lib/auth/session";
 import { notifyIntegration } from "@/lib/integrations";
 import { submitFabricOrderRequest } from "@/lib/sales-orders/submit-fabric-order-request";
@@ -29,7 +30,8 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
       requested_at: result.order.fabric_order_requested_at,
     });
 
-    const safeOrder = session.canViewFabricListPrices
+    const canViewFabricPrices = await resolveFabricPriceAccess(session);
+    const safeOrder = canViewFabricPrices
       ? result.order
       : redactSalesOrderFabricPrices(result.order);
 

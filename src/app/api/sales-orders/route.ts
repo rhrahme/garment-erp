@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
+import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server";
 import { requireAuthenticated } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getClientById } from "@/lib/data/clients";
@@ -36,7 +37,8 @@ export async function GET() {
 
     await ensureDocumentsLoaded(["sales_orders"]);
     const store = readSalesOrders();
-    if (!session.canViewFabricListPrices) {
+    const canViewFabricPrices = await resolveFabricPriceAccess(session);
+    if (!canViewFabricPrices) {
       return NextResponse.json({
         ...store,
         orders: store.orders.map(redactSalesOrderFabricPrices),
@@ -219,7 +221,8 @@ export async function POST(request: Request) {
 
     await syncPatternJobsFromSalesOrder(confirmed, { notify: true });
 
-    const safeOrder = session.canViewFabricListPrices ? order : redactSalesOrderFabricPrices(order);
+    const canViewFabricPrices = await resolveFabricPriceAccess(session);
+    const safeOrder = canViewFabricPrices ? order : redactSalesOrderFabricPrices(order);
 
     return NextResponse.json({ order: safeOrder, updated_at: saved.updated_at }, { status: 201 });
   } catch (error) {

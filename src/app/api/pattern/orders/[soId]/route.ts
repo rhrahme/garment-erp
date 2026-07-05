@@ -4,6 +4,7 @@ import { ensurePatternDocumentsLoaded, listPatternJobsForOrder, readPatternJobs 
 import { getSalesOrderById } from "@/lib/data/sales-orders";
 import { detectPatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mismatch";
 import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
+import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 
 export async function GET(_request: Request, context: { params: Promise<{ soId: string }> }) {
@@ -23,7 +24,8 @@ export async function GET(_request: Request, context: { params: Promise<{ soId: 
     }
 
     const jobs = listPatternJobsForOrder(soId).filter((job) => job.status !== "cancelled");
-    const safeOrder = session.canViewFabricListPrices ? order : redactSalesOrderFabricPrices(order);
+    const canViewFabricPrices = await resolveFabricPriceAccess(session);
+    const safeOrder = canViewFabricPrices ? order : redactSalesOrderFabricPrices(order);
     const mismatch = detectPatternSalesOrderMismatch(order, readPatternJobs().jobs);
 
     return NextResponse.json({

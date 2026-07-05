@@ -3,6 +3,7 @@ import {
   redactPurchaseOrderPrices,
   redactSalesOrderFabricPrices,
 } from "@/lib/auth/fabric-price-access";
+import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server";
 import { requireAdmin } from "@/lib/auth/session";
 import { createFabricPosFromSalesOrder } from "@/lib/sales-orders/create-fabric-pos";
 import { notifyIntegration } from "@/lib/integrations";
@@ -25,7 +26,8 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
       fabric_po_ids: result.fabricOrders.map((po) => po.id),
     });
 
-    const safeResult = session.canViewFabricListPrices
+    const canViewFabricPrices = await resolveFabricPriceAccess(session);
+    const safeResult = canViewFabricPrices
       ? result
       : {
           order: redactSalesOrderFabricPrices(result.order),

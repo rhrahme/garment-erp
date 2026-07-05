@@ -1,5 +1,4 @@
 import { timingSafeEqual } from "crypto";
-import { cookies } from "next/headers";
 import { getInvoiceAmountsPassword, isInvoiceAmountsPasswordValid } from "@/lib/auth/invoice-amounts-access";
 import type { SessionContext } from "@/lib/auth/session";
 import type { PurchaseOrder, PurchaseOrderLine } from "@/lib/types/fabric-sourcing";
@@ -50,11 +49,6 @@ export function hasFabricPriceAccess(
   if (!canRevealFabricPrices(session)) return false;
   if (unlockedCookie === "1" && isFabricPriceUnlockConfigured()) return true;
   return false;
-}
-
-export async function resolveFabricPriceAccess(session: SessionContext): Promise<boolean> {
-  const cookieStore = await cookies();
-  return hasFabricPriceAccess(session, cookieStore.get(FABRIC_PRICE_UNLOCK_COOKIE)?.value);
 }
 
 export function redactSupplierFabricPrice<T extends { unit_price?: number | null }>(item: T): T {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
+import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server";
 import { requireAuthenticated } from "@/lib/auth/session";
 import {
   isFabricLinePrintKind,
@@ -26,7 +27,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
-    const safeOrder = session.canViewFabricListPrices
+    const canViewFabricPrices = await resolveFabricPriceAccess(session);
+    const safeOrder = canViewFabricPrices
       ? result.order
       : redactSalesOrderFabricPrices(result.order);
 
