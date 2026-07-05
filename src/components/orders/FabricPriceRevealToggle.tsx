@@ -27,7 +27,10 @@ export function FabricPriceRevealToggle({
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/auth/fabric-prices/lock", { method: "POST" });
+      const res = await fetch("/api/auth/fabric-prices/lock", {
+        method: "POST",
+        credentials: "same-origin",
+      });
       if (!res.ok) throw new Error("Failed to hide prices");
       router.refresh();
     } catch (err) {
@@ -46,6 +49,7 @@ export function FabricPriceRevealToggle({
     try {
       const res = await fetch("/api/auth/fabric-prices/unlock", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });

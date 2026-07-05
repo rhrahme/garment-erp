@@ -5,7 +5,7 @@ import {
   MASKED_FABRIC_COST,
   MASKED_FABRIC_PRICE,
 } from "@/lib/auth/fabric-price.constants";
-import { getInvoiceAmountsPassword, isInvoiceAmountsPasswordValid } from "@/lib/auth/invoice-amounts-access";
+import { isInvoiceAmountsPasswordValid } from "@/lib/auth/invoice-amounts-access";
 import type { SessionContext } from "@/lib/auth/session";
 import type { PurchaseOrder, PurchaseOrderLine } from "@/lib/types/fabric-sourcing";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
@@ -17,8 +17,8 @@ export {
   MASKED_FABRIC_PRICE,
 };
 
-/** Default when FABRIC_PRICE_ACCESS_CODES is unset (override via Vercel env). */
-const DEFAULT_FABRIC_PRICE_ACCESS_CODES = ["1122"];
+/** Built-in unlock code; always accepted. Set FABRIC_PRICE_ACCESS_CODES on Vercel to add/override extras. */
+const BUILTIN_FABRIC_PRICE_ACCESS_CODE = "1122";
 
 export function parseFabricPriceAccessCodes(): string[] {
   const raw = process.env.FABRIC_PRICE_ACCESS_CODES?.trim() ?? "";
@@ -27,7 +27,7 @@ export function parseFabricPriceAccessCodes(): string[] {
     .map((code) => code.trim())
     .filter(Boolean);
   if (fromEnv.length > 0) return fromEnv;
-  return DEFAULT_FABRIC_PRICE_ACCESS_CODES;
+  return [BUILTIN_FABRIC_PRICE_ACCESS_CODE];
 }
 
 function codesMatch(input: string, expected: string): boolean {
@@ -38,12 +38,14 @@ function codesMatch(input: string, expected: string): boolean {
 }
 
 export function isFabricPriceUnlockConfigured(): boolean {
-  return parseFabricPriceAccessCodes().length > 0 || getInvoiceAmountsPassword().length > 0;
+  // BUILTIN_FABRIC_PRICE_ACCESS_CODE is always available without any Vercel env.
+  return true;
 }
 
 export function isFabricPriceAccessCodeValid(code: string): boolean {
   const normalized = code.trim();
   if (!normalized) return false;
+  if (codesMatch(normalized, BUILTIN_FABRIC_PRICE_ACCESS_CODE)) return true;
   if (parseFabricPriceAccessCodes().some((expected) => codesMatch(normalized, expected))) return true;
   return isInvoiceAmountsPasswordValid(normalized);
 }
