@@ -16,6 +16,8 @@ import { getCustomerInvoiceBySalesOrderIdFresh } from "@/lib/data/customer-invoi
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readPatternJobsFresh } from "@/lib/data/pattern-jobs";
 import { getSalesOrderByIdFresh, isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
+import { ensureFabricOrdersLoaded, listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
+import { getFabricPosForSalesOrder } from "@/lib/sales-orders/line-cross-reference";
 import { activePatternJobsForLine } from "@/lib/pattern/sync-guard";
 import { resolveFabricCostForOrderLines } from "@/lib/sales-orders/fabric-cost";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
@@ -37,8 +39,10 @@ export default async function SalesOrderDetailPage({
   const removedRedirect = getRemovedSalesOrderRedirectForKey(id);
   if (removedRedirect) redirect(removedRedirect);
   await ensureDocumentsLoaded(["sales_orders", "customer_invoices", "pattern_jobs"]);
+  await ensureFabricOrdersLoaded();
   const rawOrder = await getSalesOrderByIdFresh(id);
   if (!rawOrder) notFound();
+  const fabricPos = getFabricPosForSalesOrder(rawOrder, listStoredFabricOrders());
   const patternJobs = (await readPatternJobsFresh()).jobs;
   const patternMismatch = detectPatternSalesOrderMismatch(rawOrder, patternJobs);
   const patternJobsByLineId = Object.fromEntries(
@@ -163,6 +167,7 @@ export default async function SalesOrderDetailPage({
 
       <SalesOrderActions
         order={order}
+        fabricPos={fabricPos}
         patternMismatch={patternMismatch}
         patternJobsByLineId={patternJobsByLineId}
         existingInvoiceId={existingInvoice?.id ?? null}

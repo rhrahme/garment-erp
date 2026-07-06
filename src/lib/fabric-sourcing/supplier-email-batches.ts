@@ -35,12 +35,13 @@ function batchGroupKey(order: SupplierEmailQueueItem, consolidate: boolean): str
   if (!consolidate) {
     // One email per supplier per sales order — Solbiati + Loro Piana share the factory inbox.
     const salesOrderKey = order.sales_order_id ?? order.id;
-    return `so:${salesOrderKey}:${supplierKey}`;
+    const pendingKey = isFabricOrderPending(order) ? "pending" : "sent";
+    return `so:${salesOrderKey}:${supplierKey}:${pendingKey}`;
   }
   if (isFabricOrderPending(order)) {
     return `pending:${supplierKey}`;
   }
-  return `sent:${supplierKey}:${order.emailed_at}`;
+  return `sent:${supplierKey}:${order.emailed_at ?? "legacy"}`;
 }
 
 function resolveBatchSupplierMetadata(orders: SupplierEmailQueueItem[]): {

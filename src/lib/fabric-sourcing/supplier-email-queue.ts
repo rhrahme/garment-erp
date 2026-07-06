@@ -7,6 +7,7 @@ import {
   resolveSupplierEmailMetadata,
 } from "@/lib/fabric-sourcing/supplier-email-metadata";
 import { reconcileOrphanedFabricPos } from "@/lib/fabric-sourcing/reconcile-orphaned-fabric-pos";
+import { getFabricPosForSalesOrder } from "@/lib/sales-orders/line-cross-reference";
 import {
   groupSupplierEmailBatches,
   type SupplierEmailBatch,
@@ -20,9 +21,18 @@ function enrichQueueItem(
   order: SupplierEmailQueueItem,
   salesById: Map<string, ReturnType<typeof readSalesOrders>["orders"][number]>,
   salesOrders: ReturnType<typeof readSalesOrders>["orders"],
-  orphanPosByMissingId: Map<string, SupplierEmailQueueItem[]>
+  orphanPosByMissingId: Map<string, SupplierEmailQueueItem[]>,
+  salesOrderFilter?: ReturnType<typeof readSalesOrders>["orders"][number]
 ): SupplierEmailQueueItem {
   let salesOrder = order.sales_order_id ? salesById.get(order.sales_order_id) : undefined;
+
+  if (!salesOrder) {
+    salesOrder = salesOrders.find((candidate) => candidate.fabric_po_ids?.includes(order.id));
+  }
+
+  if (!salesOrder && salesOrderFilter) {
+    salesOrder = salesOrderFilter;
+  }
 
   if (!salesOrder && order.sales_order_id) {
     const orphanGroup = orphanPosByMissingId.get(order.sales_order_id);
@@ -49,10 +59,14 @@ export async function listSupplierEmailQueue(
 
   const salesStore = readSalesOrders();
   const salesById = new Map(salesStore.orders.map((order) => [order.id, order]));
+  const salesOrderFilter = salesOrderId ? salesById.get(salesOrderId) : undefined;
+  const allFabricOrders = (await listStoredFabricOrdersFresh()).filter(
+    (order) => order.status !== "cancelled"
+  );
 
-  const rawOrders = (await listStoredFabricOrdersFresh())
-    .filter((order) => order.status !== "cancelled")
-    .filter((order) => !salesOrderId || order.sales_order_id === salesOrderId);
+  const rawOrders = salesOrderFilter
+    ? getFabricPosForSalesOrder(salesOrderFilter, allFabricOrders)
+    : allFabricOrders;
 
   const orphanPosByMissingId = new Map<string, SupplierEmailQueueItem[]>();
   for (const order of rawOrders) {
@@ -63,7 +77,9 @@ export async function listSupplierEmailQueue(
   }
 
   return rawOrders
-    .map((order) => enrichQueueItem(order, salesById, salesStore.orders, orphanPosByMissingId))
+    .map((order) =>
+      enrichQueueItem(order, salesById, salesStore.orders, orphanPosByMissingId, salesOrderFilter)
+    )
     .sort((a, b) => {
       const aPending = isFabricOrderPending(a) ? 0 : 1;
       const bPending = isFabricOrderPending(b) ? 0 : 1;
