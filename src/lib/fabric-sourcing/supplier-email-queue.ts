@@ -1,6 +1,13 @@
-import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { readSalesOrders } from "@/lib/data/sales-orders";
-import { listStoredFabricOrdersFresh } from "@/lib/integrations/fabric-order-store";
+import path from "path";
+import {
+  ensureDocumentsLoaded,
+  invalidateDocumentCache,
+} from "@/lib/data/document-persistence";
+import { getSalesOrderByIdFresh, readSalesOrders } from "@/lib/data/sales-orders";
+import {
+  ensureFabricOrdersLoaded,
+  listStoredFabricOrdersFresh,
+} from "@/lib/integrations/fabric-order-store";
 import { isFabricOrderPending } from "@/lib/fabric-sourcing/fabric-order-line-status";
 import {
   findMatchingSalesOrderForOrphanPos,
@@ -16,6 +23,8 @@ import {
 
 export type { SupplierEmailBatch, SupplierEmailQueueItem };
 export { groupSupplierEmailBatches };
+
+const FABRIC_ORDERS_PATH = path.join(process.cwd(), "fabric-orders.local.json");
 
 function enrichQueueItem(
   order: SupplierEmailQueueItem,
@@ -48,6 +57,28 @@ function enrichQueueItem(
   };
 }
 
+async function resolveSalesOrderFilter(
+  salesOrderId: string | null | undefined,
+  salesById: Map<string, ReturnType<typeof readSalesOrders>["orders"][number]>
+): Promise<ReturnType<typeof readSalesOrders>["orders"][number] | undefined> {
+  if (!salesOrderId) return undefined;
+
+  const cached = salesById.get(salesOrderId);
+  if (cached) return cached;
+
+  const fresh = await getSalesOrderByIdFresh(salesOrderId);
+  if (fresh) {
+    salesById.set(fresh.id, fresh);
+  }
+  return fresh;
+}
+
+async function loadActiveFabricOrders(): Promise<
+  Awaited<ReturnType<typeof listStoredFabricOrdersFresh>>
+> {
+  return (await listStoredFabricOrdersFresh()).filter((order) => order.status !== "cancelled");
+}
+
 export async function listSupplierEmailQueue(
   salesOrderId?: string | null
 ): Promise<SupplierEmailQueueItem[]> {
@@ -59,14 +90,24 @@ export async function listSupplierEmailQueue(
 
   const salesStore = readSalesOrders();
   const salesById = new Map(salesStore.orders.map((order) => [order.id, order]));
-  const salesOrderFilter = salesOrderId ? salesById.get(salesOrderId) : undefined;
-  const allFabricOrders = (await listStoredFabricOrdersFresh()).filter(
-    (order) => order.status !== "cancelled"
-  );
+  const salesOrderFilter = await resolveSalesOrderFilter(salesOrderId, salesById);
+  let allFabricOrders = await loadActiveFabricOrders();
 
-  const rawOrders = salesOrderFilter
+  let rawOrders = salesOrderFilter
     ? getFabricPosForSalesOrder(salesOrderFilter, allFabricOrders)
     : allFabricOrders;
+
+  // SO still references PO ids but fabric_orders read was empty/stale — retry once from Supabase.
+  if (
+    salesOrderFilter &&
+    rawOrders.length === 0 &&
+    (salesOrderFilter.fabric_po_ids?.length ?? 0) > 0
+  ) {
+    invalidateDocumentCache(FABRIC_ORDERS_PATH);
+    await ensureFabricOrdersLoaded();
+    allFabricOrders = await loadActiveFabricOrders();
+    rawOrders = getFabricPosForSalesOrder(salesOrderFilter, allFabricOrders);
+  }
 
   const orphanPosByMissingId = new Map<string, SupplierEmailQueueItem[]>();
   for (const order of rawOrders) {

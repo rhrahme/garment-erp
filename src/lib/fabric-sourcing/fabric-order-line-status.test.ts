@@ -55,6 +55,16 @@ describe("fabric-order-line-status", () => {
     expect(isFabricOrderFullySent(po)).toBe(false);
   });
 
+  it("keeps unsent lines pending when PO emailed_at is set but only some lines were marked", () => {
+    const po = order({
+      emailed_at: "2026-01-02T00:00:00Z",
+      lines: [line("l1", "2026-01-02T00:00:00Z"), line("l2")],
+    });
+    expect(isFabricOrderLineSent(po.lines![1]!, po)).toBe(false);
+    expect(getPendingFabricOrderLines(po).map((l) => l.id)).toEqual(["l2"]);
+    expect(isFabricOrderFullySent(po)).toBe(false);
+  });
+
   it("groups selected line ids by PO", () => {
     const poA = order({ id: "po-a", lines: [line("l1"), line("l2")] });
     const poB = order({ id: "po-b", lines: [line("l3")] });
