@@ -12,6 +12,7 @@ import {
 } from "@/lib/fabric-sourcing/email-content";
 import {
   getPendingFabricOrderLines,
+  isFabricOrderLineSent,
   lineIdsByPoIdFromSelection,
 } from "@/lib/fabric-sourcing/fabric-order-line-status";
 import { fabricCatalogSupplierIdsForEmail } from "@/lib/fabric-sourcing/supplier-display";
@@ -393,30 +394,51 @@ function PendingSupplierEmailBatchCard({
     [batch.orders, selectedPoIds]
   );
 
-  const selectableLines = useMemo(
+  const displayLines = useMemo(
     () =>
       selectedOrders.flatMap((order) => {
-        const pendingLines = pendingLinesByOrder.get(order.id) ?? [];
-        return pendingLines.map((line, index) => ({
-          order,
-          line,
-          article: resolveSoArticleForFabricLine(line, index),
-          unit: fabrics.find((fabric) => fabric.fabric_number === line.fabric_number)?.unit ?? "meters",
-        }));
+        const lines = order.lines ?? [];
+        return lines.map((line, index) => {
+          const sent = isFabricOrderLineSent(line, order);
+          return {
+            order,
+            line,
+            article: resolveSoArticleForFabricLine(line, index),
+            unit: fabrics.find((fabric) => fabric.fabric_number === line.fabric_number)?.unit ?? "meters",
+            sent,
+            emailedAt: line.emailed_at ?? (sent ? order.emailed_at : null),
+          };
+        });
       }),
-    [selectedOrders, pendingLinesByOrder, fabrics]
+    [selectedOrders, fabrics]
   );
+
+  const pendingLineIds = useMemo(
+    () => new Set(displayLines.filter((row) => !row.sent).map((row) => row.line.id)),
+    [displayLines]
+  );
+
+  const lineStatusCounts = useMemo(() => {
+    let sent = 0;
+    let pending = 0;
+    for (const order of batch.orders) {
+      for (const line of order.lines ?? []) {
+        if (isFabricOrderLineSent(line, order)) sent++;
+        else pending++;
+      }
+    }
+    return { sent, pending };
+  }, [batch.orders]);
 
   useEffect(() => {
     setSelectedLineIds((current) => {
-      const validIds = new Set(selectableLines.map((row) => row.line.id));
-      const next = new Set([...current].filter((id) => validIds.has(id)));
-      if (next.size === 0 && validIds.size > 0) {
-        return validIds;
+      const next = new Set([...current].filter((id) => pendingLineIds.has(id)));
+      if (next.size === 0 && pendingLineIds.size > 0) {
+        return pendingLineIds;
       }
       return next;
     });
-  }, [selectableLines]);
+  }, [displayLines, pendingLineIds]);
 
   const lineIdsByPoId = useMemo(
     () => lineIdsByPoIdFromSelection(selectedOrders, selectedLineIds),
@@ -466,10 +488,19 @@ function PendingSupplierEmailBatchCard({
   const allPoIds = batch.orders.map((order) => order.id);
   const allPoNumbers = batch.orders.map((order) => order.po_number);
   const orderCount = new Set(selectedOrders.map((order) => order.sales_order_id).filter(Boolean)).size;
-  const fabricLineCount = selectableLines.filter((row) => selectedLineIds.has(row.line.id)).length;
+  const fabricLineCount = displayLines.filter(
+    (row) => !row.sent && selectedLineIds.has(row.line.id)
+  ).length;
   const summaryParts = [
     orderCount > 0 ? `${orderCount} order${orderCount !== 1 ? "s" : ""}` : null,
-    `${fabricLineCount} fabric line${fabricLineCount !== 1 ? "s" : ""}`,
+    lineStatusCounts.sent > 0 || lineStatusCounts.pending > 0
+      ? `${lineStatusCounts.sent} sent · ${lineStatusCounts.pending} pending`
+      : null,
+    fabricLineCount > 0
+      ? `${fabricLineCount} selected`
+      : pendingLineIds.size > 0
+        ? "No lines selected"
+        : null,
   ].filter(Boolean);
 
   function toggleOrderIncluded(orderId: string, included: boolean) {
@@ -497,7 +528,7 @@ function PendingSupplierEmailBatchCard({
   }
 
   function setAllLinesIncluded(included: boolean) {
-    setSelectedLineIds(included ? new Set(selectableLines.map((row) => row.line.id)) : new Set());
+    setSelectedLineIds(included ? new Set(pendingLineIds) : new Set());
   }
 
   return (
@@ -531,9 +562,9 @@ function PendingSupplierEmailBatchCard({
       ) : (
         <BatchOrderLinks orders={batch.orders} />
       )}
-      {selectableLines.length > 0 && (
+      {displayLines.length > 0 && (
         <BatchLinePicker
-          rows={selectableLines}
+          rows={displayLines}
           selectedLineIds={selectedLineIds}
           onToggle={toggleLineIncluded}
           onSelectAll={setAllLinesIncluded}
@@ -728,36 +759,42 @@ function BatchLinePicker({
     line: PurchaseOrderLine;
     article: number;
     unit: string;
+    sent: boolean;
+    emailedAt: string | null;
   }>;
   selectedLineIds: Set<string>;
   onToggle: (lineId: string, included: boolean) => void;
   onSelectAll: (included: boolean) => void;
 }) {
-  const allSelected = rows.length > 0 && rows.every((row) => selectedLineIds.has(row.line.id));
-  const someSelected = rows.some((row) => selectedLineIds.has(row.line.id));
+  const pendingRows = rows.filter((row) => !row.sent);
+  const allPendingSelected =
+    pendingRows.length > 0 && pendingRows.every((row) => selectedLineIds.has(row.line.id));
+  const somePendingSelected = pendingRows.some((row) => selectedLineIds.has(row.line.id));
 
   return (
     <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs font-medium text-slate-900">Fabric lines to include</p>
-        <div className="flex gap-3 text-xs">
-          <button
-            type="button"
-            className="font-medium text-indigo-600 hover:text-indigo-700 disabled:text-slate-400"
-            disabled={allSelected}
-            onClick={() => onSelectAll(true)}
-          >
-            Select all
-          </button>
-          <button
-            type="button"
-            className="font-medium text-indigo-600 hover:text-indigo-700 disabled:text-slate-400"
-            disabled={!someSelected}
-            onClick={() => onSelectAll(false)}
-          >
-            Deselect all
-          </button>
-        </div>
+        {pendingRows.length > 0 && (
+          <div className="flex gap-3 text-xs">
+            <button
+              type="button"
+              className="font-medium text-indigo-600 hover:text-indigo-700 disabled:text-slate-400"
+              disabled={allPendingSelected}
+              onClick={() => onSelectAll(true)}
+            >
+              Select all
+            </button>
+            <button
+              type="button"
+              className="font-medium text-indigo-600 hover:text-indigo-700 disabled:text-slate-400"
+              disabled={!somePendingSelected}
+              onClick={() => onSelectAll(false)}
+            >
+              Deselect all
+            </button>
+          </div>
+        )}
       </div>
       <div className="mt-2 overflow-x-auto">
         <table className="min-w-full text-sm">
@@ -768,24 +805,33 @@ function BatchLinePicker({
               <th className="py-1.5 pr-3">Fabric no.</th>
               <th className="py-1.5 pr-3">Garment</th>
               <th className="py-1.5 pr-3 text-right">Qty</th>
+              <th className="py-1.5 pr-3">Status</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ order, line, article, unit }) => {
-              const checked = selectedLineIds.has(line.id);
+            {rows.map(({ order, line, article, unit, sent, emailedAt }) => {
+              const checked = !sent && selectedLineIds.has(line.id);
               const qty =
                 Number.isFinite(line.quantity_ordered) && line.quantity_ordered === Math.floor(line.quantity_ordered)
                   ? String(Math.floor(line.quantity_ordered))
                   : String(line.quantity_ordered);
               return (
-                <tr key={line.id} className="border-t border-slate-200/80 text-slate-700">
+                <tr
+                  key={line.id}
+                  className={`border-t border-slate-200/80 ${sent ? "text-slate-500" : "text-slate-700"}`}
+                >
                   <td className="py-1.5 pr-2 align-top">
                     <input
                       type="checkbox"
                       checked={checked}
+                      disabled={sent}
                       onChange={(event) => onToggle(line.id, event.target.checked)}
-                      className="h-4 w-4 rounded border-slate-300"
-                      aria-label={`Include ${line.fabric_number ?? "fabric line"}`}
+                      className="h-4 w-4 rounded border-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label={
+                        sent
+                          ? `${line.fabric_number ?? "fabric line"} already sent`
+                          : `Include ${line.fabric_number ?? "fabric line"}`
+                      }
                     />
                   </td>
                   <td className="py-1.5 pr-3 align-top font-mono text-slate-900">
@@ -795,6 +841,22 @@ function BatchLinePicker({
                   <td className="py-1.5 pr-3 align-top">{line.garment_type ?? "—"}</td>
                   <td className="py-1.5 pr-3 align-top text-right whitespace-nowrap">
                     {qty} {unit}
+                  </td>
+                  <td className="py-1.5 pr-3 align-top">
+                    {sent ? (
+                      <div>
+                        <span className="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                          Email sent
+                        </span>
+                        {emailedAt ? (
+                          <p className="mt-1 text-xs text-slate-500">{formatDateTimeRiyadh(emailedAt)}</p>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                        Pending email
+                      </span>
+                    )}
                   </td>
                 </tr>
               );
