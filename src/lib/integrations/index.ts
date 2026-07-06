@@ -14,6 +14,5 @@ export async function notifyIntegration(
   source: "erp" | "zapier" | "api" = "erp"
 ): Promise<void> {
   const payload = { ...data, _source: source };
-  logIntegrationEvent(event, payload);
-  await emitZapierEvent(event, payload);
+  await Promise.all([logIntegrationEvent(event, payload), emitZapierEvent(event, payload)]);
 }

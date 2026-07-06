@@ -1,5 +1,5 @@
 import path from "path";
-import { readJsonFile, writeJsonFile } from "@/lib/data/json-file-cache";
+import { readJsonFile, writeJsonFileAsync } from "@/lib/data/json-file-cache";
 
 const STORE_PATH = path.join(process.cwd(), "integration-events.local.json");
 
@@ -15,11 +15,11 @@ function readLog(): EventLog {
   return readJsonFile(STORE_PATH, { events: [] });
 }
 
-function writeLog(log: EventLog): void {
-  writeJsonFile(STORE_PATH, log);
-}
-
-export function logIntegrationEvent(event: string, data: Record<string, unknown>): void {
+/** Persist to Supabase before the serverless instance exits. */
+export async function logIntegrationEvent(
+  event: string,
+  data: Record<string, unknown>
+): Promise<void> {
   const log = readLog();
   log.events.unshift({
     event,
@@ -27,7 +27,7 @@ export function logIntegrationEvent(event: string, data: Record<string, unknown>
     data,
   });
   log.events = log.events.slice(0, 200);
-  writeLog(log);
+  await writeJsonFileAsync(STORE_PATH, log);
 }
 
 export function listIntegrationEvents(limit = 50) {
