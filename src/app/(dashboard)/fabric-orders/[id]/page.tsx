@@ -15,8 +15,10 @@ import { getSessionContext } from "@/lib/auth/session";
 import { getCustomerInvoiceBySalesOrderIdFresh } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderByIdFresh, isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
+import { ensureFabricOrdersLoaded, listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 import { resolveFabricCostForOrderLines } from "@/lib/sales-orders/fabric-cost";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
+import { getFabricPosForSalesOrder } from "@/lib/sales-orders/line-cross-reference";
 import { getRemovedSalesOrderRedirectForKey } from "@/lib/sales-orders/removed-order-redirects";
 import { fabricOrderUiLabels } from "@/lib/orders/fabric-order-ui-labels";
 import { OrderShipmentTracking } from "@/components/orders/OrderShipmentTracking";
@@ -33,8 +35,10 @@ export default async function FabricOrderDetailPage({
   const removedRedirect = getRemovedSalesOrderRedirectForKey(id);
   if (removedRedirect) redirect(removedRedirect);
   await ensureDocumentsLoaded(["sales_orders", "customer_invoices"]);
+  await ensureFabricOrdersLoaded();
   const rawOrder = await getSalesOrderByIdFresh(id);
   if (!rawOrder) notFound();
+  const fabricPos = getFabricPosForSalesOrder(rawOrder, listStoredFabricOrders());
   const session = await getSessionContext();
   const labels = fabricOrderUiLabels(session.isClientManager);
   const cookieStore = await cookies();
@@ -153,6 +157,7 @@ export default async function FabricOrderDetailPage({
 
       <SalesOrderActions
         order={order}
+        fabricPos={fabricPos}
         existingInvoiceId={existingInvoice?.id ?? null}
         isReadyMade={isReadyMadeSalesOrder(order)}
         canViewFabricPrices={canViewFabricPrices}

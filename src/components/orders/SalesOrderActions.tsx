@@ -32,7 +32,14 @@ import {
   formatLabelGarmentDescription,
   lineArticleFromStickerCode,
 } from "@/lib/sales-orders/label-codes";
-import { salesOrderFabricLineAnchor } from "@/lib/sales-orders/line-cross-reference";
+import {
+  buildSoFabricLineEmailStatus,
+  salesOrderFabricLineAnchor,
+  summarizeSoFabricLineEmailStatus,
+  supplierEmailsHref,
+} from "@/lib/sales-orders/line-cross-reference";
+import { FabricLineSupplierEmailCell } from "@/components/orders/FabricLineSupplierEmailCell";
+import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 import { formatFabricLineLabels } from "@/lib/sales-orders/label-display";
 import { FabricOrderSubmitButton } from "@/components/orders/FabricOrderSubmitButton";
 import { fabricOrderUiLabels } from "@/lib/orders/fabric-order-ui-labels";
@@ -65,6 +72,7 @@ function fabricLinesCostKey(lines: SalesOrderFabricLine[]): string {
 
 export function SalesOrderActions({
   order,
+  fabricPos = [],
   patternMismatch = null,
   patternJobsByLineId = {},
   existingInvoiceId = null,
@@ -77,6 +85,7 @@ export function SalesOrderActions({
   viewMode = "sales",
 }: {
   order: SalesOrder;
+  fabricPos?: PurchaseOrder[];
   patternMismatch?: PatternSalesOrderMismatch | null;
   patternJobsByLineId?: Record<string, number>;
   existingInvoiceId?: string | null;
@@ -98,6 +107,7 @@ export function SalesOrderActions({
   const showProductionLabels = effectiveViewMode === "production" || showSalesAdmin;
   const showFabricInput = showFabricOrdering || showSalesAdmin;
   const showSupplierEmailActions = showFabricOrdering || showSalesAdmin;
+  const showSupplierEmailColumn = showFabricOrdering && fabricPos.length > 0;
   const router = useRouter();
   const [liveOrder, setLiveOrder] = useState(order);
   const [creating, setCreating] = useState(false);
@@ -156,6 +166,28 @@ export function SalesOrderActions({
     () => sortFabricLines(liveOrder.fabric_lines, lineSort, articleByLineId),
     [liveOrder.fabric_lines, lineSort, articleByLineId]
   );
+
+  const fabricLineEmailById = useMemo(() => {
+    if (!showSupplierEmailColumn) return new Map<string, ReturnType<typeof buildSoFabricLineEmailStatus>>();
+    return new Map(
+      liveOrder.fabric_lines.map((line) => [line.id, buildSoFabricLineEmailStatus(line, fabricPos)])
+    );
+  }, [liveOrder.fabric_lines, fabricPos, showSupplierEmailColumn]);
+
+  const fabricLineEmailSummary = useMemo(
+    () => (showSupplierEmailColumn ? summarizeSoFabricLineEmailStatus(liveOrder.fabric_lines, fabricPos) : null),
+    [liveOrder.fabric_lines, fabricPos, showSupplierEmailColumn]
+  );
+
+  const supplierEmailsLink = supplierEmailsHref(liveOrder.id);
+  const hasPartialSupplierEmails =
+    fabricLineEmailSummary != null &&
+    fabricLineEmailSummary.sent > 0 &&
+    fabricLineEmailSummary.pending > 0;
+  const allSupplierEmailsSent =
+    fabricLineEmailSummary != null &&
+    fabricLineEmailSummary.pending === 0 &&
+    fabricLineEmailSummary.sent > 0;
 
   const handleLineSort = useCallback((key: string) => {
     setLineSort((prev) => nextFabricLineSort(prev, key as FabricLineSortKey));
@@ -396,6 +428,46 @@ export function SalesOrderActions({
             {!fabricsEditable && fabricEditBlockedReason && (
               <p className="mt-1 text-xs text-amber-800">{fabricEditBlockedReason}</p>
             )}
+            {showSupplierEmailColumn && fabricLineEmailSummary && (
+              <div
+                className={`mt-3 rounded-lg border px-3 py-2 text-sm ${
+                  hasPartialSupplierEmails
+                    ? "border-amber-200 bg-amber-50 text-amber-900"
+                    : allSupplierEmailsSent
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                      : "border-slate-200 bg-slate-50 text-slate-700"
+                }`}
+              >
+                {hasPartialSupplierEmails ? (
+                  <p>
+                    <span className="font-medium">
+                      {fabricLineEmailSummary.sent} of{" "}
+                      {fabricLineEmailSummary.sent + fabricLineEmailSummary.pending} fabric lines emailed
+                    </span>
+                    {" — "}
+                    {fabricLineEmailSummary.pending} still pending.{" "}
+                    <Link href={supplierEmailsLink} className="font-medium text-indigo-700 underline">
+                      Send remaining in Supplier Emails
+                    </Link>
+                  </p>
+                ) : allSupplierEmailsSent ? (
+                  <p>
+                    <span className="font-medium">All fabric lines emailed to suppliers.</span>{" "}
+                    <Link href={supplierEmailsLink} className="font-medium text-indigo-700 underline">
+                      View in Supplier Emails
+                    </Link>
+                  </p>
+                ) : (
+                  <p>
+                    <span className="font-medium">{fabricLineEmailSummary.pending} fabric lines</span> ready for
+                    supplier email.{" "}
+                    <Link href={supplierEmailsLink} className="font-medium text-indigo-700 underline">
+                      Open Supplier Emails
+                    </Link>
+                  </p>
+                )}
+              </div>
+            )}
             {liveOrder.fabric_lines.length > 0 && (
               <div className="mt-2 space-y-1 text-sm font-medium text-slate-800">
                 <p>
@@ -460,6 +532,7 @@ export function SalesOrderActions({
                     direction={lineSort?.direction ?? null}
                     onSort={handleLineSort}
                   />
+                  {showSupplierEmailColumn ? <th className="px-3 py-2">Supplier email</th> : null}
                   <th className="px-3 py-2">Sticker</th>
                 </tr>
               </thead>
@@ -484,6 +557,11 @@ export function SalesOrderActions({
                     <td className="px-3 py-2 text-slate-600">
                       {line.quantity} {line.unit === "meters" ? "m" : line.unit}
                     </td>
+                    {showSupplierEmailColumn ? (
+                      <td className="px-3 py-2">
+                        <FabricLineSupplierEmailCell status={fabricLineEmailById.get(line.id)} />
+                      </td>
+                    ) : null}
                     <td className="px-3 py-2 font-mono text-xs text-indigo-700">
                       {(line.label_stickers ?? [])[0]?.code ?? "—"}
                     </td>
@@ -572,6 +650,7 @@ export function SalesOrderActions({
                         onSort={handleLineSort}
                       />
                     ) : null}
+                    {showSupplierEmailColumn ? <th className="px-3 py-2">Supplier email</th> : null}
                     {fabricsEditable ? <th className="px-3 py-2 w-28" /> : null}
                   </tr>
                 </thead>
@@ -635,6 +714,11 @@ export function SalesOrderActions({
                       {showFabricPricesColumn ? (
                         <td className="px-3 py-2 text-slate-600">
                           {canViewFabricPrices ? formatLinePrice(line) : <MaskedFabricPrice />}
+                        </td>
+                      ) : null}
+                      {showSupplierEmailColumn ? (
+                        <td className="px-3 py-2">
+                          <FabricLineSupplierEmailCell status={fabricLineEmailById.get(line.id)} />
                         </td>
                       ) : null}
                       {fabricsEditable ? (
@@ -737,6 +821,7 @@ export function SalesOrderActions({
                         onSort={handleLineSort}
                       />
                     ) : null}
+                    {showSupplierEmailColumn ? <th className="px-3 py-2">Supplier email</th> : null}
                     {fabricsEditable ? <th className="px-3 py-2 w-28" /> : null}
                   </tr>
                 </thead>
@@ -793,6 +878,11 @@ export function SalesOrderActions({
                       {showFabricPricesColumn ? (
                         <td className="px-3 py-2 text-slate-600">
                           {canViewFabricPrices ? formatLinePrice(line) : <MaskedFabricPrice />}
+                        </td>
+                      ) : null}
+                      {showSupplierEmailColumn ? (
+                        <td className="px-3 py-2">
+                          <FabricLineSupplierEmailCell status={fabricLineEmailById.get(line.id)} />
                         </td>
                       ) : null}
                       {fabricsEditable ? (
@@ -852,8 +942,14 @@ export function SalesOrderActions({
         {showSupplierEmailActions &&
           !isClientManager &&
           (liveOrder.fabric_po_ids.length > 0 ? (
-            <Link href={`/supplier-emails?sales_order_id=${liveOrder.id}`}>
-              <Button>Send supplier emails</Button>
+            <Link href={supplierEmailsLink}>
+              <Button variant={allSupplierEmailsSent ? "secondary" : undefined}>
+                {hasPartialSupplierEmails
+                  ? `Send remaining supplier emails (${fabricLineEmailSummary?.pending ?? 0})`
+                  : allSupplierEmailsSent
+                    ? "View supplier emails"
+                    : "Send supplier emails"}
+              </Button>
             </Link>
           ) : (
             <Button

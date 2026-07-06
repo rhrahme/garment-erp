@@ -1,4 +1,5 @@
 import type { FabricSwatchKey } from "@/lib/fabric-sourcing/fabric-swatch-keys";
+import { isFabricOrderLineSent } from "@/lib/fabric-sourcing/fabric-order-line-status";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import type { CustomerInvoiceLine } from "@/lib/types/customer-invoices";
 import type { PurchaseOrder, PurchaseOrderLine } from "@/lib/types/fabric-sourcing";
@@ -44,6 +45,69 @@ export function findFabricLineForInvoiceLine(
       (invoiceLine.piece_name == null ||
         line.label_stickers?.some((sticker) => sticker.piece_name === invoiceLine.piece_name))
   );
+}
+
+export function getFabricPosForSalesOrder(
+  order: Pick<SalesOrder, "id" | "so_number" | "fabric_po_ids">,
+  allFabricPos: PurchaseOrder[]
+): PurchaseOrder[] {
+  return allFabricPos.filter(
+    (po) =>
+      po.sales_order_id === order.id ||
+      order.fabric_po_ids.includes(po.id) ||
+      Boolean(po.client_reference?.includes(order.so_number))
+  );
+}
+
+export interface SoFabricLineEmailStatus {
+  poId: string | null;
+  poNumber: string | null;
+  sent: boolean;
+  emailedAt: string | null;
+  pending: boolean;
+}
+
+export function buildSoFabricLineEmailStatus(
+  fabricLine: SalesOrderFabricLine,
+  fabricPos: PurchaseOrder[]
+): SoFabricLineEmailStatus | null {
+  if (fabricPos.length === 0) return null;
+
+  const match = findFabricPoLineForSoFabricLine(fabricLine, fabricPos);
+  if (!match) {
+    return { poId: null, poNumber: null, sent: false, emailedAt: null, pending: false };
+  }
+
+  const sent = isFabricOrderLineSent(match.poLine, match.po);
+  return {
+    poId: match.po.id,
+    poNumber: match.po.po_number,
+    sent,
+    emailedAt: match.poLine.emailed_at ?? (sent ? match.po.emailed_at : null),
+    pending: !sent,
+  };
+}
+
+export function summarizeSoFabricLineEmailStatus(
+  fabricLines: SalesOrderFabricLine[],
+  fabricPos: PurchaseOrder[]
+): { sent: number; pending: number; unmatched: number } {
+  let sent = 0;
+  let pending = 0;
+  let unmatched = 0;
+
+  for (const line of fabricLines) {
+    const status = buildSoFabricLineEmailStatus(line, fabricPos);
+    if (!status) continue;
+    if (!status.poId) {
+      unmatched += 1;
+      continue;
+    }
+    if (status.sent) sent += 1;
+    else if (status.pending) pending += 1;
+  }
+
+  return { sent, pending, unmatched };
 }
 
 export function findFabricPoLineForSoFabricLine(
