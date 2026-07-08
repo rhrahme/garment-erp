@@ -8,7 +8,7 @@ import { StickerCell } from "@/components/orders/StickerCell";
 import { useLabelRotation } from "@/hooks/useLabelRotation";
 import { useLabelScale } from "@/hooks/useLabelScale";
 import type { StickerPreviewItem } from "@/lib/production/sticker-print-selection";
-import { labelRollHeightCss, labelRollWidthCss } from "@/lib/production/label-print-config";
+import { labelRollHeightCss, labelRollWidthCss, LABEL_ROLL_HEIGHT_MM, LABEL_ROLL_WIDTH_MM } from "@/lib/production/label-print-config";
 import {
   detectStickerPrintPlatform,
   stickerPrintGuide,
@@ -51,6 +51,7 @@ function PreviewCard({
 }) {
   const { label, role } = item;
   const code = label.sticker_code;
+  const previewScale = 0.42;
 
   return (
     <label
@@ -76,12 +77,24 @@ function PreviewCard({
           </p>
         </div>
       </div>
-      <div className="overflow-hidden p-2">
+      <div className="flex justify-center overflow-hidden p-2">
         <div
-          className="pointer-events-none origin-top-left scale-[0.42]"
-          style={{ width: labelRollWidthCss(), height: labelRollHeightCss() }}
+          style={{
+            width: `${LABEL_ROLL_WIDTH_MM * previewScale}mm`,
+            height: `${LABEL_ROLL_HEIGHT_MM * previewScale}mm`,
+          }}
         >
-          <StickerCell label={label} role={role} />
+          <div
+            className="pointer-events-none"
+            style={{
+              width: labelRollWidthCss(),
+              height: labelRollHeightCss(),
+              transform: `scale(${previewScale})`,
+              transformOrigin: "top left",
+            }}
+          >
+            <StickerCell label={label} role={role} />
+          </div>
         </div>
       </div>
     </label>

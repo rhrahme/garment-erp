@@ -35,6 +35,128 @@ export type StickerPrintHtmlOptions = {
   mode?: LabelPrintMode;
 };
 
+const STICKER_PRINT_POPUP_FEATURES = "popup,width=480,height=640";
+
+/** Open synchronously from a click handler so popup blockers allow the print window. */
+export function openStickerPrintPopup(): Window | null {
+  const popup = window.open("", "sticker-print", STICKER_PRINT_POPUP_FEATURES);
+  if (!popup) return null;
+  try {
+    popup.document.open();
+    popup.document.write(buildStickerPrintLoadingHtml());
+    popup.document.close();
+  } catch {
+    popup.close();
+    return null;
+  }
+  return popup;
+}
+
+export function showStickerPrintPopupError(popup: Window, message: string): void {
+  try {
+    popup.document.open();
+    popup.document.write(buildStickerPrintErrorHtml(message));
+    popup.document.close();
+  } catch {
+    /* popup may already be closed */
+  }
+}
+
+export function buildStickerPrintLoadingHtml(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #f8fafc;
+  color: #334155;
+}
+p { margin: 0; font-size: 14px; }
+</style>
+</head>
+<body><p>Preparing labels for print…</p></body>
+</html>`;
+}
+
+export function buildStickerPrintErrorHtml(message: string): string {
+  const safe = message
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  padding: 24px;
+  background: #fef2f2;
+  color: #991b1b;
+}
+h1 { font-size: 16px; margin: 0 0 8px; }
+p { margin: 0; font-size: 14px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<h1>Sticker print failed</h1>
+<p>${safe}</p>
+<p style="margin-top:12px;color:#475569">Close this window, return to the order page, and try Download PNG/PDF if print keeps failing.</p>
+</body>
+</html>`;
+}
+
+/** Runs inside the popup so print() keeps the user-gesture chain from the opener click. */
+const STICKER_PRINT_BOOT_SCRIPT = `<script>
+(function () {
+  function notifyParent(ok, reason) {
+    try {
+      if (window.opener) {
+        window.opener.postMessage({ type: "sticker-print-finished", ok: ok, reason: reason || null }, "*");
+      }
+    } catch (e) {}
+  }
+  function autoPrint() {
+    var imgs = Array.prototype.slice.call(document.querySelectorAll("img.label-raster"));
+    if (imgs.length === 0) {
+      notifyParent(false, "no-images");
+      return;
+    }
+    var pending = imgs.length;
+    function onImageReady() {
+      pending -= 1;
+      if (pending > 0) return;
+      window.focus();
+      try {
+        window.print();
+      } catch (e) {
+        notifyParent(false, "print-blocked");
+        return;
+      }
+      window.addEventListener("afterprint", function () { notifyParent(true); }, { once: true });
+    }
+    imgs.forEach(function (img) {
+      if (img.complete && img.naturalWidth > 0) onImageReady();
+      else {
+        img.addEventListener("load", onImageReady, { once: true });
+        img.addEventListener("error", function () { notifyParent(false, "image-error"); }, { once: true });
+      }
+    });
+  }
+  if (document.readyState === "complete") autoPrint();
+  else window.addEventListener("load", autoPrint, { once: true });
+})();
+</script>`;
+
 function mmToPx(mm: number, dpi = STICKER_RASTER_DPI): number {
   return Math.round((mm * dpi) / 25.4);
 }
@@ -80,7 +202,7 @@ export function buildStickerPrintHtml(
   const pages = imageDataUrls
     .map(
       (src) =>
-        `<div class="label-page"><img src="${src}" alt="" width="${imgWpx}" height="${imgHpx}" /></div>`
+        `<div class="label-page"><img class="label-raster" src="${src}" alt="" width="${imgWpx}" height="${imgHpx}" /></div>`
     )
     .join("");
 
@@ -89,6 +211,22 @@ export function buildStickerPrintHtml(
 <head>
 <meta charset="utf-8" />
 <style>
+.screen-only {
+  font-family: system-ui, sans-serif;
+  padding: 16px;
+  font-size: 14px;
+  color: #334155;
+  background: #f8fafc;
+}
+.screen-only button {
+  margin-top: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+@media print {
+  .screen-only { display: none !important; }
+}
 @page {
   size: ${pageSizeDecl};
   margin: 0;
@@ -147,7 +285,12 @@ body {
 </style>
 </head>
 <body>
+<div class="screen-only">
+  <p>Opening the print dialog… If nothing appears, allow popups for this site and click below.</p>
+  <button type="button" onclick="window.print()">Print labels</button>
+</div>
 ${pages}
+${STICKER_PRINT_BOOT_SCRIPT}
 </body>
 </html>`;
 }

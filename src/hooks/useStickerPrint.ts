@@ -1,7 +1,13 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { printStickerPngs, type StickerPdfRequest } from "@/lib/production/print-stickers";
+import {
+  openStickerPrintPopup,
+  printStickerPngs,
+  stickerPrintFailureMessage,
+  type StickerPdfRequest,
+  type StickerPrintFailureReason,
+} from "@/lib/production/print-stickers";
 
 export function useStickerPrint() {
   const [printing, setPrinting] = useState(false);
@@ -11,15 +17,21 @@ export function useStickerPrint() {
     (request: StickerPdfRequest, onAfterPrint?: () => void) => {
       setPrinting(true);
       setPrintError(null);
+
+      const popup = openStickerPrintPopup();
+      if (!popup) {
+        setPrinting(false);
+        setPrintError(stickerPrintFailureMessage("popup-blocked"));
+        return;
+      }
+
       void printStickerPngs(request, () => {
         setPrinting(false);
         onAfterPrint?.();
-      }).then((result) => {
+      }, popup).then((result) => {
         if (!result.ok) {
           setPrinting(false);
-          setPrintError(
-            "Sticker print failed — allow popups for this site, confirm you are logged in, and try again."
-          );
+          setPrintError(stickerPrintFailureMessage(result.reason ?? "unknown"));
         }
       });
     },
@@ -35,3 +47,5 @@ export function useStickerPrint() {
     requestPrint,
   };
 }
+
+export type { StickerPrintFailureReason };

@@ -7,8 +7,9 @@ import {
 import {
   buildStickerPrintHtml,
   extractPngBlobsFromZip,
+  openStickerPrintPopup,
   prepareBrowserPrintDataUrl,
-  waitForDocumentImages,
+  showStickerPrintPopupError,
 } from "@/lib/production/sticker-print-html";
 
 export type StickerPdfSheet = "fabric-cuts" | "pieces" | "print-pack" | "test" | "calibration";
@@ -40,7 +41,18 @@ export type StickerPdfRequest = {
 export type StickerPrintResult = {
   ok: boolean;
   pageCount?: number;
+  reason?: StickerPrintFailureReason;
 };
+
+export type StickerPrintFailureReason =
+  | "popup-blocked"
+  | "fetch-failed"
+  | "unauthorized"
+  | "no-labels"
+  | "image-error"
+  | "print-blocked"
+  | "no-images"
+  | "unknown";
 
 function resolveRotationDeg(request: StickerPdfRequest): LabelPrintMode {
   return request.rotationDeg ?? readLabelRotation();
@@ -104,6 +116,9 @@ async function fetchStickerPng(request: StickerPdfRequest): Promise<Response> {
 
 async function fetchStickerPngBlobs(request: StickerPdfRequest): Promise<Blob[]> {
   const res = await fetchStickerPng(request);
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
   if (!res.ok) {
     throw new Error(`Sticker PNG request failed: ${res.status}`);
   }
@@ -145,98 +160,150 @@ function triggerBlobDownload(blob: Blob, filename: string): void {
 }
 
 /**
- * Open a dedicated popup with inline base64 PNGs and print from that window.
- * Uses a blob: document URL (not about:blank) so Chrome footers show a blank
- * title instead of "about:blank" if headers are left on.
+ * Load bilevel PNGs into a popup and print from inside that window.
+ * The popup must be opened synchronously from the click handler (see openStickerPrintPopup).
  */
 function printStickerImageDataUrls(
   imageDataUrls: string[],
   mode: LabelPrintMode,
-  onAfterPrint?: () => void
-): Promise<boolean> {
+  onAfterPrint?: () => void,
+  existingPopup?: Window | null
+): Promise<{ ok: boolean; reason?: StickerPrintFailureReason }> {
   return new Promise((resolve) => {
     const html = buildStickerPrintHtml(imageDataUrls, { mode });
     const docBlob = new Blob([html], { type: "text/html;charset=utf-8" });
     const docUrl = URL.createObjectURL(docBlob);
 
-    const popup = window.open(docUrl, "sticker-print", "popup,width=480,height=640");
+    const popup =
+      existingPopup ?? window.open(docUrl, "sticker-print", "popup,width=480,height=640");
     if (!popup) {
       URL.revokeObjectURL(docUrl);
-      resolve(false);
+      resolve({ ok: false, reason: "popup-blocked" });
       return;
     }
 
     let finished = false;
 
-    const cleanup = () => {
-      window.setTimeout(() => {
-        try {
-          popup.close();
-        } catch {
-          /* already closed */
-        }
-        URL.revokeObjectURL(docUrl);
-      }, 1000);
+    const onMessage = (event: MessageEvent) => {
+      if (event.source !== popup) return;
+      const data = event.data as { type?: string; ok?: boolean; reason?: string } | null;
+      if (!data || data.type !== "sticker-print-finished") return;
+      finish(Boolean(data.ok), parsePrintFailureReason(data.reason));
     };
 
-    const finish = (ok: boolean) => {
+    const cleanup = (ok: boolean) => {
+      window.removeEventListener("message", onMessage);
+      window.setTimeout(() => {
+        if (ok) {
+          try {
+            popup.close();
+          } catch {
+            /* already closed */
+          }
+        }
+        URL.revokeObjectURL(docUrl);
+      }, ok ? 1000 : 120_000);
+    };
+
+    const finish = (ok: boolean, reason?: StickerPrintFailureReason) => {
       if (finished) return;
       finished = true;
       if (ok) onAfterPrint?.();
-      cleanup();
-      resolve(ok);
+      cleanup(ok);
+      resolve({ ok, reason: ok ? undefined : reason ?? "unknown" });
     };
 
-    const runPrint = () => {
-      void waitForDocumentImages(popup.document)
-        .then(() => {
-          try {
-            popup.focus();
-            popup.print();
-          } catch {
-            finish(false);
-            return;
-          }
+    window.addEventListener("message", onMessage);
+    popup.addEventListener("error", () => finish(false, "image-error"), { once: true });
+    window.setTimeout(() => {
+      if (!finished) finish(true);
+    }, 120_000);
 
-          popup.addEventListener("afterprint", () => finish(true), { once: true });
-          window.setTimeout(() => {
-            if (!finished) finish(true);
-          }, 120_000);
-        })
-        .catch(() => finish(false));
-    };
-
-    if (popup.document.readyState === "complete") {
-      runPrint();
-    } else {
-      popup.addEventListener("load", runPrint, { once: true });
-      popup.addEventListener("error", () => finish(false), { once: true });
+    if (existingPopup) {
+      popup.location.href = docUrl;
     }
   });
+}
+
+function parsePrintFailureReason(raw: string | null | undefined): StickerPrintFailureReason {
+  if (raw === "popup-blocked") return "popup-blocked";
+  if (raw === "fetch-failed") return "fetch-failed";
+  if (raw === "unauthorized") return "unauthorized";
+  if (raw === "no-labels") return "no-labels";
+  if (raw === "image-error") return "image-error";
+  if (raw === "print-blocked") return "print-blocked";
+  if (raw === "no-images") return "no-images";
+  return "unknown";
+}
+
+function mapFetchErrorToReason(error: unknown): StickerPrintFailureReason {
+  const message = error instanceof Error ? error.message : String(error);
+  if (message.includes("unauthorized") || message.includes("401")) return "unauthorized";
+  if (message.includes("400")) return "no-labels";
+  return "fetch-failed";
 }
 
 /**
  * Fetch server-generated bilevel PNG(s) and open the system print dialog in a popup.
  * Printer-match mode pre-rotates to landscape 102×51 mm for D550 browser print.
  * Never calls print() on the parent page.
+ *
+ * Pass a popup from openStickerPrintPopup() (opened synchronously on click) so blockers
+ * allow the window and print() runs inside the popup after images load.
  */
 export async function printStickerPngs(
   request: StickerPdfRequest,
-  onAfterPrint?: () => void
+  onAfterPrint?: () => void,
+  popup?: Window | null
 ): Promise<StickerPrintResult> {
+  const targetPopup = popup ?? openStickerPrintPopup();
+  if (!targetPopup) {
+    return { ok: false, reason: "popup-blocked" };
+  }
+
   try {
     const mode = resolveRotationDeg(request);
     const pngBlobs = await fetchStickerPngBlobs(request);
     const imageDataUrls = await Promise.all(
       pngBlobs.map((blob) => prepareBrowserPrintDataUrl(blob, mode))
     );
-    const ok = await printStickerImageDataUrls(imageDataUrls, mode, onAfterPrint);
-    return { ok, pageCount: pngBlobs.length };
+    const result = await printStickerImageDataUrls(imageDataUrls, mode, onAfterPrint, targetPopup);
+    if (!result.ok) {
+      showStickerPrintPopupError(
+        targetPopup,
+        stickerPrintFailureMessage(result.reason ?? "unknown")
+      );
+    }
+    return { ok: result.ok, pageCount: pngBlobs.length, reason: result.reason };
   } catch (error) {
     console.error("Failed to print sticker PNGs:", error);
-    return { ok: false };
+    const reason = mapFetchErrorToReason(error);
+    showStickerPrintPopupError(targetPopup, stickerPrintFailureMessage(reason));
+    return { ok: false, reason };
   }
 }
+
+export function stickerPrintFailureMessage(reason: StickerPrintFailureReason): string {
+  switch (reason) {
+    case "popup-blocked":
+      return "Popups are blocked — allow popups for this site, then click Print again.";
+    case "unauthorized":
+      return "Session expired — log in again on erp.hagan.pro, then retry.";
+    case "no-labels":
+      return "No sticker labels matched your selection.";
+    case "print-blocked":
+      return "The print dialog was blocked — use the Print labels button in this window.";
+    case "image-error":
+    case "no-images":
+      return "Sticker images failed to load — try Download PNG from the preview, or refresh and retry.";
+    case "fetch-failed":
+      return "Could not load sticker images from the server — check your connection and try again.";
+    default:
+      return "Sticker print failed — try Download PNG/PDF from the preview, or refresh and retry.";
+  }
+}
+
+export { openStickerPrintPopup };
 
 /** @deprecated Use printStickerPngs — kept as alias for existing call sites. */
 export async function printStickerPdf(

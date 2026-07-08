@@ -21,7 +21,7 @@ const {
   STICKER_PRINT_LANDSCAPE_W_MM,
 } = jiti("@/lib/production/sticker-print-html");
 const { PRINTER_MATCH_MODE } = jiti("@/lib/production/label-printer-settings");
-const { STICKER_RASTER_DPI } = jiti("@/lib/production/render-sticker-raster");
+const { STICKER_RASTER_DPI } = jiti("@/lib/production/label-print-config");
 
 const dataUrl = "data:image/png;base64,iVBORw0KGgo=";
 const html = buildStickerPrintHtml([dataUrl, dataUrl], { mode: PRINTER_MATCH_MODE });
@@ -40,6 +40,9 @@ const checks = [
   [`img explicit mm ${layout.pageW}`, html.includes(`width: ${layout.pageW}mm`)],
   ["page-break-after on pages", html.includes("page-break-after: always")],
   ["inline data URL src", html.includes('src="data:image/png;base64,')],
+  ["label raster class on img", html.includes('class="label-raster"')],
+  ["screen fallback button", html.includes('class="screen-only"')],
+  ["popup auto-print script", html.includes("sticker-print-finished")],
   ["print-color-adjust exact", html.includes("print-color-adjust: exact")],
   ["no document title (avoids print header)", !html.includes("<title>")],
   ["printer-match needs landscape rotate", browserPrintNeedsLandscapeRotate(PRINTER_MATCH_MODE)],
