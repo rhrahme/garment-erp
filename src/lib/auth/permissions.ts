@@ -27,7 +27,7 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
  * QC logins — always restricted (no prices, limited menu) even if
  * CLIENT_MANAGER_EMAILS is missing from a deploy.
  */
-const BUILTIN_CLIENT_MANAGER_EMAILS = ["hagan.qc@gmail.com"] as const;
+const BUILTIN_CLIENT_MANAGER_EMAILS = ["hagan.qc@gmail.com", "hagan.task1@gmail.com"] as const;
 
 /** Sidebar label for QC production orders (same `/orders` routes, production-focused UI). */
 export const CLIENT_MANAGER_ORDERS_NAV_LABEL = "Production Orders";

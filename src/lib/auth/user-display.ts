@@ -2,6 +2,7 @@ import type { SessionContext } from "@/lib/auth/session";
 
 const DISPLAY_NAME_BY_EMAIL: Record<string, string> = {
   "hagan.qc@gmail.com": "QC Hossein",
+  "hagan.task1@gmail.com": "Hagan Task1",
 };
 
 export function resolveUserDisplay(session: SessionContext): {
