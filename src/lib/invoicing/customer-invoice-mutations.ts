@@ -1,7 +1,9 @@
 import { saveCustomerInvoice } from "@/lib/data/customer-invoices";
 import { readSalesOrdersFresh, writeSalesOrders } from "@/lib/data/sales-orders";
+import { syncInvoiceLinesFromSalesOrder } from "@/lib/invoicing/build-invoice";
 import { notifyIntegration } from "@/lib/integrations";
 import type { CustomerInvoice, CustomerInvoiceStatus } from "@/lib/types/customer-invoices";
+import type { SalesOrder } from "@/lib/types/sales-orders";
 
 export async function applyCustomerInvoiceStatusChange(
   invoice: CustomerInvoice,
@@ -68,4 +70,12 @@ export async function applyCustomerInvoiceStatusChange(
   }
 
   return saved;
+}
+
+export async function applyCustomerInvoiceLineSync(
+  invoice: CustomerInvoice,
+  order: SalesOrder
+): Promise<CustomerInvoice> {
+  const synced = syncInvoiceLinesFromSalesOrder(invoice, order);
+  return saveCustomerInvoice(synced);
 }

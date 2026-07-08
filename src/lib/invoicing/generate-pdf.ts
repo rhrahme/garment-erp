@@ -12,7 +12,10 @@ import {
   isDubaiFabricDelivery,
 } from "@/lib/invoicing/bank-details";
 import { DHS_TOTAL_LABEL } from "@/components/invoicing/InvoiceTotalsFooter";
-import { formatInvoiceDhs, formatInvoiceSar } from "@/lib/invoicing/format-amount";
+import {
+  formatInvoiceDhsForPdf,
+  formatInvoiceSarForPdf,
+} from "@/lib/invoicing/format-amount";
 import { formatDate } from "@/lib/utils";
 
 export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): Promise<Uint8Array> {
@@ -91,24 +94,27 @@ export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): 
 
   autoTable(doc, {
     startY: y,
-    margin: { left: margin, right: margin },
+    margin: { left: margin, right: margin, bottom: 60 },
     head: [["Art.", "Garment", "Composition", "Qty", "Unit price", "Amount"]],
     body: invoice.lines.map((line) => [
       line.article_label,
       line.description,
       line.composition_label,
       String(line.quantity),
-      formatInvoiceSar(line.unit_price),
-      formatInvoiceSar(line.line_total),
+      formatInvoiceSarForPdf(line.unit_price),
+      formatInvoiceSarForPdf(line.line_total),
     ]),
-    styles: { fontSize: 8, cellPadding: 4, valign: "top" },
+    styles: { fontSize: 8, cellPadding: 4, valign: "top", overflow: "linebreak" },
     headStyles: { fillColor: [255, 255, 255], textColor: [100, 100, 100], fontStyle: "bold" },
     columnStyles: {
       0: { halign: "center", cellWidth: 28 },
-      3: { halign: "left", cellWidth: 28 },
-      4: { halign: "left", cellWidth: 58 },
-      5: { halign: "right", cellWidth: 58 },
+      2: { cellWidth: "auto" },
+      3: { halign: "right", cellWidth: 24 },
+      4: { halign: "right", cellWidth: 62 },
+      5: { halign: "right", cellWidth: 62 },
     },
+    showHead: "everyPage",
+    rowPageBreak: "auto",
     theme: "plain",
     didDrawPage: (data) => {
       y = data.cursor?.y ?? y;
@@ -118,21 +124,24 @@ export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): 
   y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
 
   const totalsBody: string[][] = [
-    [`Subtotal (${invoice.currency})`, formatInvoiceSar(invoice.subtotal)],
+    [`Subtotal (${invoice.currency})`, formatInvoiceSarForPdf(invoice.subtotal)],
   ];
   if (showDhsEquivalent) {
-    totalsBody.push(["Subtotal (DHS)", formatInvoiceDhs(sarToDhs(invoice.subtotal))]);
+    totalsBody.push(["Subtotal (DHS)", formatInvoiceDhsForPdf(sarToDhs(invoice.subtotal))]);
   }
   if (invoice.vat_rate != null && invoice.vat_rate > 0) {
-    totalsBody.push([`VAT (${Math.round(invoice.vat_rate * 100)}%)`, formatInvoiceSar(invoice.vat_amount)]);
+    totalsBody.push([
+      `VAT (${Math.round(invoice.vat_rate * 100)}%)`,
+      formatInvoiceSarForPdf(invoice.vat_amount),
+    ]);
     if (showDhsEquivalent) {
-      totalsBody.push(["VAT (DHS)", formatInvoiceDhs(sarToDhs(invoice.vat_amount))]);
+      totalsBody.push(["VAT (DHS)", formatInvoiceDhsForPdf(sarToDhs(invoice.vat_amount))]);
     }
   }
-  totalsBody.push([`Total (${invoice.currency})`, formatInvoiceSar(invoice.total)]);
+  totalsBody.push([`Total (${invoice.currency})`, formatInvoiceSarForPdf(invoice.total)]);
   const dhsTotalRowIndex = showDhsEquivalent ? totalsBody.length : -1;
   if (showDhsEquivalent) {
-    totalsBody.push([DHS_TOTAL_LABEL, formatInvoiceDhs(sarToDhs(invoice.total))]);
+    totalsBody.push([DHS_TOTAL_LABEL, formatInvoiceDhsForPdf(sarToDhs(invoice.total))]);
   }
 
   /** Tailwind slate-200 — highlight payable DHS total in generated PDFs. */

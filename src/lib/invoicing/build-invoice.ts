@@ -14,7 +14,7 @@ import {
   resolveInvoiceGarmentDescription,
   lineArticleFromStickerCode,
 } from "@/lib/sales-orders/label-codes";
-import { resolveInvoiceComposition } from "@/lib/invoicing/display";
+import { resolveInvoiceComposition, sortInvoiceLinesByArticle } from "@/lib/invoicing/display";
 import { applyAllInvoiceLineReductions } from "@/lib/invoicing/line-reduction-suggestions";
 import { isCombinedInvoiceLine } from "@/lib/invoicing/suit-combine-lines";
 import { resolveInvoiceVatRate } from "@/lib/invoicing/vat";
@@ -328,4 +328,83 @@ export function enrichInvoiceVat<T extends CustomerInvoice>(invoice: T): T {
   const vat_rate = resolveInvoiceVatRate(invoice.delivery_destination);
   const { lines, subtotal, vat_amount, total } = recalculateInvoiceTotals(invoice.lines, vat_rate);
   return { ...invoice, lines, subtotal, vat_rate, vat_amount, total };
+}
+
+/**
+ * Append invoice lines for sales-order articles missing on a stored invoice.
+ * Preserves entered unit prices on existing lines; new lines use built defaults (often 0).
+ * Skips built lines whose sales-order fabric line is already linked on the invoice.
+ */
+export function syncInvoiceLinesFromSalesOrder(
+  invoice: CustomerInvoice,
+  order: SalesOrder
+): CustomerInvoice {
+  const built = applyAllInvoiceLineReductions(
+    enrichInvoiceLinesWithCostHints(buildInvoiceLinesFromSalesOrder(order), order)
+  );
+  const existingByArticle = new Map(
+    invoice.lines
+      .filter((line) => line.article_number != null)
+      .map((line) => [line.article_number!, line])
+  );
+  const coveredSalesOrderLineIds = new Set(
+    invoice.lines.map((line) => line.sales_order_line_id).filter((id): id is string => Boolean(id))
+  );
+  const invoiceCreatedAt = invoice.created_at ? Date.parse(invoice.created_at) : 0;
+
+  const merged: CustomerInvoiceLine[] = [];
+  const seenArticles = new Set<number>();
+
+  for (const builtLine of built) {
+    const article = builtLine.article_number;
+    if (article == null) continue;
+    seenArticles.add(article);
+    const existing = existingByArticle.get(article);
+    if (existing) {
+      merged.push({
+        ...builtLine,
+        ...existing,
+        id: existing.id,
+        unit_price: existing.unit_price,
+        quantity: existing.quantity,
+        line_total: roundMoney(existing.quantity * existing.unit_price),
+        cost_hint_sar: builtLine.cost_hint_sar ?? existing.cost_hint_sar,
+        fabric_cost_hint_sar: builtLine.fabric_cost_hint_sar ?? existing.fabric_cost_hint_sar,
+      });
+      continue;
+    }
+
+    const fabricLineId = builtLine.sales_order_line_id?.trim();
+    if (fabricLineId && coveredSalesOrderLineIds.has(fabricLineId)) continue;
+
+    const fabricLine = findFabricLineForInvoiceLine(order, builtLine);
+    if (fabricLine?.added_at && invoiceCreatedAt > 0) {
+      const addedAt = Date.parse(fabricLine.added_at);
+      if (!Number.isNaN(addedAt) && addedAt <= invoiceCreatedAt) continue;
+    }
+
+    merged.push(builtLine);
+    if (fabricLineId) coveredSalesOrderLineIds.add(fabricLineId);
+  }
+
+  for (const line of invoice.lines) {
+    if (line.article_number != null && !seenArticles.has(line.article_number)) {
+      merged.push(line);
+    }
+  }
+
+  const lines = sortInvoiceLinesByArticle(merged);
+  const vat_rate = invoice.vat_rate ?? resolveInvoiceVatRate(invoice.delivery_destination);
+  const { lines: pricedLines, subtotal, vat_amount, total } = recalculateInvoiceTotals(lines, vat_rate);
+  const orderCost = getSalesOrderCost(order);
+
+  return {
+    ...invoice,
+    lines: pricedLines,
+    subtotal,
+    vat_rate,
+    vat_amount,
+    total,
+    total_cost_sar: orderCost.total_cost_sar,
+  };
 }
