@@ -33,6 +33,9 @@ const SCAN_INBOX_DOCUMENT_KEYS = [
   "supplier_availability_alerts",
 ] as const;
 
+/** IMAP scan + PDF uploads can run several minutes on production. */
+export const maxDuration = 300;
+
 export async function POST(request: Request) {
   try {
     await ensureDocumentsLoaded(SCAN_INBOX_DOCUMENT_KEYS);

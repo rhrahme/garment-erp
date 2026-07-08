@@ -34,6 +34,9 @@ function inboxNotConfiguredMessage(): string {
   return `Inbox scan is not configured. Set IMAP_PASS for ${mailbox} in Vercel environment variables.`;
 }
 
+/** IMAP scan + PDF uploads can run several minutes on production. */
+export const maxDuration = 300;
+
 export async function POST(request: Request) {
   const authError = verifyApiKey(request);
   if (authError) return authError;

@@ -3,6 +3,7 @@ import os from "os";
 import path from "path";
 import { isSupabaseDocumentsStorage } from "@/lib/data/document-persistence";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { uploadStorageObjectWithRetry } from "@/lib/supabase/storage-upload";
 
 export const INVOICE_FILES_BUCKET = "erp-invoice-files";
 
@@ -47,11 +48,14 @@ export async function writeInvoiceFile(
       throw new Error("Supabase admin is not configured for invoice file storage.");
     }
     const objectPath = storageObjectPath(category, storedFilename);
-    const { error } = await admin.storage
-      .from(INVOICE_FILES_BUCKET)
-      .upload(objectPath, content, { contentType: "application/pdf", upsert: true });
-    if (error) {
-      throw new Error(`Failed to upload invoice file to Supabase: ${error.message}`);
+    try {
+      await uploadStorageObjectWithRetry(admin, INVOICE_FILES_BUCKET, objectPath, content, {
+        contentType: "application/pdf",
+        upsert: true,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed";
+      throw new Error(`Failed to upload invoice file to Supabase: ${message}`);
     }
     return;
   }

@@ -4,5 +4,13 @@
       "path": "/api/cron/supabase-auth-health",
       "schedule": "0 0 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "src/app/api/email/scan-inbox/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/v1/email/scan-inbox/route.ts": {
+      "maxDuration": 300
+    }
+  }
 }
