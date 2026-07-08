@@ -14,6 +14,7 @@ type LocalShipment = {
   id: string;
   awb_number: string;
   carrier: string;
+  supplier_name: string | null;
   po_number: string | null;
   status: string;
   direction: "inbound" | "outbound";
@@ -232,6 +233,7 @@ export function ShipmentsWorkspace() {
         <DataTable
           columns={[
             { key: "awb", label: "AWB Number" },
+            { key: "supplier", label: "Fabric Supplier Name" },
             { key: "carrier", label: "Carrier" },
             { key: "location", label: "Location" },
             { key: "latest", label: "Latest update" },
@@ -257,6 +259,7 @@ export function ShipmentsWorkspace() {
               ) : (
                 <span className="font-mono font-medium">{s.awb_number}</span>
               ),
+              supplier: s.supplier_name ?? "—",
               carrier: s.carrier ?? "—",
               location: s.current_location ?? "—",
               latest: s.latest_event ? (

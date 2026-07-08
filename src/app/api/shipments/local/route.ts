@@ -6,12 +6,17 @@ import {
   listStoredFabricOrders,
 } from "@/lib/integrations/fabric-order-store";
 import { createInboundShipmentFromAwb } from "@/lib/integrations/create-inbound-shipment";
+import { enrichShipmentsWithSupplierName } from "@/lib/integrations/shipment-supplier";
 import { ensureShipmentsLoaded, listStoredShipments } from "@/lib/integrations/shipment-store";
 
 export async function GET() {
   try {
-    await ensureShipmentsLoaded();
-    return NextResponse.json({ shipments: listStoredShipments() });
+    await Promise.all([ensureShipmentsLoaded(), ensureFabricOrdersLoaded()]);
+    const shipments = enrichShipmentsWithSupplierName(
+      listStoredShipments(),
+      listStoredFabricOrders()
+    );
+    return NextResponse.json({ shipments });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load shipments.";
     return NextResponse.json({ error: message }, { status: 500 });
