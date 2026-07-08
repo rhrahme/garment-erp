@@ -18,7 +18,6 @@ import {
   pngToJpegDataUrl,
   renderCalibrationPagePng,
   renderStickerPagePng,
-  rotatePortraitPngForBrowserPrint,
 } from "@/lib/production/render-sticker-raster";
 
 /**
@@ -125,10 +124,10 @@ export async function generateStickerRollPngs(
     pngs.push(await renderStickerPagePng(entry.label, entry.role, qrCache, mode, scalePct));
   }
 
-  if (options.browserPrint && mode === PRINTER_MATCH_MODE) {
-    return Promise.all(pngs.map((png) => rotatePortraitPngForBrowserPrint(png)));
-  }
-
+  // Browser print for printer-match sends the PORTRAIT 51×102 raster as-is so the @page and
+  // the D550 media orientation match exactly (no rotation → no driver offset/clipping). The
+  // earlier landscape pre-rotation fought the driver's own portrait auto-rotate and shifted
+  // content off the left/top edge.
   return pngs;
 }
 

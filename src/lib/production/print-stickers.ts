@@ -255,8 +255,9 @@ function mapFetchErrorToReason(error: unknown): StickerPrintFailureReason {
 
 /**
  * Fetch server-generated bilevel PNG(s) and open the system print dialog in a popup.
- * Printer-match mode uses server-pre-rotated landscape 102×51 mm PNGs for D550 browser print.
- * Never calls print() on the parent page.
+ * Printer-match mode sends portrait 51×102 mm PNGs with a portrait @page so the page matches
+ * the D550 media exactly (no rotation → no driver offset/clipping). Never calls print() on the
+ * parent page.
  *
  * Pass a popup from openStickerPrintPopup() (opened synchronously on click) so blockers
  * allow the window and print() runs inside the popup after images load.

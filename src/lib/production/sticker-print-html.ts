@@ -17,10 +17,11 @@ export const STICKER_PRINT_PORTRAIT_W_MM = LABEL_MATCH_PRINTER_PAGE_W_MM;
 export const STICKER_PRINT_PORTRAIT_H_MM = LABEL_MATCH_PRINTER_PAGE_H_MM;
 
 /**
- * Browser direct print on D550: Chrome sends raster pages without the driver's PDF
- * ~90° CCW turn. Server pre-rotates printer-match PNGs to landscape (QR left) and
- * declares a landscape @page so the full label fits — portrait 51×102 + object-fit:fill
- * clips the QR when headers are on or the dialog scales to default paper.
+ * Browser direct print on D550: send the PORTRAIT 51×102 raster with a portrait @page so
+ * the page orientation matches the driver media exactly. An earlier build pre-rotated to
+ * landscape + landscape @page, but the D550 driver auto-rotates landscape pages to fit its
+ * portrait media, and that mismatch shifted content off the left/top edge (see IMG_9233).
+ * Kept for legacy verify scripts / callers.
  */
 export const STICKER_PRINT_LANDSCAPE_W_MM = LABEL_MATCH_PRINTER_PAGE_H_MM;
 export const STICKER_PRINT_LANDSCAPE_H_MM = LABEL_MATCH_PRINTER_PAGE_W_MM;
@@ -168,10 +169,12 @@ export function browserPrintPageLayout(mode: LabelPrintMode = PRINTER_MATCH_MODE
   landscape: boolean;
 } {
   if (isPrinterMatchMode(mode)) {
+    // Match the D550 media exactly: portrait 51×102. The raster is already portrait and
+    // centered, so @page == media → the driver prints 1:1 with no rotation and no offset.
     return {
-      pageW: STICKER_PRINT_LANDSCAPE_W_MM,
-      pageH: STICKER_PRINT_LANDSCAPE_H_MM,
-      landscape: true,
+      pageW: STICKER_PRINT_PORTRAIT_W_MM,
+      pageH: STICKER_PRINT_PORTRAIT_H_MM,
+      landscape: false,
     };
   }
 
@@ -295,9 +298,12 @@ ${STICKER_PRINT_BOOT_SCRIPT}
 </html>`;
 }
 
-/** True when browser print should pre-rotate PNGs (printer-match portrait → landscape). */
-export function browserPrintNeedsLandscapeRotate(mode: LabelPrintMode): boolean {
-  return isPrinterMatchMode(mode);
+/**
+ * Printer-match now prints the portrait raster as-is (no pre-rotation) so page orientation
+ * matches the D550 media. Always false; kept for legacy callers.
+ */
+export function browserPrintNeedsLandscapeRotate(_mode: LabelPrintMode): boolean {
+  return false;
 }
 
 /** Server sticker ZIP uses stored (uncompressed) entries only. */
@@ -364,7 +370,7 @@ export async function rotatePngBlobLandscapeCw270(blob: Blob): Promise<string> {
   return canvas.toDataURL("image/png");
 }
 
-/** Server sends landscape PNGs for printer-match browser print — no client rotation. */
+/** Server sends portrait PNGs sized to the D550 media — no client rotation. */
 export async function prepareBrowserPrintDataUrl(
   blob: Blob,
   _mode: LabelPrintMode
