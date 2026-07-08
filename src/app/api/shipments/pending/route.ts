@@ -15,7 +15,7 @@ export async function GET() {
     await Promise.all([
       ensureShipmentsLoaded(),
       ensureFabricOrdersLoaded(),
-      ensureDocumentsLoaded(["supplier_contacts"]),
+      ensureDocumentsLoaded(["supplier_contacts", "sales_orders"]),
     ]);
     const pending = listPendingAwbFabricOrders();
     return NextResponse.json({ pending, count: pending.length });

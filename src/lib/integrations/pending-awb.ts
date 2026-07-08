@@ -1,4 +1,6 @@
+import { readSalesOrders } from "@/lib/data/sales-orders";
 import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
+import { destinationCityForFabricOrder } from "@/lib/integrations/shipment-destination";
 import { supplierNameForFabricOrder } from "@/lib/integrations/shipment-supplier";
 import { listStoredShipments } from "@/lib/integrations/shipment-store";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
@@ -8,6 +10,7 @@ export type PendingAwbFabricOrder = {
   po_number: string;
   supplier_id: string;
   supplier_name: string | null;
+  destination_city: string | null;
   sales_order_id: string | null;
   client_reference: string | null;
   emailed_at: string;
@@ -25,6 +28,7 @@ function poHasShipment(po: PurchaseOrder, shipments: ReturnType<typeof listStore
 
 export function listPendingAwbFabricOrders(): PendingAwbFabricOrder[] {
   const shipments = listStoredShipments();
+  const salesOrders = readSalesOrders().orders;
 
   return listStoredFabricOrders()
     .filter((po) => Boolean(po.emailed_at))
@@ -34,6 +38,7 @@ export function listPendingAwbFabricOrders(): PendingAwbFabricOrder[] {
       po_number: po.po_number,
       supplier_id: po.supplier_id,
       supplier_name: supplierNameForFabricOrder(po),
+      destination_city: destinationCityForFabricOrder(po, salesOrders),
       sales_order_id: po.sales_order_id ?? null,
       client_reference: po.client_reference ?? null,
       emailed_at: po.emailed_at!,

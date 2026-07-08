@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/json-file-cache";
+import { readSalesOrders } from "@/lib/data/sales-orders";
 import {
   ensureFabricOrdersLoaded,
   getStoredFabricOrder,
   listStoredFabricOrders,
 } from "@/lib/integrations/fabric-order-store";
 import { createInboundShipmentFromAwb } from "@/lib/integrations/create-inbound-shipment";
+import { enrichShipmentsWithDestinationCity } from "@/lib/integrations/shipment-destination";
 import { enrichShipmentsWithSupplierName } from "@/lib/integrations/shipment-supplier";
 import {
   ensureSupplierRepliesLoaded,
@@ -19,13 +21,22 @@ export async function GET() {
     await Promise.all([
       ensureShipmentsLoaded(),
       ensureFabricOrdersLoaded(),
-      ensureDocumentsLoaded(["supplier_contacts"]),
+      ensureDocumentsLoaded(["supplier_contacts", "sales_orders"]),
       ensureSupplierRepliesLoaded(),
     ]);
-    const shipments = enrichShipmentsWithSupplierName(
+    const fabricOrders = listStoredFabricOrders();
+    const replies = listSupplierReplies(5000);
+    const salesOrders = readSalesOrders().orders;
+    const withSupplier = enrichShipmentsWithSupplierName(
       listStoredShipments(),
-      listStoredFabricOrders(),
-      listSupplierReplies(5000)
+      fabricOrders,
+      replies
+    );
+    const shipments = enrichShipmentsWithDestinationCity(
+      withSupplier,
+      fabricOrders,
+      salesOrders,
+      replies
     );
     return NextResponse.json({ shipments });
   } catch (error) {

@@ -1,5 +1,10 @@
+import { findSalesOrderByFabricPoId } from "@/lib/data/sales-orders";
 import type { SupplierInvoiceRecord } from "@/lib/integrations/supplier-invoice-store";
+import type { ShipmentRecord } from "@/lib/integrations/shipment-store";
 import type { SupplierReplyRecord } from "@/lib/integrations/supplier-reply-store";
+import { getDeliveryDestination } from "@/lib/shipping/delivery-destinations";
+import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
+import type { SalesOrder } from "@/lib/types/sales-orders";
 
 export type ShipmentDestination = "RUH" | "DXB";
 
@@ -119,4 +124,80 @@ export function resolveAwbDestination(
 
 export function destinationLabel(destination: ShipmentDestination): string {
   return destination === "RUH" ? "Riyadh" : "Dubai";
+}
+
+function destinationCityLabel(destination: ShipmentDestination | null | undefined): string | null {
+  if (!destination) return null;
+  return getDeliveryDestination(destination)?.city ?? destinationLabel(destination);
+}
+
+function findLinkedFabricOrder(
+  shipment: ShipmentRecord,
+  fabricOrders: PurchaseOrder[]
+): PurchaseOrder | undefined {
+  if (shipment.purchase_order_id) {
+    return fabricOrders.find((order) => order.id === shipment.purchase_order_id);
+  }
+  if (shipment.po_number) {
+    const normalized = shipment.po_number.toUpperCase();
+    return fabricOrders.find((order) => order.po_number.toUpperCase() === normalized);
+  }
+  return undefined;
+}
+
+function resolveDeliveryDestinationForFabricOrder(
+  po: PurchaseOrder,
+  salesOrders: SalesOrder[]
+): ShipmentDestination | null {
+  if (po.sales_order_id) {
+    const fromLink = salesOrders.find((order) => order.id === po.sales_order_id)?.delivery_destination;
+    if (fromLink) return fromLink;
+  }
+  return findSalesOrderByFabricPoId(po.id, salesOrders)?.delivery_destination ?? null;
+}
+
+export function destinationCityForFabricOrder(
+  po: PurchaseOrder,
+  salesOrders: SalesOrder[]
+): string | null {
+  return destinationCityLabel(resolveDeliveryDestinationForFabricOrder(po, salesOrders));
+}
+
+export function resolveShipmentDestinationCity(
+  shipment: ShipmentRecord,
+  fabricOrders: PurchaseOrder[],
+  salesOrders: SalesOrder[],
+  replies: SupplierReplyRecord[] = []
+): string | null {
+  if (shipment.direction !== "inbound") return null;
+
+  let destination: ShipmentDestination | null = null;
+
+  const po = findLinkedFabricOrder(shipment, fabricOrders);
+  if (po) {
+    destination = resolveDeliveryDestinationForFabricOrder(po, salesOrders);
+  }
+
+  if (!destination && shipment.sales_order_id) {
+    destination =
+      salesOrders.find((order) => order.id === shipment.sales_order_id)?.delivery_destination ?? null;
+  }
+
+  if (!destination) {
+    destination = resolveAwbDestination(shipment.awb_number, replies);
+  }
+
+  return destinationCityLabel(destination);
+}
+
+export function enrichShipmentsWithDestinationCity(
+  shipments: ShipmentRecord[],
+  fabricOrders: PurchaseOrder[],
+  salesOrders: SalesOrder[],
+  replies: SupplierReplyRecord[] = []
+): Array<ShipmentRecord & { destination_city: string | null }> {
+  return shipments.map((shipment) => ({
+    ...shipment,
+    destination_city: resolveShipmentDestinationCity(shipment, fabricOrders, salesOrders, replies),
+  }));
 }

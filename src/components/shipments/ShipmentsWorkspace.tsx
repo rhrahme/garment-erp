@@ -15,6 +15,7 @@ type LocalShipment = {
   awb_number: string;
   carrier: string;
   supplier_name: string | null;
+  destination_city: string | null;
   po_number: string | null;
   status: string;
   direction: "inbound" | "outbound";
@@ -187,6 +188,7 @@ export function ShipmentsWorkspace() {
                 <tr className="border-b border-slate-100 bg-slate-50">
                   <th className="px-4 py-3 text-left font-medium text-slate-600">Fabric PO</th>
                   <th className="px-4 py-3 text-left font-medium text-slate-600">Supplier</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-600">Destination</th>
                   <th className="px-4 py-3 text-left font-medium text-slate-600">Client</th>
                   <th className="px-4 py-3 text-left font-medium text-slate-600">Sent</th>
                 </tr>
@@ -196,6 +198,7 @@ export function ShipmentsWorkspace() {
                   <tr key={po.id}>
                     <td className="px-4 py-3 font-mono font-medium">{po.po_number}</td>
                     <td className="px-4 py-3">{po.supplier_name ?? "—"}</td>
+                    <td className="px-4 py-3">{po.destination_city ?? "—"}</td>
                     <td className="px-4 py-3 font-mono text-indigo-700">{po.client_reference ?? "—"}</td>
                     <td className="px-4 py-3 text-slate-600">
                       {po.emailed_at ? formatDate(po.emailed_at.slice(0, 10)) : "—"}
@@ -235,6 +238,7 @@ export function ShipmentsWorkspace() {
             { key: "awb", label: "AWB Number" },
             { key: "supplier", label: "Fabric Supplier Name" },
             { key: "carrier", label: "Carrier" },
+            { key: "destination", label: "Destination" },
             { key: "location", label: "Location" },
             { key: "latest", label: "Latest update" },
             { key: "po", label: "Fabric PO" },
@@ -261,6 +265,7 @@ export function ShipmentsWorkspace() {
               ),
               supplier: s.supplier_name ?? "—",
               carrier: s.carrier ?? "—",
+              destination: s.destination_city ?? "—",
               location: s.current_location ?? "—",
               latest: s.latest_event ? (
                 <div className="max-w-xs">

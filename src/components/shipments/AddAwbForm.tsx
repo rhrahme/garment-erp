@@ -7,6 +7,7 @@ export type PendingAwbOption = {
   id: string;
   po_number: string;
   supplier_name: string | null;
+  destination_city: string | null;
   client_reference: string | null;
   expected_carrier: string | null;
   emailed_at?: string;
