@@ -6,9 +6,7 @@ import {
 } from "@/lib/production/label-printer-settings";
 import {
   buildStickerPrintHtml,
-  extractPngBlobsFromZip,
   openStickerPrintPopup,
-  pngBlobToDataUrl,
   showStickerPrintPopupError,
 } from "@/lib/production/sticker-print-html";
 
@@ -65,7 +63,7 @@ function resolveScalePct(request: StickerPdfRequest): LabelScalePct {
 function buildStickerAssetUrl(
   request: StickerPdfRequest,
   format: "pdf" | "png",
-  options: { browserPrint?: boolean } = {}
+  options: { browserPrint?: boolean; cacheBust?: boolean | string } = {}
 ): string {
   const { orderId, sheet = "pieces", po, poId, codes } = request;
   const params = new URLSearchParams({ sheet });
@@ -75,15 +73,25 @@ function buildStickerAssetUrl(
   params.set("rotation", String(resolveRotationDeg(request)));
   params.set("scale", String(resolveScalePct(request)));
   if (options.browserPrint) params.set("browser_print", "1");
+  // Cache-busting: guarantees the print popup / preview never reuses a stale rendered asset.
+  if (options.cacheBust) {
+    params.set("_ts", options.cacheBust === true ? String(Date.now()) : options.cacheBust);
+  }
   return `/api/sales-orders/${orderId}/stickers/${format}?${params.toString()}`;
 }
 
-function buildStickerPdfUrl(request: StickerPdfRequest): string {
-  return buildStickerAssetUrl(request, "pdf");
+function buildStickerPdfUrl(
+  request: StickerPdfRequest,
+  options: { cacheBust?: boolean | string } = {}
+): string {
+  return buildStickerAssetUrl(request, "pdf", options);
 }
 
-function buildStickerPngUrl(request: StickerPdfRequest): string {
-  return buildStickerAssetUrl(request, "png");
+function buildStickerPngUrl(
+  request: StickerPdfRequest,
+  options: { cacheBust?: boolean | string } = {}
+): string {
+  return buildStickerAssetUrl(request, "png", options);
 }
 
 async function fetchStickerAsset(
@@ -94,7 +102,9 @@ async function fetchStickerAsset(
   const { orderId, sheet = "pieces", po, poId, codes } = request;
   const rotationDeg = resolveRotationDeg(request);
   const scalePct = resolveScalePct(request);
-  const url = `/api/sales-orders/${orderId}/stickers/${format}`;
+  // Always cache-bust print/download fetches so a stale rendered asset is never reused.
+  const cacheBust = String(Date.now());
+  const url = `/api/sales-orders/${orderId}/stickers/${format}?_ts=${cacheBust}`;
 
   if (codes && codes.length > 0) {
     return fetch(url, {
@@ -113,7 +123,9 @@ async function fetchStickerAsset(
     });
   }
 
-  return fetch(buildStickerAssetUrl(request, format, options), { cache: "no-store" });
+  return fetch(buildStickerAssetUrl(request, format, { ...options, cacheBust }), {
+    cache: "no-store",
+  });
 }
 
 async function fetchStickerPdf(request: StickerPdfRequest): Promise<Response> {
@@ -122,27 +134,6 @@ async function fetchStickerPdf(request: StickerPdfRequest): Promise<Response> {
 
 async function fetchStickerPng(request: StickerPdfRequest, browserPrint = false): Promise<Response> {
   return fetchStickerAsset(request, "png", { browserPrint });
-}
-
-async function fetchStickerPngBlobs(request: StickerPdfRequest): Promise<Blob[]> {
-  const res = await fetchStickerPng(request, true);
-  if (res.status === 401) {
-    throw new Error("unauthorized");
-  }
-  if (!res.ok) {
-    throw new Error(`Sticker PNG request failed: ${res.status}`);
-  }
-
-  const contentType = res.headers.get("Content-Type") ?? "";
-  const blob = await res.blob();
-
-  if (contentType.includes("zip")) {
-    const pngs = await extractPngBlobsFromZip(blob);
-    if (pngs.length === 0) throw new Error("Sticker ZIP contained no PNG files");
-    return pngs;
-  }
-
-  return [blob];
 }
 
 function pdfFilename(orderId: string, sheet: StickerPdfSheet): string {
@@ -170,80 +161,80 @@ function triggerBlobDownload(blob: Blob, filename: string): void {
 }
 
 /**
- * Load bilevel PNGs into a popup and print from inside that window.
- * The popup must be opened synchronously from the click handler (see openStickerPrintPopup).
+ * Print the deterministic 51×102 mm portrait sticker PDF inside a popup via a full-window
+ * iframe. Chrome renders the PDF at its own MediaBox (1:1) and iframe.contentWindow.print()
+ * prints it with no re-layout, rotation, or offset — unlike the old HTML+PNG @page path.
+ * The popup must be opened synchronously from the click handler (openStickerPrintPopup).
  */
-function printStickerImageDataUrls(
-  imageDataUrls: string[],
-  mode: LabelPrintMode,
-  onAfterPrint?: () => void,
-  existingPopup?: Window | null
+function printStickerPdfInPopup(
+  pdfBlob: Blob,
+  popup: Window,
+  onAfterPrint?: () => void
 ): Promise<{ ok: boolean; reason?: StickerPrintFailureReason }> {
   return new Promise((resolve) => {
-    const html = buildStickerPrintHtml(imageDataUrls, { mode });
-    const docBlob = new Blob([html], { type: "text/html;charset=utf-8" });
-    const docUrl = URL.createObjectURL(docBlob);
-
-    const popup =
-      existingPopup ?? window.open(docUrl, "sticker-print", "popup,width=480,height=640");
-    if (!popup) {
-      URL.revokeObjectURL(docUrl);
-      resolve({ ok: false, reason: "popup-blocked" });
-      return;
-    }
-
+    // Create the blob URL in the popup's own context so its PDF iframe can always load it.
+    const urlFactory = popup.URL ?? URL;
+    const pdfUrl = urlFactory.createObjectURL(pdfBlob);
     let finished = false;
-
-    const onMessage = (event: MessageEvent) => {
-      if (event.source !== popup) return;
-      const data = event.data as { type?: string; ok?: boolean; reason?: string } | null;
-      if (!data || data.type !== "sticker-print-finished") return;
-      finish(Boolean(data.ok), parsePrintFailureReason(data.reason));
-    };
-
-    const cleanup = (ok: boolean) => {
-      window.removeEventListener("message", onMessage);
-      window.setTimeout(() => {
-        if (ok) {
-          try {
-            popup.close();
-          } catch {
-            /* already closed */
-          }
-        }
-        URL.revokeObjectURL(docUrl);
-      }, ok ? 1000 : 120_000);
-    };
 
     const finish = (ok: boolean, reason?: StickerPrintFailureReason) => {
       if (finished) return;
       finished = true;
       if (ok) onAfterPrint?.();
-      cleanup(ok);
+      // Keep the popup open on success so the OS print dialog / spooling is never cut off;
+      // the user closes it. Revoke the object URL after enough time for spooling.
+      window.setTimeout(() => {
+        try {
+          urlFactory.revokeObjectURL(pdfUrl);
+        } catch {
+          /* popup already closed */
+        }
+      }, 120_000);
       resolve({ ok, reason: ok ? undefined : reason ?? "unknown" });
     };
 
-    window.addEventListener("message", onMessage);
-    popup.addEventListener("error", () => finish(false, "image-error"), { once: true });
+    try {
+      const doc = popup.document;
+      doc.open();
+      doc.write(
+        `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8" /><title></title>` +
+          `<style>html,body{margin:0;padding:0;height:100%;background:#f8fafc;}` +
+          `iframe{border:0;position:fixed;inset:0;width:100%;height:100%;}` +
+          `.hint{font-family:system-ui,sans-serif;padding:12px;font-size:13px;color:#334155;}` +
+          `</style></head><body>` +
+          `<div class="hint">Opening the print dialog… If it does not appear, press Ctrl/Cmd+P.</div>` +
+          `</body></html>`
+      );
+      doc.close();
+
+      const iframe = doc.createElement("iframe");
+      iframe.setAttribute("title", "Sticker labels");
+      iframe.onload = () => {
+        try {
+          const win = iframe.contentWindow;
+          if (!win) {
+            finish(false, "print-blocked");
+            return;
+          }
+          win.focus();
+          win.print();
+          finish(true);
+        } catch {
+          finish(false, "print-blocked");
+        }
+      };
+      iframe.onerror = () => finish(false, "image-error");
+      iframe.src = pdfUrl;
+      doc.body.appendChild(iframe);
+    } catch {
+      finish(false, "print-blocked");
+    }
+
+    // Safety net: if onload never fires (blocked plugin), resolve ok so the popup stays usable.
     window.setTimeout(() => {
       if (!finished) finish(true);
     }, 120_000);
-
-    if (existingPopup) {
-      popup.location.href = docUrl;
-    }
   });
-}
-
-function parsePrintFailureReason(raw: string | null | undefined): StickerPrintFailureReason {
-  if (raw === "popup-blocked") return "popup-blocked";
-  if (raw === "fetch-failed") return "fetch-failed";
-  if (raw === "unauthorized") return "unauthorized";
-  if (raw === "no-labels") return "no-labels";
-  if (raw === "image-error") return "image-error";
-  if (raw === "print-blocked") return "print-blocked";
-  if (raw === "no-images") return "no-images";
-  return "unknown";
 }
 
 function mapFetchErrorToReason(error: unknown): StickerPrintFailureReason {
@@ -254,13 +245,13 @@ function mapFetchErrorToReason(error: unknown): StickerPrintFailureReason {
 }
 
 /**
- * Fetch server-generated bilevel PNG(s) and open the system print dialog in a popup.
- * Printer-match mode sends portrait 51×102 mm PNGs with a portrait @page so the page matches
- * the D550 media exactly (no rotation → no driver offset/clipping). Never calls print() on the
- * parent page.
+ * Fetch the deterministic server-generated 51×102 mm portrait sticker PDF and print it in a
+ * popup via a full-window iframe. The PDF's MediaBox matches the D550 media exactly, so the
+ * browser/driver prints it 1:1 — no rotation, no offset, no clipping. Never calls print() on
+ * the parent page.
  *
- * Pass a popup from openStickerPrintPopup() (opened synchronously on click) so blockers
- * allow the window and print() runs inside the popup after images load.
+ * Pass a popup from openStickerPrintPopup() (opened synchronously on click) so blockers allow
+ * the window; print() runs inside the popup after the PDF iframe loads.
  */
 export async function printStickerPngs(
   request: StickerPdfRequest,
@@ -273,19 +264,30 @@ export async function printStickerPngs(
   }
 
   try {
-    const mode = resolveRotationDeg(request);
-    const pngBlobs = await fetchStickerPngBlobs(request);
-    const imageDataUrls = await Promise.all(pngBlobs.map((blob) => pngBlobToDataUrl(blob)));
-    const result = await printStickerImageDataUrls(imageDataUrls, mode, onAfterPrint, targetPopup);
+    const res = await fetchStickerPdf(request);
+    if (res.status === 401) {
+      showStickerPrintPopupError(targetPopup, stickerPrintFailureMessage("unauthorized"));
+      return { ok: false, reason: "unauthorized" };
+    }
+    if (res.status === 400) {
+      showStickerPrintPopupError(targetPopup, stickerPrintFailureMessage("no-labels"));
+      return { ok: false, reason: "no-labels" };
+    }
+    if (!res.ok) {
+      throw new Error(`Sticker PDF request failed: ${res.status}`);
+    }
+
+    const pdfBlob = await res.blob();
+    const result = await printStickerPdfInPopup(pdfBlob, targetPopup, onAfterPrint);
     if (!result.ok) {
       showStickerPrintPopupError(
         targetPopup,
         stickerPrintFailureMessage(result.reason ?? "unknown")
       );
     }
-    return { ok: result.ok, pageCount: pngBlobs.length, reason: result.reason };
+    return { ok: result.ok, reason: result.reason };
   } catch (error) {
-    console.error("Failed to print sticker PNGs:", error);
+    console.error("Failed to print sticker PDF:", error);
     const reason = mapFetchErrorToReason(error);
     showStickerPrintPopupError(targetPopup, stickerPrintFailureMessage(reason));
     return { ok: false, reason };

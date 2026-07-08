@@ -18,11 +18,13 @@ import {
   STICKER_PRINT_SCALE_NOTE,
 } from "@/lib/production/sticker-print-html";
 import {
+  buildStickerPngUrl,
   downloadStickerPdf,
   downloadStickerPng,
   STICKER_PRINT_HEADERS_HINT,
   type StickerPdfSheet,
 } from "@/lib/production/print-stickers";
+import type { LabelPrintMode, LabelScalePct } from "@/lib/production/label-printer-settings";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 
 type StickerPrintPreviewModalProps = {
@@ -44,14 +46,42 @@ function PreviewCard({
   item,
   checked,
   onToggle,
+  orderId,
+  sheet,
+  po,
+  poId,
+  rotation,
+  scalePct,
+  token,
 }: {
   item: StickerPreviewItem;
   checked: boolean;
   onToggle: (code: string, next: boolean) => void;
+  orderId: string;
+  sheet: StickerPdfSheet;
+  po?: string;
+  poId?: string;
+  rotation: LabelPrintMode;
+  scalePct: LabelScalePct;
+  /** Per-open cache-bust token so preview reflects the latest render, never a stale asset. */
+  token: string;
 }) {
   const { label, role } = item;
   const code = label.sticker_code;
   const previewScale = 0.42;
+  const [imgFailed, setImgFailed] = useState(false);
+
+  // Render the EXACT server raster (the same bitmap embedded in the print PDF), so the
+  // preview is pixel-identical to what prints. Falls back to the HTML StickerCell only if
+  // the image fails to load (e.g. session expired).
+  const pngUrl = useMemo(
+    () =>
+      buildStickerPngUrl(
+        { orderId, sheet, po, poId, codes: [code], rotationDeg: rotation, scalePct },
+        { cacheBust: token }
+      ),
+    [orderId, sheet, po, poId, code, rotation, scalePct, token]
+  );
 
   return (
     <label
@@ -79,22 +109,40 @@ function PreviewCard({
       </div>
       <div className="flex justify-center overflow-hidden p-2">
         <div
+          className="border border-slate-200"
           style={{
             width: `${LABEL_ROLL_WIDTH_MM * previewScale}mm`,
             height: `${LABEL_ROLL_HEIGHT_MM * previewScale}mm`,
           }}
         >
-          <div
-            className="pointer-events-none"
-            style={{
-              width: labelRollWidthCss(),
-              height: labelRollHeightCss(),
-              transform: `scale(${previewScale})`,
-              transformOrigin: "top left",
-            }}
-          >
-            <StickerCell label={label} role={role} />
-          </div>
+          {imgFailed ? (
+            <div
+              className="pointer-events-none"
+              style={{
+                width: labelRollWidthCss(),
+                height: labelRollHeightCss(),
+                transform: `scale(${previewScale})`,
+                transformOrigin: "top left",
+              }}
+            >
+              <StickerCell label={label} role={role} />
+            </div>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={pngUrl}
+              alt={`Sticker ${code} print preview`}
+              loading="lazy"
+              onError={() => setImgFailed(true)}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+                display: "block",
+                backgroundColor: "#ffffff",
+              }}
+            />
+          )}
         </div>
       </div>
     </label>
@@ -126,6 +174,13 @@ export function StickerPrintPreviewModal({
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const { rotation, setRotation } = useLabelRotation();
   const { scalePct, setScalePct } = useLabelScale();
+
+  // New token each time the modal opens or the print geometry changes → preview <img> URLs
+  // change → the browser always fetches a fresh render, never a stale cached asset.
+  const previewToken = useMemo(
+    () => `${rotation}-${scalePct}-${open ? Date.now() : 0}`,
+    [open, rotation, scalePct]
+  );
 
   const platformGuide = useMemo(() => stickerPrintGuide(detectStickerPrintPlatform()), []);
 
@@ -302,6 +357,13 @@ export function StickerPrintPreviewModal({
                     item={item}
                     checked={selected.has(item.label.sticker_code)}
                     onToggle={toggleCode}
+                    orderId={orderId}
+                    sheet={sheet}
+                    po={po}
+                    poId={poId}
+                    rotation={rotation}
+                    scalePct={scalePct}
+                    token={previewToken}
                   />
                 ))}
               </div>
