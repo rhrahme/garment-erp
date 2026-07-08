@@ -7,11 +7,11 @@ import { notFound } from "next/navigation";
 
 function resolveStickerSheet(
   sheetParam: string | undefined,
-  isClientManager: boolean
+  productionFloorUser: boolean
 ): "fabric-cuts" | "pieces" {
   if (sheetParam === "fabric-cuts") return "fabric-cuts";
   if (sheetParam === "pieces") return "pieces";
-  return isClientManager ? "fabric-cuts" : "pieces";
+  return productionFloorUser ? "fabric-cuts" : "pieces";
 }
 
 export default async function OrderStickersPage({
@@ -28,7 +28,7 @@ export default async function OrderStickersPage({
   const order = getSalesOrderById(id);
   if (!order) notFound();
 
-  const sheet = resolveStickerSheet(sheetParam, session.isClientManager);
+  const sheet = resolveStickerSheet(sheetParam, session.isClientManager || session.isTaskOperator);
 
   return (
     <div>

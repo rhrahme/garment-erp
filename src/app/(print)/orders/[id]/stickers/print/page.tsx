@@ -6,11 +6,11 @@ import { notFound } from "next/navigation";
 
 function resolveStickerSheet(
   sheetParam: string | undefined,
-  isClientManager: boolean
+  productionFloorUser: boolean
 ): "fabric-cuts" | "pieces" {
   if (sheetParam === "fabric-cuts") return "fabric-cuts";
   if (sheetParam === "pieces") return "pieces";
-  return isClientManager ? "fabric-cuts" : "pieces";
+  return productionFloorUser ? "fabric-cuts" : "pieces";
 }
 
 /** Dedicated print window — no dashboard sidebar/header. Open in a new tab for roll labels. */
@@ -28,7 +28,7 @@ export default async function StickerPrintOnlyPage({
   const order = getSalesOrderById(id);
   if (!order) notFound();
 
-  const sheet = resolveStickerSheet(sheetParam, session.isClientManager);
+  const sheet = resolveStickerSheet(sheetParam, session.isClientManager || session.isTaskOperator);
 
   return <StickerPrintSheet salesOrderId={id} poNumber={po} poId={poId} sheet={sheet} />;
 }

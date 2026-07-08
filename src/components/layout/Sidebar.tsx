@@ -31,7 +31,7 @@ import {
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { CLIENT_MANAGER_NAV_HREFS, CLIENT_MANAGER_ORDERS_NAV_LABEL } from "@/lib/auth/permissions";
+import { CLIENT_MANAGER_NAV_HREFS, CLIENT_MANAGER_ORDERS_NAV_LABEL, TASK_OPERATOR_NAV_HREFS, TASK_OPERATOR_ORDERS_NAV_LABEL } from "@/lib/auth/permissions";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -61,6 +61,8 @@ const navItems = [
 
 const qcNavHrefs = new Set<string>(CLIENT_MANAGER_NAV_HREFS);
 const qcNavItems = navItems.filter((item) => qcNavHrefs.has(item.href));
+const taskOperatorNavHrefs = new Set<string>(TASK_OPERATOR_NAV_HREFS);
+const taskOperatorNavItems = navItems.filter((item) => taskOperatorNavHrefs.has(item.href));
 
 function isNavActive(pathname: string, href: string): boolean {
   if (pathname === href) return true;
@@ -71,11 +73,13 @@ function isNavActive(pathname: string, href: string): boolean {
 
 export function Sidebar({
   clientsOnly = false,
+  taskOperatorOnly = false,
   isAdmin = true,
   mobileOpen = false,
   onNavigate,
 }: {
   clientsOnly?: boolean;
+  taskOperatorOnly?: boolean;
   isAdmin?: boolean;
   /** Slide-over nav open state (mobile only). */
   mobileOpen?: boolean;
@@ -83,7 +87,7 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const items = (clientsOnly ? qcNavItems : navItems).filter(
+  const items = (taskOperatorOnly ? taskOperatorNavItems : clientsOnly ? qcNavItems : navItems).filter(
     (item) => isAdmin || item.href !== "/documents"
   );
 
@@ -128,7 +132,9 @@ export function Sidebar({
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
-                  {clientsOnly && href === "/orders"
+                  {taskOperatorOnly && href === "/orders"
+                    ? TASK_OPERATOR_ORDERS_NAV_LABEL
+                    : clientsOnly && href === "/orders"
                     ? CLIENT_MANAGER_ORDERS_NAV_LABEL
                     : clientsOnly && href === "/fabric-orders"
                       ? "Fabric Orders"

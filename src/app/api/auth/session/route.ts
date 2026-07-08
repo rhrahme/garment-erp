@@ -17,6 +17,7 @@ export async function GET() {
       is_super_admin: session.isSuperAdmin,
       is_admin: session.isAdmin,
       is_client_manager: session.isClientManager,
+      is_task_operator: session.isTaskOperator,
       can_view_client_contact: session.canViewClientContact,
       can_view_fabric_list_prices: session.canViewFabricListPrices,
       can_reveal_fabric_prices: canRevealFabricPrices(session),

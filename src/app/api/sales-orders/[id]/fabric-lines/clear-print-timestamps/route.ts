@@ -5,7 +5,7 @@ import { requireAuthenticated } from "@/lib/auth/session";
 import { clearSalesOrderFabricLinePrintTimestamps } from "@/lib/sales-orders/fabric-line-print";
 
 function canClearPrintTimestamps(session: NonNullable<Awaited<ReturnType<typeof requireAuthenticated>>>): boolean {
-  return session.isAdmin || session.isClientManager;
+  return session.isAdmin || session.isClientManager || session.isTaskOperator;
 }
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {

@@ -5,7 +5,7 @@ import {
   hasFabricPriceAccess,
   redactSalesOrderFabricPrices,
 } from "@/lib/auth/fabric-price-access";
-import { getSessionContext, requireAdmin, requireAuthenticated } from "@/lib/auth/session";
+import { getSessionContext, requireAdmin, requireAuthenticated, canModifySalesOrders } from "@/lib/auth/session";
 import {
   deleteSalesOrderById,
   getSalesOrderById,
@@ -51,6 +51,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     }
 
     await ensureDocumentsLoaded(["sales_orders"]);
+
+    if (!canModifySalesOrders(session)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
 
     const { id } = await context.params;
     const body = (await request.json()) as { delivery_destination?: string | null };

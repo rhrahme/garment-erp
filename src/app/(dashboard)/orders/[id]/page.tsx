@@ -49,7 +49,9 @@ export default async function SalesOrderDetailPage({
     rawOrder.fabric_lines.map((line) => [line.id, activePatternJobsForLine(rawOrder.id, line.id)])
   );
   const session = await getSessionContext();
-  const labels = ordersUiLabels(session.isClientManager);
+  const taskOperatorMode = session.isTaskOperator;
+  const productionMode = session.isClientManager || taskOperatorMode;
+  const labels = ordersUiLabels(productionMode, taskOperatorMode);
   const cookieStore = await cookies();
   const canViewFabricPrices = hasFabricPriceAccess(
     session,
@@ -176,8 +178,9 @@ export default async function SalesOrderDetailPage({
         showFabricPriceControls={showFabricCostToAdmin}
         fabricCostSummary={fabricCost}
         isClientManager={session.isClientManager}
-        productionMode={session.isClientManager}
-        viewMode={session.isClientManager ? "production" : "sales"}
+        isTaskOperator={taskOperatorMode}
+        productionMode={productionMode}
+        viewMode={productionMode ? "production" : "sales"}
       />
     </div>
   );

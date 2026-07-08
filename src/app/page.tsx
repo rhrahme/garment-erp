@@ -13,5 +13,8 @@ export default async function Home() {
     redirect("/login");
   }
 
-  redirect(defaultPathForSession(session.isClientManager));
+  redirect(defaultPathForSession({
+    isClientManager: session.isClientManager,
+    isTaskOperator: session.isTaskOperator,
+  }));
 }

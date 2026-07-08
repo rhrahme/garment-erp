@@ -17,13 +17,15 @@ export function resolveUserDisplay(session: SessionContext): {
     mappedName ??
     (session.isSuperAdmin ? "Super Admin" : session.isAdmin ? "Admin User" : email || "User");
 
-  const title = session.isClientManager
-    ? "Quality Control"
-    : session.isSuperAdmin
-      ? "Super Admin"
-      : session.isAdmin
-        ? "Production Manager"
-        : "User";
+  const title = session.isTaskOperator
+    ? "Production Floor"
+    : session.isClientManager
+      ? "Quality Control"
+      : session.isSuperAdmin
+        ? "Super Admin"
+        : session.isAdmin
+          ? "Production Manager"
+          : "User";
 
   const initial = name.trim().charAt(0).toUpperCase() || "U";
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
 import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server";
-import { requireAuthenticated } from "@/lib/auth/session";
+import { requireAuthenticated, canModifySalesOrders } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getClientById } from "@/lib/data/clients";
 import { formatClientDisplayName } from "@/lib/clients/names";
@@ -56,6 +56,10 @@ export async function POST(request: Request) {
     const session = await requireAuthenticated();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    if (!canModifySalesOrders(session)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
 
     await ensureDocumentsLoaded(["sales_orders", "clients"]);

@@ -8,7 +8,7 @@ import {
   isAuthServiceUnavailable,
   signInWithPasswordWithRetry,
 } from "@/lib/auth/format-auth-error";
-import { defaultPathForSession, isClientManagerEmail } from "@/lib/auth/permissions";
+import { defaultPathForSession, isClientManagerEmail, isTaskOperatorEmail } from "@/lib/auth/permissions";
 import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 export async function POST(request: Request) {
@@ -44,7 +44,10 @@ export async function POST(request: Request) {
     if (!authError) {
       return NextResponse.json({
         ok: true,
-        redirect: defaultPathForSession(isClientManagerEmail(email)),
+        redirect: defaultPathForSession({
+          isClientManager: isClientManagerEmail(email),
+          isTaskOperator: isTaskOperatorEmail(email),
+        }),
       });
     }
 
@@ -52,9 +55,15 @@ export async function POST(request: Request) {
     if (
       process.env.NODE_ENV === "development" &&
       /email not confirmed/i.test(authError.message) &&
-      isClientManagerEmail(email)
+      (isClientManagerEmail(email) || isTaskOperatorEmail(email))
     ) {
-      const response = NextResponse.json({ ok: true, redirect: "/clients" });
+      const response = NextResponse.json({
+        ok: true,
+        redirect: defaultPathForSession({
+          isClientManager: isClientManagerEmail(email),
+          isTaskOperator: isTaskOperatorEmail(email),
+        }),
+      });
       response.cookies.set(DEV_IMPERSONATION_COOKIE, email, {
         httpOnly: true,
         sameSite: "lax",

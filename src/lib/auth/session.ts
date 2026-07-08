@@ -13,6 +13,7 @@ import {
   isClientManagerAccess,
   isSuperAdminEmail,
   isSuperAdminRole,
+  isTaskOperatorAccess,
 } from "@/lib/auth/permissions";
 
 export interface SessionContext {
@@ -22,6 +23,7 @@ export interface SessionContext {
   isSuperAdmin: boolean;
   isAdmin: boolean;
   isClientManager: boolean;
+  isTaskOperator: boolean;
   canViewClientContact: boolean;
   canViewFabricListPrices: boolean;
   canAccessPattern: boolean;
@@ -30,24 +32,28 @@ export interface SessionContext {
 function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<SessionContext, "userId" | "email"> {
   const isSuperAdmin = isSuperAdminRole(role) || isSuperAdminEmail(email);
   const isClientManager = !isSuperAdmin && isClientManagerAccess(role, email);
+  const isTaskOperator = !isSuperAdmin && isTaskOperatorAccess(role, email);
   const isAdmin =
-    isSuperAdmin || (!isClientManager && (isAdminRole(role) || isAdminEmail(email)));
+    isSuperAdmin || (!isClientManager && !isTaskOperator && (isAdminRole(role) || isAdminEmail(email)));
   const effectiveRole: UserRole | null = isSuperAdmin
     ? "super_admin"
     : isAdmin
       ? "admin"
       : isClientManager
         ? "client_manager"
-        : role;
+        : isTaskOperator
+          ? "task_operator"
+          : role;
 
   return {
     role: effectiveRole,
     isSuperAdmin,
     isAdmin,
     isClientManager,
+    isTaskOperator,
     canViewClientContact: canViewClientContact(role, email, isSuperAdmin),
     canViewFabricListPrices: isAdmin,
-    canAccessPattern: canAccessPatternModule(isClientManager, isAdmin),
+    canAccessPattern: canAccessPatternModule(isClientManager, isAdmin, isTaskOperator),
   };
 }
 
@@ -67,10 +73,13 @@ export async function getSessionContext(): Promise<SessionContext> {
     cookieStore.get(DEV_IMPERSONATION_COOKIE)?.value
   );
   if (impersonatedEmail) {
+    const role = isTaskOperatorAccess("task_operator", impersonatedEmail)
+      ? "task_operator"
+      : "client_manager";
     return {
       userId: `dev:${impersonatedEmail}`,
       email: impersonatedEmail,
-      ...resolveSessionFlags("client_manager", impersonatedEmail),
+      ...resolveSessionFlags(role, impersonatedEmail),
     };
   }
 
@@ -85,6 +94,7 @@ export async function getSessionContext(): Promise<SessionContext> {
       isSuperAdmin: false,
       isAdmin: false,
       isClientManager: false,
+      isTaskOperator: false,
       canViewClientContact: false,
       canViewFabricListPrices: false,
       canAccessPattern: false,
@@ -129,4 +139,9 @@ export async function requirePatternAccess(): Promise<SessionContext | null> {
   const session = await getSessionContext();
   if (!session.canAccessPattern) return null;
   return session;
+}
+
+/** Task operators may read orders for printing but cannot create or edit them. */
+export function canModifySalesOrders(session: SessionContext): boolean {
+  return !session.isTaskOperator;
 }

@@ -21,11 +21,13 @@ type OrdersView = "active" | "archived";
 export function OrdersList({
   orders,
   productionMode = false,
+  taskOperatorMode = false,
 }: {
   orders: SalesOrderListRow[];
   productionMode?: boolean;
+  taskOperatorMode?: boolean;
 }) {
-  const labels = ordersUiLabels(productionMode);
+  const labels = ordersUiLabels(productionMode, taskOperatorMode);
   const { brandId, setBrandId, hydrated } = useFactoryBrandFilter();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 200);
@@ -61,9 +63,11 @@ export function OrdersList({
       <div className="rounded-xl border border-dashed border-slate-200 py-16 text-center">
         <p className="text-lg font-medium text-slate-700">{labels.emptyTitle}</p>
         <p className="mt-2 text-sm text-slate-500">{labels.emptyDescription}</p>
-        <Link href="/orders/new" className="mt-4 inline-block">
-          <Button>{labels.newButton}</Button>
-        </Link>
+        {!taskOperatorMode && labels.newButton ? (
+          <Link href="/orders/new" className="mt-4 inline-block">
+            <Button>{labels.newButton}</Button>
+          </Link>
+        ) : null}
       </div>
     );
   }

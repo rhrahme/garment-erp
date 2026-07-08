@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SalesOrderForm } from "@/components/orders/SalesOrderForm";
 import { getSessionContext } from "@/lib/auth/session";
@@ -9,6 +10,9 @@ export default async function NewSalesOrderPage({
   searchParams: Promise<{ duplicate_from?: string; fresh?: string; continue?: string }>;
 }) {
   const session = await getSessionContext();
+  if (session.isTaskOperator) {
+    redirect("/orders");
+  }
   const productionMode = session.isClientManager;
   const labels = ordersUiLabels(productionMode);
   const { duplicate_from: duplicateFromOrderId, fresh, continue: continueDraft } = await searchParams;

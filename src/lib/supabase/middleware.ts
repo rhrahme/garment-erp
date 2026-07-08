@@ -8,7 +8,11 @@ import {
 import {
   defaultPathForSession,
   isClientManagerAccess,
-  isClientManagerRouteAllowed,
+  isRestrictedRouteAllowed,
+  isSuperAdminEmail,
+  isSuperAdminRole,
+  isTaskOperatorAccess,
+  resolveRestrictedAccess,
 } from "@/lib/auth/permissions";
 import type { UserRole } from "@/lib/types/database";
 import { withSupabaseTimeout } from "@/lib/auth/supabase-timeout";
@@ -36,7 +40,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/api/auth/login") ||
     pathname.startsWith("/api/auth/dev-impersonate") ||
     pathname.startsWith("/api/auth/confirm-client-manager") ||
-    pathname.startsWith("/api/qr");
+    pathname === "/api/qr";
 
   const impersonatedEmail = resolveDevImpersonationEmail(
     request.cookies.get(DEV_IMPERSONATION_COOKIE)?.value
@@ -81,42 +85,52 @@ export async function updateSession(request: NextRequest) {
   }
 
   const email = impersonatedEmail ?? user?.email?.trim().toLowerCase() ?? null;
-  let isClientManager = false;
-  if (impersonatedEmail) {
-    isClientManager = isClientManagerAccess("client_manager", impersonatedEmail);
-  } else if (user?.id && email) {
+  let role: UserRole | null = impersonatedEmail
+    ? isTaskOperatorAccess("task_operator", impersonatedEmail)
+      ? "task_operator"
+      : "client_manager"
+    : null;
+  let isSuperAdmin = false;
+  if (!impersonatedEmail && user?.id && email) {
     const { data: profile } = await withSupabaseTimeout(
       supabase.from("profiles").select("role").eq("id", user.id).maybeSingle(),
       "middleware profile",
       { data: null }
     );
-    isClientManager = isClientManagerAccess((profile?.role as UserRole | undefined) ?? null, email);
+    role = (profile?.role as UserRole | undefined) ?? null;
+    isSuperAdmin = isSuperAdminRole(role) || isSuperAdminEmail(email);
+  } else if (email) {
+    isSuperAdmin = isSuperAdminEmail(email);
   }
+
+  const restrictedAccess = resolveRestrictedAccess(role, email, isSuperAdmin);
+  const isClientManager = restrictedAccess === "client_manager";
+  const isTaskOperator = restrictedAccess === "task_operator";
 
   if (isAuthenticated && isAuthPage) {
     const url = request.nextUrl.clone();
-    url.pathname = defaultPathForSession(isClientManager);
+    url.pathname = defaultPathForSession({ isClientManager, isTaskOperator });
     return NextResponse.redirect(url);
   }
 
-  if (isAuthenticated && isClientManager && !isClientManagerRouteAllowed(pathname)) {
+  if (isAuthenticated && restrictedAccess && !isRestrictedRouteAllowed(pathname, restrictedAccess)) {
     if (isApiRoute) {
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
     const url = request.nextUrl.clone();
-    url.pathname = defaultPathForSession(true);
+    url.pathname = defaultPathForSession({ isClientManager, isTaskOperator });
     return NextResponse.redirect(url);
   }
 
   if (isAuthenticated && pathname === "/") {
     const url = request.nextUrl.clone();
-    url.pathname = defaultPathForSession(isClientManager);
+    url.pathname = defaultPathForSession({ isClientManager, isTaskOperator });
     return NextResponse.redirect(url);
   }
 
-  if (isAuthenticated && pathname === "/dashboard" && isClientManager) {
+  if (isAuthenticated && pathname === "/dashboard" && restrictedAccess) {
     const url = request.nextUrl.clone();
-    url.pathname = defaultPathForSession(true);
+    url.pathname = defaultPathForSession({ isClientManager, isTaskOperator });
     return NextResponse.redirect(url);
   }
 

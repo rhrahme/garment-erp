@@ -52,7 +52,7 @@ export function isFabricPriceAccessCodeValid(code: string): boolean {
 
 /** Admins who may use the reveal toggle (prices stay hidden until unlocked). */
 export function canRevealFabricPrices(session: SessionContext): boolean {
-  if (session.isClientManager) return false;
+  if (session.isClientManager || session.isTaskOperator) return false;
   return session.isSuperAdmin || session.isAdmin || session.canViewFabricListPrices;
 }
 
@@ -60,7 +60,7 @@ export function hasFabricPriceAccess(
   session: SessionContext,
   unlockedCookie: string | undefined | null
 ): boolean {
-  if (session.isClientManager) return false;
+  if (session.isClientManager || session.isTaskOperator) return false;
   if (!canRevealFabricPrices(session)) return false;
   if (unlockedCookie === "1" && isFabricPriceUnlockConfigured()) return true;
   return false;

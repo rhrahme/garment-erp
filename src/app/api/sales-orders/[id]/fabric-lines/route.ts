@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
 import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server";
-import { requireAuthenticated } from "@/lib/auth/session";
+import { requireAuthenticated, canModifySalesOrders } from "@/lib/auth/session";
 import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import { notifyIntegration } from "@/lib/integrations";
 import { syncPatternJobsFromSalesOrder } from "@/lib/pattern/sync-from-sales-order";
@@ -22,6 +22,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const session = await requireAuthenticated();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+    if (!canModifySalesOrders(session)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
 
     const { id } = await context.params;
@@ -61,6 +64,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     if (!session) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
+    if (!canModifySalesOrders(session)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
 
     const { id } = await context.params;
     const body = (await request.json()) as FabricLineUpdateInput;
@@ -98,6 +104,9 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     const session = await requireAuthenticated();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+    if (!canModifySalesOrders(session)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
 
     const { id } = await context.params;

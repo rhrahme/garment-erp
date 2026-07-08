@@ -10,8 +10,9 @@ import { ordersUiLabels } from "@/lib/orders/ui-labels";
 
 export default async function OrdersPage() {
   const session = await getSessionContext();
-  const productionMode = session.isClientManager;
-  const labels = ordersUiLabels(productionMode);
+  const taskOperatorMode = session.isTaskOperator;
+  const productionMode = session.isClientManager || taskOperatorMode;
+  const labels = ordersUiLabels(productionMode, taskOperatorMode);
 
   await ensureDocumentsLoaded(["sales_orders"]);
   const orders = dedupeIdenticalSalesOrders(listBespokeSalesOrders(readSalesOrders().orders)).map(toSalesOrderListRow);
@@ -22,7 +23,7 @@ export default async function OrdersPage() {
         title={labels.listTitle}
         description={labels.listDescription}
         action={
-          productionMode ? (
+          taskOperatorMode ? undefined : productionMode ? (
             <Link href="/fabric-orders/new?fresh=1">
               <Button>+ New fabric order</Button>
             </Link>
@@ -41,7 +42,7 @@ export default async function OrdersPage() {
             <li key={step}>{step}</li>
           ))}
         </ol>
-        {productionMode && (
+        {session.isClientManager && (
           <p className="mt-3 text-blue-800">
             Add fabrics on{" "}
             <Link href="/fabric-orders" className="font-medium underline">
@@ -52,7 +53,7 @@ export default async function OrdersPage() {
         )}
       </div>
 
-      <OrdersList orders={orders} productionMode={productionMode} />
+      <OrdersList orders={orders} productionMode={productionMode} taskOperatorMode={taskOperatorMode} />
     </div>
   );
 }

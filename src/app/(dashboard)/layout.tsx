@@ -42,6 +42,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       isSuperAdmin: false,
       isAdmin: false,
       isClientManager: false,
+      isTaskOperator: false,
       canViewClientContact: false,
       canViewFabricListPrices: false,
       canAccessPattern: false,
@@ -49,14 +50,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
   const headerExtra = (
     <>
-      {!session.isClientManager && rateStatus.aboveThreshold && rateStatus.marketRate != null && (
+      {!session.isClientManager && !session.isTaskOperator && rateStatus.aboveThreshold && rateStatus.marketRate != null && (
         <ExchangeRateBanner
           marketRate={rateStatus.marketRate}
           bookRate={rateStatus.bookRate}
           threshold={rateStatus.alertThreshold}
         />
       )}
-      {!session.isClientManager && <SupplierAvailabilityBanner />}
+      {!session.isClientManager && !session.isTaskOperator && <SupplierAvailabilityBanner />}
       <AuthHealthBanner />
       {session.isAdmin && <DocumentsHealthBanner />}
     </>

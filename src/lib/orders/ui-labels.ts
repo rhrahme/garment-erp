@@ -1,5 +1,32 @@
 /** Copy for QC production orders vs admin sales orders (same routes, different framing). */
-export function ordersUiLabels(productionMode: boolean) {
+export function ordersUiLabels(productionMode: boolean, taskOperatorMode = false) {
+  if (taskOperatorMode) {
+    return {
+      nav: "Print orders",
+      listTitle: "Print orders",
+      listDescription:
+        "Find a production order to print A4 sheets and label stickers. Scan wash and iron at Fabric Receiving. No pricing shown.",
+      newTitle: "Print orders",
+      newDescription: "Task operators cannot create orders — open an existing order to print labels.",
+      newButton: "",
+      createOne: "Create production order",
+      createMany: (count: number) => `Create ${count} production orders`,
+      emptyTitle: "No production orders yet",
+      emptyDescription: "Orders with fabrics will appear here for printing and scanning.",
+      workflowTitle: "Floor workflow",
+      workflowSteps: [
+        "Open an order that already has fabrics assigned",
+        "Print A4 receiving lists and fabric-cut / production stickers",
+        "Scan fabrics at Fabric Receiving — wash and iron stations",
+      ],
+      allOrdersLink: "← All print orders",
+      duplicateTitle: "Duplicate order for another client",
+      fabricsSectionTitle: "Production labels",
+      fabricsSectionDescription: "View assigned fabrics and print sticker packs. Pricing is hidden.",
+      detailNewButton: "New production order",
+    };
+  }
+
   if (productionMode) {
     return {
       nav: "Production Orders",

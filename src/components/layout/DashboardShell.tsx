@@ -16,6 +16,7 @@ export function DashboardShell({
 }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const clientsOnly = session.isClientManager;
+  const taskOperatorOnly = session.isTaskOperator;
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
@@ -30,6 +31,7 @@ export function DashboardShell({
 
       <Sidebar
         clientsOnly={clientsOnly}
+        taskOperatorOnly={taskOperatorOnly}
         isAdmin={session.isAdmin}
         mobileOpen={mobileNavOpen}
         onNavigate={() => setMobileNavOpen(false)}

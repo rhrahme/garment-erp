@@ -81,6 +81,7 @@ export function SalesOrderActions({
   showFabricPriceControls = false,
   fabricCostSummary = null,
   isClientManager = false,
+  isTaskOperator = false,
   productionMode = false,
   viewMode = "sales",
 }: {
@@ -94,6 +95,7 @@ export function SalesOrderActions({
   showFabricPriceControls?: boolean;
   fabricCostSummary?: FabricCostSummary | null;
   isClientManager?: boolean;
+  isTaskOperator?: boolean;
   productionMode?: boolean;
   viewMode?: SalesOrderViewMode;
 }) {
@@ -101,11 +103,11 @@ export function SalesOrderActions({
     viewMode !== "sales" ? viewMode : productionMode ? "production" : "sales";
   const fabricLabels = fabricOrderUiLabels(isClientManager);
   const labels =
-    effectiveViewMode === "fabric_order" ? fabricLabels : ordersUiLabels(productionMode);
+    effectiveViewMode === "fabric_order" ? fabricLabels : ordersUiLabels(productionMode, isTaskOperator);
   const showFabricOrdering = effectiveViewMode === "fabric_order";
   const showSalesAdmin = effectiveViewMode === "sales";
   const showProductionLabels = effectiveViewMode === "production" || showSalesAdmin;
-  const showFabricInput = showFabricOrdering || showSalesAdmin;
+  const showFabricInput = (showFabricOrdering || showSalesAdmin) && !isTaskOperator;
   const showSupplierEmailActions = showFabricOrdering || showSalesAdmin;
   const showSupplierEmailColumn = showFabricOrdering && fabricPos.length > 0;
   const router = useRouter();
@@ -419,10 +421,15 @@ export function SalesOrderActions({
                   : "Edit fabric number, supplier, garment type, or meters on existing lines."}
               </p>
             )}
-            {effectiveViewMode === "production" && (
+            {effectiveViewMode === "production" && !isTaskOperator && (
               <p className="mt-1 text-xs text-slate-500">
                 Edit fabrics on the Fabric Orders tab. Multi-piece garments (e.g. suit) show one line with multiple piece
                 labels below.
+              </p>
+            )}
+            {effectiveViewMode === "production" && isTaskOperator && (
+              <p className="mt-1 text-xs text-slate-500">
+                View fabrics and use the print buttons above for A4 sheets and sticker rolls.
               </p>
             )}
             {!fabricsEditable && fabricEditBlockedReason && (
@@ -976,23 +983,27 @@ export function SalesOrderActions({
             <Button variant="secondary">Open production order →</Button>
           </Link>
         )}
-        {effectiveViewMode === "production" && (
+        {effectiveViewMode === "production" && !isTaskOperator && (
           <Link href={`/fabric-orders/${order.id}`}>
             <Button variant="secondary">Edit fabrics on Fabric Orders →</Button>
           </Link>
         )}
-        <Link
-          href={
-            effectiveViewMode === "fabric_order"
-              ? `/fabric-orders/new?duplicate_from=${order.id}`
-              : `/orders/new?duplicate_from=${order.id}`
-          }
-        >
-          <Button variant="secondary">Duplicate for another client</Button>
-        </Link>
-        <Link href={effectiveViewMode === "fabric_order" ? "/fabric-orders/new?fresh=1" : "/orders/new"}>
-          <Button variant="secondary">{labels.detailNewButton}</Button>
-        </Link>
+        {!isTaskOperator && (
+          <Link
+            href={
+              effectiveViewMode === "fabric_order"
+                ? `/fabric-orders/new?duplicate_from=${order.id}`
+                : `/orders/new?duplicate_from=${order.id}`
+            }
+          >
+            <Button variant="secondary">Duplicate for another client</Button>
+          </Link>
+        )}
+        {!isTaskOperator && (
+          <Link href={effectiveViewMode === "fabric_order" ? "/fabric-orders/new?fresh=1" : "/orders/new"}>
+            <Button variant="secondary">{labels.detailNewButton}</Button>
+          </Link>
+        )}
         {(showProductionLabels || effectiveViewMode === "fabric_order") && (
           <DownloadSalesOrderPdfButton orderId={order.id} soNumber={order.so_number} />
         )}
