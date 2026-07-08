@@ -37,6 +37,11 @@ async function decode(buf) {
 
 // MediaBox check.
 const pdf = readFileSync(resolve(projectRoot, "pdf-proof-fabric-cuts.pdf")).toString("latin1");
+
+// PrintScaling /None → Chrome prints at actual size instead of "Fit to printable area".
+const printScalingNone = /\/PrintScaling\s*\/None/.test(pdf);
+console.log(`ViewerPreferences /PrintScaling /None present = ${printScalingNone}  ${printScalingNone ? "OK" : "FAIL"}`);
+
 const mb = pdf.match(/\/MediaBox\s*\[\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\]/);
 const ptToMm = (pt) => (pt * 25.4) / 72;
 let mediaOk = false;
@@ -49,7 +54,7 @@ if (mb) {
   console.log("MediaBox not found  FAIL");
 }
 
-let allOk = mediaOk;
+let allOk = mediaOk && printScalingNone;
 for (let i = 1; i <= 3; i += 1) {
   const buf = readFileSync(`/tmp/pdfproof-${i}.jpg`);
   const meta = await sharp(buf).metadata();

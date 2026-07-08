@@ -51,6 +51,12 @@ function createStickerPdfDocument(mode: LabelPrintMode): jsPDF {
     );
   }
 
+  // Force actual-size printing. Chrome defaults PDF printing to "Fit to printable area",
+  // which shrinks the label into the D550's hardware-margin imageable region (tiny + cornered
+  // output). Chrome honours /ViewerPreferences /PrintScaling /None → prints the page 1:1 so
+  // the 51×102 mm page maps to the 51×102 mm media with no scaling or offset.
+  doc.viewerPreferences({ PrintScaling: "None" });
+
   return doc;
 }
 
