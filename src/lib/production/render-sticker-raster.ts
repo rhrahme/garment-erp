@@ -104,39 +104,14 @@ export function buildStickerPageSvg(
   mode: LabelPrintMode,
   scalePct: LabelScalePct
 ): StickerRasterLayout {
-  const scale = labelScaleMultiplier(scalePct);
+  const requested = labelScaleMultiplier(scalePct);
   const kind = layoutKindForMode(mode);
   const dims = designDims(mode);
   const padH = LABEL_STICKER_PADDING_H_MM;
   const padV = LABEL_STICKER_PADDING_V_MM;
-  const columnGap = LABEL_STICKER_COLUMN_GAP_MM * scale;
+  const availW = dims.W - padH * 2;
+  const availH = dims.H - padV * 2;
 
-  let qrSize: number;
-  let qrX: number;
-  let qrY: number;
-  let textX: number;
-  let textRightX: number;
-  let textTop: number;
-
-  if (kind === "landscape") {
-    const availH = dims.H - padV * 2;
-    qrSize = Math.min(LABEL_STICKER_QR_SIZE_MM * scale, availH);
-    qrX = padH;
-    qrY = padV + Math.max(0, (availH - qrSize) / 2);
-    textX = padH + qrSize + columnGap;
-    textRightX = dims.W - padH;
-    textTop = padV;
-  } else {
-    const availW = dims.W - padH * 2;
-    qrSize = Math.min(LABEL_STICKER_QR_SIZE_MM * scale, availW);
-    qrX = padH + Math.max(0, (availW - qrSize) / 2);
-    qrY = padV;
-    textX = padH;
-    textRightX = dims.W - padH;
-    textTop = qrY + qrSize + columnGap;
-  }
-
-  const contentW = textRightX - textX;
   const stickerRole = resolveStickerRole(label, role);
   const productionCodeLine =
     stickerRole === "prep"
@@ -148,20 +123,72 @@ export function buildStickerPageSvg(
   const cutLengthLine = formatStickerCutLength(label.cut_quantity, label.cut_unit);
   const labelsLine = formatStickerLabelsSent(label.labels_sent);
 
-  const headerFontMm = LABEL_STICKER_FONT_MM.header * scale;
-  const lines: Array<{ text: string; fontMm: number }> = [
-    { text: label.client_code, fontMm: LABEL_STICKER_FONT_MM.clientCode * scale },
-    { text: label.client_name, fontMm: LABEL_STICKER_FONT_MM.clientName * scale },
-    { text: productionCodeLine, fontMm: LABEL_STICKER_FONT_MM.productionCode * scale },
-    { text: fabricLine, fontMm: LABEL_STICKER_FONT_MM.fabric * scale },
-    { text: cutLengthLine, fontMm: LABEL_STICKER_FONT_MM.cutLength * scale },
-    { text: labelsLine, fontMm: LABEL_STICKER_FONT_MM.labels * scale },
+  // Base (scale = 1) font sizes. The effective scale is solved below so the whole block
+  // always fits the fixed 51×102 mm media — content can never overflow / clip the bottom,
+  // regardless of the requested scale setting (100/125/150).
+  const baseLines: Array<{ text: string; baseFont: number }> = [
+    { text: label.client_code, baseFont: LABEL_STICKER_FONT_MM.clientCode },
+    { text: label.client_name, baseFont: LABEL_STICKER_FONT_MM.clientName },
+    { text: productionCodeLine, baseFont: LABEL_STICKER_FONT_MM.productionCode },
+    { text: fabricLine, baseFont: LABEL_STICKER_FONT_MM.fabric },
+    { text: cutLengthLine, baseFont: LABEL_STICKER_FONT_MM.cutLength },
+    { text: labelsLine, baseFont: LABEL_STICKER_FONT_MM.labels },
   ];
-  if (specLine) lines.push({ text: specLine, fontMm: LABEL_STICKER_FONT_MM.spec * scale });
-  lines.push({ text: pieceLabel(label), fontMm: LABEL_STICKER_FONT_MM.piece * scale });
+  if (specLine) baseLines.push({ text: specLine, baseFont: LABEL_STICKER_FONT_MM.spec });
+  baseLines.push({ text: pieceLabel(label), baseFont: LABEL_STICKER_FONT_MM.piece });
+
+  // Text block height at scale 1: header + every line + one line-gap after each (trailing dropped).
+  const textBlock1 =
+    lineHeightMm(LABEL_STICKER_FONT_MM.header) +
+    baseLines.reduce((sum, l) => sum + lineHeightMm(l.baseFont), 0) +
+    LABEL_STICKER_LINE_GAP_MM * baseLines.length;
+
+  const qrBase = LABEL_STICKER_QR_SIZE_MM;
+  const colGapBase = LABEL_STICKER_COLUMN_GAP_MM;
+
+  const fitScale =
+    kind === "landscape"
+      ? availH / Math.max(qrBase, textBlock1)
+      : Math.min(availH / (qrBase + colGapBase + textBlock1), availW / qrBase);
+  const scale = Math.max(0.1, Math.min(requested, fitScale));
+
+  const columnGap = colGapBase * scale;
+  const gap = LABEL_STICKER_LINE_GAP_MM * scale;
+  const headerFontMm = LABEL_STICKER_FONT_MM.header * scale;
+  const lines = baseLines.map((l) => ({ text: l.text, fontMm: l.baseFont * scale }));
+  const textBlockH = textBlock1 * scale;
+
+  let qrSize: number;
+  let qrX: number;
+  let qrY: number;
+  let textX: number;
+  let textRightX: number;
+  let textTop: number;
+
+  if (kind === "landscape") {
+    qrSize = Math.min(qrBase * scale, availH);
+    const colBlockH = Math.max(qrSize, textBlockH);
+    const top = padV + Math.max(0, (availH - colBlockH) / 2);
+    qrX = padH;
+    qrY = top + Math.max(0, (colBlockH - qrSize) / 2);
+    textX = padH + qrSize + columnGap;
+    textRightX = dims.W - padH;
+    textTop = top + Math.max(0, (colBlockH - textBlockH) / 2);
+  } else {
+    // Center the QR + text block vertically → even top/bottom margins, no huge empty area.
+    qrSize = Math.min(qrBase * scale, availW);
+    const blockH = qrSize + columnGap + textBlockH;
+    const top = padV + Math.max(0, (availH - blockH) / 2);
+    qrX = padH + Math.max(0, (availW - qrSize) / 2);
+    qrY = top;
+    textX = padH;
+    textRightX = dims.W - padH;
+    textTop = qrY + qrSize + columnGap;
+  }
+
+  const contentW = textRightX - textX;
 
   const textElements: string[] = [];
-  const gap = LABEL_STICKER_LINE_GAP_MM * scale;
   let y = textTop;
 
   const headerH = lineHeightMm(headerFontMm);

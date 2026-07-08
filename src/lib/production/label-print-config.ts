@@ -41,8 +41,12 @@ export const LABEL_PDF_ORIENTATION = "portrait" as const;
 export const LABEL_PDF_PAGE_WIDTH_MM = LABEL_ROLL_WIDTH_MM;
 export const LABEL_PDF_PAGE_HEIGHT_MM = LABEL_ROLL_HEIGHT_MM;
 
-/** QR square on top — ~44 mm fills the 50 mm width with ~3 mm side margins. */
-export const LABEL_STICKER_QR_SIZE_MM = 44;
+/**
+ * QR square on top. 38 mm leaves room for all text lines to fit within the 102 mm
+ * portrait length with even top/bottom margins (the block is centered + auto-fit).
+ * At 203 DPI this is ~10 device px per module — still crisp and reliably scannable.
+ */
+export const LABEL_STICKER_QR_SIZE_MM = 38;
 
 export const LABEL_STICKER_PADDING_H_MM = 2;
 export const LABEL_STICKER_PADDING_V_MM = 2;
