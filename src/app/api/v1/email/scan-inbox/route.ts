@@ -5,7 +5,7 @@ import {
   INBOX_SCAN_DAYS_DEFAULT,
   INBOX_SCAN_LIMIT_DEFAULT,
 } from "@/lib/email/inbound/scan-inbox-config";
-import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { ensureDocumentsLoaded, flushErpDocumentsToSupabase } from "@/lib/data/document-persistence";
 import { getInboxScanEmail } from "@/lib/email/imap-auth";
 import { isImapConfigured } from "@/lib/email/imap-config";
 import { getFactoryOrdersEmail } from "@/lib/data/supplier-catalogs";
@@ -53,6 +53,7 @@ export async function POST(request: Request) {
     }
 
     const result = await scanSupplierInbox({ days: body.days, limit: body.limit });
+    await flushErpDocumentsToSupabase(SCAN_INBOX_DOCUMENT_KEYS);
     return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to scan inbox.";

@@ -8,6 +8,7 @@ import {
   shouldImportSupplierReply,
 } from "@/lib/email/inbound/supplier-email-match";
 import { processTransporterEmail } from "@/lib/email/inbound/process-transporter-email";
+import { createMissingShipmentsFromReplies } from "@/lib/integrations/sync-shipments-from-replies";
 import {
   getTransporterSearchDomains,
   isRelevantTransporterEmail,
@@ -230,6 +231,9 @@ export async function scanSupplierInbox(options: InboxScanOptions = {}): Promise
   } finally {
     await client.logout();
   }
+
+  const backfilled_shipments = await createMissingShipmentsFromReplies();
+  shipments_created += backfilled_shipments;
 
   return {
     scanned,

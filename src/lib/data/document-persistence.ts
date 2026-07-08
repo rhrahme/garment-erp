@@ -386,6 +386,22 @@ export async function writeJsonFileAsync<T>(filePath: string, data: T): Promise<
   return saveDocument(filePath, data);
 }
 
+/** Await Supabase persistence for documents already in the in-process cache. */
+export async function flushErpDocumentsToSupabase(
+  keys: readonly ErpDocumentKey[]
+): Promise<void> {
+  if (!isSupabaseDocumentsStorage()) return;
+
+  await Promise.all(
+    keys.map(async (documentKey) => {
+      const spec = ERP_DOCUMENT_SPECS[documentKey];
+      const cached = fileCache.get(spec.path);
+      if (!cached) return;
+      await saveDocument(spec.path, cached.data);
+    })
+  );
+}
+
 export function invalidateDocumentCache(filePath?: string): void {
   if (filePath) {
     fileCache.delete(filePath);
