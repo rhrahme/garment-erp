@@ -17,6 +17,36 @@ import type { SalesOrder, SalesOrdersFile } from "@/lib/types/sales-orders";
 const SALES_ORDERS_PATH = path.join(process.cwd(), "src/data/sales-orders.json");
 const EMPTY_SALES_ORDERS: SalesOrdersFile = { updated_at: null, orders: [] };
 
+function normalizeSalesOrder(order: SalesOrder): SalesOrder {
+  const fabricLines = Array.isArray(order.fabric_lines) ? order.fabric_lines : [];
+  const fabricPoIds = Array.isArray(order.fabric_po_ids) ? order.fabric_po_ids : [];
+
+  return {
+    ...order,
+    status: order.status ?? "open",
+    fabric_po_ids: fabricPoIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0),
+    fabric_lines: fabricLines.map((line) => ({
+      ...line,
+      label_stickers: Array.isArray(line.label_stickers)
+        ? line.label_stickers.filter(
+            (sticker): sticker is { code: string; piece_name: string; sequence: number } =>
+              Boolean(sticker) &&
+              typeof sticker.code === "string" &&
+              typeof sticker.piece_name === "string" &&
+              Number.isFinite(sticker.sequence)
+          )
+        : [],
+    })),
+  };
+}
+
+function normalizeSalesOrdersFile(data: SalesOrdersFile): SalesOrdersFile {
+  return {
+    ...data,
+    orders: Array.isArray(data.orders) ? data.orders.map((order) => normalizeSalesOrder(order)) : [],
+  };
+}
+
 /** ClickUp retail batches (Massimo Dutti, Suit Supply, …) — shown under Ready-Made, not Sales Orders. */
 export function isReadyMadeSalesOrder(order: Pick<SalesOrder, "retail_brand">): boolean {
   return Boolean(order.retail_brand?.trim());
@@ -84,17 +114,19 @@ function buildSalesOrderSearchText(order: SalesOrder): string {
 }
 
 export function readSalesOrders(): SalesOrdersFile {
-  return readJsonFile(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS);
+  return normalizeSalesOrdersFile(readJsonFile(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS));
 }
 
 /** Bypass in-process cache — use before writes that must not clobber a concurrent reset. */
 export async function readSalesOrdersFresh(): Promise<SalesOrdersFile> {
   invalidateDocumentCache(SALES_ORDERS_PATH);
-  return readJsonFileFreshAsync(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS, { force: true });
+  return normalizeSalesOrdersFile(
+    await readJsonFileFreshAsync(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS, { force: true })
+  );
 }
 
 export async function readSalesOrdersAsync(): Promise<SalesOrdersFile> {
-  return readJsonFileAsync(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS);
+  return normalizeSalesOrdersFile(await readJsonFileAsync(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS));
 }
 
 export async function writeSalesOrders(data: SalesOrdersFile): Promise<SalesOrdersFile> {
@@ -147,7 +179,9 @@ export function findSalesOrderByFabricPoId(
 
 /** Bypass in-process cache — use on order detail after mutations (multi-instance safe). */
 export async function getSalesOrderByIdFresh(id: string): Promise<SalesOrder | undefined> {
-  const store = await readJsonFileFreshAsync(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS, { force: true });
+  const store = normalizeSalesOrdersFile(
+    await readJsonFileFreshAsync(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS, { force: true })
+  );
   return store.orders.find((order) => order.id === id);
 }
 
