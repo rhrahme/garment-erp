@@ -1,4 +1,5 @@
 import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
+import { supplierNameForFabricOrder } from "@/lib/integrations/shipment-supplier";
 import { listStoredShipments } from "@/lib/integrations/shipment-store";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 
@@ -32,7 +33,7 @@ export function listPendingAwbFabricOrders(): PendingAwbFabricOrder[] {
       id: po.id,
       po_number: po.po_number,
       supplier_id: po.supplier_id,
-      supplier_name: po.supplier?.name ?? null,
+      supplier_name: supplierNameForFabricOrder(po),
       sales_order_id: po.sales_order_id ?? null,
       client_reference: po.client_reference ?? null,
       emailed_at: po.emailed_at!,

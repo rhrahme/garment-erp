@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/session";
+import { ensureDocumentsLoaded } from "@/lib/data/json-file-cache";
 import {
   ensureFabricOrdersLoaded,
   getStoredFabricOrder,
@@ -7,14 +8,24 @@ import {
 } from "@/lib/integrations/fabric-order-store";
 import { createInboundShipmentFromAwb } from "@/lib/integrations/create-inbound-shipment";
 import { enrichShipmentsWithSupplierName } from "@/lib/integrations/shipment-supplier";
+import {
+  ensureSupplierRepliesLoaded,
+  listSupplierReplies,
+} from "@/lib/integrations/supplier-reply-store";
 import { ensureShipmentsLoaded, listStoredShipments } from "@/lib/integrations/shipment-store";
 
 export async function GET() {
   try {
-    await Promise.all([ensureShipmentsLoaded(), ensureFabricOrdersLoaded()]);
+    await Promise.all([
+      ensureShipmentsLoaded(),
+      ensureFabricOrdersLoaded(),
+      ensureDocumentsLoaded(["supplier_contacts"]),
+      ensureSupplierRepliesLoaded(),
+    ]);
     const shipments = enrichShipmentsWithSupplierName(
       listStoredShipments(),
-      listStoredFabricOrders()
+      listStoredFabricOrders(),
+      listSupplierReplies(5000)
     );
     return NextResponse.json({ shipments });
   } catch (error) {

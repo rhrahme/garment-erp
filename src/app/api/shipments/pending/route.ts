@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/session";
-import { ensureShipmentsLoaded } from "@/lib/integrations/shipment-store";
+import { ensureDocumentsLoaded } from "@/lib/data/json-file-cache";
 import { ensureFabricOrdersLoaded } from "@/lib/integrations/fabric-order-store";
 import { listPendingAwbFabricOrders } from "@/lib/integrations/pending-awb";
+import { ensureShipmentsLoaded } from "@/lib/integrations/shipment-store";
 
 export async function GET() {
   const session = await requireAdmin();
@@ -11,7 +12,11 @@ export async function GET() {
   }
 
   try {
-    await Promise.all([ensureShipmentsLoaded(), ensureFabricOrdersLoaded()]);
+    await Promise.all([
+      ensureShipmentsLoaded(),
+      ensureFabricOrdersLoaded(),
+      ensureDocumentsLoaded(["supplier_contacts"]),
+    ]);
     const pending = listPendingAwbFabricOrders();
     return NextResponse.json({ pending, count: pending.length });
   } catch (error) {
