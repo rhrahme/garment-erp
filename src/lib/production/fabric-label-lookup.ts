@@ -1,4 +1,6 @@
 import { getFabricReceiptByLineId } from "@/lib/data/fabric-receipts";
+import { readProductionWorkOrders } from "@/lib/data/production-work-orders";
+import { resolveFabricLineReceiveStatus } from "@/lib/production/fabric-receiving-floor";
 import { resolveScanToLine } from "@/lib/production/stage-scan";
 import {
   productionCodeFromSticker,
@@ -33,11 +35,10 @@ export function lookupFabricLabel(scanInput: string): FabricLabelLookupResult | 
   const { order, line, sticker } = lookup;
   const lineIndex = order.fabric_lines.findIndex((fabricLine) => fabricLine.id === line.id);
   const receipt = getFabricReceiptByLineId(line.id);
-
-  let receive_status: FabricLineReceiveStatus = "pending";
-  if (receipt?.status === "handed_off") receive_status = "handed_off";
-  else if (receipt?.status === "fabric_prep") receive_status = "fabric_prep";
-  else if (receipt) receive_status = "received";
+  const lineWorkOrders = readProductionWorkOrders().work_orders.filter(
+    (workOrder) => workOrder.sales_order_line_id === line.id
+  );
+  const receive_status = resolveFabricLineReceiveStatus(receipt, lineWorkOrders);
 
   return {
     client_code: order.client_code,

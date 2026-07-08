@@ -13,6 +13,10 @@ import {
   isFabricPrepType,
   nextFabricPrepStep,
 } from "@/lib/production/fabric-prep";
+import {
+  isFabricReceivingFloorLine,
+  resolveFabricLineReceiveStatus,
+} from "@/lib/production/fabric-receiving-floor";
 import { qrScanPayload } from "@/lib/production/qr-labels";
 import {
   fabricLineArticleNumber,
@@ -131,18 +135,6 @@ export function listActiveFabricReceipts(): FabricReceipt[] {
     .sort((a, b) => b.received_at.localeCompare(a.received_at));
 }
 
-function lineReceiveStatus(
-  receipt: FabricReceipt | undefined,
-  lineWorkOrders: ProductionWorkOrder[]
-): FabricLineReceiveStatus {
-  if (receipt) {
-    if (receipt.status === "handed_off") return "handed_off";
-    return receipt.status;
-  }
-  if (lineWorkOrders.length > 0) return "handed_off";
-  return "pending";
-}
-
 const PRODUCTION_PIPELINE_ORDER: ScanHighlightStage[] = [
   "cutting",
   "sewing",
@@ -160,10 +152,6 @@ function workOrdersByLineId(): Map<string, ProductionWorkOrder[]> {
     map.set(wo.sales_order_line_id, list);
   }
   return map;
-}
-
-function lineHasActiveProduction(workOrders: ProductionWorkOrder[]): boolean {
-  return workOrders.some((wo) => wo.status !== "completed");
 }
 
 function resolveHandedOffLineStage(workOrders: ProductionWorkOrder[]): ScanHighlightStage {
@@ -275,8 +263,8 @@ export async function listFabricReceivingOverview(
     order.fabric_lines.forEach((line, index) => {
       const receipt = receiptsByLineId.get(line.id);
       const lineWorkOrders = workOrdersByLine.get(line.id) ?? [];
-      const status = lineReceiveStatus(receipt, lineWorkOrders);
-      if (filter === "actionable" && status === "handed_off" && !lineHasActiveProduction(lineWorkOrders)) {
+      const status = resolveFabricLineReceiveStatus(receipt, lineWorkOrders);
+      if (filter === "actionable" && !isFabricReceivingFloorLine(status, order, line)) {
         return;
       }
 
