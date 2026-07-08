@@ -14,6 +14,7 @@ import {
   stickerPrintGuide,
 } from "@/lib/production/sticker-print-platform";
 import {
+  STICKER_PRINT_DRIVER_NOTE,
   STICKER_PRINT_PAPER_NOTE,
   STICKER_PRINT_SCALE_NOTE,
 } from "@/lib/production/sticker-print-html";
@@ -289,9 +290,15 @@ export function StickerPrintPreviewModal({
                   </li>
                   <li>
                     Paper <strong>51×102 mm portrait</strong>, margins <strong>None</strong>, scale{" "}
-                    <strong>100%</strong> — do <strong>not</strong> use Fit to page if the preview
-                    clips the QR.
+                    <strong>Actual size (100%)</strong> — do <strong>not</strong> use Fit to page /
+                    Fit to printable area.
                   </li>
+                  <li>
+                    Print opens the label as a <strong>PDF</strong> in a new window. If it does not
+                    print automatically, press <strong>Ctrl/Cmd+P</strong> there. Or use{" "}
+                    <strong>PDF</strong> below and print at Actual size.
+                  </li>
+                  <li className="text-amber-900">{STICKER_PRINT_DRIVER_NOTE}</li>
                 </ul>
                 <label className="mt-3 flex cursor-pointer items-start gap-2">
                   <input

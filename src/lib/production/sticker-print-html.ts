@@ -27,10 +27,17 @@ export const STICKER_PRINT_LANDSCAPE_W_MM = LABEL_MATCH_PRINTER_PAGE_H_MM;
 export const STICKER_PRINT_LANDSCAPE_H_MM = LABEL_MATCH_PRINTER_PAGE_W_MM;
 
 export const STICKER_PRINT_PAPER_NOTE =
-  "Paper: 51×102 mm portrait in the D550 driver. Scale 100% — do NOT use Fit to page if the preview clips.";
+  "Paper: 51×102 mm (2\"×4\") portrait in the D550 driver. Scale 100% — do NOT use Fit to page / Fit to printable area.";
 
 export const STICKER_PRINT_SCALE_NOTE =
-  "Set Scale to 100% (Actual size). Turn OFF Headers and footers — Chrome adds URL and date otherwise.";
+  "Print opens the label as a PDF. If it does not print automatically, press Ctrl/Cmd+P. Keep Scale = Actual size (100%) and Margins = None. Turn OFF Headers and footers.";
+
+/**
+ * The D550 Windows driver's own Printing Preferences can silently override the browser and
+ * shrink/offset labels. This must be checked once on the print PC.
+ */
+export const STICKER_PRINT_DRIVER_NOTE =
+  "One-time Windows check: Control Panel → Devices and Printers → D550 → Printing preferences → set Stock/Media = 51×102 mm (2\"×4\") and Scaling/Zoom = 100% (None). A wrong driver stock makes even actual-size labels print tiny in a corner.";
 
 export type StickerPrintHtmlOptions = {
   mode?: LabelPrintMode;

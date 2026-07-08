@@ -161,80 +161,61 @@ function triggerBlobDownload(blob: Blob, filename: string): void {
 }
 
 /**
- * Print the deterministic 51×102 mm portrait sticker PDF inside a popup via a full-window
- * iframe. Chrome renders the PDF at its own MediaBox (1:1) and iframe.contentWindow.print()
- * prints it with no re-layout, rotation, or offset — unlike the old HTML+PNG @page path.
+ * Print the deterministic 51×102 mm portrait sticker PDF by loading it as the TOP-LEVEL
+ * document of the popup window (popup.location = blob PDF URL). This is critical: Chromium
+ * only honours the PDF's /ViewerPreferences /PrintScaling /None when the PDF is the top-level
+ * document in its PDF viewer. When a PDF is embedded in an <iframe> and printed via JS, Chrome
+ * ignores the flag and falls back to "fit to printable area" → the tiny, cornered output.
+ *
+ * The popup shows Chrome's PDF viewer at actual size; a best-effort popup.print() is attempted
+ * (usually blocked cross-origin for the PDF viewer), otherwise the user prints with Ctrl/Cmd+P
+ * — either way it prints at actual size because the flag is honoured at the top level.
+ *
  * The popup must be opened synchronously from the click handler (openStickerPrintPopup).
  */
-function printStickerPdfInPopup(
+function printStickerPdfTopLevel(
   pdfBlob: Blob,
   popup: Window,
   onAfterPrint?: () => void
-): Promise<{ ok: boolean; reason?: StickerPrintFailureReason }> {
-  return new Promise((resolve) => {
-    // Create the blob URL in the popup's own context so its PDF iframe can always load it.
-    const urlFactory = popup.URL ?? URL;
-    const pdfUrl = urlFactory.createObjectURL(pdfBlob);
-    let finished = false;
+): { ok: boolean; reason?: StickerPrintFailureReason } {
+  // Create the blob URL in the OPENER context so it stays valid after the popup navigates.
+  const pdfUrl = URL.createObjectURL(pdfBlob);
 
-    const finish = (ok: boolean, reason?: StickerPrintFailureReason) => {
-      if (finished) return;
-      finished = true;
-      if (ok) onAfterPrint?.();
-      // Keep the popup open on success so the OS print dialog / spooling is never cut off;
-      // the user closes it. Revoke the object URL after enough time for spooling.
-      window.setTimeout(() => {
-        try {
-          urlFactory.revokeObjectURL(pdfUrl);
-        } catch {
-          /* popup already closed */
-        }
-      }, 120_000);
-      resolve({ ok, reason: ok ? undefined : reason ?? "unknown" });
-    };
-
+  try {
+    // Navigate the popup itself to the PDF → top-level PDF viewer (flag honoured).
+    popup.location.href = pdfUrl;
+  } catch {
     try {
-      const doc = popup.document;
-      doc.open();
-      doc.write(
-        `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8" /><title></title>` +
-          `<style>html,body{margin:0;padding:0;height:100%;background:#f8fafc;}` +
-          `iframe{border:0;position:fixed;inset:0;width:100%;height:100%;}` +
-          `.hint{font-family:system-ui,sans-serif;padding:12px;font-size:13px;color:#334155;}` +
-          `</style></head><body>` +
-          `<div class="hint">Opening the print dialog… If it does not appear, press Ctrl/Cmd+P.</div>` +
-          `</body></html>`
-      );
-      doc.close();
-
-      const iframe = doc.createElement("iframe");
-      iframe.setAttribute("title", "Sticker labels");
-      iframe.onload = () => {
-        try {
-          const win = iframe.contentWindow;
-          if (!win) {
-            finish(false, "print-blocked");
-            return;
-          }
-          win.focus();
-          win.print();
-          finish(true);
-        } catch {
-          finish(false, "print-blocked");
-        }
-      };
-      iframe.onerror = () => finish(false, "image-error");
-      iframe.src = pdfUrl;
-      doc.body.appendChild(iframe);
+      URL.revokeObjectURL(pdfUrl);
     } catch {
-      finish(false, "print-blocked");
+      /* noop */
     }
+    return { ok: false, reason: "print-blocked" };
+  }
 
-    // Safety net: if onload never fires (blocked plugin), resolve ok so the popup stays usable.
-    window.setTimeout(() => {
-      if (!finished) finish(true);
-    }, 120_000);
-  });
+  // Best-effort auto-print once the viewer has had time to load. Chrome's PDF viewer runs in
+  // an extension origin, so popup.print() typically throws cross-origin — that's fine, the PDF
+  // is on screen for the user to print manually.
+  window.setTimeout(() => {
+    try {
+      popup.focus();
+      popup.print();
+    } catch {
+      /* cross-origin PDF viewer — user prints with Ctrl/Cmd+P */
+    }
+  }, 1200);
+
+  // Revoke well after the user has had time to print/spool.
+  window.setTimeout(() => {
+    try {
+      URL.revokeObjectURL(pdfUrl);
+    } catch {
+      /* noop */
+    }
+  }, 600_000);
+
+  onAfterPrint?.();
+  return { ok: true };
 }
 
 function mapFetchErrorToReason(error: unknown): StickerPrintFailureReason {
@@ -245,13 +226,13 @@ function mapFetchErrorToReason(error: unknown): StickerPrintFailureReason {
 }
 
 /**
- * Fetch the deterministic server-generated 51×102 mm portrait sticker PDF and print it in a
- * popup via a full-window iframe. The PDF's MediaBox matches the D550 media exactly, so the
- * browser/driver prints it 1:1 — no rotation, no offset, no clipping. Never calls print() on
+ * Fetch the deterministic server-generated 51×102 mm portrait sticker PDF and open it as the
+ * TOP-LEVEL document of the popup window so Chromium honours /PrintScaling /None and prints at
+ * actual size (1:1) — no fit-to-printable shrink, rotation, or offset. Never calls print() on
  * the parent page.
  *
  * Pass a popup from openStickerPrintPopup() (opened synchronously on click) so blockers allow
- * the window; print() runs inside the popup after the PDF iframe loads.
+ * the window; the popup then navigates to the PDF and prints at the top level.
  */
 export async function printStickerPngs(
   request: StickerPdfRequest,
@@ -278,7 +259,7 @@ export async function printStickerPngs(
     }
 
     const pdfBlob = await res.blob();
-    const result = await printStickerPdfInPopup(pdfBlob, targetPopup, onAfterPrint);
+    const result = printStickerPdfTopLevel(pdfBlob, targetPopup, onAfterPrint);
     if (!result.ok) {
       showStickerPrintPopupError(
         targetPopup,
