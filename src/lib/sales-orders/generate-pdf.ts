@@ -1,10 +1,12 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import sharp from "sharp";
 import { formatSupplierUnitPrice } from "@/lib/currency/format";
 import {
   buildFabricLineArticleMap,
   formatLabelGarmentDescription,
   productionCodeFromSticker,
+  supplierFabricProductionCode,
 } from "@/lib/sales-orders/label-codes";
 import { productionBrandNameForOrder } from "@/lib/sales-orders/production-brand";
 import { qrImageFetchUrl } from "@/lib/production/qr-labels";
@@ -40,11 +42,80 @@ function groupLinesBySupplier(lines: SalesOrderFabricLine[]) {
   }, {});
 }
 
-async function fetchQrDataUrl(payload: string, size = 80): Promise<string> {
+/** JPEG embed — jsPDF Indexed 1-bit PNG from qrserver renders blank in most PDF viewers. */
+async function fetchQrJpegDataUrl(payload: string, size = 80): Promise<string> {
   const res = await fetch(qrImageFetchUrl(payload, size));
   if (!res.ok) throw new Error("Failed to load QR code image.");
-  const buffer = Buffer.from(await res.arrayBuffer());
-  return `data:image/png;base64,${buffer.toString("base64")}`;
+  const png = Buffer.from(await res.arrayBuffer());
+  const jpeg = await sharp(png).jpeg({ quality: 95, mozjpeg: true }).toBuffer();
+  return `data:image/jpeg;base64,${jpeg.toString("base64")}`;
+}
+
+type QrTableRow = {
+  article: number;
+  qrPayload: string;
+  cells: string[];
+};
+
+async function loadQrImages(rows: QrTableRow[], qrFetchSize: number): Promise<string[]> {
+  const qrCache = new Map<string, string>();
+  await Promise.all(
+    [...new Set(rows.map((row) => row.qrPayload))].map(async (payload) => {
+      qrCache.set(payload, await fetchQrJpegDataUrl(payload, qrFetchSize));
+    })
+  );
+  return rows.map((row) => qrCache.get(row.qrPayload) ?? "");
+}
+
+function renderQrTable(
+  doc: jsPDF,
+  margin: number,
+  startY: number,
+  title: string,
+  subtitle: string,
+  head: string[],
+  rows: QrTableRow[],
+  qrImages: string[],
+  qrDrawSize: number
+): number {
+  let y = startY;
+  doc.setFontSize(11);
+  doc.setTextColor(0);
+  doc.text(title, margin, y);
+  y += 16;
+  doc.setFontSize(8);
+  doc.setTextColor(90);
+  doc.text(subtitle, margin, y);
+  y += 18;
+
+  autoTable(doc, {
+    startY: y,
+    head: [head],
+    body: rows.map((row) => [String(row.article), "", ...row.cells]),
+    margin: { left: margin, right: margin },
+    styles: { fontSize: 7, cellPadding: 6, minCellHeight: 48, valign: "middle" },
+    headStyles: { fillColor: [71, 85, 105], textColor: 255 },
+    columnStyles: {
+      0: { cellWidth: 22, halign: "center" },
+      1: { cellWidth: 46, halign: "center" },
+    },
+    theme: "grid",
+    didDrawCell: (data) => {
+      if (data.section !== "body" || data.column.index !== 1) return;
+      const img = qrImages[data.row.index];
+      if (!img) return;
+      doc.addImage(
+        img,
+        "JPEG",
+        data.cell.x + (data.cell.width - qrDrawSize) / 2,
+        data.cell.y + (data.cell.height - qrDrawSize) / 2,
+        qrDrawSize,
+        qrDrawSize
+      );
+    },
+  });
+
+  return (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 16;
 }
 
 export async function generateSalesOrderPdf(
@@ -164,74 +235,71 @@ export async function generateSalesOrderPdf(
     y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 16;
   }
 
-  const stickerEntries = order.fabric_lines.flatMap((line, lineIndex) =>
-    (line.label_stickers ?? []).map((sticker) => ({
-      article: articleByLineId.get(line.id) ?? lineIndex + 1,
-      code: sticker.code,
-      fabric: line.fabric_number,
-      garment: formatLabelGarmentDescription(line.garment_type, sticker.piece_name),
-      qrPayload: productionCodeFromSticker(sticker.code, order.client_code),
-    }))
-  );
+  const qrFetchSize = 160;
+  const qrDrawSize = 38;
 
-  if (stickerEntries.length > 0) {
+  const fabricCutRows: QrTableRow[] = order.fabric_lines.map((line, lineIndex) => {
+    const article = articleByLineId.get(line.id) ?? lineIndex + 1;
+    const stickers = line.label_stickers ?? [];
+    const firstCode =
+      stickers[0]?.code ??
+      `${order.client_reference ?? order.so_number}-L${String(article).padStart(2, "0")}`;
+    const fabricCutCode = supplierFabricProductionCode(firstCode, order.client_code);
+    return {
+      article,
+      qrPayload: fabricCutCode,
+      cells: [fabricCutCode, line.fabric_number, line.garment_type, `${line.quantity} m`],
+    };
+  });
+
+  if (fabricCutRows.length > 0) {
     if (y > 680) {
       doc.addPage();
       y = margin;
     }
-
-    const qrCache = new Map<string, string>();
-    const qrFetchSize = 160;
-    const qrDrawSize = 38;
-    await Promise.all(
-      [...new Set(stickerEntries.map((entry) => entry.qrPayload))].map(async (payload) => {
-        qrCache.set(payload, await fetchQrDataUrl(payload, qrFetchSize));
-      })
+    const fabricCutQrImages = await loadQrImages(fabricCutRows, qrFetchSize);
+    y = renderQrTable(
+      doc,
+      margin,
+      y,
+      "Fabric cut QR — receive / wash",
+      "One QR per fabric line — scan when fabric arrives (before jacket / trouser split)",
+      ["Art.", "QR", "Fabric cut", "Fabric", "Garment", "Meters"],
+      fabricCutRows,
+      fabricCutQrImages,
+      qrDrawSize
     );
-    const qrImages = stickerEntries.map((entry) => qrCache.get(entry.qrPayload) ?? "");
+  }
 
-    doc.setFontSize(11);
-    doc.setTextColor(0);
-    doc.text("Label sticker codes", margin, y);
-    y += 16;
-    doc.setFontSize(8);
-    doc.setTextColor(90);
-    doc.text("Art. # matches fabric table — scan QR or use code on physical stickers", margin, y);
-    y += 18;
+  const stickerRows: QrTableRow[] = order.fabric_lines.flatMap((line, lineIndex) =>
+    (line.label_stickers ?? []).map((sticker) => ({
+      article: articleByLineId.get(line.id) ?? lineIndex + 1,
+      qrPayload: productionCodeFromSticker(sticker.code, order.client_code),
+      cells: [
+        sticker.code,
+        line.fabric_number,
+        formatLabelGarmentDescription(line.garment_type, sticker.piece_name),
+      ],
+    }))
+  );
 
-    autoTable(doc, {
-      startY: y,
-      head: [["Art.", "QR", "Code", "Fabric", "Garment"]],
-      body: stickerEntries.map((entry) => [
-        String(entry.article),
-        "",
-        entry.code,
-        entry.fabric,
-        entry.garment,
-      ]),
-      margin: { left: margin, right: margin },
-      styles: { fontSize: 7, cellPadding: 6, minCellHeight: 48, valign: "middle" },
-      headStyles: { fillColor: [71, 85, 105], textColor: 255 },
-      columnStyles: {
-        0: { cellWidth: 22, halign: "center" },
-        1: { cellWidth: 46, halign: "center" },
-      },
-      theme: "grid",
-      didDrawCell: (data) => {
-        if (data.section !== "body" || data.column.index !== 1) return;
-        const img = qrImages[data.row.index];
-        if (!img) return;
-        doc.addImage(
-          img,
-          "PNG",
-          data.cell.x + (data.cell.width - qrDrawSize) / 2,
-          data.cell.y + (data.cell.height - qrDrawSize) / 2,
-          qrDrawSize,
-          qrDrawSize
-        );
-      },
-    });
-    y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 16;
+  if (stickerRows.length > 0) {
+    if (y > 680) {
+      doc.addPage();
+      y = margin;
+    }
+    const stickerQrImages = await loadQrImages(stickerRows, qrFetchSize);
+    y = renderQrTable(
+      doc,
+      margin,
+      y,
+      "Label sticker codes",
+      "Art. # matches fabric table — scan QR or use code on physical stickers",
+      ["Art.", "QR", "Code", "Fabric", "Garment"],
+      stickerRows,
+      stickerQrImages,
+      qrDrawSize
+    );
   }
 
   if (order.notes?.trim()) {
