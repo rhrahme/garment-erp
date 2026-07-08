@@ -22,6 +22,7 @@ import type { PatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mi
 import { formatFabricCostHint, formatFabricCostSummary, formatFabricLineSupplierPrice, getFabricCostSummary, type FabricCostSummary } from "@/lib/sales-orders/fabric-cost";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
 import { FabricLineStickerPrintLinks } from "@/components/orders/FabricLineStickerPrintLinks";
+import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import { ProductionOrderAddFabrics } from "@/components/orders/ProductionOrderAddFabrics";
 import { OrderFabricLineEditor } from "@/components/orders/OrderFabricLineEditor";
 import { OrderFabricLineRemove } from "@/components/orders/OrderFabricLineRemove";
