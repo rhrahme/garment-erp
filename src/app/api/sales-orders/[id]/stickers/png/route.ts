@@ -43,7 +43,12 @@ type PngQuery = {
   codes: string[] | null;
   rotationDeg: ReturnType<typeof parseLabelRotation>;
   scalePct: ReturnType<typeof parseLabelScalePct>;
+  browserPrint: boolean;
 };
+
+function parseBrowserPrintParam(raw: string | null | undefined): boolean {
+  return raw === "1" || raw === "true";
+}
 
 function queryFromUrl(url: URL): PngQuery {
   return {
@@ -53,6 +58,7 @@ function queryFromUrl(url: URL): PngQuery {
     codes: parseCodesParam(url.searchParams.get("codes")),
     rotationDeg: parseLabelRotation(url.searchParams.get("rotation")),
     scalePct: parseLabelScalePct(url.searchParams.get("scale")),
+    browserPrint: parseBrowserPrintParam(url.searchParams.get("browser_print")),
   };
 }
 
@@ -84,8 +90,8 @@ function singlePngResponse(png: Buffer, filename: string): NextResponse {
 }
 
 async function generatePngResponse(orderId: string, query: PngQuery) {
-  const { sheet, poNumber, poId, codes, rotationDeg, scalePct } = query;
-  const pdfOptions = { rotationDeg, scalePct };
+  const { sheet, poNumber, poId, codes, rotationDeg, scalePct, browserPrint } = query;
+  const pdfOptions = { rotationDeg, scalePct, browserPrint };
 
   if (sheet === "calibration") {
     const pngs = await generateCalibrationStickerPngs();
@@ -171,6 +177,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       codes?: string[];
       rotation?: string | number | null;
       scale?: string | number | null;
+      browser_print?: boolean | string | number | null;
     };
 
     const query: PngQuery = {
@@ -180,6 +187,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       codes: parseCodesFromBody(body),
       rotationDeg: parseLabelRotation(body.rotation),
       scalePct: parseLabelScalePct(body.scale),
+      browserPrint: parseBrowserPrintParam(
+        body.browser_print === true || body.browser_print === 1 ? "1" : String(body.browser_print ?? "")
+      ),
     };
 
     return await generatePngResponse(id, query);

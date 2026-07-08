@@ -18,9 +18,9 @@ export const STICKER_PRINT_PORTRAIT_H_MM = LABEL_MATCH_PRINTER_PAGE_H_MM;
 
 /**
  * Browser direct print on D550: Chrome sends raster pages without the driver's PDF
- * ~90° CCW turn. Pre-rotate printer-match PNGs to landscape (QR left) and declare a
- * landscape @page so the full label fits — portrait 51×102 + object-fit:fill clips
- * the QR when headers are on or the dialog scales to default paper.
+ * ~90° CCW turn. Server pre-rotates printer-match PNGs to landscape (QR left) and
+ * declares a landscape @page so the full label fits — portrait 51×102 + object-fit:fill
+ * clips the QR when headers are on or the dialog scales to default paper.
  */
 export const STICKER_PRINT_LANDSCAPE_W_MM = LABEL_MATCH_PRINTER_PAGE_H_MM;
 export const STICKER_PRINT_LANDSCAPE_H_MM = LABEL_MATCH_PRINTER_PAGE_W_MM;
@@ -269,7 +269,7 @@ body {
   max-height: ${pageH}mm;
   margin: 0;
   padding: 0;
-  object-fit: fill;
+  object-fit: contain;
   object-position: center center;
 }
 @media print {
@@ -345,10 +345,7 @@ export async function pngBlobToDataUrl(blob: Blob): Promise<string> {
   });
 }
 
-/**
- * Rotate portrait printer-match PNG 270° CW — same transform as scripts/render-real-test-stickers
- * printsim — so browser print matches physical D550 output (QR left, text horizontal).
- */
+/** @deprecated Server pre-rotates printer-match PNGs — kept for legacy callers only. */
 export async function rotatePngBlobLandscapeCw270(blob: Blob): Promise<string> {
   const bitmap = await createImageBitmap(blob);
   const canvas = document.createElement("canvas");
@@ -359,6 +356,7 @@ export async function rotatePngBlobLandscapeCw270(blob: Blob): Promise<string> {
     bitmap.close();
     throw new Error("Canvas not available for sticker print rotation");
   }
+  ctx.imageSmoothingEnabled = false;
   ctx.translate(canvas.width / 2, canvas.height / 2);
   ctx.rotate((3 * Math.PI) / 2);
   ctx.drawImage(bitmap, -bitmap.width / 2, -bitmap.height / 2);
@@ -366,13 +364,11 @@ export async function rotatePngBlobLandscapeCw270(blob: Blob): Promise<string> {
   return canvas.toDataURL("image/png");
 }
 
+/** Server sends landscape PNGs for printer-match browser print — no client rotation. */
 export async function prepareBrowserPrintDataUrl(
   blob: Blob,
-  mode: LabelPrintMode
+  _mode: LabelPrintMode
 ): Promise<string> {
-  if (browserPrintNeedsLandscapeRotate(mode)) {
-    return rotatePngBlobLandscapeCw270(blob);
-  }
   return pngBlobToDataUrl(blob);
 }
 

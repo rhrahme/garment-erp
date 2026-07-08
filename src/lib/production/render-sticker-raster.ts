@@ -383,6 +383,27 @@ export function pngToDataUrl(png: Buffer): string {
   return `data:image/png;base64,${png.toString("base64")}`;
 }
 
+/**
+ * Rotate 51×102 portrait bilevel PNG 270° CW to 102×51 landscape for Chrome @page print.
+ * Must run server-side — browser canvas rotation re-encodes with image smoothing and
+ * corrupts 1-bit QR modules (fragmented / shifted / ghost outlines on the D550).
+ */
+export async function rotatePortraitPngForBrowserPrint(png: Buffer): Promise<Buffer> {
+  const meta = await sharp(png).metadata();
+  if (!meta.width || !meta.height) {
+    throw new Error("Invalid sticker PNG dimensions.");
+  }
+  if (meta.width >= meta.height) {
+    return png;
+  }
+
+  return sharp(png)
+    .rotate(270, { background: THERMAL_WHITE })
+    .threshold(THERMAL_BLACK_THRESHOLD)
+    .png({ compressionLevel: 6, palette: true, colours: 2, dither: 0 })
+    .toBuffer();
+}
+
 /** Reject anti-aliased gray rasters before JPEG — they print as hollow/fringed text. */
 async function assertBilevelThermalPng(png: Buffer): Promise<void> {
   const { data, info } = await sharp(png).raw().toBuffer({ resolveWithObject: true });

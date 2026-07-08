@@ -46,6 +46,7 @@ const checks = [
   ["print-color-adjust exact", html.includes("print-color-adjust: exact")],
   ["no document title (avoids print header)", !html.includes("<title>")],
   ["printer-match needs landscape rotate", browserPrintNeedsLandscapeRotate(PRINTER_MATCH_MODE)],
+  ["object-fit contain (no QR stretch)", html.includes("object-fit: contain")],
 ];
 
 let failed = false;

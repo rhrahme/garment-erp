@@ -9,6 +9,7 @@ import {
   DEFAULT_LABEL_SCALE_PCT,
   labelPdfOrientation,
   labelPdfPageSizeMm,
+  PRINTER_MATCH_MODE,
   type LabelPrintMode,
   type LabelScalePct,
 } from "@/lib/production/label-printer-settings";
@@ -17,6 +18,7 @@ import {
   pngToJpegDataUrl,
   renderCalibrationPagePng,
   renderStickerPagePng,
+  rotatePortraitPngForBrowserPrint,
 } from "@/lib/production/render-sticker-raster";
 
 /**
@@ -71,6 +73,8 @@ export type StickerPdfEntry = {
 export type StickerPdfOptions = {
   rotationDeg?: LabelPrintMode;
   scalePct?: LabelScalePct;
+  /** Landscape 102×51 rasters for browser print — server pre-rotates portrait PNGs. */
+  browserPrint?: boolean;
 };
 
 /**
@@ -119,6 +123,10 @@ export async function generateStickerRollPngs(
 
   for (const entry of entries) {
     pngs.push(await renderStickerPagePng(entry.label, entry.role, qrCache, mode, scalePct));
+  }
+
+  if (options.browserPrint && mode === PRINTER_MATCH_MODE) {
+    return Promise.all(pngs.map((png) => rotatePortraitPngForBrowserPrint(png)));
   }
 
   return pngs;

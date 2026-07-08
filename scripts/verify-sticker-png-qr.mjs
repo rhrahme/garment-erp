@@ -17,6 +17,8 @@ const jiti = createJiti(import.meta.url, {
 
 const { loadStickerPdfEntries } = jiti("@/lib/production/sticker-sheet-data");
 const { generateStickerRollPngs } = jiti("@/lib/production/generate-sticker-pdf");
+const { rotatePortraitPngForBrowserPrint } = jiti("@/lib/production/render-sticker-raster");
+const { PRINTER_MATCH_MODE } = jiti("@/lib/production/label-printer-settings");
 
 const loaded = await loadStickerPdfEntries(orderId, { sheet: "fabric-cuts" });
 if (!loaded || loaded.entries.length === 0) {
@@ -24,8 +26,12 @@ if (!loaded || loaded.entries.length === 0) {
   process.exit(1);
 }
 
-const pngs = await generateStickerRollPngs(loaded.entries.slice(0, 1));
+const pngs = await generateStickerRollPngs(loaded.entries.slice(0, 1), {
+  rotationDeg: PRINTER_MATCH_MODE,
+  browserPrint: true,
+});
 const png = pngs[0];
+const meta = await sharp(png).metadata();
 const { data, info } = await sharp(png).raw().toBuffer({ resolveWithObject: true });
 
 let black = 0;
@@ -43,10 +49,15 @@ const bilevel = gray === 0;
 const blackRatio = black / total;
 
 console.log("Order:", orderId, "·", loaded.order.so_number);
+console.log("Dimensions:", `${meta.width}×${meta.height}`, meta.width > meta.height ? "landscape" : "portrait");
 console.log("Pixels:", { black, white, gray, bilevel, blackRatio: blackRatio.toFixed(4) });
 
 if (!bilevel) {
   console.error("FAIL: PNG is not strict bilevel (gray pixels present)");
+  process.exit(1);
+}
+if (meta.width <= meta.height) {
+  console.error("FAIL: browser-print PNG must be landscape (width > height)");
   process.exit(1);
 }
 if (blackRatio < 0.02 || blackRatio > 0.45) {

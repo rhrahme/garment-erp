@@ -8,7 +8,7 @@ import {
   buildStickerPrintHtml,
   extractPngBlobsFromZip,
   openStickerPrintPopup,
-  prepareBrowserPrintDataUrl,
+  pngBlobToDataUrl,
   showStickerPrintPopupError,
 } from "@/lib/production/sticker-print-html";
 
@@ -62,7 +62,11 @@ function resolveScalePct(request: StickerPdfRequest): LabelScalePct {
   return request.scalePct ?? readLabelScalePct();
 }
 
-function buildStickerAssetUrl(request: StickerPdfRequest, format: "pdf" | "png"): string {
+function buildStickerAssetUrl(
+  request: StickerPdfRequest,
+  format: "pdf" | "png",
+  options: { browserPrint?: boolean } = {}
+): string {
   const { orderId, sheet = "pieces", po, poId, codes } = request;
   const params = new URLSearchParams({ sheet });
   if (po) params.set("po", po);
@@ -70,6 +74,7 @@ function buildStickerAssetUrl(request: StickerPdfRequest, format: "pdf" | "png")
   if (codes && codes.length > 0) params.set("codes", codes.join(","));
   params.set("rotation", String(resolveRotationDeg(request)));
   params.set("scale", String(resolveScalePct(request)));
+  if (options.browserPrint) params.set("browser_print", "1");
   return `/api/sales-orders/${orderId}/stickers/${format}?${params.toString()}`;
 }
 
@@ -81,7 +86,11 @@ function buildStickerPngUrl(request: StickerPdfRequest): string {
   return buildStickerAssetUrl(request, "png");
 }
 
-async function fetchStickerAsset(request: StickerPdfRequest, format: "pdf" | "png"): Promise<Response> {
+async function fetchStickerAsset(
+  request: StickerPdfRequest,
+  format: "pdf" | "png",
+  options: { browserPrint?: boolean } = {}
+): Promise<Response> {
   const { orderId, sheet = "pieces", po, poId, codes } = request;
   const rotationDeg = resolveRotationDeg(request);
   const scalePct = resolveScalePct(request);
@@ -98,24 +107,25 @@ async function fetchStickerAsset(request: StickerPdfRequest, format: "pdf" | "pn
         codes,
         rotation: rotationDeg,
         scale: scalePct,
+        browser_print: options.browserPrint ?? false,
       }),
       cache: "no-store",
     });
   }
 
-  return fetch(buildStickerAssetUrl(request, format), { cache: "no-store" });
+  return fetch(buildStickerAssetUrl(request, format, options), { cache: "no-store" });
 }
 
 async function fetchStickerPdf(request: StickerPdfRequest): Promise<Response> {
   return fetchStickerAsset(request, "pdf");
 }
 
-async function fetchStickerPng(request: StickerPdfRequest): Promise<Response> {
-  return fetchStickerAsset(request, "png");
+async function fetchStickerPng(request: StickerPdfRequest, browserPrint = false): Promise<Response> {
+  return fetchStickerAsset(request, "png", { browserPrint });
 }
 
 async function fetchStickerPngBlobs(request: StickerPdfRequest): Promise<Blob[]> {
-  const res = await fetchStickerPng(request);
+  const res = await fetchStickerPng(request, true);
   if (res.status === 401) {
     throw new Error("unauthorized");
   }
@@ -245,7 +255,7 @@ function mapFetchErrorToReason(error: unknown): StickerPrintFailureReason {
 
 /**
  * Fetch server-generated bilevel PNG(s) and open the system print dialog in a popup.
- * Printer-match mode pre-rotates to landscape 102×51 mm for D550 browser print.
+ * Printer-match mode uses server-pre-rotated landscape 102×51 mm PNGs for D550 browser print.
  * Never calls print() on the parent page.
  *
  * Pass a popup from openStickerPrintPopup() (opened synchronously on click) so blockers
@@ -264,9 +274,7 @@ export async function printStickerPngs(
   try {
     const mode = resolveRotationDeg(request);
     const pngBlobs = await fetchStickerPngBlobs(request);
-    const imageDataUrls = await Promise.all(
-      pngBlobs.map((blob) => prepareBrowserPrintDataUrl(blob, mode))
-    );
+    const imageDataUrls = await Promise.all(pngBlobs.map((blob) => pngBlobToDataUrl(blob)));
     const result = await printStickerImageDataUrls(imageDataUrls, mode, onAfterPrint, targetPopup);
     if (!result.ok) {
       showStickerPrintPopupError(
