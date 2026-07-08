@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronDown, ChevronRight } from "lucide-react";
+import { FabricLineStickerPrintLinks } from "@/components/orders/FabricLineStickerPrintLinks";
 import { Button } from "@/components/ui/Button";
 import {
   SalesOrderReceivingCutTable,
@@ -249,11 +250,18 @@ function FabricCutCard({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Link href={printHref} target="_blank">
+          <Link href={printHref} target="_blank" rel="noreferrer">
             <Button size="sm" variant="secondary">
               A4 list
             </Button>
           </Link>
+          <FabricLineStickerPrintLinks
+            orderId={order.sales_order_id}
+            lineId={line.sales_order_line_id}
+            garmentType={line.garment_type}
+            stickerCount={line.stickers.length}
+            showCutting={line.status !== "pending"}
+          />
           {showManual && (
             <button
               type="button"

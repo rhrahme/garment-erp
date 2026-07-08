@@ -13,6 +13,7 @@ import { salesOrderMatchesSearch } from "@/lib/sales-orders/list-search";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { formatDate } from "@/lib/utils";
+import { orderStickerSheetHref } from "@/lib/orders/sticker-print-links";
 import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import type { SalesOrderListRow } from "@/lib/data/sales-orders";
 
@@ -231,7 +232,23 @@ export function OrdersList({
                     <StatusBadge status={order.status} />
                   </td>
                   <td className={`sticky right-0 z-10 px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.15)] ${rowBg}`}>
-                    <div className="flex min-w-[12.5rem] items-center gap-2 whitespace-nowrap">
+                    <div className="flex min-w-[12.5rem] flex-wrap items-center gap-2 whitespace-nowrap">
+                      {taskOperatorMode && order.fabric_line_count > 0 ? (
+                        <>
+                          <Link
+                            href={orderStickerSheetHref(order.id, "fabric-cuts")}
+                            className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                          >
+                            Fabric stickers
+                          </Link>
+                          <Link
+                            href={orderStickerSheetHref(order.id, "pieces")}
+                            className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                          >
+                            Cutting stickers
+                          </Link>
+                        </>
+                      ) : null}
                       <DownloadSalesOrderPdfButton
                         orderId={order.id}
                         soNumber={order.so_number}

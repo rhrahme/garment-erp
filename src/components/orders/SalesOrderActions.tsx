@@ -21,7 +21,7 @@ import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders"
 import type { PatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mismatch";
 import { formatFabricCostHint, formatFabricCostSummary, formatFabricLineSupplierPrice, getFabricCostSummary, type FabricCostSummary } from "@/lib/sales-orders/fabric-cost";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
-import { ordersUiLabels } from "@/lib/orders/ui-labels";
+import { FabricLineStickerPrintLinks } from "@/components/orders/FabricLineStickerPrintLinks";
 import { ProductionOrderAddFabrics } from "@/components/orders/ProductionOrderAddFabrics";
 import { OrderFabricLineEditor } from "@/components/orders/OrderFabricLineEditor";
 import { OrderFabricLineRemove } from "@/components/orders/OrderFabricLineRemove";
@@ -541,6 +541,7 @@ export function SalesOrderActions({
                   />
                   {showSupplierEmailColumn ? <th className="px-3 py-2">Supplier email</th> : null}
                   <th className="px-3 py-2">Sticker</th>
+                  {effectiveViewMode === "production" ? <th className="px-3 py-2">Print</th> : null}
                 </tr>
               </thead>
               <tbody>
@@ -572,6 +573,16 @@ export function SalesOrderActions({
                     <td className="px-3 py-2 font-mono text-xs text-indigo-700">
                       {(line.label_stickers ?? [])[0]?.code ?? "—"}
                     </td>
+                    {effectiveViewMode === "production" ? (
+                      <td className="px-3 py-2">
+                        <FabricLineStickerPrintLinks
+                          orderId={order.id}
+                          lineId={line.id}
+                          garmentType={line.garment_type}
+                          stickerCount={(line.label_stickers ?? []).length}
+                        />
+                      </td>
+                    ) : null}
                   </tr>
                 ))}
               </tbody>

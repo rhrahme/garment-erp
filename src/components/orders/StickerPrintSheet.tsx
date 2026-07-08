@@ -15,6 +15,7 @@ import {
   stickerCodesForUnprintedLines,
   type StickerPreviewItem,
 } from "@/lib/production/sticker-print-selection";
+import { orderStickerSheetHref } from "@/lib/orders/sticker-print-links";
 import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
 import type { PrintablePoSheet, PrintableStickerLabel } from "@/lib/production/qr-labels";
 
@@ -44,6 +45,7 @@ type StickerPrintSheetProps = {
   salesOrderId: string;
   poNumber?: string;
   poId?: string;
+  lineId?: string;
   sheet?: StickerSheetMode;
 };
 
@@ -89,22 +91,11 @@ function readPrintedSheets(orderId: string): Set<StickerSheetMode> {
   return printed;
 }
 
-function stickerSheetHref(
-  orderId: string,
-  sheetMode: StickerSheetMode,
-  poNumber?: string,
-  poId?: string
-): string {
-  const params = new URLSearchParams({ sheet: sheetMode });
-  if (poNumber) params.set("po", poNumber);
-  if (poId) params.set("po_id", poId);
-  return `/orders/${orderId}/stickers?${params.toString()}`;
-}
-
 export function StickerPrintSheet({
   salesOrderId,
   poNumber,
   poId,
+  lineId,
   sheet = "pieces",
 }: StickerPrintSheetProps) {
   const [data, setData] = useState<StickersApiResponse | null>(null);
@@ -152,6 +143,14 @@ export function StickerPrintSheet({
 
   const stickerRole = sheet === "fabric-cuts" ? "prep" : "prod";
 
+  const filterLabelsForLine = useCallback(
+    (labels: Array<PrintableStickerLabel & { qr_url: string }>) => {
+      if (!lineId) return labels;
+      return labels.filter((label) => label.fabric_line_id === lineId);
+    },
+    [lineId]
+  );
+
   const sheets = useMemo(() => {
     if (!data) return [] as Array<
       PrintablePoSheet & {
@@ -159,26 +158,41 @@ export function StickerPrintSheet({
       }
     >;
 
+    const mapSheet = (
+      poSheet: PrintablePoSheet & {
+        labels: Array<PrintableStickerLabel & { qr_url: string }>;
+      }
+    ) => ({
+      ...poSheet,
+      labels: filterLabelsForLine(poSheet.labels),
+    });
+
     const fallbackSheet = {
       po_number: data.order.so_number,
       supplier_name: "All fabrics",
       client_code: data.order.client_code,
       so_number: data.order.so_number,
       client_reference: data.order.client_code,
-      labels: data.labels,
+      labels: filterLabelsForLine(data.labels),
     };
 
-    if (data.po_sheets.length > 0 && (poNumber || poId)) return data.po_sheets;
+    if (data.po_sheets.length > 0 && (poNumber || poId)) {
+      return data.po_sheets.map(mapSheet).filter((poSheet) => poSheet.labels.length > 0);
+    }
 
     const poLabelCount = data.po_sheets.reduce((sum, poSheet) => sum + poSheet.labels.length, 0);
-    if (data.po_sheets.length > 0 && poLabelCount > 0) return data.po_sheets;
+    if (data.po_sheets.length > 0 && poLabelCount > 0) {
+      return data.po_sheets.map(mapSheet).filter((poSheet) => poSheet.labels.length > 0);
+    }
 
-    if (data.labels.length > 0) return [fallbackSheet];
+    if (fallbackSheet.labels.length > 0) return [fallbackSheet];
 
-    if (data.po_sheets.length > 0) return data.po_sheets;
+    if (data.po_sheets.length > 0) {
+      return data.po_sheets.map(mapSheet).filter((poSheet) => poSheet.labels.length > 0);
+    }
 
     return [fallbackSheet];
-  }, [data, poNumber, poId]);
+  }, [data, filterLabelsForLine, poNumber, poId]);
 
   const previewItems = useMemo<StickerPreviewItem[]>(
     () =>
@@ -192,12 +206,18 @@ export function StickerPrintSheet({
   );
 
   const defaultSelectedCodes = useMemo(() => {
+    if (lineId) return previewItems.map((item) => item.label.sticker_code);
     if (!data?.unprinted_line_ids) return undefined;
     return stickerCodesForUnprintedLines(previewItems, {
       prep_stickers: data.unprinted_line_ids.prep_stickers,
       prod_stickers: data.unprinted_line_ids.prod_stickers,
     });
-  }, [data, previewItems]);
+  }, [data, lineId, previewItems]);
+
+  useEffect(() => {
+    if (!lineId || loading || previewItems.length === 0) return;
+    setPreviewOpen(true);
+  }, [lineId, loading, previewItems.length]);
 
   const handlePrintSelected = useCallback(
     (selectedCodes: string[]) => {
@@ -266,7 +286,7 @@ export function StickerPrintSheet({
             return (
               <Link
                 key={tab.id}
-                href={stickerSheetHref(salesOrderId, tab.id, poNumber, poId)}
+                href={orderStickerSheetHref(salesOrderId, tab.id, { po: poNumber, poId, lineId })}
                 className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                   active
                     ? "bg-emerald-600 text-white shadow-sm"
@@ -311,7 +331,10 @@ export function StickerPrintSheet({
           {singlePieceProductionEmpty ? (
             <p className="mt-2 text-sm text-slate-600">
               Single-piece garments (Short, Trouser, Shirt, …) use the same fabric-cut QR through cutting — switch to{" "}
-              <Link href={stickerSheetHref(salesOrderId, "fabric-cuts", poNumber, poId)} className="font-medium text-indigo-700 underline">
+              <Link
+                href={orderStickerSheetHref(salesOrderId, "fabric-cuts", { po: poNumber, poId, lineId })}
+                className="font-medium text-indigo-700 underline"
+              >
                 Preparation / receive stickers
               </Link>
               .

@@ -19,10 +19,10 @@ export default async function OrderStickersPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ po?: string; po_id?: string; sheet?: string }>;
+  searchParams: Promise<{ po?: string; po_id?: string; sheet?: string; line?: string }>;
 }) {
   const { id } = await params;
-  const { po, po_id: poId, sheet: sheetParam } = await searchParams;
+  const { po, po_id: poId, sheet: sheetParam, line: lineParam } = await searchParams;
   const session = await getSessionContext();
   await ensureDocumentsLoaded(["sales_orders"]);
   const order = getSalesOrderById(id);
@@ -40,7 +40,7 @@ export default async function OrderStickersPage({
             : `${order.so_number} · ${order.client_name} — one QR per piece (jacket, trouser, …) for cutting & sewing`
         }
       />
-      <StickerPrintSheet salesOrderId={id} poNumber={po} poId={poId} sheet={sheet} />
+      <StickerPrintSheet salesOrderId={id} poNumber={po} poId={poId} lineId={lineParam} sheet={sheet} />
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { orderStickerSheetHref } from "@/lib/orders/sticker-print-links";
 import { notFound, redirect } from "next/navigation";
 import { FabricCostSummaryBlock } from "@/components/orders/FabricCostSummaryBlock";
 import { DownloadSalesOrderPdfButton } from "@/components/orders/DownloadSalesOrderPdfButton";
@@ -76,6 +78,20 @@ export default async function SalesOrderDetailPage({
         }
         action={
           <div className="flex flex-wrap items-center gap-3">
+            {taskOperatorMode && order.fabric_lines.length > 0 ? (
+              <>
+                <Link href={orderStickerSheetHref(order.id, "fabric-cuts")}>
+                  <Button variant="secondary" size="sm">
+                    Fabric stickers
+                  </Button>
+                </Link>
+                <Link href={orderStickerSheetHref(order.id, "pieces")}>
+                  <Button variant="secondary" size="sm">
+                    Cutting stickers
+                  </Button>
+                </Link>
+              </>
+            ) : null}
             <DownloadSalesOrderPdfButton
               orderId={order.id}
               soNumber={order.so_number}

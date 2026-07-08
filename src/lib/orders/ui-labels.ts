@@ -16,7 +16,8 @@ export function ordersUiLabels(productionMode: boolean, taskOperatorMode = false
       workflowTitle: "Floor workflow",
       workflowSteps: [
         "Open an order that already has fabrics assigned",
-        "Print A4 receiving lists and fabric-cut / production stickers",
+        "Print fabric-cut stickers per line (receive / wash) — use Print orders or Fabric Receiving",
+        "After wash & iron, print cutting stickers for multi-piece garments (suit = jacket + trouser)",
         "Scan fabrics at Fabric Receiving — wash and iron stations",
       ],
       allOrdersLink: "← All print orders",
