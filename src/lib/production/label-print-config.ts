@@ -10,8 +10,13 @@
 export const LABEL_ROLL_WIDTH_MM = 50;
 export const LABEL_ROLL_HEIGHT_MM = 100;
 
-/** 300 DPI — thermal printers are typically 203–300 DPI. */
-export const STICKER_RASTER_DPI = 300;
+/**
+ * D550 native print resolution (8 dots/mm). Rendering the raster at the printer's
+ * EXACT device resolution means the browser/driver maps image pixels ~1:1 to printer
+ * dots — no non-integer downscale (the old 300→203 resample shifted QR module
+ * boundaries and fragmented the code). QR modules are also whole integer pixels here.
+ */
+export const STICKER_RASTER_DPI = 203;
 
 /**
  * "Match my printer" media — the EXACT driver media of the user's D550 preset

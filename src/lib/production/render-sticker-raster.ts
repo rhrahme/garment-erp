@@ -22,12 +22,13 @@ import {
   formatStickerBatchMark,
   formatStickerCutLength,
   formatStickerLabelsSent,
-  qrImageFetchUrl,
   resolveStickerRole,
   STICKER_ROLE_LABEL,
   type PrintableStickerLabel,
   type StickerRole,
 } from "@/lib/production/qr-labels";
+import { planQr, renderQrPngBuffer } from "@/lib/production/qr-render";
+import { fitStickerText, stickerTextPath, type TextAnchor } from "@/lib/production/sticker-text";
 import { stripBrandPrefixFromProductionCode } from "@/lib/sales-orders/label-codes";
 
 /**
@@ -72,23 +73,6 @@ function lineHeightMm(fontMm: number): number {
   return fontMm * LINE_HEIGHT_FACTOR;
 }
 
-function escapeXml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
-/** Rough Helvetica width estimate for truncation (avg 0.52× font size per char). */
-function fitTextApprox(text: string, maxWidthMm: number, fontMm: number): string {
-  const maxChars = Math.max(1, Math.floor(maxWidthMm / (fontMm * 0.52)));
-  if (text.length <= maxChars) return text;
-  const trimmed = text.slice(0, Math.max(1, maxChars - 1));
-  return `${trimmed}…`;
-}
-
 function formatWeight(weightGsm: number | null): string | null {
   if (weightGsm == null) return null;
   return `${weightGsm} gsm`;
@@ -98,20 +82,6 @@ function pieceLabel(label: PrintableStickerLabel): string {
   return label.production_code === label.fabric_cut_code
     ? `Cut · ${label.piece_name}`
     : label.piece_name;
-}
-
-async function fetchQrPngBuffer(payload: string, size = 450): Promise<Buffer> {
-  const res = await fetch(qrImageFetchUrl(payload, size));
-  if (!res.ok) throw new Error("Failed to load QR code image.");
-  return Buffer.from(await res.arrayBuffer());
-}
-
-type TextLine = { text: string; fontMm: number; x: number; y: number; align?: "left" | "right" | "center" };
-
-function svgTextLine(line: TextLine): string {
-  const anchor =
-    line.align === "right" ? "end" : line.align === "center" ? "middle" : "start";
-  return `<text x="${line.x}" y="${line.y}" font-family="Helvetica, Arial, sans-serif" font-size="${line.fontMm}" fill="${STICKER_COLOR}" text-anchor="${anchor}" dominant-baseline="middle">${escapeXml(line.text)}</text>`;
 }
 
 export type StickerQrPlacementMm = {
@@ -197,17 +167,25 @@ export function buildStickerPageSvg(
   const headerH = lineHeightMm(headerFontMm);
   y += headerH / 2;
   textElements.push(
-    svgTextLine({
+    stickerTextPath({
       text: STICKER_ROLE_LABEL[stickerRole],
       fontMm: headerFontMm,
       x: textX,
       y,
-      align: "left",
+      anchor: "left",
+      fill: STICKER_COLOR,
     })
   );
   if (batchMark) {
     textElements.push(
-      svgTextLine({ text: batchMark, fontMm: headerFontMm, x: textRightX, y, align: "right" })
+      stickerTextPath({
+        text: batchMark,
+        fontMm: headerFontMm,
+        x: textRightX,
+        y,
+        anchor: "right",
+        fill: STICKER_COLOR,
+      })
     );
   }
   y += headerH / 2 + gap;
@@ -215,16 +193,16 @@ export function buildStickerPageSvg(
   for (const line of lines) {
     const lineH = lineHeightMm(line.fontMm);
     y += lineH / 2;
-    const fitted = fitTextApprox(line.text, contentW, line.fontMm);
+    const fitted = fitStickerText(line.text, contentW, line.fontMm);
     textElements.push(
-      svgTextLine({ text: fitted, fontMm: line.fontMm, x: textX, y, align: "left" })
+      stickerTextPath({ text: fitted, fontMm: line.fontMm, x: textX, y, anchor: "left", fill: STICKER_COLOR })
     );
     y += lineH / 2 + gap;
   }
 
-  // QR is composited after SVG rasterize (nearest-neighbor). Embedding the QR PNG in the
-  // SVG and bilevel-thresholding the raster creates hollow module outlines from librsvg
-  // anti-aliasing when the image is scaled to print resolution.
+  // The QR is composited as a crisp integer-module raster AFTER this SVG is rasterized
+  // (see renderStickerPagePng). It is never scaled, so modules stay whole pixels. Text is
+  // pre-converted to <path> outlines (sticker-text.ts) so it does not depend on host fonts.
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg"
   width="${dims.W}mm" height="${dims.H}mm" viewBox="0 0 ${dims.W} ${dims.H}">
@@ -245,20 +223,19 @@ async function finalizeThermalRaster(pipeline: sharp.Sharp): Promise<Buffer> {
     .toBuffer();
 }
 
-async function compositeQrOnRaster(
+/** Composite the crisp QR raster centered in its placement box — NO resize (keeps modules whole pixels). */
+function compositeQrOnRaster(
   textLayer: Buffer,
   qrPng: Buffer,
+  qrDim: number,
   qr: StickerQrPlacementMm
-): Promise<sharp.Sharp> {
-  const qrPx = Math.round(mmToPx(qr.size));
-  const qrX = Math.round(mmToPx(qr.x));
-  const qrY = Math.round(mmToPx(qr.y));
-  const qrResized = await sharp(qrPng)
-    .resize(qrPx, qrPx, { kernel: sharp.kernel.nearest })
-    .png()
-    .toBuffer();
-
-  return sharp(textLayer).composite([{ input: qrResized, left: qrX, top: qrY }]);
+): sharp.Sharp {
+  const boxPx = Math.round(mmToPx(qr.size));
+  const boxX = Math.round(mmToPx(qr.x));
+  const boxY = Math.round(mmToPx(qr.y));
+  const left = boxX + Math.max(0, Math.floor((boxPx - qrDim) / 2));
+  const top = boxY + Math.max(0, Math.floor((boxPx - qrDim) / 2));
+  return sharp(textLayer).composite([{ input: qrPng, left, top }]);
 }
 
 /** Rasterize sticker SVG (+ optional 180° flip) to PNG at STICKER_RASTER_DPI. */
@@ -268,7 +245,8 @@ export async function rasterizeStickerSvg(
   pageH: number,
   mode: LabelPrintMode,
   qrPng?: Buffer,
-  qr?: StickerQrPlacementMm
+  qr?: StickerQrPlacementMm,
+  qrDim?: number
 ): Promise<Buffer> {
   const widthPx = Math.round(mmToPx(pageW));
   const heightPx = Math.round(mmToPx(pageH));
@@ -280,7 +258,7 @@ export async function rasterizeStickerSvg(
     .toBuffer();
 
   let pipeline: sharp.Sharp =
-    qrPng && qr ? await compositeQrOnRaster(textLayer, qrPng, qr) : sharp(textLayer);
+    qrPng && qr && qrDim ? compositeQrOnRaster(textLayer, qrPng, qrDim, qr) : sharp(textLayer);
 
   if (isFlipped(mode)) {
     pipeline = pipeline.rotate(180);
@@ -296,14 +274,21 @@ export async function renderStickerPagePng(
   mode: LabelPrintMode,
   scalePct: LabelScalePct
 ): Promise<Buffer> {
+  const layout = buildStickerPageSvg(label, role, mode, scalePct);
+  const boxPx = Math.round(mmToPx(layout.qr.size));
+
   let qrBuf = qrCache.get(label.qr_payload);
+  let qrDim: number;
   if (!qrBuf) {
-    qrBuf = await fetchQrPngBuffer(label.qr_payload, 450);
+    const rendered = await renderQrPngBuffer(label.qr_payload, boxPx);
+    qrBuf = rendered.png;
+    qrDim = rendered.plan.dim;
     qrCache.set(label.qr_payload, qrBuf);
+  } else {
+    qrDim = planQr(label.qr_payload, boxPx).dim;
   }
 
-  const layout = buildStickerPageSvg(label, role, mode, scalePct);
-  return rasterizeStickerSvg(layout.svg, layout.pageW, layout.pageH, mode, qrBuf, layout.qr);
+  return rasterizeStickerSvg(layout.svg, layout.pageW, layout.pageH, mode, qrBuf, layout.qr, qrDim);
 }
 
 /** Calibration page: huge letter + QR + text, whole design box rotated CW about page centre. */
@@ -342,11 +327,10 @@ export function buildCalibrationPageSvg(
     dx: number,
     dy: number,
     fontMm: number,
-    align: "left" | "center" | "right"
+    align: TextAnchor
   ): string => {
     const p = mapPoint(dx, dy);
-    const anchor = align === "right" ? "end" : align === "center" ? "middle" : "start";
-    return `<text x="${p.x}" y="${p.y}" font-family="Helvetica, Arial, sans-serif" font-size="${fontMm}" fill="${STICKER_COLOR}" text-anchor="${anchor}" dominant-baseline="middle">${escapeXml(text)}</text>`;
+    return stickerTextPath({ text, x: p.x, y: p.y, fontMm, anchor: align, fill: STICKER_COLOR });
   };
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -424,6 +408,10 @@ async function assertBilevelThermalPng(png: Buffer): Promise<void> {
  */
 export async function pngToJpegDataUrl(png: Buffer): Promise<string> {
   await assertBilevelThermalPng(png);
-  const jpeg = await sharp(png).jpeg({ quality: 95, mozjpeg: true }).toBuffer();
+  // 4:4:4 (no chroma subsampling) keeps QR module edges sharp — subsampling smears the
+  // 1-pixel black/white transitions across 2×2 blocks and can merge adjacent modules.
+  const jpeg = await sharp(png)
+    .jpeg({ quality: 95, mozjpeg: true, chromaSubsampling: "4:4:4" })
+    .toBuffer();
   return `data:image/jpeg;base64,${jpeg.toString("base64")}`;
 }
