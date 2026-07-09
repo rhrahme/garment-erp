@@ -1131,9 +1131,9 @@
           "fabric_brand": "Solbiati",
           "composition": "SATIN TWISTED 100%LI",
           "weight_gsm": 500,
-          "quantity": 2,
+          "quantity": 1,
           "unit_price": 4500,
-          "line_total": 9000,
+          "line_total": 4500,
           "cost_hint_sar": 1121.76,
           "fabric_cost_hint_sar": 871.76
         },
@@ -1445,13 +1445,13 @@
         }
       ],
       "notes": null,
-      "total": 147600.01,
+      "total": 143100.01,
       "status": "draft",
       "paid_at": null,
       "sent_at": null,
       "currency": "SAR",
       "due_date": null,
-      "subtotal": 147600.01,
+      "subtotal": 143100.01,
       "vat_rate": null,
       "client_id": "new-1783281036086",
       "so_number": "SO-2026-0119",
@@ -1468,8 +1468,9 @@
       "total_cost_sar": 35313.99,
       "client_reference": "FR-0726-0039-SO-2026-0119",
       "factory_brand_name": "Fouad Rahme",
-      "delivery_destination": "DXB"
+      "delivery_destination": "DXB",
+      "updated_at": "2026-07-09T11:55:53.500Z"
     }
   ],
-  "updated_at": "2026-07-08T17:01:19.220Z"
+  "updated_at": "2026-07-09T11:55:53.501Z"
 }
