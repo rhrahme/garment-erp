@@ -294,9 +294,10 @@ export function StickerPrintPreviewModal({
                     Fit to printable area.
                   </li>
                   <li>
-                    Print opens the label as a <strong>PDF</strong> in a new window. If it does not
-                    print automatically, press <strong>Ctrl/Cmd+P</strong> there. Or use{" "}
-                    <strong>PDF</strong> below and print at Actual size.
+                    Print opens a new window with the label image(s) and auto-opens the system
+                    dialog. If it does not print automatically, press <strong>Ctrl/Cmd+P</strong>{" "}
+                    there. Or use <strong>PDF</strong> / <strong>PNG</strong> below and print at
+                    Actual size.
                   </li>
                   <li className="text-amber-900">{STICKER_PRINT_DRIVER_NOTE}</li>
                 </ul>

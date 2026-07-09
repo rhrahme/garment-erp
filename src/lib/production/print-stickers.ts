@@ -6,7 +6,9 @@ import {
 } from "@/lib/production/label-printer-settings";
 import {
   buildStickerPrintHtml,
+  extractPngBlobsFromZip,
   openStickerPrintPopup,
+  pngBlobToDataUrl,
   showStickerPrintPopupError,
 } from "@/lib/production/sticker-print-html";
 
@@ -161,58 +163,34 @@ function triggerBlobDownload(blob: Blob, filename: string): void {
 }
 
 /**
- * Print the deterministic 51×102 mm portrait sticker PDF by loading it as the TOP-LEVEL
- * document of the popup window (popup.location = blob PDF URL). This is critical: Chromium
- * only honours the PDF's /ViewerPreferences /PrintScaling /None when the PDF is the top-level
- * document in its PDF viewer. When a PDF is embedded in an <iframe> and printed via JS, Chrome
- * ignores the flag and falls back to "fit to printable area" → the tiny, cornered output.
+ * Write the print document (one bilevel PNG per label, @page = 51×102 mm portrait, margin 0)
+ * into the popup and let its boot script auto-print when the images finish loading.
  *
- * The popup shows Chrome's PDF viewer at actual size; a best-effort popup.print() is attempted
- * (usually blocked cross-origin for the PDF viewer), otherwise the user prints with Ctrl/Cmd+P
- * — either way it prints at actual size because the flag is honoured at the top level.
- *
- * The popup must be opened synchronously from the click handler (openStickerPrintPopup).
+ * Why HTML+PNG and NOT the PDF viewer: Chrome's PDF viewer print dialog defaults Scale to
+ * "Fit to printable area", which shrinks the 51×102 label into the D550's small imageable
+ * region → the tiny, cornered, text-clipped output the user kept getting. Chrome IGNORES the
+ * PDF's /ViewerPreferences /PrintScaling /None on the Windows print path, so that flag never
+ * fixed it. Printing an HTML page instead defaults Scale to 100% and honours @page size with
+ * margin:0, so the label maps 1:1 onto the media with no shrink, rotation, or offset. The PNG
+ * bytes are the EXACT same server raster shown in the preview → preview and print can't diverge.
  */
-function printStickerPdfTopLevel(
-  pdfBlob: Blob,
+function writeStickerPrintDocument(
+  dataUrls: string[],
   popup: Window,
+  mode: LabelPrintMode,
   onAfterPrint?: () => void
 ): { ok: boolean; reason?: StickerPrintFailureReason } {
-  // Create the blob URL in the OPENER context so it stays valid after the popup navigates.
-  const pdfUrl = URL.createObjectURL(pdfBlob);
-
-  try {
-    // Navigate the popup itself to the PDF → top-level PDF viewer (flag honoured).
-    popup.location.href = pdfUrl;
-  } catch {
-    try {
-      URL.revokeObjectURL(pdfUrl);
-    } catch {
-      /* noop */
-    }
-    return { ok: false, reason: "print-blocked" };
+  if (dataUrls.length === 0) {
+    return { ok: false, reason: "no-images" };
   }
 
-  // Best-effort auto-print once the viewer has had time to load. Chrome's PDF viewer runs in
-  // an extension origin, so popup.print() typically throws cross-origin — that's fine, the PDF
-  // is on screen for the user to print manually.
-  window.setTimeout(() => {
-    try {
-      popup.focus();
-      popup.print();
-    } catch {
-      /* cross-origin PDF viewer — user prints with Ctrl/Cmd+P */
-    }
-  }, 1200);
-
-  // Revoke well after the user has had time to print/spool.
-  window.setTimeout(() => {
-    try {
-      URL.revokeObjectURL(pdfUrl);
-    } catch {
-      /* noop */
-    }
-  }, 600_000);
+  try {
+    popup.document.open();
+    popup.document.write(buildStickerPrintHtml(dataUrls, { mode }));
+    popup.document.close();
+  } catch {
+    return { ok: false, reason: "print-blocked" };
+  }
 
   onAfterPrint?.();
   return { ok: true };
@@ -226,13 +204,14 @@ function mapFetchErrorToReason(error: unknown): StickerPrintFailureReason {
 }
 
 /**
- * Fetch the deterministic server-generated 51×102 mm portrait sticker PDF and open it as the
- * TOP-LEVEL document of the popup window so Chromium honours /PrintScaling /None and prints at
- * actual size (1:1) — no fit-to-printable shrink, rotation, or offset. Never calls print() on
- * the parent page.
+ * Fetch the server-generated bilevel sticker PNG(s) — the EXACT raster the preview shows — and
+ * print them from an HTML popup with @page = 51×102 mm portrait, margin 0. HTML print defaults
+ * Scale to 100% (unlike the PDF viewer, which defaults to "Fit to printable area" and shrank the
+ * label into a corner), so each page maps 1:1 onto the D550 media with no shrink, rotation, or
+ * offset. Never calls print() on the parent page.
  *
  * Pass a popup from openStickerPrintPopup() (opened synchronously on click) so blockers allow
- * the window; the popup then navigates to the PDF and prints at the top level.
+ * the window; the popup then receives the print document and auto-prints on image load.
  */
 export async function printStickerPngs(
   request: StickerPdfRequest,
@@ -245,7 +224,7 @@ export async function printStickerPngs(
   }
 
   try {
-    const res = await fetchStickerPdf(request);
+    const res = await fetchStickerPng(request);
     if (res.status === 401) {
       showStickerPrintPopupError(targetPopup, stickerPrintFailureMessage("unauthorized"));
       return { ok: false, reason: "unauthorized" };
@@ -255,20 +234,37 @@ export async function printStickerPngs(
       return { ok: false, reason: "no-labels" };
     }
     if (!res.ok) {
-      throw new Error(`Sticker PDF request failed: ${res.status}`);
+      throw new Error(`Sticker PNG request failed: ${res.status}`);
     }
 
-    const pdfBlob = await res.blob();
-    const result = printStickerPdfTopLevel(pdfBlob, targetPopup, onAfterPrint);
+    const contentType = res.headers.get("Content-Type") ?? "";
+    const blob = await res.blob();
+    const pngBlobs = contentType.includes("zip")
+      ? await extractPngBlobsFromZip(blob)
+      : [blob];
+
+    if (pngBlobs.length === 0) {
+      showStickerPrintPopupError(targetPopup, stickerPrintFailureMessage("no-images"));
+      return { ok: false, reason: "no-images" };
+    }
+
+    const dataUrls = await Promise.all(pngBlobs.map((png) => pngBlobToDataUrl(png)));
+    const result = writeStickerPrintDocument(
+      dataUrls,
+      targetPopup,
+      resolveRotationDeg(request),
+      onAfterPrint
+    );
     if (!result.ok) {
       showStickerPrintPopupError(
         targetPopup,
         stickerPrintFailureMessage(result.reason ?? "unknown")
       );
+      return { ok: false, reason: result.reason };
     }
-    return { ok: result.ok, reason: result.reason };
+    return { ok: true, pageCount: dataUrls.length };
   } catch (error) {
-    console.error("Failed to print sticker PDF:", error);
+    console.error("Failed to print sticker labels:", error);
     const reason = mapFetchErrorToReason(error);
     showStickerPrintPopupError(targetPopup, stickerPrintFailureMessage(reason));
     return { ok: false, reason };

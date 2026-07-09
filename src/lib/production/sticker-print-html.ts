@@ -30,7 +30,7 @@ export const STICKER_PRINT_PAPER_NOTE =
   "Paper: 51×102 mm (2\"×4\") portrait in the D550 driver. Scale 100% — do NOT use Fit to page / Fit to printable area.";
 
 export const STICKER_PRINT_SCALE_NOTE =
-  "Print opens the label as a PDF. If it does not print automatically, press Ctrl/Cmd+P. Keep Scale = Actual size (100%) and Margins = None. Turn OFF Headers and footers.";
+  "Print opens the label image(s) in a new window and auto-opens the system dialog. If it does not print automatically, press Ctrl/Cmd+P. Keep Scale = 100% (Default, NOT Fit to printable area) and Margins = None. Turn OFF Headers and footers.";
 
 /**
  * The D550 Windows driver's own Printing Preferences can silently override the browser and
