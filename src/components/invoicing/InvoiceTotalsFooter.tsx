@@ -15,6 +15,10 @@ export type InvoiceTotalsFooterProps = {
   showDhsEquivalent: boolean;
   /** `print` = InvoiceDocument/PDF; `editor` = line-editing table with cost-hint column */
   variant: "print" | "editor";
+  /** Headline count of individual garment pieces (combo sets expanded). */
+  totalGarmentItems?: number | null;
+  /** Sum of raw line quantities (combo set with qty 1 counts as 1). */
+  totalQuantity?: number | null;
 };
 
 export function InvoiceTotalsFooter({
@@ -25,6 +29,8 @@ export function InvoiceTotalsFooter({
   total,
   showDhsEquivalent,
   variant,
+  totalGarmentItems,
+  totalQuantity,
 }: InvoiceTotalsFooterProps) {
   const dhsSubtotal = showDhsEquivalent ? sarToDhs(subtotal) : null;
   const dhsVatAmount =
@@ -36,10 +42,34 @@ export function InvoiceTotalsFooter({
   const pad = isPrint ? "" : "px-4 ";
   const labelAlign = "text-right";
   const amountAlign = "text-right";
+  const showGarmentItems = totalGarmentItems != null;
+  const showQuantity = totalQuantity != null;
+  const hasCountSummary = showGarmentItems || showQuantity;
+  const subtotalBorder = isPrint || hasCountSummary ? undefined : "border-t border-slate-200";
 
   return (
     <>
-      <tr className={isPrint ? undefined : "border-t border-slate-200"}>
+      {showGarmentItems && (
+        <tr className={isPrint ? undefined : "border-t border-slate-200"}>
+          <td colSpan={labelColSpan} className={`${pad}py-2 ${labelAlign} font-medium text-slate-700`}>
+            Total garment items
+          </td>
+          <td className={`${pad}py-2 ${amountAlign} font-semibold text-slate-900`}>
+            {totalGarmentItems}
+          </td>
+          {!isPrint && <td className={`${pad}py-2`} />}
+        </tr>
+      )}
+      {showQuantity && (
+        <tr>
+          <td colSpan={labelColSpan} className={`${pad}pb-2 ${labelAlign} text-slate-500`}>
+            Total quantity
+          </td>
+          <td className={`${pad}pb-2 ${amountAlign} font-medium text-slate-600`}>{totalQuantity}</td>
+          {!isPrint && <td className={`${pad}pb-2`} />}
+        </tr>
+      )}
+      <tr className={subtotalBorder}>
         <td colSpan={labelColSpan} className={`${pad}py-2 ${labelAlign} text-slate-600`}>
           Subtotal ({currency})
         </td>

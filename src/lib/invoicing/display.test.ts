@@ -2,7 +2,13 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { CustomerInvoiceLine } from "@/lib/types/customer-invoices";
 import { resolveInvoiceGarmentDescription } from "@/lib/sales-orders/label-codes";
-import { normalizeInvoiceLine, resolveInvoiceLines, toInvoiceLineDisplay } from "./display.ts";
+import {
+  computeInvoiceLineTotals,
+  countGarmentPiecesForLine,
+  normalizeInvoiceLine,
+  resolveInvoiceLines,
+  toInvoiceLineDisplay,
+} from "./display.ts";
 
 function line(overrides: Partial<CustomerInvoiceLine> & Pick<CustomerInvoiceLine, "id">): CustomerInvoiceLine {
   return {
@@ -73,5 +79,42 @@ describe("resolveInvoiceLines", () => {
     const [normalized] = resolveInvoiceLines([line({ id: "batch-suit" })]);
     assert.equal(normalized!.garment_type, "Suit");
     assert.equal(normalized!.description, "Suit (Jacket + Trouser)");
+  });
+});
+
+describe("countGarmentPiecesForLine", () => {
+  it("counts single garment types as one piece", () => {
+    assert.equal(countGarmentPiecesForLine({ garment_type: "Shirt LS", piece_name: "Shirt LS" }), 1);
+    assert.equal(countGarmentPiecesForLine({ garment_type: "Jacket", piece_name: "Jacket" }), 1);
+  });
+
+  it("expands combo garment types into pieces", () => {
+    assert.equal(countGarmentPiecesForLine({ garment_type: "Shirt+Short", piece_name: "Shirt + Short" }), 2);
+    assert.equal(
+      countGarmentPiecesForLine({ garment_type: "Shirt+Trouser+Short", piece_name: "Shirt + Trouser + Short" }),
+      3
+    );
+    assert.equal(countGarmentPiecesForLine({ garment_type: "Overshirt+Trouser", piece_name: "Overshirt + Trouser" }), 2);
+  });
+
+  it("counts a jacket + trouser suit set as two pieces", () => {
+    assert.equal(countGarmentPiecesForLine({ garment_type: "Trouser", piece_name: "Jacket + Trouser" }), 2);
+  });
+
+  it("falls back to combo type when piece_name is missing", () => {
+    assert.equal(countGarmentPiecesForLine({ garment_type: "Shirt+Short", piece_name: null }), 2);
+  });
+});
+
+describe("computeInvoiceLineTotals", () => {
+  it("sums quantity and expands combo pieces × quantity", () => {
+    const totals = computeInvoiceLineTotals([
+      line({ id: "a", garment_type: "Shirt LS", piece_name: "Shirt LS", quantity: 2 }),
+      line({ id: "b", garment_type: "Shirt+Short", piece_name: "Shirt + Short", quantity: 1 }),
+      line({ id: "c", garment_type: "Shirt+Trouser+Short", piece_name: "Shirt + Trouser + Short", quantity: 1 }),
+    ]);
+    assert.equal(totals.lineCount, 3);
+    assert.equal(totals.totalQuantity, 4);
+    assert.equal(totals.totalGarmentItems, 7);
   });
 });

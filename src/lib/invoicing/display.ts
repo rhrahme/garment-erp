@@ -5,6 +5,7 @@ import {
   resolveCombinedGarmentType,
   resolveInvoiceGarmentDescription,
 } from "@/lib/sales-orders/label-codes";
+import { getLabelCountForGarment } from "@/lib/sales-orders/garment-types";
 import type { CustomerInvoiceLine } from "@/lib/types/customer-invoices";
 
 /** Client name on printed invoices — formal Mr prefix for bespoke clients. */
@@ -191,6 +192,44 @@ export function toInvoiceLineDisplay(line: CustomerInvoiceLine): CustomerInvoice
       resolved.weight_gsm
     ),
   };
+}
+
+/**
+ * Number of individual garment pieces in one line's garment type.
+ * Combo sets count each piece (Shirt+Short = 2, Suit = Jacket+Trouser = 2),
+ * single types count as 1. Prefers the explicit piece_name list, then falls
+ * back to the garment-type piece definition in garment-types / label-codes.
+ */
+export function countGarmentPiecesForLine(
+  line: Pick<CustomerInvoiceLine, "garment_type" | "piece_name">
+): number {
+  const pieceNames = pieceNamesFromInvoicePieceField(line.piece_name);
+  if (pieceNames.length > 1) return pieceNames.length;
+  const effectiveType = resolveCombinedGarmentType(line.garment_type, pieceNames);
+  const pieceCount = getLabelCountForGarment(effectiveType);
+  return pieceCount > 0 ? pieceCount : 1;
+}
+
+export interface InvoiceLineTotals {
+  lineCount: number;
+  /** Sum of raw line quantities (a combo set with qty 1 counts as 1). */
+  totalQuantity: number;
+  /** Sum of individual garment pieces × quantity across all lines. */
+  totalGarmentItems: number;
+}
+
+/** Aggregate line counts for an invoice — combo lines expand into their pieces. */
+export function computeInvoiceLineTotals(
+  lines: Array<Pick<CustomerInvoiceLine, "garment_type" | "piece_name" | "quantity">>
+): InvoiceLineTotals {
+  let totalQuantity = 0;
+  let totalGarmentItems = 0;
+  for (const line of lines) {
+    const qty = Number.isFinite(line.quantity) ? line.quantity : 0;
+    totalQuantity += qty;
+    totalGarmentItems += countGarmentPiecesForLine(line) * qty;
+  }
+  return { lineCount: lines.length, totalQuantity, totalGarmentItems };
 }
 
 export function sortInvoiceLinesByArticle(lines: CustomerInvoiceLine[]): CustomerInvoiceLine[] {

@@ -3,6 +3,7 @@ import autoTable from "jspdf-autotable";
 import { sarToDhs } from "@/lib/currency/config";
 import type { InvoiceDocumentData } from "@/components/invoicing/InvoiceDocument";
 import {
+  computeInvoiceLineTotals,
   formatInvoiceClientName,
   formatInvoiceClientRef,
 } from "@/lib/invoicing/display";
@@ -123,7 +124,10 @@ export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): 
 
   y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
 
+  const lineTotals = computeInvoiceLineTotals(invoice.lines);
   const totalsBody: string[][] = [
+    ["Total garment items", String(lineTotals.totalGarmentItems)],
+    ["Total quantity", String(lineTotals.totalQuantity)],
     [`Subtotal (${invoice.currency})`, formatInvoiceSarForPdf(invoice.subtotal)],
   ];
   if (showDhsEquivalent) {

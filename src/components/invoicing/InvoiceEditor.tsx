@@ -11,6 +11,7 @@ import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview"
 import type { FabricSwatchKey } from "@/lib/fabric-sourcing/fabric-swatch-keys";
 import type { CustomerInvoice, CustomerInvoiceLine, CustomerInvoiceStatus } from "@/lib/types/customer-invoices";
 import {
+  computeInvoiceLineTotals,
   formatInvoiceClientName,
   resolveInvoiceLines,
   sortInvoiceLinesByArticle,
@@ -95,6 +96,8 @@ export function InvoiceEditor({
       ? Math.round(liveSubtotal * invoice.vat_rate * 100) / 100
       : 0;
   const liveTotal = Math.round((liveSubtotal + liveVatAmount) * 100) / 100;
+
+  const lineTotals = useMemo(() => computeInvoiceLineTotals(resolveInvoiceLines(lines)), [lines]);
 
   const showDhsEquivalent = isDubaiFabricDelivery(invoice.delivery_destination);
   const showRiyadhBankPdf = isRiyadhFabricDelivery(invoice.delivery_destination);
@@ -310,6 +313,8 @@ export function InvoiceEditor({
               total={liveTotal}
               showDhsEquivalent={showDhsEquivalent}
               variant="editor"
+              totalGarmentItems={lineTotals.totalGarmentItems}
+              totalQuantity={lineTotals.totalQuantity}
             />
           </tfoot>
         </table>

@@ -1,6 +1,7 @@
 import { InvoiceBankDetails } from "@/components/invoicing/InvoiceBankDetails";
 import { InvoiceTotalsFooter } from "@/components/invoicing/InvoiceTotalsFooter";
 import {
+  computeInvoiceLineTotals,
   formatInvoiceClientName,
   formatInvoiceClientRef,
   type CustomerInvoiceLineDisplay,
@@ -35,6 +36,7 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
   const clientRef = formatInvoiceClientRef(invoice.client_code, invoice.client_reference);
   const issuer = getInvoiceIssuerDetails(invoice.delivery_destination, invoice.factory_brand_name);
   const showDhsEquivalent = isDubaiFabricDelivery(invoice.delivery_destination);
+  const lineTotals = computeInvoiceLineTotals(invoice.lines);
 
   return (
     <div className="invoice-document mx-auto max-w-3xl bg-white p-8 text-slate-900">
@@ -97,6 +99,8 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
             total={invoice.total}
             showDhsEquivalent={showDhsEquivalent}
             variant="print"
+            totalGarmentItems={lineTotals.totalGarmentItems}
+            totalQuantity={lineTotals.totalQuantity}
           />
         </tfoot>
       </table>
