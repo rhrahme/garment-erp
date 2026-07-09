@@ -84,7 +84,8 @@ export type StickerPdfOptions = {
 
 /**
  * Server-generated roll PDF — one rasterised label per page.
- * Default mode "printer-match" outputs 51×102 mm portrait bitmap pages.
+ * Default mode "printer-match" outputs 102×51 mm landscape bitmap pages (design pre-rotated so
+ * the D550's fixed 90° CW turn lands each label upright on the 51×102 portrait stock).
  */
 export async function generateStickerRollPdf(
   entries: StickerPdfEntry[],
@@ -130,10 +131,9 @@ export async function generateStickerRollPngs(
     pngs.push(await renderStickerPagePng(entry.label, entry.role, qrCache, mode, scalePct));
   }
 
-  // Browser print for printer-match sends the PORTRAIT 51×102 raster as-is so the @page and
-  // the D550 media orientation match exactly (no rotation → no driver offset/clipping). The
-  // earlier landscape pre-rotation fought the driver's own portrait auto-rotate and shifted
-  // content off the left/top edge.
+  // printer-match rasters are already emitted LANDSCAPE 102×51 (design pre-rotated 90° CCW in
+  // renderStickerPagePng) so the D550's fixed 90° CW turn lands them upright on the portrait
+  // label. Preview, PDF, PNG download and browser print therefore all share the identical bytes.
   return pngs;
 }
 

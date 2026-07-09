@@ -25,7 +25,11 @@ import {
   STICKER_PRINT_HEADERS_HINT,
   type StickerPdfSheet,
 } from "@/lib/production/print-stickers";
-import type { LabelPrintMode, LabelScalePct } from "@/lib/production/label-printer-settings";
+import {
+  isPrinterMatchMode,
+  type LabelPrintMode,
+  type LabelScalePct,
+} from "@/lib/production/label-printer-settings";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 
 type StickerPrintPreviewModalProps = {
@@ -72,6 +76,13 @@ function PreviewCard({
   const previewScale = 0.42;
   const [imgFailed, setImgFailed] = useState(false);
 
+  // printer-match rasters are emitted LANDSCAPE (design pre-rotated 90° CCW so the D550's fixed
+  // 90° CW turn lands them upright). Show that exact bitmap rotated 90° CW in the portrait box so
+  // the preview matches how the physical label reads — same source bytes, just de-rotated for view.
+  const dePreRotate = isPrinterMatchMode(rotation);
+  const boxWmm = LABEL_ROLL_WIDTH_MM * previewScale;
+  const boxHmm = LABEL_ROLL_HEIGHT_MM * previewScale;
+
   // Render the EXACT server raster (the same bitmap embedded in the print PDF), so the
   // preview is pixel-identical to what prints. Falls back to the HTML StickerCell only if
   // the image fails to load (e.g. session expired).
@@ -110,11 +121,8 @@ function PreviewCard({
       </div>
       <div className="flex justify-center overflow-hidden p-2">
         <div
-          className="border border-slate-200"
-          style={{
-            width: `${LABEL_ROLL_WIDTH_MM * previewScale}mm`,
-            height: `${LABEL_ROLL_HEIGHT_MM * previewScale}mm`,
-          }}
+          className="relative overflow-hidden border border-slate-200"
+          style={{ width: `${boxWmm}mm`, height: `${boxHmm}mm` }}
         >
           {imgFailed ? (
             <div
@@ -135,13 +143,31 @@ function PreviewCard({
               alt={`Sticker ${code} print preview`}
               loading="lazy"
               onError={() => setImgFailed(true)}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "contain",
-                display: "block",
-                backgroundColor: "#ffffff",
-              }}
+              style={
+                dePreRotate
+                  ? {
+                      // Landscape bitmap → rotate 90° CW around centre to read upright in the
+                      // portrait box. Its CSS box is transposed (Hbox × Wbox) so the rotation
+                      // fills the box exactly.
+                      position: "absolute",
+                      left: "50%",
+                      top: "50%",
+                      width: `${boxHmm}mm`,
+                      height: `${boxWmm}mm`,
+                      transform: "translate(-50%, -50%) rotate(90deg)",
+                      transformOrigin: "center center",
+                      objectFit: "contain",
+                      display: "block",
+                      backgroundColor: "#ffffff",
+                    }
+                  : {
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                      display: "block",
+                      backgroundColor: "#ffffff",
+                    }
+              }
             />
           )}
         </div>

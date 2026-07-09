@@ -17,11 +17,10 @@ export const STICKER_PRINT_PORTRAIT_W_MM = LABEL_MATCH_PRINTER_PAGE_W_MM;
 export const STICKER_PRINT_PORTRAIT_H_MM = LABEL_MATCH_PRINTER_PAGE_H_MM;
 
 /**
- * Browser direct print on D550: send the PORTRAIT 51×102 raster with a portrait @page so
- * the page orientation matches the driver media exactly. An earlier build pre-rotated to
- * landscape + landscape @page, but the D550 driver auto-rotates landscape pages to fit its
- * portrait media, and that mismatch shifted content off the left/top edge (see IMG_9233).
- * Kept for legacy verify scripts / callers.
+ * Browser direct print on D550: send a LANDSCAPE 102×51 raster (the portrait design pre-rotated
+ * 90° CCW) with a landscape @page. The D550 driver applies a FIXED 90° CW rotation to every page
+ * (verified pixel-for-pixel against IMG_9251: an upright portrait page prints sideways and clips
+ * the tall content). Emitting landscape lets that turn cancel to an upright 51×102 portrait label.
  */
 export const STICKER_PRINT_LANDSCAPE_W_MM = LABEL_MATCH_PRINTER_PAGE_H_MM;
 export const STICKER_PRINT_LANDSCAPE_H_MM = LABEL_MATCH_PRINTER_PAGE_W_MM;
@@ -215,12 +214,13 @@ export function browserPrintPageLayout(mode: LabelPrintMode = PRINTER_MATCH_MODE
   landscape: boolean;
 } {
   if (isPrinterMatchMode(mode)) {
-    // Match the D550 media exactly: portrait 51×102. The raster is already portrait and
-    // centered, so @page == media → the driver prints 1:1 with no rotation and no offset.
+    // Emit a LANDSCAPE 102×51 page whose raster is the portrait design pre-rotated 90° CCW.
+    // The D550 driver's fixed 90° CW turn cancels it back to an upright 51×102 portrait label
+    // (its media), so nothing is rotated or clipped. @page bytes == preview bytes == PDF bytes.
     return {
-      pageW: STICKER_PRINT_PORTRAIT_W_MM,
-      pageH: STICKER_PRINT_PORTRAIT_H_MM,
-      landscape: false,
+      pageW: STICKER_PRINT_LANDSCAPE_W_MM,
+      pageH: STICKER_PRINT_LANDSCAPE_H_MM,
+      landscape: true,
     };
   }
 
@@ -348,8 +348,8 @@ ${STICKER_PRINT_BOOT_SCRIPT}
 }
 
 /**
- * Printer-match now prints the portrait raster as-is (no pre-rotation) so page orientation
- * matches the D550 media. Always false; kept for legacy callers.
+ * printer-match rasters are pre-rotated to landscape inside renderStickerPagePng, so no extra
+ * rotation is needed here. Always false; kept for legacy callers.
  */
 export function browserPrintNeedsLandscapeRotate(_mode: LabelPrintMode): boolean {
   return false;

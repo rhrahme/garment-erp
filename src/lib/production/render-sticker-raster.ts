@@ -287,8 +287,15 @@ export async function rasterizeStickerSvg(
   let pipeline: sharp.Sharp =
     qrPng && qr && qrDim ? compositeQrOnRaster(textLayer, qrPng, qrDim, qr) : sharp(textLayer);
 
-  if (isFlipped(mode)) {
-    pipeline = pipeline.rotate(180);
+  // printer-match: the D550 driver applies a FIXED 90° clockwise rotation to whatever page it
+  // receives (confirmed by matching IMG_9251 pixel-for-pixel). An upright portrait raster comes
+  // out sideways with the tall content clipped off the label. So emit the portrait design
+  // pre-rotated 90° CCW (rotate 270) → a 102×51 landscape raster; the driver's +90° CW cancels
+  // it and the label prints upright and complete. Rotation by 90° multiples is a lossless pixel
+  // remap (no interpolation), so the bilevel QR modules stay crisp.
+  const rotateDeg = mode === PRINTER_MATCH_MODE ? 270 : isFlipped(mode) ? 180 : 0;
+  if (rotateDeg !== 0) {
+    pipeline = pipeline.rotate(rotateDeg, { background: THERMAL_WHITE });
   }
 
   return finalizeThermalRaster(pipeline);

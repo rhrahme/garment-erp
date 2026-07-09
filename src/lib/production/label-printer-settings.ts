@@ -17,13 +17,17 @@ import {
 export type LabelRotationDeg = 0 | 90 | 180 | 270;
 
 /**
- * Full set of print modes. `"printer-match"` is the DEFAULT: it ADAPTS the PDF
- * to the user's D550 (driver media 51×102 portrait, "Fit to paper") instead of
- * asking them to change driver settings. The page is built at EXACTLY 51×102 mm
- * with portrait layout (QR top, text below) and identity transforms only — AIMO
- * drivers ignore PDF rotation matrices, so content must not use Tm rotation.
- * The driver's fixed ~90° CCW rasterisation maps that layout onto the physical
- * landscape label (QR left, horizontal text right).
+ * Full set of print modes. `"printer-match"` is the DEFAULT: it ADAPTS the output
+ * to the user's D550 instead of asking them to change driver settings.
+ *
+ * The D550 driver applies a FIXED 90° CLOCKWISE rotation to every page it prints
+ * (verified: an upright portrait 51×102 page comes out sideways on the label with
+ * the tall content clipped after the QR). So printer-match emits the readable
+ * portrait design (QR top, text below) already rotated 90° COUNTER-CLOCKWISE into a
+ * 102×51 LANDSCAPE page/raster. The driver's own +90° CW turn cancels it, landing an
+ * upright, complete 51×102 portrait label. Rotation is a lossless 90° pixel remap so
+ * the bilevel QR stays crisp. Keep the driver media on 51×102 mm — do NOT change its
+ * orientation, or the two rotations stop cancelling.
  */
 export const PRINTER_MATCH_MODE = "printer-match" as const;
 export type LabelPrintMode = LabelRotationDeg | typeof PRINTER_MATCH_MODE;
@@ -97,9 +101,9 @@ export const LABEL_ROTATION_OPTIONS: ReadonlyArray<{
 }> = [
   {
     value: PRINTER_MATCH_MODE,
-    label: "Match my printer (51×102, Fit to paper) — DEFAULT",
+    label: "Match my printer (D550) — DEFAULT",
     description:
-      "DEFAULT. Adapts the PDF to your D550 as-is — DO NOT change any driver settings. Keep the driver media on 51×102 mm portrait, Scale “Fit to paper”, margins none, and just print. The PDF page is exactly 51×102 mm with QR on top and text below (no PDF rotation matrices — the driver ignores them). The printer’s built-in ~90° CCW turn maps that onto the landscape label: QR on the LEFT, text on the RIGHT.",
+      "DEFAULT. Adapts the label to your D550 as-is — DO NOT change any driver settings. Keep the driver media on 51×102 mm (2×4 in) and just print. The page is emitted as 102×51 landscape with the design pre-rotated, so the printer’s built-in 90° turn lands it upright on the portrait label: QR on top, all text below, nothing clipped. If the label prints upside-down, switch to the “flipped” mode below.",
   },
   {
     value: 90,
@@ -161,9 +165,11 @@ export function writeLabelRotation(rotation: LabelPrintMode): void {
 }
 
 export function labelPdfPageSizeMm(mode: LabelPrintMode): { width: number; height: number } {
-  // printer-match = portrait 51×102 (EXACT driver media; Fit-to-paper is a no-op).
+  // printer-match = LANDSCAPE 102×51. The readable portrait design is pre-rotated 90° CCW into
+  // this landscape page; the D550 driver's fixed 90° CW turn cancels it back to an upright
+  // 51×102 portrait label (its media size), so nothing is rotated or clipped.
   if (mode === PRINTER_MATCH_MODE) {
-    return { width: LABEL_MATCH_PRINTER_PAGE_W_MM, height: LABEL_MATCH_PRINTER_PAGE_H_MM };
+    return { width: LABEL_MATCH_PRINTER_PAGE_H_MM, height: LABEL_MATCH_PRINTER_PAGE_W_MM };
   }
   // 90°/270° = native landscape page (100×50, QR left / text right).
   // 0°/180° = native portrait page (50×100, QR top / text below).
@@ -174,6 +180,7 @@ export function labelPdfPageSizeMm(mode: LabelPrintMode): { width: number; heigh
 }
 
 export function labelPdfOrientation(mode: LabelPrintMode): "portrait" | "landscape" {
-  // printer-match is a portrait page (the readable content is pre-rotated within it).
-  return mode === 90 || mode === 270 ? "landscape" : "portrait";
+  // printer-match is a landscape page (the readable content is pre-rotated within it so the
+  // driver's own 90° turn lands it upright on the portrait label).
+  return mode === PRINTER_MATCH_MODE || mode === 90 || mode === 270 ? "landscape" : "portrait";
 }
