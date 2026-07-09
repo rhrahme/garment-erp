@@ -1390,26 +1390,8 @@
           "fabric_cost_hint_sar": 537.23
         },
         {
-          "id": "inv-line-so-1783283492238-35",
-          "article_number": 22,
-          "sales_order_line_id": "line-1783283492238-34",
-          "description": "Jacket",
-          "garment_type": "Jacket",
-          "piece_name": "Jacket",
-          "sticker_code": "FR-0726-0039-SO-2026-0119-L35-JKT",
-          "fabric_number": "360101",
-          "fabric_brand": "Caccioppoli",
-          "composition": "65%wv.-21%se.-14%li",
-          "weight_gsm": 240,
-          "quantity": 1,
-          "unit_price": 7000,
-          "line_total": 7000,
-          "cost_hint_sar": 1148.44,
-          "fabric_cost_hint_sar": 748.44
-        },
-        {
           "id": "inv-line-so-1783283492238-36",
-          "article_number": 23,
+          "article_number": 22,
           "sales_order_line_id": "line-1783283492238-36",
           "description": "Overshirt+Trouser (Overshirt + Trouser)",
           "garment_type": "Overshirt+Trouser",
@@ -1427,7 +1409,7 @@
         },
         {
           "id": "inv-line-so-1783283492238-37",
-          "article_number": 24,
+          "article_number": 23,
           "sales_order_line_id": "line-1783283492238-37",
           "description": "Shirt LS",
           "garment_type": "Shirt LS",
@@ -1445,13 +1427,13 @@
         }
       ],
       "notes": null,
-      "total": 143100.01,
+      "total": 136100.01,
       "status": "draft",
       "paid_at": null,
       "sent_at": null,
       "currency": "SAR",
       "due_date": null,
-      "subtotal": 143100.01,
+      "subtotal": 136100.01,
       "vat_rate": null,
       "client_id": "new-1783281036086",
       "so_number": "SO-2026-0119",
@@ -1469,8 +1451,8 @@
       "client_reference": "FR-0726-0039-SO-2026-0119",
       "factory_brand_name": "Fouad Rahme",
       "delivery_destination": "DXB",
-      "updated_at": "2026-07-09T11:55:53.500Z"
+      "updated_at": "2026-07-09T11:58:09.832Z"
     }
   ],
-  "updated_at": "2026-07-09T11:55:53.501Z"
+  "updated_at": "2026-07-09T11:58:09.833Z"
 }
