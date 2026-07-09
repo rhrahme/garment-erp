@@ -28,7 +28,12 @@ import {
   type StickerRole,
 } from "@/lib/production/qr-labels";
 import { planQr, renderQrPngBuffer } from "@/lib/production/qr-render";
-import { fitStickerText, stickerTextPath, type TextAnchor } from "@/lib/production/sticker-text";
+import {
+  fitStickerText,
+  measureStickerText,
+  stickerTextPath,
+  type TextAnchor,
+} from "@/lib/production/sticker-text";
 import { stripBrandPrefixFromProductionCode } from "@/lib/sales-orders/label-codes";
 
 /**
@@ -126,13 +131,23 @@ export function buildStickerPageSvg(
   // Base (scale = 1) font sizes. The effective scale is solved below so the whole block
   // always fits the fixed 51×102 mm media — content can never overflow / clip the bottom,
   // regardless of the requested scale setting (100/125/150).
-  const baseLines: Array<{ text: string; baseFont: number }> = [
+  // The cut length and label count share ONE line ("3 m   2 labels"): meters keeps its larger
+  // emphasis and the label count sits next to it in the smaller font.
+  type BaseLine = {
+    text: string;
+    baseFont: number;
+    trailing?: { text: string; baseFont: number };
+  };
+  const baseLines: BaseLine[] = [
     { text: label.client_code, baseFont: LABEL_STICKER_FONT_MM.clientCode },
     { text: label.client_name, baseFont: LABEL_STICKER_FONT_MM.clientName },
     { text: productionCodeLine, baseFont: LABEL_STICKER_FONT_MM.productionCode },
     { text: fabricLine, baseFont: LABEL_STICKER_FONT_MM.fabric },
-    { text: cutLengthLine, baseFont: LABEL_STICKER_FONT_MM.cutLength },
-    { text: labelsLine, baseFont: LABEL_STICKER_FONT_MM.labels },
+    {
+      text: cutLengthLine,
+      baseFont: LABEL_STICKER_FONT_MM.cutLength,
+      trailing: { text: labelsLine, baseFont: LABEL_STICKER_FONT_MM.labels },
+    },
   ];
   if (specLine) baseLines.push({ text: specLine, baseFont: LABEL_STICKER_FONT_MM.spec });
   baseLines.push({ text: pieceLabel(label), baseFont: LABEL_STICKER_FONT_MM.piece });
@@ -155,7 +170,11 @@ export function buildStickerPageSvg(
   const columnGap = colGapBase * scale;
   const gap = LABEL_STICKER_LINE_GAP_MM * scale;
   const headerFontMm = LABEL_STICKER_FONT_MM.header * scale;
-  const lines = baseLines.map((l) => ({ text: l.text, fontMm: l.baseFont * scale }));
+  const lines = baseLines.map((l) => ({
+    text: l.text,
+    fontMm: l.baseFont * scale,
+    trailing: l.trailing ? { text: l.trailing.text, fontMm: l.trailing.baseFont * scale } : undefined,
+  }));
   const textBlockH = textBlock1 * scale;
 
   let qrSize: number;
@@ -220,10 +239,34 @@ export function buildStickerPageSvg(
   for (const line of lines) {
     const lineH = lineHeightMm(line.fontMm);
     y += lineH / 2;
-    const fitted = fitStickerText(line.text, contentW, line.fontMm);
-    textElements.push(
-      stickerTextPath({ text: fitted, fontMm: line.fontMm, x: textX, y, anchor: "left", fill: STICKER_COLOR })
-    );
+    if (line.trailing) {
+      // "3 m   2 labels" on one baseline: meters left in the larger font, label count in the
+      // smaller font just after it. Reserve room for the trailing so meters never eats it.
+      const trailingGap = 3 * scale;
+      const trailingW = measureStickerText(line.trailing.text, line.trailing.fontMm);
+      const mainMaxW = Math.max(0, contentW - trailingGap - trailingW);
+      const fittedMain = fitStickerText(line.text, mainMaxW, line.fontMm);
+      textElements.push(
+        stickerTextPath({ text: fittedMain, fontMm: line.fontMm, x: textX, y, anchor: "left", fill: STICKER_COLOR })
+      );
+      const trailingX = textX + measureStickerText(fittedMain, line.fontMm) + trailingGap;
+      const fittedTrailing = fitStickerText(line.trailing.text, textRightX - trailingX, line.trailing.fontMm);
+      textElements.push(
+        stickerTextPath({
+          text: fittedTrailing,
+          fontMm: line.trailing.fontMm,
+          x: trailingX,
+          y,
+          anchor: "left",
+          fill: STICKER_COLOR,
+        })
+      );
+    } else {
+      const fitted = fitStickerText(line.text, contentW, line.fontMm);
+      textElements.push(
+        stickerTextPath({ text: fitted, fontMm: line.fontMm, x: textX, y, anchor: "left", fill: STICKER_COLOR })
+      );
+    }
     y += lineH / 2 + gap;
   }
 

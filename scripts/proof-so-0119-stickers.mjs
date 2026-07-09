@@ -41,19 +41,33 @@ const pdfPath = resolve(projectRoot, "proof-so-0119-fabric-cuts.pdf");
 writeFileSync(pdfPath, Buffer.from(pdfBytes));
 console.log("PDF:", pdfPath, `(${pdfBytes.length} bytes, ${loaded.entries.length} pages)`);
 
+// Pick a label that has MULTIPLE labels so the merged "3 m   2 labels" line is visible
+// (prefer Caccioppoli / 360140 = 35/36, else any labels_sent > 1, else the first label).
+const targetIdx = (() => {
+  const byFabric = loaded.entries.findIndex((e) => e.label.fabric_number === "360140");
+  if (byFabric >= 0) return byFabric;
+  const byMulti = loaded.entries.findIndex((e) => (e.label.labels_sent ?? 0) > 1);
+  return byMulti >= 0 ? byMulti : 0;
+})();
+const targetLabel = loaded.entries[targetIdx].label;
+console.log(
+  `proof label: idx ${targetIdx} · ${targetLabel.fabric_brand} / ${targetLabel.fabric_number} · ` +
+    `${targetLabel.cut_quantity} ${targetLabel.cut_unit} · ${targetLabel.labels_sent} label(s)`
+);
+
 // 2) The exact bilevel PNG the HTML print popup embeds and prints 1:1 — this IS what reaches the
 //    D550. printer-match emits it LANDSCAPE 102×51 (portrait design pre-rotated 90° CCW).
 const pngs = await generateStickerRollPngs(loaded.entries, opts);
 const page1Path = resolve(projectRoot, "proof-so-0119-page1.png");
-writeFileSync(page1Path, pngs[0]);
-const m0 = await sharp(pngs[0]).metadata();
-console.log(`Print artifact page 1 (emitted bytes, ${m0.width}x${m0.height} landscape):`, page1Path);
+writeFileSync(page1Path, pngs[targetIdx]);
+const m0 = await sharp(pngs[targetIdx]).metadata();
+console.log(`Print artifact (emitted bytes, ${m0.width}x${m0.height} landscape):`, page1Path);
 
 // 3) PHYSICAL appearance: the D550 applies a fixed 90° CW turn to the page, which cancels our
 //    pre-rotation and lands the label upright on the 51×102 portrait stock. Simulate that so the
 //    proof shows exactly what the printed label reads like.
 const physicalPath = resolve(projectRoot, "proof-so-0119-page1-physical.png");
-const physical = await sharp(pngs[0]).rotate(90, { background: "#ffffff" }).png().toBuffer();
+const physical = await sharp(pngs[targetIdx]).rotate(90, { background: "#ffffff" }).png().toBuffer();
 writeFileSync(physicalPath, physical);
 const mp = await sharp(physical).metadata();
 console.log(`Physical label appearance (after driver 90° CW, ${mp.width}x${mp.height} portrait):`, physicalPath);

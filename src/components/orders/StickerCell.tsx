@@ -182,29 +182,39 @@ export function StickerCell({
           {fabricLine}
         </p>
 
-        <p
-          className="sticker-line sticker-line-cut-qty"
-          style={stickerTextLine({
-            fontSize: `${LABEL_STICKER_FONT_MM.cutLength}mm`,
-            letterSpacing: "0.14mm",
-            fontVariantNumeric: "tabular-nums",
+        <div
+          className="sticker-line sticker-line-cut"
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            gap: "3mm",
             flexShrink: 0,
-          })}
+            minWidth: 0,
+          }}
         >
-          {cutLengthLine}
-        </p>
-
-        <p
-          className="sticker-line sticker-line-cut-labels"
-          style={stickerTextLine({
-            fontSize: `${LABEL_STICKER_FONT_MM.labels}mm`,
-            letterSpacing: "0.05mm",
-            fontVariantNumeric: "tabular-nums",
-            flexShrink: 0,
-          })}
-        >
-          {labelsLine}
-        </p>
+          <span
+            className="sticker-line-cut-qty"
+            style={stickerTextLine({
+              fontSize: `${LABEL_STICKER_FONT_MM.cutLength}mm`,
+              letterSpacing: "0.14mm",
+              fontVariantNumeric: "tabular-nums",
+              whiteSpace: "nowrap",
+            })}
+          >
+            {cutLengthLine}
+          </span>
+          <span
+            className="sticker-line-cut-labels"
+            style={stickerTextLine({
+              fontSize: `${LABEL_STICKER_FONT_MM.labels}mm`,
+              letterSpacing: "0.05mm",
+              fontVariantNumeric: "tabular-nums",
+              whiteSpace: "nowrap",
+            })}
+          >
+            {labelsLine}
+          </span>
+        </div>
 
         {specLine ? (
           <p

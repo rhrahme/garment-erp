@@ -42,11 +42,11 @@ export const LABEL_PDF_PAGE_WIDTH_MM = LABEL_ROLL_WIDTH_MM;
 export const LABEL_PDF_PAGE_HEIGHT_MM = LABEL_ROLL_HEIGHT_MM;
 
 /**
- * QR square on top. 38 mm leaves room for all text lines to fit within the 102 mm
- * portrait length with even top/bottom margins (the block is centered + auto-fit).
- * At 203 DPI this is ~10 device px per module — still crisp and reliably scannable.
+ * QR square on top. 27 mm (~30% smaller than the previous 38 mm) frees vertical space
+ * for the text block while staying crisp and reliably scannable — at 203 DPI a short
+ * payload still renders several whole device px per module.
  */
-export const LABEL_STICKER_QR_SIZE_MM = 38;
+export const LABEL_STICKER_QR_SIZE_MM = 27;
 
 export const LABEL_STICKER_PADDING_H_MM = 2;
 export const LABEL_STICKER_PADDING_V_MM = 2;
@@ -55,17 +55,21 @@ export const LABEL_STICKER_COLUMN_GAP_MM = 2.5;
 export const LABEL_STICKER_BATCH_GAP_MM = 4;
 export const LABEL_STICKER_LINE_GAP_MM = 0.6;
 
-/** Thermal-readable font sizes (mm cap height) for the 50×100 mm portrait label. */
+/**
+ * Thermal-readable font sizes (mm cap height) for the 50×100 mm portrait label.
+ * Reduced ~17% overall (from the previous set) so the block is more compact and balanced
+ * with the smaller QR, while keeping the emphasis hierarchy (cutLength stays the largest).
+ */
 export const LABEL_STICKER_FONT_MM = {
-  header: 3.4,
-  clientCode: 4.4,
-  clientName: 4.0,
-  productionCode: 4.0,
-  fabric: 3.8,
-  cutLength: 4.6,
-  labels: 3.8,
-  spec: 3.4,
-  piece: 3.8,
+  header: 2.8,
+  clientCode: 3.6,
+  clientName: 3.3,
+  productionCode: 3.3,
+  fabric: 3.15,
+  cutLength: 3.8,
+  labels: 3.15,
+  spec: 2.8,
+  piece: 3.15,
 } as const;
 
 export function labelRollSizeCss(): string {
