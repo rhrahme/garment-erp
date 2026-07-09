@@ -1,7 +1,15 @@
-function formatPlainInvoiceAmount(amount: number): string {
+/**
+ * Grouped amount for PDFs — comma thousands separators (plain ASCII comma/period, no NBSP).
+ * Whole numbers stay clean ("2,100"); any fractional amount shows exactly 2 decimals ("133,300.70")
+ * so currency values never render with a lonely single decimal.
+ */
+function formatGroupedInvoiceAmount(amount: number): string {
   const rounded = Math.round(amount * 100) / 100;
-  if (Number.isInteger(rounded)) return String(rounded);
-  return rounded.toFixed(2);
+  const fractionDigits = Number.isInteger(rounded) ? 0 : 2;
+  return new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  }).format(rounded);
 }
 
 /** SAR/DHS amounts on customer invoices — omit .00 for whole numbers, keep up to 2 decimals when needed. */
@@ -22,12 +30,12 @@ export function formatInvoiceDhs(amount: number): string {
   return `${formatted} DHS`;
 }
 
-/** PDF-safe SAR — no thousands separators (jspdf-autotable truncates at commas in narrow cells). */
+/** PDF SAR — comma thousands separators (amount columns are sized wide enough to avoid clipping). */
 export function formatInvoiceSarForPdf(amount: number): string {
-  return `SAR ${formatPlainInvoiceAmount(amount)}`;
+  return `SAR ${formatGroupedInvoiceAmount(amount)}`;
 }
 
-/** PDF-safe DHS — no thousands separators. */
+/** PDF DHS — comma thousands separators. */
 export function formatInvoiceDhsForPdf(amount: number): string {
-  return `${formatPlainInvoiceAmount(amount)} DHS`;
+  return `${formatGroupedInvoiceAmount(amount)} DHS`;
 }

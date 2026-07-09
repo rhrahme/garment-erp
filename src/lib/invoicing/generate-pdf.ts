@@ -121,8 +121,9 @@ export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): 
       0: { halign: "center", cellWidth: 28 },
       2: { cellWidth: "auto" },
       3: { halign: "right", cellWidth: 24 },
-      4: { halign: "right", cellWidth: 62 },
-      5: { halign: "right", cellWidth: 62 },
+      // Wide enough for grouped amounts up to "SAR 1,234,567.89" without wrapping/clipping.
+      4: { halign: "right", cellWidth: 78 },
+      5: { halign: "right", cellWidth: 78 },
     },
     showHead: "everyPage",
     rowPageBreak: "auto",
