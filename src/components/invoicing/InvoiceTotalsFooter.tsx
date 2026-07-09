@@ -1,7 +1,8 @@
 import { sarToDhs } from "@/lib/currency/config";
 import { formatInvoiceDhs, formatInvoiceSar } from "@/lib/invoicing/format-amount";
+import { DHS_TOTAL_LABEL } from "@/lib/invoicing/labels";
 
-export const DHS_TOTAL_LABEL = "Equivalent in UAE Dirhams (DHS)";
+export { DHS_TOTAL_LABEL };
 /** Highlight the payable DHS amount in editor, print, and browser PDF. */
 const DHS_TOTAL_ROW_CLASS =
   "bg-slate-200 print:bg-slate-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]";
@@ -17,8 +18,6 @@ export type InvoiceTotalsFooterProps = {
   variant: "print" | "editor";
   /** Headline count of individual garment pieces (combo sets expanded). */
   totalGarmentItems?: number | null;
-  /** Sum of raw line quantities (combo set with qty 1 counts as 1). */
-  totalQuantity?: number | null;
 };
 
 export function InvoiceTotalsFooter({
@@ -30,7 +29,6 @@ export function InvoiceTotalsFooter({
   showDhsEquivalent,
   variant,
   totalGarmentItems,
-  totalQuantity,
 }: InvoiceTotalsFooterProps) {
   const dhsSubtotal = showDhsEquivalent ? sarToDhs(subtotal) : null;
   const dhsVatAmount =
@@ -43,8 +41,7 @@ export function InvoiceTotalsFooter({
   const labelAlign = "text-right";
   const amountAlign = "text-right";
   const showGarmentItems = totalGarmentItems != null;
-  const showQuantity = totalQuantity != null;
-  const hasCountSummary = showGarmentItems || showQuantity;
+  const hasCountSummary = showGarmentItems;
   const subtotalBorder = isPrint || hasCountSummary ? undefined : "border-t border-slate-200";
 
   return (
@@ -58,15 +55,6 @@ export function InvoiceTotalsFooter({
             {totalGarmentItems}
           </td>
           {!isPrint && <td className={`${pad}py-2`} />}
-        </tr>
-      )}
-      {showQuantity && (
-        <tr>
-          <td colSpan={labelColSpan} className={`${pad}pb-2 ${labelAlign} text-slate-500`}>
-            Total quantity
-          </td>
-          <td className={`${pad}pb-2 ${amountAlign} font-medium text-slate-600`}>{totalQuantity}</td>
-          {!isPrint && <td className={`${pad}pb-2`} />}
         </tr>
       )}
       <tr className={subtotalBorder}>

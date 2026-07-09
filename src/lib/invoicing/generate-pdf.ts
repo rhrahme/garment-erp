@@ -12,7 +12,7 @@ import {
   getInvoiceIssuerDetails,
   isDubaiFabricDelivery,
 } from "@/lib/invoicing/bank-details";
-import { DHS_TOTAL_LABEL } from "@/components/invoicing/InvoiceTotalsFooter";
+import { DHS_TOTAL_LABEL } from "@/lib/invoicing/labels";
 import {
   formatInvoiceDhsForPdf,
   formatInvoiceSarForPdf,
@@ -29,6 +29,16 @@ export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): 
   const issuer = getInvoiceIssuerDetails(invoice.delivery_destination, invoice.factory_brand_name);
   const showDhsEquivalent = isDubaiFabricDelivery(invoice.delivery_destination);
   const bank = getInvoiceBankDetails(invoice.delivery_destination);
+
+  // Auto-scale layout density so invoices with many lines still fit one A4 page.
+  const lineCount = invoice.lines.length;
+  const density: "normal" | "dense" | "compact" =
+    lineCount > 26 ? "compact" : lineCount > 16 ? "dense" : "normal";
+  const lineFontSize = density === "compact" ? 6.5 : density === "dense" ? 7.5 : 8;
+  const lineCellPadding = density === "compact" ? 1.5 : density === "dense" ? 2.5 : 4;
+  const totalsFontSize = density === "compact" ? 7.5 : density === "dense" ? 8 : 9;
+  const totalsCellPadding = density === "compact" ? 1.5 : density === "dense" ? 2 : 3;
+  const sectionGap = density === "normal" ? 8 : 4;
 
   doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
@@ -105,7 +115,7 @@ export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): 
       formatInvoiceSarForPdf(line.unit_price),
       formatInvoiceSarForPdf(line.line_total),
     ]),
-    styles: { fontSize: 8, cellPadding: 4, valign: "top", overflow: "linebreak" },
+    styles: { fontSize: lineFontSize, cellPadding: lineCellPadding, valign: "top", overflow: "linebreak" },
     headStyles: { fillColor: [255, 255, 255], textColor: [100, 100, 100], fontStyle: "bold" },
     columnStyles: {
       0: { halign: "center", cellWidth: 28 },
@@ -122,12 +132,11 @@ export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): 
     },
   });
 
-  y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
+  y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + sectionGap;
 
   const lineTotals = computeInvoiceLineTotals(invoice.lines);
   const totalsBody: string[][] = [
     ["Total garment items", String(lineTotals.totalGarmentItems)],
-    ["Total quantity", String(lineTotals.totalQuantity)],
     [`Subtotal (${invoice.currency})`, formatInvoiceSarForPdf(invoice.subtotal)],
   ];
   if (showDhsEquivalent) {
@@ -155,7 +164,7 @@ export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): 
     startY: y,
     margin: { left: margin, right: margin },
     body: totalsBody,
-    styles: { fontSize: 9, cellPadding: 3 },
+    styles: { fontSize: totalsFontSize, cellPadding: totalsCellPadding },
     columnStyles: {
       0: { halign: "right" },
       1: { halign: "right", fontStyle: "bold" },
@@ -168,22 +177,25 @@ export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): 
     },
   });
 
-  y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 16;
+  y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + (density === "normal" ? 16 : 10);
 
   if (bank) {
-    if (y > doc.internal.pageSize.getHeight() - 120) {
+    const bankRowHeight = density === "normal" ? 14 : 12;
+    // Estimated height of the payment-details block (rule + heading + rows).
+    const bankBlockHeight = 16 + 14 + 6 * bankRowHeight + 20;
+    if (y > doc.internal.pageSize.getHeight() - margin - bankBlockHeight) {
       doc.addPage();
       y = margin;
     }
 
     doc.setDrawColor(200);
     doc.line(margin, y, pageW - margin, y);
-    y += 16;
+    y += density === "normal" ? 16 : 12;
 
     doc.setFontSize(8);
     doc.setTextColor(100);
     doc.text("PAYMENT DETAILS", margin, y);
-    y += 14;
+    y += bankRowHeight;
 
     doc.setFontSize(9);
     doc.setTextColor(0);
@@ -203,7 +215,7 @@ export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): 
       doc.setFont("helvetica", label === "Beneficiary" || label === "IBAN" ? "bold" : "normal");
       doc.text(value, margin + 90, y);
       doc.setFont("helvetica", "normal");
-      y += 14;
+      y += bankRowHeight;
     }
   }
 

@@ -16,7 +16,7 @@ export async function resolve(specifier, context, nextResolve) {
       path.join(SRC, rel, "index.ts"),
     ];
     for (const file of candidates) {
-      if (fs.existsSync(file)) {
+      if (fs.existsSync(file) && fs.statSync(file).isFile()) {
         return nextResolve(pathToFileURL(file).href, context);
       }
     }

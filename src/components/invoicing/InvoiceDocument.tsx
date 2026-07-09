@@ -100,7 +100,6 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
             showDhsEquivalent={showDhsEquivalent}
             variant="print"
             totalGarmentItems={lineTotals.totalGarmentItems}
-            totalQuantity={lineTotals.totalQuantity}
           />
         </tfoot>
       </table>

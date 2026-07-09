@@ -314,7 +314,6 @@ export function InvoiceEditor({
               showDhsEquivalent={showDhsEquivalent}
               variant="editor"
               totalGarmentItems={lineTotals.totalGarmentItems}
-              totalQuantity={lineTotals.totalQuantity}
             />
           </tfoot>
         </table>
