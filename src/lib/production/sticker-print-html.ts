@@ -123,7 +123,18 @@ p { margin: 0; font-size: 14px; line-height: 1.5; }
 </html>`;
 }
 
-/** Runs inside the popup so print() keeps the user-gesture chain from the opener click. */
+/**
+ * Auto-print boot script. Runs inside the popup.
+ *
+ * CRITICAL: this document is injected via popup.document.open()/write()/close() into a popup
+ * that already fired its window "load" event (for the "Preparing…" page). After a document.write
+ * cycle Chrome does NOT re-fire "load", so the old code — which waited on window "load" whenever
+ * readyState !== "complete" — never ran autoPrint and the dialog never opened. Instead we run
+ * immediately (this <script> sits at the end of <body>, so every <img> already exists), wait for
+ * the label image(s) to fully decode (img.decode(), with an onload fallback and a hard safety
+ * timeout so a stuck image can never block printing), then focus + print. A visible Print button
+ * (window.__printStickerLabels) is always available as a manual fallback / retrigger.
+ */
 const STICKER_PRINT_BOOT_SCRIPT = `<script>
 (function () {
   function notifyParent(ok, reason) {
@@ -133,35 +144,63 @@ const STICKER_PRINT_BOOT_SCRIPT = `<script>
       }
     } catch (e) {}
   }
-  function autoPrint() {
+
+  var printed = false;
+  function triggerPrint() {
+    if (printed) return;
+    printed = true;
+    try {
+      window.focus();
+    } catch (e) {}
+    try {
+      window.print();
+      window.addEventListener("afterprint", function () { notifyParent(true); }, { once: true });
+    } catch (e) {
+      printed = false; // allow the manual button to retry
+      notifyParent(false, "print-blocked");
+    }
+  }
+
+  // Manual fallback button always works: it forces a fresh print() on a real user gesture.
+  window.__printStickerLabels = function () {
+    printed = false;
+    triggerPrint();
+  };
+
+  function waitForImages() {
     var imgs = Array.prototype.slice.call(document.querySelectorAll("img.label-raster"));
     if (imgs.length === 0) {
       notifyParent(false, "no-images");
-      return;
+      return Promise.resolve();
     }
-    var pending = imgs.length;
-    function onImageReady() {
-      pending -= 1;
-      if (pending > 0) return;
-      window.focus();
-      try {
-        window.print();
-      } catch (e) {
-        notifyParent(false, "print-blocked");
-        return;
+    var waits = imgs.map(function (img) {
+      // decode() resolves once the image is fully decoded and paintable (works for data: URIs).
+      if (typeof img.decode === "function") {
+        return img.decode().then(function () {}, function () {});
       }
-      window.addEventListener("afterprint", function () { notifyParent(true); }, { once: true });
-    }
-    imgs.forEach(function (img) {
-      if (img.complete && img.naturalWidth > 0) onImageReady();
-      else {
-        img.addEventListener("load", onImageReady, { once: true });
-        img.addEventListener("error", function () { notifyParent(false, "image-error"); }, { once: true });
-      }
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+      return new Promise(function (resolve) {
+        img.addEventListener("load", function () { resolve(); }, { once: true });
+        img.addEventListener("error", function () { resolve(); }, { once: true });
+      });
     });
+    return Promise.all(waits);
   }
-  if (document.readyState === "complete") autoPrint();
-  else window.addEventListener("load", autoPrint, { once: true });
+
+  function boot() {
+    var done = false;
+    function go() {
+      if (done) return;
+      done = true;
+      // A tick after decode lets layout settle before the print snapshot.
+      window.setTimeout(triggerPrint, 60);
+    }
+    // Hard safety net: never let a stuck/never-loading image block the dialog.
+    window.setTimeout(go, 3000);
+    waitForImages().then(go);
+  }
+
+  boot();
 })();
 </script>`;
 
@@ -296,8 +335,11 @@ body {
 </head>
 <body>
 <div class="screen-only">
-  <p>Opening the print dialog… If nothing appears, allow popups for this site and click below.</p>
-  <button type="button" onclick="window.print()">Print labels</button>
+  <p><strong>Preparing labels…</strong> the print dialog should open automatically.</p>
+  <p>If it doesn't appear, click <strong>Print labels</strong> below (or press Ctrl/Cmd+P). Keep
+  Scale = <strong>100%</strong> (not Fit to printable area) and Margins = <strong>None</strong>,
+  and select the <strong>D550</strong> label printer.</p>
+  <button type="button" onclick="(window.__printStickerLabels || window.print).call(window)">Print labels</button>
 </div>
 ${pages}
 ${STICKER_PRINT_BOOT_SCRIPT}

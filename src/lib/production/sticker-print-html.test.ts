@@ -51,4 +51,23 @@ describe("buildStickerPrintHtml", () => {
     assert.equal(layout.pageH, 102);
     assert.equal(layout.landscape, false);
   });
+
+  it("auto-prints after images decode without depending on the window load event", () => {
+    const html = buildStickerPrintHtml([DATA_URL_A], { mode: PRINTER_MATCH_MODE });
+    // Runs immediately (boot()) — must NOT gate auto-print on window "load", which does not
+    // re-fire after document.write into an already-loaded popup.
+    assert.ok(html.includes("boot();"));
+    assert.ok(!/addEventListener\(\s*["']load["']\s*,\s*autoPrint/.test(html));
+    // Waits for the label image(s) to decode before printing.
+    assert.match(html, /\.decode\s*===\s*"function"|\.decode\(\)/);
+    assert.match(html, /window\.print\(/);
+  });
+
+  it("exposes a manual print fallback wired to a visible button", () => {
+    const html = buildStickerPrintHtml([DATA_URL_A], { mode: PRINTER_MATCH_MODE });
+    assert.ok(html.includes("window.__printStickerLabels"));
+    // The screen-only button calls the fallback (or window.print) on a real user gesture.
+    assert.match(html, /onclick="[^"]*__printStickerLabels[^"]*"/);
+    assert.match(html, /class="screen-only"/);
+  });
 });
