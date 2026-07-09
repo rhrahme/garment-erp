@@ -90,7 +90,9 @@ function resolveCombinedGarmentType(garmentType, pieceNames) {
 
 function formatCombinedGarmentDescription(garmentType, pieceNames) {
   if (pieceNames.length <= 1) return garmentType;
-  return `${garmentType} (${pieceNames.join(" + ")})`;
+  const joinedPieces = pieceNames.join(" + ");
+  if (garmentType.replace(/\s*\+\s*/g, "+") === pieceNames.join("+")) return joinedPieces;
+  return `${garmentType} (${joinedPieces})`;
 }
 
 function lineDescription(garmentType, pieceName) {

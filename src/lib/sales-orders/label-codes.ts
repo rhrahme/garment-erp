@@ -76,7 +76,13 @@ export function formatCombinedGarmentDescription(garmentType: string, pieceNames
   if (pieceNames.length <= 1) {
     return formatLabelGarmentDescription(garmentType, pieceNames[0] ?? garmentType);
   }
-  return `${garmentType} (${pieceNames.join(" + ")})`;
+  const joinedPieces = pieceNames.join(" + ");
+  // Combo garment types (e.g. "Shirt+Short") are literally their pieces joined by "+",
+  // so append the pieces only when the type adds a distinct name (e.g. "Suit").
+  const typeIsJustPieces =
+    garmentType.replace(/\s*\+\s*/g, "+") === pieceNames.join("+");
+  if (typeIsJustPieces) return joinedPieces;
+  return `${garmentType} (${joinedPieces})`;
 }
 
 function normalizeInvoicePieceName(name: string): string {

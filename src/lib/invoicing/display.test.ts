@@ -32,6 +32,25 @@ describe("resolveInvoiceGarmentDescription", () => {
       "Suit (Jacket + Trouser)"
     );
   });
+
+  it("does not duplicate combo garment type (Shirt+Short)", () => {
+    assert.equal(
+      resolveInvoiceGarmentDescription("Shirt+Short", "Shirt + Short"),
+      "Shirt + Short"
+    );
+  });
+
+  it("does not duplicate 3-piece combo garment type (Shirt+Trouser+Short)", () => {
+    assert.equal(
+      resolveInvoiceGarmentDescription("Shirt+Trouser+Short", "Shirt + Trouser + Short"),
+      "Shirt + Trouser + Short"
+    );
+  });
+
+  it("keeps single garment descriptions unchanged", () => {
+    assert.equal(resolveInvoiceGarmentDescription("Shirt LS", "Shirt LS"), "Shirt LS");
+    assert.equal(resolveInvoiceGarmentDescription("Jacket", "Jacket"), "Jacket");
+  });
 });
 
 describe("toInvoiceLineDisplay", () => {
