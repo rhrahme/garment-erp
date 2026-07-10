@@ -42,6 +42,7 @@ import type {
   PendingFabricLine,
 } from "@/lib/types/fabric-receipts";
 import type { FabricPrepStep, FabricPrepType, ProductionWorkOrder } from "@/lib/types/production";
+import { isSalesOrderArchived } from "@/lib/sales-orders/archive";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
 const INACTIVE_SALES_ORDER_STATUSES = new Set(["complete", "cancelled", "delivered"]);
@@ -314,6 +315,8 @@ export async function listFabricReceivingOverview(
       so_number: order.so_number,
       client_name: order.client_name,
       client_code: order.client_code,
+      order_date: order.order_date,
+      is_archived: isSalesOrderArchived(order),
       order_status: order.status,
       lines,
       pending_line_count: lines.filter((line) => line.status === "pending").length,

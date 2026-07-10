@@ -71,6 +71,8 @@ export type FabricReceivingOrderRow = {
   so_number: string;
   client_name: string;
   client_code: string;
+  order_date: string;
+  is_archived: boolean;
   order_status: string;
   lines: FabricReceivingLineRow[];
   pending_line_count: number;

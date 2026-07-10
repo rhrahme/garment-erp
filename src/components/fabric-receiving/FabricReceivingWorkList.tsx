@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, ChevronRight } from "lucide-react";
+import { Archive, ArrowRight, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
+import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { FabricLineStickerPrintLinks } from "@/components/orders/FabricLineStickerPrintLinks";
 import { Button } from "@/components/ui/Button";
 import {
@@ -11,11 +12,20 @@ import {
 } from "@/components/orders/SalesOrderReceivingCutTable";
 import { ScanStageLegend } from "@/components/production/ScanStageLegend";
 import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
+import { getBrandClientCodePrefix } from "@/lib/clients/codes";
 import {
   FABRIC_PREP_TYPES,
   completeFabricPrepActionLabel,
 } from "@/lib/production/fabric-prep";
+import {
+  defaultFabricReceivingExpandedKeys,
+  fabricReceivingClientSectionMeta,
+  groupFabricReceivingCutsByClient,
+  type FabricReceivingCutEntry,
+} from "@/lib/production/fabric-receiving-client-sections";
 import { scanStageStyles } from "@/lib/production/scan-stage-highlight";
+import { SALES_ORDER_ARCHIVE_AGE_MONTHS } from "@/lib/sales-orders/archive";
+import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import type {
   FabricLineReceiveStatus,
   FabricReceivingLineRow,
@@ -26,6 +36,7 @@ import type { FabricPrepType } from "@/lib/types/production";
 import { cn } from "@/lib/utils";
 
 type FabricReceivingWorkTab = "to_receive" | "awaiting_prep" | "in_prep" | "all";
+type FabricReceivingView = "active" | "archived";
 
 const TABS: { id: FabricReceivingWorkTab; label: string; hint: string }[] = [
   { id: "to_receive", label: "To receive", hint: "Fabric not scanned at Receive yet" },
@@ -49,9 +60,7 @@ const LINE_STATUS_SORT: Record<FabricLineReceiveStatus, number> = {
   handed_off: 3,
 };
 
-type FabricCutEntry = { order: FabricReceivingOrderRow; line: FabricReceivingLineRow };
-
-function sortCutEntries(entries: FabricCutEntry[]): FabricCutEntry[] {
+function sortCutEntries(entries: FabricReceivingCutEntry[]): FabricReceivingCutEntry[] {
   return [...entries].sort((a, b) => {
     const stage = LINE_STATUS_SORT[a.line.status] - LINE_STATUS_SORT[b.line.status];
     if (stage !== 0) return stage;
@@ -94,7 +103,7 @@ function nextActionForLine(line: FabricReceivingLineRow): string {
   return "Complete prep";
 }
 
-function matchesSearch(entry: FabricCutEntry, query: string): boolean {
+function matchesSearch(entry: FabricReceivingCutEntry, query: string): boolean {
   if (!query) return true;
   const q = query.trim().toUpperCase();
   const { order, line } = entry;
@@ -103,6 +112,8 @@ function matchesSearch(entry: FabricCutEntry, query: string): boolean {
     line.fabric_number.toUpperCase().includes(q) ||
     line.garment_type.toUpperCase().includes(q) ||
     order.so_number.toUpperCase().includes(q) ||
+    order.client_name.toUpperCase().includes(q) ||
+    order.client_code.toUpperCase().includes(q) ||
     formatArticle(line.article_number).toUpperCase().includes(q)
   );
 }
@@ -244,9 +255,6 @@ function FabricCutCard({
               {line.scan_stage_label}
             </span>
             <span className="text-sm text-slate-700">{nextActionForLine(line)}</span>
-            <span className="text-xs text-slate-500">
-              {order.so_number} · {order.client_name}
-            </span>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -312,10 +320,13 @@ export function FabricReceivingWorkList({
   onAdvancePrep,
 }: FabricReceivingWorkListProps) {
   const [tab, setTab] = useState<FabricReceivingWorkTab>("awaiting_prep");
+  const [view, setView] = useState<FabricReceivingView>("active");
   const [search, setSearch] = useState("");
   const [overview, setOverview] = useState<FabricReceivingOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedManualLine, setExpandedManualLine] = useState<string | null>(null);
+  const [expandedClients, setExpandedClients] = useState<Set<string>>(() => new Set());
+  const { brandId, setBrandId, hydrated } = useFactoryBrandFilter();
 
   const loadOverview = useCallback(async (showLoading: boolean) => {
     if (showLoading) setLoading(true);
@@ -346,20 +357,38 @@ export function FabricReceivingWorkList({
     if (tabAfterScan) setTab(tabAfterScan);
   }, [tabAfterScan]);
 
+  const activeOrders = useMemo(
+    () => (overview?.orders ?? []).filter((order) => !order.is_archived),
+    [overview]
+  );
+  const archivedOrders = useMemo(
+    () => (overview?.orders ?? []).filter((order) => order.is_archived),
+    [overview]
+  );
+  const viewOrders = view === "archived" ? archivedOrders : activeOrders;
+
+  const brandFilteredOrders = useMemo(() => {
+    if (!brandId) return viewOrders;
+    const prefix = getBrandClientCodePrefix(brandId);
+    if (!prefix) return viewOrders;
+    return viewOrders.filter(
+      (order) => order.client_code.startsWith(`${prefix}-`) || order.client_code === prefix
+    );
+  }, [brandId, viewOrders]);
+
   const counts = useMemo(() => {
-    const lines = overview?.orders.flatMap((order) => order.lines) ?? [];
+    const lines = brandFilteredOrders.flatMap((order) => order.lines);
     return {
       to_receive: lines.filter((line) => line.status === "pending").length,
       awaiting_prep: lines.filter((line) => line.status === "received").length,
       in_prep: lines.filter((line) => line.status === "fabric_prep").length,
       all: lines.length,
     };
-  }, [overview]);
+  }, [brandFilteredOrders]);
 
   const visibleCuts = useMemo(() => {
-    if (!overview) return [];
     const highlightSet = new Set(highlightCutCodes.map((code) => code.toUpperCase()));
-    const entries = overview.orders.flatMap((order) =>
+    const entries = brandFilteredOrders.flatMap((order) =>
       order.lines
         .filter((line) => lineMatchesTab(line.status, tab))
         .map((line) => ({ order, line }))
@@ -368,8 +397,8 @@ export function FabricReceivingWorkList({
     const sorted = sortCutEntries(filtered);
     if (highlightSet.size === 0) return sorted;
 
-    const pinned: FabricCutEntry[] = [];
-    const rest: FabricCutEntry[] = [];
+    const pinned: FabricReceivingCutEntry[] = [];
+    const rest: FabricReceivingCutEntry[] = [];
     for (const entry of sorted) {
       if (highlightSet.has(entry.line.fabric_cut_code.toUpperCase())) {
         pinned.push(entry);
@@ -378,18 +407,62 @@ export function FabricReceivingWorkList({
       }
     }
     return [...pinned, ...rest];
-  }, [overview, tab, search, highlightCutCodes]);
+  }, [brandFilteredOrders, tab, search, highlightCutCodes]);
+
+  const clientSections = useMemo(() => groupFabricReceivingCutsByClient(visibleCuts), [visibleCuts]);
+
+  useEffect(() => {
+    setExpandedClients((current) => {
+      const validKeys = new Set(clientSections.map((section) => section.key));
+      const pruned = new Set([...current].filter((key) => validKeys.has(key)));
+      if (pruned.size > 0) return pruned;
+
+      const defaults = defaultFabricReceivingExpandedKeys(clientSections);
+      if (highlightCutCodes.length > 0) {
+        for (const section of clientSections) {
+          const hasHighlight = section.orderGroups.some((group) =>
+            group.entries.some((entry) =>
+              highlightCutCodes.some(
+                (code) => code.toUpperCase() === entry.line.fabric_cut_code.toUpperCase()
+              )
+            )
+          );
+          if (hasHighlight) defaults.add(section.key);
+        }
+      }
+      return defaults;
+    });
+  }, [clientSections, highlightCutCodes]);
 
   const swatchFabrics = useMemo(
     () =>
-      (overview?.orders ?? []).flatMap((order) =>
+      brandFilteredOrders.flatMap((order) =>
         order.lines.map((line) => ({
           supplier_id: line.supplier_id,
           fabric_number: line.fabric_number,
         }))
       ),
-    [overview]
+    [brandFilteredOrders]
   );
+
+  function toggleClientSection(key: string) {
+    setExpandedClients((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  function expandAllClients() {
+    setExpandedClients(new Set(clientSections.map((section) => section.key)));
+  }
+
+  function collapseAllClients() {
+    setExpandedClients(new Set());
+  }
+
+  const hasActiveFilters = Boolean(search.trim() || brandId);
 
   return (
     <FabricSwatchProvider fabrics={swatchFabrics}>
@@ -397,20 +470,58 @@ export function FabricReceivingWorkList({
       <div className="border-b border-slate-100 px-5 py-4">
         <h2 className="text-lg font-semibold text-slate-900">Work list</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Same table as the sales order A4 receiving list — QR, fabric cut, composition, and scan-stage row colour. One
-          row per fabric cut.
+          Grouped by client — same layout as Print orders. Expand a client to see their orders and fabric cuts.
         </p>
 
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setView("active")}
+            className={cn(
+              "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
+              view === "active"
+                ? "border-indigo-600 bg-indigo-50 text-indigo-900"
+                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+            )}
+          >
+            Active
+            <span className="ml-1.5 text-xs font-normal opacity-80">({activeOrders.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("archived")}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
+              view === "archived"
+                ? "border-slate-600 bg-slate-100 text-slate-900"
+                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+            )}
+          >
+            <Archive className="h-3.5 w-3.5" />
+            Archived
+            <span className="text-xs font-normal opacity-80">({archivedOrders.length})</span>
+          </button>
+          <p className="text-xs text-slate-500">
+            Orders older than {SALES_ORDER_ARCHIVE_AGE_MONTHS} months move to Archived automatically.
+          </p>
+        </div>
+
         <label className="mt-4 block">
-          <span className="text-sm font-medium text-slate-700">Search fabric cut, article, fabric #, or order</span>
+          <span className="text-sm font-medium text-slate-700">Search client, fabric cut, article, fabric #, or order</span>
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="FR-0526-0101-L04 or S13022 or L04…"
+            placeholder="Client name, FR-0526-0101-L04, S13022, L04…"
             className="mt-1 block w-full max-w-xl rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm uppercase"
           />
         </label>
+
+        {hydrated && (
+          <div className="mt-4">
+            <FactoryBrandTabs value={brandId} onChange={setBrandId} showAll allLabel="All brands" label="Filter by brand" />
+          </div>
+        )}
 
         <div className="mt-4 flex flex-wrap gap-2">
           {TABS.map((item) => {
@@ -436,6 +547,13 @@ export function FabricReceivingWorkList({
           })}
         </div>
 
+        {hasActiveFilters && (
+          <p className="mt-3 text-sm text-slate-500">
+            {visibleCuts.length} fabric cut{visibleCuts.length === 1 ? "" : "s"} in {clientSections.length} client
+            {clientSections.length === 1 ? "" : "s"}
+          </p>
+        )}
+
         <div className="mt-4">
           <ScanStageLegend />
         </div>
@@ -447,38 +565,137 @@ export function FabricReceivingWorkList({
         <p className="px-5 py-10 text-center text-sm text-slate-500">
           {search
             ? `No fabric cuts match “${search}”.`
-            : tab === "to_receive"
-              ? "Nothing waiting to receive — scan the fabric cut sticker at Receive."
-              : tab === "awaiting_prep"
-                ? "Nothing fabric received yet — pink rows appear here after scanning."
-                : tab === "in_prep"
-                  ? "Nothing in prep."
-                  : "No open receiving work."}
+            : hasActiveFilters
+              ? "No fabric cuts match the current brand filter."
+              : view === "archived"
+                ? "No archived receiving work."
+                : tab === "to_receive"
+                  ? "Nothing waiting to receive — scan the fabric cut sticker at Receive."
+                  : tab === "awaiting_prep"
+                    ? "Nothing fabric received yet — pink rows appear here after scanning."
+                    : tab === "in_prep"
+                      ? "Nothing in prep."
+                      : "No open receiving work."}
         </p>
       ) : (
-        <div>
-          {visibleCuts.map(({ order, line }) => (
-            <FabricCutCard
-              key={line.sales_order_line_id}
-              order={order}
-              line={line}
-              isHighlighted={highlightCutCodes.some(
-                (code) => code.toUpperCase() === line.fabric_cut_code.toUpperCase()
-              )}
-              expandedManual={expandedManualLine === line.sales_order_line_id}
-              onToggleManual={() =>
-                setExpandedManualLine((current) =>
-                  current === line.sales_order_line_id ? null : line.sales_order_line_id
-                )
-              }
-              actingId={actingId}
-              prepTypeByReceipt={prepTypeByReceipt}
-              onPrepTypeChange={onPrepTypeChange}
-              onReceiveLine={onReceiveLine}
-              onStartPrep={onStartPrep}
-              onAdvancePrep={onAdvancePrep}
-            />
-          ))}
+        <div className="space-y-3 p-4">
+          {clientSections.length > 1 && (
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+              <span>
+                {visibleCuts.length} fabric cut{visibleCuts.length === 1 ? "" : "s"} across {clientSections.length}{" "}
+                client{clientSections.length === 1 ? "" : "s"}
+              </span>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={expandAllClients}
+                  className="font-medium text-indigo-600 hover:text-indigo-800"
+                >
+                  Expand all
+                </button>
+                <button
+                  type="button"
+                  onClick={collapseAllClients}
+                  className="font-medium text-slate-600 hover:text-slate-900"
+                >
+                  Collapse all
+                </button>
+              </div>
+            </div>
+          )}
+
+          {clientSections.map((section) => {
+            const isOpen = expandedClients.has(section.key);
+            return (
+              <section key={section.key} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                <div className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50">
+                  <button
+                    type="button"
+                    onClick={() => toggleClientSection(section.key)}
+                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                  >
+                    {isOpen ? (
+                      <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 shrink-0 text-slate-500" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-slate-900">{section.client_name}</p>
+                      <p className="text-xs text-slate-500">
+                        <span className="font-mono text-indigo-700">{section.client_code}</span>
+                        <span className="mx-1.5 text-slate-300">·</span>
+                        {fabricReceivingClientSectionMeta(section)}
+                      </p>
+                    </div>
+                  </button>
+                </div>
+
+                {isOpen && (
+                  <div className="border-t border-slate-100 bg-slate-50/50">
+                    {section.orderGroups.map((group) => {
+                      const sortedEntries = sortCutEntries(group.entries);
+                      return (
+                      <div key={group.key} className="border-b border-slate-100 last:border-0">
+                        <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-100/80 px-4 py-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-slate-800">{group.order.so_number}</p>
+                            <p className="text-xs text-slate-500">
+                              {sortedEntries.length} fabric cut
+                              {sortedEntries.length === 1 ? "" : "s"}
+                            </p>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-3">
+                            <Link
+                              href={`/orders/${group.order.sales_order_id}/print?team=receiving`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                            >
+                              A4 list
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </Link>
+                            <Link
+                              href={`/orders/${group.order.sales_order_id}`}
+                              className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                            >
+                              Open order
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </Link>
+                          </div>
+                        </div>
+
+                        <div>
+                          {sortedEntries.map(({ order, line }) => (
+                            <FabricCutCard
+                              key={line.sales_order_line_id}
+                              order={order}
+                              line={line}
+                              isHighlighted={highlightCutCodes.some(
+                                (code) => code.toUpperCase() === line.fabric_cut_code.toUpperCase()
+                              )}
+                              expandedManual={expandedManualLine === line.sales_order_line_id}
+                              onToggleManual={() =>
+                                setExpandedManualLine((current) =>
+                                  current === line.sales_order_line_id ? null : line.sales_order_line_id
+                                )
+                              }
+                              actingId={actingId}
+                              prepTypeByReceipt={prepTypeByReceipt}
+                              onPrepTypeChange={onPrepTypeChange}
+                              onReceiveLine={onReceiveLine}
+                              onStartPrep={onStartPrep}
+                              onAdvancePrep={onAdvancePrep}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+            );
+          })}
         </div>
       )}
     </section>
