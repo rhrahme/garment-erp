@@ -9,6 +9,10 @@
  * fabric suppliers (solbiati, canclini, wool-stock, etc.). Missing required IDs are
  * restored from local contacts.json; sync aborts if they cannot be preserved.
  *
+ * WARNING: clients — profiles linked to sales orders are retained / restored when
+ * remote clients.json is missing them. Client profiles cannot be dropped while
+ * sales orders still reference them.
+ *
  *   npm run db:sync-from-supabase
  *   node scripts/sync-documents-from-supabase.mjs
  *   node scripts/sync-documents-from-supabase.mjs --dry-run
@@ -25,6 +29,7 @@ import {
   protectLocalFromStaleRemoteSupplierContacts,
   validateSupplierContacts,
 } from "./lib/supplier-contacts-guard.mjs";
+import { protectLocalClientsFromStaleRemote } from "./lib/clients-guard.mjs";
 
 const ERP_DOCUMENT_SPECS = {
   clients: { path: "src/data/clients.json", fallback: { updated_at: null, clients: [] } },
@@ -190,6 +195,28 @@ async function main() {
       }
       validateSupplierContacts(merged);
       payloadToWrite = merged;
+    }
+
+    if (id === "clients") {
+      const local = readLocalJson(spec.path, spec.fallback);
+      const salesSpec = ERP_DOCUMENT_SPECS.sales_orders;
+      const remoteSales = byId.get("sales_orders");
+      const salesOrders =
+        remoteSales?.data ?? readLocalJson(salesSpec.path, salesSpec.fallback);
+      const protectedClients = protectLocalClientsFromStaleRemote(payload, local, salesOrders);
+      if (protectedClients.retained.length > 0) {
+        console.warn(
+          `\n⚠ clients: retained ${protectedClients.retained.length} linked profile(s) omitted from Supabase:`,
+          protectedClients.retained.map((c) => `${c.code} (${c.id})`).join(", ")
+        );
+      }
+      if (protectedClients.restored.length > 0) {
+        console.warn(
+          `\n⚠ clients: restored ${protectedClients.restored.length} orphan profile(s) from sales orders:`,
+          protectedClients.restored.map((c) => `${c.code} (${c.id})`).join(", ")
+        );
+      }
+      payloadToWrite = protectedClients.file;
     }
 
     const fullPath = resolve(process.cwd(), spec.path);

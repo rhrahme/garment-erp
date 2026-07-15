@@ -7,7 +7,6 @@ import { normalizeStoredPhone } from "@/lib/phone/countries";
 import {
   ensureOrphanedClientsReconciled,
   normalizeClientCode,
-  protectLinkedClientsOnSave,
   readClients,
   slugifyClientId,
   writeClients,
@@ -178,26 +177,32 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
-    // Bulk editor saves replace the whole list. Never drop a profile that still
-    // has sales orders — that is how FR activity can appear without a Clients row.
-    const protectedSave = protectLinkedClientsOnSave(previous.clients, result.data);
-    if (protectedSave.retained.length > 0) {
-      console.warn(
-        `[clients] Retained ${protectedSave.retained.length} linked client(s) omitted from save:`,
-        protectedSave.retained.map((client) => `${client.code} (${client.id})`).join(", ")
-      );
-    }
+    // writeClients is the single persist gate: retains linked profiles + heals
+    // orphans from sales-order denormalized fields. Never drop a linked row.
+    const saved = await writeClients({ updated_at: null, clients: result.data });
 
-    const saved = await writeClients({ updated_at: null, clients: protectedSave.clients });
+    for (const client of saved.restored) {
+      await notifyIntegration("client.created", {
+        id: client.id,
+        code: client.code,
+        first_name: client.first_name,
+        middle_name: client.middle_name,
+        last_name: client.last_name,
+        brand_ids: client.brand_ids,
+        restored_from: "orphan_reconciliation",
+      });
+    }
 
     const isNew = previous.clients.length === 0 && saved.clients.length > 0;
     await notifyIntegration(isNew ? "client.created" : "client.updated", {
       client_count: saved.clients.length,
-      retained_linked_clients: protectedSave.retained.map((client) => client.id),
+      retained_linked_clients: saved.retained.map((client) => client.id),
+      restored_orphaned_clients: saved.restored.map((client) => client.id),
       updated_at: saved.updated_at,
     });
 
-    const responseData = session.canViewClientContact ? saved : redactClientsFile(saved);
+    const responseFile = { updated_at: saved.updated_at, clients: saved.clients };
+    const responseData = session.canViewClientContact ? responseFile : redactClientsFile(responseFile);
     return NextResponse.json(responseData);
   } catch (error) {
     console.error("Failed to save clients:", error);

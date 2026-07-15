@@ -214,6 +214,41 @@ export function retainClientsLinkedToSalesOrders(
   return { clients: [...nextClients, ...retained], retained };
 }
 
+export type PrepareClientsForPersistResult = {
+  clients: ClientProfile[];
+  retained: ClientProfile[];
+  restored: ClientProfile[];
+  skipped: OrphanClientGroup[];
+};
+
+/**
+ * Single gate for every clients-list write: retain linked profiles omitted from the
+ * payload, then rebuild any still-missing ids from denormalized sales-order fields.
+ * Never drops a client while sales orders still reference them; never mutates orders.
+ */
+export function prepareClientsForPersist(
+  previousClients: ClientProfile[],
+  nextClients: ClientProfile[],
+  orders: OrphanSalesOrder[]
+): PrepareClientsForPersistResult {
+  const retainedResult = retainClientsLinkedToSalesOrders(previousClients, nextClients, orders);
+  const reconciled = reconcileOrphanedClients(retainedResult.clients, orders);
+  return {
+    clients: reconciled.clients,
+    retained: retainedResult.retained,
+    restored: reconciled.restored,
+    skipped: reconciled.skipped,
+  };
+}
+
+/** True when every sales-order client_id has a matching clients-store row. */
+export function clientsCoverAllSalesOrderClientIds(
+  clients: ClientProfile[],
+  orders: OrphanSalesOrder[]
+): boolean {
+  return findOrphanedSalesOrderClients(clients, orders).length === 0;
+}
+
 export function fabricReceivingClientSectionKey(
   clientCode: string | null | undefined,
   clientName?: string | null

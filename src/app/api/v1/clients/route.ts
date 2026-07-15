@@ -125,7 +125,24 @@ export async function POST(request: Request) {
     };
 
     store.clients.push(client);
+    // writeClients retains linked profiles + heals orphans before persist.
     const saved = await writeClients(store);
+
+    for (const restored of saved.restored) {
+      await notifyIntegration(
+        "client.created",
+        {
+          id: restored.id,
+          code: restored.code,
+          first_name: restored.first_name,
+          middle_name: restored.middle_name,
+          last_name: restored.last_name,
+          brand_ids: restored.brand_ids,
+          restored_from: "orphan_reconciliation",
+        },
+        "api"
+      );
+    }
 
     await notifyIntegration("client.created", {
       id: client.id,

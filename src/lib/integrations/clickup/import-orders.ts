@@ -36,6 +36,7 @@ import type { ClickUpImportResult, ClickUpTask } from "./types";
 import type { ClientProfile, ClientsFile } from "../../types/clients";
 import type { ProductionStage, ProductionWorkOrder, ProductionWorkOrdersFile } from "../../types/production";
 import type { SalesOrder, SalesOrderFabricLine, SalesOrdersFile } from "../../types/sales-orders";
+import { prepareClientsForPersist } from "../../clients/orphan-reconciliation";
 
 export interface ImportClickUpOptions {
   reset?: boolean;
@@ -457,10 +458,34 @@ export function applyClickUpImport(
     fs.writeFileSync(full, `${JSON.stringify(data, null, 2)}\n`, "utf8");
   };
 
-  writeJson("src/data/clients.json", clients);
+  // Never wipe existing client profiles. Union previous + imported, then retain/
+  // heal against the sales orders this import persists so FR activity cannot
+  // outlive a Clients row.
+  const clientsPath = path.join(process.cwd(), "src/data/clients.json");
+  let previousClients: ClientProfile[] = [];
+  try {
+    const existing = JSON.parse(fs.readFileSync(clientsPath, "utf8")) as ClientsFile;
+    previousClients = Array.isArray(existing.clients) ? existing.clients : [];
+  } catch {
+    previousClients = [];
+  }
+
+  const byId = new Map(previousClients.map((client) => [client.id, client]));
+  for (const client of clients.clients) {
+    byId.set(client.id, client);
+  }
+  const prepared = prepareClientsForPersist(previousClients, [...byId.values()], sales_orders.orders);
+
+  writeJson("src/data/clients.json", {
+    updated_at: new Date().toISOString(),
+    clients: prepared.clients,
+  });
   writeJson("src/data/sales-orders.json", sales_orders);
   writeJson("src/data/production-work-orders.json", production_work_orders);
   writeJson("src/data/fabric-receipts.json", { updated_at: new Date().toISOString(), receipts: [] });
 
-  return result;
+  return {
+    ...result,
+    clients: prepared.clients.length,
+  };
 }

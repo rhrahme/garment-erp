@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireSuperAdmin } from "@/lib/auth/session";
 import { deleteClientById } from "@/lib/data/clients";
-import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { readSalesOrdersFresh } from "@/lib/data/sales-orders";
 import { notifyIntegration } from "@/lib/integrations";
 
 export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
@@ -13,22 +11,10 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
     }
 
     const { id } = await context.params;
-    await ensureDocumentsLoaded(["sales_orders", "clients"]);
-    // Always re-read sales orders so a stale local JSON fallback cannot allow
-    // deleting a client that still has remote fabric / SO activity.
-    const linkedOrders = (await readSalesOrdersFresh()).orders.filter((order) => order.client_id === id);
-    if (linkedOrders.length > 0) {
-      return NextResponse.json(
-        {
-          error: `Cannot delete client with ${linkedOrders.length} linked sales order(s). Remove or reassign orders first.`,
-        },
-        { status: 409 }
-      );
-    }
-
+    // deleteClientById enforces the linked-sales-order guard (fresh SO read).
     const result = await deleteClientById(id);
     if (!result.ok) {
-      return NextResponse.json({ error: result.error }, { status: 404 });
+      return NextResponse.json({ error: result.error }, { status: result.status ?? 404 });
     }
 
     await notifyIntegration("client.deleted", {

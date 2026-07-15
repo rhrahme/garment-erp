@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   buildClientProfileFromOrphan,
+  clientsCoverAllSalesOrderClientIds,
   findOrphanedSalesOrderClients,
   orderMatchesBrandClientPrefix,
+  prepareClientsForPersist,
   reconcileOrphanedClients,
   retainClientsLinkedToSalesOrders,
   UNASSIGNED_CLIENT_SECTION_KEY,
@@ -140,6 +142,63 @@ test("retainClientsLinkedToSalesOrders keeps omitted linked profiles", () => {
   assert.equal(result.retained.length, 1);
   assert.equal(result.retained[0]!.id, "keep");
   assert.equal(result.clients.some((row) => row.id === "keep"), true);
+});
+
+test("prepareClientsForPersist retains omitted linked and heals already-missing orphans", () => {
+  // Regression: bulk UI save drops "keep", and "orphan" was already gone from
+  // previous store — retain alone is not enough; heal must rebuild from SO fields.
+  const previous = [client({ id: "keep", code: "FR-1", first_name: "Keep", last_name: "Me" })];
+  const next: ClientProfile[] = [];
+  const orders = [
+    {
+      id: "so-1",
+      so_number: "SO-1",
+      client_id: "keep",
+      client_code: "FR-1",
+      client_name: "Keep Me",
+      order_date: "2026-01-01",
+    },
+    {
+      id: "so-2",
+      so_number: "SO-2026-0116",
+      client_id: "new-1782858921783",
+      client_code: "FR-0626-0037",
+      client_name: "Pr Khaled Bin Salman",
+      order_date: "2026-07-02",
+    },
+  ];
+
+  const result = prepareClientsForPersist(previous, next, orders);
+
+  assert.equal(result.retained.length, 1);
+  assert.equal(result.retained[0]!.id, "keep");
+  assert.equal(result.restored.length, 1);
+  assert.equal(result.restored[0]!.id, "new-1782858921783");
+  assert.equal(result.restored[0]!.code, "FR-0626-0037");
+  assert.equal(clientsCoverAllSalesOrderClientIds(result.clients, orders), true);
+});
+
+test("prepareClientsForPersist fails closed if heal/retain regress", () => {
+  // Would-be orphan outcome if save gate only trusted `next` — used as the
+  // invariant assertion future refactors must keep green.
+  const previous = [client({ id: "keep", code: "FR-1" })];
+  const next = [client({ id: "other", code: "FR-9" })];
+  const orders = [
+    {
+      id: "so-1",
+      so_number: "SO-1",
+      client_id: "keep",
+      client_code: "FR-1",
+      client_name: "Keep Me",
+      order_date: "2026-01-01",
+    },
+  ];
+
+  assert.equal(clientsCoverAllSalesOrderClientIds(next, orders), false);
+  const prepared = prepareClientsForPersist(previous, next, orders);
+  assert.equal(clientsCoverAllSalesOrderClientIds(prepared.clients, orders), true);
+  assert.ok(prepared.clients.some((row) => row.id === "keep"));
+  assert.ok(prepared.clients.some((row) => row.id === "other"));
 });
 
 test("buildClientProfileFromOrphan requires a client code and name", () => {
