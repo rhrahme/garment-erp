@@ -85,3 +85,20 @@ test("groupFabricReceivingCutsByClient groups by client and nests orders", () =>
   assert.equal(fabricReceivingClientSectionMeta(sections[0]!), "2 fabric cuts · 2 orders");
   assert.equal(sections[1]!.client_name, "Beta Client");
 });
+
+test("groupFabricReceivingCutsByClient keeps missing client codes under Unassigned", () => {
+  const orphan = order({
+    sales_order_id: "so-x",
+    so_number: "S200",
+    client_code: "",
+    client_name: "",
+  });
+  const sections = groupFabricReceivingCutsByClient([
+    entry(orphan, line({ sales_order_line_id: "l-x", fabric_cut_code: "CUT-X", status: "pending" })),
+  ]);
+
+  assert.equal(sections.length, 1);
+  assert.equal(sections[0]!.client_name, "Unassigned client");
+  assert.equal(sections[0]!.client_code, "—");
+  assert.equal(sections[0]!.key, "__unassigned__");
+});

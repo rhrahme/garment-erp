@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireSuperAdmin } from "@/lib/auth/session";
 import { deleteClientById } from "@/lib/data/clients";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { readSalesOrders } from "@/lib/data/sales-orders";
+import { readSalesOrdersFresh } from "@/lib/data/sales-orders";
 import { notifyIntegration } from "@/lib/integrations";
 
 export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
@@ -14,7 +14,9 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
 
     const { id } = await context.params;
     await ensureDocumentsLoaded(["sales_orders", "clients"]);
-    const linkedOrders = readSalesOrders().orders.filter((order) => order.client_id === id);
+    // Always re-read sales orders so a stale local JSON fallback cannot allow
+    // deleting a client that still has remote fabric / SO activity.
+    const linkedOrders = (await readSalesOrdersFresh()).orders.filter((order) => order.client_id === id);
     if (linkedOrders.length > 0) {
       return NextResponse.json(
         {

@@ -1,3 +1,8 @@
+import {
+  fabricReceivingClientSectionKey,
+  fabricReceivingClientSectionLabel,
+  UNASSIGNED_CLIENT_SECTION_KEY,
+} from "@/lib/clients/orphan-reconciliation";
 import type {
   FabricReceivingLineRow,
   FabricReceivingOrderRow,
@@ -44,10 +49,11 @@ export function groupFabricReceivingCutsByClient(
   >();
 
   for (const entry of entries) {
-    const key = entry.order.client_code;
+    const key = fabricReceivingClientSectionKey(entry.order.client_code, entry.order.client_name);
+    const labels = fabricReceivingClientSectionLabel(entry.order.client_code, entry.order.client_name);
     const group = byClient.get(key) ?? {
-      client_name: entry.order.client_name,
-      client_code: key,
+      client_name: labels.client_name,
+      client_code: labels.client_code,
       entries: [],
     };
     group.entries.push(entry);
@@ -82,6 +88,9 @@ export function groupFabricReceivingCutsByClient(
       };
     })
     .sort((a, b) => {
+      // Keep missing-client activity visible at the top so it cannot hide under other sections.
+      if (a.key === UNASSIGNED_CLIENT_SECTION_KEY) return -1;
+      if (b.key === UNASSIGNED_CLIENT_SECTION_KEY) return 1;
       if (a.pendingCount !== b.pendingCount) return b.pendingCount - a.pendingCount;
       const byActivity = b.latestActivity.localeCompare(a.latestActivity);
       if (byActivity !== 0) return byActivity;

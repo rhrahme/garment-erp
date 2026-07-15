@@ -1,6 +1,81 @@
 {
   "clients": [
     {
+      "id": "new-1783281036086",
+      "city": null,
+      "code": "FR-0726-0039",
+      "email": null,
+      "notes": null,
+      "phone": null,
+      "address": null,
+      "country": null,
+      "brand_ids": [
+        "fouad-rahme"
+      ],
+      "is_active": true,
+      "joined_at": "2026-07-05T19:52:27.651Z",
+      "last_name": "Ajlan",
+      "first_name": "Abdelaziz Mohamad",
+      "client_kind": "person",
+      "middle_name": "Al",
+      "payment_terms": null,
+      "contact_person": null,
+      "referred_by_last_name": null,
+      "referred_by_first_name": null,
+      "client_reference_prefix": null,
+      "referred_by_middle_name": null
+    },
+    {
+      "id": "new-1783276034876",
+      "city": null,
+      "code": "FR-0726-0038",
+      "email": null,
+      "notes": null,
+      "phone": null,
+      "address": null,
+      "country": null,
+      "brand_ids": [
+        "fouad-rahme"
+      ],
+      "is_active": true,
+      "joined_at": "2026-07-05T18:28:15.303Z",
+      "last_name": "Al Ajlan",
+      "first_name": "Abdelaziz",
+      "client_kind": "person",
+      "middle_name": "Ajlan",
+      "payment_terms": null,
+      "contact_person": null,
+      "referred_by_last_name": null,
+      "referred_by_first_name": null,
+      "client_reference_prefix": null,
+      "referred_by_middle_name": null
+    },
+    {
+      "id": "new-1783251678551",
+      "city": null,
+      "code": "FR-0726-0037",
+      "email": null,
+      "notes": null,
+      "phone": null,
+      "address": null,
+      "country": null,
+      "brand_ids": [
+        "fouad-rahme"
+      ],
+      "is_active": true,
+      "joined_at": "2026-07-05T11:42:10.186Z",
+      "last_name": "Shwemi",
+      "first_name": "Ibrahim",
+      "client_kind": "person",
+      "middle_name": "Al",
+      "payment_terms": null,
+      "contact_person": null,
+      "referred_by_last_name": null,
+      "referred_by_first_name": null,
+      "client_reference_prefix": null,
+      "referred_by_middle_name": null
+    },
+    {
       "id": "new-1781684719089",
       "city": null,
       "code": "FR-0626-0036",
@@ -1276,7 +1351,32 @@
       "referred_by_first_name": null,
       "client_reference_prefix": null,
       "referred_by_middle_name": null
+    },
+    {
+      "id": "new-1782858921783",
+      "code": "FR-0626-0037",
+      "joined_at": "2026-06-30T00:00:00.000Z",
+      "first_name": "Pr",
+      "middle_name": "Khaled Bin",
+      "last_name": "Salman",
+      "brand_ids": [
+        "fouad-rahme"
+      ],
+      "contact_person": null,
+      "referred_by_first_name": null,
+      "referred_by_middle_name": null,
+      "referred_by_last_name": null,
+      "email": null,
+      "phone": null,
+      "country": null,
+      "city": null,
+      "address": null,
+      "payment_terms": null,
+      "client_reference_prefix": null,
+      "notes": "Restored from sales orders (SO-2026-0116, SO-2026-0113, SO-2026-0111) — client profile was missing while orders still referenced this client.",
+      "is_active": true,
+      "client_kind": "person"
     }
   ],
-  "updated_at": "2026-06-24T19:15:00.000Z"
+  "updated_at": "2026-07-15T09:02:56.672Z"
 }

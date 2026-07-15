@@ -1,5 +1,11 @@
 import path from "path";
+import {
+  reconcileOrphanedClients,
+  retainClientsLinkedToSalesOrders,
+  type OrphanReconciliationResult,
+} from "@/lib/clients/orphan-reconciliation";
 import { ensureDocumentsLoaded, readJsonFile, readJsonFileAsync, saveDocument } from "@/lib/data/document-persistence";
+import { readSalesOrders } from "@/lib/data/sales-orders";
 import type { ClientProfile, ClientsFile } from "@/lib/types/clients";
 
 const CLIENTS_PATH = path.join(process.cwd(), "src/data/clients.json");
@@ -19,6 +25,30 @@ export async function writeClients(data: ClientsFile): Promise<ClientsFile> {
     updated_at: new Date().toISOString(),
   };
   return saveDocument(CLIENTS_PATH, payload);
+}
+
+/**
+ * Restore client profiles for any sales-order client_id that is missing from the
+ * clients store. Persists when restorals are needed so Clients and Fabric Receiving
+ * cannot diverge.
+ */
+export async function ensureOrphanedClientsReconciled(): Promise<OrphanReconciliationResult> {
+  await ensureDocumentsLoaded(["clients", "sales_orders"]);
+  const store = readClients();
+  const result = reconcileOrphanedClients(store.clients, readSalesOrders().orders);
+  if (result.restored.length === 0) {
+    return result;
+  }
+  const saved = await writeClients({ ...store, clients: result.clients });
+  return { ...result, clients: saved.clients };
+}
+
+/** Guard bulk client saves from dropping profiles that still have sales orders. */
+export function protectLinkedClientsOnSave(
+  previousClients: ClientProfile[],
+  nextClients: ClientProfile[]
+): { clients: ClientProfile[]; retained: ClientProfile[] } {
+  return retainClientsLinkedToSalesOrders(previousClients, nextClients, readSalesOrders().orders);
 }
 
 export function getActiveClients(): ClientProfile[] {

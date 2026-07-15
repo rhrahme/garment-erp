@@ -5,7 +5,9 @@ import { generateNextClientCode, getBrandClientCodePrefix } from "@/lib/clients/
 import { formatClientDisplayName, formatReferredByName, hasRequiredClientName, migrateClientName, migrateReferredByName, normalizeNamePart } from "@/lib/clients/names";
 import { normalizeStoredPhone } from "@/lib/phone/countries";
 import {
+  ensureOrphanedClientsReconciled,
   normalizeClientCode,
+  protectLinkedClientsOnSave,
   readClients,
   slugifyClientId,
   writeClients,
@@ -136,7 +138,21 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    await ensureDocumentsLoaded(["clients"]);
+    const reconciliation = await ensureOrphanedClientsReconciled();
+    if (reconciliation.restored.length > 0) {
+      for (const client of reconciliation.restored) {
+        await notifyIntegration("client.created", {
+          id: client.id,
+          code: client.code,
+          first_name: client.first_name,
+          middle_name: client.middle_name,
+          last_name: client.last_name,
+          brand_ids: client.brand_ids,
+          restored_from: "orphan_reconciliation",
+        });
+      }
+    }
+
     const data = readClients();
     return NextResponse.json(session.canViewClientContact ? data : redactClientsFile(data));
   } catch (error) {
@@ -153,7 +169,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    await ensureDocumentsLoaded(["clients"]);
+    await ensureDocumentsLoaded(["clients", "sales_orders"]);
     const previous = readClients();
     const result = validateClients(body, previous.clients, {
       allowContactFields: session.canViewClientContact,
@@ -162,11 +178,22 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
-    const saved = await writeClients({ updated_at: null, clients: result.data });
+    // Bulk editor saves replace the whole list. Never drop a profile that still
+    // has sales orders — that is how FR activity can appear without a Clients row.
+    const protectedSave = protectLinkedClientsOnSave(previous.clients, result.data);
+    if (protectedSave.retained.length > 0) {
+      console.warn(
+        `[clients] Retained ${protectedSave.retained.length} linked client(s) omitted from save:`,
+        protectedSave.retained.map((client) => `${client.code} (${client.id})`).join(", ")
+      );
+    }
+
+    const saved = await writeClients({ updated_at: null, clients: protectedSave.clients });
 
     const isNew = previous.clients.length === 0 && saved.clients.length > 0;
     await notifyIntegration(isNew ? "client.created" : "client.updated", {
       client_count: saved.clients.length,
+      retained_linked_clients: protectedSave.retained.map((client) => client.id),
       updated_at: saved.updated_at,
     });
 

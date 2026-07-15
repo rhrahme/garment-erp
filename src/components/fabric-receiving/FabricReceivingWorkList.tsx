@@ -13,6 +13,7 @@ import {
 import { ScanStageLegend } from "@/components/production/ScanStageLegend";
 import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
+import { orderMatchesBrandClientPrefix } from "@/lib/clients/orphan-reconciliation";
 import {
   FABRIC_PREP_TYPES,
   completeFabricPrepActionLabel,
@@ -371,9 +372,9 @@ export function FabricReceivingWorkList({
     if (!brandId) return viewOrders;
     const prefix = getBrandClientCodePrefix(brandId);
     if (!prefix) return viewOrders;
-    return viewOrders.filter(
-      (order) => order.client_code.startsWith(`${prefix}-`) || order.client_code === prefix
-    );
+    // Missing client codes stay visible under every brand filter so orphaned
+    // fabric activity cannot disappear while still existing on the order.
+    return viewOrders.filter((order) => orderMatchesBrandClientPrefix(order.client_code, prefix));
   }, [brandId, viewOrders]);
 
   const counts = useMemo(() => {
