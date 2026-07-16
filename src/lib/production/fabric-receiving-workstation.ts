@@ -50,7 +50,7 @@ export function nextActionForPending(): string {
 
 export function nextActionForReceipt(receipt: FabricReceipt): string {
   if (receipt.status === "received") {
-    return "Scan at Wash or Iron to start prep";
+    return "Start wash, soak, or iron on the work list";
   }
   if (receipt.status === "fabric_prep" && receipt.fabric_prep_type && receipt.fabric_prep_step) {
     const step = receipt.fabric_prep_step;

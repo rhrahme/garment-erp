@@ -47,7 +47,7 @@ type FabricReceivingView = "active" | "archived" | "floor_progress";
 const TABS: { id: FabricReceivingWorkTab; label: string; hint: string }[] = [
   { id: "to_receive", label: "To receive", hint: "Fabric not scanned at Receive yet" },
   { id: "awaiting_prep", label: "Fabric received", hint: "Pink — scanned at Receive" },
-  { id: "in_prep", label: "In prep", hint: "Sky blue — wash or iron" },
+  { id: "in_prep", label: "In prep", hint: "Sky / teal / amber — wash, soak, or iron" },
   { id: "all", label: "All", hint: "Everything on the receiving floor" },
 ];
 
@@ -101,7 +101,7 @@ function lineToTableRow(line: FabricReceivingLineRow): ReceivingCutTableRow {
 
 function nextActionForLine(line: FabricReceivingLineRow): string {
   if (line.status === "pending") return "Scan at Receive";
-  if (line.status === "received") return "Wash or Iron";
+  if (line.status === "received") return "Start wash, soak, or iron below";
   if (line.status === "fabric_prep" && line.fabric_prep_step === "wash") return "Finish wash";
   if (line.status === "fabric_prep" && line.fabric_prep_step === "soak") return "Finish soak";
   if (line.status === "fabric_prep" && line.fabric_prep_step === "iron") return "Scan at Iron";
@@ -124,6 +124,8 @@ function matchesSearch(entry: FabricReceivingCutEntry, query: string): boolean {
   );
 }
 
+type StartPrepHandler = (receiptId: string, prepType?: FabricPrepType) => void;
+
 type FabricReceivingWorkListProps = {
   reloadKey: number;
   tabAfterScan?: FabricReceivingWorkTab | null;
@@ -133,9 +135,62 @@ type FabricReceivingWorkListProps = {
   prepTypeByReceipt: Record<string, FabricPrepType>;
   onPrepTypeChange: (receiptId: string, type: FabricPrepType) => void;
   onReceiveLine: (salesOrderLineId: string) => void;
-  onStartPrep: (receiptId: string) => void;
+  onStartPrep: StartPrepHandler;
   onAdvancePrep: (receiptId: string) => void;
 };
+
+function ReceivedPrepActions({
+  receiptId,
+  actingId,
+  onStartPrep,
+}: {
+  receiptId: string;
+  actingId: string | null;
+  onStartPrep: StartPrepHandler;
+}) {
+  const busy = actingId === receiptId;
+  return (
+    <div className="flex flex-wrap items-stretch gap-2">
+      <button
+        type="button"
+        onClick={() => onStartPrep(receiptId, "wash_iron")}
+        disabled={busy}
+        className={cn(
+          "min-h-12 min-w-[8.5rem] flex-1 rounded-xl px-4 py-3 text-base font-semibold shadow-sm transition-colors",
+          "bg-sky-600 text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2",
+          "disabled:cursor-not-allowed disabled:opacity-50"
+        )}
+      >
+        {busy ? "Starting…" : "Start wash"}
+      </button>
+      <button
+        type="button"
+        onClick={() => onStartPrep(receiptId, "soak_iron")}
+        disabled={busy}
+        className={cn(
+          "min-h-12 min-w-[8.5rem] flex-1 rounded-xl px-4 py-3 text-base font-semibold shadow-sm transition-colors",
+          "bg-teal-600 text-white hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2",
+          "disabled:cursor-not-allowed disabled:opacity-50"
+        )}
+      >
+        {busy ? "Starting…" : "Start soak"}
+      </button>
+      <button
+        type="button"
+        onClick={() => onStartPrep(receiptId, "iron_only")}
+        disabled={busy}
+        className={cn(
+          "min-h-11 min-w-[6.5rem] rounded-xl px-3 py-2.5 text-sm font-medium shadow-sm transition-colors",
+          "border border-amber-300 bg-amber-50 text-amber-950 hover:bg-amber-100",
+          "focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2",
+          "disabled:cursor-not-allowed disabled:opacity-50"
+        )}
+      >
+        {busy ? "Starting…" : "Iron only"}
+      </button>
+    </div>
+  );
+}
 
 function ManualLineActions({
   line,
@@ -151,7 +206,7 @@ function ManualLineActions({
   prepTypeByReceipt: Record<string, FabricPrepType>;
   onPrepTypeChange: (receiptId: string, type: FabricPrepType) => void;
   onReceiveLine: (salesOrderLineId: string) => void;
-  onStartPrep: (receiptId: string) => void;
+  onStartPrep: StartPrepHandler;
   onAdvancePrep: (receiptId: string) => void;
 }) {
   if (line.status === "pending") {
@@ -187,7 +242,11 @@ function ManualLineActions({
             ))}
           </select>
         </label>
-        <Button size="sm" onClick={() => onStartPrep(receiptId)} disabled={actingId === receiptId}>
+        <Button
+          size="sm"
+          onClick={() => onStartPrep(receiptId, prepTypeByReceipt[receiptId] ?? "iron_only")}
+          disabled={actingId === receiptId}
+        >
           {actingId === receiptId ? "Starting…" : "Start prep"}
         </Button>
       </div>
@@ -233,7 +292,7 @@ function FabricCutCard({
   prepTypeByReceipt: Record<string, FabricPrepType>;
   onPrepTypeChange: (receiptId: string, type: FabricPrepType) => void;
   onReceiveLine: (salesOrderLineId: string) => void;
-  onStartPrep: (receiptId: string) => void;
+  onStartPrep: StartPrepHandler;
   onAdvancePrep: (receiptId: string) => void;
 }) {
   const printHref = `/orders/${order.sales_order_id}/print?team=receiving`;
@@ -241,6 +300,7 @@ function FabricCutCard({
   const showManual =
     line.status === "pending" || line.status === "received" || line.status === "fabric_prep";
   const tableRow = lineToTableRow(line);
+  const showQuickPrep = line.status === "received" && Boolean(line.receipt_id);
 
   return (
     <section
@@ -292,6 +352,16 @@ function FabricCutCard({
           )}
         </div>
       </div>
+
+      {showQuickPrep && line.receipt_id && (
+        <div className="border-t border-slate-100/80 px-4 py-3">
+          <ReceivedPrepActions
+            receiptId={line.receipt_id}
+            actingId={actingId}
+            onStartPrep={onStartPrep}
+          />
+        </div>
+      )}
 
       <div className="overflow-x-auto border-t border-slate-100/80 px-4 py-3">
         <SalesOrderReceivingCutTable

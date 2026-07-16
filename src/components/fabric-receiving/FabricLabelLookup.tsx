@@ -211,8 +211,8 @@ export function FabricLabelLookup({
 
               {result.receive_status === "received" && (
                 <p className="mt-2 text-xs">
-                  Fabric is on the work list. Start prep from the list below, or expand{" "}
-                  <strong>Floor scanner</strong> to scan at Wash, Soak, or Iron.
+                  Fabric is on the work list. Use <strong>Start wash</strong> / <strong>Start soak</strong>{" "}
+                  on the pink row, or expand <strong>Floor scanner</strong> to scan at Wash, Soak, or Iron.
                 </p>
               )}
             </div>

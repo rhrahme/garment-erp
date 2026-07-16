@@ -107,8 +107,8 @@ export function FabricReceivingWorkspace() {
     }
   }
 
-  async function startFabricPrep(id: string) {
-    const fabric_prep_type = prepTypeByReceipt[id] ?? "iron_only";
+  async function startFabricPrep(id: string, prepType?: FabricPrepType) {
+    const fabric_prep_type = prepType ?? prepTypeByReceipt[id] ?? "iron_only";
     setError(null);
     setMessage(null);
     setActingId(id);
@@ -120,6 +120,7 @@ export function FabricReceivingWorkspace() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to start fabric prep");
+      setPrepTypeByReceipt((prev) => ({ ...prev, [id]: fabric_prep_type }));
       setMessage(`Prep started — ${fabricPrepTypeLabel(fabric_prep_type)}.`);
       refreshAll();
     } catch (err) {
