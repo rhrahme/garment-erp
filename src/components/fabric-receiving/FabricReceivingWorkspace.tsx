@@ -52,13 +52,20 @@ export function FabricReceivingWorkspace() {
   >(null);
   const [sessionScans, setSessionScans] = useState<SessionScan[]>([]);
   const [canChooseDefectFoundAt, setCanChooseDefectFoundAt] = useState(false);
+  const [isTaskOperator, setIsTaskOperator] = useState(false);
   const [defectModal, setDefectModal] = useState<ReportDefectContext | null>(null);
 
   useEffect(() => {
     fetch("/api/auth/session")
       .then((res) => res.json())
-      .then((data) => setCanChooseDefectFoundAt(Boolean(data.is_admin || data.is_client_manager)))
-      .catch(() => setCanChooseDefectFoundAt(false));
+      .then((data) => {
+        setCanChooseDefectFoundAt(Boolean(data.is_admin || data.is_client_manager));
+        setIsTaskOperator(Boolean(data.is_task_operator));
+      })
+      .catch(() => {
+        setCanChooseDefectFoundAt(false);
+        setIsTaskOperator(false);
+      });
   }, []);
 
   const refreshAll = useCallback(() => {
@@ -206,6 +213,7 @@ export function FabricReceivingWorkspace() {
           <StageScanPanel
             stations={["receive", "wash", "soak", "iron"]}
             scanContext="fabric-receiving"
+            showEmployeeBadge={!isTaskOperator}
             onRefresh={refreshAll}
             onScanMessage={setMessage}
             onScanResult={handleScanResult}

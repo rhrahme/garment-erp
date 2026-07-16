@@ -31,6 +31,12 @@ type StageScanPanelProps = {
   stations: ScanStation[];
   scanContext?: "fabric-receiving" | "production";
   requireEmployee?: boolean;
+  /**
+   * When false, hides the optional "Employee badge" session box entirely.
+   * Only honored where the badge is optional (Fabric Receiving) — required
+   * two-step production scanning always shows it.
+   */
+  showEmployeeBadge?: boolean;
   onRefresh?: () => void | Promise<void>;
   onScanMessage?: (message: string) => void;
   onScanResult?: (result: StageScanResponse) => void;
@@ -40,6 +46,7 @@ export function StageScanPanel({
   stations,
   scanContext,
   requireEmployee = true,
+  showEmployeeBadge = true,
   onRefresh,
   onScanMessage,
   onScanResult,
@@ -50,8 +57,10 @@ export function StageScanPanel({
   const [employeeSession, setEmployeeSession] = useState<ScanEmployeeSession | null>(null);
   const active = options.find((option) => option.id === station) ?? options[0]!;
   const employeeOptional = scanContext === "fabric-receiving";
-  const showEmployeeSession = requireEmployee || employeeOptional;
   const stickerRequiresBadge = requireEmployee && !employeeOptional;
+  // Badge is mandatory only for required two-step scanning; where it is optional
+  // it can be hidden per role/context (task operators do not want it on Fabric Receiving).
+  const showEmployeeSession = stickerRequiresBadge || (employeeOptional && showEmployeeBadge);
 
   useEffect(() => {
     setVoiceFeedback(readVoiceFeedbackEnabled());
