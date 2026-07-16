@@ -11,6 +11,8 @@ interface CreateCustomFabricFormProps {
   nextFabricNumber: string;
   onCreated: (fabric: SupplierFabric) => void;
   onCancel: () => void;
+  /** Admins only — matches Spec `canViewFabricListPrices`. */
+  canViewPrices?: boolean;
 }
 
 type FormState = {
@@ -43,6 +45,7 @@ export function CreateCustomFabricForm({
   nextFabricNumber,
   onCreated,
   onCancel,
+  canViewPrices = false,
 }: CreateCustomFabricFormProps) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [clients, setClients] = useState<ClientProfile[]>([]);
@@ -75,6 +78,12 @@ export function CreateCustomFabricForm({
     setSaving(true);
     try {
       const selected = clients.find((c) => c.id === form.client_id);
+      const priceFields = canViewPrices
+        ? {
+            unit_price: form.unit_price.trim() ? Number(form.unit_price) : null,
+            currency: form.unit_price.trim() ? form.currency : null,
+          }
+        : {};
       const res = await fetch("/api/custom-fabrics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -84,8 +93,7 @@ export function CreateCustomFabricForm({
           composition: form.composition.trim() || null,
           weight_gsm: form.weight_gsm.trim() ? Number(form.weight_gsm) : null,
           width_cm: form.width_cm.trim() ? Number(form.width_cm) : null,
-          unit_price: form.unit_price.trim() ? Number(form.unit_price) : null,
-          currency: form.unit_price.trim() ? form.currency : null,
+          ...priceFields,
           source_note: form.source_note.trim() || null,
           client_id: form.client_id || null,
           client_name: selected ? formatClientDisplayName(selected) : null,
@@ -198,28 +206,30 @@ export function CreateCustomFabricForm({
           />
         </div>
 
-        <div>
-          <label className={labelClass}>Unit price</label>
-          <div className="flex gap-2">
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              value={form.unit_price}
-              onChange={(e) => update("unit_price", e.target.value)}
-              className={inputClass}
-            />
-            <select
-              value={form.currency}
-              onChange={(e) => update("currency", e.target.value as PriceCurrency)}
-              className="w-24 shrink-0 rounded-lg border border-slate-300 px-2 py-2 text-sm"
-            >
-              <option value="EUR">EUR</option>
-              <option value="USD">USD</option>
-              <option value="AED">AED</option>
-            </select>
+        {canViewPrices ? (
+          <div>
+            <label className={labelClass}>Unit price</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={form.unit_price}
+                onChange={(e) => update("unit_price", e.target.value)}
+                className={inputClass}
+              />
+              <select
+                value={form.currency}
+                onChange={(e) => update("currency", e.target.value as PriceCurrency)}
+                className="w-24 shrink-0 rounded-lg border border-slate-300 px-2 py-2 text-sm"
+              >
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="AED">AED</option>
+              </select>
+            </div>
           </div>
-        </div>
+        ) : null}
 
         <div className="sm:col-span-2">
           <label className={labelClass}>Client (optional)</label>

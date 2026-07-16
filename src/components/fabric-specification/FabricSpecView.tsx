@@ -167,11 +167,13 @@ export function FabricSpecView({ suppliers, items: initialItems, canViewPrices =
   const solbiatiBrand = brands.find((b) => b.id === "solbiati");
 
   function handleCustomFabricCreated(fabric: SupplierFabric) {
+    const safeFabric =
+      canViewPrices || fabric.unit_price == null ? fabric : { ...fabric, unit_price: null };
     setItems((prev) => {
-      if (prev.some((row) => row.id === fabric.id || row.fabric_number === fabric.fabric_number)) {
+      if (prev.some((row) => row.id === safeFabric.id || row.fabric_number === safeFabric.fabric_number)) {
         return prev;
       }
-      return [...prev, fabric];
+      return [...prev, safeFabric];
     });
     setShowCreateForm(false);
     setBrandId(CUSTOM_SUPPLIER_ID);
@@ -313,6 +315,7 @@ export function FabricSpecView({ suppliers, items: initialItems, canViewPrices =
             nextFabricNumber={nextFabricNumber}
             onCreated={handleCustomFabricCreated}
             onCancel={() => setShowCreateForm(false)}
+            canViewPrices={canViewPrices}
           />
         ) : null}
 

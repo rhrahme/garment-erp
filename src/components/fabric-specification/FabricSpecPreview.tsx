@@ -103,7 +103,12 @@ function FabricSpecDetailModal({
           {canViewPrices ? (
             <DetailRow label="List price">
               {fabric.unit_price != null ? (
-                <DualCurrencyPrice amount={fabric.unit_price} supplierId={fabric.supplier_id} unit="m" />
+                <DualCurrencyPrice
+                  amount={fabric.unit_price}
+                  supplierId={fabric.supplier_id}
+                  unit="m"
+                  currency={fabric.currency}
+                />
               ) : (
                 "—"
               )}

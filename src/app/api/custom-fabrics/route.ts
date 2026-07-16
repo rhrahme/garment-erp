@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { redactSupplierFabricPrice, redactSupplierFabricPrices } from "@/lib/auth/fabric-price-access";
 import { requireAuthenticated } from "@/lib/auth/session";
 import {
   createCustomFabric,
@@ -9,7 +10,11 @@ import {
   validateCreateCustomFabricInput,
 } from "@/lib/data/custom-fabrics";
 import { notifyIntegration } from "@/lib/integrations";
-import type { CreateCustomFabricInput } from "@/lib/types/custom-fabrics";
+import type { CreateCustomFabricInput, CustomFabric } from "@/lib/types/custom-fabrics";
+
+function redactCustomFabric(fabric: CustomFabric): CustomFabric {
+  return { ...fabric, unit_price: null, currency: null };
+}
 
 export async function GET() {
   try {
@@ -20,8 +25,9 @@ export async function GET() {
 
     await ensureCustomFabricsLoaded();
     const store = readCustomFabrics();
+    const fabrics = listCustomFabricsAsSupplierFabrics(store);
     return NextResponse.json({
-      fabrics: listCustomFabricsAsSupplierFabrics(store),
+      fabrics: session.canViewFabricListPrices ? fabrics : redactSupplierFabricPrices(fabrics),
       next_fabric_number: peekNextCustomFabricNumber(store.fabrics),
       updated_at: store.updated_at,
     });
@@ -39,8 +45,11 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as CreateCustomFabricInput;
+    const canSetPrice = session.canViewFabricListPrices;
     const validated = validateCreateCustomFabricInput({
       ...body,
+      // Non-admins cannot set list price via the session UI/API.
+      ...(canSetPrice ? {} : { unit_price: null, currency: null }),
       created_by: body.created_by ?? session.email ?? session.userId,
     });
     if (!validated.ok) {
@@ -72,8 +81,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        fabric,
-        supplier_fabric: supplierFabric,
+        fabric: canSetPrice ? fabric : redactCustomFabric(fabric),
+        supplier_fabric: canSetPrice ? supplierFabric : redactSupplierFabricPrice(supplierFabric),
         next_fabric_number: peekNextCustomFabricNumber(),
       },
       { status: 201 }
