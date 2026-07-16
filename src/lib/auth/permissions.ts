@@ -9,6 +9,7 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/production",
   "/quality",
   "/api/clients",
+  "/api/custom-fabrics",
   "/api/sales-orders",
   "/api/fabric-search",
   "/api/fabric-brands",
@@ -25,6 +26,7 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
 
 const TASK_OPERATOR_ROUTE_PREFIXES = [
   "/fabric-receiving",
+  "/fabric-specification",
   "/orders",
   "/api/fabric-receiving",
   "/api/sales-orders",
@@ -32,6 +34,10 @@ const TASK_OPERATOR_ROUTE_PREFIXES = [
   "/api/qr",
   "/api/fabric-brands",
   "/api/fabric-search",
+  "/api/custom-fabrics",
+  "/api/clients",
+  "/api/suppliers/loro-piana",
+  "/api/integrations/drapers/medias",
   "/api/auth/session",
   "/api/auth/dev-impersonate",
   "/login",
@@ -46,7 +52,7 @@ const TASK_OPERATOR_BLOCKED_ROUTE_PREFIXES = ["/orders/new", "/fabric-orders"] a
 const BUILTIN_CLIENT_MANAGER_EMAILS = ["hagan.qc@gmail.com"] as const;
 
 /**
- * Production-floor task operators — print labels/A4 and wash/iron scan only.
+ * Production-floor task operators — print labels/A4, wash/iron scan, and custom fabric create.
  * No prices, no order editing, minimal sidebar.
  */
 const BUILTIN_TASK_OPERATOR_EMAILS = ["hagan.task1@gmail.com"] as const;
@@ -69,7 +75,11 @@ export const CLIENT_MANAGER_NAV_HREFS = [
 ] as const;
 
 /** Sidebar pages for production-floor task operators. */
-export const TASK_OPERATOR_NAV_HREFS = ["/fabric-receiving", "/orders"] as const;
+export const TASK_OPERATOR_NAV_HREFS = [
+  "/fabric-receiving",
+  "/orders",
+  "/fabric-specification",
+] as const;
 
 export type RestrictedAccessKind = "client_manager" | "task_operator";
 
