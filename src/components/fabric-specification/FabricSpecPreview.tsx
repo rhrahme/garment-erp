@@ -85,6 +85,11 @@ function FabricSpecDetailModal({
         {pattern ? <p className="mt-1 text-sm font-medium text-slate-700">{pattern}</p> : null}
 
         <dl className="mt-4">
+          {fabric.one_off || fabric.kind === "custom" ? (
+            <DetailRow label="Supplier">
+              {fabric.supplier_name?.trim() || "Custom / One-off"}
+            </DetailRow>
+          ) : null}
           <DetailRow label="Composition">{fabric.composition ?? "—"}</DetailRow>
           <DetailRow label="Collection">{pattern ?? "—"}</DetailRow>
           <DetailRow label="Color">{fabric.color ?? "—"}</DetailRow>

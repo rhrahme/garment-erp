@@ -72,6 +72,7 @@ export function validateCreateCustomFabricInput(
       unit_price,
       currency: currency ?? (unit_price != null ? "EUR" : null),
       source_note: normalizeText(input.source_note),
+      supplier_name: normalizeText(input.supplier_name),
       client_id: normalizeText(input.client_id),
       client_name: normalizeText(input.client_name),
       sales_order_id: normalizeText(input.sales_order_id),

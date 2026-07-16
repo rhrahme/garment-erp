@@ -15,6 +15,8 @@ export interface CustomFabric {
   unit_price: number | null;
   currency: PriceCurrency | null;
   source_note: string | null;
+  /** Free-text name of a one-off / new supplier (mill/shop) not in the catalog. */
+  supplier_name: string | null;
   client_id: string | null;
   client_name: string | null;
   sales_order_id: string | null;
@@ -39,6 +41,7 @@ export interface CreateCustomFabricInput {
   unit_price?: number | null;
   currency?: PriceCurrency | null;
   source_note?: string | null;
+  supplier_name?: string | null;
   client_id?: string | null;
   client_name?: string | null;
   sales_order_id?: string | null;

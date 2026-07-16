@@ -44,6 +44,8 @@ export interface SupplierFabric {
   client_id?: string | null;
   client_name?: string | null;
   source_note?: string | null;
+  /** Custom / one-off fabrics only — free-text name of a new supplier (mill/shop). */
+  supplier_name?: string | null;
   sales_order_id?: string | null;
   created_at?: string | null;
   created_by?: string | null;

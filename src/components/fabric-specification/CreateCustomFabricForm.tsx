@@ -17,6 +17,7 @@ interface CreateCustomFabricFormProps {
 
 type FormState = {
   description: string;
+  supplier_name: string;
   color: string;
   composition: string;
   weight_gsm: string;
@@ -30,6 +31,7 @@ type FormState = {
 
 const EMPTY_FORM: FormState = {
   description: "",
+  supplier_name: "",
   color: "",
   composition: "",
   weight_gsm: "",
@@ -89,6 +91,7 @@ export function CreateCustomFabricForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           description: form.description.trim(),
+          supplier_name: form.supplier_name.trim() || null,
           color: form.color.trim() || null,
           composition: form.composition.trim() || null,
           weight_gsm: form.weight_gsm.trim() ? Number(form.weight_gsm) : null,
@@ -150,6 +153,19 @@ export function CreateCustomFabricForm({
             placeholder="e.g. Navy wool leftover from mill visit"
             className={inputClass}
           />
+        </div>
+
+        <div className="sm:col-span-2 lg:col-span-3">
+          <label className={labelClass}>Supplier name (optional)</label>
+          <input
+            value={form.supplier_name}
+            onChange={(e) => update("supplier_name", e.target.value)}
+            placeholder="New mill / shop not in the catalog"
+            className={inputClass}
+          />
+          <p className="mt-1 text-xs text-slate-500">
+            Attribute this one-off to a named supplier. Leave blank to keep it under &ldquo;Custom / One-off&rdquo;.
+          </p>
         </div>
 
         <div>

@@ -56,6 +56,7 @@ export async function POST(request: Request) {
         unit_price: fabric.unit_price,
         currency: fabric.currency,
         source_note: fabric.source_note,
+        supplier_name: fabric.supplier_name,
         client_id: fabric.client_id,
         client_name: fabric.client_name,
         sales_order_id: fabric.sales_order_id,

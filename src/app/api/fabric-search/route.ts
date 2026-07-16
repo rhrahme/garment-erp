@@ -64,10 +64,15 @@ function buildManualFabricEntry(supplierId: string, fabricNumber: string): Suppl
 }
 
 function toSearchItem(item: SupplierFabric, manual = false) {
+  // Custom / one-off fabrics carry a free-text supplier name for display.
+  const resolvedSupplierName =
+    item.supplier_id === "custom"
+      ? item.supplier_name?.trim() || item.supplier?.name || supplierName(item.supplier_id)
+      : supplierName(item.supplier_id);
   return {
     id: item.id,
     supplier_id: item.supplier_id,
-    supplier_name: formatFabricSupplierName(item.supplier_id, supplierName(item.supplier_id), item.fabric_number),
+    supplier_name: formatFabricSupplierName(item.supplier_id, resolvedSupplierName, item.fabric_number),
     fabric_number: item.fabric_number,
     composition: item.composition,
     color: item.color,

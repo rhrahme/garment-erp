@@ -75,8 +75,10 @@ export function peekNextCustomFabricNumber(
 }
 
 export function customFabricToSupplierFabric(fabric: CustomFabric): SupplierFabric {
+  const displaySupplierName = fabric.supplier_name?.trim() || CUSTOM_SUPPLIER_NAME;
   return {
     id: fabric.id,
+    // Still lives in the Custom bucket / storage; supplier_name is display-only.
     supplier_id: CUSTOM_SUPPLIER_ID,
     fabric_number: fabric.fabric_number,
     name: fabric.description,
@@ -101,11 +103,12 @@ export function customFabricToSupplierFabric(fabric: CustomFabric): SupplierFabr
     client_id: fabric.client_id,
     client_name: fabric.client_name,
     source_note: fabric.source_note,
+    supplier_name: fabric.supplier_name ?? null,
     sales_order_id: fabric.sales_order_id,
     created_at: fabric.created_at,
     created_by: fabric.created_by,
     currency: fabric.currency,
-    supplier: CUSTOM_SUPPLIER,
+    supplier: { ...CUSTOM_SUPPLIER, name: displaySupplierName },
   };
 }
 
@@ -132,6 +135,7 @@ export function searchCustomFabrics(query: string, limit: number): SupplierFabri
       item.color,
       item.composition,
       item.source_note,
+      item.supplier_name,
       item.client_name,
     ]
       .filter(Boolean)
@@ -175,6 +179,7 @@ export async function createCustomFabric(
     unit_price: validated.data.unit_price ?? null,
     currency: validated.data.currency ?? null,
     source_note: validated.data.source_note ?? null,
+    supplier_name: validated.data.supplier_name ?? null,
     client_id: validated.data.client_id ?? null,
     client_name: validated.data.client_name ?? null,
     sales_order_id: validated.data.sales_order_id ?? null,

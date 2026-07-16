@@ -118,6 +118,7 @@ export function FabricSpecView({ suppliers, items: initialItems, canViewPrices =
             f.description?.toLowerCase().includes(q) ||
             f.finish?.toLowerCase().includes(q) ||
             f.source_note?.toLowerCase().includes(q) ||
+            f.supplier_name?.toLowerCase().includes(q) ||
             f.client_name?.toLowerCase().includes(q) ||
             f.gn_code?.includes(q)
         );
