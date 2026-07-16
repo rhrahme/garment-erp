@@ -126,6 +126,16 @@ function matchesSearch(entry: FabricReceivingCutEntry, query: string): boolean {
 
 type StartPrepHandler = (receiptId: string, prepType?: FabricPrepType) => void;
 
+type DefectReportRequest = {
+  receiptId: string;
+  fabricCutCode: string;
+  fabricNumber: string;
+  soNumber: string;
+  clientName: string;
+  defaultFoundAt: "receiving" | "cutting";
+  title?: string;
+};
+
 type FabricReceivingWorkListProps = {
   reloadKey: number;
   tabAfterScan?: FabricReceivingWorkTab | null;
@@ -137,16 +147,20 @@ type FabricReceivingWorkListProps = {
   onReceiveLine: (salesOrderLineId: string) => void;
   onStartPrep: StartPrepHandler;
   onAdvancePrep: (receiptId: string) => void;
+  canChooseDefectFoundAt?: boolean;
+  onReportDefect: (request: DefectReportRequest) => void;
 };
 
 function ReceivedPrepActions({
   receiptId,
   actingId,
   onStartPrep,
+  onReportDefect,
 }: {
   receiptId: string;
   actingId: string | null;
   onStartPrep: StartPrepHandler;
+  onReportDefect: () => void;
 }) {
   const busy = actingId === receiptId;
   return (
@@ -187,6 +201,19 @@ function ReceivedPrepActions({
         )}
       >
         {busy ? "Starting…" : "Iron only"}
+      </button>
+      <button
+        type="button"
+        onClick={onReportDefect}
+        disabled={busy}
+        className={cn(
+          "min-h-11 min-w-[7.5rem] rounded-xl px-3 py-2.5 text-sm font-semibold shadow-sm transition-colors",
+          "border border-rose-300 bg-rose-50 text-rose-900 hover:bg-rose-100",
+          "focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-2",
+          "disabled:cursor-not-allowed disabled:opacity-50"
+        )}
+      >
+        Report defect
       </button>
     </div>
   );
@@ -281,6 +308,8 @@ function FabricCutCard({
   onReceiveLine,
   onStartPrep,
   onAdvancePrep,
+  canChooseDefectFoundAt = false,
+  onReportDefect,
 }: {
   order: FabricReceivingOrderRow;
   line: FabricReceivingLineRow;
@@ -294,6 +323,8 @@ function FabricCutCard({
   onReceiveLine: (salesOrderLineId: string) => void;
   onStartPrep: StartPrepHandler;
   onAdvancePrep: (receiptId: string) => void;
+  canChooseDefectFoundAt?: boolean;
+  onReportDefect: (request: DefectReportRequest) => void;
 }) {
   const printHref = `/orders/${order.sales_order_id}/print?team=receiving`;
   const styles = scanStageStyles(line.scan_stage);
@@ -301,6 +332,22 @@ function FabricCutCard({
     line.status === "pending" || line.status === "received" || line.status === "fabric_prep";
   const tableRow = lineToTableRow(line);
   const showQuickPrep = line.status === "received" && Boolean(line.receipt_id);
+  const showAddIssue =
+    Boolean(line.receipt_id) &&
+    (line.status === "fabric_prep" || line.status === "handed_off" || line.status === "received");
+
+  function openDefectReport(defaultFoundAt: "receiving" | "cutting", title: string) {
+    if (!line.receipt_id) return;
+    onReportDefect({
+      receiptId: line.receipt_id,
+      fabricCutCode: line.fabric_cut_code,
+      fabricNumber: line.fabric_number,
+      soNumber: order.so_number,
+      clientName: order.client_name,
+      defaultFoundAt,
+      title,
+    });
+  }
 
   return (
     <section
@@ -324,6 +371,12 @@ function FabricCutCard({
             <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-medium", styles.chip)}>
               {line.scan_stage_label}
             </span>
+            {line.has_defect_report && (
+              <span className="rounded-full bg-rose-600 px-2.5 py-0.5 text-xs font-semibold text-white">
+                Defect reported
+                {line.open_defect_count > 0 ? ` · ${line.open_defect_count} open` : ""}
+              </span>
+            )}
             <span className="text-sm text-slate-700">{nextActionForLine(line)}</span>
           </div>
         </div>
@@ -359,7 +412,31 @@ function FabricCutCard({
             receiptId={line.receipt_id}
             actingId={actingId}
             onStartPrep={onStartPrep}
+            onReportDefect={() => openDefectReport("receiving", "Report defect")}
           />
+        </div>
+      )}
+
+      {showAddIssue && line.receipt_id && line.status !== "received" && (
+        <div className="border-t border-slate-100/80 px-4 py-3">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                openDefectReport(
+                  canChooseDefectFoundAt ? "cutting" : "cutting",
+                  canChooseDefectFoundAt ? "Add issue" : "Flag defect (cutting)"
+                )
+              }
+              className={cn(
+                "min-h-11 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors",
+                "border border-rose-300 bg-rose-50 text-rose-900 hover:bg-rose-100",
+                "focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-2"
+              )}
+            >
+              {canChooseDefectFoundAt ? "Add issue" : "Flag defect (cutting)"}
+            </button>
+          </div>
         </div>
       )}
 
@@ -398,6 +475,8 @@ export function FabricReceivingWorkList({
   onReceiveLine,
   onStartPrep,
   onAdvancePrep,
+  canChooseDefectFoundAt = false,
+  onReportDefect,
 }: FabricReceivingWorkListProps) {
   const [tab, setTab] = useState<FabricReceivingWorkTab>("awaiting_prep");
   const [view, setView] = useState<FabricReceivingView>("active");
@@ -820,6 +899,8 @@ export function FabricReceivingWorkList({
                               onReceiveLine={onReceiveLine}
                               onStartPrep={onStartPrep}
                               onAdvancePrep={onAdvancePrep}
+                              canChooseDefectFoundAt={canChooseDefectFoundAt}
+                              onReportDefect={onReportDefect}
                             />
                             );
                           })}

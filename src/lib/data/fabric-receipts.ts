@@ -91,6 +91,57 @@ export function getFabricReceiptById(id: string): FabricReceipt | undefined {
   return readFabricReceipts().receipts.find((receipt) => receipt.id === id);
 }
 
+/** Active store first, then archive (handed-off receipts). */
+export function getFabricReceiptAnywhere(id: string): FabricReceipt | undefined {
+  return (
+    readFabricReceiptsFresh().receipts.find((receipt) => receipt.id === id) ??
+    readFabricReceiptsArchive().receipts.find((receipt) => receipt.id === id)
+  );
+}
+
+export type FabricReceiptStoreLocation = "active" | "archive";
+
+export function locateFabricReceipt(
+  id: string
+): { receipt: FabricReceipt; location: FabricReceiptStoreLocation } | null {
+  const active = readFabricReceiptsFresh().receipts.find((receipt) => receipt.id === id);
+  if (active) return { receipt: active, location: "active" };
+  const archived = readFabricReceiptsArchive().receipts.find((receipt) => receipt.id === id);
+  if (archived) return { receipt: archived, location: "archive" };
+  return null;
+}
+
+/**
+ * Mutate a receipt in either the active or archive document.
+ * Keeps defect reports attached after handoff / settle.
+ */
+export async function mutateFabricReceiptAnywhere<T>(
+  receiptId: string,
+  fn: (receipt: FabricReceipt) => Promise<T> | T
+): Promise<T> {
+  const located = locateFabricReceipt(receiptId);
+  if (!located) {
+    throw new Error("Fabric receipt not found.");
+  }
+
+  if (located.location === "active") {
+    return mutateFabricReceipts(async (store) => {
+      const receipt = store.receipts.find((item) => item.id === receiptId);
+      if (!receipt) throw new Error("Fabric receipt not found.");
+      return fn(receipt);
+    });
+  }
+
+  const archive = structuredClone(
+    await readJsonFileFreshAsync(ARCHIVE_PATH, EMPTY_FABRIC_RECEIPTS, { force: true })
+  );
+  const receipt = archive.receipts.find((item) => item.id === receiptId);
+  if (!receipt) throw new Error("Fabric receipt not found.");
+  const result = await fn(receipt);
+  await writeFabricReceiptsArchive(archive);
+  return result;
+}
+
 export function invalidateFabricReceiptsCache(): void {
   invalidateDocumentCache(STORE_PATH);
   invalidateDocumentCache(ARCHIVE_PATH);

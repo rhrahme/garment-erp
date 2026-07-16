@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   scanHighlightForFabricStation,
   scanStageStyles,
@@ -11,6 +11,12 @@ import Link from "next/link";
 import { FabricLabelLookup } from "@/components/fabric-receiving/FabricLabelLookup";
 import { FabricReceivingWorkList } from "@/components/fabric-receiving/FabricReceivingWorkList";
 import { FabricReceivingTestingReset } from "@/components/fabric-receiving/FabricReceivingTestingReset";
+import {
+  FabricDefectReportModal,
+  type ReportDefectContext,
+} from "@/components/fabric-receiving/FabricDefectReportModal";
+import { FabricDefectNotices } from "@/components/fabric-receiving/FabricDefectNotices";
+import { FabricDefectsTrackingPanel } from "@/components/fabric-receiving/FabricDefectsTrackingPanel";
 import { StageScanPanel } from "@/components/production/StageScanPanel";
 import type { StageScanResponse } from "@/components/production/StickerScanInput";
 import {
@@ -46,6 +52,15 @@ export function FabricReceivingWorkspace() {
     "to_receive" | "awaiting_prep" | "in_prep" | "all" | null
   >(null);
   const [sessionScans, setSessionScans] = useState<SessionScan[]>([]);
+  const [canChooseDefectFoundAt, setCanChooseDefectFoundAt] = useState(false);
+  const [defectModal, setDefectModal] = useState<ReportDefectContext | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((res) => res.json())
+      .then((data) => setCanChooseDefectFoundAt(Boolean(data.is_admin || data.is_client_manager)))
+      .catch(() => setCanChooseDefectFoundAt(false));
+  }, []);
 
   const refreshAll = useCallback(() => {
     setReloadKey((key) => key + 1);
@@ -166,6 +181,13 @@ export function FabricReceivingWorkspace() {
 
   return (
     <div className="space-y-6">
+      <FabricDefectNotices
+        reloadKey={reloadKey}
+        onMessage={setMessage}
+        onError={setError}
+        onChanged={refreshAll}
+      />
+
       <FabricLabelLookup
         reloadKey={reloadKey}
         onReceiveLine={handleReceiveLine}
@@ -253,6 +275,26 @@ export function FabricReceivingWorkspace() {
         onReceiveLine={handleReceiveLine}
         onStartPrep={startFabricPrep}
         onAdvancePrep={advancePrep}
+        canChooseDefectFoundAt={canChooseDefectFoundAt}
+        onReportDefect={(request) =>
+          setDefectModal({
+            receiptId: request.receiptId,
+            fabricCutCode: request.fabricCutCode,
+            fabricNumber: request.fabricNumber,
+            soNumber: request.soNumber,
+            clientName: request.clientName,
+            defaultFoundAt: request.defaultFoundAt,
+            allowFoundAtChoice: canChooseDefectFoundAt,
+            title: request.title,
+          })
+        }
+      />
+
+      <FabricDefectsTrackingPanel
+        reloadKey={reloadKey}
+        onMessage={setMessage}
+        onError={setError}
+        onChanged={refreshAll}
       />
 
       <FabricReceivingTestingReset
@@ -273,6 +315,16 @@ export function FabricReceivingWorkspace() {
         </Link>{" "}
         shows where Receive, Wash, and Iron stations sit.
       </p>
+
+      <FabricDefectReportModal
+        open={Boolean(defectModal)}
+        context={defectModal}
+        onClose={() => setDefectModal(null)}
+        onSubmitted={() => {
+          setMessage("Defect reported — prep can continue.");
+          refreshAll();
+        }}
+      />
     </div>
   );
 }

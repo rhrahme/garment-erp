@@ -26,6 +26,9 @@ const OUTBOUND_EVENTS = [
   "sales_order.fabric_order_requested",
   "fabric_receiving.testing_reset",
   "fabric_receiving.settled",
+  "fabric_receiving.defect_reported",
+  "fabric_receiving.defect_acknowledged",
+  "fabric_receiving.defect_resolved",
   "pattern_job.created",
   "pattern_job.updated",
   "pattern_fitting.completed",
@@ -104,6 +107,7 @@ export function ZapierSetup() {
             <li>POST {baseUrl}/api/v1/pattern/jobs/[id]/revisions</li>
             <li>POST {baseUrl}/api/v1/sales-orders/[id]/fabric-lines/print</li>
             <li>POST {baseUrl}/api/v1/fabric-receiving/reset-testing</li>
+            <li>POST {baseUrl}/api/v1/fabric-receiving/defects</li>
             <li>POST {baseUrl}/api/v1/customer-invoices/[id]/mark-sent</li>
             <li>GET {baseUrl}/api/v1/events</li>
           </ul>

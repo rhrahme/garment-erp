@@ -3,6 +3,51 @@ import type { FabricPrepStep, FabricPrepType } from "@/lib/types/production";
 
 export type FabricReceiptStatus = "received" | "fabric_prep" | "handed_off";
 
+export type FabricDefectFoundAt = "receiving" | "cutting";
+export type FabricDefectStatus = "open" | "acknowledged" | "resolved";
+export type FabricDefectType =
+  | "shade"
+  | "hole"
+  | "stain"
+  | "crease"
+  | "wrong_fabric"
+  | "other";
+
+export const FABRIC_DEFECT_TYPES: { id: FabricDefectType; label: string }[] = [
+  { id: "shade", label: "Shade" },
+  { id: "hole", label: "Hole" },
+  { id: "stain", label: "Stain" },
+  { id: "crease", label: "Crease" },
+  { id: "wrong_fabric", label: "Wrong fabric" },
+  { id: "other", label: "Other" },
+];
+
+export interface FabricDefectPhoto {
+  id: string;
+  filename: string;
+  stored_filename: string;
+  content_type: string;
+  size_bytes: number;
+  uploaded_at: string;
+}
+
+export interface FabricDefectReport {
+  id: string;
+  reported_at: string;
+  reported_by: string;
+  note: string;
+  defect_type?: FabricDefectType | string;
+  found_at: FabricDefectFoundAt;
+  /** True when found_at === "cutting" (receiving missed it). */
+  task_team_miss: boolean;
+  photos: FabricDefectPhoto[];
+  status: FabricDefectStatus;
+  acknowledged_at?: string;
+  acknowledged_by?: string;
+  resolved_at?: string;
+  resolved_by?: string;
+}
+
 export interface FabricReceipt {
   id: string;
   sales_order_id: string;
@@ -24,7 +69,32 @@ export interface FabricReceipt {
   received_at: string;
   updated_at: string;
   handed_off_at: string | null;
+  /** Floor / QC defect reports — optional so existing receipts stay valid. */
+  defect_reports?: FabricDefectReport[];
 }
+
+export type FabricDefectListItem = {
+  receipt_id: string;
+  sales_order_id: string;
+  sales_order_line_id: string;
+  so_number: string;
+  client_name: string;
+  client_code: string;
+  fabric_number: string;
+  garment_type: string;
+  receipt_status: FabricReceiptStatus;
+  defect: FabricDefectReport;
+  thumbnail_photo_id: string | null;
+};
+
+export type FabricDefectSummary = {
+  open: number;
+  acknowledged: number;
+  resolved: number;
+  found_at_receiving: number;
+  found_at_cutting: number;
+  task_team_misses: number;
+};
 
 export interface FabricReceiptsFile {
   updated_at: string | null;
@@ -64,6 +134,9 @@ export type FabricReceivingLineRow = {
   fabric_prep_step: FabricPrepStep | null;
   scan_stage: ScanHighlightStage;
   scan_stage_label: string;
+  /** Any defect report on this receipt (open or closed). */
+  has_defect_report: boolean;
+  open_defect_count: number;
 };
 
 export type FabricReceivingOrderRow = {

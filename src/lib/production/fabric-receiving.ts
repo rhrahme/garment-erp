@@ -306,6 +306,9 @@ export async function listFabricReceivingOverview(
         fabric_prep_step: prepStep,
         scan_stage,
         scan_stage_label,
+        has_defect_report: Boolean(receipt?.defect_reports?.length),
+        open_defect_count: (receipt?.defect_reports ?? []).filter((item) => item.status === "open")
+          .length,
       });
     });
 

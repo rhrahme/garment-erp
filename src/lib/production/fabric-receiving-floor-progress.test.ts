@@ -34,6 +34,8 @@ function line(
     fabric_prep_step: null,
     scan_stage: "pending",
     scan_stage_label: "Pending",
+    has_defect_report: false,
+    open_defect_count: 0,
     ...overrides,
   };
 }
