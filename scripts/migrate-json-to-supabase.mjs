@@ -57,6 +57,7 @@ const ERP_DOCUMENT_SPECS = {
   transporter_invoices: { path: "transporter-invoices.local.json", fallback: { invoices: [] } },
   integration_events: { path: "integration-events.local.json", fallback: { events: [] } },
   exchange_rate_state: { path: "exchange-rate-state.local.json", fallback: { last_alert_at: null, last_rate: null } },
+  custom_fabrics: { path: "src/data/custom-fabrics.json", fallback: { updated_at: null, fabrics: [] } },
 };
 
 function loadEnvLocal() {

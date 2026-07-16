@@ -38,6 +38,17 @@ export interface SupplierFabric {
   stock_updated_at?: string | null;
   /** Loro Piana price list only — Solbiati (S-prefix linen) vs Loro Piana wool/cashmere. */
   mill_line?: "loro_piana" | "solbiati" | null;
+  /** Custom / one-off fabrics (supplier_id `custom`). */
+  one_off?: boolean;
+  kind?: "custom" | null;
+  client_id?: string | null;
+  client_name?: string | null;
+  source_note?: string | null;
+  sales_order_id?: string | null;
+  created_at?: string | null;
+  created_by?: string | null;
+  /** List-price currency when not the supplier default (custom fabrics). */
+  currency?: "USD" | "EUR" | "AED" | null;
   supplier?: Supplier;
 }
 

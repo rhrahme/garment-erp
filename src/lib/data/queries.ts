@@ -215,10 +215,20 @@ function catalogItemKey(item: Pick<SupplierFabric, "supplier_id" | "fabric_numbe
 
 async function mergeCatalogPriceListItems(dbItems: SupplierFabric[]): Promise<SupplierFabric[]> {
   const catalog = await attachLiveSupplierContacts(getAllPriceListItems());
-  if (dbItems.length === 0) return catalog;
-  const keys = new Set(dbItems.map(catalogItemKey));
-  const extras = catalog.filter((item) => !keys.has(catalogItemKey(item)));
-  return [...dbItems, ...extras];
+  const { ensureCustomFabricsLoaded, listCustomFabricsAsSupplierFabrics } = await import(
+    "@/lib/data/custom-fabrics"
+  );
+  await ensureCustomFabricsLoaded();
+  const custom = listCustomFabricsAsSupplierFabrics();
+  const base = dbItems.length === 0 ? catalog : (() => {
+    const keys = new Set(dbItems.map(catalogItemKey));
+    const extras = catalog.filter((item) => !keys.has(catalogItemKey(item)));
+    return [...dbItems, ...extras];
+  })();
+  if (custom.length === 0) return base;
+  const keys = new Set(base.map(catalogItemKey));
+  const customExtras = custom.filter((item) => !keys.has(catalogItemKey(item)));
+  return [...base, ...customExtras];
 }
 
 export async function getFabricSuppliers() {
@@ -231,9 +241,14 @@ export async function getFabricSuppliers() {
 export async function getPriceListItems(supplierId?: string) {
   if (DEMO_MODE) {
     const items = await attachLiveSupplierContacts(getAllPriceListItems());
+    const { ensureCustomFabricsLoaded, listCustomFabricsAsSupplierFabrics } = await import(
+      "@/lib/data/custom-fabrics"
+    );
+    await ensureCustomFabricsLoaded();
+    const merged = [...items, ...listCustomFabricsAsSupplierFabrics()];
     return supplierId
-      ? items.filter((f) => resolveFabricSupplierId(f.supplier_id) === resolveFabricSupplierId(supplierId))
-      : items;
+      ? merged.filter((f) => resolveFabricSupplierId(f.supplier_id) === resolveFabricSupplierId(supplierId))
+      : merged;
   }
   const supabase = await createClient();
   const canonicalId = supplierId ? resolveFabricSupplierId(supplierId) : undefined;

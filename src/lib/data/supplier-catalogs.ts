@@ -36,6 +36,28 @@ export async function attachLiveSupplierContacts(fabrics: SupplierFabric[]): Pro
   }));
 }
 
+/** Search bundled catalogs + live custom fabrics (server-side). */
+export async function searchSupplierFabricsLive(
+  supplierId: string,
+  query: string,
+  limit: number
+): Promise<SupplierFabric[]> {
+  const { resolveFabricSupplierId } = await import("@/lib/fabric-sourcing/supplier-aliases");
+  const {
+    CUSTOM_SUPPLIER_ID,
+    ensureCustomFabricsLoaded,
+    searchCustomFabrics,
+  } = await import("@/lib/data/custom-fabrics");
+  const { searchSupplierFabrics } = await import("@/lib/data/supplier-catalog-data");
+
+  const canonicalId = resolveFabricSupplierId(supplierId);
+  if (canonicalId === CUSTOM_SUPPLIER_ID) {
+    await ensureCustomFabricsLoaded();
+    return searchCustomFabrics(query, limit);
+  }
+  return searchSupplierFabrics(canonicalId, query, limit);
+}
+
 export async function getImportedSuppliers(): Promise<Supplier[]> {
   const { getAllSuppliersFromContacts } = await import("@/lib/data/supplier-contacts");
   return getAllSuppliersFromContacts();

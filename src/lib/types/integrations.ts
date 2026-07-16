@@ -30,6 +30,7 @@ export type IntegrationEventType =
   | "pattern_job.ready_for_cutting"
   | "production.scan"
   | "invoice.sent"
+  | "custom_fabric.created"
   | "supabase.auth_unhealthy";
 
 export interface IntegrationEvent<T = Record<string, unknown>> {

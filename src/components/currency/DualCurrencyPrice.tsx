@@ -6,6 +6,8 @@ interface DualCurrencyPriceProps {
   supplierId: string;
   unit?: string;
   layout?: "stacked" | "inline";
+  /** Override supplier default currency (e.g. custom / one-off fabrics). */
+  currency?: "USD" | "EUR" | "AED" | null;
 }
 
 export function DualCurrencyPrice({
@@ -13,13 +15,14 @@ export function DualCurrencyPrice({
   supplierId,
   unit = "m",
   layout = "stacked",
+  currency: currencyOverride,
 }: DualCurrencyPriceProps) {
   if (amount == null) {
     return <span className="text-slate-400">—</span>;
   }
 
   const unitLabel = unit === "meters" ? "m" : unit;
-  const currency = getSupplierPriceCurrency(supplierId);
+  const currency = currencyOverride ?? getSupplierPriceCurrency(supplierId);
   const { original, sar } = formatDualCurrencyPrice(amount, currency, unitLabel);
 
   if (layout === "inline") {

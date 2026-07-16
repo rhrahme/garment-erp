@@ -119,6 +119,14 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/suppliers/contacts.json",
   },
   {
+    key: "custom_fabrics",
+    label: "Custom / one-off fabrics",
+    description: "CF-YYYY-#### fabrics created outside mill price lists",
+    category: "purchasing",
+    appHref: "/fabric-specification",
+    sourcePath: "src/data/custom-fabrics.json",
+  },
+  {
     key: "fabric_orders",
     label: "Fabric purchase orders",
     description: "Supplier fabric POs created from sales orders",

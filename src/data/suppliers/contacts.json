@@ -173,6 +173,19 @@
       "contact_person": null,
       "has_price_list": true,
       "lead_time_days": 14
+    },
+    {
+      "id": "custom",
+      "code": "CUSTOM",
+      "name": "Custom / One-off",
+      "email": null,
+      "notes": "One-off fabrics (CF-YYYY-####) — mill leftovers, shop buys, client swatches. Created in Fabric Specification.",
+      "emails": [],
+      "country": null,
+      "currency": "EUR",
+      "contact_person": null,
+      "has_price_list": true,
+      "lead_time_days": 0
     }
   ],
   "updated_at": "2026-06-15T00:00:00.000Z",

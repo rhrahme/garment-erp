@@ -38,6 +38,8 @@ const WARMUP_MARKERS = [
   "readClientsAsync(",
   "readCustomerInvoicesAsync(",
   "readProductionWorkOrdersAsync(",
+  "readCustomFabricsAsync(",
+  "ensureCustomFabricsLoaded(",
   "getFactoryOrdersEmail(",
   "getInboxScanEmailFromContacts(",
   "attachLiveSupplierContacts(",

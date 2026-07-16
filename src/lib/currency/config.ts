@@ -28,6 +28,7 @@ const SUPPLIER_PRICE_CURRENCY: Record<string, PriceCurrency> = {
   zegna: "USD",
   stylbiella: "USD",
   gazaba: "AED",
+  custom: "EUR",
 };
 
 export function getSupplierPriceCurrency(supplierId: string): PriceCurrency {

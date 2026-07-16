@@ -4,7 +4,7 @@ import { getSessionContext } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import { getSupplierByIdFromContactsSync } from "@/lib/data/supplier-contacts";
-import { searchSupplierFabrics } from "@/lib/data/supplier-catalogs";
+import { searchSupplierFabricsLive } from "@/lib/data/supplier-catalogs";
 import {
   expandLoroPianaStyleQuery,
   resolveLoroPianaFabricInput,
@@ -88,7 +88,7 @@ function toSearchItem(item: SupplierFabric, manual = false) {
 }
 
 export async function GET(request: Request) {
-  await ensureDocumentsLoaded(["supplier_contacts"]);
+  await ensureDocumentsLoaded(["supplier_contacts", "custom_fabrics"]);
   const session = await getSessionContext();
   const url = new URL(request.url);
   const query = url.searchParams.get("q")?.trim() ?? "";
@@ -101,7 +101,7 @@ export async function GET(request: Request) {
 
   const supplierId = resolveFabricSupplierId(rawSupplierId);
 
-  const catalogMatches = searchSupplierFabrics(supplierId, query, limit);
+  const catalogMatches = await searchSupplierFabricsLive(supplierId, query, limit);
   const items = catalogMatches.map((item) => toSearchItem(item, false));
 
   if (query) {
@@ -123,7 +123,8 @@ export async function GET(request: Request) {
           manualEntry.mill_line = resolved.millLine;
           items.unshift(toSearchItem(manualEntry, true));
         }
-      } else {
+      } else if (supplierId !== "custom") {
+        // Keep mill-code manual entry for real suppliers; Custom uses Create fabric.
         items.unshift(toSearchItem(buildManualFabricEntry(supplierId, query), true));
       }
     }

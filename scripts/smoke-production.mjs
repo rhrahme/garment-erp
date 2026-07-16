@@ -18,6 +18,8 @@ const REQUIRED_FABRIC_SUPPLIERS = [
   "solbiati",
   "canclini",
   "wool-stock",
+  "gazaba",
+  "custom",
 ];
 
 async function fetchCheck(name, path, validate, options = {}) {

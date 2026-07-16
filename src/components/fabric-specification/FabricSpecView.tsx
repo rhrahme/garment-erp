@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { CreateCustomFabricForm } from "@/components/fabric-specification/CreateCustomFabricForm";
 import { DownloadLoroPianaMissingSwatchesPdfButton } from "@/components/fabric-specification/DownloadLoroPianaMissingSwatchesPdfButton";
 import { FabricSpecPreview } from "@/components/fabric-specification/FabricSpecPreview";
 import { DataTable } from "@/components/ui/PageHeader";
@@ -8,6 +9,7 @@ import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useDrapersSwatchMap } from "@/hooks/useDrapersSwatchMap";
 import { useLoroPianaSwatchMap } from "@/hooks/useLoroPianaSwatchMap";
+import { CUSTOM_SUPPLIER_ID } from "@/lib/types/custom-fabrics";
 import { DRAPERS_SUPPLIER_ID } from "@/lib/integrations/drapers/config";
 import {
   expandLoroPianaStyleQuery,
@@ -28,7 +30,15 @@ interface FabricSpecViewProps {
   canViewPrices?: boolean;
 }
 
-export function FabricSpecView({ suppliers, items, canViewPrices = true }: FabricSpecViewProps) {
+export function FabricSpecView({ suppliers, items: initialItems, canViewPrices = true }: FabricSpecViewProps) {
+  const [items, setItems] = useState(initialItems);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [nextFabricNumber, setNextFabricNumber] = useState("CF-2026-0001");
+
+  useEffect(() => {
+    setItems(initialItems);
+  }, [initialItems]);
+
   const brandCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const item of items) {
@@ -62,6 +72,27 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
   const [brandId, setBrandId] = useState<string>(firstWithData);
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 200);
+  const isCustomTab = brandId === CUSTOM_SUPPLIER_ID;
+
+  useEffect(() => {
+    if (!isCustomTab) {
+      setShowCreateForm(false);
+      return;
+    }
+    let cancelled = false;
+    fetch("/api/custom-fabrics")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.next_fabric_number) return;
+        setNextFabricNumber(data.next_fabric_number as string);
+      })
+      .catch(() => {
+        /* keep draft default */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isCustomTab, items]);
 
   const filtered = useMemo(() => {
     const resolvedBrandId = brandId === "all" ? "all" : resolveFabricSupplierId(brandId);
@@ -86,6 +117,8 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
             f.composition?.toLowerCase().includes(q) ||
             f.description?.toLowerCase().includes(q) ||
             f.finish?.toLowerCase().includes(q) ||
+            f.source_note?.toLowerCase().includes(q) ||
+            f.client_name?.toLowerCase().includes(q) ||
             f.gn_code?.includes(q)
         );
       }
@@ -133,6 +166,17 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
   const isLoroPianaStyleTab = isLoroPianaStyleSupplier(brandId);
   const solbiatiBrand = brands.find((b) => b.id === "solbiati");
 
+  function handleCustomFabricCreated(fabric: SupplierFabric) {
+    setItems((prev) => {
+      if (prev.some((row) => row.id === fabric.id || row.fabric_number === fabric.fabric_number)) {
+        return prev;
+      }
+      return [...prev, fabric];
+    });
+    setShowCreateForm(false);
+    setBrandId(CUSTOM_SUPPLIER_ID);
+  }
+
   return (
     <div className="flex gap-6">
       {/* Brand list — left panel */}
@@ -157,6 +201,7 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
           </li>
           {brands.map((brand) => {
             const isSolbiati = brand.id === "solbiati";
+            const isCustom = brand.id === CUSTOM_SUPPLIER_ID;
             const isActive = brandId === brand.id;
             return (
               <li key={brand.id}>
@@ -167,10 +212,13 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
                     isActive
                       ? isSolbiati
                         ? "bg-emerald-600 text-white"
-                        : "bg-indigo-600 text-white"
+                        : isCustom
+                          ? "bg-amber-700 text-white"
+                          : "bg-indigo-600 text-white"
                       : "text-slate-700 hover:bg-slate-100",
                     brand.count === 0 && "opacity-50",
-                    isSolbiati && brand.count > 0 && !isActive && "ring-2 ring-emerald-400/70 ring-offset-1"
+                    isSolbiati && brand.count > 0 && !isActive && "ring-2 ring-emerald-400/70 ring-offset-1",
+                    isCustom && !isActive && "ring-1 ring-amber-300/80"
                   )}
                 >
                   <span className="flex flex-wrap items-center gap-1.5">
@@ -183,6 +231,15 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
                         )}
                       >
                         Linen · {brand.count}
+                      </span>
+                    ) : isCustom ? (
+                      <span
+                        className={cn(
+                          "rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                          isActive ? "bg-amber-600 text-white" : "bg-amber-100 text-amber-900"
+                        )}
+                      >
+                        One-off · {brand.count}
                       </span>
                     ) : (
                       <span className={cn("text-xs", isActive ? "text-indigo-200" : "text-slate-400")}>
@@ -209,9 +266,11 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
               {canViewPrices ? " · reference price list, not stock" : " · specs only, prices hidden"}
               {" · "}
               <span className="text-slate-600">
-                {isSolbiatiTab
-                  ? "Click the Linen badge in Preview for collection & composition — no swatch images in catalog"
-                  : "Click Preview for swatch image (Drapers, Loro Piana) or full fabric details"}
+                {isCustomTab
+                  ? "Create one-off fabrics (CF-YYYY-####) — mill leftovers, shop buys, client swatches"
+                  : isSolbiatiTab
+                    ? "Click the Linen badge in Preview for collection & composition — no swatch images in catalog"
+                    : "Click Preview for swatch image (Drapers, Loro Piana) or full fabric details"}
               </span>
             </p>
             {solbiatiBrand && solbiatiBrand.count > 0 && !isSolbiatiTab && brandId === "all" ? (
@@ -229,6 +288,15 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
             ) : null}
           </div>
           <div className="ml-auto flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            {isCustomTab ? (
+              <button
+                type="button"
+                onClick={() => setShowCreateForm((open) => !open)}
+                className="rounded-lg bg-amber-700 px-3 py-2 text-sm font-medium text-white hover:bg-amber-800"
+              >
+                {showCreateForm ? "Hide form" : "Create fabric"}
+              </button>
+            ) : null}
             {isLoroPianaStyleTab ? <DownloadLoroPianaMissingSwatchesPdfButton /> : null}
             <input
               type="search"
@@ -239,6 +307,14 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
             />
           </div>
         </div>
+
+        {isCustomTab && showCreateForm ? (
+          <CreateCustomFabricForm
+            nextFabricNumber={nextFabricNumber}
+            onCreated={handleCustomFabricCreated}
+            onCancel={() => setShowCreateForm(false)}
+          />
+        ) : null}
 
         <DataTable
           columns={[
@@ -301,7 +377,12 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
             ? {
                 price:
                   f.unit_price != null ? (
-                    <DualCurrencyPrice amount={f.unit_price} supplierId={f.supplier_id} unit="m" />
+                    <DualCurrencyPrice
+                      amount={f.unit_price}
+                      supplierId={f.supplier_id}
+                      unit="m"
+                      currency={f.currency}
+                    />
                   ) : (
                     <span className="text-slate-400">—</span>
                   ),
@@ -321,9 +402,13 @@ export function FabricSpecView({ suppliers, items, canViewPrices = true }: Fabri
           })(),
           }))}
           emptyMessage={
-            activeBrand?.count === 0
-              ? "No price list uploaded for this brand yet."
-              : "No fabrics match your search."
+            isCustomTab
+              ? showCreateForm
+                ? "Fill the form above to create the first custom fabric."
+                : "No custom fabrics yet — click Create fabric."
+              : activeBrand?.count === 0
+                ? "No price list uploaded for this brand yet."
+                : "No fabrics match your search."
           }
         />
         {filtered.length > 150 && (

@@ -11,6 +11,7 @@ export const REQUIRED_FABRIC_SUPPLIER_IDS = [
   "canclini",
   "wool-stock",
   "gazaba",
+  "custom",
 ];
 
 export function getMissingRequiredFabricSuppliers(contacts) {
