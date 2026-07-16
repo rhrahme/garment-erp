@@ -15,6 +15,7 @@ import {
 } from "@/lib/production/fabric-prep";
 import {
   isFabricReceivingFloorLine,
+  isSalesOrderFabricReceivingSettled,
   resolveFabricLineReceiveStatus,
 } from "@/lib/production/fabric-receiving-floor";
 import { qrScanPayload } from "@/lib/production/qr-labels";
@@ -310,13 +311,25 @@ export async function listFabricReceivingOverview(
 
     if (lines.length === 0) continue;
 
+    const lineStatuses = new Map(
+      order.fabric_lines.map((line) => {
+        const receipt = receiptsByLineId.get(line.id);
+        const lineWorkOrders = workOrdersByLine.get(line.id) ?? [];
+        return [line.id, resolveFabricLineReceiveStatus(receipt, lineWorkOrders)] as const;
+      })
+    );
+    const orderWorkOrders = order.fabric_lines.flatMap(
+      (line) => workOrdersByLine.get(line.id) ?? []
+    );
+    const settled = isSalesOrderFabricReceivingSettled(order, lineStatuses, orderWorkOrders);
+
     orders.push({
       sales_order_id: order.id,
       so_number: order.so_number,
       client_name: order.client_name,
       client_code: order.client_code,
       order_date: order.order_date,
-      is_archived: isSalesOrderArchived(order),
+      is_archived: isSalesOrderArchived(order) || settled,
       order_status: order.status,
       lines,
       pending_line_count: lines.filter((line) => line.status === "pending").length,

@@ -2,6 +2,7 @@ import { saveCustomerInvoice } from "@/lib/data/customer-invoices";
 import { readSalesOrdersFresh, writeSalesOrders } from "@/lib/data/sales-orders";
 import { syncInvoiceLinesFromSalesOrder } from "@/lib/invoicing/build-invoice";
 import { notifyIntegration } from "@/lib/integrations";
+import { settleFabricReceivingForSalesOrder } from "@/lib/production/fabric-receiving-settle";
 import type { CustomerInvoice, CustomerInvoiceStatus } from "@/lib/types/customer-invoices";
 import type { SalesOrder } from "@/lib/types/sales-orders";
 
@@ -43,8 +44,13 @@ export async function applyCustomerInvoiceStatusChange(
     const store = await readSalesOrdersFresh();
     const orderIndex = store.orders.findIndex((order) => order.id === invoice.sales_order_id);
     if (orderIndex >= 0) {
-      store.orders[orderIndex] = { ...store.orders[orderIndex]!, status: "complete" };
+      const order = store.orders[orderIndex]!;
+      store.orders[orderIndex] = { ...order, status: "complete" };
       await writeSalesOrders(store);
+      await settleFabricReceivingForSalesOrder(order.id, {
+        source,
+        so_number: order.so_number,
+      });
     }
   }
 

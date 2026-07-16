@@ -503,7 +503,8 @@ export function FabricReceivingWorkList({
             <span className="text-xs font-normal opacity-80">({archivedOrders.length})</span>
           </button>
           <p className="text-xs text-slate-500">
-            Orders older than {SALES_ORDER_ARCHIVE_AGE_MONTHS} months move to Archived automatically.
+            Active hides done/stitched orders. Orders older than {SALES_ORDER_ARCHIVE_AGE_MONTHS}{" "}
+            months also move to Archived. Pink means scanned at Receive — not “needs attention”.
           </p>
         </div>
 

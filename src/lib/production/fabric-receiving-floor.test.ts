@@ -4,6 +4,9 @@ import type { FabricReceipt } from "../types/fabric-receipts.ts";
 import type { ProductionWorkOrder } from "../types/production.ts";
 import {
   isFabricReceivingFloorLine,
+  isLineProductionCompleted,
+  isLineStitchedOrDone,
+  isSalesOrderFabricReceivingSettled,
   resolveFabricLineReceiveStatus,
 } from "./fabric-receiving-floor.ts";
 
@@ -32,13 +35,16 @@ function receipt(status: FabricReceipt["status"]): FabricReceipt {
   };
 }
 
-function workOrder(status: ProductionWorkOrder["status"]): ProductionWorkOrder {
+function workOrder(
+  status: ProductionWorkOrder["status"],
+  lineId = "line-1"
+): ProductionWorkOrder {
   return {
-    id: "pwo-1",
-    sticker_code: "STICKER-1",
+    id: `pwo-${lineId}-${status}`,
+    sticker_code: `STICKER-${lineId}`,
     sales_order_id: "so-1",
     so_number: "SO-TEST",
-    sales_order_line_id: "line-1",
+    sales_order_line_id: lineId,
     client_id: "c-1",
     client_code: "TST",
     client_name: "Test Client",
@@ -76,4 +82,58 @@ test("isFabricReceivingFloorLine hides handed-off and pre-PO pending lines", () 
   assert.equal(isFabricReceivingFloorLine("pending", openOrder, printedLine), true);
   assert.equal(isFabricReceivingFloorLine("received", openOrder, bareLine), true);
   assert.equal(isFabricReceivingFloorLine("fabric_prep", openOrder, bareLine), true);
+});
+
+test("stitched/completed helpers match production done stages", () => {
+  assert.equal(isLineProductionCompleted([workOrder("completed")]), true);
+  assert.equal(isLineProductionCompleted([workOrder("sewing")]), false);
+  assert.equal(isLineStitchedOrDone([workOrder("sewing")]), true);
+  assert.equal(isLineStitchedOrDone([workOrder("cutting")]), false);
+  assert.equal(isLineStitchedOrDone([]), false);
+});
+
+test("isSalesOrderFabricReceivingSettled keeps partial stitch visible when siblings need receive", () => {
+  const order = {
+    status: "open" as const,
+    fabric_lines: [
+      { id: "line-1", a4_printed_at: "2026-01-01T00:00:00.000Z", prep_stickers_printed_at: null },
+      { id: "line-2", a4_printed_at: "2026-01-01T00:00:00.000Z", prep_stickers_printed_at: null },
+    ],
+  };
+  const statuses = new Map([
+    ["line-1", "handed_off" as const],
+    ["line-2", "received" as const],
+  ]);
+  assert.equal(
+    isSalesOrderFabricReceivingSettled(order, statuses, [workOrder("completed", "line-1")]),
+    false
+  );
+});
+
+test("isSalesOrderFabricReceivingSettled when all lines past floor and production stitched", () => {
+  const order = {
+    status: "open" as const,
+    fabric_lines: [
+      { id: "line-1", a4_printed_at: "2026-01-01T00:00:00.000Z", prep_stickers_printed_at: null },
+      { id: "line-2", a4_printed_at: null, prep_stickers_printed_at: null },
+    ],
+  };
+  const statuses = new Map([
+    ["line-1", "handed_off" as const],
+    ["line-2", "pending" as const],
+  ]);
+  assert.equal(
+    isSalesOrderFabricReceivingSettled(order, statuses, [workOrder("completed", "line-1")]),
+    true
+  );
+  assert.equal(
+    isSalesOrderFabricReceivingSettled(order, statuses, [workOrder("cutting", "line-1")]),
+    false
+  );
+  assert.equal(
+    isSalesOrderFabricReceivingSettled({ ...order, status: "complete" }, statuses, [
+      workOrder("cutting", "line-1"),
+    ]),
+    true
+  );
 });

@@ -22,6 +22,7 @@ export type IntegrationEventType =
   | "sales_order.fabric_lines_print_cleared"
   | "sales_order.fabric_order_requested"
   | "fabric_receiving.testing_reset"
+  | "fabric_receiving.settled"
   | "pattern_job.created"
   | "pattern_job.updated"
   | "pattern_fitting.completed"
