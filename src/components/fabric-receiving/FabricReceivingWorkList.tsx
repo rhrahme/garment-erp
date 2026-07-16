@@ -24,6 +24,11 @@ import {
   groupFabricReceivingCutsByClient,
   type FabricReceivingCutEntry,
 } from "@/lib/production/fabric-receiving-client-sections";
+import {
+  countFloorProgress,
+  filterOrdersWithFloorProgress,
+  formatFloorProgressSummary,
+} from "@/lib/production/fabric-receiving-floor-progress";
 import { scanStageStyles } from "@/lib/production/scan-stage-highlight";
 import { SALES_ORDER_ARCHIVE_AGE_MONTHS } from "@/lib/sales-orders/archive";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
@@ -37,7 +42,7 @@ import type { FabricPrepType } from "@/lib/types/production";
 import { cn } from "@/lib/utils";
 
 type FabricReceivingWorkTab = "to_receive" | "awaiting_prep" | "in_prep" | "all";
-type FabricReceivingView = "active" | "archived";
+type FabricReceivingView = "active" | "archived" | "floor_progress";
 
 const TABS: { id: FabricReceivingWorkTab; label: string; hint: string }[] = [
   { id: "to_receive", label: "To receive", hint: "Fabric not scanned at Receive yet" },
@@ -208,6 +213,7 @@ function FabricCutCard({
   order,
   line,
   isHighlighted,
+  isLatestScan = false,
   expandedManual,
   onToggleManual,
   actingId,
@@ -220,6 +226,7 @@ function FabricCutCard({
   order: FabricReceivingOrderRow;
   line: FabricReceivingLineRow;
   isHighlighted: boolean;
+  isLatestScan?: boolean;
   expandedManual: boolean;
   onToggleManual: () => void;
   actingId: string | null;
@@ -240,7 +247,9 @@ function FabricCutCard({
       className={cn(
         "border-b border-slate-200 last:border-0",
         styles.row,
-        isHighlighted && "ring-2 ring-inset ring-indigo-400"
+        isHighlighted && "ring-2 ring-inset ring-indigo-400",
+        isLatestScan &&
+          "relative z-[1] animate-pulse ring-2 ring-indigo-500 shadow-[0_0_0_3px_rgba(99,102,241,0.35)]"
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-3">
@@ -329,34 +338,41 @@ export function FabricReceivingWorkList({
   const [expandedClients, setExpandedClients] = useState<Set<string>>(() => new Set());
   const { brandId, setBrandId, hydrated } = useFactoryBrandFilter();
 
-  const loadOverview = useCallback(async (showLoading: boolean) => {
-    if (showLoading) setLoading(true);
-    try {
-      const res = await fetch(`/api/fabric-receiving/overview?filter=actionable&t=${Date.now()}`, {
-        cache: "no-store",
-      });
-      if (!res.ok) throw new Error("Failed to load receiving work");
-      const data = (await res.json()) as FabricReceivingOverview;
-      setOverview(data);
-    } catch {
-      if (showLoading) setOverview(null);
-    } finally {
-      if (showLoading) setLoading(false);
-    }
-  }, []);
+  const isFloorProgress = view === "floor_progress";
+  const latestScanCode = highlightCutCodes[0]?.toUpperCase() ?? null;
+
+  const loadOverview = useCallback(
+    async (showLoading: boolean, floorProgress: boolean) => {
+      if (showLoading) setLoading(true);
+      try {
+        const filter = floorProgress ? "all_open" : "actionable";
+        const res = await fetch(`/api/fabric-receiving/overview?filter=${filter}&t=${Date.now()}`, {
+          cache: "no-store",
+        });
+        if (!res.ok) throw new Error("Failed to load receiving work");
+        const data = (await res.json()) as FabricReceivingOverview;
+        setOverview(data);
+      } catch {
+        if (showLoading) setOverview(null);
+      } finally {
+        if (showLoading) setLoading(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
-    void loadOverview(true);
-  }, [loadOverview]);
+    void loadOverview(true, isFloorProgress);
+  }, [loadOverview, isFloorProgress]);
 
   useEffect(() => {
     if (reloadKey === 0) return;
-    void loadOverview(false);
-  }, [reloadKey, loadOverview]);
+    void loadOverview(false, isFloorProgress);
+  }, [reloadKey, loadOverview, isFloorProgress]);
 
   useEffect(() => {
-    if (tabAfterScan) setTab(tabAfterScan);
-  }, [tabAfterScan]);
+    if (tabAfterScan && !isFloorProgress) setTab(tabAfterScan);
+  }, [tabAfterScan, isFloorProgress]);
 
   const activeOrders = useMemo(
     () => (overview?.orders ?? []).filter((order) => !order.is_archived),
@@ -366,7 +382,16 @@ export function FabricReceivingWorkList({
     () => (overview?.orders ?? []).filter((order) => order.is_archived),
     [overview]
   );
-  const viewOrders = view === "archived" ? archivedOrders : activeOrders;
+  const viewOrders = isFloorProgress
+    ? filterOrdersWithFloorProgress(activeOrders)
+    : view === "archived"
+      ? archivedOrders
+      : activeOrders;
+
+  const floorProgressOrderCount = useMemo(
+    () => filterOrdersWithFloorProgress(activeOrders).length,
+    [activeOrders]
+  );
 
   const brandFilteredOrders = useMemo(() => {
     if (!brandId) return viewOrders;
@@ -391,7 +416,7 @@ export function FabricReceivingWorkList({
     const highlightSet = new Set(highlightCutCodes.map((code) => code.toUpperCase()));
     const entries = brandFilteredOrders.flatMap((order) =>
       order.lines
-        .filter((line) => lineMatchesTab(line.status, tab))
+        .filter((line) => (isFloorProgress ? true : lineMatchesTab(line.status, tab)))
         .map((line) => ({ order, line }))
     );
     const filtered = entries.filter((entry) => matchesSearch(entry, search));
@@ -408,7 +433,7 @@ export function FabricReceivingWorkList({
       }
     }
     return [...pinned, ...rest];
-  }, [brandFilteredOrders, tab, search, highlightCutCodes]);
+  }, [brandFilteredOrders, tab, search, highlightCutCodes, isFloorProgress]);
 
   const clientSections = useMemo(() => groupFabricReceivingCutsByClient(visibleCuts), [visibleCuts]);
 
@@ -469,9 +494,13 @@ export function FabricReceivingWorkList({
     <FabricSwatchProvider fabrics={swatchFabrics}>
     <section className="rounded-xl border border-slate-200 bg-white">
       <div className="border-b border-slate-100 px-5 py-4">
-        <h2 className="text-lg font-semibold text-slate-900">Work list</h2>
+        <h2 className="text-lg font-semibold text-slate-900">
+          {isFloorProgress ? "Floor progress" : "Work list"}
+        </h2>
         <p className="mt-1 text-sm text-slate-500">
-          Grouped by client — same layout as Print orders. Expand a client to see their orders and fabric cuts.
+          {isFloorProgress
+            ? "Clients with at least one receive / wash / soak / iron scan. Expand a client to see every fabric on those orders — unfinished siblings stay visible."
+            : "Grouped by client — same layout as Print orders. Expand a client to see their orders and fabric cuts."}
         </p>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -502,9 +531,25 @@ export function FabricReceivingWorkList({
             Archived
             <span className="text-xs font-normal opacity-80">({archivedOrders.length})</span>
           </button>
+          <button
+            type="button"
+            onClick={() => setView("floor_progress")}
+            className={cn(
+              "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
+              isFloorProgress
+                ? "border-emerald-600 bg-emerald-50 text-emerald-900"
+                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+            )}
+          >
+            Floor progress
+            <span className="ml-1.5 text-xs font-normal opacity-80">
+              ({floorProgressOrderCount})
+            </span>
+          </button>
           <p className="text-xs text-slate-500">
-            Active hides done/stitched orders. Orders older than {SALES_ORDER_ARCHIVE_AGE_MONTHS}{" "}
-            months also move to Archived. Pink means scanned at Receive — not “needs attention”.
+            {isFloorProgress
+              ? "Quiet until work starts. Pink = received; sky = wash; teal = soak; amber = iron; violet = done / with production."
+              : `Active hides done/stitched orders. Orders older than ${SALES_ORDER_ARCHIVE_AGE_MONTHS} months also move to Archived. Pink means scanned at Receive — not “needs attention”.`}
           </p>
         </div>
 
@@ -525,29 +570,31 @@ export function FabricReceivingWorkList({
           </div>
         )}
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {TABS.map((item) => {
-            const count = counts[item.id];
-            const active = tab === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                title={item.hint}
-                onClick={() => setTab(item.id)}
-                className={cn(
-                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                  active ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                )}
-              >
-                {item.label}
-                <span className={cn("ml-1.5 tabular-nums", active ? "text-indigo-200" : "text-slate-500")}>
-                  ({count})
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        {!isFloorProgress && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {TABS.map((item) => {
+              const count = counts[item.id];
+              const active = tab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  title={item.hint}
+                  onClick={() => setTab(item.id)}
+                  className={cn(
+                    "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                    active ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  )}
+                >
+                  {item.label}
+                  <span className={cn("ml-1.5 tabular-nums", active ? "text-indigo-200" : "text-slate-500")}>
+                    ({count})
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {hasActiveFilters && (
           <p className="mt-3 text-sm text-slate-500">
@@ -562,22 +609,26 @@ export function FabricReceivingWorkList({
       </div>
 
       {loading ? (
-        <p className="px-5 py-8 text-sm text-slate-500">Loading work list…</p>
+        <p className="px-5 py-8 text-sm text-slate-500">
+          {isFloorProgress ? "Loading floor progress…" : "Loading work list…"}
+        </p>
       ) : visibleCuts.length === 0 ? (
         <p className="px-5 py-10 text-center text-sm text-slate-500">
           {search
             ? `No fabric cuts match “${search}”.`
             : hasActiveFilters
               ? "No fabric cuts match the current brand filter."
-              : view === "archived"
-                ? "No archived receiving work."
-                : tab === "to_receive"
-                  ? "Nothing waiting to receive — scan the fabric cut sticker at Receive."
-                  : tab === "awaiting_prep"
-                    ? "Nothing fabric received yet — pink rows appear here after scanning."
-                    : tab === "in_prep"
-                      ? "Nothing in prep."
-                      : "No open receiving work."}
+              : isFloorProgress
+                ? "No floor progress yet — quiet until the first receive / wash / soak / iron scan."
+                : view === "archived"
+                  ? "No archived receiving work."
+                  : tab === "to_receive"
+                    ? "Nothing waiting to receive — scan the fabric cut sticker at Receive."
+                    : tab === "awaiting_prep"
+                      ? "Nothing fabric received yet — pink rows appear here after scanning."
+                      : tab === "in_prep"
+                        ? "Nothing in prep."
+                        : "No open receiving work."}
         </p>
       ) : (
         <div className="space-y-3 p-4">
@@ -608,6 +659,12 @@ export function FabricReceivingWorkList({
 
           {clientSections.map((section) => {
             const isOpen = expandedClients.has(section.key);
+            const sectionLines = section.orderGroups.flatMap((group) =>
+              group.entries.map((entry) => entry.line)
+            );
+            const sectionSummary = isFloorProgress
+              ? formatFloorProgressSummary(countFloorProgress(sectionLines))
+              : fabricReceivingClientSectionMeta(section);
             return (
               <section key={section.key} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
                 <div className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50">
@@ -626,7 +683,7 @@ export function FabricReceivingWorkList({
                       <p className="text-xs text-slate-500">
                         <span className="font-mono text-indigo-700">{section.client_code}</span>
                         <span className="mx-1.5 text-slate-300">·</span>
-                        {fabricReceivingClientSectionMeta(section)}
+                        {sectionSummary}
                       </p>
                     </div>
                   </button>
@@ -636,15 +693,17 @@ export function FabricReceivingWorkList({
                   <div className="border-t border-slate-100 bg-slate-50/50">
                     {section.orderGroups.map((group) => {
                       const sortedEntries = sortCutEntries(group.entries);
+                      const orderSummary = isFloorProgress
+                        ? formatFloorProgressSummary(
+                            countFloorProgress(sortedEntries.map((entry) => entry.line))
+                          )
+                        : `${sortedEntries.length} fabric cut${sortedEntries.length === 1 ? "" : "s"}`;
                       return (
                       <div key={group.key} className="border-b border-slate-100 last:border-0">
                         <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-100/80 px-4 py-2">
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-slate-800">{group.order.so_number}</p>
-                            <p className="text-xs text-slate-500">
-                              {sortedEntries.length} fabric cut
-                              {sortedEntries.length === 1 ? "" : "s"}
-                            </p>
+                            <p className="text-xs text-slate-500">{orderSummary}</p>
                           </div>
                           <div className="flex shrink-0 items-center gap-3">
                             <Link
@@ -667,14 +726,18 @@ export function FabricReceivingWorkList({
                         </div>
 
                         <div>
-                          {sortedEntries.map(({ order, line }) => (
+                          {sortedEntries.map(({ order, line }) => {
+                            const cutUpper = line.fabric_cut_code.toUpperCase();
+                            const isHighlighted = highlightCutCodes.some(
+                              (code) => code.toUpperCase() === cutUpper
+                            );
+                            return (
                             <FabricCutCard
                               key={line.sales_order_line_id}
                               order={order}
                               line={line}
-                              isHighlighted={highlightCutCodes.some(
-                                (code) => code.toUpperCase() === line.fabric_cut_code.toUpperCase()
-                              )}
+                              isHighlighted={isHighlighted}
+                              isLatestScan={latestScanCode === cutUpper}
                               expandedManual={expandedManualLine === line.sales_order_line_id}
                               onToggleManual={() =>
                                 setExpandedManualLine((current) =>
@@ -688,7 +751,8 @@ export function FabricReceivingWorkList({
                               onStartPrep={onStartPrep}
                               onAdvancePrep={onAdvancePrep}
                             />
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                       );
