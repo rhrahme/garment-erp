@@ -18,6 +18,7 @@ import {
 } from "@/lib/sales-orders/label-codes";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import {
+  fabricReceiveRescanHint,
   fabricReceivingStationError,
   isFabricReceivingStation,
 } from "@/lib/production/fabric-receiving-scan";
@@ -117,12 +118,21 @@ export async function scanAtStation(scanInput: string, station: ScanStation): Pr
 
   if (station === "receive") {
     const result = await receiveFabricLine(line.id);
+    if (result.created) {
+      return {
+        ...base,
+        message: `Received — ${supplierLabel} ${line.fabric_number} (${line.garment_type}).`,
+        notice: "created",
+        receipt: result.receipt,
+      };
+    }
+    const prepHint = fabricReceiveRescanHint(result.receipt);
     return {
       ...base,
-      message: result.created
-        ? `Received — ${supplierLabel} ${line.fabric_number} (${line.garment_type}).`
+      message: prepHint
+        ? `${prepHint} (${line.fabric_number}).`
         : `Already received — ${supplierLabel} ${line.fabric_number}. Select Wash, Soak, or Iron, then scan again.`,
-      notice: result.created ? "created" : "already_received",
+      notice: "already_received",
       receipt: result.receipt,
     };
   }
@@ -140,7 +150,7 @@ export async function scanAtStation(scanInput: string, station: ScanStation): Pr
       const updated = await startFabricReceiptPrep(receipt.id, "wash_iron");
       return {
         ...base,
-        message: `Wash started — ${line.fabric_number}. Scan again at Wash when done, then Iron.`,
+        message: `Wash started — ${line.fabric_number}. When wash is done: scan again at Wash (or tap Finish wash → start ironing).`,
         receipt: updated,
         notice: "advanced",
       };
@@ -149,7 +159,7 @@ export async function scanAtStation(scanInput: string, station: ScanStation): Pr
       const { receipt: updated } = await advanceFabricReceipt(receipt.id);
       return {
         ...base,
-        message: `Wash complete — move to ironing (${line.fabric_number}).`,
+        message: `Wash complete — now ironing (${line.fabric_number}). Station switched to Iron — scan again when ironing is done.`,
         receipt: updated,
         notice: "advanced",
       };
@@ -165,7 +175,7 @@ export async function scanAtStation(scanInput: string, station: ScanStation): Pr
       const updated = await startFabricReceiptPrep(receipt.id, "soak_iron");
       return {
         ...base,
-        message: `Soak started — ${line.fabric_number}. Scan again at Soak when done, then Iron.`,
+        message: `Soak started — ${line.fabric_number}. When soak is done: scan again at Soak (or tap Finish soak → start ironing).`,
         receipt: updated,
         notice: "advanced",
       };
@@ -174,7 +184,7 @@ export async function scanAtStation(scanInput: string, station: ScanStation): Pr
       const { receipt: updated } = await advanceFabricReceipt(receipt.id);
       return {
         ...base,
-        message: `Soak complete — move to ironing (${line.fabric_number}).`,
+        message: `Soak complete — now ironing (${line.fabric_number}). Station switched to Iron — scan again when ironing is done.`,
         receipt: updated,
         notice: "advanced",
       };

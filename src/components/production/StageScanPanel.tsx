@@ -129,13 +129,23 @@ export function StageScanPanel({
         onSuccess={(result) => {
           onScanMessage?.(result.message);
           onScanResult?.(result);
+          // After wash/soak finishes, jump station to Iron so the next scan continues smoothly.
+          if (
+            scanContext === "fabric-receiving" &&
+            result.notice === "advanced" &&
+            (station === "wash" || station === "soak") &&
+            result.receipt?.fabric_prep_step === "iron"
+          ) {
+            setStation("iron");
+          }
         }}
       />
       {scanContext === "fabric-receiving" && (
         <p className="text-sm text-slate-600">
-          <span className="font-medium text-slate-800">Floor workflow:</span> scan badge (optional), pick{" "}
-          <strong>Receive</strong>, <strong>Wash</strong>, <strong>Soak</strong>, or <strong>Iron</strong>, then scan
-          the fabric sticker. To mark received without a badge, paste the code in the box at the top of the page.
+          <span className="font-medium text-slate-800">Floor workflow:</span> pick the station that matches the
+          step — <strong>Wash</strong> to start/finish wash, <strong>Soak</strong> for soak, then{" "}
+          <strong>Iron</strong> to finish. A second scan at Wash finishes wash and moves to ironing (station
+          switches to Iron automatically). Scanning at Receive again does not advance prep.
         </p>
       )}
       {scanContext === "production" && requireEmployee && (

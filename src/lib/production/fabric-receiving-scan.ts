@@ -8,6 +8,27 @@ export function isFabricReceivingStation(station: ScanStation): station is (type
   return (FABRIC_RECEIVING_STATIONS as readonly string[]).includes(station);
 }
 
+/**
+ * When Receive is scanned again after prep already started, tell the operator the real next step
+ * instead of a vague "already received" (which feels like "nothing happened").
+ */
+export function fabricReceiveRescanHint(receipt: FabricReceipt | undefined): string | null {
+  if (!receipt) return null;
+  if (receipt.status === "fabric_prep" && receipt.fabric_prep_step === "wash") {
+    return "Already in wash — select Wash and scan again to finish → iron";
+  }
+  if (receipt.status === "fabric_prep" && receipt.fabric_prep_step === "soak") {
+    return "Already soaking — select Soak and scan again to finish → iron";
+  }
+  if (receipt.status === "fabric_prep" && receipt.fabric_prep_step === "iron") {
+    return "Wash/soak done — select Iron and scan to finish prep → cutting";
+  }
+  if (receipt.status === "handed_off") {
+    return "Prep already done — this cut is with production";
+  }
+  return null;
+}
+
 export function fabricReceivingStationError(
   receipt: FabricReceipt | undefined,
   station: ScanStation

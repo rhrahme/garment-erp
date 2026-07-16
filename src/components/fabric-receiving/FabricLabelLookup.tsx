@@ -212,7 +212,14 @@ export function FabricLabelLookup({
               {result.receive_status === "received" && (
                 <p className="mt-2 text-xs">
                   Fabric is on the work list. Use <strong>Start wash</strong> / <strong>Start soak</strong>{" "}
-                  on the pink row, or expand <strong>Floor scanner</strong> to scan at Wash, Soak, or Iron.
+                  on the pink row, or expand <strong>Floor scanner</strong> → pick <strong>Wash</strong> /{" "}
+                  <strong>Soak</strong> / <strong>Iron</strong>, then scan.
+                </p>
+              )}
+              {result.receive_status === "fabric_prep" && (
+                <p className="mt-2 text-xs">
+                  In prep — on the sky/teal/amber row tap <strong>Finish wash → start ironing</strong> (or the
+                  matching finish button), or Floor scanner → matching station → scan again.
                 </p>
               )}
             </div>

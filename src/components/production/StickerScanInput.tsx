@@ -27,6 +27,11 @@ export type StageScanResponse = {
   piece_name: string;
   fabric_number: string;
   notice?: StageScanNotice;
+  receipt?: {
+    status?: string;
+    fabric_prep_step?: string | null;
+    fabric_prep_type?: string | null;
+  };
 };
 
 type StickerScanInputProps = {

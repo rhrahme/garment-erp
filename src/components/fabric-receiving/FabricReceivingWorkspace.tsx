@@ -21,7 +21,6 @@ import { StageScanPanel } from "@/components/production/StageScanPanel";
 import type { StageScanResponse } from "@/components/production/StickerScanInput";
 import {
   fabricPrepTypeLabel,
-  completeFabricPrepActionLabel,
 } from "@/lib/production/fabric-prep";
 import type { FabricPrepType } from "@/lib/types/production";
 
@@ -165,11 +164,11 @@ export function FabricReceivingWorkspace() {
         );
       } else {
         const receipt = data.receipt;
-        const action =
-          receipt?.fabric_prep_type && receipt?.fabric_prep_step
-            ? completeFabricPrepActionLabel(receipt.fabric_prep_type, receipt.fabric_prep_step)
-            : null;
-        setMessage(action ? `Advanced — ${action.replace(/^Finish → /, "")}` : "Prep step updated.");
+        if (receipt?.fabric_prep_step === "iron") {
+          setMessage("Moved to ironing — tap Finish prep when done, or scan at Iron.");
+        } else {
+          setMessage("Prep step updated.");
+        }
       }
       refreshAll();
     } catch (err) {
@@ -194,11 +193,11 @@ export function FabricReceivingWorkspace() {
         actingId={actingId}
       />
 
-      <details className="group rounded-xl border border-slate-200 bg-slate-50/60">
+      <details open className="group rounded-xl border border-slate-200 bg-slate-50/60">
         <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium text-slate-700 marker:content-none [&::-webkit-details-marker]:hidden">
           <span className="text-slate-900">Floor scanner</span>
           <span className="ml-2 font-normal text-slate-500">
-            — badge + scan at Receive, Wash, Soak, or Iron (optional if you pasted the code above)
+            — pick Wash / Soak / Iron, then scan (must match the step — Receive alone will not advance prep)
           </span>
         </summary>
         <div className="border-t border-slate-200 px-5 pb-5 pt-4">

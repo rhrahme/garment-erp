@@ -102,9 +102,15 @@ function lineToTableRow(line: FabricReceivingLineRow): ReceivingCutTableRow {
 function nextActionForLine(line: FabricReceivingLineRow): string {
   if (line.status === "pending") return "Scan at Receive";
   if (line.status === "received") return "Start wash, soak, or iron below";
-  if (line.status === "fabric_prep" && line.fabric_prep_step === "wash") return "Finish wash";
-  if (line.status === "fabric_prep" && line.fabric_prep_step === "soak") return "Finish soak";
-  if (line.status === "fabric_prep" && line.fabric_prep_step === "iron") return "Scan at Iron";
+  if (line.status === "fabric_prep" && line.fabric_prep_step === "wash") {
+    return "Finish wash → start ironing";
+  }
+  if (line.status === "fabric_prep" && line.fabric_prep_step === "soak") {
+    return "Finish soak → start ironing";
+  }
+  if (line.status === "fabric_prep" && line.fabric_prep_step === "iron") {
+    return "Finish ironing → ready for cutting";
+  }
   if (line.status === "handed_off") return "In production";
   return "Complete prep";
 }
@@ -214,6 +220,62 @@ function ReceivedPrepActions({
         )}
       >
         Report defect
+      </button>
+    </div>
+  );
+}
+
+function InPrepActions({
+  receiptId,
+  prepType,
+  prepStep,
+  actingId,
+  onAdvancePrep,
+  onReportDefect,
+  canChooseDefectFoundAt,
+}: {
+  receiptId: string;
+  prepType: FabricPrepType;
+  prepStep: "wash" | "soak" | "iron";
+  actingId: string | null;
+  onAdvancePrep: (receiptId: string) => void;
+  onReportDefect: () => void;
+  canChooseDefectFoundAt: boolean;
+}) {
+  const busy = actingId === receiptId;
+  const advanceLabel = completeFabricPrepActionLabel(prepType, prepStep) ?? "Advance prep";
+  const isIron = prepStep === "iron";
+
+  return (
+    <div className="flex flex-wrap items-stretch gap-2">
+      <button
+        type="button"
+        onClick={() => onAdvancePrep(receiptId)}
+        disabled={busy}
+        className={cn(
+          "min-h-12 min-w-[12rem] flex-1 rounded-xl px-4 py-3 text-base font-semibold shadow-sm transition-colors",
+          "focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          isIron
+            ? "bg-amber-600 text-white hover:bg-amber-700 focus:ring-amber-500"
+            : prepStep === "soak"
+              ? "bg-teal-600 text-white hover:bg-teal-700 focus:ring-teal-500"
+              : "bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500"
+        )}
+      >
+        {busy ? "Updating…" : advanceLabel}
+      </button>
+      <button
+        type="button"
+        onClick={onReportDefect}
+        disabled={busy}
+        className={cn(
+          "min-h-11 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors",
+          "border border-rose-300 bg-rose-50 text-rose-900 hover:bg-rose-100",
+          "focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-2",
+          "disabled:cursor-not-allowed disabled:opacity-50"
+        )}
+      >
+        {canChooseDefectFoundAt ? "Add issue" : "Flag defect (cutting)"}
       </button>
     </div>
   );
@@ -332,9 +394,14 @@ function FabricCutCard({
     line.status === "pending" || line.status === "received" || line.status === "fabric_prep";
   const tableRow = lineToTableRow(line);
   const showQuickPrep = line.status === "received" && Boolean(line.receipt_id);
+  const showInPrepAdvance =
+    line.status === "fabric_prep" &&
+    Boolean(line.receipt_id) &&
+    Boolean(line.fabric_prep_type) &&
+    Boolean(line.fabric_prep_step);
   const showAddIssue =
     Boolean(line.receipt_id) &&
-    (line.status === "fabric_prep" || line.status === "handed_off" || line.status === "received");
+    (line.status === "handed_off" || (line.status === "fabric_prep" && !showInPrepAdvance));
 
   function openDefectReport(defaultFoundAt: "receiving" | "cutting", title: string) {
     if (!line.receipt_id) return;
@@ -417,6 +484,28 @@ function FabricCutCard({
         </div>
       )}
 
+      {showInPrepAdvance &&
+        line.receipt_id &&
+        line.fabric_prep_type &&
+        line.fabric_prep_step && (
+          <div className="border-t border-slate-100/80 px-4 py-3">
+            <InPrepActions
+              receiptId={line.receipt_id}
+              prepType={line.fabric_prep_type}
+              prepStep={line.fabric_prep_step}
+              actingId={actingId}
+              onAdvancePrep={onAdvancePrep}
+              onReportDefect={() =>
+                openDefectReport(
+                  "cutting",
+                  canChooseDefectFoundAt ? "Add issue" : "Flag defect (cutting)"
+                )
+              }
+              canChooseDefectFoundAt={canChooseDefectFoundAt}
+            />
+          </div>
+        )}
+
       {showAddIssue && line.receipt_id && line.status !== "received" && (
         <div className="border-t border-slate-100/80 px-4 py-3">
           <div className="flex flex-wrap gap-2">
@@ -424,7 +513,7 @@ function FabricCutCard({
               type="button"
               onClick={() =>
                 openDefectReport(
-                  canChooseDefectFoundAt ? "cutting" : "cutting",
+                  "cutting",
                   canChooseDefectFoundAt ? "Add issue" : "Flag defect (cutting)"
                 )
               }

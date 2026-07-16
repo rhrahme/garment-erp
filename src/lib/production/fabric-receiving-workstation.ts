@@ -54,9 +54,9 @@ export function nextActionForReceipt(receipt: FabricReceipt): string {
   }
   if (receipt.status === "fabric_prep" && receipt.fabric_prep_type && receipt.fabric_prep_step) {
     const step = receipt.fabric_prep_step;
-    if (step === "wash") return "Scan at Wash when step is done";
-    if (step === "soak") return "Scan at Wash when soak is done";
-    if (step === "iron") return "Scan at Iron to finish → cutting";
+    if (step === "wash") return "Finish wash → start ironing (button or Wash scan)";
+    if (step === "soak") return "Finish soak → start ironing (button or Soak scan)";
+    if (step === "iron") return "Finish ironing → cutting (button or Iron scan)";
     return fabricPrepStatusLabel(receipt.fabric_prep_type, step);
   }
   return "Complete prep";
