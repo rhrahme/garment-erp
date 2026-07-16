@@ -8,6 +8,7 @@ export type ScanHighlightStage =
   | "received"
   | "fabric_wash"
   | "fabric_soak"
+  | "fabric_dry"
   | "fabric_iron"
   | "in_production"
   | "cutting"
@@ -21,6 +22,7 @@ export const SCAN_STAGE_LEGEND: Array<{ stage: ScanHighlightStage; label: string
   { stage: "received", label: "Fabric received (pink — scan at Receive)" },
   { stage: "fabric_wash", label: "Machine wash (sky blue — scan at Wash)" },
   { stage: "fabric_soak", label: "Soak (teal — scan at Soak)" },
+  { stage: "fabric_dry", label: "Drying (grey — hung to dry, scan at Iron)" },
   { stage: "fabric_iron", label: "Iron (amber — scan at Iron)" },
   { stage: "cutting", label: "Cutting" },
   { stage: "sewing", label: "Sewing" },
@@ -52,6 +54,11 @@ const STYLES: Record<
     row: "bg-teal-50 ring-1 ring-inset ring-teal-200/80",
     chip: "bg-teal-100 text-teal-900",
     label: "Soak",
+  },
+  fabric_dry: {
+    row: "bg-slate-100 ring-1 ring-inset ring-indigo-200/70",
+    chip: "bg-slate-200 text-slate-700",
+    label: "Drying",
   },
   fabric_iron: {
     row: "bg-amber-50 ring-1 ring-inset ring-amber-200/80",
@@ -144,6 +151,7 @@ export function fabricLineToHighlightStage(
   if (lineStatus === "fabric_prep") {
     if (prepStep === "wash") return "fabric_wash";
     if (prepStep === "soak") return "fabric_soak";
+    if (prepStep === "drying") return "fabric_dry";
     if (prepStep === "iron") return "fabric_iron";
     return "fabric_iron";
   }
@@ -156,7 +164,13 @@ export function fabricLineHighlightLabel(
 ): string {
   if (lineStatus === "fabric_prep" && prepStep) {
     const step =
-      prepStep === "wash" ? "Washing" : prepStep === "soak" ? "Soaking" : "Ironing";
+      prepStep === "wash"
+        ? "Washing"
+        : prepStep === "soak"
+          ? "Soaking"
+          : prepStep === "drying"
+            ? "Drying"
+            : "Ironing";
     return `${scanStageStyles(fabricLineToHighlightStage(lineStatus, prepStep)).label} — ${step}`;
   }
   return scanStageStyles(fabricLineToHighlightStage(lineStatus, prepStep)).label;

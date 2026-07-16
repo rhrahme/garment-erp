@@ -69,6 +69,18 @@ export interface FabricReceipt {
   received_at: string;
   updated_at: string;
   handed_off_at: string | null;
+  /**
+   * Scan timestamps for the wash/soak → dry → iron lifecycle. Optional so existing
+   * receipts stay valid; used only to DISPLAY elapsed durations (never blocking, no timers).
+   */
+  /** Scan 1 — wash or soak started (fabric in machine / soak bowl). */
+  wash_started_at?: string | null;
+  /** Scan 2 — removed from wash/soak and hung to dry. */
+  dry_started_at?: string | null;
+  /** Scan 3 — dry done, ironing started. */
+  iron_started_at?: string | null;
+  /** Scan 4 — ironing finished / ready for cutting. */
+  iron_done_at?: string | null;
   /** Floor / QC defect reports — optional so existing receipts stay valid. */
   defect_reports?: FabricDefectReport[];
 }
@@ -132,6 +144,11 @@ export type FabricReceivingLineRow = {
   updated_at: string | null;
   fabric_prep_type: FabricPrepType | null;
   fabric_prep_step: FabricPrepStep | null;
+  /** Lifecycle scan timestamps — optional, drive elapsed-duration display only. */
+  wash_started_at?: string | null;
+  dry_started_at?: string | null;
+  iron_started_at?: string | null;
+  iron_done_at?: string | null;
   scan_stage: ScanHighlightStage;
   scan_stage_label: string;
   /** Any defect report on this receipt (open or closed). */

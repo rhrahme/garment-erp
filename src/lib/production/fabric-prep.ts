@@ -5,7 +5,7 @@ export const FABRIC_PREP_TYPES = [
 ] as const;
 
 export type FabricPrepType = (typeof FABRIC_PREP_TYPES)[number]["id"];
-export type FabricPrepStep = "wash" | "soak" | "iron";
+export type FabricPrepStep = "wash" | "soak" | "drying" | "iron";
 
 export function isFabricPrepType(value: string): value is FabricPrepType {
   return FABRIC_PREP_TYPES.some((type) => type.id === value);
@@ -24,11 +24,13 @@ export function firstFabricPrepStep(type: FabricPrepType): FabricPrepStep {
 
 export function nextFabricPrepStep(type: FabricPrepType, current: FabricPrepStep): FabricPrepStep | null {
   if (type === "wash_iron") {
-    if (current === "wash") return "iron";
+    if (current === "wash") return "drying";
+    if (current === "drying") return "iron";
     return null;
   }
   if (type === "soak_iron") {
-    if (current === "soak") return "iron";
+    if (current === "soak") return "drying";
+    if (current === "drying") return "iron";
     return null;
   }
   return null;
@@ -44,6 +46,8 @@ export function fabricPrepStepLabel(step: FabricPrepStep): string {
       return "Washing";
     case "soak":
       return "Soaking";
+    case "drying":
+      return "Drying";
     case "iron":
       return "Ironing";
   }
@@ -54,8 +58,14 @@ export function fabricPrepStatusLabel(type: FabricPrepType, step: FabricPrepStep
 }
 
 export function completeFabricPrepActionLabel(type: FabricPrepType, step: FabricPrepStep): string | null {
-  const next = nextFabricPrepStep(type, step);
-  if (next === "iron") return "Finish → start ironing";
-  if (step === "iron") return "Finish prep → ready for cutting";
-  return null;
+  switch (step) {
+    case "wash":
+      return "Finish wash → hang to dry";
+    case "soak":
+      return "Finish soak → hang to dry";
+    case "drying":
+      return "Dry done → start ironing";
+    case "iron":
+      return "Finish ironing → ready for cutting";
+  }
 }

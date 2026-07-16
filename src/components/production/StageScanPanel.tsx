@@ -129,12 +129,13 @@ export function StageScanPanel({
         onSuccess={(result) => {
           onScanMessage?.(result.message);
           onScanResult?.(result);
-          // After wash/soak finishes, jump station to Iron so the next scan continues smoothly.
+          // After wash/soak is hung to dry, jump station to Iron so the next (start-ironing)
+          // scan continues smoothly.
           if (
             scanContext === "fabric-receiving" &&
             result.notice === "advanced" &&
             (station === "wash" || station === "soak") &&
-            result.receipt?.fabric_prep_step === "iron"
+            result.receipt?.fabric_prep_step === "drying"
           ) {
             setStation("iron");
           }
@@ -143,9 +144,9 @@ export function StageScanPanel({
       {scanContext === "fabric-receiving" && (
         <p className="text-sm text-slate-600">
           <span className="font-medium text-slate-800">Floor workflow:</span> pick the station that matches the
-          step — <strong>Wash</strong> to start/finish wash, <strong>Soak</strong> for soak, then{" "}
-          <strong>Iron</strong> to finish. A second scan at Wash finishes wash and moves to ironing (station
-          switches to Iron automatically). Scanning at Receive again does not advance prep.
+          step — <strong>Wash</strong>/<strong>Soak</strong> once to start, then scan again there to hang to dry
+          (station switches to <strong>Iron</strong> automatically). At Iron, scan once to start ironing and again
+          to finish → ready for cutting. Scanning at Receive again does not advance prep.
         </p>
       )}
       {scanContext === "production" && requireEmployee && (

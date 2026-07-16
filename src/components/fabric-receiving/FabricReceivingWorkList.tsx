@@ -30,6 +30,7 @@ import {
   formatFloorProgressSummary,
 } from "@/lib/production/fabric-receiving-floor-progress";
 import { scanStageStyles } from "@/lib/production/scan-stage-highlight";
+import { currentPrepStageElapsedLabel } from "@/lib/production/prep-durations";
 import { SALES_ORDER_ARCHIVE_AGE_MONTHS } from "@/lib/sales-orders/archive";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import type {
@@ -47,7 +48,7 @@ type FabricReceivingView = "active" | "archived" | "floor_progress";
 const TABS: { id: FabricReceivingWorkTab; label: string; hint: string }[] = [
   { id: "to_receive", label: "To receive", hint: "Fabric not scanned at Receive yet" },
   { id: "awaiting_prep", label: "Fabric received", hint: "Pink — scanned at Receive" },
-  { id: "in_prep", label: "In prep", hint: "Sky / teal / amber — wash, soak, or iron" },
+  { id: "in_prep", label: "In prep", hint: "Sky / teal / grey / amber — wash, soak, drying, or iron" },
   { id: "all", label: "All", hint: "Everything on the receiving floor" },
 ];
 
@@ -103,10 +104,13 @@ function nextActionForLine(line: FabricReceivingLineRow): string {
   if (line.status === "pending") return "Scan at Receive";
   if (line.status === "received") return "Start wash, soak, or iron below";
   if (line.status === "fabric_prep" && line.fabric_prep_step === "wash") {
-    return "Finish wash → start ironing";
+    return "Finish wash → hang to dry";
   }
   if (line.status === "fabric_prep" && line.fabric_prep_step === "soak") {
-    return "Finish soak → start ironing";
+    return "Finish soak → hang to dry";
+  }
+  if (line.status === "fabric_prep" && line.fabric_prep_step === "drying") {
+    return "Dry done → start ironing";
   }
   if (line.status === "fabric_prep" && line.fabric_prep_step === "iron") {
     return "Finish ironing → ready for cutting";
@@ -236,7 +240,7 @@ function InPrepActions({
 }: {
   receiptId: string;
   prepType: FabricPrepType;
-  prepStep: "wash" | "soak" | "iron";
+  prepStep: "wash" | "soak" | "drying" | "iron";
   actingId: string | null;
   onAdvancePrep: (receiptId: string) => void;
   onReportDefect: () => void;
@@ -244,7 +248,14 @@ function InPrepActions({
 }) {
   const busy = actingId === receiptId;
   const advanceLabel = completeFabricPrepActionLabel(prepType, prepStep) ?? "Advance prep";
-  const isIron = prepStep === "iron";
+  const advanceColor =
+    prepStep === "iron"
+      ? "bg-amber-600 text-white hover:bg-amber-700 focus:ring-amber-500"
+      : prepStep === "soak"
+        ? "bg-teal-600 text-white hover:bg-teal-700 focus:ring-teal-500"
+        : prepStep === "drying"
+          ? "bg-slate-600 text-white hover:bg-slate-700 focus:ring-slate-500"
+          : "bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500";
 
   return (
     <div className="flex flex-wrap items-stretch gap-2">
@@ -255,11 +266,7 @@ function InPrepActions({
         className={cn(
           "min-h-12 min-w-[12rem] flex-1 rounded-xl px-4 py-3 text-base font-semibold shadow-sm transition-colors",
           "focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-          isIron
-            ? "bg-amber-600 text-white hover:bg-amber-700 focus:ring-amber-500"
-            : prepStep === "soak"
-              ? "bg-teal-600 text-white hover:bg-teal-700 focus:ring-teal-500"
-              : "bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500"
+          advanceColor
         )}
       >
         {busy ? "Updating…" : advanceLabel}
@@ -390,6 +397,15 @@ function FabricCutCard({
 }) {
   const printHref = `/orders/${order.sales_order_id}/print?team=receiving`;
   const styles = scanStageStyles(line.scan_stage);
+  const elapsedLabel =
+    line.status === "fabric_prep"
+      ? currentPrepStageElapsedLabel(line.fabric_prep_step, {
+          wash_started_at: line.wash_started_at,
+          dry_started_at: line.dry_started_at,
+          iron_started_at: line.iron_started_at,
+          iron_done_at: line.iron_done_at,
+        })
+      : null;
   const showManual =
     line.status === "pending" || line.status === "received" || line.status === "fabric_prep";
   const tableRow = lineToTableRow(line);
@@ -445,6 +461,11 @@ function FabricCutCard({
               </span>
             )}
             <span className="text-sm text-slate-700">{nextActionForLine(line)}</span>
+            {elapsedLabel && (
+              <span className="text-xs font-medium text-slate-500" title="Elapsed in current stage (from scan times)">
+                · {elapsedLabel}
+              </span>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -786,7 +807,7 @@ export function FabricReceivingWorkList({
           </button>
           <p className="text-xs text-slate-500">
             {isFloorProgress
-              ? "Quiet until work starts. Pink = received; sky = wash; teal = soak; amber = iron; violet = done / with production."
+              ? "Quiet until work starts. Pink = received; sky = wash; teal = soak; grey = drying; amber = iron; violet = done / with production."
               : `Active hides done/stitched orders. Orders older than ${SALES_ORDER_ARCHIVE_AGE_MONTHS} months also move to Archived. Pink means scanned at Receive — not “needs attention”.`}
           </p>
         </div>

@@ -164,8 +164,10 @@ export function FabricReceivingWorkspace() {
         );
       } else {
         const receipt = data.receipt;
-        if (receipt?.fabric_prep_step === "iron") {
-          setMessage("Moved to ironing — tap Finish prep when done, or scan at Iron.");
+        if (receipt?.fabric_prep_step === "drying") {
+          setMessage("Hung to dry — tap Start ironing when dry, or scan at Iron.");
+        } else if (receipt?.fabric_prep_step === "iron") {
+          setMessage("Ironing started — tap Finish prep when done, or scan at Iron.");
         } else {
           setMessage("Prep step updated.");
         }

@@ -32,29 +32,47 @@ function receipt(partial: Partial<FabricReceipt>): FabricReceipt {
   };
 }
 
-test("fabricReceiveRescanHint steers wash/soak/iron when Receive is scanned again", () => {
+test("fabricReceiveRescanHint steers wash/soak/drying/iron when Receive is scanned again", () => {
   assert.equal(
     fabricReceiveRescanHint(
       receipt({ status: "fabric_prep", fabric_prep_type: "wash_iron", fabric_prep_step: "wash" })
     ),
-    "Already in wash — select Wash and scan again to finish → iron"
+    "Already in wash — select Wash and scan again to hang to dry"
   );
   assert.equal(
     fabricReceiveRescanHint(
       receipt({ status: "fabric_prep", fabric_prep_type: "soak_iron", fabric_prep_step: "soak" })
     ),
-    "Already soaking — select Soak and scan again to finish → iron"
+    "Already soaking — select Soak and scan again to hang to dry"
+  );
+  assert.equal(
+    fabricReceiveRescanHint(
+      receipt({ status: "fabric_prep", fabric_prep_type: "wash_iron", fabric_prep_step: "drying" })
+    ),
+    "Hung to dry — select Iron and scan to start ironing"
   );
   assert.equal(
     fabricReceiveRescanHint(
       receipt({ status: "fabric_prep", fabric_prep_type: "wash_iron", fabric_prep_step: "iron" })
     ),
-    "Wash/soak done — select Iron and scan to finish prep → cutting"
+    "Ironing — select Iron and scan to finish prep → cutting"
   );
   assert.equal(fabricReceiveRescanHint(receipt({ status: "received" })), null);
 });
 
-test("fabricReceivingStationError blocks wrong station after wash is finished", () => {
+test("fabricReceivingStationError routes wash/soak → dry → iron correctly", () => {
+  const drying = receipt({
+    status: "fabric_prep",
+    fabric_prep_type: "wash_iron",
+    fabric_prep_step: "drying",
+  });
+  // While drying, the fabric belongs at Iron (to start ironing), not Wash.
+  assert.equal(
+    fabricReceivingStationError(drying, "wash"),
+    "Washing is done — it's drying. Scan at Iron to start ironing."
+  );
+  assert.equal(fabricReceivingStationError(drying, "iron"), null);
+
   const ironing = receipt({
     status: "fabric_prep",
     fabric_prep_type: "wash_iron",
@@ -62,4 +80,15 @@ test("fabricReceivingStationError blocks wrong station after wash is finished", 
   });
   assert.equal(fabricReceivingStationError(ironing, "wash"), "Washing is done — scan at Iron.");
   assert.equal(fabricReceivingStationError(ironing, "iron"), null);
+
+  // Iron scan is rejected before the fabric has been hung to dry.
+  const washing = receipt({
+    status: "fabric_prep",
+    fabric_prep_type: "wash_iron",
+    fabric_prep_step: "wash",
+  });
+  assert.equal(
+    fabricReceivingStationError(washing, "iron"),
+    "Finish wash and hang to dry first — scan at Wash."
+  );
 });

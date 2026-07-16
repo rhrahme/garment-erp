@@ -304,6 +304,10 @@ export async function listFabricReceivingOverview(
         updated_at: receipt?.updated_at ?? receipt?.received_at ?? null,
         fabric_prep_type: receipt?.fabric_prep_type ?? null,
         fabric_prep_step: prepStep,
+        wash_started_at: receipt?.wash_started_at ?? null,
+        dry_started_at: receipt?.dry_started_at ?? null,
+        iron_started_at: receipt?.iron_started_at ?? null,
+        iron_done_at: receipt?.iron_done_at ?? null,
         scan_stage,
         scan_stage_label,
         has_defect_report: Boolean(receipt?.defect_reports?.length),
@@ -435,10 +439,18 @@ export async function startFabricReceiptPrep(id: string, fabric_prep_type: Fabri
     }
 
     const now = new Date().toISOString();
+    const firstStep = firstFabricPrepStep(fabric_prep_type);
     receipt.status = "fabric_prep";
     receipt.fabric_prep_type = fabric_prep_type;
-    receipt.fabric_prep_step = firstFabricPrepStep(fabric_prep_type);
+    receipt.fabric_prep_step = firstStep;
     receipt.updated_at = now;
+
+    // Record scan-1 timestamps for elapsed-duration display (never blocking).
+    if (firstStep === "wash" || firstStep === "soak") {
+      receipt.wash_started_at = now;
+    } else if (firstStep === "iron") {
+      receipt.iron_started_at = now;
+    }
 
     return receipt;
   });
@@ -516,6 +528,12 @@ export async function advanceFabricReceipt(id: string): Promise<{
       if (nextStep) {
         receipt.fabric_prep_step = nextStep;
         receipt.updated_at = now;
+        // Record scan timestamps at each transition for elapsed-duration display.
+        if (nextStep === "drying") {
+          receipt.dry_started_at = now;
+        } else if (nextStep === "iron") {
+          receipt.iron_started_at = now;
+        }
         return { receipt, work_orders: [] as ProductionWorkOrder[], handoff: false };
       }
 
@@ -524,6 +542,7 @@ export async function advanceFabricReceipt(id: string): Promise<{
       }
 
       receipt.status = "handed_off";
+      receipt.iron_done_at = now;
       receipt.fabric_prep_type = null;
       receipt.fabric_prep_step = null;
       receipt.handed_off_at = now;

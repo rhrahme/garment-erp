@@ -11,6 +11,7 @@ export type FloorProgressBucket =
   | "received"
   | "washing"
   | "soaking"
+  | "drying"
   | "ironing"
   | "done";
 
@@ -20,6 +21,7 @@ export type FloorProgressCounts = {
   received: number;
   washing: number;
   soaking: number;
+  drying: number;
   ironing: number;
   done: number;
 };
@@ -34,6 +36,7 @@ export function floorProgressBucketForLine(
   if (status === "fabric_prep") {
     if (prepStep === "wash") return "washing";
     if (prepStep === "soak") return "soaking";
+    if (prepStep === "drying") return "drying";
     return "ironing";
   }
   return "pending";
@@ -57,6 +60,7 @@ export function countFloorProgress(lines: FabricReceivingLineRow[]): FloorProgre
     received: 0,
     washing: 0,
     soaking: 0,
+    drying: 0,
     ironing: 0,
     done: 0,
   };
@@ -81,6 +85,9 @@ export function formatFloorProgressSummary(counts: FloorProgressCounts): string 
   ];
   if (counts.soaking > 0) {
     parts.push(`${counts.soaking} soaking`);
+  }
+  if (counts.drying > 0) {
+    parts.push(`${counts.drying} drying`);
   }
   parts.push(`${counts.ironing} ironing`);
   parts.push(`${counts.done} done`);

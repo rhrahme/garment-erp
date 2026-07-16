@@ -56,11 +56,12 @@ function order(
   };
 }
 
-test("floorProgressBucketForLine maps receive → wash/soak/iron → done", () => {
+test("floorProgressBucketForLine maps receive → wash/soak/drying/iron → done", () => {
   assert.equal(floorProgressBucketForLine("pending", null), "pending");
   assert.equal(floorProgressBucketForLine("received", null), "received");
   assert.equal(floorProgressBucketForLine("fabric_prep", "wash"), "washing");
   assert.equal(floorProgressBucketForLine("fabric_prep", "soak"), "soaking");
+  assert.equal(floorProgressBucketForLine("fabric_prep", "drying"), "drying");
   assert.equal(floorProgressBucketForLine("fabric_prep", "iron"), "ironing");
   assert.equal(floorProgressBucketForLine("fabric_prep", null), "ironing");
   assert.equal(floorProgressBucketForLine("handed_off", null), "done");
@@ -112,12 +113,26 @@ test("countFloorProgress and summary keep unfinished siblings visible in totals"
     received: 1,
     washing: 1,
     soaking: 0,
+    drying: 0,
     ironing: 1,
     done: 1,
   });
   assert.equal(
     formatFloorProgressSummary(counts),
     "5 fabrics · 1 received · 1 washing · 1 ironing · 1 done"
+  );
+});
+
+test("formatFloorProgressSummary includes drying only when present", () => {
+  const withDrying = countFloorProgress([
+    line({ sales_order_line_id: "l1", status: "fabric_prep", fabric_prep_step: "drying" }),
+    line({ sales_order_line_id: "l2", status: "fabric_prep", fabric_prep_step: "wash" }),
+    line({ sales_order_line_id: "l3", status: "received" }),
+  ]);
+  assert.equal(withDrying.drying, 1);
+  assert.equal(
+    formatFloorProgressSummary(withDrying),
+    "3 fabrics · 1 received · 1 washing · 1 drying · 0 ironing · 0 done"
   );
 });
 

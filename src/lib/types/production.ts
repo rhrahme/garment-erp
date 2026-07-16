@@ -12,7 +12,7 @@ export const PRODUCTION_STAGES = [
 export type ProductionStage = (typeof PRODUCTION_STAGES)[number];
 
 export type FabricPrepType = "wash_iron" | "soak_iron" | "iron_only";
-export type FabricPrepStep = "wash" | "soak" | "iron";
+export type FabricPrepStep = "wash" | "soak" | "drying" | "iron";
 
 export interface ProductionWorkOrder {
   id: string;

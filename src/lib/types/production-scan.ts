@@ -17,6 +17,8 @@ export type ProductionScanEvent = {
   work_order_id: string | null;
   previous_status: string | null;
   new_status: string | null;
+  /** Fabric prep step after the scan (wash/soak/drying/iron) — null off the receiving floor. */
+  fabric_prep_step?: string | null;
   /** Assigned or floater-overridden workstation — optional 3rd machine scan can update later. */
   workstation_id: string | null;
   notice?: StageScanNotice;

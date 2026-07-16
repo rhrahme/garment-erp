@@ -51,6 +51,7 @@ export async function recordProductionScanEvent(input: {
     work_order_id: input.result.work_order?.id ?? null,
     previous_status,
     new_status,
+    fabric_prep_step: input.result.receipt?.fabric_prep_step ?? null,
     workstation_id: input.employee.workstation_id,
     notice: input.result.notice,
   };
@@ -70,6 +71,7 @@ export async function recordProductionScanEvent(input: {
       work_order_id: event.work_order_id,
       previous_status: event.previous_status,
       new_status: event.new_status,
+      fabric_prep_step: event.fabric_prep_step,
       workstation_id: event.workstation_id,
       notice: event.notice,
       so_number: event.so_number,
