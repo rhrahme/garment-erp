@@ -219,7 +219,7 @@ export function FabricSpecView({ suppliers, items: initialItems, canViewPrices =
                           ? "bg-amber-700 text-white"
                           : "bg-indigo-600 text-white"
                       : "text-slate-700 hover:bg-slate-100",
-                    brand.count === 0 && "opacity-50",
+                    brand.count === 0 && !isCustom && "opacity-50",
                     isSolbiati && brand.count > 0 && !isActive && "ring-2 ring-emerald-400/70 ring-offset-1",
                     isCustom && !isActive && "ring-1 ring-amber-300/80"
                   )}
@@ -255,6 +255,19 @@ export function FabricSpecView({ suppliers, items: initialItems, canViewPrices =
             );
           })}
         </ul>
+        <button
+          type="button"
+          onClick={() => {
+            setBrandId(CUSTOM_SUPPLIER_ID);
+            setShowCreateForm(true);
+          }}
+          className="mt-3 flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-amber-400 px-3 py-2 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-50"
+        >
+          + New fabric
+        </button>
+        <p className="mt-1.5 px-1 text-[11px] leading-tight text-slate-400">
+          Add a one-off fabric (mill leftover, shop buy, client swatch).
+        </p>
       </aside>
 
       {/* Specs table — main panel */}

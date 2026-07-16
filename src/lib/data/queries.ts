@@ -232,10 +232,14 @@ async function mergeCatalogPriceListItems(dbItems: SupplierFabric[]): Promise<Su
 }
 
 export async function getFabricSuppliers() {
-  if (DEMO_MODE) return await getImportedSuppliers();
   // Fabric search/spec UIs read JSON catalogs keyed by contact ids (canclini, zegna, …).
   // Supabase warehouse `suppliers` rows may use UUIDs that never match catalog items.
-  return await getImportedSuppliers();
+  const suppliers = await getImportedSuppliers();
+  // The Custom / One-off brand must always be selectable so the Create fabric
+  // button is reachable — even when the Supabase supplier_contacts document
+  // predates the custom feature and omits it.
+  const { ensureCustomSupplierPresent } = await import("@/lib/data/custom-fabrics");
+  return ensureCustomSupplierPresent(suppliers);
 }
 
 export async function getPriceListItems(supplierId?: string) {

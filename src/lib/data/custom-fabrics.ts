@@ -31,7 +31,7 @@ const CUSTOM_FABRICS_PATH = path.join(process.cwd(), "src/data/custom-fabrics.js
 
 const EMPTY: CustomFabricsFile = { updated_at: null, fabrics: [] };
 
-const CUSTOM_SUPPLIER: Supplier = {
+export const CUSTOM_SUPPLIER: Supplier = {
   id: CUSTOM_SUPPLIER_ID,
   code: "CUSTOM",
   name: CUSTOM_SUPPLIER_NAME,
@@ -42,6 +42,20 @@ const CUSTOM_SUPPLIER: Supplier = {
   is_fabric_supplier: true,
   lead_time_days: 0,
 };
+
+/**
+ * Guarantee the Custom / One-off brand is always present in a supplier list.
+ * The bundled contacts.json seeds it, but production reads suppliers from the
+ * Supabase `supplier_contacts` document, which predates the custom feature and
+ * may not include it. Merge it in code so the brand tab (and its Create fabric
+ * button) is always reachable, even with zero custom fabrics yet.
+ */
+export function ensureCustomSupplierPresent(suppliers: Supplier[]): Supplier[] {
+  if (suppliers.some((supplier) => supplier.id === CUSTOM_SUPPLIER_ID)) {
+    return suppliers;
+  }
+  return [...suppliers, CUSTOM_SUPPLIER];
+}
 
 export function readCustomFabrics(): CustomFabricsFile {
   return readJsonFile(CUSTOM_FABRICS_PATH, EMPTY);
