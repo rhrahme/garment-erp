@@ -17,6 +17,7 @@ import {
   getFabricLineIdsForPrint,
 } from "@/lib/sales-orders/fabric-lines";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
+import { RECEIVING_A4_PRINT_CSS } from "@/lib/sales-orders/receiving-print-styles";
 
 export default async function OrderPrintPackPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -31,14 +32,8 @@ export default async function OrderPrintPackPage({ params }: { params: Promise<{
   return (
     <div className="order-print-pack min-h-screen bg-white p-8 text-slate-900 print:min-h-0 print:p-0">
       <style>{`
+        ${RECEIVING_A4_PRINT_CSS}
         @media print {
-          @page {
-            size: A4 landscape;
-            margin: 8mm;
-          }
-          .no-print {
-            display: none !important;
-          }
           .print-pack-stickers {
             display: none !important;
           }
@@ -46,6 +41,7 @@ export default async function OrderPrintPackPage({ params }: { params: Promise<{
       `}</style>
 
       <PageHeader
+        className="no-print"
         title="Print packs"
         description={`${order.so_number} · ${order.client_name} — receiving A4 + fabric cut stickers + cutting pack (multi-piece only)`}
       />

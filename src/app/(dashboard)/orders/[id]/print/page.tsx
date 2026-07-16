@@ -36,6 +36,7 @@ import {
   linesNeedingPrint,
 } from "@/lib/sales-orders/fabric-lines";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
+import { RECEIVING_A4_PRINT_CSS } from "@/lib/sales-orders/receiving-print-styles";
 import { formatDate } from "@/lib/utils";
 import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
@@ -118,54 +119,7 @@ export default async function SalesOrderPrintPage({
 
   return (
     <div className="sales-order-print min-h-screen bg-white p-8 text-slate-900 print:min-h-0 print:p-0">
-      <style>{`
-        @media print {
-          @page {
-            size: A4 landscape;
-            margin: 8mm;
-          }
-          html,
-          body {
-            height: auto !important;
-            overflow: visible !important;
-            background: white !important;
-          }
-          .flex.h-screen,
-          .flex.h-screen > div,
-          main {
-            height: auto !important;
-            overflow: visible !important;
-          }
-          aside,
-          header,
-          nav,
-          .no-print {
-            display: none !important;
-          }
-          main {
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-          .sales-order-print {
-            padding: 0 !important;
-          }
-          .print-receiving-table {
-            page-break-inside: auto;
-          }
-          .print-receiving-table thead {
-            display: table-header-group;
-          }
-          .print-receiving-table tr {
-            break-inside: avoid;
-            page-break-inside: avoid;
-          }
-          .print-receiving-table td,
-          .print-receiving-table th {
-            break-inside: avoid;
-            page-break-inside: avoid;
-          }
-        }
-      `}</style>
+      <style>{RECEIVING_A4_PRINT_CSS}</style>
 
       <SalesOrderPrintToolbar
         orderId={order.id}

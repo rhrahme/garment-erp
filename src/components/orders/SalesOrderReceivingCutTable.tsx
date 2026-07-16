@@ -20,8 +20,8 @@ export type ReceivingCutTableRow = {
   fabric_meters: number;
 };
 
-const teamPrintCell = "py-4 pr-2 align-top print:py-1.5 print:pr-1.5 print:text-[10px]";
-const teamPrintHead = "py-2 pr-2 print:pr-1.5 print:text-[9px]";
+const teamPrintCell = "py-4 pr-2 align-top print:py-1 print:pr-1 print:text-[9px]";
+const teamPrintHead = "py-2 pr-2 print:py-1 print:pr-1 print:text-[8px]";
 
 function formatWidth(line: Pick<ReceivingCutTableRow, "width_cm" | "width_inches">): string {
   if (line.width_cm != null) return `${line.width_cm} cm`;
@@ -73,7 +73,7 @@ export function CompositionCell({
 }) {
   const { line1, line2 } = compositionDisplayLines(composition);
   return (
-    <td className={cn(teamPrintCell, "max-w-[34mm] whitespace-normal text-slate-600", className)}>
+    <td className={cn(teamPrintCell, "whitespace-normal text-slate-600", className)}>
       <span className="block leading-snug">{line1}</span>
       {line2 ? <span className="mt-0.5 block leading-snug text-slate-500">{line2}</span> : null}
     </td>
@@ -120,8 +120,23 @@ export function SalesOrderReceivingCutTable({
 }: SalesOrderReceivingCutTableProps) {
   if (rows.length === 0) return null;
 
+  const hasTrailing = Boolean(renderTrailingCell && trailingHead);
+
   return (
-    <table className="print-receiving-table w-full text-sm">
+    <table className="print-receiving-table w-full table-fixed text-sm">
+      <colgroup>
+        <col className="w-[4%]" />
+        <col className="w-[7%]" />
+        <col className="w-[14%]" />
+        <col className="w-[10%]" />
+        <col className="w-[12%]" />
+        <col className="w-[18%]" />
+        <col className="w-[8%]" />
+        <col className="w-[8%]" />
+        <col className="w-[11%]" />
+        <col className="w-[8%]" />
+        {hasTrailing ? <col className="w-[8%]" /> : null}
+      </colgroup>
       <thead>
         <tr className="border-b border-slate-300 text-left text-xs uppercase tracking-wide text-slate-500">
           <th className={teamPrintHead}>Art.</th>
@@ -134,7 +149,7 @@ export function SalesOrderReceivingCutTable({
           <th className={teamPrintHead}>Width</th>
           <th className={teamPrintHead}>Garment</th>
           <th className={teamPrintHead}>Meters</th>
-          {renderTrailingCell && trailingHead ? <th className={teamPrintHead}>{trailingHead}</th> : null}
+          {hasTrailing ? <th className={teamPrintHead}>{trailingHead}</th> : null}
         </tr>
       </thead>
       <tbody>
@@ -152,17 +167,17 @@ export function SalesOrderReceivingCutTable({
                 <FabricCutQrImage
                   fabricCutCode={row.fabric_cut_code}
                   size={96}
-                  className="h-14 w-14 print:h-11 print:w-11"
+                  className="h-14 w-14 print:h-9 print:w-9"
                 />
               </td>
-              <td className={cell("font-mono font-medium text-indigo-800")}>{row.fabric_cut_code}</td>
+              <td className={cell("break-all font-mono font-medium text-indigo-800")}>{row.fabric_cut_code}</td>
               <td className={cell("font-mono")}>
                 <span className="inline-flex items-center gap-1.5">
                   <FabricSwatchPreview supplierId={row.supplier_id} fabricNumber={row.fabric_number} />
                   {row.fabric_number}
                 </span>
               </td>
-              <td className={cell("max-w-[24mm] whitespace-normal text-slate-700")}>{fabricBrandLabel(row)}</td>
+              <td className={cell("whitespace-normal text-slate-700")}>{fabricBrandLabel(row)}</td>
               <CompositionCell composition={row.composition} className={highlight} />
               <td className={cell("text-slate-600")}>{fabricWeightLabel(row)}</td>
               <td className={cell("text-slate-600")}>{formatWidth(row)}</td>

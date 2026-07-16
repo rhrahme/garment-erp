@@ -19,12 +19,12 @@ export function DashboardShell({
   const taskOperatorOnly = session.isTaskOperator;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-slate-50 print:h-auto print:overflow-visible">
       {mobileNavOpen ? (
         <button
           type="button"
           aria-label="Close navigation menu"
-          className="fixed inset-0 z-40 bg-slate-900/50 md:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/50 md:hidden print:hidden"
           onClick={() => setMobileNavOpen(false)}
         />
       ) : null}
@@ -37,10 +37,13 @@ export function DashboardShell({
         onNavigate={() => setMobileNavOpen(false)}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:overflow-visible">
         <Header session={session} onMenuClick={() => setMobileNavOpen((open) => !open)} />
         {headerExtra}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8">{children}</main>
+        {/* overflow-x-hidden makes Chrome tile wide print fragments onto extra pages */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 print:overflow-visible print:p-0">
+          {children}
+        </main>
       </div>
     </div>
   );
