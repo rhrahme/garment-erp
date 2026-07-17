@@ -30,6 +30,7 @@ import {
   formatFloorProgressSummary,
 } from "@/lib/production/fabric-receiving-floor-progress";
 import { scanStageStyles } from "@/lib/production/scan-stage-highlight";
+import { matchesNormalizedSearch } from "@/lib/search/normalize";
 import { currentPrepStageElapsedLabel } from "@/lib/production/prep-durations";
 import { SALES_ORDER_ARCHIVE_AGE_MONTHS } from "@/lib/sales-orders/archive";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
@@ -120,17 +121,20 @@ function nextActionForLine(line: FabricReceivingLineRow): string {
 }
 
 function matchesSearch(entry: FabricReceivingCutEntry, query: string): boolean {
-  if (!query) return true;
-  const q = query.trim().toUpperCase();
+  if (!query.trim()) return true;
   const { order, line } = entry;
-  return (
-    line.fabric_cut_code.toUpperCase().includes(q) ||
-    line.fabric_number.toUpperCase().includes(q) ||
-    line.garment_type.toUpperCase().includes(q) ||
-    order.so_number.toUpperCase().includes(q) ||
-    order.client_name.toUpperCase().includes(q) ||
-    order.client_code.toUpperCase().includes(q) ||
-    formatArticle(line.article_number).toUpperCase().includes(q)
+  return matchesNormalizedSearch(
+    [
+      line.fabric_cut_code,
+      line.fabric_number,
+      line.garment_type,
+      order.so_number,
+      order.client_name,
+      order.client_code,
+      formatArticle(line.article_number),
+      ...line.stickers.flatMap((sticker) => [sticker.sticker_code, sticker.production_code]),
+    ],
+    query
   );
 }
 
