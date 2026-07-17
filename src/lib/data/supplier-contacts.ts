@@ -7,6 +7,7 @@ import {
   validateSupplierContacts,
   type RequiredFabricSupplierId,
 } from "@/lib/data/required-fabric-suppliers";
+import { CUSTOM_SUPPLIER_ID, CUSTOM_SUPPLIER_NAME } from "@/lib/types/custom-fabrics";
 import type { Supplier } from "@/lib/types/fabric-sourcing";
 import type { SupplierContactRow, SupplierContactsFile } from "@/lib/types/supplier-contacts";
 
@@ -27,13 +28,47 @@ const EMPTY_CONTACTS: SupplierContactsFile = {
   suppliers: [],
 };
 
+/**
+ * The Custom / One-off brand as a supplier-contacts row. Kept in sync with the
+ * bundled contacts.json entry so JSON mode and Supabase mode agree.
+ */
+export const CUSTOM_SUPPLIER_CONTACT: SupplierContactRow = {
+  id: CUSTOM_SUPPLIER_ID,
+  code: "CUSTOM",
+  name: CUSTOM_SUPPLIER_NAME,
+  country: null,
+  contact_person: null,
+  emails: [],
+  email: null,
+  lead_time_days: 0,
+  has_price_list: true,
+  currency: "EUR",
+  notes:
+    "One-off fabrics (CF-YYYY-####) — mill leftovers, shop buys, client swatches. Created in Fabric Specification.",
+};
+
+/**
+ * Guarantee the Custom / One-off supplier is present. Production reads suppliers
+ * from the Supabase `supplier_contacts` document, which predates the custom
+ * feature and may omit it — merge it in so the brand list, the data-integrity
+ * check, and order-save validation always treat "custom" as a real supplier.
+ */
+export function ensureCustomSupplierContactPresent(
+  contacts: SupplierContactsFile
+): SupplierContactsFile {
+  if (contacts.suppliers.some((row) => row.id === CUSTOM_SUPPLIER_ID)) {
+    return contacts;
+  }
+  return { ...contacts, suppliers: [...contacts.suppliers, CUSTOM_SUPPLIER_CONTACT] };
+}
+
 function normalizeSupplierContacts(data: SupplierContactsFile): SupplierContactsFile {
-  return {
+  return ensureCustomSupplierContactPresent({
     ...data,
     factory_orders_email: data.factory_orders_email ?? null,
     inbox_scan_email: data.inbox_scan_email ?? null,
     suppliers: data.suppliers.map(normalizeContactRow),
-  };
+  });
 }
 
 /** Catalog import wins over stale Supabase has_price_list:false flags. */
