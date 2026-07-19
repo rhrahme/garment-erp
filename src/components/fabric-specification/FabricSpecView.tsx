@@ -28,9 +28,15 @@ interface FabricSpecViewProps {
   suppliers: Supplier[];
   items: SupplierFabric[];
   canViewPrices?: boolean;
+  canViewStock?: boolean;
 }
 
-export function FabricSpecView({ suppliers, items: initialItems, canViewPrices = true }: FabricSpecViewProps) {
+export function FabricSpecView({
+  suppliers,
+  items: initialItems,
+  canViewPrices = true,
+  canViewStock = true,
+}: FabricSpecViewProps) {
   const [items, setItems] = useState(initialItems);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [nextFabricNumber, setNextFabricNumber] = useState("CF-2026-0001");
@@ -137,8 +143,10 @@ export function FabricSpecView({ suppliers, items: initialItems, canViewPrices =
   }, [filtered, brandId]);
 
   const showStockColumn = useMemo(
-    () => filtered.some((fabric) => fabric.stock_status && fabric.stock_status !== "in_stock"),
-    [filtered]
+    () =>
+      canViewStock &&
+      filtered.some((fabric) => fabric.stock_status && fabric.stock_status !== "in_stock"),
+    [canViewStock, filtered]
   );
 
   const drapersFabricNumbers = useMemo(
@@ -377,6 +385,7 @@ export function FabricSpecView({ suppliers, items: initialItems, canViewPrices =
                       : undefined
                 }
                 canViewPrices={canViewPrices}
+                canViewStock={canViewStock}
               />
             ),
             fabricNo: <span className="font-mono font-medium">{f.fabric_number}</span>,
@@ -405,18 +414,22 @@ export function FabricSpecView({ suppliers, items: initialItems, canViewPrices =
                   ),
               }
             : {}),
-          stock: (() => {
-            const label = formatFabricStockLabel(f);
-            if (!label) return <span className="text-emerald-700">In stock</span>;
-            const tone = fabricStockTone(f.stock_status);
-            const className =
-              tone === "danger"
-                ? "font-medium text-red-700"
-                : tone === "warn"
-                  ? "font-medium text-amber-800"
-                  : "text-slate-600";
-            return <span className={className}>{label}</span>;
-          })(),
+          ...(canViewStock
+            ? {
+                stock: (() => {
+                  const label = formatFabricStockLabel(f);
+                  if (!label) return <span className="text-emerald-700">In stock</span>;
+                  const tone = fabricStockTone(f.stock_status);
+                  const className =
+                    tone === "danger"
+                      ? "font-medium text-red-700"
+                      : tone === "warn"
+                        ? "font-medium text-amber-800"
+                        : "text-slate-600";
+                  return <span className={className}>{label}</span>;
+                })(),
+              }
+            : {}),
           }))}
           emptyMessage={
             isCustomTab

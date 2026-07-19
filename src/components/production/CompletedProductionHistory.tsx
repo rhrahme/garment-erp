@@ -346,7 +346,7 @@ export function CompletedProductionHistory({ orders, loading, totalCount }: Comp
                             <p className="text-xs text-slate-500">
                               {readyMade ? "Ready-made" : "Client"}
                               <span className="mx-1.5 text-slate-300">·</span>
-                              {accountLabel}
+                              <span className="font-medium text-slate-700">{accountLabel || "—"}</span>
                               <span className="mx-1.5 text-slate-300">·</span>
                               {cluster.orders.length} piece{cluster.orders.length === 1 ? "" : "s"}
                             </p>

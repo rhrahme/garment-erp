@@ -49,6 +49,7 @@ export type StageScanResult = {
   station: ScanStation;
   message: string;
   client_code: string;
+  client_name: string;
   production_code: string;
   /** One code per fabric cut — what floor staff search for on the work list. */
   fabric_cut_code: string;
@@ -106,6 +107,7 @@ export async function scanAtStation(scanInput: string, station: ScanStation): Pr
   const base = {
     station,
     client_code: order.client_code,
+    client_name: order.client_name?.trim() || "—",
     production_code,
     fabric_cut_code: supplierFabricProductionCode(sticker.code, order.client_code),
     article_number: fabricLineArticleNumber(lineIndex >= 0 ? lineIndex : 0),

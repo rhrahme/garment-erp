@@ -137,6 +137,7 @@ export function SalesOrderForm({
   const [clients, setClients] = useState<ClientProfile[]>([]);
   const [fabricBrands, setFabricBrands] = useState<FabricBrand[]>([]);
   const [canViewFabricPrices, setCanViewFabricPrices] = useState(false);
+  const [canViewFabricStock, setCanViewFabricStock] = useState(true);
   const { brandId: productionBrandId, setBrandId: setProductionBrandId, hydrated: brandFilterHydrated } =
     useFactoryBrandFilter();
   const initialClientDraftRef = useRef(createClientDraft());
@@ -717,8 +718,12 @@ export function SalesOrderForm({
       try {
         const res = await fetch("/api/auth/session");
         if (!res.ok) return;
-        const data = (await res.json()) as { can_view_fabric_prices?: boolean };
+        const data = (await res.json()) as {
+          can_view_fabric_prices?: boolean;
+          can_view_fabric_stock?: boolean;
+        };
         setCanViewFabricPrices(Boolean(data.can_view_fabric_prices));
+        setCanViewFabricStock(data.can_view_fabric_stock !== false);
       } catch {
         /* ignore */
       }
@@ -1585,6 +1590,7 @@ export function SalesOrderForm({
                       onChange={setFabricPickerValue}
                       onSelect={selectFabric}
                       canViewFabricPrices={canViewFabricPrices}
+                      canViewStock={canViewFabricStock}
                       allowManualEntry={fabricBrandAllowsManualEntry(
                         selectedFabricBrand.has_price_list,
                         selectedFabricBrandId
@@ -1613,15 +1619,17 @@ export function SalesOrderForm({
                           <FabricNumberWithSwatch
                             supplierId={pendingFabric.supplier_id}
                             fabricNumber={pendingFabric.fabric_number}
-                            highlight={isFabricUnavailable(pendingFabric.stock_status)}
+                            highlight={
+                              canViewFabricStock && isFabricUnavailable(pendingFabric.stock_status)
+                            }
                           >
-                            <FabricStockBadge fabric={pendingFabric} />
+                            {canViewFabricStock ? <FabricStockBadge fabric={pendingFabric} /> : null}
                           </FabricNumberWithSwatch>
                         </p>
                         <p className="mt-0.5 text-xs text-slate-500">{selectedFabricBrand.name}</p>
                       </div>
 
-                      {isFabricUnavailable(pendingFabric.stock_status) && (
+                      {canViewFabricStock && isFabricUnavailable(pendingFabric.stock_status) && (
                         <div
                           className={`rounded-lg border px-4 py-3 text-sm ${
                             pendingFabric.stock_status === "permanently_unavailable"
@@ -1794,6 +1802,7 @@ export function SalesOrderForm({
                   lines={group.lines}
                   articleByLineId={articleByLineId}
                   canViewFabricPrices={canViewFabricPrices}
+                  canViewFabricStock={canViewFabricStock}
                   editingLineId={editingLineId}
                   lineEditForm={lineEditForm}
                   savingLineEdit={savingLineEdit}
@@ -1946,10 +1955,14 @@ export function SalesOrderForm({
                           <FabricNumberWithSwatch
                             supplierId={line.supplier_id}
                             fabricNumber={line.fabric_number}
-                            highlight={lineNeedsAvailabilityAttention(line)}
+                            highlight={
+                              canViewFabricStock && lineNeedsAvailabilityAttention(line)
+                            }
                           >
-                            <FabricStockBadge fabric={line} />
-                            <FabricReplacementBadge needsReplacement={line.needs_replacement} />
+                            {canViewFabricStock ? <FabricStockBadge fabric={line} /> : null}
+                            {canViewFabricStock ? (
+                              <FabricReplacementBadge needsReplacement={line.needs_replacement} />
+                            ) : null}
                             {line.manual ? (
                               <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-sans font-medium uppercase tracking-wide text-amber-800">
                                 Manual
@@ -1980,7 +1993,7 @@ export function SalesOrderForm({
                         </td>
                         <td className="px-3 py-2">
                           <div className="flex flex-col items-end gap-1">
-                            {isFabricUnavailable(line.stock_status) && (
+                            {canViewFabricStock && isFabricUnavailable(line.stock_status) && (
                               <Button
                                 variant="secondary"
                                 size="sm"

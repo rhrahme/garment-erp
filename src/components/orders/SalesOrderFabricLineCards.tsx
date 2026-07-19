@@ -43,6 +43,7 @@ export function SalesOrderFabricLineCards({
   lines,
   articleByLineId,
   canViewFabricPrices,
+  canViewFabricStock = true,
   editingLineId,
   lineEditForm,
   savingLineEdit,
@@ -58,6 +59,7 @@ export function SalesOrderFabricLineCards({
   lines: SalesOrderLineDraft[];
   articleByLineId: Map<string, number>;
   canViewFabricPrices: boolean;
+  canViewFabricStock?: boolean;
   editingLineId: string | null;
   lineEditForm: LineEditForm | null;
   savingLineEdit: boolean;
@@ -189,7 +191,7 @@ export function SalesOrderFabricLineCards({
           <div
             key={line.lineId}
             className={`rounded-lg border p-4 ${
-              lineNeedsAvailabilityAttention(line)
+              canViewFabricStock && lineNeedsAvailabilityAttention(line)
                 ? "border-amber-200 bg-amber-50/40"
                 : "border-slate-200 bg-white"
             }`}
@@ -203,11 +205,13 @@ export function SalesOrderFabricLineCards({
                   <FabricNumberWithSwatch
                     supplierId={line.supplier_id}
                     fabricNumber={line.fabric_number}
-                    highlight={lineNeedsAvailabilityAttention(line)}
+                    highlight={canViewFabricStock && lineNeedsAvailabilityAttention(line)}
                     numberClassName="text-base"
                   >
-                    <FabricStockBadge fabric={line} />
-                    <FabricReplacementBadge needsReplacement={line.needs_replacement} />
+                    {canViewFabricStock ? <FabricStockBadge fabric={line} /> : null}
+                    {canViewFabricStock ? (
+                      <FabricReplacementBadge needsReplacement={line.needs_replacement} />
+                    ) : null}
                   </FabricNumberWithSwatch>
                 </p>
                 {line.manual ? (
@@ -267,7 +271,7 @@ export function SalesOrderFabricLineCards({
               />
             </label>
 
-            {isFabricUnavailable(line.stock_status) ? (
+            {canViewFabricStock && isFabricUnavailable(line.stock_status) ? (
               <Button
                 variant="secondary"
                 size="sm"

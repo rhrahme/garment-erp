@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FabricSpecView } from "@/components/fabric-specification/FabricSpecView";
-import { canViewPrices, redactSupplierFabricPrices } from "@/lib/auth/fabric-price-access";
+import { canViewFabricStock, canViewPrices, redactSupplierFabricPrices } from "@/lib/auth/fabric-price-access";
 import { getSessionContext } from "@/lib/auth/session";
 import { getBrandsByFabricSourcing } from "@/lib/data/factory-brands";
 import { EUR_TO_SAR, USD_TO_SAR } from "@/lib/currency/config";
@@ -11,6 +11,7 @@ export default async function FabricSpecificationPage() {
   const session = await getSessionContext();
   const [suppliers, rawItems] = await Promise.all([getFabricSuppliers(), getPriceListItems()]);
   const showPrices = canViewPrices(session);
+  const showStock = canViewFabricStock(session);
   const items = showPrices ? rawItems : redactSupplierFabricPrices(rawItems);
 
   const brandsWithData = suppliers.filter((s) =>
@@ -50,15 +51,25 @@ export default async function FabricSpecificationPage() {
             </>
           ) : (
             ". Specs only — prices are not shown on your account."
-          )}{" "}
-          <Link href="/brands" className="font-medium underline">
-            Gliani
-          </Link>{" "}
-          uses warehouse stock instead — see Inventory.
+          )}
+          {showStock ? (
+            <>
+              {" "}
+              <Link href="/brands" className="font-medium underline">
+                Gliani
+              </Link>{" "}
+              uses warehouse stock instead — see Inventory.
+            </>
+          ) : null}
         </p>
       </div>
 
-      <FabricSpecView suppliers={suppliers} items={items} canViewPrices={showPrices} />
+      <FabricSpecView
+        suppliers={suppliers}
+        items={items}
+        canViewPrices={showPrices}
+        canViewStock={showStock}
+      />
     </div>
   );
 }

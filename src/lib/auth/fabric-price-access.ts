@@ -60,6 +60,15 @@ export function canViewPrices(session: SessionContext): boolean {
   );
 }
 
+/**
+ * Sales operators should not see supplier stock / availability badges
+ * (catalog Stock column, picker labels, order-line badges) for now.
+ * Admin / QC / task keep stock visibility.
+ */
+export function canViewFabricStock(session: Pick<SessionContext, "isSalesOperator">): boolean {
+  return !session.isSalesOperator;
+}
+
 /** Admins who may use the reveal toggle (prices stay hidden until unlocked). */
 export function canRevealFabricPrices(session: SessionContext): boolean {
   return canViewPrices(session);

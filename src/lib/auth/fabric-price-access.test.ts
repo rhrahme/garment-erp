@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  canViewFabricStock,
   canViewPrices,
   redactFabricLinePrices,
   redactPriceFields,
@@ -151,6 +152,15 @@ for (const role of ["task_operator", "client_manager", "sales_operator"] as cons
     });
   });
 }
+
+describe("fabric stock visibility", () => {
+  it("hides stock from sales operators only", () => {
+    assert.equal(canViewFabricStock(session("sales_operator")), false);
+    assert.equal(canViewFabricStock(session("admin")), true);
+    assert.equal(canViewFabricStock(session("client_manager")), true);
+    assert.equal(canViewFabricStock(session("task_operator")), true);
+  });
+});
 
 describe("admin price access", () => {
   it("passes the role gate and retains payload prices", () => {

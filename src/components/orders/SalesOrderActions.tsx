@@ -113,6 +113,7 @@ export function SalesOrderActions({
   const showFabricInput = (showFabricOrdering || showSalesAdmin) && !isTaskOperator;
   const showSupplierEmailActions = !isSalesOperator && (showFabricOrdering || showSalesAdmin);
   const showSupplierEmailColumn = !isSalesOperator && showFabricOrdering && fabricPos.length > 0;
+  const showFabricStock = !isSalesOperator;
   const router = useRouter();
   const [liveOrder, setLiveOrder] = useState(order);
   const [creating, setCreating] = useState(false);
@@ -681,9 +682,10 @@ export function SalesOrderActions({
                       key={line.id}
                       id={salesOrderFabricLineAnchor(line.id)}
                       className={`scroll-mt-24 border-b border-slate-100 last:border-0 align-top ${
-                        line.needs_replacement || line.stock_status === "permanently_unavailable"
+                        showFabricStock &&
+                        (line.needs_replacement || line.stock_status === "permanently_unavailable")
                           ? "bg-amber-50/40"
-                          : line.stock_status === "temp_unavailable"
+                          : showFabricStock && line.stock_status === "temp_unavailable"
                             ? "bg-amber-50/20"
                             : "bg-white"
                       }`}
@@ -702,17 +704,22 @@ export function SalesOrderActions({
                         <FabricNumberWithSwatch
                           supplierId={line.supplier_id}
                           fabricNumber={line.fabric_number}
-                          highlight={isFabricUnavailable(line.stock_status) || line.needs_replacement}
+                          highlight={
+                            showFabricStock &&
+                            (isFabricUnavailable(line.stock_status) || line.needs_replacement)
+                          }
                         >
-                          <FabricStockBadge fabric={line} />
-                          <FabricReplacementBadge needsReplacement={line.needs_replacement} />
+                          {showFabricStock ? <FabricStockBadge fabric={line} /> : null}
+                          {showFabricStock ? (
+                            <FabricReplacementBadge needsReplacement={line.needs_replacement} />
+                          ) : null}
                         </FabricNumberWithSwatch>
-                        {line.needs_replacement && (
+                        {showFabricStock && line.needs_replacement && (
                           <p className="mt-1 text-xs text-violet-800">
                             Replacement still needed — update fabric before supplier emails.
                           </p>
                         )}
-                        {!line.needs_replacement && formatFabricStockLabel(line) && (
+                        {showFabricStock && !line.needs_replacement && formatFabricStockLabel(line) && (
                           <p className="mt-1 text-xs text-amber-800">{formatFabricStockLabel(line)}</p>
                         )}
                         {line.added_at && (
@@ -852,9 +859,10 @@ export function SalesOrderActions({
                       key={line.id}
                       id={salesOrderFabricLineAnchor(line.id)}
                       className={`scroll-mt-24 border-b border-slate-100 last:border-0 align-top ${
-                        line.needs_replacement || line.stock_status === "permanently_unavailable"
+                        showFabricStock &&
+                        (line.needs_replacement || line.stock_status === "permanently_unavailable")
                           ? "bg-amber-50/40"
-                          : line.stock_status === "temp_unavailable"
+                          : showFabricStock && line.stock_status === "temp_unavailable"
                             ? "bg-amber-50/20"
                             : "bg-white"
                       }`}
@@ -866,17 +874,22 @@ export function SalesOrderActions({
                         <FabricNumberWithSwatch
                           supplierId={line.supplier_id}
                           fabricNumber={line.fabric_number}
-                          highlight={isFabricUnavailable(line.stock_status) || line.needs_replacement}
+                          highlight={
+                            showFabricStock &&
+                            (isFabricUnavailable(line.stock_status) || line.needs_replacement)
+                          }
                         >
-                          <FabricStockBadge fabric={line} />
-                          <FabricReplacementBadge needsReplacement={line.needs_replacement} />
+                          {showFabricStock ? <FabricStockBadge fabric={line} /> : null}
+                          {showFabricStock ? (
+                            <FabricReplacementBadge needsReplacement={line.needs_replacement} />
+                          ) : null}
                         </FabricNumberWithSwatch>
-                        {line.needs_replacement && (
+                        {showFabricStock && line.needs_replacement && (
                           <p className="mt-1 text-xs text-violet-800">
                             Replacement still needed — update fabric before supplier emails.
                           </p>
                         )}
-                        {!line.needs_replacement && formatFabricStockLabel(line) && (
+                        {showFabricStock && !line.needs_replacement && formatFabricStockLabel(line) && (
                           <p className="mt-1 text-xs text-amber-800">{formatFabricStockLabel(line)}</p>
                         )}
                         {line.added_at && (

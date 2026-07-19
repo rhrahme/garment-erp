@@ -41,7 +41,7 @@ export async function GET() {
     return {
       sales_order_id: order.id,
       so_number: order.so_number,
-      client_name: order.client_name,
+      client_name: order.client_name?.trim() || "—",
       milestone,
       needs_attention:
         isSalesAttentionMilestone(milestone) &&

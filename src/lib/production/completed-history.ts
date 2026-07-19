@@ -41,7 +41,8 @@ export function readyMadeBrandLabel(
 
 /** Bespoke client name or ready-made retail brand — never treat RM as a person client. */
 export function completedAccountLabel(order: ProductionWorkOrder): string {
-  return readyMadeBrandLabel(order) ?? order.client_name;
+  const label = readyMadeBrandLabel(order) ?? order.client_name;
+  return label?.trim() || "—";
 }
 
 export function factoryBrandLabelForWorkOrder(
@@ -224,9 +225,10 @@ function clientSections(orders: ProductionWorkOrder[]): CompletedHistorySection[
     .map(([client_name, clientOrders]) => {
       const sorted = sortOrdersNewestFirst(clientOrders);
       const latest = sorted[0]?.completed_at?.slice(0, 10);
+      const displayName = client_name.trim() || "—";
       return {
-        key: `client-${client_name}`,
-        label: client_name,
+        key: `client-${client_name || "unassigned"}`,
+        label: displayName,
         meta: latest
           ? `${sectionMeta(clientOrders)} · latest ${formatDate(latest)}`
           : sectionMeta(clientOrders),
@@ -293,10 +295,10 @@ function orderSections(orders: ProductionWorkOrder[]): CompletedHistorySection[]
 
       return {
         key: `order-${sales_order_id}`,
-        label: so_number,
+        label: `${so_number} · ${account}`,
         meta: latest
-          ? `${accountKind} · ${account} · ${pieceLabel} · completed ${formatDate(latest)}`
-          : `${accountKind} · ${account} · ${pieceLabel}`,
+          ? `${accountKind} · ${pieceLabel} · completed ${formatDate(latest)}`
+          : `${accountKind} · ${pieceLabel}`,
         clusters: [
           {
             sales_order_id,

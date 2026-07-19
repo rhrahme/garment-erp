@@ -31,6 +31,7 @@ export function FabricPicker({
   onChange,
   onSelect,
   canViewFabricPrices = true,
+  canViewStock = true,
   allowManualEntry = true,
   label = "Fabric",
   inputClassName = "w-full min-h-[44px] rounded-lg border border-slate-300 bg-white py-2.5 pl-3 pr-10 text-base sm:text-sm",
@@ -41,6 +42,7 @@ export function FabricPicker({
   onChange: (value: string) => void;
   onSelect: (item: FabricSearchItem) => void;
   canViewFabricPrices?: boolean;
+  canViewStock?: boolean;
   /** When false, unknown fabric numbers cannot be added without a catalog match. */
   allowManualEntry?: boolean;
   label?: string;
@@ -251,7 +253,10 @@ export function FabricPicker({
               </p>
               <ul className="max-h-64 overflow-y-auto">
                 {fabrics.map((item) => {
-                  const soldOut = item.stock_status === "permanently_unavailable";
+                  const soldOut = canViewStock && item.stock_status === "permanently_unavailable";
+                  const unavailable =
+                    canViewStock &&
+                    (soldOut || item.stock_status === "temp_unavailable");
                   return (
                     <li key={item.id}>
                       <button
@@ -268,7 +273,7 @@ export function FabricPicker({
                         <FabricSwatchPreview
                           supplierId={item.supplier_id}
                           fabricNumber={item.fabric_number}
-                          highlight={soldOut || item.stock_status === "temp_unavailable"}
+                          highlight={unavailable}
                           className="mt-0.5"
                         />
                         <span className="min-w-0 flex-1">
@@ -288,7 +293,7 @@ export function FabricPicker({
                                 item.weight_gsm != null ? `${item.weight_gsm} gsm` : null,
                                 formatWidth(item) !== "—" ? formatWidth(item) : null,
                                 canViewFabricPrices && item.unit_price != null ? formatLinePrice(item) : null,
-                                formatFabricStockLabel(item),
+                                canViewStock ? formatFabricStockLabel(item) : null,
                               ]
                                 .filter(Boolean)
                                 .join(" · ")}

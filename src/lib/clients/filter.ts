@@ -1,6 +1,12 @@
 import { formatClientDisplayName, formatReferredByName } from "@/lib/clients/names";
 import type { ClientProfile } from "@/lib/types/clients";
 
+/**
+ * Sentinel brand-filter value for clients with empty `brand_ids`.
+ * Not a real factory brand id — used by FactoryBrandTabs / filterClientsByBrand.
+ */
+export const UNASSIGNED_FACTORY_BRAND_ID = "__unassigned__";
+
 export type ClientSortBy =
   | "name-asc"
   | "name-desc"
@@ -51,6 +57,9 @@ export function filterClientsByBrand(
   brandId: string | null | undefined
 ): ClientProfile[] {
   if (!brandId) return clients;
+  if (brandId === UNASSIGNED_FACTORY_BRAND_ID) {
+    return clients.filter((client) => client.brand_ids.length === 0);
+  }
   return clients.filter((client) => client.brand_ids.includes(brandId));
 }
 

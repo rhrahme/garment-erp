@@ -18,10 +18,10 @@ except ImportError:
 ROOT = Path(__file__).resolve().parents[1]
 CANCLINI_JSON = ROOT / "src" / "data" / "suppliers" / "canclini-linen-stock.json"
 LINEN_XLSX = Path.home() / "Desktop" / "Fabrics" / "Linen Stock HAGAN.xlsx"
-# Source files live under ~/Desktop/Fabrics/Luthai/ (legacy folder name on disk)
+# Source files live under ~/Desktop/Fabrics/Luth/
 COTTON_FILES = [
-    Path.home() / "Desktop" / "Fabrics" / "Luthai" / "Luth PL& Inv.xlsx",
-    Path.home() / "Desktop" / "Fabrics" / "Luthai" / "Luth PL& iNV 2.xlsx",
+    Path.home() / "Desktop" / "Fabrics" / "Luth" / "Luth PL& Inv.xlsx",
+    Path.home() / "Desktop" / "Fabrics" / "Luth" / "Luth PL& iNV 2.xlsx",
 ]
 
 
@@ -246,7 +246,7 @@ def is_valid_cotton_key(key: str | None, pattern: str | None = None) -> bool:
         for token in ("METERS", "BALES", "VOLUME", "WEIGHT", "THE END", "CBM", "TOTAL")
     ):
         return False
-    if any(char in text for char in ("品", "规", "格")):
+    if re.search(r"[\u3400-\u9fff]", text):
         return False
     if re.match(r"^C?\d{5,}(?:-\d+)?(?:BP|-[A-Z]{1,4})?$", text, re.IGNORECASE):
         return True

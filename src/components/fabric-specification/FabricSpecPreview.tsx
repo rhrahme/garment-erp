@@ -15,6 +15,7 @@ interface FabricSpecPreviewProps {
   swatchSrc?: string;
   zoomSrc?: string;
   canViewPrices?: boolean;
+  canViewStock?: boolean;
 }
 
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
@@ -30,10 +31,12 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 function FabricSpecDetailModal({
   fabric,
   canViewPrices,
+  canViewStock,
   onClose,
 }: {
   fabric: SupplierFabric;
   canViewPrices: boolean;
+  canViewStock: boolean;
   onClose: () => void;
 }) {
   const brand = formatFabricSupplierName(
@@ -44,7 +47,7 @@ function FabricSpecDetailModal({
   const pattern = formatFabricPatternLabel(fabric);
   const text = formatFabricTextLabel(fabric);
   const finish = fabric.finish?.trim() || text;
-  const stockLabel = formatFabricStockLabel(fabric);
+  const stockLabel = canViewStock ? formatFabricStockLabel(fabric) : null;
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -145,10 +148,12 @@ function FabricSpecDetailModal({
 function FabricSpecPreviewTrigger({
   fabric,
   canViewPrices,
+  canViewStock,
   variant,
 }: {
   fabric: SupplierFabric;
   canViewPrices: boolean;
+  canViewStock: boolean;
   variant: "eye" | "linen";
 }) {
   const [open, setOpen] = useState(false);
@@ -174,14 +179,25 @@ function FabricSpecPreviewTrigger({
       </button>
 
       {open ? (
-        <FabricSpecDetailModal fabric={fabric} canViewPrices={canViewPrices} onClose={close} />
+        <FabricSpecDetailModal
+          fabric={fabric}
+          canViewPrices={canViewPrices}
+          canViewStock={canViewStock}
+          onClose={close}
+        />
       ) : null}
     </>
   );
 }
 
 /** Preview cell — Drapers swatch image when available, otherwise click for full spec modal. */
-export function FabricSpecPreview({ fabric, swatchSrc, zoomSrc, canViewPrices = true }: FabricSpecPreviewProps) {
+export function FabricSpecPreview({
+  fabric,
+  swatchSrc,
+  zoomSrc,
+  canViewPrices = true,
+  canViewStock = true,
+}: FabricSpecPreviewProps) {
   if (swatchSrc) {
     return (
       <DrapersFabricSwatch
@@ -195,6 +211,11 @@ export function FabricSpecPreview({ fabric, swatchSrc, zoomSrc, canViewPrices = 
   const variant = isSolbiatiFabric(fabric.supplier_id, fabric.fabric_number) ? "linen" : "eye";
 
   return (
-    <FabricSpecPreviewTrigger fabric={fabric} canViewPrices={canViewPrices} variant={variant} />
+    <FabricSpecPreviewTrigger
+      fabric={fabric}
+      canViewPrices={canViewPrices}
+      canViewStock={canViewStock}
+      variant={variant}
+    />
   );
 }

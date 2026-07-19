@@ -178,11 +178,12 @@ export function ProductionFloorWorkspace() {
                     >
                       <div className="md:flex md:items-start md:justify-between md:gap-4">
                         <div className="min-w-0 flex-1">
-                          <p className="font-mono text-sm font-semibold text-indigo-800">{order.sticker_code}</p>
-                          <p className="mt-1 text-sm font-medium text-slate-900">
-                            {isReadyMadeWorkOrder(order) ? "Ready-made" : "Client"}
-                            <span className="mx-1.5 text-slate-300">·</span>
+                          <p className="text-base font-semibold text-slate-900">
                             {completedAccountLabel(order)}
+                          </p>
+                          <p className="mt-0.5 font-mono text-sm font-semibold text-indigo-800">{order.sticker_code}</p>
+                          <p className="mt-1 text-sm text-slate-700">
+                            {isReadyMadeWorkOrder(order) ? "Ready-made" : "Client"}
                             <span className="mx-1.5 text-slate-300">·</span>
                             {formatLabelGarmentDescription(order.garment_type, order.piece_name)}
                           </p>

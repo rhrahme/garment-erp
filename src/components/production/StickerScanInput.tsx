@@ -19,6 +19,7 @@ export type StageScanResponse = {
   station: ScanStation;
   message: string;
   client_code: string;
+  client_name?: string;
   production_code: string;
   fabric_cut_code: string;
   article_number: number;
@@ -419,6 +420,9 @@ export function StickerScanInput({
               {headline && <p className="text-lg font-bold uppercase tracking-wide">{headline}</p>}
               <p className="mt-1 font-medium">{result.message}</p>
               <p className="mt-2 text-base font-semibold text-slate-900">
+                {result.client_name?.trim() || "—"}
+              </p>
+              <p className="mt-1 text-base font-semibold text-slate-900">
                 Art. {formatArticle(result.article_number)}{" "}
                 <code className="font-mono text-indigo-900">{result.fabric_cut_code}</code>
               </p>

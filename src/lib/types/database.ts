@@ -105,6 +105,8 @@ export interface WorkOrder {
   quantity_completed: number;
   start_date: string | null;
   due_date: string | null;
+  /** Bespoke client or ready-made brand label when sourced from production work orders. */
+  client_name?: string | null;
   style?: Style;
 }
 

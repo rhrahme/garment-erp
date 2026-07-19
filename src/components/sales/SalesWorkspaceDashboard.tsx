@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { Button } from "@/components/ui/Button";
+import { getFactoryBrands } from "@/lib/data/factory-brands";
+import { filterSalesClientsByBrand } from "@/lib/sales/access";
 import type { ClientProfile } from "@/lib/types/clients";
 import type { CustomerInvoice } from "@/lib/types/customer-invoices";
 import type { SalesOrder } from "@/lib/types/sales-orders";
@@ -12,6 +15,8 @@ import type {
   SalesFittingStatus,
   SalesMilestone,
 } from "@/lib/types/sales-workspace";
+
+const factoryBrands = getFactoryBrands();
 
 type Tab = "clients" | "fabrics" | "orders" | "fittings" | "production";
 type MilestoneRow = {
@@ -73,6 +78,8 @@ export function SalesWorkspaceDashboard() {
   const [fittingOrderId, setFittingOrderId] = useState("");
   const [fittingDate, setFittingDate] = useState("");
   const [fittingNotes, setFittingNotes] = useState("");
+  /** null = all brands; factory brand id; or UNASSIGNED_FACTORY_BRAND_ID */
+  const [brandFilter, setBrandFilter] = useState<string | null>(null);
 
   async function load() {
     try {
@@ -90,6 +97,22 @@ export function SalesWorkspaceDashboard() {
   useEffect(() => {
     void load();
   }, []);
+
+  // allowedBrandIds: null until sales-user → brand assignments exist (see getAllowedSalesBrandIds).
+  const filteredClients = useMemo(
+    () => filterSalesClientsByBrand(data?.clients ?? [], brandFilter, null),
+    [brandFilter, data?.clients]
+  );
+
+  useEffect(() => {
+    if (filteredClients.length === 0) {
+      setClientId("");
+      return;
+    }
+    if (!filteredClients.some((client) => client.id === clientId)) {
+      setClientId(filteredClients[0]!.id);
+    }
+  }, [clientId, filteredClients]);
 
   const selectedDetails = useMemo(
     () => data?.client_details.find((item) => item.client_id === clientId),
@@ -202,19 +225,36 @@ export function SalesWorkspaceDashboard() {
 
       {data && tab === "clients" && (
         <section className="space-y-5">
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-white p-4">
-            <select
-              value={clientId}
-              onChange={(event) => setClientId(event.target.value)}
-              className="min-h-12 min-w-64 flex-1 rounded-lg border border-slate-300 px-3"
-            >
-              {data.clients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.first_name} {client.last_name} · {client.code}
-                </option>
-              ))}
-            </select>
-            <Link href="/clients"><Button>New / edit client profile</Button></Link>
+          <div className="space-y-4 rounded-xl border bg-white p-4">
+            <FactoryBrandTabs
+              value={brandFilter}
+              onChange={setBrandFilter}
+              showAll
+              showUnassigned
+              allLabel="All brands"
+              unassignedLabel="Unassigned"
+              label="Filter by brand"
+              brands={factoryBrands}
+            />
+            <div className="flex flex-wrap items-center gap-3">
+              <select
+                value={clientId}
+                onChange={(event) => setClientId(event.target.value)}
+                className="min-h-12 min-w-64 flex-1 rounded-lg border border-slate-300 px-3"
+                disabled={filteredClients.length === 0}
+              >
+                {filteredClients.length === 0 ? (
+                  <option value="">No clients for this brand</option>
+                ) : (
+                  filteredClients.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.first_name} {client.last_name} · {client.code}
+                    </option>
+                  ))
+                )}
+              </select>
+              <Link href="/clients"><Button>New / edit client profile</Button></Link>
+            </div>
           </div>
           <div className="grid gap-5 lg:grid-cols-2">
             <div className="rounded-xl border bg-white p-5">
@@ -335,7 +375,8 @@ export function SalesWorkspaceDashboard() {
             <div key={row.sales_order_id} className={`rounded-xl border p-4 ${row.needs_attention ? "border-amber-400 bg-amber-50" : "bg-white"}`}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-semibold">{row.so_number} · {row.client_name}</p>
+                  <p className="text-base font-semibold text-slate-900">{row.client_name?.trim() || "—"}</p>
+                  <p className="mt-0.5 text-sm font-medium text-indigo-700">{row.so_number}</p>
                   <p className="text-sm text-slate-600">{label(row.milestone)}</p>
                   {row.needs_attention && <p className="mt-1 text-sm font-semibold text-amber-800">Action needed: contact the client to arrange fitting or delivery.</p>}
                 </div>

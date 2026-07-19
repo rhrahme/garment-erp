@@ -51,10 +51,11 @@ export function getLocalWorkOrders(): WorkOrder[] {
       quantity_completed: order.status === "completed" ? order.fabric_meters : 0,
       start_date: order.received_at.slice(0, 10),
       due_date: null,
+      client_name: order.client_name?.trim() || null,
       style: {
         id: order.sales_order_line_id,
         style_code: order.so_number,
-        name: [order.client_name, order.garment_type, order.piece_name].filter(Boolean).join(" — "),
+        name: [order.garment_type, order.piece_name].filter(Boolean).join(" — ") || "—",
         season: null,
         category: order.garment_type,
         target_cost: null,

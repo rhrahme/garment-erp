@@ -108,13 +108,26 @@ export default async function DashboardPage() {
             <DataTable
               columns={[
                 { key: "wo", label: "Work Order" },
+                { key: "client", label: "Client" },
                 { key: "style", label: "Style" },
                 { key: "progress", label: "Progress" },
                 { key: "status", label: "Stage" },
               ]}
               rows={activeWorkOrders.slice(0, 5).map((wo) => ({
                 wo: <span className="font-medium">{wo.wo_number}</span>,
-                style: wo.style?.style_code ?? "—",
+                client: (
+                  <span className="font-medium text-slate-900">
+                    {wo.client_name?.trim() || "—"}
+                  </span>
+                ),
+                style: (
+                  <span>
+                    <span className="font-mono text-xs text-slate-500">{wo.style?.style_code ?? "—"}</span>
+                    {wo.style?.name ? (
+                      <span className="mt-0.5 block text-sm text-slate-700">{wo.style.name}</span>
+                    ) : null}
+                  </span>
+                ),
                 progress: `${formatNumber(wo.quantity_completed)} / ${formatNumber(wo.quantity_planned)}`,
                 status: <StatusBadge status={wo.status} />,
               }))}
