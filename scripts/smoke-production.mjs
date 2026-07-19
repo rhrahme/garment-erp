@@ -71,11 +71,20 @@ async function main() {
       if (status !== 200) throw new Error(`expected 200, got ${status}`);
       if (!body?.ok) {
         throw new Error(
-          `catalog not ready (ready=${body?.catalog_ready}, S10005=${body?.sample?.solbiati_unit_price})`
+          `catalog not ready (ready=${body?.catalog_ready}, S10005_has_price=${body?.sample?.solbiati_has_unit_price})`
         );
       }
-      if (body.sample?.solbiati_unit_price == null) {
+      if (body.sample?.solbiati_has_unit_price !== true) {
         throw new Error("S10005 missing from Solbiati catalog on server");
+      }
+      // Public health must never echo monetary values.
+      if (
+        body.sample?.solbiati_unit_price != null ||
+        body.sample?.loro_piana_lookup_unit_price != null ||
+        Object.prototype.hasOwnProperty.call(body.sample ?? {}, "solbiati_unit_price") ||
+        Object.prototype.hasOwnProperty.call(body.sample ?? {}, "loro_piana_lookup_unit_price")
+      ) {
+        throw new Error("fabric-catalog health leaked price fields");
       }
     }),
     fetchCheck("login page", "/login", (status) => {

@@ -158,3 +158,23 @@ describe("admin price access", () => {
     assert.equal(line.unit_price, 125);
   });
 });
+
+describe("public fabric-catalog health", () => {
+  it("sanitizes catalog sample prices to booleans only", async () => {
+    const { toPublicFabricCatalogHealthSample } = await import(
+      "../health/fabric-catalog-health-public.ts"
+    );
+    const sample = toPublicFabricCatalogHealthSample({
+      fabric_number: "S10005",
+      solbiatiUnitPrice: 48.5,
+      loroPianaLookupUnitPrice: 48.5,
+    });
+    const json = JSON.stringify(sample);
+    assert.equal(json.includes("48.5"), false, "leaked numeric price");
+    assert.equal(json.includes('"unit_price"'), false, "leaked unit_price key");
+    assert.equal(json.includes("solbiati_unit_price"), false, "leaked legacy price key");
+    assert.equal(sample.solbiati_has_unit_price, true);
+    assert.equal(sample.loro_piana_lookup_has_unit_price, true);
+    assert.equal(sample.fabric_number, "S10005");
+  });
+});
