@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { requireAuthenticated } from "@/lib/auth/session";
 import { generateCustomerInvoicePdf } from "@/lib/invoicing/generate-pdf";
 import { prepareCustomerInvoiceDocument } from "@/lib/invoicing/prepare-invoice-document";
+import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
+import { canAccessSalesOrder } from "@/lib/sales/access";
+import { getCustomerInvoiceByIdFresh } from "@/lib/data/customer-invoices";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -14,6 +17,13 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     const prepared = await prepareCustomerInvoiceDocument(id);
     if (!prepared) {
       return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
+    }
+    const rawInvoice = await getCustomerInvoiceByIdFresh(id);
+    const order = rawInvoice
+      ? await getSalesOrderByIdFresh(rawInvoice.sales_order_id)
+      : null;
+    if (!order || !canAccessSalesOrder(session, order)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
 
     const pdfBytes = await generateCustomerInvoicePdf(prepared.invoice);

@@ -54,6 +54,9 @@ export interface SalesOrder {
   delivery_destination: DeliveryDestination | null;
   status: SalesOrderStatus;
   notes: string | null;
+  /** Sales login that owns this order. Admin-created legacy orders may be unassigned. */
+  sales_owner_email?: string | null;
+  created_by?: string | null;
   fabric_lines: SalesOrderFabricLine[];
   fabric_po_ids: string[];
   /** When QC (or admin) submitted this order for supplier fabric ordering */

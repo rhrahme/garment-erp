@@ -16,5 +16,6 @@ export default async function Home() {
   redirect(defaultPathForSession({
     isClientManager: session.isClientManager,
     isTaskOperator: session.isTaskOperator,
+    isSalesOperator: session.isSalesOperator,
   }));
 }

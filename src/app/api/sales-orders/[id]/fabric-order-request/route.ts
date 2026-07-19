@@ -4,6 +4,8 @@ import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server"
 import { requireAuthenticated } from "@/lib/auth/session";
 import { notifyIntegration } from "@/lib/integrations";
 import { submitFabricOrderRequest } from "@/lib/sales-orders/submit-fabric-order-request";
+import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
+import { canAccessSalesOrder } from "@/lib/sales/access";
 
 export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -13,6 +15,11 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     }
 
     const { id } = await context.params;
+    const existing = await getSalesOrderByIdFresh(id);
+    if (!existing) return NextResponse.json({ error: "Sales order not found." }, { status: 404 });
+    if (!canAccessSalesOrder(session, existing)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
     const result = await submitFabricOrderRequest(id, { requestedBy: session.email });
 
     if (!result.ok) {

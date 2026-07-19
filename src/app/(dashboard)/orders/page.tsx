@@ -8,6 +8,7 @@ import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSalesOrders, listBespokeSalesOrders, toSalesOrderListRow } from "@/lib/data/sales-orders";
 import { dedupeIdenticalSalesOrders } from "@/lib/sales-orders/duplicate-order";
 import { ordersUiLabels } from "@/lib/orders/ui-labels";
+import { filterSalesOrdersForSession } from "@/lib/sales/access";
 
 export default async function OrdersPage() {
   const session = await getSessionContext();
@@ -18,7 +19,8 @@ export default async function OrdersPage() {
   await ensureDocumentsLoaded(["sales_orders"]);
   // Same heal as the API read paths — Print orders resolves client names for every role.
   await healClientDataForRead();
-  const orders = dedupeIdenticalSalesOrders(listBespokeSalesOrders(readSalesOrders().orders)).map(toSalesOrderListRow);
+  const visibleOrders = filterSalesOrdersForSession(session, readSalesOrders().orders);
+  const orders = dedupeIdenticalSalesOrders(listBespokeSalesOrders(visibleOrders)).map(toSalesOrderListRow);
 
   return (
     <div>

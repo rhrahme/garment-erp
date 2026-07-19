@@ -31,10 +31,17 @@ import {
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { CLIENT_MANAGER_NAV_HREFS, CLIENT_MANAGER_ORDERS_NAV_LABEL, TASK_OPERATOR_NAV_HREFS, TASK_OPERATOR_ORDERS_NAV_LABEL } from "@/lib/auth/permissions";
+import {
+  CLIENT_MANAGER_NAV_HREFS,
+  CLIENT_MANAGER_ORDERS_NAV_LABEL,
+  SALES_OPERATOR_NAV_HREFS,
+  TASK_OPERATOR_NAV_HREFS,
+  TASK_OPERATOR_ORDERS_NAV_LABEL,
+} from "@/lib/auth/permissions";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/sales", label: "Sales Home", icon: LayoutDashboard },
   { href: "/fabric-receiving", label: "Fabric Receiving", icon: ScanLine },
   { href: "/brands", label: "Production Brands", icon: Tags },
   { href: "/clients", label: "Clients", icon: UsersRound },
@@ -63,6 +70,8 @@ const qcNavHrefs = new Set<string>(CLIENT_MANAGER_NAV_HREFS);
 const qcNavItems = navItems.filter((item) => qcNavHrefs.has(item.href));
 const taskOperatorNavHrefs = new Set<string>(TASK_OPERATOR_NAV_HREFS);
 const taskOperatorNavItems = navItems.filter((item) => taskOperatorNavHrefs.has(item.href));
+const salesOperatorNavHrefs = new Set<string>(SALES_OPERATOR_NAV_HREFS);
+const salesOperatorNavItems = navItems.filter((item) => salesOperatorNavHrefs.has(item.href));
 
 function isNavActive(pathname: string, href: string): boolean {
   if (pathname === href) return true;
@@ -74,12 +83,14 @@ function isNavActive(pathname: string, href: string): boolean {
 export function Sidebar({
   clientsOnly = false,
   taskOperatorOnly = false,
+  salesOperatorOnly = false,
   isAdmin = true,
   mobileOpen = false,
   onNavigate,
 }: {
   clientsOnly?: boolean;
   taskOperatorOnly?: boolean;
+  salesOperatorOnly?: boolean;
   isAdmin?: boolean;
   /** Slide-over nav open state (mobile only). */
   mobileOpen?: boolean;
@@ -87,9 +98,15 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const items = (taskOperatorOnly ? taskOperatorNavItems : clientsOnly ? qcNavItems : navItems).filter(
-    (item) => isAdmin || item.href !== "/documents"
-  );
+  const items = (
+    salesOperatorOnly
+      ? salesOperatorNavItems
+      : taskOperatorOnly
+        ? taskOperatorNavItems
+        : clientsOnly
+          ? qcNavItems
+          : navItems
+  ).filter((item) => isAdmin || item.href !== "/documents");
 
   async function handleLogout() {
     const supabase = createClient();

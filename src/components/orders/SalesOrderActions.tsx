@@ -83,6 +83,7 @@ export function SalesOrderActions({
   fabricCostSummary = null,
   isClientManager = false,
   isTaskOperator = false,
+  isSalesOperator = false,
   productionMode = false,
   viewMode = "sales",
 }: {
@@ -97,6 +98,7 @@ export function SalesOrderActions({
   fabricCostSummary?: FabricCostSummary | null;
   isClientManager?: boolean;
   isTaskOperator?: boolean;
+  isSalesOperator?: boolean;
   productionMode?: boolean;
   viewMode?: SalesOrderViewMode;
 }) {
@@ -109,8 +111,8 @@ export function SalesOrderActions({
   const showSalesAdmin = effectiveViewMode === "sales";
   const showProductionLabels = effectiveViewMode === "production" || showSalesAdmin;
   const showFabricInput = (showFabricOrdering || showSalesAdmin) && !isTaskOperator;
-  const showSupplierEmailActions = showFabricOrdering || showSalesAdmin;
-  const showSupplierEmailColumn = showFabricOrdering && fabricPos.length > 0;
+  const showSupplierEmailActions = !isSalesOperator && (showFabricOrdering || showSalesAdmin);
+  const showSupplierEmailColumn = !isSalesOperator && showFabricOrdering && fabricPos.length > 0;
   const router = useRouter();
   const [liveOrder, setLiveOrder] = useState(order);
   const [creating, setCreating] = useState(false);
@@ -983,14 +985,14 @@ export function SalesOrderActions({
             <Button variant="secondary">Supplier inbox</Button>
           </Link>
         )}
-        {effectiveViewMode === "sales" && !isClientManager && (
+        {(effectiveViewMode === "sales" || isSalesOperator) && !isClientManager && (
           <CreateInvoiceButton
             salesOrderId={liveOrder.id}
             existingInvoiceId={existingInvoiceId}
             isReadyMade={isReadyMade}
           />
         )}
-        {showFabricOrdering && (
+        {showFabricOrdering && !isSalesOperator && (
           <Link href={`/orders/${order.id}`}>
             <Button variant="secondary">Open production order →</Button>
           </Link>
@@ -1003,7 +1005,7 @@ export function SalesOrderActions({
         {!isTaskOperator && (
           <Link
             href={
-              effectiveViewMode === "fabric_order"
+              effectiveViewMode === "fabric_order" && !isSalesOperator
                 ? `/fabric-orders/new?duplicate_from=${order.id}`
                 : `/orders/new?duplicate_from=${order.id}`
             }
@@ -1012,7 +1014,7 @@ export function SalesOrderActions({
           </Link>
         )}
         {!isTaskOperator && (
-          <Link href={effectiveViewMode === "fabric_order" ? "/fabric-orders/new?fresh=1" : "/orders/new"}>
+          <Link href={effectiveViewMode === "fabric_order" && !isSalesOperator ? "/fabric-orders/new?fresh=1" : "/orders/new"}>
             <Button variant="secondary">{labels.detailNewButton}</Button>
           </Link>
         )}

@@ -9,6 +9,7 @@ import { requireAuthenticated } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
 import { generateSalesOrderPdf } from "@/lib/sales-orders/generate-pdf";
+import { canAccessSalesOrder } from "@/lib/sales/access";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -22,6 +23,9 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     const rawOrder = getSalesOrderById(id);
     if (!rawOrder) {
       return NextResponse.json({ error: "Sales order not found." }, { status: 404 });
+    }
+    if (!canAccessSalesOrder(session, rawOrder)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
 
     const cookieStore = await cookies();

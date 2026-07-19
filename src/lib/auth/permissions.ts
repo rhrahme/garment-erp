@@ -45,6 +45,28 @@ const TASK_OPERATOR_ROUTE_PREFIXES = [
 
 const TASK_OPERATOR_BLOCKED_ROUTE_PREFIXES = ["/orders/new", "/fabric-orders"] as const;
 
+const SALES_OPERATOR_ROUTE_PREFIXES = [
+  "/sales",
+  "/clients",
+  "/fabric-specification",
+  "/orders",
+  "/invoices",
+  "/api/clients",
+  "/api/custom-fabrics",
+  "/api/sales-orders",
+  "/api/fabric-search",
+  "/api/fabric-brands",
+  "/api/supplier-fabrics",
+  "/api/customer-invoices",
+  "/api/sales",
+  "/api/qr",
+  "/api/suppliers/loro-piana",
+  "/api/integrations/drapers/medias",
+  "/api/auth/session",
+  "/api/auth/dev-impersonate",
+  "/login",
+] as const;
+
 /**
  * QC logins — always restricted (no prices, limited menu) even if
  * CLIENT_MANAGER_EMAILS is missing from a deploy.
@@ -81,7 +103,15 @@ export const TASK_OPERATOR_NAV_HREFS = [
   "/fabric-specification",
 ] as const;
 
-export type RestrictedAccessKind = "client_manager" | "task_operator";
+export const SALES_OPERATOR_NAV_HREFS = [
+  "/sales",
+  "/clients",
+  "/fabric-specification",
+  "/orders",
+  "/invoices",
+] as const;
+
+export type RestrictedAccessKind = "client_manager" | "task_operator" | "sales_operator";
 
 export function parseSuperAdminEmails(): Set<string> {
   const raw = process.env.SUPER_ADMIN_EMAILS?.trim() ?? "";
@@ -138,12 +168,26 @@ export function parseTaskOperatorEmails(): Set<string> {
   return new Set([...BUILTIN_TASK_OPERATOR_EMAILS, ...fromEnv]);
 }
 
+export function parseSalesEmails(): Set<string> {
+  const raw = process.env.SALES_EMAILS?.trim() ?? "";
+  return new Set(
+    raw
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
+
 export function isClientManagerRole(role: UserRole | null | undefined): boolean {
   return role === "client_manager";
 }
 
 export function isTaskOperatorRole(role: UserRole | null | undefined): boolean {
   return role === "task_operator";
+}
+
+export function isSalesOperatorRole(role: UserRole | null | undefined): boolean {
+  return role === "sales_operator";
 }
 
 export function isClientManagerEmail(email: string | null | undefined): boolean {
@@ -154,6 +198,11 @@ export function isClientManagerEmail(email: string | null | undefined): boolean 
 export function isTaskOperatorEmail(email: string | null | undefined): boolean {
   if (!email) return false;
   return parseTaskOperatorEmails().has(email.trim().toLowerCase());
+}
+
+export function isSalesOperatorEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return parseSalesEmails().has(email.trim().toLowerCase());
 }
 
 export function isClientManagerAccess(
@@ -171,12 +220,24 @@ export function isTaskOperatorAccess(
   return isTaskOperatorRole(role) || isTaskOperatorEmail(email);
 }
 
+export function isSalesOperatorAccess(
+  role: UserRole | null | undefined,
+  email: string | null | undefined
+): boolean {
+  if (isClientManagerAccess(role, email) || isTaskOperatorAccess(role, email)) return false;
+  return isSalesOperatorRole(role) || isSalesOperatorEmail(email);
+}
+
 /** Accounts that must never see prices (QC and production-floor operators). */
 export function isPriceRestrictedAccess(
   role: UserRole | null | undefined,
   email: string | null | undefined
 ): boolean {
-  return isClientManagerAccess(role, email) || isTaskOperatorAccess(role, email);
+  return (
+    isClientManagerAccess(role, email) ||
+    isTaskOperatorAccess(role, email) ||
+    isSalesOperatorAccess(role, email)
+  );
 }
 
 export function resolveRestrictedAccess(
@@ -187,6 +248,7 @@ export function resolveRestrictedAccess(
   if (isSuperAdmin) return null;
   if (isClientManagerAccess(role, email)) return "client_manager";
   if (isTaskOperatorAccess(role, email)) return "task_operator";
+  if (isSalesOperatorAccess(role, email)) return "sales_operator";
   return null;
 }
 
@@ -196,7 +258,7 @@ export function canViewClientContact(
   isSuperAdmin: boolean
 ): boolean {
   if (isSuperAdmin) return true;
-  return !isPriceRestrictedAccess(role, email);
+  return isSalesOperatorAccess(role, email) || !isPriceRestrictedAccess(role, email);
 }
 
 export function isClientManagerRouteAllowed(pathname: string): boolean {
@@ -218,18 +280,40 @@ export function isTaskOperatorRouteAllowed(pathname: string): boolean {
   );
 }
 
+export function isSalesOperatorRouteAllowed(pathname: string): boolean {
+  if (
+    pathname.startsWith("/orders/") &&
+    (pathname.includes("/print") || pathname.includes("/print-pack"))
+  ) {
+    return false;
+  }
+  if (
+    pathname.startsWith("/api/sales-orders/") &&
+    (pathname.includes("/stickers") ||
+      pathname.includes("/fabric-lines/print") ||
+      pathname.includes("/fabric-lines/clear-print-timestamps") ||
+      pathname.endsWith("/fabric-pos"))
+  ) {
+    return false;
+  }
+  return SALES_OPERATOR_ROUTE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
+
 export function isRestrictedRouteAllowed(
   pathname: string,
   access: RestrictedAccessKind
 ): boolean {
-  return access === "client_manager"
-    ? isClientManagerRouteAllowed(pathname)
-    : isTaskOperatorRouteAllowed(pathname);
+  if (access === "client_manager") return isClientManagerRouteAllowed(pathname);
+  if (access === "task_operator") return isTaskOperatorRouteAllowed(pathname);
+  return isSalesOperatorRouteAllowed(pathname);
 }
 
 export type SessionLandingAccess = {
   isClientManager?: boolean;
   isTaskOperator?: boolean;
+  isSalesOperator?: boolean;
 };
 
 export function defaultPathForSession(access: boolean | SessionLandingAccess): string {
@@ -237,6 +321,9 @@ export function defaultPathForSession(access: boolean | SessionLandingAccess): s
     typeof access === "boolean" ? access : Boolean(access.isClientManager);
   const isTaskOperator =
     typeof access === "boolean" ? false : Boolean(access.isTaskOperator);
+  const isSalesOperator =
+    typeof access === "boolean" ? false : Boolean(access.isSalesOperator);
+  if (isSalesOperator) return "/sales";
   if (isTaskOperator) return "/fabric-receiving";
   if (isClientManager) return "/orders";
   return "/dashboard";

@@ -20,6 +20,13 @@ import {
   type FabricLineInput,
   type FabricLineUpdateInput,
 } from "@/lib/sales-orders/fabric-lines";
+import { canAccessSalesOrder } from "@/lib/sales/access";
+
+async function canAccessOrder(session: Awaited<ReturnType<typeof requireAuthenticated>>, id: string) {
+  if (!session) return false;
+  const order = await getSalesOrderByIdFresh(id);
+  return Boolean(order && canAccessSalesOrder(session, order));
+}
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -32,6 +39,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     }
 
     const { id } = await context.params;
+    if (!(await canAccessOrder(session, id))) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
     const body = (await request.json()) as { fabric_lines?: FabricLineInput[] };
     const inputs = body.fabric_lines ?? [];
 
@@ -73,6 +83,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     }
 
     const { id } = await context.params;
+    if (!(await canAccessOrder(session, id))) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
     const body = (await request.json()) as FabricLineUpdateInput;
     const result = await updateSalesOrderFabricLine(id, body, {
       updatedBy: session.email,
@@ -117,6 +130,9 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     }
 
     const { id } = await context.params;
+    if (!(await canAccessOrder(session, id))) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
     const body = (await request.json()) as {
       line_id?: string;
       force_cancel_orphan_jobs?: boolean;

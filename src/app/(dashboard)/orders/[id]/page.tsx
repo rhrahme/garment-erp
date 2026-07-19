@@ -33,6 +33,7 @@ import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import { OrderShipmentTracking } from "@/components/orders/OrderShipmentTracking";
 import { PatternMismatchBanner } from "@/components/pattern/PatternMismatchBanner";
 import { formatDate } from "@/lib/utils";
+import { canAccessSalesOrder } from "@/lib/sales/access";
 
 export const dynamic = "force-dynamic";
 
@@ -44,17 +45,27 @@ export default async function SalesOrderDetailPage({
   const { id } = await params;
   const removedRedirect = getRemovedSalesOrderRedirectForKey(id);
   if (removedRedirect) redirect(removedRedirect);
-  await ensureDocumentsLoaded(["sales_orders", "customer_invoices", "pattern_jobs"]);
-  await ensureFabricOrdersLoaded();
+  await ensureDocumentsLoaded(["sales_orders", "customer_invoices"]);
   const rawOrder = await getSalesOrderByIdFresh(id);
   if (!rawOrder) notFound();
-  const rawFabricPos = getFabricPosForSalesOrder(rawOrder, listStoredFabricOrders());
-  const patternJobs = (await readPatternJobsFresh()).jobs;
-  const patternMismatch = detectPatternSalesOrderMismatch(rawOrder, patternJobs);
-  const patternJobsByLineId = Object.fromEntries(
-    rawOrder.fabric_lines.map((line) => [line.id, activePatternJobsForLine(rawOrder.id, line.id)])
-  );
   const session = await getSessionContext();
+  if (!canAccessSalesOrder(session, rawOrder)) notFound();
+  if (!session.isSalesOperator) {
+    await ensureDocumentsLoaded(["pattern_jobs"]);
+    await ensureFabricOrdersLoaded();
+  }
+  const rawFabricPos = session.isSalesOperator
+    ? []
+    : getFabricPosForSalesOrder(rawOrder, listStoredFabricOrders());
+  const patternJobs = session.isSalesOperator ? [] : (await readPatternJobsFresh()).jobs;
+  const patternMismatch = session.isSalesOperator
+    ? null
+    : detectPatternSalesOrderMismatch(rawOrder, patternJobs);
+  const patternJobsByLineId = session.isSalesOperator
+    ? {}
+    : Object.fromEntries(
+        rawOrder.fabric_lines.map((line) => [line.id, activePatternJobsForLine(rawOrder.id, line.id)])
+      );
   const taskOperatorMode = session.isTaskOperator;
   const productionMode = session.isClientManager || taskOperatorMode;
   const labels = ordersUiLabels(productionMode, taskOperatorMode);
@@ -113,7 +124,7 @@ export default async function SalesOrderDetailPage({
         }
       />
 
-      <PatternMismatchBanner mismatch={patternMismatch} />
+      {patternMismatch && <PatternMismatchBanner mismatch={patternMismatch} />}
 
       <div
         className={`mb-8 grid gap-4 ${
@@ -190,7 +201,9 @@ export default async function SalesOrderDetailPage({
         )}
       </div>
 
-      <OrderShipmentTracking salesOrderId={order.id} fabricPoIds={order.fabric_po_ids} />
+      {!session.isSalesOperator && (
+        <OrderShipmentTracking salesOrderId={order.id} fabricPoIds={order.fabric_po_ids} />
+      )}
 
       <SalesOrderActions
         order={order}
@@ -204,8 +217,11 @@ export default async function SalesOrderDetailPage({
         fabricCostSummary={fabricCost}
         isClientManager={session.isClientManager}
         isTaskOperator={taskOperatorMode}
+        isSalesOperator={session.isSalesOperator}
         productionMode={productionMode}
-        viewMode={productionMode ? "production" : "sales"}
+        viewMode={
+          session.isSalesOperator ? "fabric_order" : productionMode ? "production" : "sales"
+        }
       />
     </div>
   );

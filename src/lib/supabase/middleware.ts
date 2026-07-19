@@ -7,8 +7,8 @@ import {
 } from "@/lib/auth/dev-impersonation";
 import {
   defaultPathForSession,
-  isClientManagerAccess,
   isRestrictedRouteAllowed,
+  isSalesOperatorAccess,
   isSuperAdminEmail,
   isSuperAdminRole,
   isTaskOperatorAccess,
@@ -86,7 +86,9 @@ export async function updateSession(request: NextRequest) {
 
   const email = impersonatedEmail ?? user?.email?.trim().toLowerCase() ?? null;
   let role: UserRole | null = impersonatedEmail
-    ? isTaskOperatorAccess("task_operator", impersonatedEmail)
+    ? isSalesOperatorAccess("sales_operator", impersonatedEmail)
+      ? "sales_operator"
+      : isTaskOperatorAccess("task_operator", impersonatedEmail)
       ? "task_operator"
       : "client_manager"
     : null;
@@ -106,10 +108,11 @@ export async function updateSession(request: NextRequest) {
   const restrictedAccess = resolveRestrictedAccess(role, email, isSuperAdmin);
   const isClientManager = restrictedAccess === "client_manager";
   const isTaskOperator = restrictedAccess === "task_operator";
+  const isSalesOperator = restrictedAccess === "sales_operator";
 
   if (isAuthenticated && isAuthPage) {
     const url = request.nextUrl.clone();
-    url.pathname = defaultPathForSession({ isClientManager, isTaskOperator });
+    url.pathname = defaultPathForSession({ isClientManager, isTaskOperator, isSalesOperator });
     return NextResponse.redirect(url);
   }
 
@@ -118,19 +121,19 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
     const url = request.nextUrl.clone();
-    url.pathname = defaultPathForSession({ isClientManager, isTaskOperator });
+    url.pathname = defaultPathForSession({ isClientManager, isTaskOperator, isSalesOperator });
     return NextResponse.redirect(url);
   }
 
   if (isAuthenticated && pathname === "/") {
     const url = request.nextUrl.clone();
-    url.pathname = defaultPathForSession({ isClientManager, isTaskOperator });
+    url.pathname = defaultPathForSession({ isClientManager, isTaskOperator, isSalesOperator });
     return NextResponse.redirect(url);
   }
 
   if (isAuthenticated && pathname === "/dashboard" && restrictedAccess) {
     const url = request.nextUrl.clone();
-    url.pathname = defaultPathForSession({ isClientManager, isTaskOperator });
+    url.pathname = defaultPathForSession({ isClientManager, isTaskOperator, isSalesOperator });
     return NextResponse.redirect(url);
   }
 

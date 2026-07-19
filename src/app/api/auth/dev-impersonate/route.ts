@@ -7,6 +7,7 @@ import {
 import {
   defaultPathForSession,
   isClientManagerEmail,
+  isSalesOperatorEmail,
   isTaskOperatorEmail,
 } from "@/lib/auth/permissions";
 
@@ -22,7 +23,7 @@ function startImpersonation(email: string) {
 }
 
 function isDevImpersonationEmail(email: string): boolean {
-  return isClientManagerEmail(email) || isTaskOperatorEmail(email);
+  return isClientManagerEmail(email) || isTaskOperatorEmail(email) || isSalesOperatorEmail(email);
 }
 
 /** Dev only — open in browser to sign in as QC / task operator without a password. */
@@ -41,6 +42,7 @@ export async function GET(request: Request) {
       defaultPathForSession({
         isClientManager: isClientManagerEmail(email),
         isTaskOperator: isTaskOperatorEmail(email),
+        isSalesOperator: isSalesOperatorEmail(email),
       }),
       request.url
     )

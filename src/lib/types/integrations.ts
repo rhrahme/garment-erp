@@ -34,6 +34,13 @@ export type IntegrationEventType =
   | "pattern_job.ready_for_cutting"
   | "production.scan"
   | "invoice.sent"
+  | "invoice.created"
+  | "invoice.updated"
+  | "sales_client_details.updated"
+  | "sales_client_photo.uploaded"
+  | "sales_fitting.created"
+  | "sales_fitting.updated"
+  | "sales_order.milestone_updated"
   | "custom_fabric.created"
   | "supabase.auth_unhealthy";
 

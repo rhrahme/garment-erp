@@ -71,6 +71,14 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/customer-invoices.json",
   },
   {
+    key: "sales_workspace",
+    label: "Sales workspace",
+    description: "Client measurements, photos, fittings, and milestone acknowledgements",
+    category: "clients_orders",
+    appHref: "/sales",
+    sourcePath: "src/data/sales-workspace.json",
+  },
+  {
     key: "fabric_receipts",
     label: "Fabric receipts",
     description: "Received fabric lines and prep/handoff status",

@@ -21,6 +21,7 @@ import { isGarmentStitchType } from "@/lib/sales-orders/garment-types";
 import { generateFabricLabelStickers } from "@/lib/sales-orders/label-codes";
 import { notifyIntegration } from "@/lib/integrations";
 import { syncPatternJobsFromSalesOrder } from "@/lib/pattern/sync-from-sales-order";
+import { filterSalesOrdersForSession } from "@/lib/sales/access";
 import { isDeliveryDestination } from "@/lib/shipping/delivery-destinations";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
@@ -40,14 +41,15 @@ export async function GET() {
     // Same heal as Clients / Fabric Receiving reads — every role resolves client names.
     await healClientDataForRead();
     const store = readSalesOrders();
+    const visibleOrders = filterSalesOrdersForSession(session, store.orders);
     const canViewFabricPrices = await resolveFabricPriceAccess(session);
     if (!canViewFabricPrices) {
       return NextResponse.json({
         ...store,
-        orders: store.orders.map(redactSalesOrderFabricPrices),
+        orders: visibleOrders.map(redactSalesOrderFabricPrices),
       });
     }
-    return NextResponse.json(store);
+    return NextResponse.json({ ...store, orders: visibleOrders });
   } catch (error) {
     console.error("Failed to read sales orders:", error);
     return NextResponse.json({ error: "Failed to load sales orders." }, { status: 500 });
@@ -200,6 +202,8 @@ export async function POST(request: Request) {
       delivery_destination,
       status: "open",
       notes: normalizeText(body.notes),
+      sales_owner_email: session.isSalesOperator ? session.email : null,
+      created_by: session.email,
       fabric_lines,
       fabric_po_ids: [],
     };

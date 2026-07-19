@@ -37,6 +37,13 @@ const OUTBOUND_EVENTS = [
   "pattern_job.ready_for_cutting",
   "production.scan",
   "invoice.sent",
+  "invoice.created",
+  "invoice.updated",
+  "sales_client_details.updated",
+  "sales_client_photo.uploaded",
+  "sales_fitting.created",
+  "sales_fitting.updated",
+  "sales_order.milestone_updated",
   "custom_fabric.created",
 ];
 
@@ -110,6 +117,12 @@ export function ZapierSetup() {
             <li>POST {baseUrl}/api/v1/fabric-receiving/reset-testing</li>
             <li>POST {baseUrl}/api/v1/fabric-receiving/defects</li>
             <li>POST {baseUrl}/api/v1/customer-invoices/[id]/mark-sent</li>
+            <li>POST {baseUrl}/api/v1/customer-invoices/from-sales-order</li>
+            <li>PATCH {baseUrl}/api/v1/customer-invoices/[id]</li>
+            <li>POST {baseUrl}/api/v1/sales/client-details</li>
+            <li>POST/PATCH {baseUrl}/api/v1/sales/fittings</li>
+            <li>PATCH {baseUrl}/api/v1/sales/milestones</li>
+            <li>POST {baseUrl}/api/v1/sales/client-photos</li>
             <li>GET {baseUrl}/api/v1/events</li>
           </ul>
         </div>

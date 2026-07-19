@@ -52,7 +52,12 @@ export function isFabricPriceAccessCodeValid(code: string): boolean {
 
 /** Single role gate for every price-bearing UI and API surface. */
 export function canViewPrices(session: SessionContext): boolean {
-  return session.isAdmin && !session.isClientManager && !session.isTaskOperator;
+  return (
+    session.isAdmin &&
+    !session.isClientManager &&
+    !session.isTaskOperator &&
+    !session.isSalesOperator
+  );
 }
 
 /** Admins who may use the reveal toggle (prices stay hidden until unlocked). */
@@ -75,6 +80,17 @@ const PRICE_FIELD_NAMES = new Set([
   "subtotal",
   "fabric_cost",
   "fabric_cost_summary",
+  "cost_hint_sar",
+  "fabric_cost_hint_sar",
+  "total_cost_sar",
+  "landed_cost",
+  "landed_cost_sar",
+  "purchase_price",
+  "supplier_invoice",
+  "supplier_invoice_total",
+  "manufacturing_cost",
+  "margin",
+  "margin_pct",
   "currency",
 ]);
 

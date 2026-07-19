@@ -15,6 +15,7 @@ import {
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { notifyIntegration } from "@/lib/integrations";
 import { isDeliveryDestination } from "@/lib/shipping/delivery-destinations";
+import { canAccessSalesOrder } from "@/lib/sales/access";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -29,6 +30,9 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     const order = getSalesOrderById(id);
     if (!order) {
       return NextResponse.json({ error: "Sales order not found." }, { status: 404 });
+    }
+    if (!canAccessSalesOrder(session, order)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
     const cookieStore = await cookies();
     const canViewFabricPrices = hasFabricPriceAccess(
@@ -72,6 +76,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const index = store.orders.findIndex((order) => order.id === id);
     if (index < 0) {
       return NextResponse.json({ error: "Sales order not found." }, { status: 404 });
+    }
+    if (!canAccessSalesOrder(session, store.orders[index]!)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
 
     store.orders[index] = {

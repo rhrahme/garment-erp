@@ -15,6 +15,11 @@ import {
 import type { CustomerInvoice, CustomerInvoiceLine, CustomerInvoiceStatus } from "@/lib/types/customer-invoices";
 import { invalidateDocumentCache } from "@/lib/data/document-persistence";
 import path from "path";
+import { requireAuthenticated } from "@/lib/auth/session";
+import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
+import { canAccessSalesOrder } from "@/lib/sales/access";
+import { redactCustomerInvoiceCosts } from "@/lib/auth/invoice-cost-access";
+import { notifyIntegration } from "@/lib/integrations";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -26,13 +31,20 @@ function normalizeText(value: unknown): string | null {
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const session = await requireAuthenticated();
+    if (!session) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     invalidateDocumentCache(path.join(process.cwd(), "src/data/customer-invoices.json"));
     const { id } = await context.params;
     const invoice = await getCustomerInvoiceByIdFresh(id);
     if (!invoice) {
       return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
     }
-    return NextResponse.json({ ...invoice, lines: resolveInvoiceLines(invoice.lines) });
+    const order = await getSalesOrderByIdFresh(invoice.sales_order_id);
+    if (!order || !canAccessSalesOrder(session, order)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
+    const resolved = { ...invoice, lines: resolveInvoiceLines(invoice.lines) };
+    return NextResponse.json(session.isSalesOperator ? redactCustomerInvoiceCosts(resolved) : resolved);
   } catch (error) {
     console.error("Failed to read customer invoice:", error);
     return NextResponse.json({ error: "Failed to load invoice." }, { status: 500 });
@@ -41,11 +53,17 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const session = await requireAuthenticated();
+    if (!session) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     invalidateDocumentCache(path.join(process.cwd(), "src/data/customer-invoices.json"));
     const { id } = await context.params;
     const invoice = await getCustomerInvoiceByIdFresh(id);
     if (!invoice) {
       return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
+    }
+    const order = await getSalesOrderByIdFresh(invoice.sales_order_id);
+    if (!order || !canAccessSalesOrder(session, order)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
 
     const body = (await request.json()) as {
@@ -173,7 +191,13 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
           }
         );
         invalidateDocumentCache(path.join(process.cwd(), "src/data/customer-invoices.json"));
-        return NextResponse.json(saved);
+        await notifyIntegration("invoice.updated", {
+          id: saved.id,
+          invoice_number: saved.invoice_number,
+          status: saved.status,
+          updated_by: session.email,
+        });
+        return NextResponse.json(session.isSalesOperator ? redactCustomerInvoiceCosts(saved) : saved);
       }
 
       next.status = body.status;
@@ -185,8 +209,14 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     }
 
     const saved = await saveCustomerInvoice(next);
+    await notifyIntegration("invoice.updated", {
+      id: saved.id,
+      invoice_number: saved.invoice_number,
+      status: saved.status,
+      updated_by: session.email,
+    });
     invalidateDocumentCache(path.join(process.cwd(), "src/data/customer-invoices.json"));
-    return NextResponse.json(saved);
+    return NextResponse.json(session.isSalesOperator ? redactCustomerInvoiceCosts(saved) : saved);
   } catch (error) {
     console.error("Failed to update customer invoice:", error);
     return NextResponse.json({ error: "Failed to update invoice." }, { status: 500 });
