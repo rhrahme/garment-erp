@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { OrdersList } from "@/components/orders/OrdersList";
 import { getSessionContext } from "@/lib/auth/session";
+import { healClientDataForRead } from "@/lib/clients/heal-on-read";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSalesOrders, listBespokeSalesOrders, toSalesOrderListRow } from "@/lib/data/sales-orders";
 import { dedupeIdenticalSalesOrders } from "@/lib/sales-orders/duplicate-order";
@@ -15,6 +16,8 @@ export default async function OrdersPage() {
   const labels = ordersUiLabels(productionMode, taskOperatorMode);
 
   await ensureDocumentsLoaded(["sales_orders"]);
+  // Same heal as the API read paths — Print orders resolves client names for every role.
+  await healClientDataForRead();
   const orders = dedupeIdenticalSalesOrders(listBespokeSalesOrders(readSalesOrders().orders)).map(toSalesOrderListRow);
 
   return (

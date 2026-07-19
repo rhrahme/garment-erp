@@ -1,3 +1,4 @@
+import { formatClientDisplayName } from "@/lib/clients/names";
 import type { ClientProfile } from "../types/clients";
 import type { SalesOrder } from "../types/sales-orders";
 
@@ -239,6 +240,57 @@ export function prepareClientsForPersist(
     restored: reconciled.restored,
     skipped: reconciled.skipped,
   };
+}
+
+export type SalesOrderClientFieldRepair = {
+  order_id: string;
+  so_number: string;
+  client_id: string;
+  client_code: string;
+  client_name: string;
+};
+
+/**
+ * Fill blank denormalized client_name / client_code on sales orders from the
+ * clients store. Repair-only: never blanks or overwrites populated fields, so a
+ * client with orders always resolves to a name on every read path (any role).
+ */
+export function healSalesOrderClientFields<T extends OrphanSalesOrder>(
+  orders: T[],
+  clients: ClientProfile[]
+): { orders: T[]; repaired: SalesOrderClientFieldRepair[] } {
+  const byId = new Map(clients.map((client) => [client.id, client]));
+  const repaired: SalesOrderClientFieldRepair[] = [];
+
+  const next = orders.map((order) => {
+    const clientId = normalizePart(order.client_id);
+    if (!clientId) return order;
+
+    const currentName = normalizePart(order.client_name);
+    const currentCode = normalizePart(order.client_code);
+    if (currentName && currentCode) return order;
+
+    const client = byId.get(clientId);
+    if (!client) return order;
+
+    const healedName = currentName || formatClientDisplayName(client);
+    const healedCode = currentCode || normalizePart(client.code);
+    if (healedName === currentName && healedCode === currentCode) return order;
+
+    repaired.push({
+      order_id: order.id,
+      so_number: order.so_number,
+      client_id: clientId,
+      client_code: healedCode,
+      client_name: healedName,
+    });
+    return { ...order, client_name: healedName, client_code: healedCode };
+  });
+
+  if (repaired.length === 0) {
+    return { orders, repaired };
+  }
+  return { orders: next, repaired };
 }
 
 /** True when every sales-order client_id has a matching clients-store row. */

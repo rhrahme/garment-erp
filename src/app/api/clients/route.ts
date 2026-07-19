@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { redactClientsFile } from "@/lib/auth/client-contact-access";
 import { requireAuthenticated } from "@/lib/auth/session";
 import { generateNextClientCode, getBrandClientCodePrefix } from "@/lib/clients/codes";
-import { formatClientDisplayName, formatReferredByName, hasRequiredClientName, migrateClientName, migrateReferredByName, normalizeNamePart } from "@/lib/clients/names";
+import { healClientDataForRead } from "@/lib/clients/heal-on-read";
+import { formatClientDisplayName, hasRequiredClientName, migrateClientName, migrateReferredByName, normalizeNamePart } from "@/lib/clients/names";
 import { normalizeStoredPhone } from "@/lib/phone/countries";
 import {
-  ensureOrphanedClientsReconciled,
   normalizeClientCode,
   readClients,
   slugifyClientId,
@@ -137,20 +137,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    const reconciliation = await ensureOrphanedClientsReconciled();
-    if (reconciliation.restored.length > 0) {
-      for (const client of reconciliation.restored) {
-        await notifyIntegration("client.created", {
-          id: client.id,
-          code: client.code,
-          first_name: client.first_name,
-          middle_name: client.middle_name,
-          last_name: client.last_name,
-          brand_ids: client.brand_ids,
-          restored_from: "orphan_reconciliation",
-        });
-      }
-    }
+    await healClientDataForRead();
 
     const data = readClients();
     return NextResponse.json(session.canViewClientContact ? data : redactClientsFile(data));

@@ -29,6 +29,18 @@ let erpBootstrapPromise: Promise<void> | null = null;
 
 /** Per-read cap so a degraded Supabase never blocks SSR for minutes. */
 const SUPABASE_READ_TIMEOUT_MS = 5_000;
+/**
+ * Warm-instance refresh window for Supabase-backed documents. Without it, a
+ * long-lived serverless instance served its first snapshot forever, so two users
+ * (e.g. task operator vs QC) could see different clients/orders depending on
+ * which instance answered. Stale entries are re-fetched; on failure the previous
+ * cache keeps serving (never downgraded to bundled JSON).
+ */
+const SUPABASE_CACHE_TTL_MS = 30_000;
+
+function isSupabaseCacheFresh(entry: CacheEntry | undefined): entry is CacheEntry {
+  return Boolean(entry && Date.now() - entry.mtimeMs < SUPABASE_CACHE_TTL_MS);
+}
 /** Whole bootstrap cap — fail-open and serve fallbacks when Supabase is slow/down. */
 const ERP_BOOTSTRAP_TIMEOUT_MS = 8_000;
 
@@ -170,8 +182,9 @@ async function writeToSupabase<T>(documentKey: ErpDocumentKey, payload: T): Prom
 async function loadDocumentKey(documentKey: ErpDocumentKey): Promise<void> {
   if (loadedKeys.has(documentKey)) {
     const spec = ERP_DOCUMENT_SPECS[documentKey];
-    if (fileCache.has(spec.path)) return;
-    loadedKeys.delete(documentKey);
+    const cached = fileCache.get(spec.path);
+    if (cached && (!isSupabaseDocumentsStorage() || isSupabaseCacheFresh(cached))) return;
+    if (!cached) loadedKeys.delete(documentKey);
   }
 
   const pending = loadingByKey.get(documentKey);
@@ -186,6 +199,15 @@ async function loadDocumentKey(documentKey: ErpDocumentKey): Promise<void> {
       const remote = await readFromSupabase<unknown>(documentKey);
       if (remote != null) {
         fileCache.set(spec.path, { mtimeMs: Date.now(), data: remote });
+        loadedKeys.add(documentKey);
+        return;
+      }
+      // Refresh failed — keep serving the previous snapshot instead of
+      // downgrading a warm cache to the bundled JSON fallback. Re-stamp so a
+      // degraded Supabase is retried once per TTL, not on every request.
+      const cached = fileCache.get(spec.path);
+      if (cached) {
+        fileCache.set(spec.path, { mtimeMs: Date.now(), data: cached.data });
         loadedKeys.add(documentKey);
         return;
       }
@@ -325,7 +347,7 @@ export function readJsonFileFresh<T>(filePath: string, fallback: T): T {
   return readLocalJsonFile(filePath, fallback);
 }
 
-/** Reload from Supabase only when cache is cold — avoids re-downloading on every list refresh. */
+/** Reload from Supabase only when cache is cold or stale — avoids re-downloading on every list refresh. */
 export async function readJsonFileFreshAsync<T>(
   filePath: string,
   fallback: T,
@@ -336,7 +358,7 @@ export async function readJsonFileFreshAsync<T>(
   if (isSupabaseDocumentsStorage() && documentKey) {
     if (!options?.force) {
       const cached = fileCache.get(filePath);
-      if (cached) return cached.data as T;
+      if (isSupabaseCacheFresh(cached)) return cached.data as T;
     }
     const remote = options?.force
       ? await readFromSupabaseForced<T>(documentKey)
@@ -351,6 +373,12 @@ export async function readJsonFileFreshAsync<T>(
         `[ERP] Forced Supabase read failed for "${documentKey}" — refusing bundled JSON fallback.`
       );
       return fallback;
+    }
+    // Refresh failed — keep serving the previous snapshot over bundled JSON.
+    const cached = fileCache.get(filePath);
+    if (cached) {
+      fileCache.set(filePath, { mtimeMs: Date.now(), data: cached.data });
+      return cached.data as T;
     }
   }
 

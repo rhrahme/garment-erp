@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { generateNextClientCode, getBrandClientCodePrefix } from "@/lib/clients/codes";
+import { healClientDataForRead } from "@/lib/clients/heal-on-read";
 import { formatClientDisplayName, hasRequiredClientName, migrateReferredByName, normalizeNamePart } from "@/lib/clients/names";
 import {
-  ensureOrphanedClientsReconciled,
   getActiveClients,
   getClientById,
   readClients,
@@ -25,24 +25,7 @@ export async function GET(request: Request) {
   const authError = verifyApiKey(request);
   if (authError) return authError;
 
-  const reconciliation = await ensureOrphanedClientsReconciled();
-  if (reconciliation.restored.length > 0) {
-    for (const client of reconciliation.restored) {
-      await notifyIntegration(
-        "client.created",
-        {
-          id: client.id,
-          code: client.code,
-          first_name: client.first_name,
-          middle_name: client.middle_name,
-          last_name: client.last_name,
-          brand_ids: client.brand_ids,
-          restored_from: "orphan_reconciliation",
-        },
-        "api"
-      );
-    }
-  }
+  await healClientDataForRead("api");
 
   const url = new URL(request.url);
   const id = url.searchParams.get("id");

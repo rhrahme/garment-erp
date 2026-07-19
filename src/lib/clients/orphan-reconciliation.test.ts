@@ -4,6 +4,7 @@ import {
   buildClientProfileFromOrphan,
   clientsCoverAllSalesOrderClientIds,
   findOrphanedSalesOrderClients,
+  healSalesOrderClientFields,
   orderMatchesBrandClientPrefix,
   prepareClientsForPersist,
   reconcileOrphanedClients,
@@ -224,6 +225,87 @@ test("buildClientProfileFromOrphan requires a client code and name", () => {
     }),
     null
   );
+});
+
+test("healSalesOrderClientFields fills blank denormalized fields from the clients store", () => {
+  const clients = [
+    client({
+      id: "new-1782858921783",
+      code: "FR-0626-0037",
+      first_name: "Pr",
+      middle_name: "Khaled Bin",
+      last_name: "Salman",
+    }),
+  ];
+  const orders = [
+    {
+      id: "so-1",
+      so_number: "SO-2026-0116",
+      client_id: "new-1782858921783",
+      client_code: "",
+      client_name: "",
+      order_date: "2026-07-02",
+    },
+    {
+      id: "so-2",
+      so_number: "SO-2026-0117",
+      client_id: "new-1782858921783",
+      client_code: "FR-0626-0037",
+      client_name: "Pr Khaled Bin Salman",
+      order_date: "2026-07-03",
+    },
+  ];
+
+  const result = healSalesOrderClientFields(orders, clients);
+
+  assert.equal(result.repaired.length, 1);
+  assert.equal(result.repaired[0]!.order_id, "so-1");
+  assert.equal(result.repaired[0]!.client_name, "Pr Khaled Bin Salman");
+  assert.equal(result.repaired[0]!.client_code, "FR-0626-0037");
+  assert.equal(result.orders[0]!.client_name, "Pr Khaled Bin Salman");
+  assert.equal(result.orders[0]!.client_code, "FR-0626-0037");
+  // Already-populated order untouched.
+  assert.equal(result.orders[1], orders[1]);
+});
+
+test("healSalesOrderClientFields never overwrites populated fields or invents data", () => {
+  const clients = [
+    client({ id: "c-1", code: "FR-0126-0001", first_name: "Ada", last_name: "Lovelace" }),
+  ];
+  const orders = [
+    // Populated name that differs from the clients store stays as-is (repair-only).
+    {
+      id: "so-1",
+      so_number: "SO-1",
+      client_id: "c-1",
+      client_code: "FR-0126-0001",
+      client_name: "Ada Byron",
+      order_date: "2026-01-01",
+    },
+    // Unknown client_id — nothing to repair from.
+    {
+      id: "so-2",
+      so_number: "SO-2",
+      client_id: "missing",
+      client_code: "",
+      client_name: "",
+      order_date: "2026-01-02",
+    },
+    // No client_id at all.
+    {
+      id: "so-3",
+      so_number: "SO-3",
+      client_id: "",
+      client_code: "",
+      client_name: "",
+      order_date: "2026-01-03",
+    },
+  ];
+
+  const result = healSalesOrderClientFields(orders, clients);
+  assert.equal(result.repaired.length, 0);
+  assert.equal(result.orders, orders);
+  assert.equal(result.orders[0]!.client_name, "Ada Byron");
 });
 
 test("fabric receiving section helpers surface unassigned bucket", () => {

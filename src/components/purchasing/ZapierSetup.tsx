@@ -24,6 +24,7 @@ const OUTBOUND_EVENTS = [
   "sales_order.fabric_lines_printed",
   "sales_order.fabric_lines_print_cleared",
   "sales_order.fabric_order_requested",
+  "sales_order.client_fields_healed",
   "fabric_receiving.testing_reset",
   "fabric_receiving.settled",
   "fabric_receiving.defect_reported",

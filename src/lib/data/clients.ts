@@ -1,13 +1,15 @@
 import path from "path";
 import {
+  healSalesOrderClientFields,
   prepareClientsForPersist,
   reconcileOrphanedClients,
   retainClientsLinkedToSalesOrders,
   type OrphanReconciliationResult,
   type PrepareClientsForPersistResult,
+  type SalesOrderClientFieldRepair,
 } from "@/lib/clients/orphan-reconciliation";
 import { ensureDocumentsLoaded, readJsonFile, readJsonFileAsync, saveDocument } from "@/lib/data/document-persistence";
-import { readSalesOrders, readSalesOrdersFresh } from "@/lib/data/sales-orders";
+import { readSalesOrders, readSalesOrdersFresh, writeSalesOrders } from "@/lib/data/sales-orders";
 import type { ClientProfile, ClientsFile } from "@/lib/types/clients";
 
 const CLIENTS_PATH = path.join(process.cwd(), "src/data/clients.json");
@@ -68,26 +70,41 @@ export async function writeClients(data: ClientsFile): Promise<WriteClientsResul
   };
 }
 
+export type ClientDataHealResult = OrphanReconciliationResult & {
+  repaired_orders: SalesOrderClientFieldRepair[];
+};
+
 /**
  * Restore client profiles for any sales-order client_id that is missing from the
- * clients store. Persists when restorals are needed so Clients and Fabric Receiving
- * cannot diverge.
+ * clients store, then fill blank denormalized client_name / client_code on orders
+ * from the clients store (repair-only). Persists when repairs are needed so
+ * Clients, Fabric Receiving, and Print orders cannot diverge on any read path.
  */
-export async function ensureOrphanedClientsReconciled(): Promise<OrphanReconciliationResult> {
+export async function ensureOrphanedClientsReconciled(): Promise<ClientDataHealResult> {
   await ensureDocumentsLoaded(["clients", "sales_orders"]);
   const store = readClients();
-  const result = reconcileOrphanedClients(store.clients, readSalesOrders().orders);
-  if (result.restored.length === 0) {
-    return result;
+  const ordersStore = readSalesOrders();
+  const result = reconcileOrphanedClients(store.clients, ordersStore.orders);
+  if (result.restored.length > 0) {
+    // Persist via raw path — reconcile already applied; avoid double timestamp bumps
+    // when writeClients would re-run the same heal.
+    await persistClientsFile({ ...store, clients: result.clients });
+    console.warn(
+      `[clients] Auto-healed ${result.restored.length} orphaned client profile(s):`,
+      result.restored.map((client) => `${client.code} (${client.id})`).join(", ")
+    );
   }
-  // Persist via raw path — reconcile already applied; avoid double timestamp bumps
-  // when writeClients would re-run the same heal.
-  const saved = await persistClientsFile({ ...store, clients: result.clients });
-  console.warn(
-    `[clients] Auto-healed ${result.restored.length} orphaned client profile(s):`,
-    result.restored.map((client) => `${client.code} (${client.id})`).join(", ")
-  );
-  return { ...result, clients: saved.clients };
+
+  const healed = healSalesOrderClientFields(ordersStore.orders, result.clients);
+  if (healed.repaired.length > 0) {
+    await writeSalesOrders({ ...ordersStore, orders: healed.orders });
+    console.warn(
+      `[clients] Repaired blank client fields on ${healed.repaired.length} sales order(s):`,
+      healed.repaired.map((repair) => `${repair.so_number} → ${repair.client_name}`).join(", ")
+    );
+  }
+
+  return { ...result, repaired_orders: healed.repaired };
 }
 
 /** Guard bulk client saves from dropping profiles that still have sales orders. */

@@ -7,6 +7,7 @@ import {
   redactSalesOrderFabricPrices,
 } from "@/lib/auth/fabric-price-access";
 import { getSessionContext } from "@/lib/auth/session";
+import { healClientDataForRead } from "@/lib/clients/heal-on-read";
 import { formatSupplierUnitPrice } from "@/lib/currency/format";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
@@ -88,6 +89,8 @@ export default async function SalesOrderPrintPage({
   const team =
     teamParam === "receiving" || teamParam === "production" ? teamParam : ("full" as const);
   await ensureDocumentsLoaded(["sales_orders"]);
+  // Same heal as the list read paths — the printed sheet resolves client names for every role.
+  await healClientDataForRead();
   const rawOrder = getSalesOrderById(id);
   if (!rawOrder) notFound();
 

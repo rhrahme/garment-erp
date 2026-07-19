@@ -8,7 +8,8 @@ Sales orders denormalize `client_id`, `client_code`, and `client_name`. Fabric R
 
 1. **Single write gate** — `writeClients()` in `src/lib/data/clients.ts` always runs `prepareClientsForPersist()` (retain linked + heal orphans from order fields) before persisting. UI bulk PUT, API v1 create, and any other caller of `writeClients` share this path.
 2. **Delete guard** — `deleteClientById()` refuses deletion when a fresh sales-orders read still has that `client_id` (HTTP 409).
-3. **Auto-heal on read** — Clients GET and Fabric Receiving overview call `ensureOrphanedClientsReconciled()` so a missing profile is restored append-only from denormalized SO fields.
+3. **Auto-heal on read (all roles, all read paths)** — Clients GET (+ API v1), Fabric Receiving overview + receipts, Sales Orders GET, the Print orders page, and the order print sheet all call `healClientDataForRead()` (`src/lib/clients/heal-on-read.ts`). It restores missing profiles append-only from denormalized SO fields **and** fills blank denormalized `client_name` / `client_code` on orders from the clients store (repair-only, never overwrites populated values), so a client with orders always resolves to a name regardless of role.
+3b. **Warm-cache convergence** — Supabase-backed documents in the in-process cache refresh after 30s (`SUPABASE_CACHE_TTL_MS` in `document-persistence.ts`), so two serverless instances cannot serve different clients/orders snapshots indefinitely. A failed refresh keeps serving the previous snapshot (never downgrades to bundled JSON).
 4. **Unassigned bucket** — Fabric Receiving keeps missing/blank client codes visible under “Unassigned client” instead of hiding them.
 5. **Sync / import** — `scripts/sync-documents-from-supabase.mjs` and ClickUp `applyClickUpImport` retain/heal the same way and never pure-overwrite `clients.json` with a partial list.
 6. **Manual repair** — `node scripts/reconcile-orphan-clients.mjs` (optional `--dry-run`).

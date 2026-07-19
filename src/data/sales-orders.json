@@ -3185,7 +3185,7 @@
             }
           ],
           "needs_replacement": false,
-          "prep_stickers_printed_at": null,
+          "prep_stickers_printed_at": "2026-07-16T16:07:56.430Z",
           "prod_stickers_printed_at": null,
           "replacement_fabric_number": null
         },
@@ -3217,7 +3217,7 @@
             }
           ],
           "needs_replacement": false,
-          "prep_stickers_printed_at": null,
+          "prep_stickers_printed_at": "2026-07-16T16:07:56.430Z",
           "prod_stickers_printed_at": null,
           "replacement_fabric_number": null
         },
@@ -3249,7 +3249,7 @@
             }
           ],
           "needs_replacement": false,
-          "prep_stickers_printed_at": null,
+          "prep_stickers_printed_at": "2026-07-16T16:07:56.430Z",
           "prod_stickers_printed_at": null,
           "replacement_fabric_number": null
         },
@@ -46050,5 +46050,5 @@
       "client_reference": "FR-0226-0025-SO-2026-0095"
     }
   ],
-  "updated_at": "2026-07-16T12:39:49.859Z"
+  "updated_at": "2026-07-16T16:27:38.268Z"
 }

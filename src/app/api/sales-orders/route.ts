@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
 import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server";
 import { requireAuthenticated, canModifySalesOrders } from "@/lib/auth/session";
+import { healClientDataForRead } from "@/lib/clients/heal-on-read";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getClientById } from "@/lib/data/clients";
 import { formatClientDisplayName } from "@/lib/clients/names";
@@ -36,6 +37,8 @@ export async function GET() {
     }
 
     await ensureDocumentsLoaded(["sales_orders"]);
+    // Same heal as Clients / Fabric Receiving reads — every role resolves client names.
+    await healClientDataForRead();
     const store = readSalesOrders();
     const canViewFabricPrices = await resolveFabricPriceAccess(session);
     if (!canViewFabricPrices) {
