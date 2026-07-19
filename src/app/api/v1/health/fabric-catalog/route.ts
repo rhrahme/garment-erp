@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { searchSupplierFabrics } from "@/lib/data/supplier-catalogs";
-import { isSupplierCatalogReady } from "@/lib/sales-orders/fabric-cost";
+import { isSupplierCatalogReady } from "@/lib/sales-orders/fabric-cost.server";
 
 /** Public smoke check — supplier catalog JSON is bundled and Solbiati prices resolve. */
 export async function GET() {

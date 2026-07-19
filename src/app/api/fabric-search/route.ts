@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { redactSupplierFabricPrices } from "@/lib/auth/fabric-price-access";
-import { getSessionContext } from "@/lib/auth/session";
+import { canViewPrices, redactSupplierFabricPrices } from "@/lib/auth/fabric-price-access";
+import { requireAuthenticated } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import { getSupplierByIdFromContactsSync } from "@/lib/data/supplier-contacts";
@@ -94,7 +94,10 @@ function toSearchItem(item: SupplierFabric, manual = false) {
 
 export async function GET(request: Request) {
   await ensureDocumentsLoaded(["supplier_contacts", "custom_fabrics"]);
-  const session = await getSessionContext();
+  const session = await requireAuthenticated();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
   const url = new URL(request.url);
   const query = url.searchParams.get("q")?.trim() ?? "";
   const rawSupplierId = url.searchParams.get("supplier_id")?.trim();
@@ -136,6 +139,8 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json({
-    items: session.canViewFabricListPrices ? items.slice(0, limit) : redactSupplierFabricPrices(items.slice(0, limit)),
+    items: canViewPrices(session)
+      ? items.slice(0, limit)
+      : redactSupplierFabricPrices(items.slice(0, limit)),
   });
 }

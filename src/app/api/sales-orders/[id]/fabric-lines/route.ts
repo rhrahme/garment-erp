@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
+import {
+  canViewPrices,
+  redactFabricLinePrices,
+  redactSalesOrderFabricPrices,
+} from "@/lib/auth/fabric-price-access";
 import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server";
 import { requireAuthenticated, canModifySalesOrders } from "@/lib/auth/session";
 import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
@@ -72,7 +76,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const body = (await request.json()) as FabricLineUpdateInput;
     const result = await updateSalesOrderFabricLine(id, body, {
       updatedBy: session.email,
-      allowPriceEdit: session.canViewFabricListPrices,
+      allowPriceEdit: canViewPrices(session),
     });
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });
@@ -92,7 +96,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       ? result.order
       : redactSalesOrderFabricPrices(result.order);
 
-    return NextResponse.json({ order: safeOrder, updated_line: result.updated_line });
+    const safeUpdatedLine = canViewFabricPrices
+      ? result.updated_line
+      : redactFabricLinePrices(result.updated_line);
+    return NextResponse.json({ order: safeOrder, updated_line: safeUpdatedLine });
   } catch (error) {
     console.error("Failed to update fabric line:", error);
     return NextResponse.json({ error: "Failed to update fabric line." }, { status: 500 });

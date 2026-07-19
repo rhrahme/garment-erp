@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FabricSpecView } from "@/components/fabric-specification/FabricSpecView";
-import { redactSupplierFabricPrices } from "@/lib/auth/fabric-price-access";
+import { canViewPrices, redactSupplierFabricPrices } from "@/lib/auth/fabric-price-access";
 import { getSessionContext } from "@/lib/auth/session";
 import { getBrandsByFabricSourcing } from "@/lib/data/factory-brands";
 import { EUR_TO_SAR, USD_TO_SAR } from "@/lib/currency/config";
@@ -10,7 +10,8 @@ import { getFabricSuppliers, getPriceListItems } from "@/lib/data/queries";
 export default async function FabricSpecificationPage() {
   const session = await getSessionContext();
   const [suppliers, rawItems] = await Promise.all([getFabricSuppliers(), getPriceListItems()]);
-  const items = session.canViewFabricListPrices ? rawItems : redactSupplierFabricPrices(rawItems);
+  const showPrices = canViewPrices(session);
+  const items = showPrices ? rawItems : redactSupplierFabricPrices(rawItems);
 
   const brandsWithData = suppliers.filter((s) =>
     items.some((i) => i.supplier_id === s.id)
@@ -26,7 +27,7 @@ export default async function FabricSpecificationPage() {
       <PageHeader
         title="Fabric Specification"
         description={
-          session.canViewFabricListPrices
+          showPrices
             ? "Supplier fabric specs, list prices, and HS codes — for Fouad Rahme and Fouad production"
             : "Supplier fabric specs and HS codes — list prices are hidden for your account"
         }
@@ -37,7 +38,7 @@ export default async function FabricSpecificationPage() {
         <p className="mt-1 text-blue-800">
           {suppliersWithData} supplier{suppliersWithData !== 1 ? "s" : ""} loaded · {totalItems.toLocaleString()}{" "}
           fabric{totalItems !== 1 ? "s" : ""}
-          {session.canViewFabricListPrices ? (
+          {showPrices ? (
             <>
               {" "}
               with list prices. Original EUR/USD from supplier lists; SAR shown at book rate EUR 1 = SAR{" "}
@@ -57,7 +58,7 @@ export default async function FabricSpecificationPage() {
         </p>
       </div>
 
-      <FabricSpecView suppliers={suppliers} items={items} canViewPrices={session.canViewFabricListPrices} />
+      <FabricSpecView suppliers={suppliers} items={items} canViewPrices={showPrices} />
     </div>
   );
 }

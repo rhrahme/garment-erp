@@ -1918,9 +1918,11 @@ export function SalesOrderForm({
                                   />
                                 </label>
                               </div>
-                              <p className="mt-2 text-xs text-slate-500">
-                                Changing the fabric number re-loads specs and price from the price list when available.
-                              </p>
+                              {!productionMode ? (
+                                <p className="mt-2 text-xs text-slate-500">
+                                  Changing the fabric number re-loads specs and price from the price list when available.
+                                </p>
+                              ) : null}
                               <div className="mt-3 flex flex-wrap gap-2">
                                 <Button
                                   size="sm"

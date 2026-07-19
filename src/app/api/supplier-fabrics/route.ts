@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
+import { canViewPrices, redactSupplierFabricPrices } from "@/lib/auth/fabric-price-access";
+import { requireAuthenticated } from "@/lib/auth/session";
 import { attachLiveSupplierContacts, getAllPriceListItems } from "@/lib/data/supplier-catalogs";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import { getLoroPianaMillLine } from "@/lib/fabric-sourcing/loro-piana-styles";
 
 export async function GET(request: Request) {
+  const session = await requireAuthenticated();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
   const url = new URL(request.url);
   const rawSupplierId = url.searchParams.get("supplier_id")?.trim();
   const supplierId = rawSupplierId ? resolveFabricSupplierId(rawSupplierId) : undefined;
@@ -14,8 +20,7 @@ export async function GET(request: Request) {
     items = items.filter((item) => resolveFabricSupplierId(item.supplier_id) === supplierId);
   }
 
-  return NextResponse.json({
-    items: items.map((item) => ({
+  const responseItems = items.map((item) => ({
       id: item.id,
       supplier_id: item.supplier_id,
       supplier_name: formatFabricSupplierName(
@@ -38,6 +43,10 @@ export async function GET(request: Request) {
       finish: item.finish,
       unit: item.unit,
       unit_price: item.unit_price,
-    })),
+    }));
+  return NextResponse.json({
+    items: canViewPrices(session)
+      ? responseItems
+      : redactSupplierFabricPrices(responseItems),
   });
 }

@@ -7,9 +7,11 @@ import {
   formatFabricCostSummary,
   formatFabricLineSupplierPrice,
   getFabricCostSummary,
+} from "./fabric-cost.ts";
+import {
   isSupplierCatalogReady,
   resolveFabricCostForOrderLines,
-} from "./fabric-cost.ts";
+} from "./fabric-cost.server.ts";
 import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
 function line(overrides: Partial<SalesOrderFabricLine> = {}): SalesOrderFabricLine {

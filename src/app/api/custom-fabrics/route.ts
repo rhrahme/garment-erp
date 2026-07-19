@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { redactSupplierFabricPrice, redactSupplierFabricPrices } from "@/lib/auth/fabric-price-access";
+import {
+  canViewPrices,
+  redactPriceFields,
+  redactSupplierFabricPrice,
+  redactSupplierFabricPrices,
+} from "@/lib/auth/fabric-price-access";
 import { requireAuthenticated } from "@/lib/auth/session";
 import {
   createCustomFabric,
@@ -13,7 +18,7 @@ import { notifyIntegration } from "@/lib/integrations";
 import type { CreateCustomFabricInput, CustomFabric } from "@/lib/types/custom-fabrics";
 
 function redactCustomFabric(fabric: CustomFabric): CustomFabric {
-  return { ...fabric, unit_price: null, currency: null };
+  return redactPriceFields(fabric);
 }
 
 export async function GET() {
@@ -27,7 +32,7 @@ export async function GET() {
     const store = readCustomFabrics();
     const fabrics = listCustomFabricsAsSupplierFabrics(store);
     return NextResponse.json({
-      fabrics: session.canViewFabricListPrices ? fabrics : redactSupplierFabricPrices(fabrics),
+      fabrics: canViewPrices(session) ? fabrics : redactSupplierFabricPrices(fabrics),
       next_fabric_number: peekNextCustomFabricNumber(store.fabrics),
       updated_at: store.updated_at,
     });
@@ -45,7 +50,7 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as CreateCustomFabricInput;
-    const canSetPrice = session.canViewFabricListPrices;
+    const canSetPrice = canViewPrices(session);
     const validated = validateCreateCustomFabricInput({
       ...body,
       // Non-admins cannot set list price via the session UI/API.

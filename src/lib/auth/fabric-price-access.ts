@@ -50,24 +50,49 @@ export function isFabricPriceAccessCodeValid(code: string): boolean {
   return isInvoiceAmountsPasswordValid(normalized);
 }
 
+/** Single role gate for every price-bearing UI and API surface. */
+export function canViewPrices(session: SessionContext): boolean {
+  return session.isAdmin && !session.isClientManager && !session.isTaskOperator;
+}
+
 /** Admins who may use the reveal toggle (prices stay hidden until unlocked). */
 export function canRevealFabricPrices(session: SessionContext): boolean {
-  if (session.isClientManager || session.isTaskOperator) return false;
-  return session.isSuperAdmin || session.isAdmin || session.canViewFabricListPrices;
+  return canViewPrices(session);
 }
 
 export function hasFabricPriceAccess(
   session: SessionContext,
   unlockedCookie: string | undefined | null
 ): boolean {
-  if (session.isClientManager || session.isTaskOperator) return false;
-  if (!canRevealFabricPrices(session)) return false;
+  if (!canViewPrices(session)) return false;
   if (unlockedCookie === "1" && isFabricPriceUnlockConfigured()) return true;
   return false;
 }
 
+const PRICE_FIELD_NAMES = new Set([
+  "unit_price",
+  "total_amount",
+  "subtotal",
+  "fabric_cost",
+  "fabric_cost_summary",
+  "currency",
+]);
+
+/** Recursively omit price-bearing keys so restricted API payloads contain no price fields. */
+export function redactPriceFields<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((item) => redactPriceFields(item)) as T;
+  }
+  if (value == null || typeof value !== "object") return value;
+
+  const safeEntries = Object.entries(value as Record<string, unknown>)
+    .filter(([key]) => !PRICE_FIELD_NAMES.has(key))
+    .map(([key, nested]) => [key, redactPriceFields(nested)]);
+  return Object.fromEntries(safeEntries) as T;
+}
+
 export function redactSupplierFabricPrice<T extends { unit_price?: number | null }>(item: T): T {
-  return { ...item, unit_price: null };
+  return redactPriceFields(item);
 }
 
 export function redactSupplierFabricPrices<T extends { unit_price?: number | null }>(items: T[]): T[] {
@@ -77,7 +102,7 @@ export function redactSupplierFabricPrices<T extends { unit_price?: number | nul
 export function redactFabricLinePrices<T extends Pick<SalesOrderFabricLine, "unit_price">>(
   line: T
 ): T {
-  return { ...line, unit_price: null };
+  return redactPriceFields(line);
 }
 
 export function redactSalesOrderFabricPrices(order: SalesOrder): SalesOrder {
@@ -90,13 +115,9 @@ export function redactSalesOrderFabricPrices(order: SalesOrder): SalesOrder {
 export function redactPurchaseOrderLinePrices<T extends Pick<PurchaseOrderLine, "unit_price">>(
   line: T
 ): T {
-  return { ...line, unit_price: null as unknown as number };
+  return redactPriceFields(line);
 }
 
 export function redactPurchaseOrderPrices(po: PurchaseOrder): PurchaseOrder {
-  return {
-    ...po,
-    total_amount: null as unknown as number,
-    lines: po.lines?.map(redactPurchaseOrderLinePrices),
-  };
+  return redactPriceFields(po);
 }

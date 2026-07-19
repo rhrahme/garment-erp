@@ -193,6 +193,7 @@ export function ProductionOrderAddFabrics({
                   setPendingFabric(null);
                 }}
                 onSelect={selectFabric}
+                canViewFabricPrices={!productionMode}
                 allowManualEntry={fabricBrandAllowsManualEntry(selectedBrand.has_price_list, selectedBrandId)}
                 label="Fabric number"
                 inputClassName="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono md:max-w-md"

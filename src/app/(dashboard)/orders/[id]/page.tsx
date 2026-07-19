@@ -11,6 +11,7 @@ import {
   FABRIC_PRICE_UNLOCK_COOKIE,
   canRevealFabricPrices,
   hasFabricPriceAccess,
+  redactPurchaseOrderPrices,
   redactSalesOrderFabricPrices,
 } from "@/lib/auth/fabric-price-access";
 import { getSessionContext } from "@/lib/auth/session";
@@ -21,7 +22,10 @@ import { getSalesOrderByIdFresh, isReadyMadeSalesOrder } from "@/lib/data/sales-
 import { ensureFabricOrdersLoaded, listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 import { getFabricPosForSalesOrder } from "@/lib/sales-orders/line-cross-reference";
 import { activePatternJobsForLine } from "@/lib/pattern/sync-guard";
-import { resolveFabricCostForOrderLines } from "@/lib/sales-orders/fabric-cost";
+import {
+  resolveFabricCostForOrderLines,
+  resolveFabricUnitPricesForOrderLines,
+} from "@/lib/sales-orders/fabric-cost.server";
 import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
 import { detectPatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mismatch";
 import { getRemovedSalesOrderRedirectForKey } from "@/lib/sales-orders/removed-order-redirects";
@@ -44,7 +48,7 @@ export default async function SalesOrderDetailPage({
   await ensureFabricOrdersLoaded();
   const rawOrder = await getSalesOrderByIdFresh(id);
   if (!rawOrder) notFound();
-  const fabricPos = getFabricPosForSalesOrder(rawOrder, listStoredFabricOrders());
+  const rawFabricPos = getFabricPosForSalesOrder(rawOrder, listStoredFabricOrders());
   const patternJobs = (await readPatternJobsFresh()).jobs;
   const patternMismatch = detectPatternSalesOrderMismatch(rawOrder, patternJobs);
   const patternJobsByLineId = Object.fromEntries(
@@ -60,7 +64,12 @@ export default async function SalesOrderDetailPage({
     cookieStore.get(FABRIC_PRICE_UNLOCK_COOKIE)?.value
   );
   const showFabricCostToAdmin = canRevealFabricPrices(session);
-  const order = canViewFabricPrices ? rawOrder : redactSalesOrderFabricPrices(rawOrder);
+  const order = canViewFabricPrices
+    ? { ...rawOrder, fabric_lines: resolveFabricUnitPricesForOrderLines(rawOrder.fabric_lines) }
+    : redactSalesOrderFabricPrices(rawOrder);
+  const fabricPos = canViewFabricPrices
+    ? rawFabricPos
+    : rawFabricPos.map(redactPurchaseOrderPrices);
   const existingInvoice = await getCustomerInvoiceBySalesOrderIdFresh(order.id);
   const fabricTotals = getFabricTotalsSummary(order.fabric_lines);
   const fabricCostResult =
