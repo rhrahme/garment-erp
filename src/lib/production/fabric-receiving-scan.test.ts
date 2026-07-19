@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   fabricReceiveRescanHint,
   fabricReceivingStationError,
+  planFabricStationScan,
 } from "./fabric-receiving-scan.ts";
 import type { FabricReceipt } from "../types/fabric-receipts.ts";
 
@@ -91,4 +92,94 @@ test("fabricReceivingStationError routes wash/soak → dry → iron correctly", 
     fabricReceivingStationError(washing, "iron"),
     "Finish wash and hang to dry first — scan at Wash."
   );
+});
+
+test("planFabricStationScan: iron scan on received fabric starts iron-only prep", () => {
+  const plan = planFabricStationScan(receipt({ status: "received" }), "iron");
+  assert.deepEqual(plan, { kind: "start_prep", prep_type: "iron_only" });
+});
+
+test("planFabricStationScan: iron scan advances drying → ironing and ironing → done", () => {
+  assert.deepEqual(
+    planFabricStationScan(
+      receipt({ status: "fabric_prep", fabric_prep_type: "wash_iron", fabric_prep_step: "drying" }),
+      "iron"
+    ),
+    { kind: "advance", from: "drying" }
+  );
+  assert.deepEqual(
+    planFabricStationScan(
+      receipt({ status: "fabric_prep", fabric_prep_type: "wash_iron", fabric_prep_step: "iron" }),
+      "iron"
+    ),
+    { kind: "advance", from: "iron" }
+  );
+});
+
+test("planFabricStationScan: iron scan on washing fabric rejects with accurate message", () => {
+  const plan = planFabricStationScan(
+    receipt({ status: "fabric_prep", fabric_prep_type: "wash_iron", fabric_prep_step: "wash" }),
+    "iron"
+  );
+  assert.deepEqual(plan, {
+    kind: "reject",
+    message: "Finish wash and hang to dry first — scan at Wash.",
+  });
+
+  const soaking = planFabricStationScan(
+    receipt({ status: "fabric_prep", fabric_prep_type: "soak_iron", fabric_prep_step: "soak" }),
+    "iron"
+  );
+  assert.deepEqual(soaking, {
+    kind: "reject",
+    message: "Finish soak and hang to dry first — scan at Soak.",
+  });
+});
+
+test("planFabricStationScan: wash/soak start on received and advance to drying", () => {
+  assert.deepEqual(planFabricStationScan(receipt({ status: "received" }), "wash"), {
+    kind: "start_prep",
+    prep_type: "wash_iron",
+  });
+  assert.deepEqual(planFabricStationScan(receipt({ status: "received" }), "soak"), {
+    kind: "start_prep",
+    prep_type: "soak_iron",
+  });
+  assert.deepEqual(
+    planFabricStationScan(
+      receipt({ status: "fabric_prep", fabric_prep_type: "wash_iron", fabric_prep_step: "wash" }),
+      "wash"
+    ),
+    { kind: "advance", from: "wash" }
+  );
+  assert.deepEqual(
+    planFabricStationScan(
+      receipt({ status: "fabric_prep", fabric_prep_type: "soak_iron", fabric_prep_step: "soak" }),
+      "soak"
+    ),
+    { kind: "advance", from: "soak" }
+  );
+});
+
+test("planFabricStationScan: wash scan on drying fabric points to Iron, not a dead end", () => {
+  const plan = planFabricStationScan(
+    receipt({ status: "fabric_prep", fabric_prep_type: "wash_iron", fabric_prep_step: "drying" }),
+    "wash"
+  );
+  assert.deepEqual(plan, {
+    kind: "reject",
+    message: "Washing is done — it's drying. Scan at Iron to start ironing.",
+  });
+});
+
+test("planFabricStationScan: only a truly missing receipt reports not-received", () => {
+  const plan = planFabricStationScan(undefined, "iron");
+  assert.equal(plan.kind, "reject");
+  assert.match((plan as { message: string }).message, /not received yet/);
+
+  const handedOff = planFabricStationScan(receipt({ status: "handed_off" }), "iron");
+  assert.deepEqual(handedOff, {
+    kind: "reject",
+    message: "Fabric prep is complete — this cut is on Production now.",
+  });
 });

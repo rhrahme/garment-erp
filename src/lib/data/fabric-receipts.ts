@@ -87,6 +87,21 @@ export function getFabricReceiptByLineId(lineId: string): FabricReceipt | undefi
   return readFabricReceiptsFresh().receipts.find((receipt) => receipt.sales_order_line_id === lineId);
 }
 
+/**
+ * Receipt lookup that never trusts a cache miss. The warm in-process snapshot can
+ * lag Supabase by up to the cache TTL — or be empty on a cold instance — so a
+ * fabric received seconds ago via another instance would look "not received".
+ * On a miss, force one authoritative read (which also re-warms the cache) before
+ * concluding the receipt does not exist. Scans are low-frequency, so the extra
+ * read on the miss path is cheap.
+ */
+export async function getFabricReceiptByLineIdFresh(lineId: string): Promise<FabricReceipt | undefined> {
+  const cached = getFabricReceiptByLineId(lineId);
+  if (cached) return cached;
+  const fresh = await readFabricReceiptsFreshAsync();
+  return fresh.receipts.find((receipt) => receipt.sales_order_line_id === lineId);
+}
+
 export function getFabricReceiptById(id: string): FabricReceipt | undefined {
   return readFabricReceipts().receipts.find((receipt) => receipt.id === id);
 }

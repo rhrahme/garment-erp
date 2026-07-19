@@ -1,4 +1,5 @@
 import type { FabricReceipt } from "@/lib/types/fabric-receipts";
+import type { FabricPrepStep, FabricPrepType } from "@/lib/types/production";
 import type { ScanStation } from "@/lib/production/stage-scan";
 
 /** Fabric receiving stations — operator picks the path by which button is selected. */
@@ -55,4 +56,63 @@ export function fabricReceivingStationError(
     return `Finish ${where.toLowerCase()} and hang to dry first — scan at ${where}.`;
   }
   return null;
+}
+
+export type FabricPrepStation = "wash" | "soak" | "iron";
+
+export type FabricStationScanPlan =
+  | { kind: "start_prep"; prep_type: FabricPrepType }
+  | { kind: "advance"; from: FabricPrepStep }
+  | { kind: "reject"; message: string };
+
+const STATION_START_PREP_TYPE: Record<FabricPrepStation, FabricPrepType> = {
+  wash: "wash_iron",
+  soak: "soak_iron",
+  iron: "iron_only",
+};
+
+/**
+ * Pure state machine for a Wash/Soak/Iron scan against the receipt's CURRENT state.
+ * The caller (stage-scan) executes the plan and words the confirmation messages.
+ * Reject messages always describe the actual state — a received fabric is never
+ * reported as "not received"; call sites must pass a receipt looked up fresh.
+ */
+export function planFabricStationScan(
+  receipt: FabricReceipt | undefined,
+  station: FabricPrepStation
+): FabricStationScanPlan {
+  if (!receipt) {
+    return {
+      kind: "reject",
+      message: "Fabric not received yet — scan at Receive station first.",
+    };
+  }
+  if (receipt.status === "handed_off") {
+    return {
+      kind: "reject",
+      message: "Fabric prep is complete — this cut is on Production now.",
+    };
+  }
+
+  const stationError = fabricReceivingStationError(receipt, station);
+  if (stationError) {
+    return { kind: "reject", message: stationError };
+  }
+
+  if (receipt.status === "received") {
+    // First scan at any prep station starts that path — Iron starts iron-only,
+    // matching the one-tap "Iron only" button.
+    return { kind: "start_prep", prep_type: STATION_START_PREP_TYPE[station] };
+  }
+
+  if (receipt.status === "fabric_prep" && receipt.fabric_prep_step) {
+    // stationError above guarantees the step belongs to this station
+    // (wash→wash, soak→soak, iron→drying|iron).
+    return { kind: "advance", from: receipt.fabric_prep_step };
+  }
+
+  return {
+    kind: "reject",
+    message: `Fabric is at ${receipt.status} with no prep step — use the work list buttons.`,
+  };
 }

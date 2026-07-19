@@ -1,4 +1,4 @@
-import { getFabricReceiptByLineId } from "@/lib/data/fabric-receipts";
+import { getFabricReceiptByLineId, getFabricReceiptByLineIdFresh } from "@/lib/data/fabric-receipts";
 import { getProductionWorkOrderBySticker, readProductionWorkOrders } from "@/lib/data/production-work-orders";
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import {
@@ -19,8 +19,9 @@ import {
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import {
   fabricReceiveRescanHint,
-  fabricReceivingStationError,
   isFabricReceivingStation,
+  planFabricStationScan,
+  type FabricPrepStation,
 } from "@/lib/production/fabric-receiving-scan";
 import { getGarmentPieces } from "@/lib/sales-orders/label-codes";
 import { fabricCutCodesMatch } from "@/lib/production/scan-input";
@@ -137,76 +138,39 @@ export async function scanAtStation(scanInput: string, station: ScanStation): Pr
     };
   }
 
-  const receipt = getFabricReceiptByLineId(line.id);
-  if (!receipt && station !== "cutting" && station !== "sewing") {
-    throw new Error("Fabric not received yet — scan at Receive station first.");
-  }
+  if (station === "wash" || station === "soak" || station === "iron") {
+    // Fresh lookup — a stale/cold instance cache must never report a received
+    // fabric as "not received" (the receipt may have been written via another
+    // instance seconds ago).
+    const receipt = await getFabricReceiptByLineIdFresh(line.id);
+    const plan = planFabricStationScan(receipt, station as FabricPrepStation);
 
-  if (station === "wash") {
-    if (!receipt) throw new Error("Fabric receipt not found.");
-    const stationError = fabricReceivingStationError(receipt, "wash");
-    if (stationError) throw new Error(stationError);
-    if (receipt.status === "received") {
-      const updated = await startFabricReceiptPrep(receipt.id, "wash_iron");
-      return {
-        ...base,
-        message: `Wash started — ${line.fabric_number}. When it comes out of the machine: scan again at Wash to hang to dry (or tap Finish wash → hang to dry).`,
-        receipt: updated,
-        notice: "advanced",
-      };
+    if (plan.kind === "reject") {
+      throw new Error(plan.message);
     }
-    if (receipt.status === "fabric_prep" && receipt.fabric_prep_step === "wash") {
-      const { receipt: updated } = await advanceFabricReceipt(receipt.id);
-      return {
-        ...base,
-        message: `Wash done — hung to dry (${line.fabric_number}). Station switched to Iron — scan at Iron when it's dry to start ironing.`,
-        receipt: updated,
-        notice: "advanced",
-      };
-    }
-    throw new Error(`Fabric is at ${receipt.status} — cannot scan wash now.`);
-  }
 
-  if (station === "soak") {
-    if (!receipt) throw new Error("Fabric receipt not found.");
-    const stationError = fabricReceivingStationError(receipt, "soak");
-    if (stationError) throw new Error(stationError);
-    if (receipt.status === "received") {
-      const updated = await startFabricReceiptPrep(receipt.id, "soak_iron");
-      return {
-        ...base,
-        message: `Soak started — ${line.fabric_number}. When it comes out of the bowl: scan again at Soak to hang to dry (or tap Finish soak → hang to dry).`,
-        receipt: updated,
-        notice: "advanced",
-      };
+    if (plan.kind === "start_prep") {
+      const updated = await startFabricReceiptPrep(receipt!.id, plan.prep_type);
+      const message =
+        station === "wash"
+          ? `Wash started — ${line.fabric_number}. When it comes out of the machine: scan again at Wash to hang to dry (or tap Finish wash → hang to dry).`
+          : station === "soak"
+            ? `Soak started — ${line.fabric_number}. When it comes out of the bowl: scan again at Soak to hang to dry (or tap Finish soak → hang to dry).`
+            : `Ironing started — ${line.fabric_number} (iron only). Scan again at Iron when done.`;
+      return { ...base, message, receipt: updated, notice: "advanced" };
     }
-    if (receipt.status === "fabric_prep" && receipt.fabric_prep_step === "soak") {
-      const { receipt: updated } = await advanceFabricReceipt(receipt.id);
-      return {
-        ...base,
-        message: `Soak done — hung to dry (${line.fabric_number}). Station switched to Iron — scan at Iron when it's dry to start ironing.`,
-        receipt: updated,
-        notice: "advanced",
-      };
-    }
-    throw new Error(`Fabric is at ${receipt.status} — cannot scan soak now.`);
-  }
 
-  if (station === "iron") {
-    if (!receipt) throw new Error("Fabric receipt not found.");
-    const stationError = fabricReceivingStationError(receipt, "iron");
-    if (stationError) throw new Error(stationError);
-    if (receipt.status === "received") {
-      const updated = await startFabricReceiptPrep(receipt.id, "iron_only");
+    // plan.kind === "advance" — second scan for the current step.
+    const { receipt: updated, work_orders } = await advanceFabricReceipt(receipt!.id);
+    if (plan.from === "wash" || plan.from === "soak") {
       return {
         ...base,
-        message: `Ironing started — ${line.fabric_number}. Scan again at Iron when done.`,
+        message: `${plan.from === "wash" ? "Wash" : "Soak"} done — hung to dry (${line.fabric_number}). Station switched to Iron — scan at Iron when it's dry to start ironing.`,
         receipt: updated,
         notice: "advanced",
       };
     }
-    if (receipt.status === "fabric_prep" && receipt.fabric_prep_step === "drying") {
-      const { receipt: updated } = await advanceFabricReceipt(receipt.id);
+    if (plan.from === "drying") {
       return {
         ...base,
         message: `Dry — ironing started (${line.fabric_number}). Scan again at Iron when ironing is done.`,
@@ -214,22 +178,19 @@ export async function scanAtStation(scanInput: string, station: ScanStation): Pr
         notice: "advanced",
       };
     }
-    if (receipt.status === "fabric_prep" && receipt.fabric_prep_step === "iron") {
-      const { receipt: updated, work_orders } = await advanceFabricReceipt(receipt.id);
-      const pieceNames = getGarmentPieces(line.garment_type);
-      const message =
-        pieceNames.length > 1
-          ? `Ironing complete — stick ${work_orders.map((wo) => wo.piece_name).join(" + ") || pieceNames.join(" + ")} labels from the cutting pack, then scan at Cutting.`
-          : `Ironing complete — ready for cutting. Scan the same fabric cut sticker at Cutting.`;
-      return {
-        ...base,
-        message,
-        receipt: updated,
-        work_order: work_orders[0],
-        notice: "advanced",
-      };
-    }
-    throw new Error(`Fabric is at ${receipt.status}/${receipt.fabric_prep_step ?? "—"} — finish wash or soak first if needed.`);
+    // plan.from === "iron" — prep finished, handed off to cutting.
+    const pieceNames = getGarmentPieces(line.garment_type);
+    const message =
+      pieceNames.length > 1
+        ? `Ironing complete — stick ${work_orders.map((wo) => wo.piece_name).join(" + ") || pieceNames.join(" + ")} labels from the cutting pack, then scan at Cutting.`
+        : `Ironing complete — ready for cutting. Scan the same fabric cut sticker at Cutting.`;
+    return {
+      ...base,
+      message,
+      receipt: updated,
+      work_order: work_orders[0],
+      notice: "advanced",
+    };
   }
 
   const workOrder = getProductionWorkOrderBySticker(sticker.code);
@@ -369,7 +330,9 @@ export async function scanAtFabricReceivingStation(
     throw new Error("Sticker code not recognized — check client + production code on the label.");
   }
 
-  const receipt = getFabricReceiptByLineId(lookup.line.id);
+  // Fresh lookup — also re-warms the receipts cache so the station handlers
+  // inside scanAtStation see the same authoritative state.
+  const receipt = await getFabricReceiptByLineIdFresh(lookup.line.id);
   const hasProductionWork =
     readProductionWorkOrders().work_orders.some(
       (workOrder) => workOrder.sales_order_line_id === lookup.line.id
