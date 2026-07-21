@@ -15,6 +15,7 @@ import {
 } from "@/lib/production/fabric-prep";
 import {
   isFabricReceivingFloorLine,
+  isFabricReceivingOrderActivated,
   isSalesOrderFabricReceivingSettled,
   resolveFabricLineReceiveStatus,
 } from "@/lib/production/fabric-receiving-floor";
@@ -260,13 +261,24 @@ export async function listFabricReceivingOverview(
     if (!isActiveSalesOrder(order)) continue;
     if (order.fabric_lines.length === 0) continue;
 
+    const lineStatuses = new Map(
+      order.fabric_lines.map((line) => {
+        const receipt = receiptsByLineId.get(line.id);
+        const lineWorkOrders = workOrdersByLine.get(line.id) ?? [];
+        return [line.id, resolveFabricLineReceiveStatus(receipt, lineWorkOrders)] as const;
+      })
+    );
+    const orderActivated = isFabricReceivingOrderActivated(order, lineStatuses);
     const lines: FabricReceivingLineRow[] = [];
 
     order.fabric_lines.forEach((line, index) => {
       const receipt = receiptsByLineId.get(line.id);
       const lineWorkOrders = workOrdersByLine.get(line.id) ?? [];
-      const status = resolveFabricLineReceiveStatus(receipt, lineWorkOrders);
-      if (filter === "actionable" && !isFabricReceivingFloorLine(status, order, line)) {
+      const status = lineStatuses.get(line.id) ?? "pending";
+      if (
+        filter === "actionable" &&
+        !isFabricReceivingFloorLine(status, order, line, { orderActivated })
+      ) {
         return;
       }
 
@@ -318,13 +330,6 @@ export async function listFabricReceivingOverview(
 
     if (lines.length === 0) continue;
 
-    const lineStatuses = new Map(
-      order.fabric_lines.map((line) => {
-        const receipt = receiptsByLineId.get(line.id);
-        const lineWorkOrders = workOrdersByLine.get(line.id) ?? [];
-        return [line.id, resolveFabricLineReceiveStatus(receipt, lineWorkOrders)] as const;
-      })
-    );
     const orderWorkOrders = order.fabric_lines.flatMap(
       (line) => workOrdersByLine.get(line.id) ?? []
     );

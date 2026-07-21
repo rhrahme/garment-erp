@@ -6,6 +6,7 @@ import {
 } from "@/lib/fabric-sourcing/supplier-email-queue";
 import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 import { isFabricOrderPending } from "@/lib/fabric-sourcing/fabric-order-line-status";
+import { listSalesOrderFabricLinesMissingPos } from "@/lib/sales-orders/line-cross-reference";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 import type { SalesOrder, SalesOrderStatus } from "@/lib/types/sales-orders";
 
@@ -43,9 +44,12 @@ function last7DaysCutoff(referenceDate = new Date()): string {
   return cutoff.toISOString().slice(0, 10);
 }
 
-export function getFabricPosBlockReason(order: SalesOrder): string | null {
-  if (order.status !== "open") {
-    return order.fabric_po_ids.length > 0 ? "POs already exist" : "Order is not open";
+export function getFabricPosBlockReason(
+  order: SalesOrder,
+  fabricPos: PurchaseOrder[] = []
+): string | null {
+  if (order.status !== "open" && order.status !== "fabric_pos_created") {
+    return "Order is not open";
   }
   if (order.fabric_lines.length === 0) {
     return "No fabric lines";
@@ -53,10 +57,13 @@ export function getFabricPosBlockReason(order: SalesOrder): string | null {
   if (!order.delivery_destination) {
     return "Set ship destination first";
   }
-  if (order.fabric_po_ids.length > 0) {
+
+  const missingLines = listSalesOrderFabricLinesMissingPos(order.fabric_lines, fabricPos);
+  if (missingLines.length === 0) {
     return "POs already exist";
   }
-  const pendingReplacements = order.fabric_lines.filter((line) => line.needs_replacement);
+
+  const pendingReplacements = missingLines.filter((line) => line.needs_replacement);
   if (pendingReplacements.length > 0) {
     return `Pick replacements for ${pendingReplacements.map((line) => line.fabric_number).join(", ")}`;
   }
@@ -83,6 +90,10 @@ function orderNeedsFabricAction(
     return true;
   }
   if (order.status === "fabric_pos_created") {
+    const pos = fabricOrdersBySalesOrderId.get(order.id) ?? [];
+    if (listSalesOrderFabricLinesMissingPos(order.fabric_lines, pos).length > 0) {
+      return true;
+    }
     return orderHasPendingSupplierEmails(order, fabricOrdersBySalesOrderId);
   }
   return false;
@@ -103,7 +114,8 @@ function toRow(
   order: SalesOrder,
   fabricOrdersBySalesOrderId: Map<string, PurchaseOrder[]>
 ): TodaysFabricOrderRow {
-  const blockReason = getFabricPosBlockReason(order);
+  const fabricPos = fabricOrdersBySalesOrderId.get(order.id) ?? [];
+  const blockReason = getFabricPosBlockReason(order, fabricPos);
   const replacementFabrics = order.fabric_lines
     .filter((line) => line.needs_replacement)
     .map((line) => line.fabric_number);
@@ -121,7 +133,7 @@ function toRow(
     needs_replacement: replacementFabrics.length > 0,
     replacement_fabrics: replacementFabrics,
     order_date: order.order_date,
-    can_create_pos: order.status === "open" && blockReason === null,
+    can_create_pos: blockReason === null,
     block_reason: blockReason,
   };
 }

@@ -26,7 +26,6 @@ import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import { ProductionOrderAddFabrics } from "@/components/orders/ProductionOrderAddFabrics";
 import { OrderFabricLineEditor } from "@/components/orders/OrderFabricLineEditor";
 import { OrderFabricLineRemove } from "@/components/orders/OrderFabricLineRemove";
-import { canAppendFabricLines, canEditFabricLines, fabricLineEditBlockedReason } from "@/lib/sales-orders/fabric-lines-rules";
 import {
   buildSoArticleMapFromFabricLines,
   formatFabricLineArticle,
@@ -35,6 +34,7 @@ import {
 } from "@/lib/sales-orders/label-codes";
 import {
   buildSoFabricLineEmailStatus,
+  listSalesOrderFabricLinesMissingPos,
   salesOrderFabricLineAnchor,
   summarizeSoFabricLineEmailStatus,
   supplierEmailsHref,
@@ -52,6 +52,7 @@ import {
   type FabricLineSortKey,
   type FabricLineSortState,
 } from "@/lib/sales-orders/fabric-line-sort";
+import { canAppendFabricLines, canEditFabricLines, canMutateSalesOrderFabricLine, fabricLineEditBlockedReason } from "@/lib/sales-orders/fabric-lines-rules";
 
 export type SalesOrderViewMode = "fabric_order" | "production" | "sales";
 
@@ -185,6 +186,13 @@ export function SalesOrderActions({
     [liveOrder.fabric_lines, fabricPos, showSupplierEmailColumn]
   );
 
+  const unorderedFabricLines = useMemo(
+    () => listSalesOrderFabricLinesMissingPos(liveOrder.fabric_lines, fabricPos),
+    [liveOrder.fabric_lines, fabricPos]
+  );
+  const hasUnorderedFabricLines =
+    liveOrder.fabric_po_ids.length > 0 && unorderedFabricLines.length > 0;
+
   const supplierEmailsLink = supplierEmailsHref(liveOrder.id);
   const hasPartialSupplierEmails =
     fabricLineEmailSummary != null &&
@@ -193,7 +201,8 @@ export function SalesOrderActions({
   const allSupplierEmailsSent =
     fabricLineEmailSummary != null &&
     fabricLineEmailSummary.pending === 0 &&
-    fabricLineEmailSummary.sent > 0;
+    fabricLineEmailSummary.sent > 0 &&
+    !hasUnorderedFabricLines;
 
   const handleLineSort = useCallback((key: string) => {
     setLineSort((prev) => nextFabricLineSort(prev, key as FabricLineSortKey));
@@ -211,6 +220,11 @@ export function SalesOrderActions({
   const fabricLinesEditable = canEditFabricLines(liveOrder);
   const fabricEditBlockedReason = fabricLineEditBlockedReason(liveOrder);
   const fabricsEditable = showFabricInput && fabricLinesEditable;
+  const showPerLineFabricActions = showFabricInput && canAppendFabricLines(liveOrder);
+
+  function isFabricLineMutable(line: SalesOrderFabricLine): boolean {
+    return showFabricInput && canMutateSalesOrderFabricLine(liveOrder, line, fabricPos);
+  }
 
   function handleLineUpdated(updatedLine: SalesOrderFabricLine) {
     setLiveOrder((prev) => ({
@@ -425,6 +439,11 @@ export function SalesOrderActions({
                   : "Edit fabric number, supplier, garment type, or meters on existing lines."}
               </p>
             )}
+            {!fabricsEditable && showPerLineFabricActions && hasUnorderedFabricLines && (
+              <p className="mt-1 text-xs text-slate-500">
+                New fabric lines can be edited until you create their supplier fabric orders.
+              </p>
+            )}
             {effectiveViewMode === "production" && !isTaskOperator && (
               <p className="mt-1 text-xs text-slate-500">
                 Edit fabrics on the Fabric Orders tab. Multi-piece garments (e.g. suit) show one line with multiple piece
@@ -436,20 +455,30 @@ export function SalesOrderActions({
                 View fabrics and use the print buttons above for A4 sheets and sticker rolls.
               </p>
             )}
-            {!fabricsEditable && fabricEditBlockedReason && (
+            {!fabricsEditable && !hasUnorderedFabricLines && fabricEditBlockedReason && (
               <p className="mt-1 text-xs text-amber-800">{fabricEditBlockedReason}</p>
             )}
             {showSupplierEmailColumn && fabricLineEmailSummary && (
               <div
                 className={`mt-3 rounded-lg border px-3 py-2 text-sm ${
-                  hasPartialSupplierEmails
+                  hasUnorderedFabricLines || hasPartialSupplierEmails
                     ? "border-amber-200 bg-amber-50 text-amber-900"
                     : allSupplierEmailsSent
                       ? "border-emerald-200 bg-emerald-50 text-emerald-900"
                       : "border-slate-200 bg-slate-50 text-slate-700"
                 }`}
               >
-                {hasPartialSupplierEmails ? (
+                {hasUnorderedFabricLines ? (
+                  <p>
+                    <span className="font-medium">
+                      {unorderedFabricLines.length} fabric line
+                      {unorderedFabricLines.length === 1 ? "" : "s"} not yet ordered from suppliers
+                    </span>
+                    {" — "}
+                    create supplier fabric orders for the new article
+                    {unorderedFabricLines.length === 1 ? "" : "s"}, then send the email.
+                  </p>
+                ) : hasPartialSupplierEmails ? (
                   <p>
                     <span className="font-medium">
                       {fabricLineEmailSummary.sent} of{" "}
@@ -673,7 +702,7 @@ export function SalesOrderActions({
                       />
                     ) : null}
                     {showSupplierEmailColumn ? <th className="px-3 py-2">Supplier email</th> : null}
-                    {fabricsEditable ? <th className="px-3 py-2 w-28" /> : null}
+                    {showPerLineFabricActions ? <th className="px-3 py-2 w-28" /> : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -749,24 +778,26 @@ export function SalesOrderActions({
                           <FabricLineSupplierEmailCell status={fabricLineEmailById.get(line.id)} />
                         </td>
                       ) : null}
-                      {fabricsEditable ? (
+                      {showPerLineFabricActions ? (
                         <td className="px-3 py-2">
-                          <div className="flex flex-col items-end gap-2">
-                            <OrderFabricLineEditor
-                              orderId={liveOrder.id}
-                              line={line}
-                              productionMode={isClientManager}
-                              onLineUpdated={handleLineUpdated}
-                            />
-                            <OrderFabricLineRemove
-                              orderId={liveOrder.id}
-                              line={line}
-                              productionMode={isClientManager}
-                              patternMismatch={patternMismatch}
-                              patternJobsForLine={patternJobsByLineId[line.id] ?? 0}
-                              onLineRemoved={handleLineRemoved}
-                            />
-                          </div>
+                          {isFabricLineMutable(line) ? (
+                            <div className="flex flex-col items-end gap-2">
+                              <OrderFabricLineEditor
+                                orderId={liveOrder.id}
+                                line={line}
+                                productionMode={isClientManager}
+                                onLineUpdated={handleLineUpdated}
+                              />
+                              <OrderFabricLineRemove
+                                orderId={liveOrder.id}
+                                line={line}
+                                productionMode={isClientManager}
+                                patternMismatch={patternMismatch}
+                                patternJobsForLine={patternJobsByLineId[line.id] ?? 0}
+                                onLineRemoved={handleLineRemoved}
+                              />
+                            </div>
+                          ) : null}
                         </td>
                       ) : null}
                     </tr>
@@ -850,7 +881,7 @@ export function SalesOrderActions({
                       />
                     ) : null}
                     {showSupplierEmailColumn ? <th className="px-3 py-2">Supplier email</th> : null}
-                    {fabricsEditable ? <th className="px-3 py-2 w-28" /> : null}
+                    {showPerLineFabricActions ? <th className="px-3 py-2 w-28" /> : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -919,24 +950,26 @@ export function SalesOrderActions({
                           <FabricLineSupplierEmailCell status={fabricLineEmailById.get(line.id)} />
                         </td>
                       ) : null}
-                      {fabricsEditable ? (
+                      {showPerLineFabricActions ? (
                         <td className="px-3 py-2">
-                          <div className="flex flex-col items-end gap-2">
-                            <OrderFabricLineEditor
-                              orderId={liveOrder.id}
-                              line={line}
-                              productionMode={isClientManager}
-                              onLineUpdated={handleLineUpdated}
-                            />
-                            <OrderFabricLineRemove
-                              orderId={liveOrder.id}
-                              line={line}
-                              productionMode={isClientManager}
-                              patternMismatch={patternMismatch}
-                              patternJobsForLine={patternJobsByLineId[line.id] ?? 0}
-                              onLineRemoved={handleLineRemoved}
-                            />
-                          </div>
+                          {isFabricLineMutable(line) ? (
+                            <div className="flex flex-col items-end gap-2">
+                              <OrderFabricLineEditor
+                                orderId={liveOrder.id}
+                                line={line}
+                                productionMode={isClientManager}
+                                onLineUpdated={handleLineUpdated}
+                              />
+                              <OrderFabricLineRemove
+                                orderId={liveOrder.id}
+                                line={line}
+                                productionMode={isClientManager}
+                                patternMismatch={patternMismatch}
+                                patternJobsForLine={patternJobsByLineId[line.id] ?? 0}
+                                onLineRemoved={handleLineRemoved}
+                              />
+                            </div>
+                          ) : null}
                         </td>
                       ) : null}
                     </tr>
@@ -975,7 +1008,18 @@ export function SalesOrderActions({
       <div className="flex flex-wrap gap-3">
         {showSupplierEmailActions &&
           !isClientManager &&
-          (liveOrder.fabric_po_ids.length > 0 ? (
+          (hasUnorderedFabricLines ? (
+            <Button
+              onClick={() => void createFabricPos()}
+              disabled={creating || (!liveOrder.delivery_destination && !deliveryDestination)}
+            >
+              {creating
+                ? "Creating…"
+                : `Create fabric orders for ${unorderedFabricLines.length} new line${
+                    unorderedFabricLines.length === 1 ? "" : "s"
+                  }`}
+            </Button>
+          ) : liveOrder.fabric_po_ids.length > 0 ? (
             <Link href={supplierEmailsLink}>
               <Button variant={allSupplierEmailsSent ? "secondary" : undefined}>
                 {hasPartialSupplierEmails
@@ -993,6 +1037,11 @@ export function SalesOrderActions({
               {creating ? "Creating…" : "Create fabric orders for suppliers"}
             </Button>
           ))}
+        {showSupplierEmailActions && !isClientManager && liveOrder.fabric_po_ids.length > 0 && hasUnorderedFabricLines && (
+          <Link href={supplierEmailsLink}>
+            <Button variant="secondary">View existing supplier emails</Button>
+          </Link>
+        )}
         {showSupplierEmailActions && !isClientManager && (
           <Link href="/supplier-inbox">
             <Button variant="secondary">Supplier inbox</Button>

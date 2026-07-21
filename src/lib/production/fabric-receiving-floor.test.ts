@@ -4,6 +4,7 @@ import type { FabricReceipt } from "../types/fabric-receipts.ts";
 import type { ProductionWorkOrder } from "../types/production.ts";
 import {
   isFabricReceivingFloorLine,
+  isFabricReceivingOrderActivated,
   isLineProductionCompleted,
   isLineStitchedOrDone,
   isSalesOrderFabricReceivingSettled,
@@ -82,6 +83,30 @@ test("isFabricReceivingFloorLine hides handed-off and pre-PO pending lines", () 
   assert.equal(isFabricReceivingFloorLine("pending", openOrder, printedLine), true);
   assert.equal(isFabricReceivingFloorLine("received", openOrder, bareLine), true);
   assert.equal(isFabricReceivingFloorLine("fabric_prep", openOrder, bareLine), true);
+  assert.equal(
+    isFabricReceivingFloorLine("pending", openOrder, bareLine, { orderActivated: true }),
+    true
+  );
+});
+
+test("QC-added unprinted pending sibling stays visible on activated orders", () => {
+  const order = {
+    status: "open" as const,
+    fabric_lines: [
+      { id: "line-1", a4_printed_at: "2026-01-01T00:00:00.000Z", prep_stickers_printed_at: null },
+      { id: "line-2", a4_printed_at: null, prep_stickers_printed_at: null },
+    ],
+  };
+  const statuses = new Map([
+    ["line-1", "pending" as const],
+    ["line-2", "pending" as const],
+  ]);
+  assert.equal(isFabricReceivingOrderActivated(order, statuses), true);
+  assert.equal(
+    isSalesOrderFabricReceivingSettled(order, statuses, []),
+    false,
+    "unprinted QC add on an A4-printed order must not settle the order"
+  );
 });
 
 test("stitched/completed helpers match production done stages", () => {
@@ -115,6 +140,40 @@ test("isSalesOrderFabricReceivingSettled when all lines past floor and productio
     status: "open" as const,
     fabric_lines: [
       { id: "line-1", a4_printed_at: "2026-01-01T00:00:00.000Z", prep_stickers_printed_at: null },
+      { id: "line-2", a4_printed_at: "2026-01-01T00:00:00.000Z", prep_stickers_printed_at: null },
+    ],
+  };
+  const statuses = new Map([
+    ["line-1", "handed_off" as const],
+    ["line-2", "handed_off" as const],
+  ]);
+  assert.equal(
+    isSalesOrderFabricReceivingSettled(order, statuses, [
+      workOrder("completed", "line-1"),
+      workOrder("completed", "line-2"),
+    ]),
+    true
+  );
+  assert.equal(
+    isSalesOrderFabricReceivingSettled(order, statuses, [
+      workOrder("cutting", "line-1"),
+      workOrder("cutting", "line-2"),
+    ]),
+    false
+  );
+  assert.equal(
+    isSalesOrderFabricReceivingSettled({ ...order, status: "complete" }, statuses, [
+      workOrder("cutting", "line-1"),
+    ]),
+    true
+  );
+});
+
+test("handed-off siblings keep later unprinted pending QC adds from settling", () => {
+  const order = {
+    status: "open" as const,
+    fabric_lines: [
+      { id: "line-1", a4_printed_at: "2026-01-01T00:00:00.000Z", prep_stickers_printed_at: null },
       { id: "line-2", a4_printed_at: null, prep_stickers_printed_at: null },
     ],
   };
@@ -124,16 +183,6 @@ test("isSalesOrderFabricReceivingSettled when all lines past floor and productio
   ]);
   assert.equal(
     isSalesOrderFabricReceivingSettled(order, statuses, [workOrder("completed", "line-1")]),
-    true
-  );
-  assert.equal(
-    isSalesOrderFabricReceivingSettled(order, statuses, [workOrder("cutting", "line-1")]),
     false
-  );
-  assert.equal(
-    isSalesOrderFabricReceivingSettled({ ...order, status: "complete" }, statuses, [
-      workOrder("cutting", "line-1"),
-    ]),
-    true
   );
 });

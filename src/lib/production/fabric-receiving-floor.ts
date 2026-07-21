@@ -47,16 +47,41 @@ export function isLineStitchedOrDone(lineWorkOrders: ProductionWorkOrder[]): boo
   );
 }
 
+/**
+ * True when the order has already entered Fabric Receiving work (A4/prep printed,
+ * scanned into receive/prep, handed off to production, or fabric POs created).
+ * Used so QC-added pending lines on an active order stay visible before re-print.
+ */
+export function isFabricReceivingOrderActivated(
+  order: Pick<SalesOrder, "status" | "fabric_lines">,
+  lineStatuses: Map<string, FabricLineReceiveStatus>
+): boolean {
+  if (order.status === "fabric_pos_created") return true;
+
+  for (const line of order.fabric_lines) {
+    const status = lineStatuses.get(line.id) ?? "pending";
+    if (status === "received" || status === "fabric_prep" || status === "handed_off") {
+      return true;
+    }
+    if (line.a4_printed_at || line.prep_stickers_printed_at) return true;
+  }
+  return false;
+}
+
 /** Whether a line belongs on the Fabric Receiving work list (not production floor / history). */
 export function isFabricReceivingFloorLine(
   status: FabricLineReceiveStatus,
   order: Pick<SalesOrder, "status">,
-  line: Pick<SalesOrderFabricLine, "a4_printed_at" | "prep_stickers_printed_at">
+  line: Pick<SalesOrderFabricLine, "a4_printed_at" | "prep_stickers_printed_at">,
+  options?: { orderActivated?: boolean }
 ): boolean {
   if (!FABRIC_RECEIVING_FLOOR_STATUSES.has(status)) return false;
   if (status === "received" || status === "fabric_prep") return true;
   if (order.status === "fabric_pos_created") return true;
   if (line.a4_printed_at || line.prep_stickers_printed_at) return true;
+  // Keep unprinted pending siblings visible once the order is already on the floor
+  // (e.g. QC appends a fabric after A4 was printed for earlier lines).
+  if (status === "pending" && options?.orderActivated) return true;
   return false;
 }
 
@@ -76,9 +101,10 @@ export function isSalesOrderFabricReceivingSettled(
   }
   if (order.fabric_lines.length === 0) return true;
 
+  const orderActivated = isFabricReceivingOrderActivated(order, lineStatuses);
   for (const line of order.fabric_lines) {
     const status = lineStatuses.get(line.id) ?? "pending";
-    if (isFabricReceivingFloorLine(status, order, line)) return false;
+    if (isFabricReceivingFloorLine(status, order, line, { orderActivated })) return false;
   }
 
   if (orderWorkOrders.length === 0) return true;

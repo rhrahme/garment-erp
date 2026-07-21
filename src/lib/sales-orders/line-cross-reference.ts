@@ -117,6 +117,7 @@ export function findFabricPoLineForSoFabricLine(
   const stickerCodes = new Set((fabricLine.label_stickers ?? []).map((sticker) => sticker.code));
 
   for (const po of fabricPos) {
+    if (po.status === "cancelled") continue;
     for (const poLine of po.lines ?? []) {
       const poStickers = poLine.label_stickers ?? [];
       if (poStickers.some((sticker) => stickerCodes.has(sticker.code))) {
@@ -132,6 +133,16 @@ export function findFabricPoLineForSoFabricLine(
   }
 
   return null;
+}
+
+/** Sales-order fabric lines that are not yet covered by any active supplier PO. */
+export function listSalesOrderFabricLinesMissingPos(
+  fabricLines: SalesOrderFabricLine[],
+  fabricPos: PurchaseOrder[]
+): SalesOrderFabricLine[] {
+  const activePos = fabricPos.filter((po) => po.status !== "cancelled");
+  if (activePos.length === 0) return [...fabricLines];
+  return fabricLines.filter((line) => !findFabricPoLineForSoFabricLine(line, activePos));
 }
 
 export interface InvoiceLineCrossRef {

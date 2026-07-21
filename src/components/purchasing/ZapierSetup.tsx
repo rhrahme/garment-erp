@@ -110,6 +110,8 @@ export function ZapierSetup() {
             <li>POST {baseUrl}/api/v1/shipments</li>
             <li>GET/POST {baseUrl}/api/v1/follow-ups</li>
             <li>POST/PATCH/DELETE {baseUrl}/api/v1/sales-orders/[id]/fabric-lines</li>
+            <li>POST {baseUrl}/api/v1/sales-orders/[id]/fabric-order-request</li>
+            <li>POST {baseUrl}/api/v1/sales-orders/[id]/fabric-pos</li>
             <li>GET/PATCH {baseUrl}/api/v1/pattern/jobs/[id]</li>
             <li>POST {baseUrl}/api/v1/pattern/jobs/[id]/fittings</li>
             <li>POST {baseUrl}/api/v1/pattern/jobs/[id]/revisions</li>

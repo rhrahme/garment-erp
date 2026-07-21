@@ -2,9 +2,16 @@ import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSupplierByIdFromContactsSync } from "@/lib/data/supplier-contacts";
 import { fabricPoSupplierId } from "@/lib/fabric-sourcing/supplier-display";
 import { buildClientReference, getSalesOrderById, writeSalesOrders, readSalesOrders } from "@/lib/data/sales-orders";
-import { createStoredFabricOrder } from "@/lib/integrations/fabric-order-store";
+import {
+  createStoredFabricOrder,
+  listStoredFabricOrders,
+} from "@/lib/integrations/fabric-order-store";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
+import {
+  getFabricPosForSalesOrder,
+  listSalesOrderFabricLinesMissingPos,
+} from "@/lib/sales-orders/line-cross-reference";
 
 function groupLinesByPoSupplier(lines: SalesOrderFabricLine[]): Map<string, SalesOrderFabricLine[]> {
   const groups = new Map<string, SalesOrderFabricLine[]>();
@@ -34,9 +41,27 @@ export async function createFabricPosFromSalesOrder(salesOrderId: string): Promi
   if (salesOrder.fabric_lines.length === 0) {
     throw new Error("Add at least one fabric line to the sales order.");
   }
+  if (salesOrder.status !== "open" && salesOrder.status !== "fabric_pos_created") {
+    throw new Error("Supplier fabric orders can only be created for open orders.");
+  }
+
+  const existingPos = getFabricPosForSalesOrder(salesOrder, listStoredFabricOrders()).filter(
+    (po) => po.status !== "cancelled"
+  );
+  const linesToOrder = listSalesOrderFabricLinesMissingPos(salesOrder.fabric_lines, existingPos);
+  if (linesToOrder.length === 0) {
+    throw new Error("All fabric lines already have supplier fabric orders.");
+  }
+
+  const pendingReplacements = linesToOrder.filter((line) => line.needs_replacement);
+  if (pendingReplacements.length > 0) {
+    throw new Error(
+      `Pick replacements for ${pendingReplacements.map((line) => line.fabric_number).join(", ")} before creating supplier emails.`
+    );
+  }
 
   const clientReference = buildClientReference(salesOrder.client_code, salesOrder.so_number);
-  const groups = groupLinesByPoSupplier(salesOrder.fabric_lines);
+  const groups = groupLinesByPoSupplier(linesToOrder);
   const fabricOrders: PurchaseOrder[] = [];
 
   for (const [supplierId, lines] of groups) {
@@ -64,13 +89,15 @@ export async function createFabricPosFromSalesOrder(salesOrderId: string): Promi
     fabricOrders.push(po);
   }
 
+  const nextPoIds = [...new Set([...salesOrder.fabric_po_ids, ...fabricOrders.map((po) => po.id)])];
+
   const updatedOrders = store.orders.map((order) =>
     order.id === salesOrderId
       ? {
           ...order,
           client_reference: clientReference,
           status: "fabric_pos_created" as const,
-          fabric_po_ids: fabricOrders.map((po) => po.id),
+          fabric_po_ids: nextPoIds,
         }
       : order
   );

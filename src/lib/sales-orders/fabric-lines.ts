@@ -10,11 +10,18 @@ import {
   findDuplicateFabricArticle,
   formatFabricArticleDuplicateError,
 } from "@/lib/sales-orders/duplicate-order";
-import { canAppendFabricLines, canEditFabricLines, fabricLineEditBlockedReason } from "@/lib/sales-orders/fabric-lines-rules";
+import { canAppendFabricLines, fabricLineMutateBlockedReason } from "@/lib/sales-orders/fabric-lines-rules";
+import { getFabricPosForSalesOrder } from "@/lib/sales-orders/line-cross-reference";
+import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
 
-export { canAppendFabricLines, canEditFabricLines, fabricLineEditBlockedReason, PRINTING_FREE };
+export {
+  canAppendFabricLines,
+  canEditFabricLines,
+  fabricLineEditBlockedReason,
+} from "@/lib/sales-orders/fabric-lines-rules";
+export { PRINTING_FREE };
 
 export type FabricLinePrintKind = "a4" | "prep_stickers" | "prod_stickers";
 
@@ -158,6 +165,11 @@ export function resolveOrderClientReference(order: Pick<SalesOrder, "client_code
   return `${order.client_code}-${order.so_number}`;
 }
 
+/** Strip accidental trailing punctuation from typed fabric codes (e.g. "722042."). */
+export function normalizeFabricNumberInput(fabricNumber: string): string {
+  return fabricNumber.trim().replace(/[.,;:]+$/g, "").trim();
+}
+
 export function buildFabricLineFromInput(
   line: FabricLineInput,
   clientReference: string,
@@ -165,7 +177,7 @@ export function buildFabricLineFromInput(
   options: { lineId?: string; addedAt?: string; addedBy?: string | null } = {}
 ): SalesOrderFabricLine | { error: string } {
   const supplier_id = String(line.supplier_id ?? "").trim();
-  const fabric_number = String(line.fabric_number ?? "").trim();
+  const fabric_number = normalizeFabricNumberInput(String(line.fabric_number ?? ""));
   const quantity = Number(line.quantity);
 
   if (!supplier_id || !fabric_number || !Number.isFinite(quantity) || quantity <= 0) {
@@ -297,9 +309,7 @@ export async function appendSalesOrderFabricLines(
     const error =
       order.retail_brand?.trim()
         ? "Ready-made retail orders cannot have fabrics appended."
-        : order.fabric_po_ids.length > 0
-          ? "Cannot add fabrics — supplier fabric orders were already created for this order."
-          : "This order is closed — fabrics can only be added while the order is open.";
+        : "This order is closed — fabrics can only be added while the order is open.";
     return { ok: false, status: 409, error };
   }
 
@@ -352,19 +362,23 @@ export async function updateSalesOrderFabricLine(
   }
 
   const order = store.orders[index]!;
-  const blockedReason = fabricLineEditBlockedReason(order);
-  if (blockedReason) {
-    return { ok: false, status: 409, error: blockedReason };
-  }
-
   const lineIndex = order.fabric_lines.findIndex((line) => line.id === lineId);
   if (lineIndex < 0) {
     return { ok: false, status: 404, error: "Fabric line not found on this order." };
   }
 
   const existing = order.fabric_lines[lineIndex]!;
+  await ensureDocumentsLoaded(["fabric_orders"]);
+  const fabricPos = getFabricPosForSalesOrder(order, listStoredFabricOrders());
+  const blockedReason = fabricLineMutateBlockedReason(order, existing, fabricPos);
+  if (blockedReason) {
+    return { ok: false, status: 409, error: blockedReason };
+  }
+
   const nextSupplierId = String(input.supplier_id ?? existing.supplier_id).trim();
-  const nextFabricNumber = String(input.fabric_number ?? existing.fabric_number).trim();
+  const nextFabricNumber = normalizeFabricNumberInput(
+    String(input.fabric_number ?? existing.fabric_number)
+  );
   const nextGarmentType = String(input.garment_type ?? existing.garment_type).trim();
   const nextQuantity = input.quantity != null ? Number(input.quantity) : existing.quantity;
 
@@ -491,17 +505,19 @@ export async function deleteSalesOrderFabricLine(
   }
 
   const order = store.orders[index]!;
-  const blockedReason = fabricLineEditBlockedReason(order);
-  if (blockedReason) {
-    return { ok: false, status: 409, error: blockedReason };
-  }
-
   const lineIndex = order.fabric_lines.findIndex((line) => line.id === trimmedLineId);
   if (lineIndex < 0) {
     return { ok: false, status: 404, error: "Fabric line not found on this order." };
   }
 
   const removedLine = order.fabric_lines[lineIndex]!;
+  await ensureDocumentsLoaded(["fabric_orders"]);
+  const fabricPos = getFabricPosForSalesOrder(order, listStoredFabricOrders());
+  const blockedReason = fabricLineMutateBlockedReason(order, removedLine, fabricPos);
+  if (blockedReason) {
+    return { ok: false, status: 409, error: blockedReason };
+  }
+
   const nextLines = order.fabric_lines.filter((line) => line.id !== trimmedLineId);
   store.orders[index] = { ...order, fabric_lines: nextLines };
 

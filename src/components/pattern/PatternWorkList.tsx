@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Star } from "lucide-react";
 import { jobMatchesTab } from "@/lib/pattern/work-tabs";
+import { matchesNormalizedSearch } from "@/lib/search/normalize";
 import type { PatternOverview, PatternWorkTab } from "@/lib/types/pattern";
 import { cn } from "@/lib/utils";
 
@@ -77,33 +78,28 @@ export function PatternWorkList({ reloadKey = 0 }: PatternWorkListProps) {
 
   const filteredJobs = useMemo(() => {
     if (!overview) return [];
-    const q = search.trim().toUpperCase();
     return overview.jobs.filter((row) => {
       if (!jobMatchesTab(row.job.status, tab)) return false;
-      if (!q) return true;
       const { job } = row;
-      return (
-        job.so_number.toUpperCase().includes(q) ||
-        job.client_name.toUpperCase().includes(q) ||
-        job.client_code.toUpperCase().includes(q) ||
-        job.garment_type.toUpperCase().includes(q) ||
-        job.fabric_number.toUpperCase().includes(q) ||
-        formatArticle(job.article_number).includes(q)
+      return matchesNormalizedSearch(
+        [
+          job.so_number,
+          job.client_name,
+          job.client_code,
+          job.garment_type,
+          job.fabric_number,
+          formatArticle(job.article_number),
+        ],
+        search
       );
     });
   }, [overview, tab, search]);
 
   const awaitingOrders = useMemo(() => {
     if (!overview || tab !== "new") return [];
-    const q = search.trim().toUpperCase();
-    return overview.awaiting_lines_orders.filter((order) => {
-      if (!q) return true;
-      return (
-        order.so_number.toUpperCase().includes(q) ||
-        order.client_name.toUpperCase().includes(q) ||
-        order.client_code.toUpperCase().includes(q)
-      );
-    });
+    return overview.awaiting_lines_orders.filter((order) =>
+      matchesNormalizedSearch([order.so_number, order.client_name, order.client_code], search)
+    );
   }, [overview, tab, search]);
 
   return (

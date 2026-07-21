@@ -1,6 +1,8 @@
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import { createFabricPosFromSalesOrder } from "@/lib/sales-orders/create-fabric-pos";
+import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
+import { getFabricPosForSalesOrder } from "@/lib/sales-orders/line-cross-reference";
 import {
   countAllPendingSupplierBatches,
   getFabricPosBlockReason,
@@ -47,6 +49,7 @@ export async function prepareFabricPosBatch(
 
   const store = readSalesOrders();
   const ordersById = new Map(store.orders.map((order) => [order.id, order]));
+  const allFabricOrders = listStoredFabricOrders();
 
   const created: PrepareFabricPosCreated[] = [];
   const skipped: PrepareFabricPosSkipped[] = [];
@@ -58,7 +61,7 @@ export async function prepareFabricPosBatch(
       continue;
     }
 
-    const blockReason = getFabricPosBlockReason(order);
+    const blockReason = getFabricPosBlockReason(order, getFabricPosForSalesOrder(order, allFabricOrders));
     if (blockReason) {
       skipped.push({ order_id: order.id, so_number: order.so_number, reason: blockReason });
       continue;
