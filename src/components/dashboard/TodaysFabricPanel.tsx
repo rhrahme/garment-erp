@@ -114,6 +114,7 @@ export function TodaysFabricPanel({ initialSummary }: TodaysFabricPanelProps) {
             <CardTitle>Today&apos;s fabric</CardTitle>
             <p className="mt-1 text-sm text-slate-600">
               Orders from {dateScopeLabel(summary.date_scope)} needing fabric POs or supplier emails.
+              Transfer replacements stay listed until Admin sends supplier email.
             </p>
             <p className="mt-1 text-sm font-medium text-indigo-900">{summaryLine}</p>
           </div>
@@ -176,11 +177,19 @@ export function TodaysFabricPanel({ initialSummary }: TodaysFabricPanelProps) {
                 <th className="px-4 py-3 text-left font-medium text-slate-600">Status</th>
                 <th className="px-4 py-3 text-left font-medium text-slate-600">POs</th>
                 <th className="px-4 py-3 text-left font-medium text-slate-600">Emails</th>
+                <th className="px-4 py-3 text-left font-medium text-slate-600">Alert</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
               {summary.orders.map((order) => (
-                <tr key={order.id} className="hover:bg-slate-50/50">
+                <tr
+                  key={order.id}
+                  className={
+                    order.needs_transfer_reorder_email
+                      ? "bg-amber-50/80 hover:bg-amber-50"
+                      : "hover:bg-slate-50/50"
+                  }
+                >
                   <td className="px-4 py-3">
                     <Link href={`/orders/${order.id}`} className="font-medium text-indigo-700 hover:underline">
                       {order.so_number}
@@ -201,6 +210,15 @@ export function TodaysFabricPanel({ initialSummary }: TodaysFabricPanelProps) {
                         ? "Pending"
                         : "Sent"
                       : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    {order.needs_transfer_reorder_email ? (
+                      <span className="font-semibold text-amber-900">Needs supplier email</span>
+                    ) : order.needs_replacement ? (
+                      <span className="text-amber-800">Pick replacement fabric</span>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
                   </td>
                 </tr>
               ))}

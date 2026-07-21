@@ -115,6 +115,8 @@ export function findFabricPoLineForSoFabricLine(
   fabricPos: PurchaseOrder[]
 ): { po: PurchaseOrder; poLine: PurchaseOrderLine } | null {
   const stickerCodes = new Set((fabricLine.label_stickers ?? []).map((sticker) => sticker.code));
+  /** Transfer reorders keep the same fabric/garment as the moved line — only sticker identity is unique. */
+  const requireStickerMatch = Boolean(fabricLine.transfer_replacement?.transfer_id);
 
   for (const po of fabricPos) {
     if (po.status === "cancelled") continue;
@@ -123,6 +125,7 @@ export function findFabricPoLineForSoFabricLine(
       if (poStickers.some((sticker) => stickerCodes.has(sticker.code))) {
         return { po, poLine };
       }
+      if (requireStickerMatch) continue;
       if (
         poLine.fabric_number === fabricLine.fabric_number &&
         (poLine.garment_type == null || poLine.garment_type === fabricLine.garment_type)
@@ -135,14 +138,21 @@ export function findFabricPoLineForSoFabricLine(
   return null;
 }
 
-/** Sales-order fabric lines that are not yet covered by any active supplier PO. */
+/** Sales-order fabric lines that are not yet covered by any active supplier PO.
+ * Lines that already have fabric on hand from a transfer are excluded — never re-order those.
+ */
+export function isFabricLineOnHandFromTransfer(line: SalesOrderFabricLine): boolean {
+  return Boolean(line.transfer_inbound?.transfer_id);
+}
+
 export function listSalesOrderFabricLinesMissingPos(
   fabricLines: SalesOrderFabricLine[],
   fabricPos: PurchaseOrder[]
 ): SalesOrderFabricLine[] {
+  const orderable = fabricLines.filter((line) => !isFabricLineOnHandFromTransfer(line));
   const activePos = fabricPos.filter((po) => po.status !== "cancelled");
-  if (activePos.length === 0) return [...fabricLines];
-  return fabricLines.filter((line) => !findFabricPoLineForSoFabricLine(line, activePos));
+  if (activePos.length === 0) return [...orderable];
+  return orderable.filter((line) => !findFabricPoLineForSoFabricLine(line, activePos));
 }
 
 export interface InvoiceLineCrossRef {

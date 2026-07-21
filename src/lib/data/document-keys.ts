@@ -104,6 +104,10 @@ export const ERP_DOCUMENT_SPECS = {
     path: path.join(ROOT, "src/data/pattern-jobs.json"),
     fallback: { updated_at: null, jobs: [] },
   },
+  fabric_transfers: {
+    path: path.join(ROOT, "src/data/fabric-transfers.json"),
+    fallback: { updated_at: null, transfers: [] },
+  },
   custom_fabrics: {
     path: path.join(ROOT, "src/data/custom-fabrics.json"),
     fallback: { updated_at: null, fabrics: [] },
@@ -147,6 +151,7 @@ export const LAZY_ERP_DOCUMENT_KEYS = [
   "fabric_order_drafts",
   "sales_order_drafts",
   "pattern_jobs",
+  "fabric_transfers",
   "custom_fabrics",
   "sales_workspace",
 ] as const satisfies readonly ErpDocumentKey[];

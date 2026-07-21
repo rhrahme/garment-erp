@@ -38,6 +38,28 @@ export interface SalesOrderFabricLine {
   prep_stickers_printed_at?: string | null;
   /** Production piece roll stickers printed (cutting / sewing). */
   prod_stickers_printed_at?: string | null;
+  /**
+   * Set when this line received fabric via transfer from another client/SO.
+   * Excluded from supplier PO creation — fabric is already on hand.
+   */
+  transfer_inbound?: {
+    transfer_id: string;
+    source_so_number: string;
+    source_client_name: string;
+    source_line_id: string;
+    original_sticker_codes: string[];
+    meters: number;
+  } | null;
+  /**
+   * Set when this line was auto-created as a supplier reorder after fabric
+   * was transferred away from this order.
+   */
+  transfer_replacement?: {
+    transfer_id: string;
+    destination_so_number: string;
+    destination_client_name: string;
+    meters: number;
+  } | null;
 }
 
 export interface SalesOrder {

@@ -17,12 +17,18 @@ import {
 } from "@/components/fabric-receiving/FabricDefectReportModal";
 import { FabricDefectNotices } from "@/components/fabric-receiving/FabricDefectNotices";
 import { FabricDefectsTrackingPanel } from "@/components/fabric-receiving/FabricDefectsTrackingPanel";
+import {
+  FabricTransferModal,
+  FabricTransferSuccessBanner,
+} from "@/components/orders/FabricTransferModal";
 import { StageScanPanel } from "@/components/production/StageScanPanel";
 import type { StageScanResponse } from "@/components/production/StickerScanInput";
 import {
   fabricPrepTypeLabel,
 } from "@/lib/production/fabric-prep";
 import type { FabricPrepType } from "@/lib/types/production";
+import type { FabricReceivingLineRow, FabricReceivingOrderRow } from "@/lib/types/fabric-receipts";
+import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
 type SessionScan = {
   id: string;
@@ -41,6 +47,30 @@ function formatArticle(articleNumber: number): string {
   return `L${String(articleNumber).padStart(2, "0")}`;
 }
 
+function receivingLineToFabricLine(line: FabricReceivingLineRow): SalesOrderFabricLine {
+  return {
+    id: line.sales_order_line_id,
+    garment_type: line.garment_type,
+    label_count: line.stickers.length,
+    label_stickers: line.stickers.map((sticker, index) => ({
+      code: sticker.sticker_code,
+      piece_name: sticker.piece_name,
+      sequence: index + 1,
+    })),
+    supplier_id: line.supplier_id,
+    supplier_name: line.supplier_name,
+    fabric_number: line.fabric_number,
+    quantity: line.fabric_meters,
+    unit: "meters",
+    unit_price: 0,
+    composition: line.composition,
+    weight_gsm: line.weight_gsm,
+    width_cm: line.width_cm,
+    width_inches: line.width_inches,
+    color: null,
+  };
+}
+
 export function FabricReceivingWorkspace() {
   const [reloadKey, setReloadKey] = useState(0);
   const [prepTypeByReceipt, setPrepTypeByReceipt] = useState<Record<string, FabricPrepType>>({});
@@ -53,7 +83,18 @@ export function FabricReceivingWorkspace() {
   const [sessionScans, setSessionScans] = useState<SessionScan[]>([]);
   const [canChooseDefectFoundAt, setCanChooseDefectFoundAt] = useState(false);
   const [isTaskOperator, setIsTaskOperator] = useState(false);
+  const [canTransferFabric, setCanTransferFabric] = useState(false);
   const [defectModal, setDefectModal] = useState<ReportDefectContext | null>(null);
+  const [transferTarget, setTransferTarget] = useState<{
+    order: FabricReceivingOrderRow;
+    line: FabricReceivingLineRow;
+  } | null>(null);
+  const [transferSuccess, setTransferSuccess] = useState<{
+    print_stickers_href: string;
+    destination_order_id: string;
+    destination_so_number: string;
+    admin_alert_message: string;
+  } | null>(null);
 
   useEffect(() => {
     fetch("/api/auth/session")
@@ -61,10 +102,12 @@ export function FabricReceivingWorkspace() {
       .then((data) => {
         setCanChooseDefectFoundAt(Boolean(data.is_admin || data.is_client_manager));
         setIsTaskOperator(Boolean(data.is_task_operator));
+        setCanTransferFabric(Boolean(data.is_admin || data.is_client_manager));
       })
       .catch(() => {
         setCanChooseDefectFoundAt(false);
         setIsTaskOperator(false);
+        setCanTransferFabric(false);
       });
   }, []);
 
@@ -189,6 +232,35 @@ export function FabricReceivingWorkspace() {
 
   return (
     <div className="space-y-6">
+      {transferSuccess ? (
+        <FabricTransferSuccessBanner
+          printHref={transferSuccess.print_stickers_href}
+          destinationSoNumber={transferSuccess.destination_so_number}
+          destinationOrderId={transferSuccess.destination_order_id}
+          adminAlertMessage={transferSuccess.admin_alert_message}
+          onDismiss={() => setTransferSuccess(null)}
+        />
+      ) : null}
+
+      {transferTarget ? (
+        <FabricTransferModal
+          open
+          sourceOrder={{
+            id: transferTarget.order.sales_order_id,
+            so_number: transferTarget.order.so_number,
+            client_name: transferTarget.order.client_name,
+            client_code: transferTarget.order.client_code,
+          }}
+          sourceLine={receivingLineToFabricLine(transferTarget.line)}
+          onClose={() => setTransferTarget(null)}
+          onTransferred={(result) => {
+            setTransferSuccess(result);
+            setTransferTarget(null);
+            refreshAll();
+          }}
+        />
+      ) : null}
+
       <FabricDefectNotices
         reloadKey={reloadKey}
         onMessage={setMessage}
@@ -297,6 +369,8 @@ export function FabricReceivingWorkspace() {
             title: request.title,
           })
         }
+        canTransferFabric={canTransferFabric}
+        onRequestTransfer={(order, line) => setTransferTarget({ order, line })}
       />
 
       <FabricDefectsTrackingPanel

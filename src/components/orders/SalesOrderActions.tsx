@@ -40,6 +40,11 @@ import {
   supplierEmailsHref,
 } from "@/lib/sales-orders/line-cross-reference";
 import { FabricLineSupplierEmailCell } from "@/components/orders/FabricLineSupplierEmailCell";
+import {
+  FabricTransferModal,
+  FabricTransferSuccessBanner,
+} from "@/components/orders/FabricTransferModal";
+import { FabricTransferHistory } from "@/components/orders/FabricTransferHistory";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 import { formatFabricLineLabels } from "@/lib/sales-orders/label-display";
 import { FabricOrderSubmitButton } from "@/components/orders/FabricOrderSubmitButton";
@@ -125,6 +130,15 @@ export function SalesOrderActions({
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [lineSort, setLineSort] = useState<FabricLineSortState | null>(null);
+  const [transferLine, setTransferLine] = useState<SalesOrderFabricLine | null>(null);
+  const [transferSuccess, setTransferSuccess] = useState<{
+    print_stickers_href: string;
+    destination_order_id: string;
+    destination_so_number: string;
+    admin_alert_message: string;
+  } | null>(null);
+
+  const canTransferFabricLines = (isAdmin || isClientManager) && !isTaskOperator && !isSalesOperator;
 
   useEffect(() => {
     setLiveOrder(order);
@@ -326,6 +340,30 @@ export function SalesOrderActions({
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
       )}
+
+      {transferSuccess ? (
+        <FabricTransferSuccessBanner
+          printHref={transferSuccess.print_stickers_href}
+          destinationSoNumber={transferSuccess.destination_so_number}
+          destinationOrderId={transferSuccess.destination_order_id}
+          adminAlertMessage={transferSuccess.admin_alert_message}
+          onDismiss={() => setTransferSuccess(null)}
+        />
+      ) : null}
+
+      {transferLine ? (
+        <FabricTransferModal
+          open
+          sourceOrder={liveOrder}
+          sourceLine={transferLine}
+          onClose={() => setTransferLine(null)}
+          onTransferred={(result) => {
+            setTransferSuccess(result);
+            setTransferLine(null);
+            router.refresh();
+          }}
+        />
+      ) : null}
 
       {showFabricInput && (
         <DeliveryDestinationTabs
@@ -608,12 +646,34 @@ export function SalesOrderActions({
                     </td>
                     {effectiveViewMode === "production" ? (
                       <td className="px-3 py-2">
-                        <FabricLineStickerPrintLinks
-                          orderId={order.id}
-                          lineId={line.id}
-                          garmentType={line.garment_type}
-                          stickerCount={(line.label_stickers ?? []).length}
-                        />
+                        <div className="flex flex-col items-start gap-2">
+                          <FabricLineStickerPrintLinks
+                            orderId={order.id}
+                            lineId={line.id}
+                            garmentType={line.garment_type}
+                            stickerCount={(line.label_stickers ?? []).length}
+                          />
+                          {canTransferFabricLines && !line.transfer_inbound ? (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              type="button"
+                              onClick={() => setTransferLine(line)}
+                            >
+                              Transfer
+                            </Button>
+                          ) : null}
+                          {line.transfer_inbound ? (
+                            <p className="text-xs text-amber-800">
+                              From transfer ({line.transfer_inbound.source_so_number})
+                            </p>
+                          ) : null}
+                          {line.transfer_replacement ? (
+                            <p className="text-xs text-violet-800">
+                              Reorder after transfer → {line.transfer_replacement.destination_so_number}
+                            </p>
+                          ) : null}
+                        </div>
                       </td>
                     ) : null}
                   </tr>
@@ -757,6 +817,20 @@ export function SalesOrderActions({
                             {line.added_by ? ` by ${line.added_by}` : ""}
                           </p>
                         )}
+                        {line.transfer_inbound ? (
+                          <p className="mt-1 text-xs text-amber-800">
+                            Received via transfer from {line.transfer_inbound.source_client_name} (
+                            {line.transfer_inbound.source_so_number}). Was{" "}
+                            {line.transfer_inbound.original_sticker_codes[0] ?? "—"}.
+                          </p>
+                        ) : null}
+                        {line.transfer_replacement ? (
+                          <p className="mt-1 text-xs text-violet-800">
+                            Replacement reorder after transfer to{" "}
+                            {line.transfer_replacement.destination_client_name} (
+                            {line.transfer_replacement.destination_so_number}) — needs supplier email.
+                          </p>
+                        ) : null}
                       </td>
                       <td className="px-3 py-2 text-slate-600">{line.garment_type}</td>
                       <td className="px-3 py-2 text-slate-600">{formatFabricLineLabels(line)}</td>
@@ -796,6 +870,18 @@ export function SalesOrderActions({
                                 patternJobsForLine={patternJobsByLineId[line.id] ?? 0}
                                 onLineRemoved={handleLineRemoved}
                               />
+                            </div>
+                          ) : null}
+                          {canTransferFabricLines && !line.transfer_inbound ? (
+                            <div className="mt-2 flex justify-end">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                type="button"
+                                onClick={() => setTransferLine(line)}
+                              >
+                                Transfer
+                              </Button>
                             </div>
                           ) : null}
                         </td>
@@ -929,6 +1015,20 @@ export function SalesOrderActions({
                             {line.added_by ? ` by ${line.added_by}` : ""}
                           </p>
                         )}
+                        {line.transfer_inbound ? (
+                          <p className="mt-1 text-xs text-amber-800">
+                            Received via transfer from {line.transfer_inbound.source_client_name} (
+                            {line.transfer_inbound.source_so_number}). Was{" "}
+                            {line.transfer_inbound.original_sticker_codes[0] ?? "—"}.
+                          </p>
+                        ) : null}
+                        {line.transfer_replacement ? (
+                          <p className="mt-1 text-xs text-violet-800">
+                            Replacement reorder after transfer to{" "}
+                            {line.transfer_replacement.destination_client_name} (
+                            {line.transfer_replacement.destination_so_number}) — needs supplier email.
+                          </p>
+                        ) : null}
                       </td>
                       <td className="px-3 py-2 text-slate-600">{line.garment_type}</td>
                       <td className="px-3 py-2 text-slate-600">{formatFabricLineLabels(line)}</td>
@@ -968,6 +1068,18 @@ export function SalesOrderActions({
                                 patternJobsForLine={patternJobsByLineId[line.id] ?? 0}
                                 onLineRemoved={handleLineRemoved}
                               />
+                            </div>
+                          ) : null}
+                          {canTransferFabricLines && !line.transfer_inbound ? (
+                            <div className="mt-2 flex justify-end">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                type="button"
+                                onClick={() => setTransferLine(line)}
+                              >
+                                Transfer
+                              </Button>
                             </div>
                           ) : null}
                         </td>
@@ -1095,6 +1207,10 @@ export function SalesOrderActions({
       )}
 
       <Badge className="bg-slate-100 text-slate-700">Status: {liveOrder.status.replace(/_/g, " ")}</Badge>
+
+      {(canTransferFabricLines || isAdmin || isClientManager) && (
+        <FabricTransferHistory salesOrderId={liveOrder.id} />
+      )}
     </div>
     </FabricSwatchProvider>
   );

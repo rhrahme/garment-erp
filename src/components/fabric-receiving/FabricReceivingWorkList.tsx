@@ -5,6 +5,10 @@ import Link from "next/link";
 import { Archive, ArrowRight, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { FabricLineStickerPrintLinks } from "@/components/orders/FabricLineStickerPrintLinks";
+import {
+  FabricTransferModal,
+  FabricTransferSuccessBanner,
+} from "@/components/orders/FabricTransferModal";
 import { Button } from "@/components/ui/Button";
 import {
   SalesOrderReceivingCutTable,
@@ -163,6 +167,9 @@ type FabricReceivingWorkListProps = {
   onAdvancePrep: (receiptId: string) => void;
   canChooseDefectFoundAt?: boolean;
   onReportDefect: (request: DefectReportRequest) => void;
+  /** Admin / QC only — open fabric transfer to another client SO. */
+  canTransferFabric?: boolean;
+  onRequestTransfer?: (order: FabricReceivingOrderRow, line: FabricReceivingLineRow) => void;
 };
 
 function ReceivedPrepActions({
@@ -383,6 +390,8 @@ function FabricCutCard({
   onAdvancePrep,
   canChooseDefectFoundAt = false,
   onReportDefect,
+  canTransferFabric = false,
+  onRequestTransfer,
 }: {
   order: FabricReceivingOrderRow;
   line: FabricReceivingLineRow;
@@ -398,6 +407,8 @@ function FabricCutCard({
   onAdvancePrep: (receiptId: string) => void;
   canChooseDefectFoundAt?: boolean;
   onReportDefect: (request: DefectReportRequest) => void;
+  canTransferFabric?: boolean;
+  onRequestTransfer?: (order: FabricReceivingOrderRow, line: FabricReceivingLineRow) => void;
 }) {
   const printHref = `/orders/${order.sales_order_id}/print?team=receiving`;
   const styles = scanStageStyles(line.scan_stage);
@@ -485,6 +496,16 @@ function FabricCutCard({
             stickerCount={line.stickers.length}
             showCutting={line.status !== "pending"}
           />
+          {canTransferFabric && line.status !== "handed_off" && onRequestTransfer ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              type="button"
+              onClick={() => onRequestTransfer(order, line)}
+            >
+              Transfer
+            </Button>
+          ) : null}
           {showManual && (
             <button
               type="button"
@@ -591,6 +612,8 @@ export function FabricReceivingWorkList({
   onAdvancePrep,
   canChooseDefectFoundAt = false,
   onReportDefect,
+  canTransferFabric = false,
+  onRequestTransfer,
 }: FabricReceivingWorkListProps) {
   const [tab, setTab] = useState<FabricReceivingWorkTab>("awaiting_prep");
   const [view, setView] = useState<FabricReceivingView>("active");
@@ -1015,6 +1038,8 @@ export function FabricReceivingWorkList({
                               onAdvancePrep={onAdvancePrep}
                               canChooseDefectFoundAt={canChooseDefectFoundAt}
                               onReportDefect={onReportDefect}
+                              canTransferFabric={canTransferFabric}
+                              onRequestTransfer={onRequestTransfer}
                             />
                             );
                           })}

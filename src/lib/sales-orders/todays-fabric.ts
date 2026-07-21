@@ -22,6 +22,8 @@ export type TodaysFabricOrderRow = {
   missing_delivery_destination: boolean;
   needs_replacement: boolean;
   replacement_fabrics: string[];
+  /** True when a transfer created a reorder line that still needs supplier email. */
+  needs_transfer_reorder_email: boolean;
   order_date: string;
   can_create_pos: boolean;
   block_reason: string | null;
@@ -120,6 +122,15 @@ function toRow(
     .filter((line) => line.needs_replacement)
     .map((line) => line.fabric_number);
 
+  const transferReorderLines = order.fabric_lines.filter((line) => line.transfer_replacement);
+  const emailsPending = orderHasPendingSupplierEmails(order, fabricOrdersBySalesOrderId);
+  const needsTransferReorderEmail =
+    transferReorderLines.length > 0 &&
+    (emailsPending ||
+      listSalesOrderFabricLinesMissingPos(order.fabric_lines, fabricPos).some((line) =>
+        Boolean(line.transfer_replacement)
+      ));
+
   return {
     id: order.id,
     so_number: order.so_number,
@@ -128,10 +139,11 @@ function toRow(
     fabric_line_count: order.fabric_lines.length,
     status: order.status,
     has_pos: order.fabric_po_ids.length > 0,
-    supplier_emails_pending: orderHasPendingSupplierEmails(order, fabricOrdersBySalesOrderId),
+    supplier_emails_pending: emailsPending,
     missing_delivery_destination: !order.delivery_destination,
     needs_replacement: replacementFabrics.length > 0,
     replacement_fabrics: replacementFabrics,
+    needs_transfer_reorder_email: needsTransferReorderEmail,
     order_date: order.order_date,
     can_create_pos: blockReason === null,
     block_reason: blockReason,
@@ -174,9 +186,23 @@ export async function getTodaysFabricSummary(referenceDate = new Date()): Promis
   );
 
   const { orders: scopedOrders, date_scope } = filterOrdersByDateScope(candidates, referenceDate);
-  const rows = scopedOrders
+
+  // Transfer reorder emails must stay visible even when the source SO is older than the date scope.
+  const scopedIds = new Set(scopedOrders.map((order) => order.id));
+  const transferAlertOrders = candidates.filter((order) => {
+    if (scopedIds.has(order.id)) return false;
+    const row = toRow(order, fabricOrdersBySalesOrderId);
+    return row.needs_transfer_reorder_email;
+  });
+
+  const rows = [...scopedOrders, ...transferAlertOrders]
     .map((order) => toRow(order, fabricOrdersBySalesOrderId))
-    .sort((a, b) => b.order_date.localeCompare(a.order_date) || a.so_number.localeCompare(b.so_number));
+    .sort((a, b) => {
+      if (a.needs_transfer_reorder_email !== b.needs_transfer_reorder_email) {
+        return a.needs_transfer_reorder_email ? -1 : 1;
+      }
+      return b.order_date.localeCompare(a.order_date) || a.so_number.localeCompare(b.so_number);
+    });
 
   const pending_supplier_count = await countPendingSuppliersForOrderIds(rows.map((row) => row.id));
 

@@ -27,6 +27,7 @@ export type IntegrationEventType =
   | "fabric_receiving.defect_reported"
   | "fabric_receiving.defect_acknowledged"
   | "fabric_receiving.defect_resolved"
+  | "fabric.transferred"
   | "pattern_job.created"
   | "pattern_job.updated"
   | "pattern_fitting.completed"

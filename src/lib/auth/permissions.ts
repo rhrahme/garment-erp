@@ -14,6 +14,7 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/api/fabric-search",
   "/api/fabric-brands",
   "/api/fabric-receiving",
+  "/api/fabric-transfers",
   "/api/suppliers/loro-piana",
   "/api/qr",
   "/api/integrations/drapers/medias",
@@ -275,6 +276,12 @@ export function isTaskOperatorRouteAllowed(pathname: string): boolean {
   ) {
     return false;
   }
+  if (
+    pathname.startsWith("/api/sales-orders/") &&
+    pathname.includes("/fabric-lines/transfer")
+  ) {
+    return false;
+  }
   return TASK_OPERATOR_ROUTE_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
@@ -292,6 +299,7 @@ export function isSalesOperatorRouteAllowed(pathname: string): boolean {
     (pathname.includes("/stickers") ||
       pathname.includes("/fabric-lines/print") ||
       pathname.includes("/fabric-lines/clear-print-timestamps") ||
+      pathname.includes("/fabric-lines/transfer") ||
       pathname.endsWith("/fabric-pos"))
   ) {
     return false;

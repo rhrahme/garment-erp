@@ -95,6 +95,14 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/pattern-jobs.json",
   },
   {
+    key: "fabric_transfers",
+    label: "Fabric transfers",
+    description: "Audit trail of fabric moved between clients / sales orders",
+    category: "production",
+    appHref: "/fabric-receiving",
+    sourcePath: "src/data/fabric-transfers.json",
+  },
+  {
     key: "production_work_orders",
     label: "Production work orders",
     description: "Sticker-based work orders on the production floor",
