@@ -73,10 +73,11 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         }
       />
       <InvoiceEditor
-        key={`${invoice.id}-${invoice.subtotal}-${invoice.total}-${invoice.lines.map((l) => l.unit_price).join(",")}`}
+        key={`${invoice.id}-${invoice.subtotal}-${invoice.total}-${invoice.lines.map((l) => l.unit_price).join(",")}-${(invoice.payments ?? []).length}`}
         invoice={invoice}
         lineCrossRefs={lineCrossRefs}
         lineSwatchKeys={lineSwatchKeys}
+        showCostColumns={!session.isSalesOperator}
       />
     </div>
   );

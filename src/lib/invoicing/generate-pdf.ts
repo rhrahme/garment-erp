@@ -42,6 +42,14 @@ export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): 
 
   doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
+  if (invoice.document_kind === "quote") {
+    doc.setFontSize(10);
+    doc.setTextColor(79, 70, 229);
+    doc.text("QUOTE", margin, y);
+    doc.setTextColor(0);
+    y += 14;
+    doc.setFontSize(22);
+  }
   doc.text(invoice.invoice_number, margin, y);
   doc.setFont("helvetica", "normal");
 
@@ -156,6 +164,13 @@ export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): 
   const dhsTotalRowIndex = showDhsEquivalent ? totalsBody.length : -1;
   if (showDhsEquivalent) {
     totalsBody.push([DHS_TOTAL_LABEL, formatInvoiceDhsForPdf(sarToDhs(invoice.total))]);
+  }
+  if (invoice.amount_paid != null && invoice.amount_paid > 0) {
+    totalsBody.push(["Amount paid", formatInvoiceSarForPdf(invoice.amount_paid)]);
+    totalsBody.push([
+      "Balance due",
+      formatInvoiceSarForPdf(invoice.balance_due ?? Math.max(0, invoice.total - invoice.amount_paid)),
+    ]);
   }
 
   /** Tailwind slate-200 — highlight payable DHS total in generated PDFs. */

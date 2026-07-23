@@ -2,6 +2,19 @@ import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
 
 export type CustomerInvoiceStatus = "draft" | "sent" | "paid";
 
+export type CustomerInvoicePaymentMethod = "cash" | "transfer" | "card" | "other";
+
+export interface CustomerInvoicePayment {
+  id: string;
+  amount: number;
+  /** Calendar date or ISO datetime when the client paid */
+  paid_at: string;
+  method: CustomerInvoicePaymentMethod | null;
+  notes: string | null;
+  recorded_at: string;
+  recorded_by: string | null;
+}
+
 export interface CustomerInvoiceLine {
   id: string;
   /** Matches fabric line order on sales order / costing (1 = first fabric line). */
@@ -52,6 +65,8 @@ export interface CustomerInvoice {
   created_at: string;
   sent_at: string | null;
   paid_at: string | null;
+  /** Deposits and partial payments toward the invoice total (selling amounts only). */
+  payments: CustomerInvoicePayment[];
   /** Production brand on the invoice letterhead */
   factory_brand_name: string | null;
   /** Snapshot of internal cost when invoice was created (SAR) */

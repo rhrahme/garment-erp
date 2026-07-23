@@ -9,7 +9,7 @@ import { InvoicePreview } from "@/components/invoicing/InvoicePreview";
 import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
 import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
 import type { FabricSwatchKey } from "@/lib/fabric-sourcing/fabric-swatch-keys";
-import type { CustomerInvoice, CustomerInvoiceLine, CustomerInvoiceStatus } from "@/lib/types/customer-invoices";
+import type { CustomerInvoice, CustomerInvoiceLine, CustomerInvoicePaymentMethod, CustomerInvoiceStatus } from "@/lib/types/customer-invoices";
 import {
   computeInvoiceLineTotals,
   formatInvoiceClientName,
@@ -24,6 +24,7 @@ import { InvoiceTotalsFooter } from "@/components/invoicing/InvoiceTotalsFooter"
 import { isDubaiFabricDelivery, isRiyadhFabricDelivery } from "@/lib/invoicing/bank-details";
 import { RiyadhBankDetailsPdfLink } from "@/components/invoicing/RiyadhBankDetailsPdfLink";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
+import { getInvoiceAmountPaid, getInvoiceBalanceDue, normalizeInvoicePayments } from "@/lib/invoicing/payments";
 import type { InvoiceLineCrossRef } from "@/lib/sales-orders/line-cross-reference";
 import { formatDate } from "@/lib/utils";
 
@@ -31,16 +32,23 @@ export function InvoiceEditor({
   invoice: initial,
   lineCrossRefs,
   lineSwatchKeys,
+  showCostColumns = true,
 }: {
   invoice: CustomerInvoice;
   lineCrossRefs: Map<string, InvoiceLineCrossRef>;
   lineSwatchKeys: Map<string, FabricSwatchKey>;
+  /** Admin sees fabric/cost hints; sales never. */
+  showCostColumns?: boolean;
 }) {
   const router = useRouter();
   const [invoice, setInvoice] = useState(initial);
   const [lines, setLines] = useState<CustomerInvoiceLine[]>(initial.lines);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [paymentMethod, setPaymentMethod] = useState<CustomerInvoicePaymentMethod | "">("");
+  const [paymentNotes, setPaymentNotes] = useState("");
 
   async function savePatch(
     patch: Record<string, unknown>,
@@ -76,6 +84,37 @@ export function InvoiceEditor({
     await savePatch({ status, lines: resolveInvoiceLines(lines) });
   }
 
+  async function recordPayment() {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/customer-invoices/${invoice.id}/payments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: Number.parseFloat(paymentAmount),
+          paid_at: paymentDate || null,
+          method: paymentMethod || null,
+          notes: paymentNotes || null,
+        }),
+      });
+      const data = (await res.json()) as {
+        invoice?: CustomerInvoice;
+        error?: string;
+      };
+      if (!res.ok || !data.invoice) throw new Error(data.error ?? "Failed to record payment.");
+      setInvoice(data.invoice);
+      setLines(resolveInvoiceLines(data.invoice.lines));
+      setPaymentAmount("");
+      setPaymentNotes("");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to record payment.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function updateLine(id: string, field: "unit_price" | "description", value: string) {
     setLines((current) =>
       current.map((line) => {
@@ -96,6 +135,10 @@ export function InvoiceEditor({
       ? Math.round(liveSubtotal * invoice.vat_rate * 100) / 100
       : 0;
   const liveTotal = Math.round((liveSubtotal + liveVatAmount) * 100) / 100;
+  const amountPaid = getInvoiceAmountPaid({ ...invoice, total: liveTotal });
+  const balanceDue = getInvoiceBalanceDue({ ...invoice, total: liveTotal });
+  const payments = normalizeInvoicePayments(invoice.payments);
+  const pdfKind: "quote" | "invoice" = invoice.status === "draft" ? "quote" : "invoice";
 
   const lineTotals = useMemo(() => computeInvoiceLineTotals(resolveInvoiceLines(lines)), [lines]);
 
@@ -111,6 +154,9 @@ export function InvoiceEditor({
       subtotal: liveSubtotal,
       vat_amount: liveVatAmount,
       total: liveTotal,
+      amount_paid: amountPaid,
+      balance_due: balanceDue,
+      document_kind: pdfKind,
       lines: sortInvoiceLinesByArticle(resolveInvoiceLines(lines)).map((line) =>
         toInvoiceLineDisplay({
           ...line,
@@ -118,7 +164,7 @@ export function InvoiceEditor({
         })
       ),
     }),
-    [invoice, lines, liveSubtotal, liveVatAmount, liveTotal]
+    [amountPaid, balanceDue, invoice, lines, liveSubtotal, liveVatAmount, liveTotal, pdfKind]
   );
 
   return (
@@ -144,6 +190,16 @@ export function InvoiceEditor({
           <DownloadInvoicePdfButton
             invoiceId={invoice.id}
             invoiceNumber={invoice.invoice_number}
+            kind={pdfKind}
+            label={pdfKind === "quote" ? "Download quote PDF" : "Download PDF"}
+          />
+          <DownloadInvoicePdfButton
+            invoiceId={invoice.id}
+            invoiceNumber={invoice.invoice_number}
+            kind={pdfKind}
+            mode="open"
+            label="Open PDF"
+            variant="ghost"
           />
           <Link href={`/invoices/${invoice.id}/print`} target="_blank">
             <Button variant="secondary">Open print page</Button>
@@ -228,15 +284,19 @@ export function InvoiceEditor({
               <th className="px-4 py-3">Qty</th>
               <th className="px-4 py-3">Unit price (SAR)</th>
               <th className="px-4 py-3">Line total</th>
-              <th
-                className="px-4 py-3"
-                title="Fabric cost per piece — fabric base + 5% import duty, excl. recoverable VAT and make"
-              >
-                Fabric cost
-              </th>
-              <th className="px-4 py-3" title="Internal cost per piece — fabric + 5% duty + make cost, excl. recoverable VAT">
-                Cost hint
-              </th>
+              {showCostColumns ? (
+                <>
+                  <th
+                    className="px-4 py-3"
+                    title="Fabric cost per piece — fabric base + 5% import duty, excl. recoverable VAT and make"
+                  >
+                    Fabric cost
+                  </th>
+                  <th className="px-4 py-3" title="Internal cost per piece — fabric + 5% duty + make cost, excl. recoverable VAT">
+                    Cost hint
+                  </th>
+                </>
+              ) : null}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -294,12 +354,16 @@ export function InvoiceEditor({
                   />
                 </td>
                 <td className="px-4 py-3 font-medium">{formatInvoiceSar(line.quantity * line.unit_price)}</td>
-                <td className="px-4 py-3 text-xs text-slate-500">
-                  {line.fabric_cost_hint_sar != null ? formatInvoiceSar(line.fabric_cost_hint_sar) : "—"}
-                </td>
-                <td className="px-4 py-3 text-xs text-slate-500">
-                  {line.cost_hint_sar != null ? formatInvoiceSar(line.cost_hint_sar) : "—"}
-                </td>
+                {showCostColumns ? (
+                  <>
+                    <td className="px-4 py-3 text-xs text-slate-500">
+                      {line.fabric_cost_hint_sar != null ? formatInvoiceSar(line.fabric_cost_hint_sar) : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-500">
+                      {line.cost_hint_sar != null ? formatInvoiceSar(line.cost_hint_sar) : "—"}
+                    </td>
+                  </>
+                ) : null}
               </tr>
             );
             })}
@@ -327,6 +391,98 @@ export function InvoiceEditor({
         <Link href="/invoices">
           <Button variant="secondary">All invoices</Button>
         </Link>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">Deposits & payments</h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Record client deposits against selling price. Balance due updates automatically.
+            </p>
+          </div>
+          <div className="text-right text-sm">
+            <p className="text-slate-600">Paid {formatInvoiceSar(amountPaid)}</p>
+            <p className="text-base font-semibold text-slate-900">Balance due {formatInvoiceSar(balanceDue)}</p>
+          </div>
+        </div>
+
+        {payments.length > 0 ? (
+          <ul className="mt-4 divide-y divide-slate-100 rounded-lg border border-slate-100">
+            {payments.map((payment) => (
+              <li key={payment.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-3 text-sm">
+                <div>
+                  <p className="font-medium text-slate-900">{formatInvoiceSar(payment.amount)}</p>
+                  <p className="text-slate-500">
+                    {formatDate(payment.paid_at.slice(0, 10))}
+                    {payment.method ? ` · ${payment.method}` : ""}
+                    {payment.notes ? ` · ${payment.notes}` : ""}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-4 text-sm text-slate-500">No deposits recorded yet.</p>
+        )}
+
+        {invoice.status !== "paid" || balanceDue > 0 ? (
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            <label className="text-sm font-medium text-slate-700">
+              Amount (SAR)
+              <input
+                type="number"
+                min={0.01}
+                step={0.01}
+                value={paymentAmount}
+                onChange={(event) => setPaymentAmount(event.target.value)}
+                className="mt-1 min-h-11 w-full rounded-lg border border-slate-300 px-3"
+                placeholder={balanceDue > 0 ? String(balanceDue) : "0"}
+              />
+            </label>
+            <label className="text-sm font-medium text-slate-700">
+              Paid date
+              <input
+                type="date"
+                value={paymentDate}
+                onChange={(event) => setPaymentDate(event.target.value)}
+                className="mt-1 min-h-11 w-full rounded-lg border border-slate-300 px-3"
+              />
+            </label>
+            <label className="text-sm font-medium text-slate-700">
+              Method
+              <select
+                value={paymentMethod}
+                onChange={(event) => setPaymentMethod(event.target.value as CustomerInvoicePaymentMethod | "")}
+                className="mt-1 min-h-11 w-full rounded-lg border border-slate-300 px-3"
+              >
+                <option value="">Unspecified</option>
+                <option value="cash">Cash</option>
+                <option value="transfer">Transfer</option>
+                <option value="card">Card</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <label className="text-sm font-medium text-slate-700 md:col-span-2 xl:col-span-1">
+              Notes
+              <input
+                value={paymentNotes}
+                onChange={(event) => setPaymentNotes(event.target.value)}
+                className="mt-1 min-h-11 w-full rounded-lg border border-slate-300 px-3"
+                placeholder="Deposit / reference"
+              />
+            </label>
+            <div className="flex items-end">
+              <Button
+                className="min-h-11 w-full"
+                onClick={() => void recordPayment()}
+                disabled={saving || !paymentAmount || Number.parseFloat(paymentAmount) <= 0}
+              >
+                Record payment
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <InvoicePreview invoice={previewInvoice} invoiceId={invoice.id} />

@@ -21,7 +21,9 @@ export function InvoicePreview({
     <section className="invoice-preview space-y-4">
       <div className="no-print flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
         <div>
-          <p className="font-medium text-slate-900">Invoice preview</p>
+          <p className="font-medium text-slate-900">
+            {invoice.document_kind === "quote" ? "Quote preview" : "Invoice preview"}
+          </p>
           <p className="text-xs text-slate-500">
             Matches the printed PDF — save line prices first, then download or print
           </p>
@@ -30,6 +32,7 @@ export function InvoicePreview({
           <DownloadInvoicePdfButton
             invoiceId={invoiceId}
             invoiceNumber={invoice.invoice_number}
+            kind={invoice.document_kind}
             size="sm"
           />
           <Link href={`/invoices/${invoiceId}/print`} target="_blank">

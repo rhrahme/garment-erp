@@ -10,6 +10,11 @@ import {
   enrichInvoiceDeliveryDestination,
   enrichInvoiceVat,
 } from "@/lib/invoicing/build-invoice";
+import {
+  getInvoiceAmountPaid,
+  getInvoiceBalanceDue,
+  withNormalizedPayments,
+} from "@/lib/invoicing/payments";
 import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import type {
   CustomerInvoice,
@@ -25,17 +30,29 @@ const EMPTY: CustomerInvoicesFile = {
 };
 
 export function readCustomerInvoices(): CustomerInvoicesFile {
-  return readJsonFile(INVOICES_PATH, EMPTY);
+  const file = readJsonFile(INVOICES_PATH, EMPTY);
+  return {
+    ...file,
+    invoices: file.invoices.map(withNormalizedPayments),
+  };
 }
 
 export async function readCustomerInvoicesAsync(): Promise<CustomerInvoicesFile> {
-  return readJsonFileAsync(INVOICES_PATH, EMPTY);
+  const file = await readJsonFileAsync(INVOICES_PATH, EMPTY);
+  return {
+    ...file,
+    invoices: file.invoices.map(withNormalizedPayments),
+  };
 }
 
 /** Bypass in-process cache — use on invoice detail after mutations (multi-instance safe). */
 export async function readCustomerInvoicesFresh(): Promise<CustomerInvoicesFile> {
   invalidateDocumentCache(INVOICES_PATH);
-  return readJsonFileFreshAsync(INVOICES_PATH, EMPTY, { force: true });
+  const file = await readJsonFileFreshAsync(INVOICES_PATH, EMPTY, { force: true });
+  return {
+    ...file,
+    invoices: file.invoices.map(withNormalizedPayments),
+  };
 }
 
 export async function writeCustomerInvoices(data: CustomerInvoicesFile): Promise<CustomerInvoicesFile> {
@@ -88,7 +105,7 @@ export async function saveCustomerInvoice(invoice: CustomerInvoice): Promise<Cus
   const store = await readCustomerInvoicesFresh();
   const index = store.invoices.findIndex((row) => row.id === invoice.id);
 
-  let next = invoice;
+  let next = withNormalizedPayments(invoice);
   if (!next.delivery_destination) {
     const order = await getSalesOrderByIdFresh(next.sales_order_id);
     next = enrichInvoiceDeliveryDestination(next, order);
@@ -112,13 +129,20 @@ export function getCustomerInvoiceSummary(
   const sent = file.invoices.filter((invoice) => invoice.status === "sent");
   const paid = file.invoices.filter((invoice) => invoice.status === "paid");
 
+  const outstanding_sar = roundMoney(
+    file.invoices.reduce((sum, invoice) => sum + getInvoiceBalanceDue(invoice), 0)
+  );
+  const paid_sar = roundMoney(
+    file.invoices.reduce((sum, invoice) => sum + getInvoiceAmountPaid(invoice), 0)
+  );
+
   return {
     invoice_count: file.invoices.length,
     draft_count: draft.length,
     sent_count: sent.length,
     paid_count: paid.length,
-    outstanding_sar: roundMoney([...draft, ...sent].reduce((sum, invoice) => sum + invoice.total, 0)),
-    paid_sar: roundMoney(paid.reduce((sum, invoice) => sum + invoice.total, 0)),
+    outstanding_sar,
+    paid_sar,
   };
 }
 

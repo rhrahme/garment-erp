@@ -308,6 +308,7 @@ export function buildDraftInvoiceFromSalesOrder(
     created_at: new Date().toISOString(),
     sent_at: null,
     paid_at: null,
+    payments: [],
     factory_brand_name: factoryBrand?.name ?? null,
     total_cost_sar: orderCost.total_cost_sar,
     delivery_destination: order.delivery_destination,

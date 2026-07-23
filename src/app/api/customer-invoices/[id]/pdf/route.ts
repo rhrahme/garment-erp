@@ -7,7 +7,7 @@ import { canAccessSalesOrder } from "@/lib/sales/access";
 import { getCustomerInvoiceByIdFresh } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 
-export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireAuthenticated();
     if (!session) {
@@ -15,8 +15,14 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     }
 
     const { id } = await context.params;
+    const url = new URL(request.url);
+    const kindParam = url.searchParams.get("kind");
+    const disposition = url.searchParams.get("disposition") === "inline" ? "inline" : "attachment";
+    const kind =
+      kindParam === "quote" || kindParam === "invoice" ? kindParam : undefined;
+
     await ensureDocumentsLoaded(["clients", "sales_orders", "customer_invoices"]);
-    const prepared = await prepareCustomerInvoiceDocument(id);
+    const prepared = await prepareCustomerInvoiceDocument(id, { kind });
     if (!prepared) {
       return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
     }
@@ -33,7 +39,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     return new NextResponse(Buffer.from(pdfBytes), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${prepared.invoiceNumber}.pdf"`,
+        "Content-Disposition": `${disposition}; filename="${prepared.filename}"`,
         "Cache-Control": "no-store",
       },
     });

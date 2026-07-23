@@ -3,8 +3,12 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
+import { DownloadInvoicePdfButton } from "@/components/invoicing/DownloadInvoicePdfButton";
+import { SalesFittingsPanel } from "@/components/sales/SalesFittingsPanel";
 import { Button } from "@/components/ui/Button";
 import { getFactoryBrands } from "@/lib/data/factory-brands";
+import { getInvoiceBalanceDue, getInvoiceAmountPaid } from "@/lib/invoicing/payments";
+import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
 import { filterSalesClientsByBrand } from "@/lib/sales/brand-scope";
 import type { ClientProfile } from "@/lib/types/clients";
 import type { CustomerInvoice } from "@/lib/types/customer-invoices";
@@ -204,14 +208,44 @@ export function SalesWorkspaceDashboard() {
     }
   }
 
-  async function updateFitting(fittingId: string, status: SalesFittingStatus) {
-    await fetch("/api/sales/fittings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fitting_id: fittingId, status }),
-    });
-    await load();
+  async function updateFitting(
+    fittingId: string,
+    patch: { status?: SalesFittingStatus; scheduled_at?: string; notes?: string }
+  ) {
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/sales/fittings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fitting_id: fittingId, ...patch }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error ?? "Failed to update fitting.");
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Failed to update fitting.");
+    } finally {
+      setSaving(false);
+    }
   }
+
+  const fittingOrders = useMemo(() => {
+    if (!data) return [];
+    if (!brandFilter) return data.orders;
+    const clientIds = new Set(filteredClients.map((client) => client.id));
+    return data.orders.filter((order) => clientIds.has(order.client_id));
+  }, [brandFilter, data, filteredClients]);
+
+  useEffect(() => {
+    if (fittingOrders.length === 0) {
+      setFittingOrderId("");
+      return;
+    }
+    if (!fittingOrders.some((order) => order.id === fittingOrderId)) {
+      setFittingOrderId(fittingOrders[0]!.id);
+    }
+  }, [fittingOrderId, fittingOrders]);
 
   async function updateMilestone(orderId: string, milestone: SalesMilestone, acknowledge = false) {
     await fetch("/api/sales/milestones", {
@@ -343,17 +377,57 @@ export function SalesWorkspaceDashboard() {
           <div className="flex justify-end"><Link href="/orders/new"><Button>+ New sales order</Button></Link></div>
           {data.orders.map((order) => {
             const invoice = data.invoices.find((item) => item.sales_order_id === order.id);
+            const balanceDue = invoice ? getInvoiceBalanceDue(invoice) : null;
+            const amountPaid = invoice ? getInvoiceAmountPaid(invoice) : null;
+            const pdfKind = invoice?.status === "draft" ? "quote" : "invoice";
             return (
               <div key={order.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white p-4">
                 <div>
                   <Link href={`/orders/${order.id}`} className="font-semibold text-indigo-700">{order.so_number}</Link>
                   <p className="text-sm text-slate-600">{order.client_name} · {order.fabric_lines.length} fabric line(s)</p>
+                  {invoice ? (
+                    <p className="mt-1 text-sm text-slate-600">
+                      {invoice.invoice_number} · {label(invoice.status)}
+                      {amountPaid != null && amountPaid > 0
+                        ? ` · Paid ${formatInvoiceSar(amountPaid)}`
+                        : null}
+                      {balanceDue != null
+                        ? ` · Balance ${formatInvoiceSar(balanceDue)}`
+                        : null}
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-sm text-slate-500">Open order to create invoice / quote</p>
+                  )}
                 </div>
-                {invoice ? (
-                  <Link href={`/invoices/${invoice.id}`}><Button variant="secondary">{invoice.invoice_number} · {label(invoice.status)}</Button></Link>
-                ) : (
-                  <span className="text-sm text-slate-500">Open order to create invoice</span>
-                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  {invoice ? (
+                    <>
+                      <DownloadInvoicePdfButton
+                        invoiceId={invoice.id}
+                        invoiceNumber={invoice.invoice_number}
+                        kind={pdfKind}
+                        label={pdfKind === "quote" ? "Download quote PDF" : "Download invoice PDF"}
+                        size="sm"
+                      />
+                      <DownloadInvoicePdfButton
+                        invoiceId={invoice.id}
+                        invoiceNumber={invoice.invoice_number}
+                        kind={pdfKind}
+                        mode="open"
+                        label="Open PDF"
+                        size="sm"
+                        variant="ghost"
+                      />
+                      <Link href={`/invoices/${invoice.id}`}>
+                        <Button variant="secondary" size="sm">Edit invoice</Button>
+                      </Link>
+                    </>
+                  ) : (
+                    <Link href={`/orders/${order.id}`}>
+                      <Button variant="secondary" size="sm">Open order</Button>
+                    </Link>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -362,29 +436,35 @@ export function SalesWorkspaceDashboard() {
 
       {data && tab === "fittings" && (
         <section className="space-y-5">
-          <div className="grid gap-3 rounded-xl border bg-white p-5 md:grid-cols-4">
-            <select value={fittingOrderId} onChange={(event) => setFittingOrderId(event.target.value)} className="min-h-12 rounded-lg border px-3">
-              {data.orders.map((order) => <option key={order.id} value={order.id}>{order.so_number} · {order.client_name}</option>)}
-            </select>
-            <input type="datetime-local" value={fittingDate} onChange={(event) => setFittingDate(event.target.value)} className="min-h-12 rounded-lg border px-3" />
-            <input value={fittingNotes} onChange={(event) => setFittingNotes(event.target.value)} placeholder="Fitting notes" className="min-h-12 rounded-lg border px-3" />
-            <Button onClick={() => void createFitting()} disabled={!fittingDate || saving}>Schedule fitting</Button>
-          </div>
-          {data.fittings.sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at)).map((fitting) => {
-            const order = data.orders.find((item) => item.id === fitting.sales_order_id);
-            return (
-              <div key={fitting.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white p-4">
-                <div>
-                  <p className="font-semibold">Fitting {fitting.sequence_number} · {order?.so_number}</p>
-                  <p className="text-sm text-slate-600">{new Date(fitting.scheduled_at).toLocaleString()} · {fitting.notes || "No notes"}</p>
-                </div>
-                <select value={fitting.status} onChange={(event) => void updateFitting(fitting.id, event.target.value as SalesFittingStatus)} className="min-h-11 rounded-lg border px-3">
-                  <option value="scheduled">Scheduled</option><option value="done">Done</option>
-                  <option value="no_show">No-show</option><option value="cancelled">Cancelled</option>
-                </select>
-              </div>
-            );
-          })}
+          {!isBrandScoped || scopedBrands.length > 1 ? (
+            <div className="rounded-xl border bg-white p-4">
+              <FactoryBrandTabs
+                value={brandFilter}
+                onChange={setBrandFilter}
+                showAll={!isBrandScoped}
+                showUnassigned={!isBrandScoped}
+                allLabel="All brands"
+                unassignedLabel="Unassigned"
+                label="Filter fittings by brand"
+                brands={scopedBrands}
+              />
+            </div>
+          ) : null}
+          <SalesFittingsPanel
+            fittings={data.fittings.filter((fitting) =>
+              fittingOrders.some((order) => order.id === fitting.sales_order_id)
+            )}
+            orders={fittingOrders}
+            fittingOrderId={fittingOrderId}
+            fittingDate={fittingDate}
+            fittingNotes={fittingNotes}
+            saving={saving}
+            onFittingOrderIdChange={setFittingOrderId}
+            onFittingDateChange={setFittingDate}
+            onFittingNotesChange={setFittingNotes}
+            onCreateFitting={() => void createFitting()}
+            onUpdateFitting={updateFitting}
+          />
         </section>
       )}
 

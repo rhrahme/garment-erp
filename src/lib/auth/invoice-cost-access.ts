@@ -5,6 +5,7 @@ export function redactCustomerInvoiceCosts(invoice: CustomerInvoice): CustomerIn
   return {
     ...invoice,
     total_cost_sar: null,
+    payments: Array.isArray(invoice.payments) ? invoice.payments : [],
     lines: invoice.lines.map((line) => ({
       ...line,
       cost_hint_sar: null,

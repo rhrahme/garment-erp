@@ -40,6 +40,7 @@ const OUTBOUND_EVENTS = [
   "invoice.sent",
   "invoice.created",
   "invoice.updated",
+  "invoice.payment_recorded",
   "sales_client_details.updated",
   "sales_client_photo.uploaded",
   "sales_fitting.created",
@@ -123,6 +124,7 @@ export function ZapierSetup() {
             <li>POST {baseUrl}/api/v1/customer-invoices/[id]/mark-sent</li>
             <li>POST {baseUrl}/api/v1/customer-invoices/from-sales-order</li>
             <li>PATCH {baseUrl}/api/v1/customer-invoices/[id]</li>
+            <li>POST {baseUrl}/api/v1/customer-invoices/[id]/payments</li>
             <li>POST {baseUrl}/api/v1/sales/client-details</li>
             <li>POST/PATCH {baseUrl}/api/v1/sales/fittings</li>
             <li>PATCH {baseUrl}/api/v1/sales/milestones</li>

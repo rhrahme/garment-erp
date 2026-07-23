@@ -37,6 +37,7 @@ export type IntegrationEventType =
   | "invoice.sent"
   | "invoice.created"
   | "invoice.updated"
+  | "invoice.payment_recorded"
   | "sales_client_details.updated"
   | "sales_client_photo.uploaded"
   | "sales_fitting.created"

@@ -27,6 +27,10 @@ export type InvoiceDocumentData = {
   vat_rate: number | null;
   vat_amount: number;
   total: number;
+  amount_paid?: number;
+  balance_due?: number;
+  /** Client-facing label: quote for drafts / shareable pre-invoice PDFs */
+  document_kind?: "invoice" | "quote";
   factory_brand_name: string | null;
   delivery_destination: DeliveryDestination | null;
   lines: CustomerInvoiceLineDisplay[];
@@ -42,6 +46,9 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
     <div className="invoice-document mx-auto max-w-3xl bg-white p-8 text-slate-900">
       <div className="mb-8 flex items-start justify-between border-b border-slate-200 pb-6">
         <div>
+          {invoice.document_kind === "quote" ? (
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Quote</p>
+          ) : null}
           <h1 className="text-3xl font-bold">{invoice.invoice_number}</h1>
           <p className="mt-2 text-sm text-slate-600">Date: {formatDate(invoice.invoice_date)}</p>
           {invoice.due_date && <p className="text-sm text-slate-600">Due: {formatDate(invoice.due_date)}</p>}
@@ -103,6 +110,15 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
           />
         </tfoot>
       </table>
+
+      {invoice.amount_paid != null && invoice.amount_paid > 0 ? (
+        <div className="mb-6 space-y-1 text-right text-sm">
+          <p className="text-slate-600">Amount paid: {formatInvoiceSar(invoice.amount_paid)}</p>
+          <p className="font-semibold text-slate-900">
+            Balance due: {formatInvoiceSar(invoice.balance_due ?? Math.max(0, invoice.total - invoice.amount_paid))}
+          </p>
+        </div>
+      ) : null}
 
       <InvoiceBankDetails deliveryDestination={invoice.delivery_destination} />
     </div>
