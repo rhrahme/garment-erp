@@ -33,6 +33,7 @@ type Workspace = {
   client_details: SalesClientDetails[];
   fittings: SalesFitting[];
   milestones: MilestoneRow[];
+  allowed_brand_ids?: string[] | null;
 };
 
 const TABS: { id: Tab; label: string }[] = [
@@ -80,6 +81,13 @@ export function SalesWorkspaceDashboard() {
   const [fittingNotes, setFittingNotes] = useState("");
   /** null = all brands; factory brand id; or UNASSIGNED_FACTORY_BRAND_ID */
   const [brandFilter, setBrandFilter] = useState<string | null>(null);
+  const allowedBrandIds = data?.allowed_brand_ids ?? null;
+  const isBrandScoped = Boolean(allowedBrandIds && allowedBrandIds.length > 0);
+  const scopedBrands = useMemo(() => {
+    if (!allowedBrandIds) return factoryBrands;
+    const allowed = new Set(allowedBrandIds);
+    return factoryBrands.filter((brand) => allowed.has(brand.id));
+  }, [allowedBrandIds]);
 
   async function load() {
     try {
@@ -98,10 +106,21 @@ export function SalesWorkspaceDashboard() {
     void load();
   }, []);
 
-  // allowedBrandIds: null until sales-user → brand assignments exist (see getAllowedSalesBrandIds).
+  useEffect(() => {
+    if (!isBrandScoped || !allowedBrandIds?.length) return;
+    if (allowedBrandIds.length === 1) {
+      setBrandFilter(allowedBrandIds[0]!);
+      return;
+    }
+    if (brandFilter && !allowedBrandIds.includes(brandFilter)) {
+      setBrandFilter(allowedBrandIds[0]!);
+    }
+  }, [allowedBrandIds, brandFilter, isBrandScoped]);
+
+  // Server already scopes clients; apply UI brand tab filter on top.
   const filteredClients = useMemo(
-    () => filterSalesClientsByBrand(data?.clients ?? [], brandFilter, null),
-    [brandFilter, data?.clients]
+    () => filterSalesClientsByBrand(data?.clients ?? [], brandFilter, allowedBrandIds),
+    [allowedBrandIds, brandFilter, data?.clients]
   );
 
   useEffect(() => {
@@ -229,12 +248,12 @@ export function SalesWorkspaceDashboard() {
             <FactoryBrandTabs
               value={brandFilter}
               onChange={setBrandFilter}
-              showAll
-              showUnassigned
+              showAll={!isBrandScoped}
+              showUnassigned={!isBrandScoped}
               allLabel="All brands"
               unassignedLabel="Unassigned"
               label="Filter by brand"
-              brands={factoryBrands}
+              brands={scopedBrands}
             />
             <div className="flex flex-wrap items-center gap-3">
               <select

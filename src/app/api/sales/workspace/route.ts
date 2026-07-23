@@ -9,7 +9,11 @@ import { readFabricReceipts, readFabricReceiptsArchive } from "@/lib/data/fabric
 import { readProductionWorkOrders } from "@/lib/data/production-work-orders";
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import { readSalesWorkspace } from "@/lib/data/sales-workspace";
-import { filterSalesOrdersForSession } from "@/lib/sales/access";
+import {
+  filterClientsForSalesBrandScope,
+  filterSalesOrdersForSession,
+  getAllowedSalesBrandIds,
+} from "@/lib/sales/access";
 import { deriveSalesMilestone, isSalesAttentionMilestone } from "@/lib/sales/milestones";
 
 export async function GET() {
@@ -28,7 +32,11 @@ export async function GET() {
     "production_work_orders",
   ]);
 
-  const orders = filterSalesOrdersForSession(session, readSalesOrders().orders);
+  const allowedBrandIds = getAllowedSalesBrandIds(session);
+  const allClients = readClients().clients;
+  const clients = filterClientsForSalesBrandScope(allClients, allowedBrandIds);
+  const clientIds = new Set(clients.map((client) => client.id));
+  const orders = filterSalesOrdersForSession(session, readSalesOrders().orders, allClients);
   const orderIds = new Set(orders.map((order) => order.id));
   const workspace = readSalesWorkspace();
   const receipts = [...readFabricReceipts().receipts, ...readFabricReceiptsArchive().receipts];
@@ -52,12 +60,13 @@ export async function GET() {
 
   const invoiceStore = await readCustomerInvoicesFresh();
   return NextResponse.json({
-    clients: readClients().clients,
+    allowed_brand_ids: allowedBrandIds,
+    clients,
     orders: orders.map(redactSalesOrderFabricPrices),
     invoices: invoiceStore.invoices
       .filter((invoice) => orderIds.has(invoice.sales_order_id))
       .map(redactCustomerInvoiceCosts),
-    client_details: workspace.client_details,
+    client_details: workspace.client_details.filter((details) => clientIds.has(details.client_id)),
     fittings: workspace.fittings.filter((fitting) => orderIds.has(fitting.sales_order_id)),
     milestones: milestoneRows,
   });

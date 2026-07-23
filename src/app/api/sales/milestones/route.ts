@@ -11,6 +11,7 @@ export async function PATCH(request: Request) {
   if (!session || (!session.isSalesOperator && !session.isAdmin)) {
     return NextResponse.json({ error: "Sales access required." }, { status: 403 });
   }
+  await ensureDocumentsLoaded(["clients", "sales_orders", "sales_workspace"]);
   const body = (await request.json()) as {
     sales_order_id?: string;
     milestone?: SalesMilestone;
@@ -24,7 +25,6 @@ export async function PATCH(request: Request) {
   if (!body.milestone) {
     return NextResponse.json({ error: "milestone is required." }, { status: 400 });
   }
-  await ensureDocumentsLoaded(["sales_workspace"]);
   try {
     const milestone = await updateSalesMilestone(
       order.id,

@@ -20,6 +20,7 @@ import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import { canAccessSalesOrder } from "@/lib/sales/access";
 import { redactCustomerInvoiceCosts } from "@/lib/auth/invoice-cost-access";
 import { notifyIntegration } from "@/lib/integrations";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -33,6 +34,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   try {
     const session = await requireAuthenticated();
     if (!session) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    await ensureDocumentsLoaded(["clients", "sales_orders", "customer_invoices"]);
     invalidateDocumentCache(path.join(process.cwd(), "src/data/customer-invoices.json"));
     const { id } = await context.params;
     const invoice = await getCustomerInvoiceByIdFresh(id);
@@ -55,6 +57,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   try {
     const session = await requireAuthenticated();
     if (!session) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    await ensureDocumentsLoaded(["clients", "sales_orders", "customer_invoices"]);
     invalidateDocumentCache(path.join(process.cwd(), "src/data/customer-invoices.json"));
     const { id } = await context.params;
     const invoice = await getCustomerInvoiceByIdFresh(id);

@@ -4,7 +4,7 @@ import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server"
 import { requireAuthenticated, canModifySalesOrders } from "@/lib/auth/session";
 import { healClientDataForRead } from "@/lib/clients/heal-on-read";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { getClientById } from "@/lib/data/clients";
+import { getClientById, readClients } from "@/lib/data/clients";
 import { formatClientDisplayName } from "@/lib/clients/names";
 import {
   generateSoNumber,
@@ -21,7 +21,7 @@ import { isGarmentStitchType } from "@/lib/sales-orders/garment-types";
 import { generateFabricLabelStickers } from "@/lib/sales-orders/label-codes";
 import { notifyIntegration } from "@/lib/integrations";
 import { syncPatternJobsFromSalesOrder } from "@/lib/pattern/sync-from-sales-order";
-import { filterSalesOrdersForSession } from "@/lib/sales/access";
+import { canAccessClient, filterSalesOrdersForSession } from "@/lib/sales/access";
 import { isDeliveryDestination } from "@/lib/shipping/delivery-destinations";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
@@ -37,11 +37,11 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    await ensureDocumentsLoaded(["sales_orders"]);
+    await ensureDocumentsLoaded(["sales_orders", "clients"]);
     // Same heal as Clients / Fabric Receiving reads — every role resolves client names.
     await healClientDataForRead();
     const store = readSalesOrders();
-    const visibleOrders = filterSalesOrdersForSession(session, store.orders);
+    const visibleOrders = filterSalesOrdersForSession(session, store.orders, readClients().clients);
     const canViewFabricPrices = await resolveFabricPriceAccess(session);
     if (!canViewFabricPrices) {
       return NextResponse.json({
@@ -99,6 +99,9 @@ export async function POST(request: Request) {
     const client = getClientById(client_id);
     if (!client) {
       return NextResponse.json({ error: "Client not found." }, { status: 400 });
+    }
+    if (!canAccessClient(session, client)) {
+      return NextResponse.json({ error: "Client not found." }, { status: 404 });
     }
 
     const rawLines = body.fabric_lines ?? [];

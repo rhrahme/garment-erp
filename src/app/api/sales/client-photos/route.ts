@@ -6,6 +6,7 @@ import {
   writeClientPhoto,
 } from "@/lib/data/client-photo-storage";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { canAccessClient } from "@/lib/sales/access";
 import { attachSalesClientPhoto } from "@/lib/sales/mutations";
 import type { ClientPhoto } from "@/lib/types/sales-workspace";
 
@@ -17,8 +18,12 @@ export async function POST(request: Request) {
   await ensureDocumentsLoaded(["clients", "sales_workspace"]);
   const form = await request.formData();
   const clientId = String(form.get("client_id") ?? "").trim();
+  const client = getClientById(clientId);
   const file = form.get("photo");
-  if (!clientId || !getClientById(clientId)) {
+  if (!clientId || !client) {
+    return NextResponse.json({ error: "Client not found." }, { status: 404 });
+  }
+  if (!canAccessClient(session, client)) {
     return NextResponse.json({ error: "Client not found." }, { status: 404 });
   }
   if (!(file instanceof File)) {

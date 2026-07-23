@@ -16,12 +16,14 @@ import { buildInvoiceLineCrossRefs, buildInvoiceLineSwatchKeys } from "@/lib/sal
 import { getSessionContext } from "@/lib/auth/session";
 import { canAccessSalesOrder } from "@/lib/sales/access";
 import { redactCustomerInvoiceCosts } from "@/lib/auth/invoice-cost-access";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  await ensureDocumentsLoaded(["clients", "sales_orders", "customer_invoices"]);
   const raw = await getCustomerInvoiceByIdFresh(id);
   if (!raw) notFound();
 

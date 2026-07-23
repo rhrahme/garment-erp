@@ -7,12 +7,14 @@ import { getSessionContext } from "@/lib/auth/session";
 import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import { canAccessSalesOrder } from "@/lib/sales/access";
 import { getCustomerInvoiceByIdFresh } from "@/lib/data/customer-invoices";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 export default async function InvoicePrintPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  await ensureDocumentsLoaded(["clients", "sales_orders", "customer_invoices"]);
   const prepared = await prepareCustomerInvoiceDocument(id);
   if (!prepared) notFound();
   const session = await getSessionContext();

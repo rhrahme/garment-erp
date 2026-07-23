@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Archive, Search } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { StatusBadge } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { DownloadSalesOrderPdfButton } from "@/components/orders/DownloadSalesOrderPdfButton";
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
+import { getFactoryBrands } from "@/lib/data/factory-brands";
 import { SALES_ORDER_ARCHIVE_AGE_MONTHS } from "@/lib/sales-orders/archive";
 import { salesOrderMatchesSearch } from "@/lib/sales-orders/list-search";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
@@ -23,16 +24,38 @@ export function OrdersList({
   orders,
   productionMode = false,
   taskOperatorMode = false,
+  allowedBrandIds = null,
 }: {
   orders: SalesOrderListRow[];
   productionMode?: boolean;
   taskOperatorMode?: boolean;
+  /** When set (sales brand scope), only these factory brands appear in the filter tabs. */
+  allowedBrandIds?: string[] | null;
 }) {
   const labels = ordersUiLabels(productionMode, taskOperatorMode);
-  const { brandId, setBrandId, hydrated } = useFactoryBrandFilter();
+  const scopedBrands = useMemo(() => {
+    if (!allowedBrandIds) return undefined;
+    const allowed = new Set(allowedBrandIds);
+    return getFactoryBrands().filter((brand) => allowed.has(brand.id));
+  }, [allowedBrandIds]);
+  const defaultBrandId =
+    allowedBrandIds?.length === 1 ? allowedBrandIds[0]! : null;
+  const { brandId, setBrandId, hydrated } = useFactoryBrandFilter(defaultBrandId);
+  const isBrandScoped = Boolean(allowedBrandIds && allowedBrandIds.length > 0);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 200);
   const [view, setView] = useState<OrdersView>("active");
+
+  useEffect(() => {
+    if (!hydrated || !isBrandScoped || !allowedBrandIds?.length) return;
+    if (allowedBrandIds.length === 1) {
+      if (brandId !== allowedBrandIds[0]) setBrandId(allowedBrandIds[0]!);
+      return;
+    }
+    if (brandId && !allowedBrandIds.includes(brandId)) {
+      setBrandId(allowedBrandIds[0]!);
+    }
+  }, [allowedBrandIds, brandId, hydrated, isBrandScoped, setBrandId]);
 
   const activeOrders = useMemo(() => orders.filter((order) => !order.is_archived), [orders]);
   const archivedOrders = useMemo(() => orders.filter((order) => order.is_archived), [orders]);
@@ -160,7 +183,14 @@ export function OrdersList({
       </div>
 
       {hydrated && (
-        <FactoryBrandTabs value={brandId} onChange={setBrandId} showAll allLabel="All brands" label="Filter by brand" />
+        <FactoryBrandTabs
+          value={brandId}
+          onChange={setBrandId}
+          showAll={!isBrandScoped}
+          allLabel="All brands"
+          label="Filter by brand"
+          brands={scopedBrands}
+        />
       )}
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">

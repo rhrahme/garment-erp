@@ -13,12 +13,13 @@ import { getFactoryBrands } from "@/lib/data/factory-brands";
 import { generateNextClientCode, getBrandClientCodePrefix, getJoinMonthYear } from "@/lib/clients/codes";
 import { formatClientDisplayName, formatReferredByName, isBlankClientPlaceholder, isClientSaveable } from "@/lib/clients/names";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
+import { useSalesBrandScope } from "@/hooks/useSalesBrandScope";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { cn } from "@/lib/utils";
 import type { ClientProfile, ClientsFile } from "@/lib/types/clients";
 
-const factoryBrands = getFactoryBrands();
+const allFactoryBrands = getFactoryBrands();
 
 type ClientViewMode = "list" | "table" | "cards";
 type ClientSortBy = "name-asc" | "name-desc" | "code-asc" | "code-desc" | "joined-desc" | "joined-asc";
@@ -192,7 +193,16 @@ export function ClientProfilesEditor() {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 200);
   const [isDirty, setIsDirty] = useState(false);
-  const { brandId: brandFilter, setBrandId: setBrandFilter, hydrated: brandFilterHydrated } = useFactoryBrandFilter();
+  const {
+    allowedBrandIds,
+    brands: assignableBrands,
+    hydrated: salesBrandScopeHydrated,
+    isScoped: isBrandScoped,
+  } = useSalesBrandScope();
+  const defaultBrandFilter =
+    allowedBrandIds?.length === 1 ? allowedBrandIds[0]! : null;
+  const { brandId: brandFilter, setBrandId: setBrandFilter, hydrated: brandFilterHydrated } =
+    useFactoryBrandFilter(defaultBrandFilter);
   const [viewMode, setViewMode] = useState<ClientViewMode>("list");
   const [sortBy, setSortBy] = useState<ClientSortBy>("name-asc");
   const firstNameInputRef = useRef<HTMLInputElement>(null);
@@ -217,6 +227,17 @@ export function ClientProfilesEditor() {
   useEffect(() => {
     localStorage.setItem(SORT_STORAGE_KEY, sortBy);
   }, [sortBy]);
+
+  useEffect(() => {
+    if (!salesBrandScopeHydrated || !isBrandScoped || !allowedBrandIds?.length) return;
+    if (allowedBrandIds.length === 1) {
+      setBrandFilter(allowedBrandIds[0]!);
+      return;
+    }
+    if (brandFilter && !allowedBrandIds.includes(brandFilter)) {
+      setBrandFilter(allowedBrandIds[0]!);
+    }
+  }, [allowedBrandIds, brandFilter, isBrandScoped, salesBrandScopeHydrated, setBrandFilter]);
 
   useEffect(() => {
     async function loadSession() {
@@ -405,6 +426,10 @@ export function ClientProfilesEditor() {
 
   function addClient() {
     const client = emptyClient();
+    if (allowedBrandIds?.length === 1) {
+      client.brand_ids = [allowedBrandIds[0]!];
+      client.code = assignCodeForNewClient(client, client.brand_ids) ?? "";
+    }
     setSearchQuery("");
     setIsDirty(true);
     setDraft((prev) => ({ ...prev, clients: [client, ...prev.clients] }));
@@ -455,7 +480,7 @@ export function ClientProfilesEditor() {
   }
 
   function renderBrandBadges(client: ClientProfile) {
-    const brands = factoryBrands.filter((b) => client.brand_ids.includes(b.id));
+    const brands = allFactoryBrands.filter((b) => client.brand_ids.includes(b.id));
     if (brands.length === 0) {
       return <Badge className="bg-amber-100 text-amber-700">No brand assigned</Badge>;
     }
@@ -616,7 +641,7 @@ export function ClientProfilesEditor() {
             isNew && needsBrand && "p-2 ring-1 ring-amber-300"
           )}
         >
-          {factoryBrands.map((brand) => (
+          {assignableBrands.map((brand) => (
             <button
               key={brand.id}
               type="button"
@@ -845,13 +870,14 @@ export function ClientProfilesEditor() {
                   </button>
                 )}
               </label>
-              {brandFilterHydrated && (
+              {brandFilterHydrated && salesBrandScopeHydrated && (
                 <FactoryBrandTabs
                   value={brandFilter}
                   onChange={setBrandFilter}
-                  showAll
+                  showAll={!isBrandScoped}
                   allLabel="All"
                   label="Brand"
+                  brands={assignableBrands}
                   className="lg:min-w-[22rem]"
                 />
               )}
@@ -914,7 +940,7 @@ export function ClientProfilesEditor() {
               {displayClients.map((client, index) => {
                 const isEditing = editingId === client.id;
                 const name = formatClientDisplayName(client) || "Unnamed client";
-                const brands = factoryBrands.filter((b) => client.brand_ids.includes(b.id));
+                const brands = allFactoryBrands.filter((b) => client.brand_ids.includes(b.id));
                 const brandLabel = brands.map((b) => b.name).join(", ") || "No brand";
 
                 return (

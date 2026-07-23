@@ -7,6 +7,7 @@ import {
   hasFabricPriceAccess,
 } from "@/lib/auth/fabric-price-access";
 import { getSessionContext } from "@/lib/auth/session";
+import { getAllowedSalesBrandIds } from "@/lib/sales/access";
 
 export async function GET() {
   try {
@@ -30,6 +31,7 @@ export async function GET() {
       can_view_fabric_prices: canViewFabricPrices,
       can_view_fabric_stock: canViewFabricStock(session),
       can_access_pattern: session.canAccessPattern,
+      allowed_sales_brand_ids: getAllowedSalesBrandIds(session),
     });
   } catch (error) {
     console.error("Failed to read session:", error);

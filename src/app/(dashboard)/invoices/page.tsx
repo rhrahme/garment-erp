@@ -8,7 +8,8 @@ import {
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getInvoiceableSalesOrders } from "@/lib/invoicing/invoiceable-orders";
 import { getSessionContext } from "@/lib/auth/session";
-import { filterSalesOrdersForSession } from "@/lib/sales/access";
+import { filterSalesOrdersForSession, getAllowedSalesBrandIds } from "@/lib/sales/access";
+import { readClients } from "@/lib/data/clients";
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import { redactCustomerInvoiceCosts } from "@/lib/auth/invoice-cost-access";
 
@@ -19,7 +20,11 @@ export default async function InvoicesPage() {
 
   const session = await getSessionContext();
   const invoicesFile = await readCustomerInvoicesFresh();
-  const visibleOrders = filterSalesOrdersForSession(session, readSalesOrders().orders);
+  const visibleOrders = filterSalesOrdersForSession(
+    session,
+    readSalesOrders().orders,
+    readClients().clients
+  );
   const orderIds = new Set(visibleOrders.map((order) => order.id));
   const visibleFile = session.isSalesOperator
     ? {
@@ -45,6 +50,7 @@ export default async function InvoicesPage() {
         invoices={invoices}
         summary={summary}
         invoiceableOrders={invoiceableOrders}
+        allowedBrandIds={getAllowedSalesBrandIds(session)}
       />
     </div>
   );

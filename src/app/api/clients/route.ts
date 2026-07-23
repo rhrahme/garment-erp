@@ -14,6 +14,11 @@ import {
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getFactoryBrandById } from "@/lib/data/factory-brands";
 import { notifyIntegration } from "@/lib/integrations";
+import {
+  filterClientsForSalesBrandScope,
+  getAllowedSalesBrandIds,
+  mergeClientsForSalesBrandScope,
+} from "@/lib/sales/access";
 import type { ClientProfile } from "@/lib/types/clients";
 
 function normalizeText(value: unknown): string | null {
@@ -140,7 +145,12 @@ export async function GET() {
     await healClientDataForRead();
 
     const data = readClients();
-    return NextResponse.json(session.canViewClientContact ? data : redactClientsFile(data));
+    const allowedBrandIds = getAllowedSalesBrandIds(session);
+    const scoped = {
+      ...data,
+      clients: filterClientsForSalesBrandScope(data.clients, allowedBrandIds),
+    };
+    return NextResponse.json(session.canViewClientContact ? scoped : redactClientsFile(scoped));
   } catch (error) {
     console.error("Failed to read clients:", error);
     return NextResponse.json({ error: "Failed to load clients." }, { status: 500 });
@@ -157,16 +167,29 @@ export async function PUT(request: Request) {
     const body = await request.json();
     await ensureDocumentsLoaded(["clients", "sales_orders"]);
     const previous = readClients();
-    const result = validateClients(body, previous.clients, {
+    const allowedBrandIds = getAllowedSalesBrandIds(session);
+    const previousForValidation = allowedBrandIds
+      ? filterClientsForSalesBrandScope(previous.clients, allowedBrandIds)
+      : previous.clients;
+    const result = validateClients(body, previousForValidation, {
       allowContactFields: session.canViewClientContact,
     });
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
+    let clientsToWrite = result.data;
+    if (allowedBrandIds) {
+      const merged = mergeClientsForSalesBrandScope(previous.clients, result.data, allowedBrandIds);
+      if (!merged.ok) {
+        return NextResponse.json({ error: merged.error }, { status: 403 });
+      }
+      clientsToWrite = merged.clients;
+    }
+
     // writeClients is the single persist gate: retains linked profiles + heals
     // orphans from sales-order denormalized fields. Never drop a linked row.
-    const saved = await writeClients({ updated_at: null, clients: result.data });
+    const saved = await writeClients({ updated_at: null, clients: clientsToWrite });
 
     for (const client of saved.restored) {
       await notifyIntegration("client.created", {
@@ -188,7 +211,10 @@ export async function PUT(request: Request) {
       updated_at: saved.updated_at,
     });
 
-    const responseFile = { updated_at: saved.updated_at, clients: saved.clients };
+    const responseFile = {
+      updated_at: saved.updated_at,
+      clients: filterClientsForSalesBrandScope(saved.clients, allowedBrandIds),
+    };
     const responseData = session.canViewClientContact ? responseFile : redactClientsFile(responseFile);
     return NextResponse.json(responseData);
   } catch (error) {

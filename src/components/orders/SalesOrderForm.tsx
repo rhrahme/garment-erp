@@ -21,6 +21,7 @@ import { ClientSearchSelect } from "@/components/clients/ClientSearchSelect";
 import { filterPersonClients } from "@/lib/clients/filter";
 import { formatClientDisplayName } from "@/lib/clients/names";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
+import { useSalesBrandScope } from "@/hooks/useSalesBrandScope";
 import { useLocalDraft } from "@/hooks/useLocalDraft";
 import { useServerOrderDraft } from "@/hooks/useServerOrderDraft";
 import { DRAFT_KEYS } from "@/lib/autosave/draft-keys";
@@ -138,8 +139,16 @@ export function SalesOrderForm({
   const [fabricBrands, setFabricBrands] = useState<FabricBrand[]>([]);
   const [canViewFabricPrices, setCanViewFabricPrices] = useState(false);
   const [canViewFabricStock, setCanViewFabricStock] = useState(true);
+  const {
+    allowedBrandIds,
+    brands: scopedFactoryBrands,
+    hydrated: salesBrandScopeHydrated,
+    isScoped: isBrandScoped,
+  } = useSalesBrandScope();
+  const defaultProductionBrandId =
+    allowedBrandIds?.length === 1 ? allowedBrandIds[0]! : null;
   const { brandId: productionBrandId, setBrandId: setProductionBrandId, hydrated: brandFilterHydrated } =
-    useFactoryBrandFilter();
+    useFactoryBrandFilter(defaultProductionBrandId);
   const initialClientDraftRef = useRef(createClientDraft());
   const [clientDrafts, setClientDrafts] = useState<SalesOrderClientDraft[]>(() => [initialClientDraftRef.current]);
   const [activeDraftId, setActiveDraftId] = useState(() => initialClientDraftRef.current.id);
@@ -730,6 +739,23 @@ export function SalesOrderForm({
     }
     void loadSession();
   }, []);
+
+  useEffect(() => {
+    if (!salesBrandScopeHydrated || !isBrandScoped || !allowedBrandIds?.length) return;
+    if (allowedBrandIds.length === 1) {
+      setProductionBrandId(allowedBrandIds[0]!);
+      return;
+    }
+    if (productionBrandId && !allowedBrandIds.includes(productionBrandId)) {
+      setProductionBrandId(allowedBrandIds[0]!);
+    }
+  }, [
+    allowedBrandIds,
+    isBrandScoped,
+    productionBrandId,
+    salesBrandScopeHydrated,
+    setProductionBrandId,
+  ]);
 
   useEffect(() => {
     async function load() {
@@ -1446,11 +1472,12 @@ export function SalesOrderForm({
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6 space-y-5">
-        {brandFilterHydrated && (
+        {brandFilterHydrated && salesBrandScopeHydrated && (
           <FactoryBrandTabs
             value={productionBrandId}
             onChange={handleProductionBrandChange}
             label="Production brand"
+            brands={scopedFactoryBrands}
           />
         )}
 

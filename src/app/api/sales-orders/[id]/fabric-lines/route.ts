@@ -21,9 +21,11 @@ import {
   type FabricLineUpdateInput,
 } from "@/lib/sales-orders/fabric-lines";
 import { canAccessSalesOrder } from "@/lib/sales/access";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 
 async function canAccessOrder(session: Awaited<ReturnType<typeof requireAuthenticated>>, id: string) {
   if (!session) return false;
+  await ensureDocumentsLoaded(["clients", "sales_orders"]);
   const order = await getSalesOrderByIdFresh(id);
   return Boolean(order && canAccessSalesOrder(session, order));
 }

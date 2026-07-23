@@ -6,6 +6,7 @@ import {
 } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { requireAuthenticated } from "@/lib/auth/session";
+import { readClients } from "@/lib/data/clients";
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import { filterSalesOrdersForSession } from "@/lib/sales/access";
 import { redactCustomerInvoiceCosts } from "@/lib/auth/invoice-cost-access";
@@ -14,10 +15,12 @@ export async function GET() {
   try {
     const session = await requireAuthenticated();
     if (!session) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-    await ensureDocumentsLoaded(["customer_invoices", "sales_orders"]);
+    await ensureDocumentsLoaded(["customer_invoices", "sales_orders", "clients"]);
     const file = await readCustomerInvoicesFresh();
     const orderIds = new Set(
-      filterSalesOrdersForSession(session, readSalesOrders().orders).map((order) => order.id)
+      filterSalesOrdersForSession(session, readSalesOrders().orders, readClients().clients).map(
+        (order) => order.id
+      )
     );
     const visibleFile = session.isSalesOperator
       ? {

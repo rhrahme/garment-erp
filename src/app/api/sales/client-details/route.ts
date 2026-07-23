@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuthenticated } from "@/lib/auth/session";
 import { getClientById } from "@/lib/data/clients";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { canAccessClient } from "@/lib/sales/access";
 import { updateSalesClientDetails } from "@/lib/sales/mutations";
 import type { ClientFabricSelection } from "@/lib/types/sales-workspace";
 
@@ -17,7 +18,11 @@ export async function PUT(request: Request) {
     fabric_selection?: Partial<ClientFabricSelection>;
   };
   const clientId = String(body.client_id ?? "").trim();
-  if (!clientId || !getClientById(clientId)) {
+  const client = getClientById(clientId);
+  if (!clientId || !client) {
+    return NextResponse.json({ error: "Client not found." }, { status: 404 });
+  }
+  if (!canAccessClient(session, client)) {
     return NextResponse.json({ error: "Client not found." }, { status: 404 });
   }
   try {

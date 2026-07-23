@@ -19,7 +19,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     }
 
     const { id } = await context.params;
-    await ensureDocumentsLoaded(["sales_orders"]);
+    await ensureDocumentsLoaded(["clients", "sales_orders"]);
     const rawOrder = getSalesOrderById(id);
     if (!rawOrder) {
       return NextResponse.json({ error: "Sales order not found." }, { status: 404 });

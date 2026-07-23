@@ -5,6 +5,7 @@ import { requireAuthenticated } from "@/lib/auth/session";
 import { notifyIntegration } from "@/lib/integrations";
 import { submitFabricOrderRequest } from "@/lib/sales-orders/submit-fabric-order-request";
 import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { canAccessSalesOrder } from "@/lib/sales/access";
 
 export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
@@ -15,6 +16,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     }
 
     const { id } = await context.params;
+    await ensureDocumentsLoaded(["clients", "sales_orders"]);
     const existing = await getSalesOrderByIdFresh(id);
     if (!existing) return NextResponse.json({ error: "Sales order not found." }, { status: 404 });
     if (!canAccessSalesOrder(session, existing)) {

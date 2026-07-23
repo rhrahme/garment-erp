@@ -5,10 +5,11 @@ import { OrdersList } from "@/components/orders/OrdersList";
 import { getSessionContext } from "@/lib/auth/session";
 import { healClientDataForRead } from "@/lib/clients/heal-on-read";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { readClients } from "@/lib/data/clients";
 import { readSalesOrders, listBespokeSalesOrders, toSalesOrderListRow } from "@/lib/data/sales-orders";
 import { dedupeIdenticalSalesOrders } from "@/lib/sales-orders/duplicate-order";
 import { ordersUiLabels } from "@/lib/orders/ui-labels";
-import { filterSalesOrdersForSession } from "@/lib/sales/access";
+import { filterSalesOrdersForSession, getAllowedSalesBrandIds } from "@/lib/sales/access";
 
 export default async function OrdersPage() {
   const session = await getSessionContext();
@@ -16,10 +17,14 @@ export default async function OrdersPage() {
   const productionMode = session.isClientManager || taskOperatorMode;
   const labels = ordersUiLabels(productionMode, taskOperatorMode);
 
-  await ensureDocumentsLoaded(["sales_orders"]);
+  await ensureDocumentsLoaded(["sales_orders", "clients"]);
   // Same heal as the API read paths — Print orders resolves client names for every role.
   await healClientDataForRead();
-  const visibleOrders = filterSalesOrdersForSession(session, readSalesOrders().orders);
+  const visibleOrders = filterSalesOrdersForSession(
+    session,
+    readSalesOrders().orders,
+    readClients().clients
+  );
   const orders = dedupeIdenticalSalesOrders(listBespokeSalesOrders(visibleOrders)).map(toSalesOrderListRow);
 
   return (
@@ -58,7 +63,12 @@ export default async function OrdersPage() {
         )}
       </div>
 
-      <OrdersList orders={orders} productionMode={productionMode} taskOperatorMode={taskOperatorMode} />
+      <OrdersList
+        orders={orders}
+        productionMode={productionMode}
+        taskOperatorMode={taskOperatorMode}
+        allowedBrandIds={getAllowedSalesBrandIds(session)}
+      />
     </div>
   );
 }

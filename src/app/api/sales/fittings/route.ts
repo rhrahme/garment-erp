@@ -14,6 +14,7 @@ export async function POST(request: Request) {
   if (!session || (!session.isSalesOperator && !session.isAdmin)) {
     return NextResponse.json({ error: "Sales access required." }, { status: 403 });
   }
+  await ensureDocumentsLoaded(["clients", "sales_orders", "sales_workspace"]);
   const body = (await request.json()) as {
     sales_order_id?: string;
     scheduled_at?: string;
@@ -28,7 +29,6 @@ export async function POST(request: Request) {
   if (!scheduledAt || Number.isNaN(Date.parse(scheduledAt))) {
     return NextResponse.json({ error: "A valid fitting date is required." }, { status: 400 });
   }
-  await ensureDocumentsLoaded(["sales_workspace"]);
   const fitting = await createSalesFitting(
     order.id,
     order.client_id,
@@ -44,7 +44,7 @@ export async function PATCH(request: Request) {
   if (!session || (!session.isSalesOperator && !session.isAdmin)) {
     return NextResponse.json({ error: "Sales access required." }, { status: 403 });
   }
-  await ensureDocumentsLoaded(["sales_workspace"]);
+  await ensureDocumentsLoaded(["clients", "sales_orders", "sales_workspace"]);
   const body = (await request.json()) as {
     fitting_id?: string;
     scheduled_at?: string;

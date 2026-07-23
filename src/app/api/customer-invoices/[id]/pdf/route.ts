@@ -5,6 +5,7 @@ import { prepareCustomerInvoiceDocument } from "@/lib/invoicing/prepare-invoice-
 import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import { canAccessSalesOrder } from "@/lib/sales/access";
 import { getCustomerInvoiceByIdFresh } from "@/lib/data/customer-invoices";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -14,6 +15,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     }
 
     const { id } = await context.params;
+    await ensureDocumentsLoaded(["clients", "sales_orders", "customer_invoices"]);
     const prepared = await prepareCustomerInvoiceDocument(id);
     if (!prepared) {
       return NextResponse.json({ error: "Invoice not found." }, { status: 404 });

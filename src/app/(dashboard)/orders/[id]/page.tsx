@@ -45,7 +45,7 @@ export default async function SalesOrderDetailPage({
   const { id } = await params;
   const removedRedirect = getRemovedSalesOrderRedirectForKey(id);
   if (removedRedirect) redirect(removedRedirect);
-  await ensureDocumentsLoaded(["sales_orders", "customer_invoices"]);
+  await ensureDocumentsLoaded(["clients", "sales_orders", "customer_invoices"]);
   const rawOrder = await getSalesOrderByIdFresh(id);
   if (!rawOrder) notFound();
   const session = await getSessionContext();

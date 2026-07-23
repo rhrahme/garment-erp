@@ -24,7 +24,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    await ensureDocumentsLoaded(["sales_orders"]);
+    await ensureDocumentsLoaded(["clients", "sales_orders"]);
 
     const { id } = await context.params;
     const order = getSalesOrderById(id);
@@ -54,7 +54,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    await ensureDocumentsLoaded(["sales_orders"]);
+    await ensureDocumentsLoaded(["clients", "sales_orders"]);
 
     if (!canModifySalesOrders(session)) {
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });

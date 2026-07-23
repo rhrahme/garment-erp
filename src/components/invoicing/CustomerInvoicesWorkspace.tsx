@@ -14,6 +14,7 @@ import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
 import { customerInvoiceMatchesSearch } from "@/lib/invoicing/list-search";
 import { formatDate, cn } from "@/lib/utils";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
+import { getFactoryBrands } from "@/lib/data/factory-brands";
 import { InvoiceableOrdersPanel } from "@/components/invoicing/InvoiceableOrdersPanel";
 import { RiyadhBankDetailsPdfLink } from "@/components/invoicing/RiyadhBankDetailsPdfLink";
 
@@ -28,12 +29,21 @@ export function CustomerInvoicesWorkspace({
   invoices,
   summary,
   invoiceableOrders,
+  allowedBrandIds = null,
 }: {
   invoices: CustomerInvoice[];
   summary: CustomerInvoiceSummary;
   invoiceableOrders: InvoiceableSalesOrder[];
+  allowedBrandIds?: string[] | null;
 }) {
-  const { brandId, setBrandId, hydrated } = useFactoryBrandFilter();
+  const scopedBrands = useMemo(() => {
+    if (!allowedBrandIds) return undefined;
+    const allowed = new Set(allowedBrandIds);
+    return getFactoryBrands().filter((brand) => allowed.has(brand.id));
+  }, [allowedBrandIds]);
+  const isBrandScoped = Boolean(allowedBrandIds && allowedBrandIds.length > 0);
+  const defaultBrandId = allowedBrandIds?.length === 1 ? allowedBrandIds[0]! : null;
+  const { brandId, setBrandId, hydrated } = useFactoryBrandFilter(defaultBrandId);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_TABS)[number]["id"]>("all");
 
@@ -88,9 +98,10 @@ export function CustomerInvoicesWorkspace({
         <FactoryBrandTabs
           value={brandId}
           onChange={setBrandId}
-          showAll
+          showAll={!isBrandScoped}
           allLabel="All brands"
           label="Filter by brand"
+          brands={scopedBrands}
         />
       )}
 
