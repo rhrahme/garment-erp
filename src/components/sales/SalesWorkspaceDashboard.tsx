@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { Button } from "@/components/ui/Button";
 import { getFactoryBrands } from "@/lib/data/factory-brands";
-import { filterSalesClientsByBrand } from "@/lib/sales/access";
+import { filterSalesClientsByBrand } from "@/lib/sales/brand-scope";
 import type { ClientProfile } from "@/lib/types/clients";
 import type { CustomerInvoice } from "@/lib/types/customer-invoices";
 import type { SalesOrder } from "@/lib/types/sales-orders";
