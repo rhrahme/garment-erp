@@ -5,7 +5,9 @@ import Link from "next/link";
 import { ArrowLeft, Plus, Printer, Trash2 } from "lucide-react";
 import { MeasurementInput } from "@/components/pattern/library/MeasurementInput";
 import { LibraryFileList } from "@/components/pattern/library/LibraryFileList";
+import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
 import { unitLabel } from "@/lib/pattern-library/measurements";
+import { basePatternLabelCode, basePatternQrUrl } from "@/lib/pattern-library/pattern-qr";
 import type { BasePattern, BasePatternPoint } from "@/lib/types/pattern-library";
 import { cn } from "@/lib/utils";
 
@@ -197,11 +199,14 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
                 .join(" · ") || "—"}
             </p>
           </div>
-          <div className="text-right text-xs text-slate-500">
-            <p>
-              {base.sizes.length} sizes · {base.points.length} points
-            </p>
-            <p className="mt-1">Updated {new Date(base.updated_at).toLocaleDateString()}</p>
+          <div className="flex items-start gap-3">
+            <div className="text-right text-xs text-slate-500">
+              <p>
+                {base.sizes.length} sizes · {base.points.length} points
+              </p>
+              <p className="mt-1">Updated {new Date(base.updated_at).toLocaleDateString()}</p>
+            </div>
+            <PatternQrBadge payload={basePatternQrUrl(base.id)} label={basePatternLabelCode(base)} />
           </div>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-3 text-sm">
@@ -231,6 +236,9 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
           <p className="text-sm font-semibold text-slate-800">
             Size grid <span className="font-normal text-slate-500">({unitLabel(base.unit)})</span>
+            <span className="ml-2 text-xs font-normal text-slate-400">
+              Tap a size to open its A4 working sheet
+            </span>
           </p>
           <div className="flex items-center gap-1.5">
             <input
@@ -256,8 +264,15 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                 <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2">Measurement point</th>
                 {base.sizes.map((size) => (
-                  <th key={size} className="px-1.5 py-2 text-center font-semibold">
-                    {size}
+                  <th key={size} className="px-0.5 py-1 text-center font-semibold">
+                    <Link
+                      href={`/pattern/bases/${base.id}/sizes/${encodeURIComponent(size)}/print`}
+                      target="_blank"
+                      title={`Open A4 working sheet for size ${size}`}
+                      className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg px-2 py-1.5 text-indigo-700 underline decoration-indigo-300 decoration-dotted underline-offset-2 hover:bg-indigo-50 hover:text-indigo-900"
+                    >
+                      {size}
+                    </Link>
                   </th>
                 ))}
                 <th className="px-3 py-2">Remarks</th>

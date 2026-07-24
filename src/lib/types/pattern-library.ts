@@ -17,6 +17,48 @@ export interface MeasurementPointDef {
   garment_types: string[];
 }
 
+/** One cut piece from a .TUD header (-P/-Q/-M/-E records). */
+export interface TudPiece {
+  name: string;
+  /** How many of this piece are cut per garment (-Q). */
+  cut_quantity: number | null;
+  /** Fabric assignment (-M): e.g. SHEEL (shell), FINISH (fusing), CONTASH (contrast). */
+  fabric: string | null;
+  /** size -> single-piece area (m²) and perimeter (cm) from -E records. */
+  per_size: Record<string, { area_m2: number; perimeter_cm: number }>;
+}
+
+/** Per-fabric totals for one size (-X records; all pieces × quantities). */
+export interface TudFabricTotal {
+  size: string;
+  fabric: string;
+  area_m2: number;
+  perimeter_cm: number;
+}
+
+/** Grand totals for one size (-Y records). */
+export interface TudSizeTotal {
+  size: string;
+  area_m2: number;
+  perimeter_cm: number;
+}
+
+/** Metadata parsed from a TUKA CAD .tud file header. */
+export interface TudMetadata {
+  style_caption: string | null;
+  /** Original path on the CAD workstation (/F record) — reveals folder/garment hints. */
+  source_path: string | null;
+  sizes: string[];
+  pieces: TudPiece[];
+  /** Sum of piece cut quantities (pieces to cut per garment). */
+  total_cut_pieces: number | null;
+  fabric_totals: TudFabricTotal[];
+  size_totals: TudSizeTotal[];
+  /** Convenience: total fabric area (m²) for the single-size case, else null. */
+  total_area_m2: number | null;
+  total_perimeter_cm: number | null;
+}
+
 export interface PatternLibraryAttachment {
   id: string;
   kind: PatternLibraryFileKind;
@@ -26,6 +68,10 @@ export interface PatternLibraryAttachment {
   size_bytes: number;
   uploaded_at: string;
   uploaded_by: string | null;
+  /** Parsed TUKA CAD metadata for .tud uploads (absent/null when not parseable). */
+  tud?: TudMetadata | null;
+  /** Sibling JPEG preview extracted from the .tud, stored next to the file. */
+  thumbnail_stored_filename?: string | null;
 }
 
 /** One measurement row on a base pattern: values per size, nullable (sparse grids are real). */

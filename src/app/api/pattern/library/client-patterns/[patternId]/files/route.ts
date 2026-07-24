@@ -6,7 +6,12 @@ import {
 } from "@/lib/data/pattern-library";
 import { readPatternLibraryFile } from "@/lib/pattern-library/file-storage";
 import { attachClientPatternFile } from "@/lib/pattern-library/mutations";
-import { notifyLibraryFileUploaded, storeLibraryUpload } from "@/lib/pattern-library/upload";
+import {
+  notifyLibraryFileUploaded,
+  resolveLibraryFileRequest,
+  storeLibraryUpload,
+  tudNotificationFields,
+} from "@/lib/pattern-library/upload";
 
 /** Uploads attach to the pattern itself, or to a specific trial via ?version=<versionId>. */
 export async function POST(request: Request, context: { params: Promise<{ patternId: string }> }) {
@@ -43,6 +48,7 @@ export async function POST(request: Request, context: { params: Promise<{ patter
       filename: stored.attachment.filename,
       kind: stored.attachment.kind,
       uploaded_by: session.email,
+      ...tudNotificationFields(stored.attachment),
     });
 
     return NextResponse.json({ pattern: result.pattern, file: stored.attachment }, { status: 201 });
@@ -70,12 +76,12 @@ export async function GET(request: Request, context: { params: Promise<{ pattern
     if (!pattern) {
       return NextResponse.json({ error: "Client pattern not found." }, { status: 404 });
     }
-    const fileMeta =
-      pattern.files.find((f) => f.stored_filename === storedFilename) ??
-      pattern.versions
-        .flatMap((version) => version.files)
-        .find((f) => f.stored_filename === storedFilename);
-    if (!fileMeta) {
+    const allFiles = [
+      ...pattern.files,
+      ...pattern.versions.flatMap((version) => version.files),
+    ];
+    const resolved = resolveLibraryFileRequest(allFiles, storedFilename);
+    if (!resolved) {
       return NextResponse.json({ error: "File not found." }, { status: 404 });
     }
 
@@ -85,10 +91,17 @@ export async function GET(request: Request, context: { params: Promise<{ pattern
     }
 
     return new NextResponse(new Uint8Array(content), {
-      headers: {
-        "Content-Type": fileMeta.content_type,
-        "Content-Disposition": `attachment; filename="${fileMeta.filename}"`,
-      },
+      headers: resolved.isThumbnail
+        ? {
+            "Content-Type": "image/jpeg",
+            "Content-Disposition": `inline; filename="${resolved.meta.filename}.thumb.jpg"`,
+            // Stored filenames are unique per upload — safe to cache hard.
+            "Cache-Control": "private, max-age=31536000, immutable",
+          }
+        : {
+            "Content-Type": resolved.meta.content_type,
+            "Content-Disposition": `attachment; filename="${resolved.meta.filename}"`,
+          },
     });
   } catch (error) {
     console.error("Failed to download client pattern file:", error);

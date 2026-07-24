@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { Printer } from "lucide-react";
+import { qrImageUrl } from "@/lib/production/qr-labels";
 import { formatMeasurement, unitLabel } from "@/lib/pattern-library/measurements";
+import { basePatternLabelCode, basePatternQrUrl } from "@/lib/pattern-library/pattern-qr";
 import type { BasePattern } from "@/lib/types/pattern-library";
 
 const SHEET_PRINT_CSS = `
@@ -50,9 +52,23 @@ export function BasePatternPrintView({ base }: { base: BasePattern }) {
               {base.season ? ` · ${base.season}` : ""}
             </p>
           </div>
-          <div className="rounded-lg border-2 border-slate-900 px-4 py-2 text-center">
-            <p className="text-2xl font-black tracking-widest">{base.house_brand_code}</p>
-            <p className="text-[10px] uppercase tracking-wide text-slate-500">House brand</p>
+          <div className="flex items-start gap-4">
+            <div className="rounded-lg border-2 border-slate-900 px-4 py-2 text-center">
+              <p className="text-2xl font-black tracking-widest">{base.house_brand_code}</p>
+              <p className="text-[10px] uppercase tracking-wide text-slate-500">House brand</p>
+            </div>
+            {/* Fixed pattern QR — label the physical archived pattern, scan to reopen this record */}
+            <div className="text-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={qrImageUrl(basePatternQrUrl(base.id), 200)}
+                alt={basePatternLabelCode(base)}
+                className="h-20 w-20"
+              />
+              <p className="mt-0.5 max-w-24 break-all font-mono text-[8px] leading-tight">
+                {basePatternLabelCode(base)}
+              </p>
+            </div>
           </div>
         </div>
 

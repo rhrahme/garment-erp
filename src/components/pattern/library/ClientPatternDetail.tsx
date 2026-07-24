@@ -17,7 +17,10 @@ import {
 } from "lucide-react";
 import { MeasurementInput } from "@/components/pattern/library/MeasurementInput";
 import { LibraryFileList } from "@/components/pattern/library/LibraryFileList";
+import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
 import { formatMeasurement, unitLabel } from "@/lib/pattern-library/measurements";
+import { clientPatternQrUrl } from "@/lib/pattern-library/pattern-qr";
+import { clientPatternTudPreview, formatAreaM2 } from "@/lib/pattern-library/tud-display";
 import type {
   ClientPattern,
   ClientPatternMeasurement,
@@ -262,6 +265,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   const unit = pattern.unit;
   const printHref = `/pattern/client-patterns/${pattern.id}/print${version ? `?version=${version.id}` : ""}`;
   const pdfHref = `/api/pattern/library/client-patterns/${pattern.id}/pdf${version ? `?version=${version.id}` : ""}`;
+  const tudPreview = clientPatternTudPreview(pattern);
 
   return (
     <div className="space-y-5">
@@ -294,7 +298,9 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
 
       {/* Header card */}
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="flex flex-wrap items-start gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <label className="text-sm sm:col-span-2 lg:col-span-1">
             <span className="mb-1 block text-xs font-medium text-slate-600">Pattern ref</span>
             <input
@@ -362,6 +368,29 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             />
           </label>
+            </div>
+          </div>
+          {/* Extracted TUKA preview from the latest .tud upload */}
+          {tudPreview ? (
+            <div className="flex shrink-0 flex-col items-center gap-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={tudPreview.thumbnailUrl}
+                alt={tudPreview.attachment.tud?.style_caption ?? "TUKA pattern preview"}
+                title={tudPreview.attachment.tud?.style_caption ?? tudPreview.attachment.filename}
+                width={100}
+                height={100}
+                className="h-28 w-28 rounded-lg border border-slate-200 bg-white object-contain p-1.5 shadow-sm"
+              />
+              <p className="max-w-28 truncate text-center text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                {tudPreview.attachment.tud?.total_area_m2 != null
+                  ? `TUKA · ${formatAreaM2(tudPreview.attachment.tud.total_area_m2)}`
+                  : "TUKA preview"}
+              </p>
+            </div>
+          ) : null}
+          {/* Fixed pattern QR — permanent deep link, survives ref edits */}
+          <PatternQrBadge payload={clientPatternQrUrl(pattern.id)} label={pattern.pattern_ref} />
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
           <div className="flex flex-wrap items-center gap-4 text-sm">

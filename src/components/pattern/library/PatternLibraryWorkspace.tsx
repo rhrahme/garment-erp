@@ -6,6 +6,11 @@ import { ArrowRight, Plus } from "lucide-react";
 import { matchesNormalizedSearch } from "@/lib/search/normalize";
 import { generatePatternRef } from "@/lib/pattern-library/refs";
 import { unitLabel } from "@/lib/pattern-library/measurements";
+import {
+  basePatternTudPreview,
+  clientPatternTudPreview,
+  type TudPreview,
+} from "@/lib/pattern-library/tud-display";
 import type { BasePattern, ClientPattern, PatternLibraryFile } from "@/lib/types/pattern-library";
 import { cn } from "@/lib/utils";
 
@@ -336,34 +341,40 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
                     <span className="ml-1.5 font-normal normal-case text-slate-400">({items.length})</span>
                   </h3>
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    {items.map((base) => (
-                      <Link
-                        key={base.id}
-                        href={`/pattern/library/bases/${base.id}`}
-                        className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="font-semibold text-slate-900">{base.name}</p>
-                          <ArrowRight className="h-4 w-4 shrink-0 text-slate-400" />
-                        </div>
-                        <p className="mt-1 text-sm text-slate-600">
-                          {base.cut_variant ? (
-                            <span className="mr-1.5 inline-block rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
-                              {base.cut_variant}
-                            </span>
-                          ) : null}
-                          Sizes {sizeRangeLabel(base.sizes)} ({base.sizes.length})
-                        </p>
-                        <p className="mt-2 text-xs text-slate-500">
-                          {base.house_brand_code} · {base.points.length} points · {unitLabel(base.unit)}
-                        </p>
-                        {base.style_code || base.fabric ? (
-                          <p className="mt-1 text-xs text-slate-400">
-                            {[base.fabric, base.style_code, base.season].filter(Boolean).join(" · ")}
-                          </p>
-                        ) : null}
-                      </Link>
-                    ))}
+                    {items.map((base) => {
+                      const preview = basePatternTudPreview(base);
+                      return (
+                        <Link
+                          key={base.id}
+                          href={`/pattern/library/bases/${base.id}`}
+                          className="flex gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="font-semibold text-slate-900">{base.name}</p>
+                              <ArrowRight className="h-4 w-4 shrink-0 text-slate-400" />
+                            </div>
+                            <p className="mt-1 text-sm text-slate-600">
+                              {base.cut_variant ? (
+                                <span className="mr-1.5 inline-block rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                                  {base.cut_variant}
+                                </span>
+                              ) : null}
+                              Sizes {sizeRangeLabel(base.sizes)} ({base.sizes.length})
+                            </p>
+                            <p className="mt-2 text-xs text-slate-500">
+                              {base.house_brand_code} · {base.points.length} points · {unitLabel(base.unit)}
+                            </p>
+                            {base.style_code || base.fabric ? (
+                              <p className="mt-1 text-xs text-slate-400">
+                                {[base.fabric, base.style_code, base.season].filter(Boolean).join(" · ")}
+                              </p>
+                            ) : null}
+                          </div>
+                          <CardTudThumb preview={preview} />
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -391,33 +402,54 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
   );
 }
 
+/** Small extracted TUKA preview on library cards (100×100 source, gently upscaled). */
+function CardTudThumb({ preview }: { preview: TudPreview | null }) {
+  if (!preview) return null;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={preview.thumbnailUrl}
+      alt={preview.attachment.tud?.style_caption ?? "TUKA pattern preview"}
+      title={preview.attachment.tud?.style_caption ?? preview.attachment.filename}
+      width={100}
+      height={100}
+      loading="lazy"
+      className="h-20 w-20 shrink-0 self-center rounded-lg border border-slate-200 bg-white object-contain p-1"
+    />
+  );
+}
+
 function ClientPatternCard({ pattern }: { pattern: ClientPattern }) {
   const finalVersion = pattern.versions.find((version) => version.is_final);
+  const preview = clientPatternTudPreview(pattern);
   return (
     <Link
       href={`/pattern/library/clients/${pattern.id}`}
-      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow"
+      className="flex gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow"
     >
-      <div className="flex items-start justify-between gap-2">
-        <p className="break-all font-semibold text-slate-900">{pattern.pattern_ref}</p>
-        {finalVersion ? (
-          <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
-            Final · T{finalVersion.version}
-          </span>
-        ) : (
-          <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-            Trial {pattern.versions.length}
-          </span>
-        )}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <p className="break-all font-semibold text-slate-900">{pattern.pattern_ref}</p>
+          {finalVersion ? (
+            <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+              Final · T{finalVersion.version}
+            </span>
+          ) : (
+            <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+              Trial {pattern.versions.length}
+            </span>
+          )}
+        </div>
+        <p className="mt-1 text-sm text-slate-600">
+          {pattern.client_name} · {pattern.garment_type}
+        </p>
+        <p className="mt-2 text-xs text-slate-500">
+          {pattern.versions.length} trial{pattern.versions.length === 1 ? "" : "s"}
+          {pattern.base_size ? ` · from ${pattern.base_size}` : ""}
+          {pattern.fabric ? ` · ${pattern.fabric}` : ""}
+        </p>
       </div>
-      <p className="mt-1 text-sm text-slate-600">
-        {pattern.client_name} · {pattern.garment_type}
-      </p>
-      <p className="mt-2 text-xs text-slate-500">
-        {pattern.versions.length} trial{pattern.versions.length === 1 ? "" : "s"}
-        {pattern.base_size ? ` · from ${pattern.base_size}` : ""}
-        {pattern.fabric ? ` · ${pattern.fabric}` : ""}
-      </p>
+      <CardTudThumb preview={preview} />
     </Link>
   );
 }

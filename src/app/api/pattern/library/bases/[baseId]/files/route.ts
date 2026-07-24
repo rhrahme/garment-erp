@@ -3,7 +3,12 @@ import { requirePatternAccess } from "@/lib/auth/session";
 import { ensurePatternLibraryLoaded, getBasePatternByIdFresh } from "@/lib/data/pattern-library";
 import { readPatternLibraryFile } from "@/lib/pattern-library/file-storage";
 import { attachBasePatternFile } from "@/lib/pattern-library/mutations";
-import { notifyLibraryFileUploaded, storeLibraryUpload } from "@/lib/pattern-library/upload";
+import {
+  notifyLibraryFileUploaded,
+  resolveLibraryFileRequest,
+  storeLibraryUpload,
+  tudNotificationFields,
+} from "@/lib/pattern-library/upload";
 
 export async function POST(request: Request, context: { params: Promise<{ baseId: string }> }) {
   try {
@@ -36,6 +41,7 @@ export async function POST(request: Request, context: { params: Promise<{ baseId
       filename: stored.attachment.filename,
       kind: stored.attachment.kind,
       uploaded_by: session.email,
+      ...tudNotificationFields(stored.attachment),
     });
 
     return NextResponse.json({ base: result.base, file: stored.attachment }, { status: 201 });
@@ -60,8 +66,8 @@ export async function GET(request: Request, context: { params: Promise<{ baseId:
     }
 
     const base = await getBasePatternByIdFresh(baseId);
-    const fileMeta = base?.files.find((f) => f.stored_filename === storedFilename);
-    if (!base || !fileMeta) {
+    const resolved = base ? resolveLibraryFileRequest(base.files, storedFilename) : null;
+    if (!resolved) {
       return NextResponse.json({ error: "File not found." }, { status: 404 });
     }
 
@@ -71,10 +77,17 @@ export async function GET(request: Request, context: { params: Promise<{ baseId:
     }
 
     return new NextResponse(new Uint8Array(content), {
-      headers: {
-        "Content-Type": fileMeta.content_type,
-        "Content-Disposition": `attachment; filename="${fileMeta.filename}"`,
-      },
+      headers: resolved.isThumbnail
+        ? {
+            "Content-Type": "image/jpeg",
+            "Content-Disposition": `inline; filename="${resolved.meta.filename}.thumb.jpg"`,
+            // Stored filenames are unique per upload — safe to cache hard.
+            "Cache-Control": "private, max-age=31536000, immutable",
+          }
+        : {
+            "Content-Type": resolved.meta.content_type,
+            "Content-Disposition": `attachment; filename="${resolved.meta.filename}"`,
+          },
     });
   } catch (error) {
     console.error("Failed to download base pattern file:", error);
