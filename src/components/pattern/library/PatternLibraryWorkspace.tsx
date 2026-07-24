@@ -27,12 +27,52 @@ function clientDisplayName(client: ClientOption): string {
   return [client.first_name, client.middle_name, client.last_name].filter(Boolean).join(" ");
 }
 
+/** Short badge codes for cut families the team refers to by abbreviation. */
+const CUT_FAMILY_CODES: Record<string, string> = {
+  "suit supply": "SS",
+  "hugo boss": "HB",
+};
+
+function cutFamilyCode(family: string): string {
+  const known = CUT_FAMILY_CODES[family.trim().toLowerCase()];
+  if (known) return known;
+  const words = family.trim().split(/\s+/).filter(Boolean);
+  if (words.length > 1) return words.map((word) => word[0]).join("").toUpperCase();
+  return family.slice(0, 2).toUpperCase();
+}
+
+/** Owner's preferred browse order inside a family; unknown garments sort after, alphabetically. */
+const GARMENT_ORDER = ["suit", "jacket", "overshirt", "shirt", "vest", "trouser", "shorts", "thobe"];
+
+function garmentRank(garment: string): number {
+  const index = GARMENT_ORDER.indexOf(garment.trim().toLowerCase());
+  return index === -1 ? GARMENT_ORDER.length : index;
+}
+
+function compareGarments(a: string, b: string): number {
+  return garmentRank(a) - garmentRank(b) || a.localeCompare(b);
+}
+
+function garmentLabel(garment: string): string {
+  return garment.charAt(0).toUpperCase() + garment.slice(1);
+}
+
+function sizeRangeLabel(sizes: string[]): string {
+  if (sizes.length === 0) return "no sizes";
+  if (sizes.length === 1) return sizes[0];
+  return `${sizes[0]}–${sizes[sizes.length - 1]}`;
+}
+
 export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
   const [tab, setTab] = useState<"bases" | "clients">("bases");
   const [library, setLibrary] = useState<PatternLibraryFile | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  /** null = all cut families. */
+  const [selectedFamily, setSelectedFamily] = useState<string | null>(null);
+  /** null = all house brands (FR/GL). */
+  const [houseBrandFilter, setHouseBrandFilter] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -52,13 +92,15 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
 
   const bases = useMemo(() => {
     if (!library) return [];
-    return library.base_patterns.filter((base) =>
-      matchesNormalizedSearch(
-        [base.name, base.cut_family, base.garment_type, base.cut_variant, base.house_brand_code, base.style_code],
-        search
-      )
+    return library.base_patterns.filter(
+      (base) =>
+        (houseBrandFilter === null || base.house_brand_code === houseBrandFilter) &&
+        matchesNormalizedSearch(
+          [base.name, base.cut_family, base.garment_type, base.cut_variant, base.house_brand_code, base.style_code],
+          search
+        )
     );
-  }, [library, search]);
+  }, [library, search, houseBrandFilter]);
 
   const clientPatterns = useMemo(() => {
     if (!library) return [];
@@ -70,14 +112,42 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
     );
   }, [library, search]);
 
-  const basesByBrand = useMemo(() => {
-    const groups = new Map<string, BasePattern[]>();
+  /** Stable cut-family tab list from the full library so tabs don't vanish while filtering. */
+  const cutFamilies = useMemo(() => {
+    if (!library) return [];
+    const names = [...new Set(library.base_patterns.map((base) => base.cut_family))].sort((a, b) =>
+      a.localeCompare(b)
+    );
+    return names.map((name) => ({
+      name,
+      code: cutFamilyCode(name),
+      matchCount: bases.filter((base) => base.cut_family === name).length,
+    }));
+  }, [library, bases]);
+
+  /** cut family -> garment type -> base patterns, in the owner's browse order. */
+  const familyGroups = useMemo(() => {
+    const families = new Map<string, Map<string, BasePattern[]>>();
     for (const base of bases) {
-      const key = base.house_brand_code;
-      groups.set(key, [...(groups.get(key) ?? []), base]);
+      if (selectedFamily !== null && base.cut_family !== selectedFamily) continue;
+      const garments = families.get(base.cut_family) ?? new Map<string, BasePattern[]>();
+      garments.set(base.garment_type, [...(garments.get(base.garment_type) ?? []), base]);
+      families.set(base.cut_family, garments);
     }
-    return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [bases]);
+    return [...families.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([family, garments]) => ({
+        family,
+        garments: [...garments.entries()]
+          .sort(([a], [b]) => compareGarments(a, b))
+          .map(([garment, items]) => ({
+            garment,
+            items: [...items].sort(
+              (a, b) => (a.cut_variant ?? "").localeCompare(b.cut_variant ?? "") || a.name.localeCompare(b.name)
+            ),
+          })),
+      }));
+  }, [bases, selectedFamily]);
 
   return (
     <div className="space-y-4">
@@ -165,42 +235,141 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
       {loading ? (
         <p className="text-sm text-slate-500">Loading pattern library…</p>
       ) : tab === "bases" ? (
-        <div className="space-y-6">
-          {basesByBrand.map(([brandCode, brandBases]) => (
-            <div key={brandCode} className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                {brandCode} — {brands.find((brand) => brand.code === brandCode)?.name ?? brandCode}
-              </h2>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {brandBases.map((base) => (
-                  <Link
-                    key={base.id}
-                    href={`/pattern/library/bases/${base.id}`}
-                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="font-semibold text-slate-900">{base.name}</p>
-                      <ArrowRight className="h-4 w-4 shrink-0 text-slate-400" />
-                    </div>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {base.cut_family} · {base.garment_type}
-                      {base.cut_variant ? ` · ${base.cut_variant}` : ""}
-                    </p>
-                    <p className="mt-2 text-xs text-slate-500">
-                      {base.sizes.length} sizes ({base.sizes[0]}–{base.sizes[base.sizes.length - 1]}) ·{" "}
-                      {base.points.length} points · {unitLabel(base.unit)}
-                    </p>
-                    {base.style_code || base.fabric ? (
-                      <p className="mt-1 text-xs text-slate-400">
-                        {[base.fabric, base.style_code, base.season].filter(Boolean).join(" · ")}
-                      </p>
-                    ) : null}
-                  </Link>
-                ))}
-              </div>
+        <div className="space-y-5">
+          {/* Cut family cards — the owner's primary browse axis. Big targets for tablet. */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <button
+              type="button"
+              onClick={() => setSelectedFamily(null)}
+              className={cn(
+                "min-h-20 rounded-xl border p-4 text-left transition-colors",
+                selectedFamily === null
+                  ? "border-indigo-600 bg-indigo-600 text-white shadow"
+                  : "border-slate-200 bg-white text-slate-900 shadow-sm hover:border-indigo-300"
+              )}
+            >
+              <p className="text-base font-semibold">All families</p>
+              <p className={cn("mt-1 text-xs", selectedFamily === null ? "text-indigo-100" : "text-slate-500")}>
+                {bases.length} pattern{bases.length === 1 ? "" : "s"}
+              </p>
+            </button>
+            {cutFamilies.map((family) => {
+              const active = selectedFamily === family.name;
+              return (
+                <button
+                  key={family.name}
+                  type="button"
+                  onClick={() => setSelectedFamily(active ? null : family.name)}
+                  className={cn(
+                    "min-h-20 rounded-xl border p-4 text-left transition-colors",
+                    active
+                      ? "border-indigo-600 bg-indigo-600 text-white shadow"
+                      : "border-slate-200 bg-white text-slate-900 shadow-sm hover:border-indigo-300"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        "rounded-md px-1.5 py-0.5 text-xs font-bold",
+                        active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                      )}
+                    >
+                      {family.code}
+                    </span>
+                    <p className="truncate text-base font-semibold">{family.name}</p>
+                  </div>
+                  <p className={cn("mt-1 text-xs", active ? "text-indigo-100" : "text-slate-500")}>
+                    {family.matchCount} pattern{family.matchCount === 1 ? "" : "s"}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Secondary filter: house brand (FR/GL). */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium uppercase tracking-wide text-slate-400">House brand</span>
+            <button
+              type="button"
+              onClick={() => setHouseBrandFilter(null)}
+              className={cn(
+                "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                houseBrandFilter === null
+                  ? "bg-slate-800 text-white"
+                  : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
+              )}
+            >
+              All
+            </button>
+            {brands.map((brand) => (
+              <button
+                key={brand.id}
+                type="button"
+                onClick={() => setHouseBrandFilter(houseBrandFilter === brand.code ? null : brand.code)}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                  houseBrandFilter === brand.code
+                    ? "bg-slate-800 text-white"
+                    : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
+                )}
+                title={brand.name}
+              >
+                {brand.code}
+              </button>
+            ))}
+          </div>
+
+          {familyGroups.map(({ family, garments }) => (
+            <div key={family} className="space-y-4">
+              {selectedFamily === null ? (
+                <h2 className="flex items-center gap-2 border-b border-slate-200 pb-2 text-base font-semibold text-slate-900">
+                  <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-bold text-slate-600">
+                    {cutFamilyCode(family)}
+                  </span>
+                  {family}
+                </h2>
+              ) : null}
+              {garments.map(({ garment, items }) => (
+                <div key={garment} className="space-y-2">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                    {garmentLabel(garment)}
+                    <span className="ml-1.5 font-normal normal-case text-slate-400">({items.length})</span>
+                  </h3>
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {items.map((base) => (
+                      <Link
+                        key={base.id}
+                        href={`/pattern/library/bases/${base.id}`}
+                        className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-semibold text-slate-900">{base.name}</p>
+                          <ArrowRight className="h-4 w-4 shrink-0 text-slate-400" />
+                        </div>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {base.cut_variant ? (
+                            <span className="mr-1.5 inline-block rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                              {base.cut_variant}
+                            </span>
+                          ) : null}
+                          Sizes {sizeRangeLabel(base.sizes)} ({base.sizes.length})
+                        </p>
+                        <p className="mt-2 text-xs text-slate-500">
+                          {base.house_brand_code} · {base.points.length} points · {unitLabel(base.unit)}
+                        </p>
+                        {base.style_code || base.fabric ? (
+                          <p className="mt-1 text-xs text-slate-400">
+                            {[base.fabric, base.style_code, base.season].filter(Boolean).join(" · ")}
+                          </p>
+                        ) : null}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           ))}
-          {bases.length === 0 ? (
+          {familyGroups.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
               No base patterns match.
             </p>
