@@ -13,11 +13,13 @@ export interface TudPreview {
   attachment: PatternLibraryAttachment;
   /** Inline JPEG URL for the extracted 100×100 preview. */
   thumbnailUrl: string;
+  /** Download URL for the original .tud file. */
+  downloadUrl: string;
 }
 
-function thumbnailUrl(downloadUrlBase: string, storedThumbnail: string): string {
+function fileUrl(downloadUrlBase: string, storedFilename: string): string {
   const joiner = downloadUrlBase.includes("?") ? "&" : "?";
-  return `${downloadUrlBase}${joiner}file=${encodeURIComponent(storedThumbnail)}`;
+  return `${downloadUrlBase}${joiner}file=${encodeURIComponent(storedFilename)}`;
 }
 
 /** Most recently uploaded .tud attachment that has an extracted thumbnail. */
@@ -34,12 +36,11 @@ export function findLatestTudThumbnail(
 export function basePatternTudPreview(base: BasePattern): TudPreview | null {
   const attachment = findLatestTudThumbnail(base.files);
   if (!attachment?.thumbnail_stored_filename) return null;
+  const urlBase = `/api/pattern/library/bases/${base.id}/files`;
   return {
     attachment,
-    thumbnailUrl: thumbnailUrl(
-      `/api/pattern/library/bases/${base.id}/files`,
-      attachment.thumbnail_stored_filename
-    ),
+    thumbnailUrl: fileUrl(urlBase, attachment.thumbnail_stored_filename),
+    downloadUrl: fileUrl(urlBase, attachment.stored_filename),
   };
 }
 
@@ -51,13 +52,24 @@ export function clientPatternTudPreview(pattern: ClientPattern): TudPreview | nu
     .concat(findLatestTudThumbnail(pattern.files));
   const attachment = candidates.find((candidate) => candidate !== null) ?? null;
   if (!attachment?.thumbnail_stored_filename) return null;
+  const urlBase = `/api/pattern/library/client-patterns/${pattern.id}/files`;
   return {
     attachment,
-    thumbnailUrl: thumbnailUrl(
-      `/api/pattern/library/client-patterns/${pattern.id}/files`,
-      attachment.thumbnail_stored_filename
-    ),
+    thumbnailUrl: fileUrl(urlBase, attachment.thumbnail_stored_filename),
+    downloadUrl: fileUrl(urlBase, attachment.stored_filename),
   };
+}
+
+/** Human label for TUKA fabric codes seen in -M/-X records. */
+const FABRIC_LABELS: Record<string, string> = {
+  SHEEL: "Shell",
+  FINISH: "Fusing",
+  CONTASH: "Contrast",
+};
+
+export function tudFabricLabel(fabric: string | null): string {
+  if (!fabric) return "—";
+  return FABRIC_LABELS[fabric.toUpperCase()] ?? fabric;
 }
 
 export function formatAreaM2(value: number | null): string {

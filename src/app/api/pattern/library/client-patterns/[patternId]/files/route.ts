@@ -3,9 +3,11 @@ import { requirePatternAccess } from "@/lib/auth/session";
 import {
   ensurePatternLibraryLoaded,
   getClientPatternByIdFresh,
+  readPatternLibraryFresh,
 } from "@/lib/data/pattern-library";
 import { readPatternLibraryFile } from "@/lib/pattern-library/file-storage";
 import { attachClientPatternFile } from "@/lib/pattern-library/mutations";
+import { buildTudFillSuggestion, type TudFillSuggestion } from "@/lib/pattern-library/tud-size-fill";
 import {
   notifyLibraryFileUploaded,
   resolveLibraryFileRequest,
@@ -51,7 +53,22 @@ export async function POST(request: Request, context: { params: Promise<{ patter
       ...tudNotificationFields(stored.attachment),
     });
 
-    return NextResponse.json({ pattern: result.pattern, file: stored.attachment }, { status: 201 });
+    // .tud with detected sizes → offer "set size + pre-fill sheet" to the UI.
+    let tudFill: TudFillSuggestion | null = null;
+    if (stored.attachment.tud) {
+      const store = await readPatternLibraryFresh();
+      tudFill = buildTudFillSuggestion({
+        pattern: result.pattern,
+        basePatterns: store.base_patterns,
+        attachment: stored.attachment,
+        versionId,
+      });
+    }
+
+    return NextResponse.json(
+      { pattern: result.pattern, file: stored.attachment, tud_fill: tudFill },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Failed to upload client pattern file:", error);
     return NextResponse.json({ error: "Failed to upload file." }, { status: 500 });

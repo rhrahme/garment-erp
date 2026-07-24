@@ -168,6 +168,12 @@ export interface ClientPattern {
   house_brand_id: string | null;
   house_brand_code: string | null;
   fabric: string | null;
+  /**
+   * Sales-order fabric line ids grouped into this garment/pattern by the
+   * pattern team (client fabric board). Additive — absent on older patterns.
+   * A fabric line belongs to at most one client pattern at a time.
+   */
+  linked_fabric_line_ids?: string[];
   unit: MeasurementUnit;
   versions: ClientPatternVersion[];
   final_version_id: string | null;

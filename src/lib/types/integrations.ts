@@ -40,6 +40,8 @@ export type IntegrationEventType =
   | "client_pattern.updated"
   | "client_pattern.trial_added"
   | "client_pattern.finalized"
+  | "client_pattern.fabric_lines_assigned"
+  | "client_pattern.fabric_lines_unassigned"
   | "pattern_library.file_uploaded"
   | "production.scan"
   | "production.stage_advanced"

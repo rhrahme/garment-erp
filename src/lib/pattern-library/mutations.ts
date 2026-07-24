@@ -1,6 +1,12 @@
 import { notifyIntegration } from "@/lib/integrations";
 import { readPatternLibraryFresh, writePatternLibrary } from "@/lib/data/pattern-library";
+import { readSalesOrders } from "@/lib/data/sales-orders";
+import { applyFabricLineAssignment } from "@/lib/pattern-library/client-fabric-board";
 import { generatePatternRef } from "@/lib/pattern-library/refs";
+import {
+  fillMeasurementsFromBase,
+  findBaseSizeMatch,
+} from "@/lib/pattern-library/tud-size-fill";
 import type {
   BasePattern,
   BasePatternPoint,
@@ -288,6 +294,18 @@ export interface ClientPatternInput {
   physical_pattern_location?: string | null;
   notes?: string | null;
   trial_date?: string | null;
+  /** Sales-order fabric line ids to group into this garment from the client fabric board. */
+  linked_fabric_line_ids?: string[];
+}
+
+/** Line ids of a client's fabric lines across all sales orders — assignment guard. */
+function clientFabricLineIdSet(clientId: string): Set<string> {
+  const ids = new Set<string>();
+  for (const order of readSalesOrders().orders) {
+    if (order.client_id !== clientId) continue;
+    for (const line of order.fabric_lines) ids.add(line.id);
+  }
+  return ids;
 }
 
 export async function createClientPattern(
@@ -357,6 +375,7 @@ export async function createClientPattern(
     house_brand_id: base?.house_brand_id ?? null,
     house_brand_code: base?.house_brand_code ?? null,
     fabric: input.fabric?.trim() || base?.fabric || null,
+    linked_fabric_line_ids: [],
     unit,
     versions: [version],
     final_version_id: null,
@@ -368,6 +387,34 @@ export async function createClientPattern(
     created_at: timestamp,
     updated_at: timestamp,
   };
+
+  // Optional fabric grouping at creation time (client fabric board flow).
+  const requestedLineIds = [
+    ...new Set((input.linked_fabric_line_ids ?? []).map((id) => id.trim()).filter(Boolean)),
+  ];
+  if (requestedLineIds.length > 0) {
+    const validLineIds = clientFabricLineIdSet(pattern.client_id);
+    const unknown = requestedLineIds.filter((id) => !validLineIds.has(id));
+    if (unknown.length > 0) {
+      return {
+        ok: false,
+        status: 400,
+        error: `Fabric line(s) not found on this client's sales orders: ${unknown.join(", ")}.`,
+      };
+    }
+    pattern.linked_fabric_line_ids = requestedLineIds;
+    // A fabric belongs to one garment group — strip the lines from other patterns.
+    const requestedSet = new Set(requestedLineIds);
+    for (const other of store.client_patterns) {
+      if (other.client_id !== pattern.client_id) continue;
+      const existing = other.linked_fabric_line_ids ?? [];
+      const remaining = existing.filter((id) => !requestedSet.has(id));
+      if (remaining.length !== existing.length) {
+        other.linked_fabric_line_ids = remaining;
+        other.updated_at = timestamp;
+      }
+    }
+  }
 
   store.client_patterns.push(pattern);
   await writePatternLibrary(store);
@@ -381,11 +428,140 @@ export async function createClientPattern(
       garment_type: pattern.garment_type,
       base_pattern_id: pattern.base_pattern_id,
       base_size: pattern.base_size,
+      linked_fabric_line_ids: pattern.linked_fabric_line_ids ?? [],
       created_by: options.createdBy ?? null,
     });
+    if ((pattern.linked_fabric_line_ids ?? []).length > 0) {
+      await notifyIntegration("client_pattern.fabric_lines_assigned", {
+        id: pattern.id,
+        pattern_ref: pattern.pattern_ref,
+        client_id: pattern.client_id,
+        client_code: pattern.client_code,
+        garment_type: pattern.garment_type,
+        assigned_line_ids: pattern.linked_fabric_line_ids ?? [],
+        linked_fabric_line_ids: pattern.linked_fabric_line_ids ?? [],
+        assigned_by: options.createdBy ?? null,
+      });
+    }
   }
 
   return { ok: true, pattern };
+}
+
+/**
+ * Group fabric lines into a garment: adds the line ids to this client pattern
+ * and strips them from every other pattern of the same client (reassign).
+ */
+export async function assignFabricLinesToClientPattern(
+  patternId: string,
+  lineIds: string[],
+  options: { assignedBy?: string | null; notify?: boolean } = {}
+): Promise<Ok<{ pattern: ClientPattern }> | Err> {
+  const requested = [...new Set((lineIds ?? []).map((id) => `${id}`.trim()).filter(Boolean))];
+  if (requested.length === 0) {
+    return { ok: false, status: 400, error: "line_ids is required." };
+  }
+
+  const store = await readPatternLibraryFresh();
+  const index = store.client_patterns.findIndex((pattern) => pattern.id === patternId);
+  if (index < 0) return { ok: false, status: 404, error: "Client pattern not found." };
+  const existing = store.client_patterns[index]!;
+
+  const validLineIds = clientFabricLineIdSet(existing.client_id);
+  const unknown = requested.filter((id) => !validLineIds.has(id));
+  if (unknown.length > 0) {
+    return {
+      ok: false,
+      status: 400,
+      error: `Fabric line(s) not found on this client's sales orders: ${unknown.join(", ")}.`,
+    };
+  }
+
+  const timestamp = now();
+  const { targetLinkedLineIds, strippedFromOthers } = applyFabricLineAssignment(
+    store.client_patterns,
+    patternId,
+    requested
+  );
+  for (const { patternId: otherId, linkedLineIds } of strippedFromOthers) {
+    const otherIndex = store.client_patterns.findIndex((pattern) => pattern.id === otherId);
+    if (otherIndex < 0) continue;
+    store.client_patterns[otherIndex] = {
+      ...store.client_patterns[otherIndex]!,
+      linked_fabric_line_ids: linkedLineIds,
+      updated_at: timestamp,
+    };
+  }
+  const next: ClientPattern = {
+    ...existing,
+    linked_fabric_line_ids: targetLinkedLineIds,
+    updated_at: timestamp,
+  };
+  store.client_patterns[index] = next;
+  await writePatternLibrary(store);
+
+  if (options.notify !== false) {
+    await notifyIntegration("client_pattern.fabric_lines_assigned", {
+      id: next.id,
+      pattern_ref: next.pattern_ref,
+      client_id: next.client_id,
+      client_code: next.client_code,
+      garment_type: next.garment_type,
+      assigned_line_ids: requested,
+      linked_fabric_line_ids: targetLinkedLineIds,
+      reassigned_from_pattern_ids: strippedFromOthers.map((item) => item.patternId),
+      assigned_by: options.assignedBy ?? null,
+    });
+  }
+
+  return { ok: true, pattern: next };
+}
+
+/** Remove fabric lines from a garment group — the lines become unassigned. */
+export async function unassignFabricLinesFromClientPattern(
+  patternId: string,
+  lineIds: string[],
+  options: { unassignedBy?: string | null; notify?: boolean } = {}
+): Promise<Ok<{ pattern: ClientPattern }> | Err> {
+  const requested = [...new Set((lineIds ?? []).map((id) => `${id}`.trim()).filter(Boolean))];
+  if (requested.length === 0) {
+    return { ok: false, status: 400, error: "line_ids is required." };
+  }
+
+  const store = await readPatternLibraryFresh();
+  const index = store.client_patterns.findIndex((pattern) => pattern.id === patternId);
+  if (index < 0) return { ok: false, status: 404, error: "Client pattern not found." };
+  const existing = store.client_patterns[index]!;
+
+  const requestedSet = new Set(requested);
+  const linked = existing.linked_fabric_line_ids ?? [];
+  const remaining = linked.filter((id) => !requestedSet.has(id));
+  if (remaining.length === linked.length) {
+    return { ok: false, status: 400, error: "None of those fabric lines are linked to this pattern." };
+  }
+
+  const next: ClientPattern = {
+    ...existing,
+    linked_fabric_line_ids: remaining,
+    updated_at: now(),
+  };
+  store.client_patterns[index] = next;
+  await writePatternLibrary(store);
+
+  if (options.notify !== false) {
+    await notifyIntegration("client_pattern.fabric_lines_unassigned", {
+      id: next.id,
+      pattern_ref: next.pattern_ref,
+      client_id: next.client_id,
+      client_code: next.client_code,
+      garment_type: next.garment_type,
+      unassigned_line_ids: requested.filter((id) => linked.includes(id)),
+      linked_fabric_line_ids: remaining,
+      unassigned_by: options.unassignedBy ?? null,
+    });
+  }
+
+  return { ok: true, pattern: next };
 }
 
 export async function updateClientPattern(
@@ -657,4 +833,102 @@ export async function attachClientPatternFile(
   store.client_patterns[index] = next;
   await writePatternLibrary(store);
   return { ok: true, pattern: next };
+}
+
+/**
+ * .TUD-driven size + sheet fill: sets the derivation size (and base, when the
+ * pattern had none) from a size detected in an uploaded .tud, then pre-fills
+ * empty base/target cells of the trial's measurement sheet from the base
+ * pattern's values at that size. Entered values are never overwritten.
+ */
+export async function applyTudSizeFill(
+  patternId: string,
+  input: { size?: string | null; base_pattern_id?: string | null; version_id?: string | null },
+  options: { appliedBy?: string | null; notify?: boolean } = {}
+): Promise<
+  | Ok<{
+      pattern: ClientPattern;
+      version: ClientPatternVersion;
+      base_size: string;
+      filled_points: number;
+      added_points: number;
+    }>
+  | Err
+> {
+  const detectedSize = input.size?.trim();
+  if (!detectedSize) return { ok: false, status: 400, error: "size is required." };
+
+  const store = await readPatternLibraryFresh();
+  const index = store.client_patterns.findIndex((pattern) => pattern.id === patternId);
+  if (index < 0) return { ok: false, status: 404, error: "Client pattern not found." };
+  const existing = store.client_patterns[index]!;
+
+  const baseId = input.base_pattern_id?.trim() || existing.base_pattern_id;
+  if (!baseId) {
+    return { ok: false, status: 400, error: "Pattern has no base — pass base_pattern_id to link one." };
+  }
+  const base = store.base_patterns.find((candidate) => candidate.id === baseId);
+  if (!base) return { ok: false, status: 400, error: "Base pattern not found." };
+
+  const baseSize = findBaseSizeMatch(detectedSize, base.sizes);
+  if (!baseSize) {
+    return {
+      ok: false,
+      status: 400,
+      error: `Size ${detectedSize} does not match any size on ${base.name} (${base.sizes.join(", ")}).`,
+    };
+  }
+
+  const versionIndex = input.version_id
+    ? existing.versions.findIndex((candidate) => candidate.id === input.version_id)
+    : existing.versions.length - 1;
+  if (versionIndex < 0) return { ok: false, status: 404, error: "Version not found." };
+  const targetVersion = existing.versions[versionIndex]!;
+
+  const timestamp = now();
+  const outcome = fillMeasurementsFromBase(targetVersion.measurements, base, baseSize);
+  const version: ClientPatternVersion = {
+    ...targetVersion,
+    measurements: outcome.measurements,
+    updated_by: options.appliedBy ?? targetVersion.updated_by,
+    updated_at: timestamp,
+  };
+
+  const next: ClientPattern = {
+    ...existing,
+    base_pattern_id: base.id,
+    base_size: baseSize,
+    house_brand_id: base.house_brand_id,
+    house_brand_code: base.house_brand_code,
+    versions: existing.versions.map((candidate, i) => (i === versionIndex ? version : candidate)),
+    updated_at: timestamp,
+  };
+  store.client_patterns[index] = next;
+  await writePatternLibrary(store);
+
+  if (options.notify !== false) {
+    await notifyIntegration("client_pattern.updated", {
+      id: next.id,
+      pattern_ref: next.pattern_ref,
+      client_id: next.client_id,
+      garment_type: next.garment_type,
+      action: "tud_size_fill",
+      version_id: version.id,
+      base_pattern_id: base.id,
+      base_size: baseSize,
+      detected_size: detectedSize,
+      filled_points: outcome.filled_points,
+      added_points: outcome.added_points,
+      updated_by: options.appliedBy ?? null,
+    });
+  }
+
+  return {
+    ok: true,
+    pattern: next,
+    version,
+    base_size: baseSize,
+    filled_points: outcome.filled_points,
+    added_points: outcome.added_points,
+  };
 }

@@ -2,8 +2,16 @@
 
 import { useRef, useState } from "react";
 import { ChevronDown, ChevronRight, FileUp, Paperclip } from "lucide-react";
+import { TudViewerModal } from "@/components/pattern/library/TudViewerModal";
 import { formatAreaM2, formatPieceAreaM2 } from "@/lib/pattern-library/tud-display";
+import type { TudFillSuggestion } from "@/lib/pattern-library/tud-size-fill";
 import type { PatternLibraryAttachment, TudMetadata } from "@/lib/types/pattern-library";
+
+/** Upload POST response, forwarded to onUploaded (e.g. the .tud size-fill prompt). */
+export interface LibraryUploadResponse {
+  file?: PatternLibraryAttachment;
+  tud_fill?: TudFillSuggestion | null;
+}
 
 const KIND_LABELS: Record<string, string> = {
   tud: "TUKA",
@@ -32,7 +40,7 @@ export function LibraryFileList({
   uploadUrl: string;
   /** GET base — `?file=<stored_filename>` is appended. */
   downloadUrlBase: string;
-  onUploaded: () => void;
+  onUploaded: (response?: LibraryUploadResponse) => void;
   title?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -46,11 +54,11 @@ export function LibraryFileList({
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch(uploadUrl, { method: "POST", body: formData });
+      const body = await res.json().catch(() => null);
       if (!res.ok) {
-        const body = await res.json().catch(() => null);
         throw new Error(body?.error ?? "Upload failed.");
       }
-      onUploaded();
+      onUploaded(body ?? undefined);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
@@ -101,12 +109,14 @@ export function LibraryFileList({
               </a>
               {file.tud ? (
                 <TudMetadataPanel
+                  attachment={file}
                   metadata={file.tud}
                   thumbnailUrl={
                     file.thumbnail_stored_filename
                       ? `${downloadUrlBase}${joiner}file=${encodeURIComponent(file.thumbnail_stored_filename)}`
                       : null
                   }
+                  downloadUrl={`${downloadUrlBase}${joiner}file=${encodeURIComponent(file.stored_filename)}`}
                 />
               ) : null}
             </li>
@@ -119,13 +129,18 @@ export function LibraryFileList({
 
 /** Parsed TUKA CAD info shown under a .tud attachment row. */
 function TudMetadataPanel({
+  attachment,
   metadata,
   thumbnailUrl,
+  downloadUrl,
 }: {
+  attachment: PatternLibraryAttachment;
   metadata: TudMetadata;
   thumbnailUrl: string | null;
+  downloadUrl: string;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
   const totalArea =
     metadata.total_area_m2 ??
     (metadata.size_totals.length > 0
@@ -136,14 +151,22 @@ function TudMetadataPanel({
     <div className="mb-1 ml-7 rounded-lg border border-slate-100 bg-slate-50/60 p-2.5">
       <div className="flex items-start gap-3">
         {thumbnailUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={thumbnailUrl}
-            alt={metadata.style_caption ?? "TUKA preview"}
-            width={100}
-            height={100}
-            className="h-20 w-20 shrink-0 rounded-md border border-slate-200 bg-white object-contain p-1"
-          />
+          <button
+            type="button"
+            onClick={() => setViewerOpen(true)}
+            className="shrink-0 rounded-md transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            title="Open TUKA preview"
+            aria-label="Open TUKA preview"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={thumbnailUrl}
+              alt={metadata.style_caption ?? "TUKA preview"}
+              width={100}
+              height={100}
+              className="h-20 w-20 rounded-md border border-slate-200 bg-white object-contain p-1"
+            />
+          </button>
         ) : null}
         <div className="min-w-0 flex-1 space-y-1">
           {metadata.style_caption ? (
@@ -174,16 +197,25 @@ function TudMetadataPanel({
         </div>
       </div>
 
-      {metadata.pieces.length > 0 ? (
+      <div className="mt-1.5 flex flex-wrap items-center gap-3">
         <button
           type="button"
-          onClick={() => setExpanded((open) => !open)}
-          className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-indigo-700 hover:text-indigo-900"
+          onClick={() => setViewerOpen(true)}
+          className="text-xs font-medium text-indigo-700 hover:text-indigo-900"
         >
-          {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-          {expanded ? "Hide piece list" : "Show piece list"}
+          Open full preview
         </button>
-      ) : null}
+        {metadata.pieces.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => setExpanded((open) => !open)}
+            className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-800"
+          >
+            {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+            {expanded ? "Hide piece list" : "Show piece list"}
+          </button>
+        ) : null}
+      </div>
 
       {expanded ? (
         <div className="mt-2 overflow-x-auto">
@@ -249,6 +281,15 @@ function TudMetadataPanel({
             ) : null}
           </table>
         </div>
+      ) : null}
+
+      {viewerOpen ? (
+        <TudViewerModal
+          attachment={attachment}
+          thumbnailUrl={thumbnailUrl}
+          downloadUrl={downloadUrl}
+          onClose={() => setViewerOpen(false)}
+        />
       ) : null}
     </div>
   );

@@ -43,6 +43,8 @@ const OUTBOUND_EVENTS = [
   "client_pattern.updated",
   "client_pattern.trial_added",
   "client_pattern.finalized",
+  "client_pattern.fabric_lines_assigned",
+  "client_pattern.fabric_lines_unassigned",
   "pattern_library.file_uploaded",
   "production.scan",
   "production.stage_advanced",
@@ -135,6 +137,12 @@ export function ZapierSetup() {
             <li>GET/PATCH {baseUrl}/api/v1/pattern/jobs/[id]</li>
             <li>POST {baseUrl}/api/v1/pattern/jobs/[id]/fittings</li>
             <li>POST {baseUrl}/api/v1/pattern/jobs/[id]/revisions</li>
+            <li>POST {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]/tud-fill</li>
+            <li className="pl-4 text-slate-500">
+              body: size, optional base_pattern_id / version_id / applied_by — sets
+              base size from a .tud size and fills empty measurement cells (extends
+              client_pattern.updated with action tud_size_fill)
+            </li>
             <li>POST {baseUrl}/api/v1/sales-orders/[id]/fabric-lines/print</li>
             <li>POST {baseUrl}/api/v1/fabric-receiving/reset-testing</li>
             <li>POST {baseUrl}/api/v1/fabric-receiving/defects</li>

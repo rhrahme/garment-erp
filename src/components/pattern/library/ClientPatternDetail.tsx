@@ -8,19 +8,28 @@ import {
   CheckCircle2,
   Download,
   History,
+  Layers,
   Minus,
   MoveDown,
   MoveUp,
   Plus,
   Printer,
+  Ruler,
   Trash2,
+  X,
 } from "lucide-react";
 import { MeasurementInput } from "@/components/pattern/library/MeasurementInput";
-import { LibraryFileList } from "@/components/pattern/library/LibraryFileList";
+import {
+  LibraryFileList,
+  type LibraryUploadResponse,
+} from "@/components/pattern/library/LibraryFileList";
+import { LinkedFabricsCard } from "@/components/pattern/library/LinkedFabricsCard";
 import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
 import { formatMeasurement, unitLabel } from "@/lib/pattern-library/measurements";
 import { clientPatternQrUrl } from "@/lib/pattern-library/pattern-qr";
+import { TudViewerModal } from "@/components/pattern/library/TudViewerModal";
 import { clientPatternTudPreview, formatAreaM2 } from "@/lib/pattern-library/tud-display";
+import type { TudFillSuggestion } from "@/lib/pattern-library/tud-size-fill";
 import type {
   ClientPattern,
   ClientPatternMeasurement,
@@ -59,6 +68,14 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newPointName, setNewPointName] = useState("");
+  const [tudViewerOpen, setTudViewerOpen] = useState(false);
+  // Post-upload .tud prompt: pick a detected size (and base, if none linked),
+  // confirm, and the sheet's empty cells are filled from the base values.
+  const [tudFill, setTudFill] = useState<TudFillSuggestion | null>(null);
+  const [tudFillSize, setTudFillSize] = useState("");
+  const [tudFillBaseId, setTudFillBaseId] = useState("");
+  const [tudFillBusy, setTudFillBusy] = useState(false);
+  const [tudFillNotice, setTudFillNotice] = useState<string | null>(null);
 
   const load = useCallback(
     async (keepSelection = false) => {
@@ -259,6 +276,62 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
     }
   }
 
+  function handleUploaded(response?: LibraryUploadResponse) {
+    void load(true);
+    const suggestion = response?.tud_fill ?? null;
+    if (!suggestion) return;
+    const firstBase = suggestion.base ?? suggestion.candidate_bases[0] ?? null;
+    // Prefer the trial on screen — pattern-level uploads otherwise default the
+    // suggestion to the latest trial, which may not be the open sheet.
+    setTudFill({
+      ...suggestion,
+      version_id: selectedVersionId ?? suggestion.version_id,
+    });
+    setTudFillBaseId(firstBase?.id ?? "");
+    setTudFillSize(firstBase?.matches[0]?.size ?? "");
+    setTudFillNotice(null);
+  }
+
+  async function applyTudFill() {
+    if (!tudFill || !tudFillSize) return;
+    if (dirty) {
+      const proceed = window.confirm(
+        "You have unsaved measurement edits. Applying the .tud fill will reload the sheet and discard them. Continue?"
+      );
+      if (!proceed) return;
+    }
+    setTudFillBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/pattern/library/client-patterns/${patternId}/tud-fill`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          size: tudFillSize,
+          // Only sent when the pattern has no base yet (links it).
+          base_pattern_id: tudFill.base ? undefined : tudFillBaseId || undefined,
+          // Fill the trial on screen when the upload didn't pin a version.
+          version_id: selectedVersionId ?? tudFill.version_id ?? undefined,
+        }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? "Failed to fill the sheet.");
+      const filled = body?.filled_points ?? 0;
+      const added = body?.added_points ?? 0;
+      const parts = [`Size set to ${body?.base_size ?? tudFillSize}`];
+      if (filled > 0) parts.push(`${filled} point${filled === 1 ? "" : "s"} filled`);
+      if (added > 0) parts.push(`${added} added`);
+      setTudFillNotice(`${parts.join(" · ")} — from the base pattern values. Entered cells were left unchanged.`);
+      setTudFill(null);
+      if (typeof body?.version_id === "string") setSelectedVersionId(body.version_id);
+      await load(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fill the sheet.");
+    } finally {
+      setTudFillBusy(false);
+    }
+  }
+
   if (loading) return <p className="text-sm text-slate-500">Loading client pattern…</p>;
   if (!pattern) return <p className="text-sm text-rose-600">Client pattern not found.</p>;
 
@@ -266,6 +339,10 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   const printHref = `/pattern/client-patterns/${pattern.id}/print${version ? `?version=${version.id}` : ""}`;
   const pdfHref = `/api/pattern/library/client-patterns/${pattern.id}/pdf${version ? `?version=${version.id}` : ""}`;
   const tudPreview = clientPatternTudPreview(pattern);
+  const tudFillCandidate = tudFill
+    ? tudFill.base ?? tudFill.candidate_bases.find((c) => c.id === tudFillBaseId) ?? null
+    : null;
+  const tudFillMatch = tudFillCandidate?.matches.find((m) => m.size === tudFillSize) ?? null;
 
   return (
     <div className="space-y-5">
@@ -278,6 +355,13 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           Pattern library
         </Link>
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/pattern/library/fabrics/${pattern.client_id}`}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-indigo-700 ring-1 ring-slate-200 hover:bg-indigo-50"
+          >
+            <Layers className="h-4 w-4" />
+            Client fabrics
+          </Link>
           <Link
             href={printHref}
             target="_blank"
@@ -370,23 +454,38 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           </label>
             </div>
           </div>
-          {/* Extracted TUKA preview from the latest .tud upload */}
+          {/* Extracted TUKA preview from the latest .tud upload — click to open the viewer */}
           {tudPreview ? (
             <div className="flex shrink-0 flex-col items-center gap-1">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={tudPreview.thumbnailUrl}
-                alt={tudPreview.attachment.tud?.style_caption ?? "TUKA pattern preview"}
+              <button
+                type="button"
+                onClick={() => setTudViewerOpen(true)}
+                className="rounded-lg transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                 title={tudPreview.attachment.tud?.style_caption ?? tudPreview.attachment.filename}
-                width={100}
-                height={100}
-                className="h-28 w-28 rounded-lg border border-slate-200 bg-white object-contain p-1.5 shadow-sm"
-              />
+                aria-label="Open TUKA preview"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={tudPreview.thumbnailUrl}
+                  alt={tudPreview.attachment.tud?.style_caption ?? "TUKA pattern preview"}
+                  width={100}
+                  height={100}
+                  className="h-28 w-28 rounded-lg border border-slate-200 bg-white object-contain p-1.5 shadow-sm"
+                />
+              </button>
               <p className="max-w-28 truncate text-center text-[10px] font-medium uppercase tracking-wide text-slate-400">
                 {tudPreview.attachment.tud?.total_area_m2 != null
                   ? `TUKA · ${formatAreaM2(tudPreview.attachment.tud.total_area_m2)}`
                   : "TUKA preview"}
               </p>
+              {tudViewerOpen ? (
+                <TudViewerModal
+                  attachment={tudPreview.attachment}
+                  thumbnailUrl={tudPreview.thumbnailUrl}
+                  downloadUrl={tudPreview.downloadUrl}
+                  onClose={() => setTudViewerOpen(false)}
+                />
+              ) : null}
             </div>
           ) : null}
           {/* Fixed pattern QR — permanent deep link, survives ref edits */}
@@ -435,6 +534,130 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           </button>
         </div>
       </div>
+
+      {/* .tud size detected — confirm before setting the size / filling the sheet */}
+      {tudFill ? (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-start gap-2.5">
+              <Ruler className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600" />
+              <div className="min-w-0 space-y-2">
+                <p className="text-sm font-semibold text-slate-800">
+                  Size{tudFill.sizes.length === 1 ? "" : "s"} detected in{" "}
+                  {tudFill.style_caption ?? tudFill.filename}: {tudFill.sizes.join(", ")}
+                </p>
+                {!tudFill.base ? (
+                  <label className="block text-sm">
+                    <span className="mb-1 block text-xs font-medium text-slate-600">
+                      This pattern has no base yet — derive from
+                    </span>
+                    <select
+                      value={tudFillBaseId}
+                      onChange={(e) => {
+                        const nextId = e.target.value;
+                        setTudFillBaseId(nextId);
+                        const candidate =
+                          tudFill.candidate_bases.find((c) => c.id === nextId) ?? null;
+                        setTudFillSize(candidate?.matches[0]?.size ?? "");
+                      }}
+                      className="w-full max-w-sm rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                    >
+                      {tudFill.candidate_bases.map((candidate) => (
+                        <option key={candidate.id} value={candidate.id}>
+                          {candidate.name} ({candidate.house_brand_code})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+                {tudFillCandidate && tudFillCandidate.matches.length > 1 ? (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs font-medium text-slate-600">Use size</span>
+                    {tudFillCandidate.matches.map((match) => (
+                      <button
+                        key={match.size}
+                        type="button"
+                        onClick={() => setTudFillSize(match.size)}
+                        className={cn(
+                          "rounded-lg px-3 py-1.5 text-sm font-medium",
+                          match.size === tudFillSize
+                            ? "bg-indigo-600 text-white"
+                            : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+                        )}
+                      >
+                        {match.size}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                {tudFillCandidate && tudFillMatch ? (
+                  <p className="text-sm text-slate-700">
+                    Set size to <span className="font-semibold">{tudFillMatch.base_size}</span> and
+                    fill the sheet with {tudFillCandidate.name} · {tudFillMatch.base_size} base
+                    values? Only empty cells are filled — entered values are kept.
+                    {tudFill.base &&
+                    tudFillCandidate.matches.length === 1 &&
+                    (tudFill.fillable_points !== null || tudFill.addable_points !== null) ? (
+                      <span className="mt-1 block text-xs text-slate-500">
+                        Preview
+                        {tudFill.fillable_points
+                          ? `: ${tudFill.fillable_points} empty point${tudFill.fillable_points === 1 ? "" : "s"} to fill`
+                          : ": no empty cells to fill"}
+                        {tudFill.addable_points
+                          ? ` · ${tudFill.addable_points} base point${tudFill.addable_points === 1 ? "" : "s"} to add`
+                          : ""}
+                        .
+                      </span>
+                    ) : null}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setTudFill(null)}
+              className="rounded p-1 text-slate-400 hover:bg-white hover:text-slate-600"
+              aria-label="Dismiss size suggestion"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void applyTudFill()}
+              disabled={tudFillBusy || !tudFillMatch}
+              className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {tudFillBusy ? "Filling…" : "Set size & fill sheet"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setTudFill(null)}
+              disabled={tudFillBusy}
+              className="rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+            >
+              Not now
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {tudFillNotice ? (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <p className="flex items-center gap-2 text-sm text-emerald-800">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            {tudFillNotice}
+          </p>
+          <button
+            type="button"
+            onClick={() => setTudFillNotice(null)}
+            className="rounded p-1 text-emerald-500 hover:bg-emerald-100"
+            aria-label="Dismiss notice"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ) : null}
 
       {/* View tabs */}
       <div className="flex flex-wrap gap-2">
@@ -667,7 +890,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   files={version.files}
                   uploadUrl={`/api/pattern/library/client-patterns/${pattern.id}/files?version=${version.id}`}
                   downloadUrlBase={`/api/pattern/library/client-patterns/${pattern.id}/files`}
-                  onUploaded={() => void load(true)}
+                  onUploaded={handleUploaded}
                   title={`${versionLabel(version)} files`}
                 />
               </div>
@@ -680,12 +903,13 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
       {view === "history" ? <HistoryTimeline pattern={pattern} /> : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
+        <LinkedFabricsCard clientId={pattern.client_id} patternId={pattern.id} />
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <LibraryFileList
             files={pattern.files}
             uploadUrl={`/api/pattern/library/client-patterns/${pattern.id}/files`}
             downloadUrlBase={`/api/pattern/library/client-patterns/${pattern.id}/files`}
-            onUploaded={() => void load(true)}
+            onUploaded={handleUploaded}
             title="Pattern files (.TUD, Excel, DXF, PDF, images)"
           />
         </div>

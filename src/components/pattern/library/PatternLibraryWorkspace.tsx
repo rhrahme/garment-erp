@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Plus } from "lucide-react";
+import { ArrowRight, Layers, Plus } from "lucide-react";
 import { matchesNormalizedSearch } from "@/lib/search/normalize";
+import { TudViewerModal } from "@/components/pattern/library/TudViewerModal";
 import { generatePatternRef } from "@/lib/pattern-library/refs";
 import { unitLabel } from "@/lib/pattern-library/measurements";
 import {
@@ -387,12 +388,35 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
           ) : null}
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {clientPatterns.map((pattern) => (
-            <ClientPatternCard key={pattern.id} pattern={pattern} />
+        <div className="space-y-5">
+          {groupClientPatterns(clientPatterns).map((group) => (
+            <div key={group.clientId} className="space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                <h2 className="text-base font-semibold text-slate-900">
+                  {group.clientName}
+                  <span className="ml-2 text-xs font-normal text-slate-400">
+                    {group.clientCode} · {group.patterns.length} pattern
+                    {group.patterns.length === 1 ? "" : "s"}
+                  </span>
+                </h2>
+                <Link
+                  href={`/pattern/library/fabrics/${group.clientId}`}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 ring-1 ring-slate-200 hover:bg-indigo-50"
+                >
+                  <Layers className="h-4 w-4" />
+                  Fabric board
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {group.patterns.map((pattern) => (
+                  <ClientPatternCard key={pattern.id} pattern={pattern} />
+                ))}
+              </div>
+            </div>
           ))}
           {clientPatterns.length === 0 ? (
-            <p className="col-span-full rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
+            <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
               No client patterns yet — create one from a base pattern + size.
             </p>
           ) : null}
@@ -402,26 +426,71 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
   );
 }
 
-/** Small extracted TUKA preview on library cards (100×100 source, gently upscaled). */
+/** Small extracted TUKA preview on library cards — click opens the full viewer. */
 function CardTudThumb({ preview }: { preview: TudPreview | null }) {
+  const [viewerOpen, setViewerOpen] = useState(false);
   if (!preview) return null;
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={preview.thumbnailUrl}
-      alt={preview.attachment.tud?.style_caption ?? "TUKA pattern preview"}
-      title={preview.attachment.tud?.style_caption ?? preview.attachment.filename}
-      width={100}
-      height={100}
-      loading="lazy"
-      className="h-20 w-20 shrink-0 self-center rounded-lg border border-slate-200 bg-white object-contain p-1"
-    />
+    <>
+      <button
+        type="button"
+        onClick={(event) => {
+          // Card is a Link — open the viewer instead of navigating.
+          event.preventDefault();
+          event.stopPropagation();
+          setViewerOpen(true);
+        }}
+        className="shrink-0 self-center rounded-lg transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+        title={preview.attachment.tud?.style_caption ?? preview.attachment.filename}
+        aria-label="Open TUKA preview"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={preview.thumbnailUrl}
+          alt={preview.attachment.tud?.style_caption ?? "TUKA pattern preview"}
+          width={100}
+          height={100}
+          loading="lazy"
+          className="h-20 w-20 rounded-lg border border-slate-200 bg-white object-contain p-1"
+        />
+      </button>
+      {viewerOpen ? (
+        <TudViewerModal
+          attachment={preview.attachment}
+          thumbnailUrl={preview.thumbnailUrl}
+          downloadUrl={preview.downloadUrl}
+          onClose={() => setViewerOpen(false)}
+        />
+      ) : null}
+    </>
   );
+}
+
+/** Clients tab groups patterns per client — each group header links to the fabric board. */
+function groupClientPatterns(patterns: ClientPattern[]): {
+  clientId: string;
+  clientCode: string;
+  clientName: string;
+  patterns: ClientPattern[];
+}[] {
+  const groups = new Map<string, ClientPattern[]>();
+  for (const pattern of patterns) {
+    groups.set(pattern.client_id, [...(groups.get(pattern.client_id) ?? []), pattern]);
+  }
+  return [...groups.entries()]
+    .map(([clientId, items]) => ({
+      clientId,
+      clientCode: items[0]?.client_code ?? "",
+      clientName: items[0]?.client_name || "Unknown client",
+      patterns: items,
+    }))
+    .sort((a, b) => a.clientName.localeCompare(b.clientName));
 }
 
 function ClientPatternCard({ pattern }: { pattern: ClientPattern }) {
   const finalVersion = pattern.versions.find((version) => version.is_final);
   const preview = clientPatternTudPreview(pattern);
+  const linkedFabricCount = pattern.linked_fabric_line_ids?.length ?? 0;
   return (
     <Link
       href={`/pattern/library/clients/${pattern.id}`}
@@ -448,6 +517,12 @@ function ClientPatternCard({ pattern }: { pattern: ClientPattern }) {
           {pattern.base_size ? ` · from ${pattern.base_size}` : ""}
           {pattern.fabric ? ` · ${pattern.fabric}` : ""}
         </p>
+        {linkedFabricCount > 0 ? (
+          <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
+            <Layers className="h-3 w-3" />
+            {linkedFabricCount} fabric{linkedFabricCount === 1 ? "" : "s"}
+          </span>
+        ) : null}
       </div>
       <CardTudThumb preview={preview} />
     </Link>

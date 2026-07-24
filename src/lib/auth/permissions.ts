@@ -122,6 +122,7 @@ const PATTERN_OPERATOR_ROUTE_PREFIXES = [
   "/api/qr",
   "/api/suppliers/loro-piana",
   "/api/integrations/drapers/medias",
+  "/api/integrations/caccioppoli/images",
   "/api/auth/session",
   "/api/auth/dev-impersonate",
   "/login",
