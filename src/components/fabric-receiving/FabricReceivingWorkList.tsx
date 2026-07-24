@@ -496,12 +496,17 @@ function FabricCutCard({
             stickerCount={line.stickers.length}
             showCutting={line.status !== "pending"}
           />
-          {canTransferFabric && line.status !== "handed_off" && onRequestTransfer ? (
+          {canTransferFabric && onRequestTransfer ? (
             <Button
               size="sm"
               variant="secondary"
               type="button"
               onClick={() => onRequestTransfer(order, line)}
+              title={
+                line.status === "handed_off"
+                  ? "Handed off — dialog explains block or Admin override"
+                  : undefined
+              }
             >
               Transfer
             </Button>

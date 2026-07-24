@@ -12,6 +12,15 @@ export type FabricTransferLineRef = {
   sticker_codes: string[];
 };
 
+/** Snapshot of source receiving / production stage at transfer time. */
+export type FabricTransferSourceStage = {
+  stage_label: string;
+  client_name: string;
+  receipt_status: "received" | "fabric_prep" | "handed_off" | null;
+  fabric_prep_step: "wash" | "soak" | "drying" | "iron" | null;
+  active_work_order_count: number;
+};
+
 /** Permanent audit record for moving received (or on-order) fabric between clients/SOs. */
 export interface FabricTransfer {
   id: string;
@@ -30,6 +39,14 @@ export interface FabricTransfer {
   replacement_fabric_po_ids: string[];
   /** Receipt re-keyed or split onto the destination line, if any. */
   destination_receipt_id: string | null;
+  /** Receiving / production stage on the source line when transferred. */
+  source_stage?: FabricTransferSourceStage | null;
+  /** Operator confirmed mid receiving-pipeline warning. */
+  acknowledged_receiving_stage?: boolean;
+  /** Admin cancelled cutting WOs / handed-off gate to allow transfer. */
+  admin_override?: boolean;
+  /** Cutting (or pre-cutting) work orders removed as part of Admin override. */
+  cancelled_production_work_order_ids?: string[];
 }
 
 export interface FabricTransfersFile {

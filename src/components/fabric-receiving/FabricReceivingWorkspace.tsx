@@ -252,6 +252,7 @@ export function FabricReceivingWorkspace() {
             client_code: transferTarget.order.client_code,
           }}
           sourceLine={receivingLineToFabricLine(transferTarget.line)}
+          initialStageLabel={transferTarget.line.scan_stage_label}
           onClose={() => setTransferTarget(null)}
           onTransferred={(result) => {
             setTransferSuccess(result);

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import type { TransferEligibility } from "@/lib/sales-orders/transfer-eligibility";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
 type DestinationOption = {
@@ -19,6 +20,8 @@ type FabricTransferModalProps = {
   open: boolean;
   sourceOrder: Pick<SalesOrder, "id" | "so_number" | "client_name" | "client_code">;
   sourceLine: SalesOrderFabricLine;
+  /** Optional stage hint from Fabric Receiving (refreshed from API on open). */
+  initialStageLabel?: string | null;
   onClose: () => void;
   onTransferred: (result: {
     print_stickers_href: string;
@@ -32,15 +35,21 @@ export function FabricTransferModal({
   open,
   sourceOrder,
   sourceLine,
+  initialStageLabel = null,
   onClose,
   onTransferred,
 }: FabricTransferModalProps) {
   const [orders, setOrders] = useState<DestinationOption[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [eligibility, setEligibility] = useState<TransferEligibility | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loadingEligibility, setLoadingEligibility] = useState(false);
   const [clientFilter, setClientFilter] = useState("");
   const [destinationOrderId, setDestinationOrderId] = useState("");
   const [meters, setMeters] = useState(String(sourceLine.quantity));
   const [reason, setReason] = useState("");
+  const [ackReceiving, setAckReceiving] = useState(false);
+  const [adminOverride, setAdminOverride] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,9 +61,14 @@ export function FabricTransferModal({
     setClientFilter("");
     setError(null);
     setSubmitting(false);
+    setAckReceiving(false);
+    setAdminOverride(false);
+    setEligibility(null);
 
     let cancelled = false;
     setLoadingOrders(true);
+    setLoadingEligibility(true);
+
     fetch("/api/sales-orders")
       .then((res) => res.json())
       .then((data: { orders?: SalesOrder[] }) => {
@@ -84,6 +98,22 @@ export function FabricTransferModal({
         if (!cancelled) setLoadingOrders(false);
       });
 
+    const params = new URLSearchParams({ source_line_id: sourceLine.id });
+    fetch(`/api/sales-orders/${sourceOrder.id}/fabric-lines/transfer?${params}`)
+      .then((res) => res.json())
+      .then((data: { eligibility?: TransferEligibility; is_admin?: boolean; error?: string }) => {
+        if (cancelled) return;
+        if (data.eligibility) setEligibility(data.eligibility);
+        setIsAdmin(Boolean(data.is_admin));
+        if (data.error && !data.eligibility) setError(data.error);
+      })
+      .catch(() => {
+        if (!cancelled) setError("Failed to load source fabric stage.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingEligibility(false);
+      });
+
     return () => {
       cancelled = true;
     };
@@ -104,6 +134,17 @@ export function FabricTransferModal({
   const metersNum = Number(meters);
   const isPartial = Number.isFinite(metersNum) && metersNum > 0 && metersNum < sourceLine.quantity;
 
+  const needsReceivingAck = Boolean(eligibility?.requires_receiving_ack);
+  const canSubmitOverride =
+    Boolean(eligibility?.admin_override_available) && isAdmin && adminOverride && !isPartial;
+
+  const submitBlocked =
+    (needsReceivingAck && !ackReceiving) ||
+    (Boolean(eligibility?.admin_override_available) &&
+      eligibility?.blocked &&
+      !(isAdmin && adminOverride)) ||
+    (adminOverride && isPartial);
+
   if (!open) return null;
 
   async function handleSubmit(event: FormEvent) {
@@ -122,6 +163,28 @@ export function FabricTransferModal({
       setError("Enter valid meters to transfer.");
       return;
     }
+    if (needsReceivingAck && !ackReceiving) {
+      setError("Confirm the receiving-stage warning before transferring.");
+      return;
+    }
+    if (eligibility?.blocked && eligibility.admin_override_available) {
+      if (!isAdmin) {
+        setError("Only Admin can override handed-off / cutting-queue fabric.");
+        return;
+      }
+      if (!adminOverride) {
+        setError("Confirm Admin override to cancel cutting work orders and continue.");
+        return;
+      }
+      if (isPartial) {
+        setError("Admin override requires transferring the full line quantity.");
+        return;
+      }
+    }
+    if (eligibility?.blocked && !eligibility.admin_override_available) {
+      setError(eligibility.message);
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -133,6 +196,8 @@ export function FabricTransferModal({
           destination_sales_order_id: destinationOrderId,
           meters: metersNum,
           reason: reason.trim(),
+          acknowledge_receiving_stage: ackReceiving,
+          admin_override: canSubmitOverride,
         }),
       });
       const data = await res.json();
@@ -155,6 +220,9 @@ export function FabricTransferModal({
       setSubmitting(false);
     }
   }
+
+  const stageLabel =
+    eligibility?.stage_label ?? initialStageLabel ?? (loadingEligibility ? "Loading…" : "Unknown");
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center">
@@ -197,7 +265,73 @@ export function FabricTransferModal({
             <p className="mt-1 font-mono text-xs text-indigo-700">
               {(sourceLine.label_stickers ?? [])[0]?.code ?? "—"}
             </p>
+            <p className="mt-2 text-xs text-slate-600">
+              <span className="font-medium text-slate-800">Source stage:</span> {stageLabel}
+              {" · "}
+              {sourceOrder.client_name}
+            </p>
           </div>
+
+          {eligibility?.requires_receiving_ack ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950">
+              <p className="font-medium">Receiving work in progress</p>
+              <p className="mt-1">{eligibility.message}</p>
+              <label className="mt-3 flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={ackReceiving}
+                  onChange={(e) => setAckReceiving(e.target.checked)}
+                />
+                <span>
+                  I understand this fabric is at <strong>{eligibility.stage_label}</strong> for{" "}
+                  {eligibility.client_name}, and I still want to transfer.
+                </span>
+              </label>
+            </div>
+          ) : null}
+
+          {eligibility?.blocked && eligibility.admin_override_available ? (
+            <div className="rounded-xl border border-orange-300 bg-orange-50 px-3 py-3 text-sm text-orange-950">
+              <p className="font-medium">Already handed to workshop / in cutting queue</p>
+              <p className="mt-1">{eligibility.message}</p>
+              {eligibility.remediation ? (
+                <p className="mt-2 text-xs text-orange-900/90">{eligibility.remediation}</p>
+              ) : null}
+              {isAdmin ? (
+                <label className="mt-3 flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={adminOverride}
+                    onChange={(e) => {
+                      setAdminOverride(e.target.checked);
+                      if (e.target.checked) setMeters(String(sourceLine.quantity));
+                    }}
+                  />
+                  <span>
+                    Admin override: cancel {eligibility.active_work_order_count || "cutting"} work
+                    order(s), transfer the <strong>full</strong> {sourceLine.quantity}m, and note
+                    this in the reason. Destination must hand off to cutting again with new stickers.
+                  </span>
+                </label>
+              ) : (
+                <p className="mt-3 text-xs font-medium">
+                  Ask an Admin to override, or finish / reset production for this line first.
+                </p>
+              )}
+            </div>
+          ) : null}
+
+          {eligibility?.blocked && !eligibility.admin_override_available ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-900">
+              <p className="font-medium">Transfer blocked — already in production</p>
+              <p className="mt-1">{eligibility.message}</p>
+              {eligibility.remediation ? (
+                <p className="mt-2 text-xs">{eligibility.remediation}</p>
+              ) : null}
+            </div>
+          ) : null}
 
           <label className="block text-sm">
             <span className="font-medium text-slate-800">Filter destination client / SO</span>
@@ -207,6 +341,7 @@ export function FabricTransferModal({
               onChange={(e) => setClientFilter(e.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
               placeholder="Search client name, code, or SO…"
+              disabled={Boolean(eligibility?.blocked && !eligibility.admin_override_available)}
             />
           </label>
 
@@ -216,7 +351,10 @@ export function FabricTransferModal({
               value={destinationOrderId}
               onChange={(e) => setDestinationOrderId(e.target.value)}
               required
-              disabled={loadingOrders}
+              disabled={
+                loadingOrders ||
+                Boolean(eligibility?.blocked && !eligibility.admin_override_available)
+              }
               className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
             >
               <option value="">{loadingOrders ? "Loading…" : "Select client + SO…"}</option>
@@ -246,12 +384,19 @@ export function FabricTransferModal({
               value={meters}
               onChange={(e) => setMeters(e.target.value)}
               required
+              disabled={adminOverride}
               className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
             />
-            {isPartial ? (
+            {isPartial && !adminOverride ? (
               <p className="mt-1 text-xs text-amber-800">
                 Partial transfer: {metersNum}m moves; {sourceLine.quantity - metersNum}m stays on{" "}
                 {sourceOrder.so_number}. Replacement reorder is for {metersNum}m.
+              </p>
+            ) : null}
+            {adminOverride ? (
+              <p className="mt-1 text-xs text-orange-800">
+                Override transfers the full line ({sourceLine.quantity}m). Partial meters are not
+                allowed while cancelling cutting work orders.
               </p>
             ) : null}
           </label>
@@ -264,7 +409,11 @@ export function FabricTransferModal({
               required
               rows={3}
               className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-              placeholder="e.g. Client B urgent — Client A fabric temporarily reassigned"
+              placeholder={
+                adminOverride
+                  ? "e.g. Emergency for Client B — Admin override, cancel cutting WOs before cut started"
+                  : "e.g. Client B urgent — Client A fabric temporarily reassigned"
+              }
             />
           </label>
 
@@ -278,8 +427,21 @@ export function FabricTransferModal({
             <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting || loadingOrders}>
-              {submitting ? "Transferring…" : "Transfer fabric"}
+            <Button
+              type="submit"
+              disabled={
+                submitting ||
+                loadingOrders ||
+                loadingEligibility ||
+                submitBlocked ||
+                Boolean(eligibility?.blocked && !eligibility.admin_override_available)
+              }
+            >
+              {submitting
+                ? "Transferring…"
+                : adminOverride
+                  ? "Override & transfer"
+                  : "Transfer fabric"}
             </Button>
           </div>
         </form>

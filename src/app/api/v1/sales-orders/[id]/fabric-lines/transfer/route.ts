@@ -15,6 +15,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       meters?: number;
       reason?: string;
       transferred_by?: string;
+      acknowledge_receiving_stage?: boolean;
+      admin_override?: boolean;
+      /** When true with admin_override, treated as Admin (Zapier automations). */
+      as_admin?: boolean;
     };
 
     const result = await transferFabricLine(
@@ -24,8 +28,13 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         destination_sales_order_id: body.destination_sales_order_id ?? "",
         meters: Number(body.meters),
         reason: body.reason ?? "",
+        acknowledge_receiving_stage: Boolean(body.acknowledge_receiving_stage),
+        admin_override: Boolean(body.admin_override),
       },
-      { transferredBy: body.transferred_by?.trim() || "zapier" }
+      {
+        transferredBy: body.transferred_by?.trim() || "zapier",
+        isAdmin: Boolean(body.admin_override) && body.as_admin !== false,
+      }
     );
 
     if (!result.ok) {
@@ -45,6 +54,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         replacement_line_id: result.result.transfer.replacement.line_id,
         replacement_fabric_po_ids: result.result.transfer.replacement_fabric_po_ids,
         print_stickers_href: result.result.print_stickers_href,
+        source_stage: result.result.transfer.source_stage ?? null,
+        acknowledged_receiving_stage: Boolean(result.result.transfer.acknowledged_receiving_stage),
+        admin_override: Boolean(result.result.transfer.admin_override),
+        cancelled_production_work_order_ids:
+          result.result.transfer.cancelled_production_work_order_ids ?? [],
       },
       "zapier"
     );

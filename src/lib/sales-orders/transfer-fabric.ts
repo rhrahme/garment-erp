@@ -1,19 +1,32 @@
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { appendFabricTransfer } from "@/lib/data/fabric-transfers";
-import { mutateFabricReceipts, readFabricReceiptsFresh } from "@/lib/data/fabric-receipts";
-import { readProductionWorkOrders } from "@/lib/data/production-work-orders";
+import {
+  mutateFabricReceipts,
+  readFabricReceiptsArchive,
+  readFabricReceiptsFresh,
+  writeFabricReceiptsArchive,
+} from "@/lib/data/fabric-receipts";
+import {
+  readProductionWorkOrders,
+  writeProductionWorkOrders,
+} from "@/lib/data/production-work-orders";
 import { readSalesOrders, writeSalesOrders } from "@/lib/data/sales-orders";
 import { createFabricPosFromSalesOrder } from "@/lib/sales-orders/create-fabric-pos";
 import {
   buildFabricLineFromInput,
   resolveOrderClientReference,
 } from "@/lib/sales-orders/fabric-lines";
+import {
+  assessFabricTransferEligibility,
+  type TransferEligibility,
+} from "@/lib/sales-orders/transfer-eligibility";
 import { orderStickerSheetHref } from "@/lib/orders/sticker-print-links";
 import { syncPatternJobsFromSalesOrder } from "@/lib/pattern/sync-from-sales-order";
 import type { SessionContext } from "@/lib/auth/session";
 import type { FabricReceipt } from "@/lib/types/fabric-receipts";
 import type { FabricTransfer, FabricTransferLineRef } from "@/lib/types/fabric-transfers";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
+import type { ProductionWorkOrder } from "@/lib/types/production";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
 export type TransferFabricInput = {
@@ -22,6 +35,10 @@ export type TransferFabricInput = {
   destination_sales_order_id: string;
   meters: number;
   reason: string;
+  /** Required when source is mid receiving / wash-iron pipeline. */
+  acknowledge_receiving_stage?: boolean;
+  /** Admin only — cancel cutting WOs / clear handed-off gate. */
+  admin_override?: boolean;
 };
 
 export type TransferFabricResult = {
@@ -32,6 +49,7 @@ export type TransferFabricResult = {
   replacement_line: SalesOrderFabricLine;
   replacement_fabric_orders: PurchaseOrder[];
   print_stickers_href: string;
+  eligibility: TransferEligibility;
 };
 
 export function canTransferFabric(session: Pick<SessionContext, "isAdmin" | "isClientManager">): boolean {
@@ -91,14 +109,52 @@ function cloneLineAsInput(line: SalesOrderFabricLine, quantity: number) {
   };
 }
 
-function assertNoProductionWorkOrders(lineId: string): string | null {
-  const active = readProductionWorkOrders().work_orders.filter(
-    (wo) => wo.sales_order_line_id === lineId && wo.status !== "completed"
-  );
-  if (active.length > 0) {
-    return "Cannot transfer fabric that already has production work orders. Finish or archive production first.";
-  }
+function findReceiptForLine(lineId: string): {
+  receipt: FabricReceipt;
+  location: "active" | "archive";
+} | null {
+  const active = readFabricReceiptsFresh().receipts.find((r) => r.sales_order_line_id === lineId);
+  if (active) return { receipt: active, location: "active" };
+  const archived = readFabricReceiptsArchive().receipts.find((r) => r.sales_order_line_id === lineId);
+  if (archived) return { receipt: archived, location: "archive" };
   return null;
+}
+
+function workOrdersForLine(lineId: string): ProductionWorkOrder[] {
+  return readProductionWorkOrders().work_orders.filter((wo) => wo.sales_order_line_id === lineId);
+}
+
+export async function getFabricTransferEligibility(
+  sourceSalesOrderId: string,
+  sourceLineId: string
+): Promise<
+  | { ok: true; eligibility: TransferEligibility; source_order: SalesOrder; source_line: SalesOrderFabricLine }
+  | { ok: false; status: number; error: string }
+> {
+  await ensureDocumentsLoaded([
+    "sales_orders",
+    "fabric_receipts",
+    "production_work_orders",
+  ]);
+
+  const store = readSalesOrders();
+  const sourceOrder = store.orders.find((order) => order.id === sourceSalesOrderId);
+  if (!sourceOrder) {
+    return { ok: false, status: 404, error: "Source sales order not found." };
+  }
+  const sourceLine = sourceOrder.fabric_lines.find((line) => line.id === sourceLineId);
+  if (!sourceLine) {
+    return { ok: false, status: 404, error: "Fabric line not found on the source order." };
+  }
+
+  const located = findReceiptForLine(sourceLineId);
+  const eligibility = assessFabricTransferEligibility({
+    client_name: sourceOrder.client_name,
+    receipt: located?.receipt ?? null,
+    work_orders: workOrdersForLine(sourceLineId),
+  });
+
+  return { ok: true, eligibility, source_order: sourceOrder, source_line: sourceLine };
 }
 
 function rekeyReceiptForDestination(
@@ -106,8 +162,10 @@ function rekeyReceiptForDestination(
   destOrder: SalesOrder,
   destLine: SalesOrderFabricLine,
   meters: number,
-  now: string
+  now: string,
+  options?: { clearHandoff?: boolean }
 ): FabricReceipt {
+  const clearHandoff = options?.clearHandoff === true;
   return {
     ...receipt,
     sales_order_id: destOrder.id,
@@ -124,18 +182,47 @@ function rekeyReceiptForDestination(
     composition: destLine.composition,
     weight_gsm: destLine.weight_gsm,
     updated_at: now,
+    ...(clearHandoff
+      ? {
+          status: "received" as const,
+          fabric_prep_type: null,
+          fabric_prep_step: null,
+          handed_off_at: null,
+        }
+      : {}),
   };
+}
+
+async function cancelActiveWorkOrdersForLine(lineId: string): Promise<string[]> {
+  const store = readProductionWorkOrders();
+  const cancelledIds: string[] = [];
+  const next = store.work_orders.filter((wo) => {
+    if (wo.sales_order_line_id === lineId && wo.status !== "completed") {
+      cancelledIds.push(wo.id);
+      return false;
+    }
+    return true;
+  });
+  if (cancelledIds.length > 0) {
+    await writeProductionWorkOrders({ ...store, work_orders: next });
+  }
+  return cancelledIds;
 }
 
 export async function transferFabricLine(
   input: TransferFabricInput,
-  options: { transferredBy: string }
+  options: {
+    transferredBy: string;
+    isAdmin?: boolean;
+  }
 ): Promise<{ ok: true; result: TransferFabricResult } | { ok: false; status: number; error: string }> {
   const sourceOrderId = String(input.source_sales_order_id ?? "").trim();
   const sourceLineId = String(input.source_line_id ?? "").trim();
   const destinationOrderId = String(input.destination_sales_order_id ?? "").trim();
   const reason = String(input.reason ?? "").trim();
   const meters = Number(input.meters);
+  const acknowledgeReceiving = Boolean(input.acknowledge_receiving_stage);
+  const adminOverride = Boolean(input.admin_override);
 
   if (!sourceOrderId || !sourceLineId) {
     return { ok: false, status: 400, error: "Source sales order and fabric line are required." };
@@ -204,26 +291,65 @@ export async function transferFabricLine(
     };
   }
 
-  const productionBlock = assertNoProductionWorkOrders(sourceLineId);
-  if (productionBlock) {
-    return { ok: false, status: 409, error: productionBlock };
-  }
+  const located = findReceiptForLine(sourceLineId);
+  const lineWorkOrders = workOrdersForLine(sourceLineId);
+  const eligibility = assessFabricTransferEligibility({
+    client_name: sourceOrder.client_name,
+    receipt: located?.receipt ?? null,
+    work_orders: lineWorkOrders,
+  });
 
-  const existingReceipt = readFabricReceiptsFresh().receipts.find(
-    (receipt) => receipt.sales_order_line_id === sourceLineId
-  );
-  if (existingReceipt?.status === "handed_off") {
+  if (eligibility.code === "active_production") {
     return {
       ok: false,
       status: 409,
-      error: "Cannot transfer fabric that has already been handed off to production.",
+      error: `${eligibility.message}${eligibility.remediation ? ` ${eligibility.remediation}` : ""}`,
     };
+  }
+
+  if (eligibility.requires_receiving_ack && !acknowledgeReceiving) {
+    return {
+      ok: false,
+      status: 409,
+      error: `${eligibility.message} Confirm the receiving-stage warning to continue.`,
+    };
+  }
+
+  const needsOverride =
+    eligibility.code === "cutting_override" || eligibility.code === "handed_off";
+
+  if (needsOverride) {
+    if (!adminOverride) {
+      return {
+        ok: false,
+        status: 409,
+        error: `${eligibility.message}${eligibility.remediation ? ` ${eligibility.remediation}` : ""}`,
+      };
+    }
+    if (!options.isAdmin) {
+      return {
+        ok: false,
+        status: 403,
+        error:
+          "Only Admin can override a handed-off / cutting-queue transfer. QC: ask Admin, or finish/cancel workshop jobs first.",
+      };
+    }
+    const wouldBePartial = meters < sourceLine.quantity - 1e-9;
+    if (wouldBePartial) {
+      return {
+        ok: false,
+        status: 409,
+        error:
+          "Admin override cannot use partial meters while cutting work orders exist — transfer the full line quantity, or cancel production first.",
+      };
+    }
   }
 
   const isPartial = meters < sourceLine.quantity - 1e-9;
   const remainingMeters = Math.max(0, Math.round((sourceLine.quantity - meters) * 1000) / 1000);
   const now = new Date().toISOString();
   const transferId = `ft-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const clearHandoff = needsOverride && adminOverride;
 
   const linesAfterSourceChange = isPartial
     ? sourceOrder.fabric_lines.map((line, index) =>
@@ -299,8 +425,15 @@ export async function transferFabricLine(
   const savedDestLine = savedDest.fabric_lines.find((line) => line.id === destinationLine.id)!;
   const savedReplacement = savedSource.fabric_lines.find((line) => line.id === replacementLine.id)!;
 
+  let cancelledWoIds: string[] = [];
+  if (needsOverride && adminOverride) {
+    cancelledWoIds = await cancelActiveWorkOrdersForLine(sourceLineId);
+  }
+
   let destinationReceiptId: string | null = null;
-  if (existingReceipt) {
+  const existingLocated = findReceiptForLine(sourceLineId);
+
+  if (existingLocated?.location === "active") {
     await mutateFabricReceipts((receiptsStore) => {
       const existingIndex = receiptsStore.receipts.findIndex(
         (receipt) => receipt.sales_order_line_id === sourceLineId
@@ -325,16 +458,36 @@ export async function transferFabricLine(
           savedDest,
           savedDestLine,
           meters,
-          now
+          now,
+          { clearHandoff }
         );
         receiptsStore.receipts.unshift(splitReceipt);
         destinationReceiptId = splitReceipt.id;
       } else {
-        const moved = rekeyReceiptForDestination(existing, savedDest, savedDestLine, meters, now);
+        const moved = rekeyReceiptForDestination(existing, savedDest, savedDestLine, meters, now, {
+          clearHandoff,
+        });
         receiptsStore.receipts[existingIndex] = moved;
         destinationReceiptId = moved.id;
       }
     });
+  } else if (existingLocated?.location === "archive" && clearHandoff) {
+    // Pull handed-off archive receipt onto destination as received so floor can hand off again.
+    const archive = structuredClone(readFabricReceiptsArchive());
+    const archiveIndex = archive.receipts.findIndex((r) => r.sales_order_line_id === sourceLineId);
+    if (archiveIndex >= 0) {
+      const existing = archive.receipts[archiveIndex]!;
+      archive.receipts.splice(archiveIndex, 1);
+      await writeFabricReceiptsArchive(archive);
+
+      const restored = rekeyReceiptForDestination(existing, savedDest, savedDestLine, meters, now, {
+        clearHandoff: true,
+      });
+      await mutateFabricReceipts((receiptsStore) => {
+        receiptsStore.receipts.unshift(restored);
+      });
+      destinationReceiptId = restored.id;
+    }
   }
 
   let replacementFabricOrders: PurchaseOrder[] = [];
@@ -365,6 +518,16 @@ export async function transferFabricLine(
     replacement: toLineRef(savedSource, savedReplacement),
     replacement_fabric_po_ids: replacementFabricOrders.map((po) => po.id),
     destination_receipt_id: destinationReceiptId,
+    source_stage: {
+      stage_label: eligibility.stage_label,
+      client_name: eligibility.client_name,
+      receipt_status: eligibility.receipt_status,
+      fabric_prep_step: eligibility.fabric_prep_step,
+      active_work_order_count: eligibility.active_work_order_count,
+    },
+    acknowledged_receiving_stage: acknowledgeReceiving || undefined,
+    admin_override: adminOverride || undefined,
+    cancelled_production_work_order_ids: cancelledWoIds.length > 0 ? cancelledWoIds : undefined,
   };
 
   await appendFabricTransfer(transfer);
@@ -386,6 +549,7 @@ export async function transferFabricLine(
       print_stickers_href: orderStickerSheetHref(savedDest.id, "fabric-cuts", {
         lineId: savedDestLine.id,
       }),
+      eligibility,
     },
   };
 }
