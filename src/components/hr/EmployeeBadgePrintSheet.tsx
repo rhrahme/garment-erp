@@ -19,7 +19,7 @@ import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 
 const GROUP_TITLE: Record<IdBadgeGroup, string> = {
   saudi: "Saudi",
-  expat: "Expat",
+  expat: "EIB",
 };
 
 export function EmployeeBadgePrintSheet({

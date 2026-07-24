@@ -23,10 +23,10 @@ const GROUP_COPY: Record<
     emptyHint: "No active Saudi employees yet. Add one below or switch to Expats.",
   },
   expat: {
-    title: "Expat employee ID badges",
+    title: "EIB employee ID badges",
     description:
-      "Expat badge group. Each QR encodes a unique employee identifier for attendance, access control, or floor scanning.",
-    emptyHint: "No active expat employees yet. Add one below or switch to Saudis.",
+      "EIB (expat) badge group. Each QR encodes a unique employee identifier for attendance, access control, or floor scanning.",
+    emptyHint: "No active EIB employees yet. Add one below or switch to Saudis.",
   },
 };
 
