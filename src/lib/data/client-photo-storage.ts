@@ -9,8 +9,26 @@ export const CLIENT_PHOTOS_BUCKET = "erp-client-photos";
 const SUBDIR = "client-photos";
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 
+const EXTENSION_TYPES: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  heic: "image/heic",
+  heif: "image/heif",
+};
+
 export function isAllowedClientPhotoType(contentType: string): boolean {
   return ALLOWED_TYPES.has(contentType.toLowerCase().trim());
+}
+
+/** Normalize browser file.type (often empty on iOS) using the filename extension. */
+export function resolveClientPhotoContentType(file: Pick<File, "type" | "name">): string | null {
+  const typed = file.type.toLowerCase().trim();
+  if (isAllowedClientPhotoType(typed)) return typed;
+  const extension = file.name.split(".").pop()?.replace(/[^a-z0-9]/gi, "").toLowerCase() ?? "";
+  const fromName = EXTENSION_TYPES[extension];
+  return fromName ?? null;
 }
 
 function localDirectory(): string {
@@ -49,4 +67,15 @@ export async function readClientPhoto(filename: string): Promise<Buffer | null> 
   }
   const file = path.join(localDirectory(), filename);
   return fs.existsSync(file) ? fs.readFileSync(file) : null;
+}
+
+export async function deleteClientPhoto(filename: string): Promise<void> {
+  if (isSupabaseDocumentsStorage()) {
+    const admin = getSupabaseAdmin();
+    if (!admin) return;
+    await admin.storage.from(CLIENT_PHOTOS_BUCKET).remove([objectPath(filename)]);
+    return;
+  }
+  const file = path.join(localDirectory(), filename);
+  if (fs.existsSync(file)) fs.unlinkSync(file);
 }

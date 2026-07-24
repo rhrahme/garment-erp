@@ -108,6 +108,38 @@ export async function attachSalesClientPhoto(
   return photo;
 }
 
+export async function removeSalesClientPhoto(
+  photoId: string,
+  actor: string | null,
+  source: "erp" | "api" = "erp"
+): Promise<{ client_id: string; photo: ClientPhoto } | null> {
+  const removed = await mutateSalesWorkspace((store) => {
+    const row = store.client_details.find((item) =>
+      item.photos.some((photo) => photo.id === photoId)
+    );
+    if (!row) return null;
+    const photo = row.photos.find((item) => item.id === photoId);
+    if (!photo) return null;
+    row.photos = row.photos.filter((item) => item.id !== photoId);
+    row.updated_at = new Date().toISOString();
+    row.updated_by = actor;
+    return { client_id: row.client_id, photo: structuredClone(photo) };
+  });
+  if (removed) {
+    await notifyIntegration(
+      "sales_client_photo.deleted",
+      {
+        client_id: removed.client_id,
+        photo_id: removed.photo.id,
+        filename: removed.photo.filename,
+        deleted_by: actor,
+      },
+      source
+    );
+  }
+  return removed;
+}
+
 export async function createSalesFitting(
   salesOrderId: string,
   clientId: string,

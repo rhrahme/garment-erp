@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getClientById } from "@/lib/data/clients";
 import {
-  isAllowedClientPhotoType,
+  resolveClientPhotoContentType,
   writeClientPhoto,
 } from "@/lib/data/client-photo-storage";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
@@ -19,18 +19,22 @@ export async function POST(request: Request) {
   if (!clientId || !getClientById(clientId)) {
     return NextResponse.json({ error: "Client not found." }, { status: 404 });
   }
-  if (!(file instanceof File) || !isAllowedClientPhotoType(file.type) || file.size > 10 * 1024 * 1024) {
+  if (!(file instanceof File) || file.size > 10 * 1024 * 1024) {
     return NextResponse.json({ error: "A supported photo under 10 MB is required." }, { status: 400 });
   }
-  const id = `client-photo-${Date.now()}`;
+  const contentType = resolveClientPhotoContentType(file);
+  if (!contentType) {
+    return NextResponse.json({ error: "A supported photo under 10 MB is required." }, { status: 400 });
+  }
+  const id = `client-photo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const extension = file.name.split(".").pop()?.replace(/[^a-z0-9]/gi, "").toLowerCase() || "jpg";
   const storedFilename = `${clientId.replace(/[^a-z0-9-]/gi, "_")}-${id}.${extension}`;
-  await writeClientPhoto(storedFilename, Buffer.from(await file.arrayBuffer()), file.type);
+  await writeClientPhoto(storedFilename, Buffer.from(await file.arrayBuffer()), contentType);
   const photo: ClientPhoto = {
     id,
     filename: file.name,
     stored_filename: storedFilename,
-    content_type: file.type,
+    content_type: contentType,
     size_bytes: file.size,
     uploaded_at: new Date().toISOString(),
     uploaded_by: "api",

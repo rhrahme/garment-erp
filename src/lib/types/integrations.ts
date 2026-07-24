@@ -42,6 +42,7 @@ export type IntegrationEventType =
   | "invoice.payment_recorded"
   | "sales_client_details.updated"
   | "sales_client_photo.uploaded"
+  | "sales_client_photo.deleted"
   | "sales_fitting.created"
   | "sales_fitting.updated"
   | "sales_order.milestone_updated"

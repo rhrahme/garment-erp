@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { DownloadInvoicePdfButton } from "@/components/invoicing/DownloadInvoicePdfButton";
+import { ClientPhotosPanel } from "@/components/sales/ClientPhotosPanel";
 import { SalesFittingsPanel } from "@/components/sales/SalesFittingsPanel";
 import { Button } from "@/components/ui/Button";
 import { getFactoryBrands } from "@/lib/data/factory-brands";
@@ -165,24 +166,6 @@ export function SalesWorkspaceDashboard() {
     }
   }
 
-  async function uploadPhoto(file: File) {
-    setSaving(true);
-    setError(null);
-    const form = new FormData();
-    form.set("client_id", clientId);
-    form.set("photo", file);
-    try {
-      const response = await fetch("/api/sales/client-photos", { method: "POST", body: form });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error ?? "Failed to upload photo.");
-      await load();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Failed to upload photo.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   async function createFitting() {
     setSaving(true);
     setError(null);
@@ -306,55 +289,68 @@ export function SalesWorkspaceDashboard() {
                   ))
                 )}
               </select>
-              <Link href="/clients"><Button>New / edit client profile</Button></Link>
+              <Link href="/clients"><Button variant="secondary">Edit profile details</Button></Link>
             </div>
+            <p className="text-sm text-slate-500">
+              Select a client, then use <span className="font-semibold text-slate-700">Photos</span> below to take or add pictures.
+            </p>
           </div>
-          <div className="grid gap-5 lg:grid-cols-2">
-            <div className="rounded-xl border bg-white p-5">
-              <h2 className="text-lg font-semibold">Measurements</h2>
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                {MEASUREMENT_FIELDS.map((field) => (
-                  <label key={field} className="text-sm font-medium text-slate-700">
-                    {field}
-                    <input
-                      value={measurements[field] ?? ""}
-                      onChange={(event) =>
-                        setMeasurements((current) => ({ ...current, [field]: event.target.value }))
-                      }
-                      placeholder="e.g. 102 cm"
-                      className="mt-1 min-h-11 w-full rounded-lg border border-slate-300 px-3"
-                    />
-                  </label>
-                ))}
-              </div>
-              <Button className="mt-4" onClick={() => void saveMeasurements()} disabled={!clientId || saving}>
-                Save measurements
-              </Button>
-            </div>
-            <div className="rounded-xl border bg-white p-5">
-              <h2 className="text-lg font-semibold">Client photos</h2>
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-                className="mt-4 block w-full text-sm"
-                disabled={!clientId || saving}
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) void uploadPhoto(file);
-                }}
-              />
-              <div className="mt-4 grid grid-cols-3 gap-3">
-                {(selectedDetails?.photos ?? []).map((photo) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={photo.id}
-                    src={`/api/sales/client-photos/${photo.id}`}
-                    alt={photo.filename}
-                    className="aspect-square w-full rounded-lg border object-cover"
+
+          <ClientPhotosPanel
+            clientId={clientId || null}
+            clientReady={Boolean(clientId)}
+            photos={selectedDetails?.photos ?? []}
+            onPhotosChange={(nextPhotos) => {
+              setData((current) => {
+                if (!current || !clientId) return current;
+                const existing = current.client_details.find((item) => item.client_id === clientId);
+                if (existing) {
+                  return {
+                    ...current,
+                    client_details: current.client_details.map((item) =>
+                      item.client_id === clientId ? { ...item, photos: nextPhotos } : item
+                    ),
+                  };
+                }
+                return {
+                  ...current,
+                  client_details: [
+                    ...current.client_details,
+                    {
+                      client_id: clientId,
+                      measurements: {},
+                      photos: nextPhotos,
+                      fabric_selections: [],
+                      updated_at: new Date().toISOString(),
+                      updated_by: null,
+                    },
+                  ],
+                };
+              });
+            }}
+            onError={setError}
+          />
+
+          <div className="rounded-xl border bg-white p-5">
+            <h2 className="text-lg font-semibold">Measurements</h2>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {MEASUREMENT_FIELDS.map((field) => (
+                <label key={field} className="text-sm font-medium text-slate-700">
+                  {field}
+                  <input
+                    value={measurements[field] ?? ""}
+                    onChange={(event) =>
+                      setMeasurements((current) => ({ ...current, [field]: event.target.value }))
+                    }
+                    placeholder="e.g. 102 cm"
+                    className="mt-1 min-h-11 w-full rounded-lg border border-slate-300 px-3"
                   />
-                ))}
-              </div>
+                </label>
+              ))}
             </div>
+            <Button className="mt-4" onClick={() => void saveMeasurements()} disabled={!clientId || saving}>
+              Save measurements
+            </Button>
           </div>
         </section>
       )}

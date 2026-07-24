@@ -4,6 +4,7 @@ import type { FocusEvent as ReactFocusEvent, PointerEvent as ReactPointerEvent }
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LayoutGrid, List, Plus, Search, Table2, Trash2, UserCircle, X } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
+import { ClientPhotosPanel } from "@/components/sales/ClientPhotosPanel";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -188,6 +189,7 @@ export function ClientProfilesEditor() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [canManageClientPhotos, setCanManageClientPhotos] = useState(false);
   const [canViewClientContact, setCanViewClientContact] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -244,8 +246,13 @@ export function ClientProfilesEditor() {
       try {
         const res = await fetch("/api/auth/session");
         if (!res.ok) return;
-        const data = (await res.json()) as { is_admin?: boolean; can_view_client_contact?: boolean };
+        const data = (await res.json()) as {
+          is_admin?: boolean;
+          is_sales_operator?: boolean;
+          can_view_client_contact?: boolean;
+        };
         setIsAdmin(Boolean(data.is_admin));
+        setCanManageClientPhotos(Boolean(data.is_admin || data.is_sales_operator));
         setCanViewClientContact(data.can_view_client_contact !== false);
       } catch {
         /* ignore */
@@ -718,6 +725,16 @@ export function ClientProfilesEditor() {
             {codeSection}
             <div className="md:col-span-2" />
           </>
+        )}
+
+        {canManageClientPhotos && (
+          <div className="md:col-span-2">
+            <ClientPhotosPanel
+              clientId={client.id}
+              clientReady={!isNew}
+              className="border-indigo-100 bg-indigo-50/40"
+            />
+          </div>
         )}
 
         {canViewClientContact && (
