@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
+import { requireFactoryOpsAccess } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { findPayrollEmployeeByBadgeValue, employeeNeedsWorkstationPick } from "@/lib/hr/payroll-lookup";
 
 export async function POST(request: Request) {
   try {
+    const session = await requireFactoryOpsAccess();
+    if (!session) {
+      return NextResponse.json({ error: "Factory access required." }, { status: 403 });
+    }
+
     await ensureDocumentsLoaded(["payroll_employees"]);
     const body = (await request.json()) as { code?: string };
     const code = String(body.code ?? "").trim();

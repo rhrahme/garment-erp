@@ -27,6 +27,7 @@ export type IntegrationEventType =
   | "fabric_receiving.defect_reported"
   | "fabric_receiving.defect_acknowledged"
   | "fabric_receiving.defect_resolved"
+  | "thread_button.match_updated"
   | "fabric.transferred"
   | "pattern_job.created"
   | "pattern_job.updated"
@@ -47,6 +48,7 @@ export type IntegrationEventType =
   | "sales_fitting.updated"
   | "sales_order.milestone_updated"
   | "custom_fabric.created"
+  | "employee.created"
   | "supabase.auth_unhealthy";
 
 export interface IntegrationEvent<T = Record<string, unknown>> {

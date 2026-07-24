@@ -30,6 +30,7 @@ const OUTBOUND_EVENTS = [
   "fabric_receiving.defect_reported",
   "fabric_receiving.defect_acknowledged",
   "fabric_receiving.defect_resolved",
+  "thread_button.match_updated",
   "fabric.transferred",
   "pattern_job.created",
   "pattern_job.updated",
@@ -50,6 +51,7 @@ const OUTBOUND_EVENTS = [
   "sales_fitting.updated",
   "sales_order.milestone_updated",
   "custom_fabric.created",
+  "employee.created",
 ];
 
 export function ZapierSetup() {
@@ -104,6 +106,7 @@ export function ZapierSetup() {
           <p className="mt-1 text-xs text-slate-500">Header: Authorization: Bearer YOUR_ERP_API_KEY</p>
           <ul className="mt-2 space-y-1 font-mono text-xs">
             <li>GET/POST {baseUrl}/api/v1/clients</li>
+            <li>POST {baseUrl}/api/v1/hr/employees</li>
             <li>GET {baseUrl}/api/v1/brands</li>
             <li>GET {baseUrl}/api/v1/suppliers</li>
             <li>GET {baseUrl}/api/v1/price-list-items</li>
@@ -128,6 +131,7 @@ export function ZapierSetup() {
             <li>POST {baseUrl}/api/v1/sales-orders/[id]/fabric-lines/print</li>
             <li>POST {baseUrl}/api/v1/fabric-receiving/reset-testing</li>
             <li>POST {baseUrl}/api/v1/fabric-receiving/defects</li>
+            <li>GET/POST {baseUrl}/api/v1/thread-button-matching</li>
             <li>POST {baseUrl}/api/v1/customer-invoices/[id]/mark-sent</li>
             <li>POST {baseUrl}/api/v1/customer-invoices/from-sales-order</li>
             <li>PATCH {baseUrl}/api/v1/customer-invoices/[id]</li>

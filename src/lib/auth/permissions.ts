@@ -6,6 +6,7 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/fabric-orders",
   "/orders",
   "/fabric-receiving",
+  "/thread-buttons",
   "/production",
   "/quality",
   "/api/clients",
@@ -14,6 +15,7 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/api/fabric-search",
   "/api/fabric-brands",
   "/api/fabric-receiving",
+  "/api/thread-button-matching",
   "/api/fabric-transfers",
   "/api/suppliers/loro-piana",
   "/api/qr",
@@ -27,9 +29,11 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
 
 const TASK_OPERATOR_ROUTE_PREFIXES = [
   "/fabric-receiving",
+  "/thread-buttons",
   "/fabric-specification",
   "/orders",
   "/api/fabric-receiving",
+  "/api/thread-button-matching",
   "/api/sales-orders",
   "/api/production",
   "/api/qr",
@@ -53,6 +57,7 @@ const TASK_OPERATOR_BLOCKED_ROUTE_PREFIXES = ["/orders/new", "/fabric-orders"] a
 const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   "/production",
   "/fabric-receiving",
+  "/thread-buttons",
   "/orders",
   "/quality",
   "/fabric-specification",
@@ -63,8 +68,11 @@ const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   "/inventory",
   "/shipments",
   "/washing",
+  /** Employee list + QR badges only — payroll register stays blocked via `/hr`. */
+  "/hr/id-badges",
   "/api/production",
   "/api/fabric-receiving",
+  "/api/thread-button-matching",
   "/api/factory/floor-stations",
   "/api/sales-orders",
   "/api/qr",
@@ -74,6 +82,8 @@ const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   "/api/clients",
   "/api/pattern",
   "/api/shipments",
+  "/api/hr/employees",
+  "/api/hr/employee-lookup",
   "/api/suppliers/loro-piana",
   "/api/integrations/drapers/medias",
   "/api/auth/session",
@@ -148,6 +158,7 @@ export const CLIENT_MANAGER_NAV_HREFS = [
   "/fabric-orders",
   "/orders",
   "/fabric-receiving",
+  "/thread-buttons",
   "/production",
   "/quality",
   "/clients",
@@ -157,17 +168,20 @@ export const CLIENT_MANAGER_NAV_HREFS = [
 /** Sidebar pages for production-floor task operators. */
 export const TASK_OPERATOR_NAV_HREFS = [
   "/fabric-receiving",
+  "/thread-buttons",
   "/orders",
   "/fabric-specification",
 ] as const;
 
 /**
- * Sidebar for factory managers — full factory ops, no sales CRM / accounting / HR.
+ * Sidebar for factory managers — full factory ops, no sales CRM / accounting / payroll.
  * Stickers & A4 printing live under Factory orders (`/orders`).
+ * Employees = ID badges + create (not payroll register).
  * Landing stays `/production` (not Sales Home, not admin Dashboard).
  */
 export const PRODUCTION_OPERATOR_NAV_HREFS = [
   "/fabric-receiving",
+  "/thread-buttons",
   "/brands",
   "/clients",
   "/ready-made",
@@ -180,6 +194,7 @@ export const PRODUCTION_OPERATOR_NAV_HREFS = [
   "/shipments",
   "/washing",
   "/quality",
+  "/hr/id-badges",
 ] as const;
 
 export const SALES_OPERATOR_NAV_HREFS = [
@@ -408,8 +423,14 @@ export function isTaskOperatorRouteAllowed(pathname: string): boolean {
   );
 }
 
+/** ID badges under `/hr` — operational identity/QR, not the payroll register. */
+export function isHrIdBadgesPath(pathname: string): boolean {
+  return pathname === "/hr/id-badges" || pathname.startsWith("/hr/id-badges/");
+}
+
 export function isProductionOperatorRouteAllowed(pathname: string): boolean {
   if (
+    !isHrIdBadgesPath(pathname) &&
     PRODUCTION_OPERATOR_BLOCKED_ROUTE_PREFIXES.some(
       (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
     )

@@ -27,6 +27,7 @@ import {
   Store,
   FolderArchive,
   Ruler,
+  Scissors,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -45,6 +46,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/sales", label: "Sales Home", icon: LayoutDashboard },
   { href: "/fabric-receiving", label: "Fabric Receiving", icon: ScanLine },
+  { href: "/thread-buttons", label: "Thread & buttons", icon: Scissors },
   { href: "/brands", label: "Production Brands", icon: Tags },
   { href: "/clients", label: "Clients", icon: UsersRound },
   { href: "/ready-made", label: "Ready-Made", icon: Store },
@@ -64,6 +66,7 @@ const navItems = [
   { href: "/washing", label: "Washing", icon: Droplets },
   { href: "/quality", label: "Quality Control", icon: ClipboardCheck },
   { href: "/hr", label: "HR & Payroll", icon: Users },
+  { href: "/hr/id-badges", label: "Employees", icon: Users },
   { href: "/costing", label: "Costing", icon: Calculator },
   { href: "/documents", label: "Documents & Data", icon: FolderArchive },
 ];
@@ -121,6 +124,8 @@ export function Sidebar({
     if (item.href === "/documents" && !isAdmin) return false;
     // Sales Home is sales-tablet (and admin) only — never for floor/QC/unscoped users.
     if (item.href === "/sales" && !salesOperatorOnly && !isAdmin) return false;
+    // Employees (badges) is the production-facing entry; admins use HR & Payroll.
+    if (item.href === "/hr/id-badges" && !productionOperatorOnly) return false;
     return true;
   });
 

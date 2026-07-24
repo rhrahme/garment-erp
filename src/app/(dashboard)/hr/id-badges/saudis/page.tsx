@@ -1,25 +1,37 @@
 import { EmployeeQrWorkspace } from "@/components/hr/EmployeeQrWorkspace";
+import { getSessionContext } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readPayrollEmployees } from "@/lib/data/payroll-employees";
 import { filterPayrollEmployeesByGroup } from "@/lib/hr/payroll-utils";
+import { CreateEmployeeForm } from "@/components/hr/CreateEmployeeForm";
 
-function PayrollEmptyState() {
+function EmployeesEmptyState({ canCreate }: { canCreate: boolean }) {
   return (
-    <div className="rounded-xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-500">
-      No payroll data yet. Place the salary Excel file at{" "}
-      <code className="rounded bg-slate-100 px-1">src/data/hr/salary-details-revised.xlsx</code> and run{" "}
-      <code className="rounded bg-slate-100 px-1">python3 scripts/import-salary-xlsx.py</code>.
+    <div className="space-y-4">
+      <div className="rounded-xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-500">
+        No employees yet. Add an employee to generate an ID badge QR.
+      </div>
+      {canCreate ? <CreateEmployeeForm defaultGroup="saudi" /> : null}
     </div>
   );
 }
 
 export default async function HrIdBadgesSaudisPage() {
+  const session = await getSessionContext();
+  const canCreate = session.isAdmin || session.isProductionOperator;
+
   await ensureDocumentsLoaded(["payroll_employees"]);
   const payroll = readPayrollEmployees();
 
   if (payroll.employees.length === 0) {
-    return <PayrollEmptyState />;
+    return <EmployeesEmptyState canCreate={canCreate} />;
   }
 
-  return <EmployeeQrWorkspace employees={filterPayrollEmployeesByGroup(payroll.employees, "saudi")} group="saudi" />;
+  return (
+    <EmployeeQrWorkspace
+      employees={filterPayrollEmployeesByGroup(payroll.employees, "saudi")}
+      group="saudi"
+      canCreate={canCreate}
+    />
+  );
 }

@@ -87,6 +87,14 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/fabric-receipts.json",
   },
   {
+    key: "thread_button_matches",
+    label: "Thread & button matches",
+    description: "Task team thread/button match status per fabric article",
+    category: "production",
+    appHref: "/thread-buttons",
+    sourcePath: "src/data/thread-button-matches.json",
+  },
+  {
     key: "pattern_jobs",
     label: "Pattern jobs",
     description: "Pattern drafting queue, fittings, and revisions per fabric line",
@@ -238,6 +246,8 @@ export function recordSummaryForKey(key: ErpDocumentKey, data: unknown): string 
       return `${Array.isArray(record.orders) ? record.orders.length : 0} orders`;
     case "fabric_receipts":
       return `${Array.isArray(record.receipts) ? record.receipts.length : 0} receipts`;
+    case "thread_button_matches":
+      return `${Array.isArray(record.matches) ? record.matches.length : 0} matches`;
     case "production_work_orders":
       return `${Array.isArray(record.work_orders) ? record.work_orders.length : 0} work orders`;
     case "customer_invoices":

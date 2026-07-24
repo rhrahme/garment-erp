@@ -1,10 +1,17 @@
+import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { HrNav } from "@/components/hr/HrNav";
 import { PayrollWorkspace } from "@/components/hr/PayrollWorkspace";
+import { requireAdmin } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getPayrollSummary, readPayrollEmployees } from "@/lib/data/payroll-employees";
 
 export default async function HRPage() {
+  const session = await requireAdmin();
+  if (!session) {
+    redirect("/hr/id-badges");
+  }
+
   await ensureDocumentsLoaded(["payroll_employees"]);
   const payroll = readPayrollEmployees();
   const summary = getPayrollSummary(payroll);
@@ -15,7 +22,7 @@ export default async function HRPage() {
         title="HR & Payroll"
         description="Employee salary register — bank details for WPS / payroll transfer"
       />
-      <HrNav />
+      <HrNav showPayroll />
       {payroll.employees.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-500">
           No payroll data yet. Place the salary Excel file at{" "}

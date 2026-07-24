@@ -46,6 +46,7 @@ describe("production_operator home / nav gating", () => {
     assert.ok(!nav.includes("/supplier-invoices"));
     assert.ok(!nav.includes("/purchasing"));
     assert.ok(!nav.includes("/hr"));
+    assert.ok(nav.includes("/hr/id-badges"));
     assert.ok(!nav.includes("/documents"));
     assert.ok((SALES_OPERATOR_NAV_HREFS as readonly string[]).includes("/sales"));
   });
@@ -54,6 +55,7 @@ describe("production_operator home / nav gating", () => {
     const nav = PRODUCTION_OPERATOR_NAV_HREFS as readonly string[];
     for (const href of [
       "/fabric-receiving",
+      "/thread-buttons",
       "/brands",
       "/clients",
       "/ready-made",
@@ -66,6 +68,7 @@ describe("production_operator home / nav gating", () => {
       "/shipments",
       "/washing",
       "/quality",
+      "/hr/id-badges",
     ]) {
       assert.ok(nav.includes(href), `expected nav to include ${href}`);
     }
@@ -85,6 +88,10 @@ describe("production_operator home / nav gating", () => {
     assert.equal(isProductionOperatorRouteAllowed("/clients"), true);
     assert.equal(isProductionOperatorRouteAllowed("/fabric-specification"), true);
     assert.equal(isProductionOperatorRouteAllowed("/orders/SO-1/stickers"), true);
+    assert.equal(isProductionOperatorRouteAllowed("/hr/id-badges"), true);
+    assert.equal(isProductionOperatorRouteAllowed("/hr/id-badges/saudis"), true);
+    assert.equal(isProductionOperatorRouteAllowed("/api/hr/employees"), true);
+    assert.equal(isProductionOperatorRouteAllowed("/api/hr/employee-lookup"), true);
 
     assert.equal(isProductionOperatorRouteAllowed("/sales"), false);
     assert.equal(isProductionOperatorRouteAllowed("/invoices"), false);
@@ -94,11 +101,12 @@ describe("production_operator home / nav gating", () => {
     assert.equal(isProductionOperatorRouteAllowed("/supplier-inbox"), false);
     assert.equal(isProductionOperatorRouteAllowed("/purchasing"), false);
     assert.equal(isProductionOperatorRouteAllowed("/hr"), false);
+    assert.equal(isProductionOperatorRouteAllowed("/api/hr/payroll-employees/x"), false);
     assert.equal(isProductionOperatorRouteAllowed("/documents"), false);
     assert.equal(isProductionOperatorRouteAllowed("/orders/new"), false);
   });
 
-  it("documents blocked prefixes for accounting / purchasing / HR", () => {
+  it("documents blocked prefixes for accounting / purchasing / HR payroll", () => {
     const blocked = PRODUCTION_OPERATOR_BLOCKED_ROUTE_PREFIXES as readonly string[];
     for (const prefix of [
       "/sales",

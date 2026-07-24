@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
+import { CreateEmployeeForm } from "@/components/hr/CreateEmployeeForm";
 import { employeeQrPayload } from "@/lib/hr/employee-qr";
 import { sortPayrollEmployees, type IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageUrl } from "@/lib/production/qr-labels";
@@ -16,23 +17,26 @@ const GROUP_COPY: Record<
   saudi: {
     title: "Saudi employee ID badges",
     description:
-      "Payroll bank is not BSF or ANB (e.g. Al Rajhi, SNB, Bilad). Each QR encodes a unique employee identifier for attendance, access control, or floor scanning.",
-    emptyHint: "No active Saudi employees on the payroll register.",
+      "Saudi badge group. Each QR encodes a unique employee identifier for attendance, access control, or floor scanning.",
+    emptyHint: "No active Saudi employees yet. Add one below or switch to Expats.",
   },
   expat: {
     title: "Expat employee ID badges",
     description:
-      "Payroll bank is Banque Saudi Fransi (BSF) or Arab National Bank (ANB). Each QR encodes a unique employee identifier for attendance, access control, or floor scanning.",
-    emptyHint: "No active expat employees on the payroll register.",
+      "Expat badge group. Each QR encodes a unique employee identifier for attendance, access control, or floor scanning.",
+    emptyHint: "No active expat employees yet. Add one below or switch to Saudis.",
   },
 };
 
 export function EmployeeQrWorkspace({
   employees,
   group,
+  canCreate = false,
 }: {
   employees: PayrollEmployee[];
   group: IdBadgeGroup;
+  /** Factory managers and admins can add identity-only employees. */
+  canCreate?: boolean;
 }) {
   const copy = GROUP_COPY[group];
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,6 +56,8 @@ export function EmployeeQrWorkspace({
         <p className="font-medium">{copy.title}</p>
         <p className="mt-1 text-emerald-900">{copy.description} Active employees only.</p>
       </div>
+
+      {canCreate ? <CreateEmployeeForm defaultGroup={group} /> : null}
 
       <label className="relative block max-w-md text-sm">
         <span className="font-medium text-slate-700">Search employees</span>

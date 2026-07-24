@@ -4,13 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-const tabs = [
-  { href: "/hr", label: "Payroll Register" },
-  { href: "/hr/id-badges", label: "ID Badges" },
-];
+const allTabs = [
+  { href: "/hr", label: "Payroll Register", payrollOnly: true },
+  { href: "/hr/id-badges", label: "ID Badges", payrollOnly: false },
+] as const;
 
-export function HrNav() {
+export function HrNav({ showPayroll = true }: { showPayroll?: boolean }) {
   const pathname = usePathname();
+  const tabs = allTabs.filter((tab) => showPayroll || !tab.payrollOnly);
+
+  if (tabs.length <= 1 && !showPayroll) {
+    return null;
+  }
 
   return (
     <div className="mb-6 flex gap-1 rounded-lg border border-slate-200 bg-white p-1">
