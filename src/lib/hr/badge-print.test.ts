@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   badgeGroupFromSlug,
+  badgePdfHref,
   badgePrintHref,
   chunkBadgePages,
   isBadgePrintableEmployee,
@@ -38,11 +39,16 @@ describe("badge-print helpers", () => {
     assert.equal(badgeGroupFromSlug("other"), null);
   });
 
-  it("builds print hrefs with optional ids", () => {
+  it("builds print and pdf hrefs with optional ids", () => {
     assert.equal(badgePrintHref("saudi"), "/hr/id-badges/saudis/print");
     assert.equal(
       badgePrintHref("expat", ["E1", "E2"]),
       "/hr/id-badges/expats/print?ids=E1%2CE2"
+    );
+    assert.equal(badgePdfHref("saudi"), "/api/hr/id-badges/saudis/pdf");
+    assert.equal(
+      badgePdfHref("expat", ["E1", "E2"]),
+      "/api/hr/id-badges/expats/pdf?ids=E1%2CE2"
     );
   });
 

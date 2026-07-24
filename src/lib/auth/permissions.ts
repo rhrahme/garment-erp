@@ -84,6 +84,7 @@ const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   "/api/shipments",
   "/api/hr/employees",
   "/api/hr/employee-lookup",
+  "/api/hr/id-badges",
   "/api/suppliers/loro-piana",
   "/api/integrations/drapers/medias",
   "/api/auth/session",

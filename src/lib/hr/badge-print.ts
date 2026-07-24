@@ -37,6 +37,18 @@ export function badgePrintHref(
   return `${base}?${params.toString()}`;
 }
 
+/** PDF download endpoint for A4 badge sheets (same selection as print). */
+export function badgePdfHref(
+  group: IdBadgeGroup,
+  employeeIds?: readonly string[]
+): string {
+  const base = `/api/hr/id-badges/${badgeSlugFromGroup(group)}/pdf`;
+  if (!employeeIds || employeeIds.length === 0) return base;
+  const params = new URLSearchParams();
+  params.set("ids", employeeIds.join(","));
+  return `${base}?${params.toString()}`;
+}
+
 /**
  * Employees eligible for ID badge printing.
  * Active only; also skips terminated flags if another agent added them.

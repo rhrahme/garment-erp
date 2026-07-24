@@ -6,10 +6,10 @@ import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 /** Pixel size for QR image generation (display size is mm below). */
 const QR_SIZE = 144;
 
-const GROUP_LABEL: Record<IdBadgeGroup, string> = {
-  saudi: "Saudi",
-  expat: "EIB",
-};
+/** Saudi badges keep a group label; expat cards show no EIB/Expat chrome. */
+function groupLabel(group: IdBadgeGroup): string | null {
+  return group === "saudi" ? "Saudi" : null;
+}
 
 const COMPANY_NAME = "HAGAN INDUSTRIAL COMPANY";
 
@@ -43,16 +43,17 @@ export function EmployeeBadgeCard({
 }) {
   const payload = employeeQrPayload(employee);
   const qrSrc = qrImageUrl(payload, QR_SIZE);
+  const label = groupLabel(group);
 
   return (
     <div className="badge-print-slot relative">
       <CropMarks />
 
-      <article className="badge-card flex h-full w-full flex-col overflow-hidden rounded-lg border border-slate-800 bg-white shadow-sm print:rounded-none">
+      <article className="badge-card flex h-full w-full flex-col overflow-hidden rounded-lg border-2 border-[#0B2C5A] bg-white shadow-sm print:rounded-none">
         {/* Full-width company band — reserved height, never clipped by QR/body.
             Use <div> (not <header>): print CSS hides bare header/nav/aside chrome. */}
-        <div className="badge-company-band flex h-[7mm] shrink-0 items-center justify-center border-b-2 border-slate-900 bg-slate-100 px-1.5">
-          <p className="badge-company-name whitespace-nowrap text-center text-[9px] font-bold uppercase leading-none tracking-[0.1em] text-slate-900">
+        <div className="badge-company-band flex h-[7mm] shrink-0 items-center justify-center border-b-2 border-[#0B2C5A] bg-[#0B2C5A] px-1.5">
+          <p className="badge-company-name whitespace-nowrap text-center text-[9px] font-bold uppercase leading-none tracking-[0.1em] text-white">
             {COMPANY_NAME}
           </p>
         </div>
@@ -73,16 +74,20 @@ export function EmployeeBadgeCard({
           </div>
           <div className="flex min-w-0 flex-1 flex-col justify-between px-2.5 py-1.5 text-left">
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-700">
-                {GROUP_LABEL[group]}
-              </p>
-              <h2 className="mt-0.5 line-clamp-3 text-[12px] font-semibold leading-snug text-slate-900">
+              {label ? (
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0B2C5A]">
+                  {label}
+                </p>
+              ) : null}
+              <h2
+                className={`line-clamp-3 text-[12px] font-semibold leading-snug text-slate-900 ${label ? "mt-0.5" : ""}`}
+              >
                 {employee.full_name}
               </h2>
             </div>
             <div className="min-w-0 shrink-0">
               <p className="text-[7px] uppercase tracking-wide text-slate-500">Employee ID</p>
-              <p className="truncate font-mono text-[11px] font-semibold text-slate-800">
+              <p className="truncate font-mono text-[11px] font-semibold text-[#0B2C5A]">
                 {employee.employee_id_number}
               </p>
             </div>

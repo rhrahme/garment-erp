@@ -23,10 +23,10 @@ const GROUP_COPY: Record<
     emptyHint: "No active Saudi employees yet. Add one below or switch to Expats.",
   },
   expat: {
-    title: "EIB employee ID badges",
+    title: "Expat employee ID badges",
     description:
-      "EIB (expat) badge group. Each QR encodes a unique employee identifier for attendance, access control, or floor scanning.",
-    emptyHint: "No active EIB employees yet. Add one below or switch to Saudis.",
+      "Expat badge group. Each QR encodes a unique employee identifier for attendance, access control, or floor scanning.",
+    emptyHint: "No active Expat employees yet. Add one below or switch to Saudis.",
   },
 };
 
@@ -58,9 +58,9 @@ export function EmployeeQrWorkspace({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-950">
-        <p className="font-medium">{copy.title}</p>
-        <p className="mt-1 text-emerald-900">{copy.description} Active employees only.</p>
+      <div className="rounded-xl border border-[#0B2C5A]/25 bg-[#0B2C5A]/5 px-5 py-4 text-sm text-slate-950">
+        <p className="font-medium text-[#0B2C5A]">{copy.title}</p>
+        <p className="mt-1 text-slate-800">{copy.description} Active employees only.</p>
       </div>
 
       {canCreate ? <CreateEmployeeForm defaultGroup={group} /> : null}

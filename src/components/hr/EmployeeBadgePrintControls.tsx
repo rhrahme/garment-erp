@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { CheckSquare, Printer, Square } from "lucide-react";
+import { DownloadEmployeeBadgePdfButton } from "@/components/hr/DownloadEmployeeBadgePdfButton";
 import { Button } from "@/components/ui/Button";
 import { badgePrintHref } from "@/lib/hr/badge-print";
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
@@ -21,6 +22,7 @@ export function EmployeeBadgePrintControls({
   const allIds = useMemo(() => employees.map((employee) => employee.id), [employees]);
   const selectedCount = selectedIds.size;
   const allSelected = employees.length > 0 && selectedCount === employees.length;
+  const selectedIdList = useMemo(() => [...selectedIds], [selectedIds]);
 
   function toggleSelectMode() {
     setSelectMode((prev) => {
@@ -43,7 +45,7 @@ export function EmployeeBadgePrintControls({
   }
 
   const printAllHref = badgePrintHref(group);
-  const printSelectedHref = badgePrintHref(group, [...selectedIds]);
+  const printSelectedHref = badgePrintHref(group, selectedIdList);
 
   if (employees.length === 0) return null;
 
@@ -53,7 +55,7 @@ export function EmployeeBadgePrintControls({
         <div>
           <p className="text-sm font-medium text-slate-900">Print A4 cards</p>
           <p className="mt-0.5 text-xs text-slate-500">
-            Card-size badges with cutting marks · print all or choose who to include
+            Card-size badges with cutting marks · print or download PDF · all or choose who to include
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -62,16 +64,22 @@ export function EmployeeBadgePrintControls({
             variant="secondary"
             size="sm"
             onClick={toggleSelectMode}
-            className="gap-1.5"
+            className="min-h-10 gap-1.5 sm:min-h-0"
           >
             {selectMode ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
             {selectMode ? "Cancel selection" : "Choose employees"}
           </Button>
           {selectMode ? (
             <>
-              <Button type="button" variant="ghost" size="sm" onClick={toggleAll}>
+              <Button type="button" variant="ghost" size="sm" onClick={toggleAll} className="min-h-10 sm:min-h-0">
                 {allSelected ? "Clear all" : "Select all"}
               </Button>
+              <DownloadEmployeeBadgePdfButton
+                group={group}
+                employeeIds={selectedIdList}
+                label={`Download selected (${selectedCount})`}
+                disabled={selectedCount === 0}
+              />
               <Link
                 href={printSelectedHref}
                 target="_blank"
@@ -83,7 +91,7 @@ export function EmployeeBadgePrintControls({
                   type="button"
                   size="sm"
                   disabled={selectedCount === 0}
-                  className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500"
+                  className="min-h-10 gap-1.5 bg-[#0B2C5A] hover:bg-[#08304f] focus:ring-[#0B2C5A] sm:min-h-0"
                 >
                   <Printer className="h-4 w-4" />
                   Print selected ({selectedCount})
@@ -91,16 +99,22 @@ export function EmployeeBadgePrintControls({
               </Link>
             </>
           ) : (
-            <Link href={printAllHref} target="_blank" rel="noreferrer">
-              <Button
-                type="button"
-                size="sm"
-                className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500"
-              >
-                <Printer className="h-4 w-4" />
-                Print all ({employees.length})
-              </Button>
-            </Link>
+            <>
+              <DownloadEmployeeBadgePdfButton
+                group={group}
+                label={`Download all (${employees.length})`}
+              />
+              <Link href={printAllHref} target="_blank" rel="noreferrer">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="min-h-10 gap-1.5 bg-[#0B2C5A] hover:bg-[#08304f] focus:ring-[#0B2C5A] sm:min-h-0"
+                >
+                  <Printer className="h-4 w-4" />
+                  Print all ({employees.length})
+                </Button>
+              </Link>
+            </>
           )}
         </div>
       </div>
@@ -111,12 +125,12 @@ export function EmployeeBadgePrintControls({
             const checked = selectedIds.has(employee.id);
             return (
               <li key={employee.id}>
-                <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white">
+                <label className="flex min-h-10 cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-white sm:min-h-0 sm:py-1.5">
                   <input
                     type="checkbox"
                     checked={checked}
                     onChange={() => toggleOne(employee.id)}
-                    className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    className="h-4 w-4 rounded border-slate-300 text-[#0B2C5A] focus:ring-[#0B2C5A]"
                   />
                   <span className="min-w-0 flex-1 truncate font-medium text-slate-800">
                     {employee.full_name}

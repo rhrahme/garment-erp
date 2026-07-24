@@ -69,7 +69,7 @@ export const EMPLOYEE_BADGE_PRINT_CSS = `
     .badge-card {
       width: 85.6mm;
       height: 54mm;
-      border: 0.35mm solid #0f172a !important;
+      border: 0.5mm solid #0B2C5A !important;
       box-shadow: none !important;
       border-radius: 0 !important;
       overflow: hidden;
@@ -79,14 +79,14 @@ export const EMPLOYEE_BADGE_PRINT_CSS = `
       height: 7mm !important;
       min-height: 7mm !important;
       flex-shrink: 0 !important;
-      background: #f1f5f9 !important;
-      border-bottom: 0.5mm solid #0f172a !important;
+      background: #0B2C5A !important;
+      border-bottom: 0.5mm solid #0B2C5A !important;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
 
     .badge-company-name {
-      color: #0f172a !important;
+      color: #ffffff !important;
       font-size: 9px !important;
       font-weight: 700 !important;
       letter-spacing: 0.1em !important;

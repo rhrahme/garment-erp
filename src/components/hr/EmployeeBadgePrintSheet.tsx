@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Printer } from "lucide-react";
+import { DownloadEmployeeBadgePdfButton } from "@/components/hr/DownloadEmployeeBadgePdfButton";
 import { EmployeeBadgeCard } from "@/components/hr/EmployeeBadgeCard";
 import { Button } from "@/components/ui/Button";
 import {
@@ -19,7 +20,7 @@ import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 
 const GROUP_TITLE: Record<IdBadgeGroup, string> = {
   saudi: "Saudi",
-  expat: "EIB",
+  expat: "Expat",
 };
 
 export function EmployeeBadgePrintSheet({
@@ -31,6 +32,7 @@ export function EmployeeBadgePrintSheet({
 }) {
   const pages = chunkBadgePages(employees);
   const backHref = `/hr/id-badges/${badgeSlugFromGroup(group)}`;
+  const employeeIds = employees.map((employee) => employee.id);
 
   return (
     <div className="employee-badge-print-root min-h-screen bg-white p-6 text-slate-900 print:p-0">
@@ -38,7 +40,7 @@ export function EmployeeBadgePrintSheet({
 
       <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
         <div>
-          <Link href={backHref} className="text-sm font-medium text-emerald-700 hover:text-emerald-800">
+          <Link href={backHref} className="text-sm font-medium text-[#0B2C5A] hover:text-[#08304f]">
             ← Back to {GROUP_TITLE[group]} badges
           </Link>
           <p className="mt-1 text-xs text-slate-500">
@@ -48,15 +50,23 @@ export function EmployeeBadgePrintSheet({
             {pages.length > 1 ? ` · ${pages.length} sheets` : ""}
           </p>
         </div>
-        <Button
-          size="sm"
-          onClick={() => window.print()}
-          disabled={employees.length === 0}
-          className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500"
-        >
-          <Printer className="h-4 w-4" />
-          Print A4 cards
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <DownloadEmployeeBadgePdfButton
+            group={group}
+            employeeIds={employeeIds}
+            label="Download PDF"
+            disabled={employees.length === 0}
+          />
+          <Button
+            size="sm"
+            onClick={() => window.print()}
+            disabled={employees.length === 0}
+            className="min-h-10 gap-1.5 bg-[#0B2C5A] hover:bg-[#08304f] focus:ring-[#0B2C5A] sm:min-h-0"
+          >
+            <Printer className="h-4 w-4" />
+            Print A4 cards
+          </Button>
+        </div>
       </div>
 
       {employees.length === 0 ? (
