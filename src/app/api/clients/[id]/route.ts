@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { requireSuperAdmin } from "@/lib/auth/session";
+import { requireAdmin } from "@/lib/auth/session";
 import { deleteClientById } from "@/lib/data/clients";
 import { notifyIntegration } from "@/lib/integrations";
 
 export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const session = await requireSuperAdmin();
+    const session = await requireAdmin();
     if (!session) {
-      return NextResponse.json({ error: "Super admin access required." }, { status: 403 });
+      return NextResponse.json({ error: "Only admins can delete clients." }, { status: 403 });
     }
 
     const { id } = await context.params;

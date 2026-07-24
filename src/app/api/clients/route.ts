@@ -3,6 +3,10 @@ import { redactClientsFile } from "@/lib/auth/client-contact-access";
 import { requireAuthenticated } from "@/lib/auth/session";
 import { generateNextClientCode, getBrandClientCodePrefix } from "@/lib/clients/codes";
 import { healClientDataForRead } from "@/lib/clients/heal-on-read";
+import {
+  assertClientDeleteAllowed,
+  assertClientRenameAllowed,
+} from "@/lib/clients/name-permissions";
 import { formatClientDisplayName, hasRequiredClientName, migrateClientName, migrateReferredByName, normalizeNamePart } from "@/lib/clients/names";
 import { normalizeStoredPhone } from "@/lib/phone/countries";
 import {
@@ -29,9 +33,10 @@ function normalizeText(value: unknown): string | null {
 function validateClients(
   body: unknown,
   previousClients: ClientProfile[] = [],
-  options: { allowContactFields?: boolean } = {}
-): { ok: true; data: ClientProfile[] } | { ok: false; error: string } {
+  options: { allowContactFields?: boolean; allowNameChange?: boolean } = {}
+): { ok: true; data: ClientProfile[] } | { ok: false; error: string; status?: number } {
   const allowContactFields = options.allowContactFields !== false;
+  const allowNameChange = options.allowNameChange === true;
   if (!body || typeof body !== "object" || !Array.isArray((body as { clients?: unknown }).clients)) {
     return { ok: false, error: "clients array is required." };
   }
@@ -51,6 +56,11 @@ function validateClients(
 
     if (!hasRequiredClientName(names)) {
       return { ok: false, error: "Each client needs a first and last name." };
+    }
+
+    const renameError = assertClientRenameAllowed(allowNameChange, previous, names);
+    if (renameError) {
+      return { ok: false, error: renameError, status: 403 };
     }
 
     const brand_ids = Array.isArray(row.brand_ids)
@@ -173,9 +183,19 @@ export async function PUT(request: Request) {
       : previous.clients;
     const result = validateClients(body, previousForValidation, {
       allowContactFields: session.canViewClientContact,
+      allowNameChange: session.isAdmin,
     });
     if (!result.ok) {
-      return NextResponse.json({ error: result.error }, { status: 400 });
+      return NextResponse.json({ error: result.error }, { status: result.status ?? 400 });
+    }
+
+    const deleteError = assertClientDeleteAllowed(
+      session.isAdmin,
+      previousForValidation,
+      result.data
+    );
+    if (deleteError) {
+      return NextResponse.json({ error: deleteError }, { status: 403 });
     }
 
     let clientsToWrite = result.data;

@@ -187,7 +187,7 @@ export function ClientProfilesEditor() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [canViewClientContact, setCanViewClientContact] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -244,8 +244,8 @@ export function ClientProfilesEditor() {
       try {
         const res = await fetch("/api/auth/session");
         if (!res.ok) return;
-        const data = (await res.json()) as { is_super_admin?: boolean; can_view_client_contact?: boolean };
-        setIsSuperAdmin(Boolean(data.is_super_admin));
+        const data = (await res.json()) as { is_admin?: boolean; can_view_client_contact?: boolean };
+        setIsAdmin(Boolean(data.is_admin));
         setCanViewClientContact(data.can_view_client_contact !== false);
       } catch {
         /* ignore */
@@ -403,6 +403,15 @@ export function ClientProfilesEditor() {
   }
 
   function updateClient(id: string, patch: Partial<ClientProfile>) {
+    const existing = draft.clients.find((client) => client.id === id);
+    const nameLocked =
+      Boolean(existing) && !isNewClient(existing!) && !isAdmin;
+    if (
+      nameLocked &&
+      ("first_name" in patch || "middle_name" in patch || "last_name" in patch)
+    ) {
+      return;
+    }
     setIsDirty(true);
     setDraft((prev) => ({
       ...prev,
@@ -494,7 +503,7 @@ export function ClientProfilesEditor() {
   function renderClientActions(client: ClientProfile, isEditing: boolean) {
     return (
       <div className="flex items-center gap-2">
-        {isSuperAdmin && (
+        {isAdmin && (
           <Button
             variant="ghost"
             size="sm"
@@ -526,11 +535,18 @@ export function ClientProfilesEditor() {
 
   function renderClientEditor(client: ClientProfile) {
     const isNew = isNewClient(client);
+    const nameLocked = !isNew && !isAdmin;
     const needsBrand = client.brand_ids.length === 0;
+    const nameFieldClass = nameLocked
+      ? "mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700"
+      : "mt-1 w-full rounded-lg border border-slate-300 px-3 py-2";
 
     const nameSection = (
       <div className="md:col-span-2">
         <p className="text-sm font-medium text-slate-700">Client name</p>
+        {nameLocked && (
+          <p className="mt-1 text-xs text-slate-500">Only admins can rename an existing client.</p>
+        )}
         <div className="mt-2 grid gap-4 md:grid-cols-3">
           <label className="block text-sm">
             <span className="font-medium text-slate-700">First</span>
@@ -538,9 +554,11 @@ export function ClientProfilesEditor() {
               ref={editingId === client.id ? firstNameInputRef : undefined}
               value={client.first_name}
               onChange={(e) => updateClient(client.id, { first_name: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              className={nameFieldClass}
               placeholder="First name"
               autoComplete="off"
+              readOnly={nameLocked}
+              disabled={nameLocked}
             />
           </label>
           <label className="block text-sm">
@@ -548,8 +566,10 @@ export function ClientProfilesEditor() {
             <input
               value={client.middle_name ?? ""}
               onChange={(e) => updateClient(client.id, { middle_name: e.target.value.trim() || null })}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              className={nameFieldClass}
               placeholder="Optional"
+              readOnly={nameLocked}
+              disabled={nameLocked}
             />
           </label>
           <label className="block text-sm">
@@ -557,8 +577,10 @@ export function ClientProfilesEditor() {
             <input
               value={client.last_name}
               onChange={(e) => updateClient(client.id, { last_name: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              className={nameFieldClass}
               placeholder="Last name"
+              readOnly={nameLocked}
+              disabled={nameLocked}
             />
           </label>
         </div>
