@@ -159,6 +159,14 @@ export async function requireAdmin(): Promise<SessionContext | null> {
   return session;
 }
 
+/** Admin or factory manager — operational floors (e.g. AWB tracking) without accounting roles. */
+export async function requireFactoryOpsAccess(): Promise<SessionContext | null> {
+  const session = await getSessionContext();
+  if (!session.userId && !session.email) return null;
+  if (session.isAdmin || session.isProductionOperator) return session;
+  return null;
+}
+
 export async function requireSuperAdmin(): Promise<SessionContext | null> {
   const session = await getSessionContext();
   if (!session.isSuperAdmin) return null;

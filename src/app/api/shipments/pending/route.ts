@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth/session";
+import { requireFactoryOpsAccess } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/json-file-cache";
 import { ensureFabricOrdersLoaded } from "@/lib/integrations/fabric-order-store";
 import { listPendingAwbFabricOrders } from "@/lib/integrations/pending-awb";
 import { ensureShipmentsLoaded } from "@/lib/integrations/shipment-store";
 
 export async function GET() {
-  const session = await requireAdmin();
+  const session = await requireFactoryOpsAccess();
   if (!session) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }

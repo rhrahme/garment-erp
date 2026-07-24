@@ -46,7 +46,10 @@ const TASK_OPERATOR_ROUTE_PREFIXES = [
 
 const TASK_OPERATOR_BLOCKED_ROUTE_PREFIXES = ["/orders/new", "/fabric-orders"] as const;
 
-/** Factory manager — production floor + fabric prep visibility; no accounting/costs. */
+/**
+ * Factory manager — everything inside the factory except accounting/costs.
+ * Prefer allowing operational pages (with price lockdown) over hiding them.
+ */
 const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   "/production",
   "/fabric-receiving",
@@ -54,6 +57,12 @@ const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   "/quality",
   "/fabric-specification",
   "/clients",
+  "/brands",
+  "/ready-made",
+  "/pattern",
+  "/inventory",
+  "/shipments",
+  "/washing",
   "/api/production",
   "/api/fabric-receiving",
   "/api/factory/floor-stations",
@@ -63,6 +72,8 @@ const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   "/api/fabric-search",
   "/api/custom-fabrics",
   "/api/clients",
+  "/api/pattern",
+  "/api/shipments",
   "/api/suppliers/loro-piana",
   "/api/integrations/drapers/medias",
   "/api/auth/session",
@@ -70,7 +81,7 @@ const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   "/login",
 ] as const;
 
-const PRODUCTION_OPERATOR_BLOCKED_ROUTE_PREFIXES = [
+export const PRODUCTION_OPERATOR_BLOCKED_ROUTE_PREFIXES = [
   "/orders/new",
   "/fabric-orders",
   "/invoices",
@@ -150,12 +161,24 @@ export const TASK_OPERATOR_NAV_HREFS = [
   "/fabric-specification",
 ] as const;
 
-/** Sidebar pages for factory managers (production operator). */
+/**
+ * Sidebar for factory managers — full factory ops, no sales CRM / accounting / HR.
+ * Stickers & A4 printing live under Factory orders (`/orders`).
+ * Landing stays `/production` (not Sales Home, not admin Dashboard).
+ */
 export const PRODUCTION_OPERATOR_NAV_HREFS = [
+  "/fabric-receiving",
+  "/brands",
+  "/clients",
+  "/ready-made",
+  "/fabric-specification",
+  "/pattern",
+  "/inventory",
   "/production",
   "/production/floor-map",
-  "/fabric-receiving",
   "/orders",
+  "/shipments",
+  "/washing",
   "/quality",
 ] as const;
 
@@ -484,7 +507,7 @@ export function canAccessPatternModule(
   isTaskOperator = false,
   isProductionOperator = false
 ): boolean {
-  if (isAdmin) return true;
-  if (isClientManager || isTaskOperator || isProductionOperator) return false;
+  if (isAdmin || isProductionOperator) return true;
+  if (isClientManager || isTaskOperator) return false;
   return true;
 }
