@@ -32,6 +32,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const body = (await request.json()) as {
       status?: string;
       assigned_to?: string | null;
+      client_pattern_id?: string | null;
+      client_pattern_version_id?: string | null;
       pattern_code?: string | null;
       pattern_size_notes?: string | null;
       trial_priority?: boolean;
@@ -49,6 +51,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       {
         status: body.status,
         assigned_to: body.assigned_to,
+        client_pattern_id: body.client_pattern_id,
+        client_pattern_version_id: body.client_pattern_version_id,
         pattern_code: body.pattern_code,
         pattern_size_notes: body.pattern_size_notes,
         trial_priority: body.trial_priority,

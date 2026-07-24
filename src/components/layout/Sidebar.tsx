@@ -35,6 +35,7 @@ import { useRouter } from "next/navigation";
 import {
   CLIENT_MANAGER_NAV_HREFS,
   CLIENT_MANAGER_ORDERS_NAV_LABEL,
+  PATTERN_OPERATOR_NAV_HREFS,
   PRODUCTION_OPERATOR_NAV_HREFS,
   PRODUCTION_OPERATOR_ORDERS_NAV_LABEL,
   SALES_OPERATOR_NAV_HREFS,
@@ -81,6 +82,8 @@ const productionOperatorNavItems = navItems.filter((item) =>
 );
 const salesOperatorNavHrefs = new Set<string>(SALES_OPERATOR_NAV_HREFS);
 const salesOperatorNavItems = navItems.filter((item) => salesOperatorNavHrefs.has(item.href));
+const patternOperatorNavHrefs = new Set<string>(PATTERN_OPERATOR_NAV_HREFS);
+const patternOperatorNavItems = navItems.filter((item) => patternOperatorNavHrefs.has(item.href));
 
 function isNavActive(pathname: string, href: string): boolean {
   if (pathname === href) return true;
@@ -93,6 +96,7 @@ export function Sidebar({
   clientsOnly = false,
   taskOperatorOnly = false,
   productionOperatorOnly = false,
+  patternOperatorOnly = false,
   salesOperatorOnly = false,
   isAdmin = true,
   mobileOpen = false,
@@ -101,6 +105,7 @@ export function Sidebar({
   clientsOnly?: boolean;
   taskOperatorOnly?: boolean;
   productionOperatorOnly?: boolean;
+  patternOperatorOnly?: boolean;
   salesOperatorOnly?: boolean;
   isAdmin?: boolean;
   /** Slide-over nav open state (mobile only). */
@@ -113,13 +118,15 @@ export function Sidebar({
   const items = (
     productionOperatorOnly
       ? productionOperatorNavItems
-      : salesOperatorOnly
-        ? salesOperatorNavItems
-        : taskOperatorOnly
-          ? taskOperatorNavItems
-          : clientsOnly
-            ? qcNavItems
-            : navItems
+      : patternOperatorOnly
+        ? patternOperatorNavItems
+        : salesOperatorOnly
+          ? salesOperatorNavItems
+          : taskOperatorOnly
+            ? taskOperatorNavItems
+            : clientsOnly
+              ? qcNavItems
+              : navItems
   ).filter((item) => {
     if (item.href === "/documents" && !isAdmin) return false;
     // Sales Home is sales-tablet (and admin) only — never for floor/QC/unscoped users.

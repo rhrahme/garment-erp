@@ -14,7 +14,13 @@ import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
 function session(
-  role: "admin" | "client_manager" | "task_operator" | "production_operator" | "sales_operator"
+  role:
+    | "admin"
+    | "client_manager"
+    | "task_operator"
+    | "production_operator"
+    | "pattern_operator"
+    | "sales_operator"
 ): SessionContext {
   const isAdmin = role === "admin";
   return {
@@ -26,6 +32,7 @@ function session(
     isClientManager: role === "client_manager",
     isTaskOperator: role === "task_operator",
     isProductionOperator: role === "production_operator",
+    isPatternOperator: role === "pattern_operator",
     isSalesOperator: role === "sales_operator",
     canViewClientContact: isAdmin || role === "sales_operator",
     canViewFabricListPrices: isAdmin,
@@ -117,7 +124,13 @@ function assertNoPriceFields(value: unknown): void {
   }
 }
 
-for (const role of ["task_operator", "production_operator", "client_manager", "sales_operator"] as const) {
+for (const role of [
+  "task_operator",
+  "production_operator",
+  "pattern_operator",
+  "client_manager",
+  "sales_operator",
+] as const) {
   describe(`${role} endpoint payloads`, () => {
     it("cannot pass the central admin-only price gate", () => {
       assert.equal(canViewPrices(session(role)), false);

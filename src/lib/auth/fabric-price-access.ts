@@ -57,6 +57,7 @@ export function canViewPrices(session: SessionContext): boolean {
     !session.isClientManager &&
     !session.isTaskOperator &&
     !session.isProductionOperator &&
+    !session.isPatternOperator &&
     !session.isSalesOperator
   );
 }

@@ -17,6 +17,7 @@ export default async function Home() {
     isClientManager: session.isClientManager,
     isTaskOperator: session.isTaskOperator,
     isProductionOperator: session.isProductionOperator,
+    isPatternOperator: session.isPatternOperator,
     isSalesOperator: session.isSalesOperator,
   }));
 }

@@ -69,6 +69,9 @@ export interface PatternJob {
   meters: number;
   status: PatternJobStatus;
   assigned_to: string | null;
+  /** Optional link to a master client pattern in the pattern library (+ specific trial). */
+  client_pattern_id?: string | null;
+  client_pattern_version_id?: string | null;
   pattern_code: string | null;
   pattern_size_notes: string | null;
   trial_priority: boolean;

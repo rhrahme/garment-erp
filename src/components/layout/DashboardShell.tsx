@@ -18,6 +18,7 @@ export function DashboardShell({
   const clientsOnly = session.isClientManager;
   const taskOperatorOnly = session.isTaskOperator;
   const productionOperatorOnly = session.isProductionOperator;
+  const patternOperatorOnly = session.isPatternOperator;
   const salesOperatorOnly = session.isSalesOperator;
 
   return (
@@ -35,6 +36,7 @@ export function DashboardShell({
         clientsOnly={clientsOnly}
         taskOperatorOnly={taskOperatorOnly}
         productionOperatorOnly={productionOperatorOnly}
+        patternOperatorOnly={patternOperatorOnly}
         salesOperatorOnly={salesOperatorOnly}
         isAdmin={session.isAdmin}
         mobileOpen={mobileNavOpen}

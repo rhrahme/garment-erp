@@ -1,0 +1,3300 @@
+{
+  "updated_at": "2026-07-24T20:47:47.000Z",
+  "dictionary": [
+    {
+      "id": "total-length-hnp",
+      "name": "Total Length (HNP)",
+      "aliases": [
+        "Total Length (NPS)"
+      ],
+      "garment_types": [
+        "jacket",
+        "shirt"
+      ]
+    },
+    {
+      "id": "1-2-chest",
+      "name": "1/2 Chest",
+      "aliases": [],
+      "garment_types": [
+        "jacket",
+        "shirt"
+      ]
+    },
+    {
+      "id": "1-2-waist",
+      "name": "1/2 Waist",
+      "aliases": [],
+      "garment_types": [
+        "jacket",
+        "shirt"
+      ]
+    },
+    {
+      "id": "1-2-hip-width",
+      "name": "1/2 Hip Width",
+      "aliases": [],
+      "garment_types": [
+        "jacket"
+      ]
+    },
+    {
+      "id": "1-2-shoulder",
+      "name": "1/2 Shoulder",
+      "aliases": [],
+      "garment_types": [
+        "jacket",
+        "shirt"
+      ]
+    },
+    {
+      "id": "slv-length",
+      "name": "Slv Length",
+      "aliases": [],
+      "garment_types": [
+        "jacket",
+        "shirt"
+      ]
+    },
+    {
+      "id": "cuff-opening",
+      "name": "Cuff Opening",
+      "aliases": [],
+      "garment_types": [
+        "jacket",
+        "shirt"
+      ]
+    },
+    {
+      "id": "cb-length",
+      "name": "CB Length",
+      "aliases": [],
+      "garment_types": [
+        "jacket",
+        "shirt"
+      ]
+    },
+    {
+      "id": "bicep",
+      "name": "Bicep",
+      "aliases": [],
+      "garment_types": [
+        "jacket",
+        "shirt"
+      ]
+    },
+    {
+      "id": "1-2-hip",
+      "name": "1/2 Hip",
+      "aliases": [],
+      "garment_types": [
+        "jacket"
+      ]
+    },
+    {
+      "id": "slv-back-length",
+      "name": "Slv Back Length",
+      "aliases": [],
+      "garment_types": [
+        "jacket"
+      ]
+    },
+    {
+      "id": "front-side-length",
+      "name": "Front Side Length",
+      "aliases": [],
+      "garment_types": [
+        "jacket"
+      ]
+    },
+    {
+      "id": "collar-outer-edge",
+      "name": "Collar Outer Edge",
+      "aliases": [],
+      "garment_types": [
+        "jacket",
+        "shirt"
+      ]
+    },
+    {
+      "id": "1-2-hem-width",
+      "name": "1/2 Hem Width",
+      "aliases": [
+        "1/2 Bottom Width"
+      ],
+      "garment_types": [
+        "shirt"
+      ]
+    },
+    {
+      "id": "slv-inseam",
+      "name": "Slv Inseam",
+      "aliases": [],
+      "garment_types": [
+        "shirt"
+      ]
+    },
+    {
+      "id": "elbow",
+      "name": "Elbow",
+      "aliases": [],
+      "garment_types": [
+        "shirt"
+      ]
+    },
+    {
+      "id": "side-seam",
+      "name": "Side Seam",
+      "aliases": [],
+      "garment_types": [
+        "shirt"
+      ]
+    },
+    {
+      "id": "collar-height",
+      "name": "Collar Height",
+      "aliases": [],
+      "garment_types": [
+        "shirt",
+        "jacket"
+      ]
+    },
+    {
+      "id": "collar-point",
+      "name": "Collar Point",
+      "aliases": [],
+      "garment_types": [
+        "shirt"
+      ]
+    },
+    {
+      "id": "band-height",
+      "name": "Band Height",
+      "aliases": [],
+      "garment_types": [
+        "shirt"
+      ]
+    },
+    {
+      "id": "cuff-height",
+      "name": "Cuff Height",
+      "aliases": [
+        "Cuff Width"
+      ],
+      "garment_types": [
+        "shirt"
+      ]
+    },
+    {
+      "id": "cuff-length",
+      "name": "Cuff Length",
+      "aliases": [],
+      "garment_types": [
+        "shirt"
+      ]
+    },
+    {
+      "id": "across-front",
+      "name": "Across Front",
+      "aliases": [],
+      "garment_types": [
+        "shirt"
+      ]
+    },
+    {
+      "id": "across-back",
+      "name": "Across Back",
+      "aliases": [],
+      "garment_types": [
+        "shirt"
+      ]
+    },
+    {
+      "id": "1-2-waist-straight-relux",
+      "name": "1/2 Waist straight Relux",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "waist-band-height",
+      "name": "Waist band height",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "waist-extend",
+      "name": "Waist Extend",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "1-2-hip-19cm-below-w-b",
+      "name": "1/2 Hip (19cm below w/b)",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "front-rise-excluding-w-b",
+      "name": "Front rise (excluding w/b)",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "back-rise-excluding-w-b",
+      "name": "Back rise (excluding w/b)",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "fly-opening-excluding-w-b",
+      "name": "Fly opening (excluding w/b)",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "fly-width",
+      "name": "Fly width",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "outside-excluding-w-b",
+      "name": "Outside (excluding w/b)",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "inseam",
+      "name": "Inseam",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "1-2-thigh-1cm-from-crotch",
+      "name": "1/2 Thigh (1cm from crotch)",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "1-2-thigh-10cm-from-crotch",
+      "name": "1/2 Thigh (10cm from crotch)",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "1-2-bottom-leg-opening",
+      "name": "1/2 Bottom leg opening",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "bottom-hem-stitch-height",
+      "name": "Bottom hem stitch height",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "side-pocket-opening-length",
+      "name": "Side pocket opening length",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "side-pocket-opening-width",
+      "name": "Side pocket opening width",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "back-pocket-opening-length",
+      "name": "Back pocket opening length",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "back-pocket-opening-width",
+      "name": "Back pocket opening width",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "back-pocket-position-from-waistband",
+      "name": "Back pocket position from waistband",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "back-pocket-position-from-center-rise",
+      "name": "Back pocket position from center rise",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "string-length",
+      "name": "String Length",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "string-width",
+      "name": "String width",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "loops-width-6-pcs",
+      "name": "Loops width (6 pcs)",
+      "aliases": [],
+      "garment_types": [
+        "shorts"
+      ]
+    },
+    {
+      "id": "shoulder",
+      "name": "Shoulder",
+      "aliases": [],
+      "garment_types": [
+        "shirt"
+      ]
+    },
+    {
+      "id": "slv-placket-length",
+      "name": "Slv Placket Length",
+      "aliases": [],
+      "garment_types": [
+        "shirt"
+      ]
+    }
+  ],
+  "base_patterns": [
+    {
+      "id": "bp-fr-boggi-jacket",
+      "house_brand_id": "fouad-rahme",
+      "house_brand_code": "FR",
+      "cut_family": "Boggi",
+      "garment_type": "jacket",
+      "cut_variant": null,
+      "name": "Boggi Jacket",
+      "unit": "in",
+      "sizes": [
+        "48",
+        "50",
+        "52",
+        "54",
+        "56",
+        "58",
+        "60"
+      ],
+      "points": [
+        {
+          "point_id": "total-length-hnp",
+          "name": "Total Length (HNP)",
+          "remark": "Front",
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "48": 30.25,
+            "50": 30.75,
+            "52": 31.375,
+            "54": 31.5,
+            "56": 32.5,
+            "58": 33.0,
+            "60": 33.5
+          }
+        },
+        {
+          "point_id": "1-2-chest",
+          "name": "1/2 Chest",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "48": 43.0,
+            "50": 44.25,
+            "52": 45.5,
+            "54": 47.0,
+            "56": 51.0,
+            "58": 52.5,
+            "60": 53.5
+          }
+        },
+        {
+          "point_id": "1-2-waist",
+          "name": "1/2 Waist",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "48": 38.25,
+            "50": 39.75,
+            "52": 41.5,
+            "54": 43.5,
+            "56": 46.5,
+            "58": 47.0,
+            "60": 48.0
+          }
+        },
+        {
+          "point_id": "1-2-hip-width",
+          "name": "1/2 Hip Width",
+          "remark": "Position: Slit Point",
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "48": 38.75,
+            "50": 40.0,
+            "52": 43.0,
+            "54": 44.75,
+            "56": 47.5,
+            "58": 48.5,
+            "60": 50.0
+          }
+        },
+        {
+          "point_id": "1-2-shoulder",
+          "name": "1/2 Shoulder",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "48": 5.625,
+            "50": 5.75,
+            "52": 5.875,
+            "54": 6.0,
+            "56": 6.375,
+            "58": 6.5,
+            "60": 6.625
+          }
+        },
+        {
+          "point_id": "slv-length",
+          "name": "Slv Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "48": 25.5,
+            "50": 26.0,
+            "52": 26.5,
+            "54": 26.75,
+            "56": 27.25,
+            "58": 27.75,
+            "60": 28.0
+          }
+        },
+        {
+          "point_id": "cuff-opening",
+          "name": "Cuff Opening",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "48": 5.375,
+            "50": 5.5,
+            "52": 5.625,
+            "54": 5.75,
+            "56": 5.625,
+            "58": 5.75,
+            "60": 6.125
+          }
+        },
+        {
+          "point_id": "cb-length",
+          "name": "CB Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "48": 29.5,
+            "50": 29.875,
+            "52": 30.5,
+            "54": 30.5,
+            "56": 31.625,
+            "58": 32.0,
+            "60": 32.5
+          }
+        }
+      ],
+      "style_code": null,
+      "fabric": null,
+      "season": null,
+      "special_instructions": null,
+      "physical_pattern_kept": false,
+      "physical_pattern_location": null,
+      "files": [],
+      "source_file": "BoggI Measurement Spec for Jacket.xlsx",
+      "notes": null,
+      "created_at": "2026-07-24T20:47:47.000Z",
+      "updated_at": "2026-07-24T20:47:47.000Z"
+    },
+    {
+      "id": "bp-fr-comfort-jacket",
+      "house_brand_id": "fouad-rahme",
+      "house_brand_code": "FR",
+      "cut_family": "Comfort",
+      "garment_type": "jacket",
+      "cut_variant": null,
+      "name": "Comfort Jacket",
+      "unit": "in",
+      "sizes": [
+        "44",
+        "46",
+        "48",
+        "50",
+        "52",
+        "54",
+        "56",
+        "58",
+        "60",
+        "62",
+        "64",
+        "66",
+        "68",
+        "70",
+        "72"
+      ],
+      "points": [
+        {
+          "point_id": "total-length-hnp",
+          "name": "Total Length (HNP)",
+          "remark": "Front",
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "44": 28.75,
+            "46": 28.875,
+            "48": 30.0,
+            "50": 30.75,
+            "52": 31.0,
+            "54": 31.5,
+            "56": 31.5,
+            "58": 32.0,
+            "60": 32.375,
+            "62": 32.625,
+            "64": 32.75,
+            "66": 33.25,
+            "68": 33.25,
+            "70": 33.5,
+            "72": 33.5
+          }
+        },
+        {
+          "point_id": "1-2-chest",
+          "name": "1/2 Chest",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "44": 41.5,
+            "46": 43.0,
+            "48": 45.0,
+            "50": 46.0,
+            "52": 47.5,
+            "54": 48.5,
+            "56": 49.5,
+            "58": 52.0,
+            "60": 53.0,
+            "62": 56.0,
+            "64": 56.5,
+            "66": 57.0,
+            "68": 59.0,
+            "70": 61.0,
+            "72": 62.0
+          }
+        },
+        {
+          "point_id": "1-2-waist",
+          "name": "1/2 Waist",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "44": 36.5,
+            "46": 38.0,
+            "48": 40.5,
+            "50": 42.0,
+            "52": 43.0,
+            "54": 45.0,
+            "56": 45.5,
+            "58": 47.5,
+            "60": 49.0,
+            "62": 52.0,
+            "64": 53.0,
+            "66": 55.0,
+            "68": 57.5,
+            "70": 59.0,
+            "72": 61.0
+          }
+        },
+        {
+          "point_id": "1-2-hip-width",
+          "name": "1/2 Hip Width",
+          "remark": "Position: Slit Point",
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "44": 37.5,
+            "46": 39.0,
+            "48": 41.5,
+            "50": 43.0,
+            "52": 44.0,
+            "54": 46.0,
+            "56": 46.75,
+            "58": 48.5,
+            "60": 50.0,
+            "62": 52.5,
+            "64": 54.0,
+            "66": 56.5,
+            "68": 58.5,
+            "70": 60.0,
+            "72": 62.5
+          }
+        },
+        {
+          "point_id": "1-2-shoulder",
+          "name": "1/2 Shoulder",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "44": 5.75,
+            "46": 6.0,
+            "48": 6.125,
+            "50": 6.25,
+            "52": 6.375,
+            "54": 6.5,
+            "56": 6.5,
+            "58": 6.5,
+            "60": 6.75,
+            "62": 6.875,
+            "64": 6.875,
+            "66": 7.0,
+            "68": 7.0,
+            "70": 7.125,
+            "72": 7.125
+          }
+        },
+        {
+          "point_id": "slv-length",
+          "name": "Slv Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "44": 24.5,
+            "46": 24.625,
+            "48": 25.0,
+            "50": 25.125,
+            "52": 25.5,
+            "54": 25.5,
+            "56": 25.625,
+            "58": 25.75,
+            "60": 26.0,
+            "62": 25.75,
+            "64": 25.75,
+            "66": 26.0,
+            "68": 26.25,
+            "70": 26.25,
+            "72": 26.25
+          }
+        },
+        {
+          "point_id": "bicep",
+          "name": "Bicep",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "44": 7.25,
+            "46": 7.5,
+            "48": 8.0,
+            "50": 8.25,
+            "52": 8.375,
+            "54": 8.625,
+            "56": 8.625,
+            "58": 8.625,
+            "60": 8.75,
+            "62": 8.875,
+            "64": 9.0,
+            "66": 9.25,
+            "68": 9.375,
+            "70": 9.5,
+            "72": 9.5
+          }
+        },
+        {
+          "point_id": "cuff-opening",
+          "name": "Cuff Opening",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "44": 5.25,
+            "46": 5.375,
+            "48": 5.375,
+            "50": 5.625,
+            "52": 5.75,
+            "54": 5.75,
+            "56": 6.0,
+            "58": 6.0,
+            "60": 6.0,
+            "62": 6.0,
+            "64": 6.0,
+            "66": 6.0,
+            "68": 6.0,
+            "70": 6.0,
+            "72": 6.0
+          }
+        },
+        {
+          "point_id": "cb-length",
+          "name": "CB Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "44": 27.5,
+            "46": 27.75,
+            "48": 28.5,
+            "50": 29.625,
+            "52": 30.0,
+            "54": 30.375,
+            "56": 30.375,
+            "58": 31.125,
+            "60": 31.375,
+            "62": 31.75,
+            "64": 31.5,
+            "66": 32.0,
+            "68": 32.125,
+            "70": 32.25,
+            "72": 32.625
+          }
+        }
+      ],
+      "style_code": null,
+      "fabric": null,
+      "season": null,
+      "special_instructions": null,
+      "physical_pattern_kept": false,
+      "physical_pattern_location": null,
+      "files": [],
+      "source_file": "Comfort measurement Spec for Jacket.xlsx",
+      "notes": null,
+      "created_at": "2026-07-24T20:47:47.000Z",
+      "updated_at": "2026-07-24T20:47:47.000Z"
+    },
+    {
+      "id": "bp-fr-massimo-shirt-cotton-3616",
+      "house_brand_id": "fouad-rahme",
+      "house_brand_code": "FR",
+      "cut_family": "Massimo",
+      "garment_type": "shirt",
+      "cut_variant": null,
+      "name": "Massimo Cotton Shirt 3616",
+      "unit": "in",
+      "sizes": [
+        "38",
+        "39",
+        "40",
+        "41",
+        "42",
+        "43",
+        "44"
+      ],
+      "points": [
+        {
+          "point_id": "total-length-hnp",
+          "name": "Total Length (NPS)",
+          "remark": "Front",
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 28.25,
+            "39": 28.5,
+            "40": 29.0,
+            "41": 29.125,
+            "42": 29.625,
+            "43": 29.5,
+            "44": 30.5
+          }
+        },
+        {
+          "point_id": "1-2-chest",
+          "name": "1/2 Chest",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 42.0,
+            "39": 43.5,
+            "40": 44.75,
+            "41": 45.75,
+            "42": 47.25,
+            "43": 48.5,
+            "44": 48.0
+          }
+        },
+        {
+          "point_id": "1-2-waist",
+          "name": "1/2 Waist",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 37.5,
+            "39": 38.75,
+            "40": 40.5,
+            "41": 41.5,
+            "42": 42.75,
+            "43": 43.75,
+            "44": 45.25
+          }
+        },
+        {
+          "point_id": "1-2-hem-width",
+          "name": "1/2 Bottom Width",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 41.25,
+            "39": 42.25,
+            "40": 43.5,
+            "41": 44.5,
+            "42": 45.75,
+            "43": 47.25,
+            "44": 48.0
+          }
+        },
+        {
+          "point_id": "1-2-shoulder",
+          "name": "1/2 Shoulder",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 5.875,
+            "39": 6.0,
+            "40": 6.0,
+            "41": 6.125,
+            "42": 6.25,
+            "43": 6.25,
+            "44": 6.5
+          }
+        },
+        {
+          "point_id": "slv-length",
+          "name": "Slv Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 25.625,
+            "39": 25.625,
+            "40": 26.0,
+            "41": 26.375,
+            "42": 26.5,
+            "43": 26.5,
+            "44": 27.375
+          }
+        },
+        {
+          "point_id": "slv-inseam",
+          "name": "Slv Inseam",
+          "remark": "Including Cuff",
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 17.75,
+            "39": 17.375,
+            "40": 17.75,
+            "41": 18.125,
+            "42": 17.875,
+            "43": 17.875,
+            "44": 19.125
+          }
+        },
+        {
+          "point_id": "bicep",
+          "name": "Bicep",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 7.875,
+            "39": 8.0,
+            "40": 8.125,
+            "41": 8.5,
+            "42": 8.5,
+            "43": 9.0,
+            "44": 9.0
+          }
+        },
+        {
+          "point_id": "elbow",
+          "name": "Elbow",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 6.5,
+            "39": 6.5,
+            "40": 6.625,
+            "41": 6.875,
+            "42": 7.0,
+            "43": 7.125,
+            "44": 7.125
+          }
+        },
+        {
+          "point_id": "cuff-opening",
+          "name": "Cuff Opening",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 4.25,
+            "39": 4.375,
+            "40": 4.5,
+            "41": 4.625,
+            "42": 4.625,
+            "43": 4.75,
+            "44": 4.875
+          }
+        },
+        {
+          "point_id": "cb-length",
+          "name": "CB Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 29.125,
+            "39": 29.5,
+            "40": 29.875,
+            "41": 30.5,
+            "42": 30.75,
+            "43": 30.75,
+            "44": 30.875
+          }
+        },
+        {
+          "point_id": "side-seam",
+          "name": "Side Seam",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 15.5,
+            "39": 15.625,
+            "40": 15.875,
+            "41": 16.125,
+            "42": 16.25,
+            "43": 15.75,
+            "44": 16.625
+          }
+        },
+        {
+          "point_id": "collar-outer-edge",
+          "name": "Collar Outer Edge",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 12.75,
+            "39": 13.25,
+            "40": 13.625,
+            "41": 14.0,
+            "42": 14.5,
+            "43": 15.0,
+            "44": 15.625
+          }
+        },
+        {
+          "point_id": "collar-height",
+          "name": "Collar Height",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 1.625,
+            "39": 1.625,
+            "40": 1.625,
+            "41": 1.625,
+            "42": 1.625,
+            "43": 1.625,
+            "44": 1.625
+          }
+        },
+        {
+          "point_id": "collar-point",
+          "name": "Collar Point",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 2.75,
+            "39": 2.75,
+            "40": 2.75,
+            "41": 2.75,
+            "42": 2.75,
+            "43": 2.75,
+            "44": 2.75
+          }
+        },
+        {
+          "point_id": "band-height",
+          "name": "Band Height",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 1.375,
+            "39": 1.375,
+            "40": 1.375,
+            "41": 1.375,
+            "42": 1.375,
+            "43": 1.375,
+            "44": 1.375
+          }
+        },
+        {
+          "point_id": "cuff-height",
+          "name": "Cuff Height",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 3.0,
+            "39": 3.0,
+            "40": 3.0,
+            "41": 3.0,
+            "42": 3.0,
+            "43": 3.0,
+            "44": 3.0
+          }
+        },
+        {
+          "point_id": "cuff-length",
+          "name": "Cuff Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 9.5,
+            "39": 9.75,
+            "40": 10.0,
+            "41": 10.125,
+            "42": 10.375,
+            "43": 10.625,
+            "44": 10.625
+          }
+        },
+        {
+          "point_id": "across-front",
+          "name": "Across Front",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 14.875,
+            "39": 15.375,
+            "40": 15.375,
+            "41": 16.0,
+            "42": 16.375,
+            "43": 16.5,
+            "44": 17.0
+          }
+        },
+        {
+          "point_id": "across-back",
+          "name": "Across Back",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "38": 16.625,
+            "39": 17.0,
+            "40": 17.125,
+            "41": 17.75,
+            "42": 18.375,
+            "43": 18.875,
+            "44": 18.75
+          }
+        }
+      ],
+      "style_code": "3616",
+      "fabric": "cotton",
+      "season": null,
+      "special_instructions": null,
+      "physical_pattern_kept": false,
+      "physical_pattern_location": null,
+      "files": [],
+      "source_file": "Massimo Dutty Cotton Shirt 3616.xlsx",
+      "notes": null,
+      "created_at": "2026-07-24T20:47:47.000Z",
+      "updated_at": "2026-07-24T20:47:47.000Z"
+    },
+    {
+      "id": "bp-fr-massimo-shirt-linen-1926",
+      "house_brand_id": "fouad-rahme",
+      "house_brand_code": "FR",
+      "cut_family": "Massimo",
+      "garment_type": "shirt",
+      "cut_variant": null,
+      "name": "Massimo Linen Shirt 1926",
+      "unit": "in",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "points": [
+        {
+          "point_id": "total-length-hnp",
+          "name": "Total Length (NPS)",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 27.75,
+            "M": 28.375,
+            "L": 28.875,
+            "XL": 29.5,
+            "XXL": 30.125
+          }
+        },
+        {
+          "point_id": "1-2-chest",
+          "name": "1/2 Chest",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 42.0,
+            "M": 45.0,
+            "L": 47.25,
+            "XL": 48.5,
+            "XXL": 52.0
+          }
+        },
+        {
+          "point_id": "1-2-waist",
+          "name": "1/2 Waist",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 39.75,
+            "M": 42.5,
+            "L": 44.75,
+            "XL": 47.0,
+            "XXL": 49.5
+          }
+        },
+        {
+          "point_id": "1-2-hem-width",
+          "name": "1/2 Bottom Width",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 41.75,
+            "M": 44.0,
+            "L": 46.5,
+            "XL": 48.0,
+            "XXL": 51.0
+          }
+        },
+        {
+          "point_id": "1-2-shoulder",
+          "name": "1/2 Shoulder",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 6.5,
+            "M": 6.75,
+            "L": 7.0,
+            "XL": 7.0,
+            "XXL": 7.375
+          }
+        },
+        {
+          "point_id": "slv-length",
+          "name": "Slv Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 24.875,
+            "M": 25.5,
+            "L": 25.375,
+            "XL": 26.0,
+            "XXL": 26.5
+          }
+        },
+        {
+          "point_id": "slv-inseam",
+          "name": "Slv Inseam",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 17.875,
+            "M": 18.375,
+            "L": 17.5,
+            "XL": 17.75,
+            "XXL": 18.375
+          }
+        },
+        {
+          "point_id": "bicep",
+          "name": "Bicep",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 7.875,
+            "M": 8.375,
+            "L": 8.5,
+            "XL": 8.625,
+            "XXL": 9.25
+          }
+        },
+        {
+          "point_id": "elbow",
+          "name": "Elbow",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 6.375,
+            "M": 6.625,
+            "L": 7.0,
+            "XL": 7.125,
+            "XXL": 7.5
+          }
+        },
+        {
+          "point_id": "cuff-opening",
+          "name": "Cuff Opening",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 4.25,
+            "M": 4.5,
+            "L": 4.625,
+            "XL": 5.25,
+            "XXL": 5.0
+          }
+        },
+        {
+          "point_id": "cb-length",
+          "name": "CB Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 28.375,
+            "M": 29.0,
+            "L": 29.75,
+            "XL": 30.0,
+            "XXL": 30.375
+          }
+        },
+        {
+          "point_id": "side-seam",
+          "name": "Side Seam",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 15.875,
+            "M": 16.0,
+            "L": 16.5,
+            "XL": 16.5,
+            "XXL": 16.5
+          }
+        },
+        {
+          "point_id": "collar-outer-edge",
+          "name": "Collar Outer Edge",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 14.625,
+            "M": 15.375,
+            "L": 16.0,
+            "XL": 16.625,
+            "XXL": 17.25
+          }
+        },
+        {
+          "point_id": "collar-height",
+          "name": "Collar Height",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 1.75,
+            "M": 1.75,
+            "L": 1.75,
+            "XL": 1.75,
+            "XXL": 1.75
+          }
+        },
+        {
+          "point_id": "collar-point",
+          "name": "Collar Point",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 2.625,
+            "M": 2.625,
+            "L": 2.625,
+            "XL": 2.625,
+            "XXL": 2.625
+          }
+        },
+        {
+          "point_id": "band-height",
+          "name": "Band Height",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 1.125,
+            "M": 1.125,
+            "L": 1.125,
+            "XL": 1.125,
+            "XXL": 1.125
+          }
+        },
+        {
+          "point_id": "cuff-height",
+          "name": "Cuff Height",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 2.5,
+            "M": 2.5,
+            "L": 2.5,
+            "XL": 2.5,
+            "XXL": 2.5
+          }
+        },
+        {
+          "point_id": "cuff-length",
+          "name": "Cuff Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 9.625,
+            "M": 9.875,
+            "L": 10.25,
+            "XL": 10.625,
+            "XXL": 11.0
+          }
+        },
+        {
+          "point_id": "across-front",
+          "name": "Across Front",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 15.0,
+            "M": 16.0,
+            "L": 16.875,
+            "XL": 17.0,
+            "XXL": 18.5
+          }
+        },
+        {
+          "point_id": "across-back",
+          "name": "Across Back",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S": 16.5,
+            "M": 17.5,
+            "L": 18.0,
+            "XL": 19.0,
+            "XXL": 20.0
+          }
+        }
+      ],
+      "style_code": "1926",
+      "fabric": "linen",
+      "season": null,
+      "special_instructions": null,
+      "physical_pattern_kept": false,
+      "physical_pattern_location": null,
+      "files": [],
+      "source_file": "Massimo Dutty Linen Shirt.xlsx",
+      "notes": null,
+      "created_at": "2026-07-24T20:47:47.000Z",
+      "updated_at": "2026-07-24T20:47:47.000Z"
+    },
+    {
+      "id": "bp-fr-massimo-shorts-linen-0197",
+      "house_brand_id": "fouad-rahme",
+      "house_brand_code": "FR",
+      "cut_family": "Massimo",
+      "garment_type": "shorts",
+      "cut_variant": null,
+      "name": "Massimo Linen Shorts 0197",
+      "unit": "cm",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "points": [
+        {
+          "point_id": "1-2-waist-straight-relux",
+          "name": "1/2 Waist straight Relux",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": 1.0,
+          "grading_increment": 2.0,
+          "diagram_code": "A",
+          "values": {
+            "S": 37.0,
+            "M": 39.0,
+            "L": 44.0,
+            "XL": 47.0
+          }
+        },
+        {
+          "point_id": "waist-band-height",
+          "name": "Waist band height",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": 0.0,
+          "grading_increment": 0.0,
+          "diagram_code": "C",
+          "values": {
+            "S": 4.0,
+            "M": 4.0,
+            "L": 4.0,
+            "XL": 4.0
+          }
+        },
+        {
+          "point_id": "waist-extend",
+          "name": "Waist Extend",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": 1.0,
+          "grading_increment": 2.5,
+          "diagram_code": "D",
+          "values": {
+            "S": 46.0,
+            "M": 48.0,
+            "L": 49.0,
+            "XL": 51.0
+          }
+        },
+        {
+          "point_id": "1-2-hip-19cm-below-w-b",
+          "name": "1/2 Hip (19cm below w/b)",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": 1.0,
+          "grading_increment": 2.5,
+          "diagram_code": "E",
+          "values": {
+            "S": 51.0,
+            "M": 52.0,
+            "L": 54.5,
+            "XL": 59.0
+          }
+        },
+        {
+          "point_id": "front-rise-excluding-w-b",
+          "name": "Front rise (excluding w/b)",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": 0.5,
+          "grading_increment": 0.52,
+          "diagram_code": "L",
+          "values": {
+            "S": 26.0,
+            "M": 26.0,
+            "L": 27.0,
+            "XL": 28.5
+          }
+        },
+        {
+          "point_id": "back-rise-excluding-w-b",
+          "name": "Back rise (excluding w/b)",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": 0.5,
+          "grading_increment": 0.7,
+          "diagram_code": "M",
+          "values": {
+            "S": 39.0,
+            "M": 40.0,
+            "L": 39.0,
+            "XL": 41.0
+          }
+        },
+        {
+          "point_id": "fly-opening-excluding-w-b",
+          "name": "Fly opening (excluding w/b)",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": 0.0,
+          "grading_increment": 0.0,
+          "diagram_code": "Q",
+          "values": {
+            "S": 16.0,
+            "M": 16.0,
+            "L": 16.5,
+            "XL": 17.0
+          }
+        },
+        {
+          "point_id": "fly-width",
+          "name": "Fly width",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": 0.0,
+          "grading_increment": 0.0,
+          "diagram_code": "Q1",
+          "values": {
+            "S": 4.0,
+            "M": 4.0,
+            "L": 4.0,
+            "XL": 4.0
+          }
+        },
+        {
+          "point_id": "outside-excluding-w-b",
+          "name": "Outside (excluding w/b)",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": 0.5,
+          "grading_increment": 0.7,
+          "diagram_code": "BB",
+          "values": {
+            "S": 46.0,
+            "M": 47.0,
+            "L": 46.0,
+            "XL": 48.0
+          }
+        },
+        {
+          "point_id": "inseam",
+          "name": "Inseam",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": 0.5,
+          "grading_increment": 0.0,
+          "diagram_code": "B",
+          "values": {
+            "S": 22.0,
+            "M": 22.5,
+            "L": 22.0,
+            "XL": 22.5
+          }
+        },
+        {
+          "point_id": "1-2-thigh-1cm-from-crotch",
+          "name": "1/2 Thigh (1cm from crotch)",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": 0.5,
+          "grading_increment": 1.0,
+          "diagram_code": "F",
+          "values": {
+            "S": 33.5,
+            "M": 35.0,
+            "L": 36.5,
+            "XL": 38.5
+          }
+        },
+        {
+          "point_id": "1-2-thigh-10cm-from-crotch",
+          "name": "1/2 Thigh (10cm from crotch)",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": 0.5,
+          "grading_increment": 1.0,
+          "diagram_code": "F2",
+          "values": {
+            "S": 32.0,
+            "M": 33.5,
+            "L": 35.0,
+            "XL": 36.5
+          }
+        },
+        {
+          "point_id": "1-2-bottom-leg-opening",
+          "name": "1/2 Bottom leg opening",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": 0.5,
+          "grading_increment": 1.0,
+          "diagram_code": "I",
+          "values": {
+            "S": 30.5,
+            "M": 32.0,
+            "L": 33.0,
+            "XL": 34.0
+          }
+        },
+        {
+          "point_id": "bottom-hem-stitch-height",
+          "name": "Bottom hem stitch height",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": 0.0,
+          "grading_increment": 0.0,
+          "diagram_code": "I2",
+          "values": {
+            "S": 3.0,
+            "M": 3.0,
+            "L": 3.0,
+            "XL": 3.0
+          }
+        },
+        {
+          "point_id": "side-pocket-opening-length",
+          "name": "Side pocket opening length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": 0.0,
+          "grading_increment": 0.5,
+          "diagram_code": "P",
+          "values": {
+            "S": 17.5,
+            "M": 18.0,
+            "L": 18.0,
+            "XL": 18.0
+          }
+        },
+        {
+          "point_id": "side-pocket-opening-width",
+          "name": "Side pocket opening width",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": 0.0,
+          "grading_increment": 0.0,
+          "diagram_code": "P1",
+          "values": {
+            "S": 1.5,
+            "M": 1.5,
+            "L": 1.5,
+            "XL": 1.5
+          }
+        },
+        {
+          "point_id": "back-pocket-opening-length",
+          "name": "Back pocket opening length",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": 0.0,
+          "grading_increment": 0.0,
+          "diagram_code": "O",
+          "values": {
+            "S": 14.5,
+            "M": 15.0,
+            "L": 15.0,
+            "XL": 15.0
+          }
+        },
+        {
+          "point_id": "back-pocket-opening-width",
+          "name": "Back pocket opening width",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": 0.0,
+          "grading_increment": 0.0,
+          "diagram_code": "O1",
+          "values": {
+            "S": 1.0,
+            "M": 1.0,
+            "L": 1.0,
+            "XL": 1.0
+          }
+        },
+        {
+          "point_id": "back-pocket-position-from-waistband",
+          "name": "Back pocket position from waistband",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": 0.0,
+          "grading_increment": 0.0,
+          "diagram_code": "R",
+          "values": {
+            "S": 7.5,
+            "M": 7.5,
+            "L": 7.5,
+            "XL": 7.5
+          }
+        },
+        {
+          "point_id": "back-pocket-position-from-center-rise",
+          "name": "Back pocket position from center rise",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": 0.0,
+          "grading_increment": 0.5,
+          "diagram_code": "R1",
+          "values": {
+            "S": 6.0,
+            "M": 7.0,
+            "L": 7.5,
+            "XL": 7.5
+          }
+        },
+        {
+          "point_id": "string-length",
+          "name": "String Length",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": 0.0,
+          "grading_increment": 0.0,
+          "diagram_code": null,
+          "values": {
+            "S": 136.0,
+            "M": 142.0,
+            "L": 146.0,
+            "XL": 148.0
+          }
+        },
+        {
+          "point_id": "string-width",
+          "name": "String width",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": 0.0,
+          "grading_increment": 0.0,
+          "diagram_code": null,
+          "values": {
+            "S": 1.0,
+            "M": 1.0,
+            "L": 1.0,
+            "XL": 1.0
+          }
+        },
+        {
+          "point_id": "loops-width-6-pcs",
+          "name": "Loops width (6 pcs)",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": 0.0,
+          "grading_increment": 0.0,
+          "diagram_code": null,
+          "values": {
+            "S": null,
+            "M": null,
+            "L": null,
+            "XL": null
+          }
+        }
+      ],
+      "style_code": "0197",
+      "fabric": "linen",
+      "season": "SS26",
+      "special_instructions": null,
+      "physical_pattern_kept": false,
+      "physical_pattern_location": null,
+      "files": [],
+      "source_file": "Massimo Linen Short- 0197.xlsx",
+      "notes": "Linen Short Pant",
+      "created_at": "2026-07-24T20:47:47.000Z",
+      "updated_at": "2026-07-24T20:47:47.000Z"
+    },
+    {
+      "id": "bp-fr-suit-supply-jacket-long",
+      "house_brand_id": "fouad-rahme",
+      "house_brand_code": "FR",
+      "cut_family": "Suit Supply",
+      "garment_type": "jacket",
+      "cut_variant": "Long",
+      "name": "Suit Supply Jacket (Long)",
+      "unit": "in",
+      "sizes": [
+        "L-90",
+        "L-94",
+        "L-98",
+        "L-102",
+        "L-106",
+        "L-110",
+        "L-114",
+        "L-118"
+      ],
+      "points": [
+        {
+          "point_id": "total-length-hnp",
+          "name": "Total Length (HNP)",
+          "remark": "Front",
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-90": null,
+            "L-94": 31.5,
+            "L-98": 31.75,
+            "L-102": 32.5,
+            "L-106": 33.0,
+            "L-110": 33.625,
+            "L-114": 33.75,
+            "L-118": null
+          }
+        },
+        {
+          "point_id": "1-2-chest",
+          "name": "1/2 Chest",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-90": null,
+            "L-94": 43.5,
+            "L-98": 45.0,
+            "L-102": 47.0,
+            "L-106": 48.0,
+            "L-110": 49.5,
+            "L-114": 50.0,
+            "L-118": null
+          }
+        },
+        {
+          "point_id": "1-2-waist",
+          "name": "1/2 Waist",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-90": null,
+            "L-94": 38.0,
+            "L-98": 39.5,
+            "L-102": 41.5,
+            "L-106": 42.75,
+            "L-110": 45.0,
+            "L-114": 46.0,
+            "L-118": null
+          }
+        },
+        {
+          "point_id": "1-2-hip-width",
+          "name": "1/2 Hip Width",
+          "remark": "Position: Slit Point",
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-90": null,
+            "L-94": 38.5,
+            "L-98": 40.0,
+            "L-102": 42.0,
+            "L-106": 43.25,
+            "L-110": 45.5,
+            "L-114": 46.5,
+            "L-118": null
+          }
+        },
+        {
+          "point_id": "1-2-shoulder",
+          "name": "1/2 Shoulder",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-90": null,
+            "L-94": 5.375,
+            "L-98": 5.5,
+            "L-102": 5.625,
+            "L-106": 5.75,
+            "L-110": 6.25,
+            "L-114": 6.125,
+            "L-118": null
+          }
+        },
+        {
+          "point_id": "slv-length",
+          "name": "Slv Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-90": null,
+            "L-94": 25.75,
+            "L-98": 26.25,
+            "L-102": 26.5,
+            "L-106": 27.0,
+            "L-110": 27.0,
+            "L-114": 27.5,
+            "L-118": null
+          }
+        },
+        {
+          "point_id": "bicep",
+          "name": "Bicep",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-90": null,
+            "L-94": 7.875,
+            "L-98": 8.0,
+            "L-102": 8.25,
+            "L-106": 8.375,
+            "L-110": 8.75,
+            "L-114": 8.875,
+            "L-118": null
+          }
+        },
+        {
+          "point_id": "cuff-opening",
+          "name": "Cuff Opening",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-90": null,
+            "L-94": 5.5,
+            "L-98": 5.375,
+            "L-102": 5.625,
+            "L-106": 5.75,
+            "L-110": 6.0,
+            "L-114": 6.125,
+            "L-118": null
+          }
+        },
+        {
+          "point_id": "cb-length",
+          "name": "CB Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-90": null,
+            "L-94": 30.5,
+            "L-98": 30.625,
+            "L-102": 31.25,
+            "L-106": 31.625,
+            "L-110": 32.0,
+            "L-114": 32.25,
+            "L-118": null
+          }
+        },
+        {
+          "point_id": "collar-height",
+          "name": "Collar Height",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-90": null,
+            "L-94": null,
+            "L-98": null,
+            "L-102": null,
+            "L-106": null,
+            "L-110": null,
+            "L-114": null,
+            "L-118": null
+          }
+        },
+        {
+          "point_id": "collar-outer-edge",
+          "name": "Collar Outer Edge",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-90": null,
+            "L-94": null,
+            "L-98": null,
+            "L-102": null,
+            "L-106": null,
+            "L-110": null,
+            "L-114": null,
+            "L-118": null
+          }
+        }
+      ],
+      "style_code": null,
+      "fabric": null,
+      "season": null,
+      "special_instructions": null,
+      "physical_pattern_kept": false,
+      "physical_pattern_location": null,
+      "files": [],
+      "source_file": "suit supply long Measurement Spec for Jacket.xlsx",
+      "notes": null,
+      "created_at": "2026-07-24T20:47:47.000Z",
+      "updated_at": "2026-07-24T20:47:47.000Z"
+    },
+    {
+      "id": "bp-fr-suit-supply-jacket-short",
+      "house_brand_id": "fouad-rahme",
+      "house_brand_code": "FR",
+      "cut_family": "Suit Supply",
+      "garment_type": "jacket",
+      "cut_variant": "Short",
+      "name": "Suit Supply Jacket (Short)",
+      "unit": "in",
+      "sizes": [
+        "S-22",
+        "S-23",
+        "S-24",
+        "S-25",
+        "S-26",
+        "S-27",
+        "S-28",
+        "S-29",
+        "S-30"
+      ],
+      "points": [
+        {
+          "point_id": "total-length-hnp",
+          "name": "Total Length (NPS)",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S-22": null,
+            "S-23": 29.0,
+            "S-24": 29.25,
+            "S-25": 29.5,
+            "S-26": 30.25,
+            "S-27": 30.5,
+            "S-28": 30.75,
+            "S-29": null,
+            "S-30": null
+          }
+        },
+        {
+          "point_id": "1-2-chest",
+          "name": "1/2 Chest",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S-22": null,
+            "S-23": 43.0,
+            "S-24": 44.0,
+            "S-25": 44.5,
+            "S-26": 46.0,
+            "S-27": 48.5,
+            "S-28": 49.5,
+            "S-29": null,
+            "S-30": null
+          }
+        },
+        {
+          "point_id": "1-2-waist",
+          "name": "1/2 Waist",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S-22": null,
+            "S-23": 37.5,
+            "S-24": 39.0,
+            "S-25": 39.5,
+            "S-26": 41.0,
+            "S-27": 43.5,
+            "S-28": 45.0,
+            "S-29": null,
+            "S-30": null
+          }
+        },
+        {
+          "point_id": "1-2-hip",
+          "name": "1/2 Hip",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S-22": null,
+            "S-23": 38.0,
+            "S-24": 39.5,
+            "S-25": 40.0,
+            "S-26": 41.5,
+            "S-27": 44.5,
+            "S-28": 45.5,
+            "S-29": null,
+            "S-30": null
+          }
+        },
+        {
+          "point_id": "1-2-shoulder",
+          "name": "1/2 Shoulder",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S-22": null,
+            "S-23": 5.5,
+            "S-24": 5.5,
+            "S-25": 5.625,
+            "S-26": 5.875,
+            "S-27": 6.0,
+            "S-28": 6.125,
+            "S-29": null,
+            "S-30": null
+          }
+        },
+        {
+          "point_id": "slv-back-length",
+          "name": "Slv Back Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S-22": null,
+            "S-23": 21.0,
+            "S-24": 22.375,
+            "S-25": 22.75,
+            "S-26": 23.125,
+            "S-27": 23.125,
+            "S-28": 23.625,
+            "S-29": null,
+            "S-30": null
+          }
+        },
+        {
+          "point_id": "slv-length",
+          "name": "Slv Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S-22": null,
+            "S-23": 23.5,
+            "S-24": 23.5,
+            "S-25": 24.0,
+            "S-26": 24.5,
+            "S-27": 25.0,
+            "S-28": 25.25,
+            "S-29": null,
+            "S-30": null
+          }
+        },
+        {
+          "point_id": "bicep",
+          "name": "Bicep",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S-22": null,
+            "S-23": 7.75,
+            "S-24": 7.875,
+            "S-25": 8.0,
+            "S-26": 8.25,
+            "S-27": 8.5,
+            "S-28": 8.625,
+            "S-29": null,
+            "S-30": null
+          }
+        },
+        {
+          "point_id": "cuff-opening",
+          "name": "Cuff Opening",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S-22": null,
+            "S-23": 5.375,
+            "S-24": 5.5,
+            "S-25": 5.625,
+            "S-26": 5.75,
+            "S-27": 5.75,
+            "S-28": 5.875,
+            "S-29": null,
+            "S-30": null
+          }
+        },
+        {
+          "point_id": "front-side-length",
+          "name": "Front Side Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S-22": null,
+            "S-23": 18.25,
+            "S-24": 18.375,
+            "S-25": 18.5,
+            "S-26": 18.875,
+            "S-27": 18.75,
+            "S-28": 19.125,
+            "S-29": null,
+            "S-30": null
+          }
+        },
+        {
+          "point_id": "cb-length",
+          "name": "CB Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S-22": null,
+            "S-23": 27.75,
+            "S-24": 28.0,
+            "S-25": 28.25,
+            "S-26": 28.75,
+            "S-27": 29.25,
+            "S-28": 29.625,
+            "S-29": null,
+            "S-30": null
+          }
+        },
+        {
+          "point_id": "collar-outer-edge",
+          "name": "Collar Outer Edge",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "S-22": null,
+            "S-23": 15.5,
+            "S-24": null,
+            "S-25": null,
+            "S-26": null,
+            "S-27": 15.5,
+            "S-28": null,
+            "S-29": null,
+            "S-30": null
+          }
+        }
+      ],
+      "style_code": null,
+      "fabric": null,
+      "season": null,
+      "special_instructions": null,
+      "physical_pattern_kept": false,
+      "physical_pattern_location": null,
+      "files": [],
+      "source_file": "Jacket short spec for Suit Supply Short.xlsx",
+      "notes": "Fabric code: 10013.087/4",
+      "created_at": "2026-07-24T20:47:47.000Z",
+      "updated_at": "2026-07-24T20:47:47.000Z"
+    },
+    {
+      "id": "bp-fr-suit-supply-shirt-long",
+      "house_brand_id": "fouad-rahme",
+      "house_brand_code": "FR",
+      "cut_family": "Suit Supply",
+      "garment_type": "shirt",
+      "cut_variant": "Long",
+      "name": "Suit Supply Shirt (Long)",
+      "unit": "in",
+      "sizes": [
+        "L-38",
+        "L-39",
+        "L-40",
+        "L-41",
+        "L-42",
+        "L-43",
+        "L-44",
+        "L-45",
+        "L-46"
+      ],
+      "points": [
+        {
+          "point_id": "total-length-hnp",
+          "name": "Total Length (HNP)",
+          "remark": "Front",
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-38": 31.0,
+            "L-39": 31.25,
+            "L-40": 31.125,
+            "L-41": 31.25,
+            "L-42": 31.25,
+            "L-43": 32.125,
+            "L-44": 32.625,
+            "L-45": null,
+            "L-46": null
+          }
+        },
+        {
+          "point_id": "1-2-chest",
+          "name": "1/2 Chest",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-38": 44.0,
+            "L-39": 45.0,
+            "L-40": 47.0,
+            "L-41": 48.5,
+            "L-42": 49.25,
+            "L-43": 49.75,
+            "L-44": 50.5,
+            "L-45": null,
+            "L-46": null
+          }
+        },
+        {
+          "point_id": "1-2-waist",
+          "name": "1/2 Waist",
+          "remark": "Position:",
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-38": 39.0,
+            "L-39": 39.75,
+            "L-40": 40.75,
+            "L-41": 42.75,
+            "L-42": 46.5,
+            "L-43": 43.75,
+            "L-44": 46.0,
+            "L-45": null,
+            "L-46": null
+          }
+        },
+        {
+          "point_id": "1-2-hem-width",
+          "name": "1/2 Hem Width",
+          "remark": "Position: Slit Point",
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-38": 42.5,
+            "L-39": 43.5,
+            "L-40": 45.25,
+            "L-41": 46.25,
+            "L-42": 47.25,
+            "L-43": 48.5,
+            "L-44": 49.75,
+            "L-45": null,
+            "L-46": null
+          }
+        },
+        {
+          "point_id": "1-2-shoulder",
+          "name": "1/2 Shoulder",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-38": 5.875,
+            "L-39": 6.0,
+            "L-40": 6.125,
+            "L-41": 6.25,
+            "L-42": 6.375,
+            "L-43": 6.5,
+            "L-44": 6.625,
+            "L-45": null,
+            "L-46": null
+          }
+        },
+        {
+          "point_id": "slv-length",
+          "name": "Slv Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-38": 28.25,
+            "L-39": 28.625,
+            "L-40": 28.5,
+            "L-41": 28.625,
+            "L-42": 29.0,
+            "L-43": 29.125,
+            "L-44": 29.125,
+            "L-45": null,
+            "L-46": null
+          }
+        },
+        {
+          "point_id": "slv-inseam",
+          "name": "Slv Inseam",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-38": 20.0,
+            "L-39": 20.375,
+            "L-40": 20.25,
+            "L-41": 20.375,
+            "L-42": 20.75,
+            "L-43": 21.0,
+            "L-44": 20.625,
+            "L-45": null,
+            "L-46": null
+          }
+        },
+        {
+          "point_id": "bicep",
+          "name": "Bicep",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-38": 8.0,
+            "L-39": 8.125,
+            "L-40": 8.625,
+            "L-41": 8.5,
+            "L-42": 8.75,
+            "L-43": 9.0,
+            "L-44": 8.25,
+            "L-45": null,
+            "L-46": null
+          }
+        },
+        {
+          "point_id": "cuff-opening",
+          "name": "Cuff Opening",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-38": 4.0,
+            "L-39": 4.125,
+            "L-40": 4.125,
+            "L-41": 4.125,
+            "L-42": 4.375,
+            "L-43": 4.5,
+            "L-44": 4.625,
+            "L-45": null,
+            "L-46": null
+          }
+        },
+        {
+          "point_id": "cb-length",
+          "name": "CB Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-38": 32.5,
+            "L-39": 33.0,
+            "L-40": 32.5,
+            "L-41": 32.875,
+            "L-42": 33.0,
+            "L-43": 33.875,
+            "L-44": 34.25,
+            "L-45": null,
+            "L-46": null
+          }
+        },
+        {
+          "point_id": "side-seam",
+          "name": "Side Seam",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-38": 19.0,
+            "L-39": 19.0,
+            "L-40": 18.875,
+            "L-41": 19.0,
+            "L-42": 19.0,
+            "L-43": 19.75,
+            "L-44": 19.5,
+            "L-45": null,
+            "L-46": null
+          }
+        },
+        {
+          "point_id": "collar-outer-edge",
+          "name": "Collar Outer Edge",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-38": 14.0,
+            "L-39": 14.25,
+            "L-40": 14.5,
+            "L-41": 14.875,
+            "L-42": 15.25,
+            "L-43": 15.625,
+            "L-44": 16.125,
+            "L-45": null,
+            "L-46": null
+          }
+        },
+        {
+          "point_id": "slv-placket-length",
+          "name": "Slv Placket Length",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-38": 6.0,
+            "L-39": 6.0,
+            "L-40": 6.0,
+            "L-41": 6.0,
+            "L-42": 6.0,
+            "L-43": 6.0,
+            "L-44": 6.0,
+            "L-45": null,
+            "L-46": null
+          }
+        },
+        {
+          "point_id": "collar-height",
+          "name": "Collar Height",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-38": 1.75,
+            "L-39": 1.75,
+            "L-40": 1.75,
+            "L-41": 1.75,
+            "L-42": 1.75,
+            "L-43": 1.75,
+            "L-44": 1.75,
+            "L-45": null,
+            "L-46": null
+          }
+        },
+        {
+          "point_id": "collar-point",
+          "name": "Collar Point",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-38": 3.5,
+            "L-39": 3.5,
+            "L-40": 3.5,
+            "L-41": 3.5,
+            "L-42": 3.5,
+            "L-43": 3.5,
+            "L-44": 3.5,
+            "L-45": null,
+            "L-46": null
+          }
+        },
+        {
+          "point_id": "cuff-height",
+          "name": "Cuff Width",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-38": 2.75,
+            "L-39": 2.75,
+            "L-40": 2.75,
+            "L-41": 2.75,
+            "L-42": 2.75,
+            "L-43": 2.75,
+            "L-44": 2.75,
+            "L-45": null,
+            "L-46": null
+          }
+        },
+        {
+          "point_id": "cuff-length",
+          "name": "Cuff Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "L-38": 9.0,
+            "L-39": 9.25,
+            "L-40": 9.375,
+            "L-41": 9.25,
+            "L-42": 9.625,
+            "L-43": 9.625,
+            "L-44": null,
+            "L-45": null,
+            "L-46": null
+          }
+        }
+      ],
+      "style_code": null,
+      "fabric": null,
+      "season": null,
+      "special_instructions": null,
+      "physical_pattern_kept": false,
+      "physical_pattern_location": null,
+      "files": [],
+      "source_file": "suit supply long Measurement Spec for Shirt.xlsx",
+      "notes": null,
+      "created_at": "2026-07-24T20:47:47.000Z",
+      "updated_at": "2026-07-24T20:47:47.000Z"
+    },
+    {
+      "id": "bp-fr-suit-supply-shirt-regular",
+      "house_brand_id": "fouad-rahme",
+      "house_brand_code": "FR",
+      "cut_family": "Suit Supply",
+      "garment_type": "shirt",
+      "cut_variant": "Regular",
+      "name": "Suit Supply Shirt (Regular)",
+      "unit": "in",
+      "sizes": [
+        "R-35",
+        "R-36",
+        "R-37",
+        "R-38",
+        "R-39",
+        "R-40",
+        "R-41",
+        "R-42",
+        "R-43",
+        "R-44",
+        "R-45",
+        "R-46"
+      ],
+      "points": [
+        {
+          "point_id": "total-length-hnp",
+          "name": "Total Length (HNP)",
+          "remark": "Front",
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "R-35": 28.25,
+            "R-36": 28.5,
+            "R-37": 29.0,
+            "R-38": 29.25,
+            "R-39": 30.0,
+            "R-40": 30.125,
+            "R-41": 30.5,
+            "R-42": 29.375,
+            "R-43": 31.0,
+            "R-44": 31.5,
+            "R-45": 32.0,
+            "R-46": 32.25
+          }
+        },
+        {
+          "point_id": "1-2-chest",
+          "name": "1/2 Chest",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "R-35": 40.5,
+            "R-36": 41.75,
+            "R-37": 43.5,
+            "R-38": 44.5,
+            "R-39": 44.75,
+            "R-40": 47.5,
+            "R-41": 48.0,
+            "R-42": 49.75,
+            "R-43": 50.75,
+            "R-44": 51.5,
+            "R-45": 52.25,
+            "R-46": 55.5
+          }
+        },
+        {
+          "point_id": "1-2-waist",
+          "name": "1/2 Waist",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "R-35": 35.0,
+            "R-36": 36.5,
+            "R-37": 38.5,
+            "R-38": 39.75,
+            "R-39": 40.0,
+            "R-40": 42.0,
+            "R-41": 42.75,
+            "R-42": 44.25,
+            "R-43": 44.75,
+            "R-44": 46.25,
+            "R-45": 47.5,
+            "R-46": 50.0
+          }
+        },
+        {
+          "point_id": "1-2-hem-width",
+          "name": "1/2 Hem Width",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "R-35": 38.25,
+            "R-36": 39.75,
+            "R-37": 41.75,
+            "R-38": 43.75,
+            "R-39": 43.0,
+            "R-40": 45.75,
+            "R-41": 46.25,
+            "R-42": 48.25,
+            "R-43": 48.5,
+            "R-44": 50.0,
+            "R-45": 51.5,
+            "R-46": 53.0
+          }
+        },
+        {
+          "point_id": "shoulder",
+          "name": "Shoulder",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "R-35": 17.125,
+            "R-36": 17.875,
+            "R-37": 18.25,
+            "R-38": 18.625,
+            "R-39": 18.875,
+            "R-40": 19.125,
+            "R-41": 19.75,
+            "R-42": 20.0,
+            "R-43": 20.5,
+            "R-44": 21.0,
+            "R-45": 21.125,
+            "R-46": 21.625
+          }
+        },
+        {
+          "point_id": "1-2-shoulder",
+          "name": "1/2 Shoulder",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "R-35": 5.625,
+            "R-36": 5.875,
+            "R-37": 6.0,
+            "R-38": 6.0,
+            "R-39": 6.0,
+            "R-40": 6.125,
+            "R-41": 6.375,
+            "R-42": 6.375,
+            "R-43": 6.5,
+            "R-44": 6.625,
+            "R-45": 6.75,
+            "R-46": 7.0
+          }
+        },
+        {
+          "point_id": "slv-length",
+          "name": "Slv Length",
+          "remark": "Including Cuff",
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "R-35": 25.125,
+            "R-36": 25.5,
+            "R-37": 25.5,
+            "R-38": 25.75,
+            "R-39": 25.875,
+            "R-40": 26.125,
+            "R-41": 26.375,
+            "R-42": 26.75,
+            "R-43": 26.625,
+            "R-44": 27.0,
+            "R-45": 27.25,
+            "R-46": 27.625
+          }
+        },
+        {
+          "point_id": "slv-inseam",
+          "name": "Slv Inseam",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "R-35": 16.875,
+            "R-36": 17.0,
+            "R-37": 17.0,
+            "R-38": 17.25,
+            "R-39": 17.75,
+            "R-40": 17.875,
+            "R-41": 17.875,
+            "R-42": 18.25,
+            "R-43": 18.5,
+            "R-44": 18.875,
+            "R-45": 19.125,
+            "R-46": 18.625
+          }
+        },
+        {
+          "point_id": "bicep",
+          "name": "Bicep",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "R-35": 7.5,
+            "R-36": 7.625,
+            "R-37": 7.875,
+            "R-38": 7.875,
+            "R-39": 8.0,
+            "R-40": 8.5,
+            "R-41": 8.5,
+            "R-42": 8.625,
+            "R-43": 9.0,
+            "R-44": 9.0,
+            "R-45": 9.25,
+            "R-46": 9.5
+          }
+        },
+        {
+          "point_id": "elbow",
+          "name": "Elbow",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "R-35": 6.125,
+            "R-36": 6.25,
+            "R-37": 6.25,
+            "R-38": 6.25,
+            "R-39": 6.5,
+            "R-40": 6.75,
+            "R-41": 6.875,
+            "R-42": 7.0,
+            "R-43": 7.125,
+            "R-44": 7.375,
+            "R-45": 7.5,
+            "R-46": 7.625
+          }
+        },
+        {
+          "point_id": "cuff-opening",
+          "name": "Cuff Opening",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "R-35": 3.875,
+            "R-36": 3.875,
+            "R-37": 4.0,
+            "R-38": 4.0,
+            "R-39": 4.125,
+            "R-40": 4.125,
+            "R-41": 4.375,
+            "R-42": 4.375,
+            "R-43": 4.5,
+            "R-44": 4.5,
+            "R-45": 4.75,
+            "R-46": 4.75
+          }
+        },
+        {
+          "point_id": "cb-length",
+          "name": "CB Length",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "R-35": 29.75,
+            "R-36": 29.75,
+            "R-37": 31.0,
+            "R-38": 30.75,
+            "R-39": 31.625,
+            "R-40": 31.75,
+            "R-41": 32.375,
+            "R-42": 31.5,
+            "R-43": 32.625,
+            "R-44": 33.0,
+            "R-45": 33.75,
+            "R-46": 33.75
+          }
+        },
+        {
+          "point_id": "side-seam",
+          "name": "Side Seam",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "R-35": 16.75,
+            "R-36": 16.75,
+            "R-37": 17.25,
+            "R-38": 17.25,
+            "R-39": 17.875,
+            "R-40": 18.0,
+            "R-41": 17.625,
+            "R-42": 17.0,
+            "R-43": 18.5,
+            "R-44": 18.625,
+            "R-45": 19.0,
+            "R-46": 19.125
+          }
+        },
+        {
+          "point_id": "collar-outer-edge",
+          "name": "Collar Outer Edge",
+          "remark": null,
+          "is_graded": true,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "R-35": 12.5,
+            "R-36": 12.5,
+            "R-37": 13.5,
+            "R-38": 13.75,
+            "R-39": 14.25,
+            "R-40": 14.625,
+            "R-41": 15.0,
+            "R-42": 15.25,
+            "R-43": 15.625,
+            "R-44": 16.25,
+            "R-45": 16.75,
+            "R-46": 17.0
+          }
+        },
+        {
+          "point_id": "slv-placket-length",
+          "name": "Slv Placket Length",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "R-35": 6.0,
+            "R-36": 6.0,
+            "R-37": 6.0,
+            "R-38": 6.0,
+            "R-39": 6.0,
+            "R-40": 6.0,
+            "R-41": 6.0,
+            "R-42": 6.0,
+            "R-43": 6.0,
+            "R-44": 6.0,
+            "R-45": 6.0,
+            "R-46": 6.0
+          }
+        },
+        {
+          "point_id": "collar-height",
+          "name": "Collar Height",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "R-35": 1.875,
+            "R-36": 1.875,
+            "R-37": 1.875,
+            "R-38": 1.875,
+            "R-39": 1.875,
+            "R-40": 1.875,
+            "R-41": 1.875,
+            "R-42": 1.875,
+            "R-43": 1.875,
+            "R-44": 1.875,
+            "R-45": 1.875,
+            "R-46": 1.875
+          }
+        },
+        {
+          "point_id": "collar-point",
+          "name": "Collar Point",
+          "remark": null,
+          "is_graded": false,
+          "tolerance": null,
+          "grading_increment": null,
+          "diagram_code": null,
+          "values": {
+            "R-35": 3.5,
+            "R-36": 3.5,
+            "R-37": 3.5,
+            "R-38": 3.5,
+            "R-39": 3.5,
+            "R-40": 3.5,
+            "R-41": 3.5,
+            "R-42": 3.5,
+            "R-43": 3.5,
+            "R-44": 3.5,
+            "R-45": 3.5,
+            "R-46": 3.5
+          }
+        }
+      ],
+      "style_code": null,
+      "fabric": null,
+      "season": null,
+      "special_instructions": null,
+      "physical_pattern_kept": false,
+      "physical_pattern_location": null,
+      "files": [],
+      "source_file": "suit supply Reg Measurement Spec for Shirt.xlsx",
+      "notes": null,
+      "created_at": "2026-07-24T20:47:47.000Z",
+      "updated_at": "2026-07-24T20:47:47.000Z"
+    }
+  ],
+  "client_patterns": []
+}

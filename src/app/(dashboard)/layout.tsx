@@ -44,6 +44,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       isClientManager: false,
       isTaskOperator: false,
       isProductionOperator: false,
+      isPatternOperator: false,
       isSalesOperator: false,
       canViewClientContact: false,
       canViewFabricListPrices: false,

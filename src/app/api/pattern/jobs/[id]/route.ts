@@ -40,6 +40,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const body = (await request.json()) as {
       status?: string;
       assigned_to?: string | null;
+      client_pattern_id?: string | null;
+      client_pattern_version_id?: string | null;
       pattern_code?: string | null;
       pattern_size_notes?: string | null;
       trial_priority?: boolean;
@@ -54,6 +56,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const patch: Parameters<typeof updatePatternJob>[1] = {};
     if (body.status != null) patch.status = body.status;
     if ("assigned_to" in body) patch.assigned_to = body.assigned_to;
+    if ("client_pattern_id" in body) patch.client_pattern_id = body.client_pattern_id;
+    if ("client_pattern_version_id" in body)
+      patch.client_pattern_version_id = body.client_pattern_version_id;
     if ("pattern_code" in body) patch.pattern_code = body.pattern_code;
     if ("pattern_size_notes" in body) patch.pattern_size_notes = body.pattern_size_notes;
     if (body.trial_priority != null) patch.trial_priority = body.trial_priority;

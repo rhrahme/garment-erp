@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight, Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { PatternFittingOutcome, PatternJob, PatternJobStatus } from "@/lib/types/pattern";
+import type { ClientPattern } from "@/lib/types/pattern-library";
 
 const STATUSES: PatternJobStatus[] = [
   "pending",
@@ -41,6 +42,9 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
   const [fittingOutcome, setFittingOutcome] = useState<PatternFittingOutcome>("pass");
   const [selectedFittingId, setSelectedFittingId] = useState("");
   const [uploadRevisionId, setUploadRevisionId] = useState("");
+  const [clientPatterns, setClientPatterns] = useState<ClientPattern[]>([]);
+  const [linkedPatternId, setLinkedPatternId] = useState("");
+  const [linkedVersionId, setLinkedVersionId] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -57,6 +61,8 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       setNotes(nextJob.notes ?? "");
       setBlockedReason(nextJob.blocked_reason ?? "");
       setStatus(nextJob.status);
+      setLinkedPatternId(nextJob.client_pattern_id ?? "");
+      setLinkedVersionId(nextJob.client_pattern_version_id ?? "");
       const scheduled = nextJob.fittings.find((f) => f.status === "scheduled");
       setSelectedFittingId(scheduled?.id ?? nextJob.fittings[nextJob.fittings.length - 1]?.id ?? "");
       setUploadRevisionId(nextJob.revisions[nextJob.revisions.length - 1]?.id ?? "");
@@ -70,6 +76,35 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    fetch("/api/pattern/library/client-patterns", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setClientPatterns(data?.client_patterns ?? []))
+      .catch(() => setClientPatterns([]));
+  }, []);
+
+  async function saveMasterPatternLink() {
+    setActing(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/pattern/jobs/${jobId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_pattern_id: linkedPatternId || null,
+          client_pattern_version_id: linkedVersionId || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Save failed");
+      setJob(data.job);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setActing(false);
+    }
+  }
 
   async function saveJob() {
     setActing(true);
@@ -262,6 +297,77 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
         <Button onClick={() => void saveJob()} disabled={acting}>
           {acting ? "Saving…" : "Save job"}
         </Button>
+      </section>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+        <h3 className="font-semibold text-slate-900">Master pattern (library)</h3>
+        <p className="text-xs text-slate-500">
+          Link this job to the client&apos;s master pattern + trial so cutting uses the right
+          measurement sheet.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block text-sm">
+            <span className="font-medium text-slate-700">Client pattern</span>
+            <select
+              value={linkedPatternId}
+              onChange={(e) => {
+                setLinkedPatternId(e.target.value);
+                setLinkedVersionId("");
+              }}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            >
+              <option value="">Not linked</option>
+              {clientPatterns.map((pattern) => (
+                <option key={pattern.id} value={pattern.id}>
+                  {pattern.pattern_ref} — {pattern.client_name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium text-slate-700">Trial version</span>
+            <select
+              value={linkedVersionId}
+              onChange={(e) => setLinkedVersionId(e.target.value)}
+              disabled={!linkedPatternId}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100"
+            >
+              <option value="">Latest / final</option>
+              {(clientPatterns.find((pattern) => pattern.id === linkedPatternId)?.versions ?? []).map(
+                (version) => (
+                  <option key={version.id} value={version.id}>
+                    Trial {version.version}
+                    {version.is_final ? " (Final)" : ""}
+                  </option>
+                )
+              )}
+            </select>
+          </label>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button onClick={() => void saveMasterPatternLink()} disabled={acting}>
+            {acting ? "Saving…" : "Save link"}
+          </Button>
+          {job.client_pattern_id ? (
+            <>
+              <Link
+                href={`/pattern/library/clients/${job.client_pattern_id}`}
+                className="inline-flex items-center gap-1 text-sm font-medium text-indigo-700 hover:text-indigo-900"
+              >
+                Open master pattern
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href={`/pattern/client-patterns/${job.client_pattern_id}/print?job=${job.id}${job.client_pattern_version_id ? `&version=${job.client_pattern_version_id}` : ""}`}
+                target="_blank"
+                className="inline-flex items-center gap-1 text-sm font-medium text-slate-700 hover:text-slate-900"
+              >
+                <Printer className="h-4 w-4" />
+                Print A4 sheet
+              </Link>
+            </>
+          ) : null}
+        </div>
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">

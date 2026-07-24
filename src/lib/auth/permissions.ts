@@ -106,6 +106,27 @@ export const PRODUCTION_OPERATOR_BLOCKED_ROUTE_PREFIXES = [
   "/sales",
 ] as const;
 
+/**
+ * Pattern team — pattern library + drafting queue, clients (contacts hidden),
+ * fabric specification. No prices, no orders create, no accounting/HR/sales CRM.
+ */
+const PATTERN_OPERATOR_ROUTE_PREFIXES = [
+  "/pattern",
+  "/clients",
+  "/fabric-specification",
+  "/api/pattern",
+  "/api/clients",
+  "/api/custom-fabrics",
+  "/api/fabric-search",
+  "/api/fabric-brands",
+  "/api/qr",
+  "/api/suppliers/loro-piana",
+  "/api/integrations/drapers/medias",
+  "/api/auth/session",
+  "/api/auth/dev-impersonate",
+  "/login",
+] as const;
+
 const SALES_OPERATOR_ROUTE_PREFIXES = [
   "/sales",
   "/clients",
@@ -206,10 +227,18 @@ export const SALES_OPERATOR_NAV_HREFS = [
   "/invoices",
 ] as const;
 
+/** Sidebar for the pattern team — library + queue, clients (contacts hidden), fabric spec. */
+export const PATTERN_OPERATOR_NAV_HREFS = [
+  "/pattern",
+  "/clients",
+  "/fabric-specification",
+] as const;
+
 export type RestrictedAccessKind =
   | "client_manager"
   | "task_operator"
   | "production_operator"
+  | "pattern_operator"
   | "sales_operator";
 
 export function parseSuperAdminEmails(): Set<string> {
@@ -276,6 +305,16 @@ export function parseProductionEmails(): Set<string> {
   return new Set([...BUILTIN_PRODUCTION_OPERATOR_EMAILS, ...fromEnv]);
 }
 
+export function parsePatternEmails(): Set<string> {
+  const raw = process.env.PATTERN_EMAILS?.trim() ?? "";
+  return new Set(
+    raw
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
+
 export function parseSalesEmails(): Set<string> {
   const raw = process.env.SALES_EMAILS?.trim() ?? "";
   return new Set(
@@ -302,6 +341,11 @@ export function isSalesOperatorRole(role: UserRole | null | undefined): boolean 
   return role === "sales_operator";
 }
 
+/** `pattern_maker` is the pre-existing (dormant) DB role — treated as the same access. */
+export function isPatternOperatorRole(role: UserRole | null | undefined): boolean {
+  return role === "pattern_operator" || role === "pattern_maker";
+}
+
 export function isClientManagerEmail(email: string | null | undefined): boolean {
   if (!email) return false;
   return parseClientManagerEmails().has(email.trim().toLowerCase());
@@ -320,6 +364,11 @@ export function isProductionOperatorEmail(email: string | null | undefined): boo
 export function isSalesOperatorEmail(email: string | null | undefined): boolean {
   if (!email) return false;
   return parseSalesEmails().has(email.trim().toLowerCase());
+}
+
+export function isPatternOperatorEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return parsePatternEmails().has(email.trim().toLowerCase());
 }
 
 export function isClientManagerAccess(
@@ -350,7 +399,7 @@ export function isProductionOperatorAccess(
   return isProductionOperatorRole(role) || isProductionOperatorEmail(email);
 }
 
-export function isSalesOperatorAccess(
+export function isPatternOperatorAccess(
   role: UserRole | null | undefined,
   email: string | null | undefined
 ): boolean {
@@ -361,10 +410,25 @@ export function isSalesOperatorAccess(
   ) {
     return false;
   }
+  return isPatternOperatorRole(role) || isPatternOperatorEmail(email);
+}
+
+export function isSalesOperatorAccess(
+  role: UserRole | null | undefined,
+  email: string | null | undefined
+): boolean {
+  if (
+    isClientManagerAccess(role, email) ||
+    isTaskOperatorAccess(role, email) ||
+    isProductionOperatorAccess(role, email) ||
+    isPatternOperatorAccess(role, email)
+  ) {
+    return false;
+  }
   return isSalesOperatorRole(role) || isSalesOperatorEmail(email);
 }
 
-/** Accounts that must never see prices (QC, task, factory manager, sales). */
+/** Accounts that must never see prices (QC, task, factory manager, pattern, sales). */
 export function isPriceRestrictedAccess(
   role: UserRole | null | undefined,
   email: string | null | undefined
@@ -373,6 +437,7 @@ export function isPriceRestrictedAccess(
     isClientManagerAccess(role, email) ||
     isTaskOperatorAccess(role, email) ||
     isProductionOperatorAccess(role, email) ||
+    isPatternOperatorAccess(role, email) ||
     isSalesOperatorAccess(role, email)
   );
 }
@@ -386,6 +451,7 @@ export function resolveRestrictedAccess(
   if (isClientManagerAccess(role, email)) return "client_manager";
   if (isTaskOperatorAccess(role, email)) return "task_operator";
   if (isProductionOperatorAccess(role, email)) return "production_operator";
+  if (isPatternOperatorAccess(role, email)) return "pattern_operator";
   if (isSalesOperatorAccess(role, email)) return "sales_operator";
   return null;
 }
@@ -449,6 +515,12 @@ export function isProductionOperatorRouteAllowed(pathname: string): boolean {
   );
 }
 
+export function isPatternOperatorRouteAllowed(pathname: string): boolean {
+  return PATTERN_OPERATOR_ROUTE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
+
 export function isSalesOperatorRouteAllowed(pathname: string): boolean {
   if (
     pathname.startsWith("/orders/") &&
@@ -478,6 +550,7 @@ export function isRestrictedRouteAllowed(
   if (access === "client_manager") return isClientManagerRouteAllowed(pathname);
   if (access === "task_operator") return isTaskOperatorRouteAllowed(pathname);
   if (access === "production_operator") return isProductionOperatorRouteAllowed(pathname);
+  if (access === "pattern_operator") return isPatternOperatorRouteAllowed(pathname);
   return isSalesOperatorRouteAllowed(pathname);
 }
 
@@ -485,6 +558,7 @@ export type SessionLandingAccess = {
   isClientManager?: boolean;
   isTaskOperator?: boolean;
   isProductionOperator?: boolean;
+  isPatternOperator?: boolean;
   isSalesOperator?: boolean;
 };
 
@@ -495,6 +569,7 @@ export function landingAccessFromRestricted(
     isClientManager: restrictedAccess === "client_manager",
     isTaskOperator: restrictedAccess === "task_operator",
     isProductionOperator: restrictedAccess === "production_operator",
+    isPatternOperator: restrictedAccess === "pattern_operator",
     isSalesOperator: restrictedAccess === "sales_operator",
   };
 }
@@ -513,10 +588,13 @@ export function defaultPathForSession(access: boolean | SessionLandingAccess): s
     typeof access === "boolean" ? false : Boolean(access.isTaskOperator);
   const isProductionOperator =
     typeof access === "boolean" ? false : Boolean(access.isProductionOperator);
+  const isPatternOperator =
+    typeof access === "boolean" ? false : Boolean(access.isPatternOperator);
   const isSalesOperator =
     typeof access === "boolean" ? false : Boolean(access.isSalesOperator);
   // Production before sales: factory managers must never land on Sales Home.
   if (isProductionOperator) return "/production";
+  if (isPatternOperator) return "/pattern";
   if (isSalesOperator) return "/sales";
   if (isTaskOperator) return "/fabric-receiving";
   if (isClientManager) return "/orders";
@@ -527,9 +605,10 @@ export function canAccessPatternModule(
   isClientManager: boolean,
   isAdmin: boolean,
   isTaskOperator = false,
-  isProductionOperator = false
+  isProductionOperator = false,
+  isPatternOperator = false
 ): boolean {
-  if (isAdmin || isProductionOperator) return true;
+  if (isAdmin || isProductionOperator || isPatternOperator) return true;
   if (isClientManager || isTaskOperator) return false;
   return true;
 }

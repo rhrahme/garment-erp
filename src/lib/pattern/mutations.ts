@@ -20,6 +20,8 @@ export async function updatePatternJob(
       PatternJob,
       | "status"
       | "assigned_to"
+      | "client_pattern_id"
+      | "client_pattern_version_id"
       | "pattern_code"
       | "pattern_size_notes"
       | "trial_priority"
@@ -51,9 +53,13 @@ export async function updatePatternJob(
   }
 
   const previousStatus = existing.status;
+  // Drop undefined entries so partial payloads (e.g. Zapier) never wipe stored fields.
+  const definedPatch = Object.fromEntries(
+    Object.entries(patch).filter(([, value]) => value !== undefined)
+  );
   const nextJob: PatternJob = {
     ...existing,
-    ...patch,
+    ...definedPatch,
     updated_at: now,
   };
 

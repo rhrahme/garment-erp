@@ -11,6 +11,7 @@ import {
   isAdminEmail,
   isAdminRole,
   isClientManagerAccess,
+  isPatternOperatorAccess,
   isProductionOperatorAccess,
   isSalesOperatorAccess,
   isSuperAdminEmail,
@@ -28,6 +29,7 @@ export interface SessionContext {
   isClientManager: boolean;
   isTaskOperator: boolean;
   isProductionOperator: boolean;
+  isPatternOperator: boolean;
   isSalesOperator: boolean;
   canViewClientContact: boolean;
   canViewFabricListPrices: boolean;
@@ -43,17 +45,25 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
     !isClientManager &&
     !isTaskOperator &&
     isProductionOperatorAccess(role, email);
+  const isPatternOperator =
+    !isSuperAdmin &&
+    !isClientManager &&
+    !isTaskOperator &&
+    !isProductionOperator &&
+    isPatternOperatorAccess(role, email);
   const isSalesOperator =
     !isSuperAdmin &&
     !isClientManager &&
     !isTaskOperator &&
     !isProductionOperator &&
+    !isPatternOperator &&
     isSalesOperatorAccess(role, email);
   const isAdmin =
     isSuperAdmin ||
     (!isClientManager &&
       !isTaskOperator &&
       !isProductionOperator &&
+      !isPatternOperator &&
       !isSalesOperator &&
       (isAdminRole(role) || isAdminEmail(email)));
   const effectiveRole: UserRole | null = isSuperAdmin
@@ -66,9 +76,11 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
           ? "task_operator"
           : isProductionOperator
             ? "production_operator"
-            : isSalesOperator
-              ? "sales_operator"
-              : role;
+            : isPatternOperator
+              ? "pattern_operator"
+              : isSalesOperator
+                ? "sales_operator"
+                : role;
 
   return {
     role: effectiveRole,
@@ -77,12 +89,19 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
     isClientManager,
     isTaskOperator,
     isProductionOperator,
+    isPatternOperator,
     isSalesOperator,
     canViewClientContact: canViewClientContact(role, email, isSuperAdmin),
     canViewFabricListPrices: isAdmin,
     canAccessPattern:
       !isSalesOperator &&
-      canAccessPatternModule(isClientManager, isAdmin, isTaskOperator, isProductionOperator),
+      canAccessPatternModule(
+        isClientManager,
+        isAdmin,
+        isTaskOperator,
+        isProductionOperator,
+        isPatternOperator
+      ),
   };
 }
 
@@ -124,6 +143,7 @@ export async function getSessionContext(): Promise<SessionContext> {
       isClientManager: false,
       isTaskOperator: false,
       isProductionOperator: false,
+      isPatternOperator: false,
       isSalesOperator: false,
       canViewClientContact: false,
       canViewFabricListPrices: false,
