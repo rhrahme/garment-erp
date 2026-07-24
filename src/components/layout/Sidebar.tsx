@@ -34,6 +34,8 @@ import { useRouter } from "next/navigation";
 import {
   CLIENT_MANAGER_NAV_HREFS,
   CLIENT_MANAGER_ORDERS_NAV_LABEL,
+  PRODUCTION_OPERATOR_NAV_HREFS,
+  PRODUCTION_OPERATOR_ORDERS_NAV_LABEL,
   SALES_OPERATOR_NAV_HREFS,
   TASK_OPERATOR_NAV_HREFS,
   TASK_OPERATOR_ORDERS_NAV_LABEL,
@@ -70,6 +72,10 @@ const qcNavHrefs = new Set<string>(CLIENT_MANAGER_NAV_HREFS);
 const qcNavItems = navItems.filter((item) => qcNavHrefs.has(item.href));
 const taskOperatorNavHrefs = new Set<string>(TASK_OPERATOR_NAV_HREFS);
 const taskOperatorNavItems = navItems.filter((item) => taskOperatorNavHrefs.has(item.href));
+const productionOperatorNavHrefs = new Set<string>(PRODUCTION_OPERATOR_NAV_HREFS);
+const productionOperatorNavItems = navItems.filter((item) =>
+  productionOperatorNavHrefs.has(item.href)
+);
 const salesOperatorNavHrefs = new Set<string>(SALES_OPERATOR_NAV_HREFS);
 const salesOperatorNavItems = navItems.filter((item) => salesOperatorNavHrefs.has(item.href));
 
@@ -83,6 +89,7 @@ function isNavActive(pathname: string, href: string): boolean {
 export function Sidebar({
   clientsOnly = false,
   taskOperatorOnly = false,
+  productionOperatorOnly = false,
   salesOperatorOnly = false,
   isAdmin = true,
   mobileOpen = false,
@@ -90,6 +97,7 @@ export function Sidebar({
 }: {
   clientsOnly?: boolean;
   taskOperatorOnly?: boolean;
+  productionOperatorOnly?: boolean;
   salesOperatorOnly?: boolean;
   isAdmin?: boolean;
   /** Slide-over nav open state (mobile only). */
@@ -98,15 +106,23 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  // Production before sales so a mis-set dual flag never shows Sales Home on the floor.
   const items = (
-    salesOperatorOnly
-      ? salesOperatorNavItems
-      : taskOperatorOnly
-        ? taskOperatorNavItems
-        : clientsOnly
-          ? qcNavItems
-          : navItems
-  ).filter((item) => isAdmin || item.href !== "/documents");
+    productionOperatorOnly
+      ? productionOperatorNavItems
+      : salesOperatorOnly
+        ? salesOperatorNavItems
+        : taskOperatorOnly
+          ? taskOperatorNavItems
+          : clientsOnly
+            ? qcNavItems
+            : navItems
+  ).filter((item) => {
+    if (item.href === "/documents" && !isAdmin) return false;
+    // Sales Home is sales-tablet (and admin) only — never for floor/QC/unscoped users.
+    if (item.href === "/sales" && !salesOperatorOnly && !isAdmin) return false;
+    return true;
+  });
 
   async function handleLogout() {
     const supabase = createClient();
@@ -149,13 +165,17 @@ export function Sidebar({
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
-                  {taskOperatorOnly && href === "/orders"
-                    ? TASK_OPERATOR_ORDERS_NAV_LABEL
-                    : clientsOnly && href === "/orders"
-                    ? CLIENT_MANAGER_ORDERS_NAV_LABEL
-                    : clientsOnly && href === "/fabric-orders"
-                      ? "Fabric Orders"
-                      : label}
+                  {productionOperatorOnly && href === "/orders"
+                    ? PRODUCTION_OPERATOR_ORDERS_NAV_LABEL
+                    : productionOperatorOnly && href === "/production"
+                      ? "Factory floor"
+                      : taskOperatorOnly && href === "/orders"
+                        ? TASK_OPERATOR_ORDERS_NAV_LABEL
+                        : clientsOnly && href === "/orders"
+                          ? CLIENT_MANAGER_ORDERS_NAV_LABEL
+                          : clientsOnly && href === "/fabric-orders"
+                            ? "Fabric Orders"
+                            : label}
                 </Link>
               </li>
             );

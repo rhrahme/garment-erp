@@ -66,9 +66,14 @@ export default async function SalesOrderDetailPage({
     : Object.fromEntries(
         rawOrder.fabric_lines.map((line) => [line.id, activePatternJobsForLine(rawOrder.id, line.id)])
       );
-  const taskOperatorMode = session.isTaskOperator;
-  const productionMode = session.isClientManager || taskOperatorMode;
-  const labels = ordersUiLabels(productionMode, taskOperatorMode);
+  const taskOperatorMode = session.isTaskOperator || session.isProductionOperator;
+  const productionMode =
+    session.isClientManager || session.isTaskOperator || session.isProductionOperator;
+  const labels = ordersUiLabels(
+    productionMode,
+    session.isTaskOperator,
+    session.isProductionOperator
+  );
   const cookieStore = await cookies();
   const canViewFabricPrices = hasFabricPriceAccess(
     session,

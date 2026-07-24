@@ -7,12 +7,11 @@ import {
 } from "@/lib/auth/dev-impersonation";
 import {
   defaultPathForSession,
+  landingAccessFromRestricted,
+  resolveRestrictedAccess,
   isRestrictedRouteAllowed,
-  isSalesOperatorAccess,
   isSuperAdminEmail,
   isSuperAdminRole,
-  isTaskOperatorAccess,
-  resolveRestrictedAccess,
 } from "@/lib/auth/permissions";
 import type { UserRole } from "@/lib/types/database";
 import { withSupabaseTimeout } from "@/lib/auth/supabase-timeout";
@@ -85,15 +84,13 @@ export async function updateSession(request: NextRequest) {
   }
 
   const email = impersonatedEmail ?? user?.email?.trim().toLowerCase() ?? null;
-  let role: UserRole | null = impersonatedEmail
-    ? isSalesOperatorAccess("sales_operator", impersonatedEmail)
-      ? "sales_operator"
-      : isTaskOperatorAccess("task_operator", impersonatedEmail)
-      ? "task_operator"
-      : "client_manager"
-    : null;
+  let role: UserRole | null = null;
   let isSuperAdmin = false;
-  if (!impersonatedEmail && user?.id && email) {
+  if (impersonatedEmail) {
+    // Email-list priority (production before sales) — never probe with a forced sales role.
+    role = resolveRestrictedAccess(null, impersonatedEmail, false);
+    isSuperAdmin = isSuperAdminEmail(impersonatedEmail);
+  } else if (user?.id && email) {
     const { data: profile } = await withSupabaseTimeout(
       supabase.from("profiles").select("role").eq("id", user.id).maybeSingle(),
       "middleware profile",
@@ -106,13 +103,11 @@ export async function updateSession(request: NextRequest) {
   }
 
   const restrictedAccess = resolveRestrictedAccess(role, email, isSuperAdmin);
-  const isClientManager = restrictedAccess === "client_manager";
-  const isTaskOperator = restrictedAccess === "task_operator";
-  const isSalesOperator = restrictedAccess === "sales_operator";
+  const landing = landingAccessFromRestricted(restrictedAccess);
 
   if (isAuthenticated && isAuthPage) {
     const url = request.nextUrl.clone();
-    url.pathname = defaultPathForSession({ isClientManager, isTaskOperator, isSalesOperator });
+    url.pathname = defaultPathForSession(landing);
     return NextResponse.redirect(url);
   }
 
@@ -121,19 +116,19 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
     const url = request.nextUrl.clone();
-    url.pathname = defaultPathForSession({ isClientManager, isTaskOperator, isSalesOperator });
+    url.pathname = defaultPathForSession(landing);
     return NextResponse.redirect(url);
   }
 
   if (isAuthenticated && pathname === "/") {
     const url = request.nextUrl.clone();
-    url.pathname = defaultPathForSession({ isClientManager, isTaskOperator, isSalesOperator });
+    url.pathname = defaultPathForSession(landing);
     return NextResponse.redirect(url);
   }
 
   if (isAuthenticated && pathname === "/dashboard" && restrictedAccess) {
     const url = request.nextUrl.clone();
-    url.pathname = defaultPathForSession({ isClientManager, isTaskOperator, isSalesOperator });
+    url.pathname = defaultPathForSession(landing);
     return NextResponse.redirect(url);
   }
 

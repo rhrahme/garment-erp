@@ -5,8 +5,9 @@ import {
   resolveDevImpersonationEmail,
 } from "@/lib/auth/dev-impersonation";
 import {
-  defaultPathForSession,
+  defaultPathForEmail,
   isClientManagerEmail,
+  isProductionOperatorEmail,
   isSalesOperatorEmail,
   isTaskOperatorEmail,
 } from "@/lib/auth/permissions";
@@ -23,10 +24,15 @@ function startImpersonation(email: string) {
 }
 
 function isDevImpersonationEmail(email: string): boolean {
-  return isClientManagerEmail(email) || isTaskOperatorEmail(email) || isSalesOperatorEmail(email);
+  return (
+    isClientManagerEmail(email) ||
+    isTaskOperatorEmail(email) ||
+    isProductionOperatorEmail(email) ||
+    isSalesOperatorEmail(email)
+  );
 }
 
-/** Dev only — open in browser to sign in as QC / task operator without a password. */
+/** Dev only — open in browser to sign in as restricted roles without a password. */
 export async function GET(request: Request) {
   if (!isDevImpersonationEnabled()) {
     return NextResponse.json({ error: "Dev impersonation is disabled." }, { status: 403 });
@@ -37,16 +43,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Email not allowed." }, { status: 400 });
   }
 
-  const redirect = NextResponse.redirect(
-    new URL(
-      defaultPathForSession({
-        isClientManager: isClientManagerEmail(email),
-        isTaskOperator: isTaskOperatorEmail(email),
-        isSalesOperator: isSalesOperatorEmail(email),
-      }),
-      request.url
-    )
-  );
+  const redirect = NextResponse.redirect(new URL(defaultPathForEmail(email), request.url));
   redirect.cookies.set(DEV_IMPERSONATION_COOKIE, email, {
     httpOnly: true,
     sameSite: "lax",

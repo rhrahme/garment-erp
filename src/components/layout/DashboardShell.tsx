@@ -17,6 +17,7 @@ export function DashboardShell({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const clientsOnly = session.isClientManager;
   const taskOperatorOnly = session.isTaskOperator;
+  const productionOperatorOnly = session.isProductionOperator;
   const salesOperatorOnly = session.isSalesOperator;
 
   return (
@@ -33,6 +34,7 @@ export function DashboardShell({
       <Sidebar
         clientsOnly={clientsOnly}
         taskOperatorOnly={taskOperatorOnly}
+        productionOperatorOnly={productionOperatorOnly}
         salesOperatorOnly={salesOperatorOnly}
         isAdmin={session.isAdmin}
         mobileOpen={mobileNavOpen}

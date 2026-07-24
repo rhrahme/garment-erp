@@ -1,5 +1,37 @@
 /** Copy for QC production orders vs admin sales orders (same routes, different framing). */
-export function ordersUiLabels(productionMode: boolean, taskOperatorMode = false) {
+export function ordersUiLabels(
+  productionMode: boolean,
+  taskOperatorMode = false,
+  productionOperatorMode = false
+) {
+  if (productionOperatorMode) {
+    return {
+      nav: "Factory orders",
+      listTitle: "Factory orders",
+      listDescription:
+        "Operational orders for the factory floor — watch wash/iron, advance cut→finish, hand to delivery. No pricing shown.",
+      newTitle: "Factory orders",
+      newDescription: "Factory managers cannot create orders — open an existing order for floor work.",
+      newButton: "",
+      createOne: "Create production order",
+      createMany: (count: number) => `Create ${count} production orders`,
+      emptyTitle: "No factory orders yet",
+      emptyDescription: "Orders with fabrics will appear here for floor management.",
+      workflowTitle: "Factory manager workflow",
+      workflowSteps: [
+        "Watch wash & iron progress on Fabric Receiving (Task scans; you can advance)",
+        "Open Factory floor to see pieces by client and stage",
+        "Scan or advance: cut → finish → hand to delivery driver",
+        "Flag fabric defects for QC when found on the floor",
+      ],
+      allOrdersLink: "← All factory orders",
+      duplicateTitle: "Duplicate order for another client",
+      fabricsSectionTitle: "Production labels",
+      fabricsSectionDescription: "View assigned fabrics for floor tracking. Pricing is hidden.",
+      detailNewButton: "New production order",
+    };
+  }
+
   if (taskOperatorMode) {
     return {
       nav: "Print orders",

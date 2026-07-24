@@ -14,8 +14,10 @@ import { filterSalesOrdersForSession, getAllowedSalesBrandIds } from "@/lib/sale
 export default async function OrdersPage() {
   const session = await getSessionContext();
   const taskOperatorMode = session.isTaskOperator;
-  const productionMode = session.isClientManager || taskOperatorMode;
-  const labels = ordersUiLabels(productionMode, taskOperatorMode);
+  const productionOperatorMode = session.isProductionOperator;
+  const productionMode =
+    session.isClientManager || taskOperatorMode || productionOperatorMode;
+  const labels = ordersUiLabels(productionMode, taskOperatorMode, productionOperatorMode);
 
   await ensureDocumentsLoaded(["sales_orders", "clients"]);
   // Same heal as the API read paths — Print orders resolves client names for every role.
@@ -33,7 +35,7 @@ export default async function OrdersPage() {
         title={labels.listTitle}
         description={labels.listDescription}
         action={
-          taskOperatorMode ? undefined : productionMode ? (
+          taskOperatorMode || productionOperatorMode ? undefined : productionMode ? (
             <Link href="/fabric-orders/new?fresh=1">
               <Button>+ New fabric order</Button>
             </Link>
@@ -66,7 +68,7 @@ export default async function OrdersPage() {
       <OrdersList
         orders={orders}
         productionMode={productionMode}
-        taskOperatorMode={taskOperatorMode}
+        taskOperatorMode={taskOperatorMode || productionOperatorMode}
         allowedBrandIds={getAllowedSalesBrandIds(session)}
       />
     </div>

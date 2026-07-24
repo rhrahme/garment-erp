@@ -100,7 +100,9 @@ export function FabricReceivingWorkspace() {
     fetch("/api/auth/session")
       .then((res) => res.json())
       .then((data) => {
-        setCanChooseDefectFoundAt(Boolean(data.is_admin || data.is_client_manager));
+        setCanChooseDefectFoundAt(
+          Boolean(data.is_admin || data.is_client_manager || data.is_production_operator)
+        );
         setIsTaskOperator(Boolean(data.is_task_operator));
         setCanTransferFabric(Boolean(data.is_admin || data.is_client_manager));
       })

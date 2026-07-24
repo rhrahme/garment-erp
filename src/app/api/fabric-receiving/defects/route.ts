@@ -8,8 +8,8 @@ import {
   reportFabricDefect,
 } from "@/lib/production/fabric-receiving-defects";
 
-function canManageDefects(session: SessionContext): boolean {
-  return session.isAdmin || session.isClientManager;
+function canViewDefects(session: SessionContext): boolean {
+  return session.isAdmin || session.isClientManager || session.isProductionOperator;
 }
 
 function canReportDefects(session: SessionContext): boolean {
@@ -21,8 +21,8 @@ export async function GET(request: Request) {
   if (!session) {
     return NextResponse.json({ error: "Sign in required." }, { status: 401 });
   }
-  if (!canManageDefects(session)) {
-    return NextResponse.json({ error: "Admin or QC access required." }, { status: 403 });
+  if (!canViewDefects(session)) {
+    return NextResponse.json({ error: "Admin, QC, or Production access required." }, { status: 403 });
   }
 
   try {

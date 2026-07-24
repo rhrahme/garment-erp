@@ -37,6 +37,8 @@ const OUTBOUND_EVENTS = [
   "pattern_revision.created",
   "pattern_job.ready_for_cutting",
   "production.scan",
+  "production.stage_advanced",
+  "production.handed_to_driver",
   "invoice.sent",
   "invoice.created",
   "invoice.updated",

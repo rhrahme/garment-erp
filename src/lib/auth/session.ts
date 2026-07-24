@@ -11,10 +11,12 @@ import {
   isAdminEmail,
   isAdminRole,
   isClientManagerAccess,
+  isProductionOperatorAccess,
   isSalesOperatorAccess,
   isSuperAdminEmail,
   isSuperAdminRole,
   isTaskOperatorAccess,
+  resolveRestrictedAccess,
 } from "@/lib/auth/permissions";
 
 export interface SessionContext {
@@ -25,6 +27,7 @@ export interface SessionContext {
   isAdmin: boolean;
   isClientManager: boolean;
   isTaskOperator: boolean;
+  isProductionOperator: boolean;
   isSalesOperator: boolean;
   canViewClientContact: boolean;
   canViewFabricListPrices: boolean;
@@ -35,12 +38,22 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
   const isSuperAdmin = isSuperAdminRole(role) || isSuperAdminEmail(email);
   const isClientManager = !isSuperAdmin && isClientManagerAccess(role, email);
   const isTaskOperator = !isSuperAdmin && isTaskOperatorAccess(role, email);
+  const isProductionOperator =
+    !isSuperAdmin &&
+    !isClientManager &&
+    !isTaskOperator &&
+    isProductionOperatorAccess(role, email);
   const isSalesOperator =
-    !isSuperAdmin && !isClientManager && !isTaskOperator && isSalesOperatorAccess(role, email);
+    !isSuperAdmin &&
+    !isClientManager &&
+    !isTaskOperator &&
+    !isProductionOperator &&
+    isSalesOperatorAccess(role, email);
   const isAdmin =
     isSuperAdmin ||
     (!isClientManager &&
       !isTaskOperator &&
+      !isProductionOperator &&
       !isSalesOperator &&
       (isAdminRole(role) || isAdminEmail(email)));
   const effectiveRole: UserRole | null = isSuperAdmin
@@ -51,9 +64,11 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
         ? "client_manager"
         : isTaskOperator
           ? "task_operator"
-          : isSalesOperator
-            ? "sales_operator"
-            : role;
+          : isProductionOperator
+            ? "production_operator"
+            : isSalesOperator
+              ? "sales_operator"
+              : role;
 
   return {
     role: effectiveRole,
@@ -61,11 +76,13 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
     isAdmin,
     isClientManager,
     isTaskOperator,
+    isProductionOperator,
     isSalesOperator,
     canViewClientContact: canViewClientContact(role, email, isSuperAdmin),
     canViewFabricListPrices: isAdmin,
     canAccessPattern:
-      !isSalesOperator && canAccessPatternModule(isClientManager, isAdmin, isTaskOperator),
+      !isSalesOperator &&
+      canAccessPatternModule(isClientManager, isAdmin, isTaskOperator, isProductionOperator),
   };
 }
 
@@ -85,11 +102,8 @@ export async function getSessionContext(): Promise<SessionContext> {
     cookieStore.get(DEV_IMPERSONATION_COOKIE)?.value
   );
   if (impersonatedEmail) {
-    const role = isSalesOperatorAccess("sales_operator", impersonatedEmail)
-      ? "sales_operator"
-      : isTaskOperatorAccess("task_operator", impersonatedEmail)
-      ? "task_operator"
-      : "client_manager";
+    // Email-list priority (production before sales) — never probe with a forced sales role.
+    const role = resolveRestrictedAccess(null, impersonatedEmail, false);
     return {
       userId: `dev:${impersonatedEmail}`,
       email: impersonatedEmail,
@@ -109,6 +123,7 @@ export async function getSessionContext(): Promise<SessionContext> {
       isAdmin: false,
       isClientManager: false,
       isTaskOperator: false,
+      isProductionOperator: false,
       isSalesOperator: false,
       canViewClientContact: false,
       canViewFabricListPrices: false,
@@ -156,7 +171,7 @@ export async function requirePatternAccess(): Promise<SessionContext | null> {
   return session;
 }
 
-/** Task operators may read orders for printing but cannot create or edit them. */
+/** Task / production operators may read orders for floor work but cannot create or edit them. */
 export function canModifySalesOrders(session: SessionContext): boolean {
-  return !session.isTaskOperator;
+  return !session.isTaskOperator && !session.isProductionOperator;
 }

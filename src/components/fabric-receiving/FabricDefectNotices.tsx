@@ -24,7 +24,8 @@ export function FabricDefectNotices({
   onError,
   onChanged,
 }: FabricDefectNoticesProps) {
-  const [canManage, setCanManage] = useState(false);
+  const [canView, setCanView] = useState(false);
+  const [canManageStatus, setCanManageStatus] = useState(false);
   const [items, setItems] = useState<FabricDefectListItem[]>([]);
   const [summary, setSummary] = useState<FabricDefectSummary | null>(null);
   const [loading, setLoading] = useState(false);
@@ -34,12 +35,20 @@ export function FabricDefectNotices({
   useEffect(() => {
     fetch("/api/auth/session")
       .then((res) => res.json())
-      .then((data) => setCanManage(Boolean(data.is_admin || data.is_client_manager)))
-      .catch(() => setCanManage(false));
+      .then((data) => {
+        setCanView(
+          Boolean(data.is_admin || data.is_client_manager || data.is_production_operator)
+        );
+        setCanManageStatus(Boolean(data.is_admin || data.is_client_manager));
+      })
+      .catch(() => {
+        setCanView(false);
+        setCanManageStatus(false);
+      });
   }, []);
 
   const load = useCallback(async () => {
-    if (!canManage) return;
+    if (!canView) return;
     setLoading(true);
     try {
       const res = await fetch(`/api/fabric-receiving/defects?status=open&t=${Date.now()}`, {
@@ -54,13 +63,13 @@ export function FabricDefectNotices({
     } finally {
       setLoading(false);
     }
-  }, [canManage]);
+  }, [canView]);
 
   useEffect(() => {
     void load();
   }, [load, reloadKey]);
 
-  if (!canManage) return null;
+  if (!canView) return null;
 
   const openCount = items.length;
 
@@ -187,23 +196,30 @@ export function FabricDefectNotices({
                         </p>
                       </div>
                     </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        disabled={actingId === item.defect.id}
-                        onClick={() => void updateStatus(item, "acknowledge")}
-                      >
-                        Acknowledge
-                      </Button>
-                      <Button
-                        size="sm"
-                        disabled={actingId === item.defect.id}
-                        onClick={() => void updateStatus(item, "resolve")}
-                      >
-                        Resolve
-                      </Button>
-                    </div>
+                    {canManageStatus && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={actingId === item.defect.id}
+                          onClick={() => void updateStatus(item, "acknowledge")}
+                        >
+                          Acknowledge
+                        </Button>
+                        <Button
+                          size="sm"
+                          disabled={actingId === item.defect.id}
+                          onClick={() => void updateStatus(item, "resolve")}
+                        >
+                          Resolve
+                        </Button>
+                      </div>
+                    )}
+                    {!canManageStatus && (
+                      <p className="mt-3 text-xs font-medium text-rose-800">
+                        Flagged for QC — acknowledge/resolve is on the QC account.
+                      </p>
+                    )}
                   </li>
                 );
               })}

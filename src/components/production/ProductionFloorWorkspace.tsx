@@ -15,6 +15,7 @@ import { StageScanPanel } from "@/components/production/StageScanPanel";
 import { completedAccountLabel, isReadyMadeWorkOrder } from "@/lib/production/completed-history";
 import { productionStageToHighlight, scanStageStyles } from "@/lib/production/scan-stage-highlight";
 
+/** Manager-facing pipeline: wash → iron → cut → finish → hand to delivery driver. */
 const PIPELINE_STAGES = ["cutting", "sewing", "washing", "finishing", "packed"] as const;
 const FLOOR_STAGES = [...PIPELINE_STAGES, "completed"] as const;
 
@@ -36,7 +37,7 @@ function stageActionLabel(order: ProductionWorkOrder): string | null {
     case "finishing":
       return "Move to packed";
     case "packed":
-      return "Mark completed";
+      return "Hand to delivery driver";
     default:
       return null;
   }
@@ -44,7 +45,42 @@ function stageActionLabel(order: ProductionWorkOrder): string | null {
 
 function pipelineStageLabel(stage: (typeof PRODUCTION_STAGES)[number]) {
   if (stage === "washing") return "Garment wash";
+  if (stage === "packed") return "Ready for driver";
+  if (stage === "cutting") return "Cut";
+  if (stage === "finishing") return "Finish";
   return stage.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+type ClientFloorGroup = {
+  key: string;
+  client_name: string;
+  client_code: string;
+  orders: ProductionWorkOrder[];
+  stageCounts: Record<(typeof PIPELINE_STAGES)[number], number>;
+};
+
+function groupActiveByClient(orders: ProductionWorkOrder[]): ClientFloorGroup[] {
+  const byClient = new Map<string, ClientFloorGroup>();
+
+  for (const order of orders) {
+    const key = `${order.client_code || "—"}::${order.client_name || "—"}`;
+    const group = byClient.get(key) ?? {
+      key,
+      client_name: order.client_name || "—",
+      client_code: order.client_code || "—",
+      orders: [],
+      stageCounts: { cutting: 0, sewing: 0, washing: 0, finishing: 0, packed: 0 },
+    };
+    group.orders.push(order);
+    if (PIPELINE_STAGES.includes(order.status as (typeof PIPELINE_STAGES)[number])) {
+      group.stageCounts[order.status as (typeof PIPELINE_STAGES)[number]] += 1;
+    }
+    byClient.set(key, group);
+  }
+
+  return [...byClient.values()].sort((a, b) =>
+    a.client_name.localeCompare(b.client_name, undefined, { sensitivity: "base" })
+  );
 }
 
 export function ProductionFloorWorkspace() {
@@ -52,6 +88,8 @@ export function ProductionFloorWorkspace() {
   const [tab, setTab] = useState<ProductionFloorTab>("pipeline");
   const [actingId, setActingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [expandedClient, setExpandedClient] = useState<string | null>(null);
+
   const floorOrders = workOrders.filter((order) =>
     FLOOR_STAGES.includes(order.status as (typeof FLOOR_STAGES)[number])
   );
@@ -60,6 +98,7 @@ export function ProductionFloorWorkspace() {
     () => floorOrders.filter((order) => order.status === "completed"),
     [floorOrders]
   );
+  const clientGroups = useMemo(() => groupActiveByClient(activeOrders), [activeOrders]);
 
   const tabCounts = useMemo(
     () => ({
@@ -81,7 +120,12 @@ export function ProductionFloorWorkspace() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to advance stage");
-      setMessage(`Updated to ${data.work_order.status.replace(/_/g, " ")}.`);
+      const next = String(data.work_order?.status ?? "").replace(/_/g, " ");
+      setMessage(
+        data.work_order?.status === "completed"
+          ? "Handed to delivery driver."
+          : `Updated to ${next}.`
+      );
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to advance stage");
@@ -103,10 +147,10 @@ export function ProductionFloorWorkspace() {
 
       <section className="rounded-xl border border-slate-200 bg-white">
         <div className="border-b border-slate-100 px-5 py-4">
-          <h2 className="text-lg font-semibold text-slate-900">Production floor</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Factory floor</h2>
           <p className="mt-1 text-sm text-slate-500">
             {tab === "pipeline"
-              ? "Active pieces on the floor — scan at the station or advance stages manually."
+              ? "By client + stage — scan at the station or advance cut → finish → hand to delivery driver. Wash/iron stays on Fabric Receiving (Task scans; you can manage)."
               : "Finished pieces for lookup and tracking — search by client, order, or sticker code."}
           </p>
 
@@ -120,7 +164,7 @@ export function ProductionFloorWorkspace() {
                   type="button"
                   onClick={() => setTab(item.id)}
                   className={cn(
-                    "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                    "min-h-[44px] rounded-lg px-4 py-2 text-sm font-medium transition-colors",
                     active ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   )}
                 >
@@ -145,12 +189,17 @@ export function ProductionFloorWorkspace() {
             <ScanStageLegend />
 
             <div>
-              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Stage counts</h3>
-              <div className="flex flex-wrap gap-2">
+              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+                Floor stage counts
+              </h3>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
                 {PIPELINE_STAGES.map((stage) => {
                   const count = workOrders.filter((order) => order.status === stage).length;
                   return (
-                    <div key={stage} className="rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 text-center">
+                    <div
+                      key={stage}
+                      className="min-h-[72px] rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-center"
+                    >
                       <p className="text-2xl font-bold text-slate-900">{count}</p>
                       <p className="text-xs font-medium text-slate-600">{pipelineStageLabel(stage)}</p>
                     </div>
@@ -167,55 +216,103 @@ export function ProductionFloorWorkspace() {
                 first.
               </p>
             ) : (
-              <div className="space-y-3">
-                {activeOrders.map((order) => {
-                  const action = stageActionLabel(order);
-                  const rowStyle = scanStageStyles(productionStageToHighlight(order.status));
+              <div className="space-y-4">
+                {clientGroups.map((group) => {
+                  const open = expandedClient === group.key || clientGroups.length === 1;
                   return (
-                    <div
-                      key={order.id}
-                      className={`space-y-3 rounded-xl border border-slate-200 p-4 ${rowStyle.row}`}
-                    >
-                      <div className="md:flex md:items-start md:justify-between md:gap-4">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-base font-semibold text-slate-900">
-                            {completedAccountLabel(order)}
+                    <div key={group.key} className="overflow-hidden rounded-xl border border-slate-200">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedClient(open && clientGroups.length > 1 ? null : group.key)}
+                        className="flex w-full min-h-[52px] items-center justify-between gap-3 bg-slate-50 px-4 py-3 text-left"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-base font-semibold text-slate-900">
+                            {group.client_name}
                           </p>
-                          <p className="mt-0.5 font-mono text-sm font-semibold text-indigo-800">{order.sticker_code}</p>
-                          <p className="mt-1 text-sm text-slate-700">
-                            {isReadyMadeWorkOrder(order) ? "Ready-made" : "Client"}
-                            <span className="mx-1.5 text-slate-300">·</span>
-                            {formatLabelGarmentDescription(order.garment_type, order.piece_name)}
-                          </p>
-                          <p className="mt-0.5 text-xs text-slate-500">
-                            {order.so_number} ·{" "}
-                            <FabricSupplierName
-                              supplierId={order.supplier_id}
-                              supplierName={order.supplier_name}
-                              fabricNumber={order.fabric_number}
-                            />{" "}
-                            {order.fabric_number} · {order.fabric_meters} m · received{" "}
-                            {formatDate(order.received_at.slice(0, 10))}
+                          <p className="text-xs text-slate-500">
+                            {group.client_code} · {group.orders.length} piece
+                            {group.orders.length === 1 ? "" : "s"}
                           </p>
                         </div>
-                        <div className="mt-3 flex flex-col items-end gap-1 md:mt-0 md:shrink-0">
-                          <StatusBadge status={order.status === "washing" ? "washing" : order.status} />
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${rowStyle.chip}`}>
-                            {rowStyle.label}
-                          </span>
+                        <div className="flex flex-wrap justify-end gap-1.5">
+                          {PIPELINE_STAGES.map((stage) => {
+                            const count = group.stageCounts[stage];
+                            if (!count) return null;
+                            return (
+                              <span
+                                key={stage}
+                                className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-slate-700 ring-1 ring-slate-200"
+                              >
+                                {pipelineStageLabel(stage)} {count}
+                              </span>
+                            );
+                          })}
                         </div>
-                      </div>
+                      </button>
 
-                      {action && (
-                        <div className="border-t border-slate-100 pt-3">
-                          <Button
-                            size="sm"
-                            onClick={() => void advanceStage(order.id)}
-                            disabled={actingId === order.id}
-                          >
-                            <ArrowRight className="mr-1 h-4 w-4" />
-                            {actingId === order.id ? "Updating…" : action}
-                          </Button>
+                      {open && (
+                        <div className="space-y-3 border-t border-slate-100 p-3 sm:p-4">
+                          {group.orders.map((order) => {
+                            const action = stageActionLabel(order);
+                            const rowStyle = scanStageStyles(productionStageToHighlight(order.status));
+                            return (
+                              <div
+                                key={order.id}
+                                className={`space-y-3 rounded-xl border border-slate-200 p-4 ${rowStyle.row}`}
+                              >
+                                <div className="md:flex md:items-start md:justify-between md:gap-4">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-base font-semibold text-slate-900">
+                                      {completedAccountLabel(order)}
+                                    </p>
+                                    <p className="mt-0.5 font-mono text-sm font-semibold text-indigo-800">
+                                      {order.sticker_code}
+                                    </p>
+                                    <p className="mt-1 text-sm text-slate-700">
+                                      {isReadyMadeWorkOrder(order) ? "Ready-made" : "Client"}
+                                      <span className="mx-1.5 text-slate-300">·</span>
+                                      {formatLabelGarmentDescription(order.garment_type, order.piece_name)}
+                                    </p>
+                                    <p className="mt-0.5 text-xs text-slate-500">
+                                      {order.so_number} ·{" "}
+                                      <FabricSupplierName
+                                        supplierId={order.supplier_id}
+                                        supplierName={order.supplier_name}
+                                        fabricNumber={order.fabric_number}
+                                      />{" "}
+                                      {order.fabric_number} · {order.fabric_meters} m · received{" "}
+                                      {formatDate(order.received_at.slice(0, 10))}
+                                    </p>
+                                  </div>
+                                  <div className="mt-3 flex flex-col items-end gap-1 md:mt-0 md:shrink-0">
+                                    <StatusBadge
+                                      status={order.status === "washing" ? "washing" : order.status}
+                                    />
+                                    <span
+                                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${rowStyle.chip}`}
+                                    >
+                                      {rowStyle.label}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {action && (
+                                  <div className="border-t border-slate-100 pt-3">
+                                    <Button
+                                      size="sm"
+                                      className="min-h-[44px]"
+                                      onClick={() => void advanceStage(order.id)}
+                                      disabled={actingId === order.id}
+                                    >
+                                      <ArrowRight className="mr-1 h-4 w-4" />
+                                      {actingId === order.id ? "Updating…" : action}
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
