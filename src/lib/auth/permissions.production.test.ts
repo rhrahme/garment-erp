@@ -90,6 +90,8 @@ describe("production_operator home / nav gating", () => {
     assert.equal(isProductionOperatorRouteAllowed("/orders/SO-1/stickers"), true);
     assert.equal(isProductionOperatorRouteAllowed("/hr/id-badges"), true);
     assert.equal(isProductionOperatorRouteAllowed("/hr/id-badges/saudis"), true);
+    assert.equal(isProductionOperatorRouteAllowed("/hr/id-badges/saudis/print"), true);
+    assert.equal(isProductionOperatorRouteAllowed("/hr/id-badges/expats/print"), true);
     assert.equal(isProductionOperatorRouteAllowed("/api/hr/employees"), true);
     assert.equal(isProductionOperatorRouteAllowed("/api/hr/employee-lookup"), true);
 

@@ -1,16 +1,10 @@
 import type { Metadata } from "next";
-import { stickerPrintStyles } from "@/lib/production/sticker-print-styles";
 
 export const metadata: Metadata = {
   title: " ",
 };
 
-/** Minimal chrome for thermal sticker printing — no sidebar, header, or nav. */
-export default function StickerPrintLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="sticker-print-root min-h-screen bg-white">
-      <style dangerouslySetInnerHTML={{ __html: stickerPrintStyles() }} />
-      {children}
-    </div>
-  );
+/** Minimal chrome for dedicated print windows — no sidebar, header, or nav. */
+export default function PrintLayout({ children }: { children: React.ReactNode }) {
+  return <div className="min-h-screen bg-white text-slate-900">{children}</div>;
 }

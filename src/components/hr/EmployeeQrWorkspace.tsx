@@ -3,8 +3,10 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { CreateEmployeeForm } from "@/components/hr/CreateEmployeeForm";
+import { EmployeeBadgePrintControls } from "@/components/hr/EmployeeBadgePrintControls";
 import { employeeQrPayload } from "@/lib/hr/employee-qr";
-import { sortPayrollEmployees, type IdBadgeGroup } from "@/lib/hr/payroll-utils";
+import { listBadgePrintableEmployees } from "@/lib/hr/badge-print";
+import { type IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 
@@ -41,14 +43,18 @@ export function EmployeeQrWorkspace({
   const copy = GROUP_COPY[group];
   const [searchQuery, setSearchQuery] = useState("");
 
+  const printable = useMemo(
+    () => listBadgePrintableEmployees(employees, group),
+    [employees, group]
+  );
+
   const filtered = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    const rows = sortPayrollEmployees(employees.filter((employee) => employee.is_active));
-    if (!query) return rows;
-    return rows.filter((employee) =>
+    if (!query) return printable;
+    return printable.filter((employee) =>
       [employee.full_name, employee.employee_id_number, employee.id].join(" ").toLowerCase().includes(query)
     );
-  }, [employees, searchQuery]);
+  }, [printable, searchQuery]);
 
   return (
     <div className="space-y-6">
@@ -58,6 +64,8 @@ export function EmployeeQrWorkspace({
       </div>
 
       {canCreate ? <CreateEmployeeForm defaultGroup={group} /> : null}
+
+      <EmployeeBadgePrintControls employees={printable} group={group} />
 
       <label className="relative block max-w-md text-sm">
         <span className="font-medium text-slate-700">Search employees</span>
