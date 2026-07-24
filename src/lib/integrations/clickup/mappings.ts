@@ -88,6 +88,8 @@ export function mapClickUpItemToGarmentType(item: string | null): string {
   if (normalized.includes("trouser")) return "Trouser";
   if (normalized.includes("short")) return "Short";
   if (normalized.includes("overshirt") || normalized.includes("over shirt")) return "Overshirt";
+  if (normalized.includes("polo")) return "Polo";
+  if (normalized.includes("t-shirt") || normalized.includes("tshirt") || normalized.includes("t shirt")) return "T-shirt";
   if (normalized.includes("shirt")) return "Shirt LS";
   if (normalized.includes("overcoat")) return "Overcoat";
   if (normalized.includes("thobe")) {

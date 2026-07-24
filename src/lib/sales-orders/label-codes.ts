@@ -29,6 +29,8 @@ const PIECE_ABBREV: Record<string, string> = {
   Shirt: "SHT",
   "Shirt LS": "SHT-LS",
   "Shirt SS": "SHT-SS",
+  Polo: "POLO",
+  "T-shirt": "TSH",
   Overshirt: "OS",
   Short: "SH",
   Overcoat: "OC",
