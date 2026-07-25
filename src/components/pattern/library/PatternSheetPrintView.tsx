@@ -4,6 +4,10 @@ import Link from "next/link";
 import { Download, Printer } from "lucide-react";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 import { formatMeasurement, unitLabel } from "@/lib/pattern-library/measurements";
+import {
+  clientPatternLabelCode,
+  clientPatternQrUrl,
+} from "@/lib/pattern-library/pattern-qr";
 import type { PatternSheetData } from "@/lib/pattern-library/sheet-data";
 
 const SHEET_PRINT_CSS = `
@@ -37,6 +41,8 @@ export function PatternSheetPrintView({ data }: { data: PatternSheetData }) {
   } = data;
   const unit = pattern.unit;
   const primarySticker = stickers[0] ?? null;
+  const patternQrPayload = clientPatternQrUrl(pattern.id);
+  const patternQrLabel = clientPatternLabelCode(pattern);
   const baseColLabel = resolved_base_size
     ? `Base (${resolved_base_size})`
     : pattern.base_size
@@ -58,8 +64,9 @@ export function PatternSheetPrintView({ data }: { data: PatternSheetData }) {
           <p className="mt-1 text-xs text-slate-500">
             A4 portrait · Trial {version.version}
             {version.is_final ? " (Final)" : ""}
+            {` · Pattern QR ${patternQrLabel}`}
             {primarySticker
-              ? ` · QR ${primarySticker.code}`
+              ? ` · Article QR ${primarySticker.code}`
               : " · No article QR (link a fabric line with stickers)"}
           </p>
         </div>
@@ -83,17 +90,31 @@ export function PatternSheetPrintView({ data }: { data: PatternSheetData }) {
       </div>
 
       <div className="pattern-sheet rounded-xl border border-slate-200 p-6 shadow-sm">
-        {/* Top row: title + house brand letterhead */}
+        {/* Top row: title + house brand letterhead + fixed pattern QR */}
         <div className="flex items-start justify-between gap-4 border-b-2 border-slate-900 pb-3">
           <div>
             <h1 className="text-xl font-bold tracking-tight">PATTERN MEASUREMENT SHEET</h1>
             <p className="mt-1 font-mono text-sm font-semibold">{pattern.pattern_ref}</p>
           </div>
-          <div className="min-w-[7.5rem] rounded-lg border-2 border-slate-900 px-4 py-2 text-center">
-            <p className="text-2xl font-black tracking-widest">{house_brand.code ?? "—"}</p>
-            <p className="mt-0.5 text-[11px] font-semibold leading-tight text-slate-800">
-              {house_brand.name ?? "House brand"}
-            </p>
+          <div className="flex items-start gap-3">
+            <div className="min-w-[7.5rem] rounded-lg border-2 border-slate-900 px-4 py-2 text-center">
+              <p className="text-2xl font-black tracking-widest">{house_brand.code ?? "—"}</p>
+              <p className="mt-0.5 text-[11px] font-semibold leading-tight text-slate-800">
+                {house_brand.name ?? "House brand"}
+              </p>
+            </div>
+            {/* Always present — labels the physical archived pattern; scan opens this record */}
+            <div className="text-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={qrImageUrl(patternQrPayload, 200)}
+                alt={patternQrLabel}
+                className="h-20 w-20"
+              />
+              <p className="mt-0.5 max-w-24 break-all font-mono text-[8px] leading-tight">
+                {patternQrLabel}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -103,7 +124,7 @@ export function PatternSheetPrintView({ data }: { data: PatternSheetData }) {
           </div>
         ) : null}
 
-        {/* Header block + QR */}
+        {/* Header block + optional article (fabric-line) QR */}
         <div className="mt-4 flex gap-4">
           <table className="flex-1 text-sm">
             <tbody>
@@ -111,7 +132,7 @@ export function PatternSheetPrintView({ data }: { data: PatternSheetData }) {
                 ["Client", `${pattern.client_name} (${pattern.client_code})`],
                 ["Garment", pattern.garment_type],
                 ["Description", pattern.description ?? "—"],
-                ["Derived from", derived_from ?? "—"],
+                ["Origin", derived_from ?? "Custom"],
                 [
                   "Order",
                   order
@@ -140,7 +161,8 @@ export function PatternSheetPrintView({ data }: { data: PatternSheetData }) {
                 alt={primarySticker.code}
                 className="h-28 w-28"
               />
-              <p className="mt-1 max-w-32 break-all font-mono text-[9px] leading-tight">
+              <p className="mt-0.5 text-[8px] uppercase tracking-wide text-slate-400">Article</p>
+              <p className="mt-0.5 max-w-32 break-all font-mono text-[9px] leading-tight">
                 {primarySticker.code}
               </p>
             </div>

@@ -1,6 +1,10 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatMeasurementAscii, unitLabel } from "@/lib/pattern-library/measurements";
+import {
+  clientPatternLabelCode,
+  clientPatternQrUrl,
+} from "@/lib/pattern-library/pattern-qr";
 import { renderQrPngBuffer } from "@/lib/production/qr-render";
 import type { PatternSheetData } from "@/lib/pattern-library/sheet-data";
 
@@ -45,7 +49,9 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
   const brandName = house_brand.name ?? "House brand";
   const brandW = 38;
   const brandH = house_brand.name ? 16 : 14;
-  const brandX = PAGE_W - MARGIN - brandW;
+  const patternQrLabel = clientPatternLabelCode(pattern);
+  const patternQrSize = 18;
+  const brandX = PAGE_W - MARGIN - brandW - patternQrSize - 4;
   doc.setDrawColor(...INK);
   doc.setLineWidth(0.6);
   doc.rect(brandX, MARGIN, brandW, brandH);
@@ -56,9 +62,29 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
   doc.setTextColor(...INK);
   doc.text(brandName.toUpperCase(), brandX + brandW / 2, MARGIN + 13, { align: "center" });
 
+  // Fixed pattern QR (always) — next to house-brand letterhead
+  const { png: patternQrPng } = await renderQrPngBuffer(clientPatternQrUrl(pattern.id), 300);
+  const patternQrX = PAGE_W - MARGIN - patternQrSize;
+  doc.addImage(
+    `data:image/png;base64,${patternQrPng.toString("base64")}`,
+    "PNG",
+    patternQrX,
+    MARGIN,
+    patternQrSize,
+    patternQrSize
+  );
+  doc.setFont("courier", "normal");
+  doc.setFontSize(4.5);
+  doc.setTextColor(...INK);
+  const patternLabelLines = doc.splitTextToSize(patternQrLabel, patternQrSize + 6);
+  doc.text(patternLabelLines, patternQrX + patternQrSize / 2, MARGIN + patternQrSize + 2, {
+    align: "center",
+  });
+
   doc.setDrawColor(...INK);
   doc.setLineWidth(0.7);
-  const ruleY = MARGIN + Math.max(16, brandH + 2);
+  const ruleY =
+    MARGIN + Math.max(16, brandH + 2, patternQrSize + 2 + patternLabelLines.length * 2);
   doc.line(MARGIN, ruleY, PAGE_W - MARGIN, ruleY);
 
   // Header block (left) + QR (right)
@@ -66,7 +92,7 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
     ["Client", `${pattern.client_name} (${pattern.client_code})`],
     ["Garment", pattern.garment_type],
     ["Description", pattern.description ?? "-"],
-    ["Derived from", derived_from ?? "-"],
+    ["Origin", derived_from ?? "Custom"],
     [
       "Order",
       order
@@ -79,11 +105,11 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
     ],
   ];
 
-  const qrSize = 30;
-  const hasQr = stickers.length > 0;
+  const articleQrSize = 30;
+  const hasArticleQr = stickers.length > 0;
   const headerStartY = ruleY + 5;
   let headerY = headerStartY;
-  const headerRight = hasQr ? PAGE_W - MARGIN - qrSize - 6 : PAGE_W - MARGIN;
+  const headerRight = hasArticleQr ? PAGE_W - MARGIN - articleQrSize - 6 : PAGE_W - MARGIN;
   doc.setFontSize(8.5);
   for (const [label, value] of headerRows) {
     doc.setFont("helvetica", "bold");
@@ -97,24 +123,32 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
   }
 
   let qrBottom = headerStartY;
-  if (hasQr) {
+  if (hasArticleQr) {
     const sticker = stickers[0]!;
     const { png } = await renderQrPngBuffer(sticker.qr_payload, 300);
-    const qrX = PAGE_W - MARGIN - qrSize;
+    const qrX = PAGE_W - MARGIN - articleQrSize;
     doc.addImage(
       `data:image/png;base64,${png.toString("base64")}`,
       "PNG",
       qrX,
       headerStartY - 2,
-      qrSize,
-      qrSize
+      articleQrSize,
+      articleQrSize
     );
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(5);
+    doc.setTextColor(...SLATE);
+    doc.text("ARTICLE", qrX + articleQrSize / 2, headerStartY - 2 + articleQrSize + 2, {
+      align: "center",
+    });
     doc.setFont("courier", "normal");
     doc.setFontSize(5.5);
     doc.setTextColor(...INK);
-    const codeLines = doc.splitTextToSize(sticker.code, qrSize + 4);
-    doc.text(codeLines, qrX + qrSize / 2, headerStartY - 2 + qrSize + 2.5, { align: "center" });
-    qrBottom = headerStartY - 2 + qrSize + 2.5 + codeLines.length * 2.5;
+    const codeLines = doc.splitTextToSize(sticker.code, articleQrSize + 4);
+    doc.text(codeLines, qrX + articleQrSize / 2, headerStartY - 2 + articleQrSize + 4.5, {
+      align: "center",
+    });
+    qrBottom = headerStartY - 2 + articleQrSize + 4.5 + codeLines.length * 2.5;
   }
 
   let y = Math.max(headerY + 2, qrBottom + 3);
