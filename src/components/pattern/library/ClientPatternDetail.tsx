@@ -422,10 +422,13 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
             </p>
           </div>
           <div className="text-sm">
-            <span className="mb-1 block text-xs font-medium text-slate-600">Derived from</span>
+            <span className="mb-1 block text-xs font-medium text-slate-600">Origin</span>
             <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-800">
               {linkedBase && pattern.base_pattern_id ? (
                 <>
+                  <span className="mb-0.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    Library base
+                  </span>
                   <Link
                     href={`/pattern/library/bases/${pattern.base_pattern_id}`}
                     className="font-medium text-indigo-700 hover:underline"
@@ -437,7 +440,12 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   ) : null}
                 </>
               ) : (
-                "No base linked"
+                <>
+                  <span className="font-medium text-slate-800">Custom</span>
+                  <span className="mt-0.5 block text-xs text-slate-500">
+                    Built from scratch — no library base
+                  </span>
+                </>
               )}
             </p>
           </div>

@@ -1,5 +1,8 @@
 import type { BasePattern } from "@/lib/types/pattern-library";
 
+/** Client pattern built from scratch (no library base). */
+export const CUSTOM_PATTERN_ORIGIN = "Custom";
+
 export type BasePatternDisplaySource = Pick<
   BasePattern,
   "house_brand_code" | "cut_family" | "garment_type" | "cut_variant"
@@ -21,7 +24,7 @@ export function formatBasePatternDisplayName(
 
 /**
  * Tablet-readable size + derivation line for .TUD viewers.
- * e.g. "Size 2XL · from FR · Massimo · Shorts" or "Size 2XL · No base linked"
+ * e.g. "Size 2XL · from FR · Massimo · Shorts" or "Size 2XL · Custom"
  */
 export function formatTudSizeDerivedLine(
   sizes: string[],
@@ -36,6 +39,6 @@ export function formatTudSizeDerivedLine(
   if (baseDisplayName) {
     return sizePart ? `${sizePart} · from ${baseDisplayName}` : `Derived from: ${baseDisplayName}`;
   }
-  if (sizePart) return `${sizePart} · No base linked`;
-  return "No base linked";
+  if (sizePart) return `${sizePart} · ${CUSTOM_PATTERN_ORIGIN}`;
+  return CUSTOM_PATTERN_ORIGIN;
 }

@@ -7,7 +7,10 @@ import { qrScanPayload } from "@/lib/production/qr-labels";
 import path from "path";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import type { PatternJob } from "@/lib/types/pattern";
-import { formatBasePatternDisplayName } from "@/lib/pattern-library/derived-from";
+import {
+  CUSTOM_PATTERN_ORIGIN,
+  formatBasePatternDisplayName,
+} from "@/lib/pattern-library/derived-from";
 import { resolveSheetHouseBrand, type SheetHouseBrand } from "@/lib/pattern-library/sheet-brand";
 import {
   fillMeasurementsFromBase,
@@ -61,9 +64,10 @@ function readSalesOrdersFile(): { orders: SalesOrder[] } {
   return readJsonFile(SALES_ORDERS_PATH, { updated_at: null, orders: [] as SalesOrder[] });
 }
 
-export function describeDerivedFrom(base: BasePattern | null, size: string | null): string | null {
+/** Library base label, or "Custom" when built from scratch. */
+export function describeDerivedFrom(base: BasePattern | null, size: string | null): string {
   const name = formatBasePatternDisplayName(base);
-  if (!name) return null;
+  if (!name) return CUSTOM_PATTERN_ORIGIN;
   return size ? `${name} · ${size}` : name;
 }
 

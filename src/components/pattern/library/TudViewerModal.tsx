@@ -31,7 +31,7 @@ export function TudViewerModal({
   thumbnailUrl: string | null;
   downloadUrl: string;
   onClose: () => void;
-  /** Linked base display name; `null` = show "No base linked"; omit on base patterns. */
+  /** Linked base display name; `null` = show "Custom"; omit on base patterns. */
   basePatternName?: string | null;
 }) {
   const metadata = attachment.tud ?? null;

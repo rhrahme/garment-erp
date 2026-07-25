@@ -545,7 +545,7 @@ function ClientPatternCard({
             from {basePatternName}
           </p>
         ) : (
-          <p className="mt-1 text-xs text-slate-400">No base linked</p>
+          <p className="mt-1 text-xs text-slate-400">Custom</p>
         )}
         {linkedFabricCount > 0 ? (
           <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
@@ -781,7 +781,9 @@ function CreateClientPatternForm({
           </select>
         </label>
         <label className="text-sm">
-          <span className="mb-1 block text-xs font-medium text-slate-600">Derived from base</span>
+          <span className="mb-1 block text-xs font-medium text-slate-600">
+            Origin — library base or Custom
+          </span>
           <select
             value={baseId}
             onChange={(e) => {
@@ -790,10 +792,10 @@ function CreateClientPatternForm({
             }}
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
           >
-            <option value="">No base (blank grid)</option>
+            <option value="">Custom (from scratch)</option>
             {bases.map((candidate) => (
               <option key={candidate.id} value={candidate.id}>
-                {candidate.house_brand_code} · {candidate.name}
+                Library · {candidate.house_brand_code} · {candidate.name}
               </option>
             ))}
           </select>

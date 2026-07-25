@@ -28,6 +28,7 @@ test("formatTudSizeDerivedLine pairs a single size with the base name", () => {
   );
 });
 
-test("formatTudSizeDerivedLine shows No base linked when unlinked", () => {
-  assert.equal(formatTudSizeDerivedLine(["2XL"], null), "Size 2XL · No base linked");
+test("formatTudSizeDerivedLine shows Custom when unlinked", () => {
+  assert.equal(formatTudSizeDerivedLine(["2XL"], null), "Size 2XL · Custom");
+  assert.equal(formatTudSizeDerivedLine([], null), "Custom");
 });
