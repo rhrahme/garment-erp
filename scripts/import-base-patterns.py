@@ -531,11 +531,80 @@ def merge_dictionary(dictionary, base):
             entry["garment_types"].append(base["garment_type"])
 
 
+def detect_brand_from_path(path):
+    """Infer FR/GL from folder segments or filename prefixes. Returns (brand_id, brand_code) or None."""
+    parts = [p.lower() for p in path.replace("\\", "/").split("/")]
+    joined = "/".join(parts)
+    filename = parts[-1] if parts else ""
+    # Prefer explicit house-brand folder markers over filename codes.
+    if any(
+        token in parts
+        for token in ("gliani", "gliani beirut", "gl")
+    ) or "/gliani" in joined or "/gl/" in f"/{joined}/" or "gliani" in filename:
+        return ("gliani", "GL")
+    if any(
+        token in parts
+        for token in ("foad rahme", "fouad rahme", "foad rahme spec", "fr", "fr beirut")
+    ) or "/foad" in joined or "/fouad" in joined or "/fr/" in f"/{joined}/":
+        return ("fouad-rahme", "FR")
+    if re.search(r"(^|[\s_-])gl([\s_-]|$)", filename) or "-gl-" in filename:
+        return ("gliani", "GL")
+    if re.search(r"(^|[\s_-])fr([\s_-]|$)", filename) or "-fr-" in filename:
+        return ("fouad-rahme", "FR")
+    return None
+
+
+def iter_xlsx_files(folder, recursive):
+    if not recursive:
+        for filename in sorted(os.listdir(folder)):
+            if filename.lower().endswith(".xlsx") and not filename.startswith("~$"):
+                yield os.path.join(folder, filename)
+        return
+    for dirpath, dirnames, filenames in os.walk(folder, followlinks=True):
+        # Skip junk / lock / copy dumps (prune so we don't descend further)
+        dirnames[:] = [
+            d
+            for d in dirnames
+            if d.lower() not in {"copy", "marker", "old", "new folder", ".ds_store"}
+            and not d.startswith(".")
+        ]
+        low_parts = {p.lower() for p in dirpath.replace("\\", "/").split("/")}
+        if low_parts & {"copy", "marker", "old", "new folder"}:
+            continue
+        for filename in sorted(filenames):
+            if not filename.lower().endswith(".xlsx") or filename.startswith("~$"):
+                continue
+            if "copy" in filename.lower():
+                continue
+            yield os.path.join(dirpath, filename)
+
+
+def filled_cell_count(parsed):
+    return sum(1 for p in parsed["points"] for v in p["values"].values() if v is not None)
+
+
+def cell_count(parsed):
+    return sum(len(p["values"]) for p in parsed["points"])
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--folder", required=True, help="Folder containing the .xlsx files")
     parser.add_argument("--brand-id", default="fouad-rahme", help="Factory brand id (fouad-rahme, gliani)")
     parser.add_argument("--brand-code", default="FR", help="House brand code (FR, GL)")
+    parser.add_argument("--recursive", action="store_true", help="Walk subfolders for .xlsx files")
+    parser.add_argument(
+        "--detect-brand",
+        action="store_true",
+        help="Infer FR/GL from path (falls back to --brand-id/--brand-code)",
+    )
+    parser.add_argument("--min-sizes", type=int, default=3, help="Skip grids with fewer size columns")
+    parser.add_argument(
+        "--min-fill-ratio",
+        type=float,
+        default=0.35,
+        help="Skip sparse/per-size sheets below this filled/cells ratio",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Parse and report without writing")
     args = parser.parse_args()
 
@@ -549,30 +618,60 @@ def main():
     library.setdefault("dictionary", [])
     library.setdefault("base_patterns", [])
     library.setdefault("client_patterns", [])
+    # Never drop remote/local client patterns during base import.
+    preserved_client_patterns = library["client_patterns"]
 
     existing_by_id = {base["id"]: base for base in library["base_patterns"]}
     timestamp = now_iso()
     imported = []
+    skipped = []
+    candidates_by_id = {}  # base_id -> (filled, base_dict, rel_source)
 
-    for filename in sorted(os.listdir(folder)):
-        if not filename.lower().endswith(".xlsx") or filename.startswith("~"):
+    for path in iter_xlsx_files(folder, args.recursive):
+        filename = os.path.basename(path)
+        rel = os.path.relpath(path, folder)
+        try:
+            parsed = parse_workbook(path)
+        except Exception as exc:
+            skipped.append((rel, f"parse error: {exc}"))
             continue
-        path = os.path.join(folder, filename)
-        parsed = parse_workbook(path)
-        if not parsed:
-            print(f"  SKIP (unrecognized layout): {filename}")
+        if not parsed or not parsed["points"]:
+            skipped.append((rel, "unrecognized layout"))
             continue
 
-        base_id = base_pattern_id(args.brand_code, parsed)
+        n_sizes = len(parsed["sizes"])
+        filled = filled_cell_count(parsed)
+        cells = cell_count(parsed) or 1
+        fill_ratio = filled / cells
+        if n_sizes < args.min_sizes:
+            skipped.append((rel, f"only {n_sizes} size column(s)"))
+            continue
+        if fill_ratio < args.min_fill_ratio:
+            skipped.append((rel, f"sparse fill {filled}/{cells} ({fill_ratio:.0%})"))
+            continue
+
+        brand_id, brand_code = args.brand_id, args.brand_code.upper()
+        if args.detect_brand:
+            detected = detect_brand_from_path(path)
+            if detected:
+                brand_id, brand_code = detected
+
+        base_id = base_pattern_id(brand_code, parsed)
         previous = existing_by_id.get(base_id)
+        # Prefer denser grids when multiple files collapse to the same id.
+        prior_candidate = candidates_by_id.get(base_id)
+        if prior_candidate and prior_candidate[0] >= filled:
+            skipped.append((rel, f"duplicate of denser {prior_candidate[2]}"))
+            continue
+
         base = {
             "id": base_id,
-            "house_brand_id": args.brand_id,
-            "house_brand_code": args.brand_code.upper(),
+            "house_brand_id": brand_id,
+            "house_brand_code": brand_code,
             "cut_family": parsed["cut_family"],
             "garment_type": parsed["garment_type"],
             "cut_variant": parsed["cut_variant"],
-            "name": display_name(args.brand_code, parsed),
+            "name": display_name(brand_code, parsed),
             "unit": parsed["unit"],
             "sizes": parsed["sizes"],
             "points": parsed["points"],
@@ -583,30 +682,37 @@ def main():
             "physical_pattern_kept": previous.get("physical_pattern_kept", False) if previous else False,
             "physical_pattern_location": previous.get("physical_pattern_location") if previous else None,
             "files": previous.get("files", []) if previous else [],
-            "source_file": filename,
+            "source_file": rel if args.recursive else filename,
             "notes": parsed["notes"],
             "created_at": previous.get("created_at", timestamp) if previous else timestamp,
             "updated_at": timestamp,
         }
-        existing_by_id[base_id] = base
-        merge_dictionary(library["dictionary"], base)
-
-        cells = sum(len(p["values"]) for p in base["points"])
-        filled = sum(1 for p in base["points"] for v in p["values"].values() if v is not None)
-        imported.append(base)
+        candidates_by_id[base_id] = (filled, base, rel)
         print(
-            f"  OK {base_id}\n"
-            f"     {base['name']} | {len(base['sizes'])} sizes | {len(base['points'])} points | "
-            f"{filled}/{cells} cells filled | unit={base['unit']}"
+            f"  OK [{brand_code}] {base_id}\n"
+            f"     {base['name']} | {n_sizes} sizes | {len(base['points'])} points | "
+            f"{filled}/{cells} cells filled | src={rel}"
         )
 
+    for base_id, (filled, base, _rel) in sorted(candidates_by_id.items()):
+        existing_by_id[base_id] = base
+        merge_dictionary(library["dictionary"], base)
+        imported.append(base)
+
     library["base_patterns"] = sorted(existing_by_id.values(), key=lambda b: b["id"])
+    library["client_patterns"] = preserved_client_patterns
     library["updated_at"] = timestamp
 
     print(
-        f"\nImported {len(imported)} base pattern(s); library now has "
-        f"{len(library['base_patterns'])} base(s), {len(library['dictionary'])} dictionary point(s)."
+        f"\nImported/updated {len(imported)} base pattern(s); library now has "
+        f"{len(library['base_patterns'])} base(s), {len(library['dictionary'])} dictionary point(s), "
+        f"{len(library['client_patterns'])} client pattern(s)."
     )
+    print(f"Skipped {len(skipped)} file(s).")
+    for rel, reason in skipped[:40]:
+        print(f"  SKIP {rel}: {reason}")
+    if len(skipped) > 40:
+        print(f"  ... and {len(skipped) - 40} more")
 
     if args.dry_run:
         print("Dry run — nothing written.")
