@@ -138,6 +138,43 @@ export function garmentMatchesLibraryBase(sheetGarment: string, baseGarment: str
   return allowed.has(baseGarment.trim().toLowerCase());
 }
 
+/**
+ * Soft cross-garment aliases used by the picker (e.g. Polo → shirt bases) so a
+ * sheet can still derive from a related base. These must NOT count as “we already
+ * have a library Excel for this garment” in the missing-bases hint.
+ */
+const CROSS_TYPE_LIBRARY_FALLBACKS: Record<string, readonly string[]> = {
+  polo: ["shirt"],
+  "t-shirt": ["shirt"],
+  tshirt: ["shirt"],
+  suit: ["jacket", "trouser"],
+};
+
+/**
+ * Library `garment_type` keys that count as a dedicated base for this sheet —
+ * same-family synonyms (short/shorts, Shirt LS → shirt) stay; soft fallbacks go.
+ */
+export function dedicatedLibraryGarmentKeysForSheet(garment: string): string[] {
+  const lower = garment.trim().toLowerCase();
+  if (!lower) return [];
+  const exclude = new Set(
+    (CROSS_TYPE_LIBRARY_FALLBACKS[lower] ?? []).map((key) => key.toLowerCase())
+  );
+  return libraryGarmentKeysForSheet(garment).filter(
+    (key) => !exclude.has(key.trim().toLowerCase())
+  );
+}
+
+export function garmentHasDedicatedLibraryBase(
+  sheetGarment: string,
+  baseGarment: string
+): boolean {
+  const allowed = new Set(
+    dedicatedLibraryGarmentKeysForSheet(sheetGarment).map((key) => key.toLowerCase())
+  );
+  return allowed.has(baseGarment.trim().toLowerCase());
+}
+
 function stitchRank(garment: string): number {
   const exact = PATTERN_SHEET_GARMENTS.indexOf(garment);
   if (exact >= 0) return exact;
@@ -287,14 +324,14 @@ export function normalizePatternSheetGarment(garment: string): string {
   return stitch ?? trimmed;
 }
 
-/** Sales sheet garments that have zero matching library base patterns yet. */
+/** Sales sheet garments that have zero dedicated library base patterns yet. */
 export function sheetsMissingLibraryBases(bases: BasePattern[]): string[] {
-  return PATTERN_SHEET_GARMENTS.filter(
-    (sheet) => filterBases(bases, { garmentType: sheet }).length === 0
-  );
+  return PATTERN_SHEET_GARMENTS.filter((sheet) => !sheetHasLibraryBases(bases, sheet));
 }
 
 export function sheetHasLibraryBases(bases: BasePattern[], garmentType: string): boolean {
   if (!garmentType.trim()) return false;
-  return filterBases(bases, { garmentType }).length > 0;
+  return bases.some((base) =>
+    garmentHasDedicatedLibraryBase(garmentType, base.garment_type)
+  );
 }

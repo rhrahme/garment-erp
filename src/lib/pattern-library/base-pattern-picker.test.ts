@@ -119,6 +119,13 @@ describe("base-pattern-picker", () => {
     assert.equal(resolved.baseSize, "S");
   });
 
+  it("sheetsMissingLibraryBases lists stitch types with no bases", () => {
+    const missing = sheetsMissingLibraryBases(bases);
+    assert.ok(missing.includes("Polo"));
+    assert.ok(missing.includes("Vest"));
+    assert.ok(!missing.includes("Short")); // shorts base exists
+  });
+
   it("library path is not ready until base + size set", () => {
     const incomplete = {
       garmentType: "shirt",
