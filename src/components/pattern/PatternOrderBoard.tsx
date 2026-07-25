@@ -2,16 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Eye, ImageOff, Layers, Star, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, ImageOff, Layers, Link2, Star, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
 import { FabricSwatchProvider, useFabricSwatch } from "@/components/fabric/FabricSwatchProvider";
+import { ConsolidateSelectedFabricsModal } from "@/components/pattern/ConsolidateSelectedFabricsModal";
 import { PatternMismatchBanner } from "@/components/pattern/PatternMismatchBanner";
 import { productionBrandNameForOrder } from "@/lib/sales-orders/production-brand";
 import type { PatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mismatch";
 import type { PatternJob } from "@/lib/types/pattern";
 import type { ClientPattern } from "@/lib/types/pattern-library";
 import type { SalesOrder } from "@/lib/types/sales-orders";
+import { cn } from "@/lib/utils";
 
 function formatArticle(articleNumber: number): string {
   return `L${String(articleNumber).padStart(2, "0")}`;
@@ -43,6 +45,18 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
   const [error, setError] = useState<string | null>(null);
   const [clientPatterns, setClientPatterns] = useState<ClientPattern[]>([]);
   const [previewJobId, setPreviewJobId] = useState<string | null>(null);
+  const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
+  const [consolidateOpen, setConsolidateOpen] = useState(false);
+
+  const loadClientPatterns = useCallback(async () => {
+    try {
+      const res = await fetch("/api/pattern/library/client-patterns", { cache: "no-store" });
+      const data = res.ok ? await res.json() : null;
+      setClientPatterns(data?.client_patterns ?? []);
+    } catch {
+      setClientPatterns([]);
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -52,9 +66,17 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to load");
       setOrder(data.order);
-      setJobs(data.jobs ?? []);
+      const nextJobs = (data.jobs ?? []) as PatternJob[];
+      setJobs(nextJobs);
       setMismatch(data.mismatch ?? null);
       setAwaitingLines(Boolean(data.awaiting_lines));
+      setSelectedJobIds((prev) => {
+        const next = new Set<string>();
+        for (const id of prev) {
+          if (nextJobs.some((job) => job.id === id)) next.add(id);
+        }
+        return next;
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
@@ -67,11 +89,8 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
   }, [load]);
 
   useEffect(() => {
-    fetch("/api/pattern/library/client-patterns", { cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setClientPatterns(data?.client_patterns ?? []))
-      .catch(() => setClientPatterns([]));
-  }, []);
+    void loadClientPatterns();
+  }, [loadClientPatterns]);
 
   const garmentTypes = useMemo(() => {
     const types = new Set(jobs.map((job) => job.garment_type));
@@ -103,6 +122,27 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
     () => jobs.find((job) => job.id === previewJobId) ?? null,
     [jobs, previewJobId]
   );
+
+  const selectedJobs = useMemo(
+    () => jobs.filter((job) => selectedJobIds.has(job.id)),
+    [jobs, selectedJobIds]
+  );
+
+  function toggleJob(jobId: string) {
+    setSelectedJobIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(jobId)) next.delete(jobId);
+      else next.add(jobId);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setSelectedJobIds((prev) => {
+      if (prev.size === jobs.length) return new Set();
+      return new Set(jobs.map((job) => job.id));
+    });
+  }
 
   async function setFirstTrial(jobId: string) {
     setActingId(jobId);
@@ -178,8 +218,8 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
             </Link>
           </div>
           <p className="mt-2 text-xs text-slate-500">
-            Create or open this client&apos;s garment sheet in Pattern Library (Custom or filtered
-            library base). Assign fabrics on the fabric board.
+            Tick the fabric lines that share one pattern, then consolidate — upload the .TUD and fill
+            sizes on the sheet.
           </p>
           {patternsForClient.length > 0 ? (
             <ul className="mt-3 flex flex-wrap gap-2">
@@ -221,14 +261,54 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
           </div>
         ) : null}
 
+        {jobs.length > 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-indigo-100 bg-indigo-50/60 px-4 py-3">
+            <p className="text-sm text-indigo-900">
+              <span className="font-semibold">{selectedJobIds.size}</span> selected · tick fabrics that
+              share one .TUD / measurement sheet
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={toggleAll}
+                className="text-sm font-medium text-indigo-700 hover:text-indigo-900"
+              >
+                {selectedJobIds.size === jobs.length ? "Clear selection" : "Select all"}
+              </button>
+              <Button
+                size="sm"
+                onClick={() => setConsolidateOpen(true)}
+                disabled={selectedJobIds.size === 0}
+              >
+                <Link2 className="mr-1.5 h-3.5 w-3.5" />
+                Consolidate selected
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
         <div className="space-y-3">
           {jobs.map((job) => {
             const linked = clientPatterns.find((pattern) => pattern.id === job.client_pattern_id);
             const supplierId = job.supplier_id ?? "";
+            const selected = selectedJobIds.has(job.id);
             return (
-              <div key={job.id} className="rounded-xl border border-slate-200 bg-white p-4">
+              <div
+                key={job.id}
+                className={cn(
+                  "rounded-xl border bg-white p-4",
+                  selected ? "border-indigo-300 ring-1 ring-indigo-100" : "border-slate-200"
+                )}
+              >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex min-w-0 flex-1 gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      onChange={() => toggleJob(job.id)}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600"
+                      aria-label={`Select ${formatArticle(job.article_number)}`}
+                    />
                     {supplierId ? (
                       <button
                         type="button"
@@ -290,7 +370,7 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
                             {linked.pattern_ref}
                           </Link>
                         ) : (
-                          <span className="text-amber-700">Not linked yet — use Pattern Library</span>
+                          <span className="text-amber-700">Not linked — select &amp; consolidate</span>
                         )}
                       </p>
                     </div>
@@ -331,6 +411,21 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
 
         {previewJob?.supplier_id ? (
           <JobFabricPreviewDialog job={previewJob} onClose={() => setPreviewJobId(null)} />
+        ) : null}
+
+        {consolidateOpen && order ? (
+          <ConsolidateSelectedFabricsModal
+            order={order}
+            selectedJobs={selectedJobs}
+            clientPatterns={clientPatterns}
+            onClose={() => setConsolidateOpen(false)}
+            onLinked={async () => {
+              setSelectedJobIds(new Set());
+              setConsolidateOpen(false);
+              await load();
+              await loadClientPatterns();
+            }}
+          />
         ) : null}
       </div>
     </FabricSwatchProvider>

@@ -6,7 +6,10 @@ export default async function PatternOrderPage({ params }: { params: Promise<{ s
 
   return (
     <div>
-      <PageHeader title="Pattern order board" description="All fabric lines for this sales order — specs only, no prices." />
+      <PageHeader
+        title="Pattern order board"
+        description="Select fabrics that share one pattern, consolidate, then upload the .TUD and fill sizes."
+      />
       <PatternOrderBoard soId={soId} />
     </div>
   );
