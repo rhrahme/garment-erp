@@ -48,7 +48,13 @@ CUT_FAMILY_FIXES = {
     "suit supply": "Suit Supply",
     "comfort": "Comfort",
     "massimo dutty": "Massimo",
+    "massimo dutti": "Massimo",
     "massimo": "Massimo",
+    "hugo boss": "Hugo Boss",
+    "brand boss": "Hugo Boss",
+    "boss": "Hugo Boss",
+    "camicissima": "Camicissima",
+    "luca faloni": "Luca Faloni",
 }
 
 # Alias -> canonical measurement point name (per the team's own equivalences).
@@ -73,13 +79,17 @@ KNOWN_TRIM_POINTS = {
 
 GARMENT_HINTS = [
     ("short pant", "shorts"),
+    ("linen short", "shorts"),
     ("shorts", "shorts"),
-    ("short", "shorts"),
-    ("jacket", "jacket"),
-    ("shirt", "shirt"),
+    ("chino", "trouser"),
     ("trouser", "trouser"),
+    ("jacket", "jacket"),
+    ("kurta", "shirt"),
+    ("shirt", "shirt"),
     ("pant", "trouser"),
     ("thobe", "thobe"),
+    # Bare "short" last — Suit Supply Short trousers also contain the word.
+    ("short", "shorts"),
 ]
 
 
@@ -98,6 +108,13 @@ def clean(value):
     return re.sub(r"\s+", " ", str(value)).strip()
 
 
+def clean_name(value):
+    """Strip leading label junk: ': Brand Boss' → 'Brand Boss'."""
+    text = clean(value)
+    text = re.sub(r"^[:\-\s]+", "", text)
+    return clean(text)
+
+
 def canonical_point_name(raw_name):
     return POINT_ALIASES.get(clean(raw_name).lower(), clean(raw_name))
 
@@ -106,8 +123,18 @@ def to_number(value):
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         return float(value)
     if isinstance(value, str):
+        text = value.strip()
+        # Mixed numbers: "4 9/16"
+        mixed = re.fullmatch(r"(\d+)\s+(\d+)\s*/\s*(\d+)", text)
+        if mixed:
+            whole, num, den = (int(mixed.group(i)) for i in (1, 2, 3))
+            return whole + (num / den) if den else float(whole)
+        frac = re.fullmatch(r"(\d+)\s*/\s*(\d+)", text)
+        if frac:
+            num, den = int(frac.group(1)), int(frac.group(2))
+            return num / den if den else None
         try:
-            return float(value.strip())
+            return float(text)
         except ValueError:
             return None
     return None
@@ -131,19 +158,63 @@ def detect_garment(*texts):
     return None
 
 
+_VARIANT_NOISE = re.compile(
+    r"\b(shirt|trouser|trousers|pant|pants|jacket|shorts|chino|kurta|"
+    r"linen|cotton|wool|mens|men'?s|for|all|measurement|spec)\b",
+    re.I,
+)
+
+
+def tidy_variant(raw):
+    """Keep fit/length variants (Fitted, Slim, Long); drop fabric/garment noise."""
+    text = _VARIANT_NOISE.sub("", clean(raw) or "")
+    text = clean(re.sub(r"\s+", " ", text))
+    if not text or text.lower() in {"fit", "fits"}:
+        return None
+    # "Slim Fit" → Slim
+    text = re.sub(r"\bfit\b", "", text, flags=re.I)
+    text = clean(text)
+    return text.title() if text else None
+
+
 def parse_family_and_variant(raw_name):
     """' Suit Suplly (Short)' -> ('Suit Supply', 'Short'); 'BOGGY' -> ('Boggi', None)."""
-    name = clean(raw_name)
+    name = clean_name(raw_name)
     variant = None
     match = re.search(r"\(([^)]+)\)\s*$", name)
     if match:
-        variant = clean(match.group(1)).title()
+        variant = tidy_variant(match.group(1))
         name = clean(name[: match.start()])
     lowered = name.lower()
     for key in sorted(CUT_FAMILY_FIXES, key=len, reverse=True):
-        if lowered.startswith(key):
-            return CUT_FAMILY_FIXES[key], variant
+        if lowered == key or lowered.startswith(key + " ") or lowered.startswith(key + "("):
+            family = CUT_FAMILY_FIXES[key]
+            rest = clean(name[len(key) :])
+            if rest and not variant:
+                variant = tidy_variant(rest)
+            return family, variant
     return name.title() if name else None, variant
+
+
+def infer_unit(sizes, points, default="in"):
+    """Collar charts with body lengths ≥55 are metric; otherwise keep default."""
+    numeric_sizes = []
+    for size in sizes:
+        try:
+            numeric_sizes.append(float(size))
+        except ValueError:
+            return default
+    if not numeric_sizes or min(numeric_sizes) < 34 or max(numeric_sizes) > 52:
+        return default
+    lengthish = [
+        v
+        for point in points
+        for v in point["values"].values()
+        if v is not None and "length" in point["name"].lower()
+    ]
+    if lengthish and max(lengthish) >= 55:
+        return "cm"
+    return default
 
 
 def detect_fabric(*texts):
@@ -190,19 +261,28 @@ def parse_standard_sheet(ws, filename):
 
     # Metadata rows above the header.
     pattern_name = None
+    description = None
     style_code = None
     extra_notes = []
     title = clean(rows[0][0] if rows and rows[0] else "")
     for row in rows[:header_idx]:
         cells = [clean(cell) for cell in (row or [])]
         for j, cell in enumerate(cells):
-            lowered = cell.lower()
-            if lowered == "name" and j + 2 < len(cells):
-                pattern_name = next((c for c in cells[j + 1 :] if c and c != ":"), None)
-            if lowered in ("code:", "model:") and j + 1 < len(cells):
-                style_code = next((c for c in cells[j + 1 :] if c), None)
-            if lowered == "fabric code:":
-                code = next((c for c in cells[j + 1 :] if c), None)
+            lowered = cell.lower().rstrip(":")
+            if lowered == "name":
+                pattern_name = clean_name(
+                    next((c for c in cells[j + 1 :] if c and c != ":"), None)
+                )
+            if lowered == "description":
+                description = clean_name(
+                    next((c for c in cells[j + 1 :] if c and c != ":"), None)
+                )
+            if lowered in ("code", "model", "pattern  ref", "pattern ref"):
+                style_code = clean_name(
+                    next((c for c in cells[j + 1 :] if c and c != ":"), None)
+                ) or style_code
+            if "fabric" in lowered and ("code" in lowered or "name" in lowered):
+                code = clean_name(next((c for c in cells[j + 1 :] if c and c != ":"), None))
                 if code:
                     extra_notes.append(f"Fabric code: {code}")
 
@@ -242,14 +322,25 @@ def parse_standard_sheet(ws, filename):
         )
 
     family, variant = parse_family_and_variant(pattern_name or "")
-    garment = detect_garment(title, filename) or "unknown"
-    fabric = detect_fabric(pattern_name or "", filename)
+    if not variant and description:
+        variant = tidy_variant(description)
+    garment = (
+        detect_garment(description or "", title, pattern_name or "", filename) or "unknown"
+    )
+    fabric = detect_fabric(
+        pattern_name or "",
+        description or "",
+        style_code or "",
+        filename,
+        *extra_notes,
+    )
+    unit = infer_unit(sizes, points, default="in")
 
     return {
         "cut_family": family or "Unknown",
         "cut_variant": variant,
         "garment_type": garment,
-        "unit": "in",
+        "unit": unit,
         "sizes": sizes,
         "points": points,
         "style_code": clean(style_code) or None,
@@ -346,8 +437,16 @@ def parse_techpack_sheet(ws, filename):
             point["diagram_code"] = None
 
     family, variant = parse_family_and_variant(customer or "")
+    if not variant and style_name and "chino" in clean(style_name).lower():
+        variant = "Chino"
     garment = detect_garment(style_name or "", filename) or "unknown"
-    fabric = detect_fabric(style_name or "", filename)
+    fabric_bits = []
+    for row in rows[: header_idx + 1]:
+        for cell in row or []:
+            text = clean(cell)
+            if "cotton" in text.lower() or "linen" in text.lower() or "wool" in text.lower():
+                fabric_bits.append(text)
+    fabric = detect_fabric(style_name or "", filename, *fabric_bits)
 
     return {
         "cut_family": family or "Unknown",
