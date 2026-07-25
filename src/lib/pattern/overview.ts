@@ -1,6 +1,7 @@
 import { readPatternJobsAsync } from "@/lib/data/pattern-jobs";
 import { readSalesOrdersAsync } from "@/lib/data/sales-orders";
 import { jobMatchesTab } from "@/lib/pattern/work-tabs";
+import { productionBrandNameForOrder } from "@/lib/sales-orders/production-brand";
 import type {
   PatternAwaitingLinesOrder,
   PatternJob,
@@ -53,10 +54,19 @@ export async function listPatternOverview(): Promise<PatternOverview> {
 
   const jobs: PatternJobRow[] = jobsFile.jobs
     .filter((job) => ACTIVE_STATUSES.includes(job.status) || job.status === "completed")
-    .map((job) => ({
-      job,
-      order_delivery_date: orderById.get(job.sales_order_id)?.delivery_date ?? null,
-    }))
+    .map((job) => {
+      const order = orderById.get(job.sales_order_id);
+      const house_brand = productionBrandNameForOrder({
+        client_code: order?.client_code ?? job.client_code,
+        retail_brand: order?.retail_brand ?? null,
+      });
+      return {
+        job,
+        order_delivery_date: order?.delivery_date ?? null,
+        retail_brand: order?.retail_brand ?? null,
+        house_brand: house_brand || null,
+      };
+    })
     .sort((a, b) => {
       if (a.job.trial_priority !== b.job.trial_priority) {
         return a.job.trial_priority ? -1 : 1;

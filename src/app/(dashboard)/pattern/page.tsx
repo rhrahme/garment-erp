@@ -9,7 +9,7 @@ export default function PatternPage() {
     <div>
       <PageHeader
         title="Pattern"
-        description="Pattern drafting queue — one job per fabric line. Jobs are created when sales orders are saved."
+        description="Pattern drafting queue grouped by client + sales order. Open an order to work fabric lines and link shared master patterns."
       />
       <div className="mb-4 space-y-3">
         <Link

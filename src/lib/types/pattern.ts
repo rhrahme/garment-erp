@@ -100,6 +100,10 @@ export type PatternWorkTab =
 export interface PatternJobRow {
   job: PatternJob;
   order_delivery_date: string | null;
+  /** Ready-made / factory brand from the sales order when available. */
+  retail_brand?: string | null;
+  /** Display label for house / factory brand (from SO + client code). */
+  house_brand?: string | null;
 }
 
 export interface PatternAwaitingLinesOrder {

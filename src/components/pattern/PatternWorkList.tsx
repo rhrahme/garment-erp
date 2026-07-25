@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Star } from "lucide-react";
+import { groupPatternJobsBySalesOrder } from "@/lib/pattern/queue-groups";
 import { jobMatchesTab } from "@/lib/pattern/work-tabs";
 import { matchesNormalizedSearch } from "@/lib/search/normalize";
 import type { PatternOverview, PatternWorkTab } from "@/lib/types/pattern";
@@ -61,21 +62,6 @@ export function PatternWorkList({ reloadKey = 0 }: PatternWorkListProps) {
     void loadOverview(reloadKey > 0);
   }, [loadOverview, reloadKey]);
 
-  const tabCounts = useMemo(() => {
-    const counts = Object.fromEntries(TABS.map((t) => [t.id, 0])) as Record<PatternWorkTab, number>;
-    if (!overview) return counts;
-
-    for (const row of overview.jobs) {
-      for (const t of TABS) {
-        if (jobMatchesTab(row.job.status, t.id)) counts[t.id] += 1;
-      }
-    }
-    if (tab === "new") {
-      counts.new += overview.awaiting_lines_orders.length;
-    }
-    return counts;
-  }, [overview]);
-
   const filteredJobs = useMemo(() => {
     if (!overview) return [];
     return overview.jobs.filter((row) => {
@@ -89,11 +75,15 @@ export function PatternWorkList({ reloadKey = 0 }: PatternWorkListProps) {
           job.garment_type,
           job.fabric_number,
           formatArticle(job.article_number),
+          row.retail_brand ?? "",
+          row.house_brand ?? "",
         ],
         search
       );
     });
   }, [overview, tab, search]);
+
+  const orderGroups = useMemo(() => groupPatternJobsBySalesOrder(filteredJobs), [filteredJobs]);
 
   const awaitingOrders = useMemo(() => {
     if (!overview || tab !== "new") return [];
@@ -101,6 +91,20 @@ export function PatternWorkList({ reloadKey = 0 }: PatternWorkListProps) {
       matchesNormalizedSearch([order.so_number, order.client_name, order.client_code], search)
     );
   }, [overview, tab, search]);
+
+  const tabCounts = useMemo(() => {
+    const counts = Object.fromEntries(TABS.map((t) => [t.id, 0])) as Record<PatternWorkTab, number>;
+    if (!overview) return counts;
+
+    for (const t of TABS) {
+      const matching = overview.jobs.filter((row) => jobMatchesTab(row.job.status, t.id));
+      const soIds = new Set(matching.map((row) => row.job.sales_order_id));
+      counts[t.id] = soIds.size;
+    }
+    // Awaiting-lines SOs only appear on New.
+    counts.new += overview.awaiting_lines_orders.length;
+    return counts;
+  }, [overview]);
 
   return (
     <div className="space-y-4">
@@ -144,36 +148,37 @@ export function PatternWorkList({ reloadKey = 0 }: PatternWorkListProps) {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="font-semibold text-slate-900">
-                    {order.so_number} · {order.client_name}
+                    {order.client_name} · {order.so_number}
                   </p>
                   <p className="mt-1 text-sm text-amber-800">Awaiting fabric lines</p>
+                  <p className="mt-1 text-xs text-slate-500">{order.client_code}</p>
                 </div>
                 <Link
                   href={`/pattern/orders/${order.sales_order_id}`}
                   className="inline-flex items-center gap-1 text-sm font-medium text-indigo-700 hover:text-indigo-900"
                 >
-                  Open order
+                  Open
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
             </div>
           ))}
 
-          {filteredJobs.map(({ job, order_delivery_date }) => (
+          {orderGroups.map((group) => (
             <div
-              key={job.id}
+              key={group.sales_order_id}
               className={cn(
                 "rounded-xl border bg-white p-4 shadow-sm",
-                job.trial_priority ? "border-violet-300 ring-1 ring-violet-100" : "border-slate-200"
+                group.has_trial_priority ? "border-violet-300 ring-1 ring-violet-100" : "border-slate-200"
               )}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-semibold text-slate-900">
-                      {job.so_number} · {formatArticle(job.article_number)} · {job.garment_type}
+                      {group.client_name} · {group.so_number}
                     </p>
-                    {job.trial_priority ? (
+                    {group.has_trial_priority ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-800">
                         <Star className="h-3 w-3 fill-current" />
                         First trial
@@ -181,39 +186,41 @@ export function PatternWorkList({ reloadKey = 0 }: PatternWorkListProps) {
                     ) : null}
                   </div>
                   <p className="mt-1 text-sm text-slate-600">
-                    {job.client_name} · {job.fabric_number} · {job.supplier}
+                    {group.house_brand ? `${group.house_brand} · ` : ""}
+                    {group.client_code}
+                    {group.order_delivery_date ? ` · Delivery ${group.order_delivery_date}` : ""}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {job.composition ?? "—"} · {job.gsm ?? "—"} gsm · {job.meters}m
-                    {order_delivery_date ? ` · Delivery ${order_delivery_date}` : ""}
+                  <p className="mt-2 text-sm text-slate-700">
+                    {group.fabric_line_count} fabric line{group.fabric_line_count === 1 ? "" : "s"}
+                    {" · "}
+                    {group.job_count} job{group.job_count === 1 ? "" : "s"}
+                    {group.garment_types.length > 0
+                      ? ` · ${group.garment_types.join(", ")}`
+                      : ""}
                   </p>
-                  <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-                    {STATUS_LABELS[job.status] ?? job.status}
-                    {job.assigned_to ? ` · ${job.assigned_to}` : ""}
+                  <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500">
+                    {group.status_summary.map((status) => STATUS_LABELS[status] ?? status).join(" · ")}
+                    {group.unlinked_job_count > 0
+                      ? ` · ${group.unlinked_job_count} unlinked to master pattern`
+                      : group.linked_pattern_count > 0
+                        ? " · All linked to master pattern"
+                        : ""}
                   </p>
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <Link
-                    href={`/pattern/jobs/${job.id}`}
-                    className="inline-flex items-center gap-1 text-sm font-medium text-indigo-700 hover:text-indigo-900"
-                  >
-                    Open job
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <Link
-                    href={`/pattern/orders/${job.sales_order_id}`}
-                    className="text-xs text-slate-500 hover:text-slate-700"
-                  >
-                    Order board
-                  </Link>
-                </div>
+                <Link
+                  href={`/pattern/orders/${group.sales_order_id}`}
+                  className="inline-flex items-center gap-1 text-sm font-medium text-indigo-700 hover:text-indigo-900"
+                >
+                  Open
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
             </div>
           ))}
 
-          {awaitingOrders.length === 0 && filteredJobs.length === 0 ? (
+          {awaitingOrders.length === 0 && orderGroups.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
-              No jobs in this tab.
+              No sales orders in this tab.
             </p>
           ) : null}
         </div>
