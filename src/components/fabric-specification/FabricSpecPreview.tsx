@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Eye, X } from "lucide-react";
+import { Eye, ImageOff, X } from "lucide-react";
 import { DrapersFabricSwatch } from "@/components/fabric-specification/DrapersFabricSwatch";
 import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
 import { formatFabricPatternLabel, formatFabricTextLabel } from "@/lib/fabric-sourcing/fabric-display";
@@ -28,13 +28,59 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
   );
 }
 
+function FabricPhotoPanel({
+  fabricNumber,
+  src,
+  zoomSrc,
+}: {
+  fabricNumber: string;
+  src?: string;
+  zoomSrc?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  const imageSrc = zoomSrc ?? src;
+
+  useEffect(() => {
+    setFailed(false);
+  }, [imageSrc]);
+
+  if (!imageSrc || failed) {
+    return (
+      <div
+        className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 text-slate-400"
+        aria-label={`No photo for fabric ${fabricNumber}`}
+      >
+        <ImageOff className="h-8 w-8" />
+        <p className="text-sm font-medium text-slate-500">No photo</p>
+        <p className="text-xs text-slate-400">No swatch image for {fabricNumber}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={imageSrc}
+        alt={`Fabric ${fabricNumber}`}
+        className="mx-auto max-h-64 w-full object-contain"
+        onError={() => setFailed(true)}
+      />
+    </div>
+  );
+}
+
 function FabricSpecDetailModal({
   fabric,
+  swatchSrc,
+  zoomSrc,
   canViewPrices,
   canViewStock,
   onClose,
 }: {
   fabric: SupplierFabric;
+  swatchSrc?: string;
+  zoomSrc?: string;
   canViewPrices: boolean;
   canViewStock: boolean;
   onClose: () => void;
@@ -83,7 +129,13 @@ function FabricSpecDetailModal({
         className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-xl bg-white p-5 shadow-2xl sm:p-6"
         onClick={(event) => event.stopPropagation()}
       >
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{brand}</p>
+        <FabricPhotoPanel
+          fabricNumber={fabric.fabric_number}
+          src={swatchSrc}
+          zoomSrc={zoomSrc}
+        />
+
+        <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">{brand}</p>
         <h3 className="mt-1 font-mono text-2xl font-semibold text-slate-900">{fabric.fabric_number}</h3>
         {pattern ? <p className="mt-1 text-sm font-medium text-slate-700">{pattern}</p> : null}
 
@@ -147,11 +199,15 @@ function FabricSpecDetailModal({
 
 function FabricSpecPreviewTrigger({
   fabric,
+  swatchSrc,
+  zoomSrc,
   canViewPrices,
   canViewStock,
   variant,
 }: {
   fabric: SupplierFabric;
+  swatchSrc?: string;
+  zoomSrc?: string;
   canViewPrices: boolean;
   canViewStock: boolean;
   variant: "eye" | "linen";
@@ -181,6 +237,8 @@ function FabricSpecPreviewTrigger({
       {open ? (
         <FabricSpecDetailModal
           fabric={fabric}
+          swatchSrc={swatchSrc}
+          zoomSrc={zoomSrc}
           canViewPrices={canViewPrices}
           canViewStock={canViewStock}
           onClose={close}
@@ -190,7 +248,7 @@ function FabricSpecPreviewTrigger({
   );
 }
 
-/** Preview cell — Drapers swatch image when available, otherwise click for full spec modal. */
+/** Preview cell — swatch thumbnail when available; eye/linen opens details + photo (or No photo). */
 export function FabricSpecPreview({
   fabric,
   swatchSrc,
@@ -198,13 +256,37 @@ export function FabricSpecPreview({
   canViewPrices = true,
   canViewStock = true,
 }: FabricSpecPreviewProps) {
+  const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+
   if (swatchSrc) {
     return (
-      <DrapersFabricSwatch
-        fabricNumber={fabric.fabric_number}
-        src={swatchSrc}
-        zoomSrc={zoomSrc}
-      />
+      <>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="rounded border border-transparent hover:border-indigo-300"
+          title={`Preview fabric ${fabric.fabric_number}`}
+          aria-label={`Preview fabric ${fabric.fabric_number}`}
+        >
+          <DrapersFabricSwatch
+            fabricNumber={fabric.fabric_number}
+            src={swatchSrc}
+            zoomSrc={zoomSrc}
+            disableZoom
+          />
+        </button>
+        {open ? (
+          <FabricSpecDetailModal
+            fabric={fabric}
+            swatchSrc={swatchSrc}
+            zoomSrc={zoomSrc}
+            canViewPrices={canViewPrices}
+            canViewStock={canViewStock}
+            onClose={close}
+          />
+        ) : null}
+      </>
     );
   }
 
@@ -213,6 +295,8 @@ export function FabricSpecPreview({
   return (
     <FabricSpecPreviewTrigger
       fabric={fabric}
+      swatchSrc={swatchSrc}
+      zoomSrc={zoomSrc}
       canViewPrices={canViewPrices}
       canViewStock={canViewStock}
       variant={variant}

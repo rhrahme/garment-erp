@@ -7,7 +7,9 @@ import {
   canAccessPatternModule,
   defaultPathForEmail,
   defaultPathForSession,
+  isPatternOperatorRouteAllowed,
   isProductionOperatorRouteAllowed,
+  isSalesOperatorRouteAllowed,
   resolveRestrictedAccess,
 } from "./permissions.ts";
 
@@ -132,5 +134,30 @@ describe("production_operator home / nav gating", () => {
     assert.equal(canAccessPatternModule(true, false, false, false), false);
     assert.equal(canAccessPatternModule(false, false, true, false), false);
     assert.equal(canAccessPatternModule(false, true, false, false), true);
+  });
+});
+
+describe("pattern_operator fabric swatch image routes", () => {
+  const imageRoutes = [
+    "/api/suppliers/loro-piana/images",
+    "/api/suppliers/loro-piana/images/722042",
+    "/api/integrations/drapers/medias",
+    "/api/integrations/caccioppoli/images",
+  ];
+
+  it("allows all fabric swatch APIs used by the eye/preview UI", () => {
+    for (const path of imageRoutes) {
+      assert.equal(isPatternOperatorRouteAllowed(path), true, path);
+      assert.equal(isProductionOperatorRouteAllowed(path), true, path);
+      assert.equal(isSalesOperatorRouteAllowed(path), true, path);
+    }
+  });
+
+  it("still blocks order/accounting routes for pattern_operator", () => {
+    assert.equal(isPatternOperatorRouteAllowed("/pattern/library/fabrics/client-1"), true);
+    assert.equal(isPatternOperatorRouteAllowed("/api/pattern/library/client-fabrics/x"), true);
+    assert.equal(isPatternOperatorRouteAllowed("/orders"), false);
+    assert.equal(isPatternOperatorRouteAllowed("/invoices"), false);
+    assert.equal(isPatternOperatorRouteAllowed("/costing"), false);
   });
 });

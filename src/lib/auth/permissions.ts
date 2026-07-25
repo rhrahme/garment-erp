@@ -1,5 +1,12 @@
 import type { UserRole } from "@/lib/types/database";
 
+/** Fabric swatch lookup + image proxy routes used by preview/eye UI. */
+const FABRIC_SWATCH_ROUTE_PREFIXES = [
+  "/api/suppliers/loro-piana",
+  "/api/integrations/drapers/medias",
+  "/api/integrations/caccioppoli/images",
+] as const;
+
 const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/clients",
   "/fabric-specification",
@@ -17,9 +24,8 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/api/fabric-receiving",
   "/api/thread-button-matching",
   "/api/fabric-transfers",
-  "/api/suppliers/loro-piana",
+  ...FABRIC_SWATCH_ROUTE_PREFIXES,
   "/api/qr",
-  "/api/integrations/drapers/medias",
   "/api/factory/floor-stations",
   "/api/production",
   "/api/auth/session",
@@ -41,8 +47,7 @@ const TASK_OPERATOR_ROUTE_PREFIXES = [
   "/api/fabric-search",
   "/api/custom-fabrics",
   "/api/clients",
-  "/api/suppliers/loro-piana",
-  "/api/integrations/drapers/medias",
+  ...FABRIC_SWATCH_ROUTE_PREFIXES,
   "/api/auth/session",
   "/api/auth/dev-impersonate",
   "/login",
@@ -85,8 +90,7 @@ const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   "/api/hr/employees",
   "/api/hr/employee-lookup",
   "/api/hr/id-badges",
-  "/api/suppliers/loro-piana",
-  "/api/integrations/drapers/medias",
+  ...FABRIC_SWATCH_ROUTE_PREFIXES,
   "/api/auth/session",
   "/api/auth/dev-impersonate",
   "/login",
@@ -120,9 +124,7 @@ const PATTERN_OPERATOR_ROUTE_PREFIXES = [
   "/api/fabric-search",
   "/api/fabric-brands",
   "/api/qr",
-  "/api/suppliers/loro-piana",
-  "/api/integrations/drapers/medias",
-  "/api/integrations/caccioppoli/images",
+  ...FABRIC_SWATCH_ROUTE_PREFIXES,
   "/api/auth/session",
   "/api/auth/dev-impersonate",
   "/login",
@@ -143,8 +145,7 @@ const SALES_OPERATOR_ROUTE_PREFIXES = [
   "/api/customer-invoices",
   "/api/sales",
   "/api/qr",
-  "/api/suppliers/loro-piana",
-  "/api/integrations/drapers/medias",
+  ...FABRIC_SWATCH_ROUTE_PREFIXES,
   "/api/auth/session",
   "/api/auth/dev-impersonate",
   "/login",

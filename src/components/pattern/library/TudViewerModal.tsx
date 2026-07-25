@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Download, X } from "lucide-react";
+import { formatTudSizeDerivedLine } from "@/lib/pattern-library/derived-from";
 import {
   formatAreaM2,
   formatPieceAreaM2,
@@ -14,17 +15,24 @@ import type { PatternLibraryAttachment, TudMetadata } from "@/lib/types/pattern-
  * Full-screen-ish viewer for a .TUD attachment: large preview (upscaled from
  * the embedded 100×100 JPEG) plus a browser for the parsed piece list and
  * fabric totals. Read-only — the .tud geometry itself is not decoded.
+ *
+ * Pass `basePatternName` from the parent client-pattern context so the viewer
+ * can show which base the size was derived from without a second fetch.
+ * Omit the prop entirely on base-pattern pages (derivation does not apply).
  */
 export function TudViewerModal({
   attachment,
   thumbnailUrl,
   downloadUrl,
   onClose,
+  basePatternName,
 }: {
   attachment: PatternLibraryAttachment;
   thumbnailUrl: string | null;
   downloadUrl: string;
   onClose: () => void;
+  /** Linked base display name; `null` = show "No base linked"; omit on base patterns. */
+  basePatternName?: string | null;
 }) {
   const metadata = attachment.tud ?? null;
   const [mounted, setMounted] = useState(false);
@@ -78,6 +86,11 @@ export function TudViewerModal({
               </p>
             </div>
             <p className="mt-0.5 truncate text-xs text-slate-500">{attachment.filename}</p>
+            {basePatternName !== undefined ? (
+              <p className="mt-1.5 text-sm font-medium text-slate-700">
+                {formatTudSizeDerivedLine(metadata?.sizes ?? [], basePatternName)}
+              </p>
+            ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <a
@@ -123,7 +136,7 @@ export function TudViewerModal({
           {/* Piece browser */}
           <div className="min-w-0 space-y-4 p-4 sm:p-5 lg:overflow-y-auto">
             {metadata ? (
-              <TudPieceBrowser metadata={metadata} />
+              <TudPieceBrowser metadata={metadata} basePatternName={basePatternName} />
             ) : (
               <p className="text-sm text-slate-500">
                 No parsed TUKA data for this file — only the preview is available.
@@ -137,7 +150,13 @@ export function TudViewerModal({
   );
 }
 
-function TudPieceBrowser({ metadata }: { metadata: TudMetadata }) {
+function TudPieceBrowser({
+  metadata,
+  basePatternName,
+}: {
+  metadata: TudMetadata;
+  basePatternName?: string | null;
+}) {
   const grandTotal =
     metadata.total_area_m2 ??
     (metadata.size_totals.length > 0
@@ -146,6 +165,17 @@ function TudPieceBrowser({ metadata }: { metadata: TudMetadata }) {
 
   return (
     <>
+      {basePatternName !== undefined ? (
+        <div className="rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2.5">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-indigo-500">
+            Size · derived from
+          </p>
+          <p className="mt-0.5 text-base font-semibold leading-snug text-indigo-950 sm:text-lg">
+            {formatTudSizeDerivedLine(metadata.sizes, basePatternName)}
+          </p>
+        </div>
+      ) : null}
+
       {/* Summary chips */}
       <div className="flex flex-wrap items-center gap-1.5 text-xs">
         {metadata.sizes.map((size) => (

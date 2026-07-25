@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { ImageOff, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DrapersFabricSwatchProps {
@@ -9,12 +9,46 @@ interface DrapersFabricSwatchProps {
   src?: string;
   zoomSrc?: string;
   className?: string;
+  /** When true, clicking does not open the enlarge lightbox (parent handles preview). */
+  disableZoom?: boolean;
 }
 
-/** Small square thumbnail from Drapers GET /fabrics/{code}/medias/. */
-export function DrapersFabricSwatch({ fabricNumber, src, zoomSrc, className }: DrapersFabricSwatchProps) {
+function NoPhotoPlaceholder({
+  fabricNumber,
+  className,
+}: {
+  fabricNumber: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-dashed border-slate-300 bg-slate-50 text-slate-400",
+        className
+      )}
+      title={`No photo for ${fabricNumber}`}
+      aria-label={`No photo for fabric ${fabricNumber}`}
+    >
+      <ImageOff className="h-3.5 w-3.5" />
+    </span>
+  );
+}
+
+/** Small square thumbnail from Drapers / Caccioppoli / Loro Piana swatch URLs. */
+export function DrapersFabricSwatch({
+  fabricNumber,
+  src,
+  zoomSrc,
+  className,
+  disableZoom = false,
+}: DrapersFabricSwatchProps) {
   const [open, setOpen] = useState(false);
+  const [failed, setFailed] = useState(false);
   const enlarged = zoomSrc ?? src;
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
 
   const close = useCallback(() => setOpen(false), []);
 
@@ -32,18 +66,30 @@ export function DrapersFabricSwatch({ fabricNumber, src, zoomSrc, className }: D
     };
   }, [open, close]);
 
-  if (!src) {
-    const fallbackLabel = fabricNumber.replace(/[^a-z0-9]/gi, "").slice(-3).toUpperCase() || "?";
+  if (!src || failed) {
+    return <NoPhotoPlaceholder fabricNumber={fabricNumber} className={className} />;
+  }
+
+  const image = (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      width={28}
+      height={28}
+      loading="lazy"
+      className="h-7 w-7 rounded object-cover"
+      onError={() => setFailed(true)}
+    />
+  );
+
+  if (disableZoom) {
     return (
       <span
-        className={cn(
-          "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-dashed border-slate-300 bg-slate-50 text-[9px] font-semibold uppercase tracking-tight text-slate-400",
-          className
-        )}
-        title={`No swatch image for ${fabricNumber}`}
-        aria-label={`No swatch preview for fabric ${fabricNumber}`}
+        className={cn("inline-block shrink-0 rounded border border-slate-200", className)}
+        title={`Fabric ${fabricNumber}`}
       >
-        {fallbackLabel}
+        {image}
       </span>
     );
   }
@@ -52,22 +98,17 @@ export function DrapersFabricSwatch({ fabricNumber, src, zoomSrc, className }: D
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={(event) => {
+          event.stopPropagation();
+          setOpen(true);
+        }}
         title={`Fabric ${fabricNumber} — enlarge swatch`}
         className={cn(
           "inline-block shrink-0 cursor-zoom-in rounded border border-slate-200",
           className
         )}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={src}
-          alt=""
-          width={28}
-          height={28}
-          loading="lazy"
-          className="h-7 w-7 rounded object-cover"
-        />
+        {image}
       </button>
 
       {open && enlarged ? (
@@ -92,6 +133,10 @@ export function DrapersFabricSwatch({ fabricNumber, src, zoomSrc, className }: D
             alt={`Fabric ${fabricNumber}`}
             className="max-h-[80vh] max-w-[min(90vw,520px)] rounded-lg bg-white object-contain shadow-2xl"
             onClick={(event) => event.stopPropagation()}
+            onError={() => {
+              setFailed(true);
+              close();
+            }}
           />
           <p className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-white/95 px-4 py-1.5 text-sm text-slate-700 shadow">
             {fabricNumber} · click outside or press Esc to close

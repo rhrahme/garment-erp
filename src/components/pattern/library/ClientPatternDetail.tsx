@@ -28,6 +28,7 @@ import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
 import { formatMeasurement, unitLabel } from "@/lib/pattern-library/measurements";
 import { clientPatternQrUrl } from "@/lib/pattern-library/pattern-qr";
 import { TudViewerModal } from "@/components/pattern/library/TudViewerModal";
+import { formatTudSizeDerivedLine } from "@/lib/pattern-library/derived-from";
 import { clientPatternTudPreview, formatAreaM2 } from "@/lib/pattern-library/tud-display";
 import type { TudFillSuggestion } from "@/lib/pattern-library/tud-size-fill";
 import type {
@@ -45,6 +46,12 @@ interface LinkedJob {
   client_pattern_version_id: string | null;
 }
 
+interface LinkedBaseSummary {
+  id: string;
+  name: string;
+  display_name: string | null;
+}
+
 type ViewTab = "measurements" | "evolution" | "history";
 
 function versionLabel(version: ClientPatternVersion): string {
@@ -60,6 +67,7 @@ function formatDate(value: string | null): string {
 export function ClientPatternDetail({ patternId }: { patternId: string }) {
   const [pattern, setPattern] = useState<ClientPattern | null>(null);
   const [linkedJobs, setLinkedJobs] = useState<LinkedJob[]>([]);
+  const [linkedBase, setLinkedBase] = useState<LinkedBaseSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewTab>("measurements");
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
@@ -89,6 +97,15 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         const loaded: ClientPattern = data.pattern;
         setPattern(loaded);
         setLinkedJobs(data.linked_jobs ?? []);
+        setLinkedBase(
+          data.base
+            ? {
+                id: data.base.id,
+                name: data.base.name,
+                display_name: data.base.display_name ?? null,
+              }
+            : null
+        );
         setDirty(false);
         setHeaderDirty(false);
         setSelectedVersionId((current) => {
@@ -101,6 +118,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         });
       } catch {
         setPattern(null);
+        setLinkedBase(null);
       } finally {
         setLoading(false);
       }
@@ -339,6 +357,8 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   const printHref = `/pattern/client-patterns/${pattern.id}/print${version ? `?version=${version.id}` : ""}`;
   const pdfHref = `/api/pattern/library/client-patterns/${pattern.id}/pdf${version ? `?version=${version.id}` : ""}`;
   const tudPreview = clientPatternTudPreview(pattern);
+  const basePatternName = linkedBase?.display_name ?? null;
+  const tudSizes = tudPreview?.attachment.tud?.sizes ?? (pattern.base_size ? [pattern.base_size] : []);
   const tudFillCandidate = tudFill
     ? tudFill.base ?? tudFill.candidate_bases.find((c) => c.id === tudFillBaseId) ?? null
     : null;
@@ -404,15 +424,20 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           <div className="text-sm">
             <span className="mb-1 block text-xs font-medium text-slate-600">Derived from</span>
             <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-800">
-              {pattern.base_pattern_id ? (
-                <Link
-                  href={`/pattern/library/bases/${pattern.base_pattern_id}`}
-                  className="text-indigo-700 hover:underline"
-                >
-                  {[pattern.house_brand_code, pattern.base_size].filter(Boolean).join(" · ")} base
-                </Link>
+              {linkedBase && pattern.base_pattern_id ? (
+                <>
+                  <Link
+                    href={`/pattern/library/bases/${pattern.base_pattern_id}`}
+                    className="font-medium text-indigo-700 hover:underline"
+                  >
+                    {basePatternName ?? linkedBase.name}
+                  </Link>
+                  {pattern.base_size ? (
+                    <span className="mt-0.5 block text-xs text-slate-500">Size {pattern.base_size}</span>
+                  ) : null}
+                </>
               ) : (
-                "No base pattern"
+                "No base linked"
               )}
             </p>
           </div>
@@ -478,12 +503,19 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   ? `TUKA · ${formatAreaM2(tudPreview.attachment.tud.total_area_m2)}`
                   : "TUKA preview"}
               </p>
+              <p
+                className="max-w-[9.5rem] text-center text-[11px] font-medium leading-snug text-slate-600"
+                title={formatTudSizeDerivedLine(tudSizes, basePatternName)}
+              >
+                {formatTudSizeDerivedLine(tudSizes, basePatternName)}
+              </p>
               {tudViewerOpen ? (
                 <TudViewerModal
                   attachment={tudPreview.attachment}
                   thumbnailUrl={tudPreview.thumbnailUrl}
                   downloadUrl={tudPreview.downloadUrl}
                   onClose={() => setTudViewerOpen(false)}
+                  basePatternName={basePatternName}
                 />
               ) : null}
             </div>
@@ -892,6 +924,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   downloadUrlBase={`/api/pattern/library/client-patterns/${pattern.id}/files`}
                   onUploaded={handleUploaded}
                   title={`${versionLabel(version)} files`}
+                  basePatternName={basePatternName}
                 />
               </div>
             </div>
@@ -911,6 +944,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
             downloadUrlBase={`/api/pattern/library/client-patterns/${pattern.id}/files`}
             onUploaded={handleUploaded}
             title="Pattern files (.TUD, Excel, DXF, PDF, images)"
+            basePatternName={basePatternName}
           />
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { ChevronDown, ChevronRight, FileUp, Paperclip } from "lucide-react";
 import { TudViewerModal } from "@/components/pattern/library/TudViewerModal";
+import { formatTudSizeDerivedLine } from "@/lib/pattern-library/derived-from";
 import { formatAreaM2, formatPieceAreaM2 } from "@/lib/pattern-library/tud-display";
 import type { TudFillSuggestion } from "@/lib/pattern-library/tud-size-fill";
 import type { PatternLibraryAttachment, TudMetadata } from "@/lib/types/pattern-library";
@@ -34,6 +35,7 @@ export function LibraryFileList({
   downloadUrlBase,
   onUploaded,
   title = "Files",
+  basePatternName,
 }: {
   files: PatternLibraryAttachment[];
   /** POST target (multipart, field `file`). */
@@ -42,6 +44,8 @@ export function LibraryFileList({
   downloadUrlBase: string;
   onUploaded: (response?: LibraryUploadResponse) => void;
   title?: string;
+  /** When set (including `null`), .TUD viewers show size · derived-from. */
+  basePatternName?: string | null;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -117,6 +121,7 @@ export function LibraryFileList({
                       : null
                   }
                   downloadUrl={`${downloadUrlBase}${joiner}file=${encodeURIComponent(file.stored_filename)}`}
+                  basePatternName={basePatternName}
                 />
               ) : null}
             </li>
@@ -133,11 +138,13 @@ function TudMetadataPanel({
   metadata,
   thumbnailUrl,
   downloadUrl,
+  basePatternName,
 }: {
   attachment: PatternLibraryAttachment;
   metadata: TudMetadata;
   thumbnailUrl: string | null;
   downloadUrl: string;
+  basePatternName?: string | null;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -188,6 +195,11 @@ function TudMetadataPanel({
               {metadata.total_cut_pieces !== null ? ` · ${metadata.total_cut_pieces} to cut` : ""}
             </span>
           </div>
+          {basePatternName !== undefined ? (
+            <p className="text-xs font-medium text-slate-700">
+              {formatTudSizeDerivedLine(metadata.sizes, basePatternName)}
+            </p>
+          ) : null}
           {totalArea !== null ? (
             <p className="text-sm font-semibold text-emerald-700">
               {formatAreaM2(totalArea)}{" "}
@@ -289,6 +301,7 @@ function TudMetadataPanel({
           thumbnailUrl={thumbnailUrl}
           downloadUrl={downloadUrl}
           onClose={() => setViewerOpen(false)}
+          basePatternName={basePatternName}
         />
       ) : null}
     </div>

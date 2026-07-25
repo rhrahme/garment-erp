@@ -7,14 +7,11 @@ import { FabricSpecPreview } from "@/components/fabric-specification/FabricSpecP
 import { DataTable } from "@/components/ui/PageHeader";
 import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { useDrapersSwatchMap } from "@/hooks/useDrapersSwatchMap";
-import { useLoroPianaSwatchMap } from "@/hooks/useLoroPianaSwatchMap";
+import { useFabricSwatchResolver } from "@/hooks/useFabricSwatchResolver";
 import { CUSTOM_SUPPLIER_ID } from "@/lib/types/custom-fabrics";
-import { DRAPERS_SUPPLIER_ID } from "@/lib/integrations/drapers/config";
 import {
   expandLoroPianaStyleQuery,
   isLoroPianaStyleSupplier,
-  LORO_PIANA_SWATCH_SUPPLIER_ID,
   normalizeLoroPianaFabricNumber,
 } from "@/lib/fabric-sourcing/loro-piana-styles";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
@@ -149,26 +146,15 @@ export function FabricSpecView({
     [canViewStock, filtered]
   );
 
-  const drapersFabricNumbers = useMemo(
+  const swatchKeys = useMemo(
     () =>
-      sortedDisplay
-        .filter((f) => f.supplier_id === DRAPERS_SUPPLIER_ID)
-        .map((f) => f.fabric_number)
-        .slice(0, 60),
+      sortedDisplay.slice(0, 60).map((f) => ({
+        supplier_id: f.supplier_id,
+        fabric_number: f.fabric_number,
+      })),
     [sortedDisplay]
   );
-
-  const loroPianaFabricNumbers = useMemo(
-    () =>
-      sortedDisplay
-        .filter((f) => f.supplier_id === LORO_PIANA_SWATCH_SUPPLIER_ID)
-        .map((f) => f.fabric_number)
-        .slice(0, 60),
-    [sortedDisplay]
-  );
-
-  const drapersSwatchMap = useDrapersSwatchMap(drapersFabricNumbers);
-  const loroPianaSwatchMap = useLoroPianaSwatchMap(loroPianaFabricNumbers);
+  const getSwatch = useFabricSwatchResolver(swatchKeys);
 
   const activeBrand = brands.find((b) => b.id === brandId);
   const isSolbiatiTab = brandId === "solbiati";
@@ -370,20 +356,8 @@ export function FabricSpecView({
             preview: (
               <FabricSpecPreview
                 fabric={f}
-                swatchSrc={
-                  f.supplier_id === DRAPERS_SUPPLIER_ID
-                    ? drapersSwatchMap.get(f.fabric_number)?.square
-                    : f.supplier_id === LORO_PIANA_SWATCH_SUPPLIER_ID
-                      ? loroPianaSwatchMap.get(f.fabric_number)?.square
-                      : undefined
-                }
-                zoomSrc={
-                  f.supplier_id === DRAPERS_SUPPLIER_ID
-                    ? drapersSwatchMap.get(f.fabric_number)?.zoom
-                    : f.supplier_id === LORO_PIANA_SWATCH_SUPPLIER_ID
-                      ? loroPianaSwatchMap.get(f.fabric_number)?.zoom
-                      : undefined
-                }
+                swatchSrc={getSwatch(f.supplier_id, f.fabric_number)?.square}
+                zoomSrc={getSwatch(f.supplier_id, f.fabric_number)?.zoom}
                 canViewPrices={canViewPrices}
                 canViewStock={canViewStock}
               />

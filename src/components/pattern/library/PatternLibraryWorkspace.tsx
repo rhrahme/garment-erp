@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Layers, Plus } from "lucide-react";
 import { matchesNormalizedSearch } from "@/lib/search/normalize";
 import { TudViewerModal } from "@/components/pattern/library/TudViewerModal";
+import { formatBasePatternDisplayName } from "@/lib/pattern-library/derived-from";
 import { generatePatternRef } from "@/lib/pattern-library/refs";
 import { unitLabel } from "@/lib/pattern-library/measurements";
 import {
@@ -410,7 +411,11 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
               </div>
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {group.patterns.map((pattern) => (
-                  <ClientPatternCard key={pattern.id} pattern={pattern} />
+                  <ClientPatternCard
+                    key={pattern.id}
+                    pattern={pattern}
+                    bases={library?.base_patterns ?? []}
+                  />
                 ))}
               </div>
             </div>
@@ -427,7 +432,14 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
 }
 
 /** Small extracted TUKA preview on library cards — click opens the full viewer. */
-function CardTudThumb({ preview }: { preview: TudPreview | null }) {
+function CardTudThumb({
+  preview,
+  basePatternName,
+}: {
+  preview: TudPreview | null;
+  /** Pass for client patterns; omit on base-pattern cards. */
+  basePatternName?: string | null;
+}) {
   const [viewerOpen, setViewerOpen] = useState(false);
   if (!preview) return null;
   return (
@@ -460,6 +472,7 @@ function CardTudThumb({ preview }: { preview: TudPreview | null }) {
           thumbnailUrl={preview.thumbnailUrl}
           downloadUrl={preview.downloadUrl}
           onClose={() => setViewerOpen(false)}
+          basePatternName={basePatternName}
         />
       ) : null}
     </>
@@ -487,10 +500,20 @@ function groupClientPatterns(patterns: ClientPattern[]): {
     .sort((a, b) => a.clientName.localeCompare(b.clientName));
 }
 
-function ClientPatternCard({ pattern }: { pattern: ClientPattern }) {
+function ClientPatternCard({
+  pattern,
+  bases,
+}: {
+  pattern: ClientPattern;
+  bases: BasePattern[];
+}) {
   const finalVersion = pattern.versions.find((version) => version.is_final);
   const preview = clientPatternTudPreview(pattern);
   const linkedFabricCount = pattern.linked_fabric_line_ids?.length ?? 0;
+  const linkedBase = pattern.base_pattern_id
+    ? bases.find((base) => base.id === pattern.base_pattern_id) ?? null
+    : null;
+  const basePatternName = formatBasePatternDisplayName(linkedBase);
   return (
     <Link
       href={`/pattern/library/clients/${pattern.id}`}
@@ -514,9 +537,16 @@ function ClientPatternCard({ pattern }: { pattern: ClientPattern }) {
         </p>
         <p className="mt-2 text-xs text-slate-500">
           {pattern.versions.length} trial{pattern.versions.length === 1 ? "" : "s"}
-          {pattern.base_size ? ` · from ${pattern.base_size}` : ""}
+          {pattern.base_size ? ` · size ${pattern.base_size}` : ""}
           {pattern.fabric ? ` · ${pattern.fabric}` : ""}
         </p>
+        {basePatternName ? (
+          <p className="mt-1 truncate text-xs font-medium text-indigo-700" title={basePatternName}>
+            from {basePatternName}
+          </p>
+        ) : (
+          <p className="mt-1 text-xs text-slate-400">No base linked</p>
+        )}
         {linkedFabricCount > 0 ? (
           <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
             <Layers className="h-3 w-3" />
@@ -524,7 +554,7 @@ function ClientPatternCard({ pattern }: { pattern: ClientPattern }) {
           </span>
         ) : null}
       </div>
-      <CardTudThumb preview={preview} />
+      <CardTudThumb preview={preview} basePatternName={basePatternName} />
     </Link>
   );
 }

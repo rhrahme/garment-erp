@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { requirePatternAccess } from "@/lib/auth/session";
 import {
   ensurePatternLibraryLoaded,
-  getClientPatternByIdFresh,
+  readPatternLibraryFresh,
 } from "@/lib/data/pattern-library";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readPatternJobs } from "@/lib/data/pattern-jobs";
+import { formatBasePatternDisplayName } from "@/lib/pattern-library/derived-from";
 import { updateClientPattern } from "@/lib/pattern-library/mutations";
 
 export async function GET(_request: Request, context: { params: Promise<{ patternId: string }> }) {
@@ -17,10 +18,14 @@ export async function GET(_request: Request, context: { params: Promise<{ patter
     await ensurePatternLibraryLoaded();
     await ensureDocumentsLoaded(["pattern_jobs"]);
     const { patternId } = await context.params;
-    const pattern = await getClientPatternByIdFresh(patternId);
+    const library = await readPatternLibraryFresh();
+    const pattern = library.client_patterns.find((candidate) => candidate.id === patternId) ?? null;
     if (!pattern) {
       return NextResponse.json({ error: "Client pattern not found." }, { status: 404 });
     }
+    const linkedBase = pattern.base_pattern_id
+      ? library.base_patterns.find((candidate) => candidate.id === pattern.base_pattern_id) ?? null
+      : null;
     const linkedJobs = readPatternJobs()
       .jobs.filter((job) => job.client_pattern_id === patternId)
       .map((job) => ({
@@ -30,7 +35,21 @@ export async function GET(_request: Request, context: { params: Promise<{ patter
         status: job.status,
         client_pattern_version_id: job.client_pattern_version_id ?? null,
       }));
-    return NextResponse.json({ pattern, linked_jobs: linkedJobs });
+    return NextResponse.json({
+      pattern,
+      linked_jobs: linkedJobs,
+      base: linkedBase
+        ? {
+            id: linkedBase.id,
+            name: linkedBase.name,
+            display_name: formatBasePatternDisplayName(linkedBase),
+            house_brand_code: linkedBase.house_brand_code,
+            cut_family: linkedBase.cut_family,
+            garment_type: linkedBase.garment_type,
+            cut_variant: linkedBase.cut_variant,
+          }
+        : null,
+    });
   } catch (error) {
     console.error("Failed to load client pattern:", error);
     return NextResponse.json({ error: "Failed to load client pattern." }, { status: 500 });

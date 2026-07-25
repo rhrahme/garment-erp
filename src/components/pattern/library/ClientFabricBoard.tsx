@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Layers, Scissors, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, ImageOff, Layers, Scissors, X } from "lucide-react";
 import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
-import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
+import { FabricSwatchProvider, useFabricSwatch } from "@/components/fabric/FabricSwatchProvider";
 import type {
   ClientFabricBoard as ClientFabricBoardData,
   ClientFabricBoardRow,
@@ -351,14 +351,17 @@ function FabricCard({
           aria-label={`Select fabric ${row.article_code}`}
         />
       </label>
-      <button type="button" onClick={onOpen} className="min-w-0 flex-1 text-left">
+      <div className="min-w-0 flex-1">
         <div className="flex items-start gap-3">
-          <FabricSwatchPreview
-            supplierId={row.supplier_id}
-            fabricNumber={row.fabric_number}
-            className="!h-14 !w-14 rounded-lg [&_img]:!h-full [&_img]:!w-full"
-          />
-          <div className="min-w-0 flex-1">
+          {/* Swatch outside the card button so zoom/preview clicks don't nest <button>s. */}
+          <div className="shrink-0" onClick={(event) => event.stopPropagation()}>
+            <FabricSwatchPreview
+              supplierId={row.supplier_id}
+              fabricNumber={row.fabric_number}
+              className="!h-14 !w-14 rounded-lg [&_img]:!h-full [&_img]:!w-full [&_svg]:!h-5 [&_svg]:!w-5"
+            />
+          </div>
+          <button type="button" onClick={onOpen} className="min-w-0 flex-1 text-left">
             <div className="flex items-start justify-between gap-2">
               <p className="font-mono text-sm font-bold text-slate-900">{row.article_code}</p>
               <span
@@ -377,9 +380,18 @@ function FabricCard({
             <p className="mt-0.5 text-xs text-slate-500">
               {row.garment_type} · {row.meters} {row.unit}
             </p>
-          </div>
+          </button>
+          <button
+            type="button"
+            onClick={onOpen}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600"
+            title={`Preview ${row.article_code}`}
+            aria-label={`Preview fabric ${row.article_code}`}
+          >
+            <Eye className="h-4 w-4" />
+          </button>
         </div>
-        <div className="mt-2">
+        <button type="button" onClick={onOpen} className="mt-2 block w-full text-left">
           {row.assigned_pattern ? (
             <span className="inline-flex max-w-full items-center gap-1 truncate rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-800">
               <Layers className="h-3 w-3 shrink-0" />
@@ -390,8 +402,8 @@ function FabricCard({
               Unassigned
             </span>
           )}
-        </div>
-      </button>
+        </button>
+      </div>
     </div>
   );
 }
@@ -600,6 +612,48 @@ function AssignDialog({
   );
 }
 
+function FabricDetailPhoto({
+  supplierId,
+  fabricNumber,
+}: {
+  supplierId: string;
+  fabricNumber: string;
+}) {
+  const getSwatch = useFabricSwatch();
+  const urls = getSwatch?.(supplierId, fabricNumber);
+  const src = urls?.zoom ?? urls?.square;
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
+  if (!src || failed) {
+    return (
+      <div
+        className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 text-slate-400"
+        aria-label={`No photo for fabric ${fabricNumber}`}
+      >
+        <ImageOff className="h-8 w-8" />
+        <p className="text-sm font-medium text-slate-500">No photo</p>
+        <p className="text-xs text-slate-400">No swatch image for {fabricNumber}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={`Fabric ${fabricNumber}`}
+        className="mx-auto max-h-72 w-full object-contain"
+        onError={() => setFailed(true)}
+      />
+    </div>
+  );
+}
+
 function FabricDetailDialog({
   row,
   onClose,
@@ -647,24 +701,17 @@ function FabricDetailDialog({
         className="max-h-[90vh] w-full overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:max-w-xl sm:rounded-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <FabricSwatchPreview
-              supplierId={row.supplier_id}
-              fabricNumber={row.fabric_number}
-              className="!h-20 !w-20 rounded-xl [&_img]:!h-full [&_img]:!w-full"
-            />
-            <div>
-              <p className="font-mono text-lg font-bold text-slate-900">{row.article_code}</p>
-              <span
-                className={cn(
-                  "mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-medium",
-                  STATUS_STYLES[row.status]
-                )}
-              >
-                {row.status_label}
-              </span>
-            </div>
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <p className="font-mono text-lg font-bold text-slate-900">{row.article_code}</p>
+            <span
+              className={cn(
+                "mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-medium",
+                STATUS_STYLES[row.status]
+              )}
+            >
+              {row.status_label}
+            </span>
           </div>
           <button
             type="button"
@@ -675,6 +722,8 @@ function FabricDetailDialog({
             <X className="h-5 w-5" />
           </button>
         </div>
+
+        <FabricDetailPhoto supplierId={row.supplier_id} fabricNumber={row.fabric_number} />
 
         <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
           {specs.map((spec) => (

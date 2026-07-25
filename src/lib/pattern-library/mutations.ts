@@ -1,4 +1,5 @@
 import { notifyIntegration } from "@/lib/integrations";
+import { BRAND_CLIENT_CODE_PREFIX, parseClientCodeParts } from "@/lib/clients/codes";
 import { readPatternLibraryFresh, writePatternLibrary } from "@/lib/data/pattern-library";
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import { applyFabricLineAssignment } from "@/lib/pattern-library/client-fabric-board";
@@ -17,6 +18,20 @@ import type {
   MeasurementUnit,
   PatternLibraryAttachment,
 } from "@/lib/types/pattern-library";
+
+function houseBrandFromClientCode(clientCode: string): {
+  house_brand_id: string | null;
+  house_brand_code: string | null;
+} {
+  const parts = parseClientCodeParts(clientCode);
+  if (!parts) return { house_brand_id: null, house_brand_code: null };
+  for (const [brandId, prefix] of Object.entries(BRAND_CLIENT_CODE_PREFIX)) {
+    if (prefix === parts.prefix) {
+      return { house_brand_id: brandId, house_brand_code: parts.prefix };
+    }
+  }
+  return { house_brand_id: null, house_brand_code: parts.prefix };
+}
 
 type Ok<T> = { ok: true } & T;
 type Err = { ok: false; status: number; error: string };
@@ -362,18 +377,21 @@ export async function createClientPattern(
       size: baseSize,
     });
 
+  const clientCode = input.client_code?.trim() ?? "";
+  const brandFromClient = houseBrandFromClientCode(clientCode);
+
   const pattern: ClientPattern = {
     id: `cp-${Date.now()}-${store.client_patterns.length + 1}`,
     pattern_ref: patternRef,
     client_id: input.client_id.trim(),
-    client_code: input.client_code?.trim() ?? "",
+    client_code: clientCode,
     client_name: input.client_name?.trim() ?? "",
     garment_type: input.garment_type.trim().toLowerCase(),
     description: input.description?.trim() || null,
     base_pattern_id: base?.id ?? null,
     base_size: baseSize,
-    house_brand_id: base?.house_brand_id ?? null,
-    house_brand_code: base?.house_brand_code ?? null,
+    house_brand_id: base?.house_brand_id ?? brandFromClient.house_brand_id,
+    house_brand_code: base?.house_brand_code ?? brandFromClient.house_brand_code,
     fabric: input.fabric?.trim() || base?.fabric || null,
     linked_fabric_line_ids: [],
     unit,
@@ -600,6 +618,44 @@ export async function updateClientPattern(
     }
   }
 
+  const nextBaseId =
+    patch.base_pattern_id === undefined ? existing.base_pattern_id : base?.id ?? null;
+  const nextBaseSize =
+    patch.base_size === undefined ? existing.base_size : patch.base_size?.trim() || null;
+  const brandFromClient = houseBrandFromClientCode(existing.client_code);
+  const nextHouseBrandId =
+    patch.base_pattern_id === undefined
+      ? existing.house_brand_id ?? brandFromClient.house_brand_id
+      : base?.house_brand_id ?? brandFromClient.house_brand_id;
+  const nextHouseBrandCode =
+    patch.base_pattern_id === undefined
+      ? existing.house_brand_code ?? brandFromClient.house_brand_code
+      : base?.house_brand_code ?? brandFromClient.house_brand_code;
+
+  let versions = existing.versions;
+  const baseOrSizeChanged =
+    nextBaseId !== existing.base_pattern_id || nextBaseSize !== existing.base_size;
+  if (baseOrSizeChanged && base && nextBaseSize) {
+    const resolvedSize = findBaseSizeMatch(nextBaseSize, base.sizes);
+    if (resolvedSize && versions.length > 0) {
+      const lastIndex = versions.length - 1;
+      const last = versions[lastIndex]!;
+      const outcome = fillMeasurementsFromBase(last.measurements, base, resolvedSize);
+      if (outcome.filled_points > 0 || outcome.added_points > 0) {
+        versions = versions.map((candidate, i) =>
+          i === lastIndex
+            ? {
+                ...candidate,
+                measurements: outcome.measurements,
+                updated_by: options.updatedBy ?? candidate.updated_by,
+                updated_at: now(),
+              }
+            : candidate
+        );
+      }
+    }
+  }
+
   const next: ClientPattern = {
     ...existing,
     pattern_ref: patch.pattern_ref?.trim() || existing.pattern_ref,
@@ -607,12 +663,11 @@ export async function updateClientPattern(
       patch.description === undefined ? existing.description : patch.description?.trim() || null,
     garment_type: patch.garment_type?.trim().toLowerCase() || existing.garment_type,
     fabric: patch.fabric === undefined ? existing.fabric : patch.fabric?.trim() || null,
-    base_pattern_id: patch.base_pattern_id === undefined ? existing.base_pattern_id : base?.id ?? null,
-    base_size: patch.base_size === undefined ? existing.base_size : patch.base_size?.trim() || null,
-    house_brand_id:
-      patch.base_pattern_id === undefined ? existing.house_brand_id : base?.house_brand_id ?? null,
-    house_brand_code:
-      patch.base_pattern_id === undefined ? existing.house_brand_code : base?.house_brand_code ?? null,
+    base_pattern_id: nextBaseId,
+    base_size: nextBaseSize,
+    house_brand_id: nextHouseBrandId,
+    house_brand_code: nextHouseBrandCode,
+    versions,
     special_instructions:
       patch.special_instructions === undefined
         ? existing.special_instructions

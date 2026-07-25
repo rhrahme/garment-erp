@@ -18,11 +18,21 @@ function formatDate(value: string | null | undefined): string {
 
 /** A4 portrait client-pattern measurement sheet — mirrors the print view. */
 export async function generatePatternSheetPdf(data: PatternSheetData): Promise<ArrayBuffer> {
-  const { pattern, version, fabric, order, stickers, derived_from } = data;
+  const {
+    pattern,
+    version,
+    fabric,
+    order,
+    stickers,
+    derived_from,
+    house_brand,
+    base_fill_warning,
+    resolved_base_size,
+  } = data;
   const unit = pattern.unit;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
 
-  // Title + brand block
+  // Title + brand letterhead
   doc.setTextColor(...INK);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(15);
@@ -31,22 +41,25 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
   doc.setFontSize(11);
   doc.text(pattern.pattern_ref, MARGIN, MARGIN + 12);
 
-  const brandCode = pattern.house_brand_code ?? data.base?.house_brand_code ?? "-";
-  const brandW = 34;
+  const brandCode = house_brand.code ?? "-";
+  const brandName = house_brand.name ?? "House brand";
+  const brandW = 38;
+  const brandH = house_brand.name ? 16 : 14;
   const brandX = PAGE_W - MARGIN - brandW;
   doc.setDrawColor(...INK);
   doc.setLineWidth(0.6);
-  doc.rect(brandX, MARGIN, brandW, 14);
+  doc.rect(brandX, MARGIN, brandW, brandH);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.text(brandCode, brandX + brandW / 2, MARGIN + 7.5, { align: "center" });
-  doc.setFontSize(6);
-  doc.setTextColor(...SLATE);
-  doc.text("HOUSE BRAND", brandX + brandW / 2, MARGIN + 12, { align: "center" });
+  doc.setFontSize(6.5);
+  doc.setTextColor(...INK);
+  doc.text(brandName.toUpperCase(), brandX + brandW / 2, MARGIN + 13, { align: "center" });
 
   doc.setDrawColor(...INK);
   doc.setLineWidth(0.7);
-  doc.line(MARGIN, MARGIN + 16, PAGE_W - MARGIN, MARGIN + 16);
+  const ruleY = MARGIN + Math.max(16, brandH + 2);
+  doc.line(MARGIN, ruleY, PAGE_W - MARGIN, ruleY);
 
   // Header block (left) + QR (right)
   const headerRows: [string, string][] = [
@@ -68,7 +81,8 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
 
   const qrSize = 30;
   const hasQr = stickers.length > 0;
-  let headerY = MARGIN + 21;
+  const headerStartY = ruleY + 5;
+  let headerY = headerStartY;
   const headerRight = hasQr ? PAGE_W - MARGIN - qrSize - 6 : PAGE_W - MARGIN;
   doc.setFontSize(8.5);
   for (const [label, value] of headerRows) {
@@ -82,6 +96,7 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
     headerY += 5 * Math.max(1, wrapped.length);
   }
 
+  let qrBottom = headerStartY;
   if (hasQr) {
     const sticker = stickers[0]!;
     const { png } = await renderQrPngBuffer(sticker.qr_payload, 300);
@@ -90,7 +105,7 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
       `data:image/png;base64,${png.toString("base64")}`,
       "PNG",
       qrX,
-      MARGIN + 19,
+      headerStartY - 2,
       qrSize,
       qrSize
     );
@@ -98,11 +113,26 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
     doc.setFontSize(5.5);
     doc.setTextColor(...INK);
     const codeLines = doc.splitTextToSize(sticker.code, qrSize + 4);
-    doc.text(codeLines, qrX + qrSize / 2, MARGIN + 19 + qrSize + 2.5, { align: "center" });
+    doc.text(codeLines, qrX + qrSize / 2, headerStartY - 2 + qrSize + 2.5, { align: "center" });
+    qrBottom = headerStartY - 2 + qrSize + 2.5 + codeLines.length * 2.5;
+  }
+
+  let y = Math.max(headerY + 2, qrBottom + 3);
+  if (base_fill_warning) {
+    doc.setFillColor(255, 251, 235);
+    doc.setDrawColor(251, 191, 36);
+    doc.setLineWidth(0.3);
+    const warnLines = doc.splitTextToSize(base_fill_warning, PAGE_W - MARGIN * 2 - 4);
+    const warnH = 4 + warnLines.length * 4;
+    doc.rect(MARGIN, y, PAGE_W - MARGIN * 2, warnH, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(120, 53, 15);
+    doc.text(warnLines, MARGIN + 2, y + 3.5);
+    y += warnH + 3;
   }
 
   // Fabric specification block
-  let y = Math.max(headerY + 2, MARGIN + 19 + qrSize + 8);
   doc.setDrawColor(148, 163, 184);
   doc.setLineWidth(0.3);
   const fabricRows = fabric
@@ -135,7 +165,18 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
   autoTable(doc, {
     startY: y,
     margin: { left: MARGIN, right: MARGIN },
-    head: [[`Measurement point (${unitLabel(unit)})`, "Base", "Target", "Sewn", "Adjust +/-", "Remarks"]],
+    head: [[
+      `Measurement point (${unitLabel(unit)})`,
+      resolved_base_size
+        ? `Base (${resolved_base_size})`
+        : pattern.base_size
+          ? `Base (${pattern.base_size})`
+          : "Base",
+      "Target",
+      "Sewn",
+      "Adjust +/-",
+      "Remarks",
+    ]],
     body: version.measurements.map((row) => [
       row.remark ? `${row.name} — ${row.remark}` : row.name,
       formatMeasurementAscii(row.base_value, unit),
