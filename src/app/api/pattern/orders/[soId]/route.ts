@@ -24,13 +24,20 @@ export async function GET(_request: Request, context: { params: Promise<{ soId: 
     }
 
     const jobs = listPatternJobsForOrder(soId).filter((job) => job.status !== "cancelled");
+    const lineById = new Map(order.fabric_lines.map((line) => [line.id, line]));
+    // Enrich older jobs that predate supplier_id so fabric swatches resolve.
+    const jobsWithSupplier = jobs.map((job) => ({
+      ...job,
+      supplier_id:
+        job.supplier_id ?? lineById.get(job.sales_order_line_id)?.supplier_id ?? null,
+    }));
     const canViewFabricPrices = await resolveFabricPriceAccess(session);
     const safeOrder = canViewFabricPrices ? order : redactSalesOrderFabricPrices(order);
     const mismatch = detectPatternSalesOrderMismatch(order, readPatternJobs().jobs);
 
     return NextResponse.json({
       order: safeOrder,
-      jobs,
+      jobs: jobsWithSupplier,
       awaiting_lines: order.fabric_lines.length === 0,
       mismatch,
     });

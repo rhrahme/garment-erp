@@ -29,6 +29,7 @@ function jobFieldsFromLine(
     article_number: articleNumber,
     fabric_number: line.fabric_number,
     supplier: line.supplier_name,
+    supplier_id: line.supplier_id,
     composition: line.composition,
     gsm: line.weight_gsm,
     width_cm: line.width_cm,
@@ -83,6 +84,7 @@ export async function syncPatternJobsFromSalesOrder(
         existing.garment_type !== nextJob.garment_type ||
         existing.meters !== nextJob.meters ||
         existing.supplier !== nextJob.supplier ||
+        existing.supplier_id !== nextJob.supplier_id ||
         wasCancelled;
 
       if (changed) {

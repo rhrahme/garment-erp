@@ -61,6 +61,8 @@ export interface PatternJob {
   article_number: number;
   fabric_number: string;
   supplier: string;
+  /** Catalog supplier id for swatches (from the sales-order fabric line). */
+  supplier_id?: string | null;
   composition: string | null;
   gsm: number | null;
   width_cm: number | null;
