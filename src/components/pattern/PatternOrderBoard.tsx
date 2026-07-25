@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Link2, Star } from "lucide-react";
+import { ArrowLeft, ArrowRight, Layers, Star } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { PatternMismatchBanner } from "@/components/pattern/PatternMismatchBanner";
 import { productionBrandNameForOrder } from "@/lib/sales-orders/production-brand";
@@ -10,7 +10,6 @@ import type { PatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mi
 import type { PatternJob } from "@/lib/types/pattern";
 import type { ClientPattern } from "@/lib/types/pattern-library";
 import type { SalesOrder } from "@/lib/types/sales-orders";
-import { cn } from "@/lib/utils";
 
 function formatArticle(articleNumber: number): string {
   return `L${String(articleNumber).padStart(2, "0")}`;
@@ -41,10 +40,6 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
   const [actingId, setActingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [clientPatterns, setClientPatterns] = useState<ClientPattern[]>([]);
-  const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
-  const [linkPatternId, setLinkPatternId] = useState("");
-  const [linkVersionId, setLinkVersionId] = useState("");
-  const [linking, setLinking] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -57,15 +52,6 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
       setJobs(data.jobs ?? []);
       setMismatch(data.mismatch ?? null);
       setAwaitingLines(Boolean(data.awaiting_lines));
-      setSelectedJobIds((prev) => {
-        const next = new Set<string>();
-        for (const id of prev) {
-          if ((data.jobs as PatternJob[] | undefined)?.some((job) => job.id === id)) {
-            next.add(id);
-          }
-        }
-        return next;
-      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
@@ -95,28 +81,9 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
   );
 
   const patternsForClient = useMemo(() => {
-    if (!order) return clientPatterns;
-    const forClient = clientPatterns.filter((pattern) => pattern.client_id === order.client_id);
-    return forClient.length > 0 ? forClient : clientPatterns;
+    if (!order) return [];
+    return clientPatterns.filter((pattern) => pattern.client_id === order.client_id);
   }, [clientPatterns, order]);
-
-  const selectedPattern = patternsForClient.find((pattern) => pattern.id === linkPatternId) ?? null;
-
-  function toggleJob(jobId: string) {
-    setSelectedJobIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(jobId)) next.delete(jobId);
-      else next.add(jobId);
-      return next;
-    });
-  }
-
-  function toggleAll() {
-    setSelectedJobIds((prev) => {
-      if (prev.size === jobs.length) return new Set();
-      return new Set(jobs.map((job) => job.id));
-    });
-  }
 
   async function setFirstTrial(jobId: string) {
     setActingId(jobId);
@@ -135,37 +102,6 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
       setError(err instanceof Error ? err.message : "Update failed");
     } finally {
       setActingId(null);
-    }
-  }
-
-  async function linkSelectedToPattern() {
-    if (selectedJobIds.size === 0) {
-      setError("Select at least one fabric line/job.");
-      return;
-    }
-
-    setLinking(true);
-    setError(null);
-    try {
-      const ids = Array.from(selectedJobIds);
-      for (const jobId of ids) {
-        const res = await fetch(`/api/pattern/jobs/${jobId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            client_pattern_id: linkPatternId || null,
-            client_pattern_version_id: linkPatternId ? linkVersionId || null : null,
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Link failed");
-      }
-      setSelectedJobIds(new Set());
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Link failed");
-    } finally {
-      setLinking(false);
     }
   }
 
@@ -201,6 +137,41 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
             Awaiting fabric lines — pattern jobs will appear when lines are added.
           </p>
         ) : null}
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link
+            href="/pattern/library"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          >
+            <Layers className="h-4 w-4" />
+            Pattern Library
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href={`/pattern/library/fabrics/${order.client_id}`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Fabric board
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+        <p className="mt-2 text-xs text-slate-500">
+          Create or open this client&apos;s garment sheet in Pattern Library (Custom or filtered
+          library base). Assign fabrics on the fabric board.
+        </p>
+        {patternsForClient.length > 0 ? (
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {patternsForClient.map((pattern) => (
+              <li key={pattern.id}>
+                <Link
+                  href={`/pattern/library/clients/${pattern.id}`}
+                  className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-indigo-50 hover:text-indigo-800"
+                >
+                  {pattern.pattern_ref} · {pattern.garment_type}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
 
       {mismatch ? <PatternMismatchBanner mismatch={mismatch} /> : null}
@@ -225,125 +196,41 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
         </div>
       ) : null}
 
-      {jobs.length > 0 ? (
-        <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-4">
-          <div>
-            <p className="font-medium text-slate-900">Consolidate to same master pattern</p>
-            <p className="mt-1 text-sm text-slate-600">
-              Select fabric lines that share one client pattern, then link them together.
-            </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block text-sm">
-              <span className="font-medium text-slate-700">Client pattern</span>
-              <select
-                value={linkPatternId}
-                onChange={(e) => {
-                  setLinkPatternId(e.target.value);
-                  setLinkVersionId("");
-                }}
-                className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-              >
-                <option value="">Clear link / not linked</option>
-                {patternsForClient.map((pattern) => (
-                  <option key={pattern.id} value={pattern.id}>
-                    {pattern.pattern_ref}
-                    {pattern.house_brand_code ? ` · ${pattern.house_brand_code}` : ""}
-                    {pattern.garment_type ? ` · ${pattern.garment_type}` : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-sm">
-              <span className="font-medium text-slate-700">Trial version</span>
-              <select
-                value={linkVersionId}
-                onChange={(e) => setLinkVersionId(e.target.value)}
-                disabled={!linkPatternId}
-                className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-100"
-              >
-                <option value="">Latest / final</option>
-                {(selectedPattern?.versions ?? []).map((version) => (
-                  <option key={version.id} value={version.id}>
-                    Trial {version.version}
-                    {version.is_final ? " (Final)" : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              onClick={() => void linkSelectedToPattern()}
-              disabled={linking || selectedJobIds.size === 0}
-            >
-              <Link2 className="mr-1.5 h-4 w-4" />
-              {linking
-                ? "Linking…"
-                : `Link selected (${selectedJobIds.size}) to same pattern`}
-            </Button>
-            <button
-              type="button"
-              onClick={toggleAll}
-              className="text-sm font-medium text-indigo-700 hover:text-indigo-900"
-            >
-              {selectedJobIds.size === jobs.length ? "Clear selection" : "Select all lines"}
-            </button>
-          </div>
-        </div>
-      ) : null}
-
       <div className="space-y-3">
         {jobs.map((job) => {
           const linked = clientPatterns.find((pattern) => pattern.id === job.client_pattern_id);
-          const selected = selectedJobIds.has(job.id);
           return (
-            <div
-              key={job.id}
-              className={cn(
-                "rounded-xl border bg-white p-4",
-                selected ? "border-indigo-300 ring-1 ring-indigo-100" : "border-slate-200"
-              )}
-            >
+            <div key={job.id} className="rounded-xl border border-slate-200 bg-white p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex min-w-0 flex-1 gap-3">
-                  <input
-                    type="checkbox"
-                    checked={selected}
-                    onChange={() => toggleJob(job.id)}
-                    className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600"
-                    aria-label={`Select ${formatArticle(job.article_number)}`}
-                  />
-                  <div>
-                    <p className="font-semibold text-slate-900">
-                      {formatArticle(job.article_number)} · {job.garment_type} · {job.piece_name}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {job.fabric_number} · {job.supplier} · {job.meters}m
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {job.composition ?? "—"} · {job.gsm ?? "—"} gsm
-                      {job.width_cm ? ` · ${job.width_cm} cm` : ""}
-                      {job.color ? ` · ${job.color}` : ""}
-                    </p>
-                    <p className="mt-2 text-xs uppercase tracking-wide text-slate-500">
-                      {STATUS_LABELS[job.status] ?? job.status}
-                      {job.assigned_to ? ` · ${job.assigned_to}` : ""}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-600">
-                      Master pattern:{" "}
-                      {linked ? (
-                        <Link
-                          href={`/pattern/library/clients/${linked.id}`}
-                          className="font-medium text-indigo-700 hover:text-indigo-900"
-                        >
-                          {linked.pattern_ref}
-                        </Link>
-                      ) : (
-                        <span className="text-amber-700">Not linked</span>
-                      )}
-                    </p>
-                  </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-slate-900">
+                    {formatArticle(job.article_number)} · {job.garment_type} · {job.piece_name}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {job.fabric_number} · {job.supplier} · {job.meters}m
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {job.composition ?? "—"} · {job.gsm ?? "—"} gsm
+                    {job.width_cm ? ` · ${job.width_cm} cm` : ""}
+                    {job.color ? ` · ${job.color}` : ""}
+                  </p>
+                  <p className="mt-2 text-xs uppercase tracking-wide text-slate-500">
+                    {STATUS_LABELS[job.status] ?? job.status}
+                    {job.assigned_to ? ` · ${job.assigned_to}` : ""}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Master pattern:{" "}
+                    {linked ? (
+                      <Link
+                        href={`/pattern/library/clients/${linked.id}`}
+                        className="font-medium text-indigo-700 hover:text-indigo-900"
+                      >
+                        {linked.pattern_ref}
+                      </Link>
+                    ) : (
+                      <span className="text-amber-700">Not linked yet — use Pattern Library</span>
+                    )}
+                  </p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <Link href={`/pattern/jobs/${job.id}`} className="text-sm font-medium text-indigo-700">

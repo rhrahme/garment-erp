@@ -4,7 +4,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Layers, Plus } from "lucide-react";
 import { matchesNormalizedSearch } from "@/lib/search/normalize";
+import { BasePatternCascadePicker } from "@/components/pattern/library/BasePatternCascadePicker";
 import { TudViewerModal } from "@/components/pattern/library/TudViewerModal";
+import {
+  cascadeSelectionReady,
+  emptyCascadeValue,
+  preferredBrandCodeFromClientCode,
+  resolveSelectedBase,
+  type BasePatternCascadeValue,
+} from "@/lib/pattern-library/base-pattern-picker";
 import { formatBasePatternDisplayName } from "@/lib/pattern-library/derived-from";
 import { generatePatternRef } from "@/lib/pattern-library/refs";
 import { unitLabel } from "@/lib/pattern-library/measurements";
@@ -694,9 +702,7 @@ function CreateClientPatternForm({
 }) {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [clientId, setClientId] = useState("");
-  const [garment, setGarment] = useState("");
-  const [baseId, setBaseId] = useState("");
-  const [baseSize, setBaseSize] = useState("");
+  const [cascade, setCascade] = useState<BasePatternCascadeValue>(() => emptyCascadeValue());
   const [fabric, setFabric] = useState("");
   const [description, setDescription] = useState("");
   const [refOverride, setRefOverride] = useState("");
@@ -710,25 +716,34 @@ function CreateClientPatternForm({
       .catch(() => setClients([]));
   }, []);
 
-  const base = bases.find((candidate) => candidate.id === baseId) ?? null;
+  const client = clients.find((candidate) => candidate.id === clientId) ?? null;
+  const preferredBrand = preferredBrandCodeFromClientCode(client?.code);
+
   useEffect(() => {
-    if (base && !garment) setGarment(base.garment_type);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baseId]);
+    if (!preferredBrand) return;
+    setCascade((prev) =>
+      prev.houseBrandCode ? prev : { ...prev, houseBrandCode: preferredBrand }
+    );
+  }, [preferredBrand]);
+
+  const base = resolveSelectedBase(bases, cascade);
 
   const suggestedRef = generatePatternRef({
     cut_family: base?.cut_family ?? null,
-    garment_type: garment || base?.garment_type || null,
+    garment_type: cascade.garmentType || base?.garment_type || null,
     fabric: fabric || base?.fabric || null,
-    house_brand_code: base?.house_brand_code ?? null,
+    house_brand_code: base?.house_brand_code ?? preferredBrand,
     cut_variant: base?.cut_variant ?? null,
-    size: baseSize || null,
+    size: cascade.baseSize || null,
   });
 
   async function submit() {
-    const client = clients.find((candidate) => candidate.id === clientId);
-    if (!client || !(garment.trim() || base)) {
-      setError("Client and garment are required.");
+    if (!client || !cascadeSelectionReady(cascade)) {
+      setError(
+        cascade.origin === "library"
+          ? "Client, garment, and a library base + size are required."
+          : "Client and garment are required."
+      );
       return;
     }
     setBusy(true);
@@ -741,9 +756,10 @@ function CreateClientPatternForm({
           client_id: client.id,
           client_code: client.code,
           client_name: clientDisplayName(client),
-          garment_type: garment || base?.garment_type || "",
-          base_pattern_id: baseId || null,
-          base_size: baseSize || null,
+          garment_type: cascade.garmentType,
+          base_pattern_id:
+            cascade.origin === "library" ? cascade.basePatternId || null : null,
+          base_size: cascade.origin === "library" ? cascade.baseSize || null : null,
           fabric: fabric || null,
           description: description || null,
           pattern_ref: refOverride || null,
@@ -769,70 +785,24 @@ function CreateClientPatternForm({
           <span className="mb-1 block text-xs font-medium text-slate-600">Client</span>
           <select
             value={clientId}
-            onChange={(e) => setClientId(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-          >
-            <option value="">Select client…</option>
-            {clients.map((client) => (
-              <option key={client.id} value={client.id}>
-                {client.code} — {clientDisplayName(client)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-sm">
-          <span className="mb-1 block text-xs font-medium text-slate-600">
-            Origin — library base or Custom
-          </span>
-          <select
-            value={baseId}
             onChange={(e) => {
-              setBaseId(e.target.value);
-              setBaseSize("");
+              const nextId = e.target.value;
+              setClientId(nextId);
+              const nextClient = clients.find((candidate) => candidate.id === nextId);
+              const brand = preferredBrandCodeFromClientCode(nextClient?.code);
+              if (brand) {
+                setCascade((prev) => ({ ...prev, houseBrandCode: brand }));
+              }
             }}
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
           >
-            <option value="">Custom (from scratch)</option>
-            {bases.map((candidate) => (
-              <option key={candidate.id} value={candidate.id}>
-                Library · {candidate.house_brand_code} · {candidate.name}
+            <option value="">Select client…</option>
+            {clients.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.code} — {clientDisplayName(option)}
               </option>
             ))}
           </select>
-        </label>
-        <label className="text-sm">
-          <span className="mb-1 block text-xs font-medium text-slate-600">Base size</span>
-          <select
-            value={baseSize}
-            onChange={(e) => setBaseSize(e.target.value)}
-            disabled={!base}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-100"
-          >
-            <option value="">Select size…</option>
-            {(base?.sizes ?? []).map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-sm">
-          <span className="mb-1 block text-xs font-medium text-slate-600">Garment</span>
-          <select
-            value={garment}
-            onChange={(e) => setGarment(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-          >
-            <option value="">{base ? `Same as base (${base.garment_type})` : "Select garment…"}</option>
-            {garments.map((candidate) => (
-              <option key={candidate} value={candidate}>
-                {candidate}
-              </option>
-            ))}
-          </select>
-          <span className="mt-1 block text-[11px] text-slate-400">
-            Without a base, the garment&apos;s measurement template pre-fills the grid.
-          </span>
         </label>
         <label className="text-sm">
           <span className="mb-1 block text-xs font-medium text-slate-600">Fabric (optional)</span>
@@ -851,18 +821,31 @@ function CreateClientPatternForm({
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
           />
         </label>
-        <label className="text-sm sm:col-span-2 lg:col-span-3">
-          <span className="mb-1 block text-xs font-medium text-slate-600">
-            Pattern ref (auto-generated, editable)
-          </span>
-          <input
-            value={refOverride}
-            onChange={(e) => setRefOverride(e.target.value.toUpperCase())}
-            placeholder={suggestedRef || "SS-SHIRT-LINEN-FR-REG-XXL"}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm"
-          />
-        </label>
       </div>
+
+      <div className="mt-3 rounded-lg border border-white/80 bg-white/70 p-3">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Garment sheet &amp; origin
+        </p>
+        <BasePatternCascadePicker
+          bases={bases}
+          extraGarments={garments}
+          value={cascade}
+          onChange={setCascade}
+        />
+      </div>
+
+      <label className="mt-3 block text-sm">
+        <span className="mb-1 block text-xs font-medium text-slate-600">
+          Pattern ref (auto-generated, editable)
+        </span>
+        <input
+          value={refOverride}
+          onChange={(e) => setRefOverride(e.target.value.toUpperCase())}
+          placeholder={suggestedRef || "SS-SHIRT-LINEN-FR-REG-XXL"}
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm"
+        />
+      </label>
       {error ? <p className="mt-2 text-xs text-rose-600">{error}</p> : null}
       <button
         type="button"

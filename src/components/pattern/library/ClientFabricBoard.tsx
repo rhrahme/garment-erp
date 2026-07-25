@@ -5,11 +5,19 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, Eye, ImageOff, Layers, Scissors, X } from "lucide-react";
 import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
 import { FabricSwatchProvider, useFabricSwatch } from "@/components/fabric/FabricSwatchProvider";
+import { BasePatternCascadePicker } from "@/components/pattern/library/BasePatternCascadePicker";
+import {
+  cascadeSelectionReady,
+  emptyCascadeValue,
+  preferredBrandCodeFromClientCode,
+  type BasePatternCascadeValue,
+} from "@/lib/pattern-library/base-pattern-picker";
 import type {
   ClientFabricBoard as ClientFabricBoardData,
   ClientFabricBoardRow,
   ClientFabricStatus,
 } from "@/lib/pattern-library/client-fabric-board";
+import type { BasePattern } from "@/lib/types/pattern-library";
 import { cn } from "@/lib/utils";
 
 const STATUS_STYLES: Record<ClientFabricStatus, string> = {
@@ -421,10 +429,20 @@ function AssignDialog({
 }) {
   const [mode, setMode] = useState<"new" | "existing">(board.patterns.length > 0 ? "existing" : "new");
   const [patternId, setPatternId] = useState(board.patterns[0]?.id ?? "");
-  const [garment, setGarment] = useState("");
+  const [bases, setBases] = useState<BasePattern[]>([]);
+  const [cascade, setCascade] = useState<BasePatternCascadeValue>(() =>
+    emptyCascadeValue(preferredBrandCodeFromClientCode(board.client.code))
+  );
   const [description, setDescription] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/pattern/library", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setBases(data?.base_patterns ?? []))
+      .catch(() => setBases([]));
+  }, []);
 
   const garments = useMemo(
     () =>
@@ -457,7 +475,13 @@ function AssignDialog({
         return;
       }
 
-      if (!garment.trim()) throw new Error("Choose a garment type.");
+      if (!cascadeSelectionReady(cascade)) {
+        throw new Error(
+          cascade.origin === "library"
+            ? "Choose garment, library base, and size."
+            : "Choose a garment type."
+        );
+      }
       const res = await fetch("/api/pattern/library/client-patterns", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -465,7 +489,10 @@ function AssignDialog({
           client_id: board.client.id,
           client_code: board.client.code,
           client_name: board.client.name,
-          garment_type: garment,
+          garment_type: cascade.garmentType,
+          base_pattern_id:
+            cascade.origin === "library" ? cascade.basePatternId || null : null,
+          base_size: cascade.origin === "library" ? cascade.baseSize || null : null,
           description: description || null,
           linked_fabric_line_ids: lineIds,
         }),
@@ -476,7 +503,7 @@ function AssignDialog({
       }
       const data = await res.json();
       await onDone(
-        `New ${garment} pattern created with ${lineIds.length} fabric${lineIds.length === 1 ? "" : "s"}.`,
+        `New ${cascade.garmentType} pattern created with ${lineIds.length} fabric${lineIds.length === 1 ? "" : "s"}.`,
         data.pattern?.id
       );
     } catch (err) {
@@ -566,21 +593,12 @@ function AssignDialog({
           </label>
         ) : (
           <div className="mt-4 space-y-3">
-            <label className="block text-sm">
-              <span className="mb-1 block text-xs font-medium text-slate-600">Garment type</span>
-              <select
-                value={garment}
-                onChange={(e) => setGarment(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm"
-              >
-                <option value="">Select garment…</option>
-                {garments.map((candidate) => (
-                  <option key={candidate} value={candidate}>
-                    {candidate}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <BasePatternCascadePicker
+              bases={bases}
+              extraGarments={garments}
+              value={cascade}
+              onChange={setCascade}
+            />
             <label className="block text-sm">
               <span className="mb-1 block text-xs font-medium text-slate-600">
                 Description (optional) — e.g. “long sleeve shirts”
@@ -592,8 +610,7 @@ function AssignDialog({
               />
             </label>
             <p className="text-xs text-slate-400">
-              Creates the client pattern with the garment prefilled — upload the .TUD and sizes on the
-              pattern page as usual.
+              Creates the client pattern — upload the .TUD on the pattern page as usual.
             </p>
           </div>
         )}

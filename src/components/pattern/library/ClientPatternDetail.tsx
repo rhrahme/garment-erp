@@ -18,6 +18,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { BasePatternCascadePicker } from "@/components/pattern/library/BasePatternCascadePicker";
 import { MeasurementInput } from "@/components/pattern/library/MeasurementInput";
 import {
   LibraryFileList,
@@ -25,13 +26,19 @@ import {
 } from "@/components/pattern/library/LibraryFileList";
 import { LinkedFabricsCard } from "@/components/pattern/library/LinkedFabricsCard";
 import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
+import {
+  emptyCascadeValue,
+  preferredBrandCodeFromClientCode,
+  type BasePatternCascadeValue,
+} from "@/lib/pattern-library/base-pattern-picker";
 import { formatMeasurement, unitLabel } from "@/lib/pattern-library/measurements";
 import { clientPatternQrUrl } from "@/lib/pattern-library/pattern-qr";
 import { TudViewerModal } from "@/components/pattern/library/TudViewerModal";
 import { formatTudSizeDerivedLine } from "@/lib/pattern-library/derived-from";
 import { clientPatternTudPreview, formatAreaM2 } from "@/lib/pattern-library/tud-display";
-import type { TudFillSuggestion } from "@/lib/pattern-library/tud-size-fill";
+import { sizesMatch, type TudFillSuggestion } from "@/lib/pattern-library/tud-size-fill";
 import type {
+  BasePattern,
   ClientPattern,
   ClientPatternMeasurement,
   ClientPatternVersion,
@@ -84,6 +91,8 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   const [tudFillBaseId, setTudFillBaseId] = useState("");
   const [tudFillBusy, setTudFillBusy] = useState(false);
   const [tudFillNotice, setTudFillNotice] = useState<string | null>(null);
+  const [libraryBases, setLibraryBases] = useState<BasePattern[]>([]);
+  const [tudCascade, setTudCascade] = useState<BasePatternCascadeValue>(() => emptyCascadeValue());
 
   const load = useCallback(
     async (keepSelection = false) => {
@@ -308,6 +317,38 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
     setTudFillBaseId(firstBase?.id ?? "");
     setTudFillSize(firstBase?.matches[0]?.size ?? "");
     setTudFillNotice(null);
+    if (!suggestion.base && pattern) {
+      const brand = preferredBrandCodeFromClientCode(pattern.client_code);
+      setTudCascade({
+        ...emptyCascadeValue(brand),
+        garmentType: pattern.garment_type,
+        origin: "library",
+        houseBrandCode: brand ?? firstBase?.house_brand_code ?? "",
+        basePatternId: firstBase?.id ?? "",
+        baseSize: firstBase?.matches[0]?.base_size ?? "",
+      });
+      void fetch("/api/pattern/library", { cache: "no-store" })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => setLibraryBases(data?.base_patterns ?? []))
+        .catch(() => setLibraryBases([]));
+    }
+  }
+
+  function handleTudCascadeChange(next: BasePatternCascadeValue) {
+    setTudCascade(next);
+    setTudFillBaseId(next.basePatternId);
+    if (!tudFill || !next.basePatternId) return;
+    const candidate =
+      tudFill.candidate_bases.find((entry) => entry.id === next.basePatternId) ?? null;
+    if (candidate) {
+      const match =
+        candidate.matches.find((entry) => sizesMatch(entry.base_size, next.baseSize)) ??
+        candidate.matches[0] ??
+        null;
+      setTudFillSize(match?.size ?? next.baseSize);
+      return;
+    }
+    setTudFillSize(next.baseSize);
   }
 
   async function applyTudFill() {
@@ -587,28 +628,19 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   {tudFill.style_caption ?? tudFill.filename}: {tudFill.sizes.join(", ")}
                 </p>
                 {!tudFill.base ? (
-                  <label className="block text-sm">
-                    <span className="mb-1 block text-xs font-medium text-slate-600">
-                      This pattern has no base yet — derive from
-                    </span>
-                    <select
-                      value={tudFillBaseId}
-                      onChange={(e) => {
-                        const nextId = e.target.value;
-                        setTudFillBaseId(nextId);
-                        const candidate =
-                          tudFill.candidate_bases.find((c) => c.id === nextId) ?? null;
-                        setTudFillSize(candidate?.matches[0]?.size ?? "");
-                      }}
-                      className="w-full max-w-sm rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                    >
-                      {tudFill.candidate_bases.map((candidate) => (
-                        <option key={candidate.id} value={candidate.id}>
-                          {candidate.name} ({candidate.house_brand_code})
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <div className="max-w-2xl rounded-lg border border-indigo-100 bg-white/80 p-3">
+                    <p className="mb-2 text-xs font-medium text-slate-600">
+                      This pattern has no base yet — pick a library base (filtered by brand &amp;
+                      garment)
+                    </p>
+                    <BasePatternCascadePicker
+                      bases={libraryBases}
+                      extraGarments={[pattern.garment_type]}
+                      value={tudCascade}
+                      onChange={handleTudCascadeChange}
+                      forceLibrary
+                    />
+                  </div>
                 ) : null}
                 {tudFillCandidate && tudFillCandidate.matches.length > 1 ? (
                   <div className="flex flex-wrap items-center gap-1.5">

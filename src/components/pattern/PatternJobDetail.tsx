@@ -43,8 +43,6 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
   const [selectedFittingId, setSelectedFittingId] = useState("");
   const [uploadRevisionId, setUploadRevisionId] = useState("");
   const [clientPatterns, setClientPatterns] = useState<ClientPattern[]>([]);
-  const [linkedPatternId, setLinkedPatternId] = useState("");
-  const [linkedVersionId, setLinkedVersionId] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -61,8 +59,6 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       setNotes(nextJob.notes ?? "");
       setBlockedReason(nextJob.blocked_reason ?? "");
       setStatus(nextJob.status);
-      setLinkedPatternId(nextJob.client_pattern_id ?? "");
-      setLinkedVersionId(nextJob.client_pattern_version_id ?? "");
       const scheduled = nextJob.fittings.find((f) => f.status === "scheduled");
       setSelectedFittingId(scheduled?.id ?? nextJob.fittings[nextJob.fittings.length - 1]?.id ?? "");
       setUploadRevisionId(nextJob.revisions[nextJob.revisions.length - 1]?.id ?? "");
@@ -83,28 +79,6 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       .then((data) => setClientPatterns(data?.client_patterns ?? []))
       .catch(() => setClientPatterns([]));
   }, []);
-
-  async function saveMasterPatternLink() {
-    setActing(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/pattern/jobs/${jobId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          client_pattern_id: linkedPatternId || null,
-          client_pattern_version_id: linkedVersionId || null,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Save failed");
-      setJob(data.job);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed");
-    } finally {
-      setActing(false);
-    }
-  }
 
   async function saveJob() {
     setActing(true);
@@ -302,72 +276,80 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
         <h3 className="font-semibold text-slate-900">Master pattern (library)</h3>
         <p className="text-xs text-slate-500">
-          Link this job to the client&apos;s master pattern + trial so cutting uses the right
-          measurement sheet.
+          Create or open the garment sheet in Pattern Library (Custom or filtered library base), then
+          assign this fabric on the client fabric board.
         </p>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block text-sm">
-            <span className="font-medium text-slate-700">Client pattern</span>
-            <select
-              value={linkedPatternId}
-              onChange={(e) => {
-                setLinkedPatternId(e.target.value);
-                setLinkedVersionId("");
-              }}
-              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            >
-              <option value="">Not linked</option>
-              {clientPatterns.map((pattern) => (
-                <option key={pattern.id} value={pattern.id}>
-                  {pattern.pattern_ref} — {pattern.client_name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block text-sm">
-            <span className="font-medium text-slate-700">Trial version</span>
-            <select
-              value={linkedVersionId}
-              onChange={(e) => setLinkedVersionId(e.target.value)}
-              disabled={!linkedPatternId}
-              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100"
-            >
-              <option value="">Latest / final</option>
-              {(clientPatterns.find((pattern) => pattern.id === linkedPatternId)?.versions ?? []).map(
-                (version) => (
-                  <option key={version.id} value={version.id}>
-                    Trial {version.version}
-                    {version.is_final ? " (Final)" : ""}
-                  </option>
-                )
-              )}
-            </select>
-          </label>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <Button onClick={() => void saveMasterPatternLink()} disabled={acting}>
-            {acting ? "Saving…" : "Save link"}
-          </Button>
-          {job.client_pattern_id ? (
+        {(() => {
+          const linked = job.client_pattern_id
+            ? clientPatterns.find((pattern) => pattern.id === job.client_pattern_id) ?? null
+            : null;
+          const clientPatternsForJob = clientPatterns.filter(
+            (pattern) =>
+              pattern.client_id === job.client_id &&
+              pattern.garment_type === job.garment_type
+          );
+          return (
             <>
-              <Link
-                href={`/pattern/library/clients/${job.client_pattern_id}`}
-                className="inline-flex items-center gap-1 text-sm font-medium text-indigo-700 hover:text-indigo-900"
-              >
-                Open master pattern
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href={`/pattern/client-patterns/${job.client_pattern_id}/print?job=${job.id}${job.client_pattern_version_id ? `&version=${job.client_pattern_version_id}` : ""}`}
-                target="_blank"
-                className="inline-flex items-center gap-1 text-sm font-medium text-slate-700 hover:text-slate-900"
-              >
-                <Printer className="h-4 w-4" />
-                Print A4 sheet
-              </Link>
+              <p className="text-sm text-slate-700">
+                Linked:{" "}
+                {linked ? (
+                  <span className="font-medium text-slate-900">{linked.pattern_ref}</span>
+                ) : (
+                  <span className="text-amber-700">Not linked yet</span>
+                )}
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  href="/pattern/library"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-indigo-700 hover:text-indigo-900"
+                >
+                  Pattern Library
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href={`/pattern/library/fabrics/${job.client_id}`}
+                  className="inline-flex items-center gap-1 text-sm font-medium text-indigo-700 hover:text-indigo-900"
+                >
+                  Fabric board
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                {job.client_pattern_id ? (
+                  <>
+                    <Link
+                      href={`/pattern/library/clients/${job.client_pattern_id}`}
+                      className="inline-flex items-center gap-1 text-sm font-medium text-indigo-700 hover:text-indigo-900"
+                    >
+                      Open master pattern
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                    <Link
+                      href={`/pattern/client-patterns/${job.client_pattern_id}/print?job=${job.id}${job.client_pattern_version_id ? `&version=${job.client_pattern_version_id}` : ""}`}
+                      target="_blank"
+                      className="inline-flex items-center gap-1 text-sm font-medium text-slate-700 hover:text-slate-900"
+                    >
+                      <Printer className="h-4 w-4" />
+                      Print A4 sheet
+                    </Link>
+                  </>
+                ) : null}
+              </div>
+              {clientPatternsForJob.length > 0 ? (
+                <ul className="flex flex-wrap gap-2">
+                  {clientPatternsForJob.map((pattern) => (
+                    <li key={pattern.id}>
+                      <Link
+                        href={`/pattern/library/clients/${pattern.id}`}
+                        className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-indigo-50 hover:text-indigo-800"
+                      >
+                        {pattern.pattern_ref}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </>
-          ) : null}
-        </div>
+          );
+        })()}
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
