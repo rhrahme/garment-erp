@@ -8,6 +8,7 @@ import {
   garmentMatchesLibraryBase,
   PATTERN_SHEET_GARMENTS,
   preferredBrandCodeFromClientCode,
+  sheetsMissingLibraryBases,
   uniqueBrandCodes,
   uniqueGarmentTypes,
   withAutoResolvedBase,

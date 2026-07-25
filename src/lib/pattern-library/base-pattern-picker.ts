@@ -286,3 +286,15 @@ export function normalizePatternSheetGarment(garment: string): string {
   );
   return stitch ?? trimmed;
 }
+
+/** Sales sheet garments that have zero matching library base patterns yet. */
+export function sheetsMissingLibraryBases(bases: BasePattern[]): string[] {
+  return PATTERN_SHEET_GARMENTS.filter(
+    (sheet) => filterBases(bases, { garmentType: sheet }).length === 0
+  );
+}
+
+export function sheetHasLibraryBases(bases: BasePattern[], garmentType: string): boolean {
+  if (!garmentType.trim()) return false;
+  return filterBases(bases, { garmentType }).length > 0;
+}

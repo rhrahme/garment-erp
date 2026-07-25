@@ -6,6 +6,8 @@ import {
   cascadeSelectionReady,
   filterBases,
   garmentLabel,
+  sheetHasLibraryBases,
+  sheetsMissingLibraryBases,
   type BasePatternCascadeValue,
   uniqueBrandCodes,
   uniqueCutFamilies,
@@ -24,6 +26,8 @@ type BasePatternCascadePickerProps = {
   extraGarments?: string[];
   /** Lock origin to library (e.g. TUD fill “derive from”). */
   forceLibrary?: boolean;
+  /** Show which sales garments still have no library base Excel/import. */
+  showMissingLibraryHint?: boolean;
   className?: string;
 };
 
@@ -40,12 +44,15 @@ export function BasePatternCascadePicker({
   onChange,
   extraGarments = [],
   forceLibrary = false,
+  showMissingLibraryHint = true,
   className,
 }: BasePatternCascadePickerProps) {
   const garments = useMemo(
     () => uniqueGarmentTypes(bases, extraGarments),
     [bases, extraGarments]
   );
+
+  const missingLibrarySheets = useMemo(() => sheetsMissingLibraryBases(bases), [bases]);
 
   const forGarment = useMemo(
     () =>
@@ -54,6 +61,9 @@ export function BasePatternCascadePicker({
         : [],
     [bases, value.garmentType]
   );
+
+  const selectedSheetMissingLibrary =
+    Boolean(value.garmentType) && !sheetHasLibraryBases(bases, value.garmentType);
 
   const brands = useMemo(() => uniqueBrandCodes(forGarment), [forGarment]);
 
@@ -290,14 +300,39 @@ export function BasePatternCascadePicker({
         </p>
       ) : null}
 
-      {value.origin === "library" && value.garmentType && brands.length === 0 ? (
-        <p className="text-xs text-amber-700 sm:col-span-2 lg:col-span-3">
-          No library bases for {garmentLabel(value.garmentType)} yet — switch to Custom or import a
-          base first.
-        </p>
+      {selectedSheetMissingLibrary ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 sm:col-span-2 lg:col-span-3">
+          <p className="font-semibold">
+            Library missing base patterns for {garmentLabel(value.garmentType)}
+          </p>
+          <p className="mt-1">
+            Use <span className="font-medium">Custom</span> for now, or drop the measurement Excel
+            (.xlsx) for this garment into your{" "}
+            <span className="font-mono">Base Patterns</span> folder and tell me to import — then
+            Library base will appear here.
+          </p>
+        </div>
       ) : null}
 
-      {!cascadeSelectionReady(value) && value.garmentType && value.origin === "library" ? (
+      {showMissingLibraryHint && missingLibrarySheets.length > 0 ? (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-600 sm:col-span-2 lg:col-span-3">
+          <p className="font-medium text-slate-700">
+            Library still missing bases for {missingLibrarySheets.length} garment
+            {missingLibrarySheets.length === 1 ? "" : "s"}
+          </p>
+          <p className="mt-1 leading-relaxed">
+            {missingLibrarySheets.join(" · ")}
+          </p>
+          <p className="mt-1 text-slate-500">
+            Upload those base Excels when ready and ask to import.
+          </p>
+        </div>
+      ) : null}
+
+      {libraryReady &&
+      value.garmentType &&
+      !selectedSheetMissingLibrary &&
+      !cascadeSelectionReady(value) ? (
         <p className="text-[11px] text-slate-400 sm:col-span-2 lg:col-span-3">
           Finish brand → cut → size to prefill from the library base.
         </p>
