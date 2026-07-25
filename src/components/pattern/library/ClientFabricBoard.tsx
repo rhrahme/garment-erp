@@ -9,6 +9,7 @@ import { BasePatternCascadePicker } from "@/components/pattern/library/BasePatte
 import {
   cascadeSelectionReady,
   emptyCascadeValue,
+  PATTERN_SHEET_GARMENTS,
   preferredBrandCodeFromClientCode,
   type BasePatternCascadeValue,
 } from "@/lib/pattern-library/base-pattern-picker";
@@ -28,23 +29,6 @@ const STATUS_STYLES: Record<ClientFabricStatus, string> = {
   ironing: "bg-amber-100 text-amber-800",
   ready: "bg-emerald-100 text-emerald-800",
 };
-
-/** Garments the pattern team groups fabrics into — incl. Polo / T-shirt. */
-const BASE_GARMENTS = [
-  "jacket",
-  "shirt",
-  "long sleeve shirt",
-  "short sleeve shirt",
-  "polo",
-  "t-shirt",
-  "trouser",
-  "shorts",
-  "suit",
-  "vest",
-  "overshirt",
-  "overcoat",
-  "thobe",
-];
 
 type AssignFilter = "all" | "unassigned" | "assigned";
 
@@ -445,8 +429,12 @@ function AssignDialog({
   }, []);
 
   const garments = useMemo(
-    () =>
-      [...new Set([...BASE_GARMENTS, ...board.patterns.map((pattern) => pattern.garment_type)])].sort(),
+    () => [
+      ...new Set([
+        ...PATTERN_SHEET_GARMENTS,
+        ...board.patterns.map((pattern) => pattern.garment_type),
+      ]),
+    ],
     [board.patterns]
   );
 

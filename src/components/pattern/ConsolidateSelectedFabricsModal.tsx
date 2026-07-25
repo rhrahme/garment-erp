@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import {
   cascadeSelectionReady,
   emptyCascadeValue,
+  PATTERN_SHEET_GARMENTS,
   preferredBrandCodeFromClientCode,
   type BasePatternCascadeValue,
 } from "@/lib/pattern-library/base-pattern-picker";
@@ -232,17 +233,7 @@ export function ConsolidateSelectedFabricsModal({
           <div className="mt-4 space-y-3">
             <BasePatternCascadePicker
               bases={bases}
-              extraGarments={[
-                ...selectedGarments,
-                "shirt",
-                "polo",
-                "trouser",
-                "shorts",
-                "jacket",
-                "overshirt",
-                "vest",
-                "thobe",
-              ]}
+              extraGarments={[...PATTERN_SHEET_GARMENTS, ...selectedGarments]}
               value={cascade}
               onChange={setCascade}
             />

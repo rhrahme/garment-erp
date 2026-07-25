@@ -1,5 +1,9 @@
 import { notifyIntegration } from "@/lib/integrations";
 import { BRAND_CLIENT_CODE_PREFIX, parseClientCodeParts } from "@/lib/clients/codes";
+import {
+  libraryGarmentKeysForSheet,
+  normalizePatternSheetGarment,
+} from "@/lib/pattern-library/base-pattern-picker";
 import { readPatternLibraryFresh, writePatternLibrary } from "@/lib/data/pattern-library";
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import { applyFabricLineAssignment } from "@/lib/pattern-library/client-fabric-board";
@@ -260,9 +264,12 @@ function buildMeasurementsFromTemplate(
   dictionary: MeasurementPointDef[],
   garmentType: string
 ): ClientPatternMeasurement[] {
-  const garment = garmentType.trim().toLowerCase();
+  const keys = new Set(
+    libraryGarmentKeysForSheet(garmentType).map((key) => key.toLowerCase())
+  );
+  keys.add(garmentType.trim().toLowerCase());
   return dictionary
-    .filter((point) => point.garment_types.includes(garment))
+    .filter((point) => point.garment_types.some((type) => keys.has(type.toLowerCase())))
     .map((point) => ({
       point_id: point.id,
       name: point.name,
@@ -331,6 +338,11 @@ export async function createClientPattern(
     return { ok: false, status: 400, error: "client_id and garment_type are required." };
   }
 
+  const garmentType = normalizePatternSheetGarment(input.garment_type);
+  if (!garmentType) {
+    return { ok: false, status: 400, error: "client_id and garment_type are required." };
+  }
+
   const store = await readPatternLibraryFresh();
   const base = input.base_pattern_id
     ? store.base_patterns.find((candidate) => candidate.id === input.base_pattern_id) ?? null
@@ -350,7 +362,7 @@ export async function createClientPattern(
   const measurements =
     base && baseSize
       ? buildMeasurementsFromBase(base, baseSize)
-      : buildMeasurementsFromTemplate(store.dictionary, input.garment_type);
+      : buildMeasurementsFromTemplate(store.dictionary, garmentType);
   const version: ClientPatternVersion = {
     id: `cpv-${Date.now()}-1`,
     version: 1,
@@ -370,7 +382,7 @@ export async function createClientPattern(
     input.pattern_ref?.trim() ||
     generatePatternRef({
       cut_family: base?.cut_family ?? null,
-      garment_type: input.garment_type,
+      garment_type: garmentType,
       fabric: input.fabric ?? base?.fabric ?? null,
       house_brand_code: base?.house_brand_code ?? null,
       cut_variant: base?.cut_variant ?? null,
@@ -386,7 +398,7 @@ export async function createClientPattern(
     client_id: input.client_id.trim(),
     client_code: clientCode,
     client_name: input.client_name?.trim() ?? "",
-    garment_type: input.garment_type.trim().toLowerCase(),
+    garment_type: garmentType,
     description: input.description?.trim() || null,
     base_pattern_id: base?.id ?? null,
     base_size: baseSize,

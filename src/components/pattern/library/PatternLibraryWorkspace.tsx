@@ -9,6 +9,7 @@ import { TudViewerModal } from "@/components/pattern/library/TudViewerModal";
 import {
   cascadeSelectionReady,
   emptyCascadeValue,
+  PATTERN_SHEET_GARMENTS,
   preferredBrandCodeFromClientCode,
   resolveSelectedBase,
   type BasePatternCascadeValue,
@@ -229,17 +230,11 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
           bases={library?.base_patterns ?? []}
           garments={[
             ...new Set([
-              "jacket",
-              "shirt",
-              "trouser",
-              "shorts",
-              "thobe",
-              "vest",
-              "overshirt",
+              ...PATTERN_SHEET_GARMENTS,
               ...(library?.base_patterns.map((base) => base.garment_type) ?? []),
               ...(library?.dictionary.flatMap((point) => point.garment_types) ?? []),
             ]),
-          ].sort()}
+          ]}
           onCreated={() => {
             setShowCreate(false);
             void load();
