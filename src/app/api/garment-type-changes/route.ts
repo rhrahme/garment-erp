@@ -6,7 +6,8 @@ import {
 } from "@/lib/auth/fabric-price-access";
 import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server";
 import { requireAuthenticated } from "@/lib/auth/session";
-import { listGarmentTypeChanges } from "@/lib/data/garment-type-changes";
+import { listGarmentTypeChanges, listGarmentTypeChangesForSalesOrder } from "@/lib/data/garment-type-changes";
+import { buildGarmentTypeChangeFlagsByLineId } from "@/lib/sales-orders/garment-type-change-flags";
 import { notifyAdminsOfGarmentTypeChange } from "@/lib/integrations/garment-type-change-alert";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
@@ -23,14 +24,29 @@ export async function GET(request: Request) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
+
+    await ensureDocumentsLoaded(["garment_type_changes"]);
+    const url = new URL(request.url);
+    const salesOrderId = url.searchParams.get("sales_order_id")?.trim() ?? "";
+    if (salesOrderId) {
+      await ensureDocumentsLoaded(["sales_orders"]);
+      const order = await getSalesOrderByIdFresh(salesOrderId);
+      if (!order || !canAccessSalesOrder(session, order)) {
+        return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+      }
+      const changes = listGarmentTypeChangesForSalesOrder(salesOrderId);
+      return NextResponse.json({
+        flags: buildGarmentTypeChangeFlagsByLineId(changes, salesOrderId),
+      });
+    }
+
     if (!session.isAdmin) {
       return NextResponse.json({ error: "Admin access required." }, { status: 403 });
     }
 
-    await ensureDocumentsLoaded(["garment_type_changes"]);
     const limit = Math.min(
       200,
-      Math.max(1, Number(new URL(request.url).searchParams.get("limit") ?? "50") || 50)
+      Math.max(1, Number(url.searchParams.get("limit") ?? "50") || 50)
     );
 
     return NextResponse.json({ changes: listGarmentTypeChanges(limit) });

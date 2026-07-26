@@ -46,3 +46,37 @@ export function listGarmentTypeChangesForSalesOrder(salesOrderId: string): Garme
     (change) => change.sales_order_id === salesOrderId
   );
 }
+
+export function listUnacknowledgedGarmentTypeChanges(limit = 50): GarmentTypeChange[] {
+  return readGarmentTypeChangesFresh()
+    .changes.filter((change) => change.acknowledged_at == null)
+    .slice(0, limit);
+}
+
+export function countUnacknowledgedGarmentTypeChanges(): number {
+  return readGarmentTypeChangesFresh().changes.filter((change) => change.acknowledged_at == null)
+    .length;
+}
+
+export async function markGarmentTypeChangeAcknowledged(
+  changeId: string,
+  acknowledgedBy: string
+): Promise<{ change: GarmentTypeChange; newlyAcknowledged: boolean } | null> {
+  const store = structuredClone(await readGarmentTypeChangesFreshAsync());
+  const index = store.changes.findIndex((change) => change.id === changeId);
+  if (index < 0) return null;
+
+  const existing = store.changes[index]!;
+  if (existing.acknowledged_at) {
+    return { change: existing, newlyAcknowledged: false };
+  }
+
+  const updated: GarmentTypeChange = {
+    ...existing,
+    acknowledged_at: new Date().toISOString(),
+    acknowledged_by: acknowledgedBy,
+  };
+  store.changes[index] = updated;
+  await writeGarmentTypeChanges(store);
+  return { change: updated, newlyAcknowledged: true };
+}

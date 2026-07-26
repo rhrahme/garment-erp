@@ -17,6 +17,8 @@ import {
 import { getSessionContext } from "@/lib/auth/session";
 import { getCustomerInvoiceBySalesOrderIdFresh } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { listGarmentTypeChangesForSalesOrder } from "@/lib/data/garment-type-changes";
+import { buildGarmentTypeChangeFlagsByLineId } from "@/lib/sales-orders/garment-type-change-flags";
 import { readPatternJobsFresh } from "@/lib/data/pattern-jobs";
 import { getSalesOrderByIdFresh, isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
 import { ensureFabricOrdersLoaded, listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
@@ -51,7 +53,7 @@ export default async function SalesOrderDetailPage({
   const session = await getSessionContext();
   if (!canAccessSalesOrder(session, rawOrder)) notFound();
   if (!session.isSalesOperator) {
-    await ensureDocumentsLoaded(["pattern_jobs"]);
+    await ensureDocumentsLoaded(["pattern_jobs", "garment_type_changes"]);
     await ensureFabricOrdersLoaded();
   }
   const rawFabricPos = session.isSalesOperator
@@ -91,6 +93,12 @@ export default async function SalesOrderDetailPage({
   const fabricCostResult =
     showFabricCostToAdmin ? resolveFabricCostForOrderLines(rawOrder.fabric_lines) : null;
   const fabricCost = fabricCostResult?.summary ?? null;
+  const garmentTypeChangeFlags = session.isSalesOperator
+    ? {}
+    : buildGarmentTypeChangeFlagsByLineId(
+        listGarmentTypeChangesForSalesOrder(order.id),
+        order.id
+      );
 
   return (
     <div>
@@ -215,6 +223,7 @@ export default async function SalesOrderDetailPage({
         fabricPos={fabricPos}
         patternMismatch={patternMismatch}
         patternJobsByLineId={patternJobsByLineId}
+        garmentTypeChangeFlags={garmentTypeChangeFlags}
         existingInvoiceId={existingInvoice?.id ?? null}
         isReadyMade={isReadyMadeSalesOrder(order)}
         canViewFabricPrices={canViewFabricPrices}

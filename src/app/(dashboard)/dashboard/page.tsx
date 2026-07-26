@@ -7,6 +7,7 @@ import {
   ClipboardCheck,
   Users,
   Receipt,
+  ArrowRightLeft,
 } from "lucide-react";
 import { GarmentTypeChangesPanel } from "@/components/dashboard/GarmentTypeChangesPanel";
 import { TodaysFabricPanel } from "@/components/dashboard/TodaysFabricPanel";
@@ -24,6 +25,7 @@ import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { countInvoiceableSalesOrders } from "@/lib/invoicing/invoiceable-orders";
 import { getSessionContext } from "@/lib/auth/session";
 import { countPendingAwbFabricOrders } from "@/lib/integrations/pending-awb";
+import { countUnacknowledgedGarmentTypeChanges } from "@/lib/data/garment-type-changes";
 import { getTodaysFabricSummary } from "@/lib/sales-orders/todays-fabric";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
 import { formatNumber } from "@/lib/utils";
@@ -37,6 +39,7 @@ export default async function DashboardPage() {
     "shipments",
     "costing_rates",
     "production_work_orders",
+    "garment_type_changes",
   ]);
 
   const [stats, workOrders, shipments, inventory] = await Promise.all([
@@ -50,6 +53,9 @@ export default async function DashboardPage() {
   const readyToInvoice = countInvoiceableSalesOrders();
   const todaysFabricSummary = session.isAdmin ? await getTodaysFabricSummary() : null;
   const pendingAwbCount = session.isAdmin ? countPendingAwbFabricOrders() : 0;
+  const unacknowledgedGarmentTypeChanges = session.isAdmin
+    ? countUnacknowledgedGarmentTypeChanges()
+    : 0;
 
   const lowStock = inventory.filter(
     (i) => i.material && i.quantity_on_hand <= i.material.reorder_level
@@ -93,6 +99,17 @@ export default async function DashboardPage() {
               accent="bg-amber-50 text-amber-600"
             />
           </Link>
+        )}
+        {session.isAdmin && unacknowledgedGarmentTypeChanges > 0 && (
+          <a href="#garment-type-changes" className="block transition-opacity hover:opacity-90">
+            <StatCard
+              label="Garment type changes"
+              value={unacknowledgedGarmentTypeChanges}
+              subtext="Stitch type updates need admin review"
+              icon={<ArrowRightLeft className="h-5 w-5" />}
+              accent="bg-amber-50 text-amber-700"
+            />
+          </a>
         )}
       </div>
 

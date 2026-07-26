@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ChangeGarmentTypeControl } from "@/components/orders/ChangeGarmentTypeControl";
+import { GarmentTypeChangeBadge } from "@/components/garment-type/GarmentTypeChangeBadge";
+import type { GarmentTypeChangeFlag } from "@/lib/sales-orders/garment-type-change-flags";
 import type { PatternFittingOutcome, PatternJob, PatternJobStatus } from "@/lib/types/pattern";
 import type { ClientPattern } from "@/lib/types/pattern-library";
 
@@ -45,6 +47,9 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
   const [uploadRevisionId, setUploadRevisionId] = useState("");
   const [clientPatterns, setClientPatterns] = useState<ClientPattern[]>([]);
   const [canChangeGarmentType, setCanChangeGarmentType] = useState(false);
+  const [garmentTypeChangeFlag, setGarmentTypeChangeFlag] = useState<GarmentTypeChangeFlag | null>(
+    null
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -64,6 +69,18 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       const scheduled = nextJob.fittings.find((f) => f.status === "scheduled");
       setSelectedFittingId(scheduled?.id ?? nextJob.fittings[nextJob.fittings.length - 1]?.id ?? "");
       setUploadRevisionId(nextJob.revisions[nextJob.revisions.length - 1]?.id ?? "");
+      const flagsRes = await fetch(
+        `/api/garment-type-changes?sales_order_id=${nextJob.sales_order_id}`,
+        { cache: "no-store" }
+      );
+      if (flagsRes.ok) {
+        const flagsData = (await flagsRes.json()) as {
+          flags?: Record<string, GarmentTypeChangeFlag>;
+        };
+        setGarmentTypeChangeFlag(flagsData.flags?.[nextJob.sales_order_line_id] ?? null);
+      } else {
+        setGarmentTypeChangeFlag(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
@@ -206,9 +223,12 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       </Link>
 
       <div className="rounded-xl border border-slate-200 bg-white p-5">
-        <h2 className="text-lg font-semibold text-slate-900">
-          {job.so_number} · L{String(job.article_number).padStart(2, "0")} · {job.garment_type}
-        </h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-lg font-semibold text-slate-900">
+            {job.so_number} · L{String(job.article_number).padStart(2, "0")} · {job.garment_type}
+          </h2>
+          {garmentTypeChangeFlag ? <GarmentTypeChangeBadge flag={garmentTypeChangeFlag} /> : null}
+        </div>
         <p className="mt-1 text-sm text-slate-600">
           {job.client_name} · {job.fabric_number} · {job.supplier} · {job.meters}m
         </p>

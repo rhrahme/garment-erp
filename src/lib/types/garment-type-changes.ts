@@ -17,6 +17,8 @@ export interface GarmentTypeChange {
   /** Pattern job id when one exists for the line. */
   pattern_job_id: string | null;
   admin_notified_at: string | null;
+  acknowledged_at: string | null;
+  acknowledged_by: string | null;
 }
 
 export interface GarmentTypeChangesFile {

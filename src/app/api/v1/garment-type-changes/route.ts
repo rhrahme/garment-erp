@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/lib/integrations/api-auth";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { listGarmentTypeChanges } from "@/lib/data/garment-type-changes";
+import { listGarmentTypeChanges, listGarmentTypeChangesForSalesOrder } from "@/lib/data/garment-type-changes";
+import { buildGarmentTypeChangeFlagsByLineId } from "@/lib/sales-orders/garment-type-change-flags";
 import { notifyAdminsOfGarmentTypeChange } from "@/lib/integrations/garment-type-change-alert";
 import {
   changeFabricLineGarmentType,
@@ -14,9 +15,19 @@ export async function GET(request: Request) {
 
   try {
     await ensureDocumentsLoaded(["garment_type_changes"]);
+    const url = new URL(request.url);
+    const salesOrderId = url.searchParams.get("sales_order_id")?.trim() ?? "";
+    if (salesOrderId) {
+      const changes = listGarmentTypeChangesForSalesOrder(salesOrderId);
+      return NextResponse.json({
+        flags: buildGarmentTypeChangeFlagsByLineId(changes, salesOrderId),
+        source: "api",
+      });
+    }
+
     const limit = Math.min(
       200,
-      Math.max(1, Number(new URL(request.url).searchParams.get("limit") ?? "50") || 50)
+      Math.max(1, Number(url.searchParams.get("limit") ?? "50") || 50)
     );
     return NextResponse.json({ changes: listGarmentTypeChanges(limit) });
   } catch (error) {

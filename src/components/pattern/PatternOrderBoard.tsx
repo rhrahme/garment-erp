@@ -8,7 +8,9 @@ import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
 import { FabricSwatchProvider, useFabricSwatch } from "@/components/fabric/FabricSwatchProvider";
 import { ConsolidateSelectedFabricsModal } from "@/components/pattern/ConsolidateSelectedFabricsModal";
 import { ChangeGarmentTypeControl } from "@/components/orders/ChangeGarmentTypeControl";
+import { GarmentTypeChangeBadge } from "@/components/garment-type/GarmentTypeChangeBadge";
 import { PatternMismatchBanner } from "@/components/pattern/PatternMismatchBanner";
+import type { GarmentTypeChangeFlag } from "@/lib/sales-orders/garment-type-change-flags";
 import { productionBrandNameForOrder } from "@/lib/sales-orders/production-brand";
 import type { PatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mismatch";
 import type { PatternJob } from "@/lib/types/pattern";
@@ -49,6 +51,9 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
   const [consolidateOpen, setConsolidateOpen] = useState(false);
   const [canChangeGarmentType, setCanChangeGarmentType] = useState(false);
+  const [garmentTypeChangeFlags, setGarmentTypeChangeFlags] = useState<
+    Record<string, GarmentTypeChangeFlag>
+  >({});
 
   const loadClientPatterns = useCallback(async () => {
     try {
@@ -72,6 +77,17 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
       setJobs(nextJobs);
       setMismatch(data.mismatch ?? null);
       setAwaitingLines(Boolean(data.awaiting_lines));
+      const flagsRes = await fetch(`/api/garment-type-changes?sales_order_id=${soId}`, {
+        cache: "no-store",
+      });
+      if (flagsRes.ok) {
+        const flagsData = (await flagsRes.json()) as {
+          flags?: Record<string, GarmentTypeChangeFlag>;
+        };
+        setGarmentTypeChangeFlags(flagsData.flags ?? {});
+      } else {
+        setGarmentTypeChangeFlags({});
+      }
       setSelectedJobIds((prev) => {
         const next = new Set<string>();
         for (const id of prev) {
@@ -341,9 +357,16 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-slate-900">
-                        {formatArticle(job.article_number)} · {job.garment_type} · {job.piece_name}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold text-slate-900">
+                          {formatArticle(job.article_number)} · {job.garment_type} · {job.piece_name}
+                        </p>
+                        {garmentTypeChangeFlags[job.sales_order_line_id] ? (
+                          <GarmentTypeChangeBadge
+                            flag={garmentTypeChangeFlags[job.sales_order_line_id]!}
+                          />
+                        ) : null}
+                      </div>
                       <div className="mt-1 flex flex-wrap items-center gap-2">
                         <p className="text-sm text-slate-600">
                           {job.fabric_number} · {job.supplier} · {job.meters}m

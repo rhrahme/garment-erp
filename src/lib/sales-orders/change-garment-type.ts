@@ -134,6 +134,8 @@ export async function changeFabricLineGarmentType(
     note: input.note?.trim() || null,
     pattern_job_id: patternJob?.id ?? null,
     admin_notified_at: null,
+    acknowledged_at: null,
+    acknowledged_by: null,
   };
 
   await appendGarmentTypeChange(change);

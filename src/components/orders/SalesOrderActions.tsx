@@ -46,6 +46,8 @@ import {
 } from "@/components/orders/FabricTransferModal";
 import { FabricTransferHistory } from "@/components/orders/FabricTransferHistory";
 import { ChangeGarmentTypeControl } from "@/components/orders/ChangeGarmentTypeControl";
+import { GarmentTypeChangeBadge } from "@/components/garment-type/GarmentTypeChangeBadge";
+import type { GarmentTypeChangeFlag } from "@/lib/sales-orders/garment-type-change-flags";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 import { formatFabricLineLabels } from "@/lib/sales-orders/label-display";
 import { FabricOrderSubmitButton } from "@/components/orders/FabricOrderSubmitButton";
@@ -68,6 +70,21 @@ function formatWidth(line: SalesOrderFabricLine) {
   return "—";
 }
 
+function FabricLineGarmentCell({
+  garmentType,
+  changeFlag,
+}: {
+  garmentType: string;
+  changeFlag?: GarmentTypeChangeFlag;
+}) {
+  return (
+    <div className="space-y-1">
+      <span className="text-slate-600">{garmentType}</span>
+      {changeFlag ? <GarmentTypeChangeBadge flag={changeFlag} /> : null}
+    </div>
+  );
+}
+
 function formatLinePrice(line: SalesOrderFabricLine) {
   return formatFabricLineSupplierPrice(line);
 }
@@ -83,6 +100,7 @@ export function SalesOrderActions({
   fabricPos = [],
   patternMismatch = null,
   patternJobsByLineId = {},
+  garmentTypeChangeFlags = {},
   existingInvoiceId = null,
   isReadyMade = false,
   canViewFabricPrices = false,
@@ -98,6 +116,7 @@ export function SalesOrderActions({
   fabricPos?: PurchaseOrder[];
   patternMismatch?: PatternSalesOrderMismatch | null;
   patternJobsByLineId?: Record<string, number>;
+  garmentTypeChangeFlags?: Record<string, GarmentTypeChangeFlag>;
   existingInvoiceId?: string | null;
   isReadyMade?: boolean;
   canViewFabricPrices?: boolean;
@@ -638,7 +657,12 @@ export function SalesOrderActions({
                         numberClassName="text-sm"
                       />
                     </td>
-                    <td className="px-3 py-2 text-slate-600">{line.garment_type}</td>
+                    <td className="px-3 py-2">
+                      <FabricLineGarmentCell
+                        garmentType={line.garment_type}
+                        changeFlag={garmentTypeChangeFlags[line.id]}
+                      />
+                    </td>
                     <td className="px-3 py-2 text-slate-600">
                       {line.quantity} {line.unit === "meters" ? "m" : line.unit}
                     </td>
@@ -854,7 +878,12 @@ export function SalesOrderActions({
                           </p>
                         ) : null}
                       </td>
-                      <td className="px-3 py-2 text-slate-600">{line.garment_type}</td>
+                      <td className="px-3 py-2">
+                      <FabricLineGarmentCell
+                        garmentType={line.garment_type}
+                        changeFlag={garmentTypeChangeFlags[line.id]}
+                      />
+                    </td>
                       <td className="px-3 py-2 text-slate-600">{formatFabricLineLabels(line)}</td>
                       <td className="px-3 py-2 text-slate-600">{line.composition ?? "—"}</td>
                       <td className="px-3 py-2 text-slate-600">
@@ -1052,7 +1081,12 @@ export function SalesOrderActions({
                           </p>
                         ) : null}
                       </td>
-                      <td className="px-3 py-2 text-slate-600">{line.garment_type}</td>
+                      <td className="px-3 py-2">
+                      <FabricLineGarmentCell
+                        garmentType={line.garment_type}
+                        changeFlag={garmentTypeChangeFlags[line.id]}
+                      />
+                    </td>
                       <td className="px-3 py-2 text-slate-600">{formatFabricLineLabels(line)}</td>
                       <td className="px-3 py-2 text-slate-600">{line.composition ?? "—"}</td>
                       <td className="px-3 py-2 text-slate-600">
