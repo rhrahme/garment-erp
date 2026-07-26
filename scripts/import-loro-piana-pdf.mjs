@@ -91,7 +91,7 @@ function extractStyleTokens(part) {
 function isBoilerplateLine(line) {
   return (
     /^LORO PIANA S\.P\.A\./i.test(line) ||
-    /^PRICE LIST SPRING/i.test(line) ||
+    /^PRICE LIST (?:SPRING|FALL\/WINTER)/i.test(line) ||
     /^Prices valid from/i.test(line) ||
     /^Incoterms 2010/i.test(line) ||
     /^\*\*/.test(line) ||
@@ -267,8 +267,49 @@ function parseLoroPiana(text) {
   });
 }
 
-const fabrics = parseLoroPiana(rawText);
+function detectPriceListName(text) {
+  if (/PRICE LIST FALL\/WINTER 2026\/2027/i.test(text)) return "FW26/27 Price List";
+  if (/PRICE LIST SPRING\/SUMMER 2026/i.test(text)) return "SS26 Price List";
+  if (/PRICE LIST SPRING/i.test(text)) return "SS26 Price List";
+  return "Loro Piana Price List";
+}
+
+function mergeFabrics(existingFabrics, importedFabrics) {
+  const merged = new Map(existingFabrics.map((fabric) => [fabric.fabric_number, fabric]));
+  let added = 0;
+  let updated = 0;
+
+  for (const imported of importedFabrics) {
+    const current = merged.get(imported.fabric_number);
+    if (!current) {
+      merged.set(imported.fabric_number, imported);
+      added += 1;
+      continue;
+    }
+
+    const preserved = {};
+    for (const [key, value] of Object.entries(current)) {
+      if (!(key in imported) || imported[key] == null) preserved[key] = value;
+    }
+
+    merged.set(imported.fabric_number, { ...current, ...imported, ...preserved });
+    updated += 1;
+  }
+
+  const importedNumbers = new Set(importedFabrics.map((fabric) => fabric.fabric_number));
+  const fabrics = [...merged.values()].sort((a, b) => a.fabric_number.localeCompare(b.fabric_number));
+  const preservedCount = existingFabrics.filter((fabric) => !importedNumbers.has(fabric.fabric_number)).length;
+  return { fabrics, added, updated, preserved: preservedCount };
+}
+
+const importedFabrics = parseLoroPiana(rawText);
 const outPath = path.join("src/data/suppliers/loro-piana-ss26.json");
+const existingCatalog = fs.existsSync(outPath)
+  ? JSON.parse(fs.readFileSync(outPath, "utf8"))
+  : null;
+const existingFabrics = existingCatalog?.fabrics ?? [];
+const { fabrics, added, updated, preserved } = mergeFabrics(existingFabrics, importedFabrics);
+const priceListName = detectPriceListName(rawText);
 
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(
@@ -276,7 +317,7 @@ fs.writeFileSync(
   `${JSON.stringify(
     {
       document_type: "price_list",
-      supplier: {
+      supplier: existingCatalog?.supplier ?? {
         code: "LORO-PIANA",
         name: "Loro Piana",
         country: "Italy",
@@ -284,7 +325,7 @@ fs.writeFileSync(
         lead_time_days: 14,
         currency: "EUR",
       },
-      price_list_name: "SS26 Price List",
+      price_list_name: priceListName,
       imported_at: new Date().toISOString(),
       source_file: path.basename(pdfPath),
       fabric_count: fabrics.length,
@@ -295,7 +336,9 @@ fs.writeFileSync(
   )}\n`
 );
 
-console.log(`✓ Loro Piana SS26: ${fabrics.length} fabrics → ${outPath}`);
+console.log(
+  `✓ Loro Piana ${priceListName}: ${importedFabrics.length} parsed, ${added} added, ${updated} updated, ${preserved} preserved → ${fabrics.length} total → ${outPath}`
+);
 const sampleRange = ["781038", "781039", "781040", "781041", "703010", "703018"];
 for (const num of sampleRange) {
   const hit = fabrics.find((f) => f.fabric_number === num);
