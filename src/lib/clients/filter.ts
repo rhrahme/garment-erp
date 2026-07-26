@@ -1,4 +1,5 @@
 import { formatClientDisplayName, formatReferredByName } from "@/lib/clients/names";
+import { matchesNormalizedSearch } from "@/lib/search/normalize";
 import type { ClientProfile } from "@/lib/types/clients";
 
 /**
@@ -68,33 +69,31 @@ export function searchClients(
   query: string,
   options: { excludeContactFields?: boolean } = {}
 ): ClientProfile[] {
-  const normalized = query.trim().toLowerCase();
-  if (!normalized) return clients;
+  const trimmed = query.trim();
+  if (!trimmed) return clients;
 
-  return clients.filter((client) => {
-    const haystack = [
-      formatClientDisplayName(client),
-      client.first_name,
-      client.middle_name,
-      client.last_name,
-      client.code,
-      ...(options.excludeContactFields
-        ? []
-        : [
-            client.email,
-            client.phone,
-            client.contact_person,
-            formatReferredByName(client),
-            client.country,
-          ]),
-      client.city,
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-
-    return haystack.includes(normalized);
-  });
+  return clients.filter((client) =>
+    matchesNormalizedSearch(
+      [
+        formatClientDisplayName(client),
+        client.first_name,
+        client.middle_name,
+        client.last_name,
+        client.code,
+        ...(options.excludeContactFields
+          ? []
+          : [
+              client.email,
+              client.phone,
+              client.contact_person,
+              formatReferredByName(client),
+              client.country,
+            ]),
+        client.city,
+      ],
+      trimmed
+    )
+  );
 }
 
 export function filterPersonClients(clients: ClientProfile[]): ClientProfile[] {

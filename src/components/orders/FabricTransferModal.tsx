@@ -6,13 +6,10 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { TransferEligibility } from "@/lib/sales-orders/transfer-eligibility";
 import type { FabricTransferDestination } from "@/lib/sales-orders/transfer-destinations";
-import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
+import { normalizeSearchText } from "@/lib/search/normalize";
+import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
 type DestinationOption = FabricTransferDestination;
-
-function normalizeTransferSearch(value: string): string {
-  return value.trim().toLowerCase().replace(/[\s-]+/g, "");
-}
 
 type FabricTransferModalProps = {
   open: boolean;
@@ -102,16 +99,12 @@ export function FabricTransferModal({
   }, [open, sourceOrder.id, sourceLine.id, sourceLine.quantity]);
 
   const filteredOrders = useMemo(() => {
-    const q = normalizeTransferSearch(clientFilter);
+    const q = normalizeSearchText(clientFilter);
     if (!q) return orders;
     return orders.filter((order) => {
-      const haystack = [
-        order.client_name,
-        order.client_code,
-        order.so_number,
-      ]
-        .map((value) => normalizeTransferSearch(value))
-        .join(" ");
+      const haystack = normalizeSearchText(
+        [order.client_name, order.client_code, order.so_number].join(" ")
+      );
       return haystack.includes(q);
     });
   }, [orders, clientFilter]);

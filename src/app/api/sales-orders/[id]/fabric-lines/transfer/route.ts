@@ -29,6 +29,9 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     }
 
     const { id: sourceOrderId } = await context.params;
+
+    await healClientDataForRead("api");
+
     const sourceOrder = await getSalesOrderByIdFresh(sourceOrderId);
     if (!sourceOrder || !canAccessSalesOrder(session, sourceOrder)) {
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });
@@ -38,8 +41,6 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     if (!lineId) {
       return NextResponse.json({ error: "source_line_id is required." }, { status: 400 });
     }
-
-    await healClientDataForRead("api");
 
     const result = await getFabricTransferEligibility(sourceOrderId, lineId);
     if (!result.ok) {

@@ -1,9 +1,15 @@
 /** Client-safe search helpers — do not import server data modules here. */
 
-export function salesOrderMatchesSearch(row: { search_text: string }, query: string): boolean {
-  const normalized = query.trim().toLowerCase();
-  if (!normalized) return true;
+import { matchesNormalizedSearch } from "@/lib/search/normalize";
 
-  const tokens = normalized.split(/\s+/).filter(Boolean);
-  return tokens.every((token) => row.search_text.includes(token));
+export function salesOrderMatchesSearch(row: { search_text: string }, query: string): boolean {
+  const trimmed = query.trim();
+  if (!trimmed) return true;
+
+  const tokens = trimmed.split(/\s+/).filter(Boolean);
+  if (tokens.length > 1) {
+    return tokens.every((token) => matchesNormalizedSearch([row.search_text], token));
+  }
+
+  return matchesNormalizedSearch([row.search_text], trimmed);
 }
