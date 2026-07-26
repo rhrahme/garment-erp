@@ -156,7 +156,12 @@ export function DrapersApiPanel() {
       const res = await fetch("/api/integrations/drapers/sync-catalog", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scope, enrich_details: true }),
+        body: JSON.stringify({
+          scope,
+          enrich_details: true,
+          enrich_all: scope === "catalog",
+          include_availability: false,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Catalog sync failed");
@@ -193,8 +198,8 @@ export function DrapersApiPanel() {
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Drapers API integration</h2>
           <p className="mt-1 text-sm text-slate-600">
-            Official API at api.drapersitaly.it — sync catalog availability, stock, prices, specs, and swatch URLs
-            into the Drapers price list.
+            Specs and swatch images are cached locally — Fabric Spec, picker, and SO PDFs read the cache.
+            Use live API sync below for warehouse availability (and optional price refresh).
           </p>
         </div>
         <Button variant="secondary" size="sm" onClick={() => void loadStatus()} disabled={loading}>
@@ -358,7 +363,7 @@ export function DrapersApiPanel() {
           disabled={syncing || !status?.connected}
           onClick={() => void runCatalogSync("open_orders")}
         >
-          {syncing ? "Syncing…" : "Sync open orders (full API)"}
+          {syncing ? "Syncing…" : "Refresh specs — open orders"}
         </Button>
         <Button
           size="sm"
@@ -366,10 +371,10 @@ export function DrapersApiPanel() {
           disabled={syncing || !status?.connected}
           onClick={() => void runCatalogSync("catalog")}
         >
-          Sync bulk catalog data
+          Refresh specs — full catalog
         </Button>
         <Button size="sm" variant="secondary" disabled={syncing || !status?.connected} onClick={() => void runStockSync("open_orders")}>
-          {syncing ? "Syncing…" : "Stock only — open orders"}
+          {syncing ? "Syncing…" : "Check availability — open orders"}
         </Button>
         <Button
           size="sm"
@@ -377,7 +382,7 @@ export function DrapersApiPanel() {
           disabled={syncing || !status?.connected}
           onClick={() => void runStockSync("catalog")}
         >
-          Stock only — full catalog
+          Check availability — full catalog
         </Button>
         <Button
           size="sm"
@@ -385,12 +390,14 @@ export function DrapersApiPanel() {
           disabled={syncing || !status?.connected || !caps?.pricelist}
           onClick={() => void runPriceSync()}
         >
-          Prices only
+          Refresh account prices
         </Button>
       </div>
       <p className="mt-2 text-xs text-slate-500">
-        Full sync: GET /fabrics/ (availability), /stock/, /pricelist/account/, plus /fabrics/&#123;code&#125;/ detail
-        and /medias/ for targeted fabrics. Swatch URLs are cached in the catalog JSON for Fabric Spec and orders.
+        Full offline cache (specs + JPEG swatches): run{" "}
+        <code className="rounded bg-white px-1">npm run drapers:sync-cache</code> locally. UI reads cached JSON +
+        <code className="rounded bg-white px-1"> data/suppliers/drapers/images/</code>. Live API: stock via GET /stock/
+        (daily refresh recommended).
       </p>
 
       {catalogSyncResult && (

@@ -57,6 +57,7 @@ interface RawFabric {
   swatch_square?: string | null;
   swatch_zoom?: string | null;
   swatch_ruler?: string | null;
+  swatch_filename?: string | null;
 }
 
 interface RawCatalog {
@@ -157,6 +158,7 @@ function toFabrics(catalog: RawCatalog, supplierId: string, supplier: Supplier, 
       swatch_square: drapersFields?.swatch_square ?? f.swatch_square ?? null,
       swatch_zoom: drapersFields?.swatch_zoom ?? f.swatch_zoom ?? null,
       swatch_ruler: drapersFields?.swatch_ruler ?? f.swatch_ruler ?? null,
+      swatch_filename: drapersFields?.swatch_filename ?? f.swatch_filename ?? null,
       mill_line:
         supplierId === LORO_PIANA_ID || supplierId === SOLBIATI_ID
           ? getLoroPianaMillLine(f.fabric_number)

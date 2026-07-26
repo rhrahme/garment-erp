@@ -1,15 +1,13 @@
 #!/usr/bin/env node
 /**
- * Sync Drapers catalog from official API into src/data/suppliers/drapers-hs-ss26.json
- *
- * Bulk (always): GET /fabrics/, /stock/, /pricelist/account/
- * Detail + medias (optional): GET /fabrics/{code}/, /fabrics/{code}/medias/
+ * Sync Drapers catalog specs from official API into src/data/suppliers/drapers-hs-ss26.json
  *
  * Usage:
  *   node scripts/sync-drapers-catalog.mjs --open-orders
  *   node scripts/sync-drapers-catalog.mjs --bulk
+ *   node scripts/sync-drapers-catalog.mjs --enrich-all
  *   node scripts/sync-drapers-catalog.mjs --codes 10101,90640
- *   node scripts/sync-drapers-catalog.mjs --enrich-all --delay-ms 200
+ *   node scripts/sync-drapers-catalog.mjs --availability
  */
 
 import { readFileSync, existsSync } from "node:fs";
@@ -39,9 +37,10 @@ async function main() {
   );
 
   const args = process.argv.slice(2);
-  const openOrders = args.includes("--open-orders") || (!args.includes("--bulk") && !args.includes("--codes") && !args.includes("--enrich-all"));
+  const openOrders = args.includes("--open-orders");
   const bulkOnly = args.includes("--bulk");
   const enrichAll = args.includes("--enrich-all");
+  const includeAvailability = args.includes("--availability");
   const codesArg = args.find((a) => a.startsWith("--codes="))?.slice("--codes=".length)
     ?? (args.includes("--codes") ? args[args.indexOf("--codes") + 1] : null);
   const delayMs = Number.parseInt(
@@ -62,7 +61,10 @@ async function main() {
 
   const result = await syncDrapersCatalogFromApi({
     fabric_numbers,
-    enrich_details: Boolean(fabric_numbers?.length) && !bulkOnly,
+    enrich_all: enrichAll,
+    enrich_details: enrichAll || Boolean(fabric_numbers?.length),
+    include_availability: includeAvailability,
+    include_prices: true,
     delay_ms: delayMs,
   });
 
@@ -71,6 +73,7 @@ async function main() {
       {
         mode: bulkOnly ? "bulk" : enrichAll ? "enrich-all" : openOrders ? "open-orders" : "codes",
         fabric_targets: fabric_numbers?.length ?? 0,
+        include_availability: includeAvailability,
         ...result,
       },
       null,

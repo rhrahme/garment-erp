@@ -23,10 +23,16 @@ import { normalizeDrapersFabricCode } from "@/lib/integrations/drapers/stock";
 const CATALOG_PATH = path.join(process.cwd(), "src/data/suppliers/drapers-hs-ss26.json");
 
 export interface DrapersCatalogSyncOptions {
-  /** When set, only enrich detail + medias for these codes (bulk stock/price/list still runs). */
+  /** When set, only enrich detail + medias for these codes. */
   fabric_numbers?: string[];
-  /** Fetch GET /fabrics/{code}/ and /medias/ — default true when fabric_numbers is set. */
+  /** Enrich every fabric in the local catalog (specs + remote swatch URLs). */
+  enrich_all?: boolean;
+  /** Fetch GET /fabrics/{code}/ and /medias/ — default when targets exist. */
   enrich_details?: boolean;
+  /** Include live stock/availability in this run (default false — use sync-catalog-stock for that). */
+  include_availability?: boolean;
+  /** Include account prices (default true for cache refresh). */
+  include_prices?: boolean;
   /** Pause between per-fabric detail/media calls (ms). */
   delay_ms?: number;
   page_limit?: number;
@@ -53,6 +59,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** Cache Drapers specs + remote swatch URLs into drapers-hs-ss26.json. Availability is optional. */
 export async function syncDrapersCatalogFromApi(
   options: DrapersCatalogSyncOptions = {}
 ): Promise<DrapersCatalogSyncResult> {
@@ -65,6 +72,8 @@ export async function syncDrapersCatalogFromApi(
   const catalogByCode = indexDrapersCatalogFabrics(raw.fabrics);
   const pageLimit = options.page_limit ?? 500;
   const delayMs = options.delay_ms ?? 150;
+  const includeAvailability = options.include_availability ?? false;
+  const includePrices = options.include_prices ?? true;
 
   const result: DrapersCatalogSyncResult = {
     list_checked: 0,
@@ -95,34 +104,43 @@ export async function syncDrapersCatalogFromApi(
     result.list_updated += 1;
   }
 
-  const stockRows = await fetchAllDrapersStockPages({ pageLimit });
-  result.stock_checked = stockRows.length;
-  for (const row of stockRows) {
-    const fabric = findDrapersCatalogFabric(catalogByCode, row.fabric_code);
-    if (!fabric) continue;
-    if (applyDrapersStockToCatalogFabric(fabric, row, synced_at)) {
-      result.stock_updated += 1;
+  if (includeAvailability) {
+    const stockRows = await fetchAllDrapersStockPages({ pageLimit });
+    result.stock_checked = stockRows.length;
+    for (const row of stockRows) {
+      const fabric = findDrapersCatalogFabric(catalogByCode, row.fabric_code);
+      if (!fabric) continue;
+      if (applyDrapersStockToCatalogFabric(fabric, row, synced_at)) {
+        result.stock_updated += 1;
+      }
     }
+    raw.stock_synced_at = synced_at;
+    raw.stock_sync_source = "api.drapersitaly.it/stock";
   }
 
-  const priceRows = await fetchAllDrapersAccountPricelistPages({ pageLimit });
-  result.prices_checked = priceRows.length;
-  for (const row of priceRows) {
-    const fabric = findDrapersCatalogFabric(catalogByCode, row.fabric_code);
-    if (!fabric) {
-      result.prices_not_in_catalog += 1;
-      continue;
+  if (includePrices) {
+    const priceRows = await fetchAllDrapersAccountPricelistPages({ pageLimit });
+    result.prices_checked = priceRows.length;
+    for (const row of priceRows) {
+      const fabric = findDrapersCatalogFabric(catalogByCode, row.fabric_code);
+      if (!fabric) {
+        result.prices_not_in_catalog += 1;
+        continue;
+      }
+      const outcome = applyDrapersPriceToCatalogFabric(fabric, row, synced_at);
+      if (outcome === "updated") result.prices_updated += 1;
+      else result.prices_unchanged += 1;
     }
-    const outcome = applyDrapersPriceToCatalogFabric(fabric, row, synced_at);
-    if (outcome === "updated") result.prices_updated += 1;
-    else result.prices_unchanged += 1;
+    raw.price_synced_at = synced_at;
+    raw.price_sync_source = "api.drapersitaly.it/pricelist/account";
   }
+
+  const detailTargets = options.enrich_all
+    ? raw.fabrics.map((fabric) => fabric.fabric_number)
+    : (options.fabric_numbers?.map((n) => normalizeDrapersFabricCode(n)).filter(Boolean) ?? []);
 
   const enrichDetails =
-    options.enrich_details ?? Boolean(options.fabric_numbers?.length);
-  const detailTargets =
-    options.fabric_numbers?.map((n) => normalizeDrapersFabricCode(n)).filter(Boolean) ??
-    [];
+    options.enrich_details ?? (options.enrich_all || Boolean(detailTargets.length));
 
   if (enrichDetails && detailTargets.length > 0) {
     for (const fabricNumber of detailTargets) {
@@ -159,10 +177,6 @@ export async function syncDrapersCatalogFromApi(
     }
   }
 
-  raw.stock_synced_at = synced_at;
-  raw.stock_sync_source = "api.drapersitaly.it/stock";
-  raw.price_synced_at = synced_at;
-  raw.price_sync_source = "api.drapersitaly.it/pricelist/account";
   raw.api_catalog_synced_at = synced_at;
   raw.api_catalog_sync_source = "api.drapersitaly.it/fabrics";
   fs.writeFileSync(CATALOG_PATH, `${JSON.stringify(raw, null, 2)}\n`, "utf8");

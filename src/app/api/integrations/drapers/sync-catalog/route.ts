@@ -11,12 +11,16 @@ export async function POST(request: Request) {
     const body = (await request.json().catch(() => ({}))) as {
       scope?: "open_orders" | "catalog";
       enrich_details?: boolean;
+      enrich_all?: boolean;
+      include_availability?: boolean;
+      include_prices?: boolean;
       fabric_numbers?: string[];
       delay_ms?: number;
       page_limit?: number;
     };
 
     const scope = body.scope === "catalog" ? "catalog" : "open_orders";
+    const enrichAll = body.scope === "catalog" || body.enrich_all === true;
     const fabric_numbers =
       body.fabric_numbers?.length
         ? body.fabric_numbers
@@ -26,7 +30,10 @@ export async function POST(request: Request) {
 
     const result = await syncDrapersCatalogFromApi({
       fabric_numbers,
-      enrich_details: body.enrich_details ?? Boolean(fabric_numbers?.length),
+      enrich_all: enrichAll,
+      enrich_details: body.enrich_details ?? enrichAll || Boolean(fabric_numbers?.length),
+      include_availability: body.include_availability === true,
+      include_prices: body.include_prices !== false,
       delay_ms: typeof body.delay_ms === "number" ? body.delay_ms : 150,
       page_limit: typeof body.page_limit === "number" ? body.page_limit : 500,
     });

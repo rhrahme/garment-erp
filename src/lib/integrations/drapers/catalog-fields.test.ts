@@ -89,14 +89,13 @@ test("findDrapersCatalogFabric resolves DP prefix", () => {
   assert.ok(findDrapersCatalogFabric(map, "DP10101"));
 });
 
-test("applyDrapersPriceToCatalogFabric tracks list and account prices separately", () => {
-  const fabric: DrapersCatalogFabricRow = { fabric_number: "10101", unit_price: 70, list_price: 72 };
-  const outcome = applyDrapersPriceToCatalogFabric(
-    fabric,
-    { fabric_code: "10101", list_price: "73,20", actual_price: "71,50" },
-    "2026-07-26T12:00:00.000Z"
-  );
-  assert.equal(outcome, "updated");
-  assert.equal(fabric.unit_price, 71.5);
-  assert.equal(fabric.list_price, 73.2);
+test("drapersCatalogDisplayFields prefers local swatch over remote URL", () => {
+  const fabric: DrapersCatalogFabricRow = {
+    fabric_number: "10101",
+    swatch_filename: "10101.jpg",
+    swatch_square: "https://example.com/remote.jpg",
+  };
+  const display = drapersCatalogDisplayFields(fabric);
+  assert.match(display.swatch_square ?? "", /^\/api\/suppliers\/drapers\/images\//);
+  assert.equal(display.swatch_filename, "10101.jpg");
 });

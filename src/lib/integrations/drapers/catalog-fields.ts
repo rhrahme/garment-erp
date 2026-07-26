@@ -43,10 +43,13 @@ export interface DrapersCatalogFabricRow {
   api_is_available?: boolean | null;
   /** GET /fabrics/ list — warehouse out-of-stock flag. */
   api_is_out_of_stock?: boolean | null;
-  /** GET /fabrics/{code}/medias/ */
+  /** GET /fabrics/{code}/medias/ — remote URL (fallback when local cache missing). */
   swatch_square?: string | null;
   swatch_zoom?: string | null;
   swatch_ruler?: string | null;
+  /** Cached JPEG/PNG under data/suppliers/drapers/images/ — preferred for UI + PDF. */
+  swatch_filename?: string | null;
+  swatch_cached_at?: string | null;
   api_detail_updated_at?: string | null;
   api_medias_updated_at?: string | null;
   [key: string]: unknown;
@@ -60,6 +63,8 @@ export interface DrapersCatalogFile {
   price_sync_source?: string | null;
   api_catalog_synced_at?: string | null;
   api_catalog_sync_source?: string | null;
+  swatch_manifest_path?: string | null;
+  swatch_linked_at?: string | null;
   [key: string]: unknown;
 }
 
@@ -179,6 +184,11 @@ export function applyDrapersMediasToCatalogFabric(
   fabric.api_medias_updated_at = syncedAt;
 }
 
+function drapersLocalSwatchUrl(fabricNumber: string): string {
+  const code = encodeURIComponent(fabricNumber.trim());
+  return `/api/suppliers/drapers/images/${code}`;
+}
+
 /** Prefer API-enriched catalog fields when building SupplierFabric rows. */
 export function drapersCatalogDisplayFields(fabric: DrapersCatalogFabricRow): {
   composition: string | null;
@@ -189,19 +199,24 @@ export function drapersCatalogDisplayFields(fabric: DrapersCatalogFabricRow): {
   swatch_square: string | null;
   swatch_zoom: string | null;
   swatch_ruler: string | null;
+  swatch_filename: string | null;
   api_is_available: boolean | null;
   api_is_out_of_stock: boolean | null;
   disponibilita_meters: number | null;
 } {
+  const hasLocalSwatch = Boolean(fabric.swatch_filename?.trim());
+  const localUrl = hasLocalSwatch ? drapersLocalSwatchUrl(fabric.fabric_number) : null;
+
   return {
     composition: fabric.api_fibres?.trim() || fabric.composition?.trim() || null,
     collection: fabric.api_bunch?.trim() || fabric.collection?.trim() || null,
     mill_name: fabric.api_brand?.trim() || fabric.mill_name?.trim() || null,
     description: fabric.description?.trim() || null,
     list_price: fabric.list_price ?? fabric.unit_price ?? null,
-    swatch_square: fabric.swatch_square?.trim() || null,
-    swatch_zoom: fabric.swatch_zoom?.trim() || null,
+    swatch_square: localUrl || fabric.swatch_square?.trim() || null,
+    swatch_zoom: localUrl || fabric.swatch_zoom?.trim() || fabric.swatch_square?.trim() || null,
     swatch_ruler: fabric.swatch_ruler?.trim() || null,
+    swatch_filename: fabric.swatch_filename?.trim() || null,
     api_is_available: fabric.api_is_available ?? null,
     api_is_out_of_stock: fabric.api_is_out_of_stock ?? null,
     disponibilita_meters: fabric.disponibilita_meters ?? null,

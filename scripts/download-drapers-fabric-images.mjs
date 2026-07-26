@@ -93,8 +93,9 @@ Options:
     args.quality = "best";
     if (!args.out) args.out = BY_COLLECTION_OUT;
   } else if (!args.out) {
-    args.out = args.quality === "best" ? BEST_OUT : DEFAULT_OUT;
+    args.out = DEFAULT_OUT;
   }
+  if (args.codes?.length) args.all = true;
   return args;
 }
 

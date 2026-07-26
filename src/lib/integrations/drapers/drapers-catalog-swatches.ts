@@ -3,6 +3,7 @@ import {
   drapersCatalogDisplayFields,
   type DrapersCatalogFabricRow,
 } from "@/lib/integrations/drapers/catalog-fields";
+import { drapersSwatchImageUrl } from "@/lib/fabric-sourcing/drapers-swatches";
 import { normalizeDrapersFabricCode } from "@/lib/integrations/drapers/stock";
 import type { FabricSwatchUrls } from "@/lib/fabric-sourcing/fabric-swatch-keys";
 
@@ -22,6 +23,11 @@ function registerSwatchKeys(fabricNumber: string, urls: FabricSwatchUrls): void 
 
 for (const fabric of (drapersCatalog as CatalogFile).fabrics) {
   const display = drapersCatalogDisplayFields(fabric);
+  if (display.swatch_filename) {
+    const localUrl = drapersSwatchImageUrl(fabric.fabric_number);
+    registerSwatchKeys(fabric.fabric_number, { square: localUrl, zoom: localUrl });
+    continue;
+  }
   if (!display.swatch_square) continue;
   registerSwatchKeys(fabric.fabric_number, {
     square: display.swatch_square,

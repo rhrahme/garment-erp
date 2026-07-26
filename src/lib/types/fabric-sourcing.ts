@@ -49,6 +49,8 @@ export interface SupplierFabric {
   swatch_square?: string | null;
   swatch_zoom?: string | null;
   swatch_ruler?: string | null;
+  /** Local JPEG filename under data/suppliers/drapers/images/ when cached. */
+  swatch_filename?: string | null;
   /** Loro Piana price list only — Solbiati (S-prefix linen) vs Loro Piana wool/cashmere. */
   mill_line?: "loro_piana" | "solbiati" | null;
   /** Custom / one-off fabrics (supplier_id `custom`). */

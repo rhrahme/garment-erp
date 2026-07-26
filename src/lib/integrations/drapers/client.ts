@@ -99,6 +99,11 @@ export async function testDrapersApiConnection(): Promise<{
   };
 }
 
+/** Live warehouse availability — use cached catalog JSON for specs and swatch images. */
+export async function checkDrapersAvailability(fabricNumber: string): Promise<DrapersStockLookupResult> {
+  return lookupDrapersFabricStock(fabricNumber);
+}
+
 export async function lookupDrapersFabricStock(fabricNumber: string): Promise<DrapersStockLookupResult> {
   const candidates = drapersFabricCodeCandidates(fabricNumber);
   let lastError: DrapersStockLookupResult | null = null;

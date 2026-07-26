@@ -6,6 +6,7 @@ import {
   type FabricSwatchKey,
 } from "@/lib/fabric-sourcing/fabric-swatch-keys";
 import { readLoroPianaSwatchFileAsync } from "@/lib/fabric-sourcing/loro-piana-swatches";
+import { readDrapersSwatchFileAsync } from "@/lib/fabric-sourcing/drapers-swatches";
 import { lookupCaccioppoliItemImages } from "@/lib/integrations/caccioppoli/client";
 import { isCaccioppoliApiConfigured } from "@/lib/integrations/caccioppoli/config";
 import { lookupDrapersFabricMedias } from "@/lib/integrations/drapers/client";
@@ -54,6 +55,12 @@ async function loadLoroPianaSwatchJpeg(fabricNumber: string): Promise<string | n
 }
 
 async function loadDrapersSwatchJpeg(fabricNumber: string): Promise<string | null> {
+  const local = await readDrapersSwatchFileAsync(fabricNumber);
+  if (local) {
+    const jpeg = await toJpegDataUrl(local.buffer);
+    if (jpeg) return jpeg;
+  }
+
   const cached = getDrapersCatalogSwatchUrls(fabricNumber);
   if (cached?.square) {
     const jpeg = await toJpegDataUrl(cached.square);
@@ -91,7 +98,7 @@ async function loadSwatchJpeg(supplierId: string, fabricNumber: string): Promise
 
 /**
  * Server-side swatch resolution for PDF embedding.
- * Fetches Loro Piana / Solbiati from local disk or Supabase, Drapers and Caccioppoli via API.
+ * Drapers / Loro Piana: local disk cache first; Drapers falls back to live medias API.
  */
 export async function loadFabricSwatchJpegsForPdf(
   fabrics: FabricSwatchKey[]
