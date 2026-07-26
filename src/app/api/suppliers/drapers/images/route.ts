@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticated } from "@/lib/auth/session";
-import { lookupDrapersSwatches } from "@/lib/fabric-sourcing/drapers-swatches";
-import { getDrapersCatalogSwatchUrls } from "@/lib/integrations/drapers/drapers-catalog-swatches";
+import { resolveDrapersSwatchUrlsBatch } from "@/lib/fabric-sourcing/resolve-drapers-swatch-urls.server";
 
 export async function GET(request: Request) {
   try {
@@ -17,28 +16,7 @@ export async function GET(request: Request) {
       .filter(Boolean)
       .slice(0, 60);
 
-    const items = lookupDrapersSwatches(codes).map((item) => {
-      if (item.ok && item.url) {
-        return {
-          ...item,
-          square: item.url,
-          zoom: item.url,
-        };
-      }
-
-      const cached = getDrapersCatalogSwatchUrls(item.requested_code);
-      if (cached?.square) {
-        return {
-          ...item,
-          ok: true,
-          square: cached.square,
-          zoom: cached.zoom ?? cached.square,
-          url: cached.square,
-        };
-      }
-
-      return item;
-    });
+    const items = await resolveDrapersSwatchUrlsBatch(codes);
 
     return NextResponse.json({ codes, items });
   } catch (error) {

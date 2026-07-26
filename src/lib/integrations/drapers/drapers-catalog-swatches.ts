@@ -23,16 +23,18 @@ function registerSwatchKeys(fabricNumber: string, urls: FabricSwatchUrls): void 
 }
 
 for (const fabric of (drapersSwatchIndex as SwatchIndexFile).fabrics) {
+  const remoteSquare = fabric.swatch_square?.trim() || null;
+  const remoteZoom = fabric.swatch_zoom?.trim() || remoteSquare;
+  if (remoteSquare) {
+    // Prefer stable remote URLs in the client bundle — local /api/... routes 404 until
+    // JPEGs are synced to disk/Supabase (sibling upload may still be in progress).
+    registerSwatchKeys(fabric.fabric_number, { square: remoteSquare, zoom: remoteZoom ?? remoteSquare });
+    continue;
+  }
   if (fabric.swatch_filename) {
     const localUrl = drapersSwatchImageUrl(fabric.fabric_number);
     registerSwatchKeys(fabric.fabric_number, { square: localUrl, zoom: localUrl });
-    continue;
   }
-  if (!fabric.swatch_square) continue;
-  registerSwatchKeys(fabric.fabric_number, {
-    square: fabric.swatch_square,
-    zoom: fabric.swatch_zoom || fabric.swatch_square,
-  });
 }
 
 export function getDrapersCatalogSwatchUrls(fabricNumber: string): FabricSwatchUrls | undefined {
