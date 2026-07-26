@@ -286,7 +286,7 @@ export function FabricSpecPreview({
   fabric,
   swatchSrc,
   zoomSrc,
-  canViewPrices = true,
+  canViewPrices = false,
   canViewStock = true,
 }: FabricSpecPreviewProps) {
   const [open, setOpen] = useState(false);

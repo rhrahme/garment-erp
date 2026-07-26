@@ -87,6 +87,7 @@ export function hasFabricPriceAccess(
 
 const PRICE_FIELD_NAMES = new Set([
   "unit_price",
+  "list_price",
   "total_amount",
   "subtotal",
   "fabric_cost",

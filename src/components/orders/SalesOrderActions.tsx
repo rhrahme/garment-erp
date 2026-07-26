@@ -402,6 +402,7 @@ export function SalesOrderActions({
         <ProductionOrderAddFabrics
           order={liveOrder}
           productionMode={isClientManager}
+          canViewFabricPrices={canViewFabricPrices}
           onOrderUpdated={setLiveOrder}
         />
       )}
@@ -911,6 +912,7 @@ export function SalesOrderActions({
                                 orderId={liveOrder.id}
                                 line={line}
                                 productionMode={isClientManager}
+                                canViewFabricPrices={canViewFabricPrices}
                                 onLineUpdated={handleLineUpdated}
                               />
                               <OrderFabricLineRemove
@@ -1114,6 +1116,7 @@ export function SalesOrderActions({
                                 orderId={liveOrder.id}
                                 line={line}
                                 productionMode={isClientManager}
+                                canViewFabricPrices={canViewFabricPrices}
                                 onLineUpdated={handleLineUpdated}
                               />
                               <OrderFabricLineRemove

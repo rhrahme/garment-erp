@@ -19,6 +19,7 @@ import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display
 import { formatFabricPatternLabel, formatFabricTextLabel } from "@/lib/fabric-sourcing/fabric-display";
 import { fabricStockTone, formatFabricStockLabel } from "@/lib/fabric-sourcing/fabric-stock";
 import type { Supplier, SupplierFabric } from "@/lib/types/fabric-sourcing";
+import { redactSupplierFabricPrice } from "@/lib/auth/fabric-price-access";
 import { cn } from "@/lib/utils";
 
 interface FabricSpecViewProps {
@@ -162,8 +163,7 @@ export function FabricSpecView({
   const solbiatiBrand = brands.find((b) => b.id === "solbiati");
 
   function handleCustomFabricCreated(fabric: SupplierFabric) {
-    const safeFabric =
-      canViewPrices || fabric.unit_price == null ? fabric : { ...fabric, unit_price: null };
+    const safeFabric = canViewPrices ? fabric : redactSupplierFabricPrice(fabric);
     setItems((prev) => {
       if (prev.some((row) => row.id === safeFabric.id || row.fabric_number === safeFabric.fabric_number)) {
         return prev;

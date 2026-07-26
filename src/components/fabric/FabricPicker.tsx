@@ -30,7 +30,7 @@ export function FabricPicker({
   value,
   onChange,
   onSelect,
-  canViewFabricPrices = true,
+  canViewFabricPrices = false,
   canViewStock = true,
   allowManualEntry = true,
   label = "Fabric",

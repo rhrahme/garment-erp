@@ -119,7 +119,7 @@ const fabricPo = {
 
 function assertNoPriceFields(value: unknown): void {
   const json = JSON.stringify(value);
-  for (const field of ["unit_price", "total_amount", "fabric_cost", "currency"]) {
+  for (const field of ["unit_price", "list_price", "total_amount", "fabric_cost", "currency"]) {
     assert.equal(json.includes(`"${field}"`), false, `found restricted field ${field}`);
   }
 }
@@ -154,7 +154,11 @@ for (const role of [
     });
 
     it("gets no price fields from fabric catalog and custom-fabric endpoints", () => {
-      const payload = redactSupplierFabricPrice(fabricPo.lines![0]!.supplier_fabric!);
+      const fabric = {
+        ...fabricPo.lines![0]!.supplier_fabric!,
+        list_price: 149,
+      };
+      const payload = redactSupplierFabricPrice(fabric);
       assertNoPriceFields(payload);
       assert.equal(payload.composition, "Wool");
       assert.equal(payload.width_cm, 150);

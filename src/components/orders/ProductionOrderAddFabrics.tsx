@@ -22,10 +22,12 @@ type FabricBrand = { id: string; name: string; has_price_list?: boolean };
 export function ProductionOrderAddFabrics({
   order,
   productionMode = false,
+  canViewFabricPrices = false,
   onOrderUpdated,
 }: {
   order: SalesOrder;
   productionMode?: boolean;
+  canViewFabricPrices?: boolean;
   onOrderUpdated?: (order: SalesOrder) => void;
 }) {
   const router = useRouter();
@@ -193,7 +195,7 @@ export function ProductionOrderAddFabrics({
                   setPendingFabric(null);
                 }}
                 onSelect={selectFabric}
-                canViewFabricPrices={!productionMode}
+                canViewFabricPrices={canViewFabricPrices}
                 allowManualEntry={fabricBrandAllowsManualEntry(selectedBrand.has_price_list, selectedBrandId)}
                 label="Fabric number"
                 inputClassName="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono md:max-w-md"
