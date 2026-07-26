@@ -78,6 +78,20 @@ function walkFiles(dir) {
   return out;
 }
 
+/** Extract Loro Piana book number from folder labels like "Noblesse - 762" or "Proposte Giacche - #780". */
+function inferBookNumberFromLabel(label) {
+  const normalized = label.replace(/\s+/g, " ").trim();
+  const bookParen = normalized.match(/\(book\s+(\d{3,4})\)/i);
+  if (bookParen) return bookParen[1];
+  const hashBook = normalized.match(/#\s*(\d{3,4})\b/);
+  if (hashBook) return hashBook[1];
+  const dashBook = normalized.match(/[-–]\s*(\d{3,4})\s*(?:\.\s*\d+\s*grams?)?\s*$/i);
+  if (dashBook) return dashBook[1];
+  const trailing = normalized.match(/\s(\d{3,4})\s*$/);
+  if (trailing) return trailing[1];
+  return null;
+}
+
 function filterCatalogFabrics(fabrics, { collection, weight, book }) {
   return fabrics.filter((fabric) => {
     if (book && fabric.book_number !== book) return false;
@@ -97,8 +111,22 @@ if (!args.source || !existsSync(args.source)) {
   process.exit(1);
 }
 
+const sourceLabel = basename(args.source).replace(/\s+/g, " ").trim();
+if (!args.book) {
+  const inferredBook = inferBookNumberFromLabel(sourceLabel);
+  if (inferredBook) args.book = inferredBook;
+}
+
+const catalogFilter = { collection: args.collection, weight: args.weight, book: args.book };
+if (catalogFilter.book && catalogFilter.collection) {
+  const bookInCollectionLabel = inferBookNumberFromLabel(catalogFilter.collection);
+  if (bookInCollectionLabel === catalogFilter.book) {
+    catalogFilter.collection = null;
+  }
+}
+
 const catalog = JSON.parse(readFileSync(CATALOG_PATH, "utf8"));
-const catalogFabrics = filterCatalogFabrics(catalog.fabrics ?? [], args);
+const catalogFabrics = filterCatalogFabrics(catalog.fabrics ?? [], catalogFilter);
 const catalogByNumber = new Map(catalogFabrics.map((f) => [f.fabric_number, f]));
 
 mkdirSync(args.out, { recursive: true });
@@ -157,9 +185,7 @@ const mergedByFabric = new Map(
 );
 for (const item of items) mergedByFabric.set(item.fabric_number, item);
 
-const collectionLabel =
-  args.collection ??
-  basename(args.source).replace(/\s+/g, " ").trim();
+const collectionLabel = args.collection ?? sourceLabel;
 
 const manifest = {
   imported_at: new Date().toISOString(),
