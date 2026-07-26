@@ -11,6 +11,7 @@ import {
 import type {
   DrapersApiEnvelope,
   DrapersFabricDetail,
+  DrapersFabricListRow,
   DrapersFabricMedias,
   DrapersFabricMediasLookupResult,
   DrapersHelloWorldData,
@@ -213,6 +214,33 @@ export async function lookupDrapersFabricMedias(fabricNumber: string): Promise<D
       error: "No response from Drapers media API.",
     }
   );
+}
+
+export async function fetchAllDrapersFabricPages(options?: {
+  pageLimit?: number;
+  onPage?: (page: number, rows: DrapersFabricListRow[]) => void;
+}): Promise<DrapersFabricListRow[]> {
+  const all: DrapersFabricListRow[] = [];
+  const maxPages = options?.pageLimit ?? 500;
+  let page = 1;
+
+  while (page <= maxPages) {
+    const payload = await drapersGet<DrapersFabricListRow[]>("fabrics", {
+      page,
+      limit: DRAPERS_API_PAGE_LIMIT,
+    });
+
+    const rows = Array.isArray(payload.data) ? payload.data : payload.data ? [payload.data] : [];
+    if (rows.length === 0) break;
+
+    all.push(...rows);
+    options?.onPage?.(page, rows);
+
+    if (rows.length < DRAPERS_API_PAGE_LIMIT) break;
+    page += 1;
+  }
+
+  return all;
 }
 
 export async function fetchAllDrapersAccountPricelistPages(options?: {

@@ -33,6 +33,22 @@ type StockSyncResult = {
   synced_at: string;
 };
 
+type CatalogSyncResult = {
+  scope: string;
+  list_checked: number;
+  list_updated: number;
+  stock_checked: number;
+  stock_updated: number;
+  prices_checked: number;
+  prices_updated: number;
+  details_checked: number;
+  details_updated: number;
+  medias_updated: number;
+  not_in_catalog: number;
+  errors: string[];
+  synced_at: string;
+};
+
 type PriceSyncResult = {
   checked: number;
   updated: number;
@@ -63,6 +79,7 @@ export function DrapersApiPanel() {
   const [syncing, setSyncing] = useState(false);
   const [stockSyncResult, setStockSyncResult] = useState<StockSyncResult | null>(null);
   const [priceSyncResult, setPriceSyncResult] = useState<PriceSyncResult | null>(null);
+  const [catalogSyncResult, setCatalogSyncResult] = useState<CatalogSyncResult | null>(null);
   const [previewItems, setPreviewItems] = useState<MediasPreviewItem[] | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewFabric, setPreviewFabric] = useState("90640");
@@ -131,6 +148,27 @@ export function DrapersApiPanel() {
     }
   }
 
+  async function runCatalogSync(scope: "open_orders" | "catalog") {
+    setSyncing(true);
+    setError(null);
+    setCatalogSyncResult(null);
+    try {
+      const res = await fetch("/api/integrations/drapers/sync-catalog", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scope, enrich_details: true }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Catalog sync failed");
+      setCatalogSyncResult(data as CatalogSyncResult);
+      await loadStatus();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Catalog sync failed");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   async function runPriceSync() {
     setSyncing(true);
     setError(null);
@@ -153,10 +191,10 @@ export function DrapersApiPanel() {
     <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Drapers live stock API</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Drapers API integration</h2>
           <p className="mt-1 text-sm text-slate-600">
-            Official API at api.drapersitaly.it — syncs live stock into the Drapers catalog (replaces PDF stock
-            updates).
+            Official API at api.drapersitaly.it — sync catalog availability, stock, prices, specs, and swatch URLs
+            into the Drapers price list.
           </p>
         </div>
         <Button variant="secondary" size="sm" onClick={() => void loadStatus()} disabled={loading}>
@@ -315,8 +353,23 @@ export function DrapersApiPanel() {
       ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <Button size="sm" disabled={syncing || !status?.connected} onClick={() => void runStockSync("open_orders")}>
-          {syncing ? "Syncing…" : "Sync open order fabrics"}
+        <Button
+          size="sm"
+          disabled={syncing || !status?.connected}
+          onClick={() => void runCatalogSync("open_orders")}
+        >
+          {syncing ? "Syncing…" : "Sync open orders (full API)"}
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={syncing || !status?.connected}
+          onClick={() => void runCatalogSync("catalog")}
+        >
+          Sync bulk catalog data
+        </Button>
+        <Button size="sm" variant="secondary" disabled={syncing || !status?.connected} onClick={() => void runStockSync("open_orders")}>
+          {syncing ? "Syncing…" : "Stock only — open orders"}
         </Button>
         <Button
           size="sm"
@@ -324,7 +377,7 @@ export function DrapersApiPanel() {
           disabled={syncing || !status?.connected}
           onClick={() => void runStockSync("catalog")}
         >
-          Sync full stock catalog
+          Stock only — full catalog
         </Button>
         <Button
           size="sm"
@@ -332,12 +385,34 @@ export function DrapersApiPanel() {
           disabled={syncing || !status?.connected || !caps?.pricelist}
           onClick={() => void runPriceSync()}
         >
-          Sync account prices
+          Prices only
         </Button>
       </div>
       <p className="mt-2 text-xs text-slate-500">
-        Stock: GET /stock/. Swatches: GET /fabrics/&#123;code&#125;/medias/. Prices: GET /pricelist/account/.
+        Full sync: GET /fabrics/ (availability), /stock/, /pricelist/account/, plus /fabrics/&#123;code&#125;/ detail
+        and /medias/ for targeted fabrics. Swatch URLs are cached in the catalog JSON for Fabric Spec and orders.
       </p>
+
+      {catalogSyncResult && (
+        <div className="mt-4 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+          <p className="font-medium text-slate-900">
+            Catalog sync ({catalogSyncResult.scope}) — {catalogSyncResult.synced_at.slice(0, 19)}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            List {catalogSyncResult.list_updated}/{catalogSyncResult.list_checked} · Stock{" "}
+            {catalogSyncResult.stock_updated}/{catalogSyncResult.stock_checked} · Prices updated{" "}
+            {catalogSyncResult.prices_updated} · Details {catalogSyncResult.details_updated}/
+            {catalogSyncResult.details_checked} · Swatches {catalogSyncResult.medias_updated}
+          </p>
+          {catalogSyncResult.errors.length > 0 && (
+            <ul className="mt-2 max-h-32 overflow-y-auto text-xs text-amber-800">
+              {catalogSyncResult.errors.slice(0, 8).map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {stockSyncResult && (
         <div className="mt-4 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">

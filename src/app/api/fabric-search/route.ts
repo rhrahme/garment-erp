@@ -76,13 +76,17 @@ function toSearchItem(item: SupplierFabric, manual = false) {
     fabric_number: item.fabric_number,
     composition: item.composition,
     color: item.color,
+    description: item.description,
     weight_gsm: item.weight_gsm,
     width_cm: item.width_cm,
     width_inches: item.width_inches,
     unit_price: item.unit_price,
+    list_price: item.list_price ?? null,
     unit: item.unit,
     stock_status: item.stock_status ?? null,
     restock_date: item.restock_date ?? null,
+    disponibilita_meters: item.disponibilita_meters ?? null,
+    api_is_available: item.api_is_available ?? null,
     mill_line:
       item.mill_line ??
       (item.supplier_id === "loro-piana" || item.supplier_id === "solbiati"

@@ -10,6 +10,7 @@ import { lookupCaccioppoliItemImages } from "@/lib/integrations/caccioppoli/clie
 import { isCaccioppoliApiConfigured } from "@/lib/integrations/caccioppoli/config";
 import { lookupDrapersFabricMedias } from "@/lib/integrations/drapers/client";
 import { isDrapersApiConfigured } from "@/lib/integrations/drapers/config";
+import { getDrapersCatalogSwatchUrls } from "@/lib/integrations/drapers/drapers-catalog-swatches";
 
 const SWATCH_PX = 80;
 
@@ -53,6 +54,12 @@ async function loadLoroPianaSwatchJpeg(fabricNumber: string): Promise<string | n
 }
 
 async function loadDrapersSwatchJpeg(fabricNumber: string): Promise<string | null> {
+  const cached = getDrapersCatalogSwatchUrls(fabricNumber);
+  if (cached?.square) {
+    const jpeg = await toJpegDataUrl(cached.square);
+    if (jpeg) return jpeg;
+  }
+
   if (!isDrapersApiConfigured()) return null;
   const result = await lookupDrapersFabricMedias(fabricNumber);
   if (!result.ok || !result.medias.square) return null;

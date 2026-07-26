@@ -14,6 +14,8 @@
     "db:seed-canclini": "node --experimental-strip-types --import ./scripts/tsconfig-paths-loader.mjs scripts/seed-canclini-inventory.mjs",
     "db:archive-fabric-receipts": "node scripts/archive-historical-fabric-receipts.mjs",
     "drapers:sync-stock": "node --experimental-strip-types --import ./scripts/tsconfig-paths-loader.mjs scripts/sync-drapers-stock.mjs --open-orders",
+    "drapers:sync-catalog": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs scripts/sync-drapers-catalog.mjs --open-orders",
+    "test:drapers-catalog": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/integrations/drapers/catalog-fields.test.ts",
     "verify:fabric-reset": "node scripts/verify-fabric-receiving-reset.mjs",
     "verify:label-counts": "node scripts/verify-factory-label-counts.mjs",
     "audit:document-loads": "node scripts/audit-document-loads.mjs",

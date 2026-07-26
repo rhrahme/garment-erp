@@ -160,18 +160,51 @@ function FabricSpecDetailModal({
             {fabric.gn_code ? <span className="font-mono text-xs">{fabric.gn_code}</span> : "—"}
           </DetailRow>
           <DetailRow label="Mill">{fabric.weave_type ?? "—"}</DetailRow>
+          {fabric.book_number ? (
+            <DetailRow label="Book">
+              <span className="font-mono text-xs">{fabric.book_number}</span>
+            </DetailRow>
+          ) : null}
           {canViewPrices ? (
-            <DetailRow label="List price">
-              {fabric.unit_price != null ? (
-                <DualCurrencyPrice
-                  amount={fabric.unit_price}
-                  supplierId={fabric.supplier_id}
-                  unit="m"
-                  currency={fabric.currency}
-                />
-              ) : (
-                "—"
-              )}
+            <>
+              <DetailRow label="Account price">
+                {fabric.unit_price != null ? (
+                  <DualCurrencyPrice
+                    amount={fabric.unit_price}
+                    supplierId={fabric.supplier_id}
+                    unit="m"
+                    currency={fabric.currency}
+                  />
+                ) : (
+                  "—"
+                )}
+              </DetailRow>
+              {fabric.list_price != null && fabric.list_price !== fabric.unit_price ? (
+                <DetailRow label="List price">
+                  <DualCurrencyPrice
+                    amount={fabric.list_price}
+                    supplierId={fabric.supplier_id}
+                    unit="m"
+                    currency={fabric.currency}
+                  />
+                </DetailRow>
+              ) : null}
+            </>
+          ) : null}
+          {fabric.api_is_available === false ? (
+            <DetailRow label="Catalog">
+              <span className="font-medium text-red-700">Discontinued / unavailable in Drapers catalog</span>
+            </DetailRow>
+          ) : fabric.api_is_out_of_stock ? (
+            <DetailRow label="Catalog">
+              <span className="font-medium text-amber-800">Marked out of stock in Drapers catalog</span>
+            </DetailRow>
+          ) : null}
+          {canViewStock && fabric.disponibilita_meters != null ? (
+            <DetailRow label="Warehouse">
+              {fabric.disponibilita_meters > 0
+                ? `${fabric.disponibilita_meters} m available`
+                : "0 m on hand"}
             </DetailRow>
           ) : null}
           {stockLabel ? (

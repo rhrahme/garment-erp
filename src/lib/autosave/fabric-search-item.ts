@@ -12,6 +12,10 @@ export type FabricSearchItem = {
   unit: string;
   stock_status?: "in_stock" | "temp_unavailable" | "permanently_unavailable" | null;
   restock_date?: string | null;
+  description?: string | null;
+  list_price?: number | null;
+  disponibilita_meters?: number | null;
+  api_is_available?: boolean | null;
   manual?: boolean;
   mill_line?: "loro_piana" | "solbiati" | null;
 };

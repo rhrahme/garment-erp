@@ -340,7 +340,7 @@ export function FabricSpecView({
             { key: "width", label: "Width" },
           { key: "hsCode", label: "HS Code" },
           { key: "mill", label: "Mill" },
-          ...(canViewPrices ? [{ key: "price", label: "List price/m" }] : []),
+          ...(canViewPrices ? [{ key: "price", label: "Account price/m" }] : []),
           ...(showStockColumn ? [{ key: "stock", label: "Stock" }] : []),
           ]}
           rows={sortedDisplay.map((f) => ({

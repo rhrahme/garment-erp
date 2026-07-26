@@ -5,6 +5,7 @@ import {
 } from "@/lib/fabric-sourcing/loro-piana-styles";
 import { CACCIOPPOLI_SUPPLIER_ID } from "@/lib/integrations/caccioppoli/config";
 import { DRAPERS_SUPPLIER_ID } from "@/lib/integrations/drapers/config";
+import { getDrapersCatalogSwatchUrls } from "@/lib/integrations/drapers/drapers-catalog-swatches";
 
 export type FabricSwatchKey = {
   supplier_id: string;
@@ -71,7 +72,7 @@ export function resolveFabricSwatchUrls(
   if (!trimmed) return undefined;
 
   if (isDrapersSwatchSupplier(supplierId)) {
-    return drapersMap.get(trimmed);
+    return getDrapersCatalogSwatchUrls(trimmed) ?? drapersMap.get(trimmed);
   }
 
   if (isCaccioppoliSwatchSupplier(supplierId)) {

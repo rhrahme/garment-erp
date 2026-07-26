@@ -29,9 +29,13 @@ export function drapersFabricCodeCandidates(fabricNumber: string): string[] {
   return [...new Set(candidates.filter(Boolean))];
 }
 
-function parseRestockDate(restock: string | null): string | null {
-  if (!restock?.trim()) return null;
-  const trimmed = restock.trim();
+function parseRestockDate(restock: string | number | null | undefined): string | null {
+  if (restock == null) return null;
+  if (typeof restock === "number" && Number.isFinite(restock)) {
+    return new Date(restock > 1_000_000_000_000 ? restock : restock * 1000).toISOString().slice(0, 10);
+  }
+  const trimmed = String(restock).trim();
+  if (!trimmed) return null;
   if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.slice(0, 10);
   const eu = trimmed.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);
   if (eu) {

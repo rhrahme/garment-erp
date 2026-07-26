@@ -17,6 +17,11 @@ import {
   resolveLoroPianaFabricInput,
 } from "@/lib/fabric-sourcing/loro-piana-styles";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
+import {
+  drapersCatalogDisplayFields,
+  type DrapersCatalogFabricRow,
+} from "@/lib/integrations/drapers/catalog-fields";
+import { DRAPERS_SUPPLIER_ID } from "@/lib/integrations/drapers/config";
 import type { Supplier, SupplierFabric, SupplierPriceList } from "@/lib/types/fabric-sourcing";
 
 /** Bundled supplier price-list JSON — safe for client imports (no fs/contacts). */
@@ -41,6 +46,17 @@ interface RawFabric {
   stock_status?: "in_stock" | "temp_unavailable" | "permanently_unavailable" | null;
   restock_date?: string | null;
   stock_updated_at?: string | null;
+  list_price?: number | null;
+  disponibilita_meters?: number | null;
+  api_brand?: string | null;
+  api_bunch?: string | null;
+  api_fibres?: string | null;
+  api_is_available?: boolean | null;
+  api_is_out_of_stock?: boolean | null;
+  book_number?: string | null;
+  swatch_square?: string | null;
+  swatch_zoom?: string | null;
+  swatch_ruler?: string | null;
 }
 
 interface RawCatalog {
@@ -100,34 +116,54 @@ export function getSupplierDefaultCarrier(supplierId: string | null | undefined)
 }
 
 function toFabrics(catalog: RawCatalog, supplierId: string, supplier: Supplier, prefix: string): SupplierFabric[] {
-  return catalog.fabrics.map((f) => ({
-    id: `${prefix}-${f.fabric_number}`,
-    supplier_id: supplierId,
-    fabric_number: f.fabric_number,
-    name: [f.collection ?? f.description, f.mill_code].filter(Boolean).join(" — ") || f.fabric_number,
-    composition: f.composition ?? null,
-    weight_gsm: f.weight_gsm ?? null,
-    width_cm: f.width_cm ?? null,
-    width_inches: null,
-    color: f.color ?? null,
-    finish: f.category ?? null,
-    description: f.description ?? null,
-    weave_type: f.mill_name ?? null,
-    gn_code: f.gn_code ?? null,
-    unit: f.unit ?? "meters",
-    unit_price: f.unit_price ?? null,
-    min_order_qty: null,
-    lead_time_days: 14,
-    is_active: f.is_active ?? f.unit_price != null,
-    stock_status: f.stock_status ?? null,
-    restock_date: f.restock_date ?? null,
-    stock_updated_at: f.stock_updated_at ?? null,
-    mill_line:
-      supplierId === LORO_PIANA_ID || supplierId === SOLBIATI_ID
-        ? getLoroPianaMillLine(f.fabric_number)
-        : null,
-    supplier,
-  }));
+  return catalog.fabrics.map((f) => {
+    const drapersFields =
+      supplierId === DRAPERS_SUPPLIER_ID
+        ? drapersCatalogDisplayFields(f as DrapersCatalogFabricRow)
+        : null;
+
+    const collection = drapersFields?.collection ?? f.collection ?? null;
+    const composition = drapersFields?.composition ?? f.composition ?? null;
+    const millName = drapersFields?.mill_name ?? f.mill_name ?? null;
+    const description = drapersFields?.description ?? f.description ?? null;
+
+    return {
+      id: `${prefix}-${f.fabric_number}`,
+      supplier_id: supplierId,
+      fabric_number: f.fabric_number,
+      name: [collection ?? description, f.mill_code].filter(Boolean).join(" — ") || f.fabric_number,
+      composition,
+      weight_gsm: f.weight_gsm ?? null,
+      width_cm: f.width_cm ?? null,
+      width_inches: null,
+      color: f.color ?? null,
+      finish: f.category ?? null,
+      description,
+      weave_type: millName,
+      gn_code: f.gn_code ?? null,
+      unit: f.unit ?? "meters",
+      unit_price: f.unit_price ?? null,
+      list_price: drapersFields?.list_price ?? f.list_price ?? f.unit_price ?? null,
+      min_order_qty: null,
+      lead_time_days: 14,
+      is_active: f.is_active ?? f.unit_price != null,
+      stock_status: f.stock_status ?? null,
+      restock_date: f.restock_date ?? null,
+      stock_updated_at: f.stock_updated_at ?? null,
+      disponibilita_meters: drapersFields?.disponibilita_meters ?? f.disponibilita_meters ?? null,
+      api_is_available: drapersFields?.api_is_available ?? f.api_is_available ?? null,
+      api_is_out_of_stock: drapersFields?.api_is_out_of_stock ?? f.api_is_out_of_stock ?? null,
+      book_number: f.book_number ?? null,
+      swatch_square: drapersFields?.swatch_square ?? f.swatch_square ?? null,
+      swatch_zoom: drapersFields?.swatch_zoom ?? f.swatch_zoom ?? null,
+      swatch_ruler: drapersFields?.swatch_ruler ?? f.swatch_ruler ?? null,
+      mill_line:
+        supplierId === LORO_PIANA_ID || supplierId === SOLBIATI_ID
+          ? getLoroPianaMillLine(f.fabric_number)
+          : null,
+      supplier,
+    };
+  });
 }
 
 function mergeCatalogFabrics(

@@ -36,6 +36,19 @@ export interface SupplierFabric {
   stock_status?: "in_stock" | "temp_unavailable" | "permanently_unavailable" | null;
   restock_date?: string | null;
   stock_updated_at?: string | null;
+  /** Catalog list price before account discount (Drapers API list_price). */
+  list_price?: number | null;
+  /** Live warehouse meters when synced from Drapers stock API. */
+  disponibilita_meters?: number | null;
+  /** Drapers API catalog availability — distinct from warehouse stock_status. */
+  api_is_available?: boolean | null;
+  api_is_out_of_stock?: boolean | null;
+  /** Drapers book number from PDF import. */
+  book_number?: string | null;
+  /** Cached swatch image URLs from Drapers /medias/ sync. */
+  swatch_square?: string | null;
+  swatch_zoom?: string | null;
+  swatch_ruler?: string | null;
   /** Loro Piana price list only — Solbiati (S-prefix linen) vs Loro Piana wool/cashmere. */
   mill_line?: "loro_piana" | "solbiati" | null;
   /** Custom / one-off fabrics (supplier_id `custom`). */

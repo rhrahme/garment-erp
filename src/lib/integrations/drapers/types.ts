@@ -52,6 +52,15 @@ export interface DrapersPricelistRow {
   update_date?: number;
 }
 
+/** GET /fabrics/ — paginated catalog index (collection capability). */
+export interface DrapersFabricListRow {
+  fabric_code: string;
+  endpoint?: string;
+  is_available: boolean;
+  is_out_of_stock: boolean;
+  update_date?: number;
+}
+
 /** GET /fabrics/{code}/ — catalog row (collection capability) */
 export interface DrapersFabricDetail {
   fabric_code: string;
