@@ -6,14 +6,16 @@
  *   node scripts/sync-drapers-swatches-to-supabase.mjs
  *   node scripts/sync-drapers-swatches-to-supabase.mjs --dry-run
  *   node scripts/sync-drapers-swatches-to-supabase.mjs --missing-only
+ *   node scripts/sync-drapers-swatches-to-supabase.mjs --all-local --missing-only
+ *   node scripts/sync-drapers-swatches-to-supabase.mjs --codes 70138,90639
  *
  * Requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local.
  * Bucket: erp-fabric-swatch/drapers/ (see supabase/migrations/010_erp_fabric_swatch_storage.sql).
  */
 
 import { createClient } from "@supabase/supabase-js";
-import { readFileSync, existsSync, statSync } from "node:fs";
-import { join, resolve, extname } from "node:path";
+import { readFileSync, existsSync, statSync, readdirSync } from "node:fs";
+import { join, resolve, extname, relative } from "node:path";
 
 const BUCKET = "erp-fabric-swatch";
 const STORAGE_PREFIX = "drapers";
@@ -42,10 +44,52 @@ function contentTypeForFilename(filename) {
   return "image/jpeg";
 }
 
+const MAX_UPLOAD_RETRIES = 5;
+const RETRY_BASE_MS = 1000;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableError(message) {
+  return /fetch failed|network|timeout|ECONNRESET|ETIMEDOUT|EAI_AGAIN|503|502|504|429/i.test(
+    message
+  );
+}
+
+/** @returns {Array<{ filename: string, localPath: string }>} */
+function collectLocalJpegs(rootDir) {
+  /** @type {Array<{ filename: string, localPath: string }>} */
+  const found = [];
+
+  function walk(dir) {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const localPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(localPath);
+        continue;
+      }
+      if (!/\.jpe?g$/i.test(entry.name)) continue;
+      found.push({
+        filename: relative(rootDir, localPath).split(/[/\\]/).pop(),
+        localPath,
+      });
+    }
+  }
+
+  walk(rootDir);
+  return found;
+}
+
 loadEnvLocal();
 
 const dryRun = process.argv.includes("--dry-run");
 const missingOnly = process.argv.includes("--missing-only");
+const allLocal = process.argv.includes("--all-local");
+const codesArg =
+  process.argv.find((a) => a.startsWith("--codes="))?.slice("--codes=".length) ??
+  (process.argv.includes("--codes") ? process.argv[process.argv.indexOf("--codes") + 1] : null);
+const priorityCodes = codesArg ? codesArg.split(/[,\s]+/).filter(Boolean) : [];
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 const serviceKey =
   process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? process.env.SUPABASE_SECRET_KEY?.trim();
@@ -57,14 +101,32 @@ if (!url || !serviceKey) {
   process.exit(1);
 }
 
-if (!existsSync(MANIFEST_PATH)) {
-  console.error(`Manifest not found: ${MANIFEST_PATH}`);
-  console.error("Run: npm run drapers:sync-cache");
-  process.exit(1);
-}
+/** @type {Array<{ filename: string, localPath?: string }>} */
+let items;
 
-const manifest = JSON.parse(readFileSync(MANIFEST_PATH, "utf8"));
-const items = (manifest.items ?? []).filter((item) => item.ok && item.filename);
+if (priorityCodes.length > 0) {
+  items = priorityCodes.map((code) => {
+    const normalized = code.replace(/^DP\s*/i, "").trim();
+    return { filename: `${normalized}.jpg` };
+  });
+  console.log(`Priority upload for ${items.length} code(s): ${priorityCodes.join(", ")}`);
+} else if (allLocal) {
+  if (!existsSync(IMAGES_DIR)) {
+    console.error(`Images directory not found: ${IMAGES_DIR}`);
+    process.exit(1);
+  }
+  items = collectLocalJpegs(IMAGES_DIR);
+  console.log(`Scanning ${IMAGES_DIR}: found ${items.length} local JPEG(s)`);
+} else {
+  if (!existsSync(MANIFEST_PATH)) {
+    console.error(`Manifest not found: ${MANIFEST_PATH}`);
+    console.error("Run: npm run drapers:sync-cache");
+    process.exit(1);
+  }
+
+  const manifest = JSON.parse(readFileSync(MANIFEST_PATH, "utf8"));
+  items = (manifest.items ?? []).filter((item) => item.ok && item.filename);
+}
 
 const admin = createClient(url, serviceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -121,9 +183,30 @@ if (missingOnly) {
   console.log(`Found ${existingObjects.size} existing object(s) under ${STORAGE_PREFIX}/`);
 }
 
+async function uploadWithRetry(objectPath, body, contentType) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= MAX_UPLOAD_RETRIES; attempt += 1) {
+    const { error } = await admin.storage.from(BUCKET).upload(objectPath, body, {
+      contentType,
+      upsert: true,
+    });
+    if (!error) return null;
+    lastError = error;
+    if (!isRetryableError(error.message) || attempt === MAX_UPLOAD_RETRIES) {
+      return error;
+    }
+    const delayMs = RETRY_BASE_MS * 2 ** (attempt - 1);
+    console.warn(
+      `Retry ${attempt}/${MAX_UPLOAD_RETRIES} for ${objectPath}: ${error.message} (wait ${delayMs}ms)`
+    );
+    await sleep(delayMs);
+  }
+  return lastError;
+}
+
 for (const item of items) {
   const basename = item.filename.includes("/") ? item.filename.split("/").pop() : item.filename;
-  const localPath = join(IMAGES_DIR, item.filename);
+  const localPath = item.localPath ?? join(IMAGES_DIR, item.filename);
   const objectPath = `${STORAGE_PREFIX}/${basename}`;
 
   if (!existsSync(localPath)) {
@@ -146,10 +229,7 @@ for (const item of items) {
     continue;
   }
 
-  const { error } = await admin.storage.from(BUCKET).upload(objectPath, body, {
-    contentType,
-    upsert: true,
-  });
+  const error = await uploadWithRetry(objectPath, body, contentType);
 
   if (error) {
     console.error(`Failed ${objectPath}: ${error.message}`);
