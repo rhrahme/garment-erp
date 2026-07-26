@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
 import { FabricSwatchProvider, useFabricSwatch } from "@/components/fabric/FabricSwatchProvider";
 import { ConsolidateSelectedFabricsModal } from "@/components/pattern/ConsolidateSelectedFabricsModal";
+import { ChangeGarmentTypeControl } from "@/components/orders/ChangeGarmentTypeControl";
 import { PatternMismatchBanner } from "@/components/pattern/PatternMismatchBanner";
 import { productionBrandNameForOrder } from "@/lib/sales-orders/production-brand";
 import type { PatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mismatch";
@@ -47,6 +48,7 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
   const [previewJobId, setPreviewJobId] = useState<string | null>(null);
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
   const [consolidateOpen, setConsolidateOpen] = useState(false);
+  const [canChangeGarmentType, setCanChangeGarmentType] = useState(false);
 
   const loadClientPatterns = useCallback(async () => {
     try {
@@ -91,6 +93,13 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
   useEffect(() => {
     void loadClientPatterns();
   }, [loadClientPatterns]);
+
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setCanChangeGarmentType(Boolean(data?.can_change_garment_type)))
+      .catch(() => setCanChangeGarmentType(false));
+  }, []);
 
   const garmentTypes = useMemo(() => {
     const types = new Set(jobs.map((job) => job.garment_type));
@@ -373,6 +382,15 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
                           <span className="text-amber-700">Not linked — select &amp; consolidate</span>
                         )}
                       </p>
+                      {canChangeGarmentType ? (
+                        <ChangeGarmentTypeControl
+                          compact
+                          salesOrderId={job.sales_order_id}
+                          lineId={job.sales_order_line_id}
+                          currentGarmentType={job.garment_type}
+                          onChanged={() => void load()}
+                        />
+                      ) : null}
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">

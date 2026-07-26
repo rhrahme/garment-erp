@@ -45,6 +45,7 @@ import {
   FabricTransferSuccessBanner,
 } from "@/components/orders/FabricTransferModal";
 import { FabricTransferHistory } from "@/components/orders/FabricTransferHistory";
+import { ChangeGarmentTypeControl } from "@/components/orders/ChangeGarmentTypeControl";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 import { formatFabricLineLabels } from "@/lib/sales-orders/label-display";
 import { FabricOrderSubmitButton } from "@/components/orders/FabricOrderSubmitButton";
@@ -129,6 +130,7 @@ export function SalesOrderActions({
   );
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [canChangeGarmentType, setCanChangeGarmentType] = useState(false);
   const [lineSort, setLineSort] = useState<FabricLineSortState | null>(null);
   const [transferLine, setTransferLine] = useState<SalesOrderFabricLine | null>(null);
   const [transferSuccess, setTransferSuccess] = useState<{
@@ -149,8 +151,12 @@ export function SalesOrderActions({
       try {
         const res = await fetch("/api/auth/session");
         if (!res.ok) return;
-        const data = (await res.json()) as { is_admin?: boolean };
+        const data = (await res.json()) as {
+          is_admin?: boolean;
+          can_change_garment_type?: boolean;
+        };
         setIsAdmin(Boolean(data.is_admin));
+        setCanChangeGarmentType(Boolean(data.can_change_garment_type));
       } catch {
         /* ignore */
       }
@@ -662,6 +668,22 @@ export function SalesOrderActions({
                             >
                               Transfer
                             </Button>
+                          ) : null}
+                          {canChangeGarmentType ? (
+                            <ChangeGarmentTypeControl
+                              compact
+                              salesOrderId={liveOrder.id}
+                              lineId={line.id}
+                              currentGarmentType={line.garment_type}
+                              onChanged={(next) =>
+                                handleLineUpdated({
+                                  ...line,
+                                  garment_type: next.garment_type,
+                                  label_stickers: next.label_stickers ?? line.label_stickers,
+                                  label_count: next.label_count ?? line.label_count,
+                                })
+                              }
+                            />
                           ) : null}
                           {line.transfer_inbound ? (
                             <p className="text-xs text-amber-800">

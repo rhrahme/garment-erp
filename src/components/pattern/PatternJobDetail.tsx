@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { ChangeGarmentTypeControl } from "@/components/orders/ChangeGarmentTypeControl";
 import type { PatternFittingOutcome, PatternJob, PatternJobStatus } from "@/lib/types/pattern";
 import type { ClientPattern } from "@/lib/types/pattern-library";
 
@@ -43,6 +44,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
   const [selectedFittingId, setSelectedFittingId] = useState("");
   const [uploadRevisionId, setUploadRevisionId] = useState("");
   const [clientPatterns, setClientPatterns] = useState<ClientPattern[]>([]);
+  const [canChangeGarmentType, setCanChangeGarmentType] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -78,6 +80,13 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setClientPatterns(data?.client_patterns ?? []))
       .catch(() => setClientPatterns([]));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setCanChangeGarmentType(Boolean(data?.can_change_garment_type)))
+      .catch(() => setCanChangeGarmentType(false));
   }, []);
 
   async function saveJob() {
@@ -206,6 +215,14 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
         <p className="mt-1 text-xs text-slate-500">
           {job.composition ?? "—"} · {job.gsm ?? "—"} gsm · {job.color ?? "—"}
         </p>
+        {canChangeGarmentType ? (
+          <ChangeGarmentTypeControl
+            salesOrderId={job.sales_order_id}
+            lineId={job.sales_order_line_id}
+            currentGarmentType={job.garment_type}
+            onChanged={() => void load()}
+          />
+        ) : null}
       </div>
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}

@@ -8,6 +8,7 @@ import {
   Users,
   Receipt,
 } from "lucide-react";
+import { GarmentTypeChangesPanel } from "@/components/dashboard/GarmentTypeChangesPanel";
 import { TodaysFabricPanel } from "@/components/dashboard/TodaysFabricPanel";
 import { PageHeader, StatCard } from "@/components/ui/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -98,6 +99,8 @@ export default async function DashboardPage() {
       {todaysFabricSummary && todaysFabricSummary.order_count > 0 && (
         <TodaysFabricPanel initialSummary={todaysFabricSummary} />
       )}
+
+      {session.isAdmin ? <GarmentTypeChangesPanel /> : null}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>

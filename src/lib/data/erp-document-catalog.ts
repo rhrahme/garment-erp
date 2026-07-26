@@ -111,6 +111,14 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/fabric-transfers.json",
   },
   {
+    key: "garment_type_changes",
+    label: "Garment type changes",
+    description: "Audit trail when operators change stitch / garment type on a fabric line",
+    category: "production",
+    appHref: "/dashboard",
+    sourcePath: "src/data/garment-type-changes.json",
+  },
+  {
     key: "production_work_orders",
     label: "Production work orders",
     description: "Sticker-based work orders on the production floor",

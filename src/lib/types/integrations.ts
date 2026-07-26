@@ -20,6 +20,7 @@ export type IntegrationEventType =
   | "sales_order.fabric_lines_removed"
   | "sales_order.fabric_lines_printed"
   | "sales_order.fabric_lines_print_cleared"
+  | "sales_order.garment_type_changed"
   | "sales_order.fabric_order_requested"
   | "sales_order.client_fields_healed"
   | "fabric_receiving.testing_reset"

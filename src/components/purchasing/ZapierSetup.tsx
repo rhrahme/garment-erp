@@ -23,6 +23,7 @@ const OUTBOUND_EVENTS = [
   "sales_order.fabric_lines_removed",
   "sales_order.fabric_lines_printed",
   "sales_order.fabric_lines_print_cleared",
+  "sales_order.garment_type_changed",
   "sales_order.fabric_order_requested",
   "sales_order.client_fields_healed",
   "fabric_receiving.testing_reset",
@@ -127,6 +128,7 @@ export function ZapierSetup() {
             <li>POST {baseUrl}/api/v1/shipments</li>
             <li>GET/POST {baseUrl}/api/v1/follow-ups</li>
             <li>POST/PATCH/DELETE {baseUrl}/api/v1/sales-orders/[id]/fabric-lines</li>
+            <li>GET/POST {baseUrl}/api/v1/garment-type-changes</li>
             <li>POST {baseUrl}/api/v1/sales-orders/[id]/fabric-lines/transfer</li>
             <li className="pl-4 text-slate-500">
               body: source_line_id, destination_sales_order_id, meters, reason;

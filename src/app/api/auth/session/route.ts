@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth/fabric-price-access";
 import { getSessionContext } from "@/lib/auth/session";
 import { getAllowedSalesBrandIds } from "@/lib/sales/access";
+import { canChangeGarmentType } from "@/lib/sales-orders/change-garment-type";
 
 export async function GET() {
   try {
@@ -33,6 +34,7 @@ export async function GET() {
       can_view_fabric_prices: canViewFabricPrices,
       can_view_fabric_stock: canViewFabricStock(session),
       can_access_pattern: session.canAccessPattern,
+      can_change_garment_type: canChangeGarmentType(session),
       allowed_sales_brand_ids: getAllowedSalesBrandIds(session),
     });
   } catch (error) {
