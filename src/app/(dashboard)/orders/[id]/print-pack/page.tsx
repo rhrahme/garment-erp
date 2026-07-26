@@ -3,8 +3,8 @@ import { OrderPrintPack } from "@/components/orders/OrderPrintPack";
 import { PrintPackToolbar } from "@/components/orders/PrintPackToolbar";
 import {
   receivingCutRowFromFabricLine,
-  SalesOrderReceivingCutTable,
 } from "@/components/orders/SalesOrderReceivingCutTable";
+import { SalesOrderReceivingCutTableWithSwatches } from "@/components/orders/SalesOrderReceivingCutTableWithSwatches";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
@@ -86,7 +86,8 @@ export default async function OrderPrintPackPage({ params }: { params: Promise<{
         </header>
 
         {a4PrintLines.length > 0 ? (
-          <SalesOrderReceivingCutTable
+          <SalesOrderReceivingCutTableWithSwatches
+            swatchLoading="eager"
             rows={a4PrintLines.map((line) => {
               const art = articleByLineId.get(line.id) ?? 0;
               const stickers = line.label_stickers ?? [];

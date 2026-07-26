@@ -9,6 +9,7 @@ interface DrapersFabricSwatchProps {
   src?: string;
   zoomSrc?: string;
   className?: string;
+  loading?: "lazy" | "eager";
   /** When true, clicking does not open the enlarge lightbox (parent handles preview). */
   disableZoom?: boolean;
 }
@@ -40,6 +41,7 @@ export function DrapersFabricSwatch({
   src,
   zoomSrc,
   className,
+  loading = "lazy",
   disableZoom = false,
 }: DrapersFabricSwatchProps) {
   const [open, setOpen] = useState(false);
@@ -77,7 +79,7 @@ export function DrapersFabricSwatch({
       alt=""
       width={28}
       height={28}
-      loading="lazy"
+      loading={loading}
       className="h-7 w-7 rounded object-cover"
       onError={() => setFailed(true)}
     />

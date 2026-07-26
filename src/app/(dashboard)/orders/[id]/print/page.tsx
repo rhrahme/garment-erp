@@ -21,8 +21,8 @@ import { productionBrandNameForOrder } from "@/lib/sales-orders/production-brand
 import {
   CompositionCell,
   receivingCutRowFromFabricLine,
-  SalesOrderReceivingCutTable,
 } from "@/components/orders/SalesOrderReceivingCutTable";
+import { SalesOrderReceivingCutTableWithSwatches } from "@/components/orders/SalesOrderReceivingCutTableWithSwatches";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 import {
   fabricSupplierGroupKey,
@@ -270,7 +270,8 @@ export default async function SalesOrderPrintPage({
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-700 print:mb-2">
               Fabric cut QR — receive / wash
             </h2>
-            <SalesOrderReceivingCutTable
+            <SalesOrderReceivingCutTableWithSwatches
+              swatchLoading="eager"
               rows={a4PrintLines.map((line) => {
                 const art = articleByLineId.get(line.id) ?? 0;
                 const stickers = line.label_stickers ?? [];

@@ -13,6 +13,7 @@ type FabricSwatchPreviewProps = {
   highlight?: boolean;
   className?: string;
   swatch?: FabricSwatchUrls;
+  imageLoading?: "lazy" | "eager";
 };
 
 export function FabricSwatchPreview({
@@ -21,6 +22,7 @@ export function FabricSwatchPreview({
   highlight = false,
   className,
   swatch,
+  imageLoading = "lazy",
 }: FabricSwatchPreviewProps) {
   const getSwatch = useFabricSwatch();
   const urls = swatch ?? getSwatch?.(supplierId, fabricNumber);
@@ -30,6 +32,7 @@ export function FabricSwatchPreview({
       fabricNumber={fabricNumber}
       src={urls?.square}
       zoomSrc={urls?.zoom}
+      loading={imageLoading}
       className={cn(highlight && "ring-2 ring-amber-400 ring-offset-1", className)}
     />
   );

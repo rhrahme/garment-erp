@@ -101,7 +101,7 @@ export function receivingCutRowFromFabricLine(
   };
 }
 
-type SalesOrderReceivingCutTableProps = {
+export type SalesOrderReceivingCutTableProps = {
   rows: ReceivingCutTableRow[];
   /** Optional extra column(s) after Meters — e.g. scan status on the floor. */
   renderTrailingCell?: (row: ReceivingCutTableRow) => ReactNode;
@@ -109,6 +109,7 @@ type SalesOrderReceivingCutTableProps = {
   rowClassName?: (row: ReceivingCutTableRow) => string | undefined;
   /** Scan-stage background — applied to every cell so highlights show in tables. */
   rowHighlightClassName?: (row: ReceivingCutTableRow) => string | undefined;
+  swatchLoading?: "lazy" | "eager";
 };
 
 export function SalesOrderReceivingCutTable({
@@ -117,6 +118,7 @@ export function SalesOrderReceivingCutTable({
   trailingHead,
   rowClassName,
   rowHighlightClassName,
+  swatchLoading = "lazy",
 }: SalesOrderReceivingCutTableProps) {
   if (rows.length === 0) return null;
 
@@ -173,7 +175,11 @@ export function SalesOrderReceivingCutTable({
               <td className={cell("break-all font-mono font-medium text-indigo-800")}>{row.fabric_cut_code}</td>
               <td className={cell("font-mono")}>
                 <span className="inline-flex items-center gap-1.5">
-                  <FabricSwatchPreview supplierId={row.supplier_id} fabricNumber={row.fabric_number} />
+                  <FabricSwatchPreview
+                    supplierId={row.supplier_id}
+                    fabricNumber={row.fabric_number}
+                    imageLoading={swatchLoading}
+                  />
                   {row.fabric_number}
                 </span>
               </td>
