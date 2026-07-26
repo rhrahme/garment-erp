@@ -61,7 +61,11 @@ function normalizeFabricNumberFromFilename(filename) {
   if (withN) return withN[1];
   if (/^S\d+$/.test(stem)) return stem;
   if (/^\d{6}$/.test(stem)) return stem;
-  return stem;
+  return null;
+}
+
+function isValidFabricNumber(fabricNumber) {
+  return /^\d{6}$/.test(fabricNumber) || /^S\d+$/.test(fabricNumber);
 }
 
 function walkFiles(dir) {
@@ -106,6 +110,7 @@ let copied = 0;
 for (const sourcePath of sourceFiles.sort()) {
   const sourceFilename = basename(sourcePath);
   const fabricNumber = normalizeFabricNumberFromFilename(sourceFilename);
+  if (!fabricNumber || !isValidFabricNumber(fabricNumber)) continue;
   const catalogEntry = catalogByNumber.get(fabricNumber);
   const destFilename = `${fabricNumber}${extname(sourceFilename).toLowerCase() || ".jpg"}`;
   const destPath = join(args.out, destFilename);
