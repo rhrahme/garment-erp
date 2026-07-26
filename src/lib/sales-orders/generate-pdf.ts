@@ -17,8 +17,14 @@ import {
 import { getDeliveryDestination } from "@/lib/shipping/delivery-destinations";
 import { formatSalesOrderLineStock, orderLineHasStockAlert } from "@/lib/fabric-sourcing/fabric-stock";
 import { formatTotalFabricWeightKg } from "@/lib/sales-orders/fabric-weight";
+import {
+  loadFabricSwatchJpegsForPdf,
+  swatchCacheKey,
+} from "@/lib/fabric-sourcing/resolve-fabric-swatch-for-pdf";
 import { formatDate } from "@/lib/utils";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
+
+const SWATCH_DRAW_PT = 28;
 
 function formatWidth(line: SalesOrderFabricLine): string {
   if (line.width_cm != null) return `${line.width_cm} cm`;
@@ -190,9 +196,16 @@ export async function generateSalesOrderPdf(
   );
   y += 16;
 
-  const fabricHead = ["Art.", "Fabric", "Garment", "Labels", "Composition", "Weight", "Width", "Qty"];
+  const fabricHead = ["Art.", "Swatch", "Fabric", "Garment", "Labels", "Composition", "Weight", "Width", "Qty"];
   if (showStock) fabricHead.push("Stock");
   if (showPrices) fabricHead.push("Price");
+
+  const swatchJpegs = await loadFabricSwatchJpegsForPdf(
+    order.fabric_lines.map((line) => ({
+      supplier_id: line.supplier_id,
+      fabric_number: line.fabric_number,
+    }))
+  );
 
   for (const group of Object.values(supplierGroups)) {
     if (y > 720) {
@@ -208,6 +221,7 @@ export async function generateSalesOrderPdf(
     const body = group.lines.map((line) => {
       const row = [
         String(articleByLineId.get(line.id) ?? "—"),
+        "",
         line.fabric_number,
         line.garment_type,
         String(line.label_count),
@@ -226,10 +240,28 @@ export async function generateSalesOrderPdf(
       head: [fabricHead],
       body,
       margin: { left: margin, right: margin },
-      styles: { fontSize: 8, cellPadding: 4 },
+      styles: { fontSize: 8, cellPadding: 4, minCellHeight: 36, valign: "middle" },
       headStyles: { fillColor: [71, 85, 105], textColor: 255 },
-      columnStyles: { 0: { cellWidth: 24, halign: "center" } },
+      columnStyles: {
+        0: { cellWidth: 24, halign: "center" },
+        1: { cellWidth: 36, halign: "center" },
+      },
       theme: "grid",
+      didDrawCell: (data) => {
+        if (data.section !== "body" || data.column.index !== 1) return;
+        const line = group.lines[data.row.index];
+        if (!line) return;
+        const img = swatchJpegs.get(swatchCacheKey(line.supplier_id, line.fabric_number));
+        if (!img) return;
+        doc.addImage(
+          img,
+          "JPEG",
+          data.cell.x + (data.cell.width - SWATCH_DRAW_PT) / 2,
+          data.cell.y + (data.cell.height - SWATCH_DRAW_PT) / 2,
+          SWATCH_DRAW_PT,
+          SWATCH_DRAW_PT
+        );
+      },
     });
 
     y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 16;
