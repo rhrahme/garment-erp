@@ -56,7 +56,7 @@ export async function writeFabricReceipts(data: FabricReceiptsFile): Promise<Fab
   return saveDocument(STORE_PATH, payload);
 }
 
-async function writeFabricReceiptsArchive(data: FabricReceiptsFile): Promise<FabricReceiptsFile> {
+export async function writeFabricReceiptsArchive(data: FabricReceiptsFile): Promise<FabricReceiptsFile> {
   const payload: FabricReceiptsFile = {
     ...data,
     updated_at: new Date().toISOString(),
