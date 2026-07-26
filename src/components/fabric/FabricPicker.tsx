@@ -11,6 +11,7 @@ import {
   isLoroPianaStyleSupplier,
   resolveLoroPianaFabricInput,
 } from "@/lib/fabric-sourcing/loro-piana-styles";
+import { FabricSupplierMismatchBanner } from "@/components/fabric/FabricSupplierMismatchBanner";
 import { normalizeFabricSupplierFields } from "@/lib/fabric-sourcing/supplier-display";
 
 function formatWidth(line: { width_cm?: number | null; width_inches?: number | null }) {
@@ -35,6 +36,7 @@ export function FabricPicker({
   allowManualEntry = true,
   label = "Fabric",
   inputClassName = "w-full min-h-[44px] rounded-lg border border-slate-300 bg-white py-2.5 pl-3 pr-10 text-base sm:text-sm",
+  onSwitchSupplier,
 }: {
   brandName: string;
   supplierId: string;
@@ -47,6 +49,8 @@ export function FabricPicker({
   allowManualEntry?: boolean;
   label?: string;
   inputClassName?: string;
+  /** When set, show a soft warning if the fabric number belongs to another supplier catalog. */
+  onSwitchSupplier?: (next: { supplier_id: string; supplier_name: string }) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [fabrics, setFabrics] = useState<FabricSearchItem[]>([]);
@@ -206,6 +210,15 @@ export function FabricPicker({
           </button>
         </div>
       </label>
+
+      {onSwitchSupplier && value.trim() ? (
+        <FabricSupplierMismatchBanner
+          supplierId={supplierId}
+          supplierName={brandName}
+          fabricNumber={value}
+          onSwitchSupplier={onSwitchSupplier}
+        />
+      ) : null}
 
       {open && (
         <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">

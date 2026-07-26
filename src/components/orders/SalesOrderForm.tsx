@@ -917,6 +917,12 @@ export function SalesOrderForm({
     clearFabricAddEntries();
   }
 
+  function switchFabricSupplier(next: { supplier_id: string; supplier_name: string }) {
+    setSelectedFabricBrandId(next.supplier_id);
+    setPendingFabric(null);
+    clearFabricAddEntries();
+  }
+
   function selectFabric(item: FabricSearchItem) {
     resumeDraftAutosave();
     setPendingFabric(item);
@@ -1622,6 +1628,7 @@ export function SalesOrderForm({
                         selectedFabricBrand.has_price_list,
                         selectedFabricBrandId
                       )}
+                      onSwitchSupplier={switchFabricSupplier}
                     />
                     {!pendingFabric && (
                       <p className="text-xs text-slate-500">

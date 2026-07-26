@@ -71,6 +71,12 @@ export function ProductionOrderAddFabrics({
     setError(null);
   }
 
+  function switchFabricSupplier(next: { supplier_id: string; supplier_name: string }) {
+    setSelectedBrandId(next.supplier_id);
+    setPendingFabric(null);
+    setError(null);
+  }
+
   const quantity = parseDecimalInput(meters);
   const formValid =
     Boolean(selectedBrand && fabricQuery.trim()) &&
@@ -199,6 +205,7 @@ export function ProductionOrderAddFabrics({
                 allowManualEntry={fabricBrandAllowsManualEntry(selectedBrand.has_price_list, selectedBrandId)}
                 label="Fabric number"
                 inputClassName="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono md:max-w-md"
+                onSwitchSupplier={switchFabricSupplier}
               />
 
               {pendingFabric && (
