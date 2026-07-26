@@ -4,6 +4,7 @@ import {
 } from "@/lib/auth/fabric-price-access";
 import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server";
 import { requireAuthenticated } from "@/lib/auth/session";
+import { healClientDataForRead } from "@/lib/clients/heal-on-read";
 import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import { notifyIntegration } from "@/lib/integrations";
 import { canAccessSalesOrder } from "@/lib/sales/access";
@@ -12,6 +13,7 @@ import {
   getFabricTransferEligibility,
   transferFabricLine,
 } from "@/lib/sales-orders/transfer-fabric";
+import { listFabricTransferDestinations } from "@/lib/sales-orders/transfer-destinations";
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -37,6 +39,8 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       return NextResponse.json({ error: "source_line_id is required." }, { status: 400 });
     }
 
+    await healClientDataForRead("api");
+
     const result = await getFabricTransferEligibility(sourceOrderId, lineId);
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });
@@ -44,6 +48,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 
     return NextResponse.json({
       eligibility: result.eligibility,
+      destinations: listFabricTransferDestinations(sourceOrderId, session),
       is_admin: session.isAdmin,
       source_line_id: result.source_line.id,
       source_meters: result.source_line.quantity,

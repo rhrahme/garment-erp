@@ -5,16 +5,14 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { TransferEligibility } from "@/lib/sales-orders/transfer-eligibility";
-import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
+import type { FabricTransferDestination } from "@/lib/sales-orders/transfer-destinations";
+import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
-type DestinationOption = {
-  id: string;
-  so_number: string;
-  client_id: string;
-  client_code: string;
-  client_name: string;
-  status: string;
-};
+type DestinationOption = FabricTransferDestination;
+
+function normalizeTransferSearch(value: string): string {
+  return value.trim().toLowerCase().replace(/[\s-]+/g, "");
+}
 
 type FabricTransferModalProps = {
   open: boolean;
@@ -69,49 +67,33 @@ export function FabricTransferModal({
     setLoadingOrders(true);
     setLoadingEligibility(true);
 
-    fetch("/api/sales-orders")
-      .then((res) => res.json())
-      .then((data: { orders?: SalesOrder[] }) => {
-        if (cancelled) return;
-        const options = (data.orders ?? [])
-          .filter(
-            (order) =>
-              order.id !== sourceOrder.id &&
-              order.status !== "complete" &&
-              !order.retail_brand?.trim()
-          )
-          .map((order) => ({
-            id: order.id,
-            so_number: order.so_number,
-            client_id: order.client_id,
-            client_code: order.client_code,
-            client_name: order.client_name,
-            status: order.status,
-          }))
-          .sort((a, b) => a.client_name.localeCompare(b.client_name) || a.so_number.localeCompare(b.so_number));
-        setOrders(options);
-      })
-      .catch(() => {
-        if (!cancelled) setError("Failed to load destination orders.");
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingOrders(false);
-      });
-
     const params = new URLSearchParams({ source_line_id: sourceLine.id });
     fetch(`/api/sales-orders/${sourceOrder.id}/fabric-lines/transfer?${params}`)
-      .then((res) => res.json())
-      .then((data: { eligibility?: TransferEligibility; is_admin?: boolean; error?: string }) => {
+      .then(async (res) => {
+        const data = (await res.json()) as {
+          eligibility?: TransferEligibility;
+          destinations?: DestinationOption[];
+          is_admin?: boolean;
+          error?: string;
+        };
         if (cancelled) return;
+        if (!res.ok) {
+          throw new Error(data.error ?? "Failed to load transfer options.");
+        }
+        setOrders(data.destinations ?? []);
         if (data.eligibility) setEligibility(data.eligibility);
         setIsAdmin(Boolean(data.is_admin));
-        if (data.error && !data.eligibility) setError(data.error);
       })
-      .catch(() => {
-        if (!cancelled) setError("Failed to load source fabric stage.");
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Failed to load destination orders.");
+        }
       })
       .finally(() => {
-        if (!cancelled) setLoadingEligibility(false);
+        if (!cancelled) {
+          setLoadingOrders(false);
+          setLoadingEligibility(false);
+        }
       });
 
     return () => {
@@ -120,14 +102,18 @@ export function FabricTransferModal({
   }, [open, sourceOrder.id, sourceLine.id, sourceLine.quantity]);
 
   const filteredOrders = useMemo(() => {
-    const q = clientFilter.trim().toLowerCase();
+    const q = normalizeTransferSearch(clientFilter);
     if (!q) return orders;
-    return orders.filter(
-      (order) =>
-        order.client_name.toLowerCase().includes(q) ||
-        order.client_code.toLowerCase().includes(q) ||
-        order.so_number.toLowerCase().includes(q)
-    );
+    return orders.filter((order) => {
+      const haystack = [
+        order.client_name,
+        order.client_code,
+        order.so_number,
+      ]
+        .map((value) => normalizeTransferSearch(value))
+        .join(" ");
+      return haystack.includes(q);
+    });
   }, [orders, clientFilter]);
 
   const selected = orders.find((order) => order.id === destinationOrderId) ?? null;
@@ -358,6 +344,13 @@ export function FabricTransferModal({
               className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
             >
               <option value="">{loadingOrders ? "Loading…" : "Select client + SO…"}</option>
+              {filteredOrders.length === 0 && !loadingOrders ? (
+                <option value="" disabled>
+                  {orders.length === 0
+                    ? "No open bespoke destination orders"
+                    : "No matches — try client code or SO number"}
+                </option>
+              ) : null}
               {filteredOrders.map((order) => (
                 <option key={order.id} value={order.id}>
                   {order.client_name} ({order.client_code}) — {order.so_number}
