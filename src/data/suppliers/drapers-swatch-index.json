@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-26T19:32:57.599Z",
+  "updated_at": "2026-07-26T19:48:36.989Z",
   "fabrics": [
     {
       "fabric_number": "10101",
@@ -44,10 +44,170 @@
       "swatch_filename": "10110.jpg"
     },
     {
+      "fabric_number": "10111",
+      "swatch_filename": "10111.jpg"
+    },
+    {
+      "fabric_number": "10112",
+      "swatch_filename": "10112.jpg"
+    },
+    {
+      "fabric_number": "10113",
+      "swatch_filename": "10113.jpg"
+    },
+    {
+      "fabric_number": "10114",
+      "swatch_filename": "10114.jpg"
+    },
+    {
+      "fabric_number": "10115",
+      "swatch_filename": "10115.jpg"
+    },
+    {
+      "fabric_number": "10116",
+      "swatch_filename": "10116.jpg"
+    },
+    {
+      "fabric_number": "10117",
+      "swatch_filename": "10117.jpg"
+    },
+    {
+      "fabric_number": "10118",
+      "swatch_filename": "10118.jpg"
+    },
+    {
+      "fabric_number": "10119",
+      "swatch_filename": "10119.jpg"
+    },
+    {
+      "fabric_number": "10120",
+      "swatch_filename": "10120.jpg"
+    },
+    {
       "fabric_number": "10121",
       "swatch_filename": "10121.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-ujel-20220909-tessuto_10027.jpg",
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-ibro-20220909-resa2_10027.jpg"
+    },
+    {
+      "fabric_number": "10122",
+      "swatch_filename": "10122.jpg"
+    },
+    {
+      "fabric_number": "10123",
+      "swatch_filename": "10123.jpg"
+    },
+    {
+      "fabric_number": "10124",
+      "swatch_filename": "10124.jpg"
+    },
+    {
+      "fabric_number": "10125",
+      "swatch_filename": "10125.jpg"
+    },
+    {
+      "fabric_number": "10126",
+      "swatch_filename": "10126.jpg"
+    },
+    {
+      "fabric_number": "10127",
+      "swatch_filename": "10127.jpg"
+    },
+    {
+      "fabric_number": "10128",
+      "swatch_filename": "10128.jpg"
+    },
+    {
+      "fabric_number": "10129",
+      "swatch_filename": "10129.jpg"
+    },
+    {
+      "fabric_number": "10130",
+      "swatch_filename": "10130.jpg"
+    },
+    {
+      "fabric_number": "10131",
+      "swatch_filename": "10131.jpg"
+    },
+    {
+      "fabric_number": "10132",
+      "swatch_filename": "10132.jpg"
+    },
+    {
+      "fabric_number": "10133",
+      "swatch_filename": "10133.jpg"
+    },
+    {
+      "fabric_number": "10134",
+      "swatch_filename": "10134.jpg"
+    },
+    {
+      "fabric_number": "10135",
+      "swatch_filename": "10135.jpg"
+    },
+    {
+      "fabric_number": "10136",
+      "swatch_filename": "10136.jpg"
+    },
+    {
+      "fabric_number": "10137",
+      "swatch_filename": "10137.jpg"
+    },
+    {
+      "fabric_number": "10138",
+      "swatch_filename": "10138.jpg"
+    },
+    {
+      "fabric_number": "10139",
+      "swatch_filename": "10139.jpg"
+    },
+    {
+      "fabric_number": "10140",
+      "swatch_filename": "10140.jpg"
+    },
+    {
+      "fabric_number": "10141",
+      "swatch_filename": "10141.jpg"
+    },
+    {
+      "fabric_number": "10142",
+      "swatch_filename": "10142.jpg"
+    },
+    {
+      "fabric_number": "10143",
+      "swatch_filename": "10143.jpg"
+    },
+    {
+      "fabric_number": "10144",
+      "swatch_filename": "10144.jpg"
+    },
+    {
+      "fabric_number": "10145",
+      "swatch_filename": "10145.jpg"
+    },
+    {
+      "fabric_number": "10146",
+      "swatch_filename": "10146.jpg"
+    },
+    {
+      "fabric_number": "10147",
+      "swatch_filename": "10147.jpg"
+    },
+    {
+      "fabric_number": "10148",
+      "swatch_filename": "10148.jpg"
+    },
+    {
+      "fabric_number": "10149",
+      "swatch_filename": "10149.jpg"
+    },
+    {
+      "fabric_number": "10150",
+      "swatch_filename": "10150.jpg"
+    },
+    {
+      "fabric_number": "10151",
+      "swatch_filename": "10151.jpg"
     },
     {
       "fabric_number": "10152",
@@ -56,16 +216,324 @@
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-wxso-20220909-resa2_10048.jpg"
     },
     {
+      "fabric_number": "10153",
+      "swatch_filename": "10153.jpg"
+    },
+    {
+      "fabric_number": "10154",
+      "swatch_filename": "10154.jpg"
+    },
+    {
+      "fabric_number": "10155",
+      "swatch_filename": "10155.jpg"
+    },
+    {
+      "fabric_number": "10156",
+      "swatch_filename": "10156.jpg"
+    },
+    {
+      "fabric_number": "10157",
+      "swatch_filename": "10157.jpg"
+    },
+    {
+      "fabric_number": "10158",
+      "swatch_filename": "10158.jpg"
+    },
+    {
+      "fabric_number": "10159",
+      "swatch_filename": "10159.jpg"
+    },
+    {
+      "fabric_number": "10160",
+      "swatch_filename": "10160.jpg"
+    },
+    {
+      "fabric_number": "10161",
+      "swatch_filename": "10161.jpg"
+    },
+    {
+      "fabric_number": "10162",
+      "swatch_filename": "10162.jpg"
+    },
+    {
+      "fabric_number": "10163",
+      "swatch_filename": "10163.jpg"
+    },
+    {
+      "fabric_number": "10164",
+      "swatch_filename": "10164.jpg"
+    },
+    {
+      "fabric_number": "10165",
+      "swatch_filename": "10165.jpg"
+    },
+    {
+      "fabric_number": "10166",
+      "swatch_filename": "10166.jpg"
+    },
+    {
+      "fabric_number": "10167",
+      "swatch_filename": "10167.jpg"
+    },
+    {
+      "fabric_number": "10168",
+      "swatch_filename": "10168.jpg"
+    },
+    {
+      "fabric_number": "10169",
+      "swatch_filename": "10169.jpg"
+    },
+    {
+      "fabric_number": "10170",
+      "swatch_filename": "10170.jpg"
+    },
+    {
+      "fabric_number": "10171",
+      "swatch_filename": "10171.jpg"
+    },
+    {
+      "fabric_number": "10172",
+      "swatch_filename": "10172.jpg"
+    },
+    {
+      "fabric_number": "10173",
+      "swatch_filename": "10173.jpg"
+    },
+    {
+      "fabric_number": "10174",
+      "swatch_filename": "10174.jpg"
+    },
+    {
+      "fabric_number": "10175",
+      "swatch_filename": "10175.jpg"
+    },
+    {
+      "fabric_number": "10176",
+      "swatch_filename": "10176.jpg"
+    },
+    {
+      "fabric_number": "10177",
+      "swatch_filename": "10177.jpg"
+    },
+    {
+      "fabric_number": "10178",
+      "swatch_filename": "10178.jpg"
+    },
+    {
+      "fabric_number": "10179",
+      "swatch_filename": "10179.jpg"
+    },
+    {
+      "fabric_number": "10180",
+      "swatch_filename": "10180.jpg"
+    },
+    {
+      "fabric_number": "10181",
+      "swatch_filename": "10181.jpg"
+    },
+    {
+      "fabric_number": "10182",
+      "swatch_filename": "10182.jpg"
+    },
+    {
+      "fabric_number": "10183",
+      "swatch_filename": "10183.jpg"
+    },
+    {
+      "fabric_number": "10184",
+      "swatch_filename": "10184.jpg"
+    },
+    {
+      "fabric_number": "10185",
+      "swatch_filename": "10185.jpg"
+    },
+    {
       "fabric_number": "10186",
       "swatch_filename": "10186.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-nhwg-20220909-tessuto_10069.jpg",
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-neia-20220909-resa2_10069.jpg"
     },
     {
+      "fabric_number": "10187",
+      "swatch_filename": "10187.jpg"
+    },
+    {
+      "fabric_number": "10188",
+      "swatch_filename": "10188.jpg"
+    },
+    {
+      "fabric_number": "10189",
+      "swatch_filename": "10189.jpg"
+    },
+    {
+      "fabric_number": "10190",
+      "swatch_filename": "10190.jpg"
+    },
+    {
+      "fabric_number": "12001",
+      "swatch_filename": "12001.jpg"
+    },
+    {
+      "fabric_number": "12002",
+      "swatch_filename": "12002.jpg"
+    },
+    {
+      "fabric_number": "12003",
+      "swatch_filename": "12003.jpg"
+    },
+    {
+      "fabric_number": "12005",
+      "swatch_filename": "12005.jpg"
+    },
+    {
+      "fabric_number": "12006",
+      "swatch_filename": "12006.jpg"
+    },
+    {
+      "fabric_number": "12007",
+      "swatch_filename": "12007.jpg"
+    },
+    {
+      "fabric_number": "12008",
+      "swatch_filename": "12008.jpg"
+    },
+    {
+      "fabric_number": "12010",
+      "swatch_filename": "12010.jpg"
+    },
+    {
+      "fabric_number": "12011",
+      "swatch_filename": "12011.jpg"
+    },
+    {
+      "fabric_number": "12012",
+      "swatch_filename": "12012.jpg"
+    },
+    {
+      "fabric_number": "12038",
+      "swatch_filename": "12038.jpg"
+    },
+    {
+      "fabric_number": "12039",
+      "swatch_filename": "12039.jpg"
+    },
+    {
+      "fabric_number": "12040",
+      "swatch_filename": "12040.jpg"
+    },
+    {
+      "fabric_number": "12041",
+      "swatch_filename": "12041.jpg"
+    },
+    {
+      "fabric_number": "12042",
+      "swatch_filename": "12042.jpg"
+    },
+    {
+      "fabric_number": "12043",
+      "swatch_filename": "12043.jpg"
+    },
+    {
+      "fabric_number": "12044",
+      "swatch_filename": "12044.jpg"
+    },
+    {
+      "fabric_number": "12045",
+      "swatch_filename": "12045.jpg"
+    },
+    {
+      "fabric_number": "12046",
+      "swatch_filename": "12046.jpg"
+    },
+    {
+      "fabric_number": "12047",
+      "swatch_filename": "12047.jpg"
+    },
+    {
+      "fabric_number": "12048",
+      "swatch_filename": "12048.jpg"
+    },
+    {
+      "fabric_number": "12049",
+      "swatch_filename": "12049.jpg"
+    },
+    {
+      "fabric_number": "12501",
+      "swatch_filename": "12501.jpg"
+    },
+    {
+      "fabric_number": "12502",
+      "swatch_filename": "12502.jpg"
+    },
+    {
+      "fabric_number": "12503",
+      "swatch_filename": "12503.jpg"
+    },
+    {
+      "fabric_number": "12504",
+      "swatch_filename": "12504.jpg"
+    },
+    {
+      "fabric_number": "12505",
+      "swatch_filename": "12505.jpg"
+    },
+    {
+      "fabric_number": "12506",
+      "swatch_filename": "12506.jpg"
+    },
+    {
+      "fabric_number": "12507",
+      "swatch_filename": "12507.jpg"
+    },
+    {
+      "fabric_number": "12508",
+      "swatch_filename": "12508.jpg"
+    },
+    {
+      "fabric_number": "12509",
+      "swatch_filename": "12509.jpg"
+    },
+    {
+      "fabric_number": "12510",
+      "swatch_filename": "12510.jpg"
+    },
+    {
+      "fabric_number": "12511",
+      "swatch_filename": "12511.jpg"
+    },
+    {
+      "fabric_number": "12512",
+      "swatch_filename": "12512.jpg"
+    },
+    {
+      "fabric_number": "12513",
+      "swatch_filename": "12513.jpg"
+    },
+    {
+      "fabric_number": "12514",
+      "swatch_filename": "12514.jpg"
+    },
+    {
+      "fabric_number": "12515",
+      "swatch_filename": "12515.jpg"
+    },
+    {
+      "fabric_number": "12516",
+      "swatch_filename": "12516.jpg"
+    },
+    {
       "fabric_number": "12517",
       "swatch_filename": "12517.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-mtcu-20220909-tessuto_12517.jpg",
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-9dw7-20220909-resa2_12517.jpg"
+    },
+    {
+      "fabric_number": "12518",
+      "swatch_filename": "12518.jpg"
+    },
+    {
+      "fabric_number": "12519",
+      "swatch_filename": "12519.jpg"
     },
     {
       "fabric_number": "12520",
@@ -80,10 +548,1990 @@
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-padj-20220909-resa2_12521.jpg"
     },
     {
+      "fabric_number": "12522",
+      "swatch_filename": "12522.jpg"
+    },
+    {
+      "fabric_number": "12523",
+      "swatch_filename": "12523.jpg"
+    },
+    {
+      "fabric_number": "12524",
+      "swatch_filename": "12524.jpg"
+    },
+    {
+      "fabric_number": "12525",
+      "swatch_filename": "12525.jpg"
+    },
+    {
+      "fabric_number": "12526",
+      "swatch_filename": "12526.jpg"
+    },
+    {
+      "fabric_number": "12527",
+      "swatch_filename": "12527.jpg"
+    },
+    {
+      "fabric_number": "12528",
+      "swatch_filename": "12528.jpg"
+    },
+    {
+      "fabric_number": "12529",
+      "swatch_filename": "12529.jpg"
+    },
+    {
+      "fabric_number": "12530",
+      "swatch_filename": "12530.jpg"
+    },
+    {
+      "fabric_number": "12531",
+      "swatch_filename": "12531.jpg"
+    },
+    {
+      "fabric_number": "12532",
+      "swatch_filename": "12532.jpg"
+    },
+    {
+      "fabric_number": "12533",
+      "swatch_filename": "12533.jpg"
+    },
+    {
+      "fabric_number": "12534",
+      "swatch_filename": "12534.jpg"
+    },
+    {
+      "fabric_number": "12535",
+      "swatch_filename": "12535.jpg"
+    },
+    {
+      "fabric_number": "12536",
+      "swatch_filename": "12536.jpg"
+    },
+    {
+      "fabric_number": "12537",
+      "swatch_filename": "12537.jpg"
+    },
+    {
+      "fabric_number": "12538",
+      "swatch_filename": "12538.jpg"
+    },
+    {
+      "fabric_number": "12539",
+      "swatch_filename": "12539.jpg"
+    },
+    {
+      "fabric_number": "12540",
+      "swatch_filename": "12540.jpg"
+    },
+    {
+      "fabric_number": "12541",
+      "swatch_filename": "12541.jpg"
+    },
+    {
+      "fabric_number": "12542",
+      "swatch_filename": "12542.jpg"
+    },
+    {
+      "fabric_number": "12543",
+      "swatch_filename": "12543.jpg"
+    },
+    {
+      "fabric_number": "12544",
+      "swatch_filename": "12544.jpg"
+    },
+    {
+      "fabric_number": "12545",
+      "swatch_filename": "12545.jpg"
+    },
+    {
+      "fabric_number": "12546",
+      "swatch_filename": "12546.jpg"
+    },
+    {
+      "fabric_number": "12547",
+      "swatch_filename": "12547.jpg"
+    },
+    {
+      "fabric_number": "12548",
+      "swatch_filename": "12548.jpg"
+    },
+    {
+      "fabric_number": "12549",
+      "swatch_filename": "12549.jpg"
+    },
+    {
+      "fabric_number": "12550",
+      "swatch_filename": "12550.jpg"
+    },
+    {
+      "fabric_number": "12551",
+      "swatch_filename": "12551.jpg"
+    },
+    {
+      "fabric_number": "14001",
+      "swatch_filename": "14001.jpg"
+    },
+    {
+      "fabric_number": "14002",
+      "swatch_filename": "14002.jpg"
+    },
+    {
+      "fabric_number": "14003",
+      "swatch_filename": "14003.jpg"
+    },
+    {
+      "fabric_number": "14004",
+      "swatch_filename": "14004.jpg"
+    },
+    {
+      "fabric_number": "14005",
+      "swatch_filename": "14005.jpg"
+    },
+    {
+      "fabric_number": "14006",
+      "swatch_filename": "14006.jpg"
+    },
+    {
+      "fabric_number": "14007",
+      "swatch_filename": "14007.jpg"
+    },
+    {
+      "fabric_number": "14008",
+      "swatch_filename": "14008.jpg"
+    },
+    {
+      "fabric_number": "14009",
+      "swatch_filename": "14009.jpg"
+    },
+    {
+      "fabric_number": "14010",
+      "swatch_filename": "14010.jpg"
+    },
+    {
+      "fabric_number": "14011",
+      "swatch_filename": "14011.jpg"
+    },
+    {
+      "fabric_number": "14012",
+      "swatch_filename": "14012.jpg"
+    },
+    {
+      "fabric_number": "14013",
+      "swatch_filename": "14013.jpg"
+    },
+    {
+      "fabric_number": "14014",
+      "swatch_filename": "14014.jpg"
+    },
+    {
+      "fabric_number": "14015",
+      "swatch_filename": "14015.jpg"
+    },
+    {
+      "fabric_number": "14016",
+      "swatch_filename": "14016.jpg"
+    },
+    {
+      "fabric_number": "14017",
+      "swatch_filename": "14017.jpg"
+    },
+    {
+      "fabric_number": "14018",
+      "swatch_filename": "14018.jpg"
+    },
+    {
+      "fabric_number": "14019",
+      "swatch_filename": "14019.jpg"
+    },
+    {
+      "fabric_number": "14020",
+      "swatch_filename": "14020.jpg"
+    },
+    {
+      "fabric_number": "14021",
+      "swatch_filename": "14021.jpg"
+    },
+    {
+      "fabric_number": "14022",
+      "swatch_filename": "14022.jpg"
+    },
+    {
+      "fabric_number": "14023",
+      "swatch_filename": "14023.jpg"
+    },
+    {
+      "fabric_number": "14024",
+      "swatch_filename": "14024.jpg"
+    },
+    {
+      "fabric_number": "14025",
+      "swatch_filename": "14025.jpg"
+    },
+    {
+      "fabric_number": "14026",
+      "swatch_filename": "14026.jpg"
+    },
+    {
+      "fabric_number": "14027",
+      "swatch_filename": "14027.jpg"
+    },
+    {
+      "fabric_number": "14028",
+      "swatch_filename": "14028.jpg"
+    },
+    {
+      "fabric_number": "14029",
+      "swatch_filename": "14029.jpg"
+    },
+    {
+      "fabric_number": "14030",
+      "swatch_filename": "14030.jpg"
+    },
+    {
+      "fabric_number": "14031",
+      "swatch_filename": "14031.jpg"
+    },
+    {
+      "fabric_number": "14032",
+      "swatch_filename": "14032.jpg"
+    },
+    {
+      "fabric_number": "14033",
+      "swatch_filename": "14033.jpg"
+    },
+    {
+      "fabric_number": "14034",
+      "swatch_filename": "14034.jpg"
+    },
+    {
+      "fabric_number": "14035",
+      "swatch_filename": "14035.jpg"
+    },
+    {
+      "fabric_number": "14036",
+      "swatch_filename": "14036.jpg"
+    },
+    {
+      "fabric_number": "14037",
+      "swatch_filename": "14037.jpg"
+    },
+    {
+      "fabric_number": "14038",
+      "swatch_filename": "14038.jpg"
+    },
+    {
+      "fabric_number": "14039",
+      "swatch_filename": "14039.jpg"
+    },
+    {
+      "fabric_number": "14040",
+      "swatch_filename": "14040.jpg"
+    },
+    {
+      "fabric_number": "14041",
+      "swatch_filename": "14041.jpg"
+    },
+    {
+      "fabric_number": "14042",
+      "swatch_filename": "14042.jpg"
+    },
+    {
+      "fabric_number": "14043",
+      "swatch_filename": "14043.jpg"
+    },
+    {
+      "fabric_number": "14044",
+      "swatch_filename": "14044.jpg"
+    },
+    {
+      "fabric_number": "14045",
+      "swatch_filename": "14045.jpg"
+    },
+    {
+      "fabric_number": "14046",
+      "swatch_filename": "14046.jpg"
+    },
+    {
+      "fabric_number": "14047",
+      "swatch_filename": "14047.jpg"
+    },
+    {
+      "fabric_number": "14048",
+      "swatch_filename": "14048.jpg"
+    },
+    {
+      "fabric_number": "14049",
+      "swatch_filename": "14049.jpg"
+    },
+    {
+      "fabric_number": "14050",
+      "swatch_filename": "14050.jpg"
+    },
+    {
+      "fabric_number": "14051",
+      "swatch_filename": "14051.jpg"
+    },
+    {
+      "fabric_number": "14052",
+      "swatch_filename": "14052.jpg"
+    },
+    {
+      "fabric_number": "14053",
+      "swatch_filename": "14053.jpg"
+    },
+    {
+      "fabric_number": "14054",
+      "swatch_filename": "14054.jpg"
+    },
+    {
+      "fabric_number": "14055",
+      "swatch_filename": "14055.jpg"
+    },
+    {
+      "fabric_number": "14056",
+      "swatch_filename": "14056.jpg"
+    },
+    {
+      "fabric_number": "14057",
+      "swatch_filename": "14057.jpg"
+    },
+    {
+      "fabric_number": "15101",
+      "swatch_filename": "15101.jpg"
+    },
+    {
+      "fabric_number": "15102",
+      "swatch_filename": "15102.jpg"
+    },
+    {
+      "fabric_number": "15103",
+      "swatch_filename": "15103.jpg"
+    },
+    {
+      "fabric_number": "15104",
+      "swatch_filename": "15104.jpg"
+    },
+    {
+      "fabric_number": "15105",
+      "swatch_filename": "15105.jpg"
+    },
+    {
+      "fabric_number": "15106",
+      "swatch_filename": "15106.jpg"
+    },
+    {
+      "fabric_number": "15107",
+      "swatch_filename": "15107.jpg"
+    },
+    {
+      "fabric_number": "15108",
+      "swatch_filename": "15108.jpg"
+    },
+    {
+      "fabric_number": "15109",
+      "swatch_filename": "15109.jpg"
+    },
+    {
+      "fabric_number": "15110",
+      "swatch_filename": "15110.jpg"
+    },
+    {
+      "fabric_number": "15111",
+      "swatch_filename": "15111.jpg"
+    },
+    {
+      "fabric_number": "15112",
+      "swatch_filename": "15112.jpg"
+    },
+    {
+      "fabric_number": "15113",
+      "swatch_filename": "15113.jpg"
+    },
+    {
+      "fabric_number": "15114",
+      "swatch_filename": "15114.jpg"
+    },
+    {
+      "fabric_number": "15115",
+      "swatch_filename": "15115.jpg"
+    },
+    {
+      "fabric_number": "15116",
+      "swatch_filename": "15116.jpg"
+    },
+    {
+      "fabric_number": "15117",
+      "swatch_filename": "15117.jpg"
+    },
+    {
+      "fabric_number": "15118",
+      "swatch_filename": "15118.jpg"
+    },
+    {
+      "fabric_number": "15119",
+      "swatch_filename": "15119.jpg"
+    },
+    {
+      "fabric_number": "15120",
+      "swatch_filename": "15120.jpg"
+    },
+    {
+      "fabric_number": "15121",
+      "swatch_filename": "15121.jpg"
+    },
+    {
+      "fabric_number": "15122",
+      "swatch_filename": "15122.jpg"
+    },
+    {
+      "fabric_number": "15123",
+      "swatch_filename": "15123.jpg"
+    },
+    {
+      "fabric_number": "15124",
+      "swatch_filename": "15124.jpg"
+    },
+    {
+      "fabric_number": "15125",
+      "swatch_filename": "15125.jpg"
+    },
+    {
+      "fabric_number": "15126",
+      "swatch_filename": "15126.jpg"
+    },
+    {
+      "fabric_number": "15127",
+      "swatch_filename": "15127.jpg"
+    },
+    {
+      "fabric_number": "15128",
+      "swatch_filename": "15128.jpg"
+    },
+    {
+      "fabric_number": "15129",
+      "swatch_filename": "15129.jpg"
+    },
+    {
+      "fabric_number": "15130",
+      "swatch_filename": "15130.jpg"
+    },
+    {
+      "fabric_number": "15131",
+      "swatch_filename": "15131.jpg"
+    },
+    {
+      "fabric_number": "15132",
+      "swatch_filename": "15132.jpg"
+    },
+    {
+      "fabric_number": "15133",
+      "swatch_filename": "15133.jpg"
+    },
+    {
+      "fabric_number": "15134",
+      "swatch_filename": "15134.jpg"
+    },
+    {
+      "fabric_number": "15135",
+      "swatch_filename": "15135.jpg"
+    },
+    {
+      "fabric_number": "15136",
+      "swatch_filename": "15136.jpg"
+    },
+    {
+      "fabric_number": "15137",
+      "swatch_filename": "15137.jpg"
+    },
+    {
+      "fabric_number": "15138",
+      "swatch_filename": "15138.jpg"
+    },
+    {
+      "fabric_number": "15139",
+      "swatch_filename": "15139.jpg"
+    },
+    {
+      "fabric_number": "15140",
+      "swatch_filename": "15140.jpg"
+    },
+    {
+      "fabric_number": "15141",
+      "swatch_filename": "15141.jpg"
+    },
+    {
+      "fabric_number": "15142",
+      "swatch_filename": "15142.jpg"
+    },
+    {
+      "fabric_number": "15143",
+      "swatch_filename": "15143.jpg"
+    },
+    {
+      "fabric_number": "15144",
+      "swatch_filename": "15144.jpg"
+    },
+    {
+      "fabric_number": "15145",
+      "swatch_filename": "15145.jpg"
+    },
+    {
+      "fabric_number": "15146",
+      "swatch_filename": "15146.jpg"
+    },
+    {
+      "fabric_number": "17001",
+      "swatch_filename": "17001.jpg"
+    },
+    {
+      "fabric_number": "17002",
+      "swatch_filename": "17002.jpg"
+    },
+    {
+      "fabric_number": "17003",
+      "swatch_filename": "17003.jpg"
+    },
+    {
+      "fabric_number": "17004",
+      "swatch_filename": "17004.jpg"
+    },
+    {
+      "fabric_number": "17005",
+      "swatch_filename": "17005.jpg"
+    },
+    {
+      "fabric_number": "17006",
+      "swatch_filename": "17006.jpg"
+    },
+    {
+      "fabric_number": "17007",
+      "swatch_filename": "17007.jpg"
+    },
+    {
+      "fabric_number": "17008",
+      "swatch_filename": "17008.jpg"
+    },
+    {
+      "fabric_number": "17009",
+      "swatch_filename": "17009.jpg"
+    },
+    {
+      "fabric_number": "17010",
+      "swatch_filename": "17010.jpg"
+    },
+    {
+      "fabric_number": "17011",
+      "swatch_filename": "17011.jpg"
+    },
+    {
+      "fabric_number": "17012",
+      "swatch_filename": "17012.jpg"
+    },
+    {
+      "fabric_number": "17013",
+      "swatch_filename": "17013.jpg"
+    },
+    {
+      "fabric_number": "17014",
+      "swatch_filename": "17014.jpg"
+    },
+    {
+      "fabric_number": "17015",
+      "swatch_filename": "17015.jpg"
+    },
+    {
+      "fabric_number": "17016",
+      "swatch_filename": "17016.jpg"
+    },
+    {
+      "fabric_number": "17017",
+      "swatch_filename": "17017.jpg"
+    },
+    {
+      "fabric_number": "17018",
+      "swatch_filename": "17018.jpg"
+    },
+    {
+      "fabric_number": "17019",
+      "swatch_filename": "17019.jpg"
+    },
+    {
+      "fabric_number": "17020",
+      "swatch_filename": "17020.jpg"
+    },
+    {
+      "fabric_number": "17021",
+      "swatch_filename": "17021.jpg"
+    },
+    {
+      "fabric_number": "17022",
+      "swatch_filename": "17022.jpg"
+    },
+    {
+      "fabric_number": "17023",
+      "swatch_filename": "17023.jpg"
+    },
+    {
+      "fabric_number": "17024",
+      "swatch_filename": "17024.jpg"
+    },
+    {
+      "fabric_number": "17025",
+      "swatch_filename": "17025.jpg"
+    },
+    {
+      "fabric_number": "17026",
+      "swatch_filename": "17026.jpg"
+    },
+    {
+      "fabric_number": "17027",
+      "swatch_filename": "17027.jpg"
+    },
+    {
+      "fabric_number": "17028",
+      "swatch_filename": "17028.jpg"
+    },
+    {
+      "fabric_number": "17029",
+      "swatch_filename": "17029.jpg"
+    },
+    {
+      "fabric_number": "17030",
+      "swatch_filename": "17030.jpg"
+    },
+    {
+      "fabric_number": "17031",
+      "swatch_filename": "17031.jpg"
+    },
+    {
+      "fabric_number": "17032",
+      "swatch_filename": "17032.jpg"
+    },
+    {
+      "fabric_number": "17033",
+      "swatch_filename": "17033.jpg"
+    },
+    {
+      "fabric_number": "17034",
+      "swatch_filename": "17034.jpg"
+    },
+    {
+      "fabric_number": "17035",
+      "swatch_filename": "17035.jpg"
+    },
+    {
+      "fabric_number": "17036",
+      "swatch_filename": "17036.jpg"
+    },
+    {
+      "fabric_number": "17038",
+      "swatch_filename": "17038.jpg"
+    },
+    {
+      "fabric_number": "17039",
+      "swatch_filename": "17039.jpg"
+    },
+    {
+      "fabric_number": "17040",
+      "swatch_filename": "17040.jpg"
+    },
+    {
+      "fabric_number": "17041",
+      "swatch_filename": "17041.jpg"
+    },
+    {
+      "fabric_number": "17042",
+      "swatch_filename": "17042.jpg"
+    },
+    {
       "fabric_number": "17043",
       "swatch_filename": "17043.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-8v9l-20220909-tessuto_5343.jpg",
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-ltwr-20220909-resa2_5343.jpg"
+    },
+    {
+      "fabric_number": "17044",
+      "swatch_filename": "17044.jpg"
+    },
+    {
+      "fabric_number": "17045",
+      "swatch_filename": "17045.jpg"
+    },
+    {
+      "fabric_number": "17046",
+      "swatch_filename": "17046.jpg"
+    },
+    {
+      "fabric_number": "17047",
+      "swatch_filename": "17047.jpg"
+    },
+    {
+      "fabric_number": "17048",
+      "swatch_filename": "17048.jpg"
+    },
+    {
+      "fabric_number": "17049",
+      "swatch_filename": "17049.jpg"
+    },
+    {
+      "fabric_number": "17050",
+      "swatch_filename": "17050.jpg"
+    },
+    {
+      "fabric_number": "17051",
+      "swatch_filename": "17051.jpg"
+    },
+    {
+      "fabric_number": "17052",
+      "swatch_filename": "17052.jpg"
+    },
+    {
+      "fabric_number": "17053",
+      "swatch_filename": "17053.jpg"
+    },
+    {
+      "fabric_number": "17054",
+      "swatch_filename": "17054.jpg"
+    },
+    {
+      "fabric_number": "17055",
+      "swatch_filename": "17055.jpg"
+    },
+    {
+      "fabric_number": "17056",
+      "swatch_filename": "17056.jpg"
+    },
+    {
+      "fabric_number": "17057",
+      "swatch_filename": "17057.jpg"
+    },
+    {
+      "fabric_number": "17058",
+      "swatch_filename": "17058.jpg"
+    },
+    {
+      "fabric_number": "17059",
+      "swatch_filename": "17059.jpg"
+    },
+    {
+      "fabric_number": "17060",
+      "swatch_filename": "17060.jpg"
+    },
+    {
+      "fabric_number": "17061",
+      "swatch_filename": "17061.jpg"
+    },
+    {
+      "fabric_number": "17062",
+      "swatch_filename": "17062.jpg"
+    },
+    {
+      "fabric_number": "17063",
+      "swatch_filename": "17063.jpg"
+    },
+    {
+      "fabric_number": "17064",
+      "swatch_filename": "17064.jpg"
+    },
+    {
+      "fabric_number": "17065",
+      "swatch_filename": "17065.jpg"
+    },
+    {
+      "fabric_number": "17066",
+      "swatch_filename": "17066.jpg"
+    },
+    {
+      "fabric_number": "17067",
+      "swatch_filename": "17067.jpg"
+    },
+    {
+      "fabric_number": "17068",
+      "swatch_filename": "17068.jpg"
+    },
+    {
+      "fabric_number": "18101",
+      "swatch_filename": "18101.jpg"
+    },
+    {
+      "fabric_number": "18102",
+      "swatch_filename": "18102.jpg"
+    },
+    {
+      "fabric_number": "18103",
+      "swatch_filename": "18103.jpg"
+    },
+    {
+      "fabric_number": "18104",
+      "swatch_filename": "18104.jpg"
+    },
+    {
+      "fabric_number": "18105",
+      "swatch_filename": "18105.jpg"
+    },
+    {
+      "fabric_number": "18106",
+      "swatch_filename": "18106.jpg"
+    },
+    {
+      "fabric_number": "18107",
+      "swatch_filename": "18107.jpg"
+    },
+    {
+      "fabric_number": "18108",
+      "swatch_filename": "18108.jpg"
+    },
+    {
+      "fabric_number": "18109",
+      "swatch_filename": "18109.jpg"
+    },
+    {
+      "fabric_number": "18110",
+      "swatch_filename": "18110.jpg"
+    },
+    {
+      "fabric_number": "18111",
+      "swatch_filename": "18111.jpg"
+    },
+    {
+      "fabric_number": "18112",
+      "swatch_filename": "18112.jpg"
+    },
+    {
+      "fabric_number": "18113",
+      "swatch_filename": "18113.jpg"
+    },
+    {
+      "fabric_number": "18114",
+      "swatch_filename": "18114.jpg"
+    },
+    {
+      "fabric_number": "18115",
+      "swatch_filename": "18115.jpg"
+    },
+    {
+      "fabric_number": "18116",
+      "swatch_filename": "18116.jpg"
+    },
+    {
+      "fabric_number": "18117",
+      "swatch_filename": "18117.jpg"
+    },
+    {
+      "fabric_number": "18118",
+      "swatch_filename": "18118.jpg"
+    },
+    {
+      "fabric_number": "18119",
+      "swatch_filename": "18119.jpg"
+    },
+    {
+      "fabric_number": "18120",
+      "swatch_filename": "18120.jpg"
+    },
+    {
+      "fabric_number": "18121",
+      "swatch_filename": "18121.jpg"
+    },
+    {
+      "fabric_number": "18122",
+      "swatch_filename": "18122.jpg"
+    },
+    {
+      "fabric_number": "18123",
+      "swatch_filename": "18123.jpg"
+    },
+    {
+      "fabric_number": "18124",
+      "swatch_filename": "18124.jpg"
+    },
+    {
+      "fabric_number": "18125",
+      "swatch_filename": "18125.jpg"
+    },
+    {
+      "fabric_number": "18126",
+      "swatch_filename": "18126.jpg"
+    },
+    {
+      "fabric_number": "18127",
+      "swatch_filename": "18127.jpg"
+    },
+    {
+      "fabric_number": "18128",
+      "swatch_filename": "18128.jpg"
+    },
+    {
+      "fabric_number": "18129",
+      "swatch_filename": "18129.jpg"
+    },
+    {
+      "fabric_number": "18130",
+      "swatch_filename": "18130.jpg"
+    },
+    {
+      "fabric_number": "18131",
+      "swatch_filename": "18131.jpg"
+    },
+    {
+      "fabric_number": "18132",
+      "swatch_filename": "18132.jpg"
+    },
+    {
+      "fabric_number": "18133",
+      "swatch_filename": "18133.jpg"
+    },
+    {
+      "fabric_number": "18134",
+      "swatch_filename": "18134.jpg"
+    },
+    {
+      "fabric_number": "18135",
+      "swatch_filename": "18135.jpg"
+    },
+    {
+      "fabric_number": "18136",
+      "swatch_filename": "18136.jpg"
+    },
+    {
+      "fabric_number": "18137",
+      "swatch_filename": "18137.jpg"
+    },
+    {
+      "fabric_number": "18138",
+      "swatch_filename": "18138.jpg"
+    },
+    {
+      "fabric_number": "18139",
+      "swatch_filename": "18139.jpg"
+    },
+    {
+      "fabric_number": "18140",
+      "swatch_filename": "18140.jpg"
+    },
+    {
+      "fabric_number": "18141",
+      "swatch_filename": "18141.jpg"
+    },
+    {
+      "fabric_number": "18142",
+      "swatch_filename": "18142.jpg"
+    },
+    {
+      "fabric_number": "18143",
+      "swatch_filename": "18143.jpg"
+    },
+    {
+      "fabric_number": "18144",
+      "swatch_filename": "18144.jpg"
+    },
+    {
+      "fabric_number": "18145",
+      "swatch_filename": "18145.jpg"
+    },
+    {
+      "fabric_number": "18146",
+      "swatch_filename": "18146.jpg"
+    },
+    {
+      "fabric_number": "18147",
+      "swatch_filename": "18147.jpg"
+    },
+    {
+      "fabric_number": "18148",
+      "swatch_filename": "18148.jpg"
+    },
+    {
+      "fabric_number": "18149",
+      "swatch_filename": "18149.jpg"
+    },
+    {
+      "fabric_number": "18150",
+      "swatch_filename": "18150.jpg"
+    },
+    {
+      "fabric_number": "18151",
+      "swatch_filename": "18151.jpg"
+    },
+    {
+      "fabric_number": "18152",
+      "swatch_filename": "18152.jpg"
+    },
+    {
+      "fabric_number": "18153",
+      "swatch_filename": "18153.jpg"
+    },
+    {
+      "fabric_number": "18154",
+      "swatch_filename": "18154.jpg"
+    },
+    {
+      "fabric_number": "18155",
+      "swatch_filename": "18155.jpg"
+    },
+    {
+      "fabric_number": "18156",
+      "swatch_filename": "18156.jpg"
+    },
+    {
+      "fabric_number": "18157",
+      "swatch_filename": "18157.jpg"
+    },
+    {
+      "fabric_number": "18158",
+      "swatch_filename": "18158.jpg"
+    },
+    {
+      "fabric_number": "18159",
+      "swatch_filename": "18159.jpg"
+    },
+    {
+      "fabric_number": "18160",
+      "swatch_filename": "18160.jpg"
+    },
+    {
+      "fabric_number": "18161",
+      "swatch_filename": "18161.jpg"
+    },
+    {
+      "fabric_number": "18162",
+      "swatch_filename": "18162.jpg"
+    },
+    {
+      "fabric_number": "18163",
+      "swatch_filename": "18163.jpg"
+    },
+    {
+      "fabric_number": "18164",
+      "swatch_filename": "18164.jpg"
+    },
+    {
+      "fabric_number": "18165",
+      "swatch_filename": "18165.jpg"
+    },
+    {
+      "fabric_number": "18166",
+      "swatch_filename": "18166.jpg"
+    },
+    {
+      "fabric_number": "18167",
+      "swatch_filename": "18167.jpg"
+    },
+    {
+      "fabric_number": "18168",
+      "swatch_filename": "18168.jpg"
+    },
+    {
+      "fabric_number": "18169",
+      "swatch_filename": "18169.jpg"
+    },
+    {
+      "fabric_number": "18170",
+      "swatch_filename": "18170.jpg"
+    },
+    {
+      "fabric_number": "18171",
+      "swatch_filename": "18171.jpg"
+    },
+    {
+      "fabric_number": "18172",
+      "swatch_filename": "18172.jpg"
+    },
+    {
+      "fabric_number": "18173",
+      "swatch_filename": "18173.jpg"
+    },
+    {
+      "fabric_number": "18174",
+      "swatch_filename": "18174.jpg"
+    },
+    {
+      "fabric_number": "18175",
+      "swatch_filename": "18175.jpg"
+    },
+    {
+      "fabric_number": "18176",
+      "swatch_filename": "18176.jpg"
+    },
+    {
+      "fabric_number": "18177",
+      "swatch_filename": "18177.jpg"
+    },
+    {
+      "fabric_number": "18178",
+      "swatch_filename": "18178.jpg"
+    },
+    {
+      "fabric_number": "18179",
+      "swatch_filename": "18179.jpg"
+    },
+    {
+      "fabric_number": "18180",
+      "swatch_filename": "18180.jpg"
+    },
+    {
+      "fabric_number": "18181",
+      "swatch_filename": "18181.jpg"
+    },
+    {
+      "fabric_number": "18182",
+      "swatch_filename": "18182.jpg"
+    },
+    {
+      "fabric_number": "18183",
+      "swatch_filename": "18183.jpg"
+    },
+    {
+      "fabric_number": "18184",
+      "swatch_filename": "18184.jpg"
+    },
+    {
+      "fabric_number": "18185",
+      "swatch_filename": "18185.jpg"
+    },
+    {
+      "fabric_number": "18186",
+      "swatch_filename": "18186.jpg"
+    },
+    {
+      "fabric_number": "18601",
+      "swatch_filename": "18601.jpg"
+    },
+    {
+      "fabric_number": "18602",
+      "swatch_filename": "18602.jpg"
+    },
+    {
+      "fabric_number": "18603",
+      "swatch_filename": "18603.jpg"
+    },
+    {
+      "fabric_number": "18604",
+      "swatch_filename": "18604.jpg"
+    },
+    {
+      "fabric_number": "18605",
+      "swatch_filename": "18605.jpg"
+    },
+    {
+      "fabric_number": "18606",
+      "swatch_filename": "18606.jpg"
+    },
+    {
+      "fabric_number": "18607",
+      "swatch_filename": "18607.jpg"
+    },
+    {
+      "fabric_number": "18608",
+      "swatch_filename": "18608.jpg"
+    },
+    {
+      "fabric_number": "18609",
+      "swatch_filename": "18609.jpg"
+    },
+    {
+      "fabric_number": "18610",
+      "swatch_filename": "18610.jpg"
+    },
+    {
+      "fabric_number": "18611",
+      "swatch_filename": "18611.jpg"
+    },
+    {
+      "fabric_number": "18612",
+      "swatch_filename": "18612.jpg"
+    },
+    {
+      "fabric_number": "18613",
+      "swatch_filename": "18613.jpg"
+    },
+    {
+      "fabric_number": "18614",
+      "swatch_filename": "18614.jpg"
+    },
+    {
+      "fabric_number": "18615",
+      "swatch_filename": "18615.jpg"
+    },
+    {
+      "fabric_number": "18616",
+      "swatch_filename": "18616.jpg"
+    },
+    {
+      "fabric_number": "18617",
+      "swatch_filename": "18617.jpg"
+    },
+    {
+      "fabric_number": "18618",
+      "swatch_filename": "18618.jpg"
+    },
+    {
+      "fabric_number": "18619",
+      "swatch_filename": "18619.jpg"
+    },
+    {
+      "fabric_number": "18620",
+      "swatch_filename": "18620.jpg"
+    },
+    {
+      "fabric_number": "18621",
+      "swatch_filename": "18621.jpg"
+    },
+    {
+      "fabric_number": "18622",
+      "swatch_filename": "18622.jpg"
+    },
+    {
+      "fabric_number": "18623",
+      "swatch_filename": "18623.jpg"
+    },
+    {
+      "fabric_number": "18624",
+      "swatch_filename": "18624.jpg"
+    },
+    {
+      "fabric_number": "18625",
+      "swatch_filename": "18625.jpg"
+    },
+    {
+      "fabric_number": "18626",
+      "swatch_filename": "18626.jpg"
+    },
+    {
+      "fabric_number": "19001",
+      "swatch_filename": "19001.jpg"
+    },
+    {
+      "fabric_number": "19002",
+      "swatch_filename": "19002.jpg"
+    },
+    {
+      "fabric_number": "19003",
+      "swatch_filename": "19003.jpg"
+    },
+    {
+      "fabric_number": "19004",
+      "swatch_filename": "19004.jpg"
+    },
+    {
+      "fabric_number": "19005",
+      "swatch_filename": "19005.jpg"
+    },
+    {
+      "fabric_number": "19006",
+      "swatch_filename": "19006.jpg"
+    },
+    {
+      "fabric_number": "19007",
+      "swatch_filename": "19007.jpg"
+    },
+    {
+      "fabric_number": "19008",
+      "swatch_filename": "19008.jpg"
+    },
+    {
+      "fabric_number": "19009",
+      "swatch_filename": "19009.jpg"
+    },
+    {
+      "fabric_number": "19010",
+      "swatch_filename": "19010.jpg"
+    },
+    {
+      "fabric_number": "19011",
+      "swatch_filename": "19011.jpg"
+    },
+    {
+      "fabric_number": "19012",
+      "swatch_filename": "19012.jpg"
+    },
+    {
+      "fabric_number": "19013",
+      "swatch_filename": "19013.jpg"
+    },
+    {
+      "fabric_number": "19014",
+      "swatch_filename": "19014.jpg"
+    },
+    {
+      "fabric_number": "19015",
+      "swatch_filename": "19015.jpg"
+    },
+    {
+      "fabric_number": "19016",
+      "swatch_filename": "19016.jpg"
+    },
+    {
+      "fabric_number": "19017",
+      "swatch_filename": "19017.jpg"
+    },
+    {
+      "fabric_number": "19018",
+      "swatch_filename": "19018.jpg"
+    },
+    {
+      "fabric_number": "19019",
+      "swatch_filename": "19019.jpg"
+    },
+    {
+      "fabric_number": "19020",
+      "swatch_filename": "19020.jpg"
+    },
+    {
+      "fabric_number": "19021",
+      "swatch_filename": "19021.jpg"
+    },
+    {
+      "fabric_number": "19022",
+      "swatch_filename": "19022.jpg"
+    },
+    {
+      "fabric_number": "19023",
+      "swatch_filename": "19023.jpg"
+    },
+    {
+      "fabric_number": "19024",
+      "swatch_filename": "19024.jpg"
+    },
+    {
+      "fabric_number": "19025",
+      "swatch_filename": "19025.jpg"
+    },
+    {
+      "fabric_number": "19026",
+      "swatch_filename": "19026.jpg"
+    },
+    {
+      "fabric_number": "19027",
+      "swatch_filename": "19027.jpg"
+    },
+    {
+      "fabric_number": "19028",
+      "swatch_filename": "19028.jpg"
+    },
+    {
+      "fabric_number": "19029",
+      "swatch_filename": "19029.jpg"
+    },
+    {
+      "fabric_number": "19031",
+      "swatch_filename": "19031.jpg"
+    },
+    {
+      "fabric_number": "19032",
+      "swatch_filename": "19032.jpg"
+    },
+    {
+      "fabric_number": "19033",
+      "swatch_filename": "19033.jpg"
+    },
+    {
+      "fabric_number": "19034",
+      "swatch_filename": "19034.jpg"
+    },
+    {
+      "fabric_number": "19035",
+      "swatch_filename": "19035.jpg"
+    },
+    {
+      "fabric_number": "19036",
+      "swatch_filename": "19036.jpg"
+    },
+    {
+      "fabric_number": "19037",
+      "swatch_filename": "19037.jpg"
+    },
+    {
+      "fabric_number": "19038",
+      "swatch_filename": "19038.jpg"
+    },
+    {
+      "fabric_number": "19039",
+      "swatch_filename": "19039.jpg"
+    },
+    {
+      "fabric_number": "19040",
+      "swatch_filename": "19040.jpg"
+    },
+    {
+      "fabric_number": "19041",
+      "swatch_filename": "19041.jpg"
+    },
+    {
+      "fabric_number": "19042",
+      "swatch_filename": "19042.jpg"
+    },
+    {
+      "fabric_number": "19043",
+      "swatch_filename": "19043.jpg"
+    },
+    {
+      "fabric_number": "19044",
+      "swatch_filename": "19044.jpg"
+    },
+    {
+      "fabric_number": "19045",
+      "swatch_filename": "19045.jpg"
+    },
+    {
+      "fabric_number": "19046",
+      "swatch_filename": "19046.jpg"
+    },
+    {
+      "fabric_number": "19047",
+      "swatch_filename": "19047.jpg"
+    },
+    {
+      "fabric_number": "19048",
+      "swatch_filename": "19048.jpg"
+    },
+    {
+      "fabric_number": "19049",
+      "swatch_filename": "19049.jpg"
+    },
+    {
+      "fabric_number": "19050",
+      "swatch_filename": "19050.jpg"
+    },
+    {
+      "fabric_number": "19051",
+      "swatch_filename": "19051.jpg"
+    },
+    {
+      "fabric_number": "19052",
+      "swatch_filename": "19052.jpg"
+    },
+    {
+      "fabric_number": "19053",
+      "swatch_filename": "19053.jpg"
+    },
+    {
+      "fabric_number": "19054",
+      "swatch_filename": "19054.jpg"
+    },
+    {
+      "fabric_number": "19055",
+      "swatch_filename": "19055.jpg"
+    },
+    {
+      "fabric_number": "19056",
+      "swatch_filename": "19056.jpg"
+    },
+    {
+      "fabric_number": "20101",
+      "swatch_filename": "20101.jpg"
+    },
+    {
+      "fabric_number": "20102",
+      "swatch_filename": "20102.jpg"
+    },
+    {
+      "fabric_number": "20103",
+      "swatch_filename": "20103.jpg"
+    },
+    {
+      "fabric_number": "20104",
+      "swatch_filename": "20104.jpg"
+    },
+    {
+      "fabric_number": "20105",
+      "swatch_filename": "20105.jpg"
+    },
+    {
+      "fabric_number": "20106",
+      "swatch_filename": "20106.jpg"
+    },
+    {
+      "fabric_number": "20107",
+      "swatch_filename": "20107.jpg"
+    },
+    {
+      "fabric_number": "20108",
+      "swatch_filename": "20108.jpg"
+    },
+    {
+      "fabric_number": "20109",
+      "swatch_filename": "20109.jpg"
+    },
+    {
+      "fabric_number": "20110",
+      "swatch_filename": "20110.jpg"
+    },
+    {
+      "fabric_number": "20111",
+      "swatch_filename": "20111.jpg"
+    },
+    {
+      "fabric_number": "20112",
+      "swatch_filename": "20112.jpg"
+    },
+    {
+      "fabric_number": "20113",
+      "swatch_filename": "20113.jpg"
+    },
+    {
+      "fabric_number": "20114",
+      "swatch_filename": "20114.jpg"
+    },
+    {
+      "fabric_number": "20115",
+      "swatch_filename": "20115.jpg"
+    },
+    {
+      "fabric_number": "20116",
+      "swatch_filename": "20116.jpg"
+    },
+    {
+      "fabric_number": "20117",
+      "swatch_filename": "20117.jpg"
+    },
+    {
+      "fabric_number": "20118",
+      "swatch_filename": "20118.jpg"
+    },
+    {
+      "fabric_number": "20119",
+      "swatch_filename": "20119.jpg"
+    },
+    {
+      "fabric_number": "20120",
+      "swatch_filename": "20120.jpg"
+    },
+    {
+      "fabric_number": "20121",
+      "swatch_filename": "20121.jpg"
+    },
+    {
+      "fabric_number": "20122",
+      "swatch_filename": "20122.jpg"
+    },
+    {
+      "fabric_number": "20123",
+      "swatch_filename": "20123.jpg"
+    },
+    {
+      "fabric_number": "20124",
+      "swatch_filename": "20124.jpg"
+    },
+    {
+      "fabric_number": "20125",
+      "swatch_filename": "20125.jpg"
+    },
+    {
+      "fabric_number": "20126",
+      "swatch_filename": "20126.jpg"
+    },
+    {
+      "fabric_number": "20127",
+      "swatch_filename": "20127.jpg"
+    },
+    {
+      "fabric_number": "20128",
+      "swatch_filename": "20128.jpg"
+    },
+    {
+      "fabric_number": "20129",
+      "swatch_filename": "20129.jpg"
+    },
+    {
+      "fabric_number": "20130",
+      "swatch_filename": "20130.jpg"
+    },
+    {
+      "fabric_number": "20131",
+      "swatch_filename": "20131.jpg"
+    },
+    {
+      "fabric_number": "20137",
+      "swatch_filename": "20137.jpg"
+    },
+    {
+      "fabric_number": "20138",
+      "swatch_filename": "20138.jpg"
+    },
+    {
+      "fabric_number": "20139",
+      "swatch_filename": "20139.jpg"
+    },
+    {
+      "fabric_number": "20140",
+      "swatch_filename": "20140.jpg"
+    },
+    {
+      "fabric_number": "20141",
+      "swatch_filename": "20141.jpg"
+    },
+    {
+      "fabric_number": "20142",
+      "swatch_filename": "20142.jpg"
+    },
+    {
+      "fabric_number": "20143",
+      "swatch_filename": "20143.jpg"
+    },
+    {
+      "fabric_number": "20144",
+      "swatch_filename": "20144.jpg"
+    },
+    {
+      "fabric_number": "20145",
+      "swatch_filename": "20145.jpg"
+    },
+    {
+      "fabric_number": "20146",
+      "swatch_filename": "20146.jpg"
+    },
+    {
+      "fabric_number": "20147",
+      "swatch_filename": "20147.jpg"
+    },
+    {
+      "fabric_number": "20148",
+      "swatch_filename": "20148.jpg"
+    },
+    {
+      "fabric_number": "20149",
+      "swatch_filename": "20149.jpg"
+    },
+    {
+      "fabric_number": "20150",
+      "swatch_filename": "20150.jpg"
+    },
+    {
+      "fabric_number": "20151",
+      "swatch_filename": "20151.jpg"
+    },
+    {
+      "fabric_number": "20152",
+      "swatch_filename": "20152.jpg"
+    },
+    {
+      "fabric_number": "20153",
+      "swatch_filename": "20153.jpg"
+    },
+    {
+      "fabric_number": "20154",
+      "swatch_filename": "20154.jpg"
+    },
+    {
+      "fabric_number": "20155",
+      "swatch_filename": "20155.jpg"
+    },
+    {
+      "fabric_number": "20156",
+      "swatch_filename": "20156.jpg"
+    },
+    {
+      "fabric_number": "20157",
+      "swatch_filename": "20157.jpg"
+    },
+    {
+      "fabric_number": "20158",
+      "swatch_filename": "20158.jpg"
+    },
+    {
+      "fabric_number": "20159",
+      "swatch_filename": "20159.jpg"
+    },
+    {
+      "fabric_number": "20160",
+      "swatch_filename": "20160.jpg"
+    },
+    {
+      "fabric_number": "20161",
+      "swatch_filename": "20161.jpg"
+    },
+    {
+      "fabric_number": "20162",
+      "swatch_filename": "20162.jpg"
+    },
+    {
+      "fabric_number": "20163",
+      "swatch_filename": "20163.jpg"
+    },
+    {
+      "fabric_number": "20164",
+      "swatch_filename": "20164.jpg"
+    },
+    {
+      "fabric_number": "20165",
+      "swatch_filename": "20165.jpg"
+    },
+    {
+      "fabric_number": "20166",
+      "swatch_filename": "20166.jpg"
+    },
+    {
+      "fabric_number": "20167",
+      "swatch_filename": "20167.jpg"
+    },
+    {
+      "fabric_number": "20168",
+      "swatch_filename": "20168.jpg"
+    },
+    {
+      "fabric_number": "20169",
+      "swatch_filename": "20169.jpg"
+    },
+    {
+      "fabric_number": "20170",
+      "swatch_filename": "20170.jpg"
+    },
+    {
+      "fabric_number": "20171",
+      "swatch_filename": "20171.jpg"
+    },
+    {
+      "fabric_number": "20172",
+      "swatch_filename": "20172.jpg"
+    },
+    {
+      "fabric_number": "20173",
+      "swatch_filename": "20173.jpg"
+    },
+    {
+      "fabric_number": "20174",
+      "swatch_filename": "20174.jpg"
+    },
+    {
+      "fabric_number": "20175",
+      "swatch_filename": "20175.jpg"
+    },
+    {
+      "fabric_number": "20176",
+      "swatch_filename": "20176.jpg"
+    },
+    {
+      "fabric_number": "20177",
+      "swatch_filename": "20177.jpg"
+    },
+    {
+      "fabric_number": "20178",
+      "swatch_filename": "20178.jpg"
+    },
+    {
+      "fabric_number": "20179",
+      "swatch_filename": "20179.jpg"
+    },
+    {
+      "fabric_number": "20180",
+      "swatch_filename": "20180.jpg"
+    },
+    {
+      "fabric_number": "25101",
+      "swatch_filename": "25101.jpg"
+    },
+    {
+      "fabric_number": "25102",
+      "swatch_filename": "25102.jpg"
+    },
+    {
+      "fabric_number": "25103",
+      "swatch_filename": "25103.jpg"
+    },
+    {
+      "fabric_number": "25104",
+      "swatch_filename": "25104.jpg"
+    },
+    {
+      "fabric_number": "25105",
+      "swatch_filename": "25105.jpg"
+    },
+    {
+      "fabric_number": "25106",
+      "swatch_filename": "25106.jpg"
+    },
+    {
+      "fabric_number": "25107",
+      "swatch_filename": "25107.jpg"
+    },
+    {
+      "fabric_number": "25108",
+      "swatch_filename": "25108.jpg"
+    },
+    {
+      "fabric_number": "25109",
+      "swatch_filename": "25109.jpg"
+    },
+    {
+      "fabric_number": "25110",
+      "swatch_filename": "25110.jpg"
+    },
+    {
+      "fabric_number": "25111",
+      "swatch_filename": "25111.jpg"
+    },
+    {
+      "fabric_number": "25112",
+      "swatch_filename": "25112.jpg"
+    },
+    {
+      "fabric_number": "25113",
+      "swatch_filename": "25113.jpg"
+    },
+    {
+      "fabric_number": "25114",
+      "swatch_filename": "25114.jpg"
+    },
+    {
+      "fabric_number": "25115",
+      "swatch_filename": "25115.jpg"
+    },
+    {
+      "fabric_number": "25116",
+      "swatch_filename": "25116.jpg"
+    },
+    {
+      "fabric_number": "25117",
+      "swatch_filename": "25117.jpg"
+    },
+    {
+      "fabric_number": "25118",
+      "swatch_filename": "25118.jpg"
+    },
+    {
+      "fabric_number": "25119",
+      "swatch_filename": "25119.jpg"
+    },
+    {
+      "fabric_number": "25120",
+      "swatch_filename": "25120.jpg"
+    },
+    {
+      "fabric_number": "25121",
+      "swatch_filename": "25121.jpg"
+    },
+    {
+      "fabric_number": "25122",
+      "swatch_filename": "25122.jpg"
+    },
+    {
+      "fabric_number": "25123",
+      "swatch_filename": "25123.jpg"
+    },
+    {
+      "fabric_number": "25124",
+      "swatch_filename": "25124.jpg"
+    },
+    {
+      "fabric_number": "25125",
+      "swatch_filename": "25125.jpg"
+    },
+    {
+      "fabric_number": "25126",
+      "swatch_filename": "25126.jpg"
+    },
+    {
+      "fabric_number": "25127",
+      "swatch_filename": "25127.jpg"
+    },
+    {
+      "fabric_number": "25128",
+      "swatch_filename": "25128.jpg"
+    },
+    {
+      "fabric_number": "25129",
+      "swatch_filename": "25129.jpg"
+    },
+    {
+      "fabric_number": "25130",
+      "swatch_filename": "25130.jpg"
+    },
+    {
+      "fabric_number": "25131",
+      "swatch_filename": "25131.jpg"
+    },
+    {
+      "fabric_number": "25132",
+      "swatch_filename": "25132.jpg"
+    },
+    {
+      "fabric_number": "25133",
+      "swatch_filename": "25133.jpg"
+    },
+    {
+      "fabric_number": "25134",
+      "swatch_filename": "25134.jpg"
+    },
+    {
+      "fabric_number": "25135",
+      "swatch_filename": "25135.jpg"
+    },
+    {
+      "fabric_number": "25136",
+      "swatch_filename": "25136.jpg"
+    },
+    {
+      "fabric_number": "25137",
+      "swatch_filename": "25137.jpg"
+    },
+    {
+      "fabric_number": "25138",
+      "swatch_filename": "25138.jpg"
+    },
+    {
+      "fabric_number": "25139",
+      "swatch_filename": "25139.jpg"
+    },
+    {
+      "fabric_number": "25140",
+      "swatch_filename": "25140.jpg"
+    },
+    {
+      "fabric_number": "25141",
+      "swatch_filename": "25141.jpg"
+    },
+    {
+      "fabric_number": "25142",
+      "swatch_filename": "25142.jpg"
+    },
+    {
+      "fabric_number": "25143",
+      "swatch_filename": "25143.jpg"
+    },
+    {
+      "fabric_number": "25144",
+      "swatch_filename": "25144.jpg"
+    },
+    {
+      "fabric_number": "25145",
+      "swatch_filename": "25145.jpg"
+    },
+    {
+      "fabric_number": "25146",
+      "swatch_filename": "25146.jpg"
+    },
+    {
+      "fabric_number": "25147",
+      "swatch_filename": "25147.jpg"
+    },
+    {
+      "fabric_number": "25148",
+      "swatch_filename": "25148.jpg"
+    },
+    {
+      "fabric_number": "25149",
+      "swatch_filename": "25149.jpg"
+    },
+    {
+      "fabric_number": "25150",
+      "swatch_filename": "25150.jpg"
+    },
+    {
+      "fabric_number": "25151",
+      "swatch_filename": "25151.jpg"
+    },
+    {
+      "fabric_number": "25152",
+      "swatch_filename": "25152.jpg"
+    },
+    {
+      "fabric_number": "25153",
+      "swatch_filename": "25153.jpg"
+    },
+    {
+      "fabric_number": "25154",
+      "swatch_filename": "25154.jpg"
     },
     {
       "fabric_number": "26101",
@@ -98,6 +2546,10 @@
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-plf9-20230414-resa2_259002.jpg"
     },
     {
+      "fabric_number": "26103",
+      "swatch_filename": "26103.jpg"
+    },
+    {
       "fabric_number": "26104",
       "swatch_filename": "26104.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-hpzf-20230414-tessuto_259004.jpg",
@@ -110,10 +2562,22 @@
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-hdn0-20230414-resa2_259005.jpg"
     },
     {
+      "fabric_number": "26106",
+      "swatch_filename": "26106.jpg"
+    },
+    {
+      "fabric_number": "26107",
+      "swatch_filename": "26107.jpg"
+    },
+    {
       "fabric_number": "26108",
       "swatch_filename": "26108.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-dc1y-20230414-tessuto_259008.jpg",
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-paeo-20230414-resa2_259008.jpg"
+    },
+    {
+      "fabric_number": "26109",
+      "swatch_filename": "26109.jpg"
     },
     {
       "fabric_number": "26110",
@@ -140,10 +2604,94 @@
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-uasu-20220909-resa2_25402.jpg"
     },
     {
+      "fabric_number": "26114",
+      "swatch_filename": "26114.jpg"
+    },
+    {
+      "fabric_number": "26115",
+      "swatch_filename": "26115.jpg"
+    },
+    {
+      "fabric_number": "26116",
+      "swatch_filename": "26116.jpg"
+    },
+    {
+      "fabric_number": "26117",
+      "swatch_filename": "26117.jpg"
+    },
+    {
+      "fabric_number": "26118",
+      "swatch_filename": "26118.jpg"
+    },
+    {
+      "fabric_number": "26119",
+      "swatch_filename": "26119.jpg"
+    },
+    {
+      "fabric_number": "26120",
+      "swatch_filename": "26120.jpg"
+    },
+    {
+      "fabric_number": "26121",
+      "swatch_filename": "26121.jpg"
+    },
+    {
+      "fabric_number": "26122",
+      "swatch_filename": "26122.jpg"
+    },
+    {
+      "fabric_number": "26123",
+      "swatch_filename": "26123.jpg"
+    },
+    {
+      "fabric_number": "26124",
+      "swatch_filename": "26124.jpg"
+    },
+    {
+      "fabric_number": "26125",
+      "swatch_filename": "26125.jpg"
+    },
+    {
+      "fabric_number": "26126",
+      "swatch_filename": "26126.jpg"
+    },
+    {
+      "fabric_number": "26127",
+      "swatch_filename": "26127.jpg"
+    },
+    {
+      "fabric_number": "26128",
+      "swatch_filename": "26128.jpg"
+    },
+    {
+      "fabric_number": "26129",
+      "swatch_filename": "26129.jpg"
+    },
+    {
       "fabric_number": "26130",
       "swatch_filename": "26130.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-azqc-20220909-tessuto_25413.jpg",
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-i6zy-20220909-resa2_25413.jpg"
+    },
+    {
+      "fabric_number": "26131",
+      "swatch_filename": "26131.jpg"
+    },
+    {
+      "fabric_number": "26132",
+      "swatch_filename": "26132.jpg"
+    },
+    {
+      "fabric_number": "26133",
+      "swatch_filename": "26133.jpg"
+    },
+    {
+      "fabric_number": "26134",
+      "swatch_filename": "26134.jpg"
+    },
+    {
+      "fabric_number": "26135",
+      "swatch_filename": "26135.jpg"
     },
     {
       "fabric_number": "26136",
@@ -152,10 +2700,798 @@
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-vvo2-20220909-resa2_25410.jpg"
     },
     {
+      "fabric_number": "26137",
+      "swatch_filename": "26137.jpg"
+    },
+    {
+      "fabric_number": "26138",
+      "swatch_filename": "26138.jpg"
+    },
+    {
+      "fabric_number": "26139",
+      "swatch_filename": "26139.jpg"
+    },
+    {
+      "fabric_number": "26140",
+      "swatch_filename": "26140.jpg"
+    },
+    {
+      "fabric_number": "26141",
+      "swatch_filename": "26141.jpg"
+    },
+    {
+      "fabric_number": "26142",
+      "swatch_filename": "26142.jpg"
+    },
+    {
+      "fabric_number": "26143",
+      "swatch_filename": "26143.jpg"
+    },
+    {
+      "fabric_number": "26144",
+      "swatch_filename": "26144.jpg"
+    },
+    {
+      "fabric_number": "26145",
+      "swatch_filename": "26145.jpg"
+    },
+    {
+      "fabric_number": "26146",
+      "swatch_filename": "26146.jpg"
+    },
+    {
+      "fabric_number": "26147",
+      "swatch_filename": "26147.jpg"
+    },
+    {
+      "fabric_number": "26148",
+      "swatch_filename": "26148.jpg"
+    },
+    {
+      "fabric_number": "26149",
+      "swatch_filename": "26149.jpg"
+    },
+    {
+      "fabric_number": "26150",
+      "swatch_filename": "26150.jpg"
+    },
+    {
+      "fabric_number": "26151",
+      "swatch_filename": "26151.jpg"
+    },
+    {
+      "fabric_number": "26152",
+      "swatch_filename": "26152.jpg"
+    },
+    {
+      "fabric_number": "26153",
+      "swatch_filename": "26153.jpg"
+    },
+    {
+      "fabric_number": "26154",
+      "swatch_filename": "26154.jpg"
+    },
+    {
+      "fabric_number": "26155",
+      "swatch_filename": "26155.jpg"
+    },
+    {
+      "fabric_number": "26156",
+      "swatch_filename": "26156.jpg"
+    },
+    {
+      "fabric_number": "26157",
+      "swatch_filename": "26157.jpg"
+    },
+    {
+      "fabric_number": "26158",
+      "swatch_filename": "26158.jpg"
+    },
+    {
+      "fabric_number": "26159",
+      "swatch_filename": "26159.jpg"
+    },
+    {
+      "fabric_number": "26160",
+      "swatch_filename": "26160.jpg"
+    },
+    {
+      "fabric_number": "26161",
+      "swatch_filename": "26161.jpg"
+    },
+    {
+      "fabric_number": "26162",
+      "swatch_filename": "26162.jpg"
+    },
+    {
+      "fabric_number": "26163",
+      "swatch_filename": "26163.jpg"
+    },
+    {
+      "fabric_number": "26164",
+      "swatch_filename": "26164.jpg"
+    },
+    {
+      "fabric_number": "26165",
+      "swatch_filename": "26165.jpg"
+    },
+    {
+      "fabric_number": "26166",
+      "swatch_filename": "26166.jpg"
+    },
+    {
+      "fabric_number": "26167",
+      "swatch_filename": "26167.jpg"
+    },
+    {
+      "fabric_number": "26168",
+      "swatch_filename": "26168.jpg"
+    },
+    {
+      "fabric_number": "26169",
+      "swatch_filename": "26169.jpg"
+    },
+    {
+      "fabric_number": "26170",
+      "swatch_filename": "26170.jpg"
+    },
+    {
+      "fabric_number": "27000",
+      "swatch_filename": "27000.jpg"
+    },
+    {
+      "fabric_number": "27001",
+      "swatch_filename": "27001.jpg"
+    },
+    {
+      "fabric_number": "27002",
+      "swatch_filename": "27002.jpg"
+    },
+    {
+      "fabric_number": "27003",
+      "swatch_filename": "27003.jpg"
+    },
+    {
+      "fabric_number": "27004",
+      "swatch_filename": "27004.jpg"
+    },
+    {
+      "fabric_number": "27005",
+      "swatch_filename": "27005.jpg"
+    },
+    {
+      "fabric_number": "27006",
+      "swatch_filename": "27006.jpg"
+    },
+    {
+      "fabric_number": "27007",
+      "swatch_filename": "27007.jpg"
+    },
+    {
+      "fabric_number": "27008",
+      "swatch_filename": "27008.jpg"
+    },
+    {
+      "fabric_number": "27009",
+      "swatch_filename": "27009.jpg"
+    },
+    {
+      "fabric_number": "27010",
+      "swatch_filename": "27010.jpg"
+    },
+    {
+      "fabric_number": "27011",
+      "swatch_filename": "27011.jpg"
+    },
+    {
+      "fabric_number": "27012",
+      "swatch_filename": "27012.jpg"
+    },
+    {
+      "fabric_number": "27013",
+      "swatch_filename": "27013.jpg"
+    },
+    {
+      "fabric_number": "27014",
+      "swatch_filename": "27014.jpg"
+    },
+    {
+      "fabric_number": "27015",
+      "swatch_filename": "27015.jpg"
+    },
+    {
+      "fabric_number": "27016",
+      "swatch_filename": "27016.jpg"
+    },
+    {
+      "fabric_number": "27017",
+      "swatch_filename": "27017.jpg"
+    },
+    {
+      "fabric_number": "27018",
+      "swatch_filename": "27018.jpg"
+    },
+    {
+      "fabric_number": "27019",
+      "swatch_filename": "27019.jpg"
+    },
+    {
+      "fabric_number": "27020",
+      "swatch_filename": "27020.jpg"
+    },
+    {
+      "fabric_number": "27021",
+      "swatch_filename": "27021.jpg"
+    },
+    {
+      "fabric_number": "27022",
+      "swatch_filename": "27022.jpg"
+    },
+    {
+      "fabric_number": "27023",
+      "swatch_filename": "27023.jpg"
+    },
+    {
+      "fabric_number": "27024",
+      "swatch_filename": "27024.jpg"
+    },
+    {
+      "fabric_number": "27025",
+      "swatch_filename": "27025.jpg"
+    },
+    {
+      "fabric_number": "27026",
+      "swatch_filename": "27026.jpg"
+    },
+    {
+      "fabric_number": "27027",
+      "swatch_filename": "27027.jpg"
+    },
+    {
+      "fabric_number": "27028",
+      "swatch_filename": "27028.jpg"
+    },
+    {
+      "fabric_number": "27029",
+      "swatch_filename": "27029.jpg"
+    },
+    {
+      "fabric_number": "27030",
+      "swatch_filename": "27030.jpg"
+    },
+    {
+      "fabric_number": "27031",
+      "swatch_filename": "27031.jpg"
+    },
+    {
+      "fabric_number": "27032",
+      "swatch_filename": "27032.jpg"
+    },
+    {
+      "fabric_number": "27033",
+      "swatch_filename": "27033.jpg"
+    },
+    {
+      "fabric_number": "27034",
+      "swatch_filename": "27034.jpg"
+    },
+    {
+      "fabric_number": "27035",
+      "swatch_filename": "27035.jpg"
+    },
+    {
+      "fabric_number": "27036",
+      "swatch_filename": "27036.jpg"
+    },
+    {
+      "fabric_number": "30101",
+      "swatch_filename": "30101.jpg"
+    },
+    {
+      "fabric_number": "30102",
+      "swatch_filename": "30102.jpg"
+    },
+    {
+      "fabric_number": "30103",
+      "swatch_filename": "30103.jpg"
+    },
+    {
+      "fabric_number": "30104",
+      "swatch_filename": "30104.jpg"
+    },
+    {
+      "fabric_number": "30105",
+      "swatch_filename": "30105.jpg"
+    },
+    {
+      "fabric_number": "30106",
+      "swatch_filename": "30106.jpg"
+    },
+    {
+      "fabric_number": "30107",
+      "swatch_filename": "30107.jpg"
+    },
+    {
+      "fabric_number": "30108",
+      "swatch_filename": "30108.jpg"
+    },
+    {
+      "fabric_number": "30109",
+      "swatch_filename": "30109.jpg"
+    },
+    {
+      "fabric_number": "30110",
+      "swatch_filename": "30110.jpg"
+    },
+    {
+      "fabric_number": "30111",
+      "swatch_filename": "30111.jpg"
+    },
+    {
+      "fabric_number": "30112",
+      "swatch_filename": "30112.jpg"
+    },
+    {
+      "fabric_number": "30113",
+      "swatch_filename": "30113.jpg"
+    },
+    {
+      "fabric_number": "30114",
+      "swatch_filename": "30114.jpg"
+    },
+    {
+      "fabric_number": "30115",
+      "swatch_filename": "30115.jpg"
+    },
+    {
+      "fabric_number": "30116",
+      "swatch_filename": "30116.jpg"
+    },
+    {
+      "fabric_number": "30117",
+      "swatch_filename": "30117.jpg"
+    },
+    {
+      "fabric_number": "30118",
+      "swatch_filename": "30118.jpg"
+    },
+    {
+      "fabric_number": "30119",
+      "swatch_filename": "30119.jpg"
+    },
+    {
+      "fabric_number": "30120",
+      "swatch_filename": "30120.jpg"
+    },
+    {
+      "fabric_number": "30121",
+      "swatch_filename": "30121.jpg"
+    },
+    {
+      "fabric_number": "30122",
+      "swatch_filename": "30122.jpg"
+    },
+    {
+      "fabric_number": "30123",
+      "swatch_filename": "30123.jpg"
+    },
+    {
+      "fabric_number": "30124",
+      "swatch_filename": "30124.jpg"
+    },
+    {
+      "fabric_number": "30125",
+      "swatch_filename": "30125.jpg"
+    },
+    {
+      "fabric_number": "30126",
+      "swatch_filename": "30126.jpg"
+    },
+    {
+      "fabric_number": "30127",
+      "swatch_filename": "30127.jpg"
+    },
+    {
+      "fabric_number": "30128",
+      "swatch_filename": "30128.jpg"
+    },
+    {
+      "fabric_number": "30129",
+      "swatch_filename": "30129.jpg"
+    },
+    {
+      "fabric_number": "30130",
+      "swatch_filename": "30130.jpg"
+    },
+    {
+      "fabric_number": "30131",
+      "swatch_filename": "30131.jpg"
+    },
+    {
+      "fabric_number": "30132",
+      "swatch_filename": "30132.jpg"
+    },
+    {
+      "fabric_number": "30133",
+      "swatch_filename": "30133.jpg"
+    },
+    {
+      "fabric_number": "30134",
+      "swatch_filename": "30134.jpg"
+    },
+    {
+      "fabric_number": "30135",
+      "swatch_filename": "30135.jpg"
+    },
+    {
+      "fabric_number": "30136",
+      "swatch_filename": "30136.jpg"
+    },
+    {
+      "fabric_number": "30137",
+      "swatch_filename": "30137.jpg"
+    },
+    {
+      "fabric_number": "30138",
+      "swatch_filename": "30138.jpg"
+    },
+    {
+      "fabric_number": "30139",
+      "swatch_filename": "30139.jpg"
+    },
+    {
+      "fabric_number": "30140",
+      "swatch_filename": "30140.jpg"
+    },
+    {
+      "fabric_number": "30141",
+      "swatch_filename": "30141.jpg"
+    },
+    {
+      "fabric_number": "30142",
+      "swatch_filename": "30142.jpg"
+    },
+    {
+      "fabric_number": "30143",
+      "swatch_filename": "30143.jpg"
+    },
+    {
+      "fabric_number": "30144",
+      "swatch_filename": "30144.jpg"
+    },
+    {
+      "fabric_number": "30145",
+      "swatch_filename": "30145.jpg"
+    },
+    {
+      "fabric_number": "30146",
+      "swatch_filename": "30146.jpg"
+    },
+    {
+      "fabric_number": "30147",
+      "swatch_filename": "30147.jpg"
+    },
+    {
+      "fabric_number": "30148",
+      "swatch_filename": "30148.jpg"
+    },
+    {
+      "fabric_number": "30149",
+      "swatch_filename": "30149.jpg"
+    },
+    {
+      "fabric_number": "30150",
+      "swatch_filename": "30150.jpg"
+    },
+    {
+      "fabric_number": "30151",
+      "swatch_filename": "30151.jpg"
+    },
+    {
+      "fabric_number": "30152",
+      "swatch_filename": "30152.jpg"
+    },
+    {
+      "fabric_number": "30153",
+      "swatch_filename": "30153.jpg"
+    },
+    {
+      "fabric_number": "30154",
+      "swatch_filename": "30154.jpg"
+    },
+    {
+      "fabric_number": "30155",
+      "swatch_filename": "30155.jpg"
+    },
+    {
+      "fabric_number": "30156",
+      "swatch_filename": "30156.jpg"
+    },
+    {
+      "fabric_number": "30157",
+      "swatch_filename": "30157.jpg"
+    },
+    {
+      "fabric_number": "30158",
+      "swatch_filename": "30158.jpg"
+    },
+    {
+      "fabric_number": "30159",
+      "swatch_filename": "30159.jpg"
+    },
+    {
+      "fabric_number": "30160",
+      "swatch_filename": "30160.jpg"
+    },
+    {
+      "fabric_number": "30161",
+      "swatch_filename": "30161.jpg"
+    },
+    {
+      "fabric_number": "30162",
+      "swatch_filename": "30162.jpg"
+    },
+    {
+      "fabric_number": "30163",
+      "swatch_filename": "30163.jpg"
+    },
+    {
+      "fabric_number": "30164",
+      "swatch_filename": "30164.jpg"
+    },
+    {
+      "fabric_number": "30165",
+      "swatch_filename": "30165.jpg"
+    },
+    {
+      "fabric_number": "30166",
+      "swatch_filename": "30166.jpg"
+    },
+    {
+      "fabric_number": "30167",
+      "swatch_filename": "30167.jpg"
+    },
+    {
+      "fabric_number": "30168",
+      "swatch_filename": "30168.jpg"
+    },
+    {
+      "fabric_number": "30169",
+      "swatch_filename": "30169.jpg"
+    },
+    {
+      "fabric_number": "30170",
+      "swatch_filename": "30170.jpg"
+    },
+    {
+      "fabric_number": "30171",
+      "swatch_filename": "30171.jpg"
+    },
+    {
+      "fabric_number": "30172",
+      "swatch_filename": "30172.jpg"
+    },
+    {
+      "fabric_number": "30173",
+      "swatch_filename": "30173.jpg"
+    },
+    {
+      "fabric_number": "30174",
+      "swatch_filename": "30174.jpg"
+    },
+    {
+      "fabric_number": "40101",
+      "swatch_filename": "40101.jpg"
+    },
+    {
+      "fabric_number": "40102",
+      "swatch_filename": "40102.jpg"
+    },
+    {
+      "fabric_number": "40103",
+      "swatch_filename": "40103.jpg"
+    },
+    {
+      "fabric_number": "40104",
+      "swatch_filename": "40104.jpg"
+    },
+    {
+      "fabric_number": "40105",
+      "swatch_filename": "40105.jpg"
+    },
+    {
+      "fabric_number": "40106",
+      "swatch_filename": "40106.jpg"
+    },
+    {
+      "fabric_number": "40107",
+      "swatch_filename": "40107.jpg"
+    },
+    {
+      "fabric_number": "40108",
+      "swatch_filename": "40108.jpg"
+    },
+    {
+      "fabric_number": "40109",
+      "swatch_filename": "40109.jpg"
+    },
+    {
+      "fabric_number": "40110",
+      "swatch_filename": "40110.jpg"
+    },
+    {
+      "fabric_number": "40111",
+      "swatch_filename": "40111.jpg"
+    },
+    {
+      "fabric_number": "40112",
+      "swatch_filename": "40112.jpg"
+    },
+    {
+      "fabric_number": "40113",
+      "swatch_filename": "40113.jpg"
+    },
+    {
+      "fabric_number": "40114",
+      "swatch_filename": "40114.jpg"
+    },
+    {
+      "fabric_number": "40115",
+      "swatch_filename": "40115.jpg"
+    },
+    {
+      "fabric_number": "40116",
+      "swatch_filename": "40116.jpg"
+    },
+    {
+      "fabric_number": "40117",
+      "swatch_filename": "40117.jpg"
+    },
+    {
+      "fabric_number": "40118",
+      "swatch_filename": "40118.jpg"
+    },
+    {
+      "fabric_number": "40119",
+      "swatch_filename": "40119.jpg"
+    },
+    {
       "fabric_number": "40120",
       "swatch_filename": "40120.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-yru6-20240829-tessuto_40120.jpg",
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-ngfz-20240829-resa2_40120.jpg"
+    },
+    {
+      "fabric_number": "40121",
+      "swatch_filename": "40121.jpg"
+    },
+    {
+      "fabric_number": "40122",
+      "swatch_filename": "40122.jpg"
+    },
+    {
+      "fabric_number": "40123",
+      "swatch_filename": "40123.jpg"
+    },
+    {
+      "fabric_number": "40124",
+      "swatch_filename": "40124.jpg"
+    },
+    {
+      "fabric_number": "40125",
+      "swatch_filename": "40125.jpg"
+    },
+    {
+      "fabric_number": "40126",
+      "swatch_filename": "40126.jpg"
+    },
+    {
+      "fabric_number": "40127",
+      "swatch_filename": "40127.jpg"
+    },
+    {
+      "fabric_number": "40128",
+      "swatch_filename": "40128.jpg"
+    },
+    {
+      "fabric_number": "40129",
+      "swatch_filename": "40129.jpg"
+    },
+    {
+      "fabric_number": "40130",
+      "swatch_filename": "40130.jpg"
+    },
+    {
+      "fabric_number": "40131",
+      "swatch_filename": "40131.jpg"
+    },
+    {
+      "fabric_number": "40132",
+      "swatch_filename": "40132.jpg"
+    },
+    {
+      "fabric_number": "40133",
+      "swatch_filename": "40133.jpg"
+    },
+    {
+      "fabric_number": "40134",
+      "swatch_filename": "40134.jpg"
+    },
+    {
+      "fabric_number": "40135",
+      "swatch_filename": "40135.jpg"
+    },
+    {
+      "fabric_number": "40136",
+      "swatch_filename": "40136.jpg"
+    },
+    {
+      "fabric_number": "40137",
+      "swatch_filename": "40137.jpg"
+    },
+    {
+      "fabric_number": "40138",
+      "swatch_filename": "40138.jpg"
+    },
+    {
+      "fabric_number": "40139",
+      "swatch_filename": "40139.jpg"
+    },
+    {
+      "fabric_number": "40140",
+      "swatch_filename": "40140.jpg"
+    },
+    {
+      "fabric_number": "40141",
+      "swatch_filename": "40141.jpg"
+    },
+    {
+      "fabric_number": "40142",
+      "swatch_filename": "40142.jpg"
+    },
+    {
+      "fabric_number": "40143",
+      "swatch_filename": "40143.jpg"
+    },
+    {
+      "fabric_number": "40144",
+      "swatch_filename": "40144.jpg"
+    },
+    {
+      "fabric_number": "40145",
+      "swatch_filename": "40145.jpg"
+    },
+    {
+      "fabric_number": "40146",
+      "swatch_filename": "40146.jpg"
+    },
+    {
+      "fabric_number": "40147",
+      "swatch_filename": "40147.jpg"
+    },
+    {
+      "fabric_number": "40148",
+      "swatch_filename": "40148.jpg"
+    },
+    {
+      "fabric_number": "40149",
+      "swatch_filename": "40149.jpg"
+    },
+    {
+      "fabric_number": "40150",
+      "swatch_filename": "40150.jpg"
+    },
+    {
+      "fabric_number": "40151",
+      "swatch_filename": "40151.jpg"
+    },
+    {
+      "fabric_number": "40152",
+      "swatch_filename": "40152.jpg"
+    },
+    {
+      "fabric_number": "40153",
+      "swatch_filename": "40153.jpg"
     },
     {
       "fabric_number": "40154",
@@ -164,16 +3500,184 @@
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-tavg-20240829-resa2_40154.jpg"
     },
     {
+      "fabric_number": "40155",
+      "swatch_filename": "40155.jpg"
+    },
+    {
+      "fabric_number": "40156",
+      "swatch_filename": "40156.jpg"
+    },
+    {
+      "fabric_number": "40157",
+      "swatch_filename": "40157.jpg"
+    },
+    {
+      "fabric_number": "40158",
+      "swatch_filename": "40158.jpg"
+    },
+    {
       "fabric_number": "40159",
       "swatch_filename": "40159.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-znht-20240829-tessuto_40159.jpg",
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-7lix-20240829-resa2_40159.jpg"
     },
     {
+      "fabric_number": "40160",
+      "swatch_filename": "40160.jpg"
+    },
+    {
+      "fabric_number": "50801",
+      "swatch_filename": "50801.jpg"
+    },
+    {
+      "fabric_number": "50802",
+      "swatch_filename": "50802.jpg"
+    },
+    {
       "fabric_number": "50803",
       "swatch_filename": "50803.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-7is2-20260130-tessuto_50803.jpg",
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-eumi-20260130-resa2_50803.jpg"
+    },
+    {
+      "fabric_number": "50804",
+      "swatch_filename": "50804.jpg"
+    },
+    {
+      "fabric_number": "50805",
+      "swatch_filename": "50805.jpg"
+    },
+    {
+      "fabric_number": "50806",
+      "swatch_filename": "50806.jpg"
+    },
+    {
+      "fabric_number": "50807",
+      "swatch_filename": "50807.jpg"
+    },
+    {
+      "fabric_number": "50808",
+      "swatch_filename": "50808.jpg"
+    },
+    {
+      "fabric_number": "50809",
+      "swatch_filename": "50809.jpg"
+    },
+    {
+      "fabric_number": "50810",
+      "swatch_filename": "50810.jpg"
+    },
+    {
+      "fabric_number": "50811",
+      "swatch_filename": "50811.jpg"
+    },
+    {
+      "fabric_number": "50812",
+      "swatch_filename": "50812.jpg"
+    },
+    {
+      "fabric_number": "50813",
+      "swatch_filename": "50813.jpg"
+    },
+    {
+      "fabric_number": "50814",
+      "swatch_filename": "50814.jpg"
+    },
+    {
+      "fabric_number": "50815",
+      "swatch_filename": "50815.jpg"
+    },
+    {
+      "fabric_number": "50816",
+      "swatch_filename": "50816.jpg"
+    },
+    {
+      "fabric_number": "50817",
+      "swatch_filename": "50817.jpg"
+    },
+    {
+      "fabric_number": "50818",
+      "swatch_filename": "50818.jpg"
+    },
+    {
+      "fabric_number": "50819",
+      "swatch_filename": "50819.jpg"
+    },
+    {
+      "fabric_number": "50820",
+      "swatch_filename": "50820.jpg"
+    },
+    {
+      "fabric_number": "50821",
+      "swatch_filename": "50821.jpg"
+    },
+    {
+      "fabric_number": "50822",
+      "swatch_filename": "50822.jpg"
+    },
+    {
+      "fabric_number": "50823",
+      "swatch_filename": "50823.jpg"
+    },
+    {
+      "fabric_number": "50824",
+      "swatch_filename": "50824.jpg"
+    },
+    {
+      "fabric_number": "50825",
+      "swatch_filename": "50825.jpg"
+    },
+    {
+      "fabric_number": "50826",
+      "swatch_filename": "50826.jpg"
+    },
+    {
+      "fabric_number": "50827",
+      "swatch_filename": "50827.jpg"
+    },
+    {
+      "fabric_number": "50828",
+      "swatch_filename": "50828.jpg"
+    },
+    {
+      "fabric_number": "50829",
+      "swatch_filename": "50829.jpg"
+    },
+    {
+      "fabric_number": "50830",
+      "swatch_filename": "50830.jpg"
+    },
+    {
+      "fabric_number": "50831",
+      "swatch_filename": "50831.jpg"
+    },
+    {
+      "fabric_number": "50832",
+      "swatch_filename": "50832.jpg"
+    },
+    {
+      "fabric_number": "50833",
+      "swatch_filename": "50833.jpg"
+    },
+    {
+      "fabric_number": "50834",
+      "swatch_filename": "50834.jpg"
+    },
+    {
+      "fabric_number": "50835",
+      "swatch_filename": "50835.jpg"
+    },
+    {
+      "fabric_number": "50836",
+      "swatch_filename": "50836.jpg"
+    },
+    {
+      "fabric_number": "50837",
+      "swatch_filename": "50837.jpg"
+    },
+    {
+      "fabric_number": "50838",
+      "swatch_filename": "50838.jpg"
     },
     {
       "fabric_number": "50839",
@@ -194,10 +3698,434 @@
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-vdjj-20230131-resa2_50393.jpg"
     },
     {
+      "fabric_number": "50842",
+      "swatch_filename": "50842.jpg"
+    },
+    {
+      "fabric_number": "50843",
+      "swatch_filename": "50843.jpg"
+    },
+    {
+      "fabric_number": "50844",
+      "swatch_filename": "50844.jpg"
+    },
+    {
+      "fabric_number": "50845",
+      "swatch_filename": "50845.jpg"
+    },
+    {
+      "fabric_number": "50846",
+      "swatch_filename": "50846.jpg"
+    },
+    {
+      "fabric_number": "50847",
+      "swatch_filename": "50847.jpg"
+    },
+    {
+      "fabric_number": "50848",
+      "swatch_filename": "50848.jpg"
+    },
+    {
+      "fabric_number": "50849",
+      "swatch_filename": "50849.jpg"
+    },
+    {
+      "fabric_number": "50850",
+      "swatch_filename": "50850.jpg"
+    },
+    {
+      "fabric_number": "50851",
+      "swatch_filename": "50851.jpg"
+    },
+    {
+      "fabric_number": "50852",
+      "swatch_filename": "50852.jpg"
+    },
+    {
+      "fabric_number": "50853",
+      "swatch_filename": "50853.jpg"
+    },
+    {
+      "fabric_number": "50854",
+      "swatch_filename": "50854.jpg"
+    },
+    {
+      "fabric_number": "50855",
+      "swatch_filename": "50855.jpg"
+    },
+    {
+      "fabric_number": "50856",
+      "swatch_filename": "50856.jpg"
+    },
+    {
+      "fabric_number": "50857",
+      "swatch_filename": "50857.jpg"
+    },
+    {
+      "fabric_number": "50858",
+      "swatch_filename": "50858.jpg"
+    },
+    {
+      "fabric_number": "50859",
+      "swatch_filename": "50859.jpg"
+    },
+    {
+      "fabric_number": "50860",
+      "swatch_filename": "50860.jpg"
+    },
+    {
+      "fabric_number": "50861",
+      "swatch_filename": "50861.jpg"
+    },
+    {
+      "fabric_number": "50862",
+      "swatch_filename": "50862.jpg"
+    },
+    {
+      "fabric_number": "50863",
+      "swatch_filename": "50863.jpg"
+    },
+    {
+      "fabric_number": "50864",
+      "swatch_filename": "50864.jpg"
+    },
+    {
+      "fabric_number": "50865",
+      "swatch_filename": "50865.jpg"
+    },
+    {
+      "fabric_number": "50866",
+      "swatch_filename": "50866.jpg"
+    },
+    {
+      "fabric_number": "50867",
+      "swatch_filename": "50867.jpg"
+    },
+    {
+      "fabric_number": "50868",
+      "swatch_filename": "50868.jpg"
+    },
+    {
+      "fabric_number": "50869",
+      "swatch_filename": "50869.jpg"
+    },
+    {
+      "fabric_number": "50870",
+      "swatch_filename": "50870.jpg"
+    },
+    {
+      "fabric_number": "50871",
+      "swatch_filename": "50871.jpg"
+    },
+    {
+      "fabric_number": "50872",
+      "swatch_filename": "50872.jpg"
+    },
+    {
+      "fabric_number": "50873",
+      "swatch_filename": "50873.jpg"
+    },
+    {
+      "fabric_number": "50874",
+      "swatch_filename": "50874.jpg"
+    },
+    {
+      "fabric_number": "50875",
+      "swatch_filename": "50875.jpg"
+    },
+    {
+      "fabric_number": "50876",
+      "swatch_filename": "50876.jpg"
+    },
+    {
+      "fabric_number": "50877",
+      "swatch_filename": "50877.jpg"
+    },
+    {
       "fabric_number": "50878",
       "swatch_filename": "50878.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-fmjb-20260130-tessuto_50878.jpg",
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-jukf-20260130-resa2_50878.jpg"
+    },
+    {
+      "fabric_number": "50879",
+      "swatch_filename": "50879.jpg"
+    },
+    {
+      "fabric_number": "50880",
+      "swatch_filename": "50880.jpg"
+    },
+    {
+      "fabric_number": "50881",
+      "swatch_filename": "50881.jpg"
+    },
+    {
+      "fabric_number": "50882",
+      "swatch_filename": "50882.jpg"
+    },
+    {
+      "fabric_number": "50883",
+      "swatch_filename": "50883.jpg"
+    },
+    {
+      "fabric_number": "50884",
+      "swatch_filename": "50884.jpg"
+    },
+    {
+      "fabric_number": "50885",
+      "swatch_filename": "50885.jpg"
+    },
+    {
+      "fabric_number": "50886",
+      "swatch_filename": "50886.jpg"
+    },
+    {
+      "fabric_number": "50887",
+      "swatch_filename": "50887.jpg"
+    },
+    {
+      "fabric_number": "50888",
+      "swatch_filename": "50888.jpg"
+    },
+    {
+      "fabric_number": "50889",
+      "swatch_filename": "50889.jpg"
+    },
+    {
+      "fabric_number": "50890",
+      "swatch_filename": "50890.jpg"
+    },
+    {
+      "fabric_number": "50891",
+      "swatch_filename": "50891.jpg"
+    },
+    {
+      "fabric_number": "50892",
+      "swatch_filename": "50892.jpg"
+    },
+    {
+      "fabric_number": "50893",
+      "swatch_filename": "50893.jpg"
+    },
+    {
+      "fabric_number": "50894",
+      "swatch_filename": "50894.jpg"
+    },
+    {
+      "fabric_number": "50895",
+      "swatch_filename": "50895.jpg"
+    },
+    {
+      "fabric_number": "50896",
+      "swatch_filename": "50896.jpg"
+    },
+    {
+      "fabric_number": "50897",
+      "swatch_filename": "50897.jpg"
+    },
+    {
+      "fabric_number": "50898",
+      "swatch_filename": "50898.jpg"
+    },
+    {
+      "fabric_number": "50899",
+      "swatch_filename": "50899.jpg"
+    },
+    {
+      "fabric_number": "50900",
+      "swatch_filename": "50900.jpg"
+    },
+    {
+      "fabric_number": "55106",
+      "swatch_filename": "55106.jpg"
+    },
+    {
+      "fabric_number": "55107",
+      "swatch_filename": "55107.jpg"
+    },
+    {
+      "fabric_number": "55108",
+      "swatch_filename": "55108.jpg"
+    },
+    {
+      "fabric_number": "55109",
+      "swatch_filename": "55109.jpg"
+    },
+    {
+      "fabric_number": "55110",
+      "swatch_filename": "55110.jpg"
+    },
+    {
+      "fabric_number": "55316",
+      "swatch_filename": "55316.jpg"
+    },
+    {
+      "fabric_number": "55317",
+      "swatch_filename": "55317.jpg"
+    },
+    {
+      "fabric_number": "55318",
+      "swatch_filename": "55318.jpg"
+    },
+    {
+      "fabric_number": "55319",
+      "swatch_filename": "55319.jpg"
+    },
+    {
+      "fabric_number": "55320",
+      "swatch_filename": "55320.jpg"
+    },
+    {
+      "fabric_number": "55421",
+      "swatch_filename": "55421.jpg"
+    },
+    {
+      "fabric_number": "55422",
+      "swatch_filename": "55422.jpg"
+    },
+    {
+      "fabric_number": "55423",
+      "swatch_filename": "55423.jpg"
+    },
+    {
+      "fabric_number": "55424",
+      "swatch_filename": "55424.jpg"
+    },
+    {
+      "fabric_number": "55425",
+      "swatch_filename": "55425.jpg"
+    },
+    {
+      "fabric_number": "55426",
+      "swatch_filename": "55426.jpg"
+    },
+    {
+      "fabric_number": "55427",
+      "swatch_filename": "55427.jpg"
+    },
+    {
+      "fabric_number": "55528",
+      "swatch_filename": "55528.jpg"
+    },
+    {
+      "fabric_number": "55529",
+      "swatch_filename": "55529.jpg"
+    },
+    {
+      "fabric_number": "55530",
+      "swatch_filename": "55530.jpg"
+    },
+    {
+      "fabric_number": "55531",
+      "swatch_filename": "55531.jpg"
+    },
+    {
+      "fabric_number": "55601",
+      "swatch_filename": "55601.jpg"
+    },
+    {
+      "fabric_number": "55602",
+      "swatch_filename": "55602.jpg"
+    },
+    {
+      "fabric_number": "55603",
+      "swatch_filename": "55603.jpg"
+    },
+    {
+      "fabric_number": "55604",
+      "swatch_filename": "55604.jpg"
+    },
+    {
+      "fabric_number": "55605",
+      "swatch_filename": "55605.jpg"
+    },
+    {
+      "fabric_number": "55606",
+      "swatch_filename": "55606.jpg"
+    },
+    {
+      "fabric_number": "55607",
+      "swatch_filename": "55607.jpg"
+    },
+    {
+      "fabric_number": "60001",
+      "swatch_filename": "60001.jpg"
+    },
+    {
+      "fabric_number": "60002",
+      "swatch_filename": "60002.jpg"
+    },
+    {
+      "fabric_number": "60003",
+      "swatch_filename": "60003.jpg"
+    },
+    {
+      "fabric_number": "60004",
+      "swatch_filename": "60004.jpg"
+    },
+    {
+      "fabric_number": "60005",
+      "swatch_filename": "60005.jpg"
+    },
+    {
+      "fabric_number": "60006",
+      "swatch_filename": "60006.jpg"
+    },
+    {
+      "fabric_number": "60007",
+      "swatch_filename": "60007.jpg"
+    },
+    {
+      "fabric_number": "60008",
+      "swatch_filename": "60008.jpg"
+    },
+    {
+      "fabric_number": "60009",
+      "swatch_filename": "60009.jpg"
+    },
+    {
+      "fabric_number": "60010",
+      "swatch_filename": "60010.jpg"
+    },
+    {
+      "fabric_number": "60011",
+      "swatch_filename": "60011.jpg"
+    },
+    {
+      "fabric_number": "60012",
+      "swatch_filename": "60012.jpg"
+    },
+    {
+      "fabric_number": "60013",
+      "swatch_filename": "60013.jpg"
+    },
+    {
+      "fabric_number": "60014",
+      "swatch_filename": "60014.jpg"
+    },
+    {
+      "fabric_number": "60015",
+      "swatch_filename": "60015.jpg"
+    },
+    {
+      "fabric_number": "60016",
+      "swatch_filename": "60016.jpg"
+    },
+    {
+      "fabric_number": "60017",
+      "swatch_filename": "60017.jpg"
+    },
+    {
+      "fabric_number": "60018",
+      "swatch_filename": "60018.jpg"
+    },
+    {
+      "fabric_number": "60019",
+      "swatch_filename": "60019.jpg"
+    },
+    {
+      "fabric_number": "60020",
+      "swatch_filename": "60020.jpg"
     },
     {
       "fabric_number": "60021",
@@ -206,10 +4134,590 @@
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-vt9o-20220909-resa2_60021.jpg"
     },
     {
+      "fabric_number": "60022",
+      "swatch_filename": "60022.jpg"
+    },
+    {
+      "fabric_number": "60023",
+      "swatch_filename": "60023.jpg"
+    },
+    {
+      "fabric_number": "60024",
+      "swatch_filename": "60024.jpg"
+    },
+    {
+      "fabric_number": "60025",
+      "swatch_filename": "60025.jpg"
+    },
+    {
+      "fabric_number": "60026",
+      "swatch_filename": "60026.jpg"
+    },
+    {
+      "fabric_number": "60027",
+      "swatch_filename": "60027.jpg"
+    },
+    {
+      "fabric_number": "60028",
+      "swatch_filename": "60028.jpg"
+    },
+    {
+      "fabric_number": "60029",
+      "swatch_filename": "60029.jpg"
+    },
+    {
+      "fabric_number": "60030",
+      "swatch_filename": "60030.jpg"
+    },
+    {
+      "fabric_number": "60031",
+      "swatch_filename": "60031.jpg"
+    },
+    {
+      "fabric_number": "60032",
+      "swatch_filename": "60032.jpg"
+    },
+    {
+      "fabric_number": "60033",
+      "swatch_filename": "60033.jpg"
+    },
+    {
+      "fabric_number": "60034",
+      "swatch_filename": "60034.jpg"
+    },
+    {
+      "fabric_number": "60035",
+      "swatch_filename": "60035.jpg"
+    },
+    {
+      "fabric_number": "60036",
+      "swatch_filename": "60036.jpg"
+    },
+    {
+      "fabric_number": "60037",
+      "swatch_filename": "60037.jpg"
+    },
+    {
+      "fabric_number": "60038",
+      "swatch_filename": "60038.jpg"
+    },
+    {
+      "fabric_number": "60039",
+      "swatch_filename": "60039.jpg"
+    },
+    {
+      "fabric_number": "60040",
+      "swatch_filename": "60040.jpg"
+    },
+    {
+      "fabric_number": "60041",
+      "swatch_filename": "60041.jpg"
+    },
+    {
+      "fabric_number": "60042",
+      "swatch_filename": "60042.jpg"
+    },
+    {
+      "fabric_number": "60043",
+      "swatch_filename": "60043.jpg"
+    },
+    {
+      "fabric_number": "60044",
+      "swatch_filename": "60044.jpg"
+    },
+    {
+      "fabric_number": "60045",
+      "swatch_filename": "60045.jpg"
+    },
+    {
+      "fabric_number": "60046",
+      "swatch_filename": "60046.jpg"
+    },
+    {
+      "fabric_number": "60047",
+      "swatch_filename": "60047.jpg"
+    },
+    {
+      "fabric_number": "60048",
+      "swatch_filename": "60048.jpg"
+    },
+    {
+      "fabric_number": "60049",
+      "swatch_filename": "60049.jpg"
+    },
+    {
+      "fabric_number": "60050",
+      "swatch_filename": "60050.jpg"
+    },
+    {
+      "fabric_number": "60051",
+      "swatch_filename": "60051.jpg"
+    },
+    {
+      "fabric_number": "60052",
+      "swatch_filename": "60052.jpg"
+    },
+    {
+      "fabric_number": "60053",
+      "swatch_filename": "60053.jpg"
+    },
+    {
+      "fabric_number": "60054",
+      "swatch_filename": "60054.jpg"
+    },
+    {
+      "fabric_number": "60055",
+      "swatch_filename": "60055.jpg"
+    },
+    {
+      "fabric_number": "60056",
+      "swatch_filename": "60056.jpg"
+    },
+    {
+      "fabric_number": "60057",
+      "swatch_filename": "60057.jpg"
+    },
+    {
+      "fabric_number": "60058",
+      "swatch_filename": "60058.jpg"
+    },
+    {
       "fabric_number": "60059",
       "swatch_filename": "60059.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-omkq-20220909-tessuto_60059.jpg",
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-m2vf-20220909-resa2_60059.jpg"
+    },
+    {
+      "fabric_number": "60060",
+      "swatch_filename": "60060.jpg"
+    },
+    {
+      "fabric_number": "60061",
+      "swatch_filename": "60061.jpg"
+    },
+    {
+      "fabric_number": "60062",
+      "swatch_filename": "60062.jpg"
+    },
+    {
+      "fabric_number": "60063",
+      "swatch_filename": "60063.jpg"
+    },
+    {
+      "fabric_number": "60064",
+      "swatch_filename": "60064.jpg"
+    },
+    {
+      "fabric_number": "60065",
+      "swatch_filename": "60065.jpg"
+    },
+    {
+      "fabric_number": "60066",
+      "swatch_filename": "60066.jpg"
+    },
+    {
+      "fabric_number": "60067",
+      "swatch_filename": "60067.jpg"
+    },
+    {
+      "fabric_number": "60068",
+      "swatch_filename": "60068.jpg"
+    },
+    {
+      "fabric_number": "60069",
+      "swatch_filename": "60069.jpg"
+    },
+    {
+      "fabric_number": "60070",
+      "swatch_filename": "60070.jpg"
+    },
+    {
+      "fabric_number": "60071",
+      "swatch_filename": "60071.jpg"
+    },
+    {
+      "fabric_number": "60072",
+      "swatch_filename": "60072.jpg"
+    },
+    {
+      "fabric_number": "60073",
+      "swatch_filename": "60073.jpg"
+    },
+    {
+      "fabric_number": "60074",
+      "swatch_filename": "60074.jpg"
+    },
+    {
+      "fabric_number": "60075",
+      "swatch_filename": "60075.jpg"
+    },
+    {
+      "fabric_number": "60076",
+      "swatch_filename": "60076.jpg"
+    },
+    {
+      "fabric_number": "60077",
+      "swatch_filename": "60077.jpg"
+    },
+    {
+      "fabric_number": "60078",
+      "swatch_filename": "60078.jpg"
+    },
+    {
+      "fabric_number": "60079",
+      "swatch_filename": "60079.jpg"
+    },
+    {
+      "fabric_number": "60080",
+      "swatch_filename": "60080.jpg"
+    },
+    {
+      "fabric_number": "60081",
+      "swatch_filename": "60081.jpg"
+    },
+    {
+      "fabric_number": "60082",
+      "swatch_filename": "60082.jpg"
+    },
+    {
+      "fabric_number": "60083",
+      "swatch_filename": "60083.jpg"
+    },
+    {
+      "fabric_number": "60084",
+      "swatch_filename": "60084.jpg"
+    },
+    {
+      "fabric_number": "60085",
+      "swatch_filename": "60085.jpg"
+    },
+    {
+      "fabric_number": "60086",
+      "swatch_filename": "60086.jpg"
+    },
+    {
+      "fabric_number": "60087",
+      "swatch_filename": "60087.jpg"
+    },
+    {
+      "fabric_number": "61001",
+      "swatch_filename": "61001.jpg"
+    },
+    {
+      "fabric_number": "61002",
+      "swatch_filename": "61002.jpg"
+    },
+    {
+      "fabric_number": "61003",
+      "swatch_filename": "61003.jpg"
+    },
+    {
+      "fabric_number": "61004",
+      "swatch_filename": "61004.jpg"
+    },
+    {
+      "fabric_number": "61005",
+      "swatch_filename": "61005.jpg"
+    },
+    {
+      "fabric_number": "61006",
+      "swatch_filename": "61006.jpg"
+    },
+    {
+      "fabric_number": "61007",
+      "swatch_filename": "61007.jpg"
+    },
+    {
+      "fabric_number": "61008",
+      "swatch_filename": "61008.jpg"
+    },
+    {
+      "fabric_number": "61009",
+      "swatch_filename": "61009.jpg"
+    },
+    {
+      "fabric_number": "61010",
+      "swatch_filename": "61010.jpg"
+    },
+    {
+      "fabric_number": "61011",
+      "swatch_filename": "61011.jpg"
+    },
+    {
+      "fabric_number": "61012",
+      "swatch_filename": "61012.jpg"
+    },
+    {
+      "fabric_number": "61013",
+      "swatch_filename": "61013.jpg"
+    },
+    {
+      "fabric_number": "61014",
+      "swatch_filename": "61014.jpg"
+    },
+    {
+      "fabric_number": "61015",
+      "swatch_filename": "61015.jpg"
+    },
+    {
+      "fabric_number": "61016",
+      "swatch_filename": "61016.jpg"
+    },
+    {
+      "fabric_number": "61017",
+      "swatch_filename": "61017.jpg"
+    },
+    {
+      "fabric_number": "61018",
+      "swatch_filename": "61018.jpg"
+    },
+    {
+      "fabric_number": "61019",
+      "swatch_filename": "61019.jpg"
+    },
+    {
+      "fabric_number": "61020",
+      "swatch_filename": "61020.jpg"
+    },
+    {
+      "fabric_number": "61021",
+      "swatch_filename": "61021.jpg"
+    },
+    {
+      "fabric_number": "61022",
+      "swatch_filename": "61022.jpg"
+    },
+    {
+      "fabric_number": "61023",
+      "swatch_filename": "61023.jpg"
+    },
+    {
+      "fabric_number": "61024",
+      "swatch_filename": "61024.jpg"
+    },
+    {
+      "fabric_number": "61025",
+      "swatch_filename": "61025.jpg"
+    },
+    {
+      "fabric_number": "61026",
+      "swatch_filename": "61026.jpg"
+    },
+    {
+      "fabric_number": "61027",
+      "swatch_filename": "61027.jpg"
+    },
+    {
+      "fabric_number": "61028",
+      "swatch_filename": "61028.jpg"
+    },
+    {
+      "fabric_number": "61029",
+      "swatch_filename": "61029.jpg"
+    },
+    {
+      "fabric_number": "61030",
+      "swatch_filename": "61030.jpg"
+    },
+    {
+      "fabric_number": "61031",
+      "swatch_filename": "61031.jpg"
+    },
+    {
+      "fabric_number": "61032",
+      "swatch_filename": "61032.jpg"
+    },
+    {
+      "fabric_number": "61033",
+      "swatch_filename": "61033.jpg"
+    },
+    {
+      "fabric_number": "61034",
+      "swatch_filename": "61034.jpg"
+    },
+    {
+      "fabric_number": "61035",
+      "swatch_filename": "61035.jpg"
+    },
+    {
+      "fabric_number": "61036",
+      "swatch_filename": "61036.jpg"
+    },
+    {
+      "fabric_number": "61037",
+      "swatch_filename": "61037.jpg"
+    },
+    {
+      "fabric_number": "61038",
+      "swatch_filename": "61038.jpg"
+    },
+    {
+      "fabric_number": "61039",
+      "swatch_filename": "61039.jpg"
+    },
+    {
+      "fabric_number": "61040",
+      "swatch_filename": "61040.jpg"
+    },
+    {
+      "fabric_number": "61041",
+      "swatch_filename": "61041.jpg"
+    },
+    {
+      "fabric_number": "61042",
+      "swatch_filename": "61042.jpg"
+    },
+    {
+      "fabric_number": "61043",
+      "swatch_filename": "61043.jpg"
+    },
+    {
+      "fabric_number": "61044",
+      "swatch_filename": "61044.jpg"
+    },
+    {
+      "fabric_number": "61045",
+      "swatch_filename": "61045.jpg"
+    },
+    {
+      "fabric_number": "61046",
+      "swatch_filename": "61046.jpg"
+    },
+    {
+      "fabric_number": "61047",
+      "swatch_filename": "61047.jpg"
+    },
+    {
+      "fabric_number": "61048",
+      "swatch_filename": "61048.jpg"
+    },
+    {
+      "fabric_number": "61049",
+      "swatch_filename": "61049.jpg"
+    },
+    {
+      "fabric_number": "61050",
+      "swatch_filename": "61050.jpg"
+    },
+    {
+      "fabric_number": "61051",
+      "swatch_filename": "61051.jpg"
+    },
+    {
+      "fabric_number": "61052",
+      "swatch_filename": "61052.jpg"
+    },
+    {
+      "fabric_number": "61053",
+      "swatch_filename": "61053.jpg"
+    },
+    {
+      "fabric_number": "61054",
+      "swatch_filename": "61054.jpg"
+    },
+    {
+      "fabric_number": "61055",
+      "swatch_filename": "61055.jpg"
+    },
+    {
+      "fabric_number": "61056",
+      "swatch_filename": "61056.jpg"
+    },
+    {
+      "fabric_number": "61057",
+      "swatch_filename": "61057.jpg"
+    },
+    {
+      "fabric_number": "61058",
+      "swatch_filename": "61058.jpg"
+    },
+    {
+      "fabric_number": "61059",
+      "swatch_filename": "61059.jpg"
+    },
+    {
+      "fabric_number": "61060",
+      "swatch_filename": "61060.jpg"
+    },
+    {
+      "fabric_number": "61061",
+      "swatch_filename": "61061.jpg"
+    },
+    {
+      "fabric_number": "61062",
+      "swatch_filename": "61062.jpg"
+    },
+    {
+      "fabric_number": "61063",
+      "swatch_filename": "61063.jpg"
+    },
+    {
+      "fabric_number": "65201",
+      "swatch_filename": "65201.jpg"
+    },
+    {
+      "fabric_number": "65202",
+      "swatch_filename": "65202.jpg"
+    },
+    {
+      "fabric_number": "65203",
+      "swatch_filename": "65203.jpg"
+    },
+    {
+      "fabric_number": "65204",
+      "swatch_filename": "65204.jpg"
+    },
+    {
+      "fabric_number": "65205",
+      "swatch_filename": "65205.jpg"
+    },
+    {
+      "fabric_number": "65206",
+      "swatch_filename": "65206.jpg"
+    },
+    {
+      "fabric_number": "65207",
+      "swatch_filename": "65207.jpg"
+    },
+    {
+      "fabric_number": "65208",
+      "swatch_filename": "65208.jpg"
+    },
+    {
+      "fabric_number": "65209",
+      "swatch_filename": "65209.jpg"
+    },
+    {
+      "fabric_number": "65210",
+      "swatch_filename": "65210.jpg"
+    },
+    {
+      "fabric_number": "65211",
+      "swatch_filename": "65211.jpg"
+    },
+    {
+      "fabric_number": "65212",
+      "swatch_filename": "65212.jpg"
+    },
+    {
+      "fabric_number": "65213",
+      "swatch_filename": "65213.jpg"
+    },
+    {
+      "fabric_number": "65214",
+      "swatch_filename": "65214.jpg"
+    },
+    {
+      "fabric_number": "65215",
+      "swatch_filename": "65215.jpg"
+    },
+    {
+      "fabric_number": "65216",
+      "swatch_filename": "65216.jpg"
+    },
+    {
+      "fabric_number": "65217",
+      "swatch_filename": "65217.jpg"
     },
     {
       "fabric_number": "65218",
@@ -218,10 +4726,58 @@
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-s9xx-20250901-resa2_65218.jpg"
     },
     {
+      "fabric_number": "65219",
+      "swatch_filename": "65219.jpg"
+    },
+    {
+      "fabric_number": "65220",
+      "swatch_filename": "65220.jpg"
+    },
+    {
+      "fabric_number": "65221",
+      "swatch_filename": "65221.jpg"
+    },
+    {
+      "fabric_number": "65222",
+      "swatch_filename": "65222.jpg"
+    },
+    {
+      "fabric_number": "65223",
+      "swatch_filename": "65223.jpg"
+    },
+    {
+      "fabric_number": "65224",
+      "swatch_filename": "65224.jpg"
+    },
+    {
+      "fabric_number": "65225",
+      "swatch_filename": "65225.jpg"
+    },
+    {
+      "fabric_number": "65226",
+      "swatch_filename": "65226.jpg"
+    },
+    {
+      "fabric_number": "65227",
+      "swatch_filename": "65227.jpg"
+    },
+    {
+      "fabric_number": "65228",
+      "swatch_filename": "65228.jpg"
+    },
+    {
       "fabric_number": "65229",
       "swatch_filename": "65229.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-6dyt-20250901-tessuto_65229.jpg",
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-gra0-20250901-resa2_65229.jpg"
+    },
+    {
+      "fabric_number": "65230",
+      "swatch_filename": "65230.jpg"
+    },
+    {
+      "fabric_number": "65231",
+      "swatch_filename": "65231.jpg"
     },
     {
       "fabric_number": "65232",
@@ -230,10 +4786,338 @@
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-0z2o-20250901-resa2_65232.jpg"
     },
     {
+      "fabric_number": "65233",
+      "swatch_filename": "65233.jpg"
+    },
+    {
+      "fabric_number": "65234",
+      "swatch_filename": "65234.jpg"
+    },
+    {
+      "fabric_number": "65235",
+      "swatch_filename": "65235.jpg"
+    },
+    {
+      "fabric_number": "65236",
+      "swatch_filename": "65236.jpg"
+    },
+    {
+      "fabric_number": "65237",
+      "swatch_filename": "65237.jpg"
+    },
+    {
+      "fabric_number": "65238",
+      "swatch_filename": "65238.jpg"
+    },
+    {
+      "fabric_number": "65239",
+      "swatch_filename": "65239.jpg"
+    },
+    {
+      "fabric_number": "65240",
+      "swatch_filename": "65240.jpg"
+    },
+    {
+      "fabric_number": "65241",
+      "swatch_filename": "65241.jpg"
+    },
+    {
+      "fabric_number": "65242",
+      "swatch_filename": "65242.jpg"
+    },
+    {
+      "fabric_number": "65243",
+      "swatch_filename": "65243.jpg"
+    },
+    {
+      "fabric_number": "65244",
+      "swatch_filename": "65244.jpg"
+    },
+    {
+      "fabric_number": "65245",
+      "swatch_filename": "65245.jpg"
+    },
+    {
+      "fabric_number": "65246",
+      "swatch_filename": "65246.jpg"
+    },
+    {
+      "fabric_number": "65247",
+      "swatch_filename": "65247.jpg"
+    },
+    {
+      "fabric_number": "65248",
+      "swatch_filename": "65248.jpg"
+    },
+    {
+      "fabric_number": "65249",
+      "swatch_filename": "65249.jpg"
+    },
+    {
+      "fabric_number": "65250",
+      "swatch_filename": "65250.jpg"
+    },
+    {
+      "fabric_number": "65251",
+      "swatch_filename": "65251.jpg"
+    },
+    {
+      "fabric_number": "65252",
+      "swatch_filename": "65252.jpg"
+    },
+    {
+      "fabric_number": "65253",
+      "swatch_filename": "65253.jpg"
+    },
+    {
+      "fabric_number": "65254",
+      "swatch_filename": "65254.jpg"
+    },
+    {
+      "fabric_number": "65255",
+      "swatch_filename": "65255.jpg"
+    },
+    {
+      "fabric_number": "65256",
+      "swatch_filename": "65256.jpg"
+    },
+    {
+      "fabric_number": "65257",
+      "swatch_filename": "65257.jpg"
+    },
+    {
+      "fabric_number": "65258",
+      "swatch_filename": "65258.jpg"
+    },
+    {
+      "fabric_number": "65259",
+      "swatch_filename": "65259.jpg"
+    },
+    {
+      "fabric_number": "65260",
+      "swatch_filename": "65260.jpg"
+    },
+    {
+      "fabric_number": "65261",
+      "swatch_filename": "65261.jpg"
+    },
+    {
+      "fabric_number": "65262",
+      "swatch_filename": "65262.jpg"
+    },
+    {
+      "fabric_number": "65263",
+      "swatch_filename": "65263.jpg"
+    },
+    {
+      "fabric_number": "65264",
+      "swatch_filename": "65264.jpg"
+    },
+    {
+      "fabric_number": "65265",
+      "swatch_filename": "65265.jpg"
+    },
+    {
+      "fabric_number": "65266",
+      "swatch_filename": "65266.jpg"
+    },
+    {
+      "fabric_number": "65267",
+      "swatch_filename": "65267.jpg"
+    },
+    {
+      "fabric_number": "65268",
+      "swatch_filename": "65268.jpg"
+    },
+    {
+      "fabric_number": "65269",
+      "swatch_filename": "65269.jpg"
+    },
+    {
+      "fabric_number": "65270",
+      "swatch_filename": "65270.jpg"
+    },
+    {
+      "fabric_number": "65271",
+      "swatch_filename": "65271.jpg"
+    },
+    {
+      "fabric_number": "65272",
+      "swatch_filename": "65272.jpg"
+    },
+    {
+      "fabric_number": "65273",
+      "swatch_filename": "65273.jpg"
+    },
+    {
+      "fabric_number": "65274",
+      "swatch_filename": "65274.jpg"
+    },
+    {
+      "fabric_number": "65275",
+      "swatch_filename": "65275.jpg"
+    },
+    {
+      "fabric_number": "65276",
+      "swatch_filename": "65276.jpg"
+    },
+    {
+      "fabric_number": "65277",
+      "swatch_filename": "65277.jpg"
+    },
+    {
+      "fabric_number": "65278",
+      "swatch_filename": "65278.jpg"
+    },
+    {
+      "fabric_number": "65279",
+      "swatch_filename": "65279.jpg"
+    },
+    {
+      "fabric_number": "65280",
+      "swatch_filename": "65280.jpg"
+    },
+    {
+      "fabric_number": "65281",
+      "swatch_filename": "65281.jpg"
+    },
+    {
+      "fabric_number": "65282",
+      "swatch_filename": "65282.jpg"
+    },
+    {
+      "fabric_number": "70101",
+      "swatch_filename": "70101.jpg"
+    },
+    {
+      "fabric_number": "70102",
+      "swatch_filename": "70102.jpg"
+    },
+    {
+      "fabric_number": "70103",
+      "swatch_filename": "70103.jpg"
+    },
+    {
+      "fabric_number": "70104",
+      "swatch_filename": "70104.jpg"
+    },
+    {
       "fabric_number": "70105",
       "swatch_filename": "70105.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-cv0z-20220909-tessuto_70046.jpg",
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-q8js-20220909-resa2_70046.jpg"
+    },
+    {
+      "fabric_number": "70106",
+      "swatch_filename": "70106.jpg"
+    },
+    {
+      "fabric_number": "70107",
+      "swatch_filename": "70107.jpg"
+    },
+    {
+      "fabric_number": "70108",
+      "swatch_filename": "70108.jpg"
+    },
+    {
+      "fabric_number": "70109",
+      "swatch_filename": "70109.jpg"
+    },
+    {
+      "fabric_number": "70110",
+      "swatch_filename": "70110.jpg"
+    },
+    {
+      "fabric_number": "70111",
+      "swatch_filename": "70111.jpg"
+    },
+    {
+      "fabric_number": "70112",
+      "swatch_filename": "70112.jpg"
+    },
+    {
+      "fabric_number": "70113",
+      "swatch_filename": "70113.jpg"
+    },
+    {
+      "fabric_number": "70114",
+      "swatch_filename": "70114.jpg"
+    },
+    {
+      "fabric_number": "70119",
+      "swatch_filename": "70119.jpg"
+    },
+    {
+      "fabric_number": "70120",
+      "swatch_filename": "70120.jpg"
+    },
+    {
+      "fabric_number": "70121",
+      "swatch_filename": "70121.jpg"
+    },
+    {
+      "fabric_number": "70122",
+      "swatch_filename": "70122.jpg"
+    },
+    {
+      "fabric_number": "70123",
+      "swatch_filename": "70123.jpg"
+    },
+    {
+      "fabric_number": "70124",
+      "swatch_filename": "70124.jpg"
+    },
+    {
+      "fabric_number": "70125",
+      "swatch_filename": "70125.jpg"
+    },
+    {
+      "fabric_number": "70126",
+      "swatch_filename": "70126.jpg"
+    },
+    {
+      "fabric_number": "70127",
+      "swatch_filename": "70127.jpg"
+    },
+    {
+      "fabric_number": "70128",
+      "swatch_filename": "70128.jpg"
+    },
+    {
+      "fabric_number": "70129",
+      "swatch_filename": "70129.jpg"
+    },
+    {
+      "fabric_number": "70130",
+      "swatch_filename": "70130.jpg"
+    },
+    {
+      "fabric_number": "70131",
+      "swatch_filename": "70131.jpg"
+    },
+    {
+      "fabric_number": "70132",
+      "swatch_filename": "70132.jpg"
+    },
+    {
+      "fabric_number": "70133",
+      "swatch_filename": "70133.jpg"
+    },
+    {
+      "fabric_number": "70134",
+      "swatch_filename": "70134.jpg"
+    },
+    {
+      "fabric_number": "70135",
+      "swatch_filename": "70135.jpg"
+    },
+    {
+      "fabric_number": "70136",
+      "swatch_filename": "70136.jpg"
+    },
+    {
+      "fabric_number": "70137",
+      "swatch_filename": "70137.jpg"
     },
     {
       "fabric_number": "70138",
@@ -242,10 +5126,74 @@
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-6xot-20220909-resa2_70070.jpg"
     },
     {
+      "fabric_number": "70139",
+      "swatch_filename": "70139.jpg"
+    },
+    {
+      "fabric_number": "70140",
+      "swatch_filename": "70140.jpg"
+    },
+    {
+      "fabric_number": "70141",
+      "swatch_filename": "70141.jpg"
+    },
+    {
+      "fabric_number": "70142",
+      "swatch_filename": "70142.jpg"
+    },
+    {
+      "fabric_number": "70143",
+      "swatch_filename": "70143.jpg"
+    },
+    {
+      "fabric_number": "70144",
+      "swatch_filename": "70144.jpg"
+    },
+    {
       "fabric_number": "70145",
       "swatch_filename": "70145.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-4wk7-20220909-tessuto_70069.jpg",
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-utcc-20220909-resa2_70069.jpg"
+    },
+    {
+      "fabric_number": "70146",
+      "swatch_filename": "70146.jpg"
+    },
+    {
+      "fabric_number": "70147",
+      "swatch_filename": "70147.jpg"
+    },
+    {
+      "fabric_number": "70148",
+      "swatch_filename": "70148.jpg"
+    },
+    {
+      "fabric_number": "70149",
+      "swatch_filename": "70149.jpg"
+    },
+    {
+      "fabric_number": "70150",
+      "swatch_filename": "70150.jpg"
+    },
+    {
+      "fabric_number": "70151",
+      "swatch_filename": "70151.jpg"
+    },
+    {
+      "fabric_number": "70152",
+      "swatch_filename": "70152.jpg"
+    },
+    {
+      "fabric_number": "70153",
+      "swatch_filename": "70153.jpg"
+    },
+    {
+      "fabric_number": "70154",
+      "swatch_filename": "70154.jpg"
+    },
+    {
+      "fabric_number": "70155",
+      "swatch_filename": "70155.jpg"
     },
     {
       "fabric_number": "70156",
@@ -254,10 +5202,154 @@
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-nfdz-20220909-resa2_70065.jpg"
     },
     {
+      "fabric_number": "70157",
+      "swatch_filename": "70157.jpg"
+    },
+    {
+      "fabric_number": "70158",
+      "swatch_filename": "70158.jpg"
+    },
+    {
+      "fabric_number": "70159",
+      "swatch_filename": "70159.jpg"
+    },
+    {
+      "fabric_number": "70160",
+      "swatch_filename": "70160.jpg"
+    },
+    {
+      "fabric_number": "70161",
+      "swatch_filename": "70161.jpg"
+    },
+    {
+      "fabric_number": "70162",
+      "swatch_filename": "70162.jpg"
+    },
+    {
+      "fabric_number": "70163",
+      "swatch_filename": "70163.jpg"
+    },
+    {
+      "fabric_number": "70164",
+      "swatch_filename": "70164.jpg"
+    },
+    {
+      "fabric_number": "70165",
+      "swatch_filename": "70165.jpg"
+    },
+    {
+      "fabric_number": "70166",
+      "swatch_filename": "70166.jpg"
+    },
+    {
+      "fabric_number": "70167",
+      "swatch_filename": "70167.jpg"
+    },
+    {
+      "fabric_number": "70168",
+      "swatch_filename": "70168.jpg"
+    },
+    {
+      "fabric_number": "70169",
+      "swatch_filename": "70169.jpg"
+    },
+    {
+      "fabric_number": "70170",
+      "swatch_filename": "70170.jpg"
+    },
+    {
+      "fabric_number": "70171",
+      "swatch_filename": "70171.jpg"
+    },
+    {
+      "fabric_number": "70172",
+      "swatch_filename": "70172.jpg"
+    },
+    {
+      "fabric_number": "71001",
+      "swatch_filename": "71001.jpg"
+    },
+    {
+      "fabric_number": "71002",
+      "swatch_filename": "71002.jpg"
+    },
+    {
+      "fabric_number": "71003",
+      "swatch_filename": "71003.jpg"
+    },
+    {
+      "fabric_number": "71004",
+      "swatch_filename": "71004.jpg"
+    },
+    {
+      "fabric_number": "71005",
+      "swatch_filename": "71005.jpg"
+    },
+    {
+      "fabric_number": "71006",
+      "swatch_filename": "71006.jpg"
+    },
+    {
+      "fabric_number": "71007",
+      "swatch_filename": "71007.jpg"
+    },
+    {
+      "fabric_number": "71008",
+      "swatch_filename": "71008.jpg"
+    },
+    {
+      "fabric_number": "71009",
+      "swatch_filename": "71009.jpg"
+    },
+    {
+      "fabric_number": "71010",
+      "swatch_filename": "71010.jpg"
+    },
+    {
+      "fabric_number": "71011",
+      "swatch_filename": "71011.jpg"
+    },
+    {
+      "fabric_number": "71012",
+      "swatch_filename": "71012.jpg"
+    },
+    {
+      "fabric_number": "71013",
+      "swatch_filename": "71013.jpg"
+    },
+    {
+      "fabric_number": "71014",
+      "swatch_filename": "71014.jpg"
+    },
+    {
+      "fabric_number": "71015",
+      "swatch_filename": "71015.jpg"
+    },
+    {
+      "fabric_number": "71017",
+      "swatch_filename": "71017.jpg"
+    },
+    {
+      "fabric_number": "71018",
+      "swatch_filename": "71018.jpg"
+    },
+    {
+      "fabric_number": "71019",
+      "swatch_filename": "71019.jpg"
+    },
+    {
+      "fabric_number": "71020",
+      "swatch_filename": "71020.jpg"
+    },
+    {
       "fabric_number": "71021",
       "swatch_filename": "71021.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-yvks-20240829-tessuto_71021.jpg",
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-290a-20240829-resa2_71021.jpg"
+    },
+    {
+      "fabric_number": "71022",
+      "swatch_filename": "71022.jpg"
     },
     {
       "fabric_number": "71023",
@@ -266,10 +5358,138 @@
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-jsh0-20240829-resa2_71023.jpg"
     },
     {
+      "fabric_number": "71025",
+      "swatch_filename": "71025.jpg"
+    },
+    {
+      "fabric_number": "71027",
+      "swatch_filename": "71027.jpg"
+    },
+    {
+      "fabric_number": "71028",
+      "swatch_filename": "71028.jpg"
+    },
+    {
+      "fabric_number": "71029",
+      "swatch_filename": "71029.jpg"
+    },
+    {
+      "fabric_number": "71030",
+      "swatch_filename": "71030.jpg"
+    },
+    {
+      "fabric_number": "71031",
+      "swatch_filename": "71031.jpg"
+    },
+    {
+      "fabric_number": "71032",
+      "swatch_filename": "71032.jpg"
+    },
+    {
+      "fabric_number": "71033",
+      "swatch_filename": "71033.jpg"
+    },
+    {
+      "fabric_number": "71034",
+      "swatch_filename": "71034.jpg"
+    },
+    {
+      "fabric_number": "71035",
+      "swatch_filename": "71035.jpg"
+    },
+    {
+      "fabric_number": "71036",
+      "swatch_filename": "71036.jpg"
+    },
+    {
+      "fabric_number": "71037",
+      "swatch_filename": "71037.jpg"
+    },
+    {
+      "fabric_number": "71038",
+      "swatch_filename": "71038.jpg"
+    },
+    {
+      "fabric_number": "71039",
+      "swatch_filename": "71039.jpg"
+    },
+    {
+      "fabric_number": "71040",
+      "swatch_filename": "71040.jpg"
+    },
+    {
+      "fabric_number": "71041",
+      "swatch_filename": "71041.jpg"
+    },
+    {
+      "fabric_number": "71042",
+      "swatch_filename": "71042.jpg"
+    },
+    {
+      "fabric_number": "71043",
+      "swatch_filename": "71043.jpg"
+    },
+    {
+      "fabric_number": "71044",
+      "swatch_filename": "71044.jpg"
+    },
+    {
+      "fabric_number": "71045",
+      "swatch_filename": "71045.jpg"
+    },
+    {
+      "fabric_number": "71046",
+      "swatch_filename": "71046.jpg"
+    },
+    {
+      "fabric_number": "71047",
+      "swatch_filename": "71047.jpg"
+    },
+    {
+      "fabric_number": "71048",
+      "swatch_filename": "71048.jpg"
+    },
+    {
+      "fabric_number": "71049",
+      "swatch_filename": "71049.jpg"
+    },
+    {
+      "fabric_number": "71050",
+      "swatch_filename": "71050.jpg"
+    },
+    {
       "fabric_number": "71051",
       "swatch_filename": "71051.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-jq8r-20240829-tessuto_71051.jpg",
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-6xdr-20240829-resa2_71051.jpg"
+    },
+    {
+      "fabric_number": "71052",
+      "swatch_filename": "71052.jpg"
+    },
+    {
+      "fabric_number": "71053",
+      "swatch_filename": "71053.jpg"
+    },
+    {
+      "fabric_number": "71054",
+      "swatch_filename": "71054.jpg"
+    },
+    {
+      "fabric_number": "71055",
+      "swatch_filename": "71055.jpg"
+    },
+    {
+      "fabric_number": "71056",
+      "swatch_filename": "71056.jpg"
+    },
+    {
+      "fabric_number": "71057",
+      "swatch_filename": "71057.jpg"
+    },
+    {
+      "fabric_number": "71058",
+      "swatch_filename": "71058.jpg"
     },
     {
       "fabric_number": "71059",
@@ -284,10 +5504,694 @@
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-yz5c-20240829-resa2_71060.jpg"
     },
     {
+      "fabric_number": "71063",
+      "swatch_filename": "71063.jpg"
+    },
+    {
       "fabric_number": "71064",
       "swatch_filename": "71064.jpg",
       "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-bpty-20240829-tessuto_71064.jpg",
       "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-yikk-20240829-resa2_71064.jpg"
+    },
+    {
+      "fabric_number": "71065",
+      "swatch_filename": "71065.jpg"
+    },
+    {
+      "fabric_number": "71066",
+      "swatch_filename": "71066.jpg"
+    },
+    {
+      "fabric_number": "71067",
+      "swatch_filename": "71067.jpg"
+    },
+    {
+      "fabric_number": "71069",
+      "swatch_filename": "71069.jpg"
+    },
+    {
+      "fabric_number": "71070",
+      "swatch_filename": "71070.jpg"
+    },
+    {
+      "fabric_number": "71072",
+      "swatch_filename": "71072.jpg"
+    },
+    {
+      "fabric_number": "71073",
+      "swatch_filename": "71073.jpg"
+    },
+    {
+      "fabric_number": "71074",
+      "swatch_filename": "71074.jpg"
+    },
+    {
+      "fabric_number": "75001",
+      "swatch_filename": "75001.jpg"
+    },
+    {
+      "fabric_number": "75002",
+      "swatch_filename": "75002.jpg"
+    },
+    {
+      "fabric_number": "75003",
+      "swatch_filename": "75003.jpg"
+    },
+    {
+      "fabric_number": "75004",
+      "swatch_filename": "75004.jpg"
+    },
+    {
+      "fabric_number": "75005",
+      "swatch_filename": "75005.jpg"
+    },
+    {
+      "fabric_number": "75006",
+      "swatch_filename": "75006.jpg"
+    },
+    {
+      "fabric_number": "75007",
+      "swatch_filename": "75007.jpg"
+    },
+    {
+      "fabric_number": "75008",
+      "swatch_filename": "75008.jpg"
+    },
+    {
+      "fabric_number": "75009",
+      "swatch_filename": "75009.jpg"
+    },
+    {
+      "fabric_number": "75010",
+      "swatch_filename": "75010.jpg"
+    },
+    {
+      "fabric_number": "75011",
+      "swatch_filename": "75011.jpg"
+    },
+    {
+      "fabric_number": "75012",
+      "swatch_filename": "75012.jpg"
+    },
+    {
+      "fabric_number": "75013",
+      "swatch_filename": "75013.jpg"
+    },
+    {
+      "fabric_number": "75014",
+      "swatch_filename": "75014.jpg"
+    },
+    {
+      "fabric_number": "75015",
+      "swatch_filename": "75015.jpg"
+    },
+    {
+      "fabric_number": "75016",
+      "swatch_filename": "75016.jpg"
+    },
+    {
+      "fabric_number": "75017",
+      "swatch_filename": "75017.jpg"
+    },
+    {
+      "fabric_number": "75018",
+      "swatch_filename": "75018.jpg"
+    },
+    {
+      "fabric_number": "75019",
+      "swatch_filename": "75019.jpg"
+    },
+    {
+      "fabric_number": "75020",
+      "swatch_filename": "75020.jpg"
+    },
+    {
+      "fabric_number": "75021",
+      "swatch_filename": "75021.jpg"
+    },
+    {
+      "fabric_number": "75022",
+      "swatch_filename": "75022.jpg"
+    },
+    {
+      "fabric_number": "75023",
+      "swatch_filename": "75023.jpg"
+    },
+    {
+      "fabric_number": "75024",
+      "swatch_filename": "75024.jpg"
+    },
+    {
+      "fabric_number": "75025",
+      "swatch_filename": "75025.jpg"
+    },
+    {
+      "fabric_number": "75026",
+      "swatch_filename": "75026.jpg"
+    },
+    {
+      "fabric_number": "75027",
+      "swatch_filename": "75027.jpg"
+    },
+    {
+      "fabric_number": "75028",
+      "swatch_filename": "75028.jpg"
+    },
+    {
+      "fabric_number": "75029",
+      "swatch_filename": "75029.jpg"
+    },
+    {
+      "fabric_number": "75030",
+      "swatch_filename": "75030.jpg"
+    },
+    {
+      "fabric_number": "75031",
+      "swatch_filename": "75031.jpg"
+    },
+    {
+      "fabric_number": "75032",
+      "swatch_filename": "75032.jpg"
+    },
+    {
+      "fabric_number": "75033",
+      "swatch_filename": "75033.jpg"
+    },
+    {
+      "fabric_number": "75034",
+      "swatch_filename": "75034.jpg"
+    },
+    {
+      "fabric_number": "75035",
+      "swatch_filename": "75035.jpg"
+    },
+    {
+      "fabric_number": "75036",
+      "swatch_filename": "75036.jpg"
+    },
+    {
+      "fabric_number": "75037",
+      "swatch_filename": "75037.jpg"
+    },
+    {
+      "fabric_number": "75038",
+      "swatch_filename": "75038.jpg"
+    },
+    {
+      "fabric_number": "75039",
+      "swatch_filename": "75039.jpg"
+    },
+    {
+      "fabric_number": "75040",
+      "swatch_filename": "75040.jpg"
+    },
+    {
+      "fabric_number": "75041",
+      "swatch_filename": "75041.jpg"
+    },
+    {
+      "fabric_number": "75042",
+      "swatch_filename": "75042.jpg"
+    },
+    {
+      "fabric_number": "75043",
+      "swatch_filename": "75043.jpg"
+    },
+    {
+      "fabric_number": "75044",
+      "swatch_filename": "75044.jpg"
+    },
+    {
+      "fabric_number": "75045",
+      "swatch_filename": "75045.jpg"
+    },
+    {
+      "fabric_number": "75046",
+      "swatch_filename": "75046.jpg"
+    },
+    {
+      "fabric_number": "75047",
+      "swatch_filename": "75047.jpg"
+    },
+    {
+      "fabric_number": "75048",
+      "swatch_filename": "75048.jpg"
+    },
+    {
+      "fabric_number": "75049",
+      "swatch_filename": "75049.jpg"
+    },
+    {
+      "fabric_number": "75050",
+      "swatch_filename": "75050.jpg"
+    },
+    {
+      "fabric_number": "75051",
+      "swatch_filename": "75051.jpg"
+    },
+    {
+      "fabric_number": "75052",
+      "swatch_filename": "75052.jpg"
+    },
+    {
+      "fabric_number": "75053",
+      "swatch_filename": "75053.jpg"
+    },
+    {
+      "fabric_number": "75054",
+      "swatch_filename": "75054.jpg"
+    },
+    {
+      "fabric_number": "75055",
+      "swatch_filename": "75055.jpg"
+    },
+    {
+      "fabric_number": "75056",
+      "swatch_filename": "75056.jpg"
+    },
+    {
+      "fabric_number": "75057",
+      "swatch_filename": "75057.jpg"
+    },
+    {
+      "fabric_number": "75058",
+      "swatch_filename": "75058.jpg"
+    },
+    {
+      "fabric_number": "75059",
+      "swatch_filename": "75059.jpg"
+    },
+    {
+      "fabric_number": "80001",
+      "swatch_filename": "80001.jpg"
+    },
+    {
+      "fabric_number": "80002",
+      "swatch_filename": "80002.jpg"
+    },
+    {
+      "fabric_number": "80003",
+      "swatch_filename": "80003.jpg"
+    },
+    {
+      "fabric_number": "80004",
+      "swatch_filename": "80004.jpg"
+    },
+    {
+      "fabric_number": "80005",
+      "swatch_filename": "80005.jpg"
+    },
+    {
+      "fabric_number": "80006",
+      "swatch_filename": "80006.jpg"
+    },
+    {
+      "fabric_number": "80007",
+      "swatch_filename": "80007.jpg"
+    },
+    {
+      "fabric_number": "80008",
+      "swatch_filename": "80008.jpg"
+    },
+    {
+      "fabric_number": "80009",
+      "swatch_filename": "80009.jpg"
+    },
+    {
+      "fabric_number": "80010",
+      "swatch_filename": "80010.jpg"
+    },
+    {
+      "fabric_number": "80011",
+      "swatch_filename": "80011.jpg"
+    },
+    {
+      "fabric_number": "80012",
+      "swatch_filename": "80012.jpg"
+    },
+    {
+      "fabric_number": "80013",
+      "swatch_filename": "80013.jpg"
+    },
+    {
+      "fabric_number": "80014",
+      "swatch_filename": "80014.jpg"
+    },
+    {
+      "fabric_number": "80015",
+      "swatch_filename": "80015.jpg"
+    },
+    {
+      "fabric_number": "80016",
+      "swatch_filename": "80016.jpg"
+    },
+    {
+      "fabric_number": "80017",
+      "swatch_filename": "80017.jpg"
+    },
+    {
+      "fabric_number": "80018",
+      "swatch_filename": "80018.jpg"
+    },
+    {
+      "fabric_number": "80019",
+      "swatch_filename": "80019.jpg"
+    },
+    {
+      "fabric_number": "80020",
+      "swatch_filename": "80020.jpg"
+    },
+    {
+      "fabric_number": "80101",
+      "swatch_filename": "80101.jpg"
+    },
+    {
+      "fabric_number": "80102",
+      "swatch_filename": "80102.jpg"
+    },
+    {
+      "fabric_number": "80103",
+      "swatch_filename": "80103.jpg"
+    },
+    {
+      "fabric_number": "80104",
+      "swatch_filename": "80104.jpg"
+    },
+    {
+      "fabric_number": "80105",
+      "swatch_filename": "80105.jpg"
+    },
+    {
+      "fabric_number": "80106",
+      "swatch_filename": "80106.jpg"
+    },
+    {
+      "fabric_number": "80107",
+      "swatch_filename": "80107.jpg"
+    },
+    {
+      "fabric_number": "80108",
+      "swatch_filename": "80108.jpg"
+    },
+    {
+      "fabric_number": "80109",
+      "swatch_filename": "80109.jpg"
+    },
+    {
+      "fabric_number": "80110",
+      "swatch_filename": "80110.jpg"
+    },
+    {
+      "fabric_number": "80111",
+      "swatch_filename": "80111.jpg"
+    },
+    {
+      "fabric_number": "80112",
+      "swatch_filename": "80112.jpg"
+    },
+    {
+      "fabric_number": "80113",
+      "swatch_filename": "80113.jpg"
+    },
+    {
+      "fabric_number": "80114",
+      "swatch_filename": "80114.jpg"
+    },
+    {
+      "fabric_number": "80115",
+      "swatch_filename": "80115.jpg"
+    },
+    {
+      "fabric_number": "80116",
+      "swatch_filename": "80116.jpg"
+    },
+    {
+      "fabric_number": "80117",
+      "swatch_filename": "80117.jpg"
+    },
+    {
+      "fabric_number": "80118",
+      "swatch_filename": "80118.jpg"
+    },
+    {
+      "fabric_number": "80119",
+      "swatch_filename": "80119.jpg"
+    },
+    {
+      "fabric_number": "80120",
+      "swatch_filename": "80120.jpg"
+    },
+    {
+      "fabric_number": "80121",
+      "swatch_filename": "80121.jpg"
+    },
+    {
+      "fabric_number": "80122",
+      "swatch_filename": "80122.jpg"
+    },
+    {
+      "fabric_number": "80123",
+      "swatch_filename": "80123.jpg"
+    },
+    {
+      "fabric_number": "80124",
+      "swatch_filename": "80124.jpg"
+    },
+    {
+      "fabric_number": "80125",
+      "swatch_filename": "80125.jpg"
+    },
+    {
+      "fabric_number": "80126",
+      "swatch_filename": "80126.jpg"
+    },
+    {
+      "fabric_number": "80127",
+      "swatch_filename": "80127.jpg"
+    },
+    {
+      "fabric_number": "80128",
+      "swatch_filename": "80128.jpg"
+    },
+    {
+      "fabric_number": "80129",
+      "swatch_filename": "80129.jpg"
+    },
+    {
+      "fabric_number": "80130",
+      "swatch_filename": "80130.jpg"
+    },
+    {
+      "fabric_number": "80131",
+      "swatch_filename": "80131.jpg"
+    },
+    {
+      "fabric_number": "80132",
+      "swatch_filename": "80132.jpg"
+    },
+    {
+      "fabric_number": "80133",
+      "swatch_filename": "80133.jpg"
+    },
+    {
+      "fabric_number": "80134",
+      "swatch_filename": "80134.jpg"
+    },
+    {
+      "fabric_number": "80135",
+      "swatch_filename": "80135.jpg"
+    },
+    {
+      "fabric_number": "80136",
+      "swatch_filename": "80136.jpg"
+    },
+    {
+      "fabric_number": "80137",
+      "swatch_filename": "80137.jpg"
+    },
+    {
+      "fabric_number": "80138",
+      "swatch_filename": "80138.jpg"
+    },
+    {
+      "fabric_number": "82101",
+      "swatch_filename": "82101.jpg"
+    },
+    {
+      "fabric_number": "82102",
+      "swatch_filename": "82102.jpg"
+    },
+    {
+      "fabric_number": "82103",
+      "swatch_filename": "82103.jpg"
+    },
+    {
+      "fabric_number": "82104",
+      "swatch_filename": "82104.jpg"
+    },
+    {
+      "fabric_number": "82105",
+      "swatch_filename": "82105.jpg"
+    },
+    {
+      "fabric_number": "82106",
+      "swatch_filename": "82106.jpg"
+    },
+    {
+      "fabric_number": "82107",
+      "swatch_filename": "82107.jpg"
+    },
+    {
+      "fabric_number": "82108",
+      "swatch_filename": "82108.jpg"
+    },
+    {
+      "fabric_number": "82109",
+      "swatch_filename": "82109.jpg"
+    },
+    {
+      "fabric_number": "82111",
+      "swatch_filename": "82111.jpg"
+    },
+    {
+      "fabric_number": "82112",
+      "swatch_filename": "82112.jpg"
+    },
+    {
+      "fabric_number": "82113",
+      "swatch_filename": "82113.jpg"
+    },
+    {
+      "fabric_number": "82114",
+      "swatch_filename": "82114.jpg"
+    },
+    {
+      "fabric_number": "82115",
+      "swatch_filename": "82115.jpg"
+    },
+    {
+      "fabric_number": "82116",
+      "swatch_filename": "82116.jpg"
+    },
+    {
+      "fabric_number": "82117",
+      "swatch_filename": "82117.jpg"
+    },
+    {
+      "fabric_number": "82118",
+      "swatch_filename": "82118.jpg"
+    },
+    {
+      "fabric_number": "82119",
+      "swatch_filename": "82119.jpg"
+    },
+    {
+      "fabric_number": "82120",
+      "swatch_filename": "82120.jpg"
+    },
+    {
+      "fabric_number": "82121",
+      "swatch_filename": "82121.jpg"
+    },
+    {
+      "fabric_number": "82122",
+      "swatch_filename": "82122.jpg"
+    },
+    {
+      "fabric_number": "82123",
+      "swatch_filename": "82123.jpg"
+    },
+    {
+      "fabric_number": "82124",
+      "swatch_filename": "82124.jpg"
+    },
+    {
+      "fabric_number": "82125",
+      "swatch_filename": "82125.jpg"
+    },
+    {
+      "fabric_number": "82126",
+      "swatch_filename": "82126.jpg"
+    },
+    {
+      "fabric_number": "82127",
+      "swatch_filename": "82127.jpg"
+    },
+    {
+      "fabric_number": "82128",
+      "swatch_filename": "82128.jpg"
+    },
+    {
+      "fabric_number": "82129",
+      "swatch_filename": "82129.jpg"
+    },
+    {
+      "fabric_number": "82130",
+      "swatch_filename": "82130.jpg"
+    },
+    {
+      "fabric_number": "82131",
+      "swatch_filename": "82131.jpg"
+    },
+    {
+      "fabric_number": "82132",
+      "swatch_filename": "82132.jpg"
+    },
+    {
+      "fabric_number": "82133",
+      "swatch_filename": "82133.jpg"
+    },
+    {
+      "fabric_number": "82134",
+      "swatch_filename": "82134.jpg"
+    },
+    {
+      "fabric_number": "82135",
+      "swatch_filename": "82135.jpg"
+    },
+    {
+      "fabric_number": "82136",
+      "swatch_filename": "82136.jpg"
+    },
+    {
+      "fabric_number": "82137",
+      "swatch_filename": "82137.jpg"
+    },
+    {
+      "fabric_number": "82138",
+      "swatch_filename": "82138.jpg"
+    },
+    {
+      "fabric_number": "82139",
+      "swatch_filename": "82139.jpg"
+    },
+    {
+      "fabric_number": "82140",
+      "swatch_filename": "82140.jpg"
+    },
+    {
+      "fabric_number": "85116",
+      "swatch_filename": "85116.jpg"
+    },
+    {
+      "fabric_number": "85117",
+      "swatch_filename": "85117.jpg"
+    },
+    {
+      "fabric_number": "85118",
+      "swatch_filename": "85118.jpg"
+    },
+    {
+      "fabric_number": "85119",
+      "swatch_filename": "85119.jpg"
+    },
+    {
+      "fabric_number": "85120",
+      "swatch_filename": "85120.jpg"
+    },
+    {
+      "fabric_number": "85121",
+      "swatch_filename": "85121.jpg"
     }
   ]
 }
