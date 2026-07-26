@@ -1,5 +1,5 @@
 {
-  "downloaded_at": "2026-07-26T18:57:40.193Z",
+  "downloaded_at": "2026-07-26T19:03:18.451Z",
   "source": "Drapers API GET /fabrics/{code}/medias/",
   "catalog_path": "src/data/suppliers/drapers-hs-ss26.json",
   "quality_requested": "best",
@@ -54,9 +54,9 @@
       "zoom_width": 1500,
       "zoom_height": 1500,
       "bytes_vs_zoom": 213622,
-      "original_bytes": 205312,
-      "original_quality": "zoom",
-      "bytes_vs_original": 213622
+      "original_bytes": 418934,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "10121",
@@ -104,7 +104,10 @@
       "zoom_bytes": 39843,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 338287
+      "bytes_vs_zoom": 338287,
+      "original_bytes": 378130,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "10152",
@@ -152,7 +155,10 @@
       "zoom_bytes": 41184,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 354478
+      "bytes_vs_zoom": 354478,
+      "original_bytes": 395662,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "10186",
@@ -200,7 +206,10 @@
       "zoom_bytes": 50133,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 504040
+      "bytes_vs_zoom": 504040,
+      "original_bytes": 554173,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "12520",
@@ -248,7 +257,10 @@
       "zoom_bytes": 48168,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 367243
+      "bytes_vs_zoom": 367243,
+      "original_bytes": 415411,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "12521",
@@ -296,7 +308,10 @@
       "zoom_bytes": 49884,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 411396
+      "bytes_vs_zoom": 411396,
+      "original_bytes": 461280,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "17043",
@@ -344,7 +359,10 @@
       "zoom_bytes": 43057,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 523001
+      "bytes_vs_zoom": 523001,
+      "original_bytes": 566058,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "26101",
@@ -392,7 +410,10 @@
       "zoom_bytes": 50994,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1152034
+      "bytes_vs_zoom": 1152034,
+      "original_bytes": 1203028,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "26102",
@@ -440,7 +461,10 @@
       "zoom_bytes": 55232,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1217388
+      "bytes_vs_zoom": 1217388,
+      "original_bytes": 1272620,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "26104",
@@ -488,7 +512,10 @@
       "zoom_bytes": 47127,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1089220
+      "bytes_vs_zoom": 1089220,
+      "original_bytes": 1136347,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "26105",
@@ -536,7 +563,10 @@
       "zoom_bytes": 37880,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 918792
+      "bytes_vs_zoom": 918792,
+      "original_bytes": 956672,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "26108",
@@ -584,7 +614,10 @@
       "zoom_bytes": 33794,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 791964
+      "bytes_vs_zoom": 791964,
+      "original_bytes": 825758,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "26110",
@@ -632,7 +665,10 @@
       "zoom_bytes": 48296,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1143572
+      "bytes_vs_zoom": 1143572,
+      "original_bytes": 1191868,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "26111",
@@ -680,7 +716,10 @@
       "zoom_bytes": 34975,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 809546
+      "bytes_vs_zoom": 809546,
+      "original_bytes": 844521,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "26112",
@@ -728,7 +767,10 @@
       "zoom_bytes": 34356,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 289086
+      "bytes_vs_zoom": 289086,
+      "original_bytes": 323442,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "26113",
@@ -776,7 +818,10 @@
       "zoom_bytes": 41411,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 341409
+      "bytes_vs_zoom": 341409,
+      "original_bytes": 382820,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "26130",
@@ -824,7 +869,10 @@
       "zoom_bytes": 42336,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 339110
+      "bytes_vs_zoom": 339110,
+      "original_bytes": 381446,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "26136",
@@ -872,7 +920,10 @@
       "zoom_bytes": 15417,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 125111
+      "bytes_vs_zoom": 125111,
+      "original_bytes": 140528,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "50803",
@@ -920,7 +971,10 @@
       "zoom_bytes": 82041,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 3105560
+      "bytes_vs_zoom": 3105560,
+      "original_bytes": 3187601,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "50839",
@@ -968,7 +1022,10 @@
       "zoom_bytes": 90026,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 3620265
+      "bytes_vs_zoom": 3620265,
+      "original_bytes": 3710291,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "50840",
@@ -1016,7 +1073,10 @@
       "zoom_bytes": 91623,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 3973373
+      "bytes_vs_zoom": 3973373,
+      "original_bytes": 4064996,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "50841",
@@ -1064,7 +1124,10 @@
       "zoom_bytes": 54175,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 446673
+      "bytes_vs_zoom": 446673,
+      "original_bytes": 500848,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "50878",
@@ -1112,7 +1175,10 @@
       "zoom_bytes": 64915,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 2441720
+      "bytes_vs_zoom": 2441720,
+      "original_bytes": 2506635,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "580001",
@@ -1174,7 +1240,10 @@
       "zoom_bytes": 35797,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 300914
+      "bytes_vs_zoom": 300914,
+      "original_bytes": 336711,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "60059",
@@ -1222,7 +1291,10 @@
       "zoom_bytes": 32972,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 281578
+      "bytes_vs_zoom": 281578,
+      "original_bytes": 314550,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "65007",
@@ -1277,7 +1349,10 @@
       "zoom_bytes": 71423,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1718131
+      "bytes_vs_zoom": 1718131,
+      "original_bytes": 1789554,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "65229",
@@ -1325,7 +1400,10 @@
       "zoom_bytes": 78101,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1822650
+      "bytes_vs_zoom": 1822650,
+      "original_bytes": 1900751,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "65232",
@@ -1373,7 +1451,10 @@
       "zoom_bytes": 73750,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1748263
+      "bytes_vs_zoom": 1748263,
+      "original_bytes": 1822013,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "70105",
@@ -1421,7 +1502,10 @@
       "zoom_bytes": 30305,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 316250
+      "bytes_vs_zoom": 316250,
+      "original_bytes": 346555,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "70145",
@@ -1469,7 +1553,10 @@
       "zoom_bytes": 42823,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 375612
+      "bytes_vs_zoom": 375612,
+      "original_bytes": 418435,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "71021",
@@ -1517,7 +1604,10 @@
       "zoom_bytes": 59122,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1495478
+      "bytes_vs_zoom": 1495478,
+      "original_bytes": 1554600,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "71023",
@@ -1565,7 +1655,10 @@
       "zoom_bytes": 57951,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1316846
+      "bytes_vs_zoom": 1316846,
+      "original_bytes": 1374797,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "71059",
@@ -1613,7 +1706,10 @@
       "zoom_bytes": 68531,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1614460
+      "bytes_vs_zoom": 1614460,
+      "original_bytes": 1682991,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "71060",
@@ -1661,7 +1757,10 @@
       "zoom_bytes": 61132,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1501928
+      "bytes_vs_zoom": 1501928,
+      "original_bytes": 1563060,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "71062",
@@ -1709,7 +1808,10 @@
       "zoom_bytes": 49615,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1255139
+      "bytes_vs_zoom": 1255139,
+      "original_bytes": 1304754,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "71064",
@@ -1757,7 +1859,10 @@
       "zoom_bytes": 60282,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1410485
+      "bytes_vs_zoom": 1410485,
+      "original_bytes": 1470767,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "90602",
@@ -1805,7 +1910,10 @@
       "zoom_bytes": 74787,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1629741
+      "bytes_vs_zoom": 1629741,
+      "original_bytes": 1704528,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "90606",
@@ -1853,7 +1961,10 @@
       "zoom_bytes": 85030,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1910971
+      "bytes_vs_zoom": 1910971,
+      "original_bytes": 1996001,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "90639",
@@ -1901,7 +2012,10 @@
       "zoom_bytes": 74792,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1812452
+      "bytes_vs_zoom": 1812452,
+      "original_bytes": 1887244,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "90640",
@@ -1949,7 +2063,10 @@
       "zoom_bytes": 80086,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1874227
+      "bytes_vs_zoom": 1874227,
+      "original_bytes": 1954313,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "90642",
@@ -1997,7 +2114,10 @@
       "zoom_bytes": 81030,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1902300
+      "bytes_vs_zoom": 1902300,
+      "original_bytes": 1983330,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "90644",
@@ -2045,7 +2165,10 @@
       "zoom_bytes": 60830,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1492427
+      "bytes_vs_zoom": 1492427,
+      "original_bytes": 1553257,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "90659",
@@ -2093,7 +2216,10 @@
       "zoom_bytes": 73983,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1604094
+      "bytes_vs_zoom": 1604094,
+      "original_bytes": 1678077,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "90660",
@@ -2141,7 +2267,10 @@
       "zoom_bytes": 82982,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1817898
+      "bytes_vs_zoom": 1817898,
+      "original_bytes": 1900880,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "90662",
@@ -2189,7 +2318,10 @@
       "zoom_bytes": 67128,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1598818
+      "bytes_vs_zoom": 1598818,
+      "original_bytes": 1665946,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "90663",
@@ -2237,7 +2369,10 @@
       "zoom_bytes": 48377,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1263275
+      "bytes_vs_zoom": 1263275,
+      "original_bytes": 1311652,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "90664",
@@ -2285,7 +2420,10 @@
       "zoom_bytes": 70200,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1567705
+      "bytes_vs_zoom": 1567705,
+      "original_bytes": 1637905,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "90683",
@@ -2333,7 +2471,10 @@
       "zoom_bytes": 40412,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 313619
+      "bytes_vs_zoom": 313619,
+      "original_bytes": 354031,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "99204",
@@ -2395,7 +2536,10 @@
       "zoom_bytes": 48603,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 369686
+      "bytes_vs_zoom": 369686,
+      "original_bytes": 418289,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "DP",
@@ -2450,7 +2594,10 @@
       "zoom_bytes": 65536,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1369821
+      "bytes_vs_zoom": 1369821,
+      "original_bytes": 1435357,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "DP",
@@ -2505,7 +2652,10 @@
       "zoom_bytes": 57668,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1350581
+      "bytes_vs_zoom": 1350581,
+      "original_bytes": 1408249,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "DP",
@@ -2560,7 +2710,10 @@
       "zoom_bytes": 72845,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1674937
+      "bytes_vs_zoom": 1674937,
+      "original_bytes": 1747782,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "DP",
@@ -2615,7 +2768,10 @@
       "zoom_bytes": 71423,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1718131
+      "bytes_vs_zoom": 1718131,
+      "original_bytes": 1789554,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "DP",
@@ -2670,7 +2826,10 @@
       "zoom_bytes": 39442,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 315197
+      "bytes_vs_zoom": 315197,
+      "original_bytes": 354639,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "DP",
@@ -2725,7 +2884,10 @@
       "zoom_bytes": 37283,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 304205
+      "bytes_vs_zoom": 304205,
+      "original_bytes": 341488,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "DP",
@@ -2780,7 +2942,10 @@
       "zoom_bytes": 62085,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1473395
+      "bytes_vs_zoom": 1473395,
+      "original_bytes": 1535480,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "DP",
@@ -2835,7 +3000,10 @@
       "zoom_bytes": 74792,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1812452
+      "bytes_vs_zoom": 1812452,
+      "original_bytes": 1887244,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "DP70145",
@@ -2883,7 +3051,10 @@
       "zoom_bytes": 42823,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 375612
+      "bytes_vs_zoom": 375612,
+      "original_bytes": 418435,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     },
     {
       "fabric_number": "DP90642",
@@ -2931,7 +3102,10 @@
       "zoom_bytes": 81030,
       "zoom_width": 512,
       "zoom_height": 512,
-      "bytes_vs_zoom": 1902300
+      "bytes_vs_zoom": 1902300,
+      "original_bytes": 1983330,
+      "original_quality": "square",
+      "bytes_vs_original": 0
     }
   ],
   "collections": {},

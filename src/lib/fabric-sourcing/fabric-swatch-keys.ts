@@ -72,7 +72,7 @@ export function resolveFabricSwatchUrls(
   if (!trimmed) return undefined;
 
   if (isDrapersSwatchSupplier(supplierId)) {
-    return getDrapersCatalogSwatchUrls(trimmed) ?? drapersMap.get(trimmed);
+    return drapersMap.get(trimmed) ?? getDrapersCatalogSwatchUrls(trimmed);
   }
 
   if (isCaccioppoliSwatchSupplier(supplierId)) {

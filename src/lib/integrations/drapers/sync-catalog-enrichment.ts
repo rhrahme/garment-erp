@@ -194,9 +194,10 @@ export function drapersFabricNumbersFromOpenOrders(): string[] {
   for (const order of orders.orders) {
     if (order.status === "complete") continue;
     for (const line of order.fabric_lines) {
-      if (line.supplier_id === "drapers") {
-        numbers.add(line.fabric_number.trim());
-      }
+      if (line.supplier_id !== "drapers") continue;
+      const code = line.fabric_number.trim();
+      if (!code || code === "DP") continue;
+      numbers.add(code);
     }
   }
   return [...numbers].sort();
