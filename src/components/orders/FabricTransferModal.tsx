@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
+import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
 import type { TransferEligibility } from "@/lib/sales-orders/transfer-eligibility";
 import type { FabricTransferDestination } from "@/lib/sales-orders/transfer-destinations";
 import { normalizeSearchText } from "@/lib/search/normalize";
@@ -204,6 +206,9 @@ export function FabricTransferModal({
     eligibility?.stage_label ?? initialStageLabel ?? (loadingEligibility ? "Loading…" : "Unknown");
 
   return (
+    <FabricSwatchProvider
+      fabrics={[{ supplier_id: sourceLine.supplier_id, fabric_number: sourceLine.fabric_number }]}
+    >
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center">
       <div
         role="dialog"
@@ -234,13 +239,15 @@ export function FabricTransferModal({
 
         <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4 px-5 py-4">
           <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-            <p>
-              <span className="font-medium">{sourceLine.fabric_number}</span>
-              {" · "}
+            <FabricNumberWithSwatch
+              supplierId={sourceLine.supplier_id}
+              fabricNumber={sourceLine.fabric_number}
+              className="font-medium"
+            >
               {sourceLine.garment_type}
               {" · "}
               {sourceLine.quantity}m available
-            </p>
+            </FabricNumberWithSwatch>
             <p className="mt-1 font-mono text-xs text-indigo-700">
               {(sourceLine.label_stickers ?? [])[0]?.code ?? "—"}
             </p>
@@ -433,6 +440,7 @@ export function FabricTransferModal({
         </form>
       </div>
     </div>
+    </FabricSwatchProvider>
   );
 }
 
