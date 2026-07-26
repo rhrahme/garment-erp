@@ -3,7 +3,7 @@ import {
   drapersCatalogDisplayFields,
   type DrapersCatalogFabricRow,
 } from "@/lib/integrations/drapers/catalog-fields";
-import { drapersSwatchImageUrl } from "@/lib/fabric-sourcing/drapers-swatches";
+import { drapersSwatchImageUrl } from "@/lib/fabric-sourcing/drapers-swatch-url";
 import { normalizeDrapersFabricCode } from "@/lib/integrations/drapers/stock";
 import type { FabricSwatchUrls } from "@/lib/fabric-sourcing/fabric-swatch-keys";
 

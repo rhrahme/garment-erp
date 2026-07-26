@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const result = await syncDrapersCatalogFromApi({
       fabric_numbers,
       enrich_all: enrichAll,
-      enrich_details: body.enrich_details ?? enrichAll || Boolean(fabric_numbers?.length),
+      enrich_details: body.enrich_details ?? (enrichAll || Boolean(fabric_numbers?.length)),
       include_availability: body.include_availability === true,
       include_prices: body.include_prices !== false,
       delay_ms: typeof body.delay_ms === "number" ? body.delay_ms : 150,

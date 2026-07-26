@@ -5,6 +5,7 @@ import {
   isSupabaseDrapersSwatchStorage,
   readDrapersSwatchFromStorage,
 } from "@/lib/fabric-sourcing/drapers-swatch-storage";
+import { drapersSwatchImageUrl as buildDrapersSwatchImageUrl } from "@/lib/fabric-sourcing/drapers-swatch-url";
 
 export const DRAPERS_IMAGES_ROOT = path.join(process.cwd(), "data/suppliers/drapers/images");
 export const DRAPERS_MANIFEST_PATH = path.join(DRAPERS_IMAGES_ROOT, "manifest.json");
@@ -42,10 +43,7 @@ export function readDrapersSwatchManifest(): DrapersSwatchManifest {
   return cachedManifest;
 }
 
-export function drapersSwatchImageUrl(fabricNumber: string): string {
-  const normalized = normalizeDrapersFabricCode(fabricNumber);
-  return `/api/suppliers/drapers/images/${encodeURIComponent(normalized)}`;
-}
+export { drapersSwatchImageUrl } from "@/lib/fabric-sourcing/drapers-swatch-url";
 
 function manifestSwatchEntry(fabricNumber: string): DrapersSwatchManifestItem | undefined {
   const normalized = normalizeDrapersFabricCode(fabricNumber);
@@ -102,7 +100,7 @@ export function lookupDrapersSwatch(fabricNumber: string): {
       ok: true,
       fabric_number: normalized,
       requested_code: requested,
-      url: drapersSwatchImageUrl(normalized),
+      url: buildDrapersSwatchImageUrl(normalized),
       bytes: statSync(filePath).size,
     };
   }
@@ -113,7 +111,7 @@ export function lookupDrapersSwatch(fabricNumber: string): {
       ok: true,
       fabric_number: normalized,
       requested_code: requested,
-      url: drapersSwatchImageUrl(normalized),
+      url: buildDrapersSwatchImageUrl(normalized),
     };
   }
 

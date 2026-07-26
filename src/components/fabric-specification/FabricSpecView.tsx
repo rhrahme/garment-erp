@@ -32,7 +32,7 @@ interface FabricSpecViewProps {
 export function FabricSpecView({
   suppliers,
   items: initialItems,
-  canViewPrices = true,
+  canViewPrices = false,
   canViewStock = true,
 }: FabricSpecViewProps) {
   const [items, setItems] = useState(initialItems);

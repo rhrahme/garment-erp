@@ -43,6 +43,7 @@ export async function GET(request: Request) {
       finish: item.finish,
       unit: item.unit,
       unit_price: item.unit_price,
+      list_price: item.list_price ?? null,
     }));
   return NextResponse.json({
     items: canViewPrices(session)

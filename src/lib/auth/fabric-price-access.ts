@@ -7,8 +7,11 @@ import {
 } from "@/lib/auth/fabric-price.constants";
 import { isInvoiceAmountsPasswordValid } from "@/lib/auth/invoice-amounts-access";
 import type { SessionContext } from "@/lib/auth/session";
+import { RESTRICTED_PRICE_FIELD_NAME_SET } from "@/lib/auth/price-field-names";
 import type { PurchaseOrder, PurchaseOrderLine } from "@/lib/types/fabric-sourcing";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
+
+export { RESTRICTED_PRICE_FIELD_NAMES } from "@/lib/auth/price-field-names";
 
 export {
   FABRIC_PRICE_UNLOCK_COOKIE,
@@ -85,27 +88,6 @@ export function hasFabricPriceAccess(
   return false;
 }
 
-const PRICE_FIELD_NAMES = new Set([
-  "unit_price",
-  "list_price",
-  "total_amount",
-  "subtotal",
-  "fabric_cost",
-  "fabric_cost_summary",
-  "cost_hint_sar",
-  "fabric_cost_hint_sar",
-  "total_cost_sar",
-  "landed_cost",
-  "landed_cost_sar",
-  "purchase_price",
-  "supplier_invoice",
-  "supplier_invoice_total",
-  "manufacturing_cost",
-  "margin",
-  "margin_pct",
-  "currency",
-]);
-
 /** Recursively omit price-bearing keys so restricted API payloads contain no price fields. */
 export function redactPriceFields<T>(value: T): T {
   if (Array.isArray(value)) {
@@ -114,7 +96,7 @@ export function redactPriceFields<T>(value: T): T {
   if (value == null || typeof value !== "object") return value;
 
   const safeEntries = Object.entries(value as Record<string, unknown>)
-    .filter(([key]) => !PRICE_FIELD_NAMES.has(key))
+    .filter(([key]) => !RESTRICTED_PRICE_FIELD_NAME_SET.has(key))
     .map(([key, nested]) => [key, redactPriceFields(nested)]);
   return Object.fromEntries(safeEntries) as T;
 }

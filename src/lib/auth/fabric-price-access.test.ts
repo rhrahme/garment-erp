@@ -9,6 +9,7 @@ import {
   redactSalesOrderFabricPrices,
   redactSupplierFabricPrice,
 } from "./fabric-price-access.ts";
+import { RESTRICTED_PRICE_FIELD_NAMES } from "./price-field-names.ts";
 import type { SessionContext } from "./session.ts";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
@@ -109,6 +110,7 @@ const fabricPo = {
       gn_code: null,
       unit: "meters",
       unit_price: 125,
+      list_price: 149,
       min_order_qty: null,
       lead_time_days: 14,
       is_active: true,
@@ -117,12 +119,67 @@ const fabricPo = {
   }],
 } as PurchaseOrder;
 
-function assertNoPriceFields(value: unknown): void {
+/** Mirrors GET /api/fabric-search item shape before role gate. */
+function fabricSearchItem(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "drapers-10101",
+    supplier_id: "drapers",
+    supplier_name: "Drapers",
+    fabric_number: "10101",
+    composition: "100% WV",
+    color: null,
+    description: "PE23 - BLAZON",
+    weight_gsm: 260,
+    width_cm: 150,
+    width_inches: null,
+    unit_price: 71,
+    list_price: 73.2,
+    actual_price: 71,
+    account_price: 71,
+    price: 73.2,
+    cost: 65,
+    eur: 71,
+    unit: "meters",
+    stock_status: "in_stock",
+    restock_date: null,
+    disponibilita_meters: 12,
+    api_is_available: true,
+    mill_line: null,
+    manual: false,
+    currency: "EUR",
+    ...overrides,
+  };
+}
+
+function assertNoRestrictedPriceFields(value: unknown, context = "payload"): void {
   const json = JSON.stringify(value);
-  for (const field of ["unit_price", "list_price", "total_amount", "fabric_cost", "currency"]) {
-    assert.equal(json.includes(`"${field}"`), false, `found restricted field ${field}`);
+  for (const field of RESTRICTED_PRICE_FIELD_NAMES) {
+    assert.equal(
+      json.includes(`"${field}"`),
+      false,
+      `${context} leaked restricted field ${field}`
+    );
   }
 }
+
+describe("restricted price field allowlist", () => {
+  it("strips every registered price field name (top-level and nested)", () => {
+    const sample = Object.fromEntries(
+      RESTRICTED_PRICE_FIELD_NAMES.map((field, index) => [field, index + 1])
+    );
+    const redacted = redactPriceFields({
+      fabric_number: "10101",
+      composition: "Wool",
+      nested: sample,
+      rows: [sample],
+    });
+    assertNoRestrictedPriceFields(redacted, "redactPriceFields sample");
+    assert.equal((redacted as { fabric_number: string }).fabric_number, "10101");
+    assert.equal((redacted as { composition: string }).composition, "Wool");
+    assert.deepEqual((redacted as { nested: Record<string, unknown> }).nested, {});
+    assert.deepEqual((redacted as { rows: Record<string, unknown>[] }).rows, [{}]);
+  });
+});
 
 for (const role of [
   "task_operator",
@@ -138,7 +195,7 @@ for (const role of [
 
     it("gets no price fields from GET /api/sales-orders and GET /api/sales-orders/:id", () => {
       const payload = { orders: [redactSalesOrderFabricPrices(order)] };
-      assertNoPriceFields(payload);
+      assertNoRestrictedPriceFields(payload);
       assert.equal(payload.orders[0].fabric_lines[0].quantity, 2.5);
       assert.equal(payload.orders[0].fabric_lines[0].stock_status, "in_stock");
     });
@@ -148,7 +205,7 @@ for (const role of [
         order: redactSalesOrderFabricPrices(order),
         updated_line: redactFabricLinePrices(line),
       };
-      assertNoPriceFields(payload);
+      assertNoRestrictedPriceFields(payload);
       assert.equal(payload.updated_line.fabric_number, "781050");
       assert.equal(payload.updated_line.quantity, 2.5);
     });
@@ -156,17 +213,28 @@ for (const role of [
     it("gets no price fields from fabric catalog and custom-fabric endpoints", () => {
       const fabric = {
         ...fabricPo.lines![0]!.supplier_fabric!,
-        list_price: 149,
+        actual_price: 71,
+        account_price: 71,
+        price: 73.2,
+        cost: 65,
+        eur: 71,
       };
       const payload = redactSupplierFabricPrice(fabric);
-      assertNoPriceFields(payload);
+      assertNoRestrictedPriceFields(payload);
       assert.equal(payload.composition, "Wool");
       assert.equal(payload.width_cm, 150);
     });
 
+    it("gets no price fields from GET /api/fabric-search", () => {
+      const payload = { items: [redactSupplierFabricPrice(fabricSearchItem())] };
+      assertNoRestrictedPriceFields(payload);
+      assert.equal(payload.items[0].fabric_number, "10101");
+      assert.equal(payload.items[0].composition, "100% WV");
+    });
+
     it("gets no price fields in server-rendered fabric PO props", () => {
       const payload = redactPurchaseOrderPrices(fabricPo);
-      assertNoPriceFields(payload);
+      assertNoRestrictedPriceFields(payload);
       assert.equal(payload.lines?.[0]?.quantity_ordered, 2.5);
       assert.equal(payload.status, "draft");
     });
@@ -187,6 +255,7 @@ describe("admin price access", () => {
     assert.equal(canViewPrices(session("admin")), true);
     assert.equal(redactPriceFields({ name: "safe", unit_price: 10 }).name, "safe");
     assert.equal(line.unit_price, 125);
+    assert.equal(fabricSearchItem().list_price, 73.2);
   });
 });
 
