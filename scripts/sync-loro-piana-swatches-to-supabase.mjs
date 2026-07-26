@@ -5,6 +5,7 @@
  *
  *   node scripts/sync-loro-piana-swatches-to-supabase.mjs
  *   node scripts/sync-loro-piana-swatches-to-supabase.mjs --dry-run
+ *   node scripts/sync-loro-piana-swatches-to-supabase.mjs --missing-only
  *
  * Requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local.
  * Bucket: erp-fabric-swatch (see supabase/migrations/010_erp_fabric_swatch_storage.sql).
@@ -44,6 +45,7 @@ function contentTypeForFilename(filename) {
 loadEnvLocal();
 
 const dryRun = process.argv.includes("--dry-run");
+const missingOnly = process.argv.includes("--missing-only");
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 const serviceKey =
   process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? process.env.SUPABASE_SECRET_KEY?.trim();
@@ -96,12 +98,40 @@ let failed = 0;
 
 await ensureBucket();
 
+/** @type {Set<string>} */
+const existingObjects = new Set();
+if (missingOnly) {
+  let offset = 0;
+  const limit = 1000;
+  while (true) {
+    const { data, error } = await admin.storage.from(BUCKET).list(STORAGE_PREFIX, {
+      limit,
+      offset,
+    });
+    if (error) {
+      throw new Error(`Failed to list ${STORAGE_PREFIX}/: ${error.message}`);
+    }
+    if (!data?.length) break;
+    for (const entry of data) {
+      if (entry.name) existingObjects.add(`${STORAGE_PREFIX}/${entry.name}`);
+    }
+    if (data.length < limit) break;
+    offset += limit;
+  }
+  console.log(`Found ${existingObjects.size} existing object(s) under ${STORAGE_PREFIX}/`);
+}
+
 for (const item of items) {
   const localPath = join(IMAGES_DIR, item.filename);
   const objectPath = `${STORAGE_PREFIX}/${item.filename}`;
 
   if (!existsSync(localPath)) {
     console.warn(`Skip (missing local file): ${item.filename}`);
+    skipped += 1;
+    continue;
+  }
+
+  if (missingOnly && existingObjects.has(objectPath)) {
     skipped += 1;
     continue;
   }
