@@ -16,13 +16,21 @@ const CATALOG_PATH = resolve(ROOT, "src/data/suppliers/loro-piana-ss26.json");
 const DEFAULT_OUT = resolve(ROOT, "data/suppliers/loro-piana/images");
 
 function parseArgs(argv) {
-  const args = { source: null, out: DEFAULT_OUT, collection: null, weight: null, book: null };
+  const args = {
+    source: null,
+    out: DEFAULT_OUT,
+    collection: null,
+    weight: null,
+    book: null,
+    merge: false,
+  };
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--out" && argv[i + 1]) args.out = resolve(ROOT, argv[++i]);
     else if (arg === "--collection" && argv[i + 1]) args.collection = argv[++i];
     else if (arg === "--weight" && argv[i + 1]) args.weight = Number.parseInt(argv[++i], 10);
     else if (arg === "--book" && argv[i + 1]) args.book = argv[++i];
+    else if (arg === "--merge") args.merge = true;
     else if (arg === "--help" || arg === "-h") {
       console.log(`Usage: node scripts/import-loro-piana-swatch-images.mjs <source-dir> [options]
 
@@ -31,6 +39,7 @@ Options:
   --collection NAME   Filter catalog by collection substring (case-insensitive)
   --weight GSM        Filter catalog by weight_gsm
   --book NUMBER       Filter catalog by book_number
+  --merge             Append to existing manifest.json instead of replacing it
 `);
       process.exit(0);
     } else if (!arg.startsWith("-") && !args.source) {
@@ -41,7 +50,10 @@ Options:
 }
 
 function normalizeFabricNumberFromFilename(filename) {
-  const stem = basename(filename, extname(filename)).trim().toUpperCase();
+  const stem = basename(filename, extname(filename))
+    .trim()
+    .toUpperCase()
+    .replace(/_\d+$/, "");
   // NS prefix on paper = Solbiati S prefix (e.g. NS16001 → S16001)
   const withNs = stem.match(/^NS(\d+)$/);
   if (withNs) return `S${withNs[1]}`;
@@ -129,26 +141,52 @@ for (const sourcePath of sourceFiles.sort()) {
   });
 }
 
+const manifestPath = join(args.out, "manifest.json");
+const existingManifest =
+  args.merge && existsSync(manifestPath)
+    ? JSON.parse(readFileSync(manifestPath, "utf8"))
+    : null;
+
+const mergedByFabric = new Map(
+  (existingManifest?.items ?? []).map((item) => [item.fabric_number, item])
+);
+for (const item of items) mergedByFabric.set(item.fabric_number, item);
+
+const collectionLabel =
+  args.collection ??
+  basename(args.source).replace(/\s+/g, " ").trim();
+
 const manifest = {
   imported_at: new Date().toISOString(),
-  source: args.source,
+  source: existingManifest?.source
+    ? `${existingManifest.source} + ${args.source}`
+    : args.source,
   catalog_path: "src/data/suppliers/loro-piana-ss26.json",
   output_root: "data/suppliers/loro-piana/images",
   filters: {
+    collections: existingManifest?.filters?.collections
+      ? [...new Set([...existingManifest.filters.collections, collectionLabel])]
+      : collectionLabel
+        ? [collectionLabel]
+        : undefined,
     collection: args.collection,
     weight_gsm: args.weight,
     book_number: args.book,
+    note: existingManifest?.filters?.note ?? (args.merge ? "Merged manifest from multiple imports" : undefined),
   },
   naming:
-    "N-prefixed order codes (N721001.jpg → 721001.jpg); NS-prefixed Solbiati (NS16001.jpg → S16001.jpg)",
-  items,
+    "N-prefixed order codes (N721001.jpg → 721001.jpg); NS-prefixed Solbiati (NS16001.jpg → S16001.jpg); _0 suffix stripped (N784001_0.jpg → 784001.jpg)",
+  items: [...mergedByFabric.values()].sort((a, b) =>
+    a.fabric_number.localeCompare(b.fabric_number, undefined, { numeric: true })
+  ),
 };
 
-const manifestPath = join(args.out, "manifest.json");
 writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
 const okCount = items.filter((item) => item.ok).length;
-const failCount = items.length - okCount;
+const noCatalogCount = items.filter((item) => item.ok && !item.catalog_match).length;
+const totalOk = manifest.items.filter((item) => item.ok).length;
 console.log(`Imported ${okCount} swatch image(s) to ${args.out}`);
-if (failCount) console.log(`${failCount} file(s) had no catalog match`);
+if (noCatalogCount) console.log(`${noCatalogCount} file(s) had no catalog match`);
+if (args.merge) console.log(`Manifest total: ${totalOk} ok item(s)`);
 console.log(`Manifest: ${manifestPath}`);

@@ -1,6 +1,6 @@
 {
-  "imported_at": "2026-06-19T11:08:00.783Z",
-  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml  + /Users/ralphrahme/Desktop/Loro Piana Bunches/Events + /Users/ralphrahme/Desktop/Loro Piana Bunches/Frescolino - S16. 200 grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Royal Wish  738 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Summertime 771 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Suitmate + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/DRESANO 340 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Art Du Lin II - S23 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Gabardilia S05. 240 GRAMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml",
+  "imported_at": "2026-07-26T12:30:25.510Z",
+  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml  + /Users/ralphrahme/Desktop/Loro Piana Bunches/Events + /Users/ralphrahme/Desktop/Loro Piana Bunches/Frescolino - S16. 200 grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Royal Wish  738 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Summertime 771 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Suitmate + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/DRESANO 340 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Art Du Lin II - S23 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Gabardilia S05. 240 GRAMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml + /Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml",
   "catalog_path": "src/data/suppliers/loro-piana-ss26.json",
   "output_root": "data/suppliers/loro-piana/images",
   "filters": {
@@ -18,11 +18,18 @@
       "Art Du Lin II S23 (book 782, NS→S)",
       "Gabardilia S05 (book 782, NS→S)",
       "Zefiro S10 (book 782, NS→S)",
-      "Graffiti Shirts S25 (book 782, NS→S, 180-200gr)"
+      "Graffiti Shirts S25 (book 782, NS→S, 180-200gr)",
+      "A World of Colours Cott&Cash 784",
+      "Jersey - 785",
+      "Proposte Giacche SS26 - #780. 250grams",
+      "Graffiti Shirts - S25. weight 180-200gr:ml"
     ],
+    "collection": null,
+    "weight_gsm": null,
+    "book_number": null,
     "note": "Merged manifest from multiple imports"
   },
-  "naming": "N-prefixed order codes (N721001.jpg → 721001.jpg); NS-prefixed Solbiati (NS16001.jpg → S16001.jpg)",
+  "naming": "N-prefixed order codes (N721001.jpg → 721001.jpg); NS-prefixed Solbiati (NS16001.jpg → S16001.jpg); _0 suffix stripped (N784001_0.jpg → 784001.jpg)",
   "items": [
     {
       "fabric_number": "721001",
@@ -2975,6 +2982,16 @@
       "bytes": 3323495
     },
     {
+      "fabric_number": "780001",
+      "source_filename": "N780001.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams/N780001.jpg",
+      "filename": "780001.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3638341,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
       "fabric_number": "780002",
       "source_filename": "N780002.jpg",
       "filename": "780002.jpg",
@@ -2982,6 +2999,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3531689
     },
     {
@@ -2992,7 +3010,18 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3697260
+    },
+    {
+      "fabric_number": "780004",
+      "source_filename": "N780004.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams/N780004.jpg",
+      "filename": "780004.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3747795,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "780005",
@@ -3002,6 +3031,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3745176
     },
     {
@@ -3012,6 +3042,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3342289
     },
     {
@@ -3022,6 +3053,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3876338
     },
     {
@@ -3032,7 +3064,18 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3839960
+    },
+    {
+      "fabric_number": "780009",
+      "source_filename": "N780009.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams/N780009.jpg",
+      "filename": "780009.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3328831,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "780010",
@@ -3042,6 +3085,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3539176
     },
     {
@@ -3052,6 +3096,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2712398
     },
     {
@@ -3062,6 +3107,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3397426
     },
     {
@@ -3072,6 +3118,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3279436
     },
     {
@@ -3082,6 +3129,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3416825
     },
     {
@@ -3092,6 +3140,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3003441
     },
     {
@@ -3102,6 +3151,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3513053
     },
     {
@@ -3112,6 +3162,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3639755
     },
     {
@@ -3122,6 +3173,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3200670
     },
     {
@@ -3132,6 +3184,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 5052757
     },
     {
@@ -3142,6 +3195,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3817585
     },
     {
@@ -3152,6 +3206,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3328755
     },
     {
@@ -3162,6 +3217,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3344970
     },
     {
@@ -3172,7 +3228,18 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 4210152
+    },
+    {
+      "fabric_number": "780024",
+      "source_filename": "N780024.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams/N780024.jpg",
+      "filename": "780024.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3648982,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "780025",
@@ -3182,6 +3249,7 @@
       "book_number": "780",
       "weight_gsm": 250,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2909082
     },
     {
@@ -3192,6 +3260,7 @@
       "book_number": "780",
       "weight_gsm": 290,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3512901
     },
     {
@@ -3202,6 +3271,7 @@
       "book_number": "780",
       "weight_gsm": 290,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3787223
     },
     {
@@ -3212,6 +3282,7 @@
       "book_number": "780",
       "weight_gsm": 290,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3509122
     },
     {
@@ -3222,6 +3293,7 @@
       "book_number": "780",
       "weight_gsm": 290,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3607219
     },
     {
@@ -3232,7 +3304,28 @@
       "book_number": "780",
       "weight_gsm": 290,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3240862
+    },
+    {
+      "fabric_number": "780031",
+      "source_filename": "N780031.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams/N780031.jpg",
+      "filename": "780031.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2807358,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "780032",
+      "source_filename": "N780032.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams/N780032.jpg",
+      "filename": "780032.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3691609,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "780033",
@@ -3242,6 +3335,7 @@
       "book_number": "780",
       "weight_gsm": 290,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3526577
     },
     {
@@ -3252,6 +3346,7 @@
       "book_number": "780",
       "weight_gsm": 290,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3152774
     },
     {
@@ -3262,6 +3357,7 @@
       "book_number": "780",
       "weight_gsm": 290,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3820395
     },
     {
@@ -3272,6 +3368,7 @@
       "book_number": "780",
       "weight_gsm": 290,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3390714
     },
     {
@@ -3282,6 +3379,7 @@
       "book_number": "780",
       "weight_gsm": 290,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3881561
     },
     {
@@ -3292,6 +3390,7 @@
       "book_number": "780",
       "weight_gsm": 290,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3318563
     },
     {
@@ -3302,6 +3401,7 @@
       "book_number": "780",
       "weight_gsm": 240,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3698398
     },
     {
@@ -3312,6 +3412,7 @@
       "book_number": "780",
       "weight_gsm": 240,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3882852
     },
     {
@@ -3322,6 +3423,7 @@
       "book_number": "780",
       "weight_gsm": 240,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3256724
     },
     {
@@ -3332,6 +3434,7 @@
       "book_number": "780",
       "weight_gsm": 240,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3731737
     },
     {
@@ -3342,7 +3445,18 @@
       "book_number": "780",
       "weight_gsm": 240,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3778126
+    },
+    {
+      "fabric_number": "780044",
+      "source_filename": "N780044.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams/N780044.jpg",
+      "filename": "780044.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 4091485,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "780045",
@@ -3352,6 +3466,7 @@
       "book_number": "780",
       "weight_gsm": 240,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3447372
     },
     {
@@ -3362,6 +3477,7 @@
       "book_number": "780",
       "weight_gsm": 240,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3658984
     },
     {
@@ -3372,6 +3488,7 @@
       "book_number": "780",
       "weight_gsm": 240,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3165471
     },
     {
@@ -3382,6 +3499,7 @@
       "book_number": "780",
       "weight_gsm": 240,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2978001
     },
     {
@@ -3392,6 +3510,7 @@
       "book_number": "780",
       "weight_gsm": 240,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3285632
     },
     {
@@ -3402,6 +3521,7 @@
       "book_number": "780",
       "weight_gsm": 240,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3351580
     },
     {
@@ -3412,6 +3532,7 @@
       "book_number": "780",
       "weight_gsm": 240,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3698127
     },
     {
@@ -3422,6 +3543,7 @@
       "book_number": "780",
       "weight_gsm": 240,
       "ok": true,
+      "catalog_match": true,
       "bytes": 1459265
     },
     {
@@ -3432,6 +3554,7 @@
       "book_number": "780",
       "weight_gsm": 240,
       "ok": true,
+      "catalog_match": true,
       "bytes": 1576258
     },
     {
@@ -3442,7 +3565,38 @@
       "book_number": "780",
       "weight_gsm": 240,
       "ok": true,
+      "catalog_match": true,
       "bytes": 1464811
+    },
+    {
+      "fabric_number": "780055",
+      "source_filename": "N780055.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams/N780055.jpg",
+      "filename": "780055.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2798366,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "780056",
+      "source_filename": "N780056.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams/N780056.jpg",
+      "filename": "780056.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3461448,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "780057",
+      "source_filename": "N780057.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams/N780057.jpg",
+      "filename": "780057.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3203605,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "780058",
@@ -3452,6 +3606,7 @@
       "book_number": "780",
       "weight_gsm": 280,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3576766
     },
     {
@@ -3462,6 +3617,7 @@
       "book_number": "780",
       "weight_gsm": 280,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3879071
     },
     {
@@ -3472,6 +3628,7 @@
       "book_number": "780",
       "weight_gsm": 280,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3452108
     },
     {
@@ -3482,6 +3639,7 @@
       "book_number": "780",
       "weight_gsm": 280,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3172471
     },
     {
@@ -3492,6 +3650,7 @@
       "book_number": "780",
       "weight_gsm": 280,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3753748
     },
     {
@@ -3502,6 +3661,7 @@
       "book_number": "780",
       "weight_gsm": 280,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3031930
     },
     {
@@ -3512,6 +3672,7 @@
       "book_number": "780",
       "weight_gsm": 280,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3345681
     },
     {
@@ -3522,6 +3683,7 @@
       "book_number": "780",
       "weight_gsm": 280,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2869002
     },
     {
@@ -3532,6 +3694,7 @@
       "book_number": "780",
       "weight_gsm": 290,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2813872
     },
     {
@@ -3542,6 +3705,7 @@
       "book_number": "780",
       "weight_gsm": 280,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3200234
     },
     {
@@ -3552,6 +3716,7 @@
       "book_number": "780",
       "weight_gsm": 280,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3419728
     },
     {
@@ -3562,6 +3727,7 @@
       "book_number": "780",
       "weight_gsm": 280,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2892532
     },
     {
@@ -3572,7 +3738,18 @@
       "book_number": "780",
       "weight_gsm": 280,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3150892
+    },
+    {
+      "fabric_number": "780071",
+      "source_filename": "N780071.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams/N780071.jpg",
+      "filename": "780071.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2561138,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "780072",
@@ -3582,6 +3759,7 @@
       "book_number": "780",
       "weight_gsm": 280,
       "ok": true,
+      "catalog_match": true,
       "bytes": 1480812
     },
     {
@@ -3592,6 +3770,7 @@
       "book_number": "780",
       "weight_gsm": 340,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2212752
     },
     {
@@ -3602,6 +3781,7 @@
       "book_number": "780",
       "weight_gsm": 340,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2447195
     },
     {
@@ -3612,6 +3792,7 @@
       "book_number": "780",
       "weight_gsm": 340,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2871036
     },
     {
@@ -3622,6 +3803,7 @@
       "book_number": "780",
       "weight_gsm": 340,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2855371
     },
     {
@@ -3632,6 +3814,7 @@
       "book_number": "780",
       "weight_gsm": 340,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2625256
     },
     {
@@ -4303,6 +4486,1206 @@
       "weight_gsm": 200,
       "ok": true,
       "bytes": 2231419
+    },
+    {
+      "fabric_number": "784001",
+      "source_filename": "N784001_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784001_0.jpg",
+      "filename": "784001.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1123642,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784002",
+      "source_filename": "N784002_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784002_0.jpg",
+      "filename": "784002.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 19779,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784003",
+      "source_filename": "N784003_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784003_0.jpg",
+      "filename": "784003.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1325997,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784004",
+      "source_filename": "N784004_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784004_0.jpg",
+      "filename": "784004.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1497229,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784005",
+      "source_filename": "N784005_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784005_0.jpg",
+      "filename": "784005.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1544623,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784006",
+      "source_filename": "N784006_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784006_0.jpg",
+      "filename": "784006.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1514033,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784007",
+      "source_filename": "N784007_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784007_0.jpg",
+      "filename": "784007.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1339219,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784008",
+      "source_filename": "N784008_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784008_0.jpg",
+      "filename": "784008.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1402586,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784009",
+      "source_filename": "N784009_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784009_0.jpg",
+      "filename": "784009.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1456949,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784010",
+      "source_filename": "N784010_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784010_0.jpg",
+      "filename": "784010.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1564880,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784011",
+      "source_filename": "N784011_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784011_0.jpg",
+      "filename": "784011.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1529016,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784012",
+      "source_filename": "N784012_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784012_0.jpg",
+      "filename": "784012.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1869719,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784013",
+      "source_filename": "N784013_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784013_0.jpg",
+      "filename": "784013.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1745843,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784014",
+      "source_filename": "N784014_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784014_0.jpg",
+      "filename": "784014.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1643593,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784015",
+      "source_filename": "N784015_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784015_0.jpg",
+      "filename": "784015.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1388809,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784016",
+      "source_filename": "N784016_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784016_0.jpg",
+      "filename": "784016.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1549445,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784017",
+      "source_filename": "N784017_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784017_0.jpg",
+      "filename": "784017.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1741693,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784018",
+      "source_filename": "N784018_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784018_0.jpg",
+      "filename": "784018.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1549931,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784019",
+      "source_filename": "N784019_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784019_0.jpg",
+      "filename": "784019.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1331047,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784020",
+      "source_filename": "N784020_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784020_0.jpg",
+      "filename": "784020.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1315116,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784021",
+      "source_filename": "N784021_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784021_0.jpg",
+      "filename": "784021.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 862926,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784022",
+      "source_filename": "N784022_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784022_0.jpg",
+      "filename": "784022.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1730031,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784023",
+      "source_filename": "N784023_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784023_0.jpg",
+      "filename": "784023.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1265604,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784024",
+      "source_filename": "N784024_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784024_0.jpg",
+      "filename": "784024.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1747464,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784025",
+      "source_filename": "N784025_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784025_0.jpg",
+      "filename": "784025.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1633020,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784026",
+      "source_filename": "N784026_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784026_0.jpg",
+      "filename": "784026.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1660214,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784027",
+      "source_filename": "N784027_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784027_0.jpg",
+      "filename": "784027.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 884642,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784028",
+      "source_filename": "N784028_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784028_0.jpg",
+      "filename": "784028.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1587881,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784029",
+      "source_filename": "N784029_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784029_0.jpg",
+      "filename": "784029.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1386747,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784030",
+      "source_filename": "N784030_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784030_0.jpg",
+      "filename": "784030.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 611477,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784031",
+      "source_filename": "N784031_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784031_0.jpg",
+      "filename": "784031.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1308914,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784032",
+      "source_filename": "N784032_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784032_0.jpg",
+      "filename": "784032.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1613294,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784033",
+      "source_filename": "N784033_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784033_0.jpg",
+      "filename": "784033.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 238690,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784034",
+      "source_filename": "N784034_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784034_0.jpg",
+      "filename": "784034.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 840301,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784035",
+      "source_filename": "N784035_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784035_0.jpg",
+      "filename": "784035.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1327780,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784036",
+      "source_filename": "N784036_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784036_0.jpg",
+      "filename": "784036.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1485769,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784037",
+      "source_filename": "N784037_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784037_0.jpg",
+      "filename": "784037.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1157870,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784038",
+      "source_filename": "N784038_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784038_0.jpg",
+      "filename": "784038.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1070300,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784039",
+      "source_filename": "N784039_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784039_0.jpg",
+      "filename": "784039.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1645422,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784040",
+      "source_filename": "N784040_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784040_0.jpg",
+      "filename": "784040.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1356658,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784041",
+      "source_filename": "N784041_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784041_0.jpg",
+      "filename": "784041.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1047581,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784042",
+      "source_filename": "N784042_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784042_0.jpg",
+      "filename": "784042.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1293549,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784043",
+      "source_filename": "N784043_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784043_0.jpg",
+      "filename": "784043.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1132307,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784044",
+      "source_filename": "N784044_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784044_0.jpg",
+      "filename": "784044.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1305554,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784045",
+      "source_filename": "N784045_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784045_0.jpg",
+      "filename": "784045.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 892472,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784046",
+      "source_filename": "N784046_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784046_0.jpg",
+      "filename": "784046.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1199083,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784047",
+      "source_filename": "N784047_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784047_0.jpg",
+      "filename": "784047.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1469914,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784048",
+      "source_filename": "N784048_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784048_0.jpg",
+      "filename": "784048.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 664556,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784049",
+      "source_filename": "N784049_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784049_0.jpg",
+      "filename": "784049.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1486359,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784050",
+      "source_filename": "N784050_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784050_0.jpg",
+      "filename": "784050.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1393917,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784051",
+      "source_filename": "N784051_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784051_0.jpg",
+      "filename": "784051.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1378319,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784052",
+      "source_filename": "N784052_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784052_0.jpg",
+      "filename": "784052.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 750355,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784053",
+      "source_filename": "N784053_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784053_0.jpg",
+      "filename": "784053.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1630389,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784054",
+      "source_filename": "N784054_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784054_0.jpg",
+      "filename": "784054.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1456397,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784056",
+      "source_filename": "N784056_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784056_0.jpg",
+      "filename": "784056.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 552343,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784057",
+      "source_filename": "N784057_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784057_0.jpg",
+      "filename": "784057.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 395596,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784058",
+      "source_filename": "N784058_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784058_0.jpg",
+      "filename": "784058.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1424719,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784059",
+      "source_filename": "N784059_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784059_0.jpg",
+      "filename": "784059.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1529671,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784060",
+      "source_filename": "N784060_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784060_0.jpg",
+      "filename": "784060.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1332953,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784061",
+      "source_filename": "N784061_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784061_0.jpg",
+      "filename": "784061.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1180952,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "784062",
+      "source_filename": "N784062_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784/N784062_0.jpg",
+      "filename": "784062.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 928891,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785001",
+      "source_filename": "N785001_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785001_0.jpg",
+      "filename": "785001.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1977120,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785002",
+      "source_filename": "N785002_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785002_0.jpg",
+      "filename": "785002.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 630072,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785003",
+      "source_filename": "N785003_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785003_0.jpg",
+      "filename": "785003.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 4235476,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785004",
+      "source_filename": "N785004_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785004_0.jpg",
+      "filename": "785004.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1994206,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785005",
+      "source_filename": "N785005_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785005_0.jpg",
+      "filename": "785005.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2280124,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785006",
+      "source_filename": "N785006_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785006_0.jpg",
+      "filename": "785006.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2387765,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785007",
+      "source_filename": "N785007_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785007_0.jpg",
+      "filename": "785007.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2425504,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785008",
+      "source_filename": "N785008_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785008_0.jpg",
+      "filename": "785008.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1671248,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785009",
+      "source_filename": "N785009_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785009_0.jpg",
+      "filename": "785009.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2947787,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785010",
+      "source_filename": "N785010_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785010_0.jpg",
+      "filename": "785010.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2004978,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785011",
+      "source_filename": "N785011_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785011_0.jpg",
+      "filename": "785011.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2713637,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785012",
+      "source_filename": "N785012_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785012_0.jpg",
+      "filename": "785012.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1838697,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785013",
+      "source_filename": "N785013_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785013_0.jpg",
+      "filename": "785013.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2013797,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785014",
+      "source_filename": "N785014_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785014_0.jpg",
+      "filename": "785014.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2576441,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785015",
+      "source_filename": "N785015_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785015_0.jpg",
+      "filename": "785015.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2852046,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785016",
+      "source_filename": "N785016_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785016_0.jpg",
+      "filename": "785016.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2462477,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785017",
+      "source_filename": "N785017_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785017_0.jpg",
+      "filename": "785017.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2516553,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785018",
+      "source_filename": "N785018_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785018_0.jpg",
+      "filename": "785018.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2581921,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785019",
+      "source_filename": "N785019_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785019_0.jpg",
+      "filename": "785019.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2624826,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785020",
+      "source_filename": "N785020_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785020_0.jpg",
+      "filename": "785020.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1140076,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785021",
+      "source_filename": "N785021_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785021_0.jpg",
+      "filename": "785021.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2873876,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785022",
+      "source_filename": "N785022_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785022_0.jpg",
+      "filename": "785022.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2451668,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785023",
+      "source_filename": "N785023_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785023_0.jpg",
+      "filename": "785023.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2344046,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785024",
+      "source_filename": "N785024_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785024_0.jpg",
+      "filename": "785024.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1182862,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785025",
+      "source_filename": "N785025_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785025_0.jpg",
+      "filename": "785025.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2571120,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785026",
+      "source_filename": "N785026_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785026_0.jpg",
+      "filename": "785026.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3282622,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785027",
+      "source_filename": "N785027_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785027_0.jpg",
+      "filename": "785027.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2153079,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785028",
+      "source_filename": "N785028_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785028_0.jpg",
+      "filename": "785028.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2310724,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785029",
+      "source_filename": "N785029_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785029_0.jpg",
+      "filename": "785029.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2756929,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785030",
+      "source_filename": "N785030_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785030_0.jpg",
+      "filename": "785030.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2067422,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785031",
+      "source_filename": "N785031_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785031_0.jpg",
+      "filename": "785031.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1691065,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785032",
+      "source_filename": "N785032_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785032_0.jpg",
+      "filename": "785032.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2477574,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785033",
+      "source_filename": "N785033_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785033_0.jpg",
+      "filename": "785033.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2401992,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785034",
+      "source_filename": "N785034_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785034_0.jpg",
+      "filename": "785034.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1748133,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785035",
+      "source_filename": "N785035_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785035_0.jpg",
+      "filename": "785035.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2951384,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785036",
+      "source_filename": "N785036_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785036_0.jpg",
+      "filename": "785036.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2895528,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785037",
+      "source_filename": "N785037_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785037_0.jpg",
+      "filename": "785037.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1039624,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785038",
+      "source_filename": "N785038_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785038_0.jpg",
+      "filename": "785038.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2937175,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785039",
+      "source_filename": "N785039_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785039_0.jpg",
+      "filename": "785039.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2496710,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785040",
+      "source_filename": "N785040_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785040_0.jpg",
+      "filename": "785040.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2119712,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785041",
+      "source_filename": "N785041_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785041_0.jpg",
+      "filename": "785041.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1832803,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785042",
+      "source_filename": "N785042_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785042_0.jpg",
+      "filename": "785042.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3187968,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785043",
+      "source_filename": "N785043_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785043_0.jpg",
+      "filename": "785043.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2367204,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785044",
+      "source_filename": "N785044_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785044_0.jpg",
+      "filename": "785044.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2150164,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785045",
+      "source_filename": "N785045_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785045_0.jpg",
+      "filename": "785045.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1895580,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785046",
+      "source_filename": "N785046_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785046_0.jpg",
+      "filename": "785046.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3228555,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785047",
+      "source_filename": "N785047_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785047_0.jpg",
+      "filename": "785047.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 38793,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785048",
+      "source_filename": "N785048_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785048_0.jpg",
+      "filename": "785048.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2889843,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785049",
+      "source_filename": "N785049_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785049_0.jpg",
+      "filename": "785049.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2842293,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785050",
+      "source_filename": "N785050_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785050_0.jpg",
+      "filename": "785050.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2985169,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785051",
+      "source_filename": "N785051_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785051_0.jpg",
+      "filename": "785051.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2276567,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785052",
+      "source_filename": "N785052_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785052_0.jpg",
+      "filename": "785052.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2237225,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785053",
+      "source_filename": "N785053_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785053_0.jpg",
+      "filename": "785053.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1597692,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785054",
+      "source_filename": "N785054_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785054_0.jpg",
+      "filename": "785054.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1623553,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785055",
+      "source_filename": "N785055_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785055_0.jpg",
+      "filename": "785055.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2722388,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785056",
+      "source_filename": "N785056_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785056_0.jpg",
+      "filename": "785056.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3121581,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785057",
+      "source_filename": "N785057_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785057_0.jpg",
+      "filename": "785057.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3285659,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785058",
+      "source_filename": "N785058_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785058_0.jpg",
+      "filename": "785058.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3067093,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "785059",
+      "source_filename": "N785059_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785/N785059_0.jpg",
+      "filename": "785059.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2538300,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "S05001",
@@ -6726,6 +8109,7 @@
       "book_number": "782",
       "weight_gsm": 195,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2448831
     },
     {
@@ -6736,6 +8120,7 @@
       "book_number": "782",
       "weight_gsm": 195,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2140473
     },
     {
@@ -6746,6 +8131,7 @@
       "book_number": "782",
       "weight_gsm": 195,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2289932
     },
     {
@@ -6756,6 +8142,7 @@
       "book_number": "782",
       "weight_gsm": 195,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2113794
     },
     {
@@ -6766,7 +8153,28 @@
       "book_number": "782",
       "weight_gsm": 195,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2886856
+    },
+    {
+      "fabric_number": "S25006",
+      "source_filename": "NS25006.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25006.jpg",
+      "filename": "S25006.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2956142,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "S25007",
+      "source_filename": "NS25007.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25007.jpg",
+      "filename": "S25007.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3150502,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "S25008",
@@ -6776,6 +8184,7 @@
       "book_number": "782",
       "weight_gsm": 195,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3962486
     },
     {
@@ -6786,7 +8195,68 @@
       "book_number": "782",
       "weight_gsm": 195,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3292533
+    },
+    {
+      "fabric_number": "S25010",
+      "source_filename": "NS25010.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25010.jpg",
+      "filename": "S25010.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2308169,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "S25011",
+      "source_filename": "NS25011.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25011.jpg",
+      "filename": "S25011.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2469373,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "S25012",
+      "source_filename": "NS25012.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25012.jpg",
+      "filename": "S25012.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2508941,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "S25013",
+      "source_filename": "NS25013.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25013.jpg",
+      "filename": "S25013.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2698661,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "S25014",
+      "source_filename": "NS25014.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25014.jpg",
+      "filename": "S25014.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2649403,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "S25015",
+      "source_filename": "NS25015.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25015.jpg",
+      "filename": "S25015.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2753336,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "S25016",
@@ -6796,7 +8266,28 @@
       "book_number": "782",
       "weight_gsm": 195,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2991779
+    },
+    {
+      "fabric_number": "S25017",
+      "source_filename": "NS25017.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25017.jpg",
+      "filename": "S25017.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2868010,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "S25018",
+      "source_filename": "NS25018.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25018.jpg",
+      "filename": "S25018.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3048332,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "S25019",
@@ -6806,6 +8297,7 @@
       "book_number": "782",
       "weight_gsm": 195,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2940247
     },
     {
@@ -6816,6 +8308,7 @@
       "book_number": "782",
       "weight_gsm": 195,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2690508
     },
     {
@@ -6826,6 +8319,7 @@
       "book_number": "782",
       "weight_gsm": 195,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3192343
     },
     {
@@ -6836,7 +8330,58 @@
       "book_number": "782",
       "weight_gsm": 195,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2616282
+    },
+    {
+      "fabric_number": "S25023",
+      "source_filename": "NS25023.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25023.jpg",
+      "filename": "S25023.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2094845,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "S25024",
+      "source_filename": "NS25024.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25024.jpg",
+      "filename": "S25024.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 815314,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "S25025",
+      "source_filename": "NS25025.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25025.jpg",
+      "filename": "S25025.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1980749,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "S25026",
+      "source_filename": "NS25026.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25026.jpg",
+      "filename": "S25026.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2128854,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "S25027",
+      "source_filename": "NS25027.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25027.jpg",
+      "filename": "S25027.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3156677,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "S25028",
@@ -6846,7 +8391,28 @@
       "book_number": "782",
       "weight_gsm": 180,
       "ok": true,
+      "catalog_match": true,
       "bytes": 3257996
+    },
+    {
+      "fabric_number": "S25029",
+      "source_filename": "NS25029.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25029.jpg",
+      "filename": "S25029.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2732965,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "S25030",
+      "source_filename": "NS25030.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25030.jpg",
+      "filename": "S25030.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2522518,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
       "fabric_number": "S25031",
@@ -6856,7 +8422,18 @@
       "book_number": "782",
       "weight_gsm": 180,
       "ok": true,
+      "catalog_match": true,
       "bytes": 2314622
+    },
+    {
+      "fabric_number": "S25032",
+      "source_filename": "NS25032.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml/NS25032.jpg",
+      "filename": "S25032.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3081420,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     }
   ]
 }
