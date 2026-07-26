@@ -1,6 +1,6 @@
 {
-  "imported_at": "2026-07-26T12:30:25.510Z",
-  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml  + /Users/ralphrahme/Desktop/Loro Piana Bunches/Events + /Users/ralphrahme/Desktop/Loro Piana Bunches/Frescolino - S16. 200 grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Royal Wish  738 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Summertime 771 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Suitmate + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/DRESANO 340 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Art Du Lin II - S23 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Gabardilia S05. 240 GRAMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml + /Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml",
+  "imported_at": "2026-07-26T14:17:49.578Z",
+  "source": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Australis 270gr:ml  + /Users/ralphrahme/Desktop/Loro Piana Bunches/Events + /Users/ralphrahme/Desktop/Loro Piana Bunches/Frescolino - S16. 200 grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Graffiti SS26 - S24. 270-330-430-460 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti SS26 - 781 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Royal Wish  738 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Summertime 771 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Suitmate + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/DRESANO 340 GRMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Art Du Lin II - S23 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Gabardilia S05. 240 GRAMS + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Zefiro + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml + /Users/ralphrahme/Desktop/Loro Piana Bunches/A World of Colours Cott&Cash  784 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Jersey - 785 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche SS26 - #780. 250grams + /Users/ralphrahme/Desktop/Loro Piana Bunches/Solbiati/Graffiti Shirts - S25. weight 180-200gr:ml + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787 + /Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786",
   "catalog_path": "src/data/suppliers/loro-piana-ss26.json",
   "output_root": "data/suppliers/loro-piana/images",
   "filters": {
@@ -22,11 +22,13 @@
       "A World of Colours Cott&Cash 784",
       "Jersey - 785",
       "Proposte Giacche SS26 - #780. 250grams",
-      "Graffiti Shirts - S25. weight 180-200gr:ml"
+      "Graffiti Shirts - S25. weight 180-200gr:ml",
+      "Proposte Abiti FW26 - 787",
+      "Proposte Giacche FW26 - 786"
     ],
     "collection": null,
     "weight_gsm": null,
-    "book_number": null,
+    "book_number": "786",
     "note": "Merged manifest from multiple imports"
   },
   "naming": "N-prefixed order codes (N721001.jpg → 721001.jpg); NS-prefixed Solbiati (NS16001.jpg → S16001.jpg); _0 suffix stripped (N784001_0.jpg → 784001.jpg)",
@@ -5685,6 +5687,1336 @@
       "ok": true,
       "catalog_match": false,
       "bytes": 2538300,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786001",
+      "source_filename": "N786001_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786001_0.jpg",
+      "filename": "786001.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2876042,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786002",
+      "source_filename": "N786002_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786002_0.jpg",
+      "filename": "786002.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2775248,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786003",
+      "source_filename": "N786003_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786003_0.jpg",
+      "filename": "786003.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2401153,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786004",
+      "source_filename": "N786004_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786004_0.jpg",
+      "filename": "786004.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 4012354,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786005",
+      "source_filename": "N786005_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786005_0.jpg",
+      "filename": "786005.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3508256,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786006",
+      "source_filename": "N786006_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786006_0.jpg",
+      "filename": "786006.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2609998,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786007",
+      "source_filename": "N786007_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786007_0.jpg",
+      "filename": "786007.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2526767,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786008",
+      "source_filename": "N786008_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786008_0.jpg",
+      "filename": "786008.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3263617,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786009",
+      "source_filename": "N786009_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786009_0.jpg",
+      "filename": "786009.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2883512,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786010",
+      "source_filename": "N786010_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786010_0.jpg",
+      "filename": "786010.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2349891,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786011",
+      "source_filename": "N786011_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786011_0.jpg",
+      "filename": "786011.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3193960,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786012",
+      "source_filename": "N786012_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786012_0.jpg",
+      "filename": "786012.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3106219,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786013",
+      "source_filename": "N786013_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786013_0.jpg",
+      "filename": "786013.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2945274,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786014",
+      "source_filename": "N786014_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786014_0.jpg",
+      "filename": "786014.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2703463,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786015",
+      "source_filename": "N786015_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786015_0.jpg",
+      "filename": "786015.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3098485,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786016",
+      "source_filename": "N786016_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786016_0.jpg",
+      "filename": "786016.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3126477,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786017",
+      "source_filename": "N786017_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786017_0.jpg",
+      "filename": "786017.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3085502,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786018",
+      "source_filename": "N786018_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786018_0.jpg",
+      "filename": "786018.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3032413,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786019",
+      "source_filename": "N786019_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786019_0.jpg",
+      "filename": "786019.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2785568,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786020",
+      "source_filename": "N786020_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786020_0.jpg",
+      "filename": "786020.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3044884,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786021",
+      "source_filename": "N786021_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786021_0.jpg",
+      "filename": "786021.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3017543,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786022",
+      "source_filename": "N786022_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786022_0.jpg",
+      "filename": "786022.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2655690,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786023",
+      "source_filename": "N786023_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786023_0.jpg",
+      "filename": "786023.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2855237,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786024",
+      "source_filename": "N786024_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786024_0.jpg",
+      "filename": "786024.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2793698,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786025",
+      "source_filename": "N786025_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786025_0.jpg",
+      "filename": "786025.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2529771,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786026",
+      "source_filename": "N786026_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786026_0.jpg",
+      "filename": "786026.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2695151,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786027",
+      "source_filename": "N786027_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786027_0.jpg",
+      "filename": "786027.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2593977,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786028",
+      "source_filename": "N786028_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786028_0.jpg",
+      "filename": "786028.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2665529,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786029",
+      "source_filename": "N786029_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786029_0.jpg",
+      "filename": "786029.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2356935,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786030",
+      "source_filename": "N786030_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786030_0.jpg",
+      "filename": "786030.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2699611,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786031",
+      "source_filename": "N786031_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786031_0.jpg",
+      "filename": "786031.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2681973,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786032",
+      "source_filename": "N786032_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786032_0.jpg",
+      "filename": "786032.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3000221,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786033",
+      "source_filename": "N786033_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786033_0.jpg",
+      "filename": "786033.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3120306,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786034",
+      "source_filename": "N786034_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786034_0.jpg",
+      "filename": "786034.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2283170,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786035",
+      "source_filename": "N786035_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786035_0.jpg",
+      "filename": "786035.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2641384,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786036",
+      "source_filename": "N786036_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786036_0.jpg",
+      "filename": "786036.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2476482,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786037",
+      "source_filename": "N786037_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786037_0.jpg",
+      "filename": "786037.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3069238,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786038",
+      "source_filename": "N786038_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786038_0.jpg",
+      "filename": "786038.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2909033,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786039",
+      "source_filename": "N786039_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786039_0.jpg",
+      "filename": "786039.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2566698,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786040",
+      "source_filename": "N786040_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786040_0.jpg",
+      "filename": "786040.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2801386,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786041",
+      "source_filename": "N786041_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786041_0.jpg",
+      "filename": "786041.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2188671,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786042",
+      "source_filename": "N786042_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786042_0.jpg",
+      "filename": "786042.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2703913,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786043",
+      "source_filename": "N786043_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786043_0.jpg",
+      "filename": "786043.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2494806,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786044",
+      "source_filename": "N786044_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786044_0.jpg",
+      "filename": "786044.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2822785,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786045",
+      "source_filename": "N786045_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786045_0.jpg",
+      "filename": "786045.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2644454,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786046",
+      "source_filename": "N786046_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786046_0.jpg",
+      "filename": "786046.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2495113,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786047",
+      "source_filename": "N786047_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786047_0.jpg",
+      "filename": "786047.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3180234,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786048",
+      "source_filename": "N786048_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786048_0.jpg",
+      "filename": "786048.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2830464,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786049",
+      "source_filename": "N786049_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786049_0.jpg",
+      "filename": "786049.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3202531,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786050",
+      "source_filename": "N786050_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786050_0.jpg",
+      "filename": "786050.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3334780,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786051",
+      "source_filename": "N786051_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786051_0.jpg",
+      "filename": "786051.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3115191,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786052",
+      "source_filename": "N786052_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786052_0.jpg",
+      "filename": "786052.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2949545,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786053",
+      "source_filename": "N786053_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786053_0.jpg",
+      "filename": "786053.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3069514,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786054",
+      "source_filename": "N786054_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786054_0.jpg",
+      "filename": "786054.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2259967,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786055",
+      "source_filename": "N786055_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786055_0.jpg",
+      "filename": "786055.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3061738,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786056",
+      "source_filename": "N786056_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786056_0.jpg",
+      "filename": "786056.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3432548,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786057",
+      "source_filename": "N786057_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786057_0.jpg",
+      "filename": "786057.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3135347,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786058",
+      "source_filename": "N786058_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786058_0.jpg",
+      "filename": "786058.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2907394,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786059",
+      "source_filename": "N786059_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786059_0.jpg",
+      "filename": "786059.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3146490,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786060",
+      "source_filename": "N786060_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786060_0.jpg",
+      "filename": "786060.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3443436,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786061",
+      "source_filename": "N786061_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786061_0.jpg",
+      "filename": "786061.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3025710,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786062",
+      "source_filename": "N786062_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786062_0.jpg",
+      "filename": "786062.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3115957,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786063",
+      "source_filename": "N786063_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786063_0.jpg",
+      "filename": "786063.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2746589,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786064",
+      "source_filename": "N786064_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786064_0.jpg",
+      "filename": "786064.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2702703,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786065",
+      "source_filename": "N786065_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786065_0.jpg",
+      "filename": "786065.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2536256,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786066",
+      "source_filename": "N786066_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786066_0.jpg",
+      "filename": "786066.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3050685,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "786067",
+      "source_filename": "N786067_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Giacche FW26 - 786/N786067_0.jpg",
+      "filename": "786067.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2480671,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787001",
+      "source_filename": "N787001_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787001_0.jpg",
+      "filename": "787001.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3841451,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787002",
+      "source_filename": "N787002_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787002_0.jpg",
+      "filename": "787002.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3520335,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787003",
+      "source_filename": "N787003_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787003_0.jpg",
+      "filename": "787003.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3393625,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787004",
+      "source_filename": "N787004_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787004_0.jpg",
+      "filename": "787004.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3092944,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787005",
+      "source_filename": "N787005_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787005_0.jpg",
+      "filename": "787005.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3631275,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787006",
+      "source_filename": "N787006_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787006_0.jpg",
+      "filename": "787006.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3504293,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787007",
+      "source_filename": "N787007_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787007_0.jpg",
+      "filename": "787007.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2871214,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787008",
+      "source_filename": "N787008_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787008_0.jpg",
+      "filename": "787008.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3107770,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787009",
+      "source_filename": "N787009_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787009_0.jpg",
+      "filename": "787009.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2898596,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787010",
+      "source_filename": "N787010_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787010_0.jpg",
+      "filename": "787010.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2592774,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787011",
+      "source_filename": "N787011_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787011_0.jpg",
+      "filename": "787011.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3255100,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787012",
+      "source_filename": "N787012_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787012_0.jpg",
+      "filename": "787012.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3186111,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787013",
+      "source_filename": "N787013_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787013_0.jpg",
+      "filename": "787013.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2730117,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787014",
+      "source_filename": "N787014_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787014_0.jpg",
+      "filename": "787014.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3479563,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787015",
+      "source_filename": "N787015_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787015_0.jpg",
+      "filename": "787015.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3100576,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787016",
+      "source_filename": "N787016_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787016_0.jpg",
+      "filename": "787016.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3258632,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787017",
+      "source_filename": "N787017_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787017_0.jpg",
+      "filename": "787017.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3164871,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787018",
+      "source_filename": "N787018_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787018_0.jpg",
+      "filename": "787018.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3388384,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787019",
+      "source_filename": "N787019_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787019_0.jpg",
+      "filename": "787019.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2728357,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787020",
+      "source_filename": "N787020_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787020_0.jpg",
+      "filename": "787020.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2656133,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787021",
+      "source_filename": "N787021_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787021_0.jpg",
+      "filename": "787021.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2324017,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787022",
+      "source_filename": "N787022_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787022_0.jpg",
+      "filename": "787022.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2404367,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787023",
+      "source_filename": "N787023_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787023_0.jpg",
+      "filename": "787023.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3204921,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787024",
+      "source_filename": "N787024_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787024_0.jpg",
+      "filename": "787024.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2714942,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787025",
+      "source_filename": "N787025_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787025_0.jpg",
+      "filename": "787025.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3102325,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787026",
+      "source_filename": "N787026_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787026_0.jpg",
+      "filename": "787026.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3500329,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787027",
+      "source_filename": "N787027_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787027_0.jpg",
+      "filename": "787027.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2864921,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787028",
+      "source_filename": "N787028_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787028_0.jpg",
+      "filename": "787028.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3027768,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787029",
+      "source_filename": "N787029_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787029_0.jpg",
+      "filename": "787029.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3134261,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787030",
+      "source_filename": "N787030_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787030_0.jpg",
+      "filename": "787030.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3141332,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787031",
+      "source_filename": "N787031_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787031_0.jpg",
+      "filename": "787031.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3028556,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787032",
+      "source_filename": "N787032_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787032_0.jpg",
+      "filename": "787032.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2880032,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787033",
+      "source_filename": "N787033_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787033_0.jpg",
+      "filename": "787033.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2920661,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787034",
+      "source_filename": "N787034_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787034_0.jpg",
+      "filename": "787034.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2619710,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787035",
+      "source_filename": "N787035_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787035_0.jpg",
+      "filename": "787035.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3040766,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787036",
+      "source_filename": "N787036_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787036_0.jpg",
+      "filename": "787036.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2815894,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787037",
+      "source_filename": "N787037_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787037_0.jpg",
+      "filename": "787037.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2876707,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787038",
+      "source_filename": "N787038_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787038_0.jpg",
+      "filename": "787038.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2344225,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787039",
+      "source_filename": "N787039_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787039_0.jpg",
+      "filename": "787039.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3024312,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787040",
+      "source_filename": "N787040_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787040_0.jpg",
+      "filename": "787040.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2689633,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787041",
+      "source_filename": "N787041_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787041_0.jpg",
+      "filename": "787041.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2681356,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787042",
+      "source_filename": "N787042_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787042_0.jpg",
+      "filename": "787042.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3130641,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787043",
+      "source_filename": "N787043_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787043_0.jpg",
+      "filename": "787043.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3066737,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787044",
+      "source_filename": "N787044_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787044_0.jpg",
+      "filename": "787044.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3051431,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787045",
+      "source_filename": "N787045_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787045_0.jpg",
+      "filename": "787045.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2926634,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787046",
+      "source_filename": "N787046_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787046_0.jpg",
+      "filename": "787046.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2735713,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787047",
+      "source_filename": "N787047_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787047_0.jpg",
+      "filename": "787047.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2823439,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787048",
+      "source_filename": "N787048_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787048_0.jpg",
+      "filename": "787048.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2418284,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787049",
+      "source_filename": "N787049_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787049_0.jpg",
+      "filename": "787049.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2804516,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787050",
+      "source_filename": "N787050_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787050_0.jpg",
+      "filename": "787050.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2465941,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787051",
+      "source_filename": "N787051_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787051_0.jpg",
+      "filename": "787051.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2711692,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787052",
+      "source_filename": "N787052_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787052_0.jpg",
+      "filename": "787052.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2299725,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787053",
+      "source_filename": "N787053_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787053_0.jpg",
+      "filename": "787053.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1881704,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787054",
+      "source_filename": "N787054_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787054_0.jpg",
+      "filename": "787054.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1747459,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787055",
+      "source_filename": "N787055_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787055_0.jpg",
+      "filename": "787055.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1845032,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787056",
+      "source_filename": "N787056_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787056_0.jpg",
+      "filename": "787056.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1339189,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787057",
+      "source_filename": "N787057_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787057_0.jpg",
+      "filename": "787057.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1718074,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787058",
+      "source_filename": "N787058_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787058_0.jpg",
+      "filename": "787058.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1670705,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787059",
+      "source_filename": "N787059_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787059_0.jpg",
+      "filename": "787059.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1258185,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787060",
+      "source_filename": "N787060_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787060_0.jpg",
+      "filename": "787060.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1862850,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787061",
+      "source_filename": "N787061_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787061_0.jpg",
+      "filename": "787061.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1435539,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787062",
+      "source_filename": "N787062_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787062_0.jpg",
+      "filename": "787062.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1682383,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787063",
+      "source_filename": "N787063_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787063_0.jpg",
+      "filename": "787063.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 4474905,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787064",
+      "source_filename": "N787064_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787064_0.jpg",
+      "filename": "787064.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 3156782,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787065",
+      "source_filename": "N787065_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787065_0.jpg",
+      "filename": "787065.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 2634412,
+      "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
+    },
+    {
+      "fabric_number": "787066",
+      "source_filename": "N787066_0.jpg",
+      "source_path": "/Users/ralphrahme/Desktop/Loro Piana Bunches/Proposte Abiti FW26 - 787/N787066_0.jpg",
+      "filename": "787066.jpg",
+      "ok": true,
+      "catalog_match": false,
+      "bytes": 1254365,
       "note": "Copied swatch even though fabric is not in the filtered catalog (e.g. sold out)."
     },
     {
