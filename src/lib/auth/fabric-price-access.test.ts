@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it } from "node:test";
 import {
   canViewFabricStock,
@@ -276,5 +278,15 @@ describe("public fabric-catalog health", () => {
     assert.equal(sample.solbiati_has_unit_price, true);
     assert.equal(sample.loro_piana_lookup_has_unit_price, true);
     assert.equal(sample.fabric_number, "S10005");
+  });
+});
+
+describe("client-safe Drapers swatch index", () => {
+  it("contains no restricted price field names", () => {
+    const index = JSON.parse(
+      readFileSync(join(process.cwd(), "src/data/suppliers/drapers-swatch-index.json"), "utf8")
+    ) as { fabrics: unknown[] };
+    assertNoRestrictedPriceFields(index, "drapers-swatch-index.json");
+    assert.ok(index.fabrics.length > 0, "expected non-empty swatch index");
   });
 });

@@ -19,7 +19,7 @@ import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display
 import { formatFabricPatternLabel, formatFabricTextLabel } from "@/lib/fabric-sourcing/fabric-display";
 import { fabricStockTone, formatFabricStockLabel } from "@/lib/fabric-sourcing/fabric-stock";
 import type { Supplier, SupplierFabric } from "@/lib/types/fabric-sourcing";
-import { redactSupplierFabricPrice } from "@/lib/auth/fabric-price-access";
+import { redactSupplierFabricPrice } from "@/lib/auth/fabric-price-redact";
 import { cn } from "@/lib/utils";
 
 interface FabricSpecViewProps {

@@ -1,14 +1,15 @@
-import drapersCatalog from "@/data/suppliers/drapers-hs-ss26.json";
-import {
-  drapersCatalogDisplayFields,
-  type DrapersCatalogFabricRow,
-} from "@/lib/integrations/drapers/catalog-fields";
+import drapersSwatchIndex from "@/data/suppliers/drapers-swatch-index.json";
 import { drapersSwatchImageUrl } from "@/lib/fabric-sourcing/drapers-swatch-url";
 import { normalizeDrapersFabricCode } from "@/lib/integrations/drapers/stock";
 import type { FabricSwatchUrls } from "@/lib/fabric-sourcing/fabric-swatch-keys";
 
-type CatalogFile = {
-  fabrics: DrapersCatalogFabricRow[];
+type SwatchIndexFile = {
+  fabrics: Array<{
+    fabric_number: string;
+    swatch_filename?: string | null;
+    swatch_square?: string | null;
+    swatch_zoom?: string | null;
+  }>;
 };
 
 const swatchByCode = new Map<string, FabricSwatchUrls>();
@@ -21,17 +22,16 @@ function registerSwatchKeys(fabricNumber: string, urls: FabricSwatchUrls): void 
   }
 }
 
-for (const fabric of (drapersCatalog as CatalogFile).fabrics) {
-  const display = drapersCatalogDisplayFields(fabric);
-  if (display.swatch_filename) {
+for (const fabric of (drapersSwatchIndex as SwatchIndexFile).fabrics) {
+  if (fabric.swatch_filename) {
     const localUrl = drapersSwatchImageUrl(fabric.fabric_number);
     registerSwatchKeys(fabric.fabric_number, { square: localUrl, zoom: localUrl });
     continue;
   }
-  if (!display.swatch_square) continue;
+  if (!fabric.swatch_square) continue;
   registerSwatchKeys(fabric.fabric_number, {
-    square: display.swatch_square,
-    zoom: display.swatch_zoom || display.swatch_square,
+    square: fabric.swatch_square,
+    zoom: fabric.swatch_zoom || fabric.swatch_square,
   });
 }
 

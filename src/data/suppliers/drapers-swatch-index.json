@@ -1,0 +1,293 @@
+{
+  "updated_at": "2026-07-26T19:32:57.599Z",
+  "fabrics": [
+    {
+      "fabric_number": "10101",
+      "swatch_filename": "10101.jpg"
+    },
+    {
+      "fabric_number": "10102",
+      "swatch_filename": "10102.jpg"
+    },
+    {
+      "fabric_number": "10103",
+      "swatch_filename": "10103.jpg"
+    },
+    {
+      "fabric_number": "10104",
+      "swatch_filename": "10104.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-y5gr-20220909-tessuto_10016.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-fngy-20220909-resa2_10016.jpg"
+    },
+    {
+      "fabric_number": "10105",
+      "swatch_filename": "10105.jpg"
+    },
+    {
+      "fabric_number": "10106",
+      "swatch_filename": "10106.jpg"
+    },
+    {
+      "fabric_number": "10107",
+      "swatch_filename": "10107.jpg"
+    },
+    {
+      "fabric_number": "10108",
+      "swatch_filename": "10108.jpg"
+    },
+    {
+      "fabric_number": "10109",
+      "swatch_filename": "10109.jpg"
+    },
+    {
+      "fabric_number": "10110",
+      "swatch_filename": "10110.jpg"
+    },
+    {
+      "fabric_number": "10121",
+      "swatch_filename": "10121.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-ujel-20220909-tessuto_10027.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-ibro-20220909-resa2_10027.jpg"
+    },
+    {
+      "fabric_number": "10152",
+      "swatch_filename": "10152.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-xnp5-20220909-tessuto_10048.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-wxso-20220909-resa2_10048.jpg"
+    },
+    {
+      "fabric_number": "10186",
+      "swatch_filename": "10186.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-nhwg-20220909-tessuto_10069.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-neia-20220909-resa2_10069.jpg"
+    },
+    {
+      "fabric_number": "12517",
+      "swatch_filename": "12517.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-mtcu-20220909-tessuto_12517.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-9dw7-20220909-resa2_12517.jpg"
+    },
+    {
+      "fabric_number": "12520",
+      "swatch_filename": "12520.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-kbsb-20220909-tessuto_12520.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-7gik-20220909-resa2_12520.jpg"
+    },
+    {
+      "fabric_number": "12521",
+      "swatch_filename": "12521.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-ytpn-20220909-tessuto_12521.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-padj-20220909-resa2_12521.jpg"
+    },
+    {
+      "fabric_number": "17043",
+      "swatch_filename": "17043.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-8v9l-20220909-tessuto_5343.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-ltwr-20220909-resa2_5343.jpg"
+    },
+    {
+      "fabric_number": "26101",
+      "swatch_filename": "26101.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-bluj-20230414-tessuto_259001.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-fh79-20230414-resa2_259001.jpg"
+    },
+    {
+      "fabric_number": "26102",
+      "swatch_filename": "26102.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-wcc0-20230414-tessuto_259002.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-plf9-20230414-resa2_259002.jpg"
+    },
+    {
+      "fabric_number": "26104",
+      "swatch_filename": "26104.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-hpzf-20230414-tessuto_259004.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-tfgp-20230414-resa2_259004.jpg"
+    },
+    {
+      "fabric_number": "26105",
+      "swatch_filename": "26105.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-6r2d-20230414-tessuto_259005.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-hdn0-20230414-resa2_259005.jpg"
+    },
+    {
+      "fabric_number": "26108",
+      "swatch_filename": "26108.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-dc1y-20230414-tessuto_259008.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-paeo-20230414-resa2_259008.jpg"
+    },
+    {
+      "fabric_number": "26110",
+      "swatch_filename": "26110.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-podl-20230414-tessuto_259010.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-g1dz-20230414-resa2_259010.jpg"
+    },
+    {
+      "fabric_number": "26111",
+      "swatch_filename": "26111.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-r3o8-20230414-tessuto_259011.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-xbqr-20230414-resa2_259011.jpg"
+    },
+    {
+      "fabric_number": "26112",
+      "swatch_filename": "26112.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-fbal-20220909-tessuto_25401.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-dokh-20220909-resa2_25401.jpg"
+    },
+    {
+      "fabric_number": "26113",
+      "swatch_filename": "26113.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-dswh-20220909-tessuto_25402.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-uasu-20220909-resa2_25402.jpg"
+    },
+    {
+      "fabric_number": "26130",
+      "swatch_filename": "26130.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-azqc-20220909-tessuto_25413.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-i6zy-20220909-resa2_25413.jpg"
+    },
+    {
+      "fabric_number": "26136",
+      "swatch_filename": "26136.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-ovql-20220909-tessuto_25410.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-vvo2-20220909-resa2_25410.jpg"
+    },
+    {
+      "fabric_number": "40120",
+      "swatch_filename": "40120.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-yru6-20240829-tessuto_40120.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-ngfz-20240829-resa2_40120.jpg"
+    },
+    {
+      "fabric_number": "40154",
+      "swatch_filename": "40154.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-apvb-20240829-tessuto_40154.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-tavg-20240829-resa2_40154.jpg"
+    },
+    {
+      "fabric_number": "40159",
+      "swatch_filename": "40159.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-znht-20240829-tessuto_40159.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-7lix-20240829-resa2_40159.jpg"
+    },
+    {
+      "fabric_number": "50803",
+      "swatch_filename": "50803.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-7is2-20260130-tessuto_50803.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-eumi-20260130-resa2_50803.jpg"
+    },
+    {
+      "fabric_number": "50839",
+      "swatch_filename": "50839.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-lzdq-20260130-tessuto_50839.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-1gq3-20260130-resa2_50839.jpg"
+    },
+    {
+      "fabric_number": "50840",
+      "swatch_filename": "50840.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-w3iy-20260130-tessuto_50840.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-dasc-20260130-resa2_50840.jpg"
+    },
+    {
+      "fabric_number": "50841",
+      "swatch_filename": "50841.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-k0x5-20230131-tessuto_50393.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-vdjj-20230131-resa2_50393.jpg"
+    },
+    {
+      "fabric_number": "50878",
+      "swatch_filename": "50878.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-fmjb-20260130-tessuto_50878.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-jukf-20260130-resa2_50878.jpg"
+    },
+    {
+      "fabric_number": "60021",
+      "swatch_filename": "60021.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-4bzj-20220909-tessuto_60021.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-vt9o-20220909-resa2_60021.jpg"
+    },
+    {
+      "fabric_number": "60059",
+      "swatch_filename": "60059.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-omkq-20220909-tessuto_60059.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-m2vf-20220909-resa2_60059.jpg"
+    },
+    {
+      "fabric_number": "65218",
+      "swatch_filename": "65218.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-8kta-20250901-tessuto_65218.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-s9xx-20250901-resa2_65218.jpg"
+    },
+    {
+      "fabric_number": "65229",
+      "swatch_filename": "65229.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-6dyt-20250901-tessuto_65229.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-gra0-20250901-resa2_65229.jpg"
+    },
+    {
+      "fabric_number": "65232",
+      "swatch_filename": "65232.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-razb-20250901-tessuto_65232.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-0z2o-20250901-resa2_65232.jpg"
+    },
+    {
+      "fabric_number": "70105",
+      "swatch_filename": "70105.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-cv0z-20220909-tessuto_70046.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-q8js-20220909-resa2_70046.jpg"
+    },
+    {
+      "fabric_number": "70138",
+      "swatch_filename": "70138.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-aqi2-20220909-tessuto_70070.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-6xot-20220909-resa2_70070.jpg"
+    },
+    {
+      "fabric_number": "70145",
+      "swatch_filename": "70145.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-4wk7-20220909-tessuto_70069.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-utcc-20220909-resa2_70069.jpg"
+    },
+    {
+      "fabric_number": "70156",
+      "swatch_filename": "70156.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-rqds-20220909-tessuto_70065.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-nfdz-20220909-resa2_70065.jpg"
+    },
+    {
+      "fabric_number": "71021",
+      "swatch_filename": "71021.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-yvks-20240829-tessuto_71021.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-290a-20240829-resa2_71021.jpg"
+    },
+    {
+      "fabric_number": "71023",
+      "swatch_filename": "71023.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-oyir-20240829-tessuto_71023.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-jsh0-20240829-resa2_71023.jpg"
+    },
+    {
+      "fabric_number": "71051",
+      "swatch_filename": "71051.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-jq8r-20240829-tessuto_71051.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-6xdr-20240829-resa2_71051.jpg"
+    },
+    {
+      "fabric_number": "71059",
+      "swatch_filename": "71059.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-dpol-20240829-tessuto_71059.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-lggg-20240829-resa2_71059.jpg"
+    },
+    {
+      "fabric_number": "71060",
+      "swatch_filename": "71060.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-a8im-20240829-tessuto_71060.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-yz5c-20240829-resa2_71060.jpg"
+    },
+    {
+      "fabric_number": "71064",
+      "swatch_filename": "71064.jpg",
+      "swatch_square": "https://drapersitaly.it/public/uploads/drapersmedia-bpty-20240829-tessuto_71064.jpg",
+      "swatch_zoom": "https://drapersitaly.it/public/uploads/drapersmedia-yikk-20240829-resa2_71064.jpg"
+    }
+  ]
+}

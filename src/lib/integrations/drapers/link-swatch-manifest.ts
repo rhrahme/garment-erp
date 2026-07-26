@@ -4,6 +4,7 @@ import {
   indexDrapersCatalogFabrics,
   type DrapersCatalogFile,
 } from "@/lib/integrations/drapers/catalog-fields";
+import { writeDrapersSwatchIndexFromCatalogFile } from "@/lib/integrations/drapers/drapers-swatch-index";
 import { normalizeDrapersFabricCode } from "@/lib/integrations/drapers/stock";
 import {
   DRAPERS_MANIFEST_PATH,
@@ -48,6 +49,7 @@ export function linkDrapersSwatchManifestToCatalog(): LinkDrapersSwatchManifestR
   raw.swatch_manifest_path = path.relative(process.cwd(), DRAPERS_MANIFEST_PATH);
   raw.swatch_linked_at = synced_at;
   fs.writeFileSync(CATALOG_PATH, `${JSON.stringify(raw, null, 2)}\n`, "utf8");
+  writeDrapersSwatchIndexFromCatalogFile(raw, synced_at);
 
   return result;
 }
