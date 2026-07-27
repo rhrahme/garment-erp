@@ -78,6 +78,10 @@ KNOWN_TRIM_POINTS = {
 }
 
 GARMENT_HINTS = [
+    ("overshirt", "overshirt"),
+    ("t-shirt", "t-shirt"),
+    ("tee-shirt", "t-shirt"),
+    ("tee shirt", "t-shirt"),
     ("short pant", "shorts"),
     ("linen short", "shorts"),
     ("shorts", "shorts"),
@@ -91,6 +95,55 @@ GARMENT_HINTS = [
     # Bare "short" last — Suit Supply Short trousers also contain the word.
     ("short", "shorts"),
 ]
+
+# House blank measurement templates — filename → library garment_type key(s).
+TEMPLATE_FILE_GARMENTS = {
+    "jacket.xlsx": ["jacket"],
+    "shirt-over shirt.xlsx": ["shirt", "overshirt"],
+    "short.xlsx": ["shorts"],
+    "t-shirt measurement.xlsx": ["t-shirt"],
+    "thobe.xlsx": ["thobe"],
+    "trouser.xlsx": ["trouser"],
+}
+
+TEMPLATE_CUT_FAMILY = "House Template"
+
+# Trial/sewing column headers on blank templates — not graded size runs.
+_TRIAL_HEADER = re.compile(
+    r"^(size|sewing|trial|adjustment|final|pattern\s*size|client\s*body|"
+    r"size\{cm\}|sewimg|delevery|order\s*date|fabric\s*color)$",
+    re.I,
+)
+
+
+def is_trial_workflow_grid(sizes):
+    """True when every header column is a trial/sewing label, not a size run."""
+    if not sizes:
+        return False
+    return all(_TRIAL_HEADER.match(clean(size)) for size in sizes)
+
+
+def template_garments_for_file(filename, description=""):
+    """Map a blank-template workbook to one or more library garment keys."""
+    key = filename.lower()
+    if key in TEMPLATE_FILE_GARMENTS:
+        return list(TEMPLATE_FILE_GARMENTS[key])
+    text = f"{filename} {description}".lower()
+    found = []
+    for hint, garment in GARMENT_HINTS:
+        if hint in text and garment not in found:
+            found.append(garment)
+    return found or ["unknown"]
+
+
+def extract_description_from_rows(rows, header_idx):
+    """Read the Description metadata cell (e.g. 'Jacket', 'Shirt / Overshirt')."""
+    for row in rows[:header_idx]:
+        cells = [clean(cell) for cell in (row or [])]
+        for j, cell in enumerate(cells):
+            if cell.lower().rstrip(":") == "description":
+                return clean_name(next((c for c in cells[j + 1 :] if c and c != ":"), None))
+    return None
 
 
 def now_iso():
@@ -353,6 +406,149 @@ def parse_standard_sheet(ws, filename):
 
 
 # ---------------------------------------------------------------------------
+# Format C: Hagan tee-shirt grid (MEASUREMENT POINT + alpha sizes, often blank)
+# ---------------------------------------------------------------------------
+
+def parse_hagan_tee_sheet(ws, filename):
+    rows = [[cell.value for cell in row] for row in ws.iter_rows()]
+
+    header_idx = None
+    point_col = None
+    ref_col = None
+    grading_col = None
+    tol_col = None
+    for i, row in enumerate(rows):
+        for j, cell in enumerate(row or []):
+            lowered = clean(cell).lower()
+            if lowered.startswith("measurement point"):
+                header_idx = i
+                point_col = j
+            if lowered in ("size ref", "ref") or (len(lowered) == 1 and lowered.isalpha()):
+                ref_col = j if ref_col is None else ref_col
+            if lowered.startswith("development grade"):
+                grading_col = j
+            if lowered.startswith("tol"):
+                tol_col = j
+        if header_idx is not None:
+            break
+    if header_idx is None or point_col is None:
+        return None
+
+    header = rows[header_idx]
+    ref_col = point_col + 1
+    if ref_col < len(header) and clean(header[ref_col]):
+        lowered_ref = clean(header[ref_col]).lower()
+        if lowered_ref.startswith("development") or lowered_ref in ("s", "m", "l", "xl", "xxl"):
+            ref_col = None
+
+    size_cols = []
+    start = ref_col + 1 if ref_col is not None else point_col + 1
+    for j in range(start, len(header)):
+        label = clean(header[j])
+        lowered = label.lower()
+        if lowered.startswith("development grade") or lowered.startswith("tol"):
+            break
+        size = normalize_size(header[j])
+        if size and not lowered.startswith("measurement"):
+            size_cols.append((j, size))
+
+    points = []
+    for row in rows[header_idx + 1 :]:
+        cells = row or []
+        name = clean(cells[point_col] if point_col < len(cells) else "")
+        if not name:
+            continue
+        diagram = clean(cells[ref_col]) if ref_col is not None and ref_col < len(cells) else None
+        grading = (
+            to_number(cells[grading_col])
+            if grading_col is not None and grading_col < len(cells)
+            else None
+        )
+        tolerance = (
+            to_number(cells[tol_col]) if tol_col is not None and tol_col < len(cells) else None
+        )
+        values = {}
+        for j, size in size_cols:
+            values[size] = to_number(cells[j]) if j < len(cells) else None
+        canonical = canonical_point_name(name)
+        points.append(
+            {
+                "point_id": slugify(canonical),
+                "name": name,
+                "remark": None,
+                "is_graded": bool(grading) and grading != 0,
+                "tolerance": tolerance,
+                "grading_increment": grading,
+                "diagram_code": diagram or None,
+                "values": values,
+            }
+        )
+
+    description = None
+    for row in rows[: header_idx + 1]:
+        for cell in row or []:
+            text = clean(cell)
+            if "tee-shirt" in text.lower() or "t-shirt" in text.lower():
+                description = text
+                break
+
+    return {
+        "cut_family": TEMPLATE_CUT_FAMILY,
+        "cut_variant": None,
+        "garment_type": "t-shirt",
+        "unit": "cm",
+        "sizes": [size for _, size in size_cols],
+        "points": points,
+        "style_code": None,
+        "fabric": detect_fabric(description or "", filename),
+        "season": None,
+        "special_instructions": None,
+        "notes": description,
+        "display_name": "T-shirt measurement template",
+    }
+
+
+def normalize_blank_template(parsed, filename):
+    """Convert a parsed trial-column grid into a house blank template base."""
+    description = parsed.get("_description") or parsed.get("notes") or ""
+    garments = template_garments_for_file(filename, description)
+    unit = parsed["unit"]
+    if any(g in ("shorts", "trouser", "thobe", "t-shirt") for g in garments):
+        if parsed["unit"] == "in" and any(
+            "cm" in clean(s).lower() for s in (parsed.get("sizes") or [])
+        ):
+            unit = "cm"
+        elif parsed["garment_type"] in ("shorts", "trouser", "thobe", "t-shirt"):
+            unit = parsed.get("_template_unit") or parsed["unit"]
+
+    blank_points = []
+    for point in parsed["points"]:
+        blank_points.append(
+            {
+                **point,
+                "values": {},
+                "is_graded": point.get("is_graded", True),
+            }
+        )
+
+    results = []
+    for garment in garments:
+        results.append(
+            {
+                **parsed,
+                "cut_family": TEMPLATE_CUT_FAMILY,
+                "cut_variant": None,
+                "garment_type": garment,
+                "unit": unit,
+                "sizes": [],
+                "points": [dict(p) for p in blank_points],
+                "display_name": f"House {garment.replace('-', ' ').title()} template",
+            }
+        )
+    return results
+
+
+# ---------------------------------------------------------------------------
 # Format B: Hagan tech-pack (size ref / tolerance / grading, cm)
 # ---------------------------------------------------------------------------
 
@@ -468,18 +664,56 @@ def parse_techpack_sheet(ws, filename):
 # Assembly
 # ---------------------------------------------------------------------------
 
-def parse_workbook(path):
+def parse_workbook(path, templates=False):
     wb = openpyxl.load_workbook(path, data_only=True)
     filename = os.path.basename(path)
     for ws in wb.worksheets:
+        rows = [[cell.value for cell in row] for row in ws.iter_rows()]
         flat = [clean(cell.value).lower() for row in ws.iter_rows() for cell in row]
-        if any(text.startswith("size ref") for text in flat):
+
+        hagan_tee = filename.lower().startswith("t-shirt") or filename.lower().startswith("tee")
+        if not hagan_tee:
+            for row in rows:
+                for j, cell in enumerate(row or []):
+                    if clean(cell).lower().startswith("measurement point") and j > 0:
+                        headers = {clean(c).upper() for c in (row or []) if clean(c)}
+                        if {"S", "M", "L"}.issubset(headers):
+                            hagan_tee = True
+                        break
+                if hagan_tee:
+                    break
+
+        if hagan_tee:
+            parsed = parse_hagan_tee_sheet(ws, filename)
+        elif any(text.startswith("size ref") for text in flat):
             parsed = parse_techpack_sheet(ws, filename)
         else:
             parsed = parse_standard_sheet(ws, filename)
+        if not parsed or not parsed["points"]:
+            continue
+        if templates and (
+            is_trial_workflow_grid(parsed["sizes"])
+            or filename.lower() in TEMPLATE_FILE_GARMENTS
+            or parsed.get("garment_type") == "t-shirt"
+        ):
+            rows = [[cell.value for cell in row] for row in ws.iter_rows()]
+            header_idx = next(
+                (
+                    i
+                    for i, row in enumerate(rows)
+                    if clean(row[0] if row else "").lower().startswith("measurement point")
+                ),
+                0,
+            )
+            parsed["_description"] = extract_description_from_rows(rows, header_idx)
+            if "cm" in filename.lower() or any(
+                "cm" in clean(s).lower() for s in parsed.get("sizes", [])
+            ):
+                parsed["_template_unit"] = "cm"
+            return normalize_blank_template(parsed, filename)
         if parsed and parsed["points"]:
-            return parsed
-    return None
+            return [parsed]
+    return []
 
 
 def base_pattern_id(brand_code, parsed):
@@ -605,6 +839,11 @@ def main():
         default=0.35,
         help="Skip sparse/per-size sheets below this filled/cells ratio",
     )
+    parser.add_argument(
+        "--templates",
+        action="store_true",
+        help="Import house blank measurement templates (trial-column grids, no size values)",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Parse and report without writing")
     args = parser.parse_args()
 
@@ -631,23 +870,12 @@ def main():
         filename = os.path.basename(path)
         rel = os.path.relpath(path, folder)
         try:
-            parsed = parse_workbook(path)
+            parsed_list = parse_workbook(path, templates=args.templates)
         except Exception as exc:
             skipped.append((rel, f"parse error: {exc}"))
             continue
-        if not parsed or not parsed["points"]:
+        if not parsed_list:
             skipped.append((rel, "unrecognized layout"))
-            continue
-
-        n_sizes = len(parsed["sizes"])
-        filled = filled_cell_count(parsed)
-        cells = cell_count(parsed) or 1
-        fill_ratio = filled / cells
-        if n_sizes < args.min_sizes:
-            skipped.append((rel, f"only {n_sizes} size column(s)"))
-            continue
-        if fill_ratio < args.min_fill_ratio:
-            skipped.append((rel, f"sparse fill {filled}/{cells} ({fill_ratio:.0%})"))
             continue
 
         brand_id, brand_code = args.brand_id, args.brand_code.upper()
@@ -656,43 +884,63 @@ def main():
             if detected:
                 brand_id, brand_code = detected
 
-        base_id = base_pattern_id(brand_code, parsed)
-        previous = existing_by_id.get(base_id)
-        # Prefer denser grids when multiple files collapse to the same id.
-        prior_candidate = candidates_by_id.get(base_id)
-        if prior_candidate and prior_candidate[0] >= filled:
-            skipped.append((rel, f"duplicate of denser {prior_candidate[2]}"))
-            continue
+        for parsed in parsed_list:
+            if not parsed or not parsed["points"]:
+                continue
 
-        base = {
-            "id": base_id,
-            "house_brand_id": brand_id,
-            "house_brand_code": brand_code,
-            "cut_family": parsed["cut_family"],
-            "garment_type": parsed["garment_type"],
-            "cut_variant": parsed["cut_variant"],
-            "name": display_name(brand_code, parsed),
-            "unit": parsed["unit"],
-            "sizes": parsed["sizes"],
-            "points": parsed["points"],
-            "style_code": parsed["style_code"],
-            "fabric": parsed["fabric"],
-            "season": parsed["season"],
-            "special_instructions": parsed["special_instructions"],
-            "physical_pattern_kept": previous.get("physical_pattern_kept", False) if previous else False,
-            "physical_pattern_location": previous.get("physical_pattern_location") if previous else None,
-            "files": previous.get("files", []) if previous else [],
-            "source_file": rel if args.recursive else filename,
-            "notes": parsed["notes"],
-            "created_at": previous.get("created_at", timestamp) if previous else timestamp,
-            "updated_at": timestamp,
-        }
-        candidates_by_id[base_id] = (filled, base, rel)
-        print(
-            f"  OK [{brand_code}] {base_id}\n"
-            f"     {base['name']} | {n_sizes} sizes | {len(base['points'])} points | "
-            f"{filled}/{cells} cells filled | src={rel}"
-        )
+            n_sizes = len(parsed["sizes"])
+            filled = filled_cell_count(parsed)
+            cells = cell_count(parsed) or 1
+            fill_ratio = filled / cells
+            is_template = args.templates and parsed["cut_family"] == TEMPLATE_CUT_FAMILY
+            if not is_template:
+                if n_sizes < args.min_sizes:
+                    skipped.append((rel, f"only {n_sizes} size column(s)"))
+                    continue
+                if fill_ratio < args.min_fill_ratio:
+                    skipped.append((rel, f"sparse fill {filled}/{cells} ({fill_ratio:.0%})"))
+                    continue
+
+            base_id = base_pattern_id(brand_code, parsed)
+            previous = existing_by_id.get(base_id)
+            # Prefer denser grids when multiple files collapse to the same id.
+            prior_candidate = candidates_by_id.get(base_id)
+            if prior_candidate and prior_candidate[0] >= filled and not is_template:
+                skipped.append((rel, f"duplicate of denser {prior_candidate[2]}"))
+                continue
+
+            display = parsed.get("display_name") or display_name(brand_code, parsed)
+            base = {
+                "id": base_id,
+                "house_brand_id": brand_id,
+                "house_brand_code": brand_code,
+                "cut_family": parsed["cut_family"],
+                "garment_type": parsed["garment_type"],
+                "cut_variant": parsed["cut_variant"],
+                "name": display,
+                "unit": parsed["unit"],
+                "sizes": parsed["sizes"],
+                "points": parsed["points"],
+                "style_code": parsed["style_code"],
+                "fabric": parsed["fabric"],
+                "season": parsed["season"],
+                "special_instructions": parsed["special_instructions"],
+                "physical_pattern_kept": previous.get("physical_pattern_kept", False) if previous else False,
+                "physical_pattern_location": previous.get("physical_pattern_location") if previous else None,
+                "files": previous.get("files", []) if previous else [],
+                "source_file": rel if args.recursive else filename,
+                "notes": parsed["notes"],
+                "created_at": previous.get("created_at", timestamp) if previous else timestamp,
+                "updated_at": timestamp,
+            }
+            score = len(base["points"]) if is_template else filled
+            candidates_by_id[base_id] = (score, base, rel)
+            size_label = f"{n_sizes} sizes" if n_sizes else "template (no sizes)"
+            fill_label = f"{len(base['points'])} points" if is_template else f"{filled}/{cells} cells filled"
+            print(
+                f"  OK [{brand_code}] {base_id}\n"
+                f"     {base['name']} | {size_label} | {fill_label} | src={rel}"
+            )
 
     for base_id, (filled, base, _rel) in sorted(candidates_by_id.items()):
         existing_by_id[base_id] = base
