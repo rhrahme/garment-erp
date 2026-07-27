@@ -13,6 +13,7 @@ import {
   isClientManagerEmail,
   isProductionOperatorEmail,
   isSalesOperatorEmail,
+  isAccountingOperatorEmail,
   isTaskOperatorEmail,
 } from "@/lib/auth/permissions";
 import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/supabase/env";
@@ -61,7 +62,8 @@ export async function POST(request: Request) {
       (isClientManagerEmail(email) ||
         isTaskOperatorEmail(email) ||
         isProductionOperatorEmail(email) ||
-        isSalesOperatorEmail(email))
+        isSalesOperatorEmail(email) ||
+        isAccountingOperatorEmail(email))
     ) {
       const response = NextResponse.json({
         ok: true,

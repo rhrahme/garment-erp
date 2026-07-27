@@ -5,6 +5,7 @@ export type UserRole =
   | "task_operator"
   | "production_operator"
   | "sales_operator"
+  | "accounting"
   | "pattern_operator"
   | "production_manager"
   | "pattern_maker"

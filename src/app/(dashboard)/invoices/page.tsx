@@ -51,6 +51,7 @@ export default async function InvoicesPage() {
         summary={summary}
         invoiceableOrders={invoiceableOrders}
         allowedBrandIds={getAllowedSalesBrandIds(session)}
+        showAmountsByDefault={session.canViewInvoiceAmounts}
       />
     </div>
   );

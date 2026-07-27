@@ -10,17 +10,25 @@ import {
 } from "@/components/invoicing/InvoiceAmountsRevealToggle";
 import { useInvoiceAmountsVisibility } from "@/hooks/useInvoiceAmountsVisibility";
 
-export function InvoiceSummaryCards({ summary }: { summary: CustomerInvoiceSummary }) {
+export function InvoiceSummaryCards({
+  summary,
+  showAmountsByDefault = false,
+}: {
+  summary: CustomerInvoiceSummary;
+  showAmountsByDefault?: boolean;
+}) {
   const { visible, hydrated, unlock, lock } = useInvoiceAmountsVisibility();
 
-  const showAmounts = hydrated && visible;
+  const showAmounts = showAmountsByDefault || (hydrated && visible);
   const outstandingValue = showAmounts ? formatInvoiceSar(summary.outstanding_sar) : MASKED_INVOICE_AMOUNT;
   const paidValue = showAmounts ? formatInvoiceSar(summary.paid_sar) : MASKED_INVOICE_AMOUNT;
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-end">
-        {hydrated && <InvoiceAmountsRevealToggle visible={visible} onUnlock={unlock} onLock={lock} />}
+        {!showAmountsByDefault && hydrated && (
+          <InvoiceAmountsRevealToggle visible={visible} onUnlock={unlock} onLock={lock} />
+        )}
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard

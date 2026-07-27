@@ -12,6 +12,7 @@ export default async function PatternLayout({ children }: { children: React.Reac
         isProductionOperator: session.isProductionOperator,
         isPatternOperator: session.isPatternOperator,
         isSalesOperator: session.isSalesOperator,
+        isAccountingOperator: session.isAccountingOperator,
       })
     );
   }

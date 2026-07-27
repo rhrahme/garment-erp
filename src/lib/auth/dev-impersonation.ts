@@ -2,6 +2,7 @@ import {
   isClientManagerEmail,
   isProductionOperatorEmail,
   isSalesOperatorEmail,
+  isAccountingOperatorEmail,
   isTaskOperatorEmail,
 } from "@/lib/auth/permissions";
 
@@ -19,7 +20,8 @@ export function resolveDevImpersonationEmail(cookieValue: string | undefined | n
     (!isClientManagerEmail(email) &&
       !isTaskOperatorEmail(email) &&
       !isProductionOperatorEmail(email) &&
-      !isSalesOperatorEmail(email))
+      !isSalesOperatorEmail(email) &&
+      !isAccountingOperatorEmail(email))
   ) {
     return null;
   }

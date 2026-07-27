@@ -46,8 +46,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
       isProductionOperator: false,
       isPatternOperator: false,
       isSalesOperator: false,
+      isAccountingOperator: false,
       canViewClientContact: false,
       canViewFabricListPrices: false,
+      canViewInvoiceAmounts: false,
       canAccessPattern: false,
     };
   }
@@ -57,6 +59,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         !session.isTaskOperator &&
         !session.isProductionOperator &&
         !session.isSalesOperator &&
+        !session.isAccountingOperator &&
         rateStatus.aboveThreshold &&
         rateStatus.marketRate != null && (
         <ExchangeRateBanner
@@ -68,7 +71,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {!session.isClientManager &&
         !session.isTaskOperator &&
         !session.isProductionOperator &&
-        !session.isSalesOperator && <SupplierAvailabilityBanner />}
+        !session.isSalesOperator &&
+        !session.isAccountingOperator && <SupplierAvailabilityBanner />}
       <AuthHealthBanner />
       {session.isAdmin && <DocumentsHealthBanner />}
     </>

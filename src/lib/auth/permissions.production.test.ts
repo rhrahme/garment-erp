@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  ACCOUNTING_OPERATOR_NAV_HREFS,
   PRODUCTION_OPERATOR_BLOCKED_ROUTE_PREFIXES,
   PRODUCTION_OPERATOR_NAV_HREFS,
   SALES_OPERATOR_NAV_HREFS,
   canAccessPatternModule,
   defaultPathForEmail,
   defaultPathForSession,
+  isAccountingOperatorRouteAllowed,
   isPatternOperatorRouteAllowed,
   isProductionOperatorRouteAllowed,
   isSalesOperatorRouteAllowed,
@@ -159,5 +161,53 @@ describe("pattern_operator fabric swatch image routes", () => {
     assert.equal(isPatternOperatorRouteAllowed("/orders"), false);
     assert.equal(isPatternOperatorRouteAllowed("/invoices"), false);
     assert.equal(isPatternOperatorRouteAllowed("/costing"), false);
+  });
+});
+
+describe("accounting_operator access", () => {
+  it("classifies accounting@hagan.pro as accounting", () => {
+    assert.equal(resolveRestrictedAccess(null, "accounting@hagan.pro", false), "accounting");
+    assert.equal(
+      resolveRestrictedAccess("viewer", "accounting@hagan.pro", false),
+      "accounting"
+    );
+  });
+
+  it("lands accounting on /invoices", () => {
+    assert.equal(defaultPathForEmail("accounting@hagan.pro"), "/invoices");
+    assert.equal(
+      defaultPathForSession({ isAccountingOperator: true }),
+      "/invoices"
+    );
+  });
+
+  it("accounting nav includes finance areas, not factory or sales CRM", () => {
+    const nav = ACCOUNTING_OPERATOR_NAV_HREFS as readonly string[];
+    for (const href of [
+      "/invoices",
+      "/costing",
+      "/fabric-orders",
+      "/supplier-emails",
+      "/supplier-inbox",
+      "/supplier-invoices",
+      "/purchasing",
+      "/documents",
+    ]) {
+      assert.ok(nav.includes(href), `expected nav to include ${href}`);
+    }
+    assert.ok(!nav.includes("/sales"));
+    assert.ok(!nav.includes("/production"));
+    assert.ok(!nav.includes("/dashboard"));
+  });
+
+  it("allows finance routes and blocks factory floor", () => {
+    assert.equal(isAccountingOperatorRouteAllowed("/invoices"), true);
+    assert.equal(isAccountingOperatorRouteAllowed("/costing"), true);
+    assert.equal(isAccountingOperatorRouteAllowed("/supplier-invoices"), true);
+    assert.equal(isAccountingOperatorRouteAllowed("/api/customer-invoices"), true);
+    assert.equal(isAccountingOperatorRouteAllowed("/production"), false);
+    assert.equal(isAccountingOperatorRouteAllowed("/sales"), false);
+    assert.equal(isAccountingOperatorRouteAllowed("/orders/new"), false);
+    assert.equal(isAccountingOperatorRouteAllowed("/fabric-specification"), false);
   });
 });

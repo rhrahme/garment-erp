@@ -9,6 +9,7 @@ import {
   isClientManagerEmail,
   isProductionOperatorEmail,
   isSalesOperatorEmail,
+  isAccountingOperatorEmail,
   isTaskOperatorEmail,
 } from "@/lib/auth/permissions";
 
@@ -28,7 +29,8 @@ function isDevImpersonationEmail(email: string): boolean {
     isClientManagerEmail(email) ||
     isTaskOperatorEmail(email) ||
     isProductionOperatorEmail(email) ||
-    isSalesOperatorEmail(email)
+    isSalesOperatorEmail(email) ||
+    isAccountingOperatorEmail(email)
   );
 }
 

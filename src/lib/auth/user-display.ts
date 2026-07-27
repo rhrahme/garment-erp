@@ -4,6 +4,7 @@ const DISPLAY_NAME_BY_EMAIL: Record<string, string> = {
   "hagan.qc@gmail.com": "QC Hossein",
   "hagan.task1@gmail.com": "Hagan Task1",
   "production@hagan.pro": "Factory Manager",
+  "accounting@hagan.pro": "Accounting",
   "sales1@hagan.pro": "Sales 1",
 };
 
@@ -21,7 +22,9 @@ export function resolveUserDisplay(session: SessionContext): {
 
   const title = session.isProductionOperator
     ? "Factory Manager"
-    : session.isTaskOperator
+    : session.isAccountingOperator
+      ? "Accounting"
+      : session.isTaskOperator
       ? "Production Floor"
       : session.isSalesOperator
         ? "Sales"

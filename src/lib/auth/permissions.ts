@@ -133,6 +133,62 @@ const PATTERN_OPERATOR_ROUTE_PREFIXES = [
   "/login",
 ] as const;
 
+/**
+ * Accounting — invoicing, costing, supplier invoices, purchasing; no factory floor or sales CRM.
+ * Invoice selling amounts visible; supplier fabric catalog/list prices stay admin-only (canViewPrices).
+ */
+const ACCOUNTING_OPERATOR_ROUTE_PREFIXES = [
+  "/invoices",
+  "/costing",
+  "/fabric-orders",
+  "/supplier-emails",
+  "/supplier-inbox",
+  "/supplier-invoices",
+  "/purchasing",
+  "/documents",
+  "/clients",
+  "/orders",
+  "/api/customer-invoices",
+  "/api/supplier-invoices",
+  "/api/fabric-orders",
+  "/api/supplier-emails",
+  "/api/supplier-replies",
+  "/api/email",
+  "/api/supplier-contacts",
+  "/api/fabric-order-drafts",
+  "/api/clients",
+  "/api/sales-orders",
+  "/api/reference-documents",
+  "/api/transporter-invoices",
+  "/api/exchange-rates",
+  "/api/supplier-availability-alerts",
+  "/api/price-list-items",
+  "/api/fabric-brands",
+  "/api/v1/suppliers",
+  "/api/auth/session",
+  "/api/auth/invoice-amounts",
+  "/api/auth/dev-impersonate",
+  "/login",
+] as const;
+
+const ACCOUNTING_OPERATOR_BLOCKED_ROUTE_PREFIXES = [
+  "/orders/new",
+  "/production",
+  "/pattern",
+  "/sales",
+  "/quality",
+  "/washing",
+  "/shipments",
+  "/hr",
+  "/fabric-receiving",
+  "/thread-buttons",
+  "/brands",
+  "/ready-made",
+  "/inventory",
+  "/fabric-specification",
+  "/dashboard",
+] as const;
+
 const SALES_OPERATOR_ROUTE_PREFIXES = [
   "/sales",
   "/clients",
@@ -171,6 +227,9 @@ const BUILTIN_TASK_OPERATOR_EMAILS = ["hagan.task1@gmail.com"] as const;
  * Factory managers — pipeline visibility & stage advance; watch wash/iron; no prices/accounting.
  */
 const BUILTIN_PRODUCTION_OPERATOR_EMAILS = ["production@hagan.pro"] as const;
+
+/** Accounting logins — invoicing & supplier billing; works without ACCOUNTING_EMAILS on deploy. */
+const BUILTIN_ACCOUNTING_OPERATOR_EMAILS = ["accounting@hagan.pro"] as const;
 
 /** Sidebar label for QC production orders (same `/orders` routes, production-focused UI). */
 export const CLIENT_MANAGER_ORDERS_NAV_LABEL = "Production Orders";
@@ -240,12 +299,26 @@ export const PATTERN_OPERATOR_NAV_HREFS = [
   "/fabric-specification",
 ] as const;
 
+/** Sidebar for accounting — finance & supplier billing, no factory floor or sales CRM. */
+export const ACCOUNTING_OPERATOR_NAV_HREFS = [
+  "/invoices",
+  "/costing",
+  "/fabric-orders",
+  "/supplier-emails",
+  "/supplier-inbox",
+  "/supplier-invoices",
+  "/purchasing",
+  "/clients",
+  "/documents",
+] as const;
+
 export type RestrictedAccessKind =
   | "client_manager"
   | "task_operator"
   | "production_operator"
   | "pattern_operator"
-  | "sales_operator";
+  | "sales_operator"
+  | "accounting";
 
 export function parseSuperAdminEmails(): Set<string> {
   const raw = process.env.SUPER_ADMIN_EMAILS?.trim() ?? "";
@@ -331,6 +404,15 @@ export function parseSalesEmails(): Set<string> {
   );
 }
 
+export function parseAccountingEmails(): Set<string> {
+  const raw = process.env.ACCOUNTING_EMAILS?.trim() ?? "";
+  const fromEnv = raw
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+  return new Set([...BUILTIN_ACCOUNTING_OPERATOR_EMAILS, ...fromEnv]);
+}
+
 export function isClientManagerRole(role: UserRole | null | undefined): boolean {
   return role === "client_manager";
 }
@@ -345,6 +427,10 @@ export function isProductionOperatorRole(role: UserRole | null | undefined): boo
 
 export function isSalesOperatorRole(role: UserRole | null | undefined): boolean {
   return role === "sales_operator";
+}
+
+export function isAccountingOperatorRole(role: UserRole | null | undefined): boolean {
+  return role === "accounting";
 }
 
 /** `pattern_maker` is the pre-existing (dormant) DB role — treated as the same access. */
@@ -375,6 +461,11 @@ export function isSalesOperatorEmail(email: string | null | undefined): boolean 
 export function isPatternOperatorEmail(email: string | null | undefined): boolean {
   if (!email) return false;
   return parsePatternEmails().has(email.trim().toLowerCase());
+}
+
+export function isAccountingOperatorEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return parseAccountingEmails().has(email.trim().toLowerCase());
 }
 
 export function isClientManagerAccess(
@@ -427,11 +518,30 @@ export function isSalesOperatorAccess(
     isClientManagerAccess(role, email) ||
     isTaskOperatorAccess(role, email) ||
     isProductionOperatorAccess(role, email) ||
-    isPatternOperatorAccess(role, email)
+    isPatternOperatorAccess(role, email) ||
+    isAccountingOperatorRole(role) ||
+    isAccountingOperatorEmail(email)
   ) {
     return false;
   }
   return isSalesOperatorRole(role) || isSalesOperatorEmail(email);
+}
+
+export function isAccountingOperatorAccess(
+  role: UserRole | null | undefined,
+  email: string | null | undefined
+): boolean {
+  if (
+    isClientManagerAccess(role, email) ||
+    isTaskOperatorAccess(role, email) ||
+    isProductionOperatorAccess(role, email) ||
+    isPatternOperatorAccess(role, email) ||
+    isSalesOperatorRole(role) ||
+    isSalesOperatorEmail(email)
+  ) {
+    return false;
+  }
+  return isAccountingOperatorRole(role) || isAccountingOperatorEmail(email);
 }
 
 /** Accounts that must never see prices (QC, task, factory manager, pattern, sales). */
@@ -459,6 +569,7 @@ export function resolveRestrictedAccess(
   if (isProductionOperatorAccess(role, email)) return "production_operator";
   if (isPatternOperatorAccess(role, email)) return "pattern_operator";
   if (isSalesOperatorAccess(role, email)) return "sales_operator";
+  if (isAccountingOperatorAccess(role, email)) return "accounting";
   return null;
 }
 
@@ -549,6 +660,34 @@ export function isSalesOperatorRouteAllowed(pathname: string): boolean {
   );
 }
 
+export function isAccountingOperatorRouteAllowed(pathname: string): boolean {
+  if (
+    ACCOUNTING_OPERATOR_BLOCKED_ROUTE_PREFIXES.some(
+      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+    )
+  ) {
+    return false;
+  }
+  if (
+    pathname.startsWith("/orders/") &&
+    (pathname.includes("/print") || pathname.includes("/print-pack") || pathname.includes("/stickers"))
+  ) {
+    return false;
+  }
+  if (
+    pathname.startsWith("/api/sales-orders/") &&
+    (pathname.includes("/stickers") ||
+      pathname.includes("/fabric-lines/print") ||
+      pathname.includes("/fabric-lines/clear-print-timestamps") ||
+      pathname.includes("/fabric-lines/transfer"))
+  ) {
+    return false;
+  }
+  return ACCOUNTING_OPERATOR_ROUTE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
+
 export function isRestrictedRouteAllowed(
   pathname: string,
   access: RestrictedAccessKind
@@ -557,6 +696,7 @@ export function isRestrictedRouteAllowed(
   if (access === "task_operator") return isTaskOperatorRouteAllowed(pathname);
   if (access === "production_operator") return isProductionOperatorRouteAllowed(pathname);
   if (access === "pattern_operator") return isPatternOperatorRouteAllowed(pathname);
+  if (access === "accounting") return isAccountingOperatorRouteAllowed(pathname);
   return isSalesOperatorRouteAllowed(pathname);
 }
 
@@ -566,6 +706,7 @@ export type SessionLandingAccess = {
   isProductionOperator?: boolean;
   isPatternOperator?: boolean;
   isSalesOperator?: boolean;
+  isAccountingOperator?: boolean;
 };
 
 export function landingAccessFromRestricted(
@@ -577,6 +718,7 @@ export function landingAccessFromRestricted(
     isProductionOperator: restrictedAccess === "production_operator",
     isPatternOperator: restrictedAccess === "pattern_operator",
     isSalesOperator: restrictedAccess === "sales_operator",
+    isAccountingOperator: restrictedAccess === "accounting",
   };
 }
 
@@ -598,10 +740,13 @@ export function defaultPathForSession(access: boolean | SessionLandingAccess): s
     typeof access === "boolean" ? false : Boolean(access.isPatternOperator);
   const isSalesOperator =
     typeof access === "boolean" ? false : Boolean(access.isSalesOperator);
+  const isAccountingOperator =
+    typeof access === "boolean" ? false : Boolean(access.isAccountingOperator);
   // Production before sales: factory managers must never land on Sales Home.
   if (isProductionOperator) return "/production";
   if (isPatternOperator) return "/pattern";
   if (isSalesOperator) return "/sales";
+  if (isAccountingOperator) return "/invoices";
   if (isTaskOperator) return "/fabric-receiving";
   if (isClientManager) return "/orders";
   return "/dashboard";

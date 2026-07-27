@@ -30,11 +30,13 @@ export function CustomerInvoicesWorkspace({
   summary,
   invoiceableOrders,
   allowedBrandIds = null,
+  showAmountsByDefault = false,
 }: {
   invoices: CustomerInvoice[];
   summary: CustomerInvoiceSummary;
   invoiceableOrders: InvoiceableSalesOrder[];
   allowedBrandIds?: string[] | null;
+  showAmountsByDefault?: boolean;
 }) {
   const scopedBrands = useMemo(() => {
     if (!allowedBrandIds) return undefined;
@@ -92,7 +94,7 @@ export function CustomerInvoicesWorkspace({
         </div>
       </div>
 
-      <InvoiceSummaryCards summary={summary} />
+      <InvoiceSummaryCards summary={summary} showAmountsByDefault={showAmountsByDefault} />
 
       {hydrated && (
         <FactoryBrandTabs

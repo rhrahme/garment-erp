@@ -14,6 +14,7 @@ import {
   isPatternOperatorAccess,
   isProductionOperatorAccess,
   isSalesOperatorAccess,
+  isAccountingOperatorAccess,
   isSuperAdminEmail,
   isSuperAdminRole,
   isTaskOperatorAccess,
@@ -31,8 +32,10 @@ export interface SessionContext {
   isProductionOperator: boolean;
   isPatternOperator: boolean;
   isSalesOperator: boolean;
+  isAccountingOperator: boolean;
   canViewClientContact: boolean;
   canViewFabricListPrices: boolean;
+  canViewInvoiceAmounts: boolean;
   canAccessPattern: boolean;
 }
 
@@ -58,6 +61,14 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
     !isProductionOperator &&
     !isPatternOperator &&
     isSalesOperatorAccess(role, email);
+  const isAccountingOperator =
+    !isSuperAdmin &&
+    !isClientManager &&
+    !isTaskOperator &&
+    !isProductionOperator &&
+    !isPatternOperator &&
+    !isSalesOperator &&
+    isAccountingOperatorAccess(role, email);
   const isAdmin =
     isSuperAdmin ||
     (!isClientManager &&
@@ -65,6 +76,7 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
       !isProductionOperator &&
       !isPatternOperator &&
       !isSalesOperator &&
+      !isAccountingOperator &&
       (isAdminRole(role) || isAdminEmail(email)));
   const effectiveRole: UserRole | null = isSuperAdmin
     ? "super_admin"
@@ -80,7 +92,9 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
               ? "pattern_operator"
               : isSalesOperator
                 ? "sales_operator"
-                : role;
+                : isAccountingOperator
+                  ? "accounting"
+                  : role;
 
   return {
     role: effectiveRole,
@@ -91,10 +105,13 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
     isProductionOperator,
     isPatternOperator,
     isSalesOperator,
+    isAccountingOperator,
     canViewClientContact: canViewClientContact(role, email, isSuperAdmin),
     canViewFabricListPrices: isAdmin,
+    canViewInvoiceAmounts: isAdmin || isAccountingOperator,
     canAccessPattern:
       !isSalesOperator &&
+      !isAccountingOperator &&
       canAccessPatternModule(
         isClientManager,
         isAdmin,
@@ -145,8 +162,10 @@ export async function getSessionContext(): Promise<SessionContext> {
       isProductionOperator: false,
       isPatternOperator: false,
       isSalesOperator: false,
+      isAccountingOperator: false,
       canViewClientContact: false,
       canViewFabricListPrices: false,
+      canViewInvoiceAmounts: false,
       canAccessPattern: false,
     };
   }

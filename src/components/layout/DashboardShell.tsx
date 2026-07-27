@@ -20,6 +20,7 @@ export function DashboardShell({
   const productionOperatorOnly = session.isProductionOperator;
   const patternOperatorOnly = session.isPatternOperator;
   const salesOperatorOnly = session.isSalesOperator;
+  const accountingOperatorOnly = session.isAccountingOperator;
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 print:h-auto print:overflow-visible">
@@ -38,6 +39,7 @@ export function DashboardShell({
         productionOperatorOnly={productionOperatorOnly}
         patternOperatorOnly={patternOperatorOnly}
         salesOperatorOnly={salesOperatorOnly}
+        accountingOperatorOnly={accountingOperatorOnly}
         isAdmin={session.isAdmin}
         mobileOpen={mobileNavOpen}
         onNavigate={() => setMobileNavOpen(false)}

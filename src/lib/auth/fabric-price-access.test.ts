@@ -24,6 +24,7 @@ function session(
     | "production_operator"
     | "pattern_operator"
     | "sales_operator"
+    | "accounting"
 ): SessionContext {
   const isAdmin = role === "admin";
   return {
@@ -37,8 +38,10 @@ function session(
     isProductionOperator: role === "production_operator",
     isPatternOperator: role === "pattern_operator",
     isSalesOperator: role === "sales_operator",
-    canViewClientContact: isAdmin || role === "sales_operator",
+    isAccountingOperator: role === "accounting",
+    canViewClientContact: isAdmin || role === "sales_operator" || role === "accounting",
     canViewFabricListPrices: isAdmin,
+    canViewInvoiceAmounts: isAdmin || role === "accounting",
     canAccessPattern: isAdmin,
   };
 }
@@ -189,6 +192,7 @@ for (const role of [
   "pattern_operator",
   "client_manager",
   "sales_operator",
+  "accounting",
 ] as const) {
   describe(`${role} endpoint payloads`, () => {
     it("cannot pass the central admin-only price gate", () => {
