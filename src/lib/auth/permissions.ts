@@ -137,6 +137,7 @@ const PATTERN_OPERATOR_ROUTE_PREFIXES = [
  * Accounting — invoicing, costing, supplier invoices, purchasing; no factory floor or sales CRM.
  * Invoice amounts use eye toggle; supplier fabric catalog/list prices stay admin-only (canViewPrices).
  * Supplier emails: view-only — sending is admin-only (canSendSupplierEmails).
+ * AWB tracking: view-only — add/sync is admin + factory manager (canManageShipments).
  */
 const ACCOUNTING_OPERATOR_ROUTE_PREFIXES = [
   "/invoices",
@@ -149,6 +150,7 @@ const ACCOUNTING_OPERATOR_ROUTE_PREFIXES = [
   "/documents",
   "/clients",
   "/orders",
+  "/shipments",
   "/api/customer-invoices",
   "/api/supplier-invoices",
   "/api/fabric-orders",
@@ -166,6 +168,7 @@ const ACCOUNTING_OPERATOR_ROUTE_PREFIXES = [
   "/api/price-list-items",
   "/api/fabric-brands",
   "/api/v1/suppliers",
+  "/api/shipments",
   "/api/auth/session",
   "/api/auth/invoice-amounts",
   "/api/auth/dev-impersonate",
@@ -179,7 +182,6 @@ const ACCOUNTING_OPERATOR_BLOCKED_ROUTE_PREFIXES = [
   "/sales",
   "/quality",
   "/washing",
-  "/shipments",
   "/hr",
   "/fabric-receiving",
   "/thread-buttons",
@@ -312,6 +314,7 @@ export const ACCOUNTING_OPERATOR_NAV_HREFS = [
   "/supplier-inbox",
   "/supplier-invoices",
   "/purchasing",
+  "/shipments",
   "/clients",
   "/documents",
 ] as const;

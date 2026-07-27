@@ -27,6 +27,7 @@ import {
   invoiceAmountsVisibleByDefault,
 } from "@/lib/auth/invoice-amounts-access";
 import { canSendSupplierEmails } from "@/lib/auth/supplier-email-access";
+import { canManageShipments, canViewShipments } from "@/lib/auth/shipment-access";
 
 export interface SessionContext {
   userId: string | null;
@@ -52,6 +53,10 @@ export interface SessionContext {
   invoiceAmountsVisibleByDefault: boolean;
   /** Admin-only — send supplier / fabric-order emails. */
   canSendSupplierEmails: boolean;
+  /** Admin, factory manager, or accounting — view AWB tracking. */
+  canViewShipments: boolean;
+  /** Admin or factory manager — add AWBs and sync carrier status. */
+  canManageShipments: boolean;
   canAccessPattern: boolean;
 }
 
@@ -129,6 +134,8 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
     canRevealInvoiceAmountsWithoutPassword: canRevealInvoiceAmountsWithoutPassword({ isAccountingOperator }),
     invoiceAmountsVisibleByDefault: invoiceAmountsVisibleByDefault({ isAdmin, isAccountingOperator }),
     canSendSupplierEmails: canSendSupplierEmails({ isAdmin }),
+    canViewShipments: canViewShipments({ isAdmin, isProductionOperator, isAccountingOperator }),
+    canManageShipments: canManageShipments({ isAdmin, isProductionOperator }),
     canAccessPattern:
       !isSalesOperator &&
       !isAccountingOperator &&
@@ -190,6 +197,8 @@ export async function getSessionContext(): Promise<SessionContext> {
       canRevealInvoiceAmountsWithoutPassword: false,
       invoiceAmountsVisibleByDefault: false,
       canSendSupplierEmails: false,
+      canViewShipments: false,
+      canManageShipments: false,
       canAccessPattern: false,
     };
   }
@@ -222,11 +231,27 @@ export async function requireAdmin(): Promise<SessionContext | null> {
   return session;
 }
 
-/** Admin or factory manager — operational floors (e.g. AWB tracking) without accounting roles. */
+/** Admin or factory manager — operational floors (e.g. HR badges) without accounting roles. */
 export async function requireFactoryOpsAccess(): Promise<SessionContext | null> {
   const session = await getSessionContext();
   if (!session.userId && !session.email) return null;
   if (session.isAdmin || session.isProductionOperator) return session;
+  return null;
+}
+
+/** Admin, factory manager, or accounting — read AWB tracking data. */
+export async function requireShipmentViewAccess(): Promise<SessionContext | null> {
+  const session = await getSessionContext();
+  if (!session.userId && !session.email) return null;
+  if (session.canViewShipments) return session;
+  return null;
+}
+
+/** Admin or factory manager — add AWBs and sync carrier tracking. */
+export async function requireShipmentManageAccess(): Promise<SessionContext | null> {
+  const session = await getSessionContext();
+  if (!session.userId && !session.email) return null;
+  if (session.canManageShipments) return session;
   return null;
 }
 

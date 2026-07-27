@@ -191,6 +191,7 @@ describe("accounting_operator access", () => {
       "/supplier-inbox",
       "/supplier-invoices",
       "/purchasing",
+      "/shipments",
       "/documents",
     ]) {
       assert.ok(nav.includes(href), `expected nav to include ${href}`);
@@ -200,11 +201,14 @@ describe("accounting_operator access", () => {
     assert.ok(!nav.includes("/dashboard"));
   });
 
-  it("allows finance routes and blocks factory floor", () => {
+  it("allows finance routes, AWB tracking view, and blocks factory floor", () => {
     assert.equal(isAccountingOperatorRouteAllowed("/invoices"), true);
     assert.equal(isAccountingOperatorRouteAllowed("/costing"), true);
     assert.equal(isAccountingOperatorRouteAllowed("/supplier-invoices"), true);
     assert.equal(isAccountingOperatorRouteAllowed("/supplier-emails"), true);
+    assert.equal(isAccountingOperatorRouteAllowed("/shipments"), true);
+    assert.equal(isAccountingOperatorRouteAllowed("/api/shipments/local"), true);
+    assert.equal(isAccountingOperatorRouteAllowed("/api/shipments/pending"), true);
     assert.equal(isAccountingOperatorRouteAllowed("/api/supplier-emails"), true);
     assert.equal(isAccountingOperatorRouteAllowed("/api/fabric-orders/send-email"), false);
     assert.equal(isAccountingOperatorRouteAllowed("/api/email/send-test"), false);

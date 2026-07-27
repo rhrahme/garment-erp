@@ -54,6 +54,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       canRevealInvoiceAmountsWithoutPassword: false,
       invoiceAmountsVisibleByDefault: false,
       canSendSupplierEmails: false,
+      canViewShipments: false,
+      canManageShipments: false,
       canAccessPattern: false,
     };
   }

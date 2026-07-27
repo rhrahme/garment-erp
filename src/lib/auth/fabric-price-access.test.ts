@@ -46,6 +46,8 @@ function session(
     canRevealInvoiceAmountsWithoutPassword: role === "accounting",
     invoiceAmountsVisibleByDefault: isAdmin || role === "accounting",
     canSendSupplierEmails: isAdmin,
+    canViewShipments: isAdmin || role === "production_operator" || role === "accounting",
+    canManageShipments: isAdmin || role === "production_operator",
     canAccessPattern: isAdmin,
   };
 }

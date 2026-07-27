@@ -33,6 +33,7 @@ export function ShipmentsWorkspace() {
   const defaultPoId = searchParams.get("po_id");
   const defaultAwb = searchParams.get("awb");
 
+  const [canManageShipments, setCanManageShipments] = useState(false);
   const [shipments, setShipments] = useState<LocalShipment[]>([]);
   const [pendingOrders, setPendingOrders] = useState<PendingAwbOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,6 +77,15 @@ export function ShipmentsWorkspace() {
   }, [load]);
 
   useEffect(() => {
+    fetch("/api/auth/session")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { can_manage_shipments?: boolean } | null) => {
+        if (data) setCanManageShipments(Boolean(data.can_manage_shipments));
+      })
+      .catch(() => setCanManageShipments(false));
+  }, []);
+
+  useEffect(() => {
     if (defaultAwb?.trim()) {
       setHighlightedAwb(defaultAwb.trim().toUpperCase());
     }
@@ -116,42 +126,52 @@ export function ShipmentsWorkspace() {
             : "Tracking numbers from supplier emails or manual entry. Add TRACK17_API_KEY for live status."
         }
         action={
-          <div className="flex flex-wrap gap-2">
-            {track17Configured && (
-              <Button onClick={() => void syncTracking()} disabled={syncing || shipments.length === 0}>
-                <RefreshCw className={`mr-2 h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-                {syncing ? "Syncing…" : "Refresh tracking"}
-              </Button>
-            )}
-            <Link href="/supplier-inbox">
-              <Button variant="secondary">Scan email inbox</Button>
-            </Link>
-          </div>
+          canManageShipments ? (
+            <div className="flex flex-wrap gap-2">
+              {track17Configured && (
+                <Button onClick={() => void syncTracking()} disabled={syncing || shipments.length === 0}>
+                  <RefreshCw className={`mr-2 h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                  {syncing ? "Syncing…" : "Refresh tracking"}
+                </Button>
+              )}
+              <Link href="/supplier-inbox">
+                <Button variant="secondary">Scan email inbox</Button>
+              </Link>
+            </div>
+          ) : undefined
         }
       />
 
       <AwbScanInput
         onFound={(awbNumber) => setHighlightedAwb(awbNumber.toUpperCase())}
-        onRefresh={load}
+        onRefresh={canManageShipments ? load : undefined}
       />
 
       <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
         <p className="font-medium text-slate-900">How AWB tracking works</p>
         <ol className="mt-2 list-decimal space-y-1 pl-5">
           <li>
-            Scan the carrier label above to look up a shipment, or after suppliers email an AWB use{" "}
-            <Link href="/supplier-inbox" className="font-medium text-indigo-600 hover:text-indigo-700">
-              Scan email inbox
-            </Link>{" "}
-            to auto-parse AWBs from email. You can also add them manually below.
+            {canManageShipments ? (
+              <>
+                Scan the carrier label above to look up a shipment, or after suppliers email an AWB use{" "}
+                <Link href="/supplier-inbox" className="font-medium text-indigo-600 hover:text-indigo-700">
+                  Scan email inbox
+                </Link>{" "}
+                to auto-parse AWBs from email. You can also add them manually below.
+              </>
+            ) : (
+              <>Search by AWB number above, or open a tracking link from the table below.</>
+            )}
           </li>
-          <li>
-            Each AWB links to its fabric PO. With <span className="font-mono text-xs">TRACK17_API_KEY</span> set,
-            click Refresh tracking for live DHL/carrier status.
-          </li>
+          {canManageShipments && (
+            <li>
+              Each AWB links to its fabric PO. With <span className="font-mono text-xs">TRACK17_API_KEY</span> set,
+              click Refresh tracking for live DHL/carrier status.
+            </li>
+          )}
           <li>
             Sent POs still waiting for an AWB appear in{" "}
-            <span className="font-medium">Awaiting AWB</span> below and on the dashboard.
+            <span className="font-medium">Awaiting AWB</span> below{canManageShipments ? " and on the dashboard" : ""}.
           </li>
         </ol>
       </div>
@@ -177,11 +197,13 @@ export function ShipmentsWorkspace() {
               These POs were emailed to suppliers but have no tracking number yet.
             </p>
           </div>
-          <AddAwbForm
-            pendingOrders={pendingOrders}
-            defaultPoId={defaultPoId}
-            onAdded={() => void load()}
-          />
+          {canManageShipments && (
+            <AddAwbForm
+              pendingOrders={pendingOrders}
+              defaultPoId={defaultPoId}
+              onAdded={() => void load()}
+            />
+          )}
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
             <table className="w-full text-sm">
               <thead>
@@ -281,7 +303,11 @@ export function ShipmentsWorkspace() {
               status: <StatusBadge status={s.status} />,
             };
           })}
-          emptyMessage="No tracking numbers yet — scan an AWB label above, scan email inbox after suppliers reply, or add an AWB manually."
+          emptyMessage={
+            canManageShipments
+              ? "No tracking numbers yet — scan an AWB label above, scan email inbox after suppliers reply, or add an AWB manually."
+              : "No tracking numbers yet."
+          }
         />
       )}
     </div>

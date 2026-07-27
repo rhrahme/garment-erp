@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireFactoryOpsAccess } from "@/lib/auth/session";
+import { requireShipmentManageAccess, requireShipmentViewAccess } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/json-file-cache";
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import {
@@ -17,7 +17,7 @@ import {
 import { ensureShipmentsLoaded, listStoredShipments } from "@/lib/integrations/shipment-store";
 
 export async function GET() {
-  const session = await requireFactoryOpsAccess();
+  const session = await requireShipmentViewAccess();
   if (!session) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
@@ -51,7 +51,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await requireFactoryOpsAccess();
+  const session = await requireShipmentManageAccess();
   if (!session) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }

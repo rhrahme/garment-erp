@@ -36,6 +36,8 @@ export async function GET() {
       can_reveal_invoice_amounts_without_password: session.canRevealInvoiceAmountsWithoutPassword,
       invoice_amounts_visible_by_default: session.invoiceAmountsVisibleByDefault,
       can_send_supplier_emails: session.canSendSupplierEmails,
+      can_view_shipments: session.canViewShipments,
+      can_manage_shipments: session.canManageShipments,
       can_reveal_fabric_prices: canRevealFabricPrices(session),
       can_view_fabric_prices: canViewFabricPrices,
       can_view_fabric_stock: canViewFabricStock(session),

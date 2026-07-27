@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
+import { requireShipmentManageAccess, requireShipmentViewAccess } from "@/lib/auth/session";
 import { isTrack17Configured } from "@/lib/integrations/track17/config";
 import { syncShipmentsWith17Track } from "@/lib/integrations/track17/sync-shipments";
 
 export async function GET() {
+  const session = await requireShipmentViewAccess();
+  if (!session) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+
   return NextResponse.json({
     configured: isTrack17Configured(),
     webhook_url_hint:
@@ -11,6 +17,11 @@ export async function GET() {
 }
 
 export async function POST() {
+  const session = await requireShipmentManageAccess();
+  if (!session) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+
   try {
     if (!isTrack17Configured()) {
       return NextResponse.json(

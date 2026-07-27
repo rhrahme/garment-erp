@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
+import { requireShipmentManageAccess, requireShipmentViewAccess } from "@/lib/auth/session";
 import { normalizeAwbScanInput } from "@/lib/integrations/normalize-awb-scan";
 import { ensureShipmentsLoaded, getShipmentByAwb } from "@/lib/integrations/shipment-store";
 
 export async function POST(request: Request) {
+  const session = await requireShipmentViewAccess();
+  if (!session) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+
   try {
     const body = (await request.json()) as { awb_number?: string; scan_input?: string };
     const raw = body.scan_input?.trim() || body.awb_number?.trim() || "";
