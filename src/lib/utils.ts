@@ -17,6 +17,36 @@ export function formatDate(date: string | Date) {
   }).format(new Date(date));
 }
 
+/** Parse ISO dates, EU dates, or Unix timestamps (seconds or ms). */
+export function parseFlexibleDate(value: string | number | null | undefined): Date | null {
+  if (value == null) return null;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return new Date(value > 1_000_000_000_000 ? value : value * 1000);
+  }
+  const trimmed = String(value).trim();
+  if (!trimmed) return null;
+  if (/^\d+$/.test(trimmed)) {
+    const n = Number(trimmed);
+    if (!Number.isFinite(n)) return null;
+    return new Date(n > 1_000_000_000_000 ? n : n * 1000);
+  }
+  if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return new Date(trimmed.slice(0, 10));
+  const eu = trimmed.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);
+  if (eu) {
+    const [, d, m, y] = eu;
+    return new Date(`${y}-${m!.padStart(2, "0")}-${d!.padStart(2, "0")}`);
+  }
+  const parsed = new Date(trimmed);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+/** Human-readable restock / availability date for stock alerts. */
+export function formatRestockDate(value: string | number | null | undefined): string | null {
+  const date = parseFlexibleDate(value);
+  if (!date) return null;
+  return formatDate(date);
+}
+
 export function formatDateTime(date: string | Date, options?: { timeZone?: string }) {
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",

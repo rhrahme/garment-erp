@@ -9,7 +9,7 @@ import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview"
 import { StatusBadge } from "@/components/ui/PageHeader";
 import type { SupplierReplyRecord, SupplierLineUpdate } from "@/lib/integrations/supplier-reply-store";
 import type { SupplierAvailabilityAlert } from "@/lib/integrations/supplier-availability-store";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatRestockDate } from "@/lib/utils";
 
 function lineUpdateLabel(status: SupplierLineUpdate["status"]): string {
   switch (status) {
@@ -86,7 +86,7 @@ function AvailabilityAlertCard({
             {alert.supplier_name ?? alert.supplier_id ?? "Supplier"} · {lineUpdateLabel(alert.status)}
           </p>
           {alert.restock_date && (
-            <p className="mt-1 text-sm text-amber-800">Expected available from {formatDate(alert.restock_date)}</p>
+            <p className="mt-1 text-sm text-amber-800">Expected available from {formatRestockDate(alert.restock_date)}</p>
           )}
           {alert.substitute_fabric_number && (
             <p className="mt-1 text-sm text-amber-800">
@@ -416,7 +416,7 @@ export function SupplierInboxWorkspace() {
                         </p>
                         <p className="text-xs text-amber-900">{lineUpdateLabel(update.status)}</p>
                         {update.restock_date && (
-                          <p className="text-xs text-amber-800">Available from {formatDate(update.restock_date)}</p>
+                          <p className="text-xs text-amber-800">Available from {formatRestockDate(update.restock_date)}</p>
                         )}
                         {update.substitute_fabric_number && (
                           <p className="text-xs text-amber-800">
