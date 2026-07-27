@@ -4,11 +4,13 @@ import { useMemo } from "react";
 import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
 import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
 import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
+import { MASKED_INVOICE_AMOUNT } from "@/components/invoicing/InvoiceAmountsRevealToggle";
 import { getSupplierPriceCurrency, toSar } from "@/lib/currency/config";
 import type { FabricLineCost, SalesOrderCost } from "@/lib/costing/compute";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
-function formatSar(amount: number | null): string {
+function formatSar(amount: number | null, showAmounts: boolean): string {
+  if (!showAmounts) return MASKED_INVOICE_AMOUNT;
   if (amount == null) return "—";
   return formatCurrency(amount, "SAR");
 }
@@ -21,7 +23,8 @@ function formatWeight(weightGsm: number | null): string {
   return weightGsm != null ? `${weightGsm} gsm` : "—";
 }
 
-function formatSupplierLineTotal(line: FabricLineCost): string {
+function formatSupplierLineTotal(line: FabricLineCost, showAmounts: boolean): string {
+  if (!showAmounts) return MASKED_INVOICE_AMOUNT;
   if (line.supplier_line_total == null) return "—";
   const currency = getSupplierPriceCurrency(line.supplier_id);
   const supplier = formatCurrency(line.supplier_line_total, currency);
@@ -39,7 +42,7 @@ function CostSummaryTile({ label, value, hint }: { label: string; value: string;
   );
 }
 
-function FabricLineRow({ line }: { line: FabricLineCost }) {
+function FabricLineRow({ line, showAmounts }: { line: FabricLineCost; showAmounts: boolean }) {
   return (
     <tr className="border-b border-slate-100 align-top">
       <td className="px-3 py-3 text-center font-semibold text-slate-900">{formatArticle(line.article_number)}</td>
@@ -54,28 +57,36 @@ function FabricLineRow({ line }: { line: FabricLineCost }) {
       <td className="px-3 py-3 text-slate-600">{line.color ?? "—"}</td>
       <td className="px-3 py-3 font-medium text-slate-900">{line.meters} m</td>
       <td className="px-3 py-3">
-        {line.unit_price != null ? (
+        {line.unit_price != null && showAmounts ? (
           <DualCurrencyPrice amount={line.unit_price} supplierId={line.supplier_id} unit={line.unit} />
+        ) : line.unit_price != null ? (
+          <span className="text-slate-400">{MASKED_INVOICE_AMOUNT}</span>
         ) : (
           <span className="text-amber-600">No price</span>
         )}
       </td>
-      <td className="px-3 py-3 font-medium text-slate-900">{formatSupplierLineTotal(line)}</td>
+      <td className="px-3 py-3 font-medium text-slate-900">{formatSupplierLineTotal(line, showAmounts)}</td>
       <td className="px-3 py-3 text-slate-700">
-        {formatSar(line.fabric_cost_sar)}
-        {line.customs_duty_sar > 0 && (
-          <span className="mt-0.5 block text-xs text-slate-400">incl. {formatSar(line.customs_duty_sar)} duty</span>
+        {formatSar(line.fabric_cost_sar, showAmounts)}
+        {showAmounts && line.customs_duty_sar > 0 && (
+          <span className="mt-0.5 block text-xs text-slate-400">incl. {formatSar(line.customs_duty_sar, showAmounts)} duty</span>
         )}
       </td>
-      <td className="px-3 py-3 text-slate-600">{formatSar(line.labor_cost_sar)}</td>
-      <td className="px-3 py-3 text-slate-600">{formatSar(line.washing_cost_sar)}</td>
-      <td className="px-3 py-3 text-slate-600">{formatSar(line.overhead_cost_sar)}</td>
-      <td className="px-3 py-3 font-semibold text-slate-900">{formatSar(line.total_cost_sar)}</td>
+      <td className="px-3 py-3 text-slate-600">{formatSar(line.labor_cost_sar, showAmounts)}</td>
+      <td className="px-3 py-3 text-slate-600">{formatSar(line.washing_cost_sar, showAmounts)}</td>
+      <td className="px-3 py-3 text-slate-600">{formatSar(line.overhead_cost_sar, showAmounts)}</td>
+      <td className="px-3 py-3 font-semibold text-slate-900">{formatSar(line.total_cost_sar, showAmounts)}</td>
     </tr>
   );
 }
 
-export function OrderCostDetailPanel({ order }: { order: SalesOrderCost }) {
+export function OrderCostDetailPanel({
+  order,
+  showAmounts = true,
+}: {
+  order: SalesOrderCost;
+  showAmounts?: boolean;
+}) {
   const swatchFabrics = useMemo(
     () =>
       order.lines.map((line) => ({
@@ -107,22 +118,22 @@ export function OrderCostDetailPanel({ order }: { order: SalesOrderCost }) {
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-        <CostSummaryTile label="Fabric (supplier)" value={formatSar(order.fabric_base_sar)} />
-        <CostSummaryTile label="Customs duty" value={formatSar(order.customs_duty_sar)} />
-        <CostSummaryTile label="Fabric landed" value={formatSar(order.fabric_cost_sar)} />
-        <CostSummaryTile label="Labor" value={formatSar(order.labor_cost_sar)} />
-        <CostSummaryTile label="Wash + overhead" value={formatSar(order.washing_cost_sar + order.overhead_cost_sar)} />
+        <CostSummaryTile label="Fabric (supplier)" value={formatSar(order.fabric_base_sar, showAmounts)} />
+        <CostSummaryTile label="Customs duty" value={formatSar(order.customs_duty_sar, showAmounts)} />
+        <CostSummaryTile label="Fabric landed" value={formatSar(order.fabric_cost_sar, showAmounts)} />
+        <CostSummaryTile label="Labor" value={formatSar(order.labor_cost_sar, showAmounts)} />
+        <CostSummaryTile label="Wash + overhead" value={formatSar(order.washing_cost_sar + order.overhead_cost_sar, showAmounts)} />
         <CostSummaryTile
           label="Garment total"
-          value={formatSar(order.total_cost_sar)}
+          value={formatSar(order.total_cost_sar, showAmounts)}
           hint={order.lines_missing_price > 0 ? `${order.lines_missing_price} line(s) missing price` : undefined}
         />
       </div>
 
       {order.vat_recoverable_sar > 0 && (
         <p className="mb-4 text-xs text-amber-800">
-          VAT recoverable (cash at import, not in garment total): {formatSar(order.vat_recoverable_sar)} · Cash outlay{" "}
-          {formatSar(order.fabric_cash_outlay_sar)}
+          VAT recoverable (cash at import, not in garment total): {formatSar(order.vat_recoverable_sar, showAmounts)} · Cash outlay{" "}
+          {formatSar(order.fabric_cash_outlay_sar, showAmounts)}
         </p>
       )}
 
@@ -150,7 +161,7 @@ export function OrderCostDetailPanel({ order }: { order: SalesOrderCost }) {
           </thead>
           <tbody>
             {order.lines.map((line) => (
-              <FabricLineRow key={line.line_id} line={line} />
+              <FabricLineRow key={line.line_id} line={line} showAmounts={showAmounts} />
             ))}
           </tbody>
           <tfoot>
@@ -160,12 +171,12 @@ export function OrderCostDetailPanel({ order }: { order: SalesOrderCost }) {
               </td>
               <td className="px-3 py-3">{order.line_count} lines</td>
               <td className="px-3 py-3">—</td>
-              <td className="px-3 py-3">{formatSar(Math.round(supplierFabricTotal * 100) / 100)}</td>
-              <td className="px-3 py-3">{formatSar(order.fabric_cost_sar)}</td>
-              <td className="px-3 py-3">{formatSar(order.labor_cost_sar)}</td>
-              <td className="px-3 py-3">{formatSar(order.washing_cost_sar)}</td>
-              <td className="px-3 py-3">{formatSar(order.overhead_cost_sar)}</td>
-              <td className="px-3 py-3 font-semibold">{formatSar(order.total_cost_sar)}</td>
+              <td className="px-3 py-3">{formatSar(Math.round(supplierFabricTotal * 100) / 100, showAmounts)}</td>
+              <td className="px-3 py-3">{formatSar(order.fabric_cost_sar, showAmounts)}</td>
+              <td className="px-3 py-3">{formatSar(order.labor_cost_sar, showAmounts)}</td>
+              <td className="px-3 py-3">{formatSar(order.washing_cost_sar, showAmounts)}</td>
+              <td className="px-3 py-3">{formatSar(order.overhead_cost_sar, showAmounts)}</td>
+              <td className="px-3 py-3 font-semibold">{formatSar(order.total_cost_sar, showAmounts)}</td>
             </tr>
           </tfoot>
         </table>

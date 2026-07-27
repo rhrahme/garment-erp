@@ -135,7 +135,8 @@ const PATTERN_OPERATOR_ROUTE_PREFIXES = [
 
 /**
  * Accounting — invoicing, costing, supplier invoices, purchasing; no factory floor or sales CRM.
- * Invoice selling amounts visible; supplier fabric catalog/list prices stay admin-only (canViewPrices).
+ * Invoice amounts use eye toggle; supplier fabric catalog/list prices stay admin-only (canViewPrices).
+ * Supplier emails: view-only — sending is admin-only (canSendSupplierEmails).
  */
 const ACCOUNTING_OPERATOR_ROUTE_PREFIXES = [
   "/invoices",
@@ -187,6 +188,9 @@ const ACCOUNTING_OPERATOR_BLOCKED_ROUTE_PREFIXES = [
   "/inventory",
   "/fabric-specification",
   "/dashboard",
+  "/api/fabric-orders/send-email",
+  "/api/email/send-test",
+  "/api/v1/fabric-orders",
 ] as const;
 
 const SALES_OPERATOR_ROUTE_PREFIXES = [

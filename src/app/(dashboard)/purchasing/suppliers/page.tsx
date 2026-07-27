@@ -5,8 +5,11 @@ import { SupplierContactsEditor } from "@/components/purchasing/SupplierContacts
 import { CaccioppoliApiPanel } from "@/components/purchasing/CaccioppoliApiPanel";
 import { DrapersApiPanel } from "@/components/purchasing/DrapersApiPanel";
 import { ZapierSetup } from "@/components/purchasing/ZapierSetup";
+import { getSessionContext } from "@/lib/auth/session";
 
-export default function SupplierEmailsPage() {
+export default async function SupplierEmailsPage() {
+  const session = await getSessionContext();
+
   return (
     <div>
       <PageHeader
@@ -15,10 +18,14 @@ export default function SupplierEmailsPage() {
       />
       <PurchasingNav />
       <div className="space-y-6">
-        <CaccioppoliApiPanel />
-        <DrapersApiPanel />
-        <SenderEmailSetup />
-        <ZapierSetup />
+        {session.canSendSupplierEmails && (
+          <>
+            <CaccioppoliApiPanel />
+            <DrapersApiPanel />
+            <SenderEmailSetup />
+            <ZapierSetup />
+          </>
+        )}
         <SupplierContactsEditor />
       </div>
     </div>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getFactoryOrdersEmail } from "@/lib/data/supplier-catalogs";
 import { isValidEmail, normalizeEmail } from "@/lib/data/supplier-contacts";
 import { parseRecipientList, sendEmail } from "@/lib/email/smtp";
+import { requireAdmin } from "@/lib/auth/session";
 import { resolveSupplierCc } from "@/lib/fabric-sourcing/email-content";
 import { notifyIntegration } from "@/lib/integrations";
 import {
@@ -17,6 +18,11 @@ function isValidAddress(value: string): boolean {
 
 export async function POST(request: Request) {
   try {
+    const session = await requireAdmin();
+    if (!session) {
+      return NextResponse.json({ error: "Only admins may send supplier emails." }, { status: 403 });
+    }
+
     const body = (await request.json()) as Partial<FabricOrderEmail> & {
       poNumber?: string;
       poNumbers?: string[];

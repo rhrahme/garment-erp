@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import { getFactoryOrdersEmail, getInboxScanEmailFromContacts } from "@/lib/data/supplier-catalogs";
+import { requireAdmin } from "@/lib/auth/session";
 import { notifyIntegration } from "@/lib/integrations";
 import { saveSmtpPassword, sendEmail } from "@/lib/email/smtp";
 import { getInboxScanEmail } from "@/lib/email/imap-auth";
 
 export async function POST(request: Request) {
   try {
+    const session = await requireAdmin();
+    if (!session) {
+      return NextResponse.json({ error: "Only admins may send test emails." }, { status: 403 });
+    }
+
     const body = (await request.json()) as { password?: string; to?: string };
     const password = body.password?.trim();
     const defaultTo = getInboxScanEmail() ?? (await getInboxScanEmailFromContacts());

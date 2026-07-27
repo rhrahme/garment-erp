@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth/session";
 import {
   getSmtpConfig,
   getSmtpMissingEnvVars,
@@ -28,6 +29,11 @@ export async function GET() {
 
 export async function POST() {
   try {
+    const session = await requireAdmin();
+    if (!session) {
+      return NextResponse.json({ error: "Only admins may verify SMTP." }, { status: 403 });
+    }
+
     await verifySmtpConnection();
     return NextResponse.json({ ok: true, message: "SMTP connection verified." });
   } catch (error) {

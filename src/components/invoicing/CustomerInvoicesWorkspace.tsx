@@ -6,6 +6,8 @@ import { Search } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { StatusBadge } from "@/components/ui/PageHeader";
 import { InvoiceSummaryCards } from "@/components/invoicing/InvoiceSummaryCards";
+import { MASKED_INVOICE_AMOUNT } from "@/components/invoicing/InvoiceAmountsRevealToggle";
+import { useInvoiceAmountsVisibility } from "@/hooks/useInvoiceAmountsVisibility";
 import type { CustomerInvoice, CustomerInvoiceSummary } from "@/lib/types/customer-invoices";
 import type { InvoiceableSalesOrder } from "@/lib/types/invoiceable-orders";
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
@@ -30,14 +32,21 @@ export function CustomerInvoicesWorkspace({
   summary,
   invoiceableOrders,
   allowedBrandIds = null,
-  showAmountsByDefault = false,
+  canToggleAmounts = false,
+  amountsVisibleByDefault = false,
+  revealWithoutPassword = false,
 }: {
   invoices: CustomerInvoice[];
   summary: CustomerInvoiceSummary;
   invoiceableOrders: InvoiceableSalesOrder[];
   allowedBrandIds?: string[] | null;
-  showAmountsByDefault?: boolean;
+  canToggleAmounts?: boolean;
+  amountsVisibleByDefault?: boolean;
+  revealWithoutPassword?: boolean;
 }) {
+  const { visible, hydrated, unlock, lock } = useInvoiceAmountsVisibility(amountsVisibleByDefault);
+  const alwaysShowAmounts = amountsVisibleByDefault && !canToggleAmounts;
+  const showAmounts = alwaysShowAmounts || (hydrated && visible);
   const scopedBrands = useMemo(() => {
     if (!allowedBrandIds) return undefined;
     const allowed = new Set(allowedBrandIds);
@@ -94,7 +103,12 @@ export function CustomerInvoicesWorkspace({
         </div>
       </div>
 
-      <InvoiceSummaryCards summary={summary} showAmountsByDefault={showAmountsByDefault} />
+      <InvoiceSummaryCards
+        summary={summary}
+        canToggleAmounts={canToggleAmounts}
+        amountsVisibleByDefault={amountsVisibleByDefault}
+        revealWithoutPassword={revealWithoutPassword}
+      />
 
       {hydrated && (
         <FactoryBrandTabs
@@ -186,7 +200,9 @@ export function CustomerInvoicesWorkspace({
                   <td className="px-4 py-3">
                     {invoice.sent_at ? formatDate(invoice.sent_at.slice(0, 10)) : "—"}
                   </td>
-                  <td className="px-4 py-3 font-semibold">{formatInvoiceSar(invoice.total)}</td>
+                  <td className="px-4 py-3 font-semibold">
+                    {showAmounts ? formatInvoiceSar(invoice.total) : MASKED_INVOICE_AMOUNT}
+                  </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={invoice.status} />
                   </td>

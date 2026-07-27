@@ -41,7 +41,11 @@ function session(
     isAccountingOperator: role === "accounting",
     canViewClientContact: isAdmin || role === "sales_operator" || role === "accounting",
     canViewFabricListPrices: isAdmin,
-    canViewInvoiceAmounts: isAdmin || role === "accounting",
+    canViewInvoiceAmounts: isAdmin,
+    canToggleInvoiceAmounts: role === "accounting" || role === "sales_operator",
+    canRevealInvoiceAmountsWithoutPassword: role === "accounting",
+    invoiceAmountsVisibleByDefault: isAdmin || role === "accounting",
+    canSendSupplierEmails: isAdmin,
     canAccessPattern: isAdmin,
   };
 }

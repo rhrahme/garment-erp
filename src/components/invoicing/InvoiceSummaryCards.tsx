@@ -12,22 +12,35 @@ import { useInvoiceAmountsVisibility } from "@/hooks/useInvoiceAmountsVisibility
 
 export function InvoiceSummaryCards({
   summary,
-  showAmountsByDefault = false,
+  canToggleAmounts = false,
+  amountsVisibleByDefault = false,
+  revealWithoutPassword = false,
 }: {
   summary: CustomerInvoiceSummary;
-  showAmountsByDefault?: boolean;
+  /** Show eye toggle (sales + accounting). */
+  canToggleAmounts?: boolean;
+  /** Admin always visible; accounting starts visible. */
+  amountsVisibleByDefault?: boolean;
+  /** Accounting — no password to reveal. */
+  revealWithoutPassword?: boolean;
 }) {
-  const { visible, hydrated, unlock, lock } = useInvoiceAmountsVisibility();
+  const { visible, hydrated, unlock, lock } = useInvoiceAmountsVisibility(amountsVisibleByDefault);
 
-  const showAmounts = showAmountsByDefault || (hydrated && visible);
+  const alwaysShowAmounts = amountsVisibleByDefault && !canToggleAmounts;
+  const showAmounts = alwaysShowAmounts || (hydrated && visible);
   const outstandingValue = showAmounts ? formatInvoiceSar(summary.outstanding_sar) : MASKED_INVOICE_AMOUNT;
   const paidValue = showAmounts ? formatInvoiceSar(summary.paid_sar) : MASKED_INVOICE_AMOUNT;
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-end">
-        {!showAmountsByDefault && hydrated && (
-          <InvoiceAmountsRevealToggle visible={visible} onUnlock={unlock} onLock={lock} />
+        {canToggleAmounts && hydrated && (
+          <InvoiceAmountsRevealToggle
+            visible={visible}
+            onUnlock={unlock}
+            onLock={lock}
+            skipPassword={revealWithoutPassword}
+          />
         )}
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

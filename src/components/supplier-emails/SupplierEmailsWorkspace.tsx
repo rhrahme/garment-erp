@@ -58,14 +58,21 @@ export function SupplierEmailsWorkspace() {
   const [error, setError] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [canSendSupplierEmails, setCanSendSupplierEmails] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/session")
       .then((res) => (res.ok ? res.json() : null))
-      .then((data: { is_admin?: boolean } | null) => {
-        if (data) setIsAdmin(Boolean(data.is_admin));
+      .then((data: { is_admin?: boolean; can_send_supplier_emails?: boolean } | null) => {
+        if (data) {
+          setIsAdmin(Boolean(data.is_admin));
+          setCanSendSupplierEmails(Boolean(data.can_send_supplier_emails));
+        }
       })
-      .catch(() => setIsAdmin(false));
+      .catch(() => {
+        setIsAdmin(false);
+        setCanSendSupplierEmails(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -293,6 +300,7 @@ export function SupplierEmailsWorkspace() {
                   fabrics={fabricsForEmailBatch(batch, fabricsBySupplier)}
                   factoryEmail={factoryEmail}
                   isAdmin={isAdmin}
+                  canSendSupplierEmails={canSendSupplierEmails}
                   onSent={(poIds, result, lineIdsByPoId) => void handleSent(poIds, result, lineIdsByPoId)}
                   onCancel={(poIds, poNumbers) => void handleCancel(poIds, batch.supplier_name, poNumbers)}
                 />
@@ -309,6 +317,7 @@ export function SupplierEmailsWorkspace() {
                   batch={batch}
                   fabrics={fabricsForEmailBatch(batch, fabricsBySupplier)}
                   factoryEmail={factoryEmail}
+                  canSendSupplierEmails={canSendSupplierEmails}
                 />
               ))}
             </section>
@@ -342,6 +351,7 @@ function PendingSupplierEmailBatchCard({
   fabrics,
   factoryEmail,
   isAdmin,
+  canSendSupplierEmails,
   onSent,
   onCancel,
 }: {
@@ -349,6 +359,7 @@ function PendingSupplierEmailBatchCard({
   fabrics: SupplierFabric[];
   factoryEmail: string | null;
   isAdmin: boolean;
+  canSendSupplierEmails: boolean;
   onSent: (
     poIds: string[],
     result: { emailedAt: string; emailTo: string; persisted?: boolean },
@@ -577,6 +588,7 @@ function PendingSupplierEmailBatchCard({
         poIds={selectedPoIdsList}
         lineIdsByPoId={lineIdsByPoId}
         onSent={(result) => onSent(selectedPoIdsList, result, lineIdsByPoId)}
+        allowSend={canSendSupplierEmails}
       />
     </div>
   );
@@ -586,10 +598,12 @@ function SentSupplierEmailBatchCard({
   batch,
   fabrics,
   factoryEmail,
+  canSendSupplierEmails,
 }: {
   batch: SupplierEmailBatch;
   fabrics: SupplierFabric[];
   factoryEmail: string | null;
+  canSendSupplierEmails: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showFollowUp, setShowFollowUp] = useState(false);
@@ -672,7 +686,7 @@ function SentSupplierEmailBatchCard({
           )}
           <Button variant="secondary" size="sm" onClick={openFollowUp}>
             <MessageSquarePlus className="mr-2 h-4 w-4" />
-            Send follow-up
+            {canSendSupplierEmails ? "Send follow-up" : "View follow-up draft"}
           </Button>
         </div>
       </div>
@@ -685,7 +699,7 @@ function SentSupplierEmailBatchCard({
               <p className="text-xs text-slate-500">
                 Sends a new email — original POs stay marked as sent.
               </p>
-              <EmailPreview email={followUpEmail} poNumber={poNumbers[0]} poNumbers={poNumbers} />
+              <EmailPreview email={followUpEmail} poNumber={poNumbers[0]} poNumbers={poNumbers} allowSend={canSendSupplierEmails} />
             </div>
           ) : (
             <div className="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-600">

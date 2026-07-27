@@ -23,6 +23,8 @@ interface EmailPreviewProps {
   sentTo?: string | null;
   /** Show manual "Already sent" override (e.g. sent outside the app). Default false. */
   allowManualSent?: boolean;
+  /** When false, hide send / mail-client actions (view-only). Default true. */
+  allowSend?: boolean;
 }
 
 function defaultCc(email: FabricOrderEmail): string {
@@ -39,6 +41,7 @@ export function EmailPreview({
   sentAt,
   sentTo,
   allowManualSent = false,
+  allowSend = true,
 }: EmailPreviewProps) {
   const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
@@ -193,10 +196,12 @@ export function EmailPreview({
             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             {copied ? "Copied" : "Copy"}
           </Button>
-          <Button variant="secondary" size="sm" onClick={openMailClient}>
-            Open in Mail
-          </Button>
-          {allowManualSent && onSent && !isSent && (
+          {allowSend && (
+            <Button variant="secondary" size="sm" onClick={openMailClient}>
+              Open in Mail
+            </Button>
+          )}
+          {allowSend && allowManualSent && onSent && !isSent && (
             <Button
               variant="secondary"
               size="sm"
@@ -212,7 +217,7 @@ export function EmailPreview({
               Already sent
             </Button>
           )}
-          {!isSent && (
+          {allowSend && !isSent && (
             <Button
               size="sm"
               onClick={sendEmail}
@@ -234,6 +239,11 @@ export function EmailPreview({
         </div>
       </div>
       <div className="space-y-3 px-6 py-4 text-sm">
+        {!allowSend && !isSent && (
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">
+            View only — only admins can send supplier emails from this app.
+          </div>
+        )}
         {!canSubmitSend && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
             {hasIncludedPos

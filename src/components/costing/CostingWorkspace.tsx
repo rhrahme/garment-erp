@@ -4,13 +4,19 @@ import { useMemo, useState } from "react";
 import { Calculator, ChevronDown, ChevronRight } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { OrderCostDetailPanel } from "@/components/costing/OrderCostDetailPanel";
+import {
+  InvoiceAmountsRevealToggle,
+  MASKED_INVOICE_AMOUNT,
+} from "@/components/invoicing/InvoiceAmountsRevealToggle";
 import { StatusBadge, StatCard } from "@/components/ui/PageHeader";
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
 import type { CostingOverview, SalesOrderCost } from "@/lib/costing/compute";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
+import { useInvoiceAmountsVisibility } from "@/hooks/useInvoiceAmountsVisibility";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 
-function formatSar(amount: number | null): string {
+function formatSar(amount: number | null, showAmounts: boolean): string {
+  if (!showAmounts) return MASKED_INVOICE_AMOUNT;
   if (amount == null) return "—";
   return formatCurrency(amount, "SAR");
 }
@@ -19,10 +25,12 @@ function OrderCostRow({
   order,
   open,
   onToggle,
+  showAmounts,
 }: {
   order: SalesOrderCost;
   open: boolean;
   onToggle: () => void;
+  showAmounts: boolean;
 }) {
   const partial = order.lines_missing_price > 0;
 
@@ -62,15 +70,15 @@ function OrderCostRow({
         </td>
         <td className="px-4 py-3">{formatDate(order.order_date)}</td>
         <td className="px-4 py-3">{order.line_count}</td>
-        <td className="px-4 py-3">{formatSar(order.fabric_cost_sar)}</td>
+        <td className="px-4 py-3">{formatSar(order.fabric_cost_sar, showAmounts)}</td>
         <td className="px-4 py-3 text-xs text-amber-700" title="Recoverable VAT — cash tied up until claimed">
-          {order.vat_recoverable_sar > 0 ? formatSar(order.vat_recoverable_sar) : "—"}
+          {order.vat_recoverable_sar > 0 ? formatSar(order.vat_recoverable_sar, showAmounts) : "—"}
         </td>
-        <td className="px-4 py-3">{formatSar(order.labor_cost_sar)}</td>
-        <td className="px-4 py-3">{formatSar(order.washing_cost_sar)}</td>
-        <td className="px-4 py-3">{formatSar(order.overhead_cost_sar)}</td>
+        <td className="px-4 py-3">{formatSar(order.labor_cost_sar, showAmounts)}</td>
+        <td className="px-4 py-3">{formatSar(order.washing_cost_sar, showAmounts)}</td>
+        <td className="px-4 py-3">{formatSar(order.overhead_cost_sar, showAmounts)}</td>
         <td className="px-4 py-3 font-semibold">
-          {formatSar(order.total_cost_sar)}
+          {formatSar(order.total_cost_sar, showAmounts)}
           {partial && (
             <span className="ml-1 text-xs font-normal text-amber-600" title="Some fabric prices missing">
               *
@@ -84,7 +92,7 @@ function OrderCostRow({
       {open && (
         <tr>
           <td colSpan={11} className="p-0">
-            <OrderCostDetailPanel order={order} />
+            <OrderCostDetailPanel order={order} showAmounts={showAmounts} />
           </td>
         </tr>
       )}
@@ -92,10 +100,23 @@ function OrderCostRow({
   );
 }
 
-export function CostingWorkspace({ overview }: { overview: CostingOverview }) {
+export function CostingWorkspace({
+  overview,
+  canToggleAmounts = false,
+  amountsVisibleByDefault = true,
+  revealWithoutPassword = false,
+}: {
+  overview: CostingOverview;
+  canToggleAmounts?: boolean;
+  amountsVisibleByDefault?: boolean;
+  revealWithoutPassword?: boolean;
+}) {
   const { brandId, setBrandId, hydrated } = useFactoryBrandFilter();
   const [showArchived, setShowArchived] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const { visible, hydrated: amountsHydrated, unlock, lock } = useInvoiceAmountsVisibility(amountsVisibleByDefault);
+  const alwaysShowAmounts = amountsVisibleByDefault && !canToggleAmounts;
+  const showAmounts = alwaysShowAmounts || (amountsHydrated && visible);
 
   const orders = useMemo(() => {
     let result = overview.orders;
@@ -141,6 +162,16 @@ export function CostingWorkspace({ overview }: { overview: CostingOverview }) {
 
   return (
     <div className="space-y-6">
+      {canToggleAmounts && amountsHydrated && (
+        <div className="flex justify-end">
+          <InvoiceAmountsRevealToggle
+            visible={visible}
+            onUnlock={unlock}
+            onLock={lock}
+            skipPassword={revealWithoutPassword}
+          />
+        </div>
+      )}
       <div className="rounded-xl border border-violet-200 bg-violet-50 px-5 py-4 text-sm text-violet-950">
         <p className="font-medium">How costing is calculated</p>
         <p className="mt-1 text-violet-900">
@@ -167,25 +198,25 @@ export function CostingWorkspace({ overview }: { overview: CostingOverview }) {
         />
         <StatCard
           label="Fabric (landed)"
-          value={formatSar(filteredTotals.fabric)}
-          subtext={`${formatSar(filteredTotals.customs)} customs duty incl.`}
+          value={formatSar(filteredTotals.fabric, showAmounts)}
+          subtext={`${formatSar(filteredTotals.customs, showAmounts)} customs duty incl.`}
           accent="bg-indigo-50 text-indigo-600"
         />
         <StatCard
           label="VAT recoverable"
-          value={formatSar(filteredTotals.vatRecoverable)}
-          subtext={`${formatSar(filteredTotals.fabricCash)} cash at import`}
+          value={formatSar(filteredTotals.vatRecoverable, showAmounts)}
+          subtext={`${formatSar(filteredTotals.fabricCash, showAmounts)} cash at import`}
           accent="bg-amber-50 text-amber-600"
         />
         <StatCard
           label="Make cost"
-          value={formatSar(filteredTotals.labor + filteredTotals.washing + filteredTotals.overhead)}
+          value={formatSar(filteredTotals.labor + filteredTotals.washing + filteredTotals.overhead, showAmounts)}
           subtext="Labor + wash + overhead"
           accent="bg-blue-50 text-blue-600"
         />
         <StatCard
           label="Total estimated"
-          value={formatSar(filteredTotals.total)}
+          value={formatSar(filteredTotals.total, showAmounts)}
           subtext={
             filteredTotals.missing > 0
               ? `${filteredTotals.missing} line${filteredTotals.missing !== 1 ? "s" : ""} missing fabric price`
@@ -241,6 +272,7 @@ export function CostingWorkspace({ overview }: { overview: CostingOverview }) {
                   onToggle={() =>
                     setExpandedOrderId((current) => (current === order.order_id ? null : order.order_id))
                   }
+                  showAmounts={showAmounts}
                 />
               ))}
             </tbody>

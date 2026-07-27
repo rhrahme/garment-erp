@@ -204,6 +204,10 @@ describe("accounting_operator access", () => {
     assert.equal(isAccountingOperatorRouteAllowed("/invoices"), true);
     assert.equal(isAccountingOperatorRouteAllowed("/costing"), true);
     assert.equal(isAccountingOperatorRouteAllowed("/supplier-invoices"), true);
+    assert.equal(isAccountingOperatorRouteAllowed("/supplier-emails"), true);
+    assert.equal(isAccountingOperatorRouteAllowed("/api/supplier-emails"), true);
+    assert.equal(isAccountingOperatorRouteAllowed("/api/fabric-orders/send-email"), false);
+    assert.equal(isAccountingOperatorRouteAllowed("/api/email/send-test"), false);
     assert.equal(isAccountingOperatorRouteAllowed("/api/customer-invoices"), true);
     assert.equal(isAccountingOperatorRouteAllowed("/production"), false);
     assert.equal(isAccountingOperatorRouteAllowed("/sales"), false);

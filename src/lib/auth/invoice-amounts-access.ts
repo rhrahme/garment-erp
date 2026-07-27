@@ -1,6 +1,33 @@
 import { timingSafeEqual } from "crypto";
+import type { SessionContext } from "@/lib/auth/session";
 
 export const INVOICE_AMOUNTS_UNLOCK_SESSION_KEY = "invoice_amounts_unlocked";
+
+/** Admin — always see amounts, no eye toggle. */
+export function canViewInvoiceAmountsAlways(session: Pick<SessionContext, "isAdmin">): boolean {
+  return session.isAdmin;
+}
+
+/** Sales + accounting — eye toggle on invoice/costing monetary fields. */
+export function canToggleInvoiceAmounts(
+  session: Pick<SessionContext, "isAccountingOperator" | "isSalesOperator">
+): boolean {
+  return session.isAccountingOperator || session.isSalesOperator;
+}
+
+/** Accounting reveals hidden amounts without a password. */
+export function canRevealInvoiceAmountsWithoutPassword(
+  session: Pick<SessionContext, "isAccountingOperator">
+): boolean {
+  return session.isAccountingOperator;
+}
+
+/** When the toggle exists, start with amounts visible (admin always visible separately). */
+export function invoiceAmountsVisibleByDefault(
+  session: Pick<SessionContext, "isAdmin" | "isAccountingOperator">
+): boolean {
+  return session.isAdmin || session.isAccountingOperator;
+}
 
 export function getInvoiceAmountsPassword(): string {
   return process.env.INVOICE_AMOUNTS_PASSWORD?.trim() ?? "";

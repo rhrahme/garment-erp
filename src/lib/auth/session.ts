@@ -20,6 +20,13 @@ import {
   isTaskOperatorAccess,
   resolveRestrictedAccess,
 } from "@/lib/auth/permissions";
+import {
+  canRevealInvoiceAmountsWithoutPassword,
+  canToggleInvoiceAmounts,
+  canViewInvoiceAmountsAlways,
+  invoiceAmountsVisibleByDefault,
+} from "@/lib/auth/invoice-amounts-access";
+import { canSendSupplierEmails } from "@/lib/auth/supplier-email-access";
 
 export interface SessionContext {
   userId: string | null;
@@ -35,7 +42,16 @@ export interface SessionContext {
   isAccountingOperator: boolean;
   canViewClientContact: boolean;
   canViewFabricListPrices: boolean;
+  /** Admin-only — always visible, no eye toggle. */
   canViewInvoiceAmounts: boolean;
+  /** Sales + accounting — show/hide monetary amounts on invoices & costing. */
+  canToggleInvoiceAmounts: boolean;
+  /** Accounting — reveal hidden amounts without password. */
+  canRevealInvoiceAmountsWithoutPassword: boolean;
+  /** Default visibility when toggle is present (accounting starts visible). */
+  invoiceAmountsVisibleByDefault: boolean;
+  /** Admin-only — send supplier / fabric-order emails. */
+  canSendSupplierEmails: boolean;
   canAccessPattern: boolean;
 }
 
@@ -108,7 +124,11 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
     isAccountingOperator,
     canViewClientContact: canViewClientContact(role, email, isSuperAdmin),
     canViewFabricListPrices: isAdmin,
-    canViewInvoiceAmounts: isAdmin || isAccountingOperator,
+    canViewInvoiceAmounts: canViewInvoiceAmountsAlways({ isAdmin }),
+    canToggleInvoiceAmounts: canToggleInvoiceAmounts({ isAccountingOperator, isSalesOperator }),
+    canRevealInvoiceAmountsWithoutPassword: canRevealInvoiceAmountsWithoutPassword({ isAccountingOperator }),
+    invoiceAmountsVisibleByDefault: invoiceAmountsVisibleByDefault({ isAdmin, isAccountingOperator }),
+    canSendSupplierEmails: canSendSupplierEmails({ isAdmin }),
     canAccessPattern:
       !isSalesOperator &&
       !isAccountingOperator &&
@@ -166,6 +186,10 @@ export async function getSessionContext(): Promise<SessionContext> {
       canViewClientContact: false,
       canViewFabricListPrices: false,
       canViewInvoiceAmounts: false,
+      canToggleInvoiceAmounts: false,
+      canRevealInvoiceAmountsWithoutPassword: false,
+      invoiceAmountsVisibleByDefault: false,
+      canSendSupplierEmails: false,
       canAccessPattern: false,
     };
   }

@@ -10,9 +10,16 @@ type InvoiceAmountsRevealToggleProps = {
   visible: boolean;
   onUnlock: () => void;
   onLock: () => void;
+  /** Accounting — toggle without password prompt. */
+  skipPassword?: boolean;
 };
 
-export function InvoiceAmountsRevealToggle({ visible, onUnlock, onLock }: InvoiceAmountsRevealToggleProps) {
+export function InvoiceAmountsRevealToggle({
+  visible,
+  onUnlock,
+  onLock,
+  skipPassword = false,
+}: InvoiceAmountsRevealToggleProps) {
   const [open, setOpen] = useState(false);
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -54,7 +61,15 @@ export function InvoiceAmountsRevealToggle({ visible, onUnlock, onLock }: Invoic
     <>
       <button
         type="button"
-        onClick={() => (visible ? onLock() : setOpen(true))}
+        onClick={() => {
+          if (visible) {
+            onLock();
+          } else if (skipPassword) {
+            onUnlock();
+          } else {
+            setOpen(true);
+          }
+        }}
         disabled={submitting}
         className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50 disabled:opacity-50"
         title={visible ? "Hide invoice totals" : "Show invoice totals"}
