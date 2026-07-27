@@ -1,29 +1,53 @@
 import type { SupplierFabric } from "@/lib/types/fabric-sourcing";
-import { formatRestockDate } from "@/lib/utils";
+import { formatRestockDate, isRestockDatePast } from "@/lib/utils";
 
 export type FabricStockStatus = NonNullable<SupplierFabric["stock_status"]>;
 
-export function isFabricUnavailable(
-  stockStatus: SupplierFabric["stock_status"] | null | undefined
-): boolean {
-  return stockStatus === "temp_unavailable" || stockStatus === "permanently_unavailable";
+type StockFields = Pick<SupplierFabric, "stock_status" | "restock_date">;
+
+/** Stock status for alerts/UI — past restock dates no longer block availability. */
+export function effectiveFabricStockStatus(
+  fabric: StockFields
+): SupplierFabric["stock_status"] | null | undefined {
+  if (
+    fabric.stock_status === "temp_unavailable" &&
+    fabric.restock_date != null &&
+    isRestockDatePast(fabric.restock_date)
+  ) {
+    return "in_stock";
+  }
+  return fabric.stock_status;
 }
 
-export function formatFabricStockLabel(fabric: Pick<SupplierFabric, "stock_status" | "restock_date">): string | null {
-  if (!fabric.stock_status || fabric.stock_status === "in_stock") return null;
-  if (fabric.stock_status === "temp_unavailable") {
+export function isFabricUnavailable(
+  stockStatus: SupplierFabric["stock_status"] | null | undefined,
+  restockDate?: SupplierFabric["restock_date"]
+): boolean {
+  if (stockStatus === "permanently_unavailable") return true;
+  if (stockStatus === "temp_unavailable") {
+    return restockDate == null || !isRestockDatePast(restockDate);
+  }
+  return false;
+}
+
+export function formatFabricStockLabel(fabric: StockFields): string | null {
+  const stockStatus = effectiveFabricStockStatus(fabric);
+  if (!stockStatus || stockStatus === "in_stock") return null;
+  if (stockStatus === "temp_unavailable") {
     const restockLabel = formatRestockDate(fabric.restock_date);
     return restockLabel ? `Out until ${restockLabel}` : "Temporarily unavailable";
   }
-  if (fabric.stock_status === "permanently_unavailable") return "Sold out";
+  if (stockStatus === "permanently_unavailable") return "Sold out";
   return null;
 }
 
 export function fabricStockTone(
-  stockStatus: SupplierFabric["stock_status"]
+  stockStatus: SupplierFabric["stock_status"],
+  restockDate?: SupplierFabric["restock_date"]
 ): "ok" | "warn" | "danger" | null {
-  if (!stockStatus || stockStatus === "in_stock") return null;
-  if (stockStatus === "temp_unavailable") return "warn";
+  const effective = effectiveFabricStockStatus({ stock_status: stockStatus, restock_date: restockDate });
+  if (!effective || effective === "in_stock") return null;
+  if (effective === "temp_unavailable") return "warn";
   return "danger";
 }
 
@@ -36,9 +60,8 @@ type SalesOrderStockLine = Pick<
 };
 
 export function orderLineHasStockAlert(line: SalesOrderStockLine): boolean {
-  return Boolean(
-    line.needs_replacement || (line.stock_status && line.stock_status !== "in_stock")
-  );
+  const stockStatus = effectiveFabricStockStatus(line);
+  return Boolean(line.needs_replacement || (stockStatus && stockStatus !== "in_stock"));
 }
 
 export function formatSalesOrderLineStock(line: SalesOrderStockLine): string | null {

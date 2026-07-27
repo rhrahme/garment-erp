@@ -11,7 +11,7 @@ export function FabricStockBadge({ fabric }: { fabric: StockFields }) {
   const label = formatFabricStockLabel(fabric);
   if (!label) return null;
 
-  const tone = fabricStockTone(fabric.stock_status);
+  const tone = fabricStockTone(fabric.stock_status, fabric.restock_date);
   const className =
     tone === "warn"
       ? "bg-amber-100 text-amber-900"
@@ -36,5 +36,5 @@ export function FabricReplacementBadge({ needsReplacement }: { needsReplacement?
 }
 
 export function lineNeedsAvailabilityAttention(line: StockFields & { needs_replacement?: boolean }): boolean {
-  return isFabricUnavailable(line.stock_status) || Boolean(line.needs_replacement);
+  return isFabricUnavailable(line.stock_status, line.restock_date) || Boolean(line.needs_replacement);
 }

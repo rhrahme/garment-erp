@@ -271,7 +271,7 @@ export function SalesOrderFabricLineCards({
               />
             </label>
 
-            {canViewFabricStock && isFabricUnavailable(line.stock_status) ? (
+            {canViewFabricStock && isFabricUnavailable(line.stock_status, line.restock_date) ? (
               <Button
                 variant="secondary"
                 size="sm"

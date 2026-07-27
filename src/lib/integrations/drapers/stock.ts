@@ -1,4 +1,5 @@
 import type { FabricStockStatus } from "@/lib/fabric-sourcing/fabric-stock";
+import { isRestockDatePast } from "@/lib/utils";
 import type { DrapersStockRow } from "@/lib/integrations/drapers/types";
 
 /** Parses Drapers decimal strings (e.g. "73,20" or "1.234,50"). */
@@ -57,7 +58,9 @@ export function mapDrapersStockRow(row: DrapersStockRow): {
     return { stock_status: "in_stock", restock_date: null, quantity_meters };
   }
   if (row.in_restock || restock_date) {
-    return { stock_status: "temp_unavailable", restock_date, quantity_meters };
+    const effectiveRestockDate =
+      restock_date && isRestockDatePast(restock_date) ? null : restock_date;
+    return { stock_status: "temp_unavailable", restock_date: effectiveRestockDate, quantity_meters };
   }
   return { stock_status: "permanently_unavailable", restock_date: null, quantity_meters };
 }

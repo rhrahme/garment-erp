@@ -376,8 +376,8 @@
           "label_count": 1,
           "supplier_id": "drapers",
           "garment_type": "Trouser",
-          "restock_date": 1781222400,
-          "stock_status": "temp_unavailable",
+          "restock_date": null,
+          "stock_status": "in_stock",
           "width_inches": null,
           "a4_printed_at": null,
           "fabric_number": "26112",
@@ -17119,7 +17119,10 @@
               "sequence": 1,
               "piece_name": "Trousers"
             }
-          ]
+          ],
+          "stock_status": "in_stock",
+          "restock_date": null,
+          "needs_replacement": false
         },
         {
           "id": "line-cu-86exhxxz7-1",

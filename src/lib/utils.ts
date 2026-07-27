@@ -40,6 +40,15 @@ export function parseFlexibleDate(value: string | number | null | undefined): Da
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+/** True when a restock/availability date is strictly before today (UTC calendar day). */
+export function isRestockDatePast(value: string | number | null | undefined, now = new Date()): boolean {
+  const date = parseFlexibleDate(value);
+  if (!date) return false;
+  const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const restockUtc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+  return restockUtc < todayUtc;
+}
+
 /** Human-readable restock / availability date for stock alerts. */
 export function formatRestockDate(value: string | number | null | undefined): string | null {
   const date = parseFlexibleDate(value);

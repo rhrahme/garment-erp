@@ -27,6 +27,8 @@ export interface DrapersStockSyncResult {
   errors: string[];
   synced_at: string;
   mode: string;
+  order_lines_updated?: number;
+  orders_touched?: number;
 }
 
 type DrapersCatalogFile = {
@@ -57,6 +59,71 @@ function applyStockRow(
   fabric.disponibilita_meters = mapped.quantity_meters;
   fabric.stock_updated_at = synced_at;
   return true;
+}
+
+export function propagateDrapersStockToOpenOrders(
+  catalogByCode: Map<string, DrapersCatalogFile["fabrics"][number]>,
+  options: { fabric_numbers?: string[]; synced_at: string } = { synced_at: new Date().toISOString() }
+): { order_lines_updated: number; orders_touched: number } {
+  const ordersPath = path.join(process.cwd(), "src/data/sales-orders.json");
+  const store = JSON.parse(fs.readFileSync(ordersPath, "utf8")) as {
+    orders: Array<{
+      status: string;
+      fabric_lines: Array<{
+        supplier_id: string;
+        fabric_number: string;
+        stock_status?: string | null;
+        restock_date?: string | number | null;
+        needs_replacement?: boolean;
+      }>;
+    }>;
+  };
+
+  const targetNumbers = options.fabric_numbers
+    ? new Set(options.fabric_numbers.map((n) => normalizeDrapersFabricCode(n)))
+    : null;
+
+  let order_lines_updated = 0;
+  const orders_touched = new Set<number>();
+
+  for (let orderIndex = 0; orderIndex < store.orders.length; orderIndex++) {
+    const order = store.orders[orderIndex]!;
+    if (order.status === "complete") continue;
+
+    for (const line of order.fabric_lines) {
+      if (line.supplier_id !== "drapers") continue;
+      const code = normalizeDrapersFabricCode(line.fabric_number);
+      if (targetNumbers && !targetNumbers.has(code)) continue;
+
+      const catalogFabric = catalogByCode.get(code) ?? catalogByCode.get(line.fabric_number.trim());
+      if (!catalogFabric?.stock_status) continue;
+
+      const nextStatus = catalogFabric.stock_status;
+      const nextRestock = catalogFabric.restock_date ?? null;
+      const nextNeedsReplacement = nextStatus === "permanently_unavailable";
+
+      const statusChanged = line.stock_status !== nextStatus;
+      const restockChanged = (line.restock_date ?? null) !== nextRestock;
+      const replacementChanged = Boolean(line.needs_replacement) !== nextNeedsReplacement;
+
+      if (!statusChanged && !restockChanged && !replacementChanged) continue;
+
+      line.stock_status = nextStatus;
+      line.restock_date = nextRestock;
+      line.needs_replacement = nextNeedsReplacement;
+      if (nextStatus === "in_stock") {
+        line.needs_replacement = false;
+      }
+      order_lines_updated += 1;
+      orders_touched.add(orderIndex);
+    }
+  }
+
+  if (order_lines_updated > 0) {
+    fs.writeFileSync(ordersPath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
+  }
+
+  return { order_lines_updated, orders_touched: orders_touched.size };
 }
 
 export async function syncDrapersCatalogStock(
@@ -149,6 +216,13 @@ export async function syncDrapersCatalogStock(
   raw.stock_synced_at = synced_at;
   raw.stock_sync_source = "api.drapersitaly.it/stock";
   fs.writeFileSync(CATALOG_PATH, `${JSON.stringify(raw, null, 2)}\n`, "utf8");
+
+  const propagation = propagateDrapersStockToOpenOrders(catalogByCode, {
+    fabric_numbers: options.fabric_numbers,
+    synced_at,
+  });
+  result.order_lines_updated = propagation.order_lines_updated;
+  result.orders_touched = propagation.orders_touched;
 
   return result;
 }

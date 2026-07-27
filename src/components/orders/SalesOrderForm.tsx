@@ -2027,7 +2027,7 @@ export function SalesOrderForm({
                         </td>
                         <td className="px-3 py-2">
                           <div className="flex flex-col items-end gap-1">
-                            {canViewFabricStock && isFabricUnavailable(line.stock_status) && (
+                            {canViewFabricStock && isFabricUnavailable(line.stock_status, line.restock_date) && (
                               <Button
                                 variant="secondary"
                                 size="sm"

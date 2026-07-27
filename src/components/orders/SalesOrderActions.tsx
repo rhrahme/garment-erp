@@ -821,7 +821,8 @@ export function SalesOrderActions({
                         showFabricStock &&
                         (line.needs_replacement || line.stock_status === "permanently_unavailable")
                           ? "bg-amber-50/40"
-                          : showFabricStock && line.stock_status === "temp_unavailable"
+                          : showFabricStock &&
+                              isFabricUnavailable(line.stock_status, line.restock_date)
                             ? "bg-amber-50/20"
                             : "bg-white"
                       }`}
@@ -842,7 +843,7 @@ export function SalesOrderActions({
                           fabricNumber={line.fabric_number}
                           highlight={
                             showFabricStock &&
-                            (isFabricUnavailable(line.stock_status) || line.needs_replacement)
+                            (isFabricUnavailable(line.stock_status, line.restock_date) || line.needs_replacement)
                           }
                         >
                           {showFabricStock ? <FabricStockBadge fabric={line} /> : null}
@@ -1032,7 +1033,8 @@ export function SalesOrderActions({
                         showFabricStock &&
                         (line.needs_replacement || line.stock_status === "permanently_unavailable")
                           ? "bg-amber-50/40"
-                          : showFabricStock && line.stock_status === "temp_unavailable"
+                          : showFabricStock &&
+                              isFabricUnavailable(line.stock_status, line.restock_date)
                             ? "bg-amber-50/20"
                             : "bg-white"
                       }`}
@@ -1046,7 +1048,7 @@ export function SalesOrderActions({
                           fabricNumber={line.fabric_number}
                           highlight={
                             showFabricStock &&
-                            (isFabricUnavailable(line.stock_status) || line.needs_replacement)
+                            (isFabricUnavailable(line.stock_status, line.restock_date) || line.needs_replacement)
                           }
                         >
                           {showFabricStock ? <FabricStockBadge fabric={line} /> : null}
