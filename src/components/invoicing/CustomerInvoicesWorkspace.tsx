@@ -54,7 +54,7 @@ export function CustomerInvoicesWorkspace({
   }, [allowedBrandIds]);
   const isBrandScoped = Boolean(allowedBrandIds && allowedBrandIds.length > 0);
   const defaultBrandId = allowedBrandIds?.length === 1 ? allowedBrandIds[0]! : null;
-  const { brandId, setBrandId, hydrated } = useFactoryBrandFilter(defaultBrandId);
+  const { brandId, setBrandId, hydrated: brandFilterHydrated } = useFactoryBrandFilter(defaultBrandId);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_TABS)[number]["id"]>("all");
 
@@ -110,7 +110,7 @@ export function CustomerInvoicesWorkspace({
         revealWithoutPassword={revealWithoutPassword}
       />
 
-      {hydrated && (
+      {brandFilterHydrated && (
         <FactoryBrandTabs
           value={brandId}
           onChange={setBrandId}
