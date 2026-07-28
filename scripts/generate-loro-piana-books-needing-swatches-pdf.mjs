@@ -3,7 +3,8 @@
  * Printable A4 PDF of Loro Piana / Solbiati catalog books missing swatch photos.
  *
  * Usage:
- *   node scripts/generate-loro-piana-books-needing-swatches-pdf.mjs
+ *   node scripts/generate-loro-piana-books-needing-swatches-pdf.mjs          # legacy LP-only combined list
+ *   node scripts/generate-loro-piana-solbiati-swatches-missing-pdf.mjs       # LP + Solbiati split (recommended)
  *   node scripts/generate-loro-piana-books-needing-swatches-pdf.mjs --out ~/Desktop/custom-name.pdf
  */
 
