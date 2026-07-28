@@ -26,6 +26,7 @@ import {
   formatFabricLineArticle,
   resolveSoArticleForFabricLine,
 } from "@/lib/sales-orders/label-codes";
+import { DeliveryDestinationBadge, DeliveryDestinationBadges } from "@/components/shipping/DeliveryDestinationBadge";
 import { formatDateTimeRiyadh } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 
@@ -649,8 +650,9 @@ function SentSupplierEmailBatchCard({
             <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
           )}
           <div className="min-w-0">
-            <h3 className="text-base font-semibold text-slate-900">
-              {batch.supplier_name}{" "}
+            <h3 className="flex flex-wrap items-center gap-2 text-base font-semibold text-slate-900">
+              <span>{batch.supplier_name}</span>
+              <DeliveryDestinationBadges destinations={batch.orders.map((order) => order.delivery_destination)} warnIfMissing />
               <span className="font-mono text-sm font-normal text-slate-500">
                 {poNumbers.length === 1 ? poNumbers[0] : `${poNumbers.length} POs`}
               </span>
@@ -733,8 +735,9 @@ function BatchHeader({
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900">
-          {batch.supplier_name}{" "}
+        <h3 className="flex flex-wrap items-center gap-2 text-lg font-semibold text-slate-900">
+          <span>{batch.supplier_name}</span>
+          <DeliveryDestinationBadges destinations={batch.orders.map((order) => order.delivery_destination)} warnIfMissing />
           <span className="font-mono text-sm font-normal text-slate-500">
             {poNumbers.length === 1 ? poNumbers[0] : `${poNumbers.length} POs`}
           </span>
@@ -920,8 +923,9 @@ function BatchOrderPicker({
                   onChange={(event) => onToggle(order.id, event.target.checked)}
                   className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300"
                 />
-                <span>
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span className="font-medium text-slate-900">Include in this email</span>
+                  <DeliveryDestinationBadge destination={order.delivery_destination} warnIfMissing />
                   {order.so_number && (
                     <>
                       {" — "}
@@ -981,8 +985,9 @@ function BatchOrderLinks({ orders }: { orders: SupplierEmailQueueItem[] }) {
   return (
     <p className="mt-1 text-sm text-slate-600">
       {uniqueOrders.map((order, index) => (
-        <span key={order.id}>
+        <span key={order.id} className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
           {index > 0 && " · "}
+          <DeliveryDestinationBadge destination={order.delivery_destination} warnIfMissing />
           {order.so_number && <span className="font-mono">{order.so_number}</span>}
           {order.so_number && order.client_code && " — "}
           {order.client_code && <span className="font-mono text-indigo-700">{order.client_code}</span>}
