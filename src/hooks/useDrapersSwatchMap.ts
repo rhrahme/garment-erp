@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getDrapersCatalogSwatchUrls } from "@/lib/integrations/drapers/drapers-catalog-swatches";
+import { getDrapersUiSwatchUrls } from "@/lib/integrations/drapers/drapers-catalog-swatches";
+import { drapersSwatchImageUrl } from "@/lib/fabric-sourcing/drapers-swatch-url";
 
 const CHUNK_SIZE = 30;
 
@@ -36,7 +37,7 @@ export function useDrapersSwatchMap(fabricNumbers: string[]): Map<string, Draper
       const next = new Map<string, DrapersSwatchUrls>();
 
       for (const fabricNumber of fabricNumbers) {
-        const cached = getDrapersCatalogSwatchUrls(fabricNumber);
+        const cached = getDrapersUiSwatchUrls(fabricNumber);
         if (cached?.square) {
           next.set(fabricNumber, cached);
           const trimmed = fabricNumber.trim();
@@ -55,11 +56,10 @@ export function useDrapersSwatchMap(fabricNumbers: string[]): Map<string, Draper
 
           for (const item of data.items ?? []) {
             if (!item.ok) continue;
-            const square = item.square ?? item.url;
-            if (!square) continue;
+            const apiUrl = drapersSwatchImageUrl(item.fabric_number);
             const urls: DrapersSwatchUrls = {
-              square,
-              zoom: item.zoom ?? square,
+              square: apiUrl,
+              zoom: apiUrl,
             };
             if (item.requested_code) next.set(item.requested_code, urls);
             next.set(item.fabric_number, urls);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { loroPianaSwatchImageUrl } from "@/lib/fabric-sourcing/loro-piana-swatch-url";
 
 const CHUNK_SIZE = 30;
 
@@ -44,11 +45,10 @@ export function useLoroPianaSwatchMap(fabricNumbers: string[]): Map<string, Loro
 
           for (const item of data.items ?? []) {
             if (!item.ok) continue;
-            const square = item.square ?? item.url;
-            if (!square) continue;
+            const apiUrl = loroPianaSwatchImageUrl(item.fabric_number);
             const urls: LoroPianaSwatchUrls = {
-              square,
-              zoom: item.zoom ?? square,
+              square: apiUrl,
+              zoom: apiUrl,
             };
             if (item.requested_code) next.set(item.requested_code, urls);
             next.set(item.fabric_number, urls);

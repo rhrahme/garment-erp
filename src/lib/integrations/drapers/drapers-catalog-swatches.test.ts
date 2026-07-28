@@ -21,4 +21,23 @@ describe("drapers swatch index shape", () => {
       assert.match(row.swatch_square!, /drapersitaly\.it/, row.fabric_number);
     }
   });
+
+  it("documents that UI swatches should use same-origin API routes", () => {
+    const index = JSON.parse(
+      readFileSync(join(process.cwd(), "src/data/suppliers/drapers-swatch-index.json"), "utf8")
+    ) as {
+      fabrics: Array<{
+        fabric_number: string;
+        swatch_filename?: string | null;
+        swatch_square?: string | null;
+      }>;
+    };
+
+    const row = index.fabrics.find((fabric) => fabric.fabric_number === "26136");
+    assert.ok(row?.swatch_filename || row?.swatch_square, "26136 should be indexed");
+    assert.match(
+      `/api/suppliers/drapers/images/${row!.fabric_number}`,
+      /^\/api\/suppliers\/drapers\/images\//
+    );
+  });
 });

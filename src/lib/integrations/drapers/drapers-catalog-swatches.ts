@@ -13,6 +13,7 @@ type SwatchIndexFile = {
 };
 
 const swatchByCode = new Map<string, FabricSwatchUrls>();
+const uiSwatchByCode = new Map<string, FabricSwatchUrls>();
 
 function registerSwatchKeys(fabricNumber: string, urls: FabricSwatchUrls): void {
   const trimmed = fabricNumber.trim();
@@ -22,18 +23,28 @@ function registerSwatchKeys(fabricNumber: string, urls: FabricSwatchUrls): void 
   }
 }
 
+function registerUiSwatchKeys(fabricNumber: string): void {
+  const trimmed = fabricNumber.trim();
+  const normalized = normalizeDrapersFabricCode(trimmed);
+  const url = drapersSwatchImageUrl(normalized);
+  const urls: FabricSwatchUrls = { square: url, zoom: url };
+  for (const key of [trimmed, normalized, `DP${normalized}`]) {
+    if (key) uiSwatchByCode.set(key, urls);
+  }
+}
+
 for (const fabric of (drapersSwatchIndex as SwatchIndexFile).fabrics) {
   const remoteSquare = fabric.swatch_square?.trim() || null;
   const remoteZoom = fabric.swatch_zoom?.trim() || remoteSquare;
   if (remoteSquare) {
-    // Prefer stable remote URLs in the client bundle — local /api/... routes 404 until
-    // JPEGs are synced to disk/Supabase (sibling upload may still be in progress).
     registerSwatchKeys(fabric.fabric_number, { square: remoteSquare, zoom: remoteZoom ?? remoteSquare });
-    continue;
-  }
-  if (fabric.swatch_filename) {
+  } else if (fabric.swatch_filename) {
     const localUrl = drapersSwatchImageUrl(fabric.fabric_number);
     registerSwatchKeys(fabric.fabric_number, { square: localUrl, zoom: localUrl });
+  }
+
+  if (fabric.swatch_filename || remoteSquare) {
+    registerUiSwatchKeys(fabric.fabric_number);
   }
 }
 
@@ -45,6 +56,18 @@ export function getDrapersCatalogSwatchUrls(fabricNumber: string): FabricSwatchU
     swatchByCode.get(trimmed) ??
     swatchByCode.get(normalized) ??
     swatchByCode.get(`DP${normalized}`)
+  );
+}
+
+/** Same-origin swatch URLs for React `<img>` tags — server proxies disk / Supabase / remote. */
+export function getDrapersUiSwatchUrls(fabricNumber: string): FabricSwatchUrls | undefined {
+  const trimmed = fabricNumber.trim();
+  if (!trimmed) return undefined;
+  const normalized = normalizeDrapersFabricCode(trimmed);
+  return (
+    uiSwatchByCode.get(trimmed) ??
+    uiSwatchByCode.get(normalized) ??
+    uiSwatchByCode.get(`DP${normalized}`)
   );
 }
 

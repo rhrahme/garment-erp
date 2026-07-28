@@ -1,6 +1,7 @@
 import { readFileSync, existsSync, statSync } from "node:fs";
 import path from "node:path";
 import { normalizeLoroPianaFabricNumber } from "@/lib/fabric-sourcing/loro-piana-styles";
+import { loroPianaSwatchImageUrl as buildLoroPianaSwatchImageUrl } from "@/lib/fabric-sourcing/loro-piana-swatch-url";
 import {
   isSupabaseLoroPianaSwatchStorage,
   readLoroPianaSwatchFromStorage,
@@ -47,8 +48,7 @@ export function readLoroPianaSwatchManifest(): LoroPianaSwatchManifest {
 }
 
 export function loroPianaSwatchImageUrl(fabricNumber: string): string {
-  const normalized = normalizeLoroPianaFabricNumber(fabricNumber);
-  return `/api/suppliers/loro-piana/images/${encodeURIComponent(normalized)}`;
+  return buildLoroPianaSwatchImageUrl(fabricNumber);
 }
 
 function localSwatchFilename(normalized: string): string | null {
