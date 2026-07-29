@@ -18,6 +18,12 @@ import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
 type FabricBrand = { id: string; name: string; has_price_list?: boolean };
 
+function formatWidth(line: { width_cm?: number | null; width_inches?: number | null }) {
+  if (line.width_cm != null) return `${line.width_cm} cm`;
+  if (line.width_inches != null) return `${line.width_inches}"`;
+  return "—";
+}
+
 export function OrderFabricLineEditor({
   orderId,
   line,
@@ -230,6 +236,13 @@ export function OrderFabricLineEditor({
         </label>
 
         <FactoryLabelsField garmentType={garmentType} />
+
+        <label className="block text-sm">
+          <span className="font-medium text-slate-700">Width</span>
+          <p className="mt-1 flex min-h-[44px] items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">
+            {formatWidth(pendingFabric ?? line)}
+          </p>
+        </label>
 
         <label className="block text-sm">
           <span className="font-medium text-slate-700">Meters</span>

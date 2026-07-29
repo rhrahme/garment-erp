@@ -1732,7 +1732,7 @@ export function SalesOrderForm({
                             />
                           </label>
 
-                          <div className="grid gap-4 sm:grid-cols-3">
+                          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             <label className="block text-sm">
                               <span className="font-medium text-slate-700">Garment to stitch</span>
                               <select
@@ -1760,6 +1760,12 @@ export function SalesOrderForm({
                               garmentType={activeFabricAdd.garmentType}
                               valueClassName="py-2.5 text-base sm:text-sm"
                             />
+                            <label className="block text-sm">
+                              <span className="font-medium text-slate-700">Width</span>
+                              <p className="mt-1 flex min-h-[44px] items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-base text-slate-700 sm:text-sm">
+                                {formatWidth(pendingFabric)}
+                              </p>
+                            </label>
                             <label className="block text-sm">
                               <span className="font-medium text-slate-700">Meters to order</span>
                               <MetersInput
