@@ -23,11 +23,11 @@ function AggregatePills({
             className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700"
           >
             <span className="font-medium text-slate-900">{item.label}</span>
-            <span className="text-slate-400">·</span>
+            <span className="text-slate-400">&middot;</span>
             <span>
               {item.line_count} line{item.line_count !== 1 ? "s" : ""}
             </span>
-            <span className="text-slate-400">·</span>
+            <span className="text-slate-400">&middot;</span>
             <span className="font-medium tabular-nums text-emerald-800">
               {formatAggregateMeters(item.total_meters)}
             </span>
@@ -49,15 +49,16 @@ export function SalesOrderArticlesSummary({ lines }: { lines: SalesOrderFabricLi
         <div>
           <h2 className="text-base font-semibold text-slate-900">Articles & quantities</h2>
           <p className="mt-1 text-sm text-slate-600">
-            {summary.line_count} fabric line{summary.line_count !== 1 ? "s" : ""} ·{" "}
-            <span className="font-medium text-slate-900 tabular-nums">
+            {summary.line_count} fabric line{summary.line_count !== 1 ? "s" : ""}{" "}
+            &middot;{" "}
+            <span className="font-medium tabular-nums text-slate-900">
               {summary.total_meters.toFixed(1)} m
             </span>
             {summary.total_kg != null ? (
               <>
                 {" "}
-                ·{" "}
-                <span className="font-medium text-slate-900 tabular-nums">
+                &middot;{" "}
+                <span className="font-medium tabular-nums text-slate-900">
                   {summary.total_kg.toFixed(1)} kg
                 </span>
               </>
@@ -80,11 +81,11 @@ export function SalesOrderArticlesSummary({ lines }: { lines: SalesOrderFabricLi
           <tbody>
             {summary.lines.map((line) => (
               <tr key={line.line_id} className="border-b border-slate-100 last:border-0">
-                <td className="px-3 py-1.5 text-center font-semibold text-slate-900">{line.article_label}</td>
-                <td className="px-3 py-1.5 text-slate-700">{line.garment_type}</td>
-                <td className="px-3 py-1.5 font-mono text-slate-800">{line.fabric_number}</td>
-                <td className="px-3 py-1.5 text-slate-600">{line.supplier_label}</td>
-                <td className="px-3 py-1.5 text-right font-medium tabular-nums text-slate-900">
+                <td className="px-3 py-2 text-center font-semibold text-slate-900">{line.article_label}</td>
+                <td className="px-3 py-2 text-slate-700">{line.garment_type}</td>
+                <td className="px-3 py-2 font-mono text-slate-800">{line.fabric_number}</td>
+                <td className="px-3 py-2 text-slate-600">{line.supplier_label}</td>
+                <td className="px-3 py-2 text-right font-medium tabular-nums text-slate-900">
                   {line.meters.toFixed(1)} m
                 </td>
               </tr>
