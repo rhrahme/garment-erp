@@ -253,10 +253,22 @@ export function ClientProfilesEditor() {
         const data = (await res.json()) as {
           is_admin?: boolean;
           is_sales_operator?: boolean;
+          is_client_manager?: boolean;
+          is_production_operator?: boolean;
+          can_access_client_media?: boolean;
           can_view_client_contact?: boolean;
         };
         setIsAdmin(Boolean(data.is_admin));
-        setCanManageClientPhotos(Boolean(data.is_admin || data.is_sales_operator));
+        setCanManageClientPhotos(
+          data.can_access_client_media !== undefined
+            ? Boolean(data.can_access_client_media)
+            : Boolean(
+                data.is_admin ||
+                  data.is_sales_operator ||
+                  data.is_client_manager ||
+                  data.is_production_operator
+              )
+        );
         setCanViewClientContact(data.can_view_client_contact !== false);
       } catch {
         /* ignore */

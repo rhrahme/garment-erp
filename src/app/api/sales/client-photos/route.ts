@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import {
+  canAccessClientMedia,
+} from "@/lib/auth/permissions";
 import { requireAuthenticated } from "@/lib/auth/session";
 import {
   clientMediaLimitError,
@@ -18,8 +21,8 @@ export const maxDuration = 60;
 
 export async function GET(request: Request) {
   const session = await requireAuthenticated();
-  if (!session || (!session.isSalesOperator && !session.isAdmin)) {
-    return NextResponse.json({ error: "Sales access required." }, { status: 403 });
+  if (!session || !canAccessClientMedia(session)) {
+    return NextResponse.json({ error: "Client media access required." }, { status: 403 });
   }
   await ensureDocumentsLoaded(["clients", "sales_workspace"]);
   const clientId = new URL(request.url).searchParams.get("client_id")?.trim() ?? "";
@@ -36,8 +39,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const session = await requireAuthenticated();
-  if (!session || (!session.isSalesOperator && !session.isAdmin)) {
-    return NextResponse.json({ error: "Sales access required." }, { status: 403 });
+  if (!session || !canAccessClientMedia(session)) {
+    return NextResponse.json({ error: "Client media access required." }, { status: 403 });
   }
   await ensureDocumentsLoaded(["clients", "sales_workspace"]);
   const form = await request.formData();

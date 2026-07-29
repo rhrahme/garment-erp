@@ -140,6 +140,99 @@ export async function removeSalesClientPhoto(
   return removed;
 }
 
+export async function requestSalesClientPhotoDelete(
+  photoId: string,
+  actor: string | null
+): Promise<{ client_id: string; photo: ClientPhoto } | null> {
+  return mutateSalesWorkspace((store) => {
+    const row = store.client_details.find((item) =>
+      item.photos.some((photo) => photo.id === photoId)
+    );
+    if (!row) return null;
+    const photo = row.photos.find((item) => item.id === photoId);
+    if (!photo) return null;
+    const now = new Date().toISOString();
+    photo.delete_requested_at = now;
+    photo.delete_requested_by = actor;
+    row.updated_at = now;
+    row.updated_by = actor;
+    return { client_id: row.client_id, photo: structuredClone(photo) };
+  });
+}
+
+/** Clears a pending delete request (requester cancel or admin Keep). */
+export async function clearSalesClientPhotoDeleteRequest(
+  photoId: string,
+  actor: string | null
+): Promise<{ client_id: string; photo: ClientPhoto } | null> {
+  return mutateSalesWorkspace((store) => {
+    const row = store.client_details.find((item) =>
+      item.photos.some((photo) => photo.id === photoId)
+    );
+    if (!row) return null;
+    const photo = row.photos.find((item) => item.id === photoId);
+    if (!photo) return null;
+    if (!photo.delete_requested_at) return { client_id: row.client_id, photo: structuredClone(photo) };
+    photo.delete_requested_at = null;
+    photo.delete_requested_by = null;
+    row.updated_at = new Date().toISOString();
+    row.updated_by = actor;
+    return { client_id: row.client_id, photo: structuredClone(photo) };
+  });
+}
+
+/**
+ * Replace file bytes for an existing photo id (same slot). Returns the previous
+ * stored filename so the caller can delete the old blob.
+ */
+export async function replaceSalesClientPhoto(
+  photoId: string,
+  next: Omit<ClientPhoto, "id" | "delete_requested_at" | "delete_requested_by"> & {
+    id?: string;
+  },
+  actor: string | null,
+  source: "erp" | "api" = "erp"
+): Promise<{ client_id: string; photo: ClientPhoto; previous_stored_filename: string } | null> {
+  const result = await mutateSalesWorkspace((store) => {
+    const row = store.client_details.find((item) =>
+      item.photos.some((photo) => photo.id === photoId)
+    );
+    if (!row) return null;
+    const photo = row.photos.find((item) => item.id === photoId);
+    if (!photo) return null;
+    const previous_stored_filename = photo.stored_filename;
+    const now = new Date().toISOString();
+    photo.filename = next.filename;
+    photo.stored_filename = next.stored_filename;
+    photo.content_type = next.content_type;
+    photo.size_bytes = next.size_bytes;
+    photo.uploaded_at = next.uploaded_at || now;
+    photo.uploaded_by = next.uploaded_by ?? actor;
+    photo.delete_requested_at = null;
+    photo.delete_requested_by = null;
+    row.updated_at = now;
+    row.updated_by = actor;
+    return {
+      client_id: row.client_id,
+      photo: structuredClone(photo),
+      previous_stored_filename,
+    };
+  });
+  if (result) {
+    await notifyIntegration(
+      "sales_client_photo.uploaded",
+      {
+        client_id: result.client_id,
+        photo_id: result.photo.id,
+        filename: result.photo.filename,
+        replaced: true,
+      },
+      source
+    );
+  }
+  return result;
+}
+
 export async function createSalesFitting(
   salesOrderId: string,
   clientId: string,

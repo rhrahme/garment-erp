@@ -6,6 +6,10 @@ import {
   canViewFabricStock,
   hasFabricPriceAccess,
 } from "@/lib/auth/fabric-price-access";
+import {
+  canAccessClientMedia,
+  canHardDeleteClientMedia,
+} from "@/lib/auth/permissions";
 import { getSessionContext } from "@/lib/auth/session";
 import { getAllowedSalesBrandIds } from "@/lib/sales/access";
 import { canChangeGarmentType } from "@/lib/sales-orders/change-garment-type";
@@ -38,6 +42,8 @@ export async function GET() {
       can_send_supplier_emails: session.canSendSupplierEmails,
       can_view_shipments: session.canViewShipments,
       can_manage_shipments: session.canManageShipments,
+      can_access_client_media: canAccessClientMedia(session),
+      can_hard_delete_client_media: canHardDeleteClientMedia(session),
       can_reveal_fabric_prices: canRevealFabricPrices(session),
       can_view_fabric_prices: canViewFabricPrices,
       can_view_fabric_stock: canViewFabricStock(session),

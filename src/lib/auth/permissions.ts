@@ -29,6 +29,7 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/api/qr",
   "/api/factory/floor-stations",
   "/api/production",
+  "/api/sales",
   "/api/auth/session",
   "/api/auth/dev-impersonate",
   "/login",
@@ -92,6 +93,7 @@ const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   "/api/hr/employees",
   "/api/hr/employee-lookup",
   "/api/hr/id-badges",
+  "/api/sales",
   ...FABRIC_SWATCH_ROUTE_PREFIXES,
   "/api/auth/session",
   "/api/auth/dev-impersonate",
@@ -233,6 +235,9 @@ const BUILTIN_TASK_OPERATOR_EMAILS = ["hagan.task1@gmail.com"] as const;
  * Factory managers — pipeline visibility & stage advance; watch wash/iron; no prices/accounting.
  */
 const BUILTIN_PRODUCTION_OPERATOR_EMAILS = ["production@hagan.pro"] as const;
+
+/** Tablet sales — client/catalog/order/invoice access; works without SALES_EMAILS on deploy. */
+const BUILTIN_SALES_OPERATOR_EMAILS = ["sales1@hagan.pro"] as const;
 
 /** Accounting logins — invoicing & supplier billing; works without ACCOUNTING_EMAILS on deploy. */
 const BUILTIN_ACCOUNTING_OPERATOR_EMAILS = ["accounting@hagan.pro"] as const;
@@ -403,12 +408,11 @@ export function parsePatternEmails(): Set<string> {
 
 export function parseSalesEmails(): Set<string> {
   const raw = process.env.SALES_EMAILS?.trim() ?? "";
-  return new Set(
-    raw
-      .split(",")
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean)
-  );
+  const fromEnv = raw
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+  return new Set([...BUILTIN_SALES_OPERATOR_EMAILS, ...fromEnv]);
 }
 
 export function parseAccountingEmails(): Set<string> {
@@ -769,4 +773,30 @@ export function canAccessPatternModule(
   if (isAdmin || isProductionOperator || isPatternOperator) return true;
   if (isClientManager || isTaskOperator) return false;
   return true;
+}
+
+/** Sales, QC, factory manager, and admins — view / upload client photos & videos. */
+export function canAccessClientMedia(access: {
+  isAdmin?: boolean;
+  isSalesOperator?: boolean;
+  isClientManager?: boolean;
+  isProductionOperator?: boolean;
+}): boolean {
+  return Boolean(
+    access.isAdmin ||
+      access.isSalesOperator ||
+      access.isClientManager ||
+      access.isProductionOperator
+  );
+}
+
+/** Only admin / super_admin may hard-delete or approve/reject delete requests. */
+export function canHardDeleteClientMedia(access: { isAdmin?: boolean }): boolean {
+  return Boolean(access.isAdmin);
+}
+
+export function isClientPhotoDeletePending(photo: {
+  delete_requested_at?: string | null;
+}): boolean {
+  return Boolean(photo.delete_requested_at);
 }

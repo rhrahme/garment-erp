@@ -1,13 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Camera, ImagePlus, Loader2, Trash2 } from "lucide-react";
+import { Camera, ImagePlus, Loader2, RefreshCw, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { clientMediaAcceptAttribute } from "@/lib/data/client-media-types";
 import { cn } from "@/lib/utils";
 import type { ClientPhoto } from "@/lib/types/sales-workspace";
 
 const ACCEPT = clientMediaAcceptAttribute();
+
+function isDeletePending(photo: ClientPhoto): boolean {
+  return Boolean(photo.delete_requested_at);
+}
 
 function isVideoPhoto(photo: ClientPhoto): boolean {
   return (
@@ -34,6 +38,11 @@ type UploadProgressItem = {
   totalBytes: number;
   loadedBytes: number;
   status: "uploading" | "done" | "error";
+};
+
+type MediaCapabilities = {
+  email: string | null;
+  canHardDelete: boolean;
 };
 
 function formatBytes(bytes: number): string {
@@ -79,6 +88,42 @@ function uploadClientPhoto(
   });
 }
 
+function replaceClientPhoto(
+  photoId: string,
+  file: File,
+  onProgress: (loaded: number, total: number) => void
+): Promise<ClientPhoto> {
+  return new Promise((resolve, reject) => {
+    const form = new FormData();
+    form.set("action", "replace");
+    form.set("photo", file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `/api/sales/client-photos/${encodeURIComponent(photoId)}`);
+    xhr.responseType = "json";
+
+    xhr.upload.onprogress = (event) => {
+      if (!event.lengthComputable) return;
+      onProgress(event.loaded, event.total);
+    };
+
+    xhr.onload = () => {
+      const body = (xhr.response ?? {}) as { photo?: ClientPhoto; error?: string };
+      if (xhr.status >= 200 && xhr.status < 300 && body.photo) {
+        onProgress(file.size, file.size);
+        resolve(body.photo);
+        return;
+      }
+      reject(new Error(body.error ?? "Failed to replace photo."));
+    };
+
+    xhr.onerror = () => reject(new Error("Failed to replace photo."));
+    xhr.onabort = () => reject(new Error("Replace cancelled."));
+
+    xhr.send(form);
+  });
+}
+
 export function ClientPhotosPanel({
   clientId,
   clientReady = true,
@@ -92,11 +137,18 @@ export function ClientPhotosPanel({
   const [busy, setBusy] = useState(false);
   const [uploads, setUploads] = useState<UploadProgressItem[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [capabilities, setCapabilities] = useState<MediaCapabilities>({
+    email: null,
+    canHardDelete: false,
+  });
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
+  const replacePhotoIdRef = useRef<string | null>(null);
 
   const photos = controlledPhotos ?? internalPhotos;
   const isControlled = controlledPhotos !== undefined;
+  const pendingDeletes = photos.filter((photo) => isDeletePending(photo));
 
   const reportError = useCallback(
     (message: string | null) => {
@@ -112,6 +164,17 @@ export function ClientPhotosPanel({
       onPhotosChange?.(next);
     },
     [isControlled, onPhotosChange]
+  );
+
+  const patchPhoto = useCallback(
+    (photoId: string, next: ClientPhoto | null) => {
+      applyPhotos(
+        next
+          ? photos.map((photo) => (photo.id === photoId ? next : photo))
+          : photos.filter((photo) => photo.id !== photoId)
+      );
+    },
+    [applyPhotos, photos]
   );
 
   const loadPhotos = useCallback(async () => {
@@ -141,6 +204,27 @@ export function ClientPhotosPanel({
   useEffect(() => {
     void loadPhotos();
   }, [loadPhotos]);
+
+  useEffect(() => {
+    async function loadCapabilities() {
+      try {
+        const response = await fetch("/api/auth/session", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = (await response.json()) as {
+          email?: string | null;
+          can_hard_delete_client_media?: boolean;
+          is_admin?: boolean;
+        };
+        setCapabilities({
+          email: data.email ?? null,
+          canHardDelete: Boolean(data.can_hard_delete_client_media ?? data.is_admin),
+        });
+      } catch {
+        /* ignore */
+      }
+    }
+    void loadCapabilities();
+  }, []);
 
   async function uploadFiles(fileList: FileList | File[] | null) {
     if (!clientId || !clientReady || !fileList) return;
@@ -210,7 +294,7 @@ export function ClientPhotosPanel({
 
   async function deletePhoto(photoId: string) {
     if (!clientId) return;
-    const confirmed = window.confirm("Delete this photo?");
+    const confirmed = window.confirm("Delete this photo permanently?");
     if (!confirmed) return;
 
     setBusy(true);
@@ -221,7 +305,7 @@ export function ClientPhotosPanel({
       });
       const body = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(body.error ?? "Failed to delete photo.");
-      applyPhotos(photos.filter((photo) => photo.id !== photoId));
+      patchPhoto(photoId, null);
     } catch (caught) {
       reportError(caught instanceof Error ? caught.message : "Failed to delete photo.");
     } finally {
@@ -229,7 +313,91 @@ export function ClientPhotosPanel({
     }
   }
 
+  async function postPhotoAction(
+    photoId: string,
+    action: "request_delete" | "cancel_request" | "keep" | "confirm_delete"
+  ) {
+    setBusy(true);
+    reportError(null);
+    try {
+      const response = await fetch(`/api/sales/client-photos/${encodeURIComponent(photoId)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const body = (await response.json()) as { photo?: ClientPhoto; error?: string; ok?: boolean };
+      if (!response.ok) throw new Error(body.error ?? "Action failed.");
+      if (action === "confirm_delete") {
+        patchPhoto(photoId, null);
+      } else if (body.photo) {
+        patchPhoto(photoId, body.photo);
+      }
+    } catch (caught) {
+      reportError(caught instanceof Error ? caught.message : "Action failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function startReplace(photoId: string) {
+    replacePhotoIdRef.current = photoId;
+    replaceInputRef.current?.click();
+  }
+
+  async function onReplaceFiles(fileList: FileList | null) {
+    const photoId = replacePhotoIdRef.current;
+    replacePhotoIdRef.current = null;
+    if (!photoId || !fileList?.[0]) return;
+    const file = fileList[0];
+    if (replaceInputRef.current) replaceInputRef.current.value = "";
+
+    const itemId = `replace-${Date.now()}-${file.name}`;
+    setBusy(true);
+    setUploads([
+      {
+        id: itemId,
+        name: `Replace · ${file.name}`,
+        totalBytes: file.size,
+        loadedBytes: 0,
+        status: "uploading",
+      },
+    ]);
+    reportError(null);
+    try {
+      const photo = await replaceClientPhoto(photoId, file, (loaded, total) => {
+        setUploads((prev) =>
+          prev.map((item) =>
+            item.id === itemId
+              ? {
+                  ...item,
+                  loadedBytes: loaded,
+                  totalBytes: total > 0 ? total : item.totalBytes,
+                  status: "uploading",
+                }
+              : item
+          )
+        );
+      });
+      patchPhoto(photoId, photo);
+      setUploads((prev) =>
+        prev.map((item) =>
+          item.id === itemId ? { ...item, loadedBytes: item.totalBytes, status: "done" } : item
+        )
+      );
+    } catch (caught) {
+      setUploads((prev) =>
+        prev.map((item) => (item.id === itemId ? { ...item, status: "error" } : item))
+      );
+      reportError(caught instanceof Error ? caught.message : "Failed to replace photo.");
+    } finally {
+      setBusy(false);
+      setUploads([]);
+    }
+  }
+
   const disabled = !clientId || !clientReady || busy;
+  const canHardDelete = capabilities.canHardDelete;
+  const sessionEmail = capabilities.email?.trim().toLowerCase() ?? "";
 
   return (
     <section className={cn("rounded-xl border border-slate-200 bg-white p-4 sm:p-5", className)}>
@@ -239,6 +407,12 @@ export function ClientPhotosPanel({
           <p className="mt-1 text-sm text-slate-500">
             Take a picture or pick from the gallery (JPG, HEIC, PNG, WebP, MP4, MOV) — works well on
             tablet. Images up to 15 MB; videos up to 50 MB.
+            {!canHardDelete && (
+              <>
+                {" "}
+                To remove media, request a delete — an admin confirms before it is removed.
+              </>
+            )}
           </p>
         </div>
         {photos.length > 0 && (
@@ -247,6 +421,55 @@ export function ClientPhotosPanel({
           </p>
         )}
       </div>
+
+      {canHardDelete && pendingDeletes.length > 0 && (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 sm:p-4">
+          <h3 className="text-sm font-semibold text-amber-950">
+            Pending deletions ({pendingDeletes.length})
+          </h3>
+          <p className="mt-1 text-xs text-amber-800">
+            Confirm to permanently delete, or Keep to reject the request.
+          </p>
+          <ul className="mt-3 space-y-2">
+            {pendingDeletes.map((photo) => (
+              <li
+                key={`pending-${photo.id}`}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-white px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-slate-800">{photo.filename}</p>
+                  <p className="truncate text-xs text-slate-500">
+                    Requested by {photo.delete_requested_by ?? "unknown"}
+                    {photo.delete_requested_at
+                      ? ` · ${new Date(photo.delete_requested_at).toLocaleString()}`
+                      : ""}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={busy}
+                    onClick={() => void postPhotoAction(photo.id, "keep")}
+                  >
+                    Keep
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={busy}
+                    className="bg-red-600 text-white hover:bg-red-700"
+                    onClick={() => void postPhotoAction(photo.id, "confirm_delete")}
+                  >
+                    Confirm delete
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {!clientReady && (
         <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
@@ -291,6 +514,14 @@ export function ClientPhotosPanel({
             className="sr-only"
             disabled={disabled}
             onChange={(event) => void uploadFiles(event.target.files)}
+          />
+          <input
+            ref={replaceInputRef}
+            type="file"
+            accept={ACCEPT}
+            className="sr-only"
+            disabled={disabled}
+            onChange={(event) => void onReplaceFiles(event.target.files)}
           />
         </div>
       )}
@@ -369,15 +600,28 @@ export function ClientPhotosPanel({
       {photos.length > 0 ? (
         <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {photos.map((photo) => {
-            const mediaUrl = `/api/sales/client-photos/${encodeURIComponent(photo.id)}`;
+            const mediaUrl = `/api/sales/client-photos/${encodeURIComponent(photo.id)}?v=${encodeURIComponent(photo.uploaded_at)}`;
             const video = isVideoPhoto(photo);
+            const pending = isDeletePending(photo);
+            const canCancelOwnRequest =
+              pending &&
+              !canHardDelete &&
+              Boolean(sessionEmail) &&
+              photo.delete_requested_by?.trim().toLowerCase() === sessionEmail;
+
             return (
               <li
                 key={photo.id}
                 className="group relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
               >
+                {pending && (
+                  <span className="absolute left-2 top-2 z-10 rounded-md bg-amber-500 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white shadow">
+                    Pending delete
+                  </span>
+                )}
                 {video ? (
                   <video
+                    key={mediaUrl}
                     src={mediaUrl}
                     controls
                     playsInline
@@ -388,23 +632,89 @@ export function ClientPhotosPanel({
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
+                    key={mediaUrl}
                     src={mediaUrl}
                     alt={photo.filename}
                     className="aspect-square w-full object-cover"
                   />
                 )}
-                <div className="absolute inset-x-0 bottom-0 flex justify-end bg-gradient-to-t from-black/60 to-transparent p-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
+                <div className="absolute inset-x-0 bottom-0 flex flex-wrap justify-end gap-1.5 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
                   <Button
                     type="button"
                     variant="secondary"
                     size="sm"
                     disabled={busy}
-                    className="min-h-10 bg-white/95 text-red-700 hover:bg-white"
-                    onClick={() => void deletePhoto(photo.id)}
+                    className="min-h-9 bg-white/95 text-slate-800 hover:bg-white"
+                    onClick={() => startReplace(photo.id)}
                   >
-                    <Trash2 className="mr-1.5 h-4 w-4" />
-                    Delete
+                    <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                    Replace
                   </Button>
+                  {canHardDelete ? (
+                    pending ? (
+                      <>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          disabled={busy}
+                          className="min-h-9 bg-white/95 text-slate-800 hover:bg-white"
+                          onClick={() => void postPhotoAction(photo.id, "keep")}
+                        >
+                          Keep
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          disabled={busy}
+                          className="min-h-9 bg-white/95 text-red-700 hover:bg-white"
+                          onClick={() => void postPhotoAction(photo.id, "confirm_delete")}
+                        >
+                          <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                          Confirm
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        disabled={busy}
+                        className="min-h-9 bg-white/95 text-red-700 hover:bg-white"
+                        onClick={() => void deletePhoto(photo.id)}
+                      >
+                        <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                        Delete
+                      </Button>
+                    )
+                  ) : pending ? (
+                    canCancelOwnRequest ? (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        disabled={busy}
+                        className="min-h-9 bg-white/95 text-slate-800 hover:bg-white"
+                        onClick={() => void postPhotoAction(photo.id, "cancel_request")}
+                      >
+                        <X className="mr-1.5 h-3.5 w-3.5" />
+                        Cancel request
+                      </Button>
+                    ) : null
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={busy}
+                      className="min-h-9 bg-white/95 text-amber-800 hover:bg-white"
+                      onClick={() => void postPhotoAction(photo.id, "request_delete")}
+                    >
+                      <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                      Request delete
+                    </Button>
+                  )}
                 </div>
               </li>
             );

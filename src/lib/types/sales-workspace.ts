@@ -19,6 +19,9 @@ export interface ClientPhoto {
   size_bytes: number;
   uploaded_at: string;
   uploaded_by: string | null;
+  /** Non-admin delete request; set until admin confirms or keeps. */
+  delete_requested_at?: string | null;
+  delete_requested_by?: string | null;
 }
 
 export interface ClientFabricSelection {
