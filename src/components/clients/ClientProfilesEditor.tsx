@@ -2,7 +2,7 @@
 
 import type { FocusEvent as ReactFocusEvent, PointerEvent as ReactPointerEvent } from "react";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LayoutGrid, List, Plus, Search, Table2, Trash2, UserCircle, X } from "lucide-react";
+import { Camera, LayoutGrid, List, Plus, Search, Table2, Trash2, UserCircle, X } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { ClientPhotosPanel } from "@/components/sales/ClientPhotosPanel";
 import { PhoneInput } from "@/components/ui/PhoneInput";
@@ -211,6 +211,7 @@ export function ClientProfilesEditor() {
   const [viewMode, setViewMode] = useState<ClientViewMode>("list");
   const [sortBy, setSortBy] = useState<ClientSortBy>("name-asc");
   const firstNameInputRef = useRef<HTMLInputElement>(null);
+  const pendingScrollToPhotosId = useRef<string | null>(null);
   const stableScrollHandlers = useStableScrollOnFocus();
 
   useEffect(() => {
@@ -479,7 +480,17 @@ export function ClientProfilesEditor() {
 
   useEffect(() => {
     if (!editingId) return;
-    const timer = window.setTimeout(() => focusWithoutScroll(firstNameInputRef.current), 0);
+    const scrollToPhotos = pendingScrollToPhotosId.current === editingId;
+    if (scrollToPhotos) pendingScrollToPhotosId.current = null;
+    const timer = window.setTimeout(() => {
+      if (scrollToPhotos) {
+        document
+          .getElementById(`client-photos-${editingId}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      focusWithoutScroll(firstNameInputRef.current);
+    }, 0);
     return () => window.clearTimeout(timer);
   }, [editingId]);
 
@@ -534,6 +545,17 @@ export function ClientProfilesEditor() {
     ));
   }
 
+  function openClientPhotos(clientId: string) {
+    if (editingId === clientId) {
+      document
+        .getElementById(`client-photos-${clientId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    pendingScrollToPhotosId.current = clientId;
+    setEditingId(clientId);
+  }
+
   function renderClientActions(client: ClientProfile, isEditing: boolean) {
     return (
       <div className="flex items-center gap-2">
@@ -547,6 +569,18 @@ export function ClientProfilesEditor() {
           >
             <Trash2 className="mr-1.5 h-4 w-4" />
             {deletingId === client.id ? "Deleting…" : "Delete"}
+          </Button>
+        )}
+        {canManageClientPhotos && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800"
+            disabled={isSaving}
+            onClick={() => openClientPhotos(client.id)}
+          >
+            <Camera className="mr-1.5 h-4 w-4" />
+            Photos
           </Button>
         )}
         <Button
@@ -760,7 +794,7 @@ export function ClientProfilesEditor() {
         )}
 
         {canManageClientPhotos && (
-          <div className="md:col-span-2">
+          <div id={`client-photos-${client.id}`} className="md:col-span-2 scroll-mt-4">
             <ClientPhotosPanel
               clientId={client.id}
               clientReady={!isNew}

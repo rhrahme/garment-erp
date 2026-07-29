@@ -13,8 +13,9 @@ export default function ClientsPage() {
         <p className="font-medium">Auto-save enabled</p>
         <p className="mt-1 text-blue-800">
           Pick a brand, then add first and last name. New clients save when you tap Done (so the full name is kept).
-          Edits to existing clients save automatically. A unique client code (e.g. FR-0526-0008) is assigned on save —
-          the middle segment is join month/year; the last four digits continue per brand.
+          Edits to existing clients save automatically. Use Photos on a client row (or Edit → Photos) to take or upload
+          pictures. A unique client code (e.g. FR-0526-0008) is assigned on save — the middle segment is join
+          month/year; the last four digits continue per brand.
         </p>
       </div>
 
