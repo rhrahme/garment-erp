@@ -19,7 +19,7 @@ export function SupplierEmailStatusBadge({
   className?: string;
 }) {
   if (!summary || summary.status === "none") {
-    return <span className={`text-slate-400 ${className}`.trim()}>—</span>;
+    return <span className={`text-slate-400 ${className}`.trim()}>â€”</span>;
   }
 
   return (
@@ -27,7 +27,7 @@ export function SupplierEmailStatusBadge({
       className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STYLES[summary.status]} ${className}`.trim()}
       title={
         summary.status === "partial"
-          ? `${summary.sent} emailed · ${summary.pending} pending`
+          ? `${summary.sent} emailed Â· ${summary.pending} pending`
           : undefined
       }
     >

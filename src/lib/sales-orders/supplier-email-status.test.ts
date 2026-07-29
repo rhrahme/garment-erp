@@ -56,7 +56,7 @@ describe("summarizeSalesOrderSupplierEmail", () => {
   it("returns none when no fabric POs", () => {
     const summary = summarizeSalesOrderSupplierEmail(order, []);
     assert.equal(summary.status, "none");
-    assert.equal(supplierEmailStatusShortLabel(summary), "—");
+    assert.equal(supplierEmailStatusShortLabel(summary), "â€”");
   });
 
   it("returns pending when PO lines are unsent", () => {

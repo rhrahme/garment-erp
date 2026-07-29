@@ -116,7 +116,7 @@ export function supplierEmailStatusShortLabel(
     return `Email ${summary.sent}/${summary.sent + summary.pending}`;
   }
   if (summary.status === "pending") return "Email pending";
-  return "—";
+  return "â€”";
 }
 
 export { buildSoFabricLineEmailStatus, summarizeSoFabricLineEmailStatus };

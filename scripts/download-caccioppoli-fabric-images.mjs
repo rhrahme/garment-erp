@@ -5,7 +5,7 @@
  * Prefers bulk POST /caccioppoli/getImages (paginated). Falls back to
  * getItemImages for catalog codes missing from the bulk dump.
  *
- * Catalog/specs stay in static JSON  this script only caches images.
+ * Catalog/specs stay in static JSON â€ this script only caches images.
  * Stock availability remains a separate live API sync.
  *
  * Requires CACCIOPPOLI_API_TOKEN in .env.local
@@ -254,7 +254,7 @@ async function ensureSavedFromBulk(row) {
 }
 
 async function downloadViaGetImages() {
-  console.log("Fetching bulk images via getImages");
+  console.log("Fetching bulk images via getImagesâ€");
   let fromId = 0;
   let pages = 0;
   /** Keep best row per item (prefer rowNumber 1). */
@@ -288,14 +288,14 @@ async function downloadViaGetImages() {
 
   const rows = [...bestByItem.values()];
   const limited = args.all ? rows : rows.slice(0, args.limit);
-  console.log(`Writing ${limited.length} primary swatch(es)`);
+  console.log(`Writing ${limited.length} primary swatch(es)â€`);
   for (const row of limited) {
     await ensureSavedFromBulk(row);
   }
 }
 
 async function downloadViaGetItemImages(codes) {
-  console.log(`Looking up ${codes.length} code(s) via getItemImages`);
+  console.log(`Looking up ${codes.length} code(s) via getItemImagesâ€`);
   for (const code of codes) {
     const fabricNumber = normalizeCode(code);
     const filename = `${fabricNumber}.jpg`;
@@ -363,7 +363,7 @@ if (args.codes?.length) {
 } else {
   await downloadViaGetImages();
   // Optional: probe SS26 catalog codes missing from the bulk image dump.
-  // Most shirting (206xxx) have availability but no images — skip unless --fill-catalog.
+  // Most shirting (206xxx) have availability but no images â€” skip unless --fill-catalog.
   if (args.fillCatalog) {
     const missingCatalog = catalogCodes.filter((code) => {
       const item = byCode.get(code);
@@ -371,7 +371,7 @@ if (args.codes?.length) {
     });
     const fill = args.all ? missingCatalog : missingCatalog.slice(0, Math.max(0, args.limit - downloaded));
     if (fill.length > 0) {
-      console.log(`Catalog fill-in for ${fill.length} code(s) missing from getImages…`);
+      console.log(`Catalog fill-in for ${fill.length} code(s) missing from getImagesâ€¦`);
       await downloadViaGetItemImages(fill);
     }
   } else {
