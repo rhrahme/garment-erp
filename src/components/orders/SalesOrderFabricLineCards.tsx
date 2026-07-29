@@ -3,6 +3,7 @@
 import { Pencil, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { MetersInput } from "@/components/orders/MetersInput";
+import { PreviousMetersHint } from "@/components/orders/PreviousMetersHint";
 import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
 import {
   FabricReplacementBadge,
@@ -18,6 +19,10 @@ import {
 } from "@/lib/sales-orders/garment-types";
 import { resolveFabricLineLabelCount } from "@/lib/sales-orders/label-display";
 import { formatFabricLineArticle } from "@/lib/sales-orders/label-codes";
+import {
+  findPreviousMeters,
+  suggestMetersIfEmpty,
+} from "@/lib/sales-orders/previous-meters";
 import type { SalesOrderLineDraft } from "@/lib/autosave/sales-order-draft";
 
 type LineEditForm = {
@@ -41,6 +46,7 @@ function formatWeight(weight_gsm: number | null | undefined) {
 export function SalesOrderFabricLineCards({
   groupName,
   lines,
+  allClientLines,
   articleByLineId,
   canViewFabricPrices,
   canViewFabricStock = true,
@@ -57,6 +63,8 @@ export function SalesOrderFabricLineCards({
 }: {
   groupName: string;
   lines: SalesOrderLineDraft[];
+  /** Full client draft lines — used for previous-meters suggestions across brands. */
+  allClientLines?: SalesOrderLineDraft[];
   articleByLineId: Map<string, number>;
   canViewFabricPrices: boolean;
   canViewFabricStock?: boolean;
@@ -71,6 +79,7 @@ export function SalesOrderFabricLineCards({
   onMarkFindReplacement: (lineId: string) => void;
   setLineEditForm: React.Dispatch<React.SetStateAction<LineEditForm | null>>;
 }) {
+  const priorLines = allClientLines ?? lines;
   return (
     <div className="space-y-3 md:hidden">
       <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
@@ -113,6 +122,11 @@ export function SalesOrderFabricLineCards({
                     value={lineEditForm.garment_type}
                     onChange={(e) => {
                       const next = e.target.value;
+                      const previous = findPreviousMeters(priorLines, {
+                        garmentType: next,
+                        width: line,
+                        excludeLineId: line.lineId,
+                      });
                       setLineEditForm((prev) =>
                         prev
                           ? {
@@ -121,6 +135,7 @@ export function SalesOrderFabricLineCards({
                               label_count: next
                                 ? String(getLabelCountForGarment(next))
                                 : prev.label_count,
+                              meters: suggestMetersIfEmpty(prev.meters, previous),
                             }
                           : prev
                       );
@@ -160,6 +175,17 @@ export function SalesOrderFabricLineCards({
                         setLineEditForm((prev) => (prev ? { ...prev, meters: next } : prev))
                       }
                       className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base sm:text-sm"
+                    />
+                    <PreviousMetersHint
+                      previousMeters={findPreviousMeters(priorLines, {
+                        garmentType: lineEditForm.garment_type,
+                        width: line,
+                        excludeLineId: line.lineId,
+                      })}
+                      currentMeters={lineEditForm.meters}
+                      onApply={(meters) =>
+                        setLineEditForm((prev) => (prev ? { ...prev, meters } : prev))
+                      }
                     />
                   </label>
                 </div>

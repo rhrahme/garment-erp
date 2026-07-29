@@ -6,6 +6,7 @@ import { AlertTriangle, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { FabricPicker } from "@/components/fabric/FabricPicker";
 import { FactoryLabelsField } from "@/components/orders/FactoryLabelsField";
 import { MetersInput } from "@/components/orders/MetersInput";
+import { PreviousMetersHint } from "@/components/orders/PreviousMetersHint";
 import { SalesOrderFabricLineCards } from "@/components/orders/SalesOrderFabricLineCards";
 import { Button } from "@/components/ui/Button";
 import { AutoSaveStatusBar } from "@/components/ui/AutoSaveStatus";
@@ -72,6 +73,11 @@ import {
   type FabricAddClientEntry,
   type SalesOrderClientDraft,
 } from "@/lib/sales-orders/multi-client-draft";
+import {
+  findPreviousMeters,
+  suggestMetersIfEmpty,
+  type FabricWidthFields,
+} from "@/lib/sales-orders/previous-meters";
 import type { ClientProfile, ClientsFile } from "@/lib/types/clients";
 import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
 import { DeliveryDestinationTabs } from "@/components/shipping/DeliveryDestinationTabs";
@@ -221,6 +227,40 @@ export function SalesOrderForm({
     setFabricAddEntries((prev) =>
       prev.map((entry) => (entry.id === targetId ? { ...entry, ...patch } : entry))
     );
+  }
+
+  /** Prior fabric lines for the client targeted by the active fabric-add tab. */
+  function priorLinesForFabricAdd(entry: FabricAddClientEntry | undefined): DraftLine[] {
+    if (!entry) return lines;
+    if (entry.clientId) {
+      const match = clientDrafts.find((draft) => draft.clientId === entry.clientId);
+      if (match) return match.lines;
+    }
+    return lines;
+  }
+
+  function previousMetersForAdd(
+    entry: FabricAddClientEntry | undefined,
+    garmentTypeValue: string,
+    width: FabricWidthFields | null | undefined
+  ): string | null {
+    if (!entry || !garmentTypeValue || !width) return null;
+    return findPreviousMeters(priorLinesForFabricAdd(entry), {
+      garmentType: garmentTypeValue,
+      width,
+    });
+  }
+
+  function previousMetersForLineEdit(
+    line: DraftLine,
+    garmentTypeValue: string
+  ): string | null {
+    if (!garmentTypeValue) return null;
+    return findPreviousMeters(lines, {
+      garmentType: garmentTypeValue,
+      width: line,
+      excludeLineId: line.lineId,
+    });
   }
 
   function resetFabricAddEntries(defaultClientId = "") {
@@ -1739,11 +1779,17 @@ export function SalesOrderForm({
                                 value={activeFabricAdd.garmentType}
                                 onChange={(e) => {
                                   const next = e.target.value;
+                                  const previous = previousMetersForAdd(
+                                    activeFabricAdd,
+                                    next,
+                                    pendingFabric
+                                  );
                                   patchActiveFabricAdd({
                                     garmentType: next,
                                     labelCount: next
                                       ? String(getLabelCountForGarment(next))
                                       : activeFabricAdd.labelCount,
+                                    meters: suggestMetersIfEmpty(activeFabricAdd.meters, previous),
                                   });
                                 }}
                                 className="mt-1 w-full min-h-[44px] rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base sm:text-sm"
@@ -1772,6 +1818,15 @@ export function SalesOrderForm({
                                 value={activeFabricAdd.meters}
                                 onChange={(next) => patchActiveFabricAdd({ meters: next })}
                                 className="mt-1 w-full min-h-[44px] rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base sm:text-sm"
+                              />
+                              <PreviousMetersHint
+                                previousMeters={previousMetersForAdd(
+                                  activeFabricAdd,
+                                  activeFabricAdd.garmentType,
+                                  pendingFabric
+                                )}
+                                currentMeters={activeFabricAdd.meters}
+                                onApply={(meters) => patchActiveFabricAdd({ meters })}
                               />
                             </label>
                           </div>
@@ -1840,6 +1895,7 @@ export function SalesOrderForm({
                 <SalesOrderFabricLineCards
                   groupName={group.name}
                   lines={group.lines}
+                  allClientLines={lines}
                   articleByLineId={articleByLineId}
                   canViewFabricPrices={canViewFabricPrices}
                   canViewFabricStock={canViewFabricStock}
@@ -1917,6 +1973,7 @@ export function SalesOrderForm({
                                     value={lineEditForm.garment_type}
                                     onChange={(e) => {
                                       const next = e.target.value;
+                                      const previous = previousMetersForLineEdit(line, next);
                                       setLineEditForm((prev) =>
                                         prev
                                           ? {
@@ -1925,6 +1982,7 @@ export function SalesOrderForm({
                                               label_count: next
                                                 ? String(getLabelCountForGarment(next))
                                                 : prev.label_count,
+                                              meters: suggestMetersIfEmpty(prev.meters, previous),
                                             }
                                           : prev
                                       );
@@ -1964,6 +2022,18 @@ export function SalesOrderForm({
                                       )
                                     }
                                     className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                                  />
+                                  <PreviousMetersHint
+                                    previousMeters={previousMetersForLineEdit(
+                                      line,
+                                      lineEditForm.garment_type
+                                    )}
+                                    currentMeters={lineEditForm.meters}
+                                    onApply={(meters) =>
+                                      setLineEditForm((prev) =>
+                                        prev ? { ...prev, meters } : prev
+                                      )
+                                    }
                                   />
                                 </label>
                               </div>

@@ -11,7 +11,12 @@ import { formatFabricStockLabel, isFabricUnavailable } from "@/lib/fabric-sourci
 import { fabricBrandAllowsManualEntry } from "@/lib/fabric-sourcing/supplier-display";
 import { resolveFabricItem } from "@/lib/fabric-sourcing/resolve-fabric-item";
 import { FactoryLabelsField } from "@/components/orders/FactoryLabelsField";
+import { PreviousMetersHint } from "@/components/orders/PreviousMetersHint";
 import { GARMENT_STITCH_TYPES } from "@/lib/sales-orders/garment-types";
+import {
+  findPreviousMeters,
+  suggestMetersIfEmpty,
+} from "@/lib/sales-orders/previous-meters";
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
 import { MetersInput } from "@/components/orders/MetersInput";
 import { parseDecimalInput } from "@/lib/utils/decimal-input";
@@ -49,6 +54,14 @@ export function ProductionOrderAddFabrics({
 
   const selectedBrand = fabricBrands.find((brand) => brand.id === selectedBrandId) ?? null;
 
+  const previousMeters =
+    garmentType && pendingFabric
+      ? findPreviousMeters(order.fabric_lines, {
+          garmentType,
+          width: pendingFabric,
+        })
+      : null;
+
   useEffect(() => {
     async function loadBrands() {
       try {
@@ -75,12 +88,29 @@ export function ProductionOrderAddFabrics({
     setPendingFabric(item);
     setFabricQuery(item.fabric_number);
     setError(null);
+    if (garmentType) {
+      const previous = findPreviousMeters(order.fabric_lines, {
+        garmentType,
+        width: item,
+      });
+      setMeters((current) => suggestMetersIfEmpty(current, previous));
+    }
   }
 
   function switchFabricSupplier(next: { supplier_id: string; supplier_name: string }) {
     setSelectedBrandId(next.supplier_id);
     setPendingFabric(null);
     setError(null);
+  }
+
+  function handleGarmentTypeChange(next: string) {
+    setGarmentType(next);
+    if (!next || !pendingFabric) return;
+    const previous = findPreviousMeters(order.fabric_lines, {
+      garmentType: next,
+      width: pendingFabric,
+    });
+    setMeters((current) => suggestMetersIfEmpty(current, previous));
   }
 
   const quantity = parseDecimalInput(meters);
@@ -243,7 +273,7 @@ export function ProductionOrderAddFabrics({
                   <span className="font-medium text-slate-700">Garment to stitch</span>
                   <select
                     value={garmentType}
-                    onChange={(e) => setGarmentType(e.target.value)}
+                    onChange={(e) => handleGarmentTypeChange(e.target.value)}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
                   >
                     <option value="">Select garment…</option>
@@ -267,6 +297,11 @@ export function ProductionOrderAddFabrics({
                     value={meters}
                     onChange={setMeters}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                  />
+                  <PreviousMetersHint
+                    previousMeters={previousMeters}
+                    currentMeters={meters}
+                    onApply={setMeters}
                   />
                 </label>
               </div>
