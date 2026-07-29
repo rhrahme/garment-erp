@@ -58,7 +58,12 @@ function validateClients(
       return { ok: false, error: "Each client needs a first and last name." };
     }
 
-    const renameError = assertClientRenameAllowed(allowNameChange, previous, names);
+    const renameError = assertClientRenameAllowed(
+      allowNameChange,
+      previous,
+      names,
+      previous?.joined_at
+    );
     if (renameError) {
       return { ok: false, error: renameError, status: 403 };
     }

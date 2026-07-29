@@ -3,6 +3,9 @@ import type { ClientProfile } from "@/lib/types/clients";
 
 export type ClientNameParts = Pick<ClientProfile, "first_name" | "middle_name" | "last_name">;
 
+/** Non-admins may finish / correct a name for this long after join (create + auto-save race). */
+export const CLIENT_CREATE_NAME_GRACE_MS = 7 * 24 * 60 * 60 * 1000;
+
 function normalizeMiddle(value: string | null | undefined): string | null {
   const trimmed = normalizeNamePart(value);
   return trimmed.length > 0 ? trimmed : null;
@@ -17,12 +20,29 @@ export function clientNamesEqual(a: ClientNameParts, b: ClientNameParts): boolea
   );
 }
 
+/** Recently joined clients stay renameable so create-flow typing can finish after first save. */
+export function isWithinClientCreateNameGrace(
+  joinedAt: string | null | undefined,
+  nowMs: number = Date.now()
+): boolean {
+  if (!joinedAt) return false;
+  const joinedMs = Date.parse(joinedAt);
+  if (Number.isNaN(joinedMs)) return false;
+  return nowMs - joinedMs <= CLIENT_CREATE_NAME_GRACE_MS;
+}
+
 /**
- * Existing clients with a required name are rename-locked for non-admins.
- * New clients (no previous row) and incomplete prior rows may still set a name.
+ * Existing clients with a required name are rename-locked for non-admins,
+ * except during the post-create grace window (and incomplete prior rows).
  */
-export function isClientNameLocked(previous: ClientNameParts | null | undefined): boolean {
-  return Boolean(previous && hasRequiredClientName(previous));
+export function isClientNameLocked(
+  previous: ClientNameParts | null | undefined,
+  joinedAt?: string | null,
+  nowMs: number = Date.now()
+): boolean {
+  if (!previous || !hasRequiredClientName(previous)) return false;
+  if (isWithinClientCreateNameGrace(joinedAt, nowMs)) return false;
+  return true;
 }
 
 /**
@@ -31,9 +51,11 @@ export function isClientNameLocked(previous: ClientNameParts | null | undefined)
 export function assertClientRenameAllowed(
   isAdmin: boolean,
   previous: ClientNameParts | null | undefined,
-  next: ClientNameParts
+  next: ClientNameParts,
+  joinedAt?: string | null,
+  nowMs: number = Date.now()
 ): string | null {
-  if (isAdmin || !isClientNameLocked(previous) || !previous) return null;
+  if (isAdmin || !isClientNameLocked(previous, joinedAt, nowMs) || !previous) return null;
   if (clientNamesEqual(previous, next)) return null;
   const label = formatClientDisplayName(previous) || "this client";
   return `Only admins can rename an existing client (${label}).`;

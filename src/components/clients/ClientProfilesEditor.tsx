@@ -12,6 +12,7 @@ import { AutoSaveStatusBar } from "@/components/ui/AutoSaveStatus";
 import { filterClientsByBrand, searchClients } from "@/lib/clients/filter";
 import { getFactoryBrands } from "@/lib/data/factory-brands";
 import { generateNextClientCode, getBrandClientCodePrefix, getJoinMonthYear } from "@/lib/clients/codes";
+import { isWithinClientCreateNameGrace } from "@/lib/clients/name-permissions";
 import { formatClientDisplayName, formatReferredByName, isBlankClientPlaceholder, isClientSaveable } from "@/lib/clients/names";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import { useSalesBrandScope } from "@/hooks/useSalesBrandScope";
@@ -195,6 +196,8 @@ export function ClientProfilesEditor() {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 200);
   const [isDirty, setIsDirty] = useState(false);
+  /** Clients added via "Add client" this session — pause auto-save until Done so a partial name cannot lock. */
+  const [creatingClientIds, setCreatingClientIds] = useState<Set<string>>(() => new Set());
   const {
     allowedBrandIds,
     brands: assignableBrands,
@@ -293,18 +296,17 @@ export function ClientProfilesEditor() {
     [draft.clients]
   );
 
-  // True while the user is filling in a brand-new row that isn't saveable yet
-  // (e.g. just picked a brand, or hasn't entered first + last name). Auto-save
-  // must stay paused during this window: a blank/incomplete new row is excluded
-  // from `clientsToPersist`, so saving the *other* rows and replacing the draft
-  // with the server response would silently drop the row being created.
-  const isEditingIncompleteNewClient = useMemo(() => {
-    if (!editingId) return false;
-    const editing = draft.clients.find((client) => client.id === editingId);
-    if (!editing) return false;
-    const isNew = !saved.clients.some((savedClient) => savedClient.id === editing.id);
-    return isNew && !isClientSaveable(editing);
-  }, [editingId, draft.clients, saved.clients]);
+  // Pause auto-save for the entire create session (not only while incomplete).
+  // Once first+last+brand exist, a 3s auto-save would persist a partial name and
+  // — with non-admin rename lock — freeze the fields mid-keystroke (e.g. "Turki Al Lu").
+  // Users then hit Add client again, producing duplicate truncated rows.
+  const isEditingCreatingClient = Boolean(editingId && creatingClientIds.has(editingId));
+  const editingCreatingClient = isEditingCreatingClient
+    ? draft.clients.find((client) => client.id === editingId)
+    : undefined;
+  const creatingClientReadyToSave = Boolean(
+    editingCreatingClient && isClientSaveable(editingCreatingClient)
+  );
 
   const displayClients = useMemo(() => {
     const filtered = searchClients(filterClientsByBrand(personClients, brandFilter), debouncedSearchQuery, {
@@ -352,37 +354,55 @@ export function ClientProfilesEditor() {
     setError(null);
   }, [clientsToPersist, draft, editingId]);
 
-  const autoSaveWaitingMessage = canViewClientContact
-    ? "Add first name, last name, and brand to auto-save"
-    : "Add first name, last name, and brand — contact fields are optional for your account";
+  const autoSaveWaitingMessage = isEditingCreatingClient
+    ? creatingClientReadyToSave
+      ? "Tap Done to save this new client"
+      : canViewClientContact
+        ? "Add first name, last name, and brand — then tap Done to save"
+        : "Add first name, last name, and brand — then tap Done (contact fields optional)"
+    : canViewClientContact
+      ? "Add first name, last name, and brand to auto-save"
+      : "Add first name, last name, and brand — contact fields are optional for your account";
 
   const { status: autoSaveStatus, error: autoSaveError, isSaving, saveNow } = useAutoSave({
     isDirty,
-    canSave: canAutoSave && !isEditingIncompleteNewClient,
+    canSave: canAutoSave && !isEditingCreatingClient,
     onSave: persistDraft,
     delayMs: 3_000,
     waitingMessage: autoSaveWaitingMessage,
   });
 
+  function releaseCreatingClient(clientId: string) {
+    setCreatingClientIds((prev) => {
+      if (!prev.has(clientId)) return prev;
+      const next = new Set(prev);
+      next.delete(clientId);
+      return next;
+    });
+  }
+
   async function closeClientEditor(clientId: string) {
     const client = draft.clients.find((c) => c.id === clientId);
     const isNew = client ? !saved.clients.some((s) => s.id === clientId) : false;
+    const wasCreating = creatingClientIds.has(clientId);
 
     // Closing a brand-new row that was never completed abandons it: drop it
     // from the draft rather than trying (and failing) to persist it.
-    if (client && isNew && !isClientSaveable(client)) {
+    if (client && (isNew || wasCreating) && !isClientSaveable(client)) {
       setDraft((prev) => ({ ...prev, clients: prev.clients.filter((c) => c.id !== clientId) }));
+      releaseCreatingClient(clientId);
       setEditingId(null);
       return;
     }
 
-    if (editingId === clientId && isDirty && canAutoSave) {
+    if (editingId === clientId && (isDirty || wasCreating) && canAutoSave) {
       try {
         await persistDraft();
       } catch {
         return;
       }
     }
+    releaseCreatingClient(clientId);
     setEditingId(null);
   }
 
@@ -409,10 +429,14 @@ export function ClientProfilesEditor() {
     }) ?? "";
   }
 
+  function isClientNameEditable(client: ClientProfile): boolean {
+    if (isAdmin || isNewClient(client) || creatingClientIds.has(client.id)) return true;
+    return isWithinClientCreateNameGrace(client.joined_at);
+  }
+
   function updateClient(id: string, patch: Partial<ClientProfile>) {
     const existing = draft.clients.find((client) => client.id === id);
-    const nameLocked =
-      Boolean(existing) && !isNewClient(existing!) && !isAdmin;
+    const nameLocked = Boolean(existing) && !isClientNameEditable(existing!);
     if (
       nameLocked &&
       ("first_name" in patch || "middle_name" in patch || "last_name" in patch)
@@ -448,6 +472,7 @@ export function ClientProfilesEditor() {
     }
     setSearchQuery("");
     setIsDirty(true);
+    setCreatingClientIds((prev) => new Set(prev).add(client.id));
     setDraft((prev) => ({ ...prev, clients: [client, ...prev.clients] }));
     setEditingId(client.id);
   }
@@ -461,6 +486,7 @@ export function ClientProfilesEditor() {
   function handleDiscard() {
     setDraft(cloneClients(saved));
     setIsDirty(false);
+    setCreatingClientIds(new Set());
     setEditingId(null);
     setError(null);
   }
@@ -487,6 +513,7 @@ export function ClientProfilesEditor() {
         ...prev,
         clients: prev.clients.filter((row) => row.id !== client.id),
       }));
+      releaseCreatingClient(client.id);
       if (editingId === client.id) setEditingId(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete client");
@@ -542,7 +569,7 @@ export function ClientProfilesEditor() {
 
   function renderClientEditor(client: ClientProfile) {
     const isNew = isNewClient(client);
-    const nameLocked = !isNew && !isAdmin;
+    const nameLocked = !isClientNameEditable(client);
     const needsBrand = client.brand_ids.length === 0;
     const nameFieldClass = nameLocked
       ? "mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700"
@@ -553,6 +580,11 @@ export function ClientProfilesEditor() {
         <p className="text-sm font-medium text-slate-700">Client name</p>
         {nameLocked && (
           <p className="mt-1 text-xs text-slate-500">Only admins can rename an existing client.</p>
+        )}
+        {!nameLocked && !isNew && !isAdmin && isWithinClientCreateNameGrace(client.joined_at) && (
+          <p className="mt-1 text-xs text-slate-500">
+            You can finish or correct this name for a short time after creating the client.
+          </p>
         )}
         <div className="mt-2 grid gap-4 md:grid-cols-3">
           <label className="block text-sm">
