@@ -54,7 +54,7 @@ describe("findPreviousMeters", () => {
   ];
 
   it("suggests from a single prior shirt at matching width (10-shirt flow)", () => {
-    // One prior filled line is enough — 2nd (and later) shirt lines get 1.6.
+    // One prior filled line is enough â€” 2nd (and later) shirt lines get 1.6.
     assert.equal(
       findPreviousMeters(
         [{ lineId: "1", garment_type: "Shirt", width_cm: 150, meters: "1.6" }],

@@ -3,7 +3,7 @@
 import { parseDecimalInput } from "@/lib/utils/decimal-input";
 
 /**
- * Soft apply control under meters — shown when an earlier same garment+width
+ * Soft apply control under meters â€” shown when an earlier same garment+width
  * line has meters and the current field differs (or is empty).
  */
 export function PreviousMetersHint({
