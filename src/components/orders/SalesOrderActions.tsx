@@ -630,6 +630,13 @@ export function SalesOrderActions({
                     onSort={handleLineSort}
                   />
                   <SortableTableHeader
+                    label="Width"
+                    sortKey="width"
+                    activeSortKey={lineSort?.key ?? null}
+                    direction={lineSort?.direction ?? null}
+                    onSort={handleLineSort}
+                  />
+                  <SortableTableHeader
                     label="Meters"
                     sortKey="meters"
                     activeSortKey={lineSort?.key ?? null}
@@ -664,6 +671,7 @@ export function SalesOrderActions({
                         changeFlag={garmentTypeChangeFlags[line.id]}
                       />
                     </td>
+                    <td className="px-3 py-2 text-slate-600">{formatWidth(line)}</td>
                     <td className="px-3 py-2 text-slate-600">
                       {line.quantity} {line.unit === "meters" ? "m" : line.unit}
                     </td>
