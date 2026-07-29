@@ -168,7 +168,8 @@ export function CaccioppoliApiPanel() {
             <div>
               <h3 className="font-medium text-slate-900">Fabric swatch preview</h3>
               <p className="mt-1 text-xs text-slate-500">
-                From POST /caccioppoli/getItemImages — base64 JPEG returned by the API
+                Cached swatches from local/Supabase (npm run caccioppoli:download-swatches). Live
+                getItemImages is for download only — UI thumbs use /api/suppliers/caccioppoli/images.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
