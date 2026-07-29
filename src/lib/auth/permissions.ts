@@ -3,7 +3,9 @@ import type { UserRole } from "@/lib/types/database";
 /** Fabric swatch lookup + image proxy routes used by preview/eye UI. */
 const FABRIC_SWATCH_ROUTE_PREFIXES = [
   "/api/suppliers/loro-piana",
+  "/api/suppliers/caccioppoli",
   "/api/integrations/drapers/medias",
+  /** Legacy live getItemImages route (admin/diagnostic); UI thumbs use /api/suppliers/caccioppoli. */
   "/api/integrations/caccioppoli/images",
 ] as const;
 

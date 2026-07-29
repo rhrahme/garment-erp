@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ImageOff, X } from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DrapersFabricSwatchProps {
@@ -14,6 +14,7 @@ interface DrapersFabricSwatchProps {
   disableZoom?: boolean;
 }
 
+/** Neutral empty cell — no broken-image / ImageOff icon. */
 function NoPhotoPlaceholder({
   fabricNumber,
   className,
@@ -24,14 +25,12 @@ function NoPhotoPlaceholder({
   return (
     <span
       className={cn(
-        "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-dashed border-slate-300 bg-slate-50 text-slate-400",
+        "inline-block h-7 w-7 shrink-0 rounded border border-slate-200 bg-slate-100",
         className
       )}
       title={`No photo for ${fabricNumber}`}
       aria-label={`No photo for fabric ${fabricNumber}`}
-    >
-      <ImageOff className="h-3.5 w-3.5" />
-    </span>
+    />
   );
 }
 
@@ -46,10 +45,12 @@ export function DrapersFabricSwatch({
 }: DrapersFabricSwatchProps) {
   const [open, setOpen] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const enlarged = zoomSrc ?? src;
 
   useEffect(() => {
     setFailed(false);
+    setLoaded(false);
   }, [src]);
 
   const close = useCallback(() => setOpen(false), []);
@@ -80,7 +81,8 @@ export function DrapersFabricSwatch({
       width={28}
       height={28}
       loading={loading}
-      className="h-7 w-7 rounded object-cover"
+      className={cn("h-7 w-7 rounded object-cover", !loaded && "opacity-0")}
+      onLoad={() => setLoaded(true)}
       onError={() => setFailed(true)}
     />
   );

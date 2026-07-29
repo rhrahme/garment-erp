@@ -143,6 +143,8 @@ describe("pattern_operator fabric swatch image routes", () => {
   const imageRoutes = [
     "/api/suppliers/loro-piana/images",
     "/api/suppliers/loro-piana/images/722042",
+    "/api/suppliers/caccioppoli/images",
+    "/api/suppliers/caccioppoli/images/360102",
     "/api/integrations/drapers/medias",
     "/api/integrations/caccioppoli/images",
   ];
