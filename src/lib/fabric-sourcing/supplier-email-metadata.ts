@@ -59,6 +59,7 @@ export function resolveSupplierEmailMetadata(
   salesOrder: SalesOrder | undefined
 ): {
   client_code: string | null;
+  client_name: string | null;
   so_number: string | null;
   delivery_destination: DeliveryDestination | null;
 } {
@@ -66,6 +67,7 @@ export function resolveSupplierEmailMetadata(
     client_code:
       salesOrder?.client_code ??
       (order.client_reference ? clientCodeFromReference(order.client_reference) : null),
+    client_name: salesOrder?.client_name?.trim() || null,
     so_number: salesOrder?.so_number ?? soNumberFromClientReference(order.client_reference),
     delivery_destination: salesOrder?.delivery_destination ?? null,
   };

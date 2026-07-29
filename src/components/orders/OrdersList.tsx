@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { DownloadSalesOrderPdfButton } from "@/components/orders/DownloadSalesOrderPdfButton";
 import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
 import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
+import { SupplierEmailStatusBadge } from "@/components/orders/SupplierEmailStatusBadge";
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
 import { getFactoryBrands } from "@/lib/data/factory-brands";
 import { SALES_ORDER_ARCHIVE_AGE_MONTHS } from "@/lib/sales-orders/archive";
@@ -218,6 +219,7 @@ export function OrdersList({
               {productionMode && <th className="px-4 py-3">Production labels</th>}
               <th className="px-4 py-3">Order Date</th>
               <th className="px-4 py-3">Delivery</th>
+              <th className="px-4 py-3">Supplier email</th>
               <th className="px-4 py-3">Status</th>
               <th className="sticky right-0 z-10 bg-slate-50 px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.15)]">
                 Actions
@@ -227,7 +229,7 @@ export function OrdersList({
           <tbody className="divide-y divide-slate-100">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={productionMode ? 9 : 8} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={productionMode ? 10 : 9} className="px-4 py-10 text-center text-slate-500">
                   {hasActiveFilters
                     ? "No orders match your search."
                     : view === "archived"
@@ -292,6 +294,15 @@ export function OrdersList({
                   )}
                   <td className="px-4 py-3">{formatDate(order.order_date)}</td>
                   <td className="px-4 py-3">{order.delivery_date ? formatDate(order.delivery_date) : "—"}</td>
+                  <td className="px-4 py-3">
+                    <SupplierEmailStatusBadge
+                      summary={{
+                        status: order.supplier_email_status,
+                        sent: order.supplier_email_sent,
+                        pending: order.supplier_email_pending,
+                      }}
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={order.status} />
                   </td>

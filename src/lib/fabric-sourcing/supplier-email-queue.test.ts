@@ -43,6 +43,7 @@ function queueItem(
     ...po(overrides),
     so_number: "SO-2026-0116",
     client_code: "FR-0626-0037",
+    client_name: "Test Client",
     delivery_destination: "RUH",
     ...overrides,
   };

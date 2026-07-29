@@ -69,3 +69,7 @@ data/suppliers/drapers/images-by-collection/**/*
 # Loro Piana swatch images (local imports; manifest tracks runs)
 data/suppliers/loro-piana/images/*
 !data/suppliers/loro-piana/images/manifest.json
+
+# Caccioppoli swatch images (local downloads; manifest tracks runs)
+data/suppliers/caccioppoli/images/*
+!data/suppliers/caccioppoli/images/manifest.json

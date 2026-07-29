@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { DownloadSalesOrderPdfButton } from "@/components/orders/DownloadSalesOrderPdfButton";
 import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
 import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
+import { SupplierEmailStatusBadge } from "@/components/orders/SupplierEmailStatusBadge";
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
 import { SALES_ORDER_ARCHIVE_AGE_MONTHS } from "@/lib/sales-orders/archive";
 import { salesOrderMatchesSearch } from "@/lib/sales-orders/list-search";
@@ -20,8 +21,10 @@ import type { SalesOrderListRow } from "@/lib/data/sales-orders";
 
 type FabricOrdersView = "active" | "archived" | "pending";
 
-function fabricOrderStatusLabel(order: SalesOrderListRow): string {
-  if (order.status === "fabric_pos_created" || order.status === "complete") return "Supplier emailed";
+function fabricOrderWorkflowLabel(order: SalesOrderListRow): string {
+  if (order.supplier_email_status === "sent") return "Ready for receiving";
+  if (order.supplier_email_status === "partial") return "Partial email";
+  if (order.supplier_email_status === "pending") return "Awaiting email";
   if (order.fabric_order_requested_at) return "Pending admin";
   if (order.fabric_line_count > 0) return "Draft";
   return "No fabrics";
@@ -195,6 +198,7 @@ export function FabricOrdersList({
               <th className="px-4 py-3">Availability</th>
               <th className="px-4 py-3">Labels</th>
               <th className="px-4 py-3">Order Date</th>
+              <th className="px-4 py-3">Supplier email</th>
               <th className="px-4 py-3">Fabric order</th>
               <th className="px-4 py-3">Status</th>
               <th className="sticky right-0 z-10 bg-slate-50 px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.15)]">
@@ -205,7 +209,7 @@ export function FabricOrdersList({
           <tbody className="divide-y divide-slate-100">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={10} className="px-4 py-10 text-center text-slate-500">
                   {hasActiveFilters
                     ? searching
                       ? "No fabric orders match your search."
@@ -269,7 +273,16 @@ export function FabricOrdersList({
                       : "—"}
                   </td>
                   <td className="px-4 py-3">{formatDate(order.order_date)}</td>
-                  <td className="px-4 py-3 text-slate-600">{fabricOrderStatusLabel(order)}</td>
+                  <td className="px-4 py-3">
+                    <SupplierEmailStatusBadge
+                      summary={{
+                        status: order.supplier_email_status,
+                        sent: order.supplier_email_sent,
+                        pending: order.supplier_email_pending,
+                      }}
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">{fabricOrderWorkflowLabel(order)}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-2">
                       <div className="flex flex-wrap items-center gap-2">

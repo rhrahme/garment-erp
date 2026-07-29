@@ -13,6 +13,8 @@ import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 export type SupplierEmailQueueItem = PurchaseOrder & {
   so_number: string | null;
   client_code: string | null;
+  /** Display-only on Supplier Emails UI — never included in outbound email body. */
+  client_name: string | null;
   delivery_destination: DeliveryDestination | null;
 };
 

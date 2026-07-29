@@ -10,6 +10,7 @@ import { readSalesOrders, listBespokeSalesOrders, toSalesOrderListRow } from "@/
 import { dedupeIdenticalSalesOrders } from "@/lib/sales-orders/duplicate-order";
 import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import { filterSalesOrdersForSession, getAllowedSalesBrandIds } from "@/lib/sales/access";
+import { ensureFabricOrdersLoaded, listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 
 export default async function OrdersPage() {
   const session = await getSessionContext();
@@ -19,15 +20,19 @@ export default async function OrdersPage() {
     session.isClientManager || taskOperatorMode || productionOperatorMode;
   const labels = ordersUiLabels(productionMode, taskOperatorMode, productionOperatorMode);
 
-  await ensureDocumentsLoaded(["sales_orders", "clients"]);
+  await ensureDocumentsLoaded(["sales_orders", "clients", "fabric_orders"]);
+  await ensureFabricOrdersLoaded();
   // Same heal as the API read paths — Print orders resolves client names for every role.
   await healClientDataForRead();
+  const fabricPos = listStoredFabricOrders();
   const visibleOrders = filterSalesOrdersForSession(
     session,
     readSalesOrders().orders,
     readClients().clients
   );
-  const orders = dedupeIdenticalSalesOrders(listBespokeSalesOrders(visibleOrders)).map(toSalesOrderListRow);
+  const orders = dedupeIdenticalSalesOrders(listBespokeSalesOrders(visibleOrders)).map((order) =>
+    toSalesOrderListRow(order, { fabricPos })
+  );
 
   return (
     <div>

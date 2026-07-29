@@ -138,7 +138,8 @@ export function SalesOrderActions({
   const showProductionLabels = effectiveViewMode === "production" || showSalesAdmin;
   const showFabricInput = (showFabricOrdering || showSalesAdmin) && !isTaskOperator;
   const showSupplierEmailActions = !isSalesOperator && (showFabricOrdering || showSalesAdmin);
-  const showSupplierEmailColumn = !isSalesOperator && showFabricOrdering && fabricPos.length > 0;
+  /** View-only for all roles (sales/QC/manager) so they can see if admin forgot to send. */
+  const showSupplierEmailColumn = order.fabric_lines.length > 0;
   const showFabricStock = !isSalesOperator;
   const router = useRouter();
   const [liveOrder, setLiveOrder] = useState(order);
@@ -525,7 +526,7 @@ export function SalesOrderActions({
             {showSupplierEmailColumn && fabricLineEmailSummary && (
               <div
                 className={`mt-3 rounded-lg border px-3 py-2 text-sm ${
-                  hasUnorderedFabricLines || hasPartialSupplierEmails
+                  hasUnorderedFabricLines || hasPartialSupplierEmails || fabricLineEmailSummary.pending > 0
                     ? "border-amber-200 bg-amber-50 text-amber-900"
                     : allSupplierEmailsSent
                       ? "border-emerald-200 bg-emerald-50 text-emerald-900"
@@ -539,8 +540,11 @@ export function SalesOrderActions({
                       {unorderedFabricLines.length === 1 ? "" : "s"} not yet ordered from suppliers
                     </span>
                     {" — "}
-                    create supplier fabric orders for the new article
-                    {unorderedFabricLines.length === 1 ? "" : "s"}, then send the email.
+                    {showSupplierEmailActions
+                      ? `create supplier fabric orders for the new article${
+                          unorderedFabricLines.length === 1 ? "" : "s"
+                        }, then send the email.`
+                      : "tell admin/purchasing to create supplier fabric orders and send the email."}
                   </p>
                 ) : hasPartialSupplierEmails ? (
                   <p>
@@ -549,25 +553,54 @@ export function SalesOrderActions({
                       {fabricLineEmailSummary.sent + fabricLineEmailSummary.pending} fabric lines emailed
                     </span>
                     {" — "}
-                    {fabricLineEmailSummary.pending} still pending.{" "}
-                    <Link href={supplierEmailsLink} className="font-medium text-indigo-700 underline">
-                      Send remaining in Supplier Emails
-                    </Link>
+                    {fabricLineEmailSummary.pending} still pending
+                    {showSupplierEmailActions ? (
+                      <>
+                        .{" "}
+                        <Link href={supplierEmailsLink} className="font-medium text-indigo-700 underline">
+                          Send remaining in Supplier Emails
+                        </Link>
+                      </>
+                    ) : (
+                      ". Inform admin if this still needs to be sent."
+                    )}
                   </p>
                 ) : allSupplierEmailsSent ? (
                   <p>
-                    <span className="font-medium">All fabric lines emailed to suppliers.</span>{" "}
-                    <Link href={supplierEmailsLink} className="font-medium text-indigo-700 underline">
-                      View in Supplier Emails
-                    </Link>
+                    <span className="font-medium">Email sent — all fabric lines emailed to suppliers.</span>
+                    {showSupplierEmailActions ? (
+                      <>
+                        {" "}
+                        <Link href={supplierEmailsLink} className="font-medium text-indigo-700 underline">
+                          View in Supplier Emails
+                        </Link>
+                      </>
+                    ) : null}
+                  </p>
+                ) : fabricPos.length === 0 ? (
+                  <p>
+                    <span className="font-medium">Email pending</span> — no supplier fabric orders yet
+                    {showSupplierEmailActions
+                      ? ". Create fabric orders, then send from Supplier Emails."
+                      : ". Inform admin if orders still need to be emailed."}
                   </p>
                 ) : (
                   <p>
-                    <span className="font-medium">{fabricLineEmailSummary.pending} fabric lines</span> ready for
-                    supplier email.{" "}
-                    <Link href={supplierEmailsLink} className="font-medium text-indigo-700 underline">
-                      Open Supplier Emails
-                    </Link>
+                    <span className="font-medium">
+                      Email pending — {fabricLineEmailSummary.pending} fabric line
+                      {fabricLineEmailSummary.pending === 1 ? "" : "s"}
+                    </span>{" "}
+                    ready for supplier email
+                    {showSupplierEmailActions ? (
+                      <>
+                        .{" "}
+                        <Link href={supplierEmailsLink} className="font-medium text-indigo-700 underline">
+                          Open Supplier Emails
+                        </Link>
+                      </>
+                    ) : (
+                      ". Inform admin if this still needs to be sent."
+                    )}
                   </p>
                 )}
               </div>

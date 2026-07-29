@@ -12,6 +12,8 @@ import { orderLineHasStockAlert } from "@/lib/fabric-sourcing/fabric-stock";
 import { isSalesOrderArchived } from "@/lib/sales-orders/archive";
 import { totalProductionLabels } from "@/lib/sales-orders/label-display";
 import { formatFabricLineArticle, resolveSoArticleForFabricLine } from "@/lib/sales-orders/label-codes";
+import { summarizeSalesOrderSupplierEmail } from "@/lib/sales-orders/supplier-email-status";
+import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 import type { SalesOrder, SalesOrdersFile } from "@/lib/types/sales-orders";
 
 const SALES_ORDERS_PATH = path.join(process.cwd(), "src/data/sales-orders.json");
@@ -75,6 +77,10 @@ export interface SalesOrderListRow {
   delivery_date: string | null;
   status: SalesOrder["status"];
   is_archived: boolean;
+  /** Supplier-email visibility for list badges (derived from linked fabric POs). */
+  supplier_email_status: "none" | "pending" | "partial" | "sent";
+  supplier_email_sent: number;
+  supplier_email_pending: number;
   /** Lowercase haystack for client-side list search — not shown in the UI. */
   search_text: string;
 }
@@ -137,7 +143,11 @@ export async function writeSalesOrders(data: SalesOrdersFile): Promise<SalesOrde
   return saveDocument(SALES_ORDERS_PATH, payload);
 }
 
-export function toSalesOrderListRow(order: SalesOrder): SalesOrderListRow {
+export function toSalesOrderListRow(
+  order: SalesOrder,
+  options?: { fabricPos?: PurchaseOrder[] }
+): SalesOrderListRow {
+  const email = summarizeSalesOrderSupplierEmail(order, options?.fabricPos ?? []);
   return {
     id: order.id,
     so_number: order.so_number,
@@ -159,6 +169,9 @@ export function toSalesOrderListRow(order: SalesOrder): SalesOrderListRow {
     delivery_date: order.delivery_date,
     status: order.status,
     is_archived: isSalesOrderArchived(order),
+    supplier_email_status: email.status,
+    supplier_email_sent: email.sent,
+    supplier_email_pending: email.pending,
     search_text: buildSalesOrderSearchText(order),
   };
 }

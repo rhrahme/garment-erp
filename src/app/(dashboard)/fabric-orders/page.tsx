@@ -13,6 +13,7 @@ import {
   summarizeFabricOrderDraft,
 } from "@/lib/autosave/server-fabric-order-draft";
 import { readClients } from "@/lib/data/clients";
+import { ensureFabricOrdersLoaded, listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 
 export default async function FabricOrdersPage() {
   const session = await getSessionContext();
@@ -20,8 +21,12 @@ export default async function FabricOrdersPage() {
 
   // Unfinished fabric orders live in fabric_order_drafts (per-user autosave), not sales_orders.
   // An empty or missing sales_orders row does NOT mean the user's draft was lost — check drafts first.
-  await ensureDocumentsLoaded(["sales_orders", "fabric_order_drafts", "clients"]);
-  const orders = dedupeIdenticalSalesOrders(listBespokeSalesOrders(readSalesOrders().orders)).map(toSalesOrderListRow);
+  await ensureDocumentsLoaded(["sales_orders", "fabric_order_drafts", "clients", "fabric_orders"]);
+  await ensureFabricOrdersLoaded();
+  const fabricPos = listStoredFabricOrders();
+  const orders = dedupeIdenticalSalesOrders(listBespokeSalesOrders(readSalesOrders().orders)).map((order) =>
+    toSalesOrderListRow(order, { fabricPos })
+  );
 
   let initialServerSummary = null;
   let initialServerSavedAt: string | null = null;

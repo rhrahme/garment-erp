@@ -7,6 +7,8 @@ import { FabricCostSummaryBlock } from "@/components/orders/FabricCostSummaryBlo
 import { DownloadSalesOrderPdfButton } from "@/components/orders/DownloadSalesOrderPdfButton";
 import { PageHeader, StatusBadge } from "@/components/ui/PageHeader";
 import { SalesOrderActions } from "@/components/orders/SalesOrderActions";
+import { SupplierEmailStatusBadge } from "@/components/orders/SupplierEmailStatusBadge";
+import { summarizeSalesOrderSupplierEmail } from "@/lib/sales-orders/supplier-email-status";
 import {
   FABRIC_PRICE_UNLOCK_COOKIE,
   canRevealFabricPrices,
@@ -53,13 +55,12 @@ export default async function SalesOrderDetailPage({
   if (!rawOrder) notFound();
   const session = await getSessionContext();
   if (!canAccessSalesOrder(session, rawOrder)) notFound();
+  await ensureFabricOrdersLoaded();
   if (!session.isSalesOperator) {
     await ensureDocumentsLoaded(["pattern_jobs", "garment_type_changes"]);
-    await ensureFabricOrdersLoaded();
   }
-  const rawFabricPos = session.isSalesOperator
-    ? []
-    : getFabricPosForSalesOrder(rawOrder, listStoredFabricOrders());
+  // Sales operators need PO emailed_at for Email sent/pending visibility (prices stay redacted).
+  const rawFabricPos = getFabricPosForSalesOrder(rawOrder, listStoredFabricOrders());
   const patternJobs = session.isSalesOperator ? [] : (await readPatternJobsFresh()).jobs;
   const patternMismatch = session.isSalesOperator
     ? null
@@ -100,6 +101,7 @@ export default async function SalesOrderDetailPage({
         listGarmentTypeChangesForSalesOrder(order.id),
         order.id
       );
+  const supplierEmailSummary = summarizeSalesOrderSupplierEmail(order, fabricPos);
 
   return (
     <div>
@@ -112,6 +114,9 @@ export default async function SalesOrderDetailPage({
         }
         action={
           <div className="flex flex-wrap items-center gap-3">
+            {order.fabric_lines.length > 0 ? (
+              <SupplierEmailStatusBadge summary={supplierEmailSummary} />
+            ) : null}
             {taskOperatorMode && order.fabric_lines.length > 0 ? (
               <>
                 <Link href={orderStickerSheetHref(order.id, "fabric-cuts")}>

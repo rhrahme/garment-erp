@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronRight, MessageSquarePlus, XCircle } from "lucide-react";
 import { EmailPreview } from "@/components/purchasing/EmailPreview";
+import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
+import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
 import { Button } from "@/components/ui/Button";
 import {
   buildFollowUpEmailDraft,
@@ -543,7 +545,17 @@ function PendingSupplierEmailBatchCard({
     setSelectedLineIds(included ? new Set(pendingLineIds) : new Set());
   }
 
+  const swatchFabrics = useMemo(
+    () =>
+      displayLines.map(({ order, line }) => ({
+        supplier_id: order.supplier_id,
+        fabric_number: line.fabric_number ?? "",
+      })),
+    [displayLines]
+  );
+
   return (
+    <FabricSwatchProvider fabrics={swatchFabrics}>
     <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <BatchHeader
@@ -592,6 +604,7 @@ function PendingSupplierEmailBatchCard({
         allowSend={canSendSupplierEmails}
       />
     </div>
+    </FabricSwatchProvider>
   );
 }
 
@@ -820,6 +833,7 @@ function BatchLinePicker({
               <th className="w-8 py-1.5 pr-2" aria-label="Include" />
               <th className="py-1.5 pr-3">Art.</th>
               <th className="py-1.5 pr-3">Fabric no.</th>
+              <th className="py-1.5 pr-3">Client</th>
               <th className="py-1.5 pr-3">Garment</th>
               <th className="py-1.5 pr-3 text-right">Qty</th>
               <th className="py-1.5 pr-3">Status</th>
@@ -854,7 +868,23 @@ function BatchLinePicker({
                   <td className="py-1.5 pr-3 align-top font-mono text-slate-900">
                     {formatFabricLineArticle(article)}
                   </td>
-                  <td className="py-1.5 pr-3 align-top font-mono">{line.fabric_number ?? "—"}</td>
+                  <td className="py-1.5 pr-3 align-top">
+                    {line.fabric_number ? (
+                      <FabricNumberWithSwatch
+                        supplierId={order.supplier_id}
+                        fabricNumber={line.fabric_number}
+                        numberClassName="text-slate-800"
+                      />
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className="py-1.5 pr-3 align-top">
+                    <p className="font-medium text-slate-900">{order.client_name || "—"}</p>
+                    {order.client_code ? (
+                      <p className="font-mono text-[11px] text-indigo-700">{order.client_code}</p>
+                    ) : null}
+                  </td>
                   <td className="py-1.5 pr-3 align-top">{line.garment_type ?? "—"}</td>
                   <td className="py-1.5 pr-3 align-top text-right whitespace-nowrap">
                     {qty} {unit}
@@ -926,6 +956,9 @@ function BatchOrderPicker({
                 <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span className="font-medium text-slate-900">Include in this email</span>
                   <DeliveryDestinationBadge destination={order.delivery_destination} warnIfMissing />
+                  {order.client_name && (
+                    <span className="font-medium text-slate-800">{order.client_name}</span>
+                  )}
                   {order.so_number && (
                     <>
                       {" — "}
@@ -988,6 +1021,7 @@ function BatchOrderLinks({ orders }: { orders: SupplierEmailQueueItem[] }) {
         <span key={order.id} className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
           {index > 0 && " · "}
           <DeliveryDestinationBadge destination={order.delivery_destination} warnIfMissing />
+          {order.client_name && <span className="font-medium text-slate-800">{order.client_name}</span>}
           {order.so_number && <span className="font-mono">{order.so_number}</span>}
           {order.so_number && order.client_code && " — "}
           {order.client_code && <span className="font-mono text-indigo-700">{order.client_code}</span>}

@@ -31,6 +31,7 @@ function po(
     lines: [{ fabric_number: "781006", quantity_ordered: 2, unit_price: 100 }],
     so_number: "SO-2026-0999",
     client_code: "FR-0626-0037",
+    client_name: "Test Client",
     delivery_destination: "RUH",
     ...overrides,
   };

@@ -5,6 +5,8 @@ import { FabricCostSummaryBlock } from "@/components/orders/FabricCostSummaryBlo
 import { DownloadSalesOrderPdfButton } from "@/components/orders/DownloadSalesOrderPdfButton";
 import { PageHeader, StatusBadge } from "@/components/ui/PageHeader";
 import { SalesOrderActions } from "@/components/orders/SalesOrderActions";
+import { SupplierEmailStatusBadge } from "@/components/orders/SupplierEmailStatusBadge";
+import { summarizeSalesOrderSupplierEmail } from "@/lib/sales-orders/supplier-email-status";
 import {
   FABRIC_PRICE_UNLOCK_COOKIE,
   canRevealFabricPrices,
@@ -63,6 +65,7 @@ export default async function FabricOrderDetailPage({
   const fabricCostResult =
     showFabricCostToAdmin ? resolveFabricCostForOrderLines(rawOrder.fabric_lines) : null;
   const fabricCost = fabricCostResult?.summary ?? null;
+  const supplierEmailSummary = summarizeSalesOrderSupplierEmail(order, fabricPos);
 
   return (
     <div>
@@ -75,6 +78,9 @@ export default async function FabricOrderDetailPage({
         }
         action={
           <div className="flex flex-wrap items-center gap-3">
+            {order.fabric_lines.length > 0 ? (
+              <SupplierEmailStatusBadge summary={supplierEmailSummary} />
+            ) : null}
             <DownloadSalesOrderPdfButton
               orderId={order.id}
               soNumber={order.so_number}
