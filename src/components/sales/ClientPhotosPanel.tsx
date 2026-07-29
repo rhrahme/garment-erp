@@ -3,10 +3,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, ImagePlus, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { clientMediaAcceptAttribute } from "@/lib/data/client-media-types";
 import { cn } from "@/lib/utils";
 import type { ClientPhoto } from "@/lib/types/sales-workspace";
 
-const ACCEPT = "image/jpeg,image/png,image/webp,image/heic,image/heif,image/*";
+const ACCEPT = clientMediaAcceptAttribute();
+
+function isVideoPhoto(photo: ClientPhoto): boolean {
+  return (
+    photo.content_type.toLowerCase().startsWith("video/") ||
+    /\.(mp4|m4v|mov|webm|3gp|3g2)$/i.test(photo.filename) ||
+    /\.(mp4|m4v|mov|webm|3gp|3g2)$/i.test(photo.stored_filename)
+  );
+}
 
 type ClientPhotosPanelProps = {
   clientId: string | null;
@@ -226,14 +235,15 @@ export function ClientPhotosPanel({
     <section className={cn("rounded-xl border border-slate-200 bg-white p-4 sm:p-5", className)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Photos</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Photos & videos</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Take a picture or pick from the gallery — works well on tablet.
+            Take a picture or pick from the gallery (JPG, HEIC, PNG, WebP, MP4, MOV) — works well on
+            tablet. Images up to 15 MB; videos up to 50 MB.
           </p>
         </div>
         {photos.length > 0 && (
           <p className="text-sm font-medium text-slate-600">
-            {photos.length} photo{photos.length === 1 ? "" : "s"}
+            {photos.length} item{photos.length === 1 ? "" : "s"}
           </p>
         )}
       </div>
@@ -267,7 +277,7 @@ export function ClientPhotosPanel({
           <input
             ref={cameraInputRef}
             type="file"
-            accept={ACCEPT}
+            accept="image/*,image/heic,image/heif"
             capture="environment"
             className="sr-only"
             disabled={disabled}
@@ -358,35 +368,55 @@ export function ClientPhotosPanel({
 
       {photos.length > 0 ? (
         <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {photos.map((photo) => (
-            <li key={photo.id} className="group relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`/api/sales/client-photos/${encodeURIComponent(photo.id)}`}
-                alt={photo.filename}
-                className="aspect-square w-full object-cover"
-              />
-              <div className="absolute inset-x-0 bottom-0 flex justify-end bg-gradient-to-t from-black/60 to-transparent p-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  disabled={busy}
-                  className="min-h-10 bg-white/95 text-red-700 hover:bg-white"
-                  onClick={() => void deletePhoto(photo.id)}
-                >
-                  <Trash2 className="mr-1.5 h-4 w-4" />
-                  Delete
-                </Button>
-              </div>
-            </li>
-          ))}
+          {photos.map((photo) => {
+            const mediaUrl = `/api/sales/client-photos/${encodeURIComponent(photo.id)}`;
+            const video = isVideoPhoto(photo);
+            return (
+              <li
+                key={photo.id}
+                className="group relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
+              >
+                {video ? (
+                  <video
+                    src={mediaUrl}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    className="aspect-square w-full bg-black object-contain"
+                    aria-label={photo.filename}
+                  />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={mediaUrl}
+                    alt={photo.filename}
+                    className="aspect-square w-full object-cover"
+                  />
+                )}
+                <div className="absolute inset-x-0 bottom-0 flex justify-end bg-gradient-to-t from-black/60 to-transparent p-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={busy}
+                    className="min-h-10 bg-white/95 text-red-700 hover:bg-white"
+                    onClick={() => void deletePhoto(photo.id)}
+                  >
+                    <Trash2 className="mr-1.5 h-4 w-4" />
+                    Delete
+                  </Button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       ) : (
         clientReady &&
         !loading &&
         uploads.length === 0 && (
-          <p className="mt-4 text-center text-sm text-slate-500">No photos yet — tap Take photo to start.</p>
+          <p className="mt-4 text-center text-sm text-slate-500">
+            No media yet — tap Take photo or Add from gallery.
+          </p>
         )
       )}
     </section>

@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
   // Legacy JSON/email modules have strict-check debt; runtime paths are covered in dev.
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
-  serverExternalPackages: ["sharp"],
+  serverExternalPackages: ["sharp", "heic-convert", "heic-decode", "libheif-js"],
   // Local supplier image folders can be multi-GB on dev machines; production uses Supabase storage.
   outputFileTracingIncludes: {
     "/orders/[id]": SUPPLIER_CATALOG_JSON,

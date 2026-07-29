@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
-import { getClientById } from "@/lib/data/clients";
 import {
-  resolveClientPhotoContentType,
-  writeClientPhoto,
-} from "@/lib/data/client-photo-storage";
+  clientMediaLimitError,
+  clientMediaMaxBytes,
+  prepareClientMediaForStorage,
+  resolveClientMediaContentType,
+} from "@/lib/data/client-media";
+import { writeClientPhoto } from "@/lib/data/client-photo-storage";
+import { getClientById } from "@/lib/data/clients";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { verifyApiKey } from "@/lib/integrations/api-auth";
 import { attachSalesClientPhoto } from "@/lib/sales/mutations";
 import type { ClientPhoto } from "@/lib/types/sales-workspace";
+
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const authError = verifyApiKey(request);
@@ -19,23 +24,37 @@ export async function POST(request: Request) {
   if (!clientId || !getClientById(clientId)) {
     return NextResponse.json({ error: "Client not found." }, { status: 404 });
   }
-  if (!(file instanceof File) || file.size > 10 * 1024 * 1024) {
-    return NextResponse.json({ error: "A supported photo under 10 MB is required." }, { status: 400 });
+  if (!(file instanceof File) || file.size === 0) {
+    return NextResponse.json({ error: clientMediaLimitError(null) }, { status: 400 });
   }
-  const contentType = resolveClientPhotoContentType(file);
+  const contentType = resolveClientMediaContentType(file);
   if (!contentType) {
-    return NextResponse.json({ error: "A supported photo under 10 MB is required." }, { status: 400 });
+    return NextResponse.json({ error: clientMediaLimitError(null) }, { status: 400 });
   }
+  if (file.size > clientMediaMaxBytes(contentType)) {
+    return NextResponse.json({ error: clientMediaLimitError(contentType) }, { status: 400 });
+  }
+
+  let prepared;
+  try {
+    prepared = await prepareClientMediaForStorage(file, contentType);
+  } catch (caught) {
+    const message = caught instanceof Error ? caught.message : "Failed to process media.";
+    return NextResponse.json(
+      { error: `Could not process this file (${message}). Try exporting as JPG or MP4.` },
+      { status: 400 }
+    );
+  }
+
   const id = `client-photo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const extension = file.name.split(".").pop()?.replace(/[^a-z0-9]/gi, "").toLowerCase() || "jpg";
-  const storedFilename = `${clientId.replace(/[^a-z0-9-]/gi, "_")}-${id}.${extension}`;
-  await writeClientPhoto(storedFilename, Buffer.from(await file.arrayBuffer()), contentType);
+  const storedFilename = `${clientId.replace(/[^a-z0-9-]/gi, "_")}-${id}.${prepared.extension}`;
+  await writeClientPhoto(storedFilename, prepared.buffer, prepared.contentType);
   const photo: ClientPhoto = {
     id,
-    filename: file.name,
+    filename: prepared.displayFilename,
     stored_filename: storedFilename,
-    content_type: contentType,
-    size_bytes: file.size,
+    content_type: prepared.contentType,
+    size_bytes: prepared.sizeBytes,
     uploaded_at: new Date().toISOString(),
     uploaded_by: "api",
   };

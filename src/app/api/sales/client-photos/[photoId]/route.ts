@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticated } from "@/lib/auth/session";
+import {
+  convertHeicBufferToJpeg,
+  looksLikeHeicMedia,
+} from "@/lib/data/client-media";
 import { deleteClientPhoto, readClientPhoto } from "@/lib/data/client-photo-storage";
 import { getClientById } from "@/lib/data/clients";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSalesWorkspace } from "@/lib/data/sales-workspace";
 import { canAccessClient } from "@/lib/sales/access";
 import { removeSalesClientPhoto } from "@/lib/sales/mutations";
+
+export const maxDuration = 60;
 
 export async function GET(
   _request: Request,
@@ -28,11 +34,37 @@ export async function GET(
   }
   const content = await readClientPhoto(photo.stored_filename);
   if (!content) return NextResponse.json({ error: "Photo file not found." }, { status: 404 });
-  return new NextResponse(new Uint8Array(content), {
+
+  let body = content;
+  let contentType = photo.content_type;
+  let filename = photo.filename;
+
+  if (
+    looksLikeHeicMedia({
+      contentType: photo.content_type,
+      filename: photo.filename,
+      storedFilename: photo.stored_filename,
+      buffer: content,
+    })
+  ) {
+    try {
+      body = await convertHeicBufferToJpeg(content);
+      contentType = "image/jpeg";
+      filename = photo.filename.replace(/\.hei[cf]$/i, ".jpg");
+    } catch {
+      return NextResponse.json(
+        { error: "Could not convert HEIC photo for display. Re-upload as JPG if needed." },
+        { status: 422 }
+      );
+    }
+  }
+
+  const dispositionFilename = filename.replace(/"/g, "");
+  return new NextResponse(new Uint8Array(body), {
     headers: {
-      "Content-Type": photo.content_type,
+      "Content-Type": contentType,
       "Cache-Control": "private, max-age=3600",
-      "Content-Disposition": `inline; filename="${photo.filename.replace(/"/g, "")}"`,
+      "Content-Disposition": `inline; filename="${dispositionFilename}"`,
     },
   });
 }
