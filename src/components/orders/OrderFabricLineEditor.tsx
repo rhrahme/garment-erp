@@ -5,6 +5,7 @@ import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { FabricPicker } from "@/components/fabric/FabricPicker";
 import { MetersInput } from "@/components/orders/MetersInput";
+import { PreviousMetersHint } from "@/components/orders/PreviousMetersHint";
 import { FabricStockBadge } from "@/components/fabric/FabricStockBadge";
 import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
 import { isFabricUnavailable } from "@/lib/fabric-sourcing/fabric-stock";
@@ -12,6 +13,10 @@ import { fabricBrandAllowsManualEntry } from "@/lib/fabric-sourcing/supplier-dis
 import { resolveFabricItem } from "@/lib/fabric-sourcing/resolve-fabric-item";
 import { FactoryLabelsField } from "@/components/orders/FactoryLabelsField";
 import { GARMENT_STITCH_TYPES } from "@/lib/sales-orders/garment-types";
+import {
+  findPreviousMeters,
+  suggestMetersIfEmpty,
+} from "@/lib/sales-orders/previous-meters";
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
 import { parseDecimalInput } from "@/lib/utils/decimal-input";
 import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
@@ -27,12 +32,15 @@ function formatWidth(line: { width_cm?: number | null; width_inches?: number | n
 export function OrderFabricLineEditor({
   orderId,
   line,
+  siblingLines = [],
   productionMode = false,
   canViewFabricPrices = false,
   onLineUpdated,
 }: {
   orderId: string;
   line: SalesOrderFabricLine;
+  /** Other fabric lines on the same order — used for previous-meters suggestions. */
+  siblingLines?: SalesOrderFabricLine[];
   productionMode?: boolean;
   canViewFabricPrices?: boolean;
   onLineUpdated?: (line: SalesOrderFabricLine) => void;
@@ -48,6 +56,14 @@ export function OrderFabricLineEditor({
   const [error, setError] = useState<string | null>(null);
 
   const selectedBrand = fabricBrands.find((brand) => brand.id === selectedBrandId) ?? null;
+  const widthSource = pendingFabric ?? line;
+  const previousMeters = garmentType
+    ? findPreviousMeters(siblingLines, {
+        garmentType,
+        width: widthSource,
+        excludeLineId: line.id,
+      })
+    : null;
 
   useEffect(() => {
     async function loadBrands() {
@@ -87,12 +103,31 @@ export function OrderFabricLineEditor({
     setFabricQuery(item.fabric_number);
     setSelectedBrandId(item.supplier_id);
     setError(null);
+    if (garmentType) {
+      const previous = findPreviousMeters(siblingLines, {
+        garmentType,
+        width: item,
+        excludeLineId: line.id,
+      });
+      setMeters((current) => suggestMetersIfEmpty(current, previous));
+    }
   }
 
   function switchFabricSupplier(next: { supplier_id: string; supplier_name: string }) {
     setSelectedBrandId(next.supplier_id);
     setPendingFabric(null);
     setError(null);
+  }
+
+  function handleGarmentTypeChange(next: string) {
+    setGarmentType(next);
+    if (!next) return;
+    const previous = findPreviousMeters(siblingLines, {
+      garmentType: next,
+      width: widthSource,
+      excludeLineId: line.id,
+    });
+    setMeters((current) => suggestMetersIfEmpty(current, previous));
   }
 
   const quantity = parseDecimalInput(meters);
@@ -223,7 +258,7 @@ export function OrderFabricLineEditor({
           <span className="font-medium text-slate-700">Garment to stitch</span>
           <select
             value={garmentType}
-            onChange={(e) => setGarmentType(e.target.value)}
+            onChange={(e) => handleGarmentTypeChange(e.target.value)}
             className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
           >
             <option value="">Select garment…</option>
@@ -240,7 +275,7 @@ export function OrderFabricLineEditor({
         <label className="block text-sm">
           <span className="font-medium text-slate-700">Width</span>
           <p className="mt-1 flex min-h-[44px] items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">
-            {formatWidth(pendingFabric ?? line)}
+            {formatWidth(widthSource)}
           </p>
         </label>
 
@@ -250,6 +285,11 @@ export function OrderFabricLineEditor({
             value={meters}
             onChange={setMeters}
             className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+          />
+          <PreviousMetersHint
+            previousMeters={previousMeters}
+            currentMeters={meters}
+            onApply={setMeters}
           />
         </label>
       </div>

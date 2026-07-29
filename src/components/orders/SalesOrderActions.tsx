@@ -920,6 +920,7 @@ export function SalesOrderActions({
                               <OrderFabricLineEditor
                                 orderId={liveOrder.id}
                                 line={line}
+                                siblingLines={liveOrder.fabric_lines}
                                 productionMode={isClientManager}
                                 canViewFabricPrices={canViewFabricPrices}
                                 onLineUpdated={handleLineUpdated}
@@ -1125,6 +1126,7 @@ export function SalesOrderActions({
                               <OrderFabricLineEditor
                                 orderId={liveOrder.id}
                                 line={line}
+                                siblingLines={liveOrder.fabric_lines}
                                 productionMode={isClientManager}
                                 canViewFabricPrices={canViewFabricPrices}
                                 onLineUpdated={handleLineUpdated}
