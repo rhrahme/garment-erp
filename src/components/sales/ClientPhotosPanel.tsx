@@ -19,6 +19,57 @@ type ClientPhotosPanelProps = {
   onError?: (message: string | null) => void;
 };
 
+type UploadProgressItem = {
+  id: string;
+  name: string;
+  totalBytes: number;
+  loadedBytes: number;
+  status: "uploading" | "done" | "error";
+};
+
+function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) return "0 B";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function uploadClientPhoto(
+  clientId: string,
+  file: File,
+  onProgress: (loaded: number, total: number) => void
+): Promise<ClientPhoto> {
+  return new Promise((resolve, reject) => {
+    const form = new FormData();
+    form.set("client_id", clientId);
+    form.set("photo", file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/sales/client-photos");
+    xhr.responseType = "json";
+
+    xhr.upload.onprogress = (event) => {
+      if (!event.lengthComputable) return;
+      onProgress(event.loaded, event.total);
+    };
+
+    xhr.onload = () => {
+      const body = (xhr.response ?? {}) as { photo?: ClientPhoto; error?: string };
+      if (xhr.status >= 200 && xhr.status < 300 && body.photo) {
+        onProgress(file.size, file.size);
+        resolve(body.photo);
+        return;
+      }
+      reject(new Error(body.error ?? "Failed to upload photo."));
+    };
+
+    xhr.onerror = () => reject(new Error("Failed to upload photo."));
+    xhr.onabort = () => reject(new Error("Upload cancelled."));
+
+    xhr.send(form);
+  });
+}
+
 export function ClientPhotosPanel({
   clientId,
   clientReady = true,
@@ -30,6 +81,7 @@ export function ClientPhotosPanel({
   const [internalPhotos, setInternalPhotos] = useState<ClientPhoto[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [uploads, setUploads] = useState<UploadProgressItem[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -86,18 +138,51 @@ export function ClientPhotosPanel({
     const files = Array.from(fileList).filter((file) => file.size > 0);
     if (files.length === 0) return;
 
+    const items: UploadProgressItem[] = files.map((file, index) => ({
+      id: `${Date.now()}-${index}-${file.name}`,
+      name: file.name,
+      totalBytes: file.size,
+      loadedBytes: 0,
+      status: "uploading",
+    }));
+
     setBusy(true);
+    setUploads(items);
     reportError(null);
     try {
       const uploaded: ClientPhoto[] = [];
-      for (const file of files) {
-        const form = new FormData();
-        form.set("client_id", clientId);
-        form.set("photo", file);
-        const response = await fetch("/api/sales/client-photos", { method: "POST", body: form });
-        const body = (await response.json()) as { photo?: ClientPhoto; error?: string };
-        if (!response.ok) throw new Error(body.error ?? "Failed to upload photo.");
-        if (body.photo) uploaded.push(body.photo);
+      for (let index = 0; index < files.length; index += 1) {
+        const file = files[index];
+        const itemId = items[index].id;
+        try {
+          const photo = await uploadClientPhoto(clientId, file, (loaded, total) => {
+            setUploads((prev) =>
+              prev.map((item) =>
+                item.id === itemId
+                  ? {
+                      ...item,
+                      loadedBytes: loaded,
+                      totalBytes: total > 0 ? total : item.totalBytes,
+                      status: "uploading",
+                    }
+                  : item
+              )
+            );
+          });
+          uploaded.push(photo);
+          setUploads((prev) =>
+            prev.map((item) =>
+              item.id === itemId
+                ? { ...item, loadedBytes: item.totalBytes, status: "done" }
+                : item
+            )
+          );
+        } catch (caught) {
+          setUploads((prev) =>
+            prev.map((item) => (item.id === itemId ? { ...item, status: "error" } : item))
+          );
+          throw caught;
+        }
       }
       if (isControlled) {
         applyPhotos([...photos, ...uploaded]);
@@ -108,6 +193,7 @@ export function ClientPhotosPanel({
       reportError(caught instanceof Error ? caught.message : "Failed to upload photo.");
     } finally {
       setBusy(false);
+      setUploads([]);
       if (cameraInputRef.current) cameraInputRef.current.value = "";
       if (galleryInputRef.current) galleryInputRef.current.value = "";
     }
@@ -199,6 +285,61 @@ export function ClientPhotosPanel({
         </div>
       )}
 
+      {uploads.length > 0 && (
+        <ul className="mt-4 space-y-2" aria-live="polite">
+          {uploads.map((item) => {
+            const total = item.totalBytes || 1;
+            const pct = Math.min(100, Math.round((item.loadedBytes / total) * 100));
+            const remaining = Math.max(0, item.totalBytes - item.loadedBytes);
+            const label =
+              item.status === "done"
+                ? "Uploaded"
+                : item.status === "error"
+                  ? "Failed"
+                  : `${pct}% · ${formatBytes(item.loadedBytes)} of ${formatBytes(item.totalBytes)} · ${formatBytes(remaining)} left`;
+
+            return (
+              <li
+                key={item.id}
+                className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-slate-800">{item.name}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {formatBytes(item.totalBytes)} · {label}
+                    </p>
+                  </div>
+                  {item.status === "uploading" && (
+                    <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-slate-400" />
+                  )}
+                </div>
+                <div
+                  className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={pct}
+                  aria-label={`Uploading ${item.name}`}
+                >
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-[width] duration-150 ease-out",
+                      item.status === "error"
+                        ? "bg-red-500"
+                        : item.status === "done"
+                          ? "bg-emerald-500"
+                          : "bg-indigo-500"
+                    )}
+                    style={{ width: `${item.status === "error" ? pct : Math.max(pct, 2)}%` }}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
       {(localError || loading) && (
         <div className="mt-3">
           {localError && (
@@ -243,7 +384,8 @@ export function ClientPhotosPanel({
         </ul>
       ) : (
         clientReady &&
-        !loading && (
+        !loading &&
+        uploads.length === 0 && (
           <p className="mt-4 text-center text-sm text-slate-500">No photos yet — tap Take photo to start.</p>
         )
       )}
