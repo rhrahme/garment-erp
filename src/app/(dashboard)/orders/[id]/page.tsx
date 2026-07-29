@@ -33,6 +33,7 @@ import { detectPatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-m
 import { getRemovedSalesOrderRedirectForKey } from "@/lib/sales-orders/removed-order-redirects";
 import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import { OrderShipmentTracking } from "@/components/orders/OrderShipmentTracking";
+import { SalesOrderArticlesSummary } from "@/components/orders/SalesOrderArticlesSummary";
 import { PatternMismatchBanner } from "@/components/pattern/PatternMismatchBanner";
 import { formatDate } from "@/lib/utils";
 import { canAccessSalesOrder } from "@/lib/sales/access";
@@ -213,6 +214,8 @@ export default async function SalesOrderDetailPage({
           </div>
         )}
       </div>
+
+      {order.fabric_lines.length > 0 ? <SalesOrderArticlesSummary lines={order.fabric_lines} /> : null}
 
       {!session.isSalesOperator && (
         <OrderShipmentTracking salesOrderId={order.id} fabricPoIds={order.fabric_po_ids} />

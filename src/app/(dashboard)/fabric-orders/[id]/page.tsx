@@ -25,6 +25,7 @@ import { getFabricTotalsSummary } from "@/lib/sales-orders/fabric-weight";
 import { getFabricPosForSalesOrder } from "@/lib/sales-orders/line-cross-reference";
 import { getRemovedSalesOrderRedirectForKey } from "@/lib/sales-orders/removed-order-redirects";
 import { fabricOrderUiLabels } from "@/lib/orders/fabric-order-ui-labels";
+import { SalesOrderArticlesSummary } from "@/components/orders/SalesOrderArticlesSummary";
 import { OrderShipmentTracking } from "@/components/orders/OrderShipmentTracking";
 import { formatDate } from "@/lib/utils";
 
@@ -152,6 +153,8 @@ export default async function FabricOrderDetailPage({
           </div>
         )}
       </div>
+
+      {order.fabric_lines.length > 0 ? <SalesOrderArticlesSummary lines={order.fabric_lines} /> : null}
 
       <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
         <DownloadSalesOrderPdfButton
