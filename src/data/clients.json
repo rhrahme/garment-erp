@@ -1,6 +1,131 @@
 {
   "clients": [
     {
+      "id": "new-1785317592212",
+      "city": null,
+      "code": "FR-0726-0060",
+      "email": null,
+      "notes": null,
+      "phone": null,
+      "address": null,
+      "country": null,
+      "brand_ids": [
+        "fouad-rahme"
+      ],
+      "is_active": true,
+      "joined_at": "2026-07-29T09:33:41.739Z",
+      "last_name": "Luwaihiq",
+      "first_name": "Turki",
+      "client_kind": "person",
+      "middle_name": "Al",
+      "payment_terms": null,
+      "contact_person": null,
+      "referred_by_last_name": null,
+      "referred_by_first_name": null,
+      "client_reference_prefix": null,
+      "referred_by_middle_name": null
+    },
+    {
+      "id": "new-1785315929723",
+      "city": null,
+      "code": "FR-0726-0059",
+      "email": null,
+      "notes": null,
+      "phone": null,
+      "address": null,
+      "country": null,
+      "brand_ids": [
+        "fouad-rahme"
+      ],
+      "is_active": true,
+      "joined_at": "2026-07-29T09:05:58.436Z",
+      "last_name": "Luwaihiq",
+      "first_name": "Abdallah",
+      "client_kind": "person",
+      "middle_name": "Al",
+      "payment_terms": null,
+      "contact_person": null,
+      "referred_by_last_name": null,
+      "referred_by_first_name": null,
+      "client_reference_prefix": null,
+      "referred_by_middle_name": null
+    },
+    {
+      "id": "new-1785315785859",
+      "city": null,
+      "code": "FR-0726-0058",
+      "email": null,
+      "notes": null,
+      "phone": null,
+      "address": null,
+      "country": null,
+      "brand_ids": [
+        "fouad-rahme"
+      ],
+      "is_active": true,
+      "joined_at": "2026-07-29T09:03:29.737Z",
+      "last_name": "Lu",
+      "first_name": "Turki",
+      "client_kind": "person",
+      "middle_name": "Al",
+      "payment_terms": null,
+      "contact_person": null,
+      "referred_by_last_name": null,
+      "referred_by_first_name": null,
+      "client_reference_prefix": null,
+      "referred_by_middle_name": null
+    },
+    {
+      "id": "new-1785315727115",
+      "city": null,
+      "code": "FR-0726-0057",
+      "email": null,
+      "notes": null,
+      "phone": null,
+      "address": null,
+      "country": null,
+      "brand_ids": [
+        "fouad-rahme"
+      ],
+      "is_active": true,
+      "joined_at": "2026-07-29T09:02:31.242Z",
+      "last_name": "Lu",
+      "first_name": "Turki",
+      "client_kind": "person",
+      "middle_name": "Al",
+      "payment_terms": null,
+      "contact_person": null,
+      "referred_by_last_name": null,
+      "referred_by_first_name": null,
+      "client_reference_prefix": null,
+      "referred_by_middle_name": null
+    },
+    {
+      "id": "new-1785314705195",
+      "city": null,
+      "code": "FR-0726-0056",
+      "email": null,
+      "notes": null,
+      "phone": null,
+      "address": null,
+      "country": null,
+      "brand_ids": [
+        "fouad-rahme"
+      ],
+      "is_active": true,
+      "joined_at": "2026-07-29T08:52:56.443Z",
+      "last_name": "Lu",
+      "first_name": "Turki",
+      "client_kind": "person",
+      "middle_name": "Al",
+      "payment_terms": null,
+      "contact_person": null,
+      "referred_by_last_name": null,
+      "referred_by_first_name": null,
+      "client_reference_prefix": null,
+      "referred_by_middle_name": null
+    },
+    {
       "id": "new-1783281036086",
       "city": null,
       "code": "FR-0726-0039",
@@ -241,31 +366,6 @@
       "joined_at": "2026-06-07T16:35:33.394Z",
       "last_name": "Kadhi",
       "first_name": "Michari",
-      "client_kind": "person",
-      "middle_name": "Al",
-      "payment_terms": null,
-      "contact_person": null,
-      "referred_by_last_name": null,
-      "referred_by_first_name": null,
-      "client_reference_prefix": null,
-      "referred_by_middle_name": null
-    },
-    {
-      "id": "new-1780849990244",
-      "city": null,
-      "code": "FR-0626-0031",
-      "email": null,
-      "notes": null,
-      "phone": null,
-      "address": null,
-      "country": null,
-      "brand_ids": [
-        "gliani"
-      ],
-      "is_active": true,
-      "joined_at": "2026-06-07T16:33:35.070Z",
-      "last_name": "Turk",
-      "first_name": "Firas",
       "client_kind": "person",
       "middle_name": "Al",
       "payment_terms": null,
@@ -1778,5 +1878,5 @@
       "referred_by_middle_name": null
     }
   ],
-  "updated_at": "2026-07-25T18:25:26.339Z"
+  "updated_at": "2026-07-29T11:35:37.252Z"
 }
