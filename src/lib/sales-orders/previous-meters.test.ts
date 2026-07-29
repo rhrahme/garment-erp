@@ -53,6 +53,17 @@ describe("findPreviousMeters", () => {
     },
   ];
 
+  it("suggests from a single prior shirt at matching width (10-shirt flow)", () => {
+    // One prior filled line is enough — 2nd (and later) shirt lines get 1.6.
+    assert.equal(
+      findPreviousMeters(
+        [{ lineId: "1", garment_type: "Shirt", width_cm: 150, meters: "1.6" }],
+        { garmentType: "Shirt", width: { width_cm: 150 } }
+      ),
+      "1.6"
+    );
+  });
+
   it("returns most recent same garment + width", () => {
     assert.equal(
       findPreviousMeters(lines, {
@@ -70,6 +81,16 @@ describe("findPreviousMeters", () => {
         width: { width_cm: 150 },
       }),
       "2.5"
+    );
+  });
+
+  it("does not suggest when only prior match has a different width", () => {
+    assert.equal(
+      findPreviousMeters(
+        [{ lineId: "1", garment_type: "Shirt", width_cm: 140, meters: "1.6" }],
+        { garmentType: "Shirt", width: { width_cm: 150 } }
+      ),
+      null
     );
   });
 
@@ -110,8 +131,13 @@ describe("findPreviousMeters", () => {
 });
 
 describe("suggestMetersIfEmpty", () => {
-  it("prefills empty only", () => {
-    assert.equal(suggestMetersIfEmpty("", "2.5"), "2.5");
-    assert.equal(suggestMetersIfEmpty("1", "2.5"), "1");
+  it("soft-prefills empty meters from previous", () => {
+    assert.equal(suggestMetersIfEmpty("", "1.6"), "1.6");
+    assert.equal(suggestMetersIfEmpty("   ", "1.6"), "1.6");
+  });
+
+  it("never overwrites user-entered meters", () => {
+    assert.equal(suggestMetersIfEmpty("2", "1.6"), "2");
+    assert.equal(suggestMetersIfEmpty("1.6", "2.5"), "1.6");
   });
 });
