@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  canAccessClientMedia,
-} from "@/lib/auth/permissions";
+import { canAccessClientMedia } from "@/lib/auth/permissions";
 import { requireAuthenticated } from "@/lib/auth/session";
 import {
   clientMediaLimitError,
@@ -41,6 +39,19 @@ export async function POST(request: Request) {
   const session = await requireAuthenticated();
   if (!session || !canAccessClientMedia(session)) {
     return NextResponse.json({ error: "Client media access required." }, { status: 403 });
+  }
+  // Sales uploads wearing photos; Pattern only views + assigns to fabric lines.
+  if (
+    session.isPatternOperator &&
+    !session.isAdmin &&
+    !session.isSalesOperator &&
+    !session.isClientManager &&
+    !session.isProductionOperator
+  ) {
+    return NextResponse.json(
+      { error: "Pattern operators assign photos to fabrics; Sales uploads them." },
+      { status: 403 }
+    );
   }
   await ensureDocumentsLoaded(["clients", "sales_workspace"]);
   const form = await request.formData();

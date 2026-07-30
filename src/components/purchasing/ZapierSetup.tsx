@@ -61,6 +61,9 @@ const OUTBOUND_EVENTS = [
   "sales_client_details.updated",
   "sales_client_photo.uploaded",
   "sales_client_photo.deleted",
+  "sales_client_photo.assigned",
+  "sales_client_photo.unassigned",
+  "client_pattern.tud_version_uploaded",
   "sales_fitting.created",
   "sales_fitting.updated",
   "sales_order.milestone_updated",
@@ -117,7 +120,7 @@ export function ZapierSetup() {
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <div className="text-sm text-slate-700">
-          <p className="font-medium text-slate-900">Zapier → ERP (use Webhooks by Zapier)</p>
+          <p className="font-medium text-slate-900">Zapier to ERP (use Webhooks by Zapier)</p>
           <p className="mt-1 text-xs text-slate-500">Header: Authorization: Bearer YOUR_ERP_API_KEY</p>
           <ul className="mt-2 space-y-1 font-mono text-xs">
             <li>GET/POST {baseUrl}/api/v1/clients</li>
@@ -146,9 +149,24 @@ export function ZapierSetup() {
             <li>POST {baseUrl}/api/v1/pattern/jobs/[id]/revisions</li>
             <li>POST {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]/tud-fill</li>
             <li className="pl-4 text-slate-500">
-              body: size, optional base_pattern_id / version_id / applied_by — sets
+              body: size, optional base_pattern_id / version_id / applied_by - sets
               base size from a .tud size and fills empty measurement cells (extends
               client_pattern.updated with action tud_size_fill)
+            </li>
+            <li>POST {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]/files</li>
+            <li className="pl-4 text-slate-500">
+              multipart: file, optional uploaded_by; ?version= for trial - versioned
+              .TUD re-upload (pattern_library.file_uploaded +
+              client_pattern.tud_version_uploaded)
+            </li>
+            <li>PATCH {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]</li>
+            <li className="pl-4 text-slate-500">
+              body may include garment_type, rebuild_template, active_tud_file_id,
+              measurement header fields
+            </li>
+            <li>PATCH {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]/versions/[versionId]</li>
+            <li className="pl-4 text-slate-500">
+              trial sheet updates (Sample / Trial N / Final columns via measurements)
             </li>
             <li>POST {baseUrl}/api/v1/sales-orders/[id]/fabric-lines/print</li>
             <li>POST {baseUrl}/api/v1/fabric-receiving/reset-testing</li>
@@ -165,11 +183,17 @@ export function ZapierSetup() {
             <li>PATCH {baseUrl}/api/v1/sales/milestones</li>
             <li>POST {baseUrl}/api/v1/sales/client-photos</li>
             <li>DELETE {baseUrl}/api/v1/sales/client-photos/[photoId]</li>
+            <li>POST {baseUrl}/api/v1/sales/client-photos/[photoId]/assign</li>
+            <li className="pl-4 text-slate-500">
+              body: fabric_line_id (null to unassign), optional article_number /
+              client_pattern_id / assigned_by - Pattern links wearing photo to
+              fabric line / article
+            </li>
             <li>GET {baseUrl}/api/v1/events</li>
           </ul>
         </div>
         <div className="text-sm text-slate-700">
-          <p className="font-medium text-slate-900">ERP → Zapier (Catch Hook)</p>
+          <p className="font-medium text-slate-900">ERP to Zapier (Catch Hook)</p>
           <ul className="mt-2 space-y-1">
             {OUTBOUND_EVENTS.map((event) => (
               <li key={event}>

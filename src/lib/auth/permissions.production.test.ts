@@ -6,7 +6,9 @@ import {
   PRODUCTION_OPERATOR_BLOCKED_ROUTE_PREFIXES,
   PRODUCTION_OPERATOR_NAV_HREFS,
   SALES_OPERATOR_NAV_HREFS,
+  canAccessClientMedia,
   canAccessPatternModule,
+  canAssignClientPhotoToFabric,
   defaultPathForEmail,
   defaultPathForSession,
   isAccountingOperatorRouteAllowed,
@@ -195,9 +197,29 @@ describe("pattern_operator fabric swatch image routes", () => {
   it("still blocks order/accounting routes for pattern_operator", () => {
     assert.equal(isPatternOperatorRouteAllowed("/pattern/library/fabrics/client-1"), true);
     assert.equal(isPatternOperatorRouteAllowed("/api/pattern/library/client-fabrics/x"), true);
+    assert.equal(isPatternOperatorRouteAllowed("/api/sales/client-photos"), true);
+    assert.equal(isPatternOperatorRouteAllowed("/api/sales/client-photos/photo-1"), true);
     assert.equal(isPatternOperatorRouteAllowed("/orders"), false);
     assert.equal(isPatternOperatorRouteAllowed("/invoices"), false);
     assert.equal(isPatternOperatorRouteAllowed("/costing"), false);
+  });
+});
+
+describe("pattern_operator client media assign", () => {
+  it("allows pattern to view client media and assign photos to fabrics", () => {
+    assert.equal(
+      canAccessClientMedia({ isPatternOperator: true }),
+      true
+    );
+    assert.equal(
+      canAssignClientPhotoToFabric({ isPatternOperator: true }),
+      true
+    );
+    assert.equal(
+      canAssignClientPhotoToFabric({ isAdmin: true }),
+      true
+    );
+    assert.equal(canAssignClientPhotoToFabric({}), false);
   });
 });
 

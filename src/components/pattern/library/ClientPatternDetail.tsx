@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { BasePatternCascadePicker } from "@/components/pattern/library/BasePatternCascadePicker";
+import { ClientPhotoAssignmentPanel } from "@/components/pattern/library/ClientPhotoAssignmentPanel";
 import { MeasurementInput } from "@/components/pattern/library/MeasurementInput";
 import {
   LibraryFileList,
@@ -26,8 +27,11 @@ import {
 } from "@/components/pattern/library/LibraryFileList";
 import { LinkedFabricsCard } from "@/components/pattern/library/LinkedFabricsCard";
 import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
+import { TudVersionHistory } from "@/components/pattern/library/TudVersionHistory";
 import {
   emptyCascadeValue,
+  garmentLabel,
+  PATTERN_SHEET_GARMENTS,
   preferredBrandCodeFromClientCode,
   type BasePatternCascadeValue,
 } from "@/lib/pattern-library/base-pattern-picker";
@@ -35,6 +39,14 @@ import { formatMeasurement, unitLabel } from "@/lib/pattern-library/measurements
 import { clientPatternQrUrl } from "@/lib/pattern-library/pattern-qr";
 import { TudViewerModal } from "@/components/pattern/library/TudViewerModal";
 import { formatTudSizeDerivedLine } from "@/lib/pattern-library/derived-from";
+import {
+  buildTrialSheetColumns,
+  currentTrialVersion,
+  sampleValueForPoint,
+  trialColumnValue,
+  trialSheetPoints,
+  trialSheetStatusLabel,
+} from "@/lib/pattern-library/trial-sheet";
 import { clientPatternTudPreview, formatAreaM2 } from "@/lib/pattern-library/tud-display";
 import { sizesMatch, type TudFillSuggestion } from "@/lib/pattern-library/tud-size-fill";
 import type {
@@ -66,7 +78,7 @@ function versionLabel(version: ClientPatternVersion): string {
 }
 
 function formatDate(value: string | null): string {
-  if (!value) return "—";
+  if (!value) return "-";
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString();
 }
@@ -93,6 +105,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   const [tudFillNotice, setTudFillNotice] = useState<string | null>(null);
   const [libraryBases, setLibraryBases] = useState<BasePattern[]>([]);
   const [tudCascade, setTudCascade] = useState<BasePatternCascadeValue>(() => emptyCascadeValue());
+  const [sheetMode, setSheetMode] = useState<"trials" | "detail">("trials");
 
   const load = useCallback(
     async (keepSelection = false) => {
@@ -194,7 +207,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
     setNewPointName("");
   }
 
-  async function saveHeader() {
+  async function saveHeader(extra: { rebuild_template?: boolean } = {}) {
     if (!pattern) return;
     setSaving(true);
     setError(null);
@@ -206,19 +219,140 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           pattern_ref: pattern.pattern_ref,
           description: pattern.description,
           fabric: pattern.fabric,
+          garment_type: pattern.garment_type,
           special_instructions: pattern.special_instructions,
           physical_pattern_kept: pattern.physical_pattern_kept,
           physical_pattern_location: pattern.physical_pattern_location,
           notes: pattern.notes,
+          rebuild_template: extra.rebuild_template === true,
         }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         throw new Error(body?.error ?? "Failed to save.");
       }
+      const data = await res.json().catch(() => null);
+      if (data?.pattern) setPattern(data.pattern);
       setHeaderDirty(false);
+      if (extra.rebuild_template) setDirty(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function activateTudVersion(fileId: string) {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/pattern/library/client-patterns/${patternId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active_tud_file_id: fileId }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? "Failed to set active .TUD.");
+      }
+      await load(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to set active .TUD.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  /** Persist Sample / Trial / Final cell edits across versions in one save. */
+  async function saveTrialSheet() {
+    if (!pattern) return;
+    setSaving(true);
+    setError(null);
+    try {
+      for (const trial of pattern.versions) {
+        const res = await fetch(
+          `/api/pattern/library/client-patterns/${patternId}/versions/${trial.id}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              measurements: trial.measurements,
+              trial_date: trial.trial_date,
+              special_instructions: trial.special_instructions,
+              notes: trial.notes,
+            }),
+          }
+        );
+        if (!res.ok) {
+          const body = await res.json().catch(() => null);
+          throw new Error(body?.error ?? `Failed to save Trial ${trial.version}.`);
+        }
+      }
+      setDirty(false);
+      await load(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save sheet.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function setSampleValue(pointId: string, value: number | null) {
+    mutatePattern((draft) => ({
+      ...draft,
+      versions: draft.versions.map((trial) => ({
+        ...trial,
+        measurements: trial.measurements.map((row) =>
+          row.point_id === pointId ? { ...row, base_value: value } : row
+        ),
+      })),
+    }));
+  }
+
+  function setTrialTarget(versionId: string, pointId: string, value: number | null) {
+    mutatePattern((draft) => ({
+      ...draft,
+      versions: draft.versions.map((trial) =>
+        trial.id !== versionId
+          ? trial
+          : {
+              ...trial,
+              measurements: trial.measurements.map((row) =>
+                row.point_id === pointId ? { ...row, target_value: value } : row
+              ),
+            }
+      ),
+    }));
+  }
+
+  async function changeGarmentType(nextGarment: string) {
+    if (!pattern || !nextGarment || nextGarment === pattern.garment_type) return;
+    const rebuild =
+      !pattern.base_pattern_id &&
+      window.confirm(
+        `Switch garment type to ${garmentLabel(nextGarment)} and refresh the measurement template points? Entered values on matching points are kept.`
+      );
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/pattern/library/client-patterns/${patternId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          garment_type: nextGarment,
+          rebuild_template: rebuild,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? "Failed to update garment type.");
+      }
+      const data = await res.json();
+      setPattern(data.pattern);
+      setHeaderDirty(false);
+      setDirty(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update garment type.");
     } finally {
       setSaving(false);
     }
@@ -308,7 +442,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
     const suggestion = response?.tud_fill ?? null;
     if (!suggestion) return;
     const firstBase = suggestion.base ?? suggestion.candidate_bases[0] ?? null;
-    // Prefer the trial on screen — pattern-level uploads otherwise default the
+    // Prefer the trial on screen - pattern-level uploads otherwise default the
     // suggestion to the latest trial, which may not be the open sheet.
     setTudFill({
       ...suggestion,
@@ -380,7 +514,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
       const parts = [`Size set to ${body?.base_size ?? tudFillSize}`];
       if (filled > 0) parts.push(`${filled} point${filled === 1 ? "" : "s"} filled`);
       if (added > 0) parts.push(`${added} added`);
-      setTudFillNotice(`${parts.join(" · ")} — from the base pattern values. Entered cells were left unchanged.`);
+      setTudFillNotice(`${parts.join(" / ")} - from the base pattern values. Entered cells were left unchanged.`);
       setTudFill(null);
       if (typeof body?.version_id === "string") setSelectedVersionId(body.version_id);
       await load(true);
@@ -391,7 +525,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
     }
   }
 
-  if (loading) return <p className="text-sm text-slate-500">Loading client pattern…</p>;
+  if (loading) return <p className="text-sm text-slate-500">Loading client pattern...</p>;
   if (!pattern) return <p className="text-sm text-rose-600">Client pattern not found.</p>;
 
   const unit = pattern.unit;
@@ -462,6 +596,32 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
               {pattern.client_name} <span className="text-slate-400">({pattern.client_code})</span>
             </p>
           </div>
+          <label className="text-sm">
+            <span className="mb-1 block text-xs font-medium text-slate-600">Garment type</span>
+            <select
+              value={
+                PATTERN_SHEET_GARMENTS.includes(pattern.garment_type)
+                  ? pattern.garment_type
+                  : pattern.garment_type
+              }
+              onChange={(e) => void changeGarmentType(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium"
+            >
+              {!PATTERN_SHEET_GARMENTS.includes(pattern.garment_type) ? (
+                <option value={pattern.garment_type}>
+                  {garmentLabel(pattern.garment_type)}
+                </option>
+              ) : null}
+              {PATTERN_SHEET_GARMENTS.map((garment) => (
+                <option key={garment} value={garment}>
+                  {garmentLabel(garment)}
+                </option>
+              ))}
+            </select>
+            <span className="mt-1 block text-[11px] text-slate-400">
+              Drives the measurement template (library bases stay separate).
+            </span>
+          </label>
           <div className="text-sm">
             <span className="mb-1 block text-xs font-medium text-slate-600">Origin</span>
             <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-800">
@@ -482,9 +642,9 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                 </>
               ) : (
                 <>
-                  <span className="font-medium text-slate-800">Custom</span>
+                  <span className="font-medium text-slate-800">Custom template</span>
                   <span className="mt-0.5 block text-xs text-slate-500">
-                    Built from scratch — no library base
+                    Sheet points from garment type dictionary
                   </span>
                 </>
               )}
@@ -528,7 +688,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           </label>
             </div>
           </div>
-          {/* Extracted TUKA preview from the latest .tud upload — click to open the viewer */}
+          {/* Extracted TUKA preview from the latest .tud upload - click to open the viewer */}
           {tudPreview ? (
             <div className="flex shrink-0 flex-col items-center gap-1">
               <button
@@ -549,7 +709,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
               </button>
               <p className="max-w-28 truncate text-center text-[10px] font-medium uppercase tracking-wide text-slate-400">
                 {tudPreview.attachment.tud?.total_area_m2 != null
-                  ? `TUKA · ${formatAreaM2(tudPreview.attachment.tud.total_area_m2)}`
+                  ? `TUKA / ${formatAreaM2(tudPreview.attachment.tud.total_area_m2)}`
                   : "TUKA preview"}
               </p>
               <p
@@ -569,7 +729,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
               ) : null}
             </div>
           ) : null}
-          {/* Fixed pattern QR — permanent deep link, survives ref edits */}
+          {/* Fixed pattern QR - permanent deep link, survives ref edits */}
           <PatternQrBadge payload={clientPatternQrUrl(pattern.id)} label={pattern.pattern_ref} />
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
@@ -616,7 +776,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         </div>
       </div>
 
-      {/* .tud size detected — confirm before setting the size / filling the sheet */}
+      {/* .tud size detected - confirm before setting the size / filling the sheet */}
       {tudFill ? (
         <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 shadow-sm">
           <div className="flex items-start justify-between gap-3">
@@ -630,7 +790,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                 {!tudFill.base ? (
                   <div className="max-w-2xl rounded-lg border border-indigo-100 bg-white/80 p-3">
                     <p className="mb-2 text-xs font-medium text-slate-600">
-                      This pattern has no base yet — pick a library base (filtered by brand &amp;
+                      This pattern has no base yet - pick a library base (filtered by brand &amp;
                       garment)
                     </p>
                     <BasePatternCascadePicker
@@ -665,8 +825,8 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                 {tudFillCandidate && tudFillMatch ? (
                   <p className="text-sm text-slate-700">
                     Set size to <span className="font-semibold">{tudFillMatch.base_size}</span> and
-                    fill the sheet with {tudFillCandidate.name} · {tudFillMatch.base_size} base
-                    values? Only empty cells are filled — entered values are kept.
+                    fill the sheet with {tudFillCandidate.name} / {tudFillMatch.base_size} base
+                    values? Only empty cells are filled - entered values are kept.
                     {tudFill.base &&
                     tudFillCandidate.matches.length === 1 &&
                     (tudFill.fillable_points !== null || tudFill.addable_points !== null) ? (
@@ -676,7 +836,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                           ? `: ${tudFill.fillable_points} empty point${tudFill.fillable_points === 1 ? "" : "s"} to fill`
                           : ": no empty cells to fill"}
                         {tudFill.addable_points
-                          ? ` · ${tudFill.addable_points} base point${tudFill.addable_points === 1 ? "" : "s"} to add`
+                          ? ` / ${tudFill.addable_points} base point${tudFill.addable_points === 1 ? "" : "s"} to add`
                           : ""}
                         .
                       </span>
@@ -701,7 +861,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
               disabled={tudFillBusy || !tudFillMatch}
               className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
             >
-              {tudFillBusy ? "Filling…" : "Set size & fill sheet"}
+              {tudFillBusy ? "Filling..." : "Set size & fill sheet"}
             </button>
             <button
               type="button"
@@ -758,68 +918,228 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
 
       {view === "measurements" ? (
         <>
-          {/* Trial selector */}
           <div className="flex flex-wrap items-center gap-2">
-            {pattern.versions.map((candidate) => (
+            <span
+              className={cn(
+                "rounded-full px-3 py-1 text-xs font-semibold",
+                pattern.final_version_id
+                  ? "bg-emerald-100 text-emerald-800"
+                  : "bg-amber-100 text-amber-900"
+              )}
+            >
+              {trialSheetStatusLabel(pattern)}
+            </span>
+            <div className="flex rounded-lg bg-slate-100 p-0.5 text-xs font-medium">
               <button
-                key={candidate.id}
                 type="button"
-                onClick={() => setSelectedVersionId(candidate.id)}
+                onClick={() => setSheetMode("trials")}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  candidate.id === selectedVersionId
-                    ? "bg-slate-900 text-white"
-                    : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+                  "rounded-md px-2.5 py-1.5",
+                  sheetMode === "trials" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600"
                 )}
               >
-                {versionLabel(candidate)}
-                {candidate.is_final ? (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                ) : null}
+                Sample / Trials / Final
               </button>
-            ))}
+              <button
+                type="button"
+                onClick={() => setSheetMode("detail")}
+                className={cn(
+                  "rounded-md px-2.5 py-1.5",
+                  sheetMode === "detail" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600"
+                )}
+              >
+                Trial detail (Sewn / Adjust)
+              </button>
+            </div>
             <button
               type="button"
               onClick={() => void addTrial()}
-              disabled={saving}
-              className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-sm font-medium text-indigo-700 ring-1 ring-slate-200 hover:bg-slate-50"
+              disabled={saving || Boolean(pattern.final_version_id)}
+              className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-sm font-medium text-indigo-700 ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-50"
             >
               <Plus className="h-4 w-4" />
               Add trial
             </button>
-            {version ? (
+            {(() => {
+              const current = currentTrialVersion(pattern) ?? version;
+              if (!current) return null;
+              return (
               <button
                 type="button"
-                onClick={() => void toggleFinal(version)}
+                onClick={() => void toggleFinal(current)}
                 disabled={saving}
                 className={cn(
                   "ml-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium",
-                  version.is_final
+                  current.is_final
                     ? "bg-emerald-600 text-white hover:bg-emerald-700"
                     : "bg-white text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-50"
                 )}
               >
                 <CheckCircle2 className="h-4 w-4" />
-                {version.is_final ? "Final version" : "Mark as final"}
+                {current.is_final ? "Final version" : "Mark current as final"}
               </button>
-            ) : null}
+              );
+            })()}
           </div>
 
-          {version ? (
+          {sheetMode === "trials" ? (
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
-                <div className="flex flex-wrap items-center gap-3 text-sm">
-                  <p className="font-semibold text-slate-800">
-                    {versionLabel(version)} grid{" "}
-                    <span className="font-normal text-slate-500">({unitLabel(unit)})</span>
-                  </p>
-                  <label className="inline-flex items-center gap-2 text-xs text-slate-600">
+                <p className="text-sm font-semibold text-slate-800">
+                  Measurement sheet{" "}
+                  <span className="font-normal text-slate-500">({unitLabel(unit)})</span>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void saveTrialSheet()}
+                  disabled={!dirty || saving}
+                  className={cn(
+                    "rounded-lg px-4 py-2 text-sm font-medium",
+                    dirty
+                      ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                      : "bg-slate-100 text-slate-400"
+                  )}
+                >
+                  {saving ? "Saving..." : dirty ? "Save sheet" : "Sheet saved"}
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+                      <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2">Measurement</th>
+                      {buildTrialSheetColumns(pattern).map((col) => (
+                        <th
+                          key={col.key}
+                          className={cn(
+                            "px-2 py-2 text-center",
+                            col.isCurrent ? "bg-amber-50 text-amber-900" : null,
+                            col.kind === "final" ? "text-emerald-700" : null
+                          )}
+                        >
+                          {col.label}
+                          {col.isCurrent && col.kind !== "final" ? (
+                            <span className="mt-0.5 block text-[10px] font-semibold normal-case">
+                              current
+                            </span>
+                          ) : null}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trialSheetPoints(pattern).map((point) => (
+                      <tr key={point.point_id} className="border-b border-slate-100">
+                        <td className="sticky left-0 z-10 whitespace-nowrap bg-white px-3 py-1.5 font-medium text-slate-800">
+                          {point.name}
+                          {point.remark ? (
+                            <span className="ml-2 text-xs font-normal text-slate-400">
+                              {point.remark}
+                            </span>
+                          ) : null}
+                        </td>
+                        {buildTrialSheetColumns(pattern).map((col) => {
+                          if (col.kind === "sample") {
+                            return (
+                              <td key={col.key} className="px-1 py-1 text-center">
+                                <MeasurementInput
+                                  value={sampleValueForPoint(pattern, point.point_id)}
+                                  unit={unit}
+                                  onCommit={(value) => setSampleValue(point.point_id, value)}
+                                />
+                              </td>
+                            );
+                          }
+                          if (!col.versionId) {
+                            return (
+                              <td
+                                key={col.key}
+                                className="px-2 py-1.5 text-center text-xs text-slate-300"
+                              >
+                                -
+                              </td>
+                            );
+                          }
+                          const trial =
+                            pattern.versions.find((v) => v.id === col.versionId) ?? null;
+                          return (
+                            <td
+                              key={col.key}
+                              className={cn(
+                                "px-1 py-1 text-center",
+                                col.isCurrent ? "bg-amber-50/40" : null
+                              )}
+                            >
+                              <MeasurementInput
+                                value={trialColumnValue(trial, point.point_id)}
+                                unit={unit}
+                                onCommit={(value) =>
+                                  setTrialTarget(col.versionId!, point.point_id, value)
+                                }
+                              />
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5 border-t border-slate-100 px-4 py-3">
+                <input
+                  value={newPointName}
+                  onChange={(e) => setNewPointName(e.target.value)}
+                  placeholder="Add measurement point..."
+                  className="w-64 rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+                  onKeyDown={(e) => e.key === "Enter" && addMeasurementRow()}
+                />
+                <button
+                  type="button"
+                  onClick={addMeasurementRow}
+                  className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 ring-1 ring-slate-200 hover:bg-slate-50"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add point
+                </button>
+                <p className="ml-auto text-[11px] text-slate-400">
+                  After client trial: edit the current Trial column, update Tuka, re-upload .TUD.
+                </p>
+              </div>
+            </div>
+          ) : null}
+
+          {sheetMode === "detail" && version ? (
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  {pattern.versions.map((candidate) => (
+                    <button
+                      key={candidate.id}
+                      type="button"
+                      onClick={() => setSelectedVersionId(candidate.id)}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        candidate.id === selectedVersionId
+                          ? "bg-slate-900 text-white"
+                          : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+                      )}
+                    >
+                      {versionLabel(candidate)}
+                      {candidate.is_final ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                      ) : null}
+                    </button>
+                  ))}
+                  <label className="ml-2 inline-flex items-center gap-2 text-xs text-slate-600">
                     Trial date
                     <input
                       type="date"
                       value={version.trial_date ?? ""}
                       onChange={(e) =>
-                        mutateVersion((draft) => ({ ...draft, trial_date: e.target.value || null }))
+                        mutateVersion((draft) => ({
+                          ...draft,
+                          trial_date: e.target.value || null,
+                        }))
                       }
                       className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
                     />
@@ -831,10 +1151,12 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   disabled={!dirty || saving}
                   className={cn(
                     "rounded-lg px-4 py-2 text-sm font-medium",
-                    dirty ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-slate-100 text-slate-400"
+                    dirty
+                      ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                      : "bg-slate-100 text-slate-400"
                   )}
                 >
-                  {saving ? "Saving…" : dirty ? "Save grid" : "Grid saved"}
+                  {saving ? "Saving..." : dirty ? "Save detail" : "Detail saved"}
                 </button>
               </div>
               <div className="overflow-x-auto">
@@ -842,10 +1164,10 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                       <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2">Point</th>
-                      <th className="px-2 py-2 text-center">Base</th>
+                      <th className="px-2 py-2 text-center">Sample</th>
                       <th className="px-2 py-2 text-center">Target</th>
                       <th className="px-2 py-2 text-center">Sewn</th>
-                      <th className="px-2 py-2 text-center">Adjust ±</th>
+                      <th className="px-2 py-2 text-center">Adjust +/-</th>
                       <th className="px-3 py-2">Remarks</th>
                       <th className="w-8 px-1 py-2" />
                     </tr>
@@ -855,11 +1177,6 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                       <tr key={row.point_id} className="border-b border-slate-100">
                         <td className="sticky left-0 z-10 whitespace-nowrap bg-white px-3 py-1.5 font-medium text-slate-800">
                           {row.name}
-                          {row.remark ? (
-                            <span className="ml-2 text-xs font-normal text-slate-400">
-                              {row.remark}
-                            </span>
-                          ) : null}
                         </td>
                         <td className="px-2 py-1.5 text-center tabular-nums text-slate-500">
                           {formatMeasurement(row.base_value, unit)}
@@ -868,21 +1185,27 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                           <MeasurementInput
                             value={row.target_value}
                             unit={unit}
-                            onCommit={(value) => setMeasurement(row.point_id, { target_value: value })}
+                            onCommit={(value) =>
+                              setMeasurement(row.point_id, { target_value: value })
+                            }
                           />
                         </td>
                         <td className="px-1 py-1 text-center">
                           <MeasurementInput
                             value={row.sewn_value}
                             unit={unit}
-                            onCommit={(value) => setMeasurement(row.point_id, { sewn_value: value })}
+                            onCommit={(value) =>
+                              setMeasurement(row.point_id, { sewn_value: value })
+                            }
                           />
                         </td>
                         <td className="px-1 py-1 text-center">
                           <MeasurementInput
                             value={row.adjustment}
                             unit={unit}
-                            onCommit={(value) => setMeasurement(row.point_id, { adjustment: value })}
+                            onCommit={(value) =>
+                              setMeasurement(row.point_id, { adjustment: value })
+                            }
                             className={cn(
                               row.adjustment
                                 ? row.adjustment > 0
@@ -896,10 +1219,12 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                           <input
                             value={row.remarks ?? ""}
                             onChange={(e) =>
-                              setMeasurement(row.point_id, { remarks: e.target.value || null })
+                              setMeasurement(row.point_id, {
+                                remarks: e.target.value || null,
+                              })
                             }
                             className="w-36 rounded-md border border-transparent px-1.5 py-1 text-xs text-slate-600 hover:border-slate-200 focus:border-indigo-300 focus:outline-none"
-                            placeholder="—"
+                            placeholder="-"
                           />
                         </td>
                         <td className="px-1 py-1.5 text-center">
@@ -923,23 +1248,6 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                     ))}
                   </tbody>
                 </table>
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5 border-t border-slate-100 px-4 py-3">
-                <input
-                  value={newPointName}
-                  onChange={(e) => setNewPointName(e.target.value)}
-                  placeholder="Add measurement point…"
-                  className="w-64 rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
-                  onKeyDown={(e) => e.key === "Enter" && addMeasurementRow()}
-                />
-                <button
-                  type="button"
-                  onClick={addMeasurementRow}
-                  className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 ring-1 ring-slate-200 hover:bg-slate-50"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add point
-                </button>
               </div>
               <div className="grid gap-4 border-t border-slate-100 p-4 lg:grid-cols-2">
                 <label className="text-sm">
@@ -975,6 +1283,18 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
       {view === "evolution" ? <EvolutionView pattern={pattern} /> : null}
       {view === "history" ? <HistoryTimeline pattern={pattern} /> : null}
 
+      <TudVersionHistory
+        pattern={pattern}
+        onUploaded={handleUploaded}
+        onActivate={(fileId) => void activateTudVersion(fileId)}
+      />
+
+      <ClientPhotoAssignmentPanel
+        clientId={pattern.client_id}
+        patternId={pattern.id}
+        linkedLineIds={pattern.linked_fabric_line_ids ?? []}
+      />
+
       <div className="grid gap-4 lg:grid-cols-2">
         <LinkedFabricsCard clientId={pattern.client_id} patternId={pattern.id} />
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -983,7 +1303,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
             uploadUrl={`/api/pattern/library/client-patterns/${pattern.id}/files`}
             downloadUrlBase={`/api/pattern/library/client-patterns/${pattern.id}/files`}
             onUploaded={handleUploaded}
-            title="Pattern files (.TUD, Excel, DXF, PDF, images)"
+            title="Other pattern files (Excel, DXF, PDF, images)"
             basePatternName={basePatternName}
           />
         </div>
@@ -1002,7 +1322,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                     className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
                   >
                     <span>
-                      {job.so_number} · {job.garment_type}
+                      {job.so_number} / {job.garment_type}
                     </span>
                     <span className="flex items-center gap-2 text-xs text-slate-500">
                       {job.status.replace(/_/g, " ")}
@@ -1022,7 +1342,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
 }
 
 /**
- * Per-measurement evolution across trials: base → T1 → T2 → … with the delta
+ * Per-measurement evolution across trials: base -> T1 -> T2 -> ... with the delta
  * vs the previous trial colored (emerald = increased, rose = decreased).
  */
 function EvolutionView({ pattern }: { pattern: ClientPattern }) {
@@ -1060,7 +1380,7 @@ function EvolutionView({ pattern }: { pattern: ClientPattern }) {
         <p className="text-sm font-semibold text-slate-800">
           Evolution across trials{" "}
           <span className="font-normal text-slate-500">
-            (target values, {unitLabel(unit)} — Δ vs previous trial)
+            (target values, {unitLabel(unit)} - delta vs previous trial)
           </span>
         </p>
       </div>
@@ -1143,7 +1463,7 @@ function EvolutionView({ pattern }: { pattern: ClientPattern }) {
   );
 }
 
-/** Vertical timeline: Trial 1 → … → Final with dates, editors, notes, and files. */
+/** Vertical timeline: Trial 1 -> ... -> Final with dates, editors, notes, and files. */
 function HistoryTimeline({ pattern }: { pattern: ClientPattern }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -1168,18 +1488,18 @@ function HistoryTimeline({ pattern }: { pattern: ClientPattern }) {
                 </span>
               ) : null}
               <span className="text-xs text-slate-500">
-                Trial date {formatDate(version.trial_date)} · created {formatDate(version.created_at)}
+                Trial date {formatDate(version.trial_date)} / created {formatDate(version.created_at)}
               </span>
             </div>
             <p className="mt-1 text-xs text-slate-500">
               {version.created_by ? `Created by ${version.created_by}` : "Creator unknown"}
               {version.updated_by && version.updated_by !== version.created_by
-                ? ` · last edited by ${version.updated_by}`
+                ? ` / last edited by ${version.updated_by}`
                 : ""}
-              {` · ${version.measurements.length} points`}
+              {` / ${version.measurements.length} points`}
             </p>
             {version.special_instructions ? (
-              <p className="mt-1 text-sm text-slate-700">“{version.special_instructions}”</p>
+              <p className="mt-1 text-sm text-slate-700">"{version.special_instructions}"</p>
             ) : null}
             {version.notes ? <p className="mt-1 text-sm text-slate-600">{version.notes}</p> : null}
             {version.files.length > 0 ? (
@@ -1200,7 +1520,7 @@ function HistoryTimeline({ pattern }: { pattern: ClientPattern }) {
         ))}
       </ol>
       <p className="mt-4 text-xs text-slate-400">
-        Pattern created {formatDate(pattern.created_at)} · last updated {formatDate(pattern.updated_at)}
+        Pattern created {formatDate(pattern.created_at)} / last updated {formatDate(pattern.updated_at)}
       </p>
     </div>
   );

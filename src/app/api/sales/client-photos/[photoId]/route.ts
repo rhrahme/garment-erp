@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   canAccessClientMedia,
+  canAssignClientPhotoToFabric,
   canHardDeleteClientMedia,
   isClientPhotoDeletePending,
 } from "@/lib/auth/permissions";
@@ -19,11 +20,13 @@ import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSalesWorkspace } from "@/lib/data/sales-workspace";
 import { canAccessClient } from "@/lib/sales/access";
 import {
+  assignSalesClientPhotoToFabric,
   clearSalesClientPhotoDeleteRequest,
   removeSalesClientPhoto,
   replaceSalesClientPhoto,
   requestSalesClientPhotoDelete,
 } from "@/lib/sales/mutations";
+import { readSalesOrders } from "@/lib/data/sales-orders";
 
 export const maxDuration = 60;
 
@@ -173,13 +176,73 @@ export async function POST(
     return NextResponse.json({ photo: replaced.photo });
   }
 
-  let body: { action?: string } = {};
+  let body: {
+    action?: string;
+    fabric_line_id?: string | null;
+    article_number?: string | null;
+    sales_order_id?: string | null;
+    so_number?: string | null;
+    client_pattern_id?: string | null;
+  } = {};
   try {
-    body = (await request.json()) as { action?: string };
+    body = (await request.json()) as typeof body;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
   const action = String(body.action ?? "").trim();
+
+  if (action === "assign" || action === "unassign") {
+    if (!canAssignClientPhotoToFabric(session)) {
+      return NextResponse.json(
+        { error: "Pattern or admin access required to assign photos to fabrics." },
+        { status: 403 }
+      );
+    }
+    let fabricLineId =
+      action === "unassign" ? null : body.fabric_line_id?.trim() || null;
+    let articleNumber = body.article_number?.trim() || null;
+    let salesOrderId = body.sales_order_id?.trim() || null;
+    let soNumber = body.so_number?.trim() || null;
+    const clientPatternId = body.client_pattern_id?.trim() || null;
+
+    if (fabricLineId) {
+      await ensureDocumentsLoaded(["sales_orders"]);
+      const orders = readSalesOrders().orders;
+      let matched = false;
+      for (const order of orders) {
+        if (order.client_id !== found.details.client_id) continue;
+        const line = order.fabric_lines.find((entry) => entry.id === fabricLineId);
+        if (!line) continue;
+        matched = true;
+        articleNumber = articleNumber || line.fabric_number || null;
+        salesOrderId = salesOrderId || order.id;
+        soNumber = soNumber || order.so_number;
+        break;
+      }
+      if (!matched) {
+        return NextResponse.json(
+          { error: "Fabric line not found for this client." },
+          { status: 400 }
+        );
+      }
+    } else if (action === "assign") {
+      return NextResponse.json({ error: "fabric_line_id is required." }, { status: 400 });
+    }
+
+    const updated = await assignSalesClientPhotoToFabric(
+      photoId,
+      {
+        fabric_line_id: fabricLineId,
+        article_number: articleNumber,
+        sales_order_id: salesOrderId,
+        so_number: soNumber,
+        client_pattern_id: clientPatternId,
+      },
+      session.email
+    );
+    if (!updated) return NextResponse.json({ error: "Photo not found." }, { status: 404 });
+    return NextResponse.json({ photo: updated.photo });
+  }
 
   if (action === "request_delete") {
     if (canHardDeleteClientMedia(session)) {
@@ -234,7 +297,10 @@ export async function POST(
   }
 
   return NextResponse.json(
-    { error: "Unsupported action. Use request_delete, cancel_request, keep, confirm_delete, or replace." },
+    {
+      error:
+        "Unsupported action. Use assign, unassign, request_delete, cancel_request, keep, confirm_delete, or replace.",
+    },
     { status: 400 }
   );
 }

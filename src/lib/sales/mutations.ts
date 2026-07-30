@@ -108,6 +108,71 @@ export async function attachSalesClientPhoto(
   return photo;
 }
 
+export type ClientPhotoFabricAssignment = {
+  fabric_line_id: string | null;
+  article_number?: string | null;
+  sales_order_id?: string | null;
+  so_number?: string | null;
+  client_pattern_id?: string | null;
+};
+
+/** Pattern links a wearing photo to a fabric line / article (or clears the link). */
+export async function assignSalesClientPhotoToFabric(
+  photoId: string,
+  assignment: ClientPhotoFabricAssignment,
+  actor: string | null,
+  source: "erp" | "api" = "erp"
+): Promise<{ client_id: string; photo: ClientPhoto } | null> {
+  const result = await mutateSalesWorkspace((store) => {
+    const row = store.client_details.find((item) =>
+      item.photos.some((photo) => photo.id === photoId)
+    );
+    if (!row) return null;
+    const photo = row.photos.find((item) => item.id === photoId);
+    if (!photo) return null;
+    const now = new Date().toISOString();
+    const lineId = assignment.fabric_line_id?.trim() || null;
+    if (!lineId) {
+      photo.assigned_fabric_line_id = null;
+      photo.assigned_article_number = null;
+      photo.assigned_sales_order_id = null;
+      photo.assigned_so_number = null;
+      photo.assigned_client_pattern_id = null;
+      photo.assigned_at = null;
+      photo.assigned_by = null;
+    } else {
+      photo.assigned_fabric_line_id = lineId;
+      photo.assigned_article_number = assignment.article_number?.trim() || null;
+      photo.assigned_sales_order_id = assignment.sales_order_id?.trim() || null;
+      photo.assigned_so_number = assignment.so_number?.trim() || null;
+      photo.assigned_client_pattern_id = assignment.client_pattern_id?.trim() || null;
+      photo.assigned_at = now;
+      photo.assigned_by = actor;
+    }
+    row.updated_at = now;
+    row.updated_by = actor;
+    return { client_id: row.client_id, photo: structuredClone(photo), cleared: !lineId };
+  });
+  if (result) {
+    await notifyIntegration(
+      result.cleared ? "sales_client_photo.unassigned" : "sales_client_photo.assigned",
+      {
+        client_id: result.client_id,
+        photo_id: result.photo.id,
+        filename: result.photo.filename,
+        fabric_line_id: result.photo.assigned_fabric_line_id ?? null,
+        article_number: result.photo.assigned_article_number ?? null,
+        sales_order_id: result.photo.assigned_sales_order_id ?? null,
+        so_number: result.photo.assigned_so_number ?? null,
+        client_pattern_id: result.photo.assigned_client_pattern_id ?? null,
+        assigned_by: actor,
+      },
+      source
+    );
+  }
+  return result ? { client_id: result.client_id, photo: result.photo } : null;
+}
+
 export async function removeSalesClientPhoto(
   photoId: string,
   actor: string | null,
