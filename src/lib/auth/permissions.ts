@@ -136,6 +136,8 @@ const PATTERN_OPERATOR_ROUTE_PREFIXES = [
   "/api/fabric-brands",
   "/api/qr",
   "/api/garment-type-changes",
+  // Optional badge scan on Pattern stage scan (who scanned + when).
+  "/api/hr/employee-lookup",
   // Pattern assigns sales-uploaded wearing photos to fabric lines / articles.
   "/api/sales/client-photos",
   ...FABRIC_SWATCH_ROUTE_PREFIXES,

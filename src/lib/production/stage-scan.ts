@@ -26,6 +26,7 @@ import {
 import { getGarmentPieces } from "@/lib/sales-orders/label-codes";
 import { fabricCutCodesMatch } from "@/lib/production/scan-input";
 import type { FabricReceipt } from "@/lib/types/fabric-receipts";
+import type { PatternJob } from "@/lib/types/pattern";
 import type { ProductionWorkOrder } from "@/lib/types/production";
 
 export type ScanStation =
@@ -37,7 +38,11 @@ export type ScanStation =
   | "sewing"
   | "garment_wash"
   | "finishing"
-  | "packed";
+  | "packed"
+  | "pattern_tud_ready"
+  | "pattern_sheet_filled"
+  | "pattern_handed_to_cut"
+  | "pattern_trial_done";
 
 export type StageScanNotice =
   | "created"
@@ -62,6 +67,8 @@ export type StageScanResult = {
   notice?: StageScanNotice;
   receipt?: FabricReceipt;
   work_order?: ProductionWorkOrder;
+  /** Set when scanning at a Pattern station (status tracked on the pattern job). */
+  pattern_job?: PatternJob;
 };
 
 function normalizeScan(code: string): string {

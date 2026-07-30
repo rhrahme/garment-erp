@@ -199,6 +199,8 @@ describe("pattern_operator fabric swatch image routes", () => {
     assert.equal(isPatternOperatorRouteAllowed("/api/pattern/library/client-fabrics/x"), true);
     assert.equal(isPatternOperatorRouteAllowed("/api/sales/client-photos"), true);
     assert.equal(isPatternOperatorRouteAllowed("/api/sales/client-photos/photo-1"), true);
+    assert.equal(isPatternOperatorRouteAllowed("/api/pattern/scan"), true);
+    assert.equal(isPatternOperatorRouteAllowed("/api/hr/employee-lookup"), true);
     assert.equal(isPatternOperatorRouteAllowed("/orders"), false);
     assert.equal(isPatternOperatorRouteAllowed("/invoices"), false);
     assert.equal(isPatternOperatorRouteAllowed("/costing"), false);

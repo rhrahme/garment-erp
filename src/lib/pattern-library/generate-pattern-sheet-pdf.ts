@@ -6,7 +6,7 @@ import {
   clientPatternQrUrl,
 } from "@/lib/pattern-library/pattern-qr";
 import { renderQrPngBuffer } from "@/lib/production/qr-render";
-import type { PatternSheetData } from "@/lib/pattern-library/sheet-data";
+import type { PatternSheetData, PatternSheetSticker } from "@/lib/pattern-library/sheet-data";
 
 const MARGIN = 12;
 const PAGE_W = 210;
@@ -20,7 +20,11 @@ function formatDate(value: string | null | undefined): string {
   return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString("en-GB");
 }
 
-/** A4 portrait client-pattern measurement sheet — mirrors the print view. */
+function stickerScanLabel(sticker: PatternSheetSticker): string {
+  return sticker.role === "prep" ? "Fabric cut (prep)" : sticker.piece_name;
+}
+
+/** A4 portrait client-pattern measurement sheet - mirrors the print view. */
 export async function generatePatternSheetPdf(data: PatternSheetData): Promise<ArrayBuffer> {
   const {
     pattern,
@@ -62,7 +66,7 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
   doc.setTextColor(...INK);
   doc.text(brandName.toUpperCase(), brandX + brandW / 2, MARGIN + 13, { align: "center" });
 
-  // Fixed pattern QR (always) — next to house-brand letterhead
+  // Fixed pattern QR (always) - next to house-brand letterhead
   const { png: patternQrPng } = await renderQrPngBuffer(clientPatternQrUrl(pattern.id), 300);
   const patternQrX = PAGE_W - MARGIN - patternQrSize;
   doc.addImage(
@@ -87,7 +91,7 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
     MARGIN + Math.max(16, brandH + 2, patternQrSize + 2 + patternLabelLines.length * 2);
   doc.line(MARGIN, ruleY, PAGE_W - MARGIN, ruleY);
 
-  // Header block (left) + QR (right)
+  // Header block
   const headerRows: [string, string][] = [
     ["Client", `${pattern.client_name} (${pattern.client_code})`],
     ["Garment", pattern.garment_type],
@@ -101,15 +105,12 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
     ],
     [
       "Trial",
-      `Trial ${version.version}${version.is_final ? " — FINAL" : ""} · ${formatDate(version.trial_date)}`,
+      `Trial ${version.version}${version.is_final ? " - FINAL" : ""} · ${formatDate(version.trial_date)}`,
     ],
   ];
 
-  const articleQrSize = 30;
-  const hasArticleQr = stickers.length > 0;
   const headerStartY = ruleY + 5;
   let headerY = headerStartY;
-  const headerRight = hasArticleQr ? PAGE_W - MARGIN - articleQrSize - 6 : PAGE_W - MARGIN;
   doc.setFontSize(8.5);
   for (const [label, value] of headerRows) {
     doc.setFont("helvetica", "bold");
@@ -117,41 +118,12 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
     doc.text(label.toUpperCase(), MARGIN, headerY);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...INK);
-    const wrapped = doc.splitTextToSize(value, headerRight - MARGIN - 30);
+    const wrapped = doc.splitTextToSize(value, PAGE_W - MARGIN * 2 - 30);
     doc.text(wrapped, MARGIN + 30, headerY);
     headerY += 5 * Math.max(1, wrapped.length);
   }
 
-  let qrBottom = headerStartY;
-  if (hasArticleQr) {
-    const sticker = stickers[0]!;
-    const { png } = await renderQrPngBuffer(sticker.qr_payload, 300);
-    const qrX = PAGE_W - MARGIN - articleQrSize;
-    doc.addImage(
-      `data:image/png;base64,${png.toString("base64")}`,
-      "PNG",
-      qrX,
-      headerStartY - 2,
-      articleQrSize,
-      articleQrSize
-    );
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(5);
-    doc.setTextColor(...SLATE);
-    doc.text("ARTICLE", qrX + articleQrSize / 2, headerStartY - 2 + articleQrSize + 2, {
-      align: "center",
-    });
-    doc.setFont("courier", "normal");
-    doc.setFontSize(5.5);
-    doc.setTextColor(...INK);
-    const codeLines = doc.splitTextToSize(sticker.code, articleQrSize + 4);
-    doc.text(codeLines, qrX + articleQrSize / 2, headerStartY - 2 + articleQrSize + 4.5, {
-      align: "center",
-    });
-    qrBottom = headerStartY - 2 + articleQrSize + 4.5 + codeLines.length * 2.5;
-  }
-
-  let y = Math.max(headerY + 2, qrBottom + 3);
+  let y = headerY + 3;
   if (base_fill_warning) {
     doc.setFillColor(255, 251, 235);
     doc.setDrawColor(251, 191, 36);
@@ -193,7 +165,57 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
       if (cell) doc.text(cell, MARGIN + 3 + colIndex * 62, y + 9.5 + rowIndex * 5);
     });
   });
-  y += fabricBoxH + 5;
+  y += fabricBoxH + 4;
+
+  // Manufacturing scan QRs - same payloads as production stickers (Suit: prep + Jacket + Trouser)
+  if (stickers.length > 0) {
+    const count = stickers.length;
+    const qrSize = count >= 3 ? 22 : 26;
+    const cellW = (PAGE_W - MARGIN * 2) / count;
+    const labelH = 8;
+    const boxH = 8 + qrSize + labelH;
+    doc.setDrawColor(...INK);
+    doc.setLineWidth(0.5);
+    doc.rect(MARGIN, y, PAGE_W - MARGIN * 2, boxH);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(...INK);
+    doc.text("MANUFACTURING SCAN QRS", MARGIN + 3, y + 4);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(5.5);
+    doc.setTextColor(...SLATE);
+    doc.text(
+      "Pattern / cutter / stitchers: scan the labeled QR at each step",
+      MARGIN + 52,
+      y + 4
+    );
+
+    for (let i = 0; i < stickers.length; i++) {
+      const sticker = stickers[i]!;
+      const { png } = await renderQrPngBuffer(sticker.qr_payload, 300);
+      const qrX = MARGIN + i * cellW + (cellW - qrSize) / 2;
+      const qrY = y + 6;
+      doc.addImage(
+        `data:image/png;base64,${png.toString("base64")}`,
+        "PNG",
+        qrX,
+        qrY,
+        qrSize,
+        qrSize
+      );
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(6.5);
+      doc.setTextColor(...INK);
+      doc.text(stickerScanLabel(sticker).toUpperCase(), qrX + qrSize / 2, qrY + qrSize + 3, {
+        align: "center",
+      });
+      doc.setFont("courier", "normal");
+      doc.setFontSize(5.5);
+      const codeLines = doc.splitTextToSize(sticker.production_code, cellW - 4);
+      doc.text(codeLines, qrX + qrSize / 2, qrY + qrSize + 6, { align: "center" });
+    }
+    y += boxH + 4;
+  }
 
   // Measurement grid
   autoTable(doc, {
@@ -212,7 +234,7 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
       "Remarks",
     ]],
     body: version.measurements.map((row) => [
-      row.remark ? `${row.name} — ${row.remark}` : row.name,
+      row.remark ? `${row.name} - ${row.remark}` : row.name,
       formatMeasurementAscii(row.base_value, unit),
       formatMeasurementAscii(row.target_value, unit),
       formatMeasurementAscii(row.sewn_value, unit),
@@ -253,17 +275,10 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...INK);
     doc.text(
-      `kept${pattern.physical_pattern_location ? ` — ${pattern.physical_pattern_location}` : ""}`,
+      `kept${pattern.physical_pattern_location ? ` - ${pattern.physical_pattern_location}` : ""}`,
       MARGIN + 42,
       footerY
     );
-    footerY += 5;
-  }
-
-  if (stickers.length > 1) {
-    doc.setFont("courier", "normal");
-    doc.setFontSize(7);
-    doc.text(`Pieces: ${stickers.map((sticker) => sticker.code).join("   ")}`, MARGIN, footerY);
     footerY += 5;
   }
 

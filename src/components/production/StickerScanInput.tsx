@@ -38,7 +38,7 @@ export type StageScanResponse = {
 type StickerScanInputProps = {
   station: ScanStation;
   stationLabel: string;
-  scanContext?: "fabric-receiving" | "production";
+  scanContext?: "fabric-receiving" | "production" | "pattern";
   voiceFeedback?: boolean;
   employeeSession?: ScanEmployeeSession | null;
   requireEmployee?: boolean;

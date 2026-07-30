@@ -1,7 +1,7 @@
 import type { StageScanNotice } from "@/lib/production/stage-scan";
 import type { ScanStation } from "@/lib/production/stage-scan";
 
-export type ProductionScanContext = "fabric-receiving" | "production";
+export type ProductionScanContext = "fabric-receiving" | "production" | "pattern";
 
 export type ProductionScanEvent = {
   id: string;

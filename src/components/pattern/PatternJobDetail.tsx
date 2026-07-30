@@ -7,9 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { ChangeGarmentTypeControl } from "@/components/orders/ChangeGarmentTypeControl";
 import { GarmentPiecesNest } from "@/components/garment/GarmentPiecesNest";
 import { GarmentTypeChangeBadge } from "@/components/garment-type/GarmentTypeChangeBadge";
-import { PatternManufacturingQrs } from "@/components/pattern/PatternManufacturingQrs";
+import { PatternStageScanPanel } from "@/components/pattern/PatternStageScanPanel";
 import type { GarmentTypeChangeFlag } from "@/lib/sales-orders/garment-type-change-flags";
-import type { ManufacturingStickerQr } from "@/lib/pattern/manufacturing-stickers";
 import { piecesForPatternJob } from "@/lib/sales-orders/label-codes";
 import type { PatternFittingOutcome, PatternJob, PatternJobStatus } from "@/lib/types/pattern";
 import type { ClientPattern } from "@/lib/types/pattern-library";
@@ -50,7 +49,6 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
   const [selectedFittingId, setSelectedFittingId] = useState("");
   const [uploadRevisionId, setUploadRevisionId] = useState("");
   const [clientPatterns, setClientPatterns] = useState<ClientPattern[]>([]);
-  const [manufacturingStickers, setManufacturingStickers] = useState<ManufacturingStickerQr[]>([]);
   const [canChangeGarmentType, setCanChangeGarmentType] = useState(false);
   const [garmentTypeChangeFlag, setGarmentTypeChangeFlag] = useState<GarmentTypeChangeFlag | null>(
     null
@@ -65,11 +63,6 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       if (!res.ok) throw new Error(data.error ?? "Failed to load");
       const nextJob = data.job as PatternJob;
       setJob(nextJob);
-      setManufacturingStickers(
-        Array.isArray(data.manufacturing_stickers)
-          ? (data.manufacturing_stickers as ManufacturingStickerQr[])
-          : []
-      );
       setAssignedTo(nextJob.assigned_to ?? "");
       setPatternCode(nextJob.pattern_code ?? "");
       setSizeNotes(nextJob.pattern_size_notes ?? "");
@@ -261,19 +254,30 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
         ) : null}
       </div>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
-        <div>
-          <h3 className="font-semibold text-slate-900">Manufacturing QRs</h3>
-          <p className="mt-0.5 text-xs text-slate-500">
-            Same codes as production stickers / floor scan
-            {manufacturingStickers.some((s) => s.role === "prep")
-              ? " (fabric-cut prep + piece stickers)"
-              : ""}
-            .
-          </p>
-        </div>
-        <PatternManufacturingQrs stickers={manufacturingStickers} />
+      <section className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+        <p className="text-sm text-slate-700">
+          Manufacturing scan QRs (fabric-cut prep + piece codes) are printed on the{" "}
+          <span className="font-medium text-slate-900">A4 measurement sheet</span> for cutter,
+          stitchers, and Pattern stage scans.
+          {job.client_pattern_id ? (
+            <>
+              {" "}
+              <Link
+                href={`/pattern/client-patterns/${job.client_pattern_id}/print?job=${job.id}${job.client_pattern_version_id ? `&version=${job.client_pattern_version_id}` : ""}`}
+                target="_blank"
+                className="inline-flex items-center gap-1 font-medium text-indigo-700 hover:text-indigo-900"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                Print size sheet
+              </Link>
+            </>
+          ) : (
+            <span className="text-slate-500"> Link a master pattern first to print.</span>
+          )}
+        </p>
       </section>
+
+      <PatternStageScanPanel onRefresh={() => void load()} />
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
 

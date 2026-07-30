@@ -25,11 +25,15 @@ const STATION_OPTIONS: { id: ScanStation; label: string }[] = [
   { id: "garment_wash", label: "Garment wash" },
   { id: "finishing", label: "Finishing" },
   { id: "packed", label: "Packed" },
+  { id: "pattern_tud_ready", label: "TUD ready" },
+  { id: "pattern_sheet_filled", label: "Sheet filled" },
+  { id: "pattern_handed_to_cut", label: "Handed to cut" },
+  { id: "pattern_trial_done", label: "Trial updates done" },
 ];
 
 type StageScanPanelProps = {
   stations: ScanStation[];
-  scanContext?: "fabric-receiving" | "production";
+  scanContext?: "fabric-receiving" | "production" | "pattern";
   requireEmployee?: boolean;
   /**
    * When false, hides the optional "Employee badge" session box entirely.
@@ -56,10 +60,11 @@ export function StageScanPanel({
   const [voiceFeedback, setVoiceFeedback] = useState(true);
   const [employeeSession, setEmployeeSession] = useState<ScanEmployeeSession | null>(null);
   const active = options.find((option) => option.id === station) ?? options[0]!;
-  const employeeOptional = scanContext === "fabric-receiving";
+  const employeeOptional = scanContext === "fabric-receiving" || scanContext === "pattern";
   const stickerRequiresBadge = requireEmployee && !employeeOptional;
   // Badge is mandatory only for required two-step scanning; where it is optional
   // it can be hidden per role/context (task operators do not want it on Fabric Receiving).
+  // Pattern: badge preferred when shown; logged-in pattern operator is enough without badge.
   const showEmployeeSession = stickerRequiresBadge || (employeeOptional && showEmployeeBadge);
 
   useEffect(() => {
@@ -161,7 +166,14 @@ export function StageScanPanel({
       {scanContext === "production" && requireEmployee && (
         <p className="text-sm text-slate-600">
           <span className="font-medium text-slate-800">Two-step scan:</span> badge first, then garment sticker. Session
-          lasts 8 hours — sign out when your shift ends.
+          lasts 8 hours - sign out when your shift ends.
+        </p>
+      )}
+      {scanContext === "pattern" && (
+        <p className="text-sm text-slate-600">
+          <span className="font-medium text-slate-800">Pattern scan:</span> pick the step, then scan a
+          manufacturing QR from the A4 size sheet (same codes as stickers). Optional badge tracks who;
+          otherwise your logged-in Pattern account is recorded.
         </p>
       )}
     </div>

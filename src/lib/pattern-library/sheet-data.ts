@@ -2,7 +2,7 @@ import { readPatternJobs } from "@/lib/data/pattern-jobs";
 import { readPatternLibraryFresh } from "@/lib/data/pattern-library";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readJsonFile } from "@/lib/data/document-persistence";
-import { pieceStickersForFabricLine } from "@/lib/pattern/manufacturing-stickers";
+import { manufacturingStickersForFabricLine } from "@/lib/pattern/manufacturing-stickers";
 import path from "path";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import type { PatternJob } from "@/lib/types/pattern";
@@ -23,10 +23,13 @@ import type {
 
 const SALES_ORDERS_PATH = path.join(process.cwd(), "src/data/sales-orders.json");
 
+/** Manufacturing / floor scan QR on the printable size sheet (prep + pieces). */
 export interface PatternSheetSticker {
   code: string;
   piece_name: string;
+  production_code: string;
   qr_payload: string;
+  role: "piece" | "prep";
 }
 
 export interface PatternSheetFabric {
@@ -86,10 +89,13 @@ function stickersFromLine(
   line: SalesOrderFabricLine,
   clientCode: string
 ): PatternSheetSticker[] {
-  return pieceStickersForFabricLine(line, clientCode).map((sticker) => ({
+  // Same set as production stickers: Suit -> fabric-cut prep + Jacket + Trouser.
+  return manufacturingStickersForFabricLine(line, clientCode).map((sticker) => ({
     code: sticker.code,
     piece_name: sticker.piece_name,
+    production_code: sticker.production_code,
     qr_payload: sticker.qr_payload,
+    role: sticker.role,
   }));
 }
 

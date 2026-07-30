@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   fabricCutStickerForFabricLine,
+  manufacturingStickersForFabricLine,
   manufacturingStickersForJob,
   pieceStickersForFabricLine,
 } from "./manufacturing-stickers.ts";
@@ -106,5 +107,14 @@ describe("manufacturingStickersForJob", () => {
     assert.equal(prep?.qr_payload, "FR-0132-L04");
     assert.equal(pieces[0]?.qr_payload, "FR-0132-L04-JKT");
     assert.equal(pieces[1]?.qr_payload, "FR-0132-L04-TR");
+  });
+
+  it("manufacturingStickersForFabricLine matches job helper for Suit", () => {
+    const line = suitLine("line-suit");
+    const stickers = manufacturingStickersForFabricLine(line, "FR-0126-0019");
+    assert.deepEqual(
+      stickers.map((s) => s.qr_payload),
+      ["FR-0132-L04", "FR-0132-L04-JKT", "FR-0132-L04-TR"]
+    );
   });
 });

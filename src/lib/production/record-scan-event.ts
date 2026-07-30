@@ -58,24 +58,27 @@ export async function recordProductionScanEvent(input: {
 
   await appendProductionScanEvent(event);
 
+  const payload = {
+    scan_event_id: event.id,
+    employee_id: event.employee_id,
+    employee_name: event.employee_name,
+    station: event.station,
+    context: event.context,
+    sticker_code: event.sticker_code,
+    fabric_cut_code: event.fabric_cut_code,
+    work_order_id: event.work_order_id,
+    pattern_job_id: input.result.pattern_job?.id ?? null,
+    previous_status: event.previous_status,
+    new_status: event.new_status,
+    fabric_prep_step: event.fabric_prep_step,
+    workstation_id: event.workstation_id,
+    notice: event.notice,
+    so_number: event.so_number,
+  };
+
   await notifyIntegration(
-    "production.scan",
-    {
-      scan_event_id: event.id,
-      employee_id: event.employee_id,
-      employee_name: event.employee_name,
-      station: event.station,
-      context: event.context,
-      sticker_code: event.sticker_code,
-      fabric_cut_code: event.fabric_cut_code,
-      work_order_id: event.work_order_id,
-      previous_status: event.previous_status,
-      new_status: event.new_status,
-      fabric_prep_step: event.fabric_prep_step,
-      workstation_id: event.workstation_id,
-      notice: event.notice,
-      so_number: event.so_number,
-    },
+    input.context === "pattern" ? "pattern.scan" : "production.scan",
+    payload,
     input.source ?? "erp"
   );
 }

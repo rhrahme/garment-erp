@@ -65,6 +65,22 @@ export function fabricCutStickerForFabricLine(
 }
 
 /**
+ * Manufacturing QRs for an SO fabric line.
+ * Multi-piece: fabric-cut prep + one QR per piece (Jacket, Trouser, ...).
+ * Single-piece: the one piece sticker QR (same as production sticker print).
+ */
+export function manufacturingStickersForFabricLine(
+  line: SalesOrderFabricLine,
+  clientCode: string
+): ManufacturingStickerQr[] {
+  const pieces = pieceStickersForFabricLine(line, clientCode);
+  if (pieces.length <= 1) return pieces;
+
+  const prep = fabricCutStickerForFabricLine(line, clientCode);
+  return prep ? [prep, ...pieces] : pieces;
+}
+
+/**
  * Manufacturing QRs for a pattern job's SO fabric line.
  * Multi-piece: fabric-cut prep + one QR per piece (Jacket, Trouser, ...).
  * Single-piece: the one piece sticker QR (same as production sticker print).
@@ -76,10 +92,5 @@ export function manufacturingStickersForJob(
   if (!order || order.id !== job.sales_order_id) return [];
   const line = order.fabric_lines.find((candidate) => candidate.id === job.sales_order_line_id);
   if (!line) return [];
-
-  const pieces = pieceStickersForFabricLine(line, order.client_code);
-  if (pieces.length <= 1) return pieces;
-
-  const prep = fabricCutStickerForFabricLine(line, order.client_code);
-  return prep ? [prep, ...pieces] : pieces;
+  return manufacturingStickersForFabricLine(line, order.client_code);
 }

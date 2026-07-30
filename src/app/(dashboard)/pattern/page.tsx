@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, LibraryBig } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PatternQueueSection } from "@/components/pattern/PatternQueueSection";
+import { PatternStageScanPanel } from "@/components/pattern/PatternStageScanPanel";
 
 export default function PatternPage() {
   return (
@@ -26,6 +27,9 @@ export default function PatternPage() {
           </div>
           <ArrowRight className="h-4 w-4 text-indigo-600" />
         </Link>
+      </div>
+      <div className="mb-6">
+        <PatternStageScanPanel />
       </div>
       <PatternQueueSection />
     </div>
