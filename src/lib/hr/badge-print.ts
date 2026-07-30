@@ -70,13 +70,21 @@ export function isBadgePrintableEmployee(
   return true;
 }
 
+/**
+ * Active employees only (already scoped to a badge group by the caller).
+ * Use this when `bank_name` was stripped via `toBadgeSafeEmployee` — re-running
+ * bank-based Saudi/Expat classification would drop every Expat (empty bank ⇒ Saudi).
+ */
+export function listActiveBadgeEmployees(employees: PayrollEmployee[]): PayrollEmployee[] {
+  return sortPayrollEmployees(employees.filter(isBadgePrintableEmployee));
+}
+
 export function listBadgePrintableEmployees(
   employees: PayrollEmployee[],
   group: IdBadgeGroup
 ): PayrollEmployee[] {
-  return sortPayrollEmployees(
-    filterPayrollEmployeesByGroup(employees, group).filter(isBadgePrintableEmployee)
-  );
+  // Group filter must run on full payroll (with bank_name) before any badge-safe strip.
+  return listActiveBadgeEmployees(filterPayrollEmployeesByGroup(employees, group));
 }
 
 export function parseBadgePrintIds(raw: string | string[] | undefined): string[] | null {

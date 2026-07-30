@@ -6,7 +6,7 @@ import { CreateEmployeeForm } from "@/components/hr/CreateEmployeeForm";
 import { EmployeeBadgePrintControls } from "@/components/hr/EmployeeBadgePrintControls";
 import { JobFunctionsEditor } from "@/components/hr/JobFunctionsEditor";
 import { employeeQrPayload } from "@/lib/hr/employee-qr";
-import { listBadgePrintableEmployees } from "@/lib/hr/badge-print";
+import { listActiveBadgeEmployees } from "@/lib/hr/badge-print";
 import { type IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
@@ -55,10 +55,9 @@ export function EmployeeQrWorkspace({
     setEmployees(initialEmployees);
   }, [initialEmployees]);
 
-  const printable = useMemo(
-    () => listBadgePrintableEmployees(employees, group),
-    [employees, group]
-  );
+  // Pages already filter by Saudi/Expat before stripping bank_name for QC.
+  // Do not re-classify by bank here — empty bank would hide every Expat.
+  const printable = useMemo(() => listActiveBadgeEmployees(employees), [employees]);
 
   const filtered = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
