@@ -6,7 +6,7 @@ import { qrScanPayload } from "@/lib/production/qr-labels";
 import type { PatternJob } from "@/lib/types/pattern";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
-/** One manufacturing QR ù same payload as production / prep stickers. */
+/** One manufacturing QR - same payload as production / prep stickers. */
 export type ManufacturingStickerQr = {
   /** Full sticker code stored on the SO fabric line. */
   code: string;
@@ -20,8 +20,8 @@ export type ManufacturingStickerQr = {
 };
 
 /**
- * Piece QRs for a fabric line ù same encoding as sticker print / pattern sheet.
- * Suit ? Jacket + Trouser; single-piece ? one sticker.
+ * Piece QRs for a fabric line - same encoding as sticker print / pattern sheet.
+ * Suit -> Jacket + Trouser; single-piece -> one sticker.
  */
 export function pieceStickersForFabricLine(
   line: SalesOrderFabricLine,
@@ -43,7 +43,7 @@ export function pieceStickersForFabricLine(
   });
 }
 
-/** Fabric-cut prep QR (no piece suffix) ù same as Preparation sticker sheet. */
+/** Fabric-cut prep QR (no piece suffix) - same as Preparation sticker sheet. */
 export function fabricCutStickerForFabricLine(
   line: SalesOrderFabricLine,
   clientCode: string
@@ -66,7 +66,7 @@ export function fabricCutStickerForFabricLine(
 
 /**
  * Manufacturing QRs for a pattern job's SO fabric line.
- * Multi-piece: fabric-cut prep + one QR per piece (Jacket, Trouser, Ö).
+ * Multi-piece: fabric-cut prep + one QR per piece (Jacket, Trouser, ...).
  * Single-piece: the one piece sticker QR (same as production sticker print).
  */
 export function manufacturingStickersForJob(
