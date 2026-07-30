@@ -110,7 +110,7 @@ export function ThreadButtonPhotosReviewPanelClient({
             {pendingCount > 0 ? (
               <p className="flex items-start gap-2 text-sm font-medium text-amber-900">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                Operators uploaded thread/button photos ù open Thread &amp; buttons to view, then
+                Operators uploaded thread/button photos - open Thread &amp; buttons to view, then
                 acknowledge here.
               </p>
             ) : null}
@@ -149,7 +149,7 @@ export function ThreadButtonPhotosReviewPanelClient({
             when: formatDateTime(item.uploaded_at),
             order: (
               <span>
-                {item.so_number} ù {formatArticle(item.article_number)}
+                {item.so_number} ' {formatArticle(item.article_number)}
                 <span className="mt-0.5 block text-xs text-slate-500">
                   {item.client_name} ({item.client_code})
                 </span>
@@ -162,7 +162,7 @@ export function ThreadButtonPhotosReviewPanelClient({
               </span>
             ),
             file: item.filename,
-            by: item.uploaded_by ?? "ù",
+            by: item.uploaded_by ?? "'",
             status: item.admin_acknowledged_at ? (
               <Badge className="border border-emerald-200 bg-emerald-50 text-emerald-800">
                 Reviewed

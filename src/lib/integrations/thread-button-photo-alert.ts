@@ -15,18 +15,18 @@ export async function notifyAdminsOfThreadButtonPhotoUpload(
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
   const article = formatArticle(match.article_number);
-  const subject = `ERP: Thread & buttons photo uploaded — ${match.so_number} ${article}`;
+  const subject = `ERP: Thread & buttons photo uploaded - ${match.so_number} ${article}`;
 
   const text = [
-    "Garment ERP — Thread & buttons photo",
+    "Garment ERP - Thread & buttons photo",
     "",
     "An operator uploaded a photo on Thread & buttons.",
     "Review it on the Thread & buttons page or acknowledge from the admin dashboard.",
     "",
-    `- ${match.so_number} · ${article} · ${match.fabric_number}`,
+    `- ${match.so_number} | ${article} | ${match.fabric_number}`,
     `  Client: ${match.client_name} (${match.client_code})`,
     `  Garment: ${match.garment_type}`,
-    `  Cut code: ${match.fabric_cut_code ?? "—"}`,
+    `  Cut code: ${match.fabric_cut_code ?? "-"}`,
     `  File: ${photo.filename}`,
     `  Uploaded by: ${photo.uploaded_by ?? "unknown"}`,
     "",

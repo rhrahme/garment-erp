@@ -269,7 +269,7 @@ export function ThreadButtonPhotosPanel({
                       ? "Failed"
                       : item.status === "done"
                         ? "Done"
-                        : `${pct}% ù ${formatBytes(item.totalBytes - item.loadedBytes)} left`}
+                        : `${pct}% ' ${formatBytes(item.totalBytes - item.loadedBytes)} left`}
                   </span>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
