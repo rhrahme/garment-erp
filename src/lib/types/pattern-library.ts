@@ -181,6 +181,11 @@ export interface ClientPattern {
   physical_pattern_kept: boolean;
   physical_pattern_location: string | null;
   files: PatternLibraryAttachment[];
+  /**
+   * Explicit active .TUD attachment id (pattern-level or trial file).
+   * When unset, the latest uploaded .tud is treated as active.
+   */
+  active_tud_file_id?: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;

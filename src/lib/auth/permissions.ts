@@ -65,7 +65,7 @@ const TASK_OPERATOR_ROUTE_PREFIXES = [
 const TASK_OPERATOR_BLOCKED_ROUTE_PREFIXES = ["/orders/new", "/fabric-orders"] as const;
 
 /**
- * Factory manager — everything inside the factory except accounting/costs.
+ * Factory manager - everything inside the factory except accounting/costs.
  * Prefer allowing operational pages (with price lockdown) over hiding them.
  */
 const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
@@ -82,7 +82,7 @@ const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   "/inventory",
   "/shipments",
   "/washing",
-  /** Employee list + QR badges only — payroll register stays blocked via `/hr`. */
+  /** Employee list + QR badges only - payroll register stays blocked via `/hr`. */
   "/hr/id-badges",
   "/api/production",
   "/api/fabric-receiving",
@@ -122,7 +122,7 @@ export const PRODUCTION_OPERATOR_BLOCKED_ROUTE_PREFIXES = [
 ] as const;
 
 /**
- * Pattern team — pattern library + drafting queue, clients (contacts hidden),
+ * Pattern team - pattern library + drafting queue, clients (contacts hidden),
  * fabric specification. No prices, no orders create, no accounting/HR/sales CRM.
  */
 const PATTERN_OPERATOR_ROUTE_PREFIXES = [
@@ -136,6 +136,8 @@ const PATTERN_OPERATOR_ROUTE_PREFIXES = [
   "/api/fabric-brands",
   "/api/qr",
   "/api/garment-type-changes",
+  // Pattern assigns sales-uploaded wearing photos to fabric lines / articles.
+  "/api/sales/client-photos",
   ...FABRIC_SWATCH_ROUTE_PREFIXES,
   "/api/auth/session",
   "/api/auth/dev-impersonate",
@@ -143,10 +145,10 @@ const PATTERN_OPERATOR_ROUTE_PREFIXES = [
 ] as const;
 
 /**
- * Accounting — invoicing, costing, supplier invoices, purchasing; no factory floor or sales CRM.
+ * Accounting - invoicing, costing, supplier invoices, purchasing; no factory floor or sales CRM.
  * Invoice amounts use eye toggle; supplier fabric catalog/list prices stay admin-only (canViewPrices).
- * Supplier emails: view-only — sending is admin-only (canSendSupplierEmails).
- * AWB tracking: view-only — add/sync is admin + factory manager (canManageShipments).
+ * Supplier emails: view-only - sending is admin-only (canSendSupplierEmails).
+ * AWB tracking: view-only - add/sync is admin + factory manager (canManageShipments).
  */
 const ACCOUNTING_OPERATOR_ROUTE_PREFIXES = [
   "/invoices",
@@ -227,26 +229,26 @@ const SALES_OPERATOR_ROUTE_PREFIXES = [
 ] as const;
 
 /**
- * QC logins — always restricted (no prices, limited menu) even if
+ * QC logins - always restricted (no prices, limited menu) even if
  * CLIENT_MANAGER_EMAILS is missing from a deploy.
  */
 const BUILTIN_CLIENT_MANAGER_EMAILS = ["hagan.qc@gmail.com"] as const;
 
 /**
- * Production-floor task operators — print labels/A4, wash/iron scan, and custom fabric create.
+ * Production-floor task operators - print labels/A4, wash/iron scan, and custom fabric create.
  * No prices, no order editing, minimal sidebar.
  */
 const BUILTIN_TASK_OPERATOR_EMAILS = ["hagan.task1@gmail.com"] as const;
 
 /**
- * Factory managers — pipeline visibility & stage advance; watch wash/iron; no prices/accounting.
+ * Factory managers - pipeline visibility & stage advance; watch wash/iron; no prices/accounting.
  */
 const BUILTIN_PRODUCTION_OPERATOR_EMAILS = ["production@hagan.pro"] as const;
 
-/** Tablet sales — client/catalog/order/invoice access; works without SALES_EMAILS on deploy. */
+/** Tablet sales - client/catalog/order/invoice access; works without SALES_EMAILS on deploy. */
 const BUILTIN_SALES_OPERATOR_EMAILS = ["sales1@hagan.pro"] as const;
 
-/** Accounting logins — invoicing & supplier billing; works without ACCOUNTING_EMAILS on deploy. */
+/** Accounting logins - invoicing & supplier billing; works without ACCOUNTING_EMAILS on deploy. */
 const BUILTIN_ACCOUNTING_OPERATOR_EMAILS = ["accounting@hagan.pro"] as const;
 
 /** Sidebar label for QC production orders (same `/orders` routes, production-focused UI). */
@@ -281,7 +283,7 @@ export const TASK_OPERATOR_NAV_HREFS = [
 ] as const;
 
 /**
- * Sidebar for factory managers — full factory ops, no sales CRM / accounting / payroll.
+ * Sidebar for factory managers - full factory ops, no sales CRM / accounting / payroll.
  * Stickers & A4 printing live under Factory orders (`/orders`).
  * Employees = ID badges + create (not payroll register).
  * Landing stays `/production` (not Sales Home, not admin Dashboard).
@@ -312,14 +314,14 @@ export const SALES_OPERATOR_NAV_HREFS = [
   "/invoices",
 ] as const;
 
-/** Sidebar for the pattern team — library + queue, clients (contacts hidden), fabric spec. */
+/** Sidebar for the pattern team - library + queue, clients (contacts hidden), fabric spec. */
 export const PATTERN_OPERATOR_NAV_HREFS = [
   "/pattern",
   "/clients",
   "/fabric-specification",
 ] as const;
 
-/** Sidebar for accounting — finance & supplier billing, no factory floor or sales CRM. */
+/** Sidebar for accounting - finance & supplier billing, no factory floor or sales CRM. */
 export const ACCOUNTING_OPERATOR_NAV_HREFS = [
   "/invoices",
   "/costing",
@@ -453,7 +455,7 @@ export function isAccountingOperatorRole(role: UserRole | null | undefined): boo
   return role === "accounting";
 }
 
-/** `pattern_maker` is the pre-existing (dormant) DB role — treated as the same access. */
+/** `pattern_maker` is the pre-existing (dormant) DB role - treated as the same access. */
 export function isPatternOperatorRole(role: UserRole | null | undefined): boolean {
   return role === "pattern_operator" || role === "pattern_maker";
 }
@@ -646,7 +648,7 @@ export function isTaskOperatorRouteAllowed(pathname: string): boolean {
   );
 }
 
-/** ID badges under `/hr` — operational identity/QR, not the payroll register. */
+/** ID badges under `/hr` - operational identity/QR, not the payroll register. */
 export function isHrIdBadgesPath(pathname: string): boolean {
   return pathname === "/hr/id-badges" || pathname.startsWith("/hr/id-badges/");
 }
@@ -803,19 +805,29 @@ export function canAccessPatternModule(
   return true;
 }
 
-/** Sales, QC, factory manager, and admins — view / upload client photos & videos. */
+/** Sales, QC, factory manager, pattern, and admins - view / upload client photos & videos. */
 export function canAccessClientMedia(access: {
   isAdmin?: boolean;
   isSalesOperator?: boolean;
   isClientManager?: boolean;
   isProductionOperator?: boolean;
+  isPatternOperator?: boolean;
 }): boolean {
   return Boolean(
     access.isAdmin ||
       access.isSalesOperator ||
       access.isClientManager ||
-      access.isProductionOperator
+      access.isProductionOperator ||
+      access.isPatternOperator
   );
+}
+
+/** Pattern (and admin) link wearing photos to a fabric line / article on an SO. */
+export function canAssignClientPhotoToFabric(access: {
+  isAdmin?: boolean;
+  isPatternOperator?: boolean;
+}): boolean {
+  return Boolean(access.isAdmin || access.isPatternOperator);
 }
 
 /** Only admin / super_admin may hard-delete or approve/reject delete requests. */

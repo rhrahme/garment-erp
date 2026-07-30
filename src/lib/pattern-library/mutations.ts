@@ -237,7 +237,7 @@ export async function attachBasePatternFile(
 function buildMeasurementsFromBase(base: BasePattern, size: string): ClientPatternMeasurement[] {
   return base.points.map((point) => {
     const graded = point.is_graded;
-    // Trim points render once — take the first documented value when the exact size is empty.
+    // Trim points render once - take the first documented value when the exact size is empty.
     const fallback = graded
       ? null
       : Object.values(point.values).find((value) => value !== null) ?? null;
@@ -257,10 +257,10 @@ function buildMeasurementsFromBase(base: BasePattern, size: string): ClientPatte
 }
 
 /**
- * Pre-made measurement template for a garment type — the dictionary points seen
+ * Pre-made measurement template for a garment type - the dictionary points seen
  * on that garment (from imports + past patterns), as empty rows to fill in.
  */
-function buildMeasurementsFromTemplate(
+export function buildMeasurementsFromTemplate(
   dictionary: MeasurementPointDef[],
   garmentType: string
 ): ClientPatternMeasurement[] {
@@ -320,7 +320,7 @@ export interface ClientPatternInput {
   linked_fabric_line_ids?: string[];
 }
 
-/** Line ids of a client's fabric lines across all sales orders — assignment guard. */
+/** Line ids of a client's fabric lines across all sales orders - assignment guard. */
 function clientFabricLineIdSet(clientId: string): Set<string> {
   const ids = new Set<string>();
   for (const order of readSalesOrders().orders) {
@@ -433,7 +433,7 @@ export async function createClientPattern(
       };
     }
     pattern.linked_fabric_line_ids = requestedLineIds;
-    // A fabric belongs to one garment group — strip the lines from other patterns.
+    // A fabric belongs to one garment group - strip the lines from other patterns.
     const requestedSet = new Set(requestedLineIds);
     for (const other of store.client_patterns) {
       if (other.client_id !== pattern.client_id) continue;
@@ -547,7 +547,7 @@ export async function assignFabricLinesToClientPattern(
   return { ok: true, pattern: next };
 }
 
-/** Remove fabric lines from a garment group — the lines become unassigned. */
+/** Remove fabric lines from a garment group - the lines become unassigned. */
 export async function unassignFabricLinesFromClientPattern(
   patternId: string,
   lineIds: string[],
@@ -609,8 +609,12 @@ export async function updateClientPattern(
       | "base_pattern_id"
       | "base_size"
       | "garment_type"
+      | "active_tud_file_id"
     >
-  >,
+  > & {
+    /** When garment_type changes, rebuild empty template points on the latest trial. */
+    rebuild_template?: boolean;
+  },
   options: { updatedBy?: string | null; notify?: boolean } = {}
 ): Promise<Ok<{ pattern: ClientPattern }> | Err> {
   const store = await readPatternLibraryFresh();
@@ -644,6 +648,14 @@ export async function updateClientPattern(
       ? existing.house_brand_code ?? brandFromClient.house_brand_code
       : base?.house_brand_code ?? brandFromClient.house_brand_code;
 
+  const nextGarmentType =
+    patch.garment_type === undefined
+      ? existing.garment_type
+      : normalizePatternSheetGarment(patch.garment_type) || existing.garment_type;
+  if (patch.garment_type !== undefined && !normalizePatternSheetGarment(patch.garment_type)) {
+    return { ok: false, status: 400, error: "garment_type is required." };
+  }
+
   let versions = existing.versions;
   const baseOrSizeChanged =
     nextBaseId !== existing.base_pattern_id || nextBaseSize !== existing.base_size;
@@ -668,18 +680,66 @@ export async function updateClientPattern(
     }
   }
 
+  const garmentChanged = nextGarmentType !== existing.garment_type;
+  const shouldRebuildTemplate =
+    Boolean(patch.rebuild_template) &&
+    garmentChanged &&
+    !nextBaseId &&
+    versions.length > 0;
+  if (shouldRebuildTemplate) {
+    const template = buildMeasurementsFromTemplate(store.dictionary, nextGarmentType);
+    const lastIndex = versions.length - 1;
+    const last = versions[lastIndex]!;
+    const existingByPoint = new Map(last.measurements.map((row) => [row.point_id, row]));
+    const merged = template.map((row) => {
+      const prior = existingByPoint.get(row.point_id);
+      if (!prior) return row;
+      return {
+        ...row,
+        base_value: prior.base_value,
+        target_value: prior.target_value,
+        sewn_value: prior.sewn_value,
+        adjustment: prior.adjustment,
+        remarks: prior.remarks,
+        remark: prior.remark ?? row.remark,
+      };
+    });
+    // Keep any custom points not in the new template.
+    for (const prior of last.measurements) {
+      if (!merged.some((row) => row.point_id === prior.point_id)) {
+        merged.push(prior);
+      }
+    }
+    versions = versions.map((candidate, i) =>
+      i === lastIndex
+        ? {
+            ...candidate,
+            measurements: merged,
+            updated_by: options.updatedBy ?? candidate.updated_by,
+            updated_at: now(),
+          }
+        : candidate
+    );
+  }
+
+  const nextActiveTud =
+    patch.active_tud_file_id === undefined
+      ? existing.active_tud_file_id
+      : patch.active_tud_file_id?.trim() || null;
+
   const next: ClientPattern = {
     ...existing,
     pattern_ref: patch.pattern_ref?.trim() || existing.pattern_ref,
     description:
       patch.description === undefined ? existing.description : patch.description?.trim() || null,
-    garment_type: patch.garment_type?.trim().toLowerCase() || existing.garment_type,
+    garment_type: nextGarmentType,
     fabric: patch.fabric === undefined ? existing.fabric : patch.fabric?.trim() || null,
     base_pattern_id: nextBaseId,
     base_size: nextBaseSize,
     house_brand_id: nextHouseBrandId,
     house_brand_code: nextHouseBrandCode,
     versions,
+    active_tud_file_id: nextActiveTud,
     special_instructions:
       patch.special_instructions === undefined
         ? existing.special_instructions
@@ -705,6 +765,8 @@ export async function updateClientPattern(
       pattern_ref: next.pattern_ref,
       client_id: next.client_id,
       garment_type: next.garment_type,
+      rebuilt_template: shouldRebuildTemplate,
+      active_tud_file_id: next.active_tud_file_id ?? null,
       updated_by: options.updatedBy ?? null,
     });
   }
@@ -882,6 +944,7 @@ export async function attachClientPatternFile(
   if (index < 0) return { ok: false, status: 404, error: "Client pattern not found." };
 
   const existing = store.client_patterns[index]!;
+  const timestamp = now();
   let next: ClientPattern;
   if (versionId) {
     const versionIndex = existing.versions.findIndex((version) => version.id === versionId);
@@ -889,16 +952,44 @@ export async function attachClientPatternFile(
     next = {
       ...existing,
       versions: existing.versions.map((version, i) =>
-        i === versionIndex ? { ...version, files: [...version.files, file], updated_at: now() } : version
+        i === versionIndex
+          ? { ...version, files: [...version.files, file], updated_at: timestamp }
+          : version
       ),
-      updated_at: now(),
+      // Newest .TUD becomes the active pattern file.
+      active_tud_file_id: file.kind === "tud" ? file.id : existing.active_tud_file_id,
+      updated_at: timestamp,
     };
   } else {
-    next = { ...existing, files: [...existing.files, file], updated_at: now() };
+    next = {
+      ...existing,
+      files: [...existing.files, file],
+      active_tud_file_id: file.kind === "tud" ? file.id : existing.active_tud_file_id,
+      updated_at: timestamp,
+    };
   }
 
   store.client_patterns[index] = next;
   await writePatternLibrary(store);
+
+  if (file.kind === "tud") {
+    const tudCount =
+      next.files.filter((f) => f.kind === "tud").length +
+      next.versions.reduce((sum, v) => sum + v.files.filter((f) => f.kind === "tud").length, 0);
+    await notifyIntegration("client_pattern.tud_version_uploaded", {
+      id: next.id,
+      pattern_ref: next.pattern_ref,
+      client_id: next.client_id,
+      file_id: file.id,
+      filename: file.filename,
+      tud_version: tudCount,
+      version_id: versionId,
+      uploaded_by: file.uploaded_by,
+      uploaded_at: file.uploaded_at,
+      is_active: next.active_tud_file_id === file.id,
+    });
+  }
+
   return { ok: true, pattern: next };
 }
 
@@ -932,7 +1023,7 @@ export async function applyTudSizeFill(
 
   const baseId = input.base_pattern_id?.trim() || existing.base_pattern_id;
   if (!baseId) {
-    return { ok: false, status: 400, error: "Pattern has no base — pass base_pattern_id to link one." };
+    return { ok: false, status: 400, error: "Pattern has no base - pass base_pattern_id to link one." };
   }
   const base = store.base_patterns.find((candidate) => candidate.id === baseId);
   if (!base) return { ok: false, status: 400, error: "Base pattern not found." };

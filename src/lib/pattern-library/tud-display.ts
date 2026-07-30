@@ -1,3 +1,4 @@
+import { findActiveTudAttachment } from "@/lib/pattern-library/tud-versions";
 import type {
   BasePattern,
   ClientPattern,
@@ -44,13 +45,17 @@ export function basePatternTudPreview(base: BasePattern): TudPreview | null {
   };
 }
 
-/** Latest version's .TUD preview, falling back to pattern-level files. */
+/** Active .TUD preview (explicit active id, else latest upload with thumbnail). */
 export function clientPatternTudPreview(pattern: ClientPattern): TudPreview | null {
-  const candidates = [...pattern.versions]
-    .reverse()
-    .map((version) => findLatestTudThumbnail(version.files))
-    .concat(findLatestTudThumbnail(pattern.files));
-  const attachment = candidates.find((candidate) => candidate !== null) ?? null;
+  const active = findActiveTudAttachment(pattern);
+  const attachment =
+    active?.thumbnail_stored_filename
+      ? active
+      : [...pattern.versions]
+          .reverse()
+          .map((version) => findLatestTudThumbnail(version.files))
+          .concat(findLatestTudThumbnail(pattern.files))
+          .find((candidate) => candidate !== null) ?? null;
   if (!attachment?.thumbnail_stored_filename) return null;
   const urlBase = `/api/pattern/library/client-patterns/${pattern.id}/files`;
   return {
@@ -68,16 +73,16 @@ const FABRIC_LABELS: Record<string, string> = {
 };
 
 export function tudFabricLabel(fabric: string | null): string {
-  if (!fabric) return "—";
+  if (!fabric) return "-";
   return FABRIC_LABELS[fabric.toUpperCase()] ?? fabric;
 }
 
 export function formatAreaM2(value: number | null): string {
-  if (value === null) return "—";
+  if (value === null) return "-";
   return `${value.toFixed(2)} m²`;
 }
 
 export function formatPieceAreaM2(value: number | null): string {
-  if (value === null) return "—";
+  if (value === null) return "-";
   return `${value.toFixed(3)} m²`;
 }

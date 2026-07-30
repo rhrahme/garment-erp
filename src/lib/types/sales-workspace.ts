@@ -22,6 +22,17 @@ export interface ClientPhoto {
   /** Non-admin delete request; set until admin confirms or keeps. */
   delete_requested_at?: string | null;
   delete_requested_by?: string | null;
+  /**
+   * Pattern team links a wearing photo to a specific SO fabric line / article
+   * (e.g. pink linen shirt pics -> that shirt fabric). Sales uploads; Pattern assigns.
+   */
+  assigned_fabric_line_id?: string | null;
+  assigned_article_number?: string | null;
+  assigned_sales_order_id?: string | null;
+  assigned_so_number?: string | null;
+  assigned_client_pattern_id?: string | null;
+  assigned_at?: string | null;
+  assigned_by?: string | null;
 }
 
 export interface ClientFabricSelection {

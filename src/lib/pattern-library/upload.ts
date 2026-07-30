@@ -90,4 +90,6 @@ export function tudNotificationFields(
 
 export async function notifyLibraryFileUploaded(data: Record<string, unknown>): Promise<void> {
   await notifyIntegration("pattern_library.file_uploaded", data);
+  // .TUD re-uploads also emit client_pattern.tud_version_uploaded from
+  // attachClientPatternFile (versioned history + active pointer).
 }
