@@ -14,7 +14,7 @@ export default async function ThreadButtonsPage() {
     <div>
       <PageHeader
         title="Thread & buttons"
-        description="Match thread and buttons to each fabric article. Tap Confirmed, Missing, or Decision to be taken — statuses are saved with who/when for QC and Production."
+        description="Match thread and buttons to each fabric article. Tap Confirmed, Missing, or Decision to be taken — and upload photos of thread/buttons. Admins are emailed when a photo is uploaded."
       />
       <ThreadButtonMatchingWorkspace readOnly={!canUpdate} />
     </div>

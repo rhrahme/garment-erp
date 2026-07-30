@@ -8,8 +8,10 @@ import {
   Users,
   Receipt,
   ArrowRightLeft,
+  Camera,
 } from "lucide-react";
 import { GarmentTypeChangesPanel } from "@/components/dashboard/GarmentTypeChangesPanel";
+import { ThreadButtonPhotosReviewPanel } from "@/components/dashboard/ThreadButtonPhotosReviewPanel";
 import { TodaysFabricPanel } from "@/components/dashboard/TodaysFabricPanel";
 import { PageHeader, StatCard } from "@/components/ui/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -26,6 +28,7 @@ import { countInvoiceableSalesOrders } from "@/lib/invoicing/invoiceable-orders"
 import { getSessionContext } from "@/lib/auth/session";
 import { countPendingAwbFabricOrders } from "@/lib/integrations/pending-awb";
 import { countUnacknowledgedGarmentTypeChanges } from "@/lib/data/garment-type-changes";
+import { countUnacknowledgedThreadButtonPhotos } from "@/lib/production/thread-button-matching";
 import { getTodaysFabricSummary } from "@/lib/sales-orders/todays-fabric";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
 import { formatNumber } from "@/lib/utils";
@@ -40,6 +43,7 @@ export default async function DashboardPage() {
     "costing_rates",
     "production_work_orders",
     "garment_type_changes",
+    "thread_button_matches",
   ]);
 
   const [stats, workOrders, shipments, inventory] = await Promise.all([
@@ -55,6 +59,9 @@ export default async function DashboardPage() {
   const pendingAwbCount = session.isAdmin ? countPendingAwbFabricOrders() : 0;
   const unacknowledgedGarmentTypeChanges = session.isAdmin
     ? countUnacknowledgedGarmentTypeChanges()
+    : 0;
+  const unacknowledgedThreadButtonPhotos = session.isAdmin
+    ? countUnacknowledgedThreadButtonPhotos()
     : 0;
 
   const lowStock = inventory.filter(
@@ -111,6 +118,17 @@ export default async function DashboardPage() {
             />
           </a>
         )}
+        {session.isAdmin && unacknowledgedThreadButtonPhotos > 0 && (
+          <a href="#thread-button-photos" className="block transition-opacity hover:opacity-90">
+            <StatCard
+              label="Thread & buttons photos"
+              value={unacknowledgedThreadButtonPhotos}
+              subtext="New matching photos need admin review"
+              icon={<Camera className="h-5 w-5" />}
+              accent="bg-amber-50 text-amber-700"
+            />
+          </a>
+        )}
       </div>
 
       {todaysFabricSummary && todaysFabricSummary.order_count > 0 && (
@@ -118,6 +136,7 @@ export default async function DashboardPage() {
       )}
 
       {session.isAdmin ? <GarmentTypeChangesPanel /> : null}
+      {session.isAdmin ? <ThreadButtonPhotosReviewPanel /> : null}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>

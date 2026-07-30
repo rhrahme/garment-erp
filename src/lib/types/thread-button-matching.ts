@@ -19,6 +19,23 @@ export const THREAD_BUTTON_MATCH_STATUSES: {
 
 export type ThreadButtonMatchComponent = "thread" | "button";
 
+/** Phone photo attached to a fabric article on Thread & buttons. */
+export interface ThreadButtonPhoto {
+  id: string;
+  filename: string;
+  stored_filename: string;
+  content_type: string;
+  size_bytes: number;
+  uploaded_at: string;
+  uploaded_by: string | null;
+  /** Set when admin acknowledges the upload alert (dashboard / email follow-up). */
+  admin_acknowledged_at: string | null;
+  admin_acknowledged_by: string | null;
+  /** Non-admin delete request; set until admin confirms or keeps. */
+  delete_requested_at?: string | null;
+  delete_requested_by?: string | null;
+}
+
 export interface ThreadButtonMatchRecord {
   id: string;
   sales_order_id: string;
@@ -38,6 +55,7 @@ export interface ThreadButtonMatchRecord {
   button_updated_at: string | null;
   button_updated_by: string | null;
   note: string | null;
+  photos: ThreadButtonPhoto[];
   created_at: string;
   updated_at: string;
 }
@@ -69,6 +87,7 @@ export type ThreadButtonMatchListItem = {
   button_updated_by: string | null;
   note: string | null;
   match_id: string | null;
+  photos: ThreadButtonPhoto[];
   /** Both thread and button confirmed. */
   is_fully_matched: boolean;
   /** Either component missing or needs a decision. */

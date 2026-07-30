@@ -1,0 +1,63 @@
+import fs from "fs";
+import os from "os";
+import path from "path";
+import { isSupabaseDocumentsStorage } from "@/lib/data/document-persistence";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { uploadStorageObjectWithRetry } from "@/lib/supabase/storage-upload";
+
+export const THREAD_BUTTON_PHOTOS_BUCKET = "erp-thread-button-photos";
+const SUBDIR = "thread-button-photos";
+
+function localDirectory(): string {
+  return path.join(process.env.VERCEL === "1" ? os.tmpdir() : process.cwd(), SUBDIR);
+}
+
+function objectPath(filename: string): string {
+  return `${SUBDIR}/${filename}`;
+}
+
+export async function writeThreadButtonPhoto(
+  filename: string,
+  content: Buffer,
+  contentType: string
+): Promise<void> {
+  if (isSupabaseDocumentsStorage()) {
+    const admin = getSupabaseAdmin();
+    if (!admin) throw new Error("Supabase admin is not configured.");
+    await uploadStorageObjectWithRetry(
+      admin,
+      THREAD_BUTTON_PHOTOS_BUCKET,
+      objectPath(filename),
+      content,
+      { contentType, upsert: false }
+    );
+    return;
+  }
+  fs.mkdirSync(localDirectory(), { recursive: true });
+  fs.writeFileSync(path.join(localDirectory(), filename), content);
+}
+
+export async function readThreadButtonPhoto(filename: string): Promise<Buffer | null> {
+  if (isSupabaseDocumentsStorage()) {
+    const admin = getSupabaseAdmin();
+    if (!admin) return null;
+    const { data, error } = await admin.storage
+      .from(THREAD_BUTTON_PHOTOS_BUCKET)
+      .download(objectPath(filename));
+    if (error || !data) return null;
+    return Buffer.from(await data.arrayBuffer());
+  }
+  const file = path.join(localDirectory(), filename);
+  return fs.existsSync(file) ? fs.readFileSync(file) : null;
+}
+
+export async function deleteThreadButtonPhotoFile(filename: string): Promise<void> {
+  if (isSupabaseDocumentsStorage()) {
+    const admin = getSupabaseAdmin();
+    if (!admin) return;
+    await admin.storage.from(THREAD_BUTTON_PHOTOS_BUCKET).remove([objectPath(filename)]);
+    return;
+  }
+  const file = path.join(localDirectory(), filename);
+  if (fs.existsSync(file)) fs.unlinkSync(file);
+}

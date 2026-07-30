@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import {
   mutateThreadButtonMatches,
+  readThreadButtonMatches,
   readThreadButtonMatchesFresh,
 } from "@/lib/data/thread-button-matches";
 import { notifyIntegration } from "@/lib/integrations";
@@ -19,6 +20,7 @@ import type {
   ThreadButtonMatchRecord,
   ThreadButtonMatchStatus,
   ThreadButtonMatchSummary,
+  ThreadButtonPhoto,
 } from "@/lib/types/thread-button-matching";
 
 const MATCH_STATUS_IDS = new Set<ThreadButtonMatchStatus>([
@@ -82,6 +84,7 @@ function emptyMatchFields(): Pick<
   | "button_updated_by"
   | "note"
   | "match_id"
+  | "photos"
 > {
   return {
     thread_status: "pending",
@@ -92,7 +95,19 @@ function emptyMatchFields(): Pick<
     button_updated_by: null,
     note: null,
     match_id: null,
+    photos: [],
   };
+}
+
+function normalizePhotos(photos: ThreadButtonPhoto[] | undefined): ThreadButtonPhoto[] {
+  if (!Array.isArray(photos)) return [];
+  return photos.map((photo) => ({
+    ...photo,
+    admin_acknowledged_at: photo.admin_acknowledged_at ?? null,
+    admin_acknowledged_by: photo.admin_acknowledged_by ?? null,
+    delete_requested_at: photo.delete_requested_at ?? null,
+    delete_requested_by: photo.delete_requested_by ?? null,
+  }));
 }
 
 function itemPassesFilter(
@@ -182,6 +197,7 @@ function upsertMatchFromLine(
     existing.fabric_number = line.fabric_number;
     existing.article_number = article_number;
     existing.fabric_cut_code = fabric_cut_code;
+    existing.photos = normalizePhotos(existing.photos);
     existing.updated_at = now;
     if (note !== undefined) existing.note = note;
     if (component === "thread") {
@@ -215,6 +231,58 @@ function upsertMatchFromLine(
     button_updated_at: component === "button" ? now : null,
     button_updated_by: component === "button" ? actor : null,
     note: note ?? null,
+    photos: [],
+    created_at: now,
+    updated_at: now,
+  };
+  storeMatches.push(created);
+  return created;
+}
+
+function ensureMatchShellFromLine(
+  storeMatches: ThreadButtonMatchRecord[],
+  lookup: { order: SalesOrder; line: SalesOrderFabricLine; lineIndex: number },
+  now: string
+): ThreadButtonMatchRecord {
+  const { order, line, lineIndex } = lookup;
+  const existing = storeMatches.find((item) => item.sales_order_line_id === line.id);
+  const article_number = fabricLineArticleNumber(lineIndex);
+  const fabric_cut_code = resolveFabricCutCode(order, line, lineIndex);
+
+  if (existing) {
+    existing.so_number = order.so_number;
+    existing.client_id = order.client_id;
+    existing.client_code = order.client_code;
+    existing.client_name = order.client_name;
+    existing.garment_type = line.garment_type;
+    existing.fabric_number = line.fabric_number;
+    existing.article_number = article_number;
+    existing.fabric_cut_code = fabric_cut_code;
+    existing.photos = normalizePhotos(existing.photos);
+    existing.updated_at = now;
+    return existing;
+  }
+
+  const created: ThreadButtonMatchRecord = {
+    id: randomUUID(),
+    sales_order_id: order.id,
+    sales_order_line_id: line.id,
+    so_number: order.so_number,
+    client_id: order.client_id,
+    client_code: order.client_code,
+    client_name: order.client_name,
+    garment_type: line.garment_type,
+    fabric_number: line.fabric_number,
+    article_number,
+    fabric_cut_code,
+    thread_status: "pending",
+    button_status: "pending",
+    thread_updated_at: null,
+    thread_updated_by: null,
+    button_updated_at: null,
+    button_updated_by: null,
+    note: null,
+    photos: [],
     created_at: now,
     updated_at: now,
   };
@@ -267,6 +335,7 @@ export async function listThreadButtonMatches(options?: {
               button_updated_by: match.button_updated_by,
               note: match.note,
               match_id: match.id,
+              photos: normalizePhotos(match.photos),
             }
           : emptyMatchFields()),
         is_fully_matched: isFullyMatched(thread_status, button_status),
@@ -356,4 +425,210 @@ export async function updateThreadButtonMatch(input: {
   );
 
   return record;
+}
+
+export function findThreadButtonPhoto(
+  photoId: string
+): { match: ThreadButtonMatchRecord; photo: ThreadButtonPhoto } | null {
+  for (const match of readThreadButtonMatches().matches) {
+    const photos = normalizePhotos(match.photos);
+    const photo = photos.find((item) => item.id === photoId);
+    if (photo) return { match: { ...match, photos }, photo };
+  }
+  return null;
+}
+
+export function listUnacknowledgedThreadButtonPhotos(limit = 50): Array<{
+  match: ThreadButtonMatchRecord;
+  photo: ThreadButtonPhoto;
+}> {
+  const rows: Array<{ match: ThreadButtonMatchRecord; photo: ThreadButtonPhoto }> = [];
+  for (const match of readThreadButtonMatches().matches) {
+    const photos = normalizePhotos(match.photos);
+    for (const photo of photos) {
+      if (photo.admin_acknowledged_at) continue;
+      rows.push({ match: { ...match, photos }, photo });
+    }
+  }
+  rows.sort((a, b) => b.photo.uploaded_at.localeCompare(a.photo.uploaded_at));
+  return rows.slice(0, limit);
+}
+
+export function countUnacknowledgedThreadButtonPhotos(): number {
+  let count = 0;
+  for (const match of readThreadButtonMatches().matches) {
+    for (const photo of normalizePhotos(match.photos)) {
+      if (!photo.admin_acknowledged_at) count += 1;
+    }
+  }
+  return count;
+}
+
+export async function attachThreadButtonPhoto(input: {
+  sales_order_line_id: string;
+  photo: Omit<
+    ThreadButtonPhoto,
+    "admin_acknowledged_at" | "admin_acknowledged_by" | "delete_requested_at" | "delete_requested_by"
+  >;
+  source?: "erp" | "api";
+}): Promise<{ match: ThreadButtonMatchRecord; photo: ThreadButtonPhoto }> {
+  const lineId = input.sales_order_line_id.trim();
+  if (!lineId) throw new Error("sales_order_line_id is required.");
+  const lookup = findSalesOrderLine(lineId);
+  if (!lookup) throw new Error("Sales order fabric line not found.");
+
+  const now = new Date().toISOString();
+  const photo: ThreadButtonPhoto = {
+    ...input.photo,
+    admin_acknowledged_at: null,
+    admin_acknowledged_by: null,
+    delete_requested_at: null,
+    delete_requested_by: null,
+  };
+
+  const match = await mutateThreadButtonMatches((store) => {
+    const record = ensureMatchShellFromLine(store.matches, lookup, now);
+    record.photos = normalizePhotos(record.photos);
+    record.photos.push(photo);
+    record.updated_at = now;
+    return structuredClone(record);
+  });
+
+  await notifyIntegration(
+    "thread_button.photo_uploaded",
+    {
+      match_id: match.id,
+      photo_id: photo.id,
+      filename: photo.filename,
+      sales_order_id: match.sales_order_id,
+      sales_order_line_id: match.sales_order_line_id,
+      so_number: match.so_number,
+      client_name: match.client_name,
+      client_code: match.client_code,
+      fabric_number: match.fabric_number,
+      article_number: match.article_number,
+      garment_type: match.garment_type,
+      fabric_cut_code: match.fabric_cut_code,
+      uploaded_by: photo.uploaded_by,
+      uploaded_at: photo.uploaded_at,
+    },
+    input.source ?? "erp"
+  );
+
+  return { match, photo };
+}
+
+export async function removeThreadButtonPhoto(
+  photoId: string,
+  actor: string | null,
+  source: "erp" | "api" = "erp"
+): Promise<{ match: ThreadButtonMatchRecord; photo: ThreadButtonPhoto } | null> {
+  const removed = await mutateThreadButtonMatches((store) => {
+    for (const match of store.matches) {
+      match.photos = normalizePhotos(match.photos);
+      const index = match.photos.findIndex((item) => item.id === photoId);
+      if (index < 0) continue;
+      const [photo] = match.photos.splice(index, 1);
+      match.updated_at = new Date().toISOString();
+      return { match: structuredClone(match), photo: photo! };
+    }
+    return null;
+  });
+
+  if (removed) {
+    await notifyIntegration(
+      "thread_button.photo_deleted",
+      {
+        match_id: removed.match.id,
+        photo_id: removed.photo.id,
+        filename: removed.photo.filename,
+        sales_order_id: removed.match.sales_order_id,
+        sales_order_line_id: removed.match.sales_order_line_id,
+        so_number: removed.match.so_number,
+        deleted_by: actor,
+      },
+      source
+    );
+  }
+  return removed;
+}
+
+export async function requestThreadButtonPhotoDelete(
+  photoId: string,
+  actor: string
+): Promise<ThreadButtonPhoto | null> {
+  return mutateThreadButtonMatches((store) => {
+    for (const match of store.matches) {
+      match.photos = normalizePhotos(match.photos);
+      const photo = match.photos.find((item) => item.id === photoId);
+      if (!photo) continue;
+      photo.delete_requested_at = new Date().toISOString();
+      photo.delete_requested_by = actor;
+      match.updated_at = photo.delete_requested_at;
+      return structuredClone(photo);
+    }
+    return null;
+  });
+}
+
+export async function clearThreadButtonPhotoDeleteRequest(
+  photoId: string
+): Promise<ThreadButtonPhoto | null> {
+  return mutateThreadButtonMatches((store) => {
+    for (const match of store.matches) {
+      match.photos = normalizePhotos(match.photos);
+      const photo = match.photos.find((item) => item.id === photoId);
+      if (!photo) continue;
+      photo.delete_requested_at = null;
+      photo.delete_requested_by = null;
+      match.updated_at = new Date().toISOString();
+      return structuredClone(photo);
+    }
+    return null;
+  });
+}
+
+export async function acknowledgeThreadButtonPhoto(
+  photoId: string,
+  actor: string,
+  source: "erp" | "api" = "erp"
+): Promise<{ match: ThreadButtonMatchRecord; photo: ThreadButtonPhoto; newlyAcknowledged: boolean } | null> {
+  const result = await mutateThreadButtonMatches((store) => {
+    for (const match of store.matches) {
+      match.photos = normalizePhotos(match.photos);
+      const photo = match.photos.find((item) => item.id === photoId);
+      if (!photo) continue;
+      const newlyAcknowledged = !photo.admin_acknowledged_at;
+      if (newlyAcknowledged) {
+        photo.admin_acknowledged_at = new Date().toISOString();
+        photo.admin_acknowledged_by = actor;
+        match.updated_at = photo.admin_acknowledged_at;
+      }
+      return {
+        match: structuredClone(match),
+        photo: structuredClone(photo),
+        newlyAcknowledged,
+      };
+    }
+    return null;
+  });
+
+  if (result?.newlyAcknowledged) {
+    await notifyIntegration(
+      "thread_button.photo_acknowledged",
+      {
+        match_id: result.match.id,
+        photo_id: result.photo.id,
+        filename: result.photo.filename,
+        sales_order_id: result.match.sales_order_id,
+        sales_order_line_id: result.match.sales_order_line_id,
+        so_number: result.match.so_number,
+        acknowledged_by: actor,
+        acknowledged_at: result.photo.admin_acknowledged_at,
+      },
+      source
+    );
+  }
+
+  return result;
 }

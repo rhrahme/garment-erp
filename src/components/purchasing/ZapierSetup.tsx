@@ -33,6 +33,9 @@ const OUTBOUND_EVENTS = [
   "fabric_receiving.defect_acknowledged",
   "fabric_receiving.defect_resolved",
   "thread_button.match_updated",
+  "thread_button.photo_uploaded",
+  "thread_button.photo_deleted",
+  "thread_button.photo_acknowledged",
   "fabric.transferred",
   "pattern_job.created",
   "pattern_job.updated",
@@ -150,6 +153,8 @@ export function ZapierSetup() {
             <li>POST {baseUrl}/api/v1/fabric-receiving/reset-testing</li>
             <li>POST {baseUrl}/api/v1/fabric-receiving/defects</li>
             <li>GET/POST {baseUrl}/api/v1/thread-button-matching</li>
+            <li>POST {baseUrl}/api/v1/thread-button-matching/photos</li>
+            <li>DELETE {baseUrl}/api/v1/thread-button-matching/photos/[photoId]</li>
             <li>POST {baseUrl}/api/v1/customer-invoices/[id]/mark-sent</li>
             <li>POST {baseUrl}/api/v1/customer-invoices/from-sales-order</li>
             <li>PATCH {baseUrl}/api/v1/customer-invoices/[id]</li>

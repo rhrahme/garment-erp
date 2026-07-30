@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, RefreshCw, Search } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { ThreadButtonPhotosPanel } from "@/components/thread-buttons/ThreadButtonPhotosPanel";
 import { matchesNormalizedSearch } from "@/lib/search/normalize";
 import {
   THREAD_BUTTON_MATCH_STATUSES,
@@ -11,6 +12,7 @@ import {
   type ThreadButtonMatchListItem,
   type ThreadButtonMatchStatus,
   type ThreadButtonMatchSummary,
+  type ThreadButtonPhoto,
 } from "@/lib/types/thread-button-matching";
 import { cn } from "@/lib/utils";
 
@@ -144,6 +146,21 @@ export function ThreadButtonMatchingWorkspace({
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [currentEmail, setCurrentEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/session", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data: { is_admin?: boolean; email?: string | null }) => {
+        setIsAdmin(Boolean(data.is_admin));
+        setCurrentEmail(data.email ?? null);
+      })
+      .catch(() => {
+        setIsAdmin(false);
+        setCurrentEmail(null);
+      });
+  }, []);
 
   const load = useCallback(async (nextFilter: ThreadButtonMatchListFilter) => {
     setLoading(true);
@@ -214,6 +231,14 @@ export function ThreadButtonMatchingWorkspace({
     } finally {
       setBusyKey(null);
     }
+  }
+
+  function setItemPhotos(salesOrderLineId: string, photos: ThreadButtonPhoto[]) {
+    setItems((current) =>
+      current.map((item) =>
+        item.sales_order_line_id === salesOrderLineId ? { ...item, photos } : item
+      )
+    );
   }
 
   return (
@@ -341,6 +366,15 @@ export function ThreadButtonMatchingWorkspace({
                     onSetStatus={(component, status) => void setStatus(item, component, status)}
                   />
                 </div>
+                <ThreadButtonPhotosPanel
+                  salesOrderLineId={item.sales_order_line_id}
+                  photos={item.photos ?? []}
+                  readOnly={readOnly}
+                  isAdmin={isAdmin}
+                  currentEmail={currentEmail}
+                  onPhotosChange={(photos) => setItemPhotos(item.sales_order_line_id, photos)}
+                  onError={setError}
+                />
                 {(threadBusy || buttonBusy) && (
                   <p className="mt-3 flex items-center gap-2 text-sm text-slate-500">
                     <Loader2 className="h-4 w-4 animate-spin" />
