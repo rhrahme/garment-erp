@@ -5,13 +5,19 @@ import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readPayrollEmployees, toBadgeSafeEmployee } from "@/lib/data/payroll-employees";
 import { filterPayrollEmployeesByGroup } from "@/lib/hr/payroll-utils";
 
-function EmployeesEmptyState({ canCreate }: { canCreate: boolean }) {
+function EmployeesEmptyState({
+  canCreate,
+  expatOnly,
+}: {
+  canCreate: boolean;
+  expatOnly: boolean;
+}) {
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-500">
         No employees yet. Add an employee to generate an ID badge QR.
       </div>
-      {canCreate ? <CreateEmployeeForm defaultGroup="expat" /> : null}
+      {canCreate ? <CreateEmployeeForm defaultGroup="expat" expatOnly={expatOnly} /> : null}
     </div>
   );
 }
@@ -20,6 +26,9 @@ export default async function HrIdBadgesExpatsPage() {
   const session = await getSessionContext();
   const canCreate =
     session.isAdmin || session.isProductionOperator || session.isClientManager;
+  // QC assigns job tasks from badges; admin already has payroll Roles column.
+  const canEditJobFunctions = session.isClientManager || session.isAdmin;
+  const expatOnlyCreate = session.isClientManager;
 
   await ensureDocumentsLoaded(["payroll_employees"]);
   const payroll = readPayrollEmployees();
@@ -30,7 +39,9 @@ export default async function HrIdBadgesExpatsPage() {
     : groupEmployees.map(toBadgeSafeEmployee);
 
   if (payroll.employees.length === 0) {
-    return <EmployeesEmptyState canCreate={canCreate} />;
+    return (
+      <EmployeesEmptyState canCreate={canCreate} expatOnly={expatOnlyCreate} />
+    );
   }
 
   return (
@@ -38,6 +49,8 @@ export default async function HrIdBadgesExpatsPage() {
       employees={employees}
       group="expat"
       canCreate={canCreate}
+      canEditJobFunctions={canEditJobFunctions}
+      expatOnlyCreate={expatOnlyCreate}
     />
   );
 }

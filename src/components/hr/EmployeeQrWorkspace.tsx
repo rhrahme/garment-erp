@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { CreateEmployeeForm } from "@/components/hr/CreateEmployeeForm";
 import { EmployeeBadgePrintControls } from "@/components/hr/EmployeeBadgePrintControls";
+import { JobFunctionsEditor } from "@/components/hr/JobFunctionsEditor";
 import { employeeQrPayload } from "@/lib/hr/employee-qr";
 import { listBadgePrintableEmployees } from "@/lib/hr/badge-print";
 import { type IdBadgeGroup } from "@/lib/hr/payroll-utils";
@@ -26,22 +27,33 @@ const GROUP_COPY: Record<
     title: "Expat employee ID badges",
     description:
       "Expat badge group. Each QR encodes a unique employee identifier for attendance, access control, or floor scanning.",
-    emptyHint: "No active Expat employees yet. Add one below or switch to Saudis.",
+    emptyHint: "No active Expat employees yet. Add one below.",
   },
 };
 
 export function EmployeeQrWorkspace({
-  employees,
+  employees: initialEmployees,
   group,
   canCreate = false,
+  canEditJobFunctions = false,
+  expatOnlyCreate = false,
 }: {
   employees: PayrollEmployee[];
   group: IdBadgeGroup;
   /** Factory managers and admins can add identity-only employees. */
   canCreate?: boolean;
+  /** QC (and admin on badges) can assign multi-select job roles without payroll salary access. */
+  canEditJobFunctions?: boolean;
+  /** QC creates Expats only -- hide Saudis option in the add form. */
+  expatOnlyCreate?: boolean;
 }) {
   const copy = GROUP_COPY[group];
   const [searchQuery, setSearchQuery] = useState("");
+  const [employees, setEmployees] = useState(initialEmployees);
+
+  useEffect(() => {
+    setEmployees(initialEmployees);
+  }, [initialEmployees]);
 
   const printable = useMemo(
     () => listBadgePrintableEmployees(employees, group),
@@ -56,6 +68,22 @@ export function EmployeeQrWorkspace({
     );
   }, [printable, searchQuery]);
 
+  function updateEmployee(updated: PayrollEmployee) {
+    setEmployees((current) =>
+      current.map((employee) =>
+        employee.id === updated.id
+          ? {
+              ...employee,
+              // Narrow job-functions API returns badge-safe fields only -- merge roles, keep local identity.
+              job_functions: updated.job_functions,
+              full_name: updated.full_name || employee.full_name,
+              employee_id_number: updated.employee_id_number || employee.employee_id_number,
+            }
+          : employee
+      )
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-[#0B2C5A]/25 bg-[#0B2C5A]/5 px-5 py-4 text-sm text-slate-950">
@@ -63,7 +91,9 @@ export function EmployeeQrWorkspace({
         <p className="mt-1 text-slate-800">{copy.description} Active employees only.</p>
       </div>
 
-      {canCreate ? <CreateEmployeeForm defaultGroup={group} /> : null}
+      {canCreate ? (
+        <CreateEmployeeForm defaultGroup={group} expatOnly={expatOnlyCreate} />
+      ) : null}
 
       <EmployeeBadgePrintControls employees={printable} group={group} />
 
@@ -74,7 +104,7 @@ export function EmployeeQrWorkspace({
           type="search"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Name or ID number…"
+          placeholder="Name or ID number..."
           className="mt-1 block w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3"
         />
       </label>
@@ -96,6 +126,16 @@ export function EmployeeQrWorkspace({
               >
                 <p className="font-medium text-slate-900">{employee.full_name}</p>
                 <p className="mt-1 font-mono text-xs text-slate-600">{employee.employee_id_number}</p>
+                {canEditJobFunctions ? (
+                  <div className="mt-3 w-full text-left">
+                    <p className="mb-1 text-xs font-medium text-slate-600">Job tasks</p>
+                    <JobFunctionsEditor
+                      employee={employee}
+                      onUpdated={updateEmployee}
+                      patchUrl={`/api/hr/employees/${encodeURIComponent(employee.id)}/job-functions`}
+                    />
+                  </div>
+                ) : null}
                 <div className="mt-3 flex justify-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img

@@ -5,12 +5,20 @@ import { useRouter } from "next/navigation";
 import { Plus, Loader2 } from "lucide-react";
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
 
-export function CreateEmployeeForm({ defaultGroup }: { defaultGroup: IdBadgeGroup }) {
+export function CreateEmployeeForm({
+  defaultGroup,
+  expatOnly = false,
+}: {
+  defaultGroup: IdBadgeGroup;
+  /** QC cannot create Saudi employees from badges. */
+  expatOnly?: boolean;
+}) {
   const router = useRouter();
+  const lockedGroup: IdBadgeGroup = expatOnly ? "expat" : defaultGroup;
   const [open, setOpen] = useState(false);
   const [fullName, setFullName] = useState("");
   const [employeeIdNumber, setEmployeeIdNumber] = useState("");
-  const [badgeGroup, setBadgeGroup] = useState<IdBadgeGroup>(defaultGroup);
+  const [badgeGroup, setBadgeGroup] = useState<IdBadgeGroup>(lockedGroup);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +33,7 @@ export function CreateEmployeeForm({ defaultGroup }: { defaultGroup: IdBadgeGrou
         body: JSON.stringify({
           full_name: fullName,
           employee_id_number: employeeIdNumber,
-          badge_group: badgeGroup,
+          badge_group: expatOnly ? "expat" : badgeGroup,
         }),
       });
       const data = (await res.json()) as { error?: string };
@@ -34,7 +42,7 @@ export function CreateEmployeeForm({ defaultGroup }: { defaultGroup: IdBadgeGrou
       }
       setFullName("");
       setEmployeeIdNumber("");
-      setBadgeGroup(defaultGroup);
+      setBadgeGroup(lockedGroup);
       setOpen(false);
       router.refresh();
     } catch (err) {
@@ -99,17 +107,23 @@ export function CreateEmployeeForm({ defaultGroup }: { defaultGroup: IdBadgeGrou
             placeholder="National / employee ID"
           />
         </label>
-        <label className="block text-sm">
-          <span className="font-medium text-slate-700">Badge group</span>
-          <select
-            value={badgeGroup}
-            onChange={(e) => setBadgeGroup(e.target.value as IdBadgeGroup)}
-            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2"
-          >
-            <option value="saudi">Saudis</option>
-            <option value="expat">Expats</option>
-          </select>
-        </label>
+        {expatOnly ? (
+          <p className="text-sm text-slate-600">
+            Badge group: <span className="font-medium text-slate-800">Expats</span>
+          </p>
+        ) : (
+          <label className="block text-sm">
+            <span className="font-medium text-slate-700">Badge group</span>
+            <select
+              value={badgeGroup}
+              onChange={(e) => setBadgeGroup(e.target.value as IdBadgeGroup)}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2"
+            >
+              <option value="saudi">Saudis</option>
+              <option value="expat">Expats</option>
+            </select>
+          </label>
+        )}
       </div>
       {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
       <button
@@ -118,7 +132,7 @@ export function CreateEmployeeForm({ defaultGroup }: { defaultGroup: IdBadgeGrou
         className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
       >
         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-        {saving ? "Saving…" : "Create employee"}
+        {saving ? "Saving..." : "Create employee"}
       </button>
     </form>
   );

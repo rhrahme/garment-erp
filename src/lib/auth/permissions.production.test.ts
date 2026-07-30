@@ -152,15 +152,21 @@ describe("client_manager QC ID badges (not payroll)", () => {
     assert.ok(!nav.includes("/hr"));
   });
 
-  it("allows badge pages and APIs; blocks payroll register and salary APIs", () => {
+  it("allows Expat badge pages and APIs; blocks Saudis, payroll register, and salary APIs", () => {
     assert.equal(isClientManagerRouteAllowed("/hr/id-badges"), true);
-    assert.equal(isClientManagerRouteAllowed("/hr/id-badges/saudis"), true);
-    assert.equal(isClientManagerRouteAllowed("/hr/id-badges/saudis/print"), true);
+    assert.equal(isClientManagerRouteAllowed("/hr/id-badges/expats"), true);
     assert.equal(isClientManagerRouteAllowed("/hr/id-badges/expats/print"), true);
     assert.equal(isClientManagerRouteAllowed("/api/hr/employees"), true);
+    assert.equal(
+      isClientManagerRouteAllowed("/api/hr/employees/emp-1/job-functions"),
+      true
+    );
     assert.equal(isClientManagerRouteAllowed("/api/hr/employee-lookup"), true);
-    assert.equal(isClientManagerRouteAllowed("/api/hr/id-badges/saudis/pdf"), true);
+    assert.equal(isClientManagerRouteAllowed("/api/hr/id-badges/expats/pdf"), true);
 
+    assert.equal(isClientManagerRouteAllowed("/hr/id-badges/saudis"), false);
+    assert.equal(isClientManagerRouteAllowed("/hr/id-badges/saudis/print"), false);
+    assert.equal(isClientManagerRouteAllowed("/api/hr/id-badges/saudis/pdf"), false);
     assert.equal(isClientManagerRouteAllowed("/hr"), false);
     assert.equal(isClientManagerRouteAllowed("/hr/"), false);
     assert.equal(isClientManagerRouteAllowed("/api/hr/payroll-employees"), false);

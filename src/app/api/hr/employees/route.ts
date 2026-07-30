@@ -59,10 +59,18 @@ export async function POST(request: Request) {
       address_3?: string;
     };
 
+    // QC creates Expats only -- ignore any saudi badge_group from the client.
+    const badge_group: IdBadgeGroup =
+      session.isClientManager && !session.isAdmin
+        ? "expat"
+        : body.badge_group === "expat"
+          ? "expat"
+          : "saudi";
+
     const employee = await createPayrollEmployee({
       full_name: String(body.full_name ?? ""),
       employee_id_number: String(body.employee_id_number ?? ""),
-      badge_group: body.badge_group === "expat" ? "expat" : "saudi",
+      badge_group,
       bank_name: body.bank_name,
       assigned_workstation_id: body.assigned_workstation_id,
       is_mobile_floater: body.is_mobile_floater,

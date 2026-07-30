@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { EmployeeQrWorkspace } from "@/components/hr/EmployeeQrWorkspace";
 import { getSessionContext } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
@@ -18,8 +19,12 @@ function EmployeesEmptyState({ canCreate }: { canCreate: boolean }) {
 
 export default async function HrIdBadgesSaudisPage() {
   const session = await getSessionContext();
-  const canCreate =
-    session.isAdmin || session.isProductionOperator || session.isClientManager;
+  // QC must not browse Saudi employees -- Expats only.
+  if (session.isClientManager) {
+    redirect("/hr/id-badges/expats");
+  }
+
+  const canCreate = session.isAdmin || session.isProductionOperator;
 
   await ensureDocumentsLoaded(["payroll_employees"]);
   const payroll = readPayrollEmployees();

@@ -8,6 +8,8 @@ export default async function HrIdBadgesLayout({ children }: { children: React.R
   // Payroll register tab is admin-only; QC and factory managers get badges only.
   const showPayroll = session.isAdmin;
   const badgesOnly = !session.isAdmin;
+  // QC manages Expats only -- hide Saudis tab entirely.
+  const showSaudis = !session.isClientManager;
 
   return (
     <div>
@@ -15,12 +17,14 @@ export default async function HrIdBadgesLayout({ children }: { children: React.R
         title={badgesOnly ? "Employees" : "HR & Payroll"}
         description={
           badgesOnly
-            ? "Employee list and ID badges - name, ID number, and scannable QR"
+            ? session.isClientManager
+              ? "Expat employee list and ID badges - name, ID number, job tasks, and scannable QR"
+              : "Employee list and ID badges - name, ID number, and scannable QR"
             : "Employee ID badges - name, ID number, and scannable QR per employee"
         }
       />
       <HrNav showPayroll={showPayroll} />
-      <IdBadgesNav />
+      <IdBadgesNav showSaudis={showSaudis} />
       {children}
     </div>
   );
