@@ -231,8 +231,8 @@ export function PayrollWorkspace({
         <p className="font-medium">Payroll register imported</p>
         <p className="mt-1 text-emerald-900">
           Loaded from <span className="font-mono text-xs">{sourceFile || "salary spreadsheet"}</span>
-          {updatedAt ? ` · updated ${formatDate(updatedAt.slice(0, 10))}` : ""}. Salary fields re-import from Excel
-          with <span className="font-mono text-xs">python3 scripts/import-salary-xlsx.py</span> — workstation and
+          {updatedAt ? ` - updated ${formatDate(updatedAt.slice(0, 10))}` : ""}. Salary fields re-import from Excel
+          with <span className="font-mono text-xs">python3 scripts/import-salary-xlsx.py</span> - workstation and
           roles below are saved in ERP.
         </p>
       </div>
@@ -278,7 +278,7 @@ export function PayrollWorkspace({
           type="search"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Name, ID, station, role, bank…"
+          placeholder="Name, ID, station, role, bank..."
           className="mt-1 block w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3"
         />
       </label>
@@ -329,7 +329,7 @@ export function PayrollWorkspace({
                     {employee.deduction > 0 ? (
                       <span className="text-red-600">{formatSar(employee.deduction)}</span>
                     ) : (
-                      "—"
+                      "-"
                     )}
                   </td>
                   <td className="px-4 py-3 font-semibold text-slate-900">{formatSar(employee.salary_amount)}</td>

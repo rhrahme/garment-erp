@@ -45,7 +45,7 @@ export function normalizeJobFunctions(values: unknown): EmployeeJobFunction[] {
 
 export function formatJobFunctionsSummary(values: readonly string[]): string {
   const normalized = normalizeJobFunctions(values);
-  if (normalized.length === 0) return "Select roles…";
+  if (normalized.length === 0) return "Select roles...";
   if (normalized.length === 1) return EMPLOYEE_JOB_FUNCTION_LABELS[normalized[0]!];
   if (normalized.length <= 2) {
     return normalized.map((fn) => EMPLOYEE_JOB_FUNCTION_LABELS[fn]).join(", ");

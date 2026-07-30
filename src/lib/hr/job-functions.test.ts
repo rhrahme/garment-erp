@@ -24,7 +24,7 @@ describe("normalizeJobFunctions", () => {
 
 describe("formatJobFunctionsSummary", () => {
   it("summarizes selection for the dropdown trigger", () => {
-    assert.equal(formatJobFunctionsSummary([]), "Select roles…");
+    assert.equal(formatJobFunctionsSummary([]), "Select roles...");
     assert.equal(formatJobFunctionsSummary(["cutter"]), "Cutter");
     assert.equal(formatJobFunctionsSummary(["jacket_tailor", "qc"]), "Jacket tailor, QC");
     assert.equal(formatJobFunctionsSummary(["jacket_tailor", "cutter", "qc"]), "3 roles");
