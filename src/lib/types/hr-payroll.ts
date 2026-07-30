@@ -1,3 +1,5 @@
+import type { EmployeeJobFunction } from "@/lib/hr/job-functions";
+
 export type PayrollEmployee = {
   id: string;
   s_no: number;
@@ -19,6 +21,8 @@ export type PayrollEmployee = {
   assigned_workstation_id?: string | null;
   /** Floater — may pick a station once per shift when scanning */
   is_mobile_floater?: boolean;
+  /** Factory roles (tailor specialties, cutter, QC, etc.) — multi-select. */
+  job_functions?: EmployeeJobFunction[];
 };
 
 export type PayrollEmployeesFile = {

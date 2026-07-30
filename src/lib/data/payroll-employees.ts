@@ -1,6 +1,7 @@
 import path from "path";
 import { readJsonFile } from "@/lib/data/json-file-cache";
 import { saveDocument } from "@/lib/data/document-persistence";
+import { normalizeJobFunctions, type EmployeeJobFunction } from "@/lib/hr/job-functions";
 import { idBadgeGroup, type IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import type { PayrollEmployee, PayrollEmployeesFile, PayrollSummary } from "@/lib/types/hr-payroll";
 
@@ -39,6 +40,7 @@ export type CreatePayrollEmployeeInput = {
   bank_name?: string;
   assigned_workstation_id?: string | null;
   is_mobile_floater?: boolean;
+  job_functions?: EmployeeJobFunction[];
   /** Admin-only payroll fields — omitted on floor create (zeros / empty). */
   includePayrollFields?: boolean;
   salary_amount?: number;
@@ -125,6 +127,7 @@ export async function createPayrollEmployee(input: CreatePayrollEmployeeInput): 
     is_active: true,
     assigned_workstation_id: input.assigned_workstation_id ?? null,
     is_mobile_floater: Boolean(input.is_mobile_floater),
+    job_functions: normalizeJobFunctions(input.job_functions),
   };
 
   store.employees.push(employee);
@@ -137,7 +140,7 @@ export async function createPayrollEmployee(input: CreatePayrollEmployeeInput): 
 
 export async function updatePayrollEmployee(
   id: string,
-  patch: Partial<Pick<PayrollEmployee, "assigned_workstation_id" | "is_mobile_floater">>
+  patch: Partial<Pick<PayrollEmployee, "assigned_workstation_id" | "is_mobile_floater" | "job_functions">>
 ): Promise<PayrollEmployee> {
   const store = readPayrollEmployees();
   const index = store.employees.findIndex(
@@ -147,9 +150,14 @@ export async function updatePayrollEmployee(
     throw new Error("Employee not found.");
   }
 
+  const current = store.employees[index]!;
   const updated: PayrollEmployee = {
-    ...store.employees[index]!,
+    ...current,
     ...patch,
+    job_functions:
+      patch.job_functions !== undefined
+        ? normalizeJobFunctions(patch.job_functions)
+        : normalizeJobFunctions(current.job_functions),
   };
   store.employees[index] = updated;
   await writePayrollEmployees(store);

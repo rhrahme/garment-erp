@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { updatePayrollEmployee } from "@/lib/data/payroll-employees";
+import { normalizeJobFunctions } from "@/lib/hr/job-functions";
 import { normalizeWorkstationId } from "@/lib/production/factory-workstations";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -17,6 +18,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const body = (await request.json()) as {
       assigned_workstation_id?: string | null;
       is_mobile_floater?: boolean;
+      job_functions?: unknown;
     };
 
     const assignedRaw = body.assigned_workstation_id;
@@ -28,6 +30,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const employee = await updatePayrollEmployee(id, {
       ...(body.assigned_workstation_id !== undefined ? { assigned_workstation_id } : {}),
       ...(body.is_mobile_floater !== undefined ? { is_mobile_floater: Boolean(body.is_mobile_floater) } : {}),
+      ...(body.job_functions !== undefined
+        ? { job_functions: normalizeJobFunctions(body.job_functions) }
+        : {}),
     });
 
     return NextResponse.json({ ok: true, employee });

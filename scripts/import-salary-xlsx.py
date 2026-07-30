@@ -68,6 +68,26 @@ def import_workbook(xlsx_path: Path) -> list[dict]:
     if missing:
         raise SystemExit(f"Missing expected columns: {', '.join(missing)}")
 
+    # Preserve ERP-only fields across salary re-imports (not in the spreadsheet).
+    existing_by_id: dict[str, dict] = {}
+    if OUT_PATH.exists():
+        try:
+            existing_payload = json.loads(OUT_PATH.read_text(encoding="utf-8"))
+            for employee in existing_payload.get("employees", []):
+                employee_id = clean_text(employee.get("id") or employee.get("employee_id_number"))
+                if employee_id:
+                    existing_by_id[employee_id] = employee
+        except (json.JSONDecodeError, OSError):
+            existing_by_id = {}
+
+    preserve_keys = (
+        "assigned_workstation_id",
+        "is_mobile_floater",
+        "job_functions",
+        "terminated_at",
+        "termination_reason",
+    )
+
     employees: list[dict] = []
     for row in rows[1:]:
         if not row or not any(cell not in (None, "") for cell in row):
@@ -81,6 +101,7 @@ def import_workbook(xlsx_path: Path) -> list[dict]:
         entry: dict = {
             "id": employee_id or f"emp-{len(employees) + 1}",
             "is_active": True,
+            "job_functions": [],
         }
         for source, target in HEADER_MAP.items():
             value = raw.get(source)
@@ -90,6 +111,17 @@ def import_workbook(xlsx_path: Path) -> list[dict]:
                 entry[target] = int(parse_number(value)) if clean_text(value) else len(employees) + 1
             else:
                 entry[target] = clean_text(value)
+
+        previous = existing_by_id.get(entry["id"])
+        if previous:
+            for key in preserve_keys:
+                if key in previous:
+                    entry[key] = previous[key]
+            if "is_active" in previous:
+                entry["is_active"] = previous["is_active"]
+            if "job_functions" not in entry or entry["job_functions"] is None:
+                entry["job_functions"] = []
+
         employees.append(entry)
 
     return employees

@@ -1,8 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Building2, Search, Users, Wallet } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Building2, ChevronDown, Search, Users, Wallet } from "lucide-react";
 import { StatCard } from "@/components/ui/PageHeader";
+import {
+  EMPLOYEE_JOB_FUNCTION_LABELS,
+  EMPLOYEE_JOB_FUNCTIONS,
+  formatJobFunctionsSummary,
+  normalizeJobFunctions,
+  type EmployeeJobFunction,
+} from "@/lib/hr/job-functions";
 import { maskAccountNumber, sortPayrollEmployees } from "@/lib/hr/payroll-utils";
 import { FACTORY_WORKSTATIONS } from "@/lib/production/factory-workstations";
 import type { PayrollEmployee, PayrollSummary } from "@/lib/types/hr-payroll";
@@ -10,6 +17,118 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 
 function formatSar(amount: number): string {
   return formatCurrency(amount, "SAR");
+}
+
+type EmployeePatch = Partial<
+  Pick<PayrollEmployee, "assigned_workstation_id" | "is_mobile_floater" | "job_functions">
+>;
+
+async function patchEmployee(employeeId: string, patch: EmployeePatch): Promise<PayrollEmployee> {
+  const res = await fetch(`/api/hr/payroll-employees/${encodeURIComponent(employeeId)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Save failed");
+  return data.employee as PayrollEmployee;
+}
+
+function JobFunctionsEditor({
+  employee,
+  onUpdated,
+}: {
+  employee: PayrollEmployee;
+  onUpdated: (employee: PayrollEmployee) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const selected = useMemo(
+    () => normalizeJobFunctions(employee.job_functions),
+    [employee.job_functions]
+  );
+  const selectedSet = useMemo(() => new Set(selected), [selected]);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  async function toggle(fn: EmployeeJobFunction) {
+    const next = selectedSet.has(fn)
+      ? selected.filter((value) => value !== fn)
+      : [...selected, fn];
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await patchEmployee(employee.id, {
+        job_functions: normalizeJobFunctions(next),
+      });
+      onUpdated(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div ref={rootRef} className="relative min-w-[11rem]">
+      <button
+        type="button"
+        disabled={saving}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-center justify-between gap-1 rounded border border-slate-300 bg-white px-2 py-1.5 text-left text-xs text-slate-800 hover:border-slate-400 disabled:opacity-60"
+      >
+        <span className="truncate">{formatJobFunctionsSummary(selected)}</span>
+        <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-400 ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div
+          role="listbox"
+          aria-multiselectable="true"
+          className="absolute left-0 z-20 mt-1 max-h-64 w-56 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+        >
+          {EMPLOYEE_JOB_FUNCTIONS.map((fn) => {
+            const checked = selectedSet.has(fn);
+            return (
+              <label
+                key={fn}
+                className="flex cursor-pointer items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  disabled={saving}
+                  onChange={() => void toggle(fn)}
+                  className="h-4 w-4 rounded border-slate-300"
+                />
+                <span>{EMPLOYEE_JOB_FUNCTION_LABELS[fn]}</span>
+              </label>
+            );
+          })}
+        </div>
+      )}
+      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+    </div>
+  );
 }
 
 function WorkstationEditor({
@@ -22,18 +141,12 @@ function WorkstationEditor({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function patch(patch: Partial<Pick<PayrollEmployee, "assigned_workstation_id" | "is_mobile_floater">>) {
+  async function patch(patch: EmployeePatch) {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`/api/hr/payroll-employees/${encodeURIComponent(employee.id)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Save failed");
-      onUpdated(data.employee as PayrollEmployee);
+      const updated = await patchEmployee(employee.id, patch);
+      onUpdated(updated);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
     } finally {
@@ -95,6 +208,7 @@ export function PayrollWorkspace({
         employee.full_name,
         employee.employee_id_number,
         employee.assigned_workstation_id,
+        ...(employee.job_functions ?? []).map((fn) => EMPLOYEE_JOB_FUNCTION_LABELS[fn] ?? fn),
         employee.bank_name,
         employee.account_number,
         employee.payment_description,
@@ -118,8 +232,8 @@ export function PayrollWorkspace({
         <p className="mt-1 text-emerald-900">
           Loaded from <span className="font-mono text-xs">{sourceFile || "salary spreadsheet"}</span>
           {updatedAt ? ` · updated ${formatDate(updatedAt.slice(0, 10))}` : ""}. Salary fields re-import from Excel
-          with <span className="font-mono text-xs">python3 scripts/import-salary-xlsx.py</span> — workstation
-          assignments below are saved in ERP.
+          with <span className="font-mono text-xs">python3 scripts/import-salary-xlsx.py</span> — workstation and
+          roles below are saved in ERP.
         </p>
       </div>
 
@@ -164,7 +278,7 @@ export function PayrollWorkspace({
           type="search"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Name, ID, station, bank…"
+          placeholder="Name, ID, station, role, bank…"
           className="mt-1 block w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3"
         />
       </label>
@@ -181,6 +295,7 @@ export function PayrollWorkspace({
                 <th className="px-4 py-3">#</th>
                 <th className="px-4 py-3">Employee</th>
                 <th className="px-4 py-3">ID No.</th>
+                <th className="px-4 py-3">Roles</th>
                 <th className="px-4 py-3">Workstation</th>
                 <th className="px-4 py-3">Bank</th>
                 <th className="px-4 py-3">Account</th>
@@ -197,6 +312,9 @@ export function PayrollWorkspace({
                   <td className="px-4 py-3 text-slate-500">{employee.s_no}</td>
                   <td className="px-4 py-3 font-medium text-slate-900">{employee.full_name}</td>
                   <td className="px-4 py-3 font-mono text-xs text-slate-600">{employee.employee_id_number}</td>
+                  <td className="px-4 py-3">
+                    <JobFunctionsEditor employee={employee} onUpdated={updateEmployee} />
+                  </td>
                   <td className="px-4 py-3">
                     <WorkstationEditor employee={employee} onUpdated={updateEmployee} />
                   </td>
@@ -220,7 +338,7 @@ export function PayrollWorkspace({
             </tbody>
             <tfoot>
               <tr className="border-t border-slate-200 bg-slate-50 font-medium">
-                <td className="px-4 py-3" colSpan={10}>
+                <td className="px-4 py-3" colSpan={11}>
                   {filtered.length} employee{filtered.length !== 1 ? "s" : ""} shown
                 </td>
                 <td className="px-4 py-3">{formatSar(filteredTotal)}</td>
