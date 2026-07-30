@@ -10,12 +10,19 @@ type FabricPriceRevealToggleProps = {
   canViewFabricPrices: boolean;
   compact?: boolean;
   iconOnly?: boolean;
+  /** Client-side only — no password / cookie (admin fabric catalog). */
+  skipPassword?: boolean;
+  onLock?: () => void;
+  onUnlock?: () => void;
 };
 
 export function FabricPriceRevealToggle({
   canViewFabricPrices,
   compact = false,
   iconOnly = false,
+  skipPassword = false,
+  onLock,
+  onUnlock,
 }: FabricPriceRevealToggleProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -24,6 +31,10 @@ export function FabricPriceRevealToggle({
   const [error, setError] = useState<string | null>(null);
 
   async function hidePrices() {
+    if (skipPassword) {
+      onLock?.();
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -73,11 +84,23 @@ export function FabricPriceRevealToggle({
     setError(null);
   }
 
+  function handleToggleClick() {
+    if (canViewFabricPrices) {
+      void hidePrices();
+      return;
+    }
+    if (skipPassword) {
+      onUnlock?.();
+      return;
+    }
+    setOpen(true);
+  }
+
   return (
     <>
       <button
         type="button"
-        onClick={() => (canViewFabricPrices ? void hidePrices() : setOpen(true))}
+        onClick={handleToggleClick}
         disabled={submitting}
         className={
           iconOnly
@@ -93,7 +116,7 @@ export function FabricPriceRevealToggle({
         {!iconOnly && (canViewFabricPrices ? "Hide" : "Show")}
       </button>
 
-      {open && (
+      {open && !skipPassword && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
           <div
             className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-xl"

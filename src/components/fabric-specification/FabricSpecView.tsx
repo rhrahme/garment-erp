@@ -6,7 +6,9 @@ import { DownloadLoroPianaMissingSwatchesPdfButton } from "@/components/fabric-s
 import { FabricSpecPreview } from "@/components/fabric-specification/FabricSpecPreview";
 import { DataTable } from "@/components/ui/PageHeader";
 import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
+import { FabricPriceRevealToggle } from "@/components/orders/FabricPriceRevealToggle";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useFabricSpecPricesVisibility } from "@/hooks/useFabricSpecPricesVisibility";
 import { useFabricSwatchResolver } from "@/hooks/useFabricSwatchResolver";
 import { CUSTOM_SUPPLIER_ID } from "@/lib/types/custom-fabrics";
 import {
@@ -38,6 +40,14 @@ export function FabricSpecView({
   const [items, setItems] = useState(initialItems);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [nextFabricNumber, setNextFabricNumber] = useState("CF-2026-0001");
+  const {
+    visible: pricesVisible,
+    hydrated: pricesHydrated,
+    unlock: unlockPrices,
+    lock: lockPrices,
+  } = useFabricSpecPricesVisibility(true);
+  /** Admin may hide prices via eye; sales/etc. never receive prices from the server. */
+  const showPrices = canViewPrices && (!pricesHydrated || pricesVisible);
 
   useEffect(() => {
     setItems(initialItems);
@@ -174,6 +184,7 @@ export function FabricSpecView({
     setBrandId(CUSTOM_SUPPLIER_ID);
   }
 
+
   return (
     <div className="flex gap-6">
       {/* Brand list — left panel */}
@@ -273,7 +284,7 @@ export function FabricSpecView({
             </h2>
             <p className="text-sm text-slate-500">
               {filtered.length.toLocaleString()} fabrics
-              {canViewPrices ? " · reference price list, not stock" : " · specs only, prices hidden"}
+              {showPrices ? " · reference price list, not stock" : " · specs only, prices hidden"}
               {" · "}
               <span className="text-slate-600">
                 {isCustomTab
@@ -298,6 +309,15 @@ export function FabricSpecView({
             ) : null}
           </div>
           <div className="ml-auto flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            {canViewPrices && pricesHydrated ? (
+              <FabricPriceRevealToggle
+                canViewFabricPrices={pricesVisible}
+                skipPassword
+                compact
+                onLock={lockPrices}
+                onUnlock={unlockPrices}
+              />
+            ) : null}
             {isCustomTab ? (
               <button
                 type="button"
@@ -340,7 +360,7 @@ export function FabricSpecView({
             { key: "width", label: "Width" },
           { key: "hsCode", label: "HS Code" },
           { key: "mill", label: "Mill" },
-          ...(canViewPrices ? [{ key: "price", label: "Account price/m" }] : []),
+          ...(showPrices ? [{ key: "price", label: "Account price/m" }] : []),
           ...(showStockColumn ? [{ key: "stock", label: "Stock" }] : []),
           ]}
           rows={sortedDisplay.map((f) => ({
@@ -358,7 +378,7 @@ export function FabricSpecView({
                 fabric={f}
                 swatchSrc={getSwatch(f.supplier_id, f.fabric_number)?.square}
                 zoomSrc={getSwatch(f.supplier_id, f.fabric_number)?.zoom}
-                canViewPrices={canViewPrices}
+                canViewPrices={showPrices}
                 canViewStock={canViewStock}
               />
             ),
@@ -373,7 +393,7 @@ export function FabricSpecView({
             <span className="font-mono text-xs">{f.gn_code}</span>
           ) : "—",
           mill: f.weave_type ? <span className="text-xs">{f.weave_type}</span> : "—",
-          ...(canViewPrices
+          ...(showPrices
             ? {
                 price:
                   f.unit_price != null ? (
