@@ -2,6 +2,8 @@ import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display
 import {
   buildSoArticleMapFromFabricLines,
   formatFabricLineArticle,
+  formatGarmentWithPieceList,
+  piecesForFabricLine,
 } from "@/lib/sales-orders/label-codes";
 import { fabricLineWeightKg, totalFabricMeters, totalFabricWeightKg } from "@/lib/sales-orders/fabric-weight";
 import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
@@ -11,6 +13,10 @@ export interface ArticleLineSummary {
   article_number: number;
   article_label: string;
   garment_type: string;
+  /** Ordered pieces under the line (Jacket, Trouser for Suit). */
+  pieces: string[];
+  /** Parent + pieces label for display, e.g. Suit (Jacket + Trouser). */
+  garment_label: string;
   fabric_number: string;
   supplier_label: string;
   meters: number;
@@ -69,11 +75,14 @@ export function buildSalesOrderArticlesSummary(lines: SalesOrderFabricLine[]): S
       pushAggregate(byGarment, line.garment_type, meters);
       pushAggregate(bySupplier, supplierLabel, meters);
 
+      const pieces = piecesForFabricLine(line);
       return {
         line_id: line.id,
         article_number: articleNumber,
         article_label: formatFabricLineArticle(articleNumber),
         garment_type: line.garment_type,
+        pieces,
+        garment_label: formatGarmentWithPieceList(line.garment_type, pieces),
         fabric_number: line.fabric_number,
         supplier_label: supplierLabel,
         meters,

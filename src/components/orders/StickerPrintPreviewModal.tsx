@@ -114,8 +114,9 @@ function PreviewCard({
             {label.client_code} · {label.fabric_brand} / {label.fabric_number}
           </p>
           <p className="truncate text-slate-500">
-            {label.garment_type}
-            {label.piece_name !== label.garment_type ? ` · ${label.piece_name}` : ""}
+            {label.piece_name !== label.garment_type
+              ? `${label.garment_type} · ${label.piece_name}`
+              : label.garment_type}
           </p>
         </div>
       </div>

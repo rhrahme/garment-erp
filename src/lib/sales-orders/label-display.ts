@@ -1,4 +1,4 @@
-import { getGarmentPieces } from "@/lib/sales-orders/label-codes";
+import { piecesForFabricLine } from "@/lib/sales-orders/label-codes";
 import { getLabelCountForGarment } from "@/lib/sales-orders/garment-types";
 import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
@@ -18,7 +18,7 @@ export function totalProductionLabels(lines: SalesOrderFabricLine[]): number {
 
 /** Human-readable label summary for one fabric line — e.g. "2 labels (Jacket + Trouser)". */
 export function formatFabricLineLabels(line: SalesOrderFabricLine): string {
-  const pieces = line.label_stickers?.map((sticker) => sticker.piece_name) ?? getGarmentPieces(line.garment_type);
+  const pieces = piecesForFabricLine(line);
   const count = resolveFabricLineLabelCount(line);
   if (pieces.length > 1) {
     return `${count} labels (${pieces.join(" + ")})`;

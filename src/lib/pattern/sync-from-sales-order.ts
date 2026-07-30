@@ -1,22 +1,16 @@
 import { readPatternJobsFresh, writePatternJobs } from "@/lib/data/pattern-jobs";
 import { orphanPatternJobsToCancel } from "@/lib/sales-orders/pattern-so-mismatch";
-import { fabricLineArticleNumber, getGarmentPieces } from "@/lib/sales-orders/label-codes";
+import { fabricLineArticleNumber, piecesForFabricLine } from "@/lib/sales-orders/label-codes";
 import type { PatternJob } from "@/lib/types/pattern";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import { notifyIntegration } from "@/lib/integrations";
-
-function pieceNameForLine(line: SalesOrderFabricLine): string {
-  const sticker = line.label_stickers?.[0];
-  if (sticker?.piece_name) return sticker.piece_name;
-  const pieces = getGarmentPieces(line.garment_type);
-  return pieces[0] ?? line.garment_type;
-}
 
 function jobFieldsFromLine(
   order: SalesOrder,
   line: SalesOrderFabricLine,
   articleNumber: number
 ): Omit<PatternJob, "id" | "status" | "assigned_to" | "pattern_code" | "pattern_size_notes" | "trial_priority" | "blocked_reason" | "notes" | "fittings" | "revisions" | "created_at" | "updated_at"> {
+  const pieceNames = piecesForFabricLine(line);
   return {
     sales_order_id: order.id,
     sales_order_line_id: line.id,
@@ -25,7 +19,8 @@ function jobFieldsFromLine(
     client_name: order.client_name,
     client_code: order.client_code,
     garment_type: line.garment_type,
-    piece_name: pieceNameForLine(line),
+    piece_name: pieceNames[0] ?? line.garment_type,
+    piece_names: pieceNames,
     article_number: articleNumber,
     fabric_number: line.fabric_number,
     supplier: line.supplier_name,
@@ -79,9 +74,13 @@ export async function syncPatternJobsFromSalesOrder(
         updated_at: now,
       };
 
+      const piecesChanged =
+        JSON.stringify(existing.piece_names ?? []) !== JSON.stringify(nextJob.piece_names ?? []);
       const changed =
         existing.fabric_number !== nextJob.fabric_number ||
         existing.garment_type !== nextJob.garment_type ||
+        existing.piece_name !== nextJob.piece_name ||
+        piecesChanged ||
         existing.meters !== nextJob.meters ||
         existing.supplier !== nextJob.supplier ||
         existing.supplier_id !== nextJob.supplier_id ||

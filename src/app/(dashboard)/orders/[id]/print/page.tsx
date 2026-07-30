@@ -320,7 +320,9 @@ export default async function SalesOrderPrintPage({
               </thead>
               <tbody>
                 {(team === "production" ? prodPrintLines : order.fabric_lines).flatMap((line) =>
-                  (line.label_stickers ?? []).map((sticker) => {
+                  [...(line.label_stickers ?? [])]
+                    .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
+                    .map((sticker) => {
                     const productionCode = productionCodeFromSticker(sticker.code, order.client_code);
                     return (
                       <tr key={sticker.code} className="border-b border-slate-200 align-top">

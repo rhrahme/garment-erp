@@ -48,4 +48,23 @@ describe("buildSalesOrderArticlesSummary", () => {
     assert.equal(summary.by_garment[0]?.total_meters, 2.5);
     assert.equal(summary.by_supplier[0]?.line_count, 2);
   });
+
+  it("nests Jacket and Trouser under Suit article lines", () => {
+    const summary = buildSalesOrderArticlesSummary([
+      line({
+        id: "suit-1",
+        garment_type: "Suit",
+        label_count: 2,
+        label_stickers: [
+          { code: "FR-0126-0001-SO-2026-0001-L03-TR", piece_name: "Trouser", sequence: 2 },
+          { code: "FR-0126-0001-SO-2026-0001-L03-JKT", piece_name: "Jacket", sequence: 1 },
+        ],
+        quantity: 3,
+      }),
+    ]);
+
+    assert.deepEqual(summary.lines[0]?.pieces, ["Jacket", "Trouser"]);
+    assert.equal(summary.lines[0]?.garment_label, "Suit (Jacket + Trouser)");
+    assert.equal(summary.by_garment[0]?.label, "Suit");
+  });
 });

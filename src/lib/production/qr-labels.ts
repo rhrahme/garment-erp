@@ -186,9 +186,13 @@ function lineToLabels(
     ];
   }
 
-  const fabricCutCode = supplierFabricProductionCode(stickers[0]!.code, clientCode);
+  const orderedStickers = [...stickers].sort(
+    (a, b) => (a.sequence ?? 0) - (b.sequence ?? 0)
+  );
+  const fabricCutCode = supplierFabricProductionCode(orderedStickers[0]!.code, clientCode);
 
-  return stickers.map((sticker) => {
+  // Keep Jacket before Trouser (and other mapped piece order) under the same article.
+  return orderedStickers.map((sticker) => {
     const productionCode = productionCodeFromSticker(sticker.code, clientCode);
     return {
       sticker_code: sticker.code,

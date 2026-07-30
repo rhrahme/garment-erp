@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
+import { GarmentPiecesNest } from "@/components/garment/GarmentPiecesNest";
 import { cn } from "@/lib/utils";
 import { FabricCutQrImage } from "@/components/orders/FabricCutQrImage";
+import { piecesForFabricLine } from "@/lib/sales-orders/label-codes";
 import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
 export type ReceivingCutTableRow = {
@@ -17,6 +19,7 @@ export type ReceivingCutTableRow = {
   width_cm: number | null;
   width_inches: number | null;
   garment_type: string;
+  pieces: string[];
   fabric_meters: number;
 };
 
@@ -97,6 +100,7 @@ export function receivingCutRowFromFabricLine(
     width_cm: line.width_cm,
     width_inches: line.width_inches,
     garment_type: line.garment_type,
+    pieces: piecesForFabricLine(line),
     fabric_meters: line.quantity,
   };
 }
@@ -187,7 +191,14 @@ export function SalesOrderReceivingCutTable({
               <CompositionCell composition={row.composition} className={highlight} />
               <td className={cell("text-slate-600")}>{fabricWeightLabel(row)}</td>
               <td className={cell("text-slate-600")}>{formatWidth(row)}</td>
-              <td className={cell()}>{row.garment_type}</td>
+              <td className={cell()}>
+                <span className="font-medium text-slate-900">{row.garment_type}</span>
+                <GarmentPiecesNest
+                  garmentType={row.garment_type}
+                  pieces={row.pieces}
+                  className="mt-0.5 space-y-0.5 text-xs text-slate-600 print:text-[8px]"
+                />
+              </td>
               <td className={cell("font-medium")}>{row.fabric_meters} m</td>
               {renderTrailingCell ? <td className={cell()}>{renderTrailingCell(row)}</td> : null}
             </tr>

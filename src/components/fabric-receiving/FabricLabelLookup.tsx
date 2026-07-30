@@ -179,8 +179,10 @@ export function FabricLabelLookup({
               </p>
               <p className="mt-1">
                 {result.garment_type}
-                {result.piece_name && result.piece_name !== result.garment_type ? ` — ${result.piece_name}` : ""} ·{" "}
-                {result.supplier_name} {result.fabric_number}
+                {result.piece_name && result.piece_name !== result.garment_type
+                  ? ` · ${result.piece_name}`
+                  : ""}{" "}
+                · {result.supplier_name} {result.fabric_number}
               </p>
               {(result.composition || result.weight_gsm) && (
                 <p className="mt-1 text-xs opacity-90">

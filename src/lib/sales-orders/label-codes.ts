@@ -47,6 +47,42 @@ export function getGarmentPieces(garmentType: string): string[] {
   return [garmentType];
 }
 
+/** True when the garment type expands to more than one sticker piece (Suit, Shirt+Trouser, …). */
+export function isMultiPieceGarment(garmentType: string): boolean {
+  return getGarmentPieces(garmentType).length > 1;
+}
+
+/**
+ * Ordered piece names for a fabric line — sticker sequence when present,
+ * otherwise the garment-type piece map (Jacket before Trouser for Suit).
+ */
+export function piecesForFabricLine(line: {
+  garment_type: string;
+  label_stickers?: Array<{ piece_name: string; sequence?: number }> | null;
+}): string[] {
+  const stickers = line.label_stickers;
+  if (stickers && stickers.length > 0) {
+    return [...stickers]
+      .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
+      .map((sticker) => sticker.piece_name)
+      .filter(Boolean);
+  }
+  return getGarmentPieces(line.garment_type);
+}
+
+/** Piece list for a pattern job — stored piece_names, else garment map. */
+export function piecesForPatternJob(job: {
+  garment_type: string;
+  piece_names?: string[] | null;
+  piece_name?: string | null;
+}): string[] {
+  if (job.piece_names && job.piece_names.length > 0) return job.piece_names;
+  const fromType = getGarmentPieces(job.garment_type);
+  if (fromType.length > 1) return fromType;
+  if (job.piece_name?.trim()) return [job.piece_name.trim()];
+  return fromType;
+}
+
 function pieceAbbrev(pieceName: string): string {
   return PIECE_ABBREV[pieceName] ?? pieceName.replace(/[^A-Za-z0-9]/g, "").slice(0, 6).toUpperCase();
 }
@@ -67,10 +103,30 @@ export function generateFabricLabelStickers(
   }));
 }
 
+/**
+ * Piece under parent garment — e.g. "Suit · Jacket". Single-piece garments stay as the type.
+ * Uses ASCII middle-dot separators (not em dash).
+ */
 export function formatLabelGarmentDescription(garmentType: string, pieceName: string): string {
   const pieces = getGarmentPieces(garmentType);
   if (pieces.length === 1) return garmentType;
-  return `${garmentType} — ${pieceName}`;
+  if (!pieceName?.trim() || pieceName === garmentType) return garmentType;
+  return `${garmentType} · ${pieceName}`;
+}
+
+/**
+ * Physical sticker body line.
+ * Prep / fabric-cut: "Cut · Suit". Production piece: "Suit · Jacket".
+ */
+export function formatStickerPieceLine(
+  garmentType: string,
+  pieceName: string,
+  options?: { fabricCut?: boolean }
+): string {
+  if (options?.fabricCut || !pieceName?.trim() || pieceName === garmentType) {
+    return `Cut · ${garmentType}`;
+  }
+  return formatLabelGarmentDescription(garmentType, pieceName);
 }
 
 /** Invoice display for a multi-piece garment sold as one set (e.g. Suit (Jacket + Trouser)). */
@@ -85,6 +141,11 @@ export function formatCombinedGarmentDescription(garmentType: string, pieceNames
     garmentType.replace(/\s*\+\s*/g, "+") === pieceNames.join("+");
   if (typeIsJustPieces) return joinedPieces;
   return `${garmentType} (${joinedPieces})`;
+}
+
+/** Board / summary parent label — Suit (Jacket + Trouser), or Shirt + Trouser for combo types. */
+export function formatGarmentWithPieceList(garmentType: string, pieces?: string[]): string {
+  return formatCombinedGarmentDescription(garmentType, pieces ?? getGarmentPieces(garmentType));
 }
 
 function normalizeInvoicePieceName(name: string): string {

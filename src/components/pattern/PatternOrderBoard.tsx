@@ -8,9 +8,11 @@ import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
 import { FabricSwatchProvider, useFabricSwatch } from "@/components/fabric/FabricSwatchProvider";
 import { ConsolidateSelectedFabricsModal } from "@/components/pattern/ConsolidateSelectedFabricsModal";
 import { ChangeGarmentTypeControl } from "@/components/orders/ChangeGarmentTypeControl";
+import { GarmentPiecesNest } from "@/components/garment/GarmentPiecesNest";
 import { GarmentTypeChangeBadge } from "@/components/garment-type/GarmentTypeChangeBadge";
 import { PatternMismatchBanner } from "@/components/pattern/PatternMismatchBanner";
 import type { GarmentTypeChangeFlag } from "@/lib/sales-orders/garment-type-change-flags";
+import { piecesForPatternJob } from "@/lib/sales-orders/label-codes";
 import { productionBrandNameForOrder } from "@/lib/sales-orders/production-brand";
 import type { PatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mismatch";
 import type { PatternJob } from "@/lib/types/pattern";
@@ -273,11 +275,14 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
             <ul className="mt-2 space-y-1">
               {garmentTypes.map((type) => {
                 const trialJob = jobs.find((j) => j.garment_type === type && j.trial_priority);
+                const trialPieces = trialJob ? piecesForPatternJob(trialJob) : [];
                 return (
                   <li key={type}>
                     <span className="font-medium">{type}:</span>{" "}
                     {trialJob
-                      ? `${formatArticle(trialJob.article_number)} (${trialJob.piece_name})`
+                      ? `${formatArticle(trialJob.article_number)}${
+                          trialPieces.length > 1 ? ` (${trialPieces.join(" + ")})` : ""
+                        }`
                       : "Not set"}
                   </li>
                 );
@@ -358,9 +363,15 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold text-slate-900">
-                          {formatArticle(job.article_number)} · {job.garment_type} · {job.piece_name}
-                        </p>
+                        <div>
+                          <p className="font-semibold text-slate-900">
+                            {formatArticle(job.article_number)} · {job.garment_type}
+                          </p>
+                          <GarmentPiecesNest
+                            garmentType={job.garment_type}
+                            pieces={piecesForPatternJob(job)}
+                          />
+                        </div>
                         {garmentTypeChangeFlags[job.sales_order_line_id] ? (
                           <GarmentTypeChangeBadge
                             flag={garmentTypeChangeFlags[job.sales_order_line_id]!}

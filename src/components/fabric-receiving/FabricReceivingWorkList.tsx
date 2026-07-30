@@ -37,6 +37,7 @@ import { scanStageStyles } from "@/lib/production/scan-stage-highlight";
 import { matchesNormalizedSearch } from "@/lib/search/normalize";
 import { currentPrepStageElapsedLabel } from "@/lib/production/prep-durations";
 import { SALES_ORDER_ARCHIVE_AGE_MONTHS } from "@/lib/sales-orders/archive";
+import { piecesForFabricLine } from "@/lib/sales-orders/label-codes";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import type {
   FabricLineReceiveStatus,
@@ -101,6 +102,13 @@ function lineToTableRow(line: FabricReceivingLineRow): ReceivingCutTableRow {
     width_cm: line.width_cm,
     width_inches: line.width_inches,
     garment_type: line.garment_type,
+    pieces: piecesForFabricLine({
+      garment_type: line.garment_type,
+      label_stickers: line.stickers.map((sticker, index) => ({
+        piece_name: sticker.piece_name,
+        sequence: index + 1,
+      })),
+    }),
     fabric_meters: line.fabric_meters,
   };
 }

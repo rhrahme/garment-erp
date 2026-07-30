@@ -5,8 +5,10 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ChangeGarmentTypeControl } from "@/components/orders/ChangeGarmentTypeControl";
+import { GarmentPiecesNest } from "@/components/garment/GarmentPiecesNest";
 import { GarmentTypeChangeBadge } from "@/components/garment-type/GarmentTypeChangeBadge";
 import type { GarmentTypeChangeFlag } from "@/lib/sales-orders/garment-type-change-flags";
+import { piecesForPatternJob } from "@/lib/sales-orders/label-codes";
 import type { PatternFittingOutcome, PatternJob, PatternJobStatus } from "@/lib/types/pattern";
 import type { ClientPattern } from "@/lib/types/pattern-library";
 
@@ -224,9 +226,15 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
 
       <div className="rounded-xl border border-slate-200 bg-white p-5">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-lg font-semibold text-slate-900">
-            {job.so_number} · L{String(job.article_number).padStart(2, "0")} · {job.garment_type}
-          </h2>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">
+              {job.so_number} · L{String(job.article_number).padStart(2, "0")} · {job.garment_type}
+            </h2>
+            <GarmentPiecesNest
+              garmentType={job.garment_type}
+              pieces={piecesForPatternJob(job)}
+            />
+          </div>
           {garmentTypeChangeFlag ? <GarmentTypeChangeBadge flag={garmentTypeChangeFlag} /> : null}
         </div>
         <p className="mt-1 text-sm text-slate-600">

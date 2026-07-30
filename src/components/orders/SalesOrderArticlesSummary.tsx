@@ -1,3 +1,4 @@
+import { GarmentPiecesNest } from "@/components/garment/GarmentPiecesNest";
 import {
   buildSalesOrderArticlesSummary,
   formatAggregateMeters,
@@ -82,7 +83,14 @@ export function SalesOrderArticlesSummary({ lines }: { lines: SalesOrderFabricLi
             {summary.lines.map((line) => (
               <tr key={line.line_id} className="border-b border-slate-100 last:border-0">
                 <td className="px-3 py-2 text-center font-semibold text-slate-900">{line.article_label}</td>
-                <td className="px-3 py-2 text-slate-700">{line.garment_type}</td>
+                <td className="px-3 py-2 text-slate-700">
+                  <span className="font-medium text-slate-900">{line.garment_type}</span>
+                  <GarmentPiecesNest
+                    garmentType={line.garment_type}
+                    pieces={line.pieces}
+                    className="mt-0.5 space-y-0.5 text-xs text-slate-600"
+                  />
+                </td>
                 <td className="px-3 py-2 font-mono text-slate-800">{line.fabric_number}</td>
                 <td className="px-3 py-2 text-slate-600">{line.supplier_label}</td>
                 <td className="px-3 py-2 text-right font-medium tabular-nums text-slate-900">

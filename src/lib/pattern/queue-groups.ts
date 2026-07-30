@@ -1,3 +1,7 @@
+import {
+  formatGarmentWithPieceList,
+  piecesForPatternJob,
+} from "@/lib/sales-orders/label-codes";
 import type { PatternJobRow } from "@/lib/types/pattern";
 
 export type PatternQueueGroup = {
@@ -11,6 +15,7 @@ export type PatternQueueGroup = {
   order_delivery_date: string | null;
   job_count: number;
   fabric_line_count: number;
+  /** Parent garment labels with pieces, e.g. Suit (Jacket + Trouser). */
   garment_types: string[];
   status_summary: string[];
   has_trial_priority: boolean;
@@ -63,7 +68,11 @@ export function groupPatternJobsBySalesOrder(rows: PatternJobRow[]): PatternQueu
       order_delivery_date: sorted.find((row) => row.order_delivery_date)?.order_delivery_date ?? null,
       job_count: sorted.length,
       fabric_line_count: sorted.length,
-      garment_types: uniqueSorted(sorted.map((row) => row.job.garment_type)),
+      garment_types: uniqueSorted(
+        sorted.map((row) =>
+          formatGarmentWithPieceList(row.job.garment_type, piecesForPatternJob(row.job))
+        )
+      ),
       status_summary: uniqueSorted(sorted.map((row) => row.job.status)),
       has_trial_priority: sorted.some((row) => row.job.trial_priority),
       linked_pattern_count,

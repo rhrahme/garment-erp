@@ -20,7 +20,10 @@ import {
 } from "@/lib/production/qr-labels";
 import type { StickerRole } from "@/lib/production/qr-labels";
 import type { PrintableStickerLabel } from "@/lib/production/qr-labels";
-import { stripBrandPrefixFromProductionCode } from "@/lib/sales-orders/label-codes";
+import {
+  formatStickerPieceLine,
+  stripBrandPrefixFromProductionCode,
+} from "@/lib/sales-orders/label-codes";
 import { stickerTextLine } from "@/lib/production/sticker-typography";
 
 function formatWeight(weightGsm: number | null): string | null {
@@ -41,10 +44,10 @@ export function StickerCell({
 }) {
   const qrUrl = qrImageUrl(label.qr_payload, 450);
   const weight = formatWeight(label.weight_gsm);
-  const pieceLabel =
-    label.production_code === label.fabric_cut_code
-      ? `Cut · ${label.piece_name}`
-      : label.piece_name;
+  const isFabricCut = label.production_code === label.fabric_cut_code;
+  const pieceLabel = formatStickerPieceLine(label.garment_type, label.piece_name, {
+    fabricCut: isFabricCut,
+  });
   const fabricLine = `${label.fabric_brand} / ${label.fabric_number}`;
   const specLine = [label.composition, weight].filter(Boolean).join(" / ");
   const cutLengthLine = formatStickerCutLength(label.cut_quantity, label.cut_unit);

@@ -12,6 +12,10 @@ import {
   preferredBrandCodeFromClientCode,
   type BasePatternCascadeValue,
 } from "@/lib/pattern-library/base-pattern-picker";
+import {
+  formatGarmentWithPieceList,
+  piecesForPatternJob,
+} from "@/lib/sales-orders/label-codes";
 import type { PatternJob } from "@/lib/types/pattern";
 import type { BasePattern, ClientPattern } from "@/lib/types/pattern-library";
 import type { SalesOrder } from "@/lib/types/sales-orders";
@@ -187,9 +191,14 @@ export function ConsolidateSelectedFabricsModal({
           {selectedJobs.map((job) => (
             <li
               key={job.id}
-              className="rounded-full bg-slate-100 px-2.5 py-1 font-mono text-xs font-medium text-slate-700"
+              className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700"
             >
-              {formatArticle(job.article_number)} · {job.fabric_number}
+              <span className="font-mono">
+                {formatArticle(job.article_number)} · {job.fabric_number}
+              </span>
+              <span className="ml-1.5 font-normal text-slate-500">
+                {formatGarmentWithPieceList(job.garment_type, piecesForPatternJob(job))}
+              </span>
             </li>
           ))}
         </ul>

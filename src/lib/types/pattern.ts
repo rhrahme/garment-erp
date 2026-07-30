@@ -57,7 +57,10 @@ export interface PatternJob {
   client_name: string;
   client_code: string;
   garment_type: string;
+  /** First piece (legacy); prefer piece_names for multi-piece garments. */
   piece_name: string;
+  /** All sticker pieces under this fabric line, ordered (e.g. Jacket, Trouser for Suit). */
+  piece_names?: string[];
   article_number: number;
   fabric_number: string;
   supplier: string;

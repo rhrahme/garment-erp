@@ -55,7 +55,10 @@ export function getLocalWorkOrders(): WorkOrder[] {
       style: {
         id: order.sales_order_line_id,
         style_code: order.so_number,
-        name: [order.garment_type, order.piece_name].filter(Boolean).join(" — ") || "—",
+        name:
+          order.garment_type && order.piece_name && order.piece_name !== order.garment_type
+            ? `${order.garment_type} · ${order.piece_name}`
+            : order.garment_type || order.piece_name || "-",
         season: null,
         category: order.garment_type,
         target_cost: null,

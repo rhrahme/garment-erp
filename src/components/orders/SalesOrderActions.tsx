@@ -283,7 +283,9 @@ export function SalesOrderActions({
   }
 
   const allStickers = liveOrder.fabric_lines.flatMap((line) =>
-    (line.label_stickers ?? []).map((sticker) => ({
+    [...(line.label_stickers ?? [])]
+      .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
+      .map((sticker) => ({
       ...sticker,
       fabric_number: line.fabric_number,
       garment_type: line.garment_type,
@@ -1201,7 +1203,9 @@ export function SalesOrderActions({
                           {formatFabricLineArticle(articleByLineId.get(line.id))} stickers
                         </p>
                         <ul className="mt-1 space-y-1">
-                          {line.label_stickers!.map((sticker) => (
+                          {[...line.label_stickers!]
+                            .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
+                            .map((sticker) => (
                             <li key={sticker.code} className="font-mono text-xs text-indigo-700">
                               {sticker.code}
                               <span className="ml-2 font-sans text-slate-500">

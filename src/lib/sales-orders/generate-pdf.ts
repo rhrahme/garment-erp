@@ -304,7 +304,9 @@ export async function generateSalesOrderPdf(
   }
 
   const stickerRows: QrTableRow[] = order.fabric_lines.flatMap((line, lineIndex) =>
-    (line.label_stickers ?? []).map((sticker) => ({
+    [...(line.label_stickers ?? [])]
+      .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
+      .map((sticker) => ({
       article: articleByLineId.get(line.id) ?? lineIndex + 1,
       qrPayload: productionCodeFromSticker(sticker.code, order.client_code),
       cells: [

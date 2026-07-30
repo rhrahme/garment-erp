@@ -27,6 +27,7 @@ import {
   type PrintableStickerLabel,
   type StickerRole,
 } from "@/lib/production/qr-labels";
+import { formatStickerPieceLine } from "@/lib/sales-orders/label-codes";
 import { planQr, renderQrPngBuffer } from "@/lib/production/qr-render";
 import {
   fitStickerText,
@@ -84,9 +85,9 @@ function formatWeight(weightGsm: number | null): string | null {
 }
 
 function pieceLabel(label: PrintableStickerLabel): string {
-  return label.production_code === label.fabric_cut_code
-    ? `Cut · ${label.piece_name}`
-    : label.piece_name;
+  return formatStickerPieceLine(label.garment_type, label.piece_name, {
+    fabricCut: label.production_code === label.fabric_cut_code,
+  });
 }
 
 export type StickerQrPlacementMm = {

@@ -22,8 +22,10 @@ import {
 import { qrScanPayload } from "@/lib/production/qr-labels";
 import {
   fabricLineArticleNumber,
+  formatGarmentWithPieceList,
   generateFabricLabelStickers,
   getGarmentPieces,
+  piecesForFabricLine,
   productionCodeFromSticker,
   supplierFabricProductionCode,
 } from "@/lib/sales-orders/label-codes";
@@ -68,8 +70,7 @@ function formatPendingLabel(
   line: SalesOrderFabricLine,
   pieceNames: string[]
 ): string {
-  const garmentLabel =
-    pieceNames.length > 1 ? `${line.garment_type} (${pieceNames.join(" + ")})` : line.garment_type;
+  const garmentLabel = formatGarmentWithPieceList(line.garment_type, pieceNames);
   return `${order.client_name} · ${order.so_number} · ${formatFabricSupplierName(line.supplier_id, line.supplier_name, line.fabric_number)} ${line.fabric_number} · ${garmentLabel} · ${line.quantity} m`;
 }
 
@@ -104,7 +105,7 @@ export function listPendingFabricLines(): PendingFabricLine[] {
       if (receivedLineIds.has(line.id)) return;
       if (linesOnProductionFloor.has(line.id)) return;
 
-      const pieceNames = getGarmentPieces(line.garment_type);
+      const pieceNames = piecesForFabricLine(line);
       pending.push({
         sales_order_line_id: line.id,
         sales_order_id: order.id,
@@ -198,7 +199,7 @@ function buildLineStickerRows(
 ): FabricReceivingLineRow["stickers"] {
   const stickers =
     line.label_stickers?.length > 0
-      ? line.label_stickers
+      ? [...line.label_stickers].sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
       : generateFabricLabelStickers(
           order.client_reference ?? order.so_number,
           lineIndex + 1,
@@ -469,7 +470,7 @@ function createProductionWorkOrdersFromReceipt(
 ): ProductionWorkOrder[] {
   const stickers =
     line.label_stickers?.length > 0
-      ? line.label_stickers
+      ? [...line.label_stickers].sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
       : generateFabricLabelStickers(order.client_reference ?? order.so_number, lineIndex + 1, line.garment_type);
 
   const now = new Date().toISOString();
@@ -572,9 +573,7 @@ export async function advanceFabricReceipt(id: string): Promise<{
 }
 
 export function formatFabricReceiptDescription(receipt: FabricReceipt): string {
-  const pieces = getGarmentPieces(receipt.garment_type);
-  if (pieces.length === 1) return receipt.garment_type;
-  return `${receipt.garment_type} (${pieces.join(" + ")})`;
+  return formatGarmentWithPieceList(receipt.garment_type, getGarmentPieces(receipt.garment_type));
 }
 
 export function formatFabricReceiptHandoffMessage(receipt: FabricReceipt, workOrders: ProductionWorkOrder[]): string {
