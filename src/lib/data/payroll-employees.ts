@@ -80,6 +80,7 @@ export function toPublicEmployeeIdentity(employee: PayrollEmployee): PublicEmplo
 /**
  * Strip salary / bank / address fields before sending employees to badge UI.
  * Call after group filtering so Saudi/Expat tabs still work without bank_name.
+ * Callers must not re-run bank-based group filters on the result (empty bank ⇒ Saudi).
  */
 export function toBadgeSafeEmployee(employee: PayrollEmployee): PayrollEmployee {
   return {

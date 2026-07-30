@@ -6,10 +6,12 @@ import {
   badgePrintHref,
   chunkBadgePages,
   isBadgePrintableEmployee,
+  listActiveBadgeEmployees,
   listBadgePrintableEmployees,
   parseBadgePrintIds,
   selectBadgePrintEmployees,
 } from "@/lib/hr/badge-print";
+import { toBadgeSafeEmployee } from "@/lib/data/payroll-employees";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 
 function emp(partial: Partial<PayrollEmployee> & Pick<PayrollEmployee, "id" | "full_name">): PayrollEmployee {
@@ -83,5 +85,22 @@ describe("badge-print helpers", () => {
     assert.deepEqual(parseBadgePrintIds("a, b"), ["a", "b"]);
     assert.equal(parseBadgePrintIds(undefined), null);
     assert.equal(chunkBadgePages([1, 2, 3], 2).length, 2);
+  });
+
+  it("keeps badge-safe expats after bank_name is stripped", () => {
+    const expat = emp({
+      id: "E1",
+      full_name: "Expat One",
+      bank_name: "Arab National Bank",
+    });
+    const safe = toBadgeSafeEmployee(expat);
+    assert.equal(safe.bank_name, "");
+    // Re-classifying by bank would drop this employee from the Expat tab.
+    assert.equal(listBadgePrintableEmployees([safe], "expat").length, 0);
+    // Workspace path: group filter first, then strip, then active-only list.
+    assert.deepEqual(
+      listActiveBadgeEmployees([safe]).map((e) => e.id),
+      ["E1"]
+    );
   });
 });
