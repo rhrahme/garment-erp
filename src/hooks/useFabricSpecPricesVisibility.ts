@@ -9,24 +9,37 @@ export function useFabricSpecPricesVisibility(defaultVisible = true) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem(FABRIC_SPEC_PRICES_VISIBLE_SESSION_KEY);
-    if (stored === "1") {
-      setVisible(true);
-    } else if (stored === "0") {
-      setVisible(false);
-    } else {
+    try {
+      const stored = sessionStorage.getItem(FABRIC_SPEC_PRICES_VISIBLE_SESSION_KEY);
+      if (stored === "1") {
+        setVisible(true);
+      } else if (stored === "0") {
+        setVisible(false);
+      } else {
+        setVisible(defaultVisible);
+      }
+    } catch {
       setVisible(defaultVisible);
+    } finally {
+      setHydrated(true);
     }
-    setHydrated(true);
   }, [defaultVisible]);
 
   const unlock = useCallback(() => {
-    sessionStorage.setItem(FABRIC_SPEC_PRICES_VISIBLE_SESSION_KEY, "1");
+    try {
+      sessionStorage.setItem(FABRIC_SPEC_PRICES_VISIBLE_SESSION_KEY, "1");
+    } catch {
+      /* private mode / blocked storage - still update UI */
+    }
     setVisible(true);
   }, []);
 
   const lock = useCallback(() => {
-    sessionStorage.setItem(FABRIC_SPEC_PRICES_VISIBLE_SESSION_KEY, "0");
+    try {
+      sessionStorage.setItem(FABRIC_SPEC_PRICES_VISIBLE_SESSION_KEY, "0");
+    } catch {
+      /* private mode / blocked storage - still update UI */
+    }
     setVisible(false);
   }, []);
 
