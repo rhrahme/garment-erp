@@ -93,8 +93,11 @@ function matchesFactoryBrand(
   }
 ): boolean {
   if (!brandId) return true;
-  if (item.house_brand_id && item.house_brand_id === brandId) return true;
-  if (brandPrefix && item.house_brand_code?.toUpperCase() === brandPrefix) return true;
+  // Prefer explicit house brand on the pattern; only fall back to client code.
+  if (item.house_brand_id) return item.house_brand_id === brandId;
+  if (brandPrefix && item.house_brand_code) {
+    return item.house_brand_code.toUpperCase() === brandPrefix;
+  }
   if (brandPrefix && item.client_code) {
     return orderMatchesBrandClientPrefix(item.client_code, brandPrefix);
   }
