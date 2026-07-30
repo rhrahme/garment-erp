@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { FABRIC_SPEC_PRICES_VISIBLE_SESSION_KEY } from "@/lib/auth/fabric-price.constants";
 
-/** Admin Fabric Specification — prices visible by default; eye toggle persists in sessionStorage. */
+/** Admin Fabric Specification - prices visible by default; eye toggle persists in sessionStorage. */
 export function useFabricSpecPricesVisibility(defaultVisible = true) {
   const [visible, setVisible] = useState(defaultVisible);
   const [hydrated, setHydrated] = useState(false);

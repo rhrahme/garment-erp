@@ -10,7 +10,7 @@ type FabricPriceRevealToggleProps = {
   canViewFabricPrices: boolean;
   compact?: boolean;
   iconOnly?: boolean;
-  /** Client-side only — no password / cookie (admin fabric catalog). */
+  /** Client-side only - no password / cookie (admin fabric catalog). */
   skipPassword?: boolean;
   onLock?: () => void;
   onUnlock?: () => void;
