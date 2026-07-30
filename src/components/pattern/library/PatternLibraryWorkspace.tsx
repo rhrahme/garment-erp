@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Layers, Plus } from "lucide-react";
+import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
+import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
+import { getBrandClientCodePrefix } from "@/lib/clients/codes";
+import { orderMatchesBrandClientPrefix } from "@/lib/clients/orphan-reconciliation";
 import { matchesNormalizedSearch } from "@/lib/search/normalize";
 import { BasePatternCascadePicker } from "@/components/pattern/library/BasePatternCascadePicker";
 import { TudViewerModal } from "@/components/pattern/library/TudViewerModal";
@@ -79,6 +83,24 @@ function sizeRangeLabel(sizes: string[]): string {
   return `${sizes[0]}–${sizes[sizes.length - 1]}`;
 }
 
+function matchesFactoryBrand(
+  brandId: string | null,
+  brandPrefix: string | null,
+  item: {
+    house_brand_id?: string | null;
+    house_brand_code?: string | null;
+    client_code?: string | null;
+  }
+): boolean {
+  if (!brandId) return true;
+  if (item.house_brand_id && item.house_brand_id === brandId) return true;
+  if (brandPrefix && item.house_brand_code?.toUpperCase() === brandPrefix) return true;
+  if (brandPrefix && item.client_code) {
+    return orderMatchesBrandClientPrefix(item.client_code, brandPrefix);
+  }
+  return false;
+}
+
 export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
   const [tab, setTab] = useState<"bases" | "clients">("bases");
   const [library, setLibrary] = useState<PatternLibraryFile | null>(null);
@@ -87,8 +109,8 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
   const [showCreate, setShowCreate] = useState(false);
   /** null = all cut families. */
   const [selectedFamily, setSelectedFamily] = useState<string | null>(null);
-  /** null = all house brands (FR/GL). */
-  const [houseBrandFilter, setHouseBrandFilter] = useState<string | null>(null);
+  const { brandId, setBrandId, hydrated } = useFactoryBrandFilter();
+  const brandPrefix = brandId ? getBrandClientCodePrefix(brandId) : null;
 
   const load = useCallback(async () => {
     try {
@@ -106,27 +128,35 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
     void load();
   }, [load]);
 
-  const bases = useMemo(() => {
+  const brandScopedBases = useMemo(() => {
     if (!library) return [];
-    return library.base_patterns.filter(
-      (base) =>
-        (houseBrandFilter === null || base.house_brand_code === houseBrandFilter) &&
-        matchesNormalizedSearch(
-          [base.name, base.cut_family, base.garment_type, base.cut_variant, base.house_brand_code, base.style_code],
-          search
-        )
-    );
-  }, [library, search, houseBrandFilter]);
+    return library.base_patterns.filter((base) => matchesFactoryBrand(brandId, brandPrefix, base));
+  }, [library, brandId, brandPrefix]);
 
-  const clientPatterns = useMemo(() => {
+  const brandScopedClientPatterns = useMemo(() => {
     if (!library) return [];
     return library.client_patterns.filter((pattern) =>
+      matchesFactoryBrand(brandId, brandPrefix, pattern)
+    );
+  }, [library, brandId, brandPrefix]);
+
+  const bases = useMemo(() => {
+    return brandScopedBases.filter((base) =>
+      matchesNormalizedSearch(
+        [base.name, base.cut_family, base.garment_type, base.cut_variant, base.house_brand_code, base.style_code],
+        search
+      )
+    );
+  }, [brandScopedBases, search]);
+
+  const clientPatterns = useMemo(() => {
+    return brandScopedClientPatterns.filter((pattern) =>
       matchesNormalizedSearch(
         [pattern.pattern_ref, pattern.client_name, pattern.client_code, pattern.garment_type, pattern.fabric],
         search
       )
     );
-  }, [library, search]);
+  }, [brandScopedClientPatterns, search]);
 
   /** Stable cut-family tab list from the full library so tabs don't vanish while filtering. */
   const cutFamilies = useMemo(() => {
@@ -180,7 +210,7 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
           )}
         >
           Base patterns
-          <span className="ml-1.5 text-xs opacity-80">({library?.base_patterns.length ?? 0})</span>
+          <span className="ml-1.5 text-xs opacity-80">({brandScopedBases.length})</span>
         </button>
         <button
           type="button"
@@ -194,7 +224,7 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
           )}
         >
           Client patterns
-          <span className="ml-1.5 text-xs opacity-80">({library?.client_patterns.length ?? 0})</span>
+          <span className="ml-1.5 text-xs opacity-80">({brandScopedClientPatterns.length})</span>
         </button>
         <div className="ml-auto">
           <button
@@ -208,9 +238,19 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
         </div>
       </div>
 
+      {hydrated ? (
+        <FactoryBrandTabs
+          value={brandId}
+          onChange={setBrandId}
+          showAll
+          allLabel="All brands"
+          label="Filter by brand"
+        />
+      ) : null}
+
       <input
         type="search"
-        placeholder={tab === "bases" ? "Search cut family, garment, brand…" : "Search ref, client, garment…"}
+        placeholder={tab === "bases" ? "Search cut family, garment, brand..." : "Search ref, client, garment..."}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="w-full max-w-md rounded-lg border border-slate-300 px-3 py-2 text-sm"
@@ -243,7 +283,7 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
       ) : null}
 
       {loading ? (
-        <p className="text-sm text-slate-500">Loading pattern library…</p>
+        <p className="text-sm text-slate-500">Loading pattern library...</p>
       ) : tab === "bases" ? (
         <div className="space-y-5">
           {/* Cut family cards — the owner's primary browse axis. Big targets for tablet. */}
@@ -294,39 +334,6 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
                 </button>
               );
             })}
-          </div>
-
-          {/* Secondary filter: house brand (FR/GL). */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-slate-400">House brand</span>
-            <button
-              type="button"
-              onClick={() => setHouseBrandFilter(null)}
-              className={cn(
-                "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-                houseBrandFilter === null
-                  ? "bg-slate-800 text-white"
-                  : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
-              )}
-            >
-              All
-            </button>
-            {brands.map((brand) => (
-              <button
-                key={brand.id}
-                type="button"
-                onClick={() => setHouseBrandFilter(houseBrandFilter === brand.code ? null : brand.code)}
-                className={cn(
-                  "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-                  houseBrandFilter === brand.code
-                    ? "bg-slate-800 text-white"
-                    : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
-                )}
-                title={brand.name}
-              >
-                {brand.code}
-              </button>
-            ))}
           </div>
 
           {familyGroups.map(({ family, garments }) => (

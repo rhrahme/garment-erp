@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Droplets, Scissors } from "lucide-react";
+import { getBrandClientCodePrefix } from "@/lib/clients/codes";
+import { orderMatchesBrandClientPrefix } from "@/lib/clients/orphan-reconciliation";
 import type { WashedReadyOverview, WashedReadyRow } from "@/lib/pattern-library/washed-ready";
 import { cn } from "@/lib/utils";
 
@@ -18,17 +20,23 @@ function prepLabel(row: WashedReadyRow): string {
 }
 
 function formatDate(value: string | null): string {
-  if (!value) return "—";
+  if (!value) return "-";
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime())
     ? value
     : parsed.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
+type WashedReadyPanelProps = {
+  /** Optional factory brand id from shared Pattern filter. */
+  brandId?: string | null;
+};
+
 /** Fabric-prep visibility for the pattern team: what's ready to cut vs still washing. */
-export function WashedReadyPanel() {
+export function WashedReadyPanel({ brandId = null }: WashedReadyPanelProps) {
   const [overview, setOverview] = useState<WashedReadyOverview | null>(null);
   const [open, setOpen] = useState(false);
+  const brandPrefix = brandId ? getBrandClientCodePrefix(brandId) : null;
 
   useEffect(() => {
     fetch(`/api/pattern/washed-ready?t=${Date.now()}`, { cache: "no-store" })
@@ -36,6 +44,17 @@ export function WashedReadyPanel() {
       .then(setOverview)
       .catch(() => setOverview(null));
   }, []);
+
+  const filtered = useMemo(() => {
+    if (!overview) return { ready: [] as WashedReadyRow[], pending: [] as WashedReadyRow[] };
+    if (!brandPrefix) return overview;
+    return {
+      ready: overview.ready.filter((row) => orderMatchesBrandClientPrefix(row.client_code, brandPrefix)),
+      pending: overview.pending.filter((row) =>
+        orderMatchesBrandClientPrefix(row.client_code, brandPrefix)
+      ),
+    };
+  }, [brandPrefix, overview]);
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -48,11 +67,11 @@ export function WashedReadyPanel() {
           <p className="text-sm font-semibold text-slate-800">Washed &amp; ready</p>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
             <Scissors className="h-3 w-3" />
-            {overview ? `${overview.ready.length} ready to cut` : "…"}
+            {overview ? `${filtered.ready.length} ready to cut` : "..."}
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-700">
             <Droplets className="h-3 w-3" />
-            {overview ? `${overview.pending.length} in wash / prep` : "…"}
+            {overview ? `${filtered.pending.length} in wash / prep` : "..."}
           </span>
         </div>
         <ChevronDown
@@ -66,11 +85,11 @@ export function WashedReadyPanel() {
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-emerald-700">
               Ready to cut (prep complete)
             </p>
-            {!overview || overview.ready.length === 0 ? (
+            {filtered.ready.length === 0 ? (
               <p className="text-xs text-slate-400">No fabric handed off recently.</p>
             ) : (
               <ul className="space-y-1.5">
-                {overview.ready.slice(0, 25).map((row) => (
+                {filtered.ready.slice(0, 25).map((row) => (
                   <li
                     key={row.receipt_id}
                     className="rounded-lg border border-emerald-100 bg-emerald-50/50 px-3 py-2 text-sm"
@@ -91,11 +110,11 @@ export function WashedReadyPanel() {
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-sky-700">
               Pending wash / prep
             </p>
-            {!overview || overview.pending.length === 0 ? (
+            {filtered.pending.length === 0 ? (
               <p className="text-xs text-slate-400">Nothing in fabric prep right now.</p>
             ) : (
               <ul className="space-y-1.5">
-                {overview.pending.slice(0, 25).map((row) => (
+                {filtered.pending.slice(0, 25).map((row) => (
                   <li
                     key={row.receipt_id}
                     className="rounded-lg border border-sky-100 bg-sky-50/50 px-3 py-2 text-sm"

@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Star } from "lucide-react";
+import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
+import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
+import { getBrandClientCodePrefix } from "@/lib/clients/codes";
+import { orderMatchesBrandClientPrefix } from "@/lib/clients/orphan-reconciliation";
 import { groupPatternJobsBySalesOrder } from "@/lib/pattern/queue-groups";
 import { jobMatchesTab } from "@/lib/pattern/work-tabs";
 import { matchesNormalizedSearch } from "@/lib/search/normalize";
@@ -37,13 +41,25 @@ function formatArticle(articleNumber: number): string {
 
 type PatternWorkListProps = {
   reloadKey?: number;
+  /** Controlled brand filter; when omitted, uses shared localStorage preference. */
+  brandId?: string | null;
+  /** Hide chips when parent already renders FactoryBrandTabs. */
+  hideBrandTabs?: boolean;
 };
 
-export function PatternWorkList({ reloadKey = 0 }: PatternWorkListProps) {
+export function PatternWorkList({
+  reloadKey = 0,
+  brandId: brandIdProp,
+  hideBrandTabs = false,
+}: PatternWorkListProps) {
   const [tab, setTab] = useState<PatternWorkTab>("new");
   const [overview, setOverview] = useState<PatternOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const { brandId: storedBrandId, setBrandId, hydrated } = useFactoryBrandFilter();
+  const brandId = brandIdProp !== undefined ? brandIdProp : storedBrandId;
+
+  const brandPrefix = brandId ? getBrandClientCodePrefix(brandId) : null;
 
   const loadOverview = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -62,9 +78,24 @@ export function PatternWorkList({ reloadKey = 0 }: PatternWorkListProps) {
     void loadOverview(reloadKey > 0);
   }, [loadOverview, reloadKey]);
 
-  const filteredJobs = useMemo(() => {
+  const brandScopedJobs = useMemo(() => {
     if (!overview) return [];
-    return overview.jobs.filter((row) => {
+    if (!brandPrefix) return overview.jobs;
+    return overview.jobs.filter((row) =>
+      orderMatchesBrandClientPrefix(row.job.client_code, brandPrefix)
+    );
+  }, [brandPrefix, overview]);
+
+  const brandScopedAwaiting = useMemo(() => {
+    if (!overview) return [];
+    if (!brandPrefix) return overview.awaiting_lines_orders;
+    return overview.awaiting_lines_orders.filter((order) =>
+      orderMatchesBrandClientPrefix(order.client_code, brandPrefix)
+    );
+  }, [brandPrefix, overview]);
+
+  const filteredJobs = useMemo(() => {
+    return brandScopedJobs.filter((row) => {
       if (!jobMatchesTab(row.job.status, tab)) return false;
       const { job } = row;
       return matchesNormalizedSearch(
@@ -81,33 +112,42 @@ export function PatternWorkList({ reloadKey = 0 }: PatternWorkListProps) {
         search
       );
     });
-  }, [overview, tab, search]);
+  }, [brandScopedJobs, tab, search]);
 
   const orderGroups = useMemo(() => groupPatternJobsBySalesOrder(filteredJobs), [filteredJobs]);
 
   const awaitingOrders = useMemo(() => {
-    if (!overview || tab !== "new") return [];
-    return overview.awaiting_lines_orders.filter((order) =>
+    if (tab !== "new") return [];
+    return brandScopedAwaiting.filter((order) =>
       matchesNormalizedSearch([order.so_number, order.client_name, order.client_code], search)
     );
-  }, [overview, tab, search]);
+  }, [brandScopedAwaiting, tab, search]);
 
   const tabCounts = useMemo(() => {
     const counts = Object.fromEntries(TABS.map((t) => [t.id, 0])) as Record<PatternWorkTab, number>;
-    if (!overview) return counts;
 
     for (const t of TABS) {
-      const matching = overview.jobs.filter((row) => jobMatchesTab(row.job.status, t.id));
+      const matching = brandScopedJobs.filter((row) => jobMatchesTab(row.job.status, t.id));
       const soIds = new Set(matching.map((row) => row.job.sales_order_id));
       counts[t.id] = soIds.size;
     }
     // Awaiting-lines SOs only appear on New.
-    counts.new += overview.awaiting_lines_orders.length;
+    counts.new += brandScopedAwaiting.length;
     return counts;
-  }, [overview]);
+  }, [brandScopedAwaiting, brandScopedJobs]);
 
   return (
     <div className="space-y-4">
+      {!hideBrandTabs && hydrated ? (
+        <FactoryBrandTabs
+          value={brandId}
+          onChange={setBrandId}
+          showAll
+          allLabel="All brands"
+          label="Filter by brand"
+        />
+      ) : null}
+
       <div className="flex flex-wrap gap-2">
         {TABS.map((t) => (
           <button
@@ -130,14 +170,14 @@ export function PatternWorkList({ reloadKey = 0 }: PatternWorkListProps) {
 
       <input
         type="search"
-        placeholder="Search SO, client, fabric, garment…"
+        placeholder="Search SO, client, fabric, garment..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="w-full max-w-md rounded-lg border border-slate-300 px-3 py-2 text-sm"
       />
 
       {loading && !overview ? (
-        <p className="text-sm text-slate-500">Loading pattern queue…</p>
+        <p className="text-sm text-slate-500">Loading pattern queue...</p>
       ) : (
         <div className="space-y-3">
           {awaitingOrders.map((order) => (
