@@ -66,6 +66,7 @@ const OUTBOUND_EVENTS = [
   "sales_order.milestone_updated",
   "custom_fabric.created",
   "employee.created",
+  "employee.job_functions_updated",
 ];
 
 export function ZapierSetup() {

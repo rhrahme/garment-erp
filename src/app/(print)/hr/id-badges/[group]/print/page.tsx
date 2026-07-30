@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { EmployeeBadgePrintSheet } from "@/components/hr/EmployeeBadgePrintSheet";
 import { getSessionContext } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
@@ -24,6 +24,10 @@ export default async function EmployeeBadgePrintPage({ params, searchParams }: P
 
   // Middleware allowlists /hr/id-badges for Production + QC; payroll register stays blocked.
   const session = await getSessionContext();
+  // QC prints Expats only.
+  if (session.isClientManager && group === "saudi") {
+    redirect("/hr/id-badges/expats");
+  }
   await ensureDocumentsLoaded(["payroll_employees"]);
   const payroll = readPayrollEmployees();
   const ids = parseBadgePrintIds(idsParam);

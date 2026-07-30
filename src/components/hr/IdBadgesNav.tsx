@@ -4,13 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-const tabs = [
-  { href: "/hr/id-badges/saudis", label: "Saudis" },
-  { href: "/hr/id-badges/expats", label: "Expats" },
-];
-
-export function IdBadgesNav() {
+export function IdBadgesNav({ showSaudis = true }: { showSaudis?: boolean }) {
   const pathname = usePathname();
+  const tabs = [
+    ...(showSaudis ? [{ href: "/hr/id-badges/saudis", label: "Saudis" }] : []),
+    { href: "/hr/id-badges/expats", label: "Expats" },
+  ];
 
   return (
     <div className="mb-6 flex gap-1 rounded-lg border border-slate-200 bg-white p-1">

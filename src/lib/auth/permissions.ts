@@ -602,14 +602,26 @@ export function canViewClientContact(
   return isSalesOperatorAccess(role, email) || !isPriceRestrictedAccess(role, email);
 }
 
+/** QC ID badges are Expats-only -- block Saudis pages/print/PDF. */
+export function isClientManagerSaudiIdBadgesPath(pathname: string): boolean {
+  return (
+    pathname === "/hr/id-badges/saudis" ||
+    pathname.startsWith("/hr/id-badges/saudis/") ||
+    pathname === "/api/hr/id-badges/saudis" ||
+    pathname.startsWith("/api/hr/id-badges/saudis/")
+  );
+}
+
 export function isClientManagerRouteAllowed(pathname: string): boolean {
   // Never treat badge allowlist as opening the payroll register or salary APIs.
   if (pathname === "/hr" || pathname.startsWith("/hr/")) {
+    if (isClientManagerSaudiIdBadgesPath(pathname)) return false;
     return isHrIdBadgesPath(pathname);
   }
   if (pathname === "/api/hr/payroll-employees" || pathname.startsWith("/api/hr/payroll-employees/")) {
     return false;
   }
+  if (isClientManagerSaudiIdBadgesPath(pathname)) return false;
   return CLIENT_MANAGER_ROUTE_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );

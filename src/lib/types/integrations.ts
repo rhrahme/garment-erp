@@ -63,6 +63,7 @@ export type IntegrationEventType =
   | "sales_order.milestone_updated"
   | "custom_fabric.created"
   | "employee.created"
+  | "employee.job_functions_updated"
   | "supabase.auth_unhealthy";
 
 export interface IntegrationEvent<T = Record<string, unknown>> {

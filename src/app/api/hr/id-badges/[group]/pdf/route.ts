@@ -29,6 +29,14 @@ export async function GET(request: Request, { params }: RouteProps) {
       return NextResponse.json({ error: "Unknown badge group." }, { status: 404 });
     }
 
+    // QC prints Expats only -- block Saudi badge PDFs.
+    if (session.isClientManager && !session.isAdmin && group === "saudi") {
+      return NextResponse.json(
+        { error: "QC can only print Expat employee badges." },
+        { status: 403 }
+      );
+    }
+
     await ensureDocumentsLoaded(["payroll_employees"]);
     const url = new URL(request.url);
     const ids = parseBadgePrintIds(url.searchParams.get("ids") ?? undefined);
