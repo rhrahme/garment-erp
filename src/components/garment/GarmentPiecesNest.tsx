@@ -17,7 +17,7 @@ export function GarmentPiecesNest({
       {pieces.map((piece) => (
         <li key={piece} className="flex gap-1.5">
           <span className="select-none text-slate-400" aria-hidden>
-            ·
+            -
           </span>
           <span>{piece}</span>
         </li>
