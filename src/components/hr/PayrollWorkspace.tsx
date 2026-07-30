@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Building2, ChevronDown, Search, Users, Wallet } from "lucide-react";
+import { Building2, ChevronDown, Eye, EyeOff, Search, Users, Wallet } from "lucide-react";
 import { StatCard } from "@/components/ui/PageHeader";
+import { usePayrollSalariesVisibility } from "@/hooks/usePayrollSalariesVisibility";
+import { MASKED_SALARY_AMOUNT } from "@/lib/auth/payroll-salary.constants";
 import {
   EMPLOYEE_JOB_FUNCTION_LABELS,
   EMPLOYEE_JOB_FUNCTIONS,
@@ -15,7 +17,8 @@ import { FACTORY_WORKSTATIONS } from "@/lib/production/factory-workstations";
 import type { PayrollEmployee, PayrollSummary } from "@/lib/types/hr-payroll";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
-function formatSar(amount: number): string {
+function formatSar(amount: number, showSalaries: boolean): string {
+  if (!showSalaries) return MASKED_SALARY_AMOUNT;
   return formatCurrency(amount, "SAR");
 }
 
@@ -198,31 +201,47 @@ export function PayrollWorkspace({
 }) {
   const [employees, setEmployees] = useState(initialEmployees);
   const [searchQuery, setSearchQuery] = useState("");
+  const {
+    visible: salariesVisible,
+    unlock: unlockSalaries,
+    lock: lockSalaries,
+  } = usePayrollSalariesVisibility(true);
+
+  /**
+   * Eye toggle is the sole client gate. Do NOT use `!hydrated || visible` -
+   * that keeps amounts forced-on until hydrate and can ignore lock clicks.
+   * Default state is already visible=true. Page is admin-only.
+   */
+  const showSalaries = Boolean(salariesVisible);
 
   const filtered = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     const rows = sortPayrollEmployees(employees.filter((employee) => employee.is_active));
     if (!query) return rows;
-    return rows.filter((employee) =>
-      [
+    return rows.filter((employee) => {
+      const fields = [
         employee.full_name,
         employee.employee_id_number,
         employee.assigned_workstation_id,
         ...(employee.job_functions ?? []).map((fn) => EMPLOYEE_JOB_FUNCTION_LABELS[fn] ?? fn),
         employee.bank_name,
         employee.account_number,
-        employee.payment_description,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(query)
-    );
-  }, [employees, searchQuery]);
+      ];
+      // Omit salary-related payment text from search while amounts are hidden.
+      if (showSalaries) fields.push(employee.payment_description);
+      return fields.join(" ").toLowerCase().includes(query);
+    });
+  }, [employees, searchQuery, showSalaries]);
 
   const filteredTotal = filtered.reduce((sum, employee) => sum + employee.salary_amount, 0);
 
   function updateEmployee(updated: PayrollEmployee) {
     setEmployees((current) => current.map((row) => (row.id === updated.id ? updated : row)));
+  }
+
+  function handleSalaryToggle() {
+    if (salariesVisible) lockSalaries();
+    else unlockSalaries();
   }
 
   return (
@@ -234,7 +253,34 @@ export function PayrollWorkspace({
           {updatedAt ? ` - updated ${formatDate(updatedAt.slice(0, 10))}` : ""}. Salary fields re-import from Excel
           with <span className="font-mono text-xs">python3 scripts/import-salary-xlsx.py</span> - workstation and
           roles below are saved in ERP.
+          {!showSalaries ? " Salary amounts are hidden on screen (click Show to reveal)." : null}
         </p>
+      </div>
+
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <label className="relative block max-w-md flex-1 text-sm">
+          <span className="font-medium text-slate-700">Search employees</span>
+          <Search className="pointer-events-none absolute bottom-2.5 left-3 h-4 w-4 text-slate-400" />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Name, ID, station, role, bank..."
+            className="mt-1 block w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3"
+          />
+        </label>
+        <button
+          type="button"
+          onClick={handleSalaryToggle}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50"
+          title={showSalaries ? "Hide salaries" : "Show salaries"}
+          aria-label={showSalaries ? "Hide salaries" : "Show salaries"}
+          aria-pressed={showSalaries}
+          data-salaries-visible={showSalaries ? "1" : "0"}
+        >
+          {showSalaries ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          {showSalaries ? "Hide" : "Show"}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -247,14 +293,14 @@ export function PayrollWorkspace({
         />
         <StatCard
           label="Monthly payroll"
-          value={formatSar(summary.total_payroll_sar)}
+          value={formatSar(summary.total_payroll_sar, showSalaries)}
           subtext="Total salary amount"
           icon={<Wallet className="h-5 w-5" />}
           accent="bg-indigo-50 text-indigo-600"
         />
         <StatCard
           label="Average salary"
-          value={formatSar(summary.average_salary_sar)}
+          value={formatSar(summary.average_salary_sar, showSalaries)}
           subtext="Per active employee"
           accent="bg-violet-50 text-violet-600"
         />
@@ -262,26 +308,16 @@ export function PayrollWorkspace({
           label="Banks"
           value={summary.bank_count}
           subtext={
-            summary.total_deductions_sar > 0
-              ? `${formatSar(summary.total_deductions_sar)} deductions`
-              : "No deductions this month"
+            !showSalaries
+              ? "Deductions hidden"
+              : summary.total_deductions_sar > 0
+                ? `${formatSar(summary.total_deductions_sar, true)} deductions`
+                : "No deductions this month"
           }
           icon={<Building2 className="h-5 w-5" />}
           accent="bg-sky-50 text-sky-600"
         />
       </div>
-
-      <label className="relative block max-w-md text-sm">
-        <span className="font-medium text-slate-700">Search employees</span>
-        <Search className="pointer-events-none absolute bottom-2.5 left-3 h-4 w-4 text-slate-400" />
-        <input
-          type="search"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Name, ID, station, role, bank..."
-          className="mt-1 block w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3"
-        />
-      </label>
 
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-500">
@@ -299,11 +335,15 @@ export function PayrollWorkspace({
                 <th className="px-4 py-3">Workstation</th>
                 <th className="px-4 py-3">Bank</th>
                 <th className="px-4 py-3">Account</th>
-                <th className="px-4 py-3">Basic</th>
-                <th className="px-4 py-3">Housing</th>
-                <th className="px-4 py-3">Other</th>
-                <th className="px-4 py-3">Deduction</th>
-                <th className="px-4 py-3">Net salary</th>
+                {showSalaries ? (
+                  <>
+                    <th className="px-4 py-3">Basic</th>
+                    <th className="px-4 py-3">Housing</th>
+                    <th className="px-4 py-3">Other</th>
+                    <th className="px-4 py-3">Deduction</th>
+                    <th className="px-4 py-3">Net salary</th>
+                  </>
+                ) : null}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -322,26 +362,35 @@ export function PayrollWorkspace({
                   <td className="px-4 py-3 font-mono text-xs text-slate-500" title={employee.account_number}>
                     {maskAccountNumber(employee.account_number)}
                   </td>
-                  <td className="px-4 py-3">{formatSar(employee.basic_salary)}</td>
-                  <td className="px-4 py-3">{formatSar(employee.housing_allowance)}</td>
-                  <td className="px-4 py-3">{formatSar(employee.other_earnings)}</td>
-                  <td className="px-4 py-3">
-                    {employee.deduction > 0 ? (
-                      <span className="text-red-600">{formatSar(employee.deduction)}</span>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-                  <td className="px-4 py-3 font-semibold text-slate-900">{formatSar(employee.salary_amount)}</td>
+                  {showSalaries ? (
+                    <>
+                      <td className="px-4 py-3">{formatSar(employee.basic_salary, true)}</td>
+                      <td className="px-4 py-3">{formatSar(employee.housing_allowance, true)}</td>
+                      <td className="px-4 py-3">{formatSar(employee.other_earnings, true)}</td>
+                      <td className="px-4 py-3">
+                        {employee.deduction > 0 ? (
+                          <span className="text-red-600">{formatSar(employee.deduction, true)}</span>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-slate-900">
+                        {formatSar(employee.salary_amount, true)}
+                      </td>
+                    </>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr className="border-t border-slate-200 bg-slate-50 font-medium">
-                <td className="px-4 py-3" colSpan={11}>
+                <td className="px-4 py-3" colSpan={showSalaries ? 11 : 7}>
                   {filtered.length} employee{filtered.length !== 1 ? "s" : ""} shown
+                  {!showSalaries ? " (salaries hidden)" : ""}
                 </td>
-                <td className="px-4 py-3">{formatSar(filteredTotal)}</td>
+                {showSalaries ? (
+                  <td className="px-4 py-3">{formatSar(filteredTotal, true)}</td>
+                ) : null}
               </tr>
             </tfoot>
           </table>
