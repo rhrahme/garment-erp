@@ -2,8 +2,7 @@ import { readPatternJobs } from "@/lib/data/pattern-jobs";
 import { readPatternLibraryFresh } from "@/lib/data/pattern-library";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readJsonFile } from "@/lib/data/document-persistence";
-import { productionCodeFromSticker } from "@/lib/sales-orders/label-codes";
-import { qrScanPayload } from "@/lib/production/qr-labels";
+import { pieceStickersForFabricLine } from "@/lib/pattern/manufacturing-stickers";
 import path from "path";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import type { PatternJob } from "@/lib/types/pattern";
@@ -87,10 +86,10 @@ function stickersFromLine(
   line: SalesOrderFabricLine,
   clientCode: string
 ): PatternSheetSticker[] {
-  return (line.label_stickers ?? []).map((sticker) => ({
+  return pieceStickersForFabricLine(line, clientCode).map((sticker) => ({
     code: sticker.code,
     piece_name: sticker.piece_name,
-    qr_payload: qrScanPayload(productionCodeFromSticker(sticker.code, clientCode)),
+    qr_payload: sticker.qr_payload,
   }));
 }
 

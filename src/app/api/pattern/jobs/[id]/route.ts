@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { requirePatternAccess } from "@/lib/auth/session";
 import { ensurePatternDocumentsLoaded } from "@/lib/data/pattern-jobs";
 import { getPatternJobById } from "@/lib/data/pattern-jobs";
+import { getSalesOrderById } from "@/lib/data/sales-orders";
+import { manufacturingStickersForJob } from "@/lib/pattern/manufacturing-stickers";
 import {
   isValidPatternJobStatus,
   updatePatternJob,
@@ -21,7 +23,10 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       return NextResponse.json({ error: "Pattern job not found." }, { status: 404 });
     }
 
-    return NextResponse.json({ job });
+    const order = getSalesOrderById(job.sales_order_id) ?? null;
+    const manufacturing_stickers = manufacturingStickersForJob(job, order);
+
+    return NextResponse.json({ job, manufacturing_stickers });
   } catch (error) {
     console.error("Failed to read pattern job:", error);
     return NextResponse.json({ error: "Failed to load pattern job." }, { status: 500 });

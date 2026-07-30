@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/Button";
 import { ChangeGarmentTypeControl } from "@/components/orders/ChangeGarmentTypeControl";
 import { GarmentPiecesNest } from "@/components/garment/GarmentPiecesNest";
 import { GarmentTypeChangeBadge } from "@/components/garment-type/GarmentTypeChangeBadge";
+import { PatternManufacturingQrs } from "@/components/pattern/PatternManufacturingQrs";
 import type { GarmentTypeChangeFlag } from "@/lib/sales-orders/garment-type-change-flags";
+import type { ManufacturingStickerQr } from "@/lib/pattern/manufacturing-stickers";
 import { piecesForPatternJob } from "@/lib/sales-orders/label-codes";
 import type { PatternFittingOutcome, PatternJob, PatternJobStatus } from "@/lib/types/pattern";
 import type { ClientPattern } from "@/lib/types/pattern-library";
@@ -48,6 +50,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
   const [selectedFittingId, setSelectedFittingId] = useState("");
   const [uploadRevisionId, setUploadRevisionId] = useState("");
   const [clientPatterns, setClientPatterns] = useState<ClientPattern[]>([]);
+  const [manufacturingStickers, setManufacturingStickers] = useState<ManufacturingStickerQr[]>([]);
   const [canChangeGarmentType, setCanChangeGarmentType] = useState(false);
   const [garmentTypeChangeFlag, setGarmentTypeChangeFlag] = useState<GarmentTypeChangeFlag | null>(
     null
@@ -62,6 +65,11 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       if (!res.ok) throw new Error(data.error ?? "Failed to load");
       const nextJob = data.job as PatternJob;
       setJob(nextJob);
+      setManufacturingStickers(
+        Array.isArray(data.manufacturing_stickers)
+          ? (data.manufacturing_stickers as ManufacturingStickerQr[])
+          : []
+      );
       setAssignedTo(nextJob.assigned_to ?? "");
       setPatternCode(nextJob.pattern_code ?? "");
       setSizeNotes(nextJob.pattern_size_notes ?? "");
@@ -252,6 +260,20 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
           />
         ) : null}
       </div>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
+        <div>
+          <h3 className="font-semibold text-slate-900">Manufacturing QRs</h3>
+          <p className="mt-0.5 text-xs text-slate-500">
+            Same codes as production stickers / floor scan
+            {manufacturingStickers.some((s) => s.role === "prep")
+              ? " (fabric-cut prep + piece stickers)"
+              : ""}
+            .
+          </p>
+        </div>
+        <PatternManufacturingQrs stickers={manufacturingStickers} />
+      </section>
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
