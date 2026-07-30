@@ -18,6 +18,8 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/thread-buttons",
   "/production",
   "/quality",
+  /** ID badges only -- payroll register `/hr` stays blocked (allowlist, not prefix `/hr`). */
+  "/hr/id-badges",
   "/api/clients",
   "/api/custom-fabrics",
   "/api/sales-orders",
@@ -32,6 +34,9 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/api/factory/floor-stations",
   "/api/production",
   "/api/sales",
+  "/api/hr/employees",
+  "/api/hr/employee-lookup",
+  "/api/hr/id-badges",
   "/api/auth/session",
   "/api/auth/dev-impersonate",
   "/login",
@@ -263,6 +268,8 @@ export const CLIENT_MANAGER_NAV_HREFS = [
   "/quality",
   "/clients",
   "/fabric-specification",
+  /** ID badges only -- not `/hr` payroll register. */
+  "/hr/id-badges",
 ] as const;
 
 /** Sidebar pages for production-floor task operators. */
@@ -596,6 +603,13 @@ export function canViewClientContact(
 }
 
 export function isClientManagerRouteAllowed(pathname: string): boolean {
+  // Never treat badge allowlist as opening the payroll register or salary APIs.
+  if (pathname === "/hr" || pathname.startsWith("/hr/")) {
+    return isHrIdBadgesPath(pathname);
+  }
+  if (pathname === "/api/hr/payroll-employees" || pathname.startsWith("/api/hr/payroll-employees/")) {
+    return false;
+  }
   return CLIENT_MANAGER_ROUTE_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );

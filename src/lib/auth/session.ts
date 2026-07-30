@@ -231,11 +231,16 @@ export async function requireAdmin(): Promise<SessionContext | null> {
   return session;
 }
 
-/** Admin or factory manager — operational floors (e.g. HR badges) without accounting roles. */
+/**
+ * Admin, factory manager, or QC -- operational floors (e.g. HR ID badges)
+ * without payroll register / salary APIs.
+ */
 export async function requireFactoryOpsAccess(): Promise<SessionContext | null> {
   const session = await getSessionContext();
   if (!session.userId && !session.email) return null;
-  if (session.isAdmin || session.isProductionOperator) return session;
+  if (session.isAdmin || session.isProductionOperator || session.isClientManager) {
+    return session;
+  }
   return null;
 }
 

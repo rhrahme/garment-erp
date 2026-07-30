@@ -138,8 +138,8 @@ export function Sidebar({
     if (item.href === "/documents" && !isAdmin && !accountingOperatorOnly) return false;
     // Sales Home is sales-tablet (and admin) only — never for floor/QC/unscoped users.
     if (item.href === "/sales" && !salesOperatorOnly && !isAdmin) return false;
-    // Employees (badges) is the production-facing entry; admins use HR & Payroll.
-    if (item.href === "/hr/id-badges" && !productionOperatorOnly) return false;
+    // Employees / ID Badges entry for factory manager + QC; admins use HR & Payroll.
+    if (item.href === "/hr/id-badges" && !productionOperatorOnly && !clientsOnly) return false;
     return true;
   });
 
@@ -194,7 +194,9 @@ export function Sidebar({
                           ? CLIENT_MANAGER_ORDERS_NAV_LABEL
                           : clientsOnly && href === "/fabric-orders"
                             ? "Fabric Orders"
-                            : label}
+                            : clientsOnly && href === "/hr/id-badges"
+                              ? "ID Badges"
+                              : label}
                 </Link>
               </li>
             );

@@ -5,17 +5,18 @@ import { getSessionContext } from "@/lib/auth/session";
 
 export default async function HrIdBadgesLayout({ children }: { children: React.ReactNode }) {
   const session = await getSessionContext();
-  const isProduction = session.isProductionOperator;
-  const showPayroll = !isProduction;
+  // Payroll register tab is admin-only; QC and factory managers get badges only.
+  const showPayroll = session.isAdmin;
+  const badgesOnly = !session.isAdmin;
 
   return (
     <div>
       <PageHeader
-        title={isProduction ? "Employees" : "HR & Payroll"}
+        title={badgesOnly ? "Employees" : "HR & Payroll"}
         description={
-          isProduction
-            ? "Employee list and ID badges — name, ID number, and scannable QR"
-            : "Employee ID badges — name, ID number, and scannable QR per employee"
+          badgesOnly
+            ? "Employee list and ID badges - name, ID number, and scannable QR"
+            : "Employee ID badges - name, ID number, and scannable QR per employee"
         }
       />
       <HrNav showPayroll={showPayroll} />

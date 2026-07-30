@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { EmployeeBadgePrintSheet } from "@/components/hr/EmployeeBadgePrintSheet";
 import { getSessionContext } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { readPayrollEmployees } from "@/lib/data/payroll-employees";
+import { readPayrollEmployees, toBadgeSafeEmployee } from "@/lib/data/payroll-employees";
 import {
   badgeGroupFromSlug,
   parseBadgePrintIds,
@@ -22,12 +22,13 @@ export default async function EmployeeBadgePrintPage({ params, searchParams }: P
   const group = badgeGroupFromSlug(groupSlug);
   if (!group) notFound();
 
-  // Same audience as badge tabs — middleware already allowlists /hr/id-badges for Production.
-  await getSessionContext();
+  // Middleware allowlists /hr/id-badges for Production + QC; payroll register stays blocked.
+  const session = await getSessionContext();
   await ensureDocumentsLoaded(["payroll_employees"]);
   const payroll = readPayrollEmployees();
   const ids = parseBadgePrintIds(idsParam);
-  const employees = selectBadgePrintEmployees(payroll.employees, group, ids);
+  const selected = selectBadgePrintEmployees(payroll.employees, group, ids);
+  const employees = session.isAdmin ? selected : selected.map(toBadgeSafeEmployee);
 
   return <EmployeeBadgePrintSheet employees={employees} group={group} />;
 }

@@ -77,6 +77,34 @@ export function toPublicEmployeeIdentity(employee: PayrollEmployee): PublicEmplo
   };
 }
 
+/**
+ * Strip salary / bank / address fields before sending employees to badge UI.
+ * Call after group filtering so Saudi/Expat tabs still work without bank_name.
+ */
+export function toBadgeSafeEmployee(employee: PayrollEmployee): PayrollEmployee {
+  return {
+    id: employee.id,
+    s_no: employee.s_no,
+    employee_id_number: employee.employee_id_number,
+    full_name: employee.full_name,
+    bank_name: "",
+    account_number: "",
+    salary_amount: 0,
+    basic_salary: 0,
+    housing_allowance: 0,
+    other_earnings: 0,
+    deduction: 0,
+    payment_description: "",
+    address_1: "",
+    address_2: "",
+    address_3: "",
+    is_active: employee.is_active,
+    assigned_workstation_id: employee.assigned_workstation_id ?? null,
+    is_mobile_floater: Boolean(employee.is_mobile_floater),
+    job_functions: employee.job_functions,
+  };
+}
+
 function normalizeIdNumber(value: string): string {
   return value.trim();
 }

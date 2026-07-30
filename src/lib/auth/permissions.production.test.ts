@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   ACCOUNTING_OPERATOR_NAV_HREFS,
+  CLIENT_MANAGER_NAV_HREFS,
   PRODUCTION_OPERATOR_BLOCKED_ROUTE_PREFIXES,
   PRODUCTION_OPERATOR_NAV_HREFS,
   SALES_OPERATOR_NAV_HREFS,
@@ -9,6 +10,7 @@ import {
   defaultPathForEmail,
   defaultPathForSession,
   isAccountingOperatorRouteAllowed,
+  isClientManagerRouteAllowed,
   isPatternOperatorRouteAllowed,
   isProductionOperatorRouteAllowed,
   isSalesOperatorRouteAllowed,
@@ -136,6 +138,33 @@ describe("production_operator home / nav gating", () => {
     assert.equal(canAccessPatternModule(true, false, false, false), false);
     assert.equal(canAccessPatternModule(false, false, true, false), false);
     assert.equal(canAccessPatternModule(false, true, false, false), true);
+  });
+});
+
+describe("client_manager QC ID badges (not payroll)", () => {
+  it("classifies hagan.qc@gmail.com as client_manager", () => {
+    assert.equal(resolveRestrictedAccess(null, "hagan.qc@gmail.com", false), "client_manager");
+  });
+
+  it("QC nav includes ID Badges but not payroll register", () => {
+    const nav = CLIENT_MANAGER_NAV_HREFS as readonly string[];
+    assert.ok(nav.includes("/hr/id-badges"));
+    assert.ok(!nav.includes("/hr"));
+  });
+
+  it("allows badge pages and APIs; blocks payroll register and salary APIs", () => {
+    assert.equal(isClientManagerRouteAllowed("/hr/id-badges"), true);
+    assert.equal(isClientManagerRouteAllowed("/hr/id-badges/saudis"), true);
+    assert.equal(isClientManagerRouteAllowed("/hr/id-badges/saudis/print"), true);
+    assert.equal(isClientManagerRouteAllowed("/hr/id-badges/expats/print"), true);
+    assert.equal(isClientManagerRouteAllowed("/api/hr/employees"), true);
+    assert.equal(isClientManagerRouteAllowed("/api/hr/employee-lookup"), true);
+    assert.equal(isClientManagerRouteAllowed("/api/hr/id-badges/saudis/pdf"), true);
+
+    assert.equal(isClientManagerRouteAllowed("/hr"), false);
+    assert.equal(isClientManagerRouteAllowed("/hr/"), false);
+    assert.equal(isClientManagerRouteAllowed("/api/hr/payroll-employees"), false);
+    assert.equal(isClientManagerRouteAllowed("/api/hr/payroll-employees/x"), false);
   });
 });
 
