@@ -73,8 +73,10 @@ test("parses header records from a real-shaped .tud buffer", () => {
   const back = meta.pieces.find((piece) => piece.name === "BACK");
   assert.ok(back);
   assert.equal(back.cut_quantity, 2);
+  assert.equal(back.code, "C_2");
   assert.equal(back.fabric, "SHEEL");
   assert.deepEqual(back.per_size["2XL"], { area_m2: 0.1827, perimeter_cm: 178.97 });
+  assert.equal(meta.style_file, "Sample_Style__20.07.26");
 
   // Quoted names with slashes and backslashes survive.
   const fly = meta.pieces.find((piece) => piece.name === "D/FLY_INER");

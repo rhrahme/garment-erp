@@ -7,11 +7,17 @@ import {
   estimateNestFromTud,
   type NestEstimateResult,
 } from "@/lib/pattern-library/nest-estimate";
+import {
+  buildCutterPlanFromTud,
+  type CutterTudPlan,
+} from "@/lib/pattern-library/tud-cutter-plan";
 import { getGarmentPieces } from "@/lib/sales-orders/label-codes";
 import type { ClientPattern } from "@/lib/types/pattern-library";
 
 export interface CutNestPreview {
   nest: NestEstimateResult | null;
+  /** Parts list read from TUD header for the cutter. */
+  cutter_plan: CutterTudPlan | null;
   /** True when double fold was assumed because marker_double_fold was unset. */
   fold_assumed: boolean;
   /** Why nest is missing (for empty-state copy). */
@@ -56,32 +62,40 @@ export function buildCutNestPreview(
         ? pattern.marker_fabric_width_cm
         : null;
 
-  if (width === null) {
-    return {
-      nest: null,
-      fold_assumed: false,
-      missing_reason: "Upload TUD + set fabric width for cut nest preview.",
-      source: null,
-    };
-  }
-
   const tud = collectNestTudMetadata(pattern, getGarmentPieces(pattern.garment_type));
-  if (!tud && !pattern.marker_layout?.placements?.length) {
-    return {
-      nest: null,
-      fold_assumed: false,
-      missing_reason: "Upload TUD + set fabric width for cut nest preview.",
-      source: null,
-    };
-  }
-
   const { double_fold: doubleFold, fold_assumed } = resolveMarkerDoubleFold(pattern);
   const garmentQty = options.garmentQty ?? 1;
   const size = options.size ?? pattern.base_size;
+  const cutter_plan = tud
+    ? buildCutterPlanFromTud(tud, { size, double_fold: doubleFold })
+    : null;
+
+  if (width === null) {
+    return {
+      nest: null,
+      cutter_plan,
+      fold_assumed: false,
+      missing_reason: cutter_plan
+        ? "Set fabric width for cut nest layout (parts list below from TUD)."
+        : "Upload TUD + set fabric width for cut nest preview.",
+      source: null,
+    };
+  }
+
+  if (!tud && !pattern.marker_layout?.placements?.length) {
+    return {
+      nest: null,
+      cutter_plan: null,
+      fold_assumed: false,
+      missing_reason: "Upload TUD + set fabric width for cut nest preview.",
+      source: null,
+    };
+  }
 
   if (layoutMatchesSheet(pattern, width, doubleFold, size, garmentQty) && pattern.marker_layout) {
     return {
       nest: nestResultFromMarkerLayout(pattern.marker_layout),
+      cutter_plan,
       fold_assumed,
       missing_reason: null,
       source: "saved",
@@ -91,6 +105,7 @@ export function buildCutNestPreview(
   if (!tud) {
     return {
       nest: null,
+      cutter_plan: null,
       fold_assumed,
       missing_reason: "Upload TUD + set fabric width for cut nest preview.",
       source: null,
@@ -108,11 +123,12 @@ export function buildCutNestPreview(
   if (!nest) {
     return {
       nest: null,
+      cutter_plan,
       fold_assumed,
       missing_reason: "Could not estimate nest from TUD areas for this size.",
       source: null,
     };
   }
 
-  return { nest, fold_assumed, missing_reason: null, source: "auto" };
+  return { nest, cutter_plan, fold_assumed, missing_reason: null, source: "auto" };
 }

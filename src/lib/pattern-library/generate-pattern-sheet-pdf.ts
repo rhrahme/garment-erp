@@ -339,6 +339,69 @@ async function drawPatternSheetPage(
   doc.text(footerBits.join(" · "), MARGIN, footerY + 2);
 }
 
+/** Draw TUD parts list for the cutter. Returns next Y. */
+function drawCutterPartsFromTud(
+  doc: jsPDF,
+  plan: NonNullable<PatternSheetData["cut_nest"]["cutter_plan"]>,
+  startY: number
+): number {
+  const boxW = PAGE_W - MARGIN * 2;
+  const rows = [...plan.shell_pieces, ...plan.other_pieces];
+  const rowH = 3.6;
+  const headerH = 10;
+  const boxH = headerH + 4 + rows.length * rowH + 4;
+  let y = startY;
+
+  doc.setDrawColor(100, 116, 139);
+  doc.setLineWidth(0.3);
+  doc.setFillColor(248, 250, 252);
+  doc.rect(MARGIN, y, boxW, boxH, "FD");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(...INK);
+  doc.text(
+    `PARTS FROM TUD (SIZE ${plan.size}) - ${plan.total_cut_pieces} TO CUT`,
+    MARGIN + 3,
+    y + 4
+  );
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6);
+  doc.setTextColor(...SLATE);
+  doc.text(plan.instruction, MARGIN + 3, y + 7.5);
+
+  let rowY = y + headerH;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(5.5);
+  doc.text("PIECE", MARGIN + 3, rowY);
+  doc.text("QTY", MARGIN + 42, rowY);
+  doc.text("FABRIC", MARGIN + 52, rowY);
+  doc.text("APPROX", MARGIN + 78, rowY);
+  doc.text("PLACE", MARGIN + 100, rowY);
+  rowY += 2;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(5.5);
+  doc.setTextColor(...INK);
+  for (const row of rows) {
+    rowY += rowH;
+    const label = row.code ? `${row.name} ${row.code}` : row.name;
+    doc.text(label.slice(0, 28), MARGIN + 3, rowY);
+    doc.text(String(row.cut_quantity), MARGIN + 42, rowY);
+    doc.text(row.fabric_label.slice(0, 12), MARGIN + 52, rowY);
+    doc.text(
+      `${row.approx_width_cm.toFixed(0)}x${row.approx_height_cm.toFixed(0)} cm`,
+      MARGIN + 78,
+      rowY
+    );
+    doc.text(row.place_hint.slice(0, 42), MARGIN + 100, rowY);
+  }
+
+  doc.setFontSize(5);
+  doc.setTextColor(...SLATE);
+  doc.text(plan.disclaimer, MARGIN + 3, y + boxH - 1.5);
+  return y + boxH + 3;
+}
+
 /** Draw approximate folded-fabric nest for the cutter. Returns next Y. */
 function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number): number {
   const preview = data.cut_nest;
@@ -363,7 +426,11 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
     doc.setFontSize(7);
     doc.setTextColor(...INK);
     doc.text(lines, MARGIN + 3, y + 8);
-    return y + boxH + 4;
+    y = y + boxH + 3;
+    if (preview.cutter_plan) {
+      y = drawCutterPartsFromTud(doc, preview.cutter_plan, y);
+    }
+    return y;
   }
 
   const nest = preview.nest;
@@ -454,7 +521,11 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
     y + headerH + mapH + 4
   );
 
-  return y + boxH + 4;
+  y = y + boxH + 3;
+  if (preview.cutter_plan) {
+    y = drawCutterPartsFromTud(doc, preview.cutter_plan, y);
+  }
+  return y;
 }
 
 /** A4 portrait client-pattern measurement sheet - one page per manufacturing piece. */

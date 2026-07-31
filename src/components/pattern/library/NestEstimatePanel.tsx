@@ -14,6 +14,7 @@ import {
   collectNestTudMetadata,
   estimateNestFromTud,
 } from "@/lib/pattern-library/nest-estimate";
+import { buildCutterPlanFromTud, flattenCutterPlan } from "@/lib/pattern-library/tud-cutter-plan";
 import { tudFabricLabel } from "@/lib/pattern-library/tud-display";
 import type { ClientPattern, MarkerLayout, MarkerLayoutPlacement } from "@/lib/types/pattern-library";
 
@@ -138,6 +139,14 @@ export function NestEstimatePanel({
       garment_qty: qty,
     });
   }, [tud, width, doubleFold, size, garmentQty]);
+
+  const cutterPlan = useMemo(() => {
+    if (!tud) return null;
+    return buildCutterPlanFromTud(tud, {
+      size: size || null,
+      double_fold: doubleFold !== "no",
+    });
+  }, [tud, size, doubleFold]);
 
   // Seed local board from auto pack when no placements yet but estimate is ready.
   useEffect(() => {
@@ -372,6 +381,47 @@ export function NestEstimatePanel({
         {saveOk ? <span className="text-xs text-emerald-700">Saved.</span> : null}
         {saveError ? <span className="text-xs text-rose-600">{saveError}</span> : null}
       </div>
+
+      {cutterPlan ? (
+        <div className="rounded-lg border border-slate-200 bg-slate-50/80 p-3 space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+            Parts read from TUD (size {cutterPlan.size}) - {cutterPlan.total_cut_pieces} to cut
+          </p>
+          <p className="text-xs text-slate-600">{cutterPlan.instruction}</p>
+          <div className="overflow-x-auto rounded-md border border-slate-200 bg-white">
+            <table className="w-full text-xs">
+              <thead className="bg-slate-50 text-left text-[10px] uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-2 py-1.5 font-medium">Piece</th>
+                  <th className="px-2 py-1.5 font-medium">Qty</th>
+                  <th className="px-2 py-1.5 font-medium">Fabric</th>
+                  <th className="px-2 py-1.5 font-medium">Approx size</th>
+                  <th className="px-2 py-1.5 font-medium">Place</th>
+                </tr>
+              </thead>
+              <tbody>
+                {flattenCutterPlan(cutterPlan).map((row) => (
+                  <tr key={row.name} className="border-t border-slate-100">
+                    <td className="px-2 py-1.5 font-medium text-slate-900">
+                      {row.name}
+                      {row.code ? (
+                        <span className="ml-1 font-mono text-slate-500">{row.code}</span>
+                      ) : null}
+                    </td>
+                    <td className="px-2 py-1.5 tabular-nums">{row.cut_quantity}</td>
+                    <td className="px-2 py-1.5">{row.fabric_label}</td>
+                    <td className="px-2 py-1.5 tabular-nums text-slate-700">
+                      {row.approx_width_cm.toFixed(0)} x {row.approx_height_cm.toFixed(0)} cm
+                    </td>
+                    <td className="px-2 py-1.5 text-slate-600">{row.place_hint}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-[11px] text-slate-500">{cutterPlan.disclaimer}</p>
+        </div>
+      ) : null}
 
       {!tud ? (
         <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-500">

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Download, X } from "lucide-react";
 import { formatTudSizeDerivedLine } from "@/lib/pattern-library/derived-from";
+import { buildCutterPlanFromTud, flattenCutterPlan } from "@/lib/pattern-library/tud-cutter-plan";
 import {
   formatAreaM2,
   formatPieceAreaM2,
@@ -162,6 +163,10 @@ function TudPieceBrowser({
     (metadata.size_totals.length > 0
       ? metadata.size_totals.reduce((sum, total) => sum + total.area_m2, 0)
       : null);
+  const cutterPlan = buildCutterPlanFromTud(metadata, { double_fold: true });
+  const approxByName = new Map(
+    cutterPlan ? flattenCutterPlan(cutterPlan).map((row) => [row.name, row] as const) : []
+  );
 
   return (
     <>
@@ -205,8 +210,10 @@ function TudPieceBrowser({
             <thead className="bg-slate-50">
               <tr className="text-left text-[11px] uppercase tracking-wide text-slate-400">
                 <th className="px-3 py-2.5 font-medium">Piece</th>
+                <th className="px-2 py-2.5 font-medium">Code</th>
                 <th className="px-2 py-2.5 text-center font-medium">Cut</th>
                 <th className="px-2 py-2.5 font-medium">Fabric</th>
+                <th className="px-2 py-2.5 text-right font-medium">Approx</th>
                 {metadata.sizes.map((size) => (
                   <th key={size} className="px-2 py-2.5 text-right font-medium">
                     Area {size}
@@ -218,16 +225,25 @@ function TudPieceBrowser({
             <tbody>
               {metadata.pieces.map((piece) => {
                 const firstEntry = Object.values(piece.per_size)[0] ?? null;
+                const approx = approxByName.get(piece.name);
                 return (
                   <tr key={piece.name} className="border-t border-slate-100">
                     <td className="whitespace-nowrap px-3 py-2.5 font-medium text-slate-800">
                       {piece.name}
                     </td>
+                    <td className="whitespace-nowrap px-2 py-2.5 font-mono text-slate-500">
+                      {piece.code ?? "-"}
+                    </td>
                     <td className="px-2 py-2.5 text-center tabular-nums text-slate-600">
-                      {piece.cut_quantity ?? "—"}
+                      {piece.cut_quantity ?? "-"}
                     </td>
                     <td className="whitespace-nowrap px-2 py-2.5 text-slate-500">
                       {tudFabricLabel(piece.fabric)}
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-2.5 text-right tabular-nums text-slate-600">
+                      {approx
+                        ? `${approx.approx_width_cm.toFixed(0)}x${approx.approx_height_cm.toFixed(0)}`
+                        : "-"}
                     </td>
                     {metadata.sizes.map((size) => (
                       <td key={size} className="px-2 py-2.5 text-right tabular-nums text-slate-600">
@@ -235,7 +251,7 @@ function TudPieceBrowser({
                       </td>
                     ))}
                     <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-slate-500">
-                      {firstEntry ? `${firstEntry.perimeter_cm.toFixed(0)} cm` : "—"}
+                      {firstEntry ? `${firstEntry.perimeter_cm.toFixed(0)} cm` : "-"}
                     </td>
                   </tr>
                 );

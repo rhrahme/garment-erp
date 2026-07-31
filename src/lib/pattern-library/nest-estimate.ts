@@ -156,6 +156,7 @@ export function collectNestTudMetadata(
       if (!existing) {
         mergedPieces.push({
           name: piece.name,
+          code: piece.code ?? null,
           cut_quantity: piece.cut_quantity,
           fabric: piece.fabric,
           per_size: { ...piece.per_size },
@@ -165,6 +166,7 @@ export function collectNestTudMetadata(
           existing.cut_quantity = (existing.cut_quantity ?? 0) + piece.cut_quantity;
         }
         existing.fabric = existing.fabric ?? piece.fabric;
+        existing.code = existing.code ?? piece.code ?? null;
         for (const [size, entry] of Object.entries(piece.per_size)) {
           existing.per_size[size] = entry;
         }

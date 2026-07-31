@@ -27,11 +27,13 @@ export interface MeasurementPointDef {
 /** One cut piece from a .TUD header (-P/-Q/-M/-E records). */
 export interface TudPiece {
   name: string;
+  /** TUKA piece code from -P second quoted field (e.g. C_2, C_4). */
+  code?: string | null;
   /** How many of this piece are cut per garment (-Q). */
   cut_quantity: number | null;
   /** Fabric assignment (-M): e.g. SHEEL (shell), FINISH (fusing), CONTASH (contrast). */
   fabric: string | null;
-  /** size -> single-piece area (m²) and perimeter (cm) from -E records. */
+  /** size -> single-piece area (m2) and perimeter (cm) from -E records. */
   per_size: Record<string, { area_m2: number; perimeter_cm: number }>;
 }
 
@@ -53,15 +55,17 @@ export interface TudSizeTotal {
 /** Metadata parsed from a TUKA CAD .tud file header. */
 export interface TudMetadata {
   style_caption: string | null;
-  /** Original path on the CAD workstation (/F record) — reveals folder/garment hints. */
+  /** Original path on the CAD workstation (/F record) - reveals folder/garment hints. */
   source_path: string | null;
+  /** Style file id from -F record (ASCII name without spaces). */
+  style_file?: string | null;
   sizes: string[];
   pieces: TudPiece[];
   /** Sum of piece cut quantities (pieces to cut per garment). */
   total_cut_pieces: number | null;
   fabric_totals: TudFabricTotal[];
   size_totals: TudSizeTotal[];
-  /** Convenience: total fabric area (m²) for the single-size case, else null. */
+  /** Convenience: total fabric area (m2) for the single-size case, else null. */
   total_area_m2: number | null;
   total_perimeter_cm: number | null;
 }

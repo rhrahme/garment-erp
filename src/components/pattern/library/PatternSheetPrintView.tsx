@@ -57,6 +57,48 @@ const NEST_COLORS = [
   "#a5b4fc",
 ];
 
+function CutterPartsFromTud({ plan }: { plan: NonNullable<PatternSheetData["cut_nest"]["cutter_plan"]> }) {
+  const rows = [...plan.shell_pieces, ...plan.other_pieces];
+  return (
+    <div className="mt-2">
+      <p className="text-[11px] font-semibold text-slate-800">
+        Parts from TUD (size {plan.size}) - {plan.total_cut_pieces} to cut
+      </p>
+      <p className="text-[10px] text-slate-600">{plan.instruction}</p>
+      <table className="mt-1 w-full border-collapse text-[10px]">
+        <thead>
+          <tr className="border-b border-slate-300 text-left text-slate-500">
+            <th className="py-0.5 pr-2 font-medium">Piece</th>
+            <th className="py-0.5 pr-2 font-medium">Qty</th>
+            <th className="py-0.5 pr-2 font-medium">Fabric</th>
+            <th className="py-0.5 pr-2 font-medium">Approx</th>
+            <th className="py-0.5 font-medium">Place</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.name} className="border-b border-slate-200">
+              <td className="py-0.5 pr-2 font-medium text-slate-900">
+                {row.name}
+                {row.code ? (
+                  <span className="ml-1 font-mono text-slate-500">{row.code}</span>
+                ) : null}
+              </td>
+              <td className="py-0.5 pr-2 tabular-nums">{row.cut_quantity}</td>
+              <td className="py-0.5 pr-2">{row.fabric_label}</td>
+              <td className="py-0.5 pr-2 tabular-nums">
+                {row.approx_width_cm.toFixed(0)}x{row.approx_height_cm.toFixed(0)} cm
+              </td>
+              <td className="py-0.5 text-slate-600">{row.place_hint}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="mt-0.5 text-[9px] text-slate-500">{plan.disclaimer}</p>
+    </div>
+  );
+}
+
 function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
   const preview = data.cut_nest;
   if (!preview.nest) {
@@ -68,6 +110,7 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
         <p className="mt-1 text-sm text-slate-600">
           {preview.missing_reason ?? "Upload TUD + set fabric width for cut nest preview."}
         </p>
+        {preview.cutter_plan ? <CutterPartsFromTud plan={preview.cutter_plan} /> : null}
       </div>
     );
   }
@@ -111,6 +154,7 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
         Fold fabric, place printed pattern parts on the fold, then cut. Approximate from TUD areas
         - not TUKAmark.
       </p>
+      {preview.cutter_plan ? <CutterPartsFromTud plan={preview.cutter_plan} /> : null}
       <div className="mt-2 overflow-x-auto rounded border border-slate-300 bg-slate-200 p-1">
         <svg
           viewBox={`0 0 ${viewW} ${viewH}`}

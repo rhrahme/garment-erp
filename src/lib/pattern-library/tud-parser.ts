@@ -6,20 +6,21 @@ import type {
 } from "@/lib/types/pattern-library";
 
 /**
- * TUKA CAD .tud parser — metadata only, no geometry.
+ * TUKA CAD .tud parser - reads the ASCII header used for cutter previews.
  *
  * File layout: plain-text ASCII header (records between `@ Begin` and `@ End`,
- * latin-1) followed by an embedded 100×100 JFIF JPEG thumbnail and binary
- * geometry. Header records (fields separated by runs of spaces):
+ * latin-1) followed by an embedded 100x100 JFIF JPEG thumbnail and binary
+ * geometry (outlines are not decoded). Header records:
  *   /F  <original file path>
+ *   -F  <style_file_id>
  *   -K  StyleCaption  <style name>
  *   -S  <size>  <n>
- *   -X  <size>  <fabric>  <n>  <area cm²>  <perimeter cm>   (per-fabric totals)
- *   -Y  <size>  <n>  <area cm²>  <perimeter cm>             (grand totals)
+ *   -X  <size>  <fabric>  <n>  <area cm2>  <perimeter cm>   (per-fabric totals)
+ *   -Y  <size>  <n>  <area cm2>  <perimeter cm>             (grand totals)
  *   -P  "<piece>" "<code>" ""                               (starts a piece)
  *   -Q  <piece>  <cut quantity>
  *   -M  <fabric>
- *   -E  <piece>  <size>  <n>  <area m²>  <perimeter cm>
+ *   -E  <piece>  <size>  <n>  <area m2>  <perimeter cm>
  * Unknown records are skipped; if the header is missing entirely the file is
  * treated as a plain attachment (returns null).
  */
@@ -71,6 +72,7 @@ export function parseTudFile(buffer: Buffer): ParsedTudFile | null {
 
   let styleCaption: string | null = null;
   let sourcePath: string | null = null;
+  let styleFile: string | null = null;
   const sizes: string[] = [];
   const pieces: TudPiece[] = [];
   const fabricTotals: TudFabricTotal[] = [];
@@ -90,6 +92,12 @@ export function parseTudFile(buffer: Buffer): ParsedTudFile | null {
       sourcePath = rest || null;
       continue;
     }
+    if (tag === "-F") {
+      // Style file id (not the path). Avoid colliding with /F path record.
+      const id = rest.split(/\s+/)[0];
+      if (id) styleFile = id;
+      continue;
+    }
     if (tag === "-K") {
       const match = rest.match(/^StyleCaption\s+(.*)$/);
       if (match) styleCaption = cleanText(match[1] ?? "") || null;
@@ -101,7 +109,7 @@ export function parseTudFile(buffer: Buffer): ParsedTudFile | null {
       continue;
     }
     if (tag === "-X") {
-      // -X <size> <fabric> <n> <area cm²> <perimeter cm>
+      // -X <size> <fabric> <n> <area cm2> <perimeter cm>
       const parts = rest.split(/\s+/);
       const area = toNumber(parts[3]);
       const perimeter = toNumber(parts[4]);
@@ -116,7 +124,7 @@ export function parseTudFile(buffer: Buffer): ParsedTudFile | null {
       continue;
     }
     if (tag === "-Y") {
-      // -Y <size> <n> <area cm²> <perimeter cm>
+      // -Y <size> <n> <area cm2> <perimeter cm>
       const parts = rest.split(/\s+/);
       const area = toNumber(parts[2]);
       const perimeter = toNumber(parts[3]);
@@ -130,10 +138,19 @@ export function parseTudFile(buffer: Buffer): ParsedTudFile | null {
       continue;
     }
     if (tag === "-P") {
-      const match = rest.match(/^"([^"]*)"/);
-      const name = match?.[1]?.trim() ?? "";
+      const quoted = [...rest.matchAll(/"([^"]*)"/g)].map((m) => m[1] ?? "");
+      const name = (quoted[0] ?? "").trim();
+      const code = (quoted[1] ?? "").trim() || null;
       if (name) {
-        currentPiece = pieceByName(name) ?? { name, cut_quantity: null, fabric: null, per_size: {} };
+        currentPiece =
+          pieceByName(name) ?? {
+            name,
+            code,
+            cut_quantity: null,
+            fabric: null,
+            per_size: {},
+          };
+        if (code) currentPiece.code = code;
         if (!pieces.includes(currentPiece)) pieces.push(currentPiece);
       }
       continue;
@@ -196,6 +213,7 @@ export function parseTudFile(buffer: Buffer): ParsedTudFile | null {
   const metadata: TudMetadata = {
     style_caption: styleCaption,
     source_path: sourcePath,
+    style_file: styleFile,
     sizes,
     pieces,
     total_cut_pieces: totalCutPieces,
