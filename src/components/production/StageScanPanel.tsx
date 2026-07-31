@@ -169,13 +169,6 @@ export function StageScanPanel({
           lasts 8 hours - sign out when your shift ends.
         </p>
       )}
-      {scanContext === "pattern" && (
-        <p className="text-sm text-slate-600">
-          <span className="font-medium text-slate-800">Pattern scan:</span> pick the step, then scan a
-          manufacturing QR from the A4 size sheet (same codes as stickers). Optional badge tracks who;
-          otherwise your logged-in Pattern account is recorded.
-        </p>
-      )}
     </div>
   );
 }

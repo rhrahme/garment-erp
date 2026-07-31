@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { requirePatternAccess } from "@/lib/auth/session";
 import { ensurePatternDocumentsLoaded } from "@/lib/data/pattern-jobs";
-import { getPatternJobById } from "@/lib/data/pattern-jobs";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
 import { manufacturingStickersForJob } from "@/lib/pattern/manufacturing-stickers";
 import {
+  ensurePatternJobTudCode,
   isValidPatternJobStatus,
   updatePatternJob,
 } from "@/lib/pattern/mutations";
@@ -18,10 +18,11 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 
     await ensurePatternDocumentsLoaded();
     const { id } = await context.params;
-    const job = getPatternJobById(id);
-    if (!job) {
-      return NextResponse.json({ error: "Pattern job not found." }, { status: 404 });
+    const ensured = await ensurePatternJobTudCode(id);
+    if (!ensured.ok) {
+      return NextResponse.json({ error: ensured.error }, { status: ensured.status });
     }
+    const job = ensured.job;
 
     const order = getSalesOrderById(job.sales_order_id) ?? null;
     const manufacturing_stickers = manufacturingStickersForJob(job, order);

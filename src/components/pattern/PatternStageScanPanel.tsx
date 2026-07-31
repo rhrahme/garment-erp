@@ -23,16 +23,13 @@ export function PatternStageScanPanel({ onRefresh }: PatternStageScanPanelProps)
     <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
       <div>
         <h3 className="font-semibold text-slate-900">Pattern stage scan</h3>
-        <p className="mt-0.5 text-xs text-slate-500">
-          Scan manufacturing QRs printed on the A4 measurement sheet to mark Pattern done at each
-          step (TUD ready, sheet filled, handed to cut, trial updates).
-        </p>
+        <p className="mt-0.5 text-sm text-slate-500">Scan a QR from the printed A4 sheet.</p>
       </div>
       <StageScanPanel
         stations={PATTERN_STATIONS}
         scanContext="pattern"
         requireEmployee={false}
-        showEmployeeBadge
+        showEmployeeBadge={false}
         onRefresh={onRefresh}
       />
     </section>

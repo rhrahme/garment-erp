@@ -6,7 +6,7 @@ export default async function PatternJobPage({ params }: { params: Promise<{ job
 
   return (
     <div>
-      <PageHeader title="Pattern job" description="Drafting, fittings, revisions, and file uploads." />
+      <PageHeader title="Pattern job" description="One sheet. One pattern code. Print, scan, done." />
       <PatternJobDetail jobId={jobId} />
     </div>
   );

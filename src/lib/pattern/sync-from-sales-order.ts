@@ -1,6 +1,7 @@
 import { readPatternJobsFresh, writePatternJobs } from "@/lib/data/pattern-jobs";
 import { orphanPatternJobsToCancel } from "@/lib/sales-orders/pattern-so-mismatch";
 import { fabricLineArticleNumber, piecesForFabricLine } from "@/lib/sales-orders/label-codes";
+import { generateTudPatternCode } from "@/lib/pattern/tud-pattern-code";
 import type { PatternJob } from "@/lib/types/pattern";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import { notifyIntegration } from "@/lib/integrations";
@@ -99,7 +100,7 @@ export async function syncPatternJobsFromSalesOrder(
         ...fields,
         status: "pending",
         assigned_to: null,
-        pattern_code: null,
+        pattern_code: generateTudPatternCode(fields),
         pattern_size_notes: null,
         trial_priority: false,
         blocked_reason: null,

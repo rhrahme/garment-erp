@@ -118,9 +118,7 @@ export function ClientPhotoAssignmentPanel({
           <Camera className="h-4 w-4 text-slate-400" />
           Client photos to fabric / article
         </p>
-        <p className="text-[11px] text-slate-400">
-          Sales uploads on the client profile; Pattern assigns each photo here.
-        </p>
+        <p className="text-[11px] text-slate-400">Assign photos to this fabric.</p>
       </div>
 
       {loading ? (

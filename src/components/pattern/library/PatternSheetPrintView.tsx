@@ -38,6 +38,7 @@ export function PatternSheetPrintView({ data }: { data: PatternSheetData }) {
     version,
     fabric,
     order,
+    job,
     stickers,
     derived_from,
     house_brand,
@@ -101,6 +102,11 @@ export function PatternSheetPrintView({ data }: { data: PatternSheetData }) {
           <div>
             <h1 className="text-xl font-bold tracking-tight">PATTERN MEASUREMENT SHEET</h1>
             <p className="mt-1 font-mono text-sm font-semibold">{pattern.pattern_ref}</p>
+            {job?.pattern_code ? (
+              <p className="mt-0.5 font-mono text-xs text-slate-600">
+                TUD name: {job.pattern_code}
+              </p>
+            ) : null}
           </div>
           <div className="flex items-start gap-3">
             <div className="min-w-[7.5rem] rounded-lg border-2 border-slate-900 px-4 py-2 text-center">

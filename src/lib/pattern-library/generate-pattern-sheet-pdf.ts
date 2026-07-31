@@ -31,6 +31,7 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
     version,
     fabric,
     order,
+    job,
     stickers,
     derived_from,
     house_brand,
@@ -48,6 +49,13 @@ export async function generatePatternSheetPdf(data: PatternSheetData): Promise<A
   doc.setFont("courier", "bold");
   doc.setFontSize(11);
   doc.text(pattern.pattern_ref, MARGIN, MARGIN + 12);
+  if (job?.pattern_code) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...SLATE);
+    doc.text(`TUD name: ${job.pattern_code}`, MARGIN, MARGIN + 17);
+    doc.setTextColor(...INK);
+  }
 
   const brandCode = house_brand.code ?? "-";
   const brandName = house_brand.name ?? "House brand";

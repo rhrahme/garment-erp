@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/lib/integrations/api-auth";
 import { ensurePatternDocumentsLoaded } from "@/lib/data/pattern-jobs";
-import { getPatternJobById } from "@/lib/data/pattern-jobs";
-import { isValidPatternJobStatus, updatePatternJob } from "@/lib/pattern/mutations";
+import {
+  ensurePatternJobTudCode,
+  isValidPatternJobStatus,
+  updatePatternJob,
+} from "@/lib/pattern/mutations";
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   const authError = verifyApiKey(request);
@@ -11,11 +14,11 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   try {
     await ensurePatternDocumentsLoaded();
     const { id } = await context.params;
-    const job = getPatternJobById(id);
-    if (!job) {
-      return NextResponse.json({ error: "Pattern job not found." }, { status: 404 });
+    const ensured = await ensurePatternJobTudCode(id);
+    if (!ensured.ok) {
+      return NextResponse.json({ error: ensured.error }, { status: ensured.status });
     }
-    return NextResponse.json({ job });
+    return NextResponse.json({ job: ensured.job });
   } catch (error) {
     console.error("Failed to read pattern job (API):", error);
     return NextResponse.json({ error: "Failed to load pattern job." }, { status: 500 });

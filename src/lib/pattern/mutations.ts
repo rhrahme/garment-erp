@@ -4,6 +4,10 @@ import {
   readPatternJobsFresh,
   writePatternJobs,
 } from "@/lib/data/pattern-jobs";
+import {
+  generateTudPatternCode,
+  needsTudPatternCode,
+} from "@/lib/pattern/tud-pattern-code";
 import type {
   PatternFitting,
   PatternFittingOutcome,
@@ -12,6 +16,46 @@ import type {
   PatternRevision,
   PatternRevisionFile,
 } from "@/lib/types/pattern";
+
+/**
+ * Persist a unique Tuka .TUD filename code when pattern_code is empty.
+ * Never overwrites a code that is already set.
+ */
+export async function ensurePatternJobTudCode(
+  jobId: string
+): Promise<{ ok: true; job: PatternJob } | { ok: false; status: number; error: string }> {
+  const store = await readPatternJobsFresh();
+  const index = store.jobs.findIndex((job) => job.id === jobId);
+  if (index < 0) {
+    return { ok: false, status: 404, error: "Pattern job not found." };
+  }
+
+  const existing = store.jobs[index]!;
+  if (!needsTudPatternCode(existing.pattern_code)) {
+    return { ok: true, job: existing };
+  }
+
+  let code = generateTudPatternCode(existing);
+  const taken = new Set(
+    store.jobs
+      .filter((job) => job.id !== jobId && job.pattern_code)
+      .map((job) => job.pattern_code!.trim().toUpperCase())
+  );
+  if (taken.has(code)) {
+    const suffix = existing.id.replace(/^pj-/, "").slice(-6).toUpperCase();
+    code = `${code}-${suffix}`;
+  }
+
+  const now = new Date().toISOString();
+  const nextJob: PatternJob = {
+    ...existing,
+    pattern_code: code,
+    updated_at: now,
+  };
+  store.jobs[index] = nextJob;
+  await writePatternJobs(store);
+  return { ok: true, job: nextJob };
+}
 
 export async function updatePatternJob(
   jobId: string,
