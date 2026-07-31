@@ -10,7 +10,9 @@ import {
   ArrowRightLeft,
   Camera,
   Trash2,
+  Printer,
 } from "lucide-react";
+import { FabricChangeAlertsPanel } from "@/components/dashboard/FabricChangeAlertsPanel";
 import { FabricLineDeleteRequestsPanel } from "@/components/dashboard/FabricLineDeleteRequestsPanel";
 import { GarmentTypeChangesPanel } from "@/components/dashboard/GarmentTypeChangesPanel";
 import { ThreadButtonPhotosReviewPanel } from "@/components/dashboard/ThreadButtonPhotosReviewPanel";
@@ -26,11 +28,13 @@ import {
 } from "@/lib/data/queries";
 import { getCustomerInvoiceSummary } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { countOutstandingFabricChangeAlertsForRole } from "@/lib/data/fabric-change-alerts";
 import { countInvoiceableSalesOrders } from "@/lib/invoicing/invoiceable-orders";
 import { getSessionContext } from "@/lib/auth/session";
 import { countPendingAwbFabricOrders } from "@/lib/integrations/pending-awb";
 import { countUnacknowledgedGarmentTypeChanges } from "@/lib/data/garment-type-changes";
 import { countUnacknowledgedThreadButtonPhotos } from "@/lib/production/thread-button-matching";
+import { fabricChangeAlertRoleFromSession } from "@/lib/sales-orders/fabric-change-alert-role";
 import { countPendingFabricLineDeleteRequests } from "@/lib/sales-orders/fabric-line-delete-requests";
 import { getTodaysFabricSummary } from "@/lib/sales-orders/todays-fabric";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
@@ -46,6 +50,7 @@ export default async function DashboardPage() {
     "costing_rates",
     "production_work_orders",
     "garment_type_changes",
+    "fabric_change_alerts",
     "thread_button_matches",
   ]);
 
@@ -68,6 +73,10 @@ export default async function DashboardPage() {
     : 0;
   const pendingFabricLineDeleteRequests = session.isAdmin
     ? countPendingFabricLineDeleteRequests()
+    : 0;
+  const fabricChangeRole = fabricChangeAlertRoleFromSession(session);
+  const outstandingFabricChanges = fabricChangeRole
+    ? countOutstandingFabricChangeAlertsForRole(fabricChangeRole)
     : 0;
 
   const lowStock = inventory.filter(
@@ -149,6 +158,17 @@ export default async function DashboardPage() {
             />
           </a>
         )}
+        {outstandingFabricChanges > 0 && (
+          <a href="#fabric-change-alerts" className="block transition-opacity hover:opacity-90">
+            <StatCard
+              label="Fabric changes"
+              value={outstandingFabricChanges}
+              subtext="Reprint stickers & A4 if already printed"
+              icon={<Printer className="h-5 w-5" />}
+              accent="bg-amber-50 text-amber-700"
+            />
+          </a>
+        )}
       </div>
 
       {todaysFabricSummary && todaysFabricSummary.order_count > 0 && (
@@ -156,6 +176,7 @@ export default async function DashboardPage() {
       )}
 
       {session.isAdmin ? <FabricLineDeleteRequestsPanel /> : null}
+      <FabricChangeAlertsPanel />
       {session.isAdmin ? <GarmentTypeChangesPanel /> : null}
       {session.isAdmin ? <ThreadButtonPhotosReviewPanel /> : null}
 

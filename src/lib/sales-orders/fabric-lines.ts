@@ -3,13 +3,21 @@ import { readSalesOrders, writeSalesOrders } from "@/lib/data/sales-orders";
 import { getSupplierByIdFromContactsSync } from "@/lib/data/supplier-contacts";
 import { resolveFabricItemFromCatalog } from "@/lib/fabric-sourcing/resolve-fabric-from-catalog";
 import { fabricPoSupplierId, normalizeFabricSupplierFields } from "@/lib/fabric-sourcing/supplier-display";
-import { generateFabricLabelStickers, getGarmentPieces } from "@/lib/sales-orders/label-codes";
+import {
+  fabricLineArticleNumber,
+  generateFabricLabelStickers,
+  getGarmentPieces,
+} from "@/lib/sales-orders/label-codes";
 import { isGarmentStitchType } from "@/lib/sales-orders/garment-types";
 import {
   fabricArticleKey,
   findDuplicateFabricArticle,
   formatFabricArticleDuplicateError,
 } from "@/lib/sales-orders/duplicate-order";
+import {
+  recordFabricChangeAlert,
+  snapshotFabricLine,
+} from "@/lib/sales-orders/fabric-change-alerts";
 import { canAppendFabricLines, fabricLineMutateBlockedReason } from "@/lib/sales-orders/fabric-lines-rules";
 import { getFabricPosForSalesOrder } from "@/lib/sales-orders/line-cross-reference";
 import { listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
@@ -337,6 +345,21 @@ export async function appendSalesOrderFabricLines(
   const saved = await writeSalesOrders(store);
   const updated = saved.orders.find((item) => item.id === orderId)!;
 
+  await ensureDocumentsLoaded(["pattern_jobs", "fabric_change_alerts"]);
+  for (const added of built.lines) {
+    const articleIndex = updated.fabric_lines.findIndex((entry) => entry.id === added.id);
+    await recordFabricChangeAlert({
+      kind: "line_added",
+      order: updated,
+      lineId: added.id,
+      before: null,
+      after: snapshotFabricLine(added),
+      createdBy: options.addedBy?.trim() || "unknown",
+      articleNumber: articleIndex >= 0 ? fabricLineArticleNumber(articleIndex) : null,
+      evidenceLine: added,
+    });
+  }
+
   return { ok: true, order: updated, added_lines: built.lines };
 }
 
@@ -427,6 +450,7 @@ export async function updateSalesOrderFabricLine(
     nextFabricNumber.toLowerCase() !== existing.fabric_number.toLowerCase() ||
     nextSupplierId !== existing.supplier_id;
   const garmentChanged = nextGarmentType !== existing.garment_type;
+  const beforeSnapshot = snapshotFabricLine(existing);
 
   const catalogItem = fabricChanged
     ? resolveFabricItemFromCatalog(nextSupplierId, nextFabricNumber)
@@ -480,6 +504,20 @@ export async function updateSalesOrderFabricLine(
   const saved = await writeSalesOrders(store);
   const updated = saved.orders.find((item) => item.id === orderId)!;
 
+  await ensureDocumentsLoaded(["pattern_jobs", "fabric_change_alerts"]);
+  await recordFabricChangeAlert({
+    kind: garmentChanged && !fabricChanged && beforeSnapshot.quantity === updatedLine.quantity
+      ? "garment_corrected"
+      : "line_edited",
+    order: updated,
+    lineId: updatedLine.id,
+    before: beforeSnapshot,
+    after: snapshotFabricLine(updatedLine),
+    createdBy: options.updatedBy?.trim() || "unknown",
+    articleNumber: fabricLineArticleNumber(lineIndex),
+    evidenceLine: existing,
+  });
+
   return { ok: true, order: updated, updated_line: updatedLine };
 }
 
@@ -511,6 +549,8 @@ export async function deleteSalesOrderFabricLine(
   }
 
   const removedLine = order.fabric_lines[lineIndex]!;
+  const beforeSnapshot = snapshotFabricLine(removedLine);
+  const articleNumber = fabricLineArticleNumber(lineIndex);
   await ensureDocumentsLoaded(["fabric_orders"]);
   const fabricPos = getFabricPosForSalesOrder(order, listStoredFabricOrders());
   const blockedReason = fabricLineMutateBlockedReason(order, removedLine, fabricPos);
@@ -523,6 +563,18 @@ export async function deleteSalesOrderFabricLine(
 
   const saved = await writeSalesOrders(store);
   const updated = saved.orders.find((item) => item.id === orderId)!;
+
+  await ensureDocumentsLoaded(["pattern_jobs", "fabric_change_alerts"]);
+  await recordFabricChangeAlert({
+    kind: "line_removed",
+    order: updated,
+    lineId: removedLine.id,
+    before: beforeSnapshot,
+    after: null,
+    createdBy: options.removedBy?.trim() || "unknown",
+    articleNumber,
+    evidenceLine: removedLine,
+  });
 
   return { ok: true, order: updated, removed_line: removedLine };
 }

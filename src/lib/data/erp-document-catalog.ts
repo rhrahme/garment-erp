@@ -119,6 +119,15 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/garment-type-changes.json",
   },
   {
+    key: "fabric_change_alerts",
+    label: "Fabric change alerts",
+    description:
+      "Reprint alerts when fabric lines change after POs, pattern work, or stickers/A4 may already exist",
+    category: "production",
+    appHref: "/dashboard",
+    sourcePath: "src/data/fabric-change-alerts.json",
+  },
+  {
     key: "production_work_orders",
     label: "Production work orders",
     description: "Sticker-based work orders on the production floor",

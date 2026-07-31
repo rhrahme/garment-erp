@@ -116,6 +116,10 @@ export const ERP_DOCUMENT_SPECS = {
     path: path.join(ROOT, "src/data/garment-type-changes.json"),
     fallback: { updated_at: null, changes: [] },
   },
+  fabric_change_alerts: {
+    path: path.join(ROOT, "src/data/fabric-change-alerts.json"),
+    fallback: { updated_at: null, alerts: [] },
+  },
   custom_fabrics: {
     path: path.join(ROOT, "src/data/custom-fabrics.json"),
     fallback: { updated_at: null, fabrics: [] },
@@ -166,6 +170,7 @@ export const LAZY_ERP_DOCUMENT_KEYS = [
   "pattern_library",
   "fabric_transfers",
   "garment_type_changes",
+  "fabric_change_alerts",
   "custom_fabrics",
   "sales_workspace",
   "thread_button_matches",

@@ -9,6 +9,10 @@ import { notifyIntegration } from "@/lib/integrations";
 import { syncPatternJobsFromSalesOrder } from "@/lib/pattern/sync-from-sales-order";
 import { garmentTypeChangeBlockedReason } from "@/lib/sales-orders/change-garment-type-rules";
 import {
+  recordFabricChangeAlert,
+  snapshotFabricLine,
+} from "@/lib/sales-orders/fabric-change-alerts";
+import {
   fabricLineArticleNumber,
   generateFabricLabelStickers,
   getGarmentPieces,
@@ -155,6 +159,19 @@ export async function changeFabricLineGarmentType(
       pattern_job_id: change.pattern_job_id,
     });
   }
+
+  await ensureDocumentsLoaded(["fabric_change_alerts"]);
+  await recordFabricChangeAlert({
+    kind: "garment_corrected",
+    order: savedOrder,
+    lineId: lineId,
+    before: snapshotFabricLine({ ...existing, garment_type: fromGarmentType }),
+    after: snapshotFabricLine(updatedLine),
+    createdBy: options.changedBy,
+    articleNumber: fabricLineArticleNumber(lineIndex),
+    evidenceLine: existing,
+    notify: options.notify !== false,
+  });
 
   return {
     ok: true,

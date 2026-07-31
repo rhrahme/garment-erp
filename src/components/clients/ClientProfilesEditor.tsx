@@ -4,6 +4,7 @@ import type { FocusEvent as ReactFocusEvent, PointerEvent as ReactPointerEvent }
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Camera, LayoutGrid, List, Plus, Search, Table2, Trash2, UserCircle, X } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
+import { ClientFabricChangeAlerts } from "@/components/clients/ClientFabricChangeAlerts";
 import { ClientPhotosPanel } from "@/components/sales/ClientPhotosPanel";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { Button } from "@/components/ui/Button";
@@ -803,6 +804,12 @@ export function ClientProfilesEditor() {
             {codeSection}
             <div className="md:col-span-2" />
           </>
+        )}
+
+        {!isNew && (
+          <div className="md:col-span-2">
+            <ClientFabricChangeAlerts clientId={client.id} />
+          </div>
         )}
 
         {canManageClientPhotos && (

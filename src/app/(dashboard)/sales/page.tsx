@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { FabricChangeAlertsPanel } from "@/components/dashboard/FabricChangeAlertsPanel";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SalesWorkspaceDashboard } from "@/components/sales/SalesWorkspaceDashboard";
 import { getSessionContext } from "@/lib/auth/session";
@@ -16,6 +17,7 @@ export default async function SalesPage() {
         title="Sales workspace"
         description="Clients, fabrics, selling invoices, fittings, and high-level production status"
       />
+      <FabricChangeAlertsPanel />
       <SalesWorkspaceDashboard />
     </div>
   );

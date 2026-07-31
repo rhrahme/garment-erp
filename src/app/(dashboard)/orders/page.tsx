@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FabricChangeAlertsPanel } from "@/components/dashboard/FabricChangeAlertsPanel";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { OrdersList } from "@/components/orders/OrdersList";
@@ -51,6 +52,8 @@ export default async function OrdersPage() {
           )
         }
       />
+
+      <FabricChangeAlertsPanel />
 
       <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 px-5 py-4 text-sm text-blue-900">
         <p className="font-medium">{labels.workflowTitle}</p>

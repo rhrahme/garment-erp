@@ -12,7 +12,12 @@ import {
   findFabricPoLineForSoFabricLine,
   getFabricPosForSalesOrder,
 } from "@/lib/sales-orders/line-cross-reference";
+import {
+  recordFabricChangeAlert,
+  snapshotFabricLine,
+} from "@/lib/sales-orders/fabric-change-alerts";
 import { canMutateSalesOrderFabricLine } from "@/lib/sales-orders/fabric-lines-rules";
+import { fabricLineArticleNumber } from "@/lib/sales-orders/label-codes";
 import {
   buildFabricLineDeleteRequestSummary,
   isFabricLineDeletePending,
@@ -343,6 +348,20 @@ export async function approveFabricLineDelete(
     line_id: removedLine.id,
     removed_by: actor,
     via: "delete_request_approved",
+  });
+
+  const articleIndex = current.fabric_lines.findIndex((entry) => entry.id === lineId);
+  await ensureDocumentsLoaded(["pattern_jobs", "fabric_change_alerts"]);
+  await recordFabricChangeAlert({
+    kind: "line_delete_approved",
+    order: updatedOrder,
+    lineId: removedLine.id,
+    before: snapshotFabricLine(removedLine),
+    after: null,
+    createdBy: actor,
+    articleNumber: articleIndex >= 0 ? fabricLineArticleNumber(articleIndex) : null,
+    evidenceLine: removedLine,
+    force: true,
   });
 
   return { ok: true, result };

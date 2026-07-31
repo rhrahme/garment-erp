@@ -29,6 +29,7 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/api/thread-button-matching",
   "/api/fabric-transfers",
   "/api/garment-type-changes",
+  "/api/fabric-change-alerts",
   ...FABRIC_SWATCH_ROUTE_PREFIXES,
   "/api/qr",
   "/api/factory/floor-stations",
@@ -90,6 +91,7 @@ const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   "/api/factory/floor-stations",
   "/api/sales-orders",
   "/api/garment-type-changes",
+  "/api/fabric-change-alerts",
   "/api/qr",
   "/api/fabric-brands",
   "/api/fabric-search",
@@ -136,6 +138,7 @@ const PATTERN_OPERATOR_ROUTE_PREFIXES = [
   "/api/fabric-brands",
   "/api/qr",
   "/api/garment-type-changes",
+  "/api/fabric-change-alerts",
   // Optional badge scan on Pattern stage scan (who scanned + when).
   "/api/hr/employee-lookup",
   // Pattern assigns sales-uploaded wearing photos to fabric lines / articles.
@@ -224,6 +227,7 @@ const SALES_OPERATOR_ROUTE_PREFIXES = [
   "/api/sales",
   "/api/qr",
   "/api/garment-type-changes",
+  "/api/fabric-change-alerts",
   ...FABRIC_SWATCH_ROUTE_PREFIXES,
   "/api/auth/session",
   "/api/auth/dev-impersonate",
