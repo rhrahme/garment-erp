@@ -641,6 +641,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
         <NestEstimatePanel
           pattern={sheetPattern}
           requiredPieceNames={piecesForPatternJob(job)}
+          defaultFabricWidthCm={job.width_cm ?? null}
           onPatternUpdated={(next) => {
             setSheetPattern(next);
             const allFiles = [

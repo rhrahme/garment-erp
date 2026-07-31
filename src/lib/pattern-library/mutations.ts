@@ -7,6 +7,10 @@ import {
 import { readPatternLibraryFresh, writePatternLibrary } from "@/lib/data/pattern-library";
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import { applyFabricLineAssignment } from "@/lib/pattern-library/client-fabric-board";
+import {
+  applyMarkerLayoutSeed,
+  sanitizeMarkerLayout,
+} from "@/lib/pattern-library/marker-layout";
 import { generatePatternRef } from "@/lib/pattern-library/refs";
 import {
   fillMeasurementsFromBase,
@@ -633,6 +637,7 @@ export async function updateClientPattern(
       | "active_marker_file_id"
       | "marker_fabric_width_cm"
       | "marker_double_fold"
+      | "marker_layout"
     >
   > & {
     /** When garment_type changes, rebuild empty template points on the latest trial. */
@@ -774,6 +779,21 @@ export async function updateClientPattern(
     return { ok: false, status: 400, error: "marker_double_fold must be true, false, or null." };
   }
 
+  let nextMarkerLayout =
+    patch.marker_layout === undefined
+      ? undefined
+      : sanitizeMarkerLayout(patch.marker_layout);
+  if (patch.marker_layout !== undefined && nextMarkerLayout === undefined) {
+    return { ok: false, status: 400, error: "marker_layout is invalid." };
+  }
+  if (nextMarkerLayout) {
+    nextMarkerLayout = {
+      ...nextMarkerLayout,
+      updated_at: now(),
+      source: nextMarkerLayout.source === "auto" ? "auto" : "manual",
+    };
+  }
+
   const next: ClientPattern = {
     ...existing,
     pattern_ref: patch.pattern_ref?.trim() || existing.pattern_ref,
@@ -793,6 +813,8 @@ export async function updateClientPattern(
       nextMarkerWidth === undefined ? existing.marker_fabric_width_cm : nextMarkerWidth,
     marker_double_fold:
       nextMarkerFold === undefined ? existing.marker_double_fold : nextMarkerFold,
+    marker_layout:
+      nextMarkerLayout === undefined ? existing.marker_layout : nextMarkerLayout,
     special_instructions:
       patch.special_instructions === undefined
         ? existing.special_instructions
@@ -817,6 +839,10 @@ export async function updateClientPattern(
     next.marker_fabric_width_cm !== existing.marker_fabric_width_cm ||
     next.marker_double_fold !== existing.marker_double_fold;
 
+  const markerLayoutChanged =
+    JSON.stringify(next.marker_layout ?? null) !==
+    JSON.stringify(existing.marker_layout ?? null);
+
   if (options.notify !== false) {
     await notifyIntegration("client_pattern.updated", {
       id: next.id,
@@ -838,6 +864,22 @@ export async function updateClientPattern(
         active_marker_file_id: next.active_marker_file_id ?? null,
         marker_fabric_width_cm: next.marker_fabric_width_cm ?? null,
         marker_double_fold: next.marker_double_fold ?? null,
+        updated_by: options.updatedBy ?? null,
+      });
+    }
+    if (markerLayoutChanged && next.marker_layout) {
+      await notifyIntegration("client_pattern.marker_layout_saved", {
+        id: next.id,
+        pattern_ref: next.pattern_ref,
+        client_id: next.client_id,
+        size: next.marker_layout.size,
+        garment_qty: next.marker_layout.garment_qty,
+        fabric_width_cm: next.marker_layout.fabric_width_cm,
+        double_fold: next.marker_layout.double_fold,
+        packed_length_m: next.marker_layout.packed_length_m,
+        efficiency_pct: next.marker_layout.efficiency_pct,
+        placement_count: next.marker_layout.placements.length,
+        source: next.marker_layout.source,
         updated_by: options.updatedBy ?? null,
       });
     }
@@ -1060,6 +1102,16 @@ export async function attachClientPatternFile(
     };
   }
 
+  // Seed approximate marker board when TUD lands and width is known; never clobber saved layout.
+  const hadMarkerLayout = Boolean(existing.marker_layout?.placements?.length);
+  if (attachment.kind === "tud") {
+    next = applyMarkerLayoutSeed(next, { updated_at: timestamp });
+  }
+  const markerLayoutSeeded =
+    attachment.kind === "tud" &&
+    !hadMarkerLayout &&
+    Boolean(next.marker_layout?.placements?.length);
+
   store.client_patterns[index] = next;
   await writePatternLibrary(store);
 
@@ -1084,7 +1136,24 @@ export async function attachClientPatternFile(
       uploaded_by: attachment.uploaded_by,
       uploaded_at: attachment.uploaded_at,
       is_active: activeForPiece,
+      marker_layout_seeded: markerLayoutSeeded,
     });
+    if (markerLayoutSeeded && next.marker_layout) {
+      await notifyIntegration("client_pattern.marker_layout_saved", {
+        id: next.id,
+        pattern_ref: next.pattern_ref,
+        client_id: next.client_id,
+        size: next.marker_layout.size,
+        garment_qty: next.marker_layout.garment_qty,
+        fabric_width_cm: next.marker_layout.fabric_width_cm,
+        double_fold: next.marker_layout.double_fold,
+        packed_length_m: next.marker_layout.packed_length_m,
+        efficiency_pct: next.marker_layout.efficiency_pct,
+        placement_count: next.marker_layout.placements.length,
+        source: next.marker_layout.source,
+        updated_by: attachment.uploaded_by,
+      });
+    }
   }
 
   if (attachment.kind === "marker") {

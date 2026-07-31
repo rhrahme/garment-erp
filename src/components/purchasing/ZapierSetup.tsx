@@ -73,6 +73,7 @@ const OUTBOUND_EVENTS = [
   "client_pattern.tud_version_uploaded",
   "client_pattern.marker_uploaded",
   "client_pattern.marker_setup_updated",
+  "client_pattern.marker_layout_saved",
   "sales_fitting.created",
   "sales_fitting.updated",
   "sales_order.milestone_updated",

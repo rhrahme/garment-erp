@@ -183,6 +183,38 @@ export interface ClientPatternFabricRef {
   source?: string | null;
 }
 
+/** One placed rectangle on the in-ERP marker board (not CAD outlines). */
+export interface MarkerLayoutPlacement {
+  id: string;
+  name: string;
+  fabric: string | null;
+  x_cm: number;
+  y_cm: number;
+  width_cm: number;
+  height_cm: number;
+  rotated: boolean;
+  secondary: boolean;
+}
+
+/**
+ * Saved approximate marker from TUD areas + fabric width.
+ * Pattern can drag/rotate pieces; cutter A4 prefers this when present.
+ */
+export interface MarkerLayout {
+  size: string;
+  garment_qty: number;
+  fabric_width_cm: number;
+  double_fold: boolean;
+  usable_width_cm: number;
+  area_m2: number;
+  packed_length_m: number;
+  efficiency_pct: number;
+  placements: MarkerLayoutPlacement[];
+  updated_at: string;
+  /** auto = seeded/repacked; manual = Pattern saved after edits. */
+  source: "auto" | "manual";
+}
+
 export interface ClientPattern {
   id: string;
   /** e.g. SS-SHIRT-LINEN-FR-REG-XXL — auto-generated, editable. */
@@ -240,6 +272,11 @@ export interface ClientPattern {
    * Double-fold nest input. Null/absent = not answered yet.
    */
   marker_double_fold?: boolean | null;
+  /**
+   * Saved in-ERP marker layout (approximate rectangles from TUD areas).
+   * Null/absent = not saved yet; A4 falls back to live auto-pack.
+   */
+  marker_layout?: MarkerLayout | null;
   notes: string | null;
   created_at: string;
   updated_at: string;

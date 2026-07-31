@@ -105,6 +105,7 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
       <p className="mt-0.5 text-[11px] text-slate-600">
         {foldLabel} - usable {nest.usable_width_cm} cm of {nest.fabric_width_cm} cm · est.{" "}
         {nest.estimated_length_m.toFixed(2)} m · size {nest.size}
+        {preview.source === "saved" ? " · saved marker" : " · auto estimate"}
       </p>
       <p className="text-[11px] text-slate-600">
         Fold fabric, place printed pattern parts on the fold, then cut. Approximate from TUD areas

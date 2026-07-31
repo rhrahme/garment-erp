@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { buildCutNestPreview } from "./cut-nest-preview.ts";
+import { buildAutoMarkerLayout } from "./marker-layout.ts";
 import type { ClientPattern, PatternLibraryAttachment } from "@/lib/types/pattern-library";
 
 function tudAttachment(): PatternLibraryAttachment {
@@ -100,5 +101,45 @@ describe("buildCutNestPreview", () => {
     const result = buildCutNestPreview(pattern({ files: [] }), 148);
     assert.equal(result.nest, null);
     assert.match(result.missing_reason ?? "", /TUD/i);
+  });
+
+  it("prefers saved marker_layout when width/fold/size match", () => {
+    const base = pattern({ marker_fabric_width_cm: 148, marker_double_fold: true });
+    const layout = buildAutoMarkerLayout(base);
+    assert.ok(layout);
+    const moved = {
+      ...layout!,
+      source: "manual" as const,
+      placements: layout!.placements.map((p, i) =>
+        i === 0 ? { ...p, x_cm: 9.5 } : p
+      ),
+    };
+    const result = buildCutNestPreview(
+      pattern({
+        marker_fabric_width_cm: 148,
+        marker_double_fold: true,
+        marker_layout: moved,
+      }),
+      148
+    );
+    assert.equal(result.source, "saved");
+    assert.ok(result.nest);
+    assert.equal(result.nest!.placements[0]?.x_cm, 9.5);
+  });
+
+  it("falls back to auto when saved layout width differs", () => {
+    const base = pattern({ marker_fabric_width_cm: 140, marker_double_fold: true });
+    const layout = buildAutoMarkerLayout(base);
+    assert.ok(layout);
+    const result = buildCutNestPreview(
+      pattern({
+        marker_fabric_width_cm: 148,
+        marker_double_fold: true,
+        marker_layout: layout,
+      }),
+      148
+    );
+    assert.equal(result.source, "auto");
+    assert.ok(result.nest);
   });
 });

@@ -394,7 +394,7 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
       : "Double fold"
     : "Open width";
   doc.text(
-    `${foldLabel} - usable ${nest.usable_width_cm} cm of ${nest.fabric_width_cm} cm · est. ${nest.estimated_length_m.toFixed(2)} m · size ${nest.size}`,
+    `${foldLabel} - usable ${nest.usable_width_cm} cm of ${nest.fabric_width_cm} cm · est. ${nest.estimated_length_m.toFixed(2)} m · size ${nest.size}${preview.source === "saved" ? " · saved marker" : " · auto estimate"}`,
     MARGIN + 3,
     y + 8
   );
