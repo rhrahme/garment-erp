@@ -80,7 +80,7 @@ export function OrderFabricLineDeleteRequest({
         onLineRemoved?.(line.id);
         if (data.supplier_follow_up_needed) {
           setFollowUpNote(
-            `Removed from ERP. ${data.po_number ?? "Supplier PO"} was already emailed — contact the supplier if they should not ship this fabric.`
+            `Removed from ERP. ${data.po_number ?? "Supplier PO"} was already emailed - contact the supplier if they should not ship this fabric.`
           );
         }
       } else if (data.order) {
@@ -108,7 +108,7 @@ export function OrderFabricLineDeleteRequest({
         <p className="mt-0.5 text-[11px] text-amber-800">
           by {line.delete_requested_by ?? "unknown"}
           {line.delete_requested_at
-            ? ` · ${new Date(line.delete_requested_at).toLocaleString()}`
+            ? ` - ${new Date(line.delete_requested_at).toLocaleString()}`
             : ""}
         </p>
         {line.delete_request_reason ? (
@@ -143,7 +143,7 @@ export function OrderFabricLineDeleteRequest({
   if (pending) {
     return (
       <div className="mt-2 max-w-[14rem] text-right">
-        <p className="text-xs font-medium text-amber-800">Delete requested — waiting on admin</p>
+        <p className="text-xs font-medium text-amber-800">Delete requested - waiting on admin</p>
         {isRequester ? (
           <Button
             type="button"
@@ -193,12 +193,12 @@ export function OrderFabricLineDeleteRequest({
           onChange={(event) => setReason(event.target.value)}
           rows={2}
           className="mt-1 w-full rounded-md border border-slate-200 px-2 py-1 text-sm text-slate-900"
-          placeholder="Wrong article / supplier…"
+          placeholder="Wrong article / supplier..."
         />
       </label>
       {patternMismatch?.has_mismatch ? (
         <p className="mt-2 text-xs text-amber-900">
-          This order has a pattern/SO line count mismatch — verify against ClickUp before
+          This order has a pattern/SO line count mismatch - verify against ClickUp before
           requesting delete.
         </p>
       ) : null}
@@ -211,7 +211,7 @@ export function OrderFabricLineDeleteRequest({
           disabled={submitting}
           onClick={() => void postAction("request_delete")}
         >
-          {submitting ? "Sending…" : "Send request"}
+          {submitting ? "Sending..." : "Send request"}
         </Button>
         <Button
           type="button"

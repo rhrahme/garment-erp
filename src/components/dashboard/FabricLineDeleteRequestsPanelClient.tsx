@@ -78,7 +78,7 @@ export function FabricLineDeleteRequestsPanelClient({
       if (action === "confirm_delete" && data.supplier_follow_up_needed) {
         setNotes((current) => ({
           ...current,
-          [key]: `${data.po_number ?? "PO"} was already emailed ù contact the supplier if they should not ship.`,
+          [key]: `${data.po_number ?? "PO"} was already emailed - contact the supplier if they should not ship.`,
         }));
       }
       router.refresh();
@@ -162,9 +162,9 @@ export function FabricLineDeleteRequestsPanelClient({
                 ),
                 fabric: (
                   <span className="text-sm">
-                    {request.article_label} ù {request.fabric_number}
+                    {request.article_label} | {request.fabric_number}
                     <span className="mt-0.5 block text-xs text-slate-500">
-                      {request.garment_type} ù {request.quantity}
+                      {request.garment_type} | {request.quantity}
                       {request.unit === "meters" ? "m" : ` ${request.unit}`}
                     </span>
                     {request.delete_request_reason ? (
@@ -176,7 +176,7 @@ export function FabricLineDeleteRequestsPanelClient({
                 ),
                 po: (
                   <span className="text-xs text-slate-700">
-                    {request.po_number ?? "ù"}
+                    {request.po_number ?? "-"}
                     {request.po_line_emailed ? (
                       <span className="mt-0.5 block text-amber-800">Emailed</span>
                     ) : request.po_number ? (
