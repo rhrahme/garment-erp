@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requirePatternAccess } from "@/lib/auth/session";
 import { generatePatternSheetPdf } from "@/lib/pattern-library/generate-pattern-sheet-pdf";
+import { buildPatternSheetPdfFilename } from "@/lib/pattern-library/pattern-sheet-pdf-filename";
 import { buildPatternSheetData } from "@/lib/pattern-library/sheet-data";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,7 @@ export async function GET(request: Request, context: { params: Promise<{ pattern
     }
 
     const pdfBytes = await generatePatternSheetPdf(data);
-    const filename = `${data.pattern.pattern_ref.toLowerCase()}-trial-${data.version.version}.pdf`;
+    const filename = buildPatternSheetPdfFilename(data);
 
     return new NextResponse(Buffer.from(pdfBytes), {
       headers: {

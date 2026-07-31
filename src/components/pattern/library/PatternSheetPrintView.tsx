@@ -318,6 +318,7 @@ export function PatternSheetPrintView({ data }: { data: PatternSheetData }) {
         <div className="flex flex-wrap items-center gap-2">
           <a
             href={`/api/pattern/library/client-patterns/${pattern.id}/pdf?version=${version.id}${data.job ? `&job=${data.job.id}` : ""}`}
+            download
             className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"
           >
             <Download className="h-4 w-4" />
