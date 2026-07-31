@@ -16,6 +16,7 @@ export const EMPLOYEE_JOB_FUNCTIONS = [
   "buttons",
   "qc",
   "pattern",
+  "cleaner",
 ] as const;
 
 export type EmployeeJobFunction = (typeof EMPLOYEE_JOB_FUNCTIONS)[number];
@@ -37,6 +38,7 @@ export const EMPLOYEE_JOB_FUNCTION_LABELS: Record<EmployeeJobFunction, string> =
   buttons: "Buttons",
   qc: "QC",
   pattern: "Pattern",
+  cleaner: "Cleaner",
 };
 
 /**

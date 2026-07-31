@@ -53,6 +53,12 @@ describe("normalizeJobFunctions", () => {
     assert.equal(EMPLOYEE_JOB_FUNCTION_LABELS.shirt_tailor, "Shirt tailor");
     assert.ok(!EMPLOYEE_JOB_FUNCTIONS.some((fn) => fn.includes("ls") || fn.includes("ss")));
   });
+
+  it("includes cleaner as an assignable job task", () => {
+    assert.ok(EMPLOYEE_JOB_FUNCTIONS.includes("cleaner"));
+    assert.equal(EMPLOYEE_JOB_FUNCTION_LABELS.cleaner, "Cleaner");
+    assert.deepEqual(normalizeJobFunctions(["cleaner", "qc", "cleaner"]), ["qc", "cleaner"]);
+  });
 });
 
 describe("formatJobFunctionsSummary", () => {
@@ -63,5 +69,6 @@ describe("formatJobFunctionsSummary", () => {
     assert.equal(formatJobFunctionsSummary(["jacket_tailor", "cutter", "qc"]), "3 roles");
     assert.equal(formatJobFunctionsSummary(["shorts_tailor"]), "Shorts tailor");
     assert.equal(formatJobFunctionsSummary(["tshirt_tailor"]), "T-shirt tailor");
+    assert.equal(formatJobFunctionsSummary(["cleaner"]), "Cleaner");
   });
 });
