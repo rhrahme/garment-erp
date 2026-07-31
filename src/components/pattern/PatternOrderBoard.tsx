@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Eye, ImageOff, Layers, Link2, Star, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, ImageOff, Layers, Link2, Sparkles, Star, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
 import { FabricSwatchProvider, useFabricSwatch } from "@/components/fabric/FabricSwatchProvider";
@@ -11,6 +11,7 @@ import { ChangeGarmentTypeControl } from "@/components/orders/ChangeGarmentTypeC
 import { GarmentPiecesNest } from "@/components/garment/GarmentPiecesNest";
 import { GarmentTypeChangeBadge } from "@/components/garment-type/GarmentTypeChangeBadge";
 import { PatternMismatchBanner } from "@/components/pattern/PatternMismatchBanner";
+import type { CrossClientFitFamily } from "@/lib/pattern/auto-consolidate-grouping";
 import type { GarmentTypeChangeFlag } from "@/lib/sales-orders/garment-type-change-flags";
 import { piecesForPatternJob } from "@/lib/sales-orders/label-codes";
 import { productionBrandNameForOrder } from "@/lib/sales-orders/production-brand";
@@ -52,6 +53,9 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
   const [previewJobId, setPreviewJobId] = useState<string | null>(null);
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
   const [consolidateOpen, setConsolidateOpen] = useState(false);
+  const [autoBusy, setAutoBusy] = useState(false);
+  const [autoSummary, setAutoSummary] = useState<string | null>(null);
+  const [fitFamilies, setFitFamilies] = useState<CrossClientFitFamily[]>([]);
   const [canChangeGarmentType, setCanChangeGarmentType] = useState(false);
   const [garmentTypeChangeFlags, setGarmentTypeChangeFlags] = useState<
     Record<string, GarmentTypeChangeFlag>
@@ -191,6 +195,62 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
     }
   }
 
+  async function previewFitFamilies(clientId: string) {
+    try {
+      const res = await fetch("/api/pattern/auto-consolidate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dry_run: true }),
+      });
+      const data = res.ok ? await res.json() : null;
+      const families = (data?.cross_client_fit_families ?? []) as CrossClientFitFamily[];
+      setFitFamilies(
+        families.filter((family) =>
+          family.clients.some((client) => client.client_id === clientId)
+        )
+      );
+    } catch {
+      setFitFamilies([]);
+    }
+  }
+
+  async function autoConsolidateByComposition() {
+    if (!order) return;
+    setAutoBusy(true);
+    setAutoSummary(null);
+    setError(null);
+    try {
+      const res = await fetch("/api/pattern/auto-consolidate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client_id: order.client_id }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? "Auto-consolidate failed");
+      setAutoSummary(
+        `Groups ${data.groups_formed ?? 0} | linked ${data.jobs_linked ?? 0} jobs | created ${
+          data.patterns_created ?? 0
+        } patterns | reused ${data.patterns_reused ?? 0}`
+      );
+      setFitFamilies(
+        ((data.cross_client_fit_families ?? []) as CrossClientFitFamily[]).filter((family) =>
+          family.clients.some((client) => client.client_id === order.client_id)
+        )
+      );
+      await load();
+      await loadClientPatterns();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Auto-consolidate failed");
+    } finally {
+      setAutoBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!order?.client_id) return;
+    void previewFitFamilies(order.client_id);
+  }, [order?.client_id, jobs.length]);
+
   if (loading) return <p className="text-sm text-slate-500">Loading order board…</p>;
   if (error && !order) return <p className="text-sm text-red-600">{error}</p>;
   if (!order) return <p className="text-sm text-slate-500">Order not found.</p>;
@@ -243,11 +303,25 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
               Fabric board
               <ArrowRight className="h-4 w-4" />
             </Link>
+            <Button
+              variant="secondary"
+              onClick={() => void autoConsolidateByComposition()}
+              disabled={autoBusy || jobs.length < 2}
+            >
+              <Sparkles className="mr-1.5 h-4 w-4" />
+              {autoBusy ? "Auto-consolidating..." : "Auto-consolidate by composition/weight"}
+            </Button>
           </div>
           <p className="mt-2 text-xs text-slate-500">
-            Tick the fabric lines that share one pattern, then consolidate — upload the .TUD and fill
-            sizes on the sheet.
+            Tick fabrics to consolidate manually, or auto-group this client&apos;s lines that share
+            garment type + composition + gsm onto one measurement sheet per client (never across
+            clients).
           </p>
+          {autoSummary ? (
+            <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+              {autoSummary}
+            </p>
+          ) : null}
           {patternsForClient.length > 0 ? (
             <ul className="mt-3 flex flex-wrap gap-2">
               {patternsForClient.map((pattern) => (
@@ -265,6 +339,29 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
         </div>
 
         {mismatch ? <PatternMismatchBanner mismatch={mismatch} /> : null}
+
+        {fitFamilies.length > 0 ? (
+          <div className="rounded-xl border border-sky-100 bg-sky-50/70 p-4 text-sm text-sky-950">
+            <p className="font-medium">Same fit family (other clients)</p>
+            <p className="mt-1 text-xs text-sky-800">
+              Same composition + gsm + garment - each client keeps their own measurement sheet.
+            </p>
+            <ul className="mt-2 space-y-2">
+              {fitFamilies.map((family) => (
+                <li key={family.fit_key}>
+                  <span className="font-medium">
+                    {family.garment_type} | {family.composition_display} | {family.weight_gsm} gsm
+                  </span>
+                  <span className="mt-0.5 block text-xs text-sky-800">
+                    {family.clients
+                      .map((client) => `${client.client_name} (${client.job_count})`)
+                      .join(" | ")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
 

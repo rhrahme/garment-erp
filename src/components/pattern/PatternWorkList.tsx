@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Star } from "lucide-react";
+import { ArrowRight, Sparkles, Star } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
+import { Button } from "@/components/ui/Button";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
 import { orderMatchesBrandClientPrefix } from "@/lib/clients/orphan-reconciliation";
@@ -56,6 +57,9 @@ export function PatternWorkList({
   const [overview, setOverview] = useState<PatternOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [autoBusy, setAutoBusy] = useState(false);
+  const [autoSummary, setAutoSummary] = useState<string | null>(null);
+  const [autoError, setAutoError] = useState<string | null>(null);
   const { brandId: storedBrandId, setBrandId, hydrated } = useFactoryBrandFilter();
   const brandId = brandIdProp !== undefined ? brandIdProp : storedBrandId;
 
@@ -136,6 +140,34 @@ export function PatternWorkList({
     return counts;
   }, [brandScopedAwaiting, brandScopedJobs]);
 
+  async function autoConsolidateAll() {
+    setAutoBusy(true);
+    setAutoSummary(null);
+    setAutoError(null);
+    try {
+      const res = await fetch("/api/pattern/auto-consolidate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? "Auto-consolidate failed");
+      setAutoSummary(
+        `Groups ${data.groups_formed ?? 0} | linked ${data.jobs_linked ?? 0} jobs | created ${
+          data.patterns_created ?? 0
+        } patterns | reused ${data.patterns_reused ?? 0}` +
+          (data.cross_client_fit_families?.length
+            ? ` | ${data.cross_client_fit_families.length} cross-client fit families`
+            : "")
+      );
+      await loadOverview(true);
+    } catch (err) {
+      setAutoError(err instanceof Error ? err.message : "Auto-consolidate failed");
+    } finally {
+      setAutoBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       {!hideBrandTabs && hydrated ? (
@@ -147,6 +179,21 @@ export function PatternWorkList({
           label="Filter by brand"
         />
       ) : null}
+
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-indigo-100 bg-indigo-50/50 px-4 py-3">
+        <p className="text-sm text-indigo-950">
+          Auto-group pattern jobs by garment + composition + gsm (per client sheets; cross-client
+          fit families are shown for visibility only).
+        </p>
+        <Button size="sm" variant="secondary" onClick={() => void autoConsolidateAll()} disabled={autoBusy}>
+          <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+          {autoBusy ? "Auto-consolidating..." : "Auto-consolidate by composition/weight"}
+        </Button>
+      </div>
+      {autoSummary ? (
+        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{autoSummary}</p>
+      ) : null}
+      {autoError ? <p className="text-sm text-red-600">{autoError}</p> : null}
 
       <div className="flex flex-wrap gap-2">
         {TABS.map((t) => (

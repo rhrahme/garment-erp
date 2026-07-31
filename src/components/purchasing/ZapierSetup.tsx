@@ -47,6 +47,7 @@ const OUTBOUND_EVENTS = [
   "pattern_fitting.completed",
   "pattern_revision.created",
   "pattern_job.ready_for_cutting",
+  "pattern.auto_consolidated",
   "pattern.scan",
   "base_pattern.created",
   "base_pattern.updated",
@@ -155,6 +156,11 @@ export function ZapierSetup() {
             <li>GET/PATCH {baseUrl}/api/v1/pattern/jobs/[id]</li>
             <li>POST {baseUrl}/api/v1/pattern/jobs/[id]/fittings</li>
             <li>POST {baseUrl}/api/v1/pattern/jobs/[id]/revisions</li>
+            <li>POST {baseUrl}/api/v1/pattern/auto-consolidate</li>
+            <li className="pl-4 text-slate-500">
+              body optional: sales_order_id, client_id, dry_run, acted_by - groups jobs by
+              garment + composition + gsm per client and links/creates ClientPatterns
+            </li>
             <li>POST {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]/tud-fill</li>
             <li className="pl-4 text-slate-500">
               body: size, optional base_pattern_id / version_id / applied_by - sets

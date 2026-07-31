@@ -44,6 +44,7 @@ export type IntegrationEventType =
   | "pattern_fitting.completed"
   | "pattern_revision.created"
   | "pattern_job.ready_for_cutting"
+  | "pattern.auto_consolidated"
   | "pattern.scan"
   | "base_pattern.created"
   | "base_pattern.updated"
