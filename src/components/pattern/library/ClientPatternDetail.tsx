@@ -530,6 +530,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
 
   const unit = pattern.unit;
   const printHref = `/pattern/client-patterns/${pattern.id}/print${version ? `?version=${version.id}` : ""}`;
+  const photosPrintHref = `/pattern/client-patterns/${pattern.id}/photos/print`;
   const pdfHref = `/api/pattern/library/client-patterns/${pattern.id}/pdf${version ? `?version=${version.id}` : ""}`;
   const tudPreview = clientPatternTudPreview(pattern);
   const basePatternName = linkedBase?.display_name ?? null;
@@ -564,6 +565,14 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           >
             <Printer className="h-4 w-4" />
             Print A4
+          </Link>
+          <Link
+            href={photosPrintHref}
+            target="_blank"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+          >
+            <Printer className="h-4 w-4" />
+            Print images
           </Link>
           <a
             href={pdfHref}
@@ -1283,16 +1292,16 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
       {view === "evolution" ? <EvolutionView pattern={pattern} /> : null}
       {view === "history" ? <HistoryTimeline pattern={pattern} /> : null}
 
-      <TudVersionHistory
-        pattern={pattern}
-        onUploaded={handleUploaded}
-        onActivate={(fileId) => void activateTudVersion(fileId)}
-      />
-
       <ClientPhotoAssignmentPanel
         clientId={pattern.client_id}
         patternId={pattern.id}
         linkedLineIds={pattern.linked_fabric_line_ids ?? []}
+      />
+
+      <TudVersionHistory
+        pattern={pattern}
+        onUploaded={handleUploaded}
+        onActivate={(fileId) => void activateTudVersion(fileId)}
       />
 
       <div className="grid gap-4 lg:grid-cols-2">

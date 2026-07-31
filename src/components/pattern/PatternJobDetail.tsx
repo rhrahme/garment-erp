@@ -156,6 +156,10 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       }`
     : null;
 
+  const photosPrintHref = job?.client_pattern_id
+    ? `/pattern/client-patterns/${job.client_pattern_id}/photos/print`
+    : null;
+
   const sheetHref = job?.client_pattern_id
     ? `/pattern/library/clients/${job.client_pattern_id}`
     : null;
@@ -494,14 +498,26 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
           Print sheet is one A4 page per piece, each with that piece&apos;s manufacturing QR (e.g. Suit = Jacket + Trouser pages).
         </p>
         {printHref ? (
-          <Link
-            href={printHref}
-            target="_blank"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
-          >
-            <Printer className="h-4 w-4" />
-            Print A4
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={printHref}
+              target="_blank"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
+            >
+              <Printer className="h-4 w-4" />
+              Print A4
+            </Link>
+            {photosPrintHref ? (
+              <Link
+                href={photosPrintHref}
+                target="_blank"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+              >
+                <Printer className="h-4 w-4" />
+                Print images
+              </Link>
+            ) : null}
+          </div>
         ) : (
           <p className="text-sm text-slate-500">Link a sheet to print.</p>
         )}
@@ -521,7 +537,8 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
         <section className="rounded-xl border border-slate-200 bg-white p-5">
           <h3 className="font-semibold text-slate-900">Client photos</h3>
           <p className="mt-1 text-sm text-slate-500">
-            Link a measurement sheet to assign photos to this fabric.
+            Link a measurement sheet to see Sales uploads, send each photo to this fabric, and print
+            images.
           </p>
         </section>
       )}
