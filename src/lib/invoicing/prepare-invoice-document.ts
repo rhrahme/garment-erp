@@ -8,6 +8,7 @@ import {
 import type { InvoiceDocumentData } from "@/components/invoicing/InvoiceDocument";
 import { resolveInvoiceLines, sortInvoiceLinesByArticle, toInvoiceLineDisplay } from "@/lib/invoicing/display";
 import { getInvoiceAmountPaid, getInvoiceBalanceDue } from "@/lib/invoicing/payments";
+import { buildCustomerInvoicePdfFilename } from "@/lib/pdf/download-filename";
 
 /** Load invoice + sales order and shape data for InvoiceDocument / PDF output. */
 export async function prepareCustomerInvoiceDocument(
@@ -61,8 +62,11 @@ export async function prepareCustomerInvoiceDocument(
     lines: enriched.lines as InvoiceDocumentData["lines"],
   };
 
-  const filenamePrefix = documentKind === "quote" ? "QUOTE" : "INV";
-  const filename = `${filenamePrefix}-${raw.invoice_number}.pdf`;
+  const filename = buildCustomerInvoicePdfFilename({
+    invoiceNumber: raw.invoice_number,
+    clientName: enriched.client_name,
+    kind: documentKind,
+  });
 
   return { invoice, invoiceNumber: raw.invoice_number, filename };
 }

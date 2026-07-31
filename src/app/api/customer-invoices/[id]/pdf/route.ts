@@ -6,6 +6,7 @@ import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import { canAccessSalesOrder } from "@/lib/sales/access";
 import { getCustomerInvoiceByIdFresh } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { contentDisposition } from "@/lib/pdf/download-filename";
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -39,7 +40,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     return new NextResponse(Buffer.from(pdfBytes), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `${disposition}; filename="${prepared.filename}"`,
+        "Content-Disposition": contentDisposition(prepared.filename, disposition),
         "Cache-Control": "no-store",
       },
     });

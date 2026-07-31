@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { ExternalLink, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import {
+  buildCustomerInvoicePdfFilename,
+  filenameFromResponse,
+} from "@/lib/pdf/download-filename";
 
 export function DownloadInvoicePdfButton({
   invoiceId,
@@ -58,8 +62,10 @@ export function DownloadInvoicePdfButton({
       } else {
         const anchor = document.createElement("a");
         anchor.href = url;
-        const prefix = kind === "quote" ? "QUOTE" : "INV";
-        anchor.download = `${prefix}-${invoiceNumber}.pdf`;
+        anchor.download = filenameFromResponse(
+          res,
+          buildCustomerInvoicePdfFilename({ invoiceNumber, kind })
+        );
         anchor.click();
         URL.revokeObjectURL(url);
       }

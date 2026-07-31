@@ -1,17 +1,7 @@
 import type { PatternSheetData } from "@/lib/pattern-library/sheet-data";
+import { buildDownloadFilename, slugPdfToken } from "@/lib/pdf/download-filename";
 
-/** Collapse to filesystem-safe ASCII slug tokens. */
-export function slugPdfToken(value: string | null | undefined, maxLen = 40): string {
-  const raw = (value ?? "")
-    .normalize("NFKD")
-    .replace(/[^\x20-\x7E]/g, " ")
-    .replace(/['"]/g, "")
-    .replace(/[^A-Za-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .replace(/-+/g, "-");
-  if (!raw) return "";
-  return raw.slice(0, maxLen).replace(/-+$/g, "");
-}
+export { slugPdfToken } from "@/lib/pdf/download-filename";
 
 function sheetStageLabel(version: PatternSheetData["version"]): string {
   if (version.is_final) return "Final";
@@ -29,20 +19,15 @@ export function buildPatternSheetPdfFilename(data: PatternSheetData): string {
   const garment = slugPdfToken(data.pattern.garment_type, 28);
   const hasIdentity = Boolean(clientCode || clientName || garment);
 
-  const parts = [
+  return buildDownloadFilename([
     clientCode,
     clientName,
     garment,
-    slugPdfToken(data.resolved_base_size ?? data.pattern.base_size, 12),
-    slugPdfToken(data.fabric?.fabric_number ?? data.job?.fabric_number ?? null, 16),
-    slugPdfToken(data.order?.so_number ?? data.job?.so_number ?? null, 20),
+    data.resolved_base_size ?? data.pattern.base_size,
+    data.fabric?.fabric_number ?? data.job?.fabric_number ?? null,
+    data.order?.so_number ?? data.job?.so_number ?? null,
     // Fall back to pattern_ref when client/garment identity is missing.
-    hasIdentity ? "" : slugPdfToken(data.pattern.pattern_ref, 48),
-    slugPdfToken(sheetStageLabel(data.version), 16),
-  ].filter(Boolean);
-
-  const base = parts.join("-") || slugPdfToken(data.pattern.pattern_ref, 48) || "pattern-sheet";
-  // Keep Windows/mac path lengths sane.
-  const trimmed = base.length > 140 ? base.slice(0, 140).replace(/-+$/g, "") : base;
-  return `${trimmed}.pdf`;
+    hasIdentity ? null : data.pattern.pattern_ref,
+    sheetStageLabel(data.version),
+  ]);
 }

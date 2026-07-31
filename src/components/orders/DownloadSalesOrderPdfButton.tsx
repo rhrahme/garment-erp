@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FileDown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { buildDownloadFilename, filenameFromResponse } from "@/lib/pdf/download-filename";
 
 export function DownloadSalesOrderPdfButton({
   orderId,
@@ -35,7 +36,7 @@ export function DownloadSalesOrderPdfButton({
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `${soNumber}.pdf`;
+      anchor.download = filenameFromResponse(res, buildDownloadFilename([soNumber]));
       anchor.click();
       URL.revokeObjectURL(url);
     } catch (err) {

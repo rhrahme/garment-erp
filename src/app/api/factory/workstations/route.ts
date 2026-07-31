@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/session";
 import { generateWorkstationQrPdf } from "@/lib/production/generate-workstation-qr-pdf";
 import type { FactoryWorkstation } from "@/lib/production/factory-workstations";
+import { contentDisposition } from "@/lib/pdf/download-filename";
 
 const WORKSTATIONS_PATH = path.join(process.cwd(), "src/data/factory-workstations.json");
 
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
       return new NextResponse(Buffer.from(pdfBytes), {
         headers: {
           "Content-Type": "application/pdf",
-          "Content-Disposition": 'inline; filename="workstation-qr-placards.pdf"',
+          "Content-Disposition": contentDisposition("workstation-qr-placards.pdf", "inline"),
           "Cache-Control": "no-store",
         },
       });

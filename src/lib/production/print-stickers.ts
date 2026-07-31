@@ -11,6 +11,11 @@ import {
   pngBlobToDataUrl,
   showStickerPrintPopupError,
 } from "@/lib/production/sticker-print-html";
+import {
+  buildStickerDownloadFilename,
+  filenameFromResponse,
+  type StickerSheetFilenameKind,
+} from "@/lib/pdf/download-filename";
 
 export type StickerPdfSheet = "fabric-cuts" | "pieces" | "print-pack" | "test" | "calibration";
 
@@ -139,15 +144,20 @@ async function fetchStickerPng(request: StickerPdfRequest, browserPrint = false)
 }
 
 function pdfFilename(orderId: string, sheet: StickerPdfSheet): string {
-  if (sheet === "calibration") return "sticker-rotation-calibration.pdf";
-  if (sheet === "test") return "sticker-test.pdf";
-  return `stickers-${orderId}-${sheet}.pdf`;
+  return buildStickerDownloadFilename({
+    soNumber: orderId,
+    sheet: sheet as StickerSheetFilenameKind,
+    ext: "pdf",
+  });
 }
 
 function pngFilename(orderId: string, sheet: StickerPdfSheet, multi = false): string {
-  if (sheet === "calibration") return multi ? "sticker-calibration.zip" : "sticker-calibration-A.png";
-  if (sheet === "test") return multi ? "sticker-test.zip" : "sticker-test-1.png";
-  return multi ? `stickers-${orderId}-${sheet}.zip` : `stickers-${orderId}-${sheet}.png`;
+  return buildStickerDownloadFilename({
+    soNumber: orderId,
+    sheet: sheet as StickerSheetFilenameKind,
+    ext: multi ? "zip" : "png",
+    pageLabel: sheet === "calibration" ? "A" : sheet === "test" ? "1" : null,
+  });
 }
 
 function triggerBlobDownload(blob: Blob, filename: string): void {
@@ -316,7 +326,10 @@ export async function downloadStickerPdf(request: StickerPdfRequest): Promise<bo
     }
 
     const blob = await res.blob();
-    triggerBlobDownload(blob, pdfFilename(request.orderId, sheet));
+    triggerBlobDownload(
+      blob,
+      filenameFromResponse(res, pdfFilename(request.orderId, sheet))
+    );
     return true;
   } catch (error) {
     console.error("Failed to download sticker PDF:", error);
@@ -358,7 +371,10 @@ export async function downloadStickerPng(request: StickerPdfRequest): Promise<bo
     const contentType = res.headers.get("Content-Type") ?? "";
     const multi = contentType.includes("zip");
     const blob = await res.blob();
-    triggerBlobDownload(blob, pngFilename(request.orderId, sheet, multi));
+    triggerBlobDownload(
+      blob,
+      filenameFromResponse(res, pngFilename(request.orderId, sheet, multi))
+    );
     return true;
   } catch (error) {
     console.error("Failed to download sticker PNG:", error);

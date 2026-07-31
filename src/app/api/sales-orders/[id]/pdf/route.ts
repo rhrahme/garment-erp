@@ -8,6 +8,7 @@ import {
 import { requireAuthenticated } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
+import { buildSalesOrderPdfFilename, contentDisposition } from "@/lib/pdf/download-filename";
 import { generateSalesOrderPdf } from "@/lib/sales-orders/generate-pdf";
 import { canAccessSalesOrder } from "@/lib/sales/access";
 
@@ -36,10 +37,11 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     const order = canViewFabricPrices ? rawOrder : redactSalesOrderFabricPrices(rawOrder);
     const pdfBytes = await generateSalesOrderPdf(order, { showPrices: canViewFabricPrices });
 
+    const filename = buildSalesOrderPdfFilename(rawOrder);
     return new NextResponse(Buffer.from(pdfBytes), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${rawOrder.so_number}.pdf"`,
+        "Content-Disposition": contentDisposition(filename),
         "Cache-Control": "no-store",
       },
     });

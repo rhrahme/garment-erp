@@ -10,6 +10,10 @@ import {
 import { parseLabelRotation, parseLabelScalePct } from "@/lib/production/label-printer-settings";
 import { filterEntriesByStickerCodes } from "@/lib/production/sticker-print-selection";
 import { loadStickerPdfEntries, type StickerSheetKind } from "@/lib/production/sticker-sheet-data";
+import {
+  buildStickerDownloadFilename,
+  contentDisposition,
+} from "@/lib/pdf/download-filename";
 
 function parseSheetParam(value: string | null): StickerSheetKind | "test" | "calibration" {
   if (value === "fabric-cuts") return "fabric-cuts";
@@ -73,7 +77,7 @@ async function zipPngs(
   return new NextResponse(Buffer.from(zipBytes), {
     headers: {
       "Content-Type": "application/zip",
-      "Content-Disposition": `attachment; filename="${zipFilename}"`,
+      "Content-Disposition": contentDisposition(zipFilename),
       "Cache-Control": "no-store",
     },
   });
@@ -83,7 +87,7 @@ function singlePngResponse(png: Buffer, filename: string): NextResponse {
   return new NextResponse(Buffer.from(png), {
     headers: {
       "Content-Type": "image/png",
-      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Disposition": contentDisposition(filename),
       "Cache-Control": "no-store",
     },
   });
@@ -97,21 +101,41 @@ async function generatePngResponse(orderId: string, query: PngQuery) {
     const pngs = await generateCalibrationStickerPngs();
     if (pngs.length === 1) {
       const letter = CALIBRATION_PAGES[0]?.letter ?? "A";
-      return singlePngResponse(pngs[0]!, `sticker-calibration-${letter}.png`);
+      return singlePngResponse(
+        pngs[0]!,
+        buildStickerDownloadFilename({ sheet: "calibration", ext: "png", pageLabel: letter })
+      );
     }
     return zipPngs(
       pngs,
-      (index) => `sticker-calibration-${CALIBRATION_PAGES[index]?.letter ?? index + 1}.png`,
-      "sticker-calibration.zip"
+      (index) =>
+        buildStickerDownloadFilename({
+          sheet: "calibration",
+          ext: "png",
+          pageLabel: CALIBRATION_PAGES[index]?.letter ?? String(index + 1),
+        }),
+      buildStickerDownloadFilename({ sheet: "calibration", ext: "zip" })
     );
   }
 
   if (sheet === "test") {
     const pngs = await generateTestStickerPngs(pdfOptions);
     if (pngs.length === 1) {
-      return singlePngResponse(pngs[0]!, "sticker-test-1.png");
+      return singlePngResponse(
+        pngs[0]!,
+        buildStickerDownloadFilename({ sheet: "test", ext: "png", pageLabel: "1" })
+      );
     }
-    return zipPngs(pngs, (index) => `sticker-test-${index + 1}.png`, "sticker-test.zip");
+    return zipPngs(
+      pngs,
+      (index) =>
+        buildStickerDownloadFilename({
+          sheet: "test",
+          ext: "png",
+          pageLabel: String(index + 1),
+        }),
+      buildStickerDownloadFilename({ sheet: "test", ext: "zip" })
+    );
   }
 
   const loaded = await loadStickerPdfEntries(orderId, { sheet, poNumber, poId });
@@ -124,22 +148,30 @@ async function generatePngResponse(orderId: string, query: PngQuery) {
     return NextResponse.json({ error: "No sticker labels to print." }, { status: 400 });
   }
 
-  const suffix = sheet === "print-pack" ? "print-pack" : sheet === "fabric-cuts" ? "prep" : "prod";
   const pngs = await generateStickerRollPngs(entries, pdfOptions);
+  const soNumber = loaded.order.so_number;
+  const clientName = loaded.order.client_name;
 
   if (pngs.length === 1) {
-    return singlePngResponse(pngs[0]!, `${loaded.order.so_number}-sticker-${suffix}.png`);
+    return singlePngResponse(
+      pngs[0]!,
+      buildStickerDownloadFilename({ soNumber, clientName, sheet, ext: "png" })
+    );
   }
 
-  const zipBytes = await generateStickerRollPngZip(
-    entries,
-    pdfOptions,
-    `${loaded.order.so_number}-sticker-${suffix}`
-  );
+  const entryBase = buildStickerDownloadFilename({
+    soNumber,
+    clientName,
+    sheet,
+    ext: "png",
+  }).replace(/\.png$/i, "");
+  const zipBytes = await generateStickerRollPngZip(entries, pdfOptions, entryBase);
   return new NextResponse(Buffer.from(zipBytes), {
     headers: {
       "Content-Type": "application/zip",
-      "Content-Disposition": `attachment; filename="${loaded.order.so_number}-stickers-${suffix}.zip"`,
+      "Content-Disposition": contentDisposition(
+        buildStickerDownloadFilename({ soNumber, clientName, sheet, ext: "zip" })
+      ),
       "Cache-Control": "no-store",
     },
   });

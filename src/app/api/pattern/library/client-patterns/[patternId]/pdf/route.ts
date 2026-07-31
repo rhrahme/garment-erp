@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requirePatternAccess } from "@/lib/auth/session";
 import { generatePatternSheetPdf } from "@/lib/pattern-library/generate-pattern-sheet-pdf";
 import { buildPatternSheetPdfFilename } from "@/lib/pattern-library/pattern-sheet-pdf-filename";
+import { contentDisposition } from "@/lib/pdf/download-filename";
 import { buildPatternSheetData } from "@/lib/pattern-library/sheet-data";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +30,7 @@ export async function GET(request: Request, context: { params: Promise<{ pattern
     return new NextResponse(Buffer.from(pdfBytes), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": contentDisposition(filename),
         "Cache-Control": "no-store",
       },
     });

@@ -3,8 +3,12 @@
 import { useState } from "react";
 import { FileDown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { badgePdfHref } from "@/lib/hr/badge-print";
+import { badgePdfHref, badgeSlugFromGroup } from "@/lib/hr/badge-print";
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
+import {
+  buildEmployeeBadgePdfFilename,
+  filenameFromResponse,
+} from "@/lib/pdf/download-filename";
 
 export function DownloadEmployeeBadgePdfButton({
   group,
@@ -35,10 +39,15 @@ export function DownloadEmployeeBadgePdfButton({
       }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-      const slug = group === "expat" ? "expats" : "saudis";
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `employee-badges-${slug}.pdf`;
+      anchor.download = filenameFromResponse(
+        res,
+        buildEmployeeBadgePdfFilename({
+          groupSlug: badgeSlugFromGroup(group),
+          selectedCount: employeeIds?.length ?? null,
+        })
+      );
       anchor.click();
       URL.revokeObjectURL(url);
     } catch (err) {

@@ -9,6 +9,7 @@ import {
   isDynamicallyGeneratedReferenceFile,
   RIYADH_BANK_DETAILS_DOCUMENT_ID,
 } from "@/lib/data/reference-source-files";
+import { buildDownloadFilename, contentDisposition } from "@/lib/pdf/download-filename";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,9 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
         return new NextResponse(Buffer.from(pdfBytes), {
           headers: {
             "Content-Type": "application/pdf",
-            "Content-Disposition": 'attachment; filename="Riyadh bank details.pdf"',
+            "Content-Disposition": contentDisposition(
+              buildDownloadFilename(["Riyadh", "bank", "details"])
+            ),
             "Cache-Control": "private, max-age=3600",
           },
         });

@@ -3,6 +3,7 @@ import {
   generateLabelMapPdf,
   type LabelMapLayout,
 } from "@/lib/production/generate-label-map-pdf";
+import { contentDisposition } from "@/lib/pdf/download-filename";
 
 function parseLayout(value: string | null): LabelMapLayout {
   if (value === "pairs") return "pairs";
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(Buffer.from(pdfBytes), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": contentDisposition(filename),
         "Cache-Control": "no-store",
       },
     });

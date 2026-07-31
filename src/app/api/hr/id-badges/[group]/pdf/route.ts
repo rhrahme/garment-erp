@@ -9,6 +9,7 @@ import {
   selectBadgePrintEmployees,
 } from "@/lib/hr/badge-print";
 import { generateEmployeeBadgePdf } from "@/lib/hr/generate-employee-badge-pdf";
+import { buildEmployeeBadgePdfFilename, contentDisposition } from "@/lib/pdf/download-filename";
 
 export const dynamic = "force-dynamic";
 
@@ -47,12 +48,16 @@ export async function GET(request: Request, { params }: RouteProps) {
     );
 
     const pdfBytes = await generateEmployeeBadgePdf(employees, group);
-    const filename = `employee-badges-${badgeSlugFromGroup(group)}.pdf`;
+    const filename = buildEmployeeBadgePdfFilename({
+      groupSlug: badgeSlugFromGroup(group),
+      selectedCount: ids?.length ? employees.length : null,
+      employeeName: employees.length === 1 ? employees[0]?.full_name : null,
+    });
 
     return new NextResponse(Buffer.from(pdfBytes), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": contentDisposition(filename),
         "Cache-Control": "no-store",
       },
     });

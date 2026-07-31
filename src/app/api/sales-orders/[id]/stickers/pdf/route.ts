@@ -8,6 +8,10 @@ import {
 import { parseLabelRotation, parseLabelScalePct } from "@/lib/production/label-printer-settings";
 import { filterEntriesByStickerCodes } from "@/lib/production/sticker-print-selection";
 import { loadStickerPdfEntries, type StickerSheetKind } from "@/lib/production/sticker-sheet-data";
+import {
+  buildStickerDownloadFilename,
+  contentDisposition,
+} from "@/lib/pdf/download-filename";
 
 function parseSheetParam(value: string | null): StickerSheetKind | "test" | "calibration" {
   if (value === "fabric-cuts") return "fabric-cuts";
@@ -60,10 +64,11 @@ async function generatePdfResponse(orderId: string, query: PdfQuery) {
 
   if (sheet === "calibration") {
     const pdfBytes = await generateCalibrationStickerPdf();
+    const filename = buildStickerDownloadFilename({ sheet: "calibration", ext: "pdf" });
     return new NextResponse(Buffer.from(pdfBytes), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": 'inline; filename="sticker-rotation-calibration.pdf"',
+        "Content-Disposition": contentDisposition(filename, "inline"),
         "Cache-Control": "no-store",
       },
     });
@@ -71,10 +76,11 @@ async function generatePdfResponse(orderId: string, query: PdfQuery) {
 
   if (sheet === "test") {
     const pdfBytes = await generateTestStickerPdf(pdfOptions);
+    const filename = buildStickerDownloadFilename({ sheet: "test", ext: "pdf" });
     return new NextResponse(Buffer.from(pdfBytes), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": 'inline; filename="sticker-test.pdf"',
+        "Content-Disposition": contentDisposition(filename, "inline"),
         "Cache-Control": "no-store",
       },
     });
@@ -91,12 +97,17 @@ async function generatePdfResponse(orderId: string, query: PdfQuery) {
   }
 
   const pdfBytes = await generateStickerRollPdf(entries, pdfOptions);
-  const suffix = sheet === "print-pack" ? "print-pack" : sheet === "fabric-cuts" ? "prep" : "prod";
+  const filename = buildStickerDownloadFilename({
+    soNumber: loaded.order.so_number,
+    clientName: loaded.order.client_name,
+    sheet,
+    ext: "pdf",
+  });
 
   return new NextResponse(Buffer.from(pdfBytes), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="${loaded.order.so_number}-stickers-${suffix}.pdf"`,
+      "Content-Disposition": contentDisposition(filename, "inline"),
       "Cache-Control": "no-store",
     },
   });

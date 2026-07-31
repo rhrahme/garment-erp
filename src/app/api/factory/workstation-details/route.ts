@@ -3,6 +3,7 @@ import {
   generateWorkstationDetailPdf,
   type WorkstationDetailLayout,
 } from "@/lib/production/generate-workstation-detail-pdf";
+import { contentDisposition } from "@/lib/pdf/download-filename";
 
 function parseLayout(value: string | null): WorkstationDetailLayout {
   if (value === "all") return "all";
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(Buffer.from(pdfBytes), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": contentDisposition(filename),
         "Cache-Control": "no-store",
       },
     });
