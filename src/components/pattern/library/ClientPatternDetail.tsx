@@ -26,8 +26,10 @@ import {
   type LibraryUploadResponse,
 } from "@/components/pattern/library/LibraryFileList";
 import { LinkedFabricsCard } from "@/components/pattern/library/LinkedFabricsCard";
+import { NestEstimatePanel } from "@/components/pattern/library/NestEstimatePanel";
 import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
 import { TudVersionHistory } from "@/components/pattern/library/TudVersionHistory";
+import { getGarmentPieces } from "@/lib/sales-orders/label-codes";
 import {
   emptyCascadeValue,
   garmentLabel,
@@ -1345,6 +1347,12 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         clientId={pattern.client_id}
         patternId={pattern.id}
         linkedLineIds={pattern.linked_fabric_line_ids ?? []}
+      />
+
+      <NestEstimatePanel
+        pattern={pattern}
+        requiredPieceNames={getGarmentPieces(pattern.garment_type)}
+        onPatternUpdated={(next) => setPattern(next)}
       />
 
       <TudVersionHistory

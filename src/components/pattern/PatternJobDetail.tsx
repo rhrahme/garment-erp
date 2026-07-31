@@ -14,6 +14,7 @@ import {
   LibraryFileList,
   type LibraryUploadResponse,
 } from "@/components/pattern/library/LibraryFileList";
+import { NestEstimatePanel } from "@/components/pattern/library/NestEstimatePanel";
 import { PatternStageScanPanel } from "@/components/pattern/PatternStageScanPanel";
 import type { GarmentTypeChangeFlag } from "@/lib/sales-orders/garment-type-change-flags";
 import {
@@ -61,6 +62,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
   const [fittingOutcome, setFittingOutcome] = useState<PatternFittingOutcome>("pass");
   const [selectedFittingId, setSelectedFittingId] = useState("");
   const [clientPatterns, setClientPatterns] = useState<ClientPattern[]>([]);
+  const [sheetPattern, setSheetPattern] = useState<ClientPattern | null>(null);
   const [sheetFiles, setSheetFiles] = useState<PatternLibraryAttachment[]>([]);
   const [linkPatternId, setLinkPatternId] = useState("");
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
@@ -76,13 +78,20 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       });
       if (!res.ok) {
         setSheetFiles([]);
+        setSheetPattern(null);
         return;
       }
       const data = await res.json();
       const pattern = data.pattern as ClientPattern | undefined;
-      setSheetFiles(pattern?.files ?? []);
+      setSheetPattern(pattern ?? null);
+      const allFiles = [
+        ...(pattern?.files ?? []),
+        ...(pattern?.versions.flatMap((version) => version.files) ?? []),
+      ];
+      setSheetFiles(allFiles);
     } catch {
       setSheetFiles([]);
+      setSheetPattern(null);
     }
   }, []);
 
@@ -106,6 +115,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
         await loadSheetFiles(nextJob.client_pattern_id);
       } else {
         setSheetFiles([]);
+        setSheetPattern(null);
       }
       const flagsRes = await fetch(
         `/api/garment-type-changes?sales_order_id=${nextJob.sales_order_id}`,
@@ -626,6 +636,21 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
           </p>
         )}
       </section>
+
+      {sheetPattern ? (
+        <NestEstimatePanel
+          pattern={sheetPattern}
+          requiredPieceNames={piecesForPatternJob(job)}
+          onPatternUpdated={(next) => {
+            setSheetPattern(next);
+            const allFiles = [
+              ...next.files,
+              ...next.versions.flatMap((version) => version.files),
+            ];
+            setSheetFiles(allFiles);
+          }}
+        />
+      ) : null}
 
       {/* 5. Print A4 */}
       <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">

@@ -11,7 +11,8 @@ import type { PatternLibraryAttachment } from "@/lib/types/pattern-library";
 export async function storeLibraryUpload(
   file: File,
   ownerPrefix: string,
-  uploadedBy: string | null
+  uploadedBy: string | null,
+  options: { forceKind?: PatternLibraryAttachment["kind"] | null } = {}
 ): Promise<{ ok: true; attachment: PatternLibraryAttachment } | { ok: false; error: string }> {
   const buffer = Buffer.from(await file.arrayBuffer());
   if (buffer.length === 0) return { ok: false, error: "File is empty." };
@@ -19,7 +20,12 @@ export async function storeLibraryUpload(
     return { ok: false, error: "File exceeds the 50MB limit." };
   }
 
-  const { kind, contentType } = classifyPatternLibraryFile(file.name);
+  const classified = classifyPatternLibraryFile(file.name);
+  const kind = options.forceKind ?? classified.kind;
+  const contentType =
+    kind === "marker" && classified.kind !== "marker"
+      ? "application/octet-stream"
+      : classified.contentType;
   const sanitized = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const storedFilename = `${ownerPrefix}-${Date.now()}-${sanitized}`;
   await writePatternLibraryFile(storedFilename, buffer, contentType);

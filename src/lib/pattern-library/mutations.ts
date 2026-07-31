@@ -594,6 +594,25 @@ export async function unassignFabricLinesFromClientPattern(
   return { ok: true, pattern: next };
 }
 
+function sanitizeMarkerWidthCm(value: unknown): number | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null || value === "") return null;
+  const num = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(num) || num <= 0) {
+    return Number.NaN;
+  }
+  return Math.round(num * 100) / 100;
+}
+
+function sanitizeMarkerDoubleFold(value: unknown): boolean | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (typeof value === "boolean") return value;
+  if (value === "true" || value === "yes" || value === 1 || value === "1") return true;
+  if (value === "false" || value === "no" || value === 0 || value === "0") return false;
+  return Number.NaN as unknown as boolean;
+}
+
 export async function updateClientPattern(
   patternId: string,
   patch: Partial<
@@ -611,6 +630,9 @@ export async function updateClientPattern(
       | "garment_type"
       | "active_tud_file_id"
       | "active_tud_by_piece"
+      | "active_marker_file_id"
+      | "marker_fabric_width_cm"
+      | "marker_double_fold"
     >
   > & {
     /** When garment_type changes, rebuild empty template points on the latest trial. */
@@ -731,6 +753,27 @@ export async function updateClientPattern(
       ? existing.active_tud_by_piece
       : sanitizeActiveTudByPiece(patch.active_tud_by_piece);
 
+  const nextActiveMarker =
+    patch.active_marker_file_id === undefined
+      ? existing.active_marker_file_id
+      : patch.active_marker_file_id?.trim() || null;
+
+  const nextMarkerWidth = sanitizeMarkerWidthCm(
+    patch.marker_fabric_width_cm === undefined
+      ? undefined
+      : patch.marker_fabric_width_cm
+  );
+  if (nextMarkerWidth !== undefined && Number.isNaN(nextMarkerWidth)) {
+    return { ok: false, status: 400, error: "marker_fabric_width_cm must be a positive number." };
+  }
+
+  const nextMarkerFold = sanitizeMarkerDoubleFold(
+    patch.marker_double_fold === undefined ? undefined : patch.marker_double_fold
+  );
+  if (nextMarkerFold !== undefined && typeof nextMarkerFold !== "boolean" && nextMarkerFold !== null) {
+    return { ok: false, status: 400, error: "marker_double_fold must be true, false, or null." };
+  }
+
   const next: ClientPattern = {
     ...existing,
     pattern_ref: patch.pattern_ref?.trim() || existing.pattern_ref,
@@ -745,6 +788,11 @@ export async function updateClientPattern(
     versions,
     active_tud_file_id: nextActiveTud,
     active_tud_by_piece: nextActiveByPiece,
+    active_marker_file_id: nextActiveMarker,
+    marker_fabric_width_cm:
+      nextMarkerWidth === undefined ? existing.marker_fabric_width_cm : nextMarkerWidth,
+    marker_double_fold:
+      nextMarkerFold === undefined ? existing.marker_double_fold : nextMarkerFold,
     special_instructions:
       patch.special_instructions === undefined
         ? existing.special_instructions
@@ -764,6 +812,11 @@ export async function updateClientPattern(
   store.client_patterns[index] = next;
   await writePatternLibrary(store);
 
+  const markerSetupChanged =
+    next.active_marker_file_id !== existing.active_marker_file_id ||
+    next.marker_fabric_width_cm !== existing.marker_fabric_width_cm ||
+    next.marker_double_fold !== existing.marker_double_fold;
+
   if (options.notify !== false) {
     await notifyIntegration("client_pattern.updated", {
       id: next.id,
@@ -772,8 +825,22 @@ export async function updateClientPattern(
       garment_type: next.garment_type,
       rebuilt_template: shouldRebuildTemplate,
       active_tud_file_id: next.active_tud_file_id ?? null,
+      active_marker_file_id: next.active_marker_file_id ?? null,
+      marker_fabric_width_cm: next.marker_fabric_width_cm ?? null,
+      marker_double_fold: next.marker_double_fold ?? null,
       updated_by: options.updatedBy ?? null,
     });
+    if (markerSetupChanged) {
+      await notifyIntegration("client_pattern.marker_setup_updated", {
+        id: next.id,
+        pattern_ref: next.pattern_ref,
+        client_id: next.client_id,
+        active_marker_file_id: next.active_marker_file_id ?? null,
+        marker_fabric_width_cm: next.marker_fabric_width_cm ?? null,
+        marker_double_fold: next.marker_double_fold ?? null,
+        updated_by: options.updatedBy ?? null,
+      });
+    }
   }
 
   return { ok: true, pattern: next };
@@ -977,6 +1044,8 @@ export async function attachClientPatternFile(
       // Newest .TUD becomes the active pattern file (legacy single pointer).
       active_tud_file_id: attachment.kind === "tud" ? attachment.id : existing.active_tud_file_id,
       active_tud_by_piece: nextActiveByPiece,
+      active_marker_file_id:
+        attachment.kind === "marker" ? attachment.id : existing.active_marker_file_id,
       updated_at: timestamp,
     };
   } else {
@@ -985,6 +1054,8 @@ export async function attachClientPatternFile(
       files: [...existing.files, attachment],
       active_tud_file_id: attachment.kind === "tud" ? attachment.id : existing.active_tud_file_id,
       active_tud_by_piece: nextActiveByPiece,
+      active_marker_file_id:
+        attachment.kind === "marker" ? attachment.id : existing.active_marker_file_id,
       updated_at: timestamp,
     };
   }
@@ -1013,6 +1084,22 @@ export async function attachClientPatternFile(
       uploaded_by: attachment.uploaded_by,
       uploaded_at: attachment.uploaded_at,
       is_active: activeForPiece,
+    });
+  }
+
+  if (attachment.kind === "marker") {
+    await notifyIntegration("client_pattern.marker_uploaded", {
+      id: next.id,
+      pattern_ref: next.pattern_ref,
+      client_id: next.client_id,
+      file_id: attachment.id,
+      filename: attachment.filename,
+      version_id: versionId,
+      uploaded_by: attachment.uploaded_by,
+      uploaded_at: attachment.uploaded_at,
+      active_marker_file_id: next.active_marker_file_id ?? null,
+      marker_fabric_width_cm: next.marker_fabric_width_cm ?? null,
+      marker_double_fold: next.marker_double_fold ?? null,
     });
   }
 

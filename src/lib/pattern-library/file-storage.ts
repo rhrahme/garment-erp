@@ -11,6 +11,8 @@ const SUBDIR = "pattern-library";
 
 const KIND_BY_EXTENSION: Record<string, PatternLibraryFileKind> = {
   tud: "tud",
+  mrk: "marker",
+  plt: "marker",
   xlsx: "xlsx",
   xls: "xlsx",
   dxf: "dxf",
@@ -24,6 +26,8 @@ const KIND_BY_EXTENSION: Record<string, PatternLibraryFileKind> = {
 
 const MIME_BY_EXTENSION: Record<string, string> = {
   tud: "application/octet-stream",
+  mrk: "application/octet-stream",
+  plt: "application/octet-stream",
   xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   xls: "application/vnd.ms-excel",
   dxf: "application/dxf",

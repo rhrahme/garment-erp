@@ -1,4 +1,5 @@
 import { listPatternJobsForOrder } from "@/lib/data/pattern-jobs";
+import { assertPatternJobCuttingFiles } from "@/lib/pattern/cutting-file-gate";
 import { updatePatternJob } from "@/lib/pattern/mutations";
 import {
   isTerminalPatternStatus,
@@ -90,6 +91,13 @@ export async function scanAtPatternStation(
   const plan = planPatternScan(station, job.status);
   if (plan.kind === "reject") {
     throw new Error(plan.message);
+  }
+
+  // TUD-ready scan requires uploaded .TUD(s). Marker export upload is never required
+  // (nesting will be in-ERP from TUD + fabric width / double fold).
+  if (plan.kind === "advance" && station === "pattern_tud_ready") {
+    const gate = await assertPatternJobCuttingFiles(job, "tud");
+    if (!gate.ok) throw new Error(gate.error);
   }
 
   if (plan.kind === "check_in") {

@@ -6,7 +6,14 @@
 
 export type MeasurementUnit = "in" | "cm";
 
-export type PatternLibraryFileKind = "tud" | "xlsx" | "dxf" | "pdf" | "image" | "other";
+export type PatternLibraryFileKind =
+  | "tud"
+  | "marker"
+  | "xlsx"
+  | "dxf"
+  | "pdf"
+  | "image"
+  | "other";
 
 /** Canonical measurement point with known aliases (e.g. "1/2 Hem Width" ≡ "1/2 Bottom Width"). */
 export interface MeasurementPointDef {
@@ -220,6 +227,19 @@ export interface ClientPattern {
    * Additive - absent on older patterns.
    */
   active_tud_by_piece?: Record<string, string>;
+  /**
+   * Active TUKAmark marker / nesting file id (pattern-level or trial attachment).
+   * Additive - absent on older patterns.
+   */
+  active_marker_file_id?: string | null;
+  /**
+   * Fabric width (cm) for nest estimate / marker setup. Null/absent = not set yet.
+   */
+  marker_fabric_width_cm?: number | null;
+  /**
+   * Double-fold nest input. Null/absent = not answered yet.
+   */
+  marker_double_fold?: boolean | null;
   notes: string | null;
   created_at: string;
   updated_at: string;

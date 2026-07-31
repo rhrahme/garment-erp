@@ -67,6 +67,8 @@ export type IntegrationEventType =
   | "sales_client_photo.assigned"
   | "sales_client_photo.unassigned"
   | "client_pattern.tud_version_uploaded"
+  | "client_pattern.marker_uploaded"
+  | "client_pattern.marker_setup_updated"
   | "sales_fitting.created"
   | "sales_fitting.updated"
   | "sales_order.milestone_updated"

@@ -35,8 +35,15 @@ export async function POST(request: Request, context: { params: Promise<{ patter
     const pieceNameRaw = formData.get("piece_name");
     const pieceName =
       typeof pieceNameRaw === "string" && pieceNameRaw.trim() ? pieceNameRaw.trim() : null;
+    const slotRaw = formData.get("slot");
+    const slot =
+      typeof slotRaw === "string" && slotRaw.trim().toLowerCase() === "marker"
+        ? "marker"
+        : null;
 
-    const stored = await storeLibraryUpload(file, patternId, session.email);
+    const stored = await storeLibraryUpload(file, patternId, session.email, {
+      forceKind: slot === "marker" ? "marker" : null,
+    });
     if (!stored.ok) {
       return NextResponse.json({ error: stored.error }, { status: 400 });
     }

@@ -7,7 +7,7 @@ import {
 } from "@/lib/data/pattern-library";
 import { readPatternLibraryFile } from "@/lib/pattern-library/file-storage";
 import { attachClientPatternFile } from "@/lib/pattern-library/mutations";
-import { buildTudFillSuggestion } from "@/lib/pattern-library/tud-size-fill";
+import { buildTudFillSuggestion, type TudFillSuggestion } from "@/lib/pattern-library/tud-size-fill";
 import {
   notifyLibraryFileUploaded,
   resolveLibraryFileRequest,
@@ -23,11 +23,6 @@ export async function POST(request: Request, context: { params: Promise<{ patter
   try {
     await ensurePatternLibraryLoaded();
     const { patternId } = await context.params;
-    const pattern = await getClientPatternByIdFresh(patternId);
-    if (!pattern) {
-      return NextResponse.json({ error: "Client pattern not found." }, { status: 404 });
-    }
-
     const url = new URL(request.url);
     const versionId = url.searchParams.get("version")?.trim() || null;
 
@@ -39,11 +34,20 @@ export async function POST(request: Request, context: { params: Promise<{ patter
     const pieceNameRaw = formData.get("piece_name");
     const pieceName =
       typeof pieceNameRaw === "string" && pieceNameRaw.trim() ? pieceNameRaw.trim() : null;
+    const slotRaw = formData.get("slot");
+    const slot =
+      typeof slotRaw === "string" && slotRaw.trim().toLowerCase() === "marker"
+        ? "marker"
+        : null;
     const uploadedByRaw = formData.get("uploaded_by");
     const uploadedBy =
-      typeof uploadedByRaw === "string" && uploadedByRaw.trim() ? uploadedByRaw.trim() : "api";
+      typeof uploadedByRaw === "string" && uploadedByRaw.trim()
+        ? uploadedByRaw.trim()
+        : "api";
 
-    const stored = await storeLibraryUpload(file, patternId, uploadedBy);
+    const stored = await storeLibraryUpload(file, patternId, uploadedBy, {
+      forceKind: slot === "marker" ? "marker" : null,
+    });
     if (!stored.ok) {
       return NextResponse.json({ error: stored.error }, { status: 400 });
     }
@@ -74,7 +78,7 @@ export async function POST(request: Request, context: { params: Promise<{ patter
       ...tudNotificationFields(uploaded),
     });
 
-    let tudFill = null;
+    let tudFill: TudFillSuggestion | null = null;
     if (uploaded.tud) {
       const store = await readPatternLibraryFresh();
       tudFill = buildTudFillSuggestion({
