@@ -421,7 +421,7 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
     doc.setTextColor(...SLATE);
-    doc.text("CUT NEST PREVIEW (FOR CUTTER)", MARGIN + 3, y + 4);
+    doc.text("FABRIC CUT LAYOUT (FROM TUD)", MARGIN + 3, y + 4);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.setTextColor(...INK);
@@ -435,6 +435,7 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
 
   const nest = preview.nest;
   const lengthCm = Math.max(
+    (preview.board_length_m ?? nest.packed_length_m) * 100,
     nest.packed_length_m * 100,
     ...nest.placements.map((p) => p.x_cm + p.width_cm),
     1
@@ -451,7 +452,7 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
   doc.setTextColor(...INK);
-  doc.text("CUT NEST PREVIEW (FOR CUTTER)", MARGIN + 3, y + 4);
+  doc.text("FABRIC CUT LAYOUT (FROM TUD)", MARGIN + 3, y + 4);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
   doc.setTextColor(...SLATE);
@@ -460,13 +461,23 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
       ? "Double fold assumed (shop default)"
       : "Double fold"
     : "Open width";
+  const orderBit =
+    preview.ordered_length_m != null
+      ? ` · ordered ${preview.ordered_length_m.toFixed(2)} m${
+          preview.fits_on_order === true
+            ? " (fits)"
+            : preview.fits_on_order === false
+              ? " (OVER)"
+              : ""
+        }`
+      : "";
   doc.text(
-    `${foldLabel} - usable ${nest.usable_width_cm} cm of ${nest.fabric_width_cm} cm · est. ${nest.estimated_length_m.toFixed(2)} m · size ${nest.size}${preview.source === "saved" ? " · saved marker" : " · auto estimate"}`,
+    `${foldLabel} - usable ${nest.usable_width_cm} cm of ${nest.fabric_width_cm} cm · packed ${nest.packed_length_m.toFixed(2)} m · size ${nest.size}${orderBit}${preview.source === "saved" ? " · saved marker" : ""}`,
     MARGIN + 3,
     y + 8
   );
   doc.text(
-    "Fold fabric, place printed pattern parts on the fold, then cut. Approximate from TUD areas - not TUKAmark.",
+    "TUD pieces placed on fabric without overlap. Approx rectangles from area - not CAD outlines.",
     MARGIN + 3,
     y + 11.5
   );

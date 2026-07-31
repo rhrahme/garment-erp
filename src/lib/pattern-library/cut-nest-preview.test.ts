@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buildCutNestPreview } from "./cut-nest-preview.ts";
+import {
+  buildCutNestPreview,
+  metersFromFabricLineQuantity,
+} from "./cut-nest-preview.ts";
 import { buildAutoMarkerLayout } from "./marker-layout.ts";
 import type { ClientPattern, PatternLibraryAttachment } from "@/lib/types/pattern-library";
 
@@ -158,5 +161,30 @@ describe("buildCutNestPreview", () => {
     );
     assert.equal(result.source, "auto");
     assert.ok(result.nest);
+  });
+
+  it("uses ordered meters for board length and fits flag", () => {
+    const result = buildCutNestPreview(pattern({ marker_double_fold: true }), 148, {
+      ordered_length_m: 2,
+    });
+    assert.ok(result.nest);
+    assert.equal(result.ordered_length_m, 2);
+    assert.ok((result.board_length_m ?? 0) >= 2);
+    assert.equal(result.fits_on_order, true);
+    assert.ok(result.nest!.placements.length >= 2);
+  });
+
+  it("flags OVER when ordered meters shorter than packed", () => {
+    const result = buildCutNestPreview(pattern({ marker_double_fold: true }), 148, {
+      ordered_length_m: 0.01,
+    });
+    assert.ok(result.nest);
+    assert.equal(result.fits_on_order, false);
+  });
+
+  it("parses fabric line meters from quantity", () => {
+    assert.equal(metersFromFabricLineQuantity(1.6, "meters"), 1.6);
+    assert.equal(metersFromFabricLineQuantity(2, "m"), 2);
+    assert.equal(metersFromFabricLineQuantity(2, "yards"), null);
   });
 });

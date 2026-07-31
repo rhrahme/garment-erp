@@ -566,6 +566,7 @@ export function NestEstimatePanel({
             fabricWidthCm={width}
             doubleFold={doubleFold === "yes"}
             packedLengthM={metrics.packed_length_m}
+            orderedLengthM={null}
             efficiencyPct={metrics.efficiency_pct}
             areaM2={areaM2 || liveEstimate?.area_m2 || 0}
             size={size || liveEstimate?.size || "-"}
@@ -606,6 +607,7 @@ function MarkerBoard({
   fabricWidthCm,
   doubleFold,
   packedLengthM,
+  orderedLengthM,
   efficiencyPct,
   areaM2,
   size,
@@ -619,6 +621,7 @@ function MarkerBoard({
   fabricWidthCm: number;
   doubleFold: boolean;
   packedLengthM: number;
+  orderedLengthM: number | null;
   efficiencyPct: number;
   areaM2: number;
   size: string;
@@ -635,7 +638,9 @@ function MarkerBoard({
   } | null>(null);
 
   const widthCm = Math.max(usableWidthCm, 1);
+  const boardLengthM = Math.max(packedLengthM, orderedLengthM ?? 0);
   const lengthCm = Math.max(
+    boardLengthM * 100,
     packedLengthM * 100,
     ...placements.map((p) => p.x_cm + p.width_cm),
     40
@@ -759,7 +764,10 @@ function MarkerBoard({
           Width: {usableWidthCm.toFixed(0)}cm
           {doubleFold ? ` (fold of ${fabricWidthCm.toFixed(0)})` : ""}
         </span>
-        <span>Length: {packedLengthM.toFixed(3)}m</span>
+        <span>
+          Packed: {packedLengthM.toFixed(3)}m
+          {orderedLengthM != null ? ` / Ordered: ${orderedLengthM.toFixed(3)}m` : ""}
+        </span>
         <span>Area: {areaM2.toFixed(3)}m2</span>
         <span>Size: {size}</span>
         <span>Qty: {garmentQty}</span>

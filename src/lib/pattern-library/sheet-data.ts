@@ -8,6 +8,7 @@ import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders"
 import type { PatternJob } from "@/lib/types/pattern";
 import {
   buildCutNestPreview,
+  metersFromFabricLineQuantity,
   type CutNestPreview,
 } from "@/lib/pattern-library/cut-nest-preview";
 import {
@@ -46,6 +47,8 @@ export interface PatternSheetFabric {
   width_cm: number | null;
   width_inches: number | null;
   color: string | null;
+  /** Ordered meters from SO fabric line when known. */
+  ordered_meters?: number | null;
 }
 
 export interface PatternSheetData {
@@ -90,6 +93,7 @@ function fabricFromLine(line: SalesOrderFabricLine): PatternSheetFabric {
     width_cm: line.width_cm ?? null,
     width_inches: line.width_inches ?? null,
     color: line.color ?? null,
+    ordered_meters: metersFromFabricLineQuantity(line.quantity, line.unit),
   };
 }
 
@@ -223,6 +227,8 @@ export async function buildPatternSheetData(
   let stickers: PatternSheetSticker[] = [];
   let fabric: PatternSheetData["fabric"] = null;
 
+  let orderedMeters: number | null = null;
+
   if (job) {
     fabric = {
       fabric_number: job.fabric_number,
@@ -243,17 +249,27 @@ export async function buildPatternSheetData(
       const line = salesOrder.fabric_lines.find(
         (candidate) => candidate.id === job!.sales_order_line_id
       );
-      if (line) stickers = stickersFromLine(line, salesOrder.client_code);
+      if (line) {
+        stickers = stickersFromLine(line, salesOrder.client_code);
+        orderedMeters = metersFromFabricLineQuantity(line.quantity, line.unit);
+        fabric = { ...fabric, ordered_meters: orderedMeters };
+      }
     }
   }
 
-  // Linked fabric lines (client fabric board) — primary/first for article QR +
+  // Linked fabric lines (client fabric board) - primary/first for article QR +
   // fabric block when no pattern job is attached.
   const linkedLineIds = pattern.linked_fabric_line_ids ?? [];
   for (const lineId of linkedLineIds) {
     const found = findOrderLine(salesOrders, lineId);
     if (!found) continue;
     if (!fabric) fabric = fabricFromLine(found.line);
+    if (orderedMeters == null) {
+      orderedMeters = metersFromFabricLineQuantity(found.line.quantity, found.line.unit);
+      if (fabric && fabric.ordered_meters == null) {
+        fabric = { ...fabric, ordered_meters: orderedMeters };
+      }
+    }
     if (!order) {
       order = {
         so_number: found.order.so_number,
@@ -271,6 +287,7 @@ export async function buildPatternSheetData(
   const cut_nest = buildCutNestPreview(pattern, fabric?.width_cm ?? job?.width_cm ?? null, {
     size: filled.resolved_base_size ?? pattern.base_size,
     garmentQty: 1,
+    ordered_length_m: orderedMeters ?? fabric?.ordered_meters ?? null,
   });
 
   return {

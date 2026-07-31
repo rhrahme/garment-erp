@@ -105,10 +105,10 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
     return (
       <div className="mt-4 rounded-lg border border-slate-300 bg-slate-50 p-3">
         <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
-          Cut nest preview (for cutter)
+          Fabric cut layout (from TUD)
         </p>
         <p className="mt-1 text-sm text-slate-600">
-          {preview.missing_reason ?? "Upload TUD + set fabric width for cut nest preview."}
+          {preview.missing_reason ?? "Upload TUD + set fabric width for fabric cut layout."}
         </p>
         {preview.cutter_plan ? <CutterPartsFromTud plan={preview.cutter_plan} /> : null}
       </div>
@@ -117,6 +117,7 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
 
   const nest = preview.nest;
   const lengthCm = Math.max(
+    (preview.board_length_m ?? nest.packed_length_m) * 100,
     nest.packed_length_m * 100,
     ...nest.placements.map((p) => p.x_cm + p.width_cm),
     1
@@ -139,20 +140,30 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
       ? "Double fold assumed (shop default)"
       : "Double fold"
     : "Open width";
+  const orderNote =
+    preview.ordered_length_m != null
+      ? ` · ordered ${preview.ordered_length_m.toFixed(2)} m${
+          preview.fits_on_order === true
+            ? " (fits)"
+            : preview.fits_on_order === false
+              ? " (OVER)"
+              : ""
+        }`
+      : "";
 
   return (
     <div className="cut-nest-block mt-4 rounded-lg border border-slate-300 bg-slate-50 p-3">
       <p className="text-xs font-bold uppercase tracking-wide text-slate-900">
-        Cut nest preview (for cutter)
+        Fabric cut layout (from TUD)
       </p>
       <p className="mt-0.5 text-[11px] text-slate-600">
-        {foldLabel} - usable {nest.usable_width_cm} cm of {nest.fabric_width_cm} cm · est.{" "}
-        {nest.estimated_length_m.toFixed(2)} m · size {nest.size}
-        {preview.source === "saved" ? " · saved marker" : " · auto estimate"}
+        {foldLabel} - usable {nest.usable_width_cm} cm of {nest.fabric_width_cm} cm · packed{" "}
+        {nest.packed_length_m.toFixed(2)} m · size {nest.size}
+        {orderNote}
+        {preview.source === "saved" ? " · saved marker" : ""}
       </p>
       <p className="text-[11px] text-slate-600">
-        Fold fabric, place printed pattern parts on the fold, then cut. Approximate from TUD areas
-        - not TUKAmark.
+        TUD pieces placed on fabric without overlap. Approx rectangles from area - not CAD outlines.
       </p>
       {preview.cutter_plan ? <CutterPartsFromTud plan={preview.cutter_plan} /> : null}
       <div className="mt-2 overflow-x-auto rounded border border-slate-300 bg-slate-200 p-1">
@@ -160,7 +171,7 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
           viewBox={`0 0 ${viewW} ${viewH}`}
           className="h-auto w-full min-w-[280px]"
           role="img"
-          aria-label="Approximate folded fabric nest layout"
+          aria-label="Fabric cut layout from TUD pieces"
         >
           <rect x={0} y={0} width={viewW} height={viewH} fill="#cbd5e1" />
           {nest.placements.map((p) => {

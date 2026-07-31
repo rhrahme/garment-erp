@@ -81,6 +81,9 @@ function sheet(overrides: Partial<PatternSheetData> = {}): PatternSheetData {
     cut_nest: {
       nest: null,
       cutter_plan: null,
+      ordered_length_m: null,
+      board_length_m: null,
+      fits_on_order: null,
       fold_assumed: false,
       missing_reason: null,
       source: null,

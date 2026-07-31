@@ -19,6 +19,12 @@ export interface CutNestPreview {
   nest: NestEstimateResult | null;
   /** Parts list read from TUD header for the cutter. */
   cutter_plan: CutterTudPlan | null;
+  /** Ordered fabric meters from SO line (null when unknown). */
+  ordered_length_m: number | null;
+  /** Fabric strip length drawn on the board (max ordered, packed). */
+  board_length_m: number | null;
+  /** Whether packed length fits on ordered meters (null if ordered unknown). */
+  fits_on_order: boolean | null;
   /** True when double fold was assumed because marker_double_fold was unset. */
   fold_assumed: boolean;
   /** Why nest is missing (for empty-state copy). */
@@ -44,69 +50,134 @@ function layoutMatchesSheet(
   return true;
 }
 
+function positiveMeters(value: unknown): number | null {
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n) || !(n > 0)) return null;
+  return Math.round(n * 1000) / 1000;
+}
+
+/** Convert SO fabric-line quantity to meters when unit is meters-like. */
+export function metersFromFabricLineQuantity(
+  quantity: number | null | undefined,
+  unit: string | null | undefined
+): number | null {
+  const qty = positiveMeters(quantity);
+  if (qty === null) return null;
+  const u = (unit ?? "meters").trim().toLowerCase();
+  if (!u || u === "m" || u === "meter" || u === "meters" || u === "mt" || u === "mtr") {
+    return qty;
+  }
+  return null;
+}
+
+function withBoardFields(
+  base: Omit<CutNestPreview, "ordered_length_m" | "board_length_m" | "fits_on_order">,
+  nest: NestEstimateResult | null,
+  orderedLengthM: number | null
+): CutNestPreview {
+  const packed = nest?.packed_length_m ?? null;
+  const ordered = positiveMeters(orderedLengthM);
+  const board =
+    packed != null || ordered != null
+      ? Math.max(packed ?? 0, ordered ?? 0) || null
+      : null;
+  const fits =
+    ordered != null && packed != null ? packed <= ordered + 1e-6 : null;
+  return {
+    ...base,
+    nest,
+    ordered_length_m: ordered,
+    board_length_m: board,
+    fits_on_order: fits,
+  };
+}
+
 /**
  * Build the cutter handoff nest preview for a measurement sheet.
- * Prefers saved marker_layout when width/fold/size/qty match; else live estimate.
- * Defaults double fold to yes when Pattern has not answered yet (shop practice).
+ * Places TUD piece rects on fabric width without overlap; board uses ordered meters when known.
  */
 export function buildCutNestPreview(
   pattern: ClientPattern,
   fabricWidthCm: number | null | undefined,
-  options: { size?: string | null; garmentQty?: number } = {}
+  options: {
+    size?: string | null;
+    garmentQty?: number;
+    ordered_length_m?: number | null;
+  } = {}
 ): CutNestPreview {
   const width =
     typeof fabricWidthCm === "number" && Number.isFinite(fabricWidthCm) && fabricWidthCm > 0
       ? fabricWidthCm
       : resolveMarkerFabricWidthCm(pattern);
 
-  const tud = collectNestTudMetadata(pattern, getGarmentPieces(pattern.garment_type));
+  const tud =
+    collectNestTudMetadata(pattern, getGarmentPieces(pattern.garment_type)) ??
+    collectNestTudMetadata(pattern, []);
   const { double_fold: doubleFold, fold_assumed } = resolveMarkerDoubleFold(pattern);
   const garmentQty = options.garmentQty ?? 1;
   const size = options.size ?? pattern.base_size;
+  const ordered = positiveMeters(options.ordered_length_m);
   const cutter_plan = tud
     ? buildCutterPlanFromTud(tud, { size, double_fold: doubleFold })
     : null;
 
   if (width === null) {
-    return {
-      nest: null,
-      cutter_plan,
-      fold_assumed: false,
-      missing_reason: cutter_plan
-        ? "Set fabric width for cut nest layout (parts list below from TUD)."
-        : "Upload TUD + set fabric width for cut nest preview.",
-      source: null,
-    };
+    return withBoardFields(
+      {
+        nest: null,
+        cutter_plan,
+        fold_assumed: false,
+        missing_reason: cutter_plan
+          ? "Set fabric width for fabric cut layout (parts list below from TUD)."
+          : "Upload TUD + set fabric width for fabric cut layout.",
+        source: null,
+      },
+      null,
+      ordered
+    );
   }
 
   if (!tud && !pattern.marker_layout?.placements?.length) {
-    return {
-      nest: null,
-      cutter_plan: null,
-      fold_assumed: false,
-      missing_reason: "Upload TUD + set fabric width for cut nest preview.",
-      source: null,
-    };
+    return withBoardFields(
+      {
+        nest: null,
+        cutter_plan: null,
+        fold_assumed: false,
+        missing_reason: "Upload TUD + set fabric width for fabric cut layout.",
+        source: null,
+      },
+      null,
+      ordered
+    );
   }
 
   if (layoutMatchesSheet(pattern, width, doubleFold, size, garmentQty) && pattern.marker_layout) {
-    return {
-      nest: nestResultFromMarkerLayout(pattern.marker_layout),
-      cutter_plan,
-      fold_assumed,
-      missing_reason: null,
-      source: "saved",
-    };
+    const nest = nestResultFromMarkerLayout(pattern.marker_layout);
+    return withBoardFields(
+      {
+        nest,
+        cutter_plan,
+        fold_assumed,
+        missing_reason: null,
+        source: "saved",
+      },
+      nest,
+      ordered
+    );
   }
 
   if (!tud) {
-    return {
-      nest: null,
-      cutter_plan: null,
-      fold_assumed,
-      missing_reason: "Upload TUD + set fabric width for cut nest preview.",
-      source: null,
-    };
+    return withBoardFields(
+      {
+        nest: null,
+        cutter_plan: null,
+        fold_assumed,
+        missing_reason: "Upload TUD + set fabric width for fabric cut layout.",
+        source: null,
+      },
+      null,
+      ordered
+    );
   }
 
   const nest = estimateNestFromTud({
@@ -118,14 +189,28 @@ export function buildCutNestPreview(
   });
 
   if (!nest) {
-    return {
-      nest: null,
-      cutter_plan,
-      fold_assumed,
-      missing_reason: "Could not estimate nest from TUD areas for this size.",
-      source: null,
-    };
+    return withBoardFields(
+      {
+        nest: null,
+        cutter_plan,
+        fold_assumed,
+        missing_reason: "Could not place TUD pieces for this size.",
+        source: null,
+      },
+      null,
+      ordered
+    );
   }
 
-  return { nest, cutter_plan, fold_assumed, missing_reason: null, source: "auto" };
+  return withBoardFields(
+    {
+      nest,
+      cutter_plan,
+      fold_assumed,
+      missing_reason: null,
+      source: "auto",
+    },
+    nest,
+    ordered
+  );
 }
