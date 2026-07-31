@@ -168,7 +168,7 @@ export function parseTudFile(buffer: Buffer): ParsedTudFile | null {
       continue;
     }
     if (tag === "-E") {
-      // -E <piece> <size> <n> <area m²> <perimeter cm>
+      // -E <piece> <size> <n> <area m2> <perimeter cm>
       const parts = rest.split(/\s+/);
       const area = toNumber(parts[3]);
       const perimeter = toNumber(parts[4]);
@@ -178,12 +178,12 @@ export function parseTudFile(buffer: Buffer): ParsedTudFile | null {
       }
       continue;
     }
-    // Unknown record — skip.
+    // Unknown record - skip.
   }
 
   if (!styleCaption && sizes.length === 0 && pieces.length === 0) return null;
 
-  // Fallback totals when -Y is absent: sum single-piece areas × cut quantity.
+  // Fallback totals when -Y is absent: sum single-piece areas x cut quantity.
   if (sizeTotals.length === 0 && pieces.length > 0) {
     for (const size of sizes) {
       let area = 0;
