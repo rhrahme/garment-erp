@@ -166,6 +166,15 @@ describe("buildClientFabricBoard", () => {
       id: "cp-1",
       pattern_ref: "FR-SHIRT-LINEN",
       linked_fabric_line_ids: ["line-1"],
+      linked_fabric_refs: [
+        {
+          fabric_number: "70138",
+          supplier_id: "drapers",
+          supplier_name: "Drapers",
+          composition: "Wool",
+          source: "mahrab-pattern",
+        },
+      ],
     }),
     clientPattern({ id: "cp-other", pattern_ref: "X", client_id: "client-2" }),
   ];
@@ -204,7 +213,14 @@ describe("buildClientFabricBoard", () => {
       garment_type: "shirt",
     });
     assert.equal(board.rows[1]!.assigned_pattern, null);
-    assert.deepEqual(board.summary, { total: 3, assigned: 1 });
+    assert.deepEqual(board.summary, { total: 3, assigned: 1, catalog: 1 });
+  });
+
+  it("lists pattern catalog fabric refs without requiring SO lines", () => {
+    assert.equal(board.catalog_rows.length, 1);
+    assert.equal(board.catalog_rows[0]!.fabric_number, "70138");
+    assert.equal(board.catalog_rows[0]!.assigned_pattern.pattern_id, "cp-1");
+    assert.equal(board.patterns[0]!.linked_ref_count, 1);
   });
 
   it("never exposes prices", () => {

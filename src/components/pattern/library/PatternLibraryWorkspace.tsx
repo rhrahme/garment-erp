@@ -522,7 +522,8 @@ function ClientPatternCard({
 }) {
   const finalVersion = pattern.versions.find((version) => version.is_final);
   const preview = clientPatternTudPreview(pattern);
-  const linkedFabricCount = pattern.linked_fabric_line_ids?.length ?? 0;
+  const linkedFabricCount =
+    (pattern.linked_fabric_line_ids?.length ?? 0) + (pattern.linked_fabric_refs?.length ?? 0);
   const linkedBase = pattern.base_pattern_id
     ? bases.find((base) => base.id === pattern.base_pattern_id) ?? null
     : null;

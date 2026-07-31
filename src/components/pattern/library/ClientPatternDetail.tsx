@@ -1354,7 +1354,11 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <LinkedFabricsCard clientId={pattern.client_id} patternId={pattern.id} />
+        <LinkedFabricsCard
+          clientId={pattern.client_id}
+          patternId={pattern.id}
+          fabricRefs={pattern.linked_fabric_refs ?? []}
+        />
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <LibraryFileList
             files={pattern.files}

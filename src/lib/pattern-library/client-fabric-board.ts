@@ -1,4 +1,4 @@
-import type { ClientPattern } from "@/lib/types/pattern-library";
+import type { ClientPattern, ClientPatternFabricRef } from "@/lib/types/pattern-library";
 import type { FabricReceipt } from "@/lib/types/fabric-receipts";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import {
@@ -11,6 +11,7 @@ import {
  * Client fabric board — the pattern team's per-client view of every fabric
  * article across sales orders, with receiving/prep status and the garment
  * (client pattern) each fabric has been grouped into. Deliberately price-free.
+ * Also surfaces catalog fabric refs linked on patterns (no SO line required).
  */
 
 export type ClientFabricStatus =
@@ -89,13 +90,30 @@ export interface ClientFabricBoardPattern {
   garment_type: string;
   is_final: boolean;
   linked_line_count: number;
+  linked_ref_count: number;
+}
+
+/** Catalog fabric from a client pattern (not an SO line). */
+export interface ClientFabricCatalogRow {
+  fabric_number: string;
+  supplier_id: string | null;
+  supplier_name: string | null;
+  composition: string | null;
+  weight_gsm: number | null;
+  width_cm: number | null;
+  color: string | null;
+  description: string | null;
+  source: string | null;
+  assigned_pattern: ClientFabricAssignedPattern;
 }
 
 export interface ClientFabricBoard {
   client: { id: string; code: string; name: string };
   rows: ClientFabricBoardRow[];
+  /** Pattern-linked catalog fabrics (visible without SO fabric lines). */
+  catalog_rows: ClientFabricCatalogRow[];
   patterns: ClientFabricBoardPattern[];
-  summary: { total: number; assigned: number };
+  summary: { total: number; assigned: number; catalog: number };
 }
 
 function articleCode(order: SalesOrder, line: SalesOrderFabricLine, lineIndex: number): string {
@@ -179,6 +197,20 @@ export function buildClientFabricBoard(input: {
     });
   }
 
+  const catalog_rows: ClientFabricCatalogRow[] = [];
+  const seenCatalog = new Set<string>();
+  for (const pattern of clientPatterns) {
+    for (const ref of pattern.linked_fabric_refs ?? []) {
+      const number = String(ref.fabric_number ?? "").trim();
+      if (!number) continue;
+      const key = `${String(ref.supplier_id ?? "").toLowerCase()}::${number.toLowerCase()}`;
+      if (seenCatalog.has(key)) continue;
+      seenCatalog.add(key);
+      catalog_rows.push(catalogRowFromRef(ref, pattern));
+    }
+  }
+  catalog_rows.sort((a, b) => a.fabric_number.localeCompare(b.fabric_number, undefined, { numeric: true }));
+
   const patterns: ClientFabricBoardPattern[] = clientPatterns
     .map((pattern) => ({
       id: pattern.id,
@@ -186,6 +218,7 @@ export function buildClientFabricBoard(input: {
       garment_type: pattern.garment_type,
       is_final: pattern.final_version_id !== null,
       linked_line_count: (pattern.linked_fabric_line_ids ?? []).length,
+      linked_ref_count: (pattern.linked_fabric_refs ?? []).length,
     }))
     .sort((a, b) => a.pattern_ref.localeCompare(b.pattern_ref));
 
@@ -198,10 +231,34 @@ export function buildClientFabricBoard(input: {
       name: input.clientName ?? firstOrder?.client_name ?? firstPattern?.client_name ?? "",
     },
     rows,
+    catalog_rows,
     patterns,
     summary: {
       total: rows.length,
       assigned: rows.filter((row) => row.assigned_pattern !== null).length,
+      catalog: catalog_rows.length,
+    },
+  };
+}
+
+function catalogRowFromRef(
+  ref: ClientPatternFabricRef,
+  pattern: ClientPattern
+): ClientFabricCatalogRow {
+  return {
+    fabric_number: ref.fabric_number,
+    supplier_id: ref.supplier_id ?? null,
+    supplier_name: ref.supplier_name ?? null,
+    composition: ref.composition ?? null,
+    weight_gsm: ref.weight_gsm ?? null,
+    width_cm: ref.width_cm ?? null,
+    color: ref.color ?? null,
+    description: ref.description ?? null,
+    source: ref.source ?? null,
+    assigned_pattern: {
+      pattern_id: pattern.id,
+      pattern_ref: pattern.pattern_ref,
+      garment_type: pattern.garment_type,
     },
   };
 }

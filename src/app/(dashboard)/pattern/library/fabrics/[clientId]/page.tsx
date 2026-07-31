@@ -11,7 +11,7 @@ export default async function ClientFabricBoardPage({
     <div>
       <PageHeader
         title="Client fabrics"
-        description="Every fabric article on this client's sales orders — preview, specs and prep status. Tick fabrics and group them into garments."
+        description="Sales-order fabrics plus pattern catalog fabrics — preview, specs and prep status. Tick SO fabrics and group them into garments."
       />
       <ClientFabricBoard clientId={clientId} />
     </div>

@@ -158,6 +158,24 @@ export interface ClientPatternVersion {
   updated_at: string;
 }
 
+/**
+ * Catalog fabric linked to a client pattern without requiring a sales-order
+ * fabric line (e.g. Mahrab pattern import). Swatches resolve via supplier
+ * image APIs using supplier_id + fabric_number.
+ */
+export interface ClientPatternFabricRef {
+  fabric_number: string;
+  supplier_id: string | null;
+  supplier_name?: string | null;
+  composition?: string | null;
+  weight_gsm?: number | null;
+  width_cm?: number | null;
+  color?: string | null;
+  description?: string | null;
+  /** Provenance marker, e.g. "mahrab-pattern". */
+  source?: string | null;
+}
+
 export interface ClientPattern {
   id: string;
   /** e.g. SS-SHIRT-LINEN-FR-REG-XXL — auto-generated, editable. */
@@ -179,6 +197,11 @@ export interface ClientPattern {
    * A fabric line belongs to at most one client pattern at a time.
    */
   linked_fabric_line_ids?: string[];
+  /**
+   * Catalog fabric numbers grouped into this garment (pattern import / reports).
+   * Shown on Pattern UI with swatches even when no SO fabric line exists.
+   */
+  linked_fabric_refs?: ClientPatternFabricRef[];
   unit: MeasurementUnit;
   versions: ClientPatternVersion[];
   final_version_id: string | null;

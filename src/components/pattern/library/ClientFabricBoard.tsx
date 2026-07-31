@@ -16,6 +16,7 @@ import {
 import type {
   ClientFabricBoard as ClientFabricBoardData,
   ClientFabricBoardRow,
+  ClientFabricCatalogRow,
   ClientFabricStatus,
 } from "@/lib/pattern-library/client-fabric-board";
 import type { BasePattern } from "@/lib/types/pattern-library";
@@ -106,11 +107,18 @@ export function ClientFabricBoard({ clientId }: { clientId: string }) {
   }, [rows]);
 
   const swatchKeys = useMemo(
-    () =>
-      (board?.rows ?? []).map((row) => ({
+    () => [
+      ...(board?.rows ?? []).map((row) => ({
         supplier_id: row.supplier_id,
         fabric_number: row.fabric_number,
       })),
+      ...(board?.catalog_rows ?? [])
+        .filter((row) => row.supplier_id)
+        .map((row) => ({
+          supplier_id: row.supplier_id!,
+          fabric_number: row.fabric_number,
+        })),
+    ],
     [board]
   );
 
@@ -168,7 +176,10 @@ export function ClientFabricBoard({ clientId }: { clientId: string }) {
             Pattern library
           </Link>
           <span className="rounded-full bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-800">
-            {board.summary.assigned}/{board.summary.total} assigned to a garment
+            {board.summary.assigned}/{board.summary.total} SO assigned
+            {(board.summary.catalog ?? 0) > 0
+              ? ` · ${board.summary.catalog} from patterns`
+              : ""}
           </span>
         </div>
 
@@ -228,6 +239,23 @@ export function ClientFabricBoard({ clientId }: { clientId: string }) {
         ) : null}
         {error ? <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p> : null}
 
+        {(board.catalog_rows ?? []).length > 0 ? (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+              Pattern catalog fabrics
+              <span className="ml-2 font-normal normal-case text-slate-400">
+                from pattern files · {board.catalog_rows.length} fabric
+                {board.catalog_rows.length === 1 ? "" : "s"}
+              </span>
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {board.catalog_rows.map((row) => (
+                <CatalogFabricCard key={`${row.supplier_id ?? ""}:${row.fabric_number}`} row={row} />
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         {orderGroups.map((group) => (
           <div key={group.so_number} className="space-y-2">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
@@ -250,7 +278,7 @@ export function ClientFabricBoard({ clientId }: { clientId: string }) {
             </div>
           </div>
         ))}
-        {rows.length === 0 ? (
+        {rows.length === 0 && (board.catalog_rows ?? []).length === 0 ? (
           <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
             {board.rows.length === 0
               ? "No fabric articles on this client's sales orders yet."
@@ -395,6 +423,50 @@ function FabricCard({
             </span>
           )}
         </button>
+      </div>
+    </div>
+  );
+}
+
+function CatalogFabricCard({ row }: { row: ClientFabricCatalogRow }) {
+  const specs = [
+    row.composition,
+    row.weight_gsm != null ? `${row.weight_gsm} gsm` : null,
+    row.width_cm != null ? `${row.width_cm} cm` : null,
+    row.color,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return (
+    <div className="flex gap-3 rounded-xl border border-teal-200 bg-white p-3 shadow-sm">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start gap-3">
+          {row.supplier_id ? (
+            <FabricSwatchPreview
+              supplierId={row.supplier_id}
+              fabricNumber={row.fabric_number}
+              className="!h-14 !w-14 shrink-0 rounded-lg [&_img]:!h-full [&_img]:!w-full [&_svg]:!h-5 [&_svg]:!w-5"
+            />
+          ) : (
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-slate-400">
+              <ImageOff className="h-5 w-5" />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="font-mono text-sm font-bold text-slate-900">{row.fabric_number}</p>
+            <p className="mt-0.5 truncate text-sm text-slate-700">
+              {row.supplier_name ?? "Catalog"}
+            </p>
+            <p className="mt-0.5 truncate text-xs text-slate-500">{specs || "No specs"}</p>
+            <Link
+              href={`/pattern/library/clients/${row.assigned_pattern.pattern_id}`}
+              className="mt-2 inline-flex max-w-full items-center gap-1 truncate rounded-full bg-teal-50 px-2.5 py-1 text-xs font-medium text-teal-800 hover:bg-teal-100"
+            >
+              <Layers className="h-3 w-3 shrink-0" />
+              {row.assigned_pattern.garment_type} · {row.assigned_pattern.pattern_ref}
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
