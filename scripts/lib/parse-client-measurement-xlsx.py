@@ -50,6 +50,141 @@ def slugify(name: str) -> str:
     return s or "point"
 
 
+def parse_md_short_sheet(path: Path, rows: list) -> dict | None:
+    """Factory MD-SHORT style: names in col E, size values under a size label (e.g. 2XL)."""
+    header_idx = None
+    for i, row in enumerate(rows):
+        cells = [clean(c) for c in (row or [])]
+        joined = " ".join(c for c in cells if c).lower()
+        if "size specifications" in joined or (
+            any(c.lower() == "size ref." for c in cells) and any("style" in c.lower() for c in cells)
+        ):
+            header_idx = i
+            break
+    if header_idx is None:
+        return None
+
+    header = rows[header_idx]
+    size_col = None
+    size_label = None
+    for j, cell in enumerate(header):
+        label = clean(cell)
+        low = label.lower()
+        if not low:
+            continue
+        if low in {"size specifications", "size ref.", "tole -/+", "tole  -/+", "grading", "model :", "model:"}:
+            continue
+        if re.fullmatch(r"[mls]|xl|xxl|xxxl|xxxxl|\d?xl|[0-9]{1,2}", low) or re.fullmatch(
+            r"[0-9]+\s*cm", low
+        ):
+            size_col = j
+            size_label = label
+            break
+    # Fallback: first column after col 7 that has numeric values in data rows
+    if size_col is None:
+        for j in range(7, max(len(r or []) for r in rows[header_idx + 1 : header_idx + 20] or [[]]) or 14):
+            nums = 0
+            for row in rows[header_idx + 1 : header_idx + 25]:
+                if j < len(row or []) and to_number((row or [])[j]) is not None:
+                    nums += 1
+            if nums >= 4:
+                size_col = j
+                size_label = clean((header[j] if j < len(header) else None) or f"col{j}")
+                break
+    if size_col is None:
+        return None
+
+    # Customer / fabric from rows above
+    name = None
+    fabric_code = None
+    pattern_ref = None
+    for row in rows[: header_idx + 1]:
+        cells = [clean(c) for c in (row or [])]
+        for j, cell in enumerate(cells):
+            low = cell.lower().rstrip(":")
+            if low.startswith("customer") and j + 1 < len(cells) and cells[j + 1]:
+                name = cells[j + 1]
+            if low in {"fabric", "fabric code", "fabric:"} and j + 1 < len(cells):
+                fabric_code = cells[j + 1] or fabric_code
+            if cell.startswith("MD-SHORT") or cell.startswith("MD-"):
+                pattern_ref = cell
+
+    points = []
+    for row in rows[header_idx + 1 :]:
+        cells = row or []
+        # Point name typically column index 4
+        point_name = ""
+        for idx in (4, 0, 1, 3):
+            if idx < len(cells):
+                candidate = clean(cells[idx])
+                if candidate and not re.fullmatch(r"[A-Z]{1,3}\d?", candidate) and to_number(candidate) is None:
+                    # skip pure letter refs like A, C, BB
+                    if idx == 4 or (idx == 0 and "waist" in candidate.lower()):
+                        point_name = candidate
+                        break
+        if not point_name:
+            # col 4 preferred even if letter-like skipped above failed
+            point_name = clean(cells[4]) if len(cells) > 4 else ""
+        if not point_name:
+            continue
+        if point_name.lower().startswith("special"):
+            break
+        # Skip letter codes mistaken as names
+        if re.fullmatch(r"[A-Z]{1,3}\d?", point_name):
+            continue
+        size_val = to_number(cells[size_col]) if size_col < len(cells) else None
+        if size_val is None:
+            continue
+        points.append(
+            {
+                "point_id": slugify(point_name),
+                "name": point_name,
+                "base_value": size_val,
+                "target_value": size_val,
+                "trial_values": {},
+                "final_value": None,
+                "remarks": None,
+            }
+        )
+
+    if not points:
+        return None
+
+    # MD-SHORT factory sheets are almost always cm (half-waist often 40-60).
+    waist = next(
+        (
+            p["base_value"]
+            for p in points
+            if p["base_value"] is not None and "waist" in p["name"].lower() and "band" not in p["name"].lower()
+        ),
+        None,
+    )
+    if waist is not None:
+        unit = "cm" if waist >= 30 else "in"
+    else:
+        vals = [p["base_value"] for p in points if p["base_value"] is not None]
+        med = sorted(vals)[len(vals) // 2] if vals else 0
+        unit = "cm" if med >= 30 else "in"
+
+    return {
+        "ok": True,
+        "path": str(path),
+        "filename": path.name,
+        "pattern_ref": pattern_ref,
+        "client_name": name,
+        "description": "MD-SHORT factory sheet",
+        "fabric_code": fabric_code,
+        "sheet_stage": "final",
+        "size_label": size_label,
+        "unit": unit,
+        "order_date": None,
+        "special_instructions": None,
+        "points": points,
+        "filled_count": sum(1 for p in points if p["base_value"] is not None),
+        "format": "md-short",
+    }
+
+
 def parse_sheet(path: Path) -> dict:
     wb = load_workbook(path, data_only=True, read_only=True)
     ws = wb[wb.sheetnames[0]]
@@ -63,11 +198,13 @@ def parse_sheet(path: Path) -> dict:
             header_idx = i
             break
     if header_idx is None:
+        md = parse_md_short_sheet(path, rows)
+        if md:
+            return md
         return {"ok": False, "error": "no measurement header", "path": str(path)}
 
     header = rows[header_idx]
-    size_col = None
-    size_label = None
+    size_candidates: list[tuple[int, str, int]] = []  # (col, label, priority)
     trial_cols: dict[int, int] = {}
     final_col = None
     remarks_col = None
@@ -85,15 +222,49 @@ def parse_sheet(path: Path) -> dict:
             trial_cols[int(m.group(1)) if m else 1] = j
         elif low in {"sewing", "sewimg", "adjustment"}:
             continue
-        elif size_col is None and (
-            low.startswith("size")
+        elif (
+            "pattern size" in low
+            or low == "client body"
+            or low.startswith("size")
             or low.startswith("r-")
             or low.startswith("l-")
             or low.startswith("s-")
             or re.fullmatch(r"[mls]|xl|xxl|xxxl|\d{2}", low)
+            # House size labels like "GL- 54", "FR- 48"
+            or re.fullmatch(r"(gl|fr|fd|ju)\s*[-_]?\s*\d{1,3}", low)
         ):
-            size_col = j
-            size_label = label
+            # Prefer pattern size / size / house size over client body when both have values
+            if "pattern size" in low or low.startswith("size"):
+                priority = 3
+            elif re.fullmatch(r"(gl|fr|fd|ju)\s*[-_]?\s*\d{1,3}", low):
+                priority = 2
+            elif low == "client body":
+                priority = 1
+            else:
+                priority = 2
+            size_candidates.append((j, label, priority))
+
+    size_col = None
+    size_label = None
+    if size_candidates:
+        # Score by how many numeric values exist under each candidate column
+        scored = []
+        for j, label, priority in size_candidates:
+            nums = 0
+            for row in rows[header_idx + 1 : header_idx + 40]:
+                cells = row or []
+                if j < len(cells) and to_number(cells[j]) is not None:
+                    nums += 1
+            scored.append((nums, priority, j, label))
+        scored.sort(key=lambda t: (t[0], t[1]), reverse=True)
+        if scored and scored[0][0] > 0:
+            size_col = scored[0][2]
+            size_label = scored[0][3]
+        else:
+            # Fall back to highest-priority header even if empty
+            size_candidates.sort(key=lambda t: t[2], reverse=True)
+            size_col = size_candidates[0][0]
+            size_label = size_candidates[0][1]
 
     # Metadata above header
     pattern_ref = None
