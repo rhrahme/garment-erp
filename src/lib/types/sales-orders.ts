@@ -60,6 +60,13 @@ export interface SalesOrderFabricLine {
     destination_client_name: string;
     meters: number;
   } | null;
+  /**
+   * QC/sales request for admin to remove a PO-locked fabric line.
+   * Cleared on reject; line is removed on approve.
+   */
+  delete_requested_at?: string | null;
+  delete_requested_by?: string | null;
+  delete_request_reason?: string | null;
 }
 
 export interface SalesOrder {

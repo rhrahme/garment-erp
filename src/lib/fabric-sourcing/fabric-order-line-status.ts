@@ -1,11 +1,16 @@
 import type { PurchaseOrder, PurchaseOrderLine } from "@/lib/types/fabric-sourcing";
 
 function hasLineLevelSentMarkers(order: PurchaseOrder): boolean {
-  return (order.lines ?? []).some((line) => Boolean(line.emailed_at));
+  return (order.lines ?? []).some((line) => !line.cancelled_at && Boolean(line.emailed_at));
+}
+
+export function isFabricOrderLineActive(line: PurchaseOrderLine): boolean {
+  return !line.cancelled_at;
 }
 
 /** True when this PO line has been included in a supplier email. */
 export function isFabricOrderLineSent(line: PurchaseOrderLine, order: PurchaseOrder): boolean {
+  if (line.cancelled_at) return false;
   if (line.emailed_at) return true;
   // Legacy POs: whole order marked sent before line-level tracking existed.
   if (order.emailed_at && !hasLineLevelSentMarkers(order)) return true;
@@ -13,11 +18,13 @@ export function isFabricOrderLineSent(line: PurchaseOrderLine, order: PurchaseOr
 }
 
 export function getPendingFabricOrderLines(order: PurchaseOrder): PurchaseOrderLine[] {
-  return (order.lines ?? []).filter((line) => !isFabricOrderLineSent(line, order));
+  return (order.lines ?? []).filter(
+    (line) => isFabricOrderLineActive(line) && !isFabricOrderLineSent(line, order)
+  );
 }
 
 export function isFabricOrderFullySent(order: PurchaseOrder): boolean {
-  const lines = order.lines ?? [];
+  const lines = (order.lines ?? []).filter(isFabricOrderLineActive);
   if (lines.length === 0) return Boolean(order.emailed_at);
   return getPendingFabricOrderLines(order).length === 0;
 }

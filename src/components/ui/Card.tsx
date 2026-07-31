@@ -3,11 +3,12 @@ import { cn } from "@/lib/utils";
 interface CardProps {
   children: React.ReactNode;
   className?: string;
+  id?: string;
 }
 
-export function Card({ children, className }: CardProps) {
+export function Card({ children, className, id }: CardProps) {
   return (
-    <div className={cn("rounded-xl border border-slate-200 bg-white shadow-sm", className)}>
+    <div id={id} className={cn("rounded-xl border border-slate-200 bg-white shadow-sm", className)}>
       {children}
     </div>
   );

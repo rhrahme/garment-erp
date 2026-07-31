@@ -9,7 +9,9 @@ import {
   Receipt,
   ArrowRightLeft,
   Camera,
+  Trash2,
 } from "lucide-react";
+import { FabricLineDeleteRequestsPanel } from "@/components/dashboard/FabricLineDeleteRequestsPanel";
 import { GarmentTypeChangesPanel } from "@/components/dashboard/GarmentTypeChangesPanel";
 import { ThreadButtonPhotosReviewPanel } from "@/components/dashboard/ThreadButtonPhotosReviewPanel";
 import { TodaysFabricPanel } from "@/components/dashboard/TodaysFabricPanel";
@@ -29,6 +31,7 @@ import { getSessionContext } from "@/lib/auth/session";
 import { countPendingAwbFabricOrders } from "@/lib/integrations/pending-awb";
 import { countUnacknowledgedGarmentTypeChanges } from "@/lib/data/garment-type-changes";
 import { countUnacknowledgedThreadButtonPhotos } from "@/lib/production/thread-button-matching";
+import { countPendingFabricLineDeleteRequests } from "@/lib/sales-orders/fabric-line-delete-requests";
 import { getTodaysFabricSummary } from "@/lib/sales-orders/todays-fabric";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
 import { formatNumber } from "@/lib/utils";
@@ -62,6 +65,9 @@ export default async function DashboardPage() {
     : 0;
   const unacknowledgedThreadButtonPhotos = session.isAdmin
     ? countUnacknowledgedThreadButtonPhotos()
+    : 0;
+  const pendingFabricLineDeleteRequests = session.isAdmin
+    ? countPendingFabricLineDeleteRequests()
     : 0;
 
   const lowStock = inventory.filter(
@@ -129,12 +135,27 @@ export default async function DashboardPage() {
             />
           </a>
         )}
+        {session.isAdmin && pendingFabricLineDeleteRequests > 0 && (
+          <a
+            href="#fabric-line-delete-requests"
+            className="block transition-opacity hover:opacity-90"
+          >
+            <StatCard
+              label="Fabric delete requests"
+              value={pendingFabricLineDeleteRequests}
+              subtext="PO-locked lines QC asked to remove"
+              icon={<Trash2 className="h-5 w-5" />}
+              accent="bg-amber-50 text-amber-700"
+            />
+          </a>
+        )}
       </div>
 
       {todaysFabricSummary && todaysFabricSummary.order_count > 0 && (
         <TodaysFabricPanel initialSummary={todaysFabricSummary} />
       )}
 
+      {session.isAdmin ? <FabricLineDeleteRequestsPanel /> : null}
       {session.isAdmin ? <GarmentTypeChangesPanel /> : null}
       {session.isAdmin ? <ThreadButtonPhotosReviewPanel /> : null}
 

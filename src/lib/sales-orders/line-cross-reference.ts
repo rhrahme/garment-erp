@@ -121,6 +121,7 @@ export function findFabricPoLineForSoFabricLine(
   for (const po of fabricPos) {
     if (po.status === "cancelled") continue;
     for (const poLine of po.lines ?? []) {
+      if (poLine.cancelled_at) continue;
       const poStickers = poLine.label_stickers ?? [];
       if (poStickers.some((sticker) => stickerCodes.has(sticker.code))) {
         return { po, poLine };

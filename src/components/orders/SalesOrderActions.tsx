@@ -26,6 +26,7 @@ import { ordersUiLabels } from "@/lib/orders/ui-labels";
 import { ProductionOrderAddFabrics } from "@/components/orders/ProductionOrderAddFabrics";
 import { OrderFabricLineEditor } from "@/components/orders/OrderFabricLineEditor";
 import { OrderFabricLineRemove } from "@/components/orders/OrderFabricLineRemove";
+import { OrderFabricLineDeleteRequest } from "@/components/orders/OrderFabricLineDeleteRequest";
 import {
   buildSoArticleMapFromFabricLines,
   formatFabricLineArticle,
@@ -150,6 +151,7 @@ export function SalesOrderActions({
   );
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [canChangeGarmentType, setCanChangeGarmentType] = useState(false);
   const [lineSort, setLineSort] = useState<FabricLineSortState | null>(null);
   const [transferLine, setTransferLine] = useState<SalesOrderFabricLine | null>(null);
@@ -173,9 +175,11 @@ export function SalesOrderActions({
         if (!res.ok) return;
         const data = (await res.json()) as {
           is_admin?: boolean;
+          email?: string | null;
           can_change_garment_type?: boolean;
         };
         setIsAdmin(Boolean(data.is_admin));
+        setSessionEmail(data.email ?? null);
         setCanChangeGarmentType(Boolean(data.can_change_garment_type));
       } catch {
         /* ignore */
@@ -261,9 +265,19 @@ export function SalesOrderActions({
   const fabricEditBlockedReason = fabricLineEditBlockedReason(liveOrder);
   const fabricsEditable = showFabricInput && fabricLinesEditable;
   const showPerLineFabricActions = showFabricInput && canAppendFabricLines(liveOrder);
+  /** QC on /orders production view - request admin delete for PO-locked lines. */
+  const showProductionDeleteRequest =
+    effectiveViewMode === "production" &&
+    (isClientManager || isAdmin) &&
+    !isTaskOperator &&
+    canAppendFabricLines(liveOrder);
 
   function isFabricLineMutable(line: SalesOrderFabricLine): boolean {
     return showFabricInput && canMutateSalesOrderFabricLine(liveOrder, line, fabricPos);
+  }
+
+  function isFabricLinePoLocked(line: SalesOrderFabricLine): boolean {
+    return !canMutateSalesOrderFabricLine(liveOrder, line, fabricPos);
   }
 
   function handleLineUpdated(updatedLine: SalesOrderFabricLine) {
@@ -753,6 +767,19 @@ export function SalesOrderActions({
                               }
                             />
                           ) : null}
+                          {showProductionDeleteRequest && isFabricLinePoLocked(line) ? (
+                            <OrderFabricLineDeleteRequest
+                              orderId={liveOrder.id}
+                              line={line}
+                              sessionEmail={sessionEmail}
+                              isAdmin={isAdmin}
+                              productionMode={isClientManager}
+                              patternMismatch={patternMismatch}
+                              patternJobsForLine={patternJobsByLineId[line.id] ?? 0}
+                              onOrderUpdated={setLiveOrder}
+                              onLineRemoved={handleLineRemoved}
+                            />
+                          ) : null}
                           {line.transfer_inbound ? (
                             <p className="text-xs text-amber-800">
                               From transfer ({line.transfer_inbound.source_so_number})
@@ -969,7 +996,21 @@ export function SalesOrderActions({
                                 onLineRemoved={handleLineRemoved}
                               />
                             </div>
-                          ) : null}
+                          ) : (
+                            <div className="flex flex-col items-end gap-2">
+                              <OrderFabricLineDeleteRequest
+                                orderId={liveOrder.id}
+                                line={line}
+                                sessionEmail={sessionEmail}
+                                isAdmin={isAdmin}
+                                productionMode={isClientManager}
+                                patternMismatch={patternMismatch}
+                                patternJobsForLine={patternJobsByLineId[line.id] ?? 0}
+                                onOrderUpdated={setLiveOrder}
+                                onLineRemoved={handleLineRemoved}
+                              />
+                            </div>
+                          )}
                           {canTransferFabricLines && !line.transfer_inbound ? (
                             <div className="mt-2 flex justify-end">
                               <Button
@@ -1175,7 +1216,21 @@ export function SalesOrderActions({
                                 onLineRemoved={handleLineRemoved}
                               />
                             </div>
-                          ) : null}
+                          ) : (
+                            <div className="flex flex-col items-end gap-2">
+                              <OrderFabricLineDeleteRequest
+                                orderId={liveOrder.id}
+                                line={line}
+                                sessionEmail={sessionEmail}
+                                isAdmin={isAdmin}
+                                productionMode={isClientManager}
+                                patternMismatch={patternMismatch}
+                                patternJobsForLine={patternJobsByLineId[line.id] ?? 0}
+                                onOrderUpdated={setLiveOrder}
+                                onLineRemoved={handleLineRemoved}
+                              />
+                            </div>
+                          )}
                           {canTransferFabricLines && !line.transfer_inbound ? (
                             <div className="mt-2 flex justify-end">
                               <Button

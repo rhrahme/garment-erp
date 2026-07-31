@@ -98,6 +98,12 @@ export interface PurchaseOrderLine {
   availability_note?: string | null;
   substitute_fabric_number?: string | null;
   supplier_fabric?: SupplierFabric;
+  /**
+   * Soft-cancel when admin removes a mistaken SO fabric line that was already
+   * on an emailed PO. Line stays for audit; excluded from active matching.
+   */
+  cancelled_at?: string | null;
+  cancelled_reason?: string | null;
 }
 
 export interface PurchaseOrder {
