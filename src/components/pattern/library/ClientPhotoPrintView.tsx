@@ -68,11 +68,11 @@ export function ClientPhotoPrintView({
             Back to {patternRef}
           </Link>
           <p className="mt-1 text-xs text-slate-500">
-            A4 portrait · Client wearing photos
-            {clientName ? ` · ${clientName}` : ""}
-            {` · ${printable.length} image${printable.length === 1 ? "" : "s"}`}
+            A4 portrait - Client wearing photos
+            {clientName ? ` - ${clientName}` : ""}
+            {` - ${printable.length} image${printable.length === 1 ? "" : "s"}`}
             {skippedVideos > 0
-              ? ` · ${skippedVideos} video${skippedVideos === 1 ? "" : "s"} skipped`
+              ? ` - ${skippedVideos} video${skippedVideos === 1 ? "" : "s"} skipped`
               : ""}
           </p>
         </div>
