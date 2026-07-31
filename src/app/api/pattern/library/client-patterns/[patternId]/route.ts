@@ -8,7 +8,10 @@ import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readPatternJobs } from "@/lib/data/pattern-jobs";
 import { formatBasePatternDisplayName } from "@/lib/pattern-library/derived-from";
 import { resolveMarkerFabricWidthAsync } from "@/lib/pattern-library/marker-layout";
-import { updateClientPattern } from "@/lib/pattern-library/mutations";
+import {
+  seedMarkerLayoutIfMissing,
+  updateClientPattern,
+} from "@/lib/pattern-library/mutations";
 
 export async function GET(_request: Request, context: { params: Promise<{ patternId: string }> }) {
   try {
@@ -17,13 +20,21 @@ export async function GET(_request: Request, context: { params: Promise<{ patter
       return NextResponse.json({ error: "Pattern access required." }, { status: 403 });
     }
     await ensurePatternLibraryLoaded();
-    await ensureDocumentsLoaded(["pattern_jobs"]);
+    await ensureDocumentsLoaded(["pattern_jobs", "sales_orders"]);
     const { patternId } = await context.params;
-    const library = await readPatternLibraryFresh();
-    const pattern = library.client_patterns.find((candidate) => candidate.id === patternId) ?? null;
+
+    // Existing TUDs: fill width/marker layout on open (no re-upload).
+    const seeded = await seedMarkerLayoutIfMissing(patternId, { notify: false });
+    const pattern = seeded.ok
+      ? seeded.pattern
+      : (await readPatternLibraryFresh()).client_patterns.find(
+          (candidate) => candidate.id === patternId
+        ) ?? null;
     if (!pattern) {
       return NextResponse.json({ error: "Client pattern not found." }, { status: 404 });
     }
+
+    const library = await readPatternLibraryFresh();
     const linkedBase = pattern.base_pattern_id
       ? library.base_patterns.find((candidate) => candidate.id === pattern.base_pattern_id) ?? null
       : null;
@@ -48,6 +59,7 @@ export async function GET(_request: Request, context: { params: Promise<{ patter
       linked_jobs: linkedJobs,
       suggested_fabric_width_cm: widthSuggestion?.width_cm ?? null,
       suggested_fabric_width_source: widthSuggestion?.source ?? null,
+      marker_backfilled: seeded.ok ? seeded.changed : false,
       base: linkedBase
         ? {
             id: linkedBase.id,

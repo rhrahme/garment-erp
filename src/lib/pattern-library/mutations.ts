@@ -5,13 +5,19 @@ import {
   normalizePatternSheetGarment,
 } from "@/lib/pattern-library/base-pattern-picker";
 import { readPatternLibraryFresh, writePatternLibrary } from "@/lib/data/pattern-library";
-import { readSalesOrders } from "@/lib/data/sales-orders";
+import { readPatternJobsFresh } from "@/lib/data/pattern-jobs";
+import { readSalesOrders, readSalesOrdersFresh } from "@/lib/data/sales-orders";
 import { applyFabricLineAssignment } from "@/lib/pattern-library/client-fabric-board";
 import {
   applyMarkerLayoutSeed,
   resolveMarkerFabricWidthAsync,
   sanitizeMarkerLayout,
 } from "@/lib/pattern-library/marker-layout";
+import {
+  backfillMarkerLayoutForPattern,
+  backfillMarkerLayoutsForPatterns,
+  patternNeedsMarkerBackfill,
+} from "@/lib/pattern-library/marker-layout-backfill";
 import { generatePatternRef } from "@/lib/pattern-library/refs";
 import {
   fillMeasurementsFromBase,
@@ -1300,5 +1306,138 @@ export async function applyTudSizeFill(
     base_size: baseSize,
     filled_points: outcome.filled_points,
     added_points: outcome.added_points,
+  };
+}
+
+/**
+ * Opportunistic seed for one pattern that already has a TUD (no re-upload).
+ * Persists when width/layout can be filled from fabric/SO/job.
+ */
+export async function seedMarkerLayoutIfMissing(
+  patternId: string,
+  options: { notify?: boolean } = {}
+): Promise<Ok<{ pattern: ClientPattern; changed: boolean }> | Err> {
+  const store = await readPatternLibraryFresh();
+  const index = store.client_patterns.findIndex((pattern) => pattern.id === patternId);
+  if (index < 0) return { ok: false, status: 404, error: "Client pattern not found." };
+
+  const existing = store.client_patterns[index]!;
+  if (!patternNeedsMarkerBackfill(existing)) {
+    return { ok: true, pattern: existing, changed: false };
+  }
+
+  const [salesOrders, jobsStore] = await Promise.all([
+    readSalesOrdersFresh(),
+    readPatternJobsFresh(),
+  ]);
+  const jobHint =
+    jobsStore.jobs.find(
+      (job) =>
+        job.client_pattern_id === patternId &&
+        typeof job.width_cm === "number" &&
+        job.width_cm > 0
+    )?.width_cm ?? null;
+
+  const result = backfillMarkerLayoutForPattern(existing, {
+    updated_at: now(),
+    hints: [jobHint],
+    salesOrders: salesOrders.orders,
+  });
+
+  if (!result.changed) {
+    return { ok: true, pattern: existing, changed: false };
+  }
+
+  const next = { ...result.pattern, updated_at: now() };
+  store.client_patterns[index] = next;
+  await writePatternLibrary(store);
+
+  if (options.notify !== false && next.marker_layout) {
+    await notifyIntegration("client_pattern.marker_layout_saved", {
+      id: next.id,
+      pattern_ref: next.pattern_ref,
+      client_id: next.client_id,
+      size: next.marker_layout.size,
+      garment_qty: next.marker_layout.garment_qty,
+      fabric_width_cm: next.marker_layout.fabric_width_cm,
+      double_fold: next.marker_layout.double_fold,
+      packed_length_m: next.marker_layout.packed_length_m,
+      efficiency_pct: next.marker_layout.efficiency_pct,
+      placement_count: next.marker_layout.placements.length,
+      source: next.marker_layout.source,
+      updated_by: "marker-backfill",
+    });
+  }
+
+  return { ok: true, pattern: next, changed: true };
+}
+
+/** Batch backfill for all client patterns that already have TUD metadata. */
+export async function seedMissingMarkerLayoutsForLibrary(
+  options: { notify?: boolean } = {}
+): Promise<
+  Ok<{
+    seeded_layout: number;
+    filled_width: number;
+    skipped_no_tud: number;
+    skipped_no_width: number;
+    unchanged: number;
+  }>
+> {
+  const store = await readPatternLibraryFresh();
+  const [salesOrders, jobsStore] = await Promise.all([
+    readSalesOrdersFresh(),
+    readPatternJobsFresh(),
+  ]);
+
+  const hintsByPatternId: Record<string, Array<number | null | undefined>> = {};
+  for (const job of jobsStore.jobs) {
+    if (!job.client_pattern_id) continue;
+    if (!(typeof job.width_cm === "number" && job.width_cm > 0)) continue;
+    const list = hintsByPatternId[job.client_pattern_id] ?? [];
+    list.push(job.width_cm);
+    hintsByPatternId[job.client_pattern_id] = list;
+  }
+
+  const summary = backfillMarkerLayoutsForPatterns(store.client_patterns, {
+    updated_at: now(),
+    salesOrders: salesOrders.orders,
+    hintsByPatternId,
+  });
+
+  const changed =
+    summary.seeded_layout > 0 ||
+    summary.filled_width > 0 ||
+    summary.patterns.some(
+      (pattern, i) =>
+        pattern.marker_layout !== store.client_patterns[i]?.marker_layout ||
+        pattern.marker_fabric_width_cm !== store.client_patterns[i]?.marker_fabric_width_cm ||
+        pattern.marker_double_fold !== store.client_patterns[i]?.marker_double_fold
+    );
+
+  if (changed) {
+    store.client_patterns = summary.patterns.map((pattern) => ({
+      ...pattern,
+      updated_at: pattern.updated_at || now(),
+    }));
+    await writePatternLibrary(store);
+  }
+
+  if (options.notify !== false && summary.seeded_layout > 0) {
+    await notifyIntegration("client_pattern.marker_layout_saved", {
+      action: "marker_backfill_batch",
+      seeded_layout: summary.seeded_layout,
+      filled_width: summary.filled_width,
+      skipped_no_width: summary.skipped_no_width,
+    });
+  }
+
+  return {
+    ok: true,
+    seeded_layout: summary.seeded_layout,
+    filled_width: summary.filled_width,
+    skipped_no_tud: summary.skipped_no_tud,
+    skipped_no_width: summary.skipped_no_width,
+    unchanged: summary.unchanged,
   };
 }

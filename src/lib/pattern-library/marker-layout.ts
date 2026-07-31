@@ -265,7 +265,9 @@ export function buildAutoMarkerLayout(
 
   const pieces =
     options.requiredPieceNames ?? getGarmentPieces(pattern.garment_type);
-  const tud = collectNestTudMetadata(pattern, pieces);
+  // Multi-piece garments may still have one unscoped TUD - fall back to active file.
+  const tud =
+    collectNestTudMetadata(pattern, pieces) ?? collectNestTudMetadata(pattern, []);
   if (!tud) return null;
 
   const { double_fold } = resolveMarkerDoubleFold(pattern);
