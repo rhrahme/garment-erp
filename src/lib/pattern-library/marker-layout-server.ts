@@ -1,5 +1,3 @@
-import "server-only";
-
 import { readSalesOrdersFresh } from "@/lib/data/sales-orders";
 import {
   resolveMarkerFabricWidthDetails,
