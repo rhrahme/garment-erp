@@ -7,7 +7,7 @@ import {
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readPatternJobs } from "@/lib/data/pattern-jobs";
 import { formatBasePatternDisplayName } from "@/lib/pattern-library/derived-from";
-import { resolveMarkerFabricWidthAsync } from "@/lib/pattern-library/marker-layout";
+import { resolveMarkerFabricWidthAsync } from "@/lib/pattern-library/marker-layout-server";
 import {
   seedMarkerLayoutIfMissing,
   updateClientPattern,

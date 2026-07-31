@@ -106,22 +106,6 @@ export function resolveMarkerFabricWidthDetails(
   return null;
 }
 
-/** Server helper: also loads sales orders when linked lines exist. */
-export async function resolveMarkerFabricWidthAsync(
-  pattern: ClientPattern,
-  options: { hints?: Array<number | null | undefined> } = {}
-): Promise<{ width_cm: number; source: MarkerFabricWidthSource } | null> {
-  const sync = resolveMarkerFabricWidthDetails(pattern, { hints: options.hints });
-  if (sync) return sync;
-  if (!(pattern.linked_fabric_line_ids?.length)) return null;
-  const { readSalesOrdersFresh } = await import("@/lib/data/sales-orders");
-  const store = await readSalesOrdersFresh();
-  return resolveMarkerFabricWidthDetails(pattern, {
-    hints: options.hints,
-    salesOrders: store.orders,
-  });
-}
-
 /** Shop default: double fold when Pattern has not answered. */
 export function resolveMarkerDoubleFold(pattern: ClientPattern): {
   double_fold: boolean;

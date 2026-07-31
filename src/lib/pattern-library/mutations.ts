@@ -10,9 +10,9 @@ import { readSalesOrders, readSalesOrdersFresh } from "@/lib/data/sales-orders";
 import { applyFabricLineAssignment } from "@/lib/pattern-library/client-fabric-board";
 import {
   applyMarkerLayoutSeed,
-  resolveMarkerFabricWidthAsync,
   sanitizeMarkerLayout,
 } from "@/lib/pattern-library/marker-layout";
+import { resolveMarkerFabricWidthAsync } from "@/lib/pattern-library/marker-layout-server";
 import {
   backfillMarkerLayoutForPattern,
   backfillMarkerLayoutsForPatterns,
