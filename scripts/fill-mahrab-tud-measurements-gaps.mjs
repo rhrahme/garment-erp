@@ -1136,7 +1136,7 @@ async function main() {
     if (dirtyJobs) await persistJobs();
     console.log("Persisted pattern_library (+ jobs if linked) to Supabase.");
   } else {
-    console.log("\n(dry-run � no uploads/fills)");
+    console.log("\n(dry-run -- no uploads/fills)");
   }
 
   // Reclassify remaining gaps after apply (from in-memory store)
