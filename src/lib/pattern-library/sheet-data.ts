@@ -7,6 +7,10 @@ import path from "path";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import type { PatternJob } from "@/lib/types/pattern";
 import {
+  buildCutNestPreview,
+  type CutNestPreview,
+} from "@/lib/pattern-library/cut-nest-preview";
+import {
   CUSTOM_PATTERN_ORIGIN,
   formatBasePatternDisplayName,
 } from "@/lib/pattern-library/derived-from";
@@ -62,6 +66,8 @@ export interface PatternSheetData {
   base_fill_warning: string | null;
   /** Size column used for the fill (base's own spelling after 2XL↔XXL match). */
   resolved_base_size: string | null;
+  /** Approximate cut nest for the cutter handoff (folded fabric placement). */
+  cut_nest: CutNestPreview;
 }
 
 function readSalesOrdersFile(): { orders: SalesOrder[] } {
@@ -262,6 +268,11 @@ export async function buildPatternSheetData(
     if (stickers.length > 0 || fabric) break;
   }
 
+  const cut_nest = buildCutNestPreview(pattern, fabric?.width_cm ?? job?.width_cm ?? null, {
+    size: filled.resolved_base_size ?? pattern.base_size,
+    garmentQty: 1,
+  });
+
   return {
     pattern,
     version,
@@ -274,5 +285,6 @@ export async function buildPatternSheetData(
     house_brand: resolveSheetHouseBrand(pattern, base),
     base_fill_warning: filled.base_fill_warning,
     resolved_base_size: filled.resolved_base_size,
+    cut_nest,
   };
 }

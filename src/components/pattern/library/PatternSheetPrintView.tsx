@@ -18,6 +18,7 @@ const SHEET_PRINT_CSS = `
   .pattern-sheet table { page-break-inside: auto; }
   .pattern-sheet tr { page-break-inside: avoid; }
   .mfg-qr-block { page-break-inside: avoid; }
+  .cut-nest-block { page-break-inside: avoid; }
   .pattern-sheet-page { break-after: page; page-break-after: always; }
   .pattern-sheet-page:last-child { break-after: auto; page-break-after: auto; }
 }
@@ -47,7 +48,119 @@ type SheetPageProps = {
   pageTotal: number;
 };
 
-/** One A4 page — shared sheet info + at most one piece manufacturing QR. */
+const NEST_COLORS = [
+  "#f9a8d4",
+  "#99f6e4",
+  "#fde68a",
+  "#c4b5fd",
+  "#fda4af",
+  "#a5b4fc",
+];
+
+function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
+  const preview = data.cut_nest;
+  if (!preview.nest) {
+    return (
+      <div className="mt-4 rounded-lg border border-slate-300 bg-slate-50 p-3">
+        <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
+          Cut nest preview (for cutter)
+        </p>
+        <p className="mt-1 text-sm text-slate-600">
+          {preview.missing_reason ?? "Upload TUD + set fabric width for cut nest preview."}
+        </p>
+      </div>
+    );
+  }
+
+  const nest = preview.nest;
+  const lengthCm = Math.max(
+    nest.packed_length_m * 100,
+    ...nest.placements.map((p) => p.x_cm + p.width_cm),
+    1
+  );
+  const usableW = Math.max(nest.usable_width_cm, 1);
+  const viewW = 640;
+  const viewH = Math.max(96, Math.round((viewW * usableW) / lengthCm));
+  const scaleX = viewW / lengthCm;
+  const scaleY = viewH / usableW;
+  const colorByName = new Map<string, string>();
+  let colorIdx = 0;
+  for (const p of nest.placements) {
+    if (!colorByName.has(p.name)) {
+      colorByName.set(p.name, NEST_COLORS[colorIdx % NEST_COLORS.length]!);
+      colorIdx += 1;
+    }
+  }
+  const foldLabel = nest.double_fold
+    ? preview.fold_assumed
+      ? "Double fold assumed (shop default)"
+      : "Double fold"
+    : "Open width";
+
+  return (
+    <div className="cut-nest-block mt-4 rounded-lg border border-slate-300 bg-slate-50 p-3">
+      <p className="text-xs font-bold uppercase tracking-wide text-slate-900">
+        Cut nest preview (for cutter)
+      </p>
+      <p className="mt-0.5 text-[11px] text-slate-600">
+        {foldLabel} - usable {nest.usable_width_cm} cm of {nest.fabric_width_cm} cm · est.{" "}
+        {nest.estimated_length_m.toFixed(2)} m · size {nest.size}
+      </p>
+      <p className="text-[11px] text-slate-600">
+        Fold fabric, place printed pattern parts on the fold, then cut. Approximate from TUD areas
+        - not TUKAmark.
+      </p>
+      <div className="mt-2 overflow-x-auto rounded border border-slate-300 bg-slate-200 p-1">
+        <svg
+          viewBox={`0 0 ${viewW} ${viewH}`}
+          className="h-auto w-full min-w-[280px]"
+          role="img"
+          aria-label="Approximate folded fabric nest layout"
+        >
+          <rect x={0} y={0} width={viewW} height={viewH} fill="#cbd5e1" />
+          {nest.placements.map((p) => {
+            const x = p.x_cm * scaleX;
+            const y = p.y_cm * scaleY;
+            const w = Math.max(p.width_cm * scaleX, 2);
+            const h = Math.max(p.height_cm * scaleY, 2);
+            return (
+              <g key={p.id}>
+                <rect
+                  x={x}
+                  y={y}
+                  width={w}
+                  height={h}
+                  fill={colorByName.get(p.name) ?? "#f9a8d4"}
+                  stroke="#0f172a"
+                  strokeWidth={1}
+                  opacity={0.92}
+                />
+                {w > 28 && h > 12 ? (
+                  <text
+                    x={x + w / 2}
+                    y={y + h / 2}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize={Math.min(11, h * 0.4)}
+                    fill="#0f172a"
+                  >
+                    {p.name}
+                  </text>
+                ) : null}
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+      <p className="mt-1 text-[11px] text-slate-500">
+        Packed length {nest.packed_length_m.toFixed(2)} m · {nest.placements.length} piece rects ·
+        efficiency ~{nest.efficiency_pct.toFixed(0)}%
+      </p>
+    </div>
+  );
+}
+
+/** One A4 page - shared sheet info + cut nest + floor scan QR. */
 function PatternSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProps) {
   const {
     pattern,
@@ -94,7 +207,7 @@ function PatternSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProp
               {house_brand.name ?? "House brand"}
             </p>
           </div>
-          {/* Pattern archive QR - opens library record (not a floor scan code) */}
+          {/* Pattern library QR - archive deep link (not the floor scan code) */}
           <div className="text-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -102,7 +215,10 @@ function PatternSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProp
               alt={patternQrLabel}
               className="h-20 w-20"
             />
-            <p className="mt-0.5 max-w-24 break-all font-mono text-[8px] leading-tight">
+            <p className="mt-0.5 text-[8px] font-bold uppercase tracking-wide text-slate-500">
+              Pattern library
+            </p>
+            <p className="max-w-24 break-all font-mono text-[8px] leading-tight">
               {patternQrLabel}
             </p>
           </div>
@@ -191,14 +307,16 @@ function PatternSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProp
         )}
       </div>
 
-      {/* Manufacturing scan QR - this piece only */}
+      <CutNestPreviewBlock data={data} />
+
+      {/* Cutting / floor scan QR - this piece only */}
       {sticker ? (
         <div className="mfg-qr-block mt-4 rounded-lg border-2 border-slate-900 p-3">
           <p className="text-xs font-bold uppercase tracking-wide text-slate-900">
-            Manufacturing scan QR — {piecePageLabel(sticker)}
+            Cutting / floor scan QR — {piecePageLabel(sticker)}
           </p>
           <p className="mt-0.5 text-[11px] text-slate-600">
-            Pattern, cutter, and stitchers: scan this piece QR at each step (same code as stickers).
+            Handoff to cutting: cutter scans at cut; stitchers scan later (same code as stickers).
           </p>
           <div className="mt-3 flex justify-center">
             <div className="flex w-[7.5rem] flex-col items-center text-center">

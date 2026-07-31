@@ -78,6 +78,7 @@ function sheet(overrides: Partial<PatternSheetData> = {}): PatternSheetData {
     house_brand: { code: "FR", name: "Fouad Rahme" },
     base_fill_warning: null,
     resolved_base_size: "M",
+    cut_nest: { nest: null, fold_assumed: false, missing_reason: null },
     ...overrides,
   };
 }

@@ -57,10 +57,19 @@ async function drawPatternSheetPage(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(15);
   doc.text("PATTERN MEASUREMENT SHEET", MARGIN, MARGIN + 5);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(...SLATE);
+  doc.text(
+    "Cutting handoff - fold fabric, place parts, cut, then scan floor QR",
+    MARGIN,
+    MARGIN + 9.5
+  );
+  doc.setTextColor(...INK);
   doc.setFont("courier", "bold");
   doc.setFontSize(11);
-  doc.text(pattern.pattern_ref, MARGIN, MARGIN + 12);
-  let titleExtraY = MARGIN + 12;
+  doc.text(pattern.pattern_ref, MARGIN, MARGIN + 16);
+  let titleExtraY = MARGIN + 16;
   if (job?.pattern_code) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
@@ -94,7 +103,7 @@ async function drawPatternSheetPage(
   doc.setFontSize(6.5);
   doc.text(brandName.toUpperCase(), brandX + brandW / 2, MARGIN + 13, { align: "center" });
 
-  // Fixed pattern QR (always) - next to house-brand letterhead
+  // Pattern library QR (archive deep link) - not the floor scan code
   const patternQrX = PAGE_W - MARGIN - patternQrSize;
   doc.addImage(
     `data:image/png;base64,${patternQrPng.toString("base64")}`,
@@ -104,11 +113,17 @@ async function drawPatternSheetPage(
     patternQrSize,
     patternQrSize
   );
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(4);
+  doc.setTextColor(...SLATE);
+  doc.text("PATTERN LIBRARY", patternQrX + patternQrSize / 2, MARGIN + patternQrSize + 2, {
+    align: "center",
+  });
   doc.setFont("courier", "normal");
-  doc.setFontSize(4.5);
+  doc.setFontSize(4);
   doc.setTextColor(...INK);
   const patternLabelLines = doc.splitTextToSize(patternQrLabel, patternQrSize + 6);
-  doc.text(patternLabelLines, patternQrX + patternQrSize / 2, MARGIN + patternQrSize + 2, {
+  doc.text(patternLabelLines, patternQrX + patternQrSize / 2, MARGIN + patternQrSize + 4.5, {
     align: "center",
   });
 
@@ -195,7 +210,10 @@ async function drawPatternSheetPage(
   });
   y += fabricBoxH + 4;
 
-  // Manufacturing scan QR - this piece only
+  // Cut nest preview for cutter (folded fabric placement)
+  y = drawCutNestPreview(doc, data, y);
+
+  // Manufacturing scan QR - this piece only (cutter / floor stages)
   if (sticker) {
     const qrSize = 28;
     const labelH = 10;
@@ -207,7 +225,7 @@ async function drawPatternSheetPage(
     doc.setFontSize(7);
     doc.setTextColor(...INK);
     doc.text(
-      `MANUFACTURING SCAN QR - ${piecePageLabel(sticker).toUpperCase()}`,
+      `CUTTING / FLOOR SCAN QR - ${piecePageLabel(sticker).toUpperCase()}`,
       MARGIN + 3,
       y + 4
     );
@@ -215,7 +233,7 @@ async function drawPatternSheetPage(
     doc.setFontSize(5.5);
     doc.setTextColor(...SLATE);
     doc.text(
-      "Pattern / cutter / stitchers: scan this piece QR at each step",
+      "Handoff to cutting: cutter scans at cut; stitchers scan later (same as stickers)",
       MARGIN + 3,
       y + 7.5
     );
@@ -319,6 +337,124 @@ async function drawPatternSheetPage(
   ];
   if (sticker) footerBits.push(sticker.production_code);
   doc.text(footerBits.join(" · "), MARGIN, footerY + 2);
+}
+
+/** Draw approximate folded-fabric nest for the cutter. Returns next Y. */
+function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number): number {
+  const preview = data.cut_nest;
+  const boxW = PAGE_W - MARGIN * 2;
+  let y = startY;
+
+  doc.setDrawColor(100, 116, 139);
+  doc.setLineWidth(0.35);
+
+  if (!preview.nest) {
+    const msg =
+      preview.missing_reason ?? "Upload TUD + set fabric width for cut nest preview.";
+    const lines = doc.splitTextToSize(msg, boxW - 6);
+    const boxH = 8 + lines.length * 3.5;
+    doc.setFillColor(248, 250, 252);
+    doc.rect(MARGIN, y, boxW, boxH, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(...SLATE);
+    doc.text("CUT NEST PREVIEW (FOR CUTTER)", MARGIN + 3, y + 4);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(...INK);
+    doc.text(lines, MARGIN + 3, y + 8);
+    return y + boxH + 4;
+  }
+
+  const nest = preview.nest;
+  const lengthCm = Math.max(
+    nest.packed_length_m * 100,
+    ...nest.placements.map((p) => p.x_cm + p.width_cm),
+    1
+  );
+  const usableW = Math.max(nest.usable_width_cm, 1);
+  const mapW = boxW - 6;
+  const mapH = Math.min(42, Math.max(22, (mapW * usableW) / lengthCm));
+  const headerH = 14;
+  const footerH = 8;
+  const boxH = headerH + mapH + footerH + 4;
+
+  doc.setFillColor(248, 250, 252);
+  doc.rect(MARGIN, y, boxW, boxH, "FD");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(...INK);
+  doc.text("CUT NEST PREVIEW (FOR CUTTER)", MARGIN + 3, y + 4);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.5);
+  doc.setTextColor(...SLATE);
+  const foldLabel = nest.double_fold
+    ? preview.fold_assumed
+      ? "Double fold assumed (shop default)"
+      : "Double fold"
+    : "Open width";
+  doc.text(
+    `${foldLabel} - usable ${nest.usable_width_cm} cm of ${nest.fabric_width_cm} cm · est. ${nest.estimated_length_m.toFixed(2)} m · size ${nest.size}`,
+    MARGIN + 3,
+    y + 8
+  );
+  doc.text(
+    "Fold fabric, place printed pattern parts on the fold, then cut. Approximate from TUD areas - not TUKAmark.",
+    MARGIN + 3,
+    y + 11.5
+  );
+
+  const mapX = MARGIN + 3;
+  const mapY = y + headerH;
+  doc.setFillColor(203, 213, 225);
+  doc.setDrawColor(51, 65, 85);
+  doc.rect(mapX, mapY, mapW, mapH, "FD");
+
+  const scaleX = mapW / lengthCm;
+  const scaleY = mapH / usableW;
+  const fills: Array<[number, number, number]> = [
+    [249, 168, 212],
+    [153, 246, 228],
+    [253, 230, 138],
+    [196, 181, 253],
+    [253, 164, 175],
+    [165, 180, 252],
+  ];
+  const colorByName = new Map<string, [number, number, number]>();
+  let colorIdx = 0;
+
+  for (const p of nest.placements) {
+    if (!colorByName.has(p.name)) {
+      colorByName.set(p.name, fills[colorIdx % fills.length]!);
+      colorIdx += 1;
+    }
+    const fill = colorByName.get(p.name)!;
+    const rx = mapX + p.x_cm * scaleX;
+    const ry = mapY + p.y_cm * scaleY;
+    const rw = Math.max(p.width_cm * scaleX, 1.2);
+    const rh = Math.max(p.height_cm * scaleY, 1.2);
+    doc.setFillColor(...fill);
+    doc.setDrawColor(15, 23, 42);
+    doc.setLineWidth(0.2);
+    doc.rect(rx, ry, rw, rh, "FD");
+    if (rw > 10 && rh > 4) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(5);
+      doc.setTextColor(...INK);
+      doc.text(p.name, rx + rw / 2, ry + rh / 2 + 0.8, { align: "center" });
+    }
+  }
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6);
+  doc.setTextColor(...SLATE);
+  doc.text(
+    `Packed length ${nest.packed_length_m.toFixed(2)} m · ${nest.placements.length} piece rects · efficiency ~${nest.efficiency_pct.toFixed(0)}%`,
+    MARGIN + 3,
+    y + headerH + mapH + 4
+  );
+
+  return y + boxH + 4;
 }
 
 /** A4 portrait client-pattern measurement sheet - one page per manufacturing piece. */
