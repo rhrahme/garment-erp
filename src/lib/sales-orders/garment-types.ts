@@ -1,5 +1,6 @@
 export const GARMENT_STITCH_TYPES = [
   "Suit",
+  "Suit+Vest",
   "Jacket",
   "Vest",
   "Trouser",
@@ -30,6 +31,7 @@ export function isGarmentStitchType(value: string): value is GarmentStitchType {
 /** Labels the fabric factory must attach — one per garment piece (e.g. suit = jacket + trouser). */
 export const GARMENT_LABEL_COUNTS: Record<GarmentStitchType, number> = {
   Suit: 2,
+  "Suit+Vest": 3,
   Jacket: 1,
   Vest: 1,
   Trouser: 1,

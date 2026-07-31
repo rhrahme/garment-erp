@@ -1,5 +1,5 @@
 import {
-  productionCodeFromSticker,
+  pieceProductionCodeFromSticker,
   supplierFabricProductionCode,
 } from "@/lib/sales-orders/label-codes";
 import { qrScanPayload } from "@/lib/production/qr-labels";
@@ -17,11 +17,15 @@ export type ManufacturingStickerQr = {
   qr_payload: string;
   /** Piece stickers (cutting/sewing) vs fabric-cut prep (receive/wash). */
   role: "piece" | "prep";
+  /** 1-based piece index when multi-piece (Jacket = 1). */
+  piece_index: number | null;
+  /** Total pieces on the line (2 for Suit, 3 for Suit+Vest). */
+  piece_total: number | null;
 };
 
 /**
  * Piece QRs for a fabric line - same encoding as sticker print / pattern sheet.
- * Suit -> Jacket + Trouser; single-piece -> one sticker.
+ * Suit -> Jacket-1/2 + Trouser-2/2; Suit+Vest -> JKT-1/3, VST-2/3, TR-3/3.
  */
 export function pieceStickersForFabricLine(
   line: SalesOrderFabricLine,
@@ -30,15 +34,18 @@ export function pieceStickersForFabricLine(
   const stickers = [...(line.label_stickers ?? [])].sort(
     (a, b) => (a.sequence ?? 0) - (b.sequence ?? 0)
   );
+  const total = stickers.length;
 
-  return stickers.map((sticker) => {
-    const production_code = productionCodeFromSticker(sticker.code, clientCode);
+  return stickers.map((sticker, index) => {
+    const production_code = pieceProductionCodeFromSticker(sticker, clientCode, stickers);
     return {
       code: sticker.code,
       piece_name: sticker.piece_name,
       production_code,
       qr_payload: qrScanPayload(production_code),
       role: "piece" as const,
+      piece_index: total > 1 ? index + 1 : null,
+      piece_total: total > 1 ? total : null,
     };
   });
 }
@@ -61,6 +68,8 @@ export function fabricCutStickerForFabricLine(
     production_code,
     qr_payload: qrScanPayload(production_code),
     role: "prep",
+    piece_index: null,
+    piece_total: null,
   };
 }
 

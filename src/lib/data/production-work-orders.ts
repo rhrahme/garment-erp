@@ -1,7 +1,11 @@
 import path from "path";
 import { readJsonFile, readJsonFileAsync, readJsonFileFreshAsync, saveDocument } from "@/lib/data/document-persistence";
 import type { ProductionWorkOrder, ProductionWorkOrdersFile } from "@/lib/types/production";
-import { productionCodeFromSticker, supplierFabricProductionCode } from "@/lib/sales-orders/label-codes";
+import {
+  codesMatchAllowingPieceIndex,
+  productionCodeFromSticker,
+  supplierFabricProductionCode,
+} from "@/lib/sales-orders/label-codes";
 
 const STORE_PATH = path.join(process.cwd(), "src/data/production-work-orders.json");
 const EMPTY_PRODUCTION_WORK_ORDERS: ProductionWorkOrdersFile = { updated_at: null, work_orders: [] };
@@ -31,10 +35,9 @@ export async function writeProductionWorkOrders(
 export function getProductionWorkOrderBySticker(stickerCode: string): ProductionWorkOrder | undefined {
   const normalized = stickerCode.trim().toUpperCase();
   return readProductionWorkOrders().work_orders.find((order) => {
-    if (order.sticker_code.toUpperCase() === normalized) return true;
-    if (productionCodeFromSticker(order.sticker_code, order.client_code).toUpperCase() === normalized) {
-      return true;
-    }
+    if (codesMatchAllowingPieceIndex(order.sticker_code, normalized)) return true;
+    const production = productionCodeFromSticker(order.sticker_code, order.client_code).toUpperCase();
+    if (codesMatchAllowingPieceIndex(production, normalized)) return true;
     return supplierFabricProductionCode(order.sticker_code, order.client_code).toUpperCase() === normalized;
   });
 }

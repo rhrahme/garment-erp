@@ -491,7 +491,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
           Print A4 size sheet
         </h3>
         <p className="text-sm text-slate-500">
-          Print sheet includes manufacturing QRs (one per piece; cut prep when Suit).
+          Print sheet is one A4 page per piece, each with that piece&apos;s manufacturing QR (e.g. Suit = Jacket + Trouser pages).
         </p>
         {printHref ? (
           <Link

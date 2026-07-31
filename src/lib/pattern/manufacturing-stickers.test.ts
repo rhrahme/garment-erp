@@ -54,7 +54,7 @@ function trouserLine(id: string): SalesOrderFabricLine {
 }
 
 describe("manufacturingStickersForJob", () => {
-  it("returns fabric-cut prep plus Jacket/Trouser piece QRs for Suit", () => {
+  it("returns fabric-cut prep plus Jacket/Trouser piece QRs for Suit with n/N", () => {
     const line = suitLine("line-suit");
     const order = {
       id: "so-1",
@@ -69,7 +69,7 @@ describe("manufacturingStickersForJob", () => {
 
     assert.deepEqual(
       stickers.map((s) => s.qr_payload),
-      ["FR-0132-L04", "FR-0132-L04-JKT", "FR-0132-L04-TR"]
+      ["FR-0132-L04", "FR-0132-L04-JKT-1/2", "FR-0132-L04-TR-2/2"]
     );
     assert.deepEqual(
       stickers.map((s) => s.role),
@@ -81,7 +81,7 @@ describe("manufacturingStickersForJob", () => {
     );
   });
 
-  it("returns one piece QR for single-piece Trouser", () => {
+  it("returns one piece QR for single-piece Trouser (no n/N)", () => {
     const line = trouserLine("line-tr");
     const order = {
       id: "so-1",
@@ -97,16 +97,20 @@ describe("manufacturingStickersForJob", () => {
     assert.equal(stickers.length, 1);
     assert.equal(stickers[0]?.qr_payload, "FR-0132-L05-TR");
     assert.equal(stickers[0]?.role, "piece");
+    assert.equal(stickers[0]?.piece_index, null);
   });
 
-  it("matches sticker print piece encoding helpers", () => {
+  it("matches sticker print piece encoding helpers with n/N", () => {
     const line = suitLine("line-suit");
     const pieces = pieceStickersForFabricLine(line, "FR-0126-0019");
     const prep = fabricCutStickerForFabricLine(line, "FR-0126-0019");
 
     assert.equal(prep?.qr_payload, "FR-0132-L04");
-    assert.equal(pieces[0]?.qr_payload, "FR-0132-L04-JKT");
-    assert.equal(pieces[1]?.qr_payload, "FR-0132-L04-TR");
+    assert.equal(pieces[0]?.qr_payload, "FR-0132-L04-JKT-1/2");
+    assert.equal(pieces[1]?.qr_payload, "FR-0132-L04-TR-2/2");
+    assert.equal(pieces[0]?.piece_index, 1);
+    assert.equal(pieces[0]?.piece_total, 2);
+    assert.equal(pieces[1]?.piece_index, 2);
   });
 
   it("manufacturingStickersForFabricLine matches job helper for Suit", () => {
@@ -114,7 +118,7 @@ describe("manufacturingStickersForJob", () => {
     const stickers = manufacturingStickersForFabricLine(line, "FR-0126-0019");
     assert.deepEqual(
       stickers.map((s) => s.qr_payload),
-      ["FR-0132-L04", "FR-0132-L04-JKT", "FR-0132-L04-TR"]
+      ["FR-0132-L04", "FR-0132-L04-JKT-1/2", "FR-0132-L04-TR-2/2"]
     );
   });
 });

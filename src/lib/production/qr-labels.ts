@@ -3,6 +3,7 @@ import {
   fabricLineArticleNumber,
   getGarmentPieces,
   lineArticleFromStickerCode,
+  pieceProductionCodeFromSticker,
   productionCodeFromSticker,
   supplierFabricProductionCode,
 } from "@/lib/sales-orders/label-codes";
@@ -193,7 +194,7 @@ function lineToLabels(
 
   // Keep Jacket before Trouser (and other mapped piece order) under the same article.
   return orderedStickers.map((sticker) => {
-    const productionCode = productionCodeFromSticker(sticker.code, clientCode);
+    const productionCode = pieceProductionCodeFromSticker(sticker, clientCode, orderedStickers);
     return {
       sticker_code: sticker.code,
       fabric_line_id: line.id,

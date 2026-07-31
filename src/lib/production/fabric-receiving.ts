@@ -25,8 +25,8 @@ import {
   formatGarmentWithPieceList,
   generateFabricLabelStickers,
   getGarmentPieces,
+  pieceProductionCodeFromSticker,
   piecesForFabricLine,
-  productionCodeFromSticker,
   supplierFabricProductionCode,
 } from "@/lib/sales-orders/label-codes";
 import { formatFabricSupplierName, normalizeFabricSupplierFields } from "@/lib/fabric-sourcing/supplier-display";
@@ -209,7 +209,7 @@ function buildLineStickerRows(
   return stickers.map((sticker) => ({
     sticker_code: sticker.code,
     piece_name: sticker.piece_name,
-    production_code: productionCodeFromSticker(sticker.code, order.client_code),
+    production_code: pieceProductionCodeFromSticker(sticker, order.client_code, stickers),
     scan_stage: stickerScanStage(status, prepStep, sticker.code, workOrdersBySticker),
   }));
 }

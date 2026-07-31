@@ -13,7 +13,8 @@ import {
 } from "@/lib/production/stage-scan";
 import {
   fabricLineArticleNumber,
-  productionCodeFromSticker,
+  pieceProductionCodeFromSticker,
+  pieceScanAttribution,
   supplierFabricProductionCode,
 } from "@/lib/sales-orders/label-codes";
 import type { PatternJob } from "@/lib/types/pattern";
@@ -65,7 +66,9 @@ export async function scanAtPatternStation(
     throw new Error("No pattern job for this fabric line - sync pattern jobs from the sales order.");
   }
 
-  const production_code = productionCodeFromSticker(sticker.code, order.client_code);
+  const siblings = line.label_stickers ?? [sticker];
+  const production_code = pieceProductionCodeFromSticker(sticker, order.client_code, siblings);
+  const attribution = pieceScanAttribution(sticker, order.client_code, siblings);
   const lineIndex = order.fabric_lines.findIndex((fabricLine) => fabricLine.id === line.id);
   const base = {
     station: station as ScanStation,
@@ -76,7 +79,11 @@ export async function scanAtPatternStation(
     article_number: fabricLineArticleNumber(lineIndex >= 0 ? lineIndex : 0),
     garment_type: line.garment_type,
     so_number: order.so_number,
-    piece_name: sticker.piece_name,
+    piece_name: attribution.piece_name,
+    piece_abbrev: attribution.piece_abbrev,
+    piece_index: attribution.piece_index,
+    piece_total: attribution.piece_total,
+    piece_mark: attribution.piece_mark,
     fabric_number: line.fabric_number,
   };
 

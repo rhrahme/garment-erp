@@ -3,7 +3,7 @@ import { readProductionWorkOrders } from "@/lib/data/production-work-orders";
 import { resolveFabricLineReceiveStatus } from "@/lib/production/fabric-receiving-floor";
 import { resolveScanToLine } from "@/lib/production/stage-scan";
 import {
-  productionCodeFromSticker,
+  pieceProductionCodeFromSticker,
   resolveSoArticleForFabricLine,
   supplierFabricProductionCode,
 } from "@/lib/sales-orders/label-codes";
@@ -48,7 +48,11 @@ export function lookupFabricLabel(scanInput: string): FabricLabelLookupResult | 
     sales_order_line_id: line.id,
     article_number: resolveSoArticleForFabricLine(line, lineIndex >= 0 ? lineIndex : 0),
     fabric_cut_code: supplierFabricProductionCode(sticker.code, order.client_code),
-    production_code: productionCodeFromSticker(sticker.code, order.client_code),
+    production_code: pieceProductionCodeFromSticker(
+      sticker,
+      order.client_code,
+      line.label_stickers ?? [sticker]
+    ),
     garment_type: line.garment_type,
     piece_name: sticker.piece_name,
     fabric_number: line.fabric_number,

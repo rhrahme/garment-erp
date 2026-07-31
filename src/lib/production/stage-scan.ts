@@ -13,7 +13,8 @@ import {
 import {
   expandFabricLabelScanInput,
   fabricLineArticleNumber,
-  productionCodeFromSticker,
+  pieceProductionCodeFromSticker,
+  pieceScanAttribution,
   supplierFabricProductionCode,
 } from "@/lib/sales-orders/label-codes";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
@@ -62,6 +63,13 @@ export type StageScanResult = {
   garment_type: string;
   so_number: string;
   piece_name: string;
+  /** Piece abbrev — JKT / TR / VST. */
+  piece_abbrev: string;
+  /** 1-based index within the garment set (null when single-piece / unknown). */
+  piece_index: number | null;
+  piece_total: number | null;
+  /** History mark — e.g. JKT-1/2. */
+  piece_mark: string;
   fabric_number: string;
   /** UI hint — e.g. re-scan at Receive when already received does not advance the line. */
   notice?: StageScanNotice;
@@ -99,7 +107,8 @@ export function resolveScanToLine(scanInput: string) {
 }
 
 function productionCodeForResult(lookup: NonNullable<ReturnType<typeof resolveScanToLine>>): string {
-  return productionCodeFromSticker(lookup.sticker.code, lookup.order.client_code);
+  const siblings = lookup.line.label_stickers ?? [lookup.sticker];
+  return pieceProductionCodeFromSticker(lookup.sticker, lookup.order.client_code, siblings);
 }
 
 export async function scanAtStation(scanInput: string, station: ScanStation): Promise<StageScanResult> {
@@ -109,7 +118,9 @@ export async function scanAtStation(scanInput: string, station: ScanStation): Pr
   }
 
   const { order, line, sticker } = lookup;
+  const siblings = line.label_stickers ?? [sticker];
   const production_code = productionCodeForResult(lookup);
+  const attribution = pieceScanAttribution(sticker, order.client_code, siblings);
   const lineIndex = order.fabric_lines.findIndex((fabricLine) => fabricLine.id === line.id);
   const base = {
     station,
@@ -120,7 +131,11 @@ export async function scanAtStation(scanInput: string, station: ScanStation): Pr
     article_number: fabricLineArticleNumber(lineIndex >= 0 ? lineIndex : 0),
     garment_type: line.garment_type,
     so_number: order.so_number,
-    piece_name: sticker.piece_name,
+    piece_name: attribution.piece_name,
+    piece_abbrev: attribution.piece_abbrev,
+    piece_index: attribution.piece_index,
+    piece_total: attribution.piece_total,
+    piece_mark: attribution.piece_mark,
     fabric_number: line.fabric_number,
   };
 

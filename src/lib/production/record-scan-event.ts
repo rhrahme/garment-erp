@@ -54,6 +54,11 @@ export async function recordProductionScanEvent(input: {
     fabric_prep_step: input.result.receipt?.fabric_prep_step ?? null,
     workstation_id: input.employee.workstation_id,
     notice: input.result.notice,
+    piece_name: input.result.piece_name ?? null,
+    piece_abbrev: input.result.piece_abbrev ?? null,
+    piece_index: input.result.piece_index ?? null,
+    piece_total: input.result.piece_total ?? null,
+    piece_mark: input.result.piece_mark ?? null,
   };
 
   await appendProductionScanEvent(event);
@@ -74,6 +79,11 @@ export async function recordProductionScanEvent(input: {
     workstation_id: event.workstation_id,
     notice: event.notice,
     so_number: event.so_number,
+    piece_name: event.piece_name,
+    piece_abbrev: event.piece_abbrev,
+    piece_index: event.piece_index,
+    piece_total: event.piece_total,
+    piece_mark: event.piece_mark,
   };
 
   await notifyIntegration(

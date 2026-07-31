@@ -26,6 +26,10 @@ export type StageScanResponse = {
   garment_type: string;
   so_number: string;
   piece_name: string;
+  piece_abbrev?: string;
+  piece_index?: number | null;
+  piece_total?: number | null;
+  piece_mark?: string;
   fabric_number: string;
   notice?: StageScanNotice;
   receipt?: {
@@ -425,6 +429,15 @@ export function StickerScanInput({
               <p className="mt-1 text-base font-semibold text-slate-900">
                 Art. {formatArticle(result.article_number)}{" "}
                 <code className="font-mono text-indigo-900">{result.fabric_cut_code}</code>
+              </p>
+              <p className="mt-1 text-sm">
+                {result.piece_mark || result.piece_name}
+                {result.production_code !== result.fabric_cut_code ? (
+                  <>
+                    {" "}
+                    · <code className="font-mono text-indigo-900">{result.production_code}</code>
+                  </>
+                ) : null}
               </p>
               <p className="mt-1 text-sm">
                 {result.garment_type} · {result.fabric_number} · {result.so_number}

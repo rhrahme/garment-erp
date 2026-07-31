@@ -14,6 +14,8 @@ export interface FabricLabelSticker {
 /** Garment pieces that each get their own label sticker. */
 const GARMENT_PIECES: Partial<Record<GarmentStitchType, string[]>> = {
   Suit: ["Jacket", "Trouser"],
+  /** 3-piece suit: Jacket, Vest, Trouser (sensible stitcher order). */
+  "Suit+Vest": ["Jacket", "Vest", "Trouser"],
   "Overshirt+Trouser": ["Overshirt", "Trouser"],
   "Shirt+Trouser": ["Shirt", "Trouser"],
   "Shirt+Trouser+Short": ["Shirt", "Trouser", "Short"],
@@ -83,8 +85,99 @@ export function piecesForPatternJob(job: {
   return fromType;
 }
 
-function pieceAbbrev(pieceName: string): string {
+export function pieceAbbrev(pieceName: string): string {
   return PIECE_ABBREV[pieceName] ?? pieceName.replace(/[^A-Za-z0-9]/g, "").slice(0, 6).toUpperCase();
+}
+
+/** Trailing piece index on manufacturing codes — e.g. -1/2, -2/3. */
+const PIECE_INDEX_MARK_RE = /-(\d+)\/(\d+)$/i;
+
+export function parsePieceIndexMark(code: string): { index: number; total: number } | null {
+  const match = code.trim().match(PIECE_INDEX_MARK_RE);
+  if (!match) return null;
+  const index = Number.parseInt(match[1]!, 10);
+  const total = Number.parseInt(match[2]!, 10);
+  if (!Number.isFinite(index) || !Number.isFinite(total) || index < 1 || total < 1) return null;
+  return { index, total };
+}
+
+/** Strip trailing -n/N so old and new piece codes can dual-match. */
+export function stripPieceIndexMark(code: string): string {
+  return code.replace(PIECE_INDEX_MARK_RE, "");
+}
+
+/** Format piece index mark — e.g. 1/2. */
+export function formatPieceIndexMark(index1Based: number, total: number): string {
+  return `${index1Based}/${total}`;
+}
+
+/**
+ * Append -n/N for multi-piece garments. Single-piece codes stay unchanged.
+ * Idempotent when the code already ends with an index mark.
+ */
+export function withPieceIndexMark(code: string, index1Based: number, total: number): string {
+  const base = stripPieceIndexMark(code);
+  if (total <= 1) return base;
+  return `${base}-${formatPieceIndexMark(index1Based, total)}`;
+}
+
+export type PieceScanAttribution = {
+  piece_name: string;
+  piece_abbrev: string;
+  piece_index: number | null;
+  piece_total: number | null;
+  /** Abbrev + mark for multi-piece (JKT-1/2); abbrev alone for single-piece. */
+  piece_mark: string;
+};
+
+/**
+ * Production / QR code for a piece sticker — always includes -n/N when the line
+ * has more than one piece. Accepts legacy stored codes without -n/N.
+ */
+export function pieceProductionCodeFromSticker(
+  sticker: { code: string; piece_name: string; sequence?: number },
+  clientCode: string,
+  siblings: Array<{ code: string; sequence?: number }>
+): string {
+  const raw = productionCodeFromSticker(sticker.code, clientCode);
+  if (parsePieceIndexMark(raw)) return raw;
+  const total = siblings.length;
+  if (total <= 1) return raw;
+  const ordered = [...siblings].sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+  const fromSequence = sticker.sequence && sticker.sequence > 0 ? sticker.sequence : null;
+  const fromOrder = ordered.findIndex((candidate) => candidate.code === sticker.code);
+  const index1Based = fromSequence ?? (fromOrder >= 0 ? fromOrder + 1 : 1);
+  return withPieceIndexMark(raw, index1Based, total);
+}
+
+/** Piece attribution for scan events / UI (JKT + 1/2). */
+export function pieceScanAttribution(
+  sticker: { code: string; piece_name: string; sequence?: number },
+  clientCode: string,
+  siblings: Array<{ code: string; sequence?: number }>
+): PieceScanAttribution {
+  const production = pieceProductionCodeFromSticker(sticker, clientCode, siblings);
+  const parsed = parsePieceIndexMark(production);
+  const abbrev = pieceAbbrev(sticker.piece_name);
+  const total = parsed?.total ?? (siblings.length > 1 ? siblings.length : null);
+  const index =
+    parsed?.index ??
+    (total != null
+      ? sticker.sequence && sticker.sequence > 0
+        ? sticker.sequence
+        : null
+      : 1);
+  const piece_mark =
+    index != null && total != null && total > 1
+      ? `${abbrev}-${formatPieceIndexMark(index, total)}`
+      : abbrev;
+  return {
+    piece_name: sticker.piece_name,
+    piece_abbrev: abbrev,
+    piece_index: index,
+    piece_total: total ?? (siblings.length <= 1 ? 1 : siblings.length),
+    piece_mark,
+  };
 }
 
 /** One unique sticker code per garment piece — printed by the fabric supplier. */
@@ -95,12 +188,16 @@ export function generateFabricLabelStickers(
 ): FabricLabelSticker[] {
   const pieces = getGarmentPieces(garmentType);
   const linePart = `L${String(lineIndex).padStart(2, "0")}`;
+  const total = pieces.length;
 
-  return pieces.map((piece_name, index) => ({
-    code: `${clientReference}-${linePart}-${pieceAbbrev(piece_name)}`,
-    piece_name,
-    sequence: index + 1,
-  }));
+  return pieces.map((piece_name, index) => {
+    const base = `${clientReference}-${linePart}-${pieceAbbrev(piece_name)}`;
+    return {
+      code: total > 1 ? withPieceIndexMark(base, index + 1, total) : base,
+      piece_name,
+      sequence: index + 1,
+    };
+  });
 }
 
 /**
@@ -313,12 +410,22 @@ export function looksLikeFabricLabelInput(raw: string): boolean {
   return false;
 }
 
+/** True when a and b are the same code, allowing old (...-JKT) vs new (...-JKT-1/2). */
+export function codesMatchAllowingPieceIndex(a: string, b: string): boolean {
+  const left = a.trim().toUpperCase();
+  const right = b.trim().toUpperCase();
+  if (!left || !right) return false;
+  if (left === right) return true;
+  return stripPieceIndexMark(left) === stripPieceIndexMark(right);
+}
+
 export function stickerCodesMatch(scanInput: string, stickerCode: string, clientCode: string): boolean {
   for (const candidate of expandFabricLabelScanInput(scanInput)) {
     const normalized = candidate.trim().toUpperCase();
     if (!normalized) continue;
-    if (stickerCode.toUpperCase() === normalized) return true;
-    if (productionCodeFromSticker(stickerCode, clientCode).toUpperCase() === normalized) return true;
+    if (codesMatchAllowingPieceIndex(stickerCode, normalized)) return true;
+    const production = productionCodeFromSticker(stickerCode, clientCode).toUpperCase();
+    if (codesMatchAllowingPieceIndex(production, normalized)) return true;
     if (supplierFabricProductionCode(stickerCode, clientCode).toUpperCase() === normalized) return true;
   }
   return false;

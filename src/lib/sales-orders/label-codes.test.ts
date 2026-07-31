@@ -5,11 +5,15 @@ import {
   formatGarmentWithPieceList,
   formatLabelGarmentDescription,
   formatStickerPieceLine,
+  generateFabricLabelStickers,
   getGarmentPieces,
   looksLikeFabricLabelInput,
+  pieceProductionCodeFromSticker,
+  pieceScanAttribution,
   piecesForFabricLine,
   piecesForPatternJob,
   stickerCodesMatch,
+  stripPieceIndexMark,
 } from "./label-codes.ts";
 
 describe("expandFabricLabelScanInput", () => {
@@ -55,6 +59,62 @@ describe("stickerCodesMatch with supplier input", () => {
 
   it("matches supplier pasted label to stored sticker", () => {
     assert.equal(stickerCodesMatch("FR-0226-0024/ 0109-L32", stickerCode, clientCode), true);
+  });
+});
+
+describe("piece index marks (n/N)", () => {
+  const clientCode = "FR-0126-0019";
+  const clientRef = "FR-0126-0019-SO-2026-0132";
+
+  it("generates Suit stickers with 1/2 and 2/2", () => {
+    const stickers = generateFabricLabelStickers(clientRef, 7, "Suit");
+    assert.equal(stickers[0]!.code, `${clientRef}-L07-JKT-1/2`);
+    assert.equal(stickers[1]!.code, `${clientRef}-L07-TR-2/2`);
+  });
+
+  it("generates Suit+Vest stickers Jacket / Vest / Trouser as 1/3 2/3 3/3", () => {
+    assert.deepEqual(getGarmentPieces("Suit+Vest"), ["Jacket", "Vest", "Trouser"]);
+    const stickers = generateFabricLabelStickers(clientRef, 7, "Suit+Vest");
+    assert.equal(stickers[0]!.code, `${clientRef}-L07-JKT-1/3`);
+    assert.equal(stickers[1]!.code, `${clientRef}-L07-VST-2/3`);
+    assert.equal(stickers[2]!.code, `${clientRef}-L07-TR-3/3`);
+  });
+
+  it("builds production codes FR-0132-L07-JKT-1/2 from new and legacy stickers", () => {
+    const newStickers = generateFabricLabelStickers(clientRef, 7, "Suit");
+    assert.equal(
+      pieceProductionCodeFromSticker(newStickers[0]!, clientCode, newStickers),
+      "FR-0132-L07-JKT-1/2"
+    );
+    assert.equal(
+      pieceProductionCodeFromSticker(newStickers[1]!, clientCode, newStickers),
+      "FR-0132-L07-TR-2/2"
+    );
+
+    const legacy = [
+      { code: `${clientRef}-L07-JKT`, piece_name: "Jacket", sequence: 1 },
+      { code: `${clientRef}-L07-TR`, piece_name: "Trouser", sequence: 2 },
+    ];
+    assert.equal(pieceProductionCodeFromSticker(legacy[0]!, clientCode, legacy), "FR-0132-L07-JKT-1/2");
+    assert.equal(pieceProductionCodeFromSticker(legacy[1]!, clientCode, legacy), "FR-0132-L07-TR-2/2");
+  });
+
+  it("dual-accepts old piece scans without -n/N", () => {
+    const stickerCode = `${clientRef}-L07-JKT-1/2`;
+    assert.equal(stickerCodesMatch("FR-0132-L07-JKT-1/2", stickerCode, clientCode), true);
+    assert.equal(stickerCodesMatch("FR-0132-L07-JKT", stickerCode, clientCode), true);
+    assert.equal(stickerCodesMatch(`${clientRef}-L07-JKT`, stickerCode, clientCode), true);
+    assert.equal(stickerCodesMatch("FR-0132-L07-TR-2/2", stickerCode, clientCode), false);
+  });
+
+  it("attributes piece mark JKT-1/2 for scan history", () => {
+    const stickers = generateFabricLabelStickers(clientRef, 7, "Suit");
+    const attr = pieceScanAttribution(stickers[0]!, clientCode, stickers);
+    assert.equal(attr.piece_abbrev, "JKT");
+    assert.equal(attr.piece_index, 1);
+    assert.equal(attr.piece_total, 2);
+    assert.equal(attr.piece_mark, "JKT-1/2");
+    assert.equal(stripPieceIndexMark("FR-0132-L07-JKT-1/2"), "FR-0132-L07-JKT");
   });
 });
 
