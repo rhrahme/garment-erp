@@ -51,7 +51,7 @@ function widthSourceLabel(source: MarkerFabricWidthSource | "manual" | null): st
   }
 }
 
-/** Muted fills + green strokes ù estimate rects, not candy "fake CAD". */
+/** Muted fills + green strokes ‚Äî estimate rects, not candy "fake CAD". */
 const PIECE_COLORS = [
   "#ecfdf5",
   "#f0fdf4",
@@ -333,7 +333,7 @@ export function NestEstimatePanel({
         </h3>
         <p className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
           <span className="font-semibold">Estimate only.</span> Green boxes are approximate
-          rectangles from TUD area + perimeter ù not TUKA piece outlines. Use the parts table and
+          rectangles from TUD area + perimeter ‚Äî not TUKA piece outlines. Use the parts table and
           fold instructions for cutting; the board is for fabric-length planning.
         </p>
         {(() => {
@@ -345,7 +345,7 @@ export function NestEstimatePanel({
             <p className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
               Optional archive marker attached: <span className="font-medium">{marker.filename}</span>
               {tum?.efficiency_pct != null || lengthM != null
-                ? ` ù ${[
+                ? ` ‚Äî ${[
                     lengthM != null ? `${lengthM.toFixed(2)} m` : null,
                     tum?.width_cm != null ? `${tum.width_cm.toFixed(0)} cm wide` : null,
                     tum?.efficiency_pct != null
@@ -353,7 +353,7 @@ export function NestEstimatePanel({
                       : null,
                   ]
                     .filter(Boolean)
-                    .join(" ù ")}`
+                    .join(" ‚Äî ")}`
                 : ""}
               . Not required for the TUD-only workflow.
             </p>
@@ -517,7 +517,7 @@ export function NestEstimatePanel({
       {cutterPlan ? (
         <div className="rounded-lg border border-slate-300 bg-white p-3 space-y-2 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-800">
-            Parts from TUD (size {cutterPlan.size}) ù {cutterPlan.total_cut_pieces} to cut
+            Parts from TUD (size {cutterPlan.size}) ‚Äî {cutterPlan.total_cut_pieces} to cut
           </p>
           <p className="text-sm font-medium text-slate-800">{cutterPlan.instruction}</p>
           <div className="overflow-x-auto rounded-md border border-slate-200">
@@ -543,7 +543,7 @@ export function NestEstimatePanel({
                     <td className="px-2 py-1.5 tabular-nums">{row.cut_quantity}</td>
                     <td className="px-2 py-1.5">{row.fabric_label}</td>
                     <td className="px-2 py-1.5 tabular-nums text-slate-700">
-                      ~{row.approx_width_cm.toFixed(0)} ù {row.approx_height_cm.toFixed(0)} cm
+                      ~{row.approx_width_cm.toFixed(0)} ‚Äî {row.approx_height_cm.toFixed(0)} cm
                     </td>
                     <td className="px-2 py-1.5 text-slate-700">{row.place_hint}</td>
                   </tr>
@@ -802,7 +802,7 @@ function MarkerBoard({
         <span>Qty: {garmentQty}</span>
       </div>
       <p className="border-t border-amber-900/60 bg-amber-950 px-3 py-1.5 text-[11px] text-amber-100">
-        ESTIMATE ONLY ó green outline boxes from TUD header area/perimeter. Not CAD piece shapes.
+        ESTIMATE ONLY ‚Äî green outline boxes from TUD header area/perimeter. Not CAD piece shapes.
         Drag / rotate for length planning only.
       </p>
     </div>
