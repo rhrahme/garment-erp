@@ -31,20 +31,95 @@ export function snapCm(value: number, step = SNAP_CM): number {
   return round1(Math.round(value / step) * step);
 }
 
-export function resolveMarkerFabricWidthCm(pattern: ClientPattern): number | null {
-  if (
-    typeof pattern.marker_fabric_width_cm === "number" &&
-    Number.isFinite(pattern.marker_fabric_width_cm) &&
-    pattern.marker_fabric_width_cm > 0
-  ) {
-    return pattern.marker_fabric_width_cm;
-  }
-  for (const ref of pattern.linked_fabric_refs ?? []) {
-    if (typeof ref.width_cm === "number" && Number.isFinite(ref.width_cm) && ref.width_cm > 0) {
-      return ref.width_cm;
+export type MarkerFabricWidthSource =
+  | "saved"
+  | "hint"
+  | "fabric_ref"
+  | "sales_order_line";
+
+export type MarkerFabricWidthOrder = {
+  fabric_lines: Array<{ id: string; width_cm: number | null }>;
+};
+
+function positiveWidth(value: unknown): number | null {
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n) || !(n > 0)) return null;
+  return n;
+}
+
+/** Width from linked SO fabric lines (first linked id with a width wins). */
+export function widthCmFromLinkedSalesOrders(
+  pattern: ClientPattern,
+  orders: MarkerFabricWidthOrder[]
+): number | null {
+  for (const lineId of pattern.linked_fabric_line_ids ?? []) {
+    const id = lineId.trim();
+    if (!id) continue;
+    for (const order of orders) {
+      const line = order.fabric_lines.find((candidate) => candidate.id === id);
+      const width = positiveWidth(line?.width_cm);
+      if (width !== null) return width;
     }
   }
   return null;
+}
+
+/**
+ * Resolve fabric width without asking Pattern when ERP already has it.
+ * Priority: saved marker width -> explicit hints (job/UI) -> fabric refs -> SO lines.
+ */
+export function resolveMarkerFabricWidthCm(
+  pattern: ClientPattern,
+  options: {
+    hints?: Array<number | null | undefined>;
+    salesOrders?: MarkerFabricWidthOrder[];
+  } = {}
+): number | null {
+  return resolveMarkerFabricWidthDetails(pattern, options)?.width_cm ?? null;
+}
+
+export function resolveMarkerFabricWidthDetails(
+  pattern: ClientPattern,
+  options: {
+    hints?: Array<number | null | undefined>;
+    salesOrders?: MarkerFabricWidthOrder[];
+  } = {}
+): { width_cm: number; source: MarkerFabricWidthSource } | null {
+  const saved = positiveWidth(pattern.marker_fabric_width_cm);
+  if (saved !== null) return { width_cm: saved, source: "saved" };
+
+  for (const hint of options.hints ?? []) {
+    const width = positiveWidth(hint);
+    if (width !== null) return { width_cm: width, source: "hint" };
+  }
+
+  for (const ref of pattern.linked_fabric_refs ?? []) {
+    const width = positiveWidth(ref.width_cm);
+    if (width !== null) return { width_cm: width, source: "fabric_ref" };
+  }
+
+  if (options.salesOrders?.length) {
+    const fromLines = widthCmFromLinkedSalesOrders(pattern, options.salesOrders);
+    if (fromLines !== null) return { width_cm: fromLines, source: "sales_order_line" };
+  }
+
+  return null;
+}
+
+/** Server helper: also loads sales orders when linked lines exist. */
+export async function resolveMarkerFabricWidthAsync(
+  pattern: ClientPattern,
+  options: { hints?: Array<number | null | undefined> } = {}
+): Promise<{ width_cm: number; source: MarkerFabricWidthSource } | null> {
+  const sync = resolveMarkerFabricWidthDetails(pattern, { hints: options.hints });
+  if (sync) return sync;
+  if (!(pattern.linked_fabric_line_ids?.length)) return null;
+  const { readSalesOrdersFresh } = await import("@/lib/data/sales-orders");
+  const store = await readSalesOrdersFresh();
+  return resolveMarkerFabricWidthDetails(pattern, {
+    hints: options.hints,
+    salesOrders: store.orders,
+  });
 }
 
 /** Shop default: double fold when Pattern has not answered. */
@@ -215,16 +290,63 @@ export function buildAutoMarkerLayout(
  */
 export function applyMarkerLayoutSeed(
   pattern: ClientPattern,
-  options: { updated_at?: string } = {}
+  options: {
+    updated_at?: string;
+    fabric_width_cm?: number | null;
+    hints?: Array<number | null | undefined>;
+    salesOrders?: MarkerFabricWidthOrder[];
+  } = {}
 ): ClientPattern {
   if (pattern.marker_layout && pattern.marker_layout.placements.length > 0) {
+    // Still backfill saved width/fold when known and unset.
+    const resolved = resolveMarkerFabricWidthDetails(pattern, {
+      hints: [options.fabric_width_cm, ...(options.hints ?? [])],
+      salesOrders: options.salesOrders,
+    });
+    if (
+      resolved &&
+      !(pattern.marker_fabric_width_cm != null && pattern.marker_fabric_width_cm > 0)
+    ) {
+      return {
+        ...pattern,
+        marker_fabric_width_cm: resolved.width_cm,
+        marker_double_fold:
+          pattern.marker_double_fold === true || pattern.marker_double_fold === false
+            ? pattern.marker_double_fold
+            : true,
+      };
+    }
     return pattern;
   }
 
+  const resolvedWidth =
+    positiveWidth(options.fabric_width_cm) ??
+    resolveMarkerFabricWidthCm(pattern, {
+      hints: options.hints,
+      salesOrders: options.salesOrders,
+    });
+
   const layout = buildAutoMarkerLayout(pattern, {
+    fabric_width_cm: resolvedWidth,
     updated_at: options.updated_at ?? new Date().toISOString(),
   });
-  if (!layout) return pattern;
+  if (!layout) {
+    // Persist known width even when TUD nest cannot build yet.
+    if (
+      resolvedWidth !== null &&
+      !(pattern.marker_fabric_width_cm != null && pattern.marker_fabric_width_cm > 0)
+    ) {
+      return {
+        ...pattern,
+        marker_fabric_width_cm: resolvedWidth,
+        marker_double_fold:
+          pattern.marker_double_fold === true || pattern.marker_double_fold === false
+            ? pattern.marker_double_fold
+            : true,
+      };
+    }
+    return pattern;
+  }
 
   return {
     ...pattern,

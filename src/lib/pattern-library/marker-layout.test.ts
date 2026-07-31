@@ -5,6 +5,7 @@ import {
   buildAutoMarkerLayout,
   clampPlacement,
   recomputeMarkerMetrics,
+  resolveMarkerFabricWidthDetails,
   rotatePlacement90,
   sanitizeMarkerLayout,
 } from "./marker-layout.ts";
@@ -128,6 +129,43 @@ describe("marker-layout", () => {
     );
     assert.ok(layout);
     assert.equal(layout!.fabric_width_cm, 150);
+  });
+
+  it("resolves width from sales-order fabric lines before asking Pattern", () => {
+    const resolved = resolveMarkerFabricWidthDetails(
+      pattern({
+        marker_fabric_width_cm: null,
+        linked_fabric_line_ids: ["line-1"],
+      }),
+      {
+        salesOrders: [
+          {
+            fabric_lines: [
+              { id: "line-1", width_cm: 148 },
+              { id: "line-2", width_cm: 140 },
+            ],
+          },
+        ],
+      }
+    );
+    assert.ok(resolved);
+    assert.equal(resolved!.width_cm, 148);
+    assert.equal(resolved!.source, "sales_order_line");
+  });
+
+  it("prefers hint/job width over SO when saved width missing", () => {
+    const resolved = resolveMarkerFabricWidthDetails(
+      pattern({
+        marker_fabric_width_cm: null,
+        linked_fabric_line_ids: ["line-1"],
+      }),
+      {
+        hints: [152],
+        salesOrders: [{ fabric_lines: [{ id: "line-1", width_cm: 148 }] }],
+      }
+    );
+    assert.equal(resolved?.width_cm, 152);
+    assert.equal(resolved?.source, "hint");
   });
 
   it("clamps and rotates placements within usable width", () => {

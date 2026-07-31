@@ -7,6 +7,7 @@ import {
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readPatternJobs } from "@/lib/data/pattern-jobs";
 import { formatBasePatternDisplayName } from "@/lib/pattern-library/derived-from";
+import { resolveMarkerFabricWidthAsync } from "@/lib/pattern-library/marker-layout";
 import { updateClientPattern } from "@/lib/pattern-library/mutations";
 
 export async function GET(_request: Request, context: { params: Promise<{ patternId: string }> }) {
@@ -34,10 +35,19 @@ export async function GET(_request: Request, context: { params: Promise<{ patter
         garment_type: job.garment_type,
         status: job.status,
         client_pattern_version_id: job.client_pattern_version_id ?? null,
+        width_cm: job.width_cm ?? null,
       }));
+    const jobWidthHint =
+      linkedJobs.find((job) => typeof job.width_cm === "number" && job.width_cm > 0)?.width_cm ??
+      null;
+    const widthSuggestion = await resolveMarkerFabricWidthAsync(pattern, {
+      hints: [jobWidthHint],
+    });
     return NextResponse.json({
       pattern,
       linked_jobs: linkedJobs,
+      suggested_fabric_width_cm: widthSuggestion?.width_cm ?? null,
+      suggested_fabric_width_source: widthSuggestion?.source ?? null,
       base: linkedBase
         ? {
             id: linkedBase.id,

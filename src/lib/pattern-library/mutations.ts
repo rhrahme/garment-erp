@@ -9,6 +9,7 @@ import { readSalesOrders } from "@/lib/data/sales-orders";
 import { applyFabricLineAssignment } from "@/lib/pattern-library/client-fabric-board";
 import {
   applyMarkerLayoutSeed,
+  resolveMarkerFabricWidthAsync,
   sanitizeMarkerLayout,
 } from "@/lib/pattern-library/marker-layout";
 import { generatePatternRef } from "@/lib/pattern-library/refs";
@@ -1102,10 +1103,14 @@ export async function attachClientPatternFile(
     };
   }
 
-  // Seed approximate marker board when TUD lands and width is known; never clobber saved layout.
+  // Seed approximate marker board when TUD lands; pull width from fabric/SO when known.
   const hadMarkerLayout = Boolean(existing.marker_layout?.placements?.length);
   if (attachment.kind === "tud") {
-    next = applyMarkerLayoutSeed(next, { updated_at: timestamp });
+    const widthInfo = await resolveMarkerFabricWidthAsync(next);
+    next = applyMarkerLayoutSeed(next, {
+      updated_at: timestamp,
+      fabric_width_cm: widthInfo?.width_cm ?? null,
+    });
   }
   const markerLayoutSeeded =
     attachment.kind === "tud" &&

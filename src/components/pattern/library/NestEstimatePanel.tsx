@@ -8,7 +8,9 @@ import {
   clampPlacement,
   layoutFromNestEstimate,
   recomputeMarkerMetrics,
+  resolveMarkerFabricWidthDetails,
   rotatePlacement90,
+  type MarkerFabricWidthSource,
 } from "@/lib/pattern-library/marker-layout";
 import {
   collectNestTudMetadata,
@@ -21,11 +23,30 @@ import type { ClientPattern, MarkerLayout, MarkerLayoutPlacement } from "@/lib/t
 type NestEstimatePanelProps = {
   pattern: ClientPattern;
   requiredPieceNames?: string[];
-  /** Prefill width from linked SO fabric when pattern has none saved. */
+  /** Prefill width from linked SO fabric / job when pattern has none saved. */
   defaultFabricWidthCm?: number | null;
+  /** Optional source label for defaultFabricWidthCm (e.g. sales_order_line). */
+  defaultFabricWidthSource?: MarkerFabricWidthSource | null;
   /** Called after nest fields are saved (parent should refresh pattern). */
   onPatternUpdated?: (pattern: ClientPattern) => void;
 };
+
+function widthSourceLabel(source: MarkerFabricWidthSource | "manual" | null): string {
+  switch (source) {
+    case "saved":
+      return "saved on pattern";
+    case "hint":
+      return "from job / suggestion";
+    case "fabric_ref":
+      return "from linked fabric";
+    case "sales_order_line":
+      return "from sales-order fabric";
+    case "manual":
+      return "entered manually";
+    default:
+      return "unknown";
+  }
+}
 
 const PIECE_COLORS = [
   "#f9a8d4",
@@ -41,6 +62,7 @@ export function NestEstimatePanel({
   pattern,
   requiredPieceNames = [],
   defaultFabricWidthCm = null,
+  defaultFabricWidthSource = null,
   onPatternUpdated,
 }: NestEstimatePanelProps) {
   const completeness = useMemo(
@@ -59,14 +81,23 @@ export function NestEstimatePanel({
     sizes[0] ??
     "";
 
+  const autoWidth = useMemo(
+    () =>
+      resolveMarkerFabricWidthDetails(pattern, {
+        hints: [defaultFabricWidthCm],
+      }),
+    [pattern, defaultFabricWidthCm]
+  );
+
   const initialWidth =
-    pattern.marker_fabric_width_cm != null
-      ? String(pattern.marker_fabric_width_cm)
+    autoWidth != null
+      ? String(autoWidth.width_cm)
       : defaultFabricWidthCm != null && defaultFabricWidthCm > 0
         ? String(defaultFabricWidthCm)
         : "";
 
   const [widthInput, setWidthInput] = useState(initialWidth);
+  const [widthOverride, setWidthOverride] = useState(false);
   const [doubleFold, setDoubleFold] = useState<"unset" | "yes" | "no">(
     pattern.marker_double_fold === true
       ? "yes"
@@ -88,15 +119,18 @@ export function NestEstimatePanel({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveOk, setSaveOk] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const autoPersistRef = useRef<string | null>(null);
 
   useEffect(() => {
-    setWidthInput(
-      pattern.marker_fabric_width_cm != null
-        ? String(pattern.marker_fabric_width_cm)
-        : defaultFabricWidthCm != null && defaultFabricWidthCm > 0
-          ? String(defaultFabricWidthCm)
-          : ""
-    );
+    if (!widthOverride) {
+      setWidthInput(
+        autoWidth != null
+          ? String(autoWidth.width_cm)
+          : defaultFabricWidthCm != null && defaultFabricWidthCm > 0
+            ? String(defaultFabricWidthCm)
+            : ""
+      );
+    }
     setDoubleFold(
       pattern.marker_double_fold === true
         ? "yes"
@@ -111,12 +145,42 @@ export function NestEstimatePanel({
       if (pattern.marker_layout.size) setSize(pattern.marker_layout.size);
     }
   }, [
-    pattern.marker_fabric_width_cm,
+    autoWidth,
     pattern.marker_double_fold,
     pattern.marker_layout,
     pattern.id,
     defaultFabricWidthCm,
+    widthOverride,
   ]);
+
+  // Persist known width/fold once so Pattern does not have to click Save.
+  useEffect(() => {
+    const width = autoWidth?.width_cm;
+    if (!(width != null && width > 0)) return;
+    if (pattern.marker_fabric_width_cm != null && pattern.marker_fabric_width_cm > 0) return;
+    const key = `${pattern.id}:${width}`;
+    if (autoPersistRef.current === key) return;
+    autoPersistRef.current = key;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/pattern/library/client-patterns/${pattern.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            marker_fabric_width_cm: width,
+            marker_double_fold:
+              pattern.marker_double_fold === true || pattern.marker_double_fold === false
+                ? pattern.marker_double_fold
+                : true,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.pattern) onPatternUpdated?.(data.pattern as ClientPattern);
+      } catch {
+        // Non-blocking: UI still uses the resolved width locally.
+      }
+    })();
+  }, [autoWidth, pattern.id, pattern.marker_fabric_width_cm, pattern.marker_double_fold, onPatternUpdated]);
 
   useEffect(() => {
     if (defaultSize && (!size || !sizes.includes(size))) {
@@ -127,6 +191,12 @@ export function NestEstimatePanel({
   const width = Number(widthInput);
   const usableWidthCm =
     width > 0 ? (doubleFold === "yes" ? width / 2 : width) : 0;
+  const widthSource: MarkerFabricWidthSource | "manual" | null = widthOverride
+    ? "manual"
+    : autoWidth?.source ??
+      (defaultFabricWidthCm != null && defaultFabricWidthCm > 0
+        ? defaultFabricWidthSource ?? "hint"
+        : null);
 
   const liveEstimate = useMemo(() => {
     if (!tud || !(width > 0) || doubleFold === "unset") return null;
@@ -257,8 +327,8 @@ export function NestEstimatePanel({
           Marker board (from TUD)
         </h3>
         <p className="mt-0.5 text-sm text-slate-500">
-          After TUD upload: set fabric width, auto-place pieces, drag/rotate like TUKAmrk, then
-          save. Rectangles from TUD areas - not true CAD outlines.
+          Fabric width is taken from the linked fabric / SO when known. After TUD upload: auto-place
+          pieces, drag/rotate if needed, then save. Rectangles from TUD areas - not CAD outlines.
         </p>
       </div>
 
@@ -289,21 +359,54 @@ export function NestEstimatePanel({
       </ul>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <label className="text-sm">
+        <div className="text-sm">
           <span className="mb-1 flex items-center gap-1 text-xs font-medium text-slate-600">
             <Ruler className="h-3.5 w-3.5" />
             Fabric width (cm)
           </span>
-          <input
-            type="number"
-            min={1}
-            step={0.1}
-            value={widthInput}
-            onChange={(e) => setWidthInput(e.target.value)}
-            placeholder="e.g. 140"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          />
-        </label>
+          {width > 0 && !widthOverride ? (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-2">
+              <p className="text-sm font-semibold text-emerald-950">{width} cm</p>
+              <p className="text-[11px] text-emerald-800">
+                Auto {widthSourceLabel(widthSource)}
+              </p>
+              <button
+                type="button"
+                onClick={() => setWidthOverride(true)}
+                className="mt-1 text-[11px] font-medium text-emerald-900 underline"
+              >
+                Change width
+              </button>
+            </div>
+          ) : (
+            <>
+              <input
+                type="number"
+                min={1}
+                step={0.1}
+                value={widthInput}
+                onChange={(e) => {
+                  setWidthOverride(true);
+                  setWidthInput(e.target.value);
+                }}
+                placeholder="Only if missing from fabric"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              />
+              {widthOverride && autoWidth ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWidthOverride(false);
+                    setWidthInput(String(autoWidth.width_cm));
+                  }}
+                  className="mt-1 text-[11px] font-medium text-slate-600 underline"
+                >
+                  Use auto {autoWidth.width_cm} cm
+                </button>
+              ) : null}
+            </>
+          )}
+        </div>
         <label className="text-sm">
           <span className="mb-1 block text-xs font-medium text-slate-600">Double fold</span>
           <select
@@ -311,7 +414,7 @@ export function NestEstimatePanel({
             onChange={(e) => setDoubleFold(e.target.value as "unset" | "yes" | "no")}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
           >
-            <option value="yes">Yes (double fold)</option>
+            <option value="yes">Yes (double fold, default)</option>
             <option value="no">No (open width)</option>
           </select>
         </label>
@@ -429,7 +532,7 @@ export function NestEstimatePanel({
         </p>
       ) : !(width > 0) ? (
         <p className="rounded-lg border border-dashed border-amber-200 bg-amber-50/60 px-3 py-4 text-sm text-amber-900">
-          Enter fabric width to place pieces on the marker.
+          Fabric width not found on linked fabric / SO. Enter it once here.
         </p>
       ) : (
         <>

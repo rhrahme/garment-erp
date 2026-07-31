@@ -1,6 +1,7 @@
 import {
   nestResultFromMarkerLayout,
   resolveMarkerDoubleFold,
+  resolveMarkerFabricWidthCm,
 } from "@/lib/pattern-library/marker-layout";
 import {
   collectNestTudMetadata,
@@ -56,11 +57,7 @@ export function buildCutNestPreview(
   const width =
     typeof fabricWidthCm === "number" && Number.isFinite(fabricWidthCm) && fabricWidthCm > 0
       ? fabricWidthCm
-      : typeof pattern.marker_fabric_width_cm === "number" &&
-          Number.isFinite(pattern.marker_fabric_width_cm) &&
-          pattern.marker_fabric_width_cm > 0
-        ? pattern.marker_fabric_width_cm
-        : null;
+      : resolveMarkerFabricWidthCm(pattern);
 
   const tud = collectNestTudMetadata(pattern, getGarmentPieces(pattern.garment_type));
   const { double_fold: doubleFold, fold_assumed } = resolveMarkerDoubleFold(pattern);

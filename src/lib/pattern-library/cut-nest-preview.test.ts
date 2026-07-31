@@ -97,6 +97,23 @@ describe("buildCutNestPreview", () => {
     assert.match(result.missing_reason ?? "", /width/i);
   });
 
+  it("uses linked fabric ref width when sheet width omitted", () => {
+    const result = buildCutNestPreview(
+      pattern({
+        linked_fabric_refs: [
+          {
+            fabric_number: "S10008",
+            supplier_id: null,
+            width_cm: 148,
+          },
+        ],
+      }),
+      null
+    );
+    assert.ok(result.nest);
+    assert.equal(result.nest!.fabric_width_cm, 148);
+  });
+
   it("reports missing when no TUD", () => {
     const result = buildCutNestPreview(pattern({ files: [] }), 148);
     assert.equal(result.nest, null);

@@ -65,6 +65,7 @@ interface LinkedJob {
   garment_type: string;
   status: string;
   client_pattern_version_id: string | null;
+  width_cm?: number | null;
 }
 
 interface LinkedBaseSummary {
@@ -88,6 +89,10 @@ function formatDate(value: string | null): string {
 export function ClientPatternDetail({ patternId }: { patternId: string }) {
   const [pattern, setPattern] = useState<ClientPattern | null>(null);
   const [linkedJobs, setLinkedJobs] = useState<LinkedJob[]>([]);
+  const [suggestedFabricWidthCm, setSuggestedFabricWidthCm] = useState<number | null>(null);
+  const [suggestedFabricWidthSource, setSuggestedFabricWidthSource] = useState<
+    "saved" | "hint" | "fabric_ref" | "sales_order_line" | null
+  >(null);
   const [linkedBase, setLinkedBase] = useState<LinkedBaseSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewTab>("measurements");
@@ -121,6 +126,13 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         const loaded: ClientPattern = data.pattern;
         setPattern(loaded);
         setLinkedJobs(data.linked_jobs ?? []);
+        setSuggestedFabricWidthCm(
+          typeof data.suggested_fabric_width_cm === "number" &&
+            data.suggested_fabric_width_cm > 0
+            ? data.suggested_fabric_width_cm
+            : null
+        );
+        setSuggestedFabricWidthSource(data.suggested_fabric_width_source ?? null);
         setLinkedBase(
           data.base
             ? {
@@ -1353,6 +1365,13 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
       <NestEstimatePanel
         pattern={pattern}
         requiredPieceNames={getGarmentPieces(pattern.garment_type)}
+        defaultFabricWidthCm={
+          suggestedFabricWidthCm ??
+          linkedJobs.find((job) => typeof job.width_cm === "number" && job.width_cm > 0)
+            ?.width_cm ??
+          null
+        }
+        defaultFabricWidthSource={suggestedFabricWidthSource}
         onPatternUpdated={(next) => setPattern(next)}
       />
 
