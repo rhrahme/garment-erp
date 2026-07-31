@@ -438,7 +438,7 @@ async function main() {
     writeFileSync(LIBRARY_PATH, JSON.stringify(store, null, 2) + "\n");
     console.log("Upserted pattern_library to Supabase + local JSON.");
   } else {
-    console.log("Dry run — no writes.");
+    console.log("Dry run - no writes.");
   }
 
   const logPath = "/tmp/mahrab-pattern-fabric-link-log.json";

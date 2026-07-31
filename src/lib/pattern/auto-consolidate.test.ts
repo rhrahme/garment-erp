@@ -323,7 +323,7 @@ describe("planAutoConsolidate", () => {
         linked_fabric_line_ids: ["line-other"],
       }),
     ];
-    // Other line is linen/different fit — patternMatchesFit should fail for cotton 240.
+    // Other line is linen/different fit - patternMatchesFit should fail for cotton 240.
     orders[0]!.fabric_lines.push(
       fabricLine("line-other", 9, {
         composition: "100% Linen",

@@ -366,9 +366,13 @@ function RoughMarkerBoard({ estimate }: { estimate: NestEstimateResult }) {
         </svg>
       </div>
       <p className="text-xs text-slate-500">
-        Length {lengthCm.toFixed(0)} cm x usable width {widthCm.toFixed(0)} cm ·{" "}
-        {estimate.placements.length} piece rects · size {estimate.size} · qty{" "}
-        {estimate.garment_qty}
+        Length {lengthCm.toFixed(0)} cm x usable width {widthCm.toFixed(0)} cm
+        {" / "}
+        {estimate.placements.length} piece rects
+        {" / "}
+        size {estimate.size}
+        {" / "}
+        qty {estimate.garment_qty}
       </p>
     </div>
   );

@@ -94,7 +94,7 @@ export type AutoConsolidateOptions = {
   sales_order_id?: string | null;
   /** Limit to one client. */
   client_id?: string | null;
-  /** When true, plan only ù no writes. */
+  /** When true, plan only - no writes. */
   dry_run?: boolean;
   actedBy?: string | null;
   notify?: boolean;
@@ -124,7 +124,7 @@ export function canonicalPatternGarmentType(garmentType: string): string {
 
 /**
  * Normalized family key for grouping (lowercase canonical sheet type).
- * Suit stays "suit"; Jacket/Trouser stay separate ù do not collapse suit pieces.
+ * Suit stays "suit"; Jacket/Trouser stay separate - do not collapse suit pieces.
  */
 export function normalizeGarmentTypeFamily(garmentType: string): string {
   const canonical = canonicalPatternGarmentType(garmentType);
