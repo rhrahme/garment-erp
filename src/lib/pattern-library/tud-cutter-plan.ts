@@ -122,7 +122,7 @@ export function buildCutterPlanFromTud(
       ? "Fold shell fabric, place printed shell parts on the fold, cut. Cut lining/fusing on their fabrics."
       : "Place printed parts on open fabric width, then cut. Cut lining/fusing on their fabrics.",
     disclaimer:
-      "Sizes are approximate from TUD area + perimeter (header). Not CAD outlines / not TUKAmark.",
+      "ESTIMATE ONLY - sizes from TUD header area + perimeter. Not CAD outlines (TUD binary geometry is not parsed).",
   };
 }
 

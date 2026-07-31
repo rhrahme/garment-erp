@@ -11,6 +11,8 @@ const SUBDIR = "pattern-library";
 
 const KIND_BY_EXTENSION: Record<string, PatternLibraryFileKind> = {
   tud: "tud",
+  /** Shop TUKAmrk marker files (header + JPEG + binary; same family as .tud). */
+  tum: "marker",
   mrk: "marker",
   plt: "marker",
   xlsx: "xlsx",
@@ -26,6 +28,7 @@ const KIND_BY_EXTENSION: Record<string, PatternLibraryFileKind> = {
 
 const MIME_BY_EXTENSION: Record<string, string> = {
   tud: "application/octet-stream",
+  tum: "application/octet-stream",
   mrk: "application/octet-stream",
   plt: "application/octet-stream",
   xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

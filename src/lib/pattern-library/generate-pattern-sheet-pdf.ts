@@ -402,35 +402,180 @@ function drawCutterPartsFromTud(
   return y + boxH + 3;
 }
 
+/** Draw active TUKAmrk (.tum) preview + -D metrics. Returns next Y, or startY if none. */
+function drawTumMarkerPreview(doc: jsPDF, data: PatternSheetData, startY: number): number {
+  const marker = data.marker;
+  if (!marker) return startY;
+
+  const tum = marker.tum;
+  const boxW = PAGE_W - MARGIN * 2;
+  let y = startY;
+  const hasThumb = Boolean(marker.thumbnail_data_url);
+  const thumbSize = hasThumb ? 28 : 0;
+  const pieceRows = tum?.pieces ?? [];
+  const rowH = 3.4;
+  const metricsH = 14;
+  const partsH =
+    pieceRows.length > 0 ? 8 + Math.min(pieceRows.length, 12) * rowH + 2 : 0;
+  const boxH = Math.max(metricsH + partsH + 4, hasThumb ? thumbSize + 10 : metricsH + 4);
+
+  doc.setDrawColor(15, 23, 42);
+  doc.setLineWidth(0.35);
+  doc.setFillColor(248, 250, 252);
+  doc.rect(MARGIN, y, boxW, boxH, "FD");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(...INK);
+  doc.text("FABRIC CUT LAYOUT (FROM TUKAMRK)", MARGIN + 3, y + 4);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.5);
+  doc.setTextColor(...SLATE);
+  const caption =
+    tum?.style_caption ??
+    marker.attachment.filename.replace(/\.[^.]+$/, "") ??
+    marker.attachment.filename;
+  doc.text(caption.slice(0, 70), MARGIN + 3, y + 8);
+
+  const lengthM = tum?.length_cm != null ? tum.length_cm / 100 : null;
+  const metricBits = [
+    tum?.width_cm != null ? `width ${tum.width_cm.toFixed(1)} cm` : null,
+    lengthM != null ? `length ${lengthM.toFixed(2)} m` : null,
+    tum?.efficiency_pct != null ? `efficiency ${tum.efficiency_pct.toFixed(1)}%` : null,
+    tum?.size ? `size ${tum.size}` : null,
+    tum?.garment_qty != null ? `qty ${tum.garment_qty}` : null,
+  ].filter(Boolean);
+  doc.setTextColor(...INK);
+  doc.setFontSize(7);
+  doc.text(
+    metricBits.length > 0
+      ? metricBits.join(" · ")
+      : "Shop marker attached (metrics unavailable).",
+    MARGIN + 3,
+    y + 12
+  );
+
+  if (hasThumb && marker.thumbnail_data_url) {
+    const thumbX = PAGE_W - MARGIN - thumbSize - 3;
+    const thumbY = y + 4;
+    try {
+      doc.addImage(marker.thumbnail_data_url, "JPEG", thumbX, thumbY, thumbSize, thumbSize);
+    } catch {
+      // Thumbnail decode can fail for odd JPEGs — metrics still print.
+    }
+  }
+
+  if (pieceRows.length > 0) {
+    let rowY = y + metricsH + 2;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(5.5);
+    doc.setTextColor(...SLATE);
+    doc.text("PIECE", MARGIN + 3, rowY);
+    doc.text("QTY", MARGIN + 48, rowY);
+    doc.text("FABRIC", MARGIN + 58, rowY);
+    doc.text("AREA m2", MARGIN + 88, rowY);
+    rowY += 1.5;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(5.5);
+    doc.setTextColor(...INK);
+    for (const piece of pieceRows.slice(0, 12)) {
+      rowY += rowH;
+      const label = piece.code ? `${piece.name} ${piece.code}` : piece.name;
+      doc.text(label.slice(0, 30), MARGIN + 3, rowY);
+      doc.text(piece.cut_quantity != null ? String(piece.cut_quantity) : "-", MARGIN + 48, rowY);
+      doc.text((piece.fabric ?? "-").slice(0, 12), MARGIN + 58, rowY);
+      doc.text(
+        piece.area_m2 != null ? piece.area_m2.toFixed(4) : "-",
+        MARGIN + 88,
+        rowY
+      );
+    }
+    if (pieceRows.length > 12) {
+      rowY += rowH;
+      doc.setTextColor(...SLATE);
+      doc.text(`+ ${pieceRows.length - 12} more pieces in marker file`, MARGIN + 3, rowY);
+    }
+  }
+
+  return y + boxH + 3;
+}
+
+/** Draw TUD embedded preview (100×100 JFIF, printed larger). Returns next Y. */
+function drawTudThumbnailPreview(doc: jsPDF, data: PatternSheetData, startY: number): number {
+  if (!data.tud_thumbnail_data_url) return startY;
+  const boxW = PAGE_W - MARGIN * 2;
+  const thumbSize = 48;
+  const boxH = thumbSize + 12;
+  let y = startY;
+
+  doc.setDrawColor(100, 116, 139);
+  doc.setLineWidth(0.3);
+  doc.setFillColor(248, 250, 252);
+  doc.rect(MARGIN, y, boxW, boxH, "FD");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(...INK);
+  doc.text("TUD PREVIEW (EMBEDDED)", MARGIN + 3, y + 4);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(5.5);
+  doc.setTextColor(...SLATE);
+  doc.text(
+    "100×100 JFIF from the .tud — visual reference only (not cuttable outlines).",
+    MARGIN + 3,
+    y + 7.5
+  );
+
+  const thumbX = PAGE_W - MARGIN - thumbSize - 3;
+  const thumbY = y + 3;
+  try {
+    doc.addImage(data.tud_thumbnail_data_url, "JPEG", thumbX, thumbY, thumbSize, thumbSize);
+  } catch {
+    // Odd JPEGs still leave the label.
+  }
+  return y + boxH + 3;
+}
+
 /** Draw approximate folded-fabric nest for the cutter. Returns next Y. */
 function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number): number {
+  // Optional .tum archive path — only when a marker is actually attached.
+  if (data.marker) {
+    return drawTumMarkerPreview(doc, data, startY);
+  }
+
   const preview = data.cut_nest;
   const boxW = PAGE_W - MARGIN * 2;
   let y = startY;
+
+  // Parts table + fold instructions first (what the cutter actually uses).
+  if (preview.cutter_plan) {
+    y = drawCutterPartsFromTud(doc, preview.cutter_plan, y);
+  }
+
+  // Larger TUD thumbnail for visual recognition on A4.
+  y = drawTudThumbnailPreview(doc, data, y);
 
   doc.setDrawColor(100, 116, 139);
   doc.setLineWidth(0.35);
 
   if (!preview.nest) {
     const msg =
-      preview.missing_reason ?? "Upload TUD + set fabric width for cut nest preview.";
+      preview.missing_reason ?? "Upload TUD + set fabric width for length estimate.";
     const lines = doc.splitTextToSize(msg, boxW - 6);
     const boxH = 8 + lines.length * 3.5;
-    doc.setFillColor(248, 250, 252);
+    doc.setFillColor(255, 251, 235);
+    doc.setDrawColor(217, 119, 6);
     doc.rect(MARGIN, y, boxW, boxH, "FD");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
-    doc.setTextColor(...SLATE);
-    doc.text("FABRIC CUT LAYOUT (FROM TUD)", MARGIN + 3, y + 4);
+    doc.setTextColor(120, 53, 15);
+    doc.text("LENGTH ESTIMATE — NOT AVAILABLE", MARGIN + 3, y + 4);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.setTextColor(...INK);
     doc.text(lines, MARGIN + 3, y + 8);
-    y = y + boxH + 3;
-    if (preview.cutter_plan) {
-      y = drawCutterPartsFromTud(doc, preview.cutter_plan, y);
-    }
-    return y;
+    return y + boxH + 3;
   }
 
   const nest = preview.nest;
@@ -442,17 +587,18 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
   );
   const usableW = Math.max(nest.usable_width_cm, 1);
   const mapW = boxW - 6;
-  const mapH = Math.min(42, Math.max(22, (mapW * usableW) / lengthCm));
+  const mapH = Math.min(36, Math.max(18, (mapW * usableW) / lengthCm));
   const headerH = 14;
   const footerH = 8;
   const boxH = headerH + mapH + footerH + 4;
 
-  doc.setFillColor(248, 250, 252);
+  doc.setFillColor(255, 251, 235);
+  doc.setDrawColor(217, 119, 6);
   doc.rect(MARGIN, y, boxW, boxH, "FD");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
-  doc.setTextColor(...INK);
-  doc.text("FABRIC CUT LAYOUT (FROM TUD)", MARGIN + 3, y + 4);
+  doc.setTextColor(120, 53, 15);
+  doc.text("LENGTH ESTIMATE ONLY — NOT CAD OUTLINES", MARGIN + 3, y + 4);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
   doc.setTextColor(...SLATE);
@@ -472,48 +618,34 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
         }`
       : "";
   doc.text(
-    `${foldLabel} - usable ${nest.usable_width_cm} cm of ${nest.fabric_width_cm} cm · packed ${nest.packed_length_m.toFixed(2)} m · size ${nest.size}${orderBit}${preview.source === "saved" ? " · saved marker" : ""}`,
+    `${foldLabel} - usable ${nest.usable_width_cm} cm of ${nest.fabric_width_cm} cm · packed ~${nest.packed_length_m.toFixed(2)} m · size ${nest.size}${orderBit}${preview.source === "saved" ? " · saved" : ""}`,
     MARGIN + 3,
     y + 8
   );
   doc.text(
-    "TUD pieces placed on fabric without overlap. Approx rectangles from area - not CAD outlines.",
+    "Green boxes = area/perimeter rectangles from TUD header. Cut from real TUKA pieces, not this map.",
     MARGIN + 3,
     y + 11.5
   );
 
   const mapX = MARGIN + 3;
   const mapY = y + headerH;
-  doc.setFillColor(203, 213, 225);
-  doc.setDrawColor(51, 65, 85);
+  doc.setFillColor(241, 245, 249);
+  doc.setDrawColor(100, 116, 139);
   doc.rect(mapX, mapY, mapW, mapH, "FD");
 
   const scaleX = mapW / lengthCm;
   const scaleY = mapH / usableW;
-  const fills: Array<[number, number, number]> = [
-    [249, 168, 212],
-    [153, 246, 228],
-    [253, 230, 138],
-    [196, 181, 253],
-    [253, 164, 175],
-    [165, 180, 252],
-  ];
-  const colorByName = new Map<string, [number, number, number]>();
-  let colorIdx = 0;
 
   for (const p of nest.placements) {
-    if (!colorByName.has(p.name)) {
-      colorByName.set(p.name, fills[colorIdx % fills.length]!);
-      colorIdx += 1;
-    }
-    const fill = colorByName.get(p.name)!;
     const rx = mapX + p.x_cm * scaleX;
     const ry = mapY + p.y_cm * scaleY;
     const rw = Math.max(p.width_cm * scaleX, 1.2);
     const rh = Math.max(p.height_cm * scaleY, 1.2);
-    doc.setFillColor(...fill);
-    doc.setDrawColor(15, 23, 42);
-    doc.setLineWidth(0.2);
+    // Outline style (TUKA-ish green), not candy pink/teal fills.
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(22, 101, 52);
+    doc.setLineWidth(0.45);
     doc.rect(rx, ry, rw, rh, "FD");
     if (rw > 10 && rh > 4) {
       doc.setFont("helvetica", "bold");
@@ -527,16 +659,12 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
   doc.setFontSize(6);
   doc.setTextColor(...SLATE);
   doc.text(
-    `Packed length ${nest.packed_length_m.toFixed(2)} m · ${nest.placements.length} piece rects · efficiency ~${nest.efficiency_pct.toFixed(0)}%`,
+    `Est. packed ~${nest.packed_length_m.toFixed(2)} m · ${nest.placements.length} estimate rects · ~${nest.efficiency_pct.toFixed(0)}% (rough)`,
     MARGIN + 3,
     y + headerH + mapH + 4
   );
 
-  y = y + boxH + 3;
-  if (preview.cutter_plan) {
-    y = drawCutterPartsFromTud(doc, preview.cutter_plan, y);
-  }
-  return y;
+  return y + boxH + 3;
 }
 
 /** A4 portrait client-pattern measurement sheet - one page per manufacturing piece. */

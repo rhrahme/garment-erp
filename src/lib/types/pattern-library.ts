@@ -70,6 +70,41 @@ export interface TudMetadata {
   total_perimeter_cm: number | null;
 }
 
+/** One piece listed in a TUKAmrk .tum header (-P/-E/-G). */
+export interface TumPiece {
+  name: string;
+  code?: string | null;
+  /** Instances on the marker from the -E count field (null when absent). */
+  cut_quantity: number | null;
+  fabric: string | null;
+  area_m2: number | null;
+  perimeter_cm: number | null;
+}
+
+/**
+ * Metadata from a TUKAmrk .tum ASCII header.
+ * Binary marker geometry is not decoded — only header metrics + embedded JPEG.
+ */
+export interface TumMetadata {
+  style_caption: string | null;
+  /** Source .tud path from /F when present. */
+  source_path: string | null;
+  /** Marker file path from ! record when present. */
+  marker_path: string | null;
+  /** Marker length (cm) from -D. */
+  length_cm: number | null;
+  /** Fabric / marker width (cm) from -D. */
+  width_cm: number | null;
+  /** Nest efficiency (%) from -D. */
+  efficiency_pct: number | null;
+  /** Optional 4th -D field (often perimeter-like). */
+  perimeter_cm: number | null;
+  size: string | null;
+  garment_qty: number | null;
+  pieces: TumPiece[];
+  total_cut_pieces: number | null;
+}
+
 export interface PatternLibraryAttachment {
   id: string;
   kind: PatternLibraryFileKind;
@@ -86,7 +121,9 @@ export interface PatternLibraryAttachment {
   piece_name?: string | null;
   /** Parsed TUKA CAD metadata for .tud uploads (absent/null when not parseable). */
   tud?: TudMetadata | null;
-  /** Sibling JPEG preview extracted from the .tud, stored next to the file. */
+  /** Parsed TUKAmrk .tum metadata for marker uploads (absent/null when not parseable). */
+  tum?: TumMetadata | null;
+  /** Sibling JPEG preview extracted from .tud/.tum, stored next to the file. */
   thumbnail_stored_filename?: string | null;
 }
 

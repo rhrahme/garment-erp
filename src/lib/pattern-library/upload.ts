@@ -4,6 +4,7 @@ import {
   classifyPatternLibraryFile,
   writePatternLibraryFile,
 } from "@/lib/pattern-library/file-storage";
+import { parseTumFile } from "@/lib/pattern-library/tum-parser";
 import { parseTudFile } from "@/lib/pattern-library/tud-parser";
 import type { PatternLibraryAttachment } from "@/lib/types/pattern-library";
 
@@ -59,6 +60,24 @@ export async function storeLibraryUpload(
     }
   }
 
+  // .tum (TUKAmrk) — same header+JPEG shape; store -D metrics + piece list.
+  // Binary marker geometry is not decoded.
+  if (kind === "marker") {
+    try {
+      const parsed = parseTumFile(buffer);
+      if (parsed) {
+        attachment.tum = parsed.metadata;
+        if (parsed.thumbnail) {
+          const thumbnailName = `${storedFilename}.thumb.jpg`;
+          await writePatternLibraryFile(thumbnailName, parsed.thumbnail, "image/jpeg");
+          attachment.thumbnail_stored_filename = thumbnailName;
+        }
+      }
+    } catch (error) {
+      console.error("Failed to extract .tum metadata (stored as plain marker):", error);
+    }
+  }
+
   return { ok: true, attachment };
 }
 
@@ -91,6 +110,24 @@ export function tudNotificationFields(
     tud_total_cut_pieces: attachment.tud.total_cut_pieces,
     tud_total_area_m2: attachment.tud.total_area_m2,
     tud_has_thumbnail: Boolean(attachment.thumbnail_stored_filename),
+  };
+}
+
+/** Parsed .tum (TUKAmrk) summary fields for marker upload webhooks. */
+export function tumNotificationFields(
+  attachment: PatternLibraryAttachment
+): Record<string, unknown> {
+  if (!attachment.tum) return {};
+  return {
+    tum_style_caption: attachment.tum.style_caption,
+    tum_length_cm: attachment.tum.length_cm,
+    tum_width_cm: attachment.tum.width_cm,
+    tum_efficiency_pct: attachment.tum.efficiency_pct,
+    tum_size: attachment.tum.size,
+    tum_garment_qty: attachment.tum.garment_qty,
+    tum_piece_count: attachment.tum.pieces.length,
+    tum_total_cut_pieces: attachment.tum.total_cut_pieces,
+    tum_has_thumbnail: Boolean(attachment.thumbnail_stored_filename),
   };
 }
 

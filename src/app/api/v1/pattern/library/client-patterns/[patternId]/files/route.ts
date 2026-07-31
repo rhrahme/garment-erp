@@ -13,6 +13,7 @@ import {
   resolveLibraryFileRequest,
   storeLibraryUpload,
   tudNotificationFields,
+  tumNotificationFields,
 } from "@/lib/pattern-library/upload";
 
 /** Zapier / API-key parity for client-pattern file upload (incl. per-piece .TUD). */
@@ -76,6 +77,7 @@ export async function POST(request: Request, context: { params: Promise<{ patter
       uploaded_by: uploadedBy,
       source: "api",
       ...tudNotificationFields(uploaded),
+      ...tumNotificationFields(uploaded),
     });
 
     let tudFill: TudFillSuggestion | null = null;

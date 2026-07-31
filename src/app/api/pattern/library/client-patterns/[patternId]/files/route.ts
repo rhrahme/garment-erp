@@ -13,6 +13,7 @@ import {
   resolveLibraryFileRequest,
   storeLibraryUpload,
   tudNotificationFields,
+  tumNotificationFields,
 } from "@/lib/pattern-library/upload";
 
 /** Uploads attach to the pattern itself, or to a specific trial via ?version=<versionId>. */
@@ -71,6 +72,7 @@ export async function POST(request: Request, context: { params: Promise<{ patter
       piece_name: uploaded.piece_name ?? pieceName,
       uploaded_by: session.email,
       ...tudNotificationFields(uploaded),
+      ...tumNotificationFields(uploaded),
     });
 
     // .tud with detected sizes → offer "set size + pre-fill sheet" to the UI.

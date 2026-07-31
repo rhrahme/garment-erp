@@ -48,14 +48,8 @@ type SheetPageProps = {
   pageTotal: number;
 };
 
-const NEST_COLORS = [
-  "#f9a8d4",
-  "#99f6e4",
-  "#fde68a",
-  "#c4b5fd",
-  "#fda4af",
-  "#a5b4fc",
-];
+const NEST_FILL = "#ffffff";
+const NEST_STROKE = "#166534";
 
 function CutterPartsFromTud({ plan }: { plan: NonNullable<PatternSheetData["cut_nest"]["cutter_plan"]> }) {
   const rows = [...plan.shell_pieces, ...plan.other_pieces];
@@ -99,18 +93,113 @@ function CutterPartsFromTud({ plan }: { plan: NonNullable<PatternSheetData["cut_
   );
 }
 
+function TumMarkerPreviewBlock({ data }: { data: PatternSheetData }) {
+  const marker = data.marker;
+  if (!marker) return null;
+  const tum = marker.tum;
+  const lengthM = tum?.length_cm != null ? tum.length_cm / 100 : null;
+  const metricBits = [
+    tum?.width_cm != null ? `width ${tum.width_cm.toFixed(1)} cm` : null,
+    lengthM != null ? `length ${lengthM.toFixed(2)} m` : null,
+    tum?.efficiency_pct != null ? `efficiency ${tum.efficiency_pct.toFixed(1)}%` : null,
+    tum?.size ? `size ${tum.size}` : null,
+    tum?.garment_qty != null ? `qty ${tum.garment_qty}` : null,
+  ].filter(Boolean);
+
+  return (
+    <div className="cut-nest-block mt-4 rounded-lg border border-slate-800 bg-slate-50 p-3">
+      <p className="text-xs font-bold uppercase tracking-wide text-slate-900">
+        Fabric cut layout (from TUKAmrk)
+      </p>
+      <p className="mt-0.5 text-[11px] font-medium text-slate-800">
+        {tum?.style_caption ?? marker.attachment.filename}
+      </p>
+      <p className="text-[11px] text-slate-600">
+        {metricBits.length > 0
+          ? metricBits.join(" · ")
+          : "Shop marker attached (metrics unavailable)."}
+      </p>
+      <div className="mt-2 flex flex-wrap items-start gap-3">
+        {marker.thumbnail_data_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={marker.thumbnail_data_url}
+            alt="TUKAmrk marker preview"
+            width={112}
+            height={112}
+            className="h-28 w-28 rounded border border-slate-300 bg-white object-contain p-1"
+          />
+        ) : null}
+        {tum && tum.pieces.length > 0 ? (
+          <table className="min-w-0 flex-1 border-collapse text-[10px]">
+            <thead>
+              <tr className="border-b border-slate-300 text-left text-slate-500">
+                <th className="py-0.5 pr-2 font-medium">Piece</th>
+                <th className="py-0.5 pr-2 font-medium">Qty</th>
+                <th className="py-0.5 pr-2 font-medium">Fabric</th>
+                <th className="py-0.5 font-medium">Area m2</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tum.pieces.map((piece) => (
+                <tr key={piece.name} className="border-b border-slate-200">
+                  <td className="py-0.5 pr-2 font-medium text-slate-900">
+                    {piece.name}
+                    {piece.code ? (
+                      <span className="ml-1 font-mono text-slate-500">{piece.code}</span>
+                    ) : null}
+                  </td>
+                  <td className="py-0.5 pr-2 tabular-nums">{piece.cut_quantity ?? "-"}</td>
+                  <td className="py-0.5 pr-2">{piece.fabric ?? "-"}</td>
+                  <td className="py-0.5 tabular-nums">
+                    {piece.area_m2 != null ? piece.area_m2.toFixed(4) : "-"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : null}
+      </div>
+      <p className="mt-1 text-[9px] text-slate-500">
+        Nesting done in TUKAmrk outside ERP. Preview + -D metrics from attached .tum (not CAD
+        outline decode).
+      </p>
+    </div>
+  );
+}
+
 function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
+  // Optional .tum archive path only when actually attached.
+  if (data.marker) {
+    return <TumMarkerPreviewBlock data={data} />;
+  }
+
   const preview = data.cut_nest;
   if (!preview.nest) {
     return (
-      <div className="mt-4 rounded-lg border border-slate-300 bg-slate-50 p-3">
-        <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
-          Fabric cut layout (from TUD)
+      <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3">
+        <p className="text-xs font-bold uppercase tracking-wide text-amber-900">
+          Length estimate — not available
         </p>
-        <p className="mt-1 text-sm text-slate-600">
-          {preview.missing_reason ?? "Upload TUD + set fabric width for fabric cut layout."}
+        <p className="mt-1 text-sm text-slate-700">
+          {preview.missing_reason ?? "Upload TUD + set fabric width for length estimate."}
         </p>
         {preview.cutter_plan ? <CutterPartsFromTud plan={preview.cutter_plan} /> : null}
+        {data.tud_thumbnail_data_url ? (
+          <div className="mt-2 flex items-start gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={data.tud_thumbnail_data_url}
+              alt="TUD embedded preview"
+              width={160}
+              height={160}
+              className="h-40 w-40 rounded border border-slate-300 bg-white object-contain p-1"
+            />
+            <p className="text-[10px] text-slate-500">
+              TUD preview (100×100 embedded JFIF, enlarged) — visual reference only.
+            </p>
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -127,14 +216,6 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
   const viewH = Math.max(96, Math.round((viewW * usableW) / lengthCm));
   const scaleX = viewW / lengthCm;
   const scaleY = viewH / usableW;
-  const colorByName = new Map<string, string>();
-  let colorIdx = 0;
-  for (const p of nest.placements) {
-    if (!colorByName.has(p.name)) {
-      colorByName.set(p.name, NEST_COLORS[colorIdx % NEST_COLORS.length]!);
-      colorIdx += 1;
-    }
-  }
   const foldLabel = nest.double_fold
     ? preview.fold_assumed
       ? "Double fold assumed (shop default)"
@@ -152,66 +233,95 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
       : "";
 
   return (
-    <div className="cut-nest-block mt-4 rounded-lg border border-slate-300 bg-slate-50 p-3">
-      <p className="text-xs font-bold uppercase tracking-wide text-slate-900">
-        Fabric cut layout (from TUD)
-      </p>
-      <p className="mt-0.5 text-[11px] text-slate-600">
-        {foldLabel} - usable {nest.usable_width_cm} cm of {nest.fabric_width_cm} cm · packed{" "}
-        {nest.packed_length_m.toFixed(2)} m · size {nest.size}
-        {orderNote}
-        {preview.source === "saved" ? " · saved marker" : ""}
-      </p>
-      <p className="text-[11px] text-slate-600">
-        TUD pieces placed on fabric without overlap. Approx rectangles from area - not CAD outlines.
-      </p>
-      {preview.cutter_plan ? <CutterPartsFromTud plan={preview.cutter_plan} /> : null}
-      <div className="mt-2 overflow-x-auto rounded border border-slate-300 bg-slate-200 p-1">
-        <svg
-          viewBox={`0 0 ${viewW} ${viewH}`}
-          className="h-auto w-full min-w-[280px]"
-          role="img"
-          aria-label="Fabric cut layout from TUD pieces"
-        >
-          <rect x={0} y={0} width={viewW} height={viewH} fill="#cbd5e1" />
-          {nest.placements.map((p) => {
-            const x = p.x_cm * scaleX;
-            const y = p.y_cm * scaleY;
-            const w = Math.max(p.width_cm * scaleX, 2);
-            const h = Math.max(p.height_cm * scaleY, 2);
-            return (
-              <g key={p.id}>
-                <rect
-                  x={x}
-                  y={y}
-                  width={w}
-                  height={h}
-                  fill={colorByName.get(p.name) ?? "#f9a8d4"}
-                  stroke="#0f172a"
-                  strokeWidth={1}
-                  opacity={0.92}
-                />
-                {w > 28 && h > 12 ? (
-                  <text
-                    x={x + w / 2}
-                    y={y + h / 2}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fontSize={Math.min(11, h * 0.4)}
-                    fill="#0f172a"
-                  >
-                    {p.name}
-                  </text>
-                ) : null}
-              </g>
-            );
-          })}
-        </svg>
+    <div className="cut-nest-block mt-4 space-y-2">
+      {preview.cutter_plan ? (
+        <div className="rounded-lg border border-slate-300 bg-white p-3">
+          <CutterPartsFromTud plan={preview.cutter_plan} />
+        </div>
+      ) : null}
+
+      {data.tud_thumbnail_data_url ? (
+        <div className="flex items-start gap-3 rounded-lg border border-slate-300 bg-slate-50 p-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={data.tud_thumbnail_data_url}
+            alt="TUD embedded preview"
+            width={160}
+            height={160}
+            className="h-40 w-40 rounded border border-slate-300 bg-white object-contain p-1"
+          />
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-800">
+              TUD preview (embedded)
+            </p>
+            <p className="mt-1 text-[11px] text-slate-500">
+              100×100 JFIF from the .tud — visual reference only (not cuttable outlines).
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
+        <p className="text-xs font-bold uppercase tracking-wide text-amber-950">
+          Length estimate only — not CAD outlines
+        </p>
+        <p className="mt-0.5 text-[11px] text-slate-700">
+          {foldLabel} - usable {nest.usable_width_cm} cm of {nest.fabric_width_cm} cm · packed ~
+          {nest.packed_length_m.toFixed(2)} m · size {nest.size}
+          {orderNote}
+          {preview.source === "saved" ? " · saved" : ""}
+        </p>
+        <p className="text-[11px] text-amber-900">
+          Green boxes = area/perimeter rectangles from TUD header. Cut from real TUKA pieces, not
+          this map.
+        </p>
+        <div className="mt-2 overflow-x-auto rounded border border-slate-300 bg-slate-100 p-1">
+          <svg
+            viewBox={`0 0 ${viewW} ${viewH}`}
+            className="h-auto w-full min-w-[280px]"
+            role="img"
+            aria-label="Length estimate board from TUD areas"
+          >
+            <rect x={0} y={0} width={viewW} height={viewH} fill="#e2e8f0" />
+            {nest.placements.map((p) => {
+              const x = p.x_cm * scaleX;
+              const y = p.y_cm * scaleY;
+              const w = Math.max(p.width_cm * scaleX, 2);
+              const h = Math.max(p.height_cm * scaleY, 2);
+              return (
+                <g key={p.id}>
+                  <rect
+                    x={x}
+                    y={y}
+                    width={w}
+                    height={h}
+                    fill={NEST_FILL}
+                    stroke={NEST_STROKE}
+                    strokeWidth={1.5}
+                    opacity={0.95}
+                  />
+                  {w > 28 && h > 12 ? (
+                    <text
+                      x={x + w / 2}
+                      y={y + h / 2}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize={Math.min(11, h * 0.4)}
+                      fill="#14532d"
+                    >
+                      {p.name}
+                    </text>
+                  ) : null}
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+        <p className="mt-1 text-[11px] text-slate-500">
+          Est. packed ~{nest.packed_length_m.toFixed(2)} m · {nest.placements.length} estimate
+          rects · ~{nest.efficiency_pct.toFixed(0)}% (rough)
+        </p>
       </div>
-      <p className="mt-1 text-[11px] text-slate-500">
-        Packed length {nest.packed_length_m.toFixed(2)} m · {nest.placements.length} piece rects ·
-        efficiency ~{nest.efficiency_pct.toFixed(0)}%
-      </p>
     </div>
   );
 }

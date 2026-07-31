@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LayoutGrid, RotateCw, Ruler } from "lucide-react";
-import { evaluatePatternCuttingCompleteness } from "@/lib/pattern-library/cutting-completeness";
+import {
+  evaluatePatternCuttingCompleteness,
+  findActiveMarkerAttachment,
+} from "@/lib/pattern-library/cutting-completeness";
 import {
   buildAutoMarkerLayout,
   clampPlacement,
@@ -48,15 +51,17 @@ function widthSourceLabel(source: MarkerFabricWidthSource | "manual" | null): st
   }
 }
 
+/** Muted fills + green strokes ù estimate rects, not candy "fake CAD". */
 const PIECE_COLORS = [
-  "#f9a8d4",
-  "#99f6e4",
-  "#fde68a",
-  "#c4b5fd",
-  "#fda4af",
-  "#a5b4fc",
-  "#86efac",
+  "#ecfdf5",
+  "#f0fdf4",
+  "#f7fee7",
+  "#eff6ff",
+  "#f8fafc",
+  "#fafafa",
+  "#f5f5f4",
 ];
+const PIECE_STROKE = "#166534";
 
 export function NestEstimatePanel({
   pattern,
@@ -320,16 +325,40 @@ export function NestEstimatePanel({
   }, [placements]);
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+    <section className="rounded-xl border border-amber-200 bg-white p-5 space-y-4">
       <div>
         <h3 className="flex items-center gap-2 font-semibold text-slate-900">
-          <LayoutGrid className="h-4 w-4 text-slate-400" />
-          Marker board (from TUD)
+          <LayoutGrid className="h-4 w-4 text-amber-600" />
+          Length estimate (from TUD header)
         </h3>
-        <p className="mt-0.5 text-sm text-slate-500">
-          Fabric width is taken from the linked fabric / SO when known. After TUD upload: auto-place
-          pieces, drag/rotate if needed, then save. Rectangles from TUD areas - not CAD outlines.
+        <p className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+          <span className="font-semibold">Estimate only.</span> Green boxes are approximate
+          rectangles from TUD area + perimeter ù not TUKA piece outlines. Use the parts table and
+          fold instructions for cutting; the board is for fabric-length planning.
         </p>
+        {(() => {
+          const marker = findActiveMarkerAttachment(pattern);
+          if (!marker) return null;
+          const tum = marker.tum;
+          const lengthM = tum?.length_cm != null ? tum.length_cm / 100 : null;
+          return (
+            <p className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+              Optional archive marker attached: <span className="font-medium">{marker.filename}</span>
+              {tum?.efficiency_pct != null || lengthM != null
+                ? ` ù ${[
+                    lengthM != null ? `${lengthM.toFixed(2)} m` : null,
+                    tum?.width_cm != null ? `${tum.width_cm.toFixed(0)} cm wide` : null,
+                    tum?.efficiency_pct != null
+                      ? `${tum.efficiency_pct.toFixed(1)}% eff`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" ù ")}`
+                : ""}
+              . Not required for the TUD-only workflow.
+            </p>
+          );
+        })()}
       </div>
 
       <ul className="grid gap-1.5 sm:grid-cols-2">
@@ -486,14 +515,14 @@ export function NestEstimatePanel({
       </div>
 
       {cutterPlan ? (
-        <div className="rounded-lg border border-slate-200 bg-slate-50/80 p-3 space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-            Parts read from TUD (size {cutterPlan.size}) - {cutterPlan.total_cut_pieces} to cut
+        <div className="rounded-lg border border-slate-300 bg-white p-3 space-y-2 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-800">
+            Parts from TUD (size {cutterPlan.size}) ù {cutterPlan.total_cut_pieces} to cut
           </p>
-          <p className="text-xs text-slate-600">{cutterPlan.instruction}</p>
-          <div className="overflow-x-auto rounded-md border border-slate-200 bg-white">
+          <p className="text-sm font-medium text-slate-800">{cutterPlan.instruction}</p>
+          <div className="overflow-x-auto rounded-md border border-slate-200">
             <table className="w-full text-xs">
-              <thead className="bg-slate-50 text-left text-[10px] uppercase tracking-wide text-slate-500">
+              <thead className="bg-slate-100 text-left text-[10px] uppercase tracking-wide text-slate-600">
                 <tr>
                   <th className="px-2 py-1.5 font-medium">Piece</th>
                   <th className="px-2 py-1.5 font-medium">Qty</th>
@@ -514,9 +543,9 @@ export function NestEstimatePanel({
                     <td className="px-2 py-1.5 tabular-nums">{row.cut_quantity}</td>
                     <td className="px-2 py-1.5">{row.fabric_label}</td>
                     <td className="px-2 py-1.5 tabular-nums text-slate-700">
-                      {row.approx_width_cm.toFixed(0)} x {row.approx_height_cm.toFixed(0)} cm
+                      ~{row.approx_width_cm.toFixed(0)} ù {row.approx_height_cm.toFixed(0)} cm
                     </td>
-                    <td className="px-2 py-1.5 text-slate-600">{row.place_hint}</td>
+                    <td className="px-2 py-1.5 text-slate-700">{row.place_hint}</td>
                   </tr>
                 ))}
               </tbody>
@@ -528,7 +557,7 @@ export function NestEstimatePanel({
 
       {!tud ? (
         <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-500">
-          Upload a .TUD first to generate the marker board.
+          Upload a .TUD first for parts + length estimate.
         </p>
       ) : !(width > 0) ? (
         <p className="rounded-lg border border-dashed border-amber-200 bg-amber-50/60 px-3 py-4 text-sm text-amber-900">
@@ -539,17 +568,17 @@ export function NestEstimatePanel({
           {pieceNames.length > 0 ? (
             <div className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
               <span className="w-full text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                Piece bin
+                Estimate pieces
               </span>
               {pieceNames.map((name, i) => {
                 const count = placements.filter((p) => p.name === name).length;
                 return (
                   <span
                     key={name}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-emerald-700/40 bg-white px-2 py-1 text-xs font-medium text-slate-800"
                   >
                     <span
-                      className="inline-block h-2.5 w-2.5 rounded-sm"
+                      className="inline-block h-2.5 w-2.5 rounded-sm border border-emerald-800"
                       style={{ background: PIECE_COLORS[i % PIECE_COLORS.length] }}
                     />
                     {name}
@@ -589,7 +618,7 @@ export function NestEstimatePanel({
             <ul className="flex flex-wrap gap-3 text-xs text-slate-600">
               {liveEstimate.fabric_breakdown.map((row) => (
                 <li key={row.fabric}>
-                  {tudFabricLabel(row.fabric)}: {row.estimated_length_m.toFixed(2)} m (
+                  {tudFabricLabel(row.fabric)}: ~{row.estimated_length_m.toFixed(2)} m (
                   {row.area_m2.toFixed(3)} m2)
                 </li>
               ))}
@@ -734,8 +763,8 @@ function MarkerBoard({
                   width={w}
                   height={h}
                   fill={fill}
-                  stroke={selected ? "#f8fafc" : "#18181b"}
-                  strokeWidth={selected ? 2.5 : 1}
+                  stroke={selected ? "#fbbf24" : PIECE_STROKE}
+                  strokeWidth={selected ? 2.5 : 1.5}
                   opacity={p.secondary ? 0.55 : 0.95}
                 />
                 {w > 28 && h > 14 ? (
@@ -745,7 +774,7 @@ function MarkerBoard({
                     textAnchor="middle"
                     dominantBaseline="middle"
                     fontSize={Math.min(11, h * 0.45)}
-                    fill="#0f172a"
+                    fill="#14532d"
                     style={{ pointerEvents: "none" }}
                   >
                     {p.name}
@@ -772,9 +801,9 @@ function MarkerBoard({
         <span>Size: {size}</span>
         <span>Qty: {garmentQty}</span>
       </div>
-      <p className="border-t border-zinc-800 bg-zinc-900 px-3 py-1.5 text-[11px] text-zinc-400">
-        Drag pieces to move. Select + Rotate 90. Approximate from TUD areas - not a TUKAmark CAD
-        marker.
+      <p className="border-t border-amber-900/60 bg-amber-950 px-3 py-1.5 text-[11px] text-amber-100">
+        ESTIMATE ONLY ó green outline boxes from TUD header area/perimeter. Not CAD piece shapes.
+        Drag / rotate for length planning only.
       </p>
     </div>
   );

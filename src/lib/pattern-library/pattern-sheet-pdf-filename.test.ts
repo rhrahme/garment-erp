@@ -88,6 +88,8 @@ function sheet(overrides: Partial<PatternSheetData> = {}): PatternSheetData {
       missing_reason: null,
       source: null,
     },
+    marker: null,
+    tud_thumbnail_data_url: null,
     ...overrides,
   };
 }

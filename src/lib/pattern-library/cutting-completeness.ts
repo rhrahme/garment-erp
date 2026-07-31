@@ -118,14 +118,19 @@ export function evaluatePatternCuttingCompleteness(
     detail: foldSet ? (fold ? "Double fold" : "Open width") : null,
   });
 
-  // Optional: keep visibility if a marker export was archived, never required.
+  // Optional shop TUKAmrk (.tum) - preferred on cutter A4 when present.
   const marker = findActiveMarkerAttachment(pattern);
+  const tum = marker?.tum;
+  const tumDetail =
+    tum && tum.length_cm != null && tum.efficiency_pct != null
+      ? `${marker!.filename} · ${tum.length_cm.toFixed(1)} cm · ${tum.efficiency_pct.toFixed(1)}%`
+      : marker?.filename ?? null;
   items.push({
     id: "marker_file",
-    label: "Marker file (optional archive)",
+    label: "TUKAmrk .tum (shop marker)",
     done: Boolean(marker),
     optional: true,
-    detail: marker?.filename ?? null,
+    detail: tumDetail,
   });
 
   const missing_tud_labels = items
@@ -159,6 +164,6 @@ export function formatCuttingCompletenessError(
   return `Nest inputs incomplete - missing: ${result.missing_nest_input_labels.join(", ")}.`;
 }
 
-/** Common nest / plotter export extensions if archiving a marker file. */
+/** Shop TUKAmrk + legacy nest / plotter export extensions. */
 export const MARKER_UPLOAD_ACCEPT =
-  ".mrk,.MRK,.plt,.PLT,.pdf,.PDF,.dxf,.DXF,.zip,.ZIP";
+  ".tum,.TUM,.mrk,.MRK,.plt,.PLT,.pdf,.PDF,.dxf,.DXF,.zip,.ZIP";

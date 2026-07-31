@@ -6,6 +6,7 @@ import { pieceStickersForFabricLine } from "@/lib/pattern/manufacturing-stickers
 import path from "path";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import type { PatternJob } from "@/lib/types/pattern";
+import { findActiveMarkerAttachment } from "@/lib/pattern-library/cutting-completeness";
 import {
   buildCutNestPreview,
   metersFromFabricLineQuantity,
@@ -15,15 +16,19 @@ import {
   CUSTOM_PATTERN_ORIGIN,
   formatBasePatternDisplayName,
 } from "@/lib/pattern-library/derived-from";
+import { readPatternLibraryFile } from "@/lib/pattern-library/file-storage";
 import { resolveSheetHouseBrand, type SheetHouseBrand } from "@/lib/pattern-library/sheet-brand";
 import {
   fillMeasurementsFromBase,
   findBaseSizeMatch,
 } from "@/lib/pattern-library/tud-size-fill";
+import { findActiveTudAttachment } from "@/lib/pattern-library/tud-versions";
 import type {
   BasePattern,
   ClientPattern,
   ClientPatternVersion,
+  PatternLibraryAttachment,
+  TumMetadata,
 } from "@/lib/types/pattern-library";
 
 const SALES_ORDERS_PATH = path.join(process.cwd(), "src/data/sales-orders.json");
@@ -51,6 +56,14 @@ export interface PatternSheetFabric {
   ordered_meters?: number | null;
 }
 
+/** Optional TUKAmrk (.tum) attachment — archive/future only; shop workflow is TUD-only. */
+export interface PatternSheetMarker {
+  attachment: PatternLibraryAttachment;
+  tum: TumMetadata | null;
+  /** JPEG data URL for print/PDF, or null when no thumbnail was extracted. */
+  thumbnail_data_url: string | null;
+}
+
 export interface PatternSheetData {
   pattern: ClientPattern;
   version: ClientPatternVersion;
@@ -71,6 +84,15 @@ export interface PatternSheetData {
   resolved_base_size: string | null;
   /** Approximate cut nest for the cutter handoff (folded fabric placement). */
   cut_nest: CutNestPreview;
+  /**
+   * Optional shop TUKAmrk marker when attached. Not required for TUD-only workflow.
+   */
+  marker: PatternSheetMarker | null;
+  /**
+   * Embedded TUD JFIF preview (100×100 source) as data URL for A4 — visual
+   * reference only; not a substitute for CAD outlines.
+   */
+  tud_thumbnail_data_url: string | null;
 }
 
 function readSalesOrdersFile(): { orders: SalesOrder[] } {
@@ -290,6 +312,32 @@ export async function buildPatternSheetData(
     ordered_length_m: orderedMeters ?? fabric?.ordered_meters ?? null,
   });
 
+  const markerAttachment = findActiveMarkerAttachment(pattern);
+  let marker: PatternSheetMarker | null = null;
+  if (markerAttachment) {
+    let thumbnail_data_url: string | null = null;
+    if (markerAttachment.thumbnail_stored_filename) {
+      const thumb = await readPatternLibraryFile(markerAttachment.thumbnail_stored_filename);
+      if (thumb) {
+        thumbnail_data_url = `data:image/jpeg;base64,${thumb.toString("base64")}`;
+      }
+    }
+    marker = {
+      attachment: markerAttachment,
+      tum: markerAttachment.tum ?? null,
+      thumbnail_data_url,
+    };
+  }
+
+  let tud_thumbnail_data_url: string | null = null;
+  const tudAttachment = findActiveTudAttachment(pattern);
+  if (tudAttachment?.thumbnail_stored_filename) {
+    const thumb = await readPatternLibraryFile(tudAttachment.thumbnail_stored_filename);
+    if (thumb) {
+      tud_thumbnail_data_url = `data:image/jpeg;base64,${thumb.toString("base64")}`;
+    }
+  }
+
   return {
     pattern,
     version,
@@ -303,5 +351,7 @@ export async function buildPatternSheetData(
     base_fill_warning: filled.base_fill_warning,
     resolved_base_size: filled.resolved_base_size,
     cut_nest,
+    marker,
+    tud_thumbnail_data_url,
   };
 }

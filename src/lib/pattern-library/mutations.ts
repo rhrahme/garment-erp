@@ -1118,6 +1118,19 @@ export async function attachClientPatternFile(
       fabric_width_cm: widthInfo?.width_cm ?? null,
     });
   }
+
+  // Prefer shop marker width from .tum -D when pattern width is still unset.
+  if (
+    attachment.kind === "marker" &&
+    attachment.tum?.width_cm != null &&
+    attachment.tum.width_cm > 0 &&
+    !(typeof next.marker_fabric_width_cm === "number" && next.marker_fabric_width_cm > 0)
+  ) {
+    next = {
+      ...next,
+      marker_fabric_width_cm: attachment.tum.width_cm,
+    };
+  }
   const markerLayoutSeeded =
     attachment.kind === "tud" &&
     !hadMarkerLayout &&
@@ -1180,6 +1193,14 @@ export async function attachClientPatternFile(
       active_marker_file_id: next.active_marker_file_id ?? null,
       marker_fabric_width_cm: next.marker_fabric_width_cm ?? null,
       marker_double_fold: next.marker_double_fold ?? null,
+      tum_style_caption: attachment.tum?.style_caption ?? null,
+      tum_length_cm: attachment.tum?.length_cm ?? null,
+      tum_width_cm: attachment.tum?.width_cm ?? null,
+      tum_efficiency_pct: attachment.tum?.efficiency_pct ?? null,
+      tum_size: attachment.tum?.size ?? null,
+      tum_garment_qty: attachment.tum?.garment_qty ?? null,
+      tum_piece_count: attachment.tum?.pieces.length ?? null,
+      tum_has_thumbnail: Boolean(attachment.thumbnail_stored_filename),
     });
   }
 

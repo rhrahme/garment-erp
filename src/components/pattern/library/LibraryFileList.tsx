@@ -6,7 +6,11 @@ import { TudViewerModal } from "@/components/pattern/library/TudViewerModal";
 import { formatTudSizeDerivedLine } from "@/lib/pattern-library/derived-from";
 import { formatAreaM2, formatPieceAreaM2 } from "@/lib/pattern-library/tud-display";
 import type { TudFillSuggestion } from "@/lib/pattern-library/tud-size-fill";
-import type { PatternLibraryAttachment, TudMetadata } from "@/lib/types/pattern-library";
+import type {
+  PatternLibraryAttachment,
+  TudMetadata,
+  TumMetadata,
+} from "@/lib/types/pattern-library";
 
 /** Upload POST response, forwarded to onUploaded (e.g. the .tud size-fill prompt). */
 export interface LibraryUploadResponse {
@@ -16,6 +20,7 @@ export interface LibraryUploadResponse {
 
 const KIND_LABELS: Record<string, string> = {
   tud: "TUKA",
+  marker: "TUKAmrk",
   xlsx: "Excel",
   dxf: "DXF",
   pdf: "PDF",
@@ -37,9 +42,14 @@ export function LibraryFileList({
   title = "Files",
   basePatternName,
   pieceName = null,
+  /** Sent as form field `slot` (e.g. `marker` forces marker kind). */
+  formSlot = null,
   accept = ".tud,.xlsx,.xls,.dxf,.pdf,.png,.jpg,.jpeg,.webp,.heic",
   emptyLabel = "No files yet — .TUD, Excel, DXF, PDF, images.",
   uploadLabel = "Upload",
+  activeFileId = null,
+  onActivate = null,
+  activateLabel = "Set active",
 }: {
   files: PatternLibraryAttachment[];
   /** POST target (multipart, field `file`). */
@@ -52,9 +62,14 @@ export function LibraryFileList({
   basePatternName?: string | null;
   /** When set, sent as form field `piece_name` (per-piece .TUD slots). */
   pieceName?: string | null;
+  formSlot?: string | null;
   accept?: string;
   emptyLabel?: string;
   uploadLabel?: string;
+  /** When set with onActivate, highlights the active attachment. */
+  activeFileId?: string | null;
+  onActivate?: ((fileId: string) => void) | null;
+  activateLabel?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -67,6 +82,7 @@ export function LibraryFileList({
       const formData = new FormData();
       formData.append("file", file);
       if (pieceName?.trim()) formData.append("piece_name", pieceName.trim());
+      if (formSlot?.trim()) formData.append("slot", formSlot.trim());
       const res = await fetch(uploadUrl, { method: "POST", body: formData });
       const body = await res.json().catch(() => null);
       if (!res.ok) {
@@ -108,19 +124,50 @@ export function LibraryFileList({
         <p className="text-xs text-slate-400">{emptyLabel}</p>
       ) : (
         <ul className="space-y-1">
-          {files.map((file) => (
+          {files.map((file) => {
+            const isActive = activeFileId != null && file.id === activeFileId;
+            return (
             <li key={file.id}>
-              <a
-                href={`${downloadUrlBase}${joiner}file=${encodeURIComponent(file.stored_filename)}`}
-                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+              <div
+                className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-slate-700 ${
+                  isActive ? "bg-emerald-50 ring-1 ring-emerald-200" : "hover:bg-slate-50"
+                }`}
               >
-                <Paperclip className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                <span className="min-w-0 flex-1 truncate">{file.filename}</span>
-                <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium uppercase text-slate-500">
-                  {KIND_LABELS[file.kind] ?? file.kind}
-                </span>
-                <span className="shrink-0 text-xs text-slate-400">{formatSize(file.size_bytes)}</span>
-              </a>
+                <a
+                  href={`${downloadUrlBase}${joiner}file=${encodeURIComponent(file.stored_filename)}`}
+                  className="flex min-w-0 flex-1 items-center gap-2"
+                >
+                  <Paperclip className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <span className="min-w-0 flex-1 truncate">{file.filename}</span>
+                  <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium uppercase text-slate-500">
+                    {KIND_LABELS[file.kind] ?? file.kind}
+                  </span>
+                  <span className="shrink-0 text-xs text-slate-400">{formatSize(file.size_bytes)}</span>
+                </a>
+                {isActive ? (
+                  <span className="shrink-0 text-[10px] font-semibold uppercase text-emerald-700">
+                    Active
+                  </span>
+                ) : onActivate ? (
+                  <button
+                    type="button"
+                    onClick={() => onActivate(file.id)}
+                    className="shrink-0 text-[11px] font-medium text-indigo-700 hover:text-indigo-900"
+                  >
+                    {activateLabel}
+                  </button>
+                ) : null}
+              </div>
+              {file.tum ? (
+                <TumMetadataPanel
+                  metadata={file.tum}
+                  thumbnailUrl={
+                    file.thumbnail_stored_filename
+                      ? `${downloadUrlBase}${joiner}file=${encodeURIComponent(file.thumbnail_stored_filename)}`
+                      : null
+                  }
+                />
+              ) : null}
               {file.tud ? (
                 <TudMetadataPanel
                   attachment={file}
@@ -135,9 +182,60 @@ export function LibraryFileList({
                 />
               ) : null}
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
+    </div>
+  );
+}
+
+/** Parsed TUKAmrk metrics shown under a .tum marker attachment. */
+function TumMetadataPanel({
+  metadata,
+  thumbnailUrl,
+}: {
+  metadata: TumMetadata;
+  thumbnailUrl: string | null;
+}) {
+  const lengthM = metadata.length_cm != null ? metadata.length_cm / 100 : null;
+  return (
+    <div className="mb-1 ml-7 rounded-lg border border-slate-100 bg-slate-50/60 p-2.5">
+      <div className="flex items-start gap-3">
+        {thumbnailUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={thumbnailUrl}
+            alt={metadata.style_caption ?? "TUKAmrk preview"}
+            width={80}
+            height={80}
+            className="h-16 w-16 rounded-md border border-slate-200 bg-white object-contain p-1"
+          />
+        ) : null}
+        <div className="min-w-0 flex-1 space-y-1 text-xs">
+          {metadata.style_caption ? (
+            <p className="truncate text-sm font-medium text-slate-800">{metadata.style_caption}</p>
+          ) : null}
+          <p className="text-slate-600">
+            {[
+              metadata.width_cm != null ? `${metadata.width_cm.toFixed(1)} cm wide` : null,
+              lengthM != null ? `${lengthM.toFixed(2)} m long` : null,
+              metadata.efficiency_pct != null
+                ? `${metadata.efficiency_pct.toFixed(1)}% eff`
+                : null,
+              metadata.size ? `size ${metadata.size}` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ") || "Marker metrics unavailable"}
+          </p>
+          <p className="text-slate-500">
+            {metadata.pieces.length} piece{metadata.pieces.length === 1 ? "" : "s"}
+            {metadata.total_cut_pieces != null
+              ? ` · ${metadata.total_cut_pieces} on marker`
+              : ""}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

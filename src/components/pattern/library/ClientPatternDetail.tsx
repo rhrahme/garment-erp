@@ -29,6 +29,11 @@ import { LinkedFabricsCard } from "@/components/pattern/library/LinkedFabricsCar
 import { NestEstimatePanel } from "@/components/pattern/library/NestEstimatePanel";
 import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
 import { TudVersionHistory } from "@/components/pattern/library/TudVersionHistory";
+import {
+  findActiveMarkerAttachment,
+  listMarkerFiles,
+  MARKER_UPLOAD_ACCEPT,
+} from "@/lib/pattern-library/cutting-completeness";
 import { getGarmentPieces } from "@/lib/sales-orders/label-codes";
 import {
   emptyCascadeValue,
@@ -272,6 +277,29 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
       await load(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to set active .TUD.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function activateMarkerFile(fileId: string) {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/pattern/library/client-patterns/${patternId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active_marker_file_id: fileId }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? "Failed to set active marker.");
+      }
+      const data = await res.json().catch(() => null);
+      if (data?.pattern) setPattern(data.pattern);
+      else await load(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to set active marker.");
     } finally {
       setSaving(false);
     }
@@ -1361,6 +1389,32 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         patternId={pattern.id}
         linkedLineIds={pattern.linked_fabric_line_ids ?? []}
       />
+
+      <details className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 shadow-sm">
+        <summary className="cursor-pointer text-sm font-medium text-slate-600">
+          Optional archive: TUKAmrk .tum (not used in shop workflow)
+        </summary>
+        <p className="mt-2 text-xs text-slate-500">
+          You nest/cut from .tud only. .tum attach is optional for archive/future — it is not
+          required and does not unlock real outlines from TUD.
+        </p>
+        <div className="mt-3">
+          <LibraryFileList
+            files={listMarkerFiles(pattern)}
+            uploadUrl={`/api/pattern/library/client-patterns/${pattern.id}/files`}
+            downloadUrlBase={`/api/pattern/library/client-patterns/${pattern.id}/files`}
+            onUploaded={handleUploaded}
+            title="Marker files (optional)"
+            formSlot="marker"
+            accept={MARKER_UPLOAD_ACCEPT}
+            emptyLabel="No .tum attached (normal for TUD-only workflow)."
+            uploadLabel="Upload .tum (optional)"
+            activeFileId={findActiveMarkerAttachment(pattern)?.id ?? null}
+            onActivate={(fileId) => void activateMarkerFile(fileId)}
+            activateLabel="Set active"
+          />
+        </div>
+      </details>
 
       <NestEstimatePanel
         pattern={pattern}
