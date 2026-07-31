@@ -188,6 +188,9 @@ function PatternSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProp
       <div className="flex items-start justify-between gap-4 border-b-2 border-slate-900 pb-3">
         <div>
           <h1 className="text-xl font-bold tracking-tight">PATTERN MEASUREMENT SHEET</h1>
+          <p className="mt-0.5 text-xs text-slate-500">
+            Cutting handoff - fold fabric, place parts, cut, then scan floor QR
+          </p>
           <p className="mt-1 font-mono text-sm font-semibold">{pattern.pattern_ref}</p>
           {sticker?.production_code || job?.pattern_code ? (
             <p className="mt-0.5 font-mono text-xs text-slate-600">
