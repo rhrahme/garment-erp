@@ -15,7 +15,9 @@ import {
 } from "@/components/pattern/library/LibraryFileList";
 import { PatternStageScanPanel } from "@/components/pattern/PatternStageScanPanel";
 import type { GarmentTypeChangeFlag } from "@/lib/sales-orders/garment-type-change-flags";
-import { piecesForPatternJob } from "@/lib/sales-orders/label-codes";
+import { listTudPiecePatternCodes } from "@/lib/pattern/tud-pattern-code";
+import { filterTudFilesForPiece } from "@/lib/pattern-library/tud-versions";
+import { isMultiPieceGarment, piecesForPatternJob } from "@/lib/sales-orders/label-codes";
 import type { PatternFittingOutcome, PatternJob, PatternJobStatus } from "@/lib/types/pattern";
 import type { ClientPattern, PatternLibraryAttachment } from "@/lib/types/pattern-library";
 
@@ -42,7 +44,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const [assignedTo, setAssignedTo] = useState("");
   const [sizeNotes, setSizeNotes] = useState("");
@@ -165,13 +167,15 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
     : null;
 
   const patternCode = job?.pattern_code?.trim() || "";
+  const pieceCodes = job ? listTudPiecePatternCodes(job) : [];
+  const multiPiece = job ? isMultiPieceGarment(job.garment_type) : false;
 
-  async function copyPatternCode() {
-    if (!patternCode) return;
+  async function copyCode(code: string) {
+    if (!code) return;
     try {
-      await navigator.clipboard.writeText(patternCode);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
+      await navigator.clipboard.writeText(code);
+      setCopiedCode(code);
+      window.setTimeout(() => setCopiedCode(null), 1600);
     } catch {
       setError("Could not copy pattern code.");
     }
@@ -312,8 +316,6 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
   if (loading) return <p className="text-sm text-slate-500">Loading job...</p>;
   if (!job) return <p className="text-sm text-slate-500">Job not found.</p>;
 
-  const tudFiles = sheetFiles.filter((file) => file.kind === "tud");
-
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <Link
@@ -324,7 +326,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
         Back
       </Link>
 
-      {/* 1. Header */}
+      {/* 1. Header - parent Suit line stays one job */}
       <section className="rounded-xl border border-slate-200 bg-white p-5">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-lg font-semibold text-slate-900">
@@ -341,28 +343,6 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
           {job.fabric_number} - {job.supplier} - {job.meters}m
           {job.color ? ` - ${job.color}` : ""}
         </p>
-      </section>
-
-      {/* 2. Pattern code for TUD name */}
-      <section className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-indigo-800">
-          Pattern code for TUD name
-        </p>
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <code className="rounded-lg bg-white px-3 py-2 font-mono text-base font-semibold text-slate-900 ring-1 ring-indigo-100">
-            {patternCode || "..."}
-          </code>
-          <button
-            type="button"
-            onClick={() => void copyPatternCode()}
-            disabled={!patternCode}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            {copied ? "Copied" : "Copy"}
-          </button>
-        </div>
-        <p className="mt-1.5 text-xs text-slate-600">Paste as the .TUD filename in Tuka.</p>
       </section>
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
@@ -461,30 +441,110 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
         )}
       </section>
 
-      {/* 4. .TUD upload */}
-      <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
+      {/* 4. .TUD - one slot per piece (multi) or single slot (as today) */}
+      <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
         <div>
           <h3 className="flex items-center gap-2 font-semibold text-slate-900">
             <FileUp className="h-4 w-4 text-slate-400" />
-            .TUD file
+            {multiPiece ? ".TUD files (per piece)" : ".TUD file"}
           </h3>
           <p className="mt-0.5 text-sm text-slate-500">
-            Name the file <span className="font-mono text-slate-700">{patternCode || "pattern code"}</span>
-            .tud
+            {multiPiece
+              ? "Copy each piece code as the Tuka filename, then upload that piece's .TUD. Shared sheet stays on this Suit line."
+              : `Name the file ${patternCode || "pattern code"}.tud`}
           </p>
         </div>
+
+        {!multiPiece ? (
+          <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-800">
+              Pattern code for TUD name
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <code className="rounded-lg bg-white px-3 py-2 font-mono text-base font-semibold text-slate-900 ring-1 ring-indigo-100">
+                {patternCode || "..."}
+              </code>
+              <button
+                type="button"
+                onClick={() => void copyCode(patternCode)}
+                disabled={!patternCode}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {copiedCode === patternCode ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copiedCode === patternCode ? "Copied" : "Copy"}
+              </button>
+            </div>
+            <p className="mt-1.5 text-xs text-slate-600">Paste as the .TUD filename in Tuka.</p>
+          </div>
+        ) : null}
+
         {job.client_pattern_id ? (
-          <div className="space-y-2">
+          multiPiece ? (
+            <div className="space-y-3">
+              {pieceCodes.map((piece) => {
+                const pieceFiles = filterTudFilesForPiece(sheetFiles, piece.piece_name);
+                return (
+                  <div
+                    key={piece.piece_name}
+                    className="rounded-lg border border-slate-200 bg-slate-50/40 p-3 space-y-2"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-slate-900">
+                        {piece.piece_name}
+                        <span className="ml-2 text-xs font-medium text-slate-500">
+                          {piece.index}/{piece.total}
+                        </span>
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <code className="rounded-md bg-white px-2.5 py-1.5 font-mono text-sm font-semibold text-slate-900 ring-1 ring-slate-200">
+                        {piece.code}
+                      </code>
+                      <button
+                        type="button"
+                        onClick={() => void copyCode(piece.code)}
+                        className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
+                      >
+                        {copiedCode === piece.code ? (
+                          <Check className="h-3.5 w-3.5" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                        {copiedCode === piece.code ? "Copied" : "Copy"}
+                      </button>
+                    </div>
+                    <LibraryFileList
+                      files={pieceFiles}
+                      uploadUrl={`/api/pattern/library/client-patterns/${job.client_pattern_id}/files`}
+                      downloadUrlBase={`/api/pattern/library/client-patterns/${job.client_pattern_id}/files`}
+                      onUploaded={handleTudUploaded}
+                      title="Upload / re-upload .TUD"
+                      pieceName={piece.piece_name}
+                      accept=".tud"
+                      emptyLabel="No .TUD for this piece yet."
+                      uploadLabel="Upload .TUD"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
             <LibraryFileList
-              files={tudFiles.length > 0 ? tudFiles : sheetFiles}
+              files={filterTudFilesForPiece(sheetFiles, null)}
               uploadUrl={`/api/pattern/library/client-patterns/${job.client_pattern_id}/files`}
               downloadUrlBase={`/api/pattern/library/client-patterns/${job.client_pattern_id}/files`}
               onUploaded={handleTudUploaded}
               title="Upload / re-upload .TUD"
+              accept=".tud"
+              emptyLabel="No .TUD yet."
+              uploadLabel="Upload .TUD"
             />
-          </div>
+          )
         ) : (
-          <p className="text-sm text-slate-500">Link a measurement sheet first, then upload the .TUD.</p>
+          <p className="text-sm text-slate-500">
+            Link a measurement sheet first, then upload the .TUD
+            {multiPiece ? " for each piece" : ""}.
+          </p>
         )}
       </section>
 

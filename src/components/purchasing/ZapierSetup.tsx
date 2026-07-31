@@ -161,14 +161,14 @@ export function ZapierSetup() {
             </li>
             <li>POST {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]/files</li>
             <li className="pl-4 text-slate-500">
-              multipart: file, optional uploaded_by; ?version= for trial - versioned
-              .TUD re-upload (pattern_library.file_uploaded +
-              client_pattern.tud_version_uploaded)
+              multipart: file, optional piece_name (Jacket/Trouser/...), optional
+              uploaded_by; ?version= for trial - versioned .TUD re-upload
+              (pattern_library.file_uploaded + client_pattern.tud_version_uploaded)
             </li>
             <li>PATCH {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]</li>
             <li className="pl-4 text-slate-500">
               body may include garment_type, rebuild_template, active_tud_file_id,
-              measurement header fields
+              active_tud_by_piece, measurement header fields
             </li>
             <li>PATCH {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]/versions/[versionId]</li>
             <li className="pl-4 text-slate-500">

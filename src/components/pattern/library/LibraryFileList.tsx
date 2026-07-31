@@ -36,6 +36,10 @@ export function LibraryFileList({
   onUploaded,
   title = "Files",
   basePatternName,
+  pieceName = null,
+  accept = ".tud,.xlsx,.xls,.dxf,.pdf,.png,.jpg,.jpeg,.webp,.heic",
+  emptyLabel = "No files yet — .TUD, Excel, DXF, PDF, images.",
+  uploadLabel = "Upload",
 }: {
   files: PatternLibraryAttachment[];
   /** POST target (multipart, field `file`). */
@@ -46,6 +50,11 @@ export function LibraryFileList({
   title?: string;
   /** When set (including `null`), .TUD viewers show size · derived-from. */
   basePatternName?: string | null;
+  /** When set, sent as form field `piece_name` (per-piece .TUD slots). */
+  pieceName?: string | null;
+  accept?: string;
+  emptyLabel?: string;
+  uploadLabel?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -57,6 +66,7 @@ export function LibraryFileList({
     try {
       const formData = new FormData();
       formData.append("file", file);
+      if (pieceName?.trim()) formData.append("piece_name", pieceName.trim());
       const res = await fetch(uploadUrl, { method: "POST", body: formData });
       const body = await res.json().catch(() => null);
       if (!res.ok) {
@@ -79,11 +89,11 @@ export function LibraryFileList({
         <p className="text-sm font-semibold text-slate-700">{title}</p>
         <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-indigo-700 ring-1 ring-slate-200 hover:bg-slate-50">
           <FileUp className="h-3.5 w-3.5" />
-          {busy ? "Uploading…" : "Upload"}
+          {busy ? "Uploading…" : uploadLabel}
           <input
             ref={inputRef}
             type="file"
-            accept=".tud,.xlsx,.xls,.dxf,.pdf,.png,.jpg,.jpeg,.webp,.heic"
+            accept={accept}
             className="hidden"
             disabled={busy}
             onChange={(e) => {
@@ -95,7 +105,7 @@ export function LibraryFileList({
       </div>
       {error ? <p className="text-xs text-rose-600">{error}</p> : null}
       {files.length === 0 ? (
-        <p className="text-xs text-slate-400">No files yet — .TUD, Excel, DXF, PDF, images.</p>
+        <p className="text-xs text-slate-400">{emptyLabel}</p>
       ) : (
         <ul className="space-y-1">
           {files.map((file) => (

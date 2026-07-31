@@ -32,41 +32,54 @@ export async function POST(request: Request, context: { params: Promise<{ patter
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "file is required." }, { status: 400 });
     }
+    const pieceNameRaw = formData.get("piece_name");
+    const pieceName =
+      typeof pieceNameRaw === "string" && pieceNameRaw.trim() ? pieceNameRaw.trim() : null;
 
     const stored = await storeLibraryUpload(file, patternId, session.email);
     if (!stored.ok) {
       return NextResponse.json({ error: stored.error }, { status: 400 });
     }
 
-    const result = await attachClientPatternFile(patternId, versionId, stored.attachment);
+    const result = await attachClientPatternFile(patternId, versionId, stored.attachment, {
+      piece_name: pieceName,
+    });
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
+    const uploaded =
+      result.pattern.files.find((candidate) => candidate.id === stored.attachment.id) ??
+      result.pattern.versions
+        .flatMap((version) => version.files)
+        .find((candidate) => candidate.id === stored.attachment.id) ??
+      stored.attachment;
+
     await notifyLibraryFileUploaded({
       client_pattern_id: patternId,
       version_id: versionId,
-      file_id: stored.attachment.id,
-      filename: stored.attachment.filename,
-      kind: stored.attachment.kind,
+      file_id: uploaded.id,
+      filename: uploaded.filename,
+      kind: uploaded.kind,
+      piece_name: uploaded.piece_name ?? pieceName,
       uploaded_by: session.email,
-      ...tudNotificationFields(stored.attachment),
+      ...tudNotificationFields(uploaded),
     });
 
     // .tud with detected sizes → offer "set size + pre-fill sheet" to the UI.
     let tudFill: TudFillSuggestion | null = null;
-    if (stored.attachment.tud) {
+    if (uploaded.tud) {
       const store = await readPatternLibraryFresh();
       tudFill = buildTudFillSuggestion({
         pattern: result.pattern,
         basePatterns: store.base_patterns,
-        attachment: stored.attachment,
+        attachment: uploaded,
         versionId,
       });
     }
 
     return NextResponse.json(
-      { pattern: result.pattern, file: stored.attachment, tud_fill: tudFill },
+      { pattern: result.pattern, file: uploaded, tud_fill: tudFill },
       { status: 201 }
     );
   } catch (error) {

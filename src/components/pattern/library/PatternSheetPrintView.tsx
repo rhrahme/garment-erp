@@ -76,9 +76,9 @@ function PatternSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProp
         <div>
           <h1 className="text-xl font-bold tracking-tight">PATTERN MEASUREMENT SHEET</h1>
           <p className="mt-1 font-mono text-sm font-semibold">{pattern.pattern_ref}</p>
-          {job?.pattern_code ? (
+          {sticker?.production_code || job?.pattern_code ? (
             <p className="mt-0.5 font-mono text-xs text-slate-600">
-              TUD name: {job.pattern_code}
+              TUD name: {sticker?.production_code || job?.pattern_code}
             </p>
           ) : null}
           {pageTotal > 1 && sticker ? (

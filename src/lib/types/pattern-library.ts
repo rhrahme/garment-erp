@@ -68,6 +68,11 @@ export interface PatternLibraryAttachment {
   size_bytes: number;
   uploaded_at: string;
   uploaded_by: string | null;
+  /**
+   * Garment piece this .TUD belongs to (Jacket, Trouser, ...).
+   * Null/absent = unscoped (legacy single-slot uploads).
+   */
+  piece_name?: string | null;
   /** Parsed TUKA CAD metadata for .tud uploads (absent/null when not parseable). */
   tud?: TudMetadata | null;
   /** Sibling JPEG preview extracted from the .tud, stored next to the file. */
@@ -184,8 +189,14 @@ export interface ClientPattern {
   /**
    * Explicit active .TUD attachment id (pattern-level or trial file).
    * When unset, the latest uploaded .tud is treated as active.
+   * Single-piece / legacy; multi-piece garments prefer active_tud_by_piece.
    */
   active_tud_file_id?: string | null;
+  /**
+   * Active .TUD attachment id keyed by garment piece name (Jacket, Trouser, ...).
+   * Additive - absent on older patterns.
+   */
+  active_tud_by_piece?: Record<string, string>;
   notes: string | null;
   created_at: string;
   updated_at: string;

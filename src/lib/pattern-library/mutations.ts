@@ -610,6 +610,7 @@ export async function updateClientPattern(
       | "base_size"
       | "garment_type"
       | "active_tud_file_id"
+      | "active_tud_by_piece"
     >
   > & {
     /** When garment_type changes, rebuild empty template points on the latest trial. */
@@ -727,6 +728,11 @@ export async function updateClientPattern(
       ? existing.active_tud_file_id
       : patch.active_tud_file_id?.trim() || null;
 
+  const nextActiveByPiece =
+    patch.active_tud_by_piece === undefined
+      ? existing.active_tud_by_piece
+      : sanitizeActiveTudByPiece(patch.active_tud_by_piece);
+
   const next: ClientPattern = {
     ...existing,
     pattern_ref: patch.pattern_ref?.trim() || existing.pattern_ref,
@@ -740,6 +746,7 @@ export async function updateClientPattern(
     house_brand_code: nextHouseBrandCode,
     versions,
     active_tud_file_id: nextActiveTud,
+    active_tud_by_piece: nextActiveByPiece,
     special_instructions:
       patch.special_instructions === undefined
         ? existing.special_instructions
@@ -937,14 +944,27 @@ export async function finalizeClientPatternVersion(
 export async function attachClientPatternFile(
   patternId: string,
   versionId: string | null,
-  file: PatternLibraryAttachment
+  file: PatternLibraryAttachment,
+  options: { piece_name?: string | null } = {}
 ): Promise<Ok<{ pattern: ClientPattern }> | Err> {
   const store = await readPatternLibraryFresh();
   const index = store.client_patterns.findIndex((pattern) => pattern.id === patternId);
   if (index < 0) return { ok: false, status: 404, error: "Client pattern not found." };
 
+  const pieceName = options.piece_name?.trim() || file.piece_name?.trim() || null;
+  const attachment: PatternLibraryAttachment =
+    file.kind === "tud" && pieceName ? { ...file, piece_name: pieceName } : { ...file };
+
   const existing = store.client_patterns[index]!;
   const timestamp = now();
+  const nextActiveByPiece =
+    attachment.kind === "tud" && pieceName
+      ? {
+          ...(existing.active_tud_by_piece ?? {}),
+          [pieceName]: attachment.id,
+        }
+      : existing.active_tud_by_piece;
+
   let next: ClientPattern;
   if (versionId) {
     const versionIndex = existing.versions.findIndex((version) => version.id === versionId);
@@ -953,18 +973,20 @@ export async function attachClientPatternFile(
       ...existing,
       versions: existing.versions.map((version, i) =>
         i === versionIndex
-          ? { ...version, files: [...version.files, file], updated_at: timestamp }
+          ? { ...version, files: [...version.files, attachment], updated_at: timestamp }
           : version
       ),
-      // Newest .TUD becomes the active pattern file.
-      active_tud_file_id: file.kind === "tud" ? file.id : existing.active_tud_file_id,
+      // Newest .TUD becomes the active pattern file (legacy single pointer).
+      active_tud_file_id: attachment.kind === "tud" ? attachment.id : existing.active_tud_file_id,
+      active_tud_by_piece: nextActiveByPiece,
       updated_at: timestamp,
     };
   } else {
     next = {
       ...existing,
-      files: [...existing.files, file],
-      active_tud_file_id: file.kind === "tud" ? file.id : existing.active_tud_file_id,
+      files: [...existing.files, attachment],
+      active_tud_file_id: attachment.kind === "tud" ? attachment.id : existing.active_tud_file_id,
+      active_tud_by_piece: nextActiveByPiece,
       updated_at: timestamp,
     };
   }
@@ -972,25 +994,56 @@ export async function attachClientPatternFile(
   store.client_patterns[index] = next;
   await writePatternLibrary(store);
 
-  if (file.kind === "tud") {
-    const tudCount =
-      next.files.filter((f) => f.kind === "tud").length +
-      next.versions.reduce((sum, v) => sum + v.files.filter((f) => f.kind === "tud").length, 0);
+  if (attachment.kind === "tud") {
+    const pieceTuds = collectTudAttachmentsForPiece(next, pieceName);
+    const tudCount = pieceName
+      ? pieceTuds.length
+      : next.files.filter((f) => f.kind === "tud").length +
+        next.versions.reduce((sum, v) => sum + v.files.filter((f) => f.kind === "tud").length, 0);
+    const activeForPiece = pieceName
+      ? next.active_tud_by_piece?.[pieceName] === attachment.id
+      : next.active_tud_file_id === attachment.id;
     await notifyIntegration("client_pattern.tud_version_uploaded", {
       id: next.id,
       pattern_ref: next.pattern_ref,
       client_id: next.client_id,
-      file_id: file.id,
-      filename: file.filename,
+      file_id: attachment.id,
+      filename: attachment.filename,
+      piece_name: pieceName,
       tud_version: tudCount,
       version_id: versionId,
-      uploaded_by: file.uploaded_by,
-      uploaded_at: file.uploaded_at,
-      is_active: next.active_tud_file_id === file.id,
+      uploaded_by: attachment.uploaded_by,
+      uploaded_at: attachment.uploaded_at,
+      is_active: activeForPiece,
     });
   }
 
   return { ok: true, pattern: next };
+}
+
+function sanitizeActiveTudByPiece(
+  value: Record<string, string> | null | undefined
+): Record<string, string> | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const next: Record<string, string> = {};
+  for (const [piece, fileId] of Object.entries(value)) {
+    const key = piece.trim();
+    const id = typeof fileId === "string" ? fileId.trim() : "";
+    if (key && id) next[key] = id;
+  }
+  return Object.keys(next).length > 0 ? next : undefined;
+}
+
+function collectTudAttachmentsForPiece(
+  pattern: ClientPattern,
+  pieceName: string | null
+): PatternLibraryAttachment[] {
+  const all = [
+    ...pattern.files,
+    ...pattern.versions.flatMap((version) => version.files),
+  ].filter((file) => file.kind === "tud");
+  if (!pieceName) return all;
+  return all.filter((file) => (file.piece_name ?? "").trim() === pieceName);
 }
 
 /**
