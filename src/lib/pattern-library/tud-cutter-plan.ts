@@ -62,12 +62,14 @@ function rowForPiece(
   if (!entry || !(entry.area_m2 > 0)) return null;
   const role = fabricRole(piece.fabric);
   const { width_cm, height_cm } = rectFromAreaPerimeter(entry.area_m2, entry.perimeter_cm);
+  const fabricLabel = tudFabricLabel(piece.fabric);
   return {
     name: piece.name,
     code: piece.code ?? null,
     cut_quantity: Math.max(1, piece.cut_quantity ?? 1),
     fabric: piece.fabric,
-    fabric_label: tudFabricLabel(piece.fabric),
+    // Many TUDs omit -M; treat missing as shell for cutter copy.
+    fabric_label: fabricLabel === "-" && role === "shell" ? "Shell" : fabricLabel,
     fabric_role: role,
     area_m2: entry.area_m2,
     perimeter_cm: entry.perimeter_cm,

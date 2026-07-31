@@ -368,7 +368,7 @@ export function NestEstimatePanel({
             <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-2">
               <p className="text-sm font-semibold text-emerald-950">{width} cm</p>
               <p className="text-[11px] text-emerald-800">
-                Auto {widthSourceLabel(widthSource)}
+                Auto - {widthSourceLabel(widthSource)} (no need to type)
               </p>
               <button
                 type="button"
