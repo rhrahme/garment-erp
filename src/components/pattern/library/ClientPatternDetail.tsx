@@ -358,6 +358,35 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
     }
   }
 
+  /** Seed Sample/Trial/Final rows from the garment dictionary when the grid is empty. */
+  async function loadTemplatePoints() {
+    if (!pattern || pattern.base_pattern_id) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/pattern/library/client-patterns/${patternId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          garment_type: pattern.garment_type,
+          rebuild_template: true,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? "Failed to load template points.");
+      }
+      const data = await res.json();
+      setPattern(data.pattern);
+      setHeaderDirty(false);
+      setDirty(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load template points.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function saveVersion() {
     if (!pattern || !version) return;
     setSaving(true);
@@ -1094,6 +1123,26 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   </tbody>
                 </table>
               </div>
+              {trialSheetPoints(pattern).length === 0 ? (
+                <div className="border-t border-slate-100 px-4 py-6 text-center space-y-3">
+                  <p className="text-sm text-slate-600">
+                    No measurement rows yet for{" "}
+                    <span className="font-medium">{garmentLabel(pattern.garment_type)}</span>.
+                    Load the garment template to enter Sample / Trial / Final sizes.
+                  </p>
+                  {!pattern.base_pattern_id ? (
+                    <button
+                      type="button"
+                      onClick={() => void loadTemplatePoints()}
+                      disabled={saving}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                    >
+                      <Ruler className="h-4 w-4" />
+                      {saving ? "Loading..." : "Load template points"}
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
               <div className="flex flex-wrap items-center gap-1.5 border-t border-slate-100 px-4 py-3">
                 <input
                   value={newPointName}

@@ -81,6 +81,68 @@ export function garmentLabel(garment: string): string {
 }
 
 /**
+ * Map one garment/piece token to library dictionary keys (lowercase families).
+ * Compound stitch types are split on "+" first (Suit+Vest, Overshirt+Trouser).
+ */
+function addLibraryKeysForToken(keys: Set<string>, token: string): void {
+  const lower = token.trim().toLowerCase();
+  if (!lower) return;
+  keys.add(lower);
+
+  if (lower === "short" || lower === "shorts") {
+    keys.add("short");
+    keys.add("shorts");
+    return;
+  }
+  // Shirt LS / Shirt SS / bare shirt - do NOT match "overshirt" via includes("shirt").
+  if (lower === "shirt" || lower.startsWith("shirt ")) {
+    keys.add("shirt");
+    return;
+  }
+  if (lower === "polo") {
+    keys.add("polo");
+    keys.add("shirt");
+    return;
+  }
+  if (lower === "t-shirt" || lower === "tshirt") {
+    keys.add("t-shirt");
+    keys.add("shirt");
+    return;
+  }
+  if (lower.includes("thobe")) {
+    keys.add("thobe");
+    return;
+  }
+  if (lower === "suit") {
+    keys.add("suit");
+    keys.add("jacket");
+    keys.add("trouser");
+    return;
+  }
+  if (lower === "jacket") {
+    keys.add("jacket");
+    return;
+  }
+  if (lower.includes("trouser")) {
+    keys.add("trouser");
+    return;
+  }
+  if (lower === "overshirt") {
+    keys.add("overshirt");
+    return;
+  }
+  if (lower === "overcoat") {
+    keys.add("overcoat");
+    return;
+  }
+  if (lower.includes("vest")) {
+    keys.add("vest");
+    // Dictionary has no vest points yet - seed jacket body points so sheets are editable.
+    keys.add("jacket");
+  }
+}
+
+/**
  * Map a sales/pattern sheet garment to library base `garment_type` keys
  * (bases are often lowercase: shirt, shorts, trouser…).
  */
@@ -90,42 +152,13 @@ export function libraryGarmentKeysForSheet(garment: string): string[] {
   const lower = trimmed.toLowerCase();
   const keys = new Set<string>([trimmed, lower]);
 
-  if (lower === "short" || lower === "shorts") {
-    keys.add("short");
-    keys.add("shorts");
-  }
-  if (lower.startsWith("shirt") || lower.includes("shirt+")) {
-    keys.add("shirt");
-  }
-  if (lower === "polo") {
-    keys.add("polo");
-    keys.add("shirt");
-  }
-  if (lower === "t-shirt" || lower === "tshirt") {
-    keys.add("t-shirt");
-    keys.add("shirt");
-  }
-  if (lower.includes("thobe")) {
-    keys.add("thobe");
-  }
-  if (lower.includes("jacket") || lower === "suit") {
-    keys.add("jacket");
-  }
-  if (lower.includes("trouser")) {
-    keys.add("trouser");
-  }
-  if (lower.includes("overshirt")) {
-    keys.add("overshirt");
-  }
-  if (lower.includes("overcoat")) {
-    keys.add("overcoat");
-  }
-  if (lower.includes("vest")) {
-    keys.add("vest");
-  }
-  if (lower === "suit") {
-    keys.add("suit");
-    keys.add("trouser");
+  // Split compounds (Suit+Vest, Overshirt+Trouser) so each piece contributes keys.
+  // Avoid matching "overshirt" as "shirt+" via substring checks on the full string.
+  const tokens = lower.includes("+")
+    ? lower.split("+").map((part) => part.trim()).filter(Boolean)
+    : [lower];
+  for (const token of tokens) {
+    addLibraryKeysForToken(keys, token);
   }
 
   return [...keys];
@@ -148,6 +181,7 @@ const CROSS_TYPE_LIBRARY_FALLBACKS: Record<string, readonly string[]> = {
   "t-shirt": ["shirt"],
   tshirt: ["shirt"],
   suit: ["jacket", "trouser"],
+  vest: ["jacket"],
 };
 
 /**

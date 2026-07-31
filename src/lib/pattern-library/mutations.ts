@@ -681,12 +681,10 @@ export async function updateClientPattern(
     }
   }
 
-  const garmentChanged = nextGarmentType !== existing.garment_type;
+  // Explicit rebuild_template seeds/refreshes points even when garment is unchanged
+  // (empty custom/vest sheets, or "Load template" on an empty Sample/Trial grid).
   const shouldRebuildTemplate =
-    Boolean(patch.rebuild_template) &&
-    garmentChanged &&
-    !nextBaseId &&
-    versions.length > 0;
+    Boolean(patch.rebuild_template) && !nextBaseId && versions.length > 0;
   if (shouldRebuildTemplate) {
     const template = buildMeasurementsFromTemplate(store.dictionary, nextGarmentType);
     const lastIndex = versions.length - 1;

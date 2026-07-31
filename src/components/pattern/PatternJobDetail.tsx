@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Copy, FileUp, Printer, Ruler } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/PageHeader";
@@ -15,7 +16,10 @@ import {
 } from "@/components/pattern/library/LibraryFileList";
 import { PatternStageScanPanel } from "@/components/pattern/PatternStageScanPanel";
 import type { GarmentTypeChangeFlag } from "@/lib/sales-orders/garment-type-change-flags";
-import { listTudPiecePatternCodes } from "@/lib/pattern/tud-pattern-code";
+import {
+  generateTudPatternCode,
+  listTudPiecePatternCodes,
+} from "@/lib/pattern/tud-pattern-code";
 import { filterTudFilesForPiece } from "@/lib/pattern-library/tud-versions";
 import { isMultiPieceGarment, piecesForPatternJob } from "@/lib/sales-orders/label-codes";
 import type { PatternFittingOutcome, PatternJob, PatternJobStatus } from "@/lib/types/pattern";
@@ -40,6 +44,7 @@ type PatternJobDetailProps = {
 };
 
 export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
+  const router = useRouter();
   const [job, setJob] = useState<PatternJob | null>(null);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
@@ -166,7 +171,9 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
     ? `/pattern/library/clients/${job.client_pattern_id}`
     : null;
 
-  const patternCode = job?.pattern_code?.trim() || "";
+  const patternCode = job
+    ? job.pattern_code?.trim() || generateTudPatternCode(job)
+    : "";
   const pieceCodes = job ? listTudPiecePatternCodes(job) : [];
   const multiPiece = job ? isMultiPieceGarment(job.garment_type) : false;
 
@@ -222,9 +229,48 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       setShowTemplatePicker(false);
       setLinkPatternId("");
       await loadSheetFiles(linkPatternId);
+      router.push(`/pattern/library/clients/${linkPatternId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Link failed");
     } finally {
+      setActing(false);
+    }
+  }
+
+  /** Create a Sample/Trial/Final sheet for this job garment and open it for size entry. */
+  async function createAndOpenSheet() {
+    if (!job) return;
+    setActing(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/pattern/library/client-patterns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_id: job.client_id,
+          client_code: job.client_code,
+          client_name: job.client_name,
+          garment_type: job.garment_type,
+          fabric: job.fabric_number || null,
+          linked_fabric_line_ids: [job.sales_order_line_id],
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? "Failed to create sheet");
+      const patternId = data?.pattern?.id as string | undefined;
+      if (!patternId) throw new Error("Sheet created but id missing.");
+
+      const linkRes = await fetch(`/api/pattern/jobs/${jobId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client_pattern_id: patternId }),
+      });
+      const linkData = await linkRes.json().catch(() => null);
+      if (!linkRes.ok) throw new Error(linkData?.error ?? "Failed to link sheet");
+
+      router.push(`/pattern/library/clients/${patternId}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create sheet");
       setActing(false);
     }
   }
@@ -382,9 +428,23 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
             ) : null}
           </div>
         ) : (
-          <div className="space-y-2">
-            <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
-              No sheet yet.{" "}
+          <div className="space-y-3">
+            <p className="text-sm text-slate-600">
+              Create a Sample / Trial / Final sheet for{" "}
+              <span className="font-medium text-slate-800">{job.garment_type}</span> and enter
+              sizes.
+            </p>
+            <button
+              type="button"
+              onClick={() => void createAndOpenSheet()}
+              disabled={acting}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {acting ? "Creating..." : "Create & open sheet"}
+              <ArrowRight className="h-4 w-4" />
+            </button>
+            <p className="text-xs text-slate-500">
+              Sharing one sheet across several fabrics?{" "}
               <Link
                 href={`/pattern/orders/${job.sales_order_id}`}
                 className="font-medium text-indigo-700 hover:text-indigo-900"
@@ -399,7 +459,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
                 onClick={() => setShowTemplatePicker(true)}
                 className="text-sm text-slate-500 underline-offset-2 hover:text-slate-800 hover:underline"
               >
-                Use library template
+                Use existing library template
               </button>
             ) : (
               <div className="flex flex-wrap items-end gap-2">
@@ -423,7 +483,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
                   onClick={() => void linkTemplate()}
                   disabled={acting || !linkPatternId}
                 >
-                  Link
+                  Link & open
                 </Button>
                 <button
                   type="button"
@@ -441,7 +501,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
         )}
       </section>
 
-      {/* 4. .TUD - one slot per piece (multi) or single slot (as today) */}
+      {/* 4. .TUD - codes always visible; upload after sheet is linked */}
       <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
         <div>
           <h3 className="flex items-center gap-2 font-semibold text-slate-900">
@@ -450,12 +510,47 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
           </h3>
           <p className="mt-0.5 text-sm text-slate-500">
             {multiPiece
-              ? "Copy each piece code as the Tuka filename, then upload that piece's .TUD. Shared sheet stays on this Suit line."
+              ? "Copy each piece code as the Tuka filename, then upload that piece's .TUD. Shared sheet stays on this garment line."
               : `Name the file ${patternCode || "pattern code"}.tud`}
           </p>
         </div>
 
-        {!multiPiece ? (
+        {multiPiece ? (
+          <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-3 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-800">
+              Pattern codes for TUD names
+            </p>
+            {pieceCodes.map((piece) => (
+              <div
+                key={piece.piece_name}
+                className="flex flex-wrap items-center gap-2 rounded-lg bg-white px-3 py-2 ring-1 ring-indigo-100"
+              >
+                <span className="text-sm font-medium text-slate-700">
+                  {piece.piece_name}
+                  <span className="ml-1.5 text-xs font-normal text-slate-500">
+                    {piece.index}/{piece.total}
+                  </span>
+                </span>
+                <code className="rounded-md bg-slate-50 px-2.5 py-1.5 font-mono text-sm font-semibold text-slate-900 ring-1 ring-slate-200">
+                  {piece.code}
+                </code>
+                <button
+                  type="button"
+                  onClick={() => void copyCode(piece.code)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                >
+                  {copiedCode === piece.code ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                  {copiedCode === piece.code ? "Copied" : "Copy"}
+                </button>
+              </div>
+            ))}
+            <p className="text-xs text-slate-600">Paste each code as the .TUD filename in Tuka.</p>
+          </div>
+        ) : (
           <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-indigo-800">
               Pattern code for TUD name
@@ -476,7 +571,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
             </div>
             <p className="mt-1.5 text-xs text-slate-600">Paste as the .TUD filename in Tuka.</p>
           </div>
-        ) : null}
+        )}
 
         {job.client_pattern_id ? (
           multiPiece ? (
@@ -488,31 +583,15 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
                     key={piece.piece_name}
                     className="rounded-lg border border-slate-200 bg-slate-50/40 p-3 space-y-2"
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-slate-900">
-                        {piece.piece_name}
-                        <span className="ml-2 text-xs font-medium text-slate-500">
-                          {piece.index}/{piece.total}
-                        </span>
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <code className="rounded-md bg-white px-2.5 py-1.5 font-mono text-sm font-semibold text-slate-900 ring-1 ring-slate-200">
+                    <p className="text-sm font-semibold text-slate-900">
+                      {piece.piece_name}
+                      <span className="ml-2 text-xs font-medium text-slate-500">
+                        {piece.index}/{piece.total}
+                      </span>
+                      <span className="ml-2 font-mono text-xs font-normal text-slate-500">
                         {piece.code}
-                      </code>
-                      <button
-                        type="button"
-                        onClick={() => void copyCode(piece.code)}
-                        className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
-                      >
-                        {copiedCode === piece.code ? (
-                          <Check className="h-3.5 w-3.5" />
-                        ) : (
-                          <Copy className="h-3.5 w-3.5" />
-                        )}
-                        {copiedCode === piece.code ? "Copied" : "Copy"}
-                      </button>
-                    </div>
+                      </span>
+                    </p>
                     <LibraryFileList
                       files={pieceFiles}
                       uploadUrl={`/api/pattern/library/client-patterns/${job.client_pattern_id}/files`}
@@ -542,7 +621,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
           )
         ) : (
           <p className="text-sm text-slate-500">
-            Link a measurement sheet first, then upload the .TUD
+            Create or open a measurement sheet above, then upload the .TUD
             {multiPiece ? " for each piece" : ""}.
           </p>
         )}

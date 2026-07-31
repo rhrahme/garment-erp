@@ -6,6 +6,7 @@ import {
   emptyCascadeValue,
   filterBases,
   garmentMatchesLibraryBase,
+  libraryGarmentKeysForSheet,
   PATTERN_SHEET_GARMENTS,
   preferredBrandCodeFromClientCode,
   sheetsMissingLibraryBases,
@@ -97,6 +98,24 @@ describe("base-pattern-picker", () => {
     assert.equal(garmentMatchesLibraryBase("Polo", "shirt"), true);
     assert.equal(filterBases(bases, { garmentType: "Shirt LS" }).length, 3);
     assert.equal(filterBases(bases, { garmentType: "Short" }).length, 1);
+  });
+
+  it("libraryGarmentKeysForSheet expands Suit compounds and Vest fallback", () => {
+    const suitVest = libraryGarmentKeysForSheet("Suit+Vest").map((k) => k.toLowerCase());
+    assert.ok(suitVest.includes("jacket"));
+    assert.ok(suitVest.includes("trouser"));
+    assert.ok(suitVest.includes("vest"));
+
+    const overTrouser = libraryGarmentKeysForSheet("Overshirt+Trouser").map((k) =>
+      k.toLowerCase()
+    );
+    assert.ok(overTrouser.includes("overshirt"));
+    assert.ok(overTrouser.includes("trouser"));
+    assert.ok(!overTrouser.includes("shirt"));
+
+    const vest = libraryGarmentKeysForSheet("Vest").map((k) => k.toLowerCase());
+    assert.ok(vest.includes("vest"));
+    assert.ok(vest.includes("jacket"));
   });
 
   it("Custom path is ready without a base id", () => {
