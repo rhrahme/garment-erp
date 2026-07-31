@@ -8,6 +8,7 @@ import { activePatternJobsForLine } from "@/lib/pattern/sync-guard";
 import {
   changedFieldsSummary,
   fabricLineMeaningfullyChanged,
+  orderHasFabricPosLock,
   shouldRecordFabricChangeAlert,
   snapshotFabricLine,
   type FabricChangeSnapshot,
@@ -114,7 +115,7 @@ export async function recordFabricChangeAlert(
     had_prep_stickers: Boolean(evidence?.prep_stickers_printed_at),
     had_prod_stickers: Boolean(evidence?.prod_stickers_printed_at),
     had_pattern_work: hadPatternWork,
-    had_fabric_pos: input.order.status === "fabric_pos_created" || input.order.fabric_po_ids.length > 0,
+    had_fabric_pos: orderHasFabricPosLock(input.order),
     acknowledgements: {},
     admin_notified_at: null,
   };

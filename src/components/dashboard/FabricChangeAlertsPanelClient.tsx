@@ -27,7 +27,7 @@ export function FabricChangeAlertsPanelClient({
   initialAlerts,
   role,
   compact = false,
-  title = "Fabric changes - reprint stickers & A4",
+  title = "Fabric changes - reprint stickers and A4",
 }: FabricChangeAlertsPanelClientProps) {
   const router = useRouter();
   const [alerts, setAlerts] = useState(initialAlerts);
@@ -146,10 +146,18 @@ export function FabricChangeAlertsPanelClient({
             ),
             change: (
               <span className="text-sm">
-                {alert.article_number != null
-                  ? `L${String(alert.article_number).padStart(2, "0")} - `
-                  : ""}
-                {alert.summary}
+                <span className="block font-medium text-slate-800">
+                  Fabric changed on {alert.so_number} / client {alert.client_name}
+                </span>
+                <span className="block text-slate-600">
+                  {alert.article_number != null
+                    ? `L${String(alert.article_number).padStart(2, "0")} - `
+                    : ""}
+                  {alert.summary}
+                </span>
+                <span className="mt-0.5 block text-xs text-amber-800">
+                  Reprint stickers and A4 if already printed
+                </span>
               </span>
             ),
             status: alert.acknowledgements[role] ? (

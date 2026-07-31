@@ -17,6 +17,11 @@ import {
   resolveOrderClientReference,
 } from "@/lib/sales-orders/fabric-lines";
 import {
+  recordFabricChangeAlert,
+  snapshotFabricLine,
+} from "@/lib/sales-orders/fabric-change-alerts";
+import { fabricLineArticleNumber } from "@/lib/sales-orders/label-codes";
+import {
   assessFabricTransferEligibility,
   type TransferEligibility,
 } from "@/lib/sales-orders/transfer-eligibility";
@@ -248,6 +253,7 @@ export async function transferFabricLine(
     "pattern_jobs",
     "production_work_orders",
     "supplier_contacts",
+    "fabric_change_alerts",
   ]);
 
   const store = readSalesOrders();
@@ -536,6 +542,62 @@ export async function transferFabricLine(
   const finalStore = readSalesOrders();
   savedSource = finalStore.orders.find((order) => order.id === sourceOrderId) ?? savedSource;
   savedDest = finalStore.orders.find((order) => order.id === destinationOrderId) ?? savedDest;
+
+  const actor = options.transferredBy.trim() || "unknown";
+  const sourceBefore = snapshotFabricLine(sourceLine);
+  const sourceAfterPartial = savedSource.fabric_lines.find((line) => line.id === sourceLineId);
+  const replacementIndex = savedSource.fabric_lines.findIndex(
+    (line) => line.id === savedReplacement.id
+  );
+  const destLineIndex = savedDest.fabric_lines.findIndex((line) => line.id === savedDestLine.id);
+
+  if (isPartial && sourceAfterPartial) {
+    await recordFabricChangeAlert({
+      kind: "line_edited",
+      order: savedSource,
+      lineId: sourceLineId,
+      before: sourceBefore,
+      after: snapshotFabricLine(sourceAfterPartial),
+      createdBy: actor,
+      articleNumber: fabricLineArticleNumber(sourceLineIndex),
+      evidenceLine: sourceLine,
+    });
+  } else if (!isPartial) {
+    await recordFabricChangeAlert({
+      kind: "line_removed",
+      order: savedSource,
+      lineId: sourceLineId,
+      before: sourceBefore,
+      after: null,
+      createdBy: actor,
+      articleNumber: fabricLineArticleNumber(sourceLineIndex),
+      evidenceLine: sourceLine,
+    });
+  }
+
+  // Replacement / inbound lines need reprint alerts when source already had stickers, POs, or pattern.
+  await recordFabricChangeAlert({
+    kind: "line_added",
+    order: savedSource,
+    lineId: savedReplacement.id,
+    before: null,
+    after: snapshotFabricLine(savedReplacement),
+    createdBy: actor,
+    articleNumber:
+      replacementIndex >= 0 ? fabricLineArticleNumber(replacementIndex) : null,
+    evidenceLine: sourceLine,
+  });
+
+  await recordFabricChangeAlert({
+    kind: "line_added",
+    order: savedDest,
+    lineId: savedDestLine.id,
+    before: null,
+    after: snapshotFabricLine(savedDestLine),
+    createdBy: actor,
+    articleNumber: destLineIndex >= 0 ? fabricLineArticleNumber(destLineIndex) : null,
+    evidenceLine: sourceLine,
+  });
 
   return {
     ok: true,
