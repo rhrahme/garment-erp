@@ -31,7 +31,7 @@ const JPEG_END = Buffer.from([0xff, 0xd9]);
 
 export interface ParsedTudFile {
   metadata: TudMetadata;
-  /** Embedded JFIF preview (typically 100×100), or null when absent. */
+  /** Embedded JFIF preview (typically 100x100), or null when absent. */
   thumbnail: Buffer | null;
 }
 
@@ -50,7 +50,7 @@ function round(value: number, decimals: number): number {
   return Math.round(value * factor) / factor;
 }
 
-/** Extracts the embedded JFIF thumbnail (first FF D8 FF E0 … FF D9 span). */
+/** Extracts the embedded JFIF thumbnail (first FF D8 FF E0 ... FF D9 span). */
 export function extractTudThumbnail(buffer: Buffer): Buffer | null {
   const start = buffer.indexOf(JPEG_START);
   if (start < 0) return null;
