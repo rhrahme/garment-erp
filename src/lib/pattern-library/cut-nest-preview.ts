@@ -12,7 +12,7 @@ import {
   type NestEstimateResult,
 } from "@/lib/pattern-library/nest-estimate";
 import {
-  buildCutterPlanFromTud,
+  buildCutterPlanForClientPattern,
   type CutterTudPlan,
 } from "@/lib/pattern-library/tud-cutter-plan";
 import { getGarmentPieces } from "@/lib/sales-orders/label-codes";
@@ -121,9 +121,10 @@ export function buildCutNestPreview(
   const garmentQty = options.garmentQty ?? 1;
   const size = options.size ?? pattern.base_size;
   const ordered = positiveMeters(options.ordered_length_m);
-  const cutter_plan = tud
-    ? buildCutterPlanFromTud(tud, { size, double_fold: doubleFold })
-    : null;
+  const cutter_plan = buildCutterPlanForClientPattern(pattern, {
+    size,
+    double_fold: doubleFold,
+  });
   const hasGeometry = Boolean(dxf?.pieces?.length || tud);
 
   if (width === null) {

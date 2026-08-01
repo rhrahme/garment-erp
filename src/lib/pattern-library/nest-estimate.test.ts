@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   buildNestRects,
+  collectNestTudMetadata,
   effectiveUsableWidthCm,
   estimateNestFromTud,
   NEST_ESTIMATE_WASTE_FACTOR,
   packNestRects,
   rectFromAreaPerimeter,
 } from "./nest-estimate.ts";
-import type { TudMetadata } from "@/lib/types/pattern-library";
+import type { ClientPattern, PatternLibraryAttachment, TudMetadata } from "@/lib/types/pattern-library";
 
 function sampleTud(): TudMetadata {
   return {
@@ -118,5 +119,73 @@ describe("estimateNestFromTud", () => {
     assert.ok(one && two);
     assert.equal(two!.area_m2, one!.area_m2 * 2);
     assert.ok(two!.placements.length >= one!.placements.length);
+  });
+});
+
+describe("collectNestTudMetadata multi-piece", () => {
+  it("prefixes piece names and does not sum colliding BACK qtys", () => {
+    const tud = (
+      name: string,
+      size: string,
+      qty: number
+    ): NonNullable<PatternLibraryAttachment["tud"]> => ({
+      style_caption: name,
+      source_path: null,
+      sizes: [size],
+      pieces: [
+        {
+          name: "BACK",
+          cut_quantity: qty,
+          fabric: "SHEEL",
+          per_size: { [size]: { area_m2: 0.2, perimeter_cm: 180 } },
+        },
+      ],
+      total_cut_pieces: qty,
+      fabric_totals: [],
+      size_totals: [{ size, area_m2: 0.2 * qty, perimeter_cm: 180 * qty }],
+      total_area_m2: 0.2 * qty,
+      total_perimeter_cm: 180 * qty,
+    });
+
+    const file = (
+      id: string,
+      pieceName: string,
+      meta: NonNullable<PatternLibraryAttachment["tud"]>
+    ): PatternLibraryAttachment => ({
+      id,
+      kind: "tud",
+      filename: `${id}.tud`,
+      stored_filename: `${id}.tud`,
+      content_type: "application/octet-stream",
+      size_bytes: 10,
+      uploaded_at: "2026-01-01T00:00:00.000Z",
+      uploaded_by: "test",
+      piece_name: pieceName,
+      tud: meta,
+    });
+
+    const pattern = {
+      id: "cp-ot",
+      garment_type: "Overshirt+Trouser",
+      versions: [],
+      files: [
+        file("os", "Overshirt", tud("OS", "RE-XXL", 2)),
+        file("tr", "Trouser", tud("TR", "48", 2)),
+      ],
+      active_tud_by_piece: { Overshirt: "os", Trouser: "tr" },
+    } as ClientPattern
+
+    const merged = collectNestTudMetadata(pattern, ["Overshirt", "Trouser"]);
+    assert.ok(merged);
+    assert.equal(merged!.total_cut_pieces, 4);
+    assert.equal(
+      merged!.pieces.find((p) => p.name === "Overshirt: BACK")?.cut_quantity,
+      2
+    );
+    assert.equal(
+      merged!.pieces.find((p) => p.name === "Trouser: BACK")?.cut_quantity,
+      2
+    );
+    assert.equal(merged!.pieces.filter((p) => p.name === "BACK").length, 0);
   });
 });

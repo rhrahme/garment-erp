@@ -157,43 +157,49 @@ export function collectNestTudMetadata(
   requiredPieceNames: string[] = []
 ): TudMetadata | null {
   const pieces = requiredPieceNames.map((n) => n.trim()).filter(Boolean);
-  const attachments =
-    pieces.length > 1
-      ? pieces
-          .map((piece) => findActiveTudAttachmentForPiece(pattern, piece))
-          .filter((a): a is NonNullable<typeof a> => Boolean(a?.tud))
-      : (() => {
-          const active = findActiveTudAttachment(pattern);
-          return active?.tud ? [active] : [];
-        })();
 
-  if (attachments.length === 0) return null;
-  if (attachments.length === 1) return attachments[0]!.tud ?? null;
+  // Single garment / unscoped: use the active TUD as-is (no rename).
+  if (pieces.length <= 1) {
+    const active =
+      pieces.length === 1
+        ? findActiveTudAttachmentForPiece(pattern, pieces[0]!) ??
+          findActiveTudAttachment(pattern)
+        : findActiveTudAttachment(pattern);
+    return active?.tud ?? null;
+  }
 
   const mergedPieces: TudPiece[] = [];
   const sizes: string[] = [];
   const fabricTotals: TudFabricTotal[] = [];
   let styleCaption: string | null = null;
   let sourcePath: string | null = null;
+  let attachmentCount = 0;
 
-  for (const att of attachments) {
-    const tud = att.tud!;
+  // Multi-piece shells (Suit, Overshirt+Trouser, …): keep piece slots separate.
+  // Bare names like BACK collide across garments — prefix and never sum qtys.
+  for (const pieceName of pieces) {
+    const att = findActiveTudAttachmentForPiece(pattern, pieceName);
+    if (!att?.tud) continue;
+    attachmentCount += 1;
+    const tud = att.tud;
     if (!styleCaption) styleCaption = tud.style_caption;
     if (!sourcePath) sourcePath = tud.source_path;
     for (const size of tud.sizes) {
       if (!sizes.includes(size)) sizes.push(size);
     }
     for (const piece of tud.pieces) {
-      const existing = mergedPieces.find((p) => p.name === piece.name);
+      const name = `${pieceName}: ${piece.name}`;
+      const existing = mergedPieces.find((p) => p.name === name);
       if (!existing) {
         mergedPieces.push({
-          name: piece.name,
+          name,
           code: piece.code ?? null,
           cut_quantity: piece.cut_quantity,
           fabric: piece.fabric,
           per_size: { ...piece.per_size },
         });
       } else {
+        // Same slot + same part name only (true duplicate inside one TUD).
         if (piece.cut_quantity !== null) {
           existing.cut_quantity = (existing.cut_quantity ?? 0) + piece.cut_quantity;
         }
@@ -206,6 +212,8 @@ export function collectNestTudMetadata(
     }
     fabricTotals.push(...tud.fabric_totals);
   }
+
+  if (attachmentCount === 0 || mergedPieces.length === 0) return null;
 
   // Rebuild size totals from merged pieces.
   const sizeTotals = sizes.map((size) => {

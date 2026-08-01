@@ -1,6 +1,11 @@
 import { rectFromAreaPerimeter, resolveNestSize } from "@/lib/pattern-library/nest-estimate";
+import {
+  findActiveTudAttachment,
+  findActiveTudAttachmentForPiece,
+} from "@/lib/pattern-library/tud-versions";
 import { tudFabricLabel } from "@/lib/pattern-library/tud-display";
-import type { TudMetadata, TudPiece } from "@/lib/types/pattern-library";
+import { getGarmentPieces } from "@/lib/sales-orders/label-codes";
+import type { ClientPattern, TudMetadata, TudPiece } from "@/lib/types/pattern-library";
 
 export type CutterFabricRole = "shell" | "lining" | "fusing" | "contrast" | "other";
 
@@ -99,18 +104,10 @@ export function buildCutterPlanFromTud(
   if (rows.length === 0) return null;
 
   // Largest shell first, then others - matches how cutters think about main parts.
-  rows.sort((a, b) => {
-    const roleRank = (r: CutterFabricRole) => (r === "shell" ? 0 : 1);
-    return (
-      roleRank(a.fabric_role) - roleRank(b.fabric_role) ||
-      b.area_m2 * b.cut_quantity - a.area_m2 * a.cut_quantity ||
-      a.name.localeCompare(b.name)
-    );
-  });
-
-  const shell_pieces = rows.filter((r) => r.fabric_role === "shell");
-  const other_pieces = rows.filter((r) => r.fabric_role !== "shell");
-  const total_cut_pieces = rows.reduce((sum, r) => sum + r.cut_quantity, 0);
+  const sorted = sortCutterRows(rows);
+  const shell_pieces = sorted.filter((r) => r.fabric_role === "shell");
+  const other_pieces = sorted.filter((r) => r.fabric_role !== "shell");
+  const total_cut_pieces = sorted.reduce((sum, r) => sum + r.cut_quantity, 0);
 
   return {
     size,
@@ -129,4 +126,74 @@ export function buildCutterPlanFromTud(
 /** Flat list for tables / PDF (shell first). */
 export function flattenCutterPlan(plan: CutterTudPlan): CutterPiecePlanRow[] {
   return [...plan.shell_pieces, ...plan.other_pieces];
+}
+
+function sortCutterRows(rows: CutterPiecePlanRow[]): CutterPiecePlanRow[] {
+  return [...rows].sort((a, b) => {
+    const roleRank = (r: CutterFabricRole) => (r === "shell" ? 0 : 1);
+    return (
+      roleRank(a.fabric_role) - roleRank(b.fabric_role) ||
+      b.area_m2 * b.cut_quantity - a.area_m2 * a.cut_quantity ||
+      a.name.localeCompare(b.name)
+    );
+  });
+}
+
+/**
+ * Cutter parts plan for a pattern. Multi-piece shells build one plan per
+ * garment slot (each TUD keeps its own size) so Overshirt BACK and Trouser BACK
+ * are not merged into a doubled qty under a single preferred size.
+ */
+export function buildCutterPlanForClientPattern(
+  pattern: ClientPattern,
+  options: { size?: string | null; double_fold?: boolean } = {}
+): CutterTudPlan | null {
+  const pieceNames = getGarmentPieces(pattern.garment_type)
+    .map((n) => n.trim())
+    .filter(Boolean);
+
+  if (pieceNames.length <= 1) {
+    const piece = pieceNames[0];
+    const att = piece ? findActiveTudAttachmentForPiece(pattern, piece) : null;
+    const tud = att?.tud ?? findActiveTudAttachment(pattern)?.tud ?? null;
+    if (!tud) return null;
+    return buildCutterPlanFromTud(tud, options);
+  }
+
+  const rows: CutterPiecePlanRow[] = [];
+  const sizeLabels: string[] = [];
+  let styleCaption: string | null = null;
+
+  for (const pieceName of pieceNames) {
+    const att = findActiveTudAttachmentForPiece(pattern, pieceName);
+    if (!att?.tud) continue;
+    const plan = buildCutterPlanFromTud(att.tud, options);
+    if (!plan) continue;
+    if (!styleCaption) styleCaption = plan.style_caption;
+    if (!sizeLabels.includes(plan.size)) sizeLabels.push(plan.size);
+    for (const row of flattenCutterPlan(plan)) {
+      rows.push({ ...row, name: `${pieceName}: ${row.name}` });
+    }
+  }
+
+  if (rows.length === 0) return null;
+
+  const sorted = sortCutterRows(rows);
+  const shell_pieces = sorted.filter((r) => r.fabric_role === "shell");
+  const other_pieces = sorted.filter((r) => r.fabric_role !== "shell");
+  const total_cut_pieces = sorted.reduce((sum, r) => sum + r.cut_quantity, 0);
+  const doubleFold = options.double_fold !== false;
+
+  return {
+    size: sizeLabels.length === 1 ? sizeLabels[0]! : sizeLabels.join(" / "),
+    style_caption: styleCaption,
+    total_cut_pieces,
+    shell_pieces,
+    other_pieces,
+    instruction: doubleFold
+      ? "Fold shell fabric, place printed shell parts on the fold, cut. Cut lining/fusing on their fabrics."
+      : "Place printed parts on open fabric width, then cut. Cut lining/fusing on their fabrics.",
+    disclaimer:
+      "ESTIMATE ONLY - sizes from TUD header area + perimeter. Not CAD outlines (TUD binary geometry is not parsed).",
+  };
 }
