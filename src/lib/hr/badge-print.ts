@@ -13,6 +13,20 @@ export function badgeDisplayName(
   return short || employee.full_name;
 }
 
+/**
+ * Version stamp for physical/PDF badge cards - calendar day when printed.
+ * Uses Asia/Riyadh and the same en-GB day style as HR `formatDate`.
+ */
+export function badgePrintDateLabel(now = new Date()): string {
+  const formatted = new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Riyadh",
+  }).format(now);
+  return `Printed ${formatted}`;
+}
+
 /** Standard CR80 / ID-1 badge size (mm). */
 export const BADGE_CARD_WIDTH_MM = 85.6;
 export const BADGE_CARD_HEIGHT_MM = 54;
