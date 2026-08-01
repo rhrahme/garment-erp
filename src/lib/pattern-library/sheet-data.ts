@@ -17,6 +17,7 @@ import {
   formatBasePatternDisplayName,
 } from "@/lib/pattern-library/derived-from";
 import { readPatternLibraryFile } from "@/lib/pattern-library/file-storage";
+import { hydrateMultiPieceGeometry } from "@/lib/pattern-library/multi-piece-geometry";
 import { resolveSheetHouseBrand, type SheetHouseBrand } from "@/lib/pattern-library/sheet-brand";
 import {
   fillMeasurementsFromBase,
@@ -211,8 +212,11 @@ export async function buildPatternSheetData(
 ): Promise<PatternSheetData | null> {
   await ensureDocumentsLoaded(["pattern_library", "pattern_jobs", "sales_orders", "clients"]);
   const library = await readPatternLibraryFresh();
-  const pattern = library.client_patterns.find((candidate) => candidate.id === patternId) ?? null;
-  if (!pattern) return null;
+  const rawPattern =
+    library.client_patterns.find((candidate) => candidate.id === patternId) ?? null;
+  if (!rawPattern) return null;
+  // Suit / Shirt+Short shells: borrow Jacket/Trouser TUD+DXF from sibling patterns.
+  const pattern = hydrateMultiPieceGeometry(rawPattern, library.client_patterns).pattern;
 
   const rawVersion =
     (options.versionId

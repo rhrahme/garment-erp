@@ -3,6 +3,7 @@ import {
   collectNestTudMetadata,
   effectiveUsableWidthCm,
   estimateNestFromDxf,
+  estimateNestFromMultiPieceSources,
   estimateNestFromTud,
   type NestEstimateResult,
   type NestPlacement,
@@ -260,6 +261,26 @@ export function buildAutoMarkerLayout(
   if (width === null) return null;
 
   const { double_fold } = resolveMarkerDoubleFold(pattern);
+  const pieces =
+    options.requiredPieceNames ?? getGarmentPieces(pattern.garment_type);
+
+  if (pieces.length > 1) {
+    const mixed = estimateNestFromMultiPieceSources({
+      pattern,
+      fabric_width_cm: width,
+      double_fold,
+      size: options.size ?? pattern.base_size,
+      garment_qty: options.garment_qty ?? 1,
+      requiredPieceNames: pieces,
+    });
+    if (mixed) {
+      return layoutFromNestEstimate(mixed, {
+        source: "auto",
+        updated_at: options.updated_at,
+      });
+    }
+  }
+
   const dxf = collectNestDxfMetadata(pattern);
   if (dxf?.pieces?.length) {
     const nest = estimateNestFromDxf({
@@ -277,8 +298,6 @@ export function buildAutoMarkerLayout(
     }
   }
 
-  const pieces =
-    options.requiredPieceNames ?? getGarmentPieces(pattern.garment_type);
   // Multi-piece garments may still have one unscoped TUD - fall back to active file.
   const tud =
     collectNestTudMetadata(pattern, pieces) ?? collectNestTudMetadata(pattern, []);

@@ -7,6 +7,7 @@ import {
   collectNestDxfMetadata,
   collectNestTudMetadata,
   estimateNestFromDxf,
+  estimateNestFromMultiPieceSources,
   estimateNestFromTud,
   type NestEstimateResult,
 } from "@/lib/pattern-library/nest-estimate";
@@ -170,6 +171,31 @@ export function buildCutNestPreview(
       nest,
       ordered
     );
+  }
+
+  const pieceNames = getGarmentPieces(pattern.garment_type);
+  if (pieceNames.length > 1) {
+    const mixed = estimateNestFromMultiPieceSources({
+      pattern,
+      fabric_width_cm: width,
+      double_fold: doubleFold,
+      size,
+      garment_qty: garmentQty,
+      requiredPieceNames: pieceNames,
+    });
+    if (mixed) {
+      return withBoardFields(
+        {
+          nest: mixed,
+          cutter_plan,
+          fold_assumed,
+          missing_reason: null,
+          source: "auto",
+        },
+        mixed,
+        ordered
+      );
+    }
   }
 
   if (dxf?.pieces?.length) {

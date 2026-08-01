@@ -1,7 +1,9 @@
+import { findActiveDxfAttachmentForPiece } from "@/lib/pattern-library/multi-piece-geometry";
 import {
   findActiveTudAttachment,
   findActiveTudAttachmentForPiece,
 } from "@/lib/pattern-library/tud-versions";
+import { getGarmentPieces } from "@/lib/sales-orders/label-codes";
 import type {
   ClientPattern,
   DxfMetadata,
@@ -526,33 +528,24 @@ export function resolveNestSizeFromDxf(
   return fromPieces ?? dxf.sizes[0] ?? null;
 }
 
-/** Nest real DXF outlines onto fabric width (bbox shelf packer). */
-export function estimateNestFromDxf(input: {
-  dxf: DxfMetadata;
+/** Pack arbitrary nest rects (DXF outlines and/or TUD area estimates). */
+export function estimateNestFromRects(input: {
+  rects: NestRect[];
   fabric_width_cm: number;
   double_fold: boolean;
-  size?: string | null;
-  garment_qty?: number;
-  include_secondary?: boolean;
+  size: string;
+  garment_qty: number;
+  disclaimer: string;
 }): NestEstimateResult | null {
   const width = input.fabric_width_cm;
-  if (!(width > 0)) return null;
+  if (!(width > 0) || input.rects.length === 0) return null;
 
-  const size = resolveNestSizeFromDxf(input.dxf, input.size) ?? "DXF";
-  const garmentQty = Math.max(1, Math.floor(input.garment_qty ?? 1) || 1);
   const usableWidthCm = effectiveUsableWidthCm(width, input.double_fold);
   if (!(usableWidthCm > 0)) return null;
 
-  const rects = buildNestRectsFromDxf(input.dxf, garmentQty, {
-    includeSecondary: input.include_secondary === true,
-    size: size === "DXF" ? null : size,
-  });
-  if (rects.length === 0) return null;
-
-  const packed = packNestRects(rects, usableWidthCm);
+  const packed = packNestRects(input.rects, usableWidthCm);
   const areaM2 = round3(
-    rects.reduce((sum, r) => {
-      // Prefer polygon area when outline present; else bbox.
+    input.rects.reduce((sum, r) => {
       if (r.outline_cm && r.outline_cm.length >= 3) {
         let a = 0;
         const pts = r.outline_cm;
@@ -576,7 +569,7 @@ export function estimateNestFromDxf(input: {
   const efficiencyPct = round2((areaM2 / (usableWidthM * lengthForEff)) * 100);
 
   const byFabric = new Map<string, number>();
-  for (const r of rects) {
+  for (const r of input.rects) {
     const key = r.fabric?.trim() || "SHEEL";
     const pieceArea = (r.width_cm * r.height_cm) / 10_000;
     byFabric.set(key, (byFabric.get(key) ?? 0) + pieceArea);
@@ -590,9 +583,13 @@ export function estimateNestFromDxf(input: {
     });
   }
 
+  const hasDxf = input.rects.some(
+    (r) => r.geometry_source === "dxf" && (r.outline_cm?.length ?? 0) >= 3
+  );
+
   return {
-    size,
-    garment_qty: garmentQty,
+    size: input.size,
+    garment_qty: input.garment_qty,
     fabric_width_cm: width,
     double_fold: input.double_fold,
     usable_width_cm: round1(usableWidthCm),
@@ -602,10 +599,134 @@ export function estimateNestFromDxf(input: {
     efficiency_pct: efficiencyPct,
     fabric_breakdown,
     placements: packed.placements,
-    has_dxf_outlines: true,
+    has_dxf_outlines: hasDxf,
+    disclaimer: input.disclaimer,
+  };
+}
+
+/**
+ * Multi-piece nest: per garment piece prefer DXF outlines, else that piece's TUD.
+ * Avoids jacket-DXF-only nests that drop trouser TUD pieces.
+ */
+export function estimateNestFromMultiPieceSources(input: {
+  pattern: ClientPattern;
+  fabric_width_cm: number;
+  double_fold: boolean;
+  size?: string | null;
+  garment_qty?: number;
+  include_secondary?: boolean;
+  requiredPieceNames?: string[];
+}): NestEstimateResult | null {
+  const pieces =
+    (input.requiredPieceNames?.length
+      ? input.requiredPieceNames
+      : getGarmentPieces(input.pattern.garment_type)
+    )
+      .map((n) => n.trim())
+      .filter(Boolean);
+  if (pieces.length <= 1) return null;
+
+  const garmentQty = Math.max(1, Math.floor(input.garment_qty ?? 1) || 1);
+  const includeSecondary = input.include_secondary === true;
+  const rects: NestRect[] = [];
+  const sizeLabels: string[] = [];
+  let usedDxf = false;
+  let usedTud = false;
+
+  for (const piece of pieces) {
+    const dxfAtt = findActiveDxfAttachmentForPiece(input.pattern, piece);
+    if (dxfAtt?.dxf?.pieces?.length) {
+      const size = resolveNestSizeFromDxf(dxfAtt.dxf, input.size) ?? "DXF";
+      if (size !== "DXF") sizeLabels.push(size);
+      const pieceRects = buildNestRectsFromDxf(dxfAtt.dxf, garmentQty, {
+        includeSecondary,
+        size: size === "DXF" ? null : size,
+      }).map((rect, index) => ({
+        ...rect,
+        id: `${piece}-${rect.id}-${index}`,
+        name: `${piece}: ${rect.name}`,
+      }));
+      if (pieceRects.length > 0) {
+        rects.push(...pieceRects);
+        usedDxf = true;
+        continue;
+      }
+    }
+
+    const tudAtt = findActiveTudAttachmentForPiece(input.pattern, piece);
+    if (!tudAtt?.tud) continue;
+    const size = resolveNestSize(tudAtt.tud, input.size);
+    if (!size) continue;
+    sizeLabels.push(size);
+    const pieceRects = buildNestRects(tudAtt.tud, size, garmentQty, {
+      includeSecondary,
+    }).map((rect, index) => ({
+      ...rect,
+      id: `${piece}-${rect.id}-${index}`,
+      name: `${piece}: ${rect.name}`,
+    }));
+    if (pieceRects.length > 0) {
+      rects.push(...pieceRects);
+      usedTud = true;
+    }
+  }
+
+  if (rects.length === 0) return null;
+
+  const preferred = input.size?.trim() || null;
+  const size =
+    (preferred && sizeLabels.includes(preferred) ? preferred : null) ??
+    sizeLabels[0] ??
+    preferred ??
+    "MIXED";
+
+  const disclaimer =
+    usedDxf && usedTud
+      ? "Mixed nest: DXF outlines where available, TUD area estimates for other pieces. Verify in TUKAmark before cutting."
+      : usedDxf
+        ? "Piece outlines from DXF polylines. Shelf packing uses bounding boxes — verify nest in TUKAmark before cutting."
+        : "Approximate from TUD areas - verify in TUKAmark before cutting. Not a CAD cutting marker.";
+
+  return estimateNestFromRects({
+    rects,
+    fabric_width_cm: input.fabric_width_cm,
+    double_fold: input.double_fold,
+    size,
+    garment_qty: garmentQty,
+    disclaimer,
+  });
+}
+
+/** Nest real DXF outlines onto fabric width (bbox shelf packer). */
+export function estimateNestFromDxf(input: {
+  dxf: DxfMetadata;
+  fabric_width_cm: number;
+  double_fold: boolean;
+  size?: string | null;
+  garment_qty?: number;
+  include_secondary?: boolean;
+}): NestEstimateResult | null {
+  const width = input.fabric_width_cm;
+  if (!(width > 0)) return null;
+
+  const size = resolveNestSizeFromDxf(input.dxf, input.size) ?? "DXF";
+  const garmentQty = Math.max(1, Math.floor(input.garment_qty ?? 1) || 1);
+
+  const rects = buildNestRectsFromDxf(input.dxf, garmentQty, {
+    includeSecondary: input.include_secondary === true,
+    size: size === "DXF" ? null : size,
+  });
+  if (rects.length === 0) return null;
+
+  return estimateNestFromRects({
+    rects,
+    fabric_width_cm: width,
+    double_fold: input.double_fold,
+    size,
+    garment_qty: garmentQty,
     disclaimer:
       "Piece outlines from DXF polylines. Shelf packing uses bounding boxes — verify nest in TUKAmark before cutting.",
-  };
+  });
 }
 
 /** Convenience: estimate from a client pattern + nest fields. Prefers DXF outlines. */
@@ -622,6 +743,17 @@ export function estimateNestForClientPattern(
   const fold = pattern.marker_double_fold;
   if (typeof width !== "number" || !(width > 0)) return null;
   if (fold !== true && fold !== false) return null;
+
+  const mixed = estimateNestFromMultiPieceSources({
+    pattern,
+    fabric_width_cm: width,
+    double_fold: fold,
+    size: options.size ?? pattern.base_size,
+    garment_qty: options.garment_qty,
+    include_secondary: options.include_secondary,
+    requiredPieceNames: options.requiredPieceNames,
+  });
+  if (mixed) return mixed;
 
   const dxf = collectNestDxfMetadata(pattern);
   if (dxf?.pieces?.length) {
