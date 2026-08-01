@@ -7,7 +7,13 @@ import { cn } from "@/lib/utils";
 type DashboardPayload = {
   open_sessions: SewingSession[];
   closed_today: number;
-  completed_by_employee: { employee_name: string; count: number; duration_sec: number }[];
+  closed_in_period?: number;
+  completed_by_employee: {
+    employee_name: string;
+    count: number;
+    duration_sec: number;
+    avg_duration_sec?: number;
+  }[];
 };
 
 function formatDuration(sec: number): string {

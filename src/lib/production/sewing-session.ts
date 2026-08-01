@@ -21,9 +21,17 @@ import type {
 
 export {
   expireStaleSewingState,
+  parseSewingDashboardPeriod,
   SEWING_ARM_TIMEOUT_MS,
   SEWING_CLOSING_TIMEOUT_MS,
+  sewingPeriodWindow,
   sewingSessionsDashboard,
+} from "@/lib/production/sewing-session-state";
+export type {
+  SewingDashboardPeriod,
+  SewingEmployeeAggregate,
+  SewingPeriodWindow,
+  SewingSessionsDashboardOptions,
 } from "@/lib/production/sewing-session-state";
 
 function nowIso(at = Date.now()): string {

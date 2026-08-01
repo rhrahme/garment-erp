@@ -1,9 +1,9 @@
-import { StitchKioskPanel } from "@/components/production/StitchKioskPanel";
+import { StitchFloorWorkspace } from "@/components/production/StitchFloorWorkspace";
 
 export default function StitchKioskPage() {
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-5.5rem)] w-full max-w-5xl flex-col">
-      <StitchKioskPanel />
+    <div className="mx-auto w-full max-w-6xl px-1 sm:px-0">
+      <StitchFloorWorkspace />
     </div>
   );
 }
