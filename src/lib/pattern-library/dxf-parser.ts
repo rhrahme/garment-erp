@@ -393,7 +393,7 @@ export function outlinePointsForPlacement(
     return outline_cm.map((p) => ({ x: p.x, y: p.y }));
   }
 
-  // 90° CW: (x,y) -> (y, W-x) so dims become H x W
+  // 90-degree CW: (x,y) -> (y, W-x) so dims become H x W
   return outline_cm.map((p) => ({
     x: p.y,
     y: canonW! - p.x,

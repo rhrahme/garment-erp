@@ -115,7 +115,7 @@ const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${viewW}" height="${viewH + 48}" viewBox="0 0 ${viewW} ${viewH + 48}">
   <rect width="100%" height="100%" fill="#18181b"/>
   <text x="12" y="20" fill="#e4e4e7" font-size="14" font-family="ui-sans-serif,system-ui,sans-serif">
-    ${escapeXml(parsed.metadata.style_caption || path.basename(dxfPath))} — ${parsed.metadata.pieces.length} piece types · ${nest.placements.length} cut · size ${escapeXml(nest.size)} · usable ${usable}cm · packed ${nest.packed_length_m.toFixed(2)}m
+    ${escapeXml(parsed.metadata.style_caption || path.basename(dxfPath))} - ${parsed.metadata.pieces.length} piece types Â· ${nest.placements.length} cut Â· size ${escapeXml(nest.size)} Â· usable ${usable}cm Â· packed ${nest.packed_length_m.toFixed(2)}m
   </text>
   <g transform="translate(0,36)">
     <rect x="0" y="0" width="${viewW}" height="${viewH}" fill="#3f3f46"/>
