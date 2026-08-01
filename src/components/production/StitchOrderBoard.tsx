@@ -1,0 +1,252 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import { ScanStageLegend } from "@/components/production/ScanStageLegend";
+import { StatusBadge } from "@/components/ui/PageHeader";
+import { FabricSupplierName } from "@/components/fabric/FabricSupplierName";
+import {
+  productionStageToHighlight,
+  scanStageStyles,
+  type ScanHighlightStage,
+} from "@/lib/production/scan-stage-highlight";
+import { formatLabelGarmentDescription } from "@/lib/sales-orders/label-codes";
+import type { ProductionWorkOrder } from "@/lib/types/production";
+import type { SalesOrder } from "@/lib/types/sales-orders";
+import type { SewingSession } from "@/lib/types/sewing-sessions";
+import { cn } from "@/lib/utils";
+
+type PieceFilter = "all" | "ready" | "in_process" | "done";
+
+type StitchBucket = "ready" | "in_process" | "done" | "not_ready";
+
+const FILTERS: { id: PieceFilter; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "ready", label: "Ready" },
+  { id: "in_process", label: "In process" },
+  { id: "done", label: "Done" },
+];
+
+const DONE_STAGES = new Set(["washing", "finishing", "packed", "completed"]);
+
+function liveSessionForWorkOrder(
+  workOrder: ProductionWorkOrder,
+  openSessions: SewingSession[]
+): SewingSession | null {
+  return (
+    openSessions.find(
+      (session) =>
+        (session.status === "open" || session.status === "closing") &&
+        (session.work_order_id === workOrder.id ||
+          session.production_code === workOrder.sticker_code ||
+          session.scan_code === workOrder.sticker_code)
+    ) ?? null
+  );
+}
+
+function stitchBucket(
+  workOrder: ProductionWorkOrder | undefined,
+  live: SewingSession | null
+): StitchBucket {
+  if (live || workOrder?.status === "sewing") return "in_process";
+  if (workOrder?.status === "cutting") return "ready";
+  if (workOrder && DONE_STAGES.has(workOrder.status)) return "done";
+  return "not_ready";
+}
+
+function stitchCaption(bucket: StitchBucket): string | null {
+  if (bucket === "ready") return "Ready";
+  if (bucket === "in_process") return "Sewing now";
+  if (bucket === "done") return "Left";
+  return null;
+}
+
+function highlightForPiece(
+  workOrder: ProductionWorkOrder | undefined,
+  live: SewingSession | null
+): ScanHighlightStage {
+  if (live || workOrder?.status === "sewing") return "sewing";
+  if (workOrder) return productionStageToHighlight(workOrder.status);
+  return "pending";
+}
+
+function garmentSummary(order: SalesOrder): string {
+  const types = [
+    ...new Set(order.fabric_lines.map((line) => line.garment_type).filter(Boolean)),
+  ];
+  if (types.length === 0) return "No garments";
+  if (types.length <= 3) return types.join(", ");
+  return `${types.slice(0, 3).join(", ")} +${types.length - 3}`;
+}
+
+export function StitchOrderBoard({
+  order,
+  workOrders,
+  openSessions,
+  onBack,
+}: {
+  order: SalesOrder;
+  workOrders: ProductionWorkOrder[];
+  openSessions: SewingSession[];
+  onBack: () => void;
+}) {
+  const [filter, setFilter] = useState<PieceFilter>("all");
+
+  const pieces = useMemo(() => {
+    const forOrder = workOrders
+      .filter((wo) => wo.sales_order_id === order.id)
+      .sort((a, b) => a.sticker_code.localeCompare(b.sticker_code));
+
+    return forOrder.map((wo) => {
+      const live = liveSessionForWorkOrder(wo, openSessions);
+      const bucket = stitchBucket(wo, live);
+      return { wo, live, bucket };
+    });
+  }, [order.id, openSessions, workOrders]);
+
+  const filtered = useMemo(() => {
+    if (filter === "all") return pieces;
+    return pieces.filter((row) => row.bucket === filter);
+  }, [filter, pieces]);
+
+  const counts = useMemo(() => {
+    const next = { all: pieces.length, ready: 0, in_process: 0, done: 0 };
+    for (const row of pieces) {
+      if (row.bucket === "ready") next.ready += 1;
+      if (row.bucket === "in_process") next.in_process += 1;
+      if (row.bucket === "done") next.done += 1;
+    }
+    return next;
+  }, [pieces]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <button
+            type="button"
+            onClick={onBack}
+            className="mb-2 inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            All orders
+          </button>
+          <h2 className="text-xl font-semibold text-slate-900">{order.client_name}</h2>
+          <p className="mt-0.5 font-mono text-sm font-semibold text-indigo-800">
+            {order.so_number}
+            <span className="mx-1.5 font-sans font-normal text-slate-400">/</span>
+            <span className="font-sans font-normal text-slate-600">{order.client_code}</span>
+          </p>
+          <p className="mt-1 text-sm text-slate-600">{garmentSummary(order)}</p>
+        </div>
+        <StatusBadge status={order.status} />
+      </div>
+
+      <ScanStageLegend />
+
+      <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Stitch status
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-2.5 py-1 text-xs font-medium text-orange-950">
+            Ready
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-900">
+            Sewing now
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-cyan-100 px-2.5 py-1 text-xs font-medium text-cyan-900">
+            Left
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {FILTERS.map((item) => {
+          const active = filter === item.id;
+          const count = counts[item.id];
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setFilter(item.id)}
+              className={cn(
+                "min-h-[44px] rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                active
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"
+              )}
+            >
+              {item.label}
+              <span className={cn("ml-1.5 tabular-nums", active ? "text-indigo-200" : "text-slate-500")}>
+                ({count})
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {pieces.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
+          No production pieces for this order yet - fabric must be received and cut first.
+        </p>
+      ) : filtered.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
+          No pieces match this filter.
+        </p>
+      ) : (
+        <ul className="space-y-3">
+          {filtered.map(({ wo, live, bucket }) => {
+            const stage = highlightForPiece(wo, live);
+            const styles = scanStageStyles(stage);
+            const caption = stitchCaption(bucket);
+            return (
+              <li
+                key={wo.id}
+                className={cn(
+                  "rounded-xl border border-slate-200 p-4",
+                  styles.row
+                )}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <p className="text-base font-semibold text-slate-900">
+                      {formatLabelGarmentDescription(wo.garment_type, wo.piece_name)}
+                    </p>
+                    <p className="font-mono text-sm font-semibold text-indigo-800">
+                      {wo.sticker_code}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      <FabricSupplierName
+                        supplierId={wo.supplier_id}
+                        supplierName={wo.supplier_name}
+                        fabricNumber={wo.fabric_number}
+                      />{" "}
+                      {wo.fabric_number}
+                    </p>
+                    {live ? (
+                      <p className="text-sm font-medium text-emerald-800">
+                        {live.employee_name}
+                        {live.status === "closing" ? " (closing)" : ""}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    {caption ? (
+                      <span className="rounded-full bg-white/80 px-2.5 py-0.5 text-xs font-semibold text-slate-800 ring-1 ring-slate-200">
+                        {caption}
+                      </span>
+                    ) : null}
+                    <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", styles.chip)}>
+                      {styles.label}
+                    </span>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}

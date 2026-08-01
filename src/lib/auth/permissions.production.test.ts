@@ -165,21 +165,37 @@ describe("stitch_operator kiosk gating", () => {
     assert.deepEqual(nav, ["/stitch"]);
   });
 
-  it("allows sewing kiosk routes and blocks the rest of the ERP", () => {
+  it("allows sewing kiosk routes and read-only order APIs; blocks the rest of the ERP", () => {
     assert.equal(isStitchOperatorRouteAllowed("/stitch"), true);
     assert.equal(isStitchOperatorRouteAllowed("/production/stitch"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/production/sewing-session"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/production/sewing-session/scan"), true);
+    assert.equal(isStitchOperatorRouteAllowed("/api/production/work-orders"), true);
+    assert.equal(isStitchOperatorRouteAllowed("/api/production/work-orders/wo-1"), true);
+    assert.equal(isStitchOperatorRouteAllowed("/api/sales-orders"), true);
+    assert.equal(isStitchOperatorRouteAllowed("/api/sales-orders/so-1"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/qr"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/hr/employee-lookup"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/auth/session"), true);
 
     assert.equal(isStitchOperatorRouteAllowed("/production"), false);
     assert.equal(isStitchOperatorRouteAllowed("/orders"), false);
+    assert.equal(isStitchOperatorRouteAllowed("/orders/so-1"), false);
+    assert.equal(isStitchOperatorRouteAllowed("/orders/so-1/print"), false);
     assert.equal(isStitchOperatorRouteAllowed("/sales"), false);
     assert.equal(isStitchOperatorRouteAllowed("/dashboard"), false);
     assert.equal(isStitchOperatorRouteAllowed("/invoices"), false);
-    assert.equal(isStitchOperatorRouteAllowed("/api/sales-orders"), false);
+    assert.equal(isStitchOperatorRouteAllowed("/api/production/stage-scan"), false);
+    assert.equal(isStitchOperatorRouteAllowed("/api/sales-orders/so-1/stickers"), false);
+    assert.equal(isStitchOperatorRouteAllowed("/api/sales-orders/so-1/pdf"), false);
+    assert.equal(
+      isStitchOperatorRouteAllowed("/api/sales-orders/so-1/fabric-lines/print"),
+      false
+    );
+    assert.equal(
+      isStitchOperatorRouteAllowed("/api/sales-orders/so-1/fabric-lines/transfer"),
+      false
+    );
   });
 });
 

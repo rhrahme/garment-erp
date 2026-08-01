@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAuthenticated } from "@/lib/auth/session";
 import { notifyIntegration } from "@/lib/integrations";
 import { advanceProductionWorkOrder, startFabricPrep } from "@/lib/production/sticker-scan";
 import { isFabricPrepType } from "@/lib/production/fabric-prep";
@@ -28,6 +29,15 @@ async function notifyStageAdvance(
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const session = await requireAuthenticated();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+    // Stitch kiosk is read-only for work orders (no stage advance).
+    if (session.isStitchOperator) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
+
     const { id } = await params;
     const body = (await request.json().catch(() => ({}))) as {
       action?: string;

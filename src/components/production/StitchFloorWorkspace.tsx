@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { StitchKioskPanel } from "@/components/production/StitchKioskPanel";
+import { StitchOrdersPanel } from "@/components/production/StitchOrdersPanel";
 import {
   StitchScanCaptureProvider,
   StitchScannerReadyBadge,
@@ -17,7 +18,7 @@ import type { SewingScanFailure } from "@/lib/types/sewing-scan-failures";
 import type { SewingSession } from "@/lib/types/sewing-sessions";
 import { cn } from "@/lib/utils";
 
-type FloorTab = "scan" | "live" | "performance" | "history";
+type FloorTab = "scan" | "orders" | "live" | "performance" | "history";
 type HistoryMode = "sessions" | "failures";
 
 type DashboardPayload = {
@@ -36,6 +37,7 @@ type DashboardPayload = {
 
 const TABS: { id: FloorTab; label: string }[] = [
   { id: "scan", label: "Scan" },
+  { id: "orders", label: "Orders" },
   { id: "live", label: "Live" },
   { id: "performance", label: "Performance" },
   { id: "history", label: "History" },
@@ -234,6 +236,12 @@ export function StitchFloorWorkspace() {
         {tab === "scan" && (
           <div className="mx-auto w-full max-w-5xl flex-1">
             <StitchKioskPanel />
+          </div>
+        )}
+
+        {tab === "orders" && (
+          <div className="mx-auto w-full max-w-6xl flex-1">
+            <StitchOrdersPanel openSessions={data?.open_sessions ?? []} />
           </div>
         )}
 

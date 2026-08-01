@@ -27,15 +27,22 @@ export function OrdersList({
   orders,
   productionMode = false,
   taskOperatorMode = false,
+  stitchMode = false,
   allowedBrandIds = null,
+  onOrderOpen,
 }: {
   orders: SalesOrderListRow[];
   productionMode?: boolean;
   taskOperatorMode?: boolean;
+  /** Stitch kiosk: production labels, no print/download/new; open in-tab via onOrderOpen. */
+  stitchMode?: boolean;
   /** When set (sales brand scope), only these factory brands appear in the filter tabs. */
   allowedBrandIds?: string[] | null;
+  /** When set (stitch), open order in-tab instead of navigating to `/orders/[id]`. */
+  onOrderOpen?: (orderId: string) => void;
 }) {
-  const labels = ordersUiLabels(productionMode, taskOperatorMode);
+  const effectiveProductionMode = productionMode || stitchMode;
+  const labels = ordersUiLabels(effectiveProductionMode, taskOperatorMode || stitchMode);
   const scopedBrands = useMemo(() => {
     if (!allowedBrandIds) return undefined;
     const allowed = new Set(allowedBrandIds);
@@ -101,7 +108,7 @@ export function OrdersList({
       <div className="rounded-xl border border-dashed border-slate-200 py-16 text-center">
         <p className="text-lg font-medium text-slate-700">{labels.emptyTitle}</p>
         <p className="mt-2 text-sm text-slate-500">{labels.emptyDescription}</p>
-        {!taskOperatorMode && labels.newButton ? (
+        {!taskOperatorMode && !stitchMode && labels.newButton ? (
           <Link href="/orders/new" className="mt-4 inline-block">
             <Button>{labels.newButton}</Button>
           </Link>
@@ -186,7 +193,7 @@ export function OrdersList({
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Order #, client, fabric, supplier…"
+            placeholder="Order #, client, fabric, supplier..."
             className="mt-1 block w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm"
           />
         </label>
@@ -216,10 +223,10 @@ export function OrdersList({
               <th className="px-4 py-3">Client code</th>
               <th className="px-4 py-3">Fabrics</th>
               <th className="px-4 py-3">Availability</th>
-              {productionMode && <th className="px-4 py-3">Production labels</th>}
+              {effectiveProductionMode && <th className="px-4 py-3">Production labels</th>}
               <th className="px-4 py-3">Order Date</th>
               <th className="px-4 py-3">Delivery</th>
-              <th className="px-4 py-3">Supplier email</th>
+              {!stitchMode && <th className="px-4 py-3">Supplier email</th>}
               <th className="px-4 py-3">Status</th>
               <th className="sticky right-0 z-10 bg-slate-50 px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.15)]">
                 Actions
@@ -229,7 +236,12 @@ export function OrdersList({
           <tbody className="divide-y divide-slate-100">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={productionMode ? 10 : 9} className="px-4 py-10 text-center text-slate-500">
+                <td
+                  colSpan={
+                    (effectiveProductionMode ? 9 : 8) + (stitchMode ? 0 : 1)
+                  }
+                  className="px-4 py-10 text-center text-slate-500"
+                >
                   {hasActiveFilters
                     ? "No orders match your search."
                     : view === "archived"
@@ -255,7 +267,7 @@ export function OrdersList({
                   </td>
                   <td className="px-4 py-3">
                     {order.fabric_preview_lines.length === 0 ? (
-                      <span className="text-slate-400">—</span>
+                      <span className="text-slate-400">-</span>
                     ) : (
                       <div className="flex flex-wrap items-center gap-1.5">
                         {order.fabric_preview_lines.slice(0, 5).map((line, index) => (
@@ -282,33 +294,35 @@ export function OrdersList({
                         {order.fabric_stock_alert_count} issue{order.fabric_stock_alert_count !== 1 ? "s" : ""}
                       </span>
                     ) : (
-                      <span className="text-slate-400">—</span>
+                      <span className="text-slate-400">-</span>
                     )}
                   </td>
-                  {productionMode && (
+                  {effectiveProductionMode && (
                     <td className="px-4 py-3">
                       {order.production_label_count > 0
                         ? `${order.production_label_count} label${order.production_label_count !== 1 ? "s" : ""}`
-                        : "—"}
+                        : "-"}
                     </td>
                   )}
                   <td className="px-4 py-3">{formatDate(order.order_date)}</td>
-                  <td className="px-4 py-3">{order.delivery_date ? formatDate(order.delivery_date) : "—"}</td>
-                  <td className="px-4 py-3">
-                    <SupplierEmailStatusBadge
-                      summary={{
-                        status: order.supplier_email_status,
-                        sent: order.supplier_email_sent,
-                        pending: order.supplier_email_pending,
-                      }}
-                    />
-                  </td>
+                  <td className="px-4 py-3">{order.delivery_date ? formatDate(order.delivery_date) : "-"}</td>
+                  {!stitchMode && (
+                    <td className="px-4 py-3">
+                      <SupplierEmailStatusBadge
+                        summary={{
+                          status: order.supplier_email_status,
+                          sent: order.supplier_email_sent,
+                          pending: order.supplier_email_pending,
+                        }}
+                      />
+                    </td>
+                  )}
                   <td className="px-4 py-3">
                     <StatusBadge status={order.status} />
                   </td>
                   <td className={`sticky right-0 z-10 px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.15)] ${rowBg}`}>
                     <div className="flex min-w-[12.5rem] flex-wrap items-center gap-2 whitespace-nowrap">
-                      {taskOperatorMode && order.fabric_line_count > 0 ? (
+                      {!stitchMode && taskOperatorMode && order.fabric_line_count > 0 ? (
                         <>
                           <Link
                             href={orderStickerSheetHref(order.id, "fabric-cuts")}
@@ -324,16 +338,31 @@ export function OrdersList({
                           </Link>
                         </>
                       ) : null}
-                      <DownloadSalesOrderPdfButton
-                        orderId={order.id}
-                        soNumber={order.so_number}
-                        variant="secondary"
-                        size="sm"
-                        label="Download"
-                      />
-                      <Link href={`/orders/${order.id}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
-                        Open →
-                      </Link>
+                      {!stitchMode ? (
+                        <DownloadSalesOrderPdfButton
+                          orderId={order.id}
+                          soNumber={order.so_number}
+                          variant="secondary"
+                          size="sm"
+                          label="Download"
+                        />
+                      ) : null}
+                      {onOrderOpen ? (
+                        <button
+                          type="button"
+                          onClick={() => onOrderOpen(order.id)}
+                          className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                        >
+                          Open ->
+                        </button>
+                      ) : (
+                        <Link
+                          href={`/orders/${order.id}`}
+                          className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                        >
+                          Open ->
+                        </Link>
+                      )}
                     </div>
                   </td>
                 </tr>

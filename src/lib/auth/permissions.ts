@@ -66,13 +66,16 @@ const TASK_OPERATOR_ROUTE_PREFIXES = [
 const TASK_OPERATOR_BLOCKED_ROUTE_PREFIXES = ["/orders/new", "/fabric-orders"] as const;
 
 /**
- * Stitch floor kiosk - sewing badge/A4 scans only.
+ * Stitch floor kiosk - sewing badge/A4 scans + read-only orders board.
  * Landing `/stitch`; shared path `/production/stitch` also allowed.
+ * Writes (stage-scan, stickers, SO mutations) stay blocked in isStitchOperatorRouteAllowed.
  */
 const STITCH_OPERATOR_ROUTE_PREFIXES = [
   "/stitch",
   "/production/stitch",
   "/api/production/sewing-session",
+  "/api/production/work-orders",
+  "/api/sales-orders",
   "/api/qr",
   "/api/hr/employee-lookup",
   "/api/auth/session",
@@ -723,6 +726,27 @@ export function isHrIdBadgesPath(pathname: string): boolean {
 }
 
 export function isStitchOperatorRouteAllowed(pathname: string): boolean {
+  // Never open full QC /orders pages (print, edit, fabric PO).
+  if (pathname === "/orders" || pathname.startsWith("/orders/")) {
+    return false;
+  }
+  // Stage advance stays factory-manager only.
+  if (
+    pathname === "/api/production/stage-scan" ||
+    pathname.startsWith("/api/production/stage-scan/")
+  ) {
+    return false;
+  }
+  // Sales-order reads only: list + `/api/sales-orders/:id` - no stickers/print/transfers.
+  if (pathname.startsWith("/api/sales-orders/")) {
+    const rest = pathname.slice("/api/sales-orders/".length);
+    if (!rest || rest.includes("/")) return false;
+  }
+  // Work-order reads only: list + `/api/production/work-orders/:id` (PATCH gated in handler).
+  if (pathname.startsWith("/api/production/work-orders/")) {
+    const rest = pathname.slice("/api/production/work-orders/".length);
+    if (!rest || rest.includes("/")) return false;
+  }
   return STITCH_OPERATOR_ROUTE_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
