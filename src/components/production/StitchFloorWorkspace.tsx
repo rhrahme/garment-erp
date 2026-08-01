@@ -410,8 +410,13 @@ export function StitchFloorWorkspace() {
                         }
                         className="flex w-full flex-wrap items-center justify-between gap-3 px-4 py-4 text-left"
                       >
-                        <div>
+                        <div className="min-w-0 space-y-1">
                           <p className="text-lg font-semibold text-slate-900">{row.employee_name}</p>
+                          {(row.articles?.length ?? 0) > 0 ? (
+                            <p className="text-base font-semibold text-slate-800">
+                              {row.articles.join(" ù ")}
+                            </p>
+                          ) : null}
                           <p className="text-sm text-slate-500">
                             Tap to {expanded ? "hide" : "show"} pieces
                           </p>
@@ -453,13 +458,16 @@ export function StitchFloorWorkspace() {
                                 key={piece.id}
                                 className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 py-3 last:border-b-0"
                               >
-                                <div>
-                                  <p className="font-medium text-slate-900">
-                                    {sewingSessionArticleLabel(piece) || piece.production_code}
+                                <div className="min-w-0 space-y-0.5">
+                                  <p className="text-base font-semibold text-slate-800">
+                                    {sewingSessionArticleLabel(piece) || "-"}
+                                  </p>
+                                  <p className="text-sm font-medium text-slate-700">
+                                    {piece.production_code}
+                                    {piece.piece_mark ? ` / ${piece.piece_mark}` : ""}
                                   </p>
                                   <p className="text-sm text-slate-500">
-                                    {piece.production_code}
-                                    {piece.client_name ? ` / ${piece.client_name}` : ""}
+                                    {piece.client_name || "No client"}
                                     {piece.so_number ? ` / ${piece.so_number}` : ""}
                                   </p>
                                 </div>
@@ -493,7 +501,7 @@ export function StitchFloorWorkspace() {
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
                   {historyMode === "sessions"
-                    ? "Closed in period plus open sessions. Search employee, piece, SO, or client."
+                    ? "Closed in period plus open sessions. Search employee, article, piece, SO, or client."
                     : "Rejected badge/A4 scans in period. Use for QC sequence reconstruction."}
                 </p>
               </div>
@@ -538,7 +546,7 @@ export function StitchFloorWorkspace() {
               onChange={(e) => setSearch(e.target.value)}
               placeholder={
                 historyMode === "sessions"
-                  ? "Search employee, piece, SO, client..."
+                  ? "Search employee, article, piece, SO, client..."
                   : "Search employee, code, reason, kiosk..."
               }
               className="mt-4 min-h-[52px] w-full rounded-xl border border-slate-300 px-4 text-base text-slate-900 outline-none ring-indigo-500 focus:ring-2"
@@ -568,8 +576,13 @@ export function StitchFloorWorkspace() {
                     {historyRows.map((row) => (
                       <tr key={row.id} className="text-slate-800">
                         <td className="px-3 py-3 font-medium">{row.employee_name}</td>
-                        <td className="px-3 py-3 font-medium text-slate-900">
-                          {sewingSessionArticleLabel(row) || "-"}
+                        <td className="px-3 py-3">
+                          <div className="font-semibold text-slate-900">
+                            {sewingSessionArticleLabel(row) || "-"}
+                          </div>
+                          {row.piece_mark ? (
+                            <div className="text-xs text-slate-500">{row.piece_mark}</div>
+                          ) : null}
                         </td>
                         <td className="px-3 py-3 font-mono text-xs sm:text-sm">
                           {row.production_code}

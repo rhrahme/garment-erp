@@ -1,3 +1,4 @@
+import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
 import type { SewingScanFailure } from "@/lib/types/sewing-scan-failures";
 import type {
   SewingKioskArm,
@@ -29,6 +30,8 @@ export type SewingEmployeeAggregate = {
   count: number;
   duration_sec: number;
   avg_duration_sec: number;
+  /** Distinct floor article labels for closed pieces (Overshirt, Trouser, ...). */
+  articles: string[];
 };
 
 function ageMs(iso: string, at: number): number {
@@ -186,7 +189,13 @@ function inPeriod(iso: string | null | undefined, window: SewingPeriodWindow): b
 }
 
 function aggregateClosedByEmployee(closed: SewingSession[]): SewingEmployeeAggregate[] {
-  const byEmployee = new Map<string, SewingEmployeeAggregate>();
+  const byEmployee = new Map<
+    string,
+    Omit<SewingEmployeeAggregate, "articles" | "avg_duration_sec"> & {
+      avg_duration_sec: number;
+      articleSet: Set<string>;
+    }
+  >();
   for (const row of closed) {
     const cur = byEmployee.get(row.employee_id) ?? {
       employee_id: row.employee_id,
@@ -194,15 +203,19 @@ function aggregateClosedByEmployee(closed: SewingSession[]): SewingEmployeeAggre
       count: 0,
       duration_sec: 0,
       avg_duration_sec: 0,
+      articleSet: new Set<string>(),
     };
     cur.count += 1;
     cur.duration_sec += row.duration_sec ?? 0;
+    const label = sewingSessionArticleLabel(row);
+    if (label) cur.articleSet.add(label);
     byEmployee.set(row.employee_id, cur);
   }
   return [...byEmployee.values()]
-    .map((row) => ({
+    .map(({ articleSet, ...row }) => ({
       ...row,
       avg_duration_sec: row.count > 0 ? Math.round(row.duration_sec / row.count) : 0,
+      articles: [...articleSet].sort((a, b) => a.localeCompare(b)),
     }))
     .sort((a, b) => b.count - a.count || a.employee_name.localeCompare(b.employee_name));
 }

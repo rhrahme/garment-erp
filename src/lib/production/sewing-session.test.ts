@@ -16,7 +16,10 @@ import {
   decidePieceStart,
 } from "@/lib/production/sewing-session-recovery";
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
-import { enrichSewingSessionGarmentFields } from "@/lib/production/sewing-session-garment";
+import {
+  enrichSewingSessionGarmentFields,
+  enrichSewingSessionsGarmentFields,
+} from "@/lib/production/sewing-session-garment";
 import {
   expireStaleSewingState,
   SEWING_ARM_TIMEOUT_MS,
@@ -129,6 +132,79 @@ describe("enrichSewingSessionGarmentFields", () => {
     assert.equal(enriched.garment_type, "Overshirt+Trouser");
     assert.equal(enriched.fabric_number, "66046");
     assert.equal(sewingSessionArticleLabel(enriched), "Overshirt");
+  });
+});
+
+describe("sewingSessionsDashboard article labels", () => {
+  it("lists distinct articles on employee aggregates and history rows", () => {
+    const at = new Date(2026, 7, 1, 15, 0, 0, 0).getTime();
+    const store: SewingSessionsFile = {
+      updated_at: null,
+      kiosk_arms: [],
+      sessions: [
+        session({
+          id: "os1",
+          employee_id: "e1",
+          employee_name: "Ali",
+          status: "closed",
+          production_code: "FR-OS",
+          piece_mark: "OS-1/2",
+          garment_type: "Overshirt+Trouser",
+          started_at: new Date(at - 600_000).toISOString(),
+          ended_at: new Date(at - 300_000).toISOString(),
+          duration_sec: 300,
+        }),
+        session({
+          id: "tr1",
+          employee_id: "e1",
+          employee_name: "Ali",
+          status: "closed",
+          production_code: "FR-TR",
+          piece_mark: "TR-2/2",
+          garment_type: "Overshirt+Trouser",
+          started_at: new Date(at - 500_000).toISOString(),
+          ended_at: new Date(at - 200_000).toISOString(),
+          duration_sec: 300,
+        }),
+      ],
+    };
+    const dash = sewingSessionsDashboard(store, at);
+    assert.deepEqual(dash.completed_by_employee[0]?.articles, ["Overshirt", "Trouser"]);
+    assert.equal(sewingSessionArticleLabel(dash.sessions[0]!), "Trouser");
+    assert.equal(sewingSessionArticleLabel(dash.sessions[1]!), "Overshirt");
+  });
+
+  it("backfills closed-session articles via SO lookup before Performance aggregates", () => {
+    const at = new Date(2026, 7, 1, 15, 0, 0, 0).getTime();
+    const store: SewingSessionsFile = {
+      updated_at: null,
+      kiosk_arms: [],
+      sessions: [
+        session({
+          id: "legacy-closed",
+          employee_id: "e1",
+          employee_name: "Ali",
+          status: "closed",
+          production_code: "FR-0131-L04-OS-1/2",
+          scan_code: "FR-0626-0037-SO-2026-0131-L04-OS",
+          piece_mark: "OS-1/2",
+          so_number: "SO-2026-0131",
+          garment_type: null,
+          fabric_number: null,
+          started_at: new Date(at - 600_000).toISOString(),
+          ended_at: new Date(at - 100_000).toISOString(),
+          duration_sec: 500,
+        }),
+      ],
+    };
+    // Mirrors sewingSessionsDashboard wrapper: enrich store before aggregate.
+    const enrichedStore: SewingSessionsFile = {
+      ...store,
+      sessions: enrichSewingSessionsGarmentFields(store.sessions),
+    };
+    const dash = sewingSessionsDashboard(enrichedStore, at);
+    assert.equal(dash.sessions[0]?.garment_type, "Overshirt+Trouser");
+    assert.deepEqual(dash.completed_by_employee[0]?.articles, ["Overshirt"]);
   });
 });
 

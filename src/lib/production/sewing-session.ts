@@ -67,18 +67,20 @@ export {
   enrichSewingSessionsGarmentFields,
 } from "@/lib/production/sewing-session-garment";
 
-/** Dashboard payload with null garment_type backfilled from live SO sticker lookup. */
+/**
+ * Dashboard payload with null garment_type backfilled from live SO sticker lookup.
+ * Enrich before aggregation so Performance employee rows include article labels.
+ */
 export function sewingSessionsDashboard(
   store: SewingSessionsFile,
   at = Date.now(),
   options: SewingSessionsDashboardOptions = {}
 ) {
-  const dash = sewingSessionsDashboardBase(store, at, options);
-  return {
-    ...dash,
-    open_sessions: enrichSewingSessionsGarmentFields(dash.open_sessions),
-    sessions: enrichSewingSessionsGarmentFields(dash.sessions),
+  const enrichedStore: SewingSessionsFile = {
+    ...store,
+    sessions: enrichSewingSessionsGarmentFields(store.sessions ?? []),
   };
+  return sewingSessionsDashboardBase(enrichedStore, at, options);
 }
 
 function nowIso(at = Date.now()): string {
