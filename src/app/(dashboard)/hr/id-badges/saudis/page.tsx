@@ -43,6 +43,7 @@ export default async function HrIdBadgesSaudisPage() {
       employees={employees}
       group="saudi"
       canCreate={canCreate}
+      canEditShortName={session.isAdmin}
     />
   );
 }

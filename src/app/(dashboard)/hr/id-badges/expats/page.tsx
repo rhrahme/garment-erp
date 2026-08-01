@@ -26,8 +26,9 @@ export default async function HrIdBadgesExpatsPage() {
   const session = await getSessionContext();
   const canCreate =
     session.isAdmin || session.isProductionOperator || session.isClientManager;
-  // QC assigns job tasks from badges; admin already has payroll Roles column.
+  // QC assigns job tasks / short name from badges; admin already has payroll Roles column.
   const canEditJobFunctions = session.isClientManager || session.isAdmin;
+  const canEditShortName = session.isClientManager || session.isAdmin;
   const expatOnlyCreate = session.isClientManager;
 
   await ensureDocumentsLoaded(["payroll_employees"]);
@@ -50,6 +51,7 @@ export default async function HrIdBadgesExpatsPage() {
       group="expat"
       canCreate={canCreate}
       canEditJobFunctions={canEditJobFunctions}
+      canEditShortName={canEditShortName}
       expatOnlyCreate={expatOnlyCreate}
     />
   );

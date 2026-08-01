@@ -203,6 +203,7 @@ describe("client_manager QC ID badges (not payroll)", () => {
       isClientManagerRouteAllowed("/api/hr/employees/emp-1/job-functions"),
       true
     );
+    assert.equal(isClientManagerRouteAllowed("/api/hr/employees/emp-1"), true);
     assert.equal(isClientManagerRouteAllowed("/api/hr/employee-lookup"), true);
     assert.equal(isClientManagerRouteAllowed("/api/hr/id-badges/expats/pdf"), true);
 

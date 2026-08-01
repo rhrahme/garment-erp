@@ -5,6 +5,14 @@ import {
 } from "@/lib/hr/payroll-utils";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 
+/** Name printed on ID badge cards — short_name when set, else legal full_name. */
+export function badgeDisplayName(
+  employee: Pick<PayrollEmployee, "full_name" | "short_name">
+): string {
+  const short = String(employee.short_name ?? "").trim();
+  return short || employee.full_name;
+}
+
 /** Standard CR80 / ID-1 badge size (mm). */
 export const BADGE_CARD_WIDTH_MM = 85.6;
 export const BADGE_CARD_HEIGHT_MM = 54;

@@ -5,6 +5,8 @@ export type PayrollEmployee = {
   s_no: number;
   employee_id_number: string;
   full_name: string;
+  /** Optional nickname for ID badge cards only; ERP lists keep full_name. */
+  short_name?: string | null;
   bank_name: string;
   account_number: string;
   salary_amount: number;

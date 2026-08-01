@@ -3,6 +3,7 @@ import { requireFactoryOpsAccess } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readPayrollEmployees } from "@/lib/data/payroll-employees";
 import {
+  badgeDisplayName,
   badgeGroupFromSlug,
   badgeSlugFromGroup,
   parseBadgePrintIds,
@@ -51,7 +52,10 @@ export async function GET(request: Request, { params }: RouteProps) {
     const filename = buildEmployeeBadgePdfFilename({
       groupSlug: badgeSlugFromGroup(group),
       selectedCount: ids?.length ? employees.length : null,
-      employeeName: employees.length === 1 ? employees[0]?.full_name : null,
+      employeeName:
+        employees.length === 1 && employees[0]
+          ? badgeDisplayName(employees[0])
+          : null,
     });
 
     return new NextResponse(Buffer.from(pdfBytes), {

@@ -5,8 +5,9 @@ import { Search } from "lucide-react";
 import { CreateEmployeeForm } from "@/components/hr/CreateEmployeeForm";
 import { EmployeeBadgePrintControls } from "@/components/hr/EmployeeBadgePrintControls";
 import { JobFunctionsEditor } from "@/components/hr/JobFunctionsEditor";
+import { ShortNameEditor } from "@/components/hr/ShortNameEditor";
+import { badgeDisplayName, listActiveBadgeEmployees } from "@/lib/hr/badge-print";
 import { employeeQrPayload } from "@/lib/hr/employee-qr";
-import { listActiveBadgeEmployees } from "@/lib/hr/badge-print";
 import { type IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
@@ -36,6 +37,7 @@ export function EmployeeQrWorkspace({
   group,
   canCreate = false,
   canEditJobFunctions = false,
+  canEditShortName = false,
   expatOnlyCreate = false,
 }: {
   employees: PayrollEmployee[];
@@ -44,6 +46,8 @@ export function EmployeeQrWorkspace({
   canCreate?: boolean;
   /** QC (and admin on badges) can assign multi-select job roles without payroll salary access. */
   canEditJobFunctions?: boolean;
+  /** QC (and admin) can set badge nickname without payroll salary access. */
+  canEditShortName?: boolean;
   /** QC creates Expats only -- hide Saudis option in the add form. */
   expatOnlyCreate?: boolean;
 }) {
@@ -63,7 +67,16 @@ export function EmployeeQrWorkspace({
     const query = searchQuery.trim().toLowerCase();
     if (!query) return printable;
     return printable.filter((employee) =>
-      [employee.full_name, employee.employee_id_number, employee.id].join(" ").toLowerCase().includes(query)
+      [
+        employee.full_name,
+        employee.short_name,
+        employee.employee_id_number,
+        employee.id,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(query)
     );
   }, [printable, searchQuery]);
 
@@ -73,8 +86,13 @@ export function EmployeeQrWorkspace({
         employee.id === updated.id
           ? {
               ...employee,
-              // Narrow job-functions API returns badge-safe fields only -- merge roles, keep local identity.
-              job_functions: updated.job_functions,
+              // Narrow badge APIs return safe fields only -- merge, keep local identity.
+              job_functions:
+                updated.job_functions !== undefined
+                  ? updated.job_functions
+                  : employee.job_functions,
+              short_name:
+                updated.short_name !== undefined ? updated.short_name : employee.short_name,
               full_name: updated.full_name || employee.full_name,
               employee_id_number: updated.employee_id_number || employee.employee_id_number,
             }
@@ -124,7 +142,21 @@ export function EmployeeQrWorkspace({
                 className="flex flex-col items-center rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm"
               >
                 <p className="font-medium text-slate-900">{employee.full_name}</p>
+                {employee.short_name?.trim() ? (
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Badge: {badgeDisplayName(employee)}
+                  </p>
+                ) : null}
                 <p className="mt-1 font-mono text-xs text-slate-600">{employee.employee_id_number}</p>
+                {canEditShortName ? (
+                  <div className="mt-3 w-full">
+                    <ShortNameEditor
+                      employee={employee}
+                      onUpdated={updateEmployee}
+                      patchUrl={`/api/hr/employees/${encodeURIComponent(employee.id)}`}
+                    />
+                  </div>
+                ) : null}
                 {canEditJobFunctions ? (
                   <div className="mt-3 w-full text-left">
                     <p className="mb-1 text-xs font-medium text-slate-600">Job tasks</p>

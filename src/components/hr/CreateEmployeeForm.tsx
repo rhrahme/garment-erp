@@ -17,6 +17,7 @@ export function CreateEmployeeForm({
   const lockedGroup: IdBadgeGroup = expatOnly ? "expat" : defaultGroup;
   const [open, setOpen] = useState(false);
   const [fullName, setFullName] = useState("");
+  const [shortName, setShortName] = useState("");
   const [employeeIdNumber, setEmployeeIdNumber] = useState("");
   const [badgeGroup, setBadgeGroup] = useState<IdBadgeGroup>(lockedGroup);
   const [saving, setSaving] = useState(false);
@@ -32,6 +33,7 @@ export function CreateEmployeeForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           full_name: fullName,
+          short_name: shortName.trim() || null,
           employee_id_number: employeeIdNumber,
           badge_group: expatOnly ? "expat" : badgeGroup,
         }),
@@ -41,6 +43,7 @@ export function CreateEmployeeForm({
         throw new Error(data.error || "Failed to create employee.");
       }
       setFullName("");
+      setShortName("");
       setEmployeeIdNumber("");
       setBadgeGroup(lockedGroup);
       setOpen(false);
@@ -95,6 +98,16 @@ export function CreateEmployeeForm({
             onChange={(e) => setFullName(e.target.value)}
             className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2"
             placeholder="Employee full name"
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium text-slate-700">Short name</span>
+          <span className="ml-1 text-xs font-normal text-slate-500">(optional, ID badge only)</span>
+          <input
+            value={shortName}
+            onChange={(e) => setShortName(e.target.value)}
+            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2"
+            placeholder="Nickname shown on badge"
           />
         </label>
         <label className="block text-sm">

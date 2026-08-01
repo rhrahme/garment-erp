@@ -5,6 +5,7 @@ import {
   BADGE_CARDS_PER_PAGE,
   BADGE_CARDS_PER_ROW,
   BADGE_ROWS_PER_PAGE,
+  badgeDisplayName,
   chunkBadgePages,
 } from "@/lib/hr/badge-print";
 import { employeeQrPayload } from "@/lib/hr/employee-qr";
@@ -124,7 +125,7 @@ function drawBadgeCard(
   doc.setTextColor(15, 23, 42);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  const nameLines = doc.splitTextToSize(employee.full_name, textMaxW);
+  const nameLines = doc.splitTextToSize(badgeDisplayName(employee), textMaxW);
   doc.text(nameLines.slice(0, 3), textX, textY);
   textY += Math.min(nameLines.length, 3) * 4.2;
 

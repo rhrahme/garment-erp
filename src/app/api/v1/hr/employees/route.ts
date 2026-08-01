@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       full_name?: string;
       employee_id_number?: string;
+      short_name?: string | null;
       badge_group?: IdBadgeGroup;
       bank_name?: string;
       assigned_workstation_id?: string | null;
@@ -26,6 +27,7 @@ export async function POST(request: Request) {
     const employee = await createPayrollEmployee({
       full_name: String(body.full_name ?? ""),
       employee_id_number: String(body.employee_id_number ?? ""),
+      short_name: body.short_name,
       badge_group: body.badge_group === "expat" ? "expat" : "saudi",
       bank_name: body.bank_name,
       assigned_workstation_id: body.assigned_workstation_id,
@@ -40,6 +42,7 @@ export async function POST(request: Request) {
         id: publicEmployee.id,
         employee_id_number: publicEmployee.employee_id_number,
         full_name: publicEmployee.full_name,
+        short_name: publicEmployee.short_name,
         badge_group: publicEmployee.badge_group,
       },
       "api"

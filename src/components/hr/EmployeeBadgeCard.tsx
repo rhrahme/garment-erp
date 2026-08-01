@@ -1,3 +1,4 @@
+import { badgeDisplayName } from "@/lib/hr/badge-print";
 import { employeeQrPayload } from "@/lib/hr/employee-qr";
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageUrl } from "@/lib/production/qr-labels";
@@ -44,6 +45,7 @@ export function EmployeeBadgeCard({
   const payload = employeeQrPayload(employee);
   const qrSrc = qrImageUrl(payload, QR_SIZE);
   const label = groupLabel(group);
+  const displayName = badgeDisplayName(employee);
 
   return (
     <div className="badge-print-slot relative">
@@ -82,7 +84,7 @@ export function EmployeeBadgeCard({
               <h2
                 className={`line-clamp-3 text-[12px] font-semibold leading-snug text-slate-900 ${label ? "mt-0.5" : ""}`}
               >
-                {employee.full_name}
+                {displayName}
               </h2>
             </div>
             <div className="min-w-0 shrink-0">

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  badgeDisplayName,
   badgeGroupFromSlug,
   badgePdfHref,
   badgePrintHref,
@@ -35,6 +36,30 @@ function emp(partial: Partial<PayrollEmployee> & Pick<PayrollEmployee, "id" | "f
 }
 
 describe("badge-print helpers", () => {
+  it("prefers short_name on badge label when set", () => {
+    assert.equal(
+      badgeDisplayName(emp({ id: "1", full_name: "Rone Astar Dhar Sutradhar", short_name: "Rone" })),
+      "Rone"
+    );
+    assert.equal(
+      badgeDisplayName(emp({ id: "2", full_name: "Legal Name Only", short_name: "   " })),
+      "Legal Name Only"
+    );
+    assert.equal(
+      badgeDisplayName(emp({ id: "3", full_name: "Legal Name Only", short_name: null })),
+      "Legal Name Only"
+    );
+  });
+
+  it("keeps short_name on badge-safe employee shape", () => {
+    const safe = toBadgeSafeEmployee(
+      emp({ id: "E1", full_name: "Expat One", short_name: "One", bank_name: "Arab National Bank" })
+    );
+    assert.equal(safe.short_name, "One");
+    assert.equal(safe.salary_amount, 0);
+    assert.equal(safe.bank_name, "");
+  });
+
   it("maps saudis/expats slugs", () => {
     assert.equal(badgeGroupFromSlug("saudis"), "saudi");
     assert.equal(badgeGroupFromSlug("expats"), "expat");

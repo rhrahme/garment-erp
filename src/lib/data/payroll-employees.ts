@@ -35,6 +35,8 @@ export async function writePayrollEmployees(data: PayrollEmployeesFile): Promise
 export type CreatePayrollEmployeeInput = {
   full_name: string;
   employee_id_number: string;
+  /** Optional nickname for ID badge cards only. */
+  short_name?: string | null;
   /** Controls ID-badge Saudis/Expats tab; defaults to saudi. */
   badge_group?: IdBadgeGroup;
   bank_name?: string;
@@ -59,17 +61,26 @@ export type PublicEmployeeIdentity = {
   id: string;
   employee_id_number: string;
   full_name: string;
+  short_name: string | null;
   badge_group: IdBadgeGroup;
   assigned_workstation_id: string | null;
   is_mobile_floater: boolean;
   is_active: boolean;
 };
 
+/** Trim short_name; empty / missing becomes null. */
+export function normalizeShortName(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  const trimmed = String(value).trim();
+  return trimmed || null;
+}
+
 export function toPublicEmployeeIdentity(employee: PayrollEmployee): PublicEmployeeIdentity {
   return {
     id: employee.id,
     employee_id_number: employee.employee_id_number,
     full_name: employee.full_name,
+    short_name: normalizeShortName(employee.short_name),
     badge_group: idBadgeGroup(employee),
     assigned_workstation_id: employee.assigned_workstation_id ?? null,
     is_mobile_floater: Boolean(employee.is_mobile_floater),
@@ -88,6 +99,7 @@ export function toBadgeSafeEmployee(employee: PayrollEmployee): PayrollEmployee 
     s_no: employee.s_no,
     employee_id_number: employee.employee_id_number,
     full_name: employee.full_name,
+    short_name: normalizeShortName(employee.short_name),
     bank_name: "",
     account_number: "",
     salary_amount: 0,
@@ -135,11 +147,13 @@ export async function createPayrollEmployee(input: CreatePayrollEmployeeInput): 
     store.employees.reduce((max, employee) => Math.max(max, employee.s_no || 0), 0) + 1;
 
   const includePayroll = Boolean(input.includePayrollFields);
+  const short_name = normalizeShortName(input.short_name);
   const employee: PayrollEmployee = {
     id: employee_id_number,
     s_no: nextSNo,
     employee_id_number,
     full_name,
+    short_name,
     bank_name,
     account_number: includePayroll ? String(input.account_number ?? "").trim() : "",
     salary_amount: includePayroll ? Number(input.salary_amount ?? 0) || 0 : 0,
@@ -169,7 +183,12 @@ export async function createPayrollEmployee(input: CreatePayrollEmployeeInput): 
 
 export async function updatePayrollEmployee(
   id: string,
-  patch: Partial<Pick<PayrollEmployee, "assigned_workstation_id" | "is_mobile_floater" | "job_functions">>
+  patch: Partial<
+    Pick<
+      PayrollEmployee,
+      "assigned_workstation_id" | "is_mobile_floater" | "job_functions" | "short_name"
+    >
+  >
 ): Promise<PayrollEmployee> {
   const store = readPayrollEmployees();
   const index = store.employees.findIndex(
@@ -183,6 +202,10 @@ export async function updatePayrollEmployee(
   const updated: PayrollEmployee = {
     ...current,
     ...patch,
+    short_name:
+      patch.short_name !== undefined
+        ? normalizeShortName(patch.short_name)
+        : normalizeShortName(current.short_name),
     job_functions:
       patch.job_functions !== undefined
         ? normalizeJobFunctions(patch.job_functions)

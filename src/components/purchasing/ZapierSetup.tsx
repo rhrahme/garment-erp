@@ -82,6 +82,7 @@ const OUTBOUND_EVENTS = [
   "sales_order.milestone_updated",
   "custom_fabric.created",
   "employee.created",
+  "employee.updated",
   "employee.job_functions_updated",
 ];
 
@@ -138,6 +139,7 @@ export function ZapierSetup() {
           <ul className="mt-2 space-y-1 font-mono text-xs">
             <li>GET/POST {baseUrl}/api/v1/clients</li>
             <li>POST {baseUrl}/api/v1/hr/employees</li>
+            <li>PATCH {baseUrl}/api/v1/hr/employees/[id]</li>
             <li>GET {baseUrl}/api/v1/brands</li>
             <li>GET {baseUrl}/api/v1/suppliers</li>
             <li>GET {baseUrl}/api/v1/price-list-items</li>

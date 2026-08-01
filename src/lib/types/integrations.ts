@@ -79,6 +79,7 @@ export type IntegrationEventType =
   | "sales_order.milestone_updated"
   | "custom_fabric.created"
   | "employee.created"
+  | "employee.updated"
   | "employee.job_functions_updated"
   | "supabase.auth_unhealthy";
 
