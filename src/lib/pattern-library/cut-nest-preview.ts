@@ -4,7 +4,9 @@ import {
   resolveMarkerFabricWidthCm,
 } from "@/lib/pattern-library/marker-layout";
 import {
+  collectNestDxfMetadata,
   collectNestTudMetadata,
+  estimateNestFromDxf,
   estimateNestFromTud,
   type NestEstimateResult,
 } from "@/lib/pattern-library/nest-estimate";
@@ -110,6 +112,7 @@ export function buildCutNestPreview(
       ? fabricWidthCm
       : resolveMarkerFabricWidthCm(pattern);
 
+  const dxf = collectNestDxfMetadata(pattern);
   const tud =
     collectNestTudMetadata(pattern, getGarmentPieces(pattern.garment_type)) ??
     collectNestTudMetadata(pattern, []);
@@ -120,6 +123,7 @@ export function buildCutNestPreview(
   const cutter_plan = tud
     ? buildCutterPlanFromTud(tud, { size, double_fold: doubleFold })
     : null;
+  const hasGeometry = Boolean(dxf?.pieces?.length || tud);
 
   if (width === null) {
     return withBoardFields(
@@ -129,7 +133,9 @@ export function buildCutNestPreview(
         fold_assumed: false,
         missing_reason: cutter_plan
           ? "Set fabric width for fabric cut layout (parts list below from TUD)."
-          : "Upload TUD + set fabric width for fabric cut layout.",
+          : dxf?.pieces?.length
+            ? "Set fabric width for fabric cut layout (DXF outlines ready)."
+            : "Upload DXF or TUD + set fabric width for fabric cut layout.",
         source: null,
       },
       null,
@@ -137,13 +143,13 @@ export function buildCutNestPreview(
     );
   }
 
-  if (!tud && !pattern.marker_layout?.placements?.length) {
+  if (!hasGeometry && !pattern.marker_layout?.placements?.length) {
     return withBoardFields(
       {
         nest: null,
         cutter_plan: null,
         fold_assumed: false,
-        missing_reason: "Upload TUD + set fabric width for fabric cut layout.",
+        missing_reason: "Upload DXF or TUD + set fabric width for fabric cut layout.",
         source: null,
       },
       null,
@@ -166,13 +172,36 @@ export function buildCutNestPreview(
     );
   }
 
+  if (dxf?.pieces?.length) {
+    const nest = estimateNestFromDxf({
+      dxf,
+      fabric_width_cm: width,
+      double_fold: doubleFold,
+      size,
+      garment_qty: garmentQty,
+    });
+    if (nest) {
+      return withBoardFields(
+        {
+          nest,
+          cutter_plan,
+          fold_assumed,
+          missing_reason: null,
+          source: "auto",
+        },
+        nest,
+        ordered
+      );
+    }
+  }
+
   if (!tud) {
     return withBoardFields(
       {
         nest: null,
         cutter_plan: null,
         fold_assumed,
-        missing_reason: "Upload TUD + set fabric width for fabric cut layout.",
+        missing_reason: "Upload DXF or TUD + set fabric width for fabric cut layout.",
         source: null,
       },
       null,

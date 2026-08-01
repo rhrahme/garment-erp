@@ -23,6 +23,7 @@ const KIND_LABELS: Record<string, string> = {
   marker: "TUKAmrk",
   xlsx: "Excel",
   dxf: "DXF",
+  rul: "RUL",
   pdf: "PDF",
   image: "Image",
   other: "File",
@@ -44,8 +45,8 @@ export function LibraryFileList({
   pieceName = null,
   /** Sent as form field `slot` (e.g. `marker` forces marker kind). */
   formSlot = null,
-  accept = ".tud,.xlsx,.xls,.dxf,.pdf,.png,.jpg,.jpeg,.webp,.heic",
-  emptyLabel = "No files yet — .TUD, Excel, DXF, PDF, images.",
+  accept = ".tud,.xlsx,.xls,.dxf,.rul,.pdf,.png,.jpg,.jpeg,.webp,.heic",
+  emptyLabel = "No files yet — .TUD, Excel, DXF, RUL, PDF, images.",
   uploadLabel = "Upload",
   activeFileId = null,
   onActivate = null,
@@ -180,6 +181,22 @@ export function LibraryFileList({
                   downloadUrl={`${downloadUrlBase}${joiner}file=${encodeURIComponent(file.stored_filename)}`}
                   basePatternName={basePatternName}
                 />
+              ) : null}
+              {file.dxf ? (
+                <p className="mt-1 text-[11px] text-emerald-800">
+                  DXF outlines: {file.dxf.pieces.length} pieces
+                  {file.dxf.total_cut_pieces
+                    ? ` · ${file.dxf.total_cut_pieces} to cut`
+                    : ""}
+                  {file.dxf.sizes.length ? ` · size ${file.dxf.sizes.join(", ")}` : ""}
+                  {file.dxf.style_caption ? ` · ${file.dxf.style_caption}` : ""}
+                </p>
+              ) : null}
+              {file.rul ? (
+                <p className="mt-1 text-[11px] text-slate-600">
+                  RUL sizes: {file.rul.sizes.join(", ") || "—"}
+                  {file.rul.sample_size ? ` · sample ${file.rul.sample_size}` : ""}
+                </p>
               ) : null}
             </li>
             );

@@ -10,6 +10,7 @@ import { readSalesOrders, readSalesOrdersFresh } from "@/lib/data/sales-orders";
 import { applyFabricLineAssignment } from "@/lib/pattern-library/client-fabric-board";
 import {
   applyMarkerLayoutSeed,
+  buildAutoMarkerLayout,
   sanitizeMarkerLayout,
 } from "@/lib/pattern-library/marker-layout";
 import { resolveMarkerFabricWidthAsync } from "@/lib/pattern-library/marker-layout-server";
@@ -1110,13 +1111,47 @@ export async function attachClientPatternFile(
   }
 
   // Seed approximate marker board when TUD lands; pull width from fabric/SO when known.
+  // When DXF outlines land, rebuild the board from real polylines (even if a TUD estimate exists).
   const hadMarkerLayout = Boolean(existing.marker_layout?.placements?.length);
+  const existingLayoutIsDxf = Boolean(
+    existing.marker_layout?.placements?.some(
+      (p) => p.geometry_source === "dxf" && (p.outline_cm?.length ?? 0) >= 3
+    )
+  );
   if (attachment.kind === "tud") {
     const widthInfo = await resolveMarkerFabricWidthAsync(next);
     next = applyMarkerLayoutSeed(next, {
       updated_at: timestamp,
       fabric_width_cm: widthInfo?.width_cm ?? null,
     });
+  } else if (
+    attachment.kind === "dxf" &&
+    attachment.dxf?.pieces?.length &&
+    !existingLayoutIsDxf
+  ) {
+    const widthInfo = await resolveMarkerFabricWidthAsync(next);
+    const widthCm =
+      widthInfo?.width_cm ??
+      (typeof next.marker_fabric_width_cm === "number" && next.marker_fabric_width_cm > 0
+        ? next.marker_fabric_width_cm
+        : null);
+    const layout = buildAutoMarkerLayout(next, {
+      fabric_width_cm: widthCm,
+      size: next.base_size,
+      garment_qty: next.marker_layout?.garment_qty ?? 1,
+      updated_at: timestamp,
+    });
+    if (layout) {
+      next = {
+        ...next,
+        marker_layout: layout,
+        marker_fabric_width_cm: next.marker_fabric_width_cm ?? layout.fabric_width_cm,
+        marker_double_fold:
+          next.marker_double_fold === true || next.marker_double_fold === false
+            ? next.marker_double_fold
+            : layout.double_fold,
+      };
+    }
   }
 
   // Prefer shop marker width from .tum -D when pattern width is still unset.
@@ -1132,9 +1167,16 @@ export async function attachClientPatternFile(
     };
   }
   const markerLayoutSeeded =
-    attachment.kind === "tud" &&
-    !hadMarkerLayout &&
-    Boolean(next.marker_layout?.placements?.length);
+    (attachment.kind === "tud" &&
+      !hadMarkerLayout &&
+      Boolean(next.marker_layout?.placements?.length)) ||
+    (attachment.kind === "dxf" &&
+      !existingLayoutIsDxf &&
+      Boolean(
+        next.marker_layout?.placements?.some(
+          (p) => p.geometry_source === "dxf" && (p.outline_cm?.length ?? 0) >= 3
+        )
+      ));
 
   store.client_patterns[index] = next;
   await writePatternLibrary(store);
@@ -1178,6 +1220,28 @@ export async function attachClientPatternFile(
         updated_by: attachment.uploaded_by,
       });
     }
+  }
+
+  if (
+    attachment.kind === "dxf" &&
+    markerLayoutSeeded &&
+    next.marker_layout
+  ) {
+    await notifyIntegration("client_pattern.marker_layout_saved", {
+      id: next.id,
+      pattern_ref: next.pattern_ref,
+      client_id: next.client_id,
+      size: next.marker_layout.size,
+      garment_qty: next.marker_layout.garment_qty,
+      fabric_width_cm: next.marker_layout.fabric_width_cm,
+      double_fold: next.marker_layout.double_fold,
+      packed_length_m: next.marker_layout.packed_length_m,
+      efficiency_pct: next.marker_layout.efficiency_pct,
+      placement_count: next.marker_layout.placements.length,
+      source: next.marker_layout.source,
+      updated_by: attachment.uploaded_by,
+      geometry_source: "dxf",
+    });
   }
 
   if (attachment.kind === "marker") {

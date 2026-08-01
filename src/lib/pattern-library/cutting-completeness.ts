@@ -166,4 +166,4 @@ export function formatCuttingCompletenessError(
 
 /** Shop TUKAmrk + legacy nest / plotter export extensions. */
 export const MARKER_UPLOAD_ACCEPT =
-  ".tum,.TUM,.mrk,.MRK,.plt,.PLT,.pdf,.PDF,.dxf,.DXF,.zip,.ZIP";
+  ".tum,.TUM,.mrk,.MRK,.plt,.PLT,.pdf,.PDF,.dxf,.DXF,.rul,.RUL,.zip,.ZIP";

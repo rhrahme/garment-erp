@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { outlinePointsForPlacement } from "@/lib/pattern-library/dxf-parser";
 import { formatMeasurementAscii, unitLabel } from "@/lib/pattern-library/measurements";
 import {
   clientPatternLabelCode,
@@ -579,6 +580,7 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
   }
 
   const nest = preview.nest;
+  const hasDxf = Boolean(nest.has_dxf_outlines);
   const lengthCm = Math.max(
     (preview.board_length_m ?? nest.packed_length_m) * 100,
     nest.packed_length_m * 100,
@@ -592,13 +594,24 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
   const footerH = 8;
   const boxH = headerH + mapH + footerH + 4;
 
-  doc.setFillColor(255, 251, 235);
-  doc.setDrawColor(217, 119, 6);
+  if (hasDxf) {
+    doc.setFillColor(236, 253, 245);
+    doc.setDrawColor(5, 150, 105);
+  } else {
+    doc.setFillColor(255, 251, 235);
+    doc.setDrawColor(217, 119, 6);
+  }
   doc.rect(MARGIN, y, boxW, boxH, "FD");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
-  doc.setTextColor(120, 53, 15);
-  doc.text("LENGTH ESTIMATE ONLY — NOT CAD OUTLINES", MARGIN + 3, y + 4);
+  doc.setTextColor(...(hasDxf ? ([6, 78, 59] as [number, number, number]) : [120, 53, 15]));
+  doc.text(
+    hasDxf
+      ? "FABRIC CUT LAYOUT — DXF PIECE OUTLINES"
+      : "LENGTH ESTIMATE ONLY — NOT CAD OUTLINES",
+    MARGIN + 3,
+    y + 4
+  );
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
   doc.setTextColor(...SLATE);
@@ -623,7 +636,9 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
     y + 8
   );
   doc.text(
-    "Green boxes = area/perimeter rectangles from TUD header. Cut from real TUKA pieces, not this map.",
+    hasDxf
+      ? "Green shapes = DXF polylines. Nest uses bounding-box shelves — verify in TUKAmark before cutting."
+      : "Green boxes = area/perimeter rectangles from TUD header. Cut from real TUKA pieces, not this map.",
     MARGIN + 3,
     y + 11.5
   );
@@ -642,11 +657,28 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
     const ry = mapY + p.y_cm * scaleY;
     const rw = Math.max(p.width_cm * scaleX, 1.2);
     const rh = Math.max(p.height_cm * scaleY, 1.2);
-    // Outline style (TUKA-ish green), not candy pink/teal fills.
     doc.setFillColor(255, 255, 255);
     doc.setDrawColor(22, 101, 52);
     doc.setLineWidth(0.45);
-    doc.rect(rx, ry, rw, rh, "FD");
+
+    const local = outlinePointsForPlacement(
+      p.outline_cm,
+      p,
+      p.outline_width_cm ?? undefined
+    );
+    if (local && local.length >= 3) {
+      const pts = local.map((pt) => ({
+        x: mapX + (p.x_cm + pt.x) * scaleX,
+        y: mapY + (p.y_cm + pt.y) * scaleY,
+      }));
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[i]!;
+        const b = pts[(i + 1) % pts.length]!;
+        doc.line(a.x, a.y, b.x, b.y);
+      }
+    } else {
+      doc.rect(rx, ry, rw, rh, "FD");
+    }
     if (rw > 10 && rh > 4) {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(5);
@@ -659,7 +691,9 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
   doc.setFontSize(6);
   doc.setTextColor(...SLATE);
   doc.text(
-    `Est. packed ~${nest.packed_length_m.toFixed(2)} m · ${nest.placements.length} estimate rects · ~${nest.efficiency_pct.toFixed(0)}% (rough)`,
+    hasDxf
+      ? `Packed ~${nest.packed_length_m.toFixed(2)} m · ${nest.placements.length} DXF pieces · ~${nest.efficiency_pct.toFixed(0)}% (bbox nest)`
+      : `Est. packed ~${nest.packed_length_m.toFixed(2)} m · ${nest.placements.length} estimate rects · ~${nest.efficiency_pct.toFixed(0)}% (rough)`,
     MARGIN + 3,
     y + headerH + mapH + 4
   );

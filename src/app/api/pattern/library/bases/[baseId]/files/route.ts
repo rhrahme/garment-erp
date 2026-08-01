@@ -4,10 +4,13 @@ import { ensurePatternLibraryLoaded, getBasePatternByIdFresh } from "@/lib/data/
 import { readPatternLibraryFile } from "@/lib/pattern-library/file-storage";
 import { attachBasePatternFile } from "@/lib/pattern-library/mutations";
 import {
+  dxfNotificationFields,
   notifyLibraryFileUploaded,
   resolveLibraryFileRequest,
+  rulNotificationFields,
   storeLibraryUpload,
   tudNotificationFields,
+  tumNotificationFields,
 } from "@/lib/pattern-library/upload";
 
 export async function POST(request: Request, context: { params: Promise<{ baseId: string }> }) {
@@ -42,6 +45,9 @@ export async function POST(request: Request, context: { params: Promise<{ baseId
       kind: stored.attachment.kind,
       uploaded_by: session.email,
       ...tudNotificationFields(stored.attachment),
+      ...tumNotificationFields(stored.attachment),
+      ...dxfNotificationFields(stored.attachment),
+      ...rulNotificationFields(stored.attachment),
     });
 
     return NextResponse.json({ base: result.base, file: stored.attachment }, { status: 201 });

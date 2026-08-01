@@ -1,9 +1,11 @@
 import { notifyIntegration } from "@/lib/integrations";
+import { parseDxfFile } from "@/lib/pattern-library/dxf-parser";
 import {
   PATTERN_LIBRARY_MAX_FILE_BYTES,
   classifyPatternLibraryFile,
   writePatternLibraryFile,
 } from "@/lib/pattern-library/file-storage";
+import { parseRulFile } from "@/lib/pattern-library/rul-parser";
 import { parseTumFile } from "@/lib/pattern-library/tum-parser";
 import { parseTudFile } from "@/lib/pattern-library/tud-parser";
 import type { PatternLibraryAttachment } from "@/lib/types/pattern-library";
@@ -78,6 +80,30 @@ export async function storeLibraryUpload(
     }
   }
 
+  // .dxf — ASCII polylines → real piece outlines for nest preview.
+  if (kind === "dxf") {
+    try {
+      const parsed = parseDxfFile(buffer);
+      if (parsed) {
+        attachment.dxf = parsed.metadata;
+      }
+    } catch (error) {
+      console.error("Failed to extract .dxf outlines (stored as plain attachment):", error);
+    }
+  }
+
+  // .rul — grade-rule / size list only (no geometry).
+  if (kind === "rul") {
+    try {
+      const parsed = parseRulFile(buffer);
+      if (parsed) {
+        attachment.rul = parsed;
+      }
+    } catch (error) {
+      console.error("Failed to extract .rul metadata (stored as plain attachment):", error);
+    }
+  }
+
   return { ok: true, attachment };
 }
 
@@ -128,6 +154,34 @@ export function tumNotificationFields(
     tum_piece_count: attachment.tum.pieces.length,
     tum_total_cut_pieces: attachment.tum.total_cut_pieces,
     tum_has_thumbnail: Boolean(attachment.thumbnail_stored_filename),
+  };
+}
+
+/** Parsed .dxf outline summary fields for upload webhooks. */
+export function dxfNotificationFields(
+  attachment: PatternLibraryAttachment
+): Record<string, unknown> {
+  if (!attachment.dxf) return {};
+  return {
+    dxf_style_caption: attachment.dxf.style_caption,
+    dxf_sizes: attachment.dxf.sizes,
+    dxf_piece_count: attachment.dxf.pieces.length,
+    dxf_total_cut_pieces: attachment.dxf.total_cut_pieces,
+    dxf_units: attachment.dxf.units,
+    dxf_has_outlines: attachment.dxf.pieces.some((p) => p.outline_cm.length >= 3),
+  };
+}
+
+/** Parsed .rul size-list fields for upload webhooks. */
+export function rulNotificationFields(
+  attachment: PatternLibraryAttachment
+): Record<string, unknown> {
+  if (!attachment.rul) return {};
+  return {
+    rul_grade_rule_table: attachment.rul.grade_rule_table,
+    rul_sizes: attachment.rul.sizes,
+    rul_sample_size: attachment.rul.sample_size,
+    rul_units: attachment.rul.units,
   };
 }
 

@@ -1,6 +1,8 @@
 import {
+  collectNestDxfMetadata,
   collectNestTudMetadata,
   effectiveUsableWidthCm,
+  estimateNestFromDxf,
   estimateNestFromTud,
   type NestEstimateResult,
   type NestPlacement,
@@ -128,6 +130,9 @@ export function placementToMarker(p: NestPlacement): MarkerLayoutPlacement {
     height_cm: p.height_cm,
     rotated: p.rotated,
     secondary: p.secondary,
+    outline_cm: p.outline_cm ?? null,
+    outline_width_cm: p.outline_width_cm ?? null,
+    geometry_source: p.geometry_source ?? null,
   };
 }
 
@@ -208,6 +213,9 @@ export function layoutFromNestEstimate(
 }
 
 export function nestResultFromMarkerLayout(layout: MarkerLayout): NestEstimateResult {
+  const hasDxf = layout.placements.some(
+    (p) => p.geometry_source === "dxf" && (p.outline_cm?.length ?? 0) >= 3
+  );
   return {
     size: layout.size,
     garment_qty: layout.garment_qty,
@@ -220,8 +228,12 @@ export function nestResultFromMarkerLayout(layout: MarkerLayout): NestEstimateRe
     efficiency_pct: layout.efficiency_pct,
     fabric_breakdown: [],
     placements: layout.placements.map((p) => ({ ...p })),
-    disclaimer:
-      layout.source === "manual"
+    has_dxf_outlines: hasDxf,
+    disclaimer: hasDxf
+      ? layout.source === "manual"
+        ? "Saved marker layout from DXF outlines — verify nest in TUKAmark before cutting."
+        : "Auto marker from DXF outlines — shelf pack uses bounding boxes; verify before cutting."
+      : layout.source === "manual"
         ? "Saved marker layout (approximate from TUD areas) - not a TUKAmark CAD marker."
         : "Auto marker from TUD areas - not a TUKAmark CAD marker.",
   };
@@ -247,6 +259,24 @@ export function buildAutoMarkerLayout(
       : resolveMarkerFabricWidthCm(pattern);
   if (width === null) return null;
 
+  const { double_fold } = resolveMarkerDoubleFold(pattern);
+  const dxf = collectNestDxfMetadata(pattern);
+  if (dxf?.pieces?.length) {
+    const nest = estimateNestFromDxf({
+      dxf,
+      fabric_width_cm: width,
+      double_fold,
+      size: options.size ?? pattern.base_size,
+      garment_qty: options.garment_qty ?? 1,
+    });
+    if (nest) {
+      return layoutFromNestEstimate(nest, {
+        source: "auto",
+        updated_at: options.updated_at,
+      });
+    }
+  }
+
   const pieces =
     options.requiredPieceNames ?? getGarmentPieces(pattern.garment_type);
   // Multi-piece garments may still have one unscoped TUD - fall back to active file.
@@ -254,7 +284,6 @@ export function buildAutoMarkerLayout(
     collectNestTudMetadata(pattern, pieces) ?? collectNestTudMetadata(pattern, []);
   if (!tud) return null;
 
-  const { double_fold } = resolveMarkerDoubleFold(pattern);
   const nest = estimateNestFromTud({
     tud,
     fabric_width_cm: width,

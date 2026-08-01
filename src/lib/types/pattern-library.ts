@@ -11,6 +11,7 @@ export type PatternLibraryFileKind =
   | "marker"
   | "xlsx"
   | "dxf"
+  | "rul"
   | "pdf"
   | "image"
   | "other";
@@ -81,6 +82,40 @@ export interface TumPiece {
   perimeter_cm: number | null;
 }
 
+/** One cut piece outline extracted from an ASCII DXF (POLYLINE / LWPOLYLINE). */
+export interface DxfPiece {
+  name: string;
+  cut_quantity: number;
+  fabric: string | null;
+  size: string | null;
+  width_cm: number;
+  height_cm: number;
+  area_m2: number;
+  perimeter_cm: number;
+  /** Closed outline in local cm, origin at bbox min corner (unrotated). */
+  outline_cm: Array<{ x: number; y: number }>;
+}
+
+/** Parsed ASCII DXF piece outlines (TUKA / ANSI-AAMA style exports). */
+export interface DxfMetadata {
+  style_caption: string | null;
+  /** Coordinate units used when converting to cm (mm for METRIC TUKA exports). */
+  units: "mm" | "cm" | "in";
+  sizes: string[];
+  pieces: DxfPiece[];
+  total_cut_pieces: number;
+  source: "dxf_polylines";
+}
+
+/** Size / grade-rule header from an ANSI/AAMA .rul file (no geometry). */
+export interface RulMetadata {
+  grade_rule_table: string | null;
+  units: string | null;
+  sample_size: string | null;
+  sizes: string[];
+  author: string | null;
+}
+
 /**
  * Metadata from a TUKAmrk .tum ASCII header.
  * Binary marker geometry is not decoded — only header metrics + embedded JPEG.
@@ -123,6 +158,10 @@ export interface PatternLibraryAttachment {
   tud?: TudMetadata | null;
   /** Parsed TUKAmrk .tum metadata for marker uploads (absent/null when not parseable). */
   tum?: TumMetadata | null;
+  /** Parsed DXF piece outlines for .dxf uploads (absent/null when not parseable). */
+  dxf?: DxfMetadata | null;
+  /** Parsed .rul grade-rule / size list (absent/null when not parseable). */
+  rul?: RulMetadata | null;
   /** Sibling JPEG preview extracted from .tud/.tum, stored next to the file. */
   thumbnail_stored_filename?: string | null;
 }
@@ -224,7 +263,7 @@ export interface ClientPatternFabricRef {
   source?: string | null;
 }
 
-/** One placed rectangle on the in-ERP marker board (not CAD outlines). */
+/** One placed piece on the in-ERP marker board (bbox + optional DXF outline). */
 export interface MarkerLayoutPlacement {
   id: string;
   name: string;
@@ -235,6 +274,14 @@ export interface MarkerLayoutPlacement {
   height_cm: number;
   rotated: boolean;
   secondary: boolean;
+  /**
+   * Closed outline in canonical (unrotated) local cm when sourced from DXF.
+   * Rendered with `rotated` applied; absent for TUD area-estimate rects.
+   */
+  outline_cm?: Array<{ x: number; y: number }> | null;
+  /** Unrotated bbox width for outline rotation math. */
+  outline_width_cm?: number | null;
+  geometry_source?: "dxf" | "tud_estimate" | null;
 }
 
 /**

@@ -1447,7 +1447,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
             uploadUrl={`/api/pattern/library/client-patterns/${pattern.id}/files`}
             downloadUrlBase={`/api/pattern/library/client-patterns/${pattern.id}/files`}
             onUploaded={handleUploaded}
-            title="Other pattern files (Excel, DXF, PDF, images)"
+            title="Other pattern files (Excel, DXF, RUL, PDF, images)"
             basePatternName={basePatternName}
           />
         </div>

@@ -9,8 +9,10 @@ import { readPatternLibraryFile } from "@/lib/pattern-library/file-storage";
 import { attachClientPatternFile } from "@/lib/pattern-library/mutations";
 import { buildTudFillSuggestion, type TudFillSuggestion } from "@/lib/pattern-library/tud-size-fill";
 import {
+  dxfNotificationFields,
   notifyLibraryFileUploaded,
   resolveLibraryFileRequest,
+  rulNotificationFields,
   storeLibraryUpload,
   tudNotificationFields,
   tumNotificationFields,
@@ -78,6 +80,8 @@ export async function POST(request: Request, context: { params: Promise<{ patter
       source: "api",
       ...tudNotificationFields(uploaded),
       ...tumNotificationFields(uploaded),
+      ...dxfNotificationFields(uploaded),
+      ...rulNotificationFields(uploaded),
     });
 
     let tudFill: TudFillSuggestion | null = null;

@@ -4,6 +4,8 @@ import {
 } from "@/lib/pattern-library/tud-versions";
 import type {
   ClientPattern,
+  DxfMetadata,
+  PatternLibraryAttachment,
   TudFabricTotal,
   TudMetadata,
   TudPiece,
@@ -20,6 +22,10 @@ export interface NestRect {
   height_cm: number;
   /** True when this copy is a secondary/fusing piece. */
   secondary: boolean;
+  /** Canonical (unrotated) DXF outline in local cm. */
+  outline_cm?: Array<{ x: number; y: number }> | null;
+  outline_width_cm?: number | null;
+  geometry_source?: "dxf" | "tud_estimate" | null;
 }
 
 export interface NestPlacement {
@@ -32,6 +38,9 @@ export interface NestPlacement {
   height_cm: number;
   rotated: boolean;
   secondary: boolean;
+  outline_cm?: Array<{ x: number; y: number }> | null;
+  outline_width_cm?: number | null;
+  geometry_source?: "dxf" | "tud_estimate" | null;
 }
 
 export interface NestFabricBreakdown {
@@ -58,6 +67,8 @@ export interface NestEstimateResult {
   placements: NestPlacement[];
   /** Warning when geometry is approximate / incomplete. */
   disclaimer: string;
+  /** True when placements carry real DXF outlines (not TUD area rects). */
+  has_dxf_outlines?: boolean;
 }
 
 export function effectiveUsableWidthCm(widthCm: number, doubleFold: boolean): number {
@@ -117,6 +128,21 @@ function isShellFabric(fabric: string | null): boolean {
     return false;
   }
   return true;
+}
+
+/** Latest uploaded DXF attachment with parsed piece outlines. */
+export function findActiveDxfAttachment(
+  pattern: ClientPattern
+): PatternLibraryAttachment | null {
+  const withDxf = pattern.files
+    .filter((f) => f.kind === "dxf" && f.dxf?.pieces?.length)
+    .slice()
+    .sort((a, b) => (a.uploaded_at < b.uploaded_at ? 1 : -1));
+  return withDxf[0] ?? null;
+}
+
+export function collectNestDxfMetadata(pattern: ClientPattern): DxfMetadata | null {
+  return findActiveDxfAttachment(pattern)?.dxf ?? null;
 }
 
 /** Merge active TUD metadata across piece slots (or single active TUD). */
@@ -289,11 +315,55 @@ export function buildNestRects(
         width_cm,
         height_cm,
         secondary,
+        geometry_source: "tud_estimate",
       });
     }
   }
 
   // Largest first helps shelf packing.
+  rects.sort(
+    (a, b) => b.width_cm * b.height_cm - a.width_cm * a.height_cm || a.name.localeCompare(b.name)
+  );
+  return rects;
+}
+
+/** Build cut rectangles + outlines from parsed DXF pieces. */
+export function buildNestRectsFromDxf(
+  dxf: DxfMetadata,
+  garmentQty: number,
+  options: { includeSecondary?: boolean; size?: string | null } = {}
+): NestRect[] {
+  const includeSecondary = options.includeSecondary === true;
+  const qty = Math.max(1, Math.floor(garmentQty) || 1);
+  const wantSize = options.size?.trim() || null;
+  const rects: NestRect[] = [];
+  let seq = 0;
+
+  for (const piece of dxf.pieces) {
+    if (wantSize && piece.size && piece.size !== wantSize) continue;
+    if (!(piece.width_cm > 0) || !(piece.height_cm > 0)) continue;
+    if (!piece.outline_cm?.length) continue;
+
+    const secondary = !isShellFabric(piece.fabric);
+    if (secondary && !includeSecondary) continue;
+
+    const copies = Math.max(1, piece.cut_quantity ?? 1) * qty;
+    for (let i = 0; i < copies; i++) {
+      seq += 1;
+      rects.push({
+        id: `${piece.name}-${seq}`,
+        name: piece.name,
+        fabric: piece.fabric,
+        width_cm: round1(piece.width_cm),
+        height_cm: round1(piece.height_cm),
+        secondary,
+        outline_cm: piece.outline_cm.map((p) => ({ x: p.x, y: p.y })),
+        outline_width_cm: round1(piece.width_cm),
+        geometry_source: "dxf",
+      });
+    }
+  }
+
   rects.sort(
     (a, b) => b.width_cm * b.height_cm - a.width_cm * a.height_cm || a.name.localeCompare(b.name)
   );
@@ -364,6 +434,9 @@ export function packNestRects(
       height_cm: o.height_cm,
       rotated: o.rotated,
       secondary: rect.secondary,
+      outline_cm: rect.outline_cm ?? null,
+      outline_width_cm: rect.outline_width_cm ?? rect.width_cm,
+      geometry_source: rect.geometry_source ?? null,
     });
 
     shelfUsedY += o.height_cm;
@@ -436,12 +509,106 @@ export function estimateNestFromTud(input: {
     efficiency_pct: efficiencyPct,
     fabric_breakdown,
     placements: packed.placements,
+    has_dxf_outlines: false,
     disclaimer:
       "Approximate from TUD areas - verify in TUKAmark before cutting. Not a CAD cutting marker.",
   };
 }
 
-/** Convenience: estimate from a client pattern + nest fields. */
+export function resolveNestSizeFromDxf(
+  dxf: DxfMetadata,
+  preferredSize?: string | null
+): string | null {
+  const preferred = preferredSize?.trim() || null;
+  if (preferred && dxf.sizes.includes(preferred)) return preferred;
+  if (dxf.sizes.length === 1) return dxf.sizes[0]!;
+  const fromPieces = dxf.pieces.find((p) => p.size)?.size ?? null;
+  return fromPieces ?? dxf.sizes[0] ?? null;
+}
+
+/** Nest real DXF outlines onto fabric width (bbox shelf packer). */
+export function estimateNestFromDxf(input: {
+  dxf: DxfMetadata;
+  fabric_width_cm: number;
+  double_fold: boolean;
+  size?: string | null;
+  garment_qty?: number;
+  include_secondary?: boolean;
+}): NestEstimateResult | null {
+  const width = input.fabric_width_cm;
+  if (!(width > 0)) return null;
+
+  const size = resolveNestSizeFromDxf(input.dxf, input.size) ?? "DXF";
+  const garmentQty = Math.max(1, Math.floor(input.garment_qty ?? 1) || 1);
+  const usableWidthCm = effectiveUsableWidthCm(width, input.double_fold);
+  if (!(usableWidthCm > 0)) return null;
+
+  const rects = buildNestRectsFromDxf(input.dxf, garmentQty, {
+    includeSecondary: input.include_secondary === true,
+    size: size === "DXF" ? null : size,
+  });
+  if (rects.length === 0) return null;
+
+  const packed = packNestRects(rects, usableWidthCm);
+  const areaM2 = round3(
+    rects.reduce((sum, r) => {
+      // Prefer polygon area when outline present; else bbox.
+      if (r.outline_cm && r.outline_cm.length >= 3) {
+        let a = 0;
+        const pts = r.outline_cm;
+        for (let i = 0; i < pts.length; i++) {
+          const p0 = pts[i]!;
+          const p1 = pts[(i + 1) % pts.length]!;
+          a += p0.x * p1.y - p1.x * p0.y;
+        }
+        return sum + Math.abs(a) / 2 / 10_000;
+      }
+      return sum + (r.width_cm * r.height_cm) / 10_000;
+    }, 0)
+  );
+
+  const usableWidthM = usableWidthCm / 100;
+  const estimatedLengthM = round3(
+    (areaM2 / usableWidthM) * (1 + NEST_ESTIMATE_WASTE_FACTOR)
+  );
+  const packedLengthM = round3(packed.packed_length_cm / 100);
+  const lengthForEff = Math.max(packedLengthM, estimatedLengthM, 1e-6);
+  const efficiencyPct = round2((areaM2 / (usableWidthM * lengthForEff)) * 100);
+
+  const byFabric = new Map<string, number>();
+  for (const r of rects) {
+    const key = r.fabric?.trim() || "SHEEL";
+    const pieceArea = (r.width_cm * r.height_cm) / 10_000;
+    byFabric.set(key, (byFabric.get(key) ?? 0) + pieceArea);
+  }
+  const fabric_breakdown: NestFabricBreakdown[] = [];
+  for (const [fabric, area] of byFabric) {
+    fabric_breakdown.push({
+      fabric,
+      area_m2: round3(area),
+      estimated_length_m: round3((area / usableWidthM) * (1 + NEST_ESTIMATE_WASTE_FACTOR)),
+    });
+  }
+
+  return {
+    size,
+    garment_qty: garmentQty,
+    fabric_width_cm: width,
+    double_fold: input.double_fold,
+    usable_width_cm: round1(usableWidthCm),
+    area_m2: areaM2,
+    estimated_length_m: estimatedLengthM,
+    packed_length_m: packedLengthM,
+    efficiency_pct: efficiencyPct,
+    fabric_breakdown,
+    placements: packed.placements,
+    has_dxf_outlines: true,
+    disclaimer:
+      "Piece outlines from DXF polylines. Shelf packing uses bounding boxes — verify nest in TUKAmark before cutting.",
+  };
+}
+
+/** Convenience: estimate from a client pattern + nest fields. Prefers DXF outlines. */
 export function estimateNestForClientPattern(
   pattern: ClientPattern,
   options: {
@@ -455,6 +622,18 @@ export function estimateNestForClientPattern(
   const fold = pattern.marker_double_fold;
   if (typeof width !== "number" || !(width > 0)) return null;
   if (fold !== true && fold !== false) return null;
+
+  const dxf = collectNestDxfMetadata(pattern);
+  if (dxf?.pieces?.length) {
+    return estimateNestFromDxf({
+      dxf,
+      fabric_width_cm: width,
+      double_fold: fold,
+      size: options.size ?? pattern.base_size,
+      garment_qty: options.garment_qty,
+      include_secondary: options.include_secondary,
+    });
+  }
 
   const tud = collectNestTudMetadata(pattern, options.requiredPieceNames ?? []);
   if (!tud) return null;

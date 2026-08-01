@@ -441,7 +441,7 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
             uploadUrl={`/api/pattern/library/bases/${base.id}/files`}
             downloadUrlBase={`/api/pattern/library/bases/${base.id}/files`}
             onUploaded={() => void load()}
-            title="Base pattern files (.TUD, Excel, DXF, PDF, images)"
+            title="Base pattern files (.TUD, Excel, DXF, RUL, PDF, images)"
           />
         </div>
       </div>
