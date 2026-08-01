@@ -3,6 +3,8 @@ import { describe, it } from "node:test";
 import {
   badgeDisplayName,
   badgeGroupFromSlug,
+  badgeJobFunctionLabels,
+  badgeJobFunctionsLine,
   badgePdfHref,
   badgePrintDateLabel,
   badgePrintHref,
@@ -55,6 +57,36 @@ describe("badge-print helpers", () => {
   it("stamps print date as a version label", () => {
     assert.equal(badgePrintDateLabel(new Date("2026-08-01T12:00:00+03:00")), "Printed 01 Aug 2026");
     assert.match(badgePrintDateLabel(), /^Printed \d{2} [A-Z][a-z]{2} \d{4}$/);
+  });
+
+  it("formats job functions for the badge card and hides when empty", () => {
+    assert.equal(badgeJobFunctionsLine(emp({ id: "1", full_name: "A" })), null);
+    assert.equal(
+      badgeJobFunctionsLine(emp({ id: "2", full_name: "B", job_functions: [] })),
+      null
+    );
+    assert.deepEqual(
+      badgeJobFunctionLabels(
+        emp({ id: "3", full_name: "C", job_functions: ["qc", "shirt_tailor"] })
+      ),
+      ["Shirt tailor", "QC"]
+    );
+    assert.equal(
+      badgeJobFunctionsLine(
+        emp({ id: "4", full_name: "D", job_functions: ["qc", "shirt_tailor"] })
+      ),
+      "Shirt tailor, QC"
+    );
+    // Badge-safe strip must keep job_functions for print/PDF paths.
+    const safe = toBadgeSafeEmployee(
+      emp({
+        id: "E1",
+        full_name: "Expat One",
+        bank_name: "Arab National Bank",
+        job_functions: ["cutter", "qc"],
+      })
+    );
+    assert.equal(badgeJobFunctionsLine(safe), "Cutter, QC");
   });
 
   it("keeps short_name on badge-safe employee shape", () => {

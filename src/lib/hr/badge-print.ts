@@ -1,16 +1,41 @@
 import {
+  EMPLOYEE_JOB_FUNCTION_LABELS,
+  normalizeJobFunctions,
+} from "@/lib/hr/job-functions";
+import {
   filterPayrollEmployeesByGroup,
   sortPayrollEmployees,
   type IdBadgeGroup,
 } from "@/lib/hr/payroll-utils";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 
-/** Name printed on ID badge cards — short_name when set, else legal full_name. */
+/** Name printed on ID badge cards - short_name when set, else legal full_name. */
 export function badgeDisplayName(
   employee: Pick<PayrollEmployee, "full_name" | "short_name">
 ): string {
   const short = String(employee.short_name ?? "").trim();
   return short || employee.full_name;
+}
+
+/**
+ * Job role labels for the physical/PDF badge card (catalog order).
+ * Empty when none are set - callers should hide the jobs block.
+ */
+export function badgeJobFunctionLabels(
+  employee: Pick<PayrollEmployee, "job_functions">
+): string[] {
+  return normalizeJobFunctions(employee.job_functions).map(
+    (fn) => EMPLOYEE_JOB_FUNCTION_LABELS[fn]
+  );
+}
+
+/** Compact single-line job summary for the badge; null when none. */
+export function badgeJobFunctionsLine(
+  employee: Pick<PayrollEmployee, "job_functions">
+): string | null {
+  const labels = badgeJobFunctionLabels(employee);
+  if (labels.length === 0) return null;
+  return labels.join(", ");
 }
 
 /**
@@ -31,7 +56,7 @@ export function badgePrintDateLabel(now = new Date()): string {
 export const BADGE_CARD_WIDTH_MM = 85.6;
 export const BADGE_CARD_HEIGHT_MM = 54;
 
-/** A4 portrait grid: 2 × 5 = 10 cards per sheet. */
+/** A4 portrait grid: 2 x 5 = 10 cards per sheet. */
 export const BADGE_CARDS_PER_ROW = 2;
 export const BADGE_ROWS_PER_PAGE = 5;
 export const BADGE_CARDS_PER_PAGE = BADGE_CARDS_PER_ROW * BADGE_ROWS_PER_PAGE;
@@ -94,8 +119,8 @@ export function isBadgePrintableEmployee(
 
 /**
  * Active employees only (already scoped to a badge group by the caller).
- * Use this when `bank_name` was stripped via `toBadgeSafeEmployee` — re-running
- * bank-based Saudi/Expat classification would drop every Expat (empty bank ⇒ Saudi).
+ * Use this when `bank_name` was stripped via `toBadgeSafeEmployee` - re-running
+ * bank-based Saudi/Expat classification would drop every Expat (empty bank => Saudi).
  */
 export function listActiveBadgeEmployees(employees: PayrollEmployee[]): PayrollEmployee[] {
   return sortPayrollEmployees(employees.filter(isBadgePrintableEmployee));

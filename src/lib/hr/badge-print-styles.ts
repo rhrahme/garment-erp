@@ -93,5 +93,24 @@ export const EMPLOYEE_BADGE_PRINT_CSS = `
       line-height: 1 !important;
       white-space: nowrap !important;
     }
+
+    /* Keep footer (ID + print date) inside the cut edge; do not let name/jobs push it out. */
+    .badge-card-footer {
+      flex-shrink: 0 !important;
+    }
+
+    .badge-print-date {
+      color: #475569 !important;
+      font-size: 7px !important;
+      font-weight: 500 !important;
+      line-height: 1.15 !important;
+    }
+
+    .badge-job-functions {
+      color: #475569 !important;
+      font-size: 7px !important;
+      font-weight: 500 !important;
+      line-height: 1.15 !important;
+    }
   }
 `;

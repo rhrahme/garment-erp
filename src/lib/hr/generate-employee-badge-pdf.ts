@@ -6,6 +6,7 @@ import {
   BADGE_CARDS_PER_ROW,
   BADGE_ROWS_PER_PAGE,
   badgeDisplayName,
+  badgeJobFunctionsLine,
   badgePrintDateLabel,
   chunkBadgePages,
 } from "@/lib/hr/badge-print";
@@ -14,7 +15,7 @@ import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageFetchUrl } from "@/lib/production/qr-labels";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 
-/** Hagan corporate navy — solid dark blue for badge chrome. */
+/** Hagan corporate navy - solid dark blue for badge chrome. */
 export const BADGE_NAVY = "#0B2C5A";
 
 const COMPANY_NAME = "HAGAN INDUSTRIAL COMPANY";
@@ -124,36 +125,50 @@ function drawBadgeCard(
     textY += 4;
   }
 
+  const jobsLine = badgeJobFunctionsLine(employee);
+  const nameMaxLines = jobsLine ? 2 : 3;
+
   doc.setTextColor(15, 23, 42);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   const nameLines = doc.splitTextToSize(badgeDisplayName(employee), textMaxW);
-  doc.text(nameLines.slice(0, 3), textX, textY);
-  textY += Math.min(nameLines.length, 3) * 4.2;
+  doc.text(nameLines.slice(0, nameMaxLines), textX, textY);
+  textY += Math.min(nameLines.length, nameMaxLines) * 4.2;
 
-  const idY = y + h - 8;
+  // Job roles under name (only when set) - keep clear of QR/left panel
+  if (jobsLine) {
+    doc.setTextColor(71, 85, 105);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    const jobLines = doc.splitTextToSize(jobsLine, textMaxW);
+    doc.text(jobLines.slice(0, 2), textX, textY + 0.5);
+  }
+
+  // Footer reserved inside cut edge: ID + always-visible print date
+  const printY = y + h - 3.5;
+  const idY = printY - 4.2;
   doc.setTextColor(100, 116, 139);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6);
   doc.text("EMPLOYEE ID", textX, idY - 3.5);
-  doc.setTextColor(30, 41, 59);
+  doc.setTextColor(11, 44, 90);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.text(employee.employee_id_number, textX, idY, {
     maxWidth: textMaxW,
   });
 
-  // Print-date version stamp (bottom of right column; does not crowd name/QR)
-  doc.setTextColor(148, 163, 184);
+  // Print-date version stamp - inset from bottom so cutting does not remove it
+  doc.setTextColor(71, 85, 105);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(5);
-  doc.text(printedLabel, textX, y + h - 2.2, {
+  doc.setFontSize(6.5);
+  doc.text(printedLabel, textX, printY, {
     maxWidth: textMaxW,
   });
 }
 
 /**
- * A4 portrait PDF — 2×5 CR80 badge cards with crop marks (matches print sheet).
+ * A4 portrait PDF - 2x5 CR80 badge cards with crop marks (matches print sheet).
  */
 export async function generateEmployeeBadgePdf(
   employees: PayrollEmployee[],

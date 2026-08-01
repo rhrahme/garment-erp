@@ -1,4 +1,8 @@
-import { badgeDisplayName, badgePrintDateLabel } from "@/lib/hr/badge-print";
+import {
+  badgeDisplayName,
+  badgeJobFunctionsLine,
+  badgePrintDateLabel,
+} from "@/lib/hr/badge-print";
 import { employeeQrPayload } from "@/lib/hr/employee-qr";
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageUrl } from "@/lib/production/qr-labels";
@@ -46,6 +50,7 @@ export function EmployeeBadgeCard({
   const qrSrc = qrImageUrl(payload, QR_SIZE);
   const label = groupLabel(group);
   const displayName = badgeDisplayName(employee);
+  const jobsLine = badgeJobFunctionsLine(employee);
   const printedLabel = badgePrintDateLabel();
 
   return (
@@ -53,7 +58,7 @@ export function EmployeeBadgeCard({
       <CropMarks />
 
       <article className="badge-card flex h-full w-full flex-col overflow-hidden rounded-lg border-2 border-[#0B2C5A] bg-white shadow-sm print:rounded-none">
-        {/* Full-width company band — reserved height, never clipped by QR/body.
+        {/* Full-width company band - reserved height, never clipped by QR/body.
             Use <div> (not <header>): print CSS hides bare header/nav/aside chrome. */}
         <div className="badge-company-band flex h-[7mm] shrink-0 items-center justify-center border-b-2 border-[#0B2C5A] bg-[#0B2C5A] px-1.5">
           <p className="badge-company-name whitespace-nowrap text-center text-[9px] font-bold uppercase leading-none tracking-[0.1em] text-white">
@@ -83,17 +88,25 @@ export function EmployeeBadgeCard({
                 </p>
               ) : null}
               <h2
-                className={`line-clamp-3 text-[12px] font-semibold leading-snug text-slate-900 ${label ? "mt-0.5" : ""}`}
+                className={`${
+                  jobsLine ? "line-clamp-2" : "line-clamp-3"
+                } text-[12px] font-semibold leading-snug text-slate-900 ${label ? "mt-0.5" : ""}`}
               >
                 {displayName}
               </h2>
+              {jobsLine ? (
+                <p className="badge-job-functions mt-0.5 line-clamp-2 text-[7px] font-medium leading-tight text-slate-600">
+                  {jobsLine}
+                </p>
+              ) : null}
             </div>
-            <div className="min-w-0 shrink-0">
+            {/* Footer reserved so print date is never clipped by overflow / name length */}
+            <div className="badge-card-footer mt-1 min-w-0 shrink-0">
               <p className="text-[7px] uppercase tracking-wide text-slate-500">Employee ID</p>
               <p className="truncate font-mono text-[11px] font-semibold text-[#0B2C5A]">
                 {employee.employee_id_number}
               </p>
-              <p className="mt-0.5 truncate text-[6px] leading-tight text-slate-400">
+              <p className="badge-print-date mt-0.5 truncate text-[7px] font-medium leading-tight text-slate-600">
                 {printedLabel}
               </p>
             </div>
