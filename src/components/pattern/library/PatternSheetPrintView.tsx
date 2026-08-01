@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { Download, Printer } from "lucide-react";
-import { qrImageUrl } from "@/lib/production/qr-labels";
+import { outlinePointsForPlacement } from "@/lib/pattern-library/dxf-parser";
 import { formatMeasurement, unitLabel } from "@/lib/pattern-library/measurements";
 import {
   clientPatternLabelCode,
   clientPatternQrUrl,
 } from "@/lib/pattern-library/pattern-qr";
 import type { PatternSheetData, PatternSheetSticker } from "@/lib/pattern-library/sheet-data";
+import { qrImageUrl } from "@/lib/production/qr-labels";
 
 const SHEET_PRINT_CSS = `
 @page { size: A4 portrait; margin: 10mm; }
@@ -48,8 +49,10 @@ type SheetPageProps = {
   pageTotal: number;
 };
 
-const NEST_FILL = "#ffffff";
+const NEST_FILL = "#a7f3d0";
+const NEST_FILL_RECT = "#ffffff";
 const NEST_STROKE = "#166534";
+const NEST_BOARD = "#3f3f46";
 
 function CutterPartsFromTud({ plan }: { plan: NonNullable<PatternSheetData["cut_nest"]["cutter_plan"]> }) {
   const rows = [...plan.shell_pieces, ...plan.other_pieces];
@@ -116,7 +119,7 @@ function TumMarkerPreviewBlock({ data }: { data: PatternSheetData }) {
       </p>
       <p className="text-[11px] text-slate-600">
         {metricBits.length > 0
-          ? metricBits.join(" · ")
+          ? metricBits.join(" - ")
           : "Shop marker attached (metrics unavailable)."}
       </p>
       <div className="mt-2 flex flex-wrap items-start gap-3">
@@ -179,7 +182,7 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
     return (
       <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3">
         <p className="text-xs font-bold uppercase tracking-wide text-amber-900">
-          Length estimate — not available
+          Length estimate - not available
         </p>
         <p className="mt-1 text-sm text-slate-700">
           {preview.missing_reason ?? "Upload TUD + set fabric width for length estimate."}
@@ -196,7 +199,7 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
               className="h-40 w-40 rounded border border-slate-300 bg-white object-contain p-1"
             />
             <p className="text-[10px] text-slate-500">
-              TUD preview (100×100 embedded JFIF, enlarged) — visual reference only.
+              TUD preview (100x100 embedded JFIF, enlarged) - visual reference only.
             </p>
           </div>
         ) : null}
@@ -205,6 +208,7 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
   }
 
   const nest = preview.nest;
+  const hasDxf = Boolean(nest.has_dxf_outlines);
   const lengthCm = Math.max(
     (preview.board_length_m ?? nest.packed_length_m) * 100,
     nest.packed_length_m * 100,
@@ -213,9 +217,9 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
   );
   const usableW = Math.max(nest.usable_width_cm, 1);
   const viewW = 640;
+  // Uniform scale (same X/Y) - matches NestEstimatePanel / PDF letterbox transform.
   const viewH = Math.max(96, Math.round((viewW * usableW) / lengthCm));
-  const scaleX = viewW / lengthCm;
-  const scaleY = viewH / usableW;
+  const scale = viewW / lengthCm;
   const foldLabel = nest.double_fold
     ? preview.fold_assumed
       ? "Double fold assumed (shop default)"
@@ -223,7 +227,7 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
     : "Open width";
   const orderNote =
     preview.ordered_length_m != null
-      ? ` · ordered ${preview.ordered_length_m.toFixed(2)} m${
+      ? ` - ordered ${preview.ordered_length_m.toFixed(2)} m${
           preview.fits_on_order === true
             ? " (fits)"
             : preview.fits_on_order === false
@@ -255,51 +259,92 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
               TUD preview (embedded)
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
-              100×100 JFIF from the .tud — visual reference only (not cuttable outlines).
+              100x100 JFIF from the .tud - visual reference only (not cuttable outlines).
             </p>
           </div>
         </div>
       ) : null}
 
-      <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
-        <p className="text-xs font-bold uppercase tracking-wide text-amber-950">
-          Length estimate only — not CAD outlines
+      <div
+        className={`rounded-lg border p-3 ${
+          hasDxf
+            ? "border-emerald-300 bg-emerald-50"
+            : "border-amber-300 bg-amber-50"
+        }`}
+      >
+        <p
+          className={`text-xs font-bold uppercase tracking-wide ${
+            hasDxf ? "text-emerald-950" : "text-amber-950"
+          }`}
+        >
+          {hasDxf
+            ? "Fabric cut layout - DXF piece outlines"
+            : "Length estimate only - not CAD outlines"}
         </p>
         <p className="mt-0.5 text-[11px] text-slate-700">
-          {foldLabel} - usable {nest.usable_width_cm} cm of {nest.fabric_width_cm} cm · packed ~
-          {nest.packed_length_m.toFixed(2)} m · size {nest.size}
+          {foldLabel} - usable {nest.usable_width_cm} cm of {nest.fabric_width_cm} cm - packed ~
+          {nest.packed_length_m.toFixed(2)} m - size {nest.size}
           {orderNote}
-          {preview.source === "saved" ? " · saved" : ""}
+          {preview.source === "saved" ? " - saved" : ""}
         </p>
-        <p className="text-[11px] text-amber-900">
-          Green boxes = area/perimeter rectangles from TUD header. Cut from real TUKA pieces, not
-          this map.
+        <p className={`text-[11px] ${hasDxf ? "text-emerald-900" : "text-amber-900"}`}>
+          {hasDxf
+            ? "Green shapes = DXF polylines. Nest uses bounding-box shelves - verify in TUKAmark before cutting."
+            : "Green boxes = area/perimeter rectangles from TUD header. Cut from real TUKA pieces, not this map."}
         </p>
         <div className="mt-2 overflow-x-auto rounded border border-slate-300 bg-slate-100 p-1">
           <svg
             viewBox={`0 0 ${viewW} ${viewH}`}
             className="h-auto w-full min-w-[280px]"
             role="img"
-            aria-label="Length estimate board from TUD areas"
+            aria-label={
+              hasDxf
+                ? "Fabric cut layout from DXF outlines"
+                : "Length estimate board from TUD areas"
+            }
           >
-            <rect x={0} y={0} width={viewW} height={viewH} fill="#e2e8f0" />
+            <rect x={0} y={0} width={viewW} height={viewH} fill={NEST_BOARD} />
             {nest.placements.map((p) => {
-              const x = p.x_cm * scaleX;
-              const y = p.y_cm * scaleY;
-              const w = Math.max(p.width_cm * scaleX, 2);
-              const h = Math.max(p.height_cm * scaleY, 2);
+              const x = p.x_cm * scale;
+              const y = p.y_cm * scale;
+              const w = Math.max(p.width_cm * scale, 2);
+              const h = Math.max(p.height_cm * scale, 2);
+              const localOutline = outlinePointsForPlacement(
+                p.outline_cm,
+                p,
+                p.outline_width_cm ?? undefined
+              );
+              const polygonPoints =
+                localOutline && localOutline.length >= 3
+                  ? localOutline
+                      .map(
+                        (pt) =>
+                          `${(p.x_cm + pt.x) * scale},${(p.y_cm + pt.y) * scale}`
+                      )
+                      .join(" ")
+                  : null;
               return (
                 <g key={p.id}>
-                  <rect
-                    x={x}
-                    y={y}
-                    width={w}
-                    height={h}
-                    fill={NEST_FILL}
-                    stroke={NEST_STROKE}
-                    strokeWidth={1.5}
-                    opacity={0.95}
-                  />
+                  {polygonPoints ? (
+                    <polygon
+                      points={polygonPoints}
+                      fill={NEST_FILL}
+                      stroke={NEST_STROKE}
+                      strokeWidth={1.5}
+                      opacity={0.95}
+                    />
+                  ) : (
+                    <rect
+                      x={x}
+                      y={y}
+                      width={w}
+                      height={h}
+                      fill={NEST_FILL_RECT}
+                      stroke={NEST_STROKE}
+                      strokeWidth={1.5}
+                      opacity={0.95}
+                    />
+                  )}
                   {w > 28 && h > 12 ? (
                     <text
                       x={x + w / 2}
@@ -318,8 +363,9 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
           </svg>
         </div>
         <p className="mt-1 text-[11px] text-slate-500">
-          Est. packed ~{nest.packed_length_m.toFixed(2)} m · {nest.placements.length} estimate
-          rects · ~{nest.efficiency_pct.toFixed(0)}% (rough)
+          {hasDxf
+            ? `Packed ~${nest.packed_length_m.toFixed(2)} m - ${nest.placements.length} DXF pieces - ~${nest.efficiency_pct.toFixed(0)}% (bbox nest)`
+            : `Est. packed ~${nest.packed_length_m.toFixed(2)} m - ${nest.placements.length} estimate rects - ~${nest.efficiency_pct.toFixed(0)}% (rough)`}
         </p>
       </div>
     </div>
@@ -412,12 +458,12 @@ function PatternSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProp
               [
                 "Order",
                 order
-                  ? `${order.so_number} · ordered ${formatDate(order.order_date)}${order.delivery_date ? ` · delivery ${formatDate(order.delivery_date)}` : ""}`
+                  ? `${order.so_number} - ordered ${formatDate(order.order_date)}${order.delivery_date ? ` - delivery ${formatDate(order.delivery_date)}` : ""}`
                   : "-",
               ],
               [
                 "Trial",
-                `Trial ${version.version}${version.is_final ? " - FINAL" : ""} · ${formatDate(version.trial_date)}`,
+                `Trial ${version.version}${version.is_final ? " - FINAL" : ""} - ${formatDate(version.trial_date)}`,
               ],
             ].map(([label, value]) => (
               <tr key={label} className="border-b border-slate-200">
@@ -482,7 +528,7 @@ function PatternSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProp
       {sticker ? (
         <div className="mfg-qr-block mt-4 rounded-lg border-2 border-slate-900 p-3">
           <p className="text-xs font-bold uppercase tracking-wide text-slate-900">
-            Cutting / floor scan QR — {piecePageLabel(sticker)}
+            Cutting / floor scan QR - {piecePageLabel(sticker)}
           </p>
           <p className="mt-0.5 text-[11px] text-slate-600">
             Handoff to cutting: cutter scans at cut; stitchers scan later (same code as stickers).
@@ -562,10 +608,10 @@ function PatternSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProp
           </p>
         ) : null}
         <p className="pt-2 text-[10px] text-slate-400">
-          Printed {new Date().toLocaleDateString("en-GB")} · {pattern.pattern_ref} · Trial{" "}
+          Printed {new Date().toLocaleDateString("en-GB")} - {pattern.pattern_ref} - Trial{" "}
           {version.version}
           {version.is_final ? " (Final)" : ""}
-          {sticker ? ` · ${sticker.production_code}` : ""}
+          {sticker ? ` - ${sticker.production_code}` : ""}
         </p>
       </div>
     </div>
@@ -580,8 +626,8 @@ export function PatternSheetPrintView({ data }: { data: PatternSheetData }) {
   const pageTotal = pages.length;
   const mfgSummary =
     stickers.length > 0
-      ? ` · ${stickers.length} page${stickers.length === 1 ? "" : "s"}: ${stickers.map((s) => piecePageLabel(s)).join(", ")}`
-      : " · No manufacturing QRs (link a fabric line with stickers)";
+      ? ` - ${stickers.length} page${stickers.length === 1 ? "" : "s"}: ${stickers.map((s) => piecePageLabel(s)).join(", ")}`
+      : " - No manufacturing QRs (link a fabric line with stickers)";
 
   return (
     <div className="mx-auto min-h-screen max-w-[210mm] bg-white p-6 text-slate-900 print:p-0">
@@ -596,9 +642,9 @@ export function PatternSheetPrintView({ data }: { data: PatternSheetData }) {
             Back to {pattern.pattern_ref}
           </Link>
           <p className="mt-1 text-xs text-slate-500">
-            A4 portrait · Trial {version.version}
+            A4 portrait - Trial {version.version}
             {version.is_final ? " (Final)" : ""}
-            {` · Pattern QR ${clientPatternLabelCode(pattern)}`}
+            {` - Pattern QR ${clientPatternLabelCode(pattern)}`}
             {mfgSummary}
           </p>
         </div>

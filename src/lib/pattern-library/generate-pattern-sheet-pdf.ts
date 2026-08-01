@@ -3,6 +3,10 @@ import autoTable from "jspdf-autotable";
 import { outlinePointsForPlacement } from "@/lib/pattern-library/dxf-parser";
 import { formatMeasurementAscii, unitLabel } from "@/lib/pattern-library/measurements";
 import {
+  nestMapHeight,
+  nestMapTransform,
+} from "@/lib/pattern-library/nest-map-transform";
+import {
   clientPatternLabelCode,
   clientPatternQrUrl,
 } from "@/lib/pattern-library/pattern-qr";
@@ -145,12 +149,12 @@ async function drawPatternSheetPage(
     [
       "Order",
       order
-        ? `${order.so_number} · ordered ${formatDate(order.order_date)}${order.delivery_date ? ` · delivery ${formatDate(order.delivery_date)}` : ""}`
+        ? `${order.so_number} - ordered ${formatDate(order.order_date)}${order.delivery_date ? ` - delivery ${formatDate(order.delivery_date)}` : ""}`
         : "-",
     ],
     [
       "Trial",
-      `Trial ${version.version}${version.is_final ? " - FINAL" : ""} · ${formatDate(version.trial_date)}`,
+      `Trial ${version.version}${version.is_final ? " - FINAL" : ""} - ${formatDate(version.trial_date)}`,
     ],
   ];
 
@@ -337,7 +341,7 @@ async function drawPatternSheetPage(
     `Trial ${version.version}${version.is_final ? " (Final)" : ""}`,
   ];
   if (sticker) footerBits.push(sticker.production_code);
-  doc.text(footerBits.join(" · "), MARGIN, footerY + 2);
+  doc.text(footerBits.join(" - "), MARGIN, footerY + 2);
 }
 
 /** Draw TUD parts list for the cutter. Returns next Y. */
@@ -451,7 +455,7 @@ function drawTumMarkerPreview(doc: jsPDF, data: PatternSheetData, startY: number
   doc.setFontSize(7);
   doc.text(
     metricBits.length > 0
-      ? metricBits.join(" · ")
+      ? metricBits.join(" - ")
       : "Shop marker attached (metrics unavailable).",
     MARGIN + 3,
     y + 12
@@ -463,7 +467,7 @@ function drawTumMarkerPreview(doc: jsPDF, data: PatternSheetData, startY: number
     try {
       doc.addImage(marker.thumbnail_data_url, "JPEG", thumbX, thumbY, thumbSize, thumbSize);
     } catch {
-      // Thumbnail decode can fail for odd JPEGs — metrics still print.
+      // Thumbnail decode can fail for odd JPEGs - metrics still print.
     }
   }
 
@@ -502,7 +506,7 @@ function drawTumMarkerPreview(doc: jsPDF, data: PatternSheetData, startY: number
   return y + boxH + 3;
 }
 
-/** Draw TUD embedded preview (100×100 JFIF, printed larger). Returns next Y. */
+/** Draw TUD embedded preview (100x100 JFIF, printed larger). Returns next Y. */
 function drawTudThumbnailPreview(doc: jsPDF, data: PatternSheetData, startY: number): number {
   if (!data.tud_thumbnail_data_url) return startY;
   const boxW = PAGE_W - MARGIN * 2;
@@ -523,7 +527,7 @@ function drawTudThumbnailPreview(doc: jsPDF, data: PatternSheetData, startY: num
   doc.setFontSize(5.5);
   doc.setTextColor(...SLATE);
   doc.text(
-    "100×100 JFIF from the .tud — visual reference only (not cuttable outlines).",
+    "100x100 JFIF from the .tud - visual reference only (not cuttable outlines).",
     MARGIN + 3,
     y + 7.5
   );
@@ -540,7 +544,7 @@ function drawTudThumbnailPreview(doc: jsPDF, data: PatternSheetData, startY: num
 
 /** Draw approximate folded-fabric nest for the cutter. Returns next Y. */
 function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number): number {
-  // Optional .tum archive path — only when a marker is actually attached.
+  // Optional .tum archive path - only when a marker is actually attached.
   if (data.marker) {
     return drawTumMarkerPreview(doc, data, startY);
   }
@@ -571,7 +575,7 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
     doc.setTextColor(120, 53, 15);
-    doc.text("LENGTH ESTIMATE — NOT AVAILABLE", MARGIN + 3, y + 4);
+    doc.text("LENGTH ESTIMATE - NOT AVAILABLE", MARGIN + 3, y + 4);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.setTextColor(...INK);
@@ -589,7 +593,9 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
   );
   const usableW = Math.max(nest.usable_width_cm, 1);
   const mapW = boxW - 6;
-  const mapH = Math.min(36, Math.max(18, (mapW * usableW) / lengthCm));
+  // Cap height for A4, but draw with uniform scale (letterbox) so DXF outlines
+  // match NestEstimatePanel proportions instead of being squashed flat.
+  const mapH = nestMapHeight(mapW, lengthCm, usableW, { hasDxfOutlines: hasDxf });
   const headerH = 14;
   const footerH = 8;
   const boxH = headerH + mapH + footerH + 4;
@@ -607,8 +613,8 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
   doc.setTextColor(...(hasDxf ? ([6, 78, 59] as [number, number, number]) : [120, 53, 15]));
   doc.text(
     hasDxf
-      ? "FABRIC CUT LAYOUT — DXF PIECE OUTLINES"
-      : "LENGTH ESTIMATE ONLY — NOT CAD OUTLINES",
+      ? "FABRIC CUT LAYOUT - DXF PIECE OUTLINES"
+      : "LENGTH ESTIMATE ONLY - NOT CAD OUTLINES",
     MARGIN + 3,
     y + 4
   );
@@ -622,7 +628,7 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
     : "Open width";
   const orderBit =
     preview.ordered_length_m != null
-      ? ` · ordered ${preview.ordered_length_m.toFixed(2)} m${
+      ? ` - ordered ${preview.ordered_length_m.toFixed(2)} m${
           preview.fits_on_order === true
             ? " (fits)"
             : preview.fits_on_order === false
@@ -631,13 +637,13 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
         }`
       : "";
   doc.text(
-    `${foldLabel} - usable ${nest.usable_width_cm} cm of ${nest.fabric_width_cm} cm · packed ~${nest.packed_length_m.toFixed(2)} m · size ${nest.size}${orderBit}${preview.source === "saved" ? " · saved" : ""}`,
+    `${foldLabel} - usable ${nest.usable_width_cm} cm of ${nest.fabric_width_cm} cm - packed ~${nest.packed_length_m.toFixed(2)} m - size ${nest.size}${orderBit}${preview.source === "saved" ? " - saved" : ""}`,
     MARGIN + 3,
     y + 8
   );
   doc.text(
     hasDxf
-      ? "Green shapes = DXF polylines. Nest uses bounding-box shelves — verify in TUKAmark before cutting."
+      ? "Green shapes = DXF polylines. Nest uses bounding-box shelves - verify in TUKAmark before cutting."
       : "Green boxes = area/perimeter rectangles from TUD header. Cut from real TUKA pieces, not this map.",
     MARGIN + 3,
     y + 11.5
@@ -645,19 +651,30 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
 
   const mapX = MARGIN + 3;
   const mapY = y + headerH;
+  // Outer map chrome (letterbox gutter) - not fabric length.
   doc.setFillColor(241, 245, 249);
   doc.setDrawColor(100, 116, 139);
   doc.rect(mapX, mapY, mapW, mapH, "FD");
 
-  const scaleX = mapW / lengthCm;
-  const scaleY = mapH / usableW;
+  const { scale, offsetX, offsetY, contentW, contentH } = nestMapTransform(
+    lengthCm,
+    usableW,
+    mapW,
+    mapH
+  );
+  const originX = mapX + offsetX;
+  const originY = mapY + offsetY;
+  // Fabric strip only - same proportions as NestEstimatePanel board.
+  doc.setFillColor(hasDxf ? 63 : 226, hasDxf ? 63 : 232, hasDxf ? 70 : 240);
+  doc.setDrawColor(113, 113, 122);
+  doc.rect(originX, originY, contentW, contentH, "FD");
 
   for (const p of nest.placements) {
-    const rx = mapX + p.x_cm * scaleX;
-    const ry = mapY + p.y_cm * scaleY;
-    const rw = Math.max(p.width_cm * scaleX, 1.2);
-    const rh = Math.max(p.height_cm * scaleY, 1.2);
-    doc.setFillColor(255, 255, 255);
+    const rx = originX + p.x_cm * scale;
+    const ry = originY + p.y_cm * scale;
+    const rw = Math.max(p.width_cm * scale, 1.2);
+    const rh = Math.max(p.height_cm * scale, 1.2);
+    doc.setFillColor(167, 243, 208);
     doc.setDrawColor(22, 101, 52);
     doc.setLineWidth(0.45);
 
@@ -668,15 +685,20 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
     );
     if (local && local.length >= 3) {
       const pts = local.map((pt) => ({
-        x: mapX + (p.x_cm + pt.x) * scaleX,
-        y: mapY + (p.y_cm + pt.y) * scaleY,
+        x: originX + (p.x_cm + pt.x) * scale,
+        y: originY + (p.y_cm + pt.y) * scale,
       }));
-      for (let i = 0; i < pts.length; i++) {
-        const a = pts[i]!;
-        const b = pts[(i + 1) % pts.length]!;
-        doc.line(a.x, a.y, b.x, b.y);
+      // Closed polyline fill via relative segments (same outline as NestEstimatePanel).
+      const segments: Array<[number, number]> = [];
+      for (let i = 1; i < pts.length; i++) {
+        segments.push([pts[i]!.x - pts[i - 1]!.x, pts[i]!.y - pts[i - 1]!.y]);
       }
+      const first = pts[0]!;
+      const last = pts[pts.length - 1]!;
+      segments.push([first.x - last.x, first.y - last.y]);
+      doc.lines(segments, first.x, first.y, [1, 1], "FD", true);
     } else {
+      doc.setFillColor(255, 255, 255);
       doc.rect(rx, ry, rw, rh, "FD");
     }
     if (rw > 10 && rh > 4) {
@@ -692,8 +714,8 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
   doc.setTextColor(...SLATE);
   doc.text(
     hasDxf
-      ? `Packed ~${nest.packed_length_m.toFixed(2)} m · ${nest.placements.length} DXF pieces · ~${nest.efficiency_pct.toFixed(0)}% (bbox nest)`
-      : `Est. packed ~${nest.packed_length_m.toFixed(2)} m · ${nest.placements.length} estimate rects · ~${nest.efficiency_pct.toFixed(0)}% (rough)`,
+      ? `Packed ~${nest.packed_length_m.toFixed(2)} m - ${nest.placements.length} DXF pieces - ~${nest.efficiency_pct.toFixed(0)}% (bbox nest)`
+      : `Est. packed ~${nest.packed_length_m.toFixed(2)} m - ${nest.placements.length} estimate rects - ~${nest.efficiency_pct.toFixed(0)}% (rough)`,
     MARGIN + 3,
     y + headerH + mapH + 4
   );
