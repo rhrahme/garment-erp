@@ -156,7 +156,7 @@ export function Sidebar({
                   : navItems
   ).filter((item) => {
     if (item.href === "/documents" && !isAdmin && !accountingOperatorOnly) return false;
-    // Sales Home is sales-tablet (and admin) only — never for floor/QC/unscoped users.
+    // Sales Home is sales-tablet (and admin) only - never for floor/QC/unscoped users.
     if (item.href === "/sales" && !salesOperatorOnly && !isAdmin) return false;
     // Stitch Orders left-nav is for stitch floor accounts (not full QC `/orders`).
     if (item.href === "/stitch/orders" && !stitchOperatorOnly) return false;
