@@ -184,7 +184,7 @@ export function StitchKioskPanel() {
               <p className="text-xs uppercase text-slate-500">Piece</p>
               <p className="text-lg font-semibold text-slate-900">
                 {openSession.production_code}
-                {openSession.piece_mark ? ` ù ${openSession.piece_mark}` : ""}
+                {openSession.piece_mark ? ` - ${openSession.piece_mark}` : ""}
               </p>
             </div>
             <div className="rounded-xl bg-white/70 px-4 py-3">

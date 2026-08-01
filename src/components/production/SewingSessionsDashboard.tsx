@@ -68,13 +68,13 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
           <div className="rounded-lg bg-slate-50 px-3 py-2">
             <span className="text-slate-500">Open now</span>{" "}
             <span className="font-semibold tabular-nums text-slate-900">
-              {data?.open_sessions.length ?? "—"}
+              {data?.open_sessions.length ?? "-"}
             </span>
           </div>
           <div className="rounded-lg bg-slate-50 px-3 py-2">
             <span className="text-slate-500">Closed today</span>{" "}
             <span className="font-semibold tabular-nums text-slate-900">
-              {data?.closed_today ?? "—"}
+              {data?.closed_today ?? "-"}
             </span>
           </div>
         </div>
@@ -87,8 +87,8 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
                   <p className="font-medium text-slate-900">{session.employee_name}</p>
                   <p className="text-slate-500">
                     {session.production_code}
-                    {session.piece_mark ? ` · ${session.piece_mark}` : ""}
-                    {session.client_name ? ` · ${session.client_name}` : ""}
+                    {session.piece_mark ? ` - ${session.piece_mark}` : ""}
+                    {session.client_name ? ` - ${session.client_name}` : ""}
                   </p>
                 </div>
                 <span
@@ -118,7 +118,7 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
                 <li key={row.employee_name} className="flex justify-between gap-3 text-slate-700">
                   <span>{row.employee_name}</span>
                   <span className="tabular-nums text-slate-500">
-                    {row.count} pcs · {formatDuration(row.duration_sec)}
+                    {row.count} pcs / {formatDuration(row.duration_sec)}
                   </span>
                 </li>
               ))}
