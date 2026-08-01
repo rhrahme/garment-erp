@@ -145,8 +145,11 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
     canViewClientContact: canViewClientContact(role, email, isSuperAdmin),
     canViewFabricListPrices: isAdmin,
     canViewInvoiceAmounts: canViewInvoiceAmountsAlways({ isAdmin }),
-    canToggleInvoiceAmounts: canToggleInvoiceAmounts({ isAccountingOperator, isSalesOperator }),
-    canRevealInvoiceAmountsWithoutPassword: canRevealInvoiceAmountsWithoutPassword({ isAccountingOperator }),
+    canToggleInvoiceAmounts: canToggleInvoiceAmounts({ isAdmin, isAccountingOperator, isSalesOperator }),
+    canRevealInvoiceAmountsWithoutPassword: canRevealInvoiceAmountsWithoutPassword({
+      isAdmin,
+      isAccountingOperator,
+    }),
     invoiceAmountsVisibleByDefault: invoiceAmountsVisibleByDefault({ isAdmin, isAccountingOperator }),
     canSendSupplierEmails: canSendSupplierEmails({ isAdmin }),
     canViewShipments: canViewShipments({ isAdmin, isProductionOperator, isAccountingOperator }),

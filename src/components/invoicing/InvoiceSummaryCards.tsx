@@ -8,40 +8,44 @@ import {
   InvoiceAmountsRevealToggle,
   MASKED_INVOICE_AMOUNT,
 } from "@/components/invoicing/InvoiceAmountsRevealToggle";
-import { useInvoiceAmountsVisibility } from "@/hooks/useInvoiceAmountsVisibility";
 
 export function InvoiceSummaryCards({
   summary,
   canToggleAmounts = false,
-  amountsVisibleByDefault = false,
+  showAmounts = false,
+  amountsVisible = false,
+  amountsHydrated = false,
+  onUnlock,
+  onLock,
   revealWithoutPassword = false,
 }: {
   summary: CustomerInvoiceSummary;
-  /** Show eye toggle (sales + accounting). */
+  /** Show eye toggle (admin + sales + accounting). */
   canToggleAmounts?: boolean;
-  /** Admin always visible; accounting starts visible. */
-  amountsVisibleByDefault?: boolean;
-  /** Accounting — no password to reveal. */
+  /** Whether monetary values are currently revealed. */
+  showAmounts?: boolean;
+  /** Eye toggle pressed state (same as showAmounts when toggle is active). */
+  amountsVisible?: boolean;
+  amountsHydrated?: boolean;
+  onUnlock?: () => void;
+  onLock?: () => void;
+  /** Admin / accounting — no password to reveal. */
   revealWithoutPassword?: boolean;
 }) {
-  const { visible, hydrated, unlock, lock } = useInvoiceAmountsVisibility(amountsVisibleByDefault);
-
-  const alwaysShowAmounts = amountsVisibleByDefault && !canToggleAmounts;
-  const showAmounts = alwaysShowAmounts || (hydrated && visible);
   const outstandingValue = showAmounts ? formatInvoiceSar(summary.outstanding_sar) : MASKED_INVOICE_AMOUNT;
   const paidValue = showAmounts ? formatInvoiceSar(summary.paid_sar) : MASKED_INVOICE_AMOUNT;
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-end">
-        {canToggleAmounts && hydrated && (
+        {canToggleAmounts && amountsHydrated && onUnlock && onLock ? (
           <InvoiceAmountsRevealToggle
-            visible={visible}
-            onUnlock={unlock}
-            onLock={lock}
+            visible={amountsVisible}
+            onUnlock={onUnlock}
+            onLock={onLock}
             skipPassword={revealWithoutPassword}
           />
-        )}
+        ) : null}
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard

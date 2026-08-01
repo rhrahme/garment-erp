@@ -59,12 +59,12 @@ export function FabricSpecView({
     visible: pricesVisible,
     unlock: unlockPrices,
     lock: lockPrices,
-  } = useFabricSpecPricesVisibility(true);
+  } = useFabricSpecPricesVisibility(false);
 
   /**
    * Eye toggle is the sole client gate for admins. Do NOT use
    * `!hydrated || visible` - that keeps prices forced-on until hydrate and
-   * can ignore lock clicks. Default state is already visible=true.
+   * can ignore lock clicks. Default state is hidden until Show is clicked.
    */
   const showPrices = Boolean(canViewPrices && pricesVisible);
 

@@ -17,7 +17,9 @@ export default async function CostingPage() {
       />
       <CostingWorkspace
         overview={overview}
-        canToggleAmounts={session.canToggleInvoiceAmounts && session.isAccountingOperator}
+        canToggleAmounts={
+          session.canToggleInvoiceAmounts && (session.isAdmin || session.isAccountingOperator)
+        }
         amountsVisibleByDefault={session.invoiceAmountsVisibleByDefault}
         revealWithoutPassword={session.canRevealInvoiceAmountsWithoutPassword}
       />

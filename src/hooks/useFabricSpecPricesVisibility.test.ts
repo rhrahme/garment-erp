@@ -11,7 +11,11 @@ function fabricSpecShowPrices(canViewPrices: boolean, pricesVisible: boolean): b
 }
 
 describe("fabric spec eye toggle showPrices", () => {
-  it("admin default visible shows prices", () => {
+  it("admin default hidden until reveal", () => {
+    assert.equal(fabricSpecShowPrices(true, false), false);
+  });
+
+  it("admin reveal shows prices", () => {
     assert.equal(fabricSpecShowPrices(true, true), true);
   });
 

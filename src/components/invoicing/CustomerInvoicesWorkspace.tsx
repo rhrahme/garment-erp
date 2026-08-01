@@ -45,8 +45,8 @@ export function CustomerInvoicesWorkspace({
   revealWithoutPassword?: boolean;
 }) {
   const { visible, hydrated, unlock, lock } = useInvoiceAmountsVisibility(amountsVisibleByDefault);
-  const alwaysShowAmounts = amountsVisibleByDefault && !canToggleAmounts;
-  const showAmounts = alwaysShowAmounts || (hydrated && visible);
+  /** Roles that can see amounts still start hidden; only an explicit Show click reveals. */
+  const showAmounts = Boolean(canToggleAmounts && hydrated && visible);
   const scopedBrands = useMemo(() => {
     if (!allowedBrandIds) return undefined;
     const allowed = new Set(allowedBrandIds);
@@ -106,7 +106,11 @@ export function CustomerInvoicesWorkspace({
       <InvoiceSummaryCards
         summary={summary}
         canToggleAmounts={canToggleAmounts}
-        amountsVisibleByDefault={amountsVisibleByDefault}
+        showAmounts={showAmounts}
+        amountsVisible={visible}
+        amountsHydrated={hydrated}
+        onUnlock={unlock}
+        onLock={lock}
         revealWithoutPassword={revealWithoutPassword}
       />
 

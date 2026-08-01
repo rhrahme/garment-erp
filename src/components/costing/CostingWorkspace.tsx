@@ -103,7 +103,7 @@ function OrderCostRow({
 export function CostingWorkspace({
   overview,
   canToggleAmounts = false,
-  amountsVisibleByDefault = true,
+  amountsVisibleByDefault = false,
   revealWithoutPassword = false,
 }: {
   overview: CostingOverview;
@@ -115,8 +115,8 @@ export function CostingWorkspace({
   const [showArchived, setShowArchived] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const { visible, hydrated: amountsHydrated, unlock, lock } = useInvoiceAmountsVisibility(amountsVisibleByDefault);
-  const alwaysShowAmounts = amountsVisibleByDefault && !canToggleAmounts;
-  const showAmounts = alwaysShowAmounts || (amountsHydrated && visible);
+  /** Admin / accounting start hidden; Show click reveals for the browser session. */
+  const showAmounts = Boolean(canToggleAmounts && amountsHydrated && visible);
 
   const orders = useMemo(() => {
     let result = overview.orders;
