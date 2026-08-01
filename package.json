@@ -30,6 +30,7 @@
     "test:price-access": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/auth/fabric-price-access.test.ts",
     "test:tud-parser": "node --experimental-strip-types --test src/lib/pattern-library/tud-parser.test.ts",
     "test:dxf-parser": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/pattern-library/dxf-parser.test.ts",
+    "test:sewing-session": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/production/sewing-session.test.ts",
     "proof:dxf-outlines": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs scripts/proof-dxf-outlines.mjs",
     "test:tud-size-fill": "node --experimental-strip-types --test src/lib/pattern-library/tud-size-fill.test.ts",
     "test:base-pattern-picker": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/pattern-library/base-pattern-picker.test.ts",

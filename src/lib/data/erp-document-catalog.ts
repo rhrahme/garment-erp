@@ -144,6 +144,14 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/production-scan-events.json",
   },
   {
+    key: "sewing_sessions",
+    label: "Sewing sessions",
+    description: "Timed stitcher sessions (badge + A4 piece QR start/end) on factory laptops",
+    category: "production",
+    appHref: "/production/stitch",
+    sourcePath: "src/data/sewing-sessions.json",
+  },
+  {
     key: "factory_floor_map",
     label: "Factory floor map",
     description: "Hagan factory layout PDF for shop-floor stations",

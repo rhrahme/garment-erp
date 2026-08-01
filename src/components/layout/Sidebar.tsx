@@ -56,6 +56,7 @@ const navItems = [
   { href: "/pattern", label: "Pattern", icon: Ruler },
   { href: "/inventory", label: "Inventory", icon: Package },
   { href: "/production", label: "Production", icon: Factory },
+  { href: "/production/stitch", label: "Stitch kiosk", icon: ScanLine },
   { href: "/production/floor-map", label: "Factory floor map", icon: Map },
   { href: "/fabric-orders", label: "Fabric Orders", icon: Truck },
   { href: "/orders", label: "Sales Orders", icon: ShoppingCart },
@@ -91,7 +92,12 @@ const accountingOperatorNavItems = navItems.filter((item) => accountingOperatorN
 function isNavActive(pathname: string, href: string): boolean {
   if (pathname === href) return true;
   if (!pathname.startsWith(href + "/")) return false;
-  if (href === "/production" && pathname.startsWith("/production/floor-map")) return false;
+  if (
+    href === "/production" &&
+    (pathname.startsWith("/production/floor-map") || pathname.startsWith("/production/stitch"))
+  ) {
+    return false;
+  }
   return true;
 }
 

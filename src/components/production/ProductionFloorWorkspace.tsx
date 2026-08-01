@@ -11,6 +11,7 @@ import { PRODUCTION_STAGES, type ProductionWorkOrder } from "@/lib/types/product
 import { cn, formatDate } from "@/lib/utils";
 import { useProductionWorkOrders } from "@/components/production/useProductionWorkOrders";
 import { ScanStageLegend } from "@/components/production/ScanStageLegend";
+import { SewingSessionsDashboard } from "@/components/production/SewingSessionsDashboard";
 import { StageScanPanel } from "@/components/production/StageScanPanel";
 import { completedAccountLabel, isReadyMadeWorkOrder } from "@/lib/production/completed-history";
 import { productionStageToHighlight, scanStageStyles } from "@/lib/production/scan-stage-highlight";
@@ -144,6 +145,8 @@ export function ProductionFloorWorkspace() {
           {message}
         </div>
       )}
+
+      <SewingSessionsDashboard />
 
       <section className="rounded-xl border border-slate-200 bg-white">
         <div className="border-b border-slate-100 px-5 py-4">

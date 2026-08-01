@@ -304,6 +304,7 @@ export const PRODUCTION_OPERATOR_NAV_HREFS = [
   "/pattern",
   "/inventory",
   "/production",
+  "/production/stitch",
   "/production/floor-map",
   "/orders",
   "/shipments",

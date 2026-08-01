@@ -56,6 +56,8 @@ export type IntegrationEventType =
   | "client_pattern.fabric_lines_unassigned"
   | "pattern_library.file_uploaded"
   | "production.scan"
+  | "production.sewing_session_started"
+  | "production.sewing_session_ended"
   | "production.stage_advanced"
   | "production.handed_to_driver"
   | "invoice.sent"
