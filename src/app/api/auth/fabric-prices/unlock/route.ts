@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   canRevealFabricPrices,
+  encodeFabricPriceUnlockCookie,
   FABRIC_PRICE_UNLOCK_COOKIE,
   FABRIC_PRICE_UNLOCK_MAX_AGE_SEC,
   isFabricPriceAccessCodeValid,
@@ -25,15 +26,23 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = (await request.json()) as { code?: string; password?: string };
+    const body = (await request.json()) as {
+      code?: string;
+      password?: string;
+      pathname?: string;
+    };
     const code = (body.password ?? body.code)?.trim() ?? "";
+    const unlockCookie = encodeFabricPriceUnlockCookie(body.pathname ?? "");
 
     if (!isFabricPriceAccessCodeValid(code)) {
       return NextResponse.json({ error: "Incorrect password." }, { status: 403 });
     }
+    if (!unlockCookie) {
+      return NextResponse.json({ error: "Missing page path for unlock." }, { status: 400 });
+    }
 
     const response = NextResponse.json({ ok: true });
-    response.cookies.set(FABRIC_PRICE_UNLOCK_COOKIE, "1", {
+    response.cookies.set(FABRIC_PRICE_UNLOCK_COOKIE, unlockCookie, {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",

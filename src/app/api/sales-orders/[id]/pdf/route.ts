@@ -30,10 +30,11 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     }
 
     const cookieStore = await cookies();
-    const canViewFabricPrices = hasFabricPriceAccess(
-      session,
-      cookieStore.get(FABRIC_PRICE_UNLOCK_COOKIE)?.value
-    );
+    const unlockCookie = cookieStore.get(FABRIC_PRICE_UNLOCK_COOKIE)?.value;
+    // PDF downloads from the unlocked order/fabric-order page only.
+    const canViewFabricPrices =
+      hasFabricPriceAccess(session, unlockCookie, `/orders/${id}`) ||
+      hasFabricPriceAccess(session, unlockCookie, `/fabric-orders/${id}`);
     const order = canViewFabricPrices ? rawOrder : redactSalesOrderFabricPrices(rawOrder);
     const pdfBytes = await generateSalesOrderPdf(order, { showPrices: canViewFabricPrices });
 

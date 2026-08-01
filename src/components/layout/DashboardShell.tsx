@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PriceRevealLockOnNavigate } from "@/components/auth/PriceRevealLockOnNavigate";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import type { SessionContext } from "@/lib/auth/session";
@@ -26,6 +27,7 @@ export function DashboardShell({
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 print:h-auto print:overflow-visible">
+      <PriceRevealLockOnNavigate />
       {mobileNavOpen ? (
         <button
           type="button"

@@ -5,6 +5,7 @@ import { describe, it } from "node:test";
 import {
   canViewFabricStock,
   canViewPrices,
+  hasFabricPriceAccess,
   redactFabricLinePrices,
   redactPriceFields,
   redactPurchaseOrderPrices,
@@ -271,6 +272,19 @@ describe("admin price access", () => {
     assert.equal(redactPriceFields({ name: "safe", unit_price: 10 }).name, "safe");
     assert.equal(line.unit_price, 125);
     assert.equal(fabricSearchItem().list_price, 73.2);
+  });
+
+  it("stays locked without a path-scoped unlock cookie even for admin", () => {
+    assert.equal(hasFabricPriceAccess(session("admin"), null, "/orders/a"), false);
+    assert.equal(hasFabricPriceAccess(session("admin"), undefined, "/orders/a"), false);
+    assert.equal(hasFabricPriceAccess(session("admin"), "0", "/orders/a"), false);
+    assert.equal(hasFabricPriceAccess(session("admin"), "1", "/orders/a"), false);
+  });
+
+  it("reveals only on the unlocked page path for admin", () => {
+    assert.equal(hasFabricPriceAccess(session("admin"), "1:/orders/a", "/orders/a"), true);
+    assert.equal(hasFabricPriceAccess(session("admin"), "1:/orders/a", "/orders/b"), false);
+    assert.equal(hasFabricPriceAccess(session("sales_operator"), "1:/orders/a", "/orders/a"), false);
   });
 });
 

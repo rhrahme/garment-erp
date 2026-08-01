@@ -1,10 +1,6 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import {
-  FABRIC_PRICE_UNLOCK_COOKIE,
-  hasFabricPriceAccess,
-  redactSalesOrderFabricPrices,
-} from "@/lib/auth/fabric-price-access";
+import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
+import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server";
 import { getSessionContext, requireAdmin, requireAuthenticated, canModifySalesOrders } from "@/lib/auth/session";
 import {
   deleteSalesOrderById,
@@ -34,11 +30,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     if (!canAccessSalesOrder(session, order)) {
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
-    const cookieStore = await cookies();
-    const canViewFabricPrices = hasFabricPriceAccess(
-      session,
-      cookieStore.get(FABRIC_PRICE_UNLOCK_COOKIE)?.value
-    );
+    const canViewFabricPrices = await resolveFabricPriceAccess(session);
     const safeOrder = canViewFabricPrices ? order : redactSalesOrderFabricPrices(order);
     return NextResponse.json({ order: safeOrder });
   } catch (error) {
@@ -87,11 +79,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     };
     const saved = await writeSalesOrders(store);
     const order = saved.orders.find((item) => item.id === id);
-    const cookieStore = await cookies();
-    const canViewFabricPrices = hasFabricPriceAccess(
-      session,
-      cookieStore.get(FABRIC_PRICE_UNLOCK_COOKIE)?.value
-    );
+    const canViewFabricPrices = await resolveFabricPriceAccess(session);
     const safeOrder = canViewFabricPrices && order
       ? order
       : order

@@ -5,6 +5,7 @@ import {
   MASKED_FABRIC_COST,
   MASKED_FABRIC_PRICE,
 } from "@/lib/auth/fabric-price.constants";
+import { fabricPriceUnlockMatchesPath } from "@/lib/auth/fabric-price-unlock-path";
 import { isInvoiceAmountsPasswordValid } from "@/lib/auth/invoice-amounts-access";
 import type { SessionContext } from "@/lib/auth/session";
 
@@ -18,6 +19,13 @@ export {
   redactSupplierFabricPrices,
   RESTRICTED_PRICE_FIELD_NAMES,
 } from "@/lib/auth/fabric-price-redact";
+
+export {
+  encodeFabricPriceUnlockCookie,
+  fabricPriceUnlockMatchesPath,
+  normalizePriceUnlockPath,
+  parseFabricPriceUnlockPath,
+} from "@/lib/auth/fabric-price-unlock-path";
 
 export {
   FABRIC_PRICE_UNLOCK_COOKIE,
@@ -85,12 +93,17 @@ export function canRevealFabricPrices(session: SessionContext): boolean {
   return canViewPrices(session);
 }
 
+/**
+ * True only after an explicit Show on this exact page path.
+ * Legacy sticky cookie value "1" never unlocks. Leaving the page (or refresh)
+ * requires Show again.
+ */
 export function hasFabricPriceAccess(
   session: SessionContext,
-  unlockedCookie: string | undefined | null
+  unlockedCookie: string | undefined | null,
+  currentPathname?: string | null
 ): boolean {
   if (!canViewPrices(session)) return false;
-  if (unlockedCookie === "1" && isFabricPriceUnlockConfigured()) return true;
-  return false;
+  if (!isFabricPriceUnlockConfigured()) return false;
+  return fabricPriceUnlockMatchesPath(unlockedCookie, currentPathname);
 }
-

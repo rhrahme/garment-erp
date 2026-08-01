@@ -51,7 +51,8 @@ export default async function FabricOrderDetailPage({
   const cookieStore = await cookies();
   const canViewFabricPrices = hasFabricPriceAccess(
     session,
-    cookieStore.get(FABRIC_PRICE_UNLOCK_COOKIE)?.value
+    cookieStore.get(FABRIC_PRICE_UNLOCK_COOKIE)?.value,
+    `/fabric-orders/${id}`
   );
   const showFabricCostToAdmin = canRevealFabricPrices(session);
   const order = canViewFabricPrices

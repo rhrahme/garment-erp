@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "crypto";
 import type { SessionContext } from "@/lib/auth/session";
 
+/** @deprecated Unlock is in-memory; key kept so old sessionStorage entries are ignored. */
 export const INVOICE_AMOUNTS_UNLOCK_SESSION_KEY = "invoice_amounts_unlocked";
 
 /** Admin — may view invoice amounts (UI still starts hidden until eye reveal). */
@@ -22,7 +23,7 @@ export function canRevealInvoiceAmountsWithoutPassword(
   return session.isAdmin || session.isAccountingOperator;
 }
 
-/** Always start hidden; sessionStorage remembers an explicit Show click for the browser session. */
+/** Always start hidden; explicit Show click unlocks in-memory until refresh or Hide. */
 export function invoiceAmountsVisibleByDefault(
   _session?: Pick<SessionContext, "isAdmin" | "isAccountingOperator">
 ): boolean {

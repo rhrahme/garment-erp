@@ -102,12 +102,12 @@ export function PayrollWorkspace({
     visible: salariesVisible,
     unlock: unlockSalaries,
     lock: lockSalaries,
-  } = usePayrollSalariesVisibility(true);
+  } = usePayrollSalariesVisibility(false);
 
   /**
    * Eye toggle is the sole client gate. Do NOT use `!hydrated || visible` -
    * that keeps amounts forced-on until hydrate and can ignore lock clicks.
-   * Default state is already visible=true. Page is admin-only.
+   * Default state is hidden until Show. Page is admin-only.
    */
   const showSalaries = Boolean(salariesVisible);
 

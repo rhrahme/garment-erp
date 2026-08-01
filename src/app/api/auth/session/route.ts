@@ -1,11 +1,9 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import {
-  FABRIC_PRICE_UNLOCK_COOKIE,
   canRevealFabricPrices,
   canViewFabricStock,
-  hasFabricPriceAccess,
 } from "@/lib/auth/fabric-price-access";
+import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server";
 import {
   canAccessClientMedia,
   canHardDeleteClientMedia,
@@ -17,11 +15,7 @@ import { canChangeGarmentType } from "@/lib/sales-orders/change-garment-type";
 export async function GET() {
   try {
     const session = await getSessionContext();
-    const cookieStore = await cookies();
-    const canViewFabricPrices = hasFabricPriceAccess(
-      session,
-      cookieStore.get(FABRIC_PRICE_UNLOCK_COOKIE)?.value
-    );
+    const canViewFabricPrices = await resolveFabricPriceAccess(session);
     return NextResponse.json({
       email: session.email,
       role: session.role,

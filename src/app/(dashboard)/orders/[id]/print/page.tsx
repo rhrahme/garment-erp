@@ -98,7 +98,8 @@ export default async function SalesOrderPrintPage({
   const cookieStore = await cookies();
   const canViewFabricPrices = hasFabricPriceAccess(
     session,
-    cookieStore.get(FABRIC_PRICE_UNLOCK_COOKIE)?.value
+    cookieStore.get(FABRIC_PRICE_UNLOCK_COOKIE)?.value,
+    `/orders/${id}/print`
   );
   const order = canViewFabricPrices ? rawOrder : redactSalesOrderFabricPrices(rawOrder);
   const supplierGroups = groupLinesBySupplier(order.fabric_lines);
