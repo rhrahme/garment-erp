@@ -8,6 +8,7 @@ import {
   StitchScanCaptureProvider,
   StitchScannerReadyBadge,
 } from "@/components/production/stitch-scan-capture";
+import { SortableTableHeader } from "@/components/ui/SortableTableHeader";
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
 import {
   SEWING_LIVE_LONG_RUNNING_SEC,
@@ -17,10 +18,45 @@ import {
 } from "@/lib/production/sewing-session-state";
 import type { SewingScanFailure } from "@/lib/types/sewing-scan-failures";
 import type { SewingSession } from "@/lib/types/sewing-sessions";
+import {
+  applyTableSort,
+  compareSortNumbers,
+  compareSortStrings,
+  nextTableSort,
+  type TableSortState,
+} from "@/lib/ui/table-sort";
 import { cn } from "@/lib/utils";
 
 type FloorTab = "scan" | "orders" | "live" | "performance" | "history";
 type HistoryMode = "sessions" | "failures";
+
+type LiveSortKey =
+  | "employee"
+  | "article"
+  | "piece"
+  | "client"
+  | "started"
+  | "elapsed"
+  | "status";
+
+type HistorySortKey =
+  | "employee"
+  | "article"
+  | "piece"
+  | "client"
+  | "start"
+  | "end"
+  | "duration"
+  | "status";
+
+type FailureSortKey =
+  | "when"
+  | "kind"
+  | "code"
+  | "reason"
+  | "employee"
+  | "kiosk"
+  | "piece";
 
 const FLOOR_TABS = new Set<FloorTab>(["scan", "orders", "live", "performance", "history"]);
 
@@ -130,6 +166,94 @@ function failureSearchBlob(row: SewingScanFailure): string {
     .toLowerCase();
 }
 
+function compareLiveSessions(
+  a: SewingSession,
+  b: SewingSession,
+  key: LiveSortKey,
+  now: number
+): number {
+  switch (key) {
+    case "employee":
+      return compareSortStrings(a.employee_name ?? "", b.employee_name ?? "");
+    case "article":
+      return compareSortStrings(sewingSessionArticleLabel(a), sewingSessionArticleLabel(b));
+    case "piece":
+      return compareSortStrings(
+        `${a.production_code ?? ""} ${a.piece_mark ?? ""}`,
+        `${b.production_code ?? ""} ${b.piece_mark ?? ""}`
+      );
+    case "client":
+      return compareSortStrings(
+        `${a.so_number ?? ""} ${a.client_name ?? ""}`,
+        `${b.so_number ?? ""} ${b.client_name ?? ""}`
+      );
+    case "started":
+      return compareSortNumbers(new Date(a.started_at).getTime(), new Date(b.started_at).getTime());
+    case "elapsed":
+      return compareSortNumbers(
+        sewingSessionElapsedSec(a.started_at, now),
+        sewingSessionElapsedSec(b.started_at, now)
+      );
+    case "status":
+      return compareSortStrings(a.status, b.status);
+    default:
+      return 0;
+  }
+}
+
+function compareHistorySessions(a: SewingSession, b: SewingSession, key: HistorySortKey): number {
+  switch (key) {
+    case "employee":
+      return compareSortStrings(a.employee_name ?? "", b.employee_name ?? "");
+    case "article":
+      return compareSortStrings(sewingSessionArticleLabel(a), sewingSessionArticleLabel(b));
+    case "piece":
+      return compareSortStrings(a.production_code ?? "", b.production_code ?? "");
+    case "client":
+      return compareSortStrings(
+        `${a.so_number ?? ""} ${a.client_name ?? ""}`,
+        `${b.so_number ?? ""} ${b.client_name ?? ""}`
+      );
+    case "start":
+      return compareSortNumbers(new Date(a.started_at).getTime(), new Date(b.started_at).getTime());
+    case "end":
+      return compareSortNumbers(
+        a.ended_at ? new Date(a.ended_at).getTime() : null,
+        b.ended_at ? new Date(b.ended_at).getTime() : null
+      );
+    case "duration":
+      return compareSortNumbers(a.duration_sec, b.duration_sec);
+    case "status":
+      return compareSortStrings(a.status, b.status);
+    default:
+      return 0;
+  }
+}
+
+function compareFailures(a: SewingScanFailure, b: SewingScanFailure, key: FailureSortKey): number {
+  switch (key) {
+    case "when":
+      return compareSortNumbers(new Date(a.scanned_at).getTime(), new Date(b.scanned_at).getTime());
+    case "kind":
+      return compareSortStrings(a.scan_kind ?? "", b.scan_kind ?? "");
+    case "code":
+      return compareSortStrings(a.raw_code ?? "", b.raw_code ?? "");
+    case "reason":
+      return compareSortStrings(a.reason ?? "", b.reason ?? "");
+    case "employee":
+      return compareSortStrings(
+        a.employee_name || a.arm_employee_name || "",
+        b.employee_name || b.arm_employee_name || ""
+      );
+    case "kiosk":
+      return compareSortStrings(a.kiosk_id ?? "", b.kiosk_id ?? "");
+    case "piece":
+      return compareSortStrings(a.related_production_code ?? "", b.related_production_code ?? "");
+    default:
+      return 0;
+  }
+}
+
 export function StitchFloorWorkspace({
   initialTab = "scan",
 }: {
@@ -149,6 +273,12 @@ export function StitchFloorWorkspace({
   const [search, setSearch] = useState("");
   const [expandedEmployeeId, setExpandedEmployeeId] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [liveSort, setLiveSort] = useState<TableSortState<LiveSortKey> | null>({
+    key: "elapsed",
+    direction: "desc",
+  });
+  const [historySort, setHistorySort] = useState<TableSortState<HistorySortKey> | null>(null);
+  const [failureSort, setFailureSort] = useState<TableSortState<FailureSortKey> | null>(null);
 
   useEffect(() => {
     setTab(tabFromLocation(pathname, searchParams.get("tab"), initialTab));
@@ -198,19 +328,24 @@ export function StitchFloorWorkspace({
 
   const periodHint = PERIODS.find((row) => row.id === period)?.hint ?? "";
 
+  const liveRows = useMemo(() => {
+    const rows = data?.open_sessions ?? [];
+    return applyTableSort(rows, liveSort, (a, b, key) => compareLiveSessions(a, b, key, now));
+  }, [data?.open_sessions, liveSort, now]);
+
   const historyRows = useMemo(() => {
     const rows = data?.sessions ?? [];
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((row) => sessionSearchBlob(row).includes(q));
-  }, [data?.sessions, search]);
+    const filtered = q ? rows.filter((row) => sessionSearchBlob(row).includes(q)) : rows;
+    return applyTableSort(filtered, historySort, compareHistorySessions);
+  }, [data?.sessions, historySort, search]);
 
   const failureRows = useMemo(() => {
     const rows = data?.failed_scans ?? [];
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((row) => failureSearchBlob(row).includes(q));
-  }, [data?.failed_scans, search]);
+    const filtered = q ? rows.filter((row) => failureSearchBlob(row).includes(q)) : rows;
+    return applyTableSort(filtered, failureSort, compareFailures);
+  }, [data?.failed_scans, failureSort, search]);
 
   const piecesByEmployee = useMemo(() => {
     const map = new Map<string, SewingSession[]>();
@@ -305,88 +440,141 @@ export function StitchFloorWorkspace({
               )}
             </div>
           </div>
-          <div className="p-4 sm:p-5">
+          <div className="overflow-x-auto p-2 sm:p-4">
             {!data ? (
-              <p className="text-base text-slate-500">Loading...</p>
-            ) : data.open_sessions.length === 0 ? (
-              <p className="text-base text-slate-500">No one sewing right now.</p>
+              <p className="px-3 py-4 text-base text-slate-500">Loading...</p>
+            ) : liveRows.length === 0 ? (
+              <p className="px-3 py-4 text-base text-slate-500">No one sewing right now.</p>
             ) : (
-              <ul className="divide-y divide-slate-100 rounded-xl border border-slate-100">
-                {[...data.open_sessions]
-                  .sort(
-                    (a, b) =>
-                      sewingSessionElapsedSec(b.started_at, now) -
-                      sewingSessionElapsedSec(a.started_at, now)
-                  )
-                  .map((session) => {
+              <table className="min-w-full text-left text-sm">
+                <thead className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <SortableTableHeader
+                      label="Employee"
+                      sortKey="employee"
+                      activeSortKey={liveSort?.key ?? null}
+                      direction={liveSort?.direction ?? null}
+                      onSort={(key) => setLiveSort((prev) => nextTableSort(prev, key as LiveSortKey))}
+                      className="px-3 py-3"
+                    />
+                    <SortableTableHeader
+                      label="Article"
+                      sortKey="article"
+                      activeSortKey={liveSort?.key ?? null}
+                      direction={liveSort?.direction ?? null}
+                      onSort={(key) => setLiveSort((prev) => nextTableSort(prev, key as LiveSortKey))}
+                      className="px-3 py-3"
+                    />
+                    <SortableTableHeader
+                      label="Piece"
+                      sortKey="piece"
+                      activeSortKey={liveSort?.key ?? null}
+                      direction={liveSort?.direction ?? null}
+                      onSort={(key) => setLiveSort((prev) => nextTableSort(prev, key as LiveSortKey))}
+                      className="px-3 py-3"
+                    />
+                    <SortableTableHeader
+                      label="SO / Client"
+                      sortKey="client"
+                      activeSortKey={liveSort?.key ?? null}
+                      direction={liveSort?.direction ?? null}
+                      onSort={(key) => setLiveSort((prev) => nextTableSort(prev, key as LiveSortKey))}
+                      className="px-3 py-3"
+                    />
+                    <SortableTableHeader
+                      label="Started"
+                      sortKey="started"
+                      activeSortKey={liveSort?.key ?? null}
+                      direction={liveSort?.direction ?? null}
+                      onSort={(key) => setLiveSort((prev) => nextTableSort(prev, key as LiveSortKey))}
+                      className="px-3 py-3"
+                    />
+                    <SortableTableHeader
+                      label="Elapsed"
+                      sortKey="elapsed"
+                      activeSortKey={liveSort?.key ?? null}
+                      direction={liveSort?.direction ?? null}
+                      onSort={(key) => setLiveSort((prev) => nextTableSort(prev, key as LiveSortKey))}
+                      className="px-3 py-3"
+                    />
+                    <SortableTableHeader
+                      label="Status"
+                      sortKey="status"
+                      activeSortKey={liveSort?.key ?? null}
+                      direction={liveSort?.direction ?? null}
+                      onSort={(key) => setLiveSort((prev) => nextTableSort(prev, key as LiveSortKey))}
+                      className="px-3 py-3"
+                    />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {liveRows.map((session) => {
                     const elapsedSec = sewingSessionElapsedSec(session.started_at, now);
                     const longRunning = elapsedSec >= SEWING_LIVE_LONG_RUNNING_SEC;
                     const today =
                       data.today_by_employee?.find((row) => row.employee_id === session.employee_id) ??
                       null;
                     return (
-                      <li
+                      <tr
                         key={session.id}
-                        className={cn(
-                          "flex flex-wrap items-start justify-between gap-3 px-4 py-4",
-                          longRunning && "bg-red-50/60"
-                        )}
+                        className={cn("text-slate-800", longRunning && "bg-red-50/60")}
                       >
-                        <div className="min-w-0 flex-1 space-y-1">
-                          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                            <p className="text-lg font-semibold text-slate-900">
-                              {session.employee_name}
-                            </p>
-                            {session.employee_id_number ? (
-                              <p className="font-mono text-sm text-slate-500">
-                                ID {session.employee_id_number}
-                              </p>
-                            ) : null}
-                          </div>
-                          <p className="text-base font-semibold text-slate-800">
-                            {sewingSessionArticleLabel(session) || "-"}
-                          </p>
-                          <p className="text-sm font-medium text-slate-700">
-                            {session.production_code}
-                            {session.piece_mark ? ` / ${session.piece_mark}` : ""}
-                          </p>
-                          <p className="text-sm text-slate-500">
-                            {session.client_name || "No client"}
-                            {session.so_number ? ` / ${session.so_number}` : ""}
-                            {session.fabric_number ? ` / fabric ${session.fabric_number}` : ""}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            Started {formatClock(session.started_at)}
-                            {session.workstation_id
-                              ? ` / station ${session.workstation_id}`
-                              : ""}
-                            {session.kiosk_id ? ` / kiosk ${session.kiosk_id}` : ""}
-                          </p>
+                        <td className="px-3 py-3">
+                          <div className="font-semibold text-slate-900">{session.employee_name}</div>
+                          {session.employee_id_number ? (
+                            <div className="font-mono text-xs text-slate-500">
+                              ID {session.employee_id_number}
+                            </div>
+                          ) : null}
                           {today && today.count > 0 ? (
-                            <p className="text-xs font-medium text-slate-600">
-                              Today so far: {today.count} pcs / {formatDuration(today.duration_sec)}
-                            </p>
+                            <div className="mt-1 text-xs text-slate-500">
+                              Today: {today.count} pcs / {formatDuration(today.duration_sec)}
+                            </div>
                           ) : (
-                            <p className="text-xs text-slate-400">Today so far: first piece</p>
+                            <div className="mt-1 text-xs text-slate-400">Today: first piece</div>
                           )}
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <span
+                        </td>
+                        <td className="px-3 py-3 font-semibold text-slate-900">
+                          {sewingSessionArticleLabel(session) || "-"}
+                        </td>
+                        <td className="px-3 py-3 font-mono text-xs sm:text-sm">
+                          {session.production_code}
+                          {session.piece_mark ? (
+                            <div className="text-xs text-slate-500">{session.piece_mark}</div>
+                          ) : null}
+                        </td>
+                        <td className="px-3 py-3">
+                          <div>{session.so_number || "-"}</div>
+                          <div className="text-slate-500">{session.client_name || "No client"}</div>
+                          {session.fabric_number ? (
+                            <div className="text-xs text-slate-500">fabric {session.fabric_number}</div>
+                          ) : null}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <div>{formatClock(session.started_at)}</div>
+                          {session.workstation_id || session.kiosk_id ? (
+                            <div className="text-xs text-slate-500">
+                              {[session.workstation_id, session.kiosk_id].filter(Boolean).join(" / ")}
+                            </div>
+                          ) : null}
+                        </td>
+                        <td className="px-3 py-3">
+                          <div
                             className={cn(
-                              "text-2xl font-semibold tabular-nums",
+                              "text-lg font-semibold tabular-nums",
                               longRunning ? "text-red-700" : "text-slate-900"
                             )}
                           >
                             {formatElapsed(session.started_at, now)}
-                          </span>
+                          </div>
                           {longRunning ? (
-                            <span className="rounded-lg bg-red-100 px-3 py-1 text-sm font-semibold text-red-800">
-                              Long running
-                            </span>
+                            <div className="mt-1 text-xs font-semibold text-red-800">Long running</div>
                           ) : null}
+                        </td>
+                        <td className="px-3 py-3">
                           <span
                             className={cn(
-                              "rounded-lg px-3 py-1 text-sm font-semibold",
+                              "rounded-lg px-2.5 py-1 text-xs font-semibold",
                               session.status === "closing"
                                 ? "bg-sky-100 text-sky-800"
                                 : "bg-emerald-100 text-emerald-800"
@@ -394,11 +582,12 @@ export function StitchFloorWorkspace({
                           >
                             {session.status === "closing" ? "Closing" : "Sewing"}
                           </span>
-                        </div>
-                      </li>
+                        </td>
+                      </tr>
                     );
                   })}
-              </ul>
+                </tbody>
+              </table>
             )}
           </div>
         </section>
@@ -611,14 +800,86 @@ export function StitchFloorWorkspace({
                 <table className="min-w-full text-left text-sm">
                   <thead className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     <tr>
-                      <th className="px-3 py-3">Employee</th>
-                      <th className="px-3 py-3">Article</th>
-                      <th className="px-3 py-3">Piece</th>
-                      <th className="px-3 py-3">SO / Client</th>
-                      <th className="px-3 py-3">Start</th>
-                      <th className="px-3 py-3">End</th>
-                      <th className="px-3 py-3">Duration</th>
-                      <th className="px-3 py-3">Status</th>
+                      <SortableTableHeader
+                        label="Employee"
+                        sortKey="employee"
+                        activeSortKey={historySort?.key ?? null}
+                        direction={historySort?.direction ?? null}
+                        onSort={(key) =>
+                          setHistorySort((prev) => nextTableSort(prev, key as HistorySortKey))
+                        }
+                        className="px-3 py-3"
+                      />
+                      <SortableTableHeader
+                        label="Article"
+                        sortKey="article"
+                        activeSortKey={historySort?.key ?? null}
+                        direction={historySort?.direction ?? null}
+                        onSort={(key) =>
+                          setHistorySort((prev) => nextTableSort(prev, key as HistorySortKey))
+                        }
+                        className="px-3 py-3"
+                      />
+                      <SortableTableHeader
+                        label="Piece"
+                        sortKey="piece"
+                        activeSortKey={historySort?.key ?? null}
+                        direction={historySort?.direction ?? null}
+                        onSort={(key) =>
+                          setHistorySort((prev) => nextTableSort(prev, key as HistorySortKey))
+                        }
+                        className="px-3 py-3"
+                      />
+                      <SortableTableHeader
+                        label="SO / Client"
+                        sortKey="client"
+                        activeSortKey={historySort?.key ?? null}
+                        direction={historySort?.direction ?? null}
+                        onSort={(key) =>
+                          setHistorySort((prev) => nextTableSort(prev, key as HistorySortKey))
+                        }
+                        className="px-3 py-3"
+                      />
+                      <SortableTableHeader
+                        label="Start"
+                        sortKey="start"
+                        activeSortKey={historySort?.key ?? null}
+                        direction={historySort?.direction ?? null}
+                        onSort={(key) =>
+                          setHistorySort((prev) => nextTableSort(prev, key as HistorySortKey))
+                        }
+                        className="px-3 py-3"
+                      />
+                      <SortableTableHeader
+                        label="End"
+                        sortKey="end"
+                        activeSortKey={historySort?.key ?? null}
+                        direction={historySort?.direction ?? null}
+                        onSort={(key) =>
+                          setHistorySort((prev) => nextTableSort(prev, key as HistorySortKey))
+                        }
+                        className="px-3 py-3"
+                      />
+                      <SortableTableHeader
+                        label="Duration"
+                        sortKey="duration"
+                        activeSortKey={historySort?.key ?? null}
+                        direction={historySort?.direction ?? null}
+                        onSort={(key) =>
+                          setHistorySort((prev) => nextTableSort(prev, key as HistorySortKey))
+                        }
+                        className="px-3 py-3"
+                      />
+                      <SortableTableHeader
+                        label="Status"
+                        sortKey="status"
+                        activeSortKey={historySort?.key ?? null}
+                        direction={historySort?.direction ?? null}
+                        onSort={(key) =>
+                          setHistorySort((prev) => nextTableSort(prev, key as HistorySortKey))
+                        }
+                        className="px-3 py-3"
+                      />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -676,13 +937,76 @@ export function StitchFloorWorkspace({
               <table className="min-w-full text-left text-sm">
                 <thead className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <tr>
-                    <th className="px-3 py-3">When</th>
-                    <th className="px-3 py-3">Kind</th>
-                    <th className="px-3 py-3">Code</th>
-                    <th className="px-3 py-3">Reason</th>
-                    <th className="px-3 py-3">Employee / Arm</th>
-                    <th className="px-3 py-3">Kiosk</th>
-                    <th className="px-3 py-3">Related piece</th>
+                    <SortableTableHeader
+                      label="When"
+                      sortKey="when"
+                      activeSortKey={failureSort?.key ?? null}
+                      direction={failureSort?.direction ?? null}
+                      onSort={(key) =>
+                        setFailureSort((prev) => nextTableSort(prev, key as FailureSortKey))
+                      }
+                      className="px-3 py-3"
+                    />
+                    <SortableTableHeader
+                      label="Kind"
+                      sortKey="kind"
+                      activeSortKey={failureSort?.key ?? null}
+                      direction={failureSort?.direction ?? null}
+                      onSort={(key) =>
+                        setFailureSort((prev) => nextTableSort(prev, key as FailureSortKey))
+                      }
+                      className="px-3 py-3"
+                    />
+                    <SortableTableHeader
+                      label="Code"
+                      sortKey="code"
+                      activeSortKey={failureSort?.key ?? null}
+                      direction={failureSort?.direction ?? null}
+                      onSort={(key) =>
+                        setFailureSort((prev) => nextTableSort(prev, key as FailureSortKey))
+                      }
+                      className="px-3 py-3"
+                    />
+                    <SortableTableHeader
+                      label="Reason"
+                      sortKey="reason"
+                      activeSortKey={failureSort?.key ?? null}
+                      direction={failureSort?.direction ?? null}
+                      onSort={(key) =>
+                        setFailureSort((prev) => nextTableSort(prev, key as FailureSortKey))
+                      }
+                      className="px-3 py-3"
+                    />
+                    <SortableTableHeader
+                      label="Employee / Arm"
+                      sortKey="employee"
+                      activeSortKey={failureSort?.key ?? null}
+                      direction={failureSort?.direction ?? null}
+                      onSort={(key) =>
+                        setFailureSort((prev) => nextTableSort(prev, key as FailureSortKey))
+                      }
+                      className="px-3 py-3"
+                    />
+                    <SortableTableHeader
+                      label="Kiosk"
+                      sortKey="kiosk"
+                      activeSortKey={failureSort?.key ?? null}
+                      direction={failureSort?.direction ?? null}
+                      onSort={(key) =>
+                        setFailureSort((prev) => nextTableSort(prev, key as FailureSortKey))
+                      }
+                      className="px-3 py-3"
+                    />
+                    <SortableTableHeader
+                      label="Related piece"
+                      sortKey="piece"
+                      activeSortKey={failureSort?.key ?? null}
+                      direction={failureSort?.direction ?? null}
+                      onSort={(key) =>
+                        setFailureSort((prev) => nextTableSort(prev, key as FailureSortKey))
+                      }
+                      className="px-3 py-3"
+                    />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
