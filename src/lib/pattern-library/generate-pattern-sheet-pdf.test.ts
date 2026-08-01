@@ -136,7 +136,7 @@ function sheet(overrides: Partial<PatternSheetData> = {}): PatternSheetData {
         piece_total: null,
       },
     ],
-    derived_from: "FR · Comfort · Shorts",
+    derived_from: "FR Â· Comfort Â· Shorts",
     house_brand: { code: "FR", name: "Fouad Rahme" },
     base_fill_warning: null,
     resolved_base_size: "M",

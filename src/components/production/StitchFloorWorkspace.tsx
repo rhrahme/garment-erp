@@ -414,7 +414,7 @@ export function StitchFloorWorkspace() {
                           <p className="text-lg font-semibold text-slate-900">{row.employee_name}</p>
                           {(row.articles?.length ?? 0) > 0 ? (
                             <p className="text-base font-semibold text-slate-800">
-                              {row.articles.join(" ù ")}
+                              {row.articles.join(" ¬∑ ")}
                             </p>
                           ) : null}
                           <p className="text-sm text-slate-500">
