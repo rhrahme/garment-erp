@@ -83,6 +83,41 @@ describe("evaluatePatternCuttingCompleteness", () => {
     assert.equal(result.nest_inputs_complete, true);
     assert.equal(formatCuttingCompletenessError(result, "tud"), null);
     assert.equal(findActiveMarkerAttachment(pattern), null);
+    const dxfItem = result.items.find((item) => item.id === "dxf_file");
+    assert.equal(dxfItem?.optional, true);
+    assert.equal(dxfItem?.done, false);
+  });
+
+  it("marks DXF cut outlines done when parsed outlines exist", () => {
+    const pattern = basePattern({
+      files: [
+        file("a", "tud"),
+        file("d", "dxf", {
+          filename: "cut.dxf",
+          dxf: {
+            sizes: ["48"],
+            pieces: [
+              {
+                name: "FRONT",
+                size: "48",
+                fabric: null,
+                cut_quantity: 1,
+                width_cm: 40,
+                height_cm: 50,
+                outline_cm: [
+                  { x: 0, y: 0 },
+                  { x: 40, y: 0 },
+                  { x: 40, y: 50 },
+                  { x: 0, y: 50 },
+                ],
+              },
+            ],
+          },
+        }),
+      ],
+    });
+    const result = evaluatePatternCuttingCompleteness(pattern, []);
+    assert.equal(result.items.find((item) => item.id === "dxf_file")?.done, true);
   });
 
   it("tracks nest inputs separately from TUDs", () => {

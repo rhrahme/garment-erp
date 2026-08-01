@@ -143,6 +143,15 @@ export function LibraryFileList({
                   <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium uppercase text-slate-500">
                     {KIND_LABELS[file.kind] ?? file.kind}
                   </span>
+                  {file.borrowed_from_pattern_id ? (
+                    <span
+                      className="shrink-0 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800"
+                      title={`From linked piece pattern ${file.borrowed_from_pattern_id}`}
+                    >
+                      From piece
+                      {file.piece_name ? ` · ${file.piece_name}` : ""}
+                    </span>
+                  ) : null}
                   <span className="shrink-0 text-xs text-slate-400">{formatSize(file.size_bytes)}</span>
                 </a>
                 {isActive ? (

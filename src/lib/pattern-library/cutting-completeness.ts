@@ -39,6 +39,36 @@ export function listMarkerFiles(pattern: ClientPattern): PatternLibraryAttachmen
     });
 }
 
+/** DXF cut-outline files attached to a client pattern (pattern-level + trials). */
+export function listDxfFiles(pattern: ClientPattern): PatternLibraryAttachment[] {
+  const all = [
+    ...pattern.files,
+    ...pattern.versions.flatMap((version) => version.files),
+  ];
+  return all
+    .filter((file) => file.kind === "dxf")
+    .sort((a, b) => {
+      const ta = new Date(a.uploaded_at).getTime();
+      const tb = new Date(b.uploaded_at).getTime();
+      if (ta !== tb) return ta - tb;
+      return a.id.localeCompare(b.id);
+    });
+}
+
+/** Latest DXF with parsed outlines, else latest DXF file. */
+export function findActiveDxfFile(
+  pattern: ClientPattern
+): PatternLibraryAttachment | null {
+  const files = listDxfFiles(pattern);
+  if (files.length === 0) return null;
+  const withOutlines = files
+    .filter((file) => (file.dxf?.pieces?.length ?? 0) > 0)
+    .slice()
+    .sort((a, b) => (a.uploaded_at < b.uploaded_at ? 1 : -1));
+  if (withOutlines[0]) return withOutlines[0];
+  return files[files.length - 1] ?? null;
+}
+
 export function findActiveMarkerAttachment(
   pattern: ClientPattern
 ): PatternLibraryAttachment | null {
@@ -118,6 +148,23 @@ export function evaluatePatternCuttingCompleteness(
     detail: foldSet ? (fold ? "Double fold" : "Open width") : null,
   });
 
+  // Preferred for real cut outlines on the nest board / cutter sheet.
+  // Soft-required: TUD-only patterns still work for the parts table.
+  const dxf = findActiveDxfFile(pattern);
+  const dxfHasOutlines = Boolean(dxf?.dxf?.pieces?.length);
+  const dxfDetail = dxf
+    ? dxfHasOutlines
+      ? `${dxf.filename} · ${dxf.dxf!.pieces.length} pieces`
+      : dxf.filename
+    : "Preferred for outlines; TUD still works for parts table";
+  items.push({
+    id: "dxf_file",
+    label: "DXF for cut outlines",
+    done: dxfHasOutlines,
+    optional: true,
+    detail: dxfDetail,
+  });
+
   // Optional shop TUKAmrk (.tum) - preferred on cutter A4 when present.
   const marker = findActiveMarkerAttachment(pattern);
   const tum = marker?.tum;
@@ -167,3 +214,6 @@ export function formatCuttingCompletenessError(
 /** Shop TUKAmrk + legacy nest / plotter export extensions. */
 export const MARKER_UPLOAD_ACCEPT =
   ".tum,.TUM,.mrk,.MRK,.plt,.PLT,.pdf,.PDF,.dxf,.DXF,.rul,.RUL,.zip,.ZIP";
+
+/** Dedicated DXF cut-outline upload (AAMA / TUKA polyline export). */
+export const DXF_UPLOAD_ACCEPT = ".dxf,.DXF";

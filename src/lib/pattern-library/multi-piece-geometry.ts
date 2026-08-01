@@ -20,7 +20,10 @@ const PIECE_GARMENT_ALIASES: Record<string, string[]> = {
   "Shirt LS": ["shirt", "shirt ls"],
   "Shirt SS": ["shirt", "shirt ss"],
   Short: ["short", "shorts"],
-  Overshirt: ["overshirt"],
+  // Imported overshirts are often typed as "shirt"; keep "shirt" as a fallback
+  // so Overshirt+Trouser shells can still borrow geometry (fabric-line score picks
+  // the right sibling when a true Shirt pattern also exists).
+  Overshirt: ["overshirt", "over shirt", "shirt"],
   Thobe: ["thobe", "formal thobe", "house thobe"],
 };
 
@@ -75,12 +78,14 @@ export function findSiblingPatternForPiece(
 function cloneAttachmentForPiece(
   source: PatternLibraryAttachment,
   pieceName: string,
-  role: "tud" | "dxf"
+  role: "tud" | "dxf",
+  sourcePatternId: string
 ): PatternLibraryAttachment {
   return {
     ...source,
     id: `borrowed-${role}-${pieceName}-${source.id}`,
     piece_name: pieceName,
+    borrowed_from_pattern_id: sourcePatternId,
   };
 }
 
@@ -157,7 +162,7 @@ export function hydrateMultiPieceGeometry(
       const tud =
         findActiveTudAttachmentForPiece(sibling, piece) ?? findActiveTudAttachment(sibling);
       if (tud?.tud) {
-        const cloned = cloneAttachmentForPiece(tud, piece, "tud");
+        const cloned = cloneAttachmentForPiece(tud, piece, "tud", sibling.id);
         extraFiles.push(cloned);
         nextActiveByPiece[piece] = cloned.id;
         borrowed_from[piece] = sibling.id;
@@ -168,7 +173,7 @@ export function hydrateMultiPieceGeometry(
       const dxf =
         findActiveDxfAttachmentForPiece(sibling, piece) ?? findActiveDxfOnPattern(sibling);
       if (dxf?.dxf?.pieces?.length) {
-        extraFiles.push(cloneAttachmentForPiece(dxf, piece, "dxf"));
+        extraFiles.push(cloneAttachmentForPiece(dxf, piece, "dxf", sibling.id));
         borrowed_from[piece] = sibling.id;
       }
     }

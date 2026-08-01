@@ -19,6 +19,7 @@ import { outlinePointsForPlacement } from "@/lib/pattern-library/dxf-parser";
 import {
   collectNestDxfMetadata,
   collectNestTudMetadata,
+  estimateNestForClientPattern,
   estimateNestFromDxf,
   estimateNestFromTud,
 } from "@/lib/pattern-library/nest-estimate";
@@ -218,6 +219,21 @@ export function NestEstimatePanel({
   const liveEstimate = useMemo(() => {
     if (!(width > 0) || doubleFold === "unset") return null;
     const qty = Math.max(1, Math.floor(Number(garmentQty)) || 1);
+    // Multi-piece shells (Overshirt+Trouser, Suit, ...): per-piece DXF/TUD mix.
+    if (requiredPieceNames.length > 1) {
+      return estimateNestForClientPattern(
+        {
+          ...pattern,
+          marker_fabric_width_cm: width,
+          marker_double_fold: doubleFold === "yes",
+        },
+        {
+          requiredPieceNames,
+          size: size || null,
+          garment_qty: qty,
+        }
+      );
+    }
     if (dxf?.pieces?.length) {
       return estimateNestFromDxf({
         dxf,
@@ -235,7 +251,7 @@ export function NestEstimatePanel({
       size: size || null,
       garment_qty: qty,
     });
-  }, [dxf, tud, width, doubleFold, size, garmentQty]);
+  }, [dxf, tud, width, doubleFold, size, garmentQty, pattern, requiredPieceNames]);
 
   const cutterPlan = useMemo(() => {
     if (!tud) return null;
@@ -288,23 +304,37 @@ export function NestEstimatePanel({
   function autoNest() {
     if (!(width > 0) || !nestSourceReady) return;
     const qty = Math.max(1, Math.floor(Number(garmentQty)) || 1);
-    const nest = dxf?.pieces?.length
-      ? estimateNestFromDxf({
-          dxf,
-          fabric_width_cm: width,
-          double_fold: doubleFold === "yes",
-          size: size || null,
-          garment_qty: qty,
-        })
-      : tud
-        ? estimateNestFromTud({
-            tud,
-            fabric_width_cm: width,
-            double_fold: doubleFold === "yes",
-            size: size || null,
-            garment_qty: qty,
-          })
-        : null;
+    const nest =
+      requiredPieceNames.length > 1
+        ? estimateNestForClientPattern(
+            {
+              ...pattern,
+              marker_fabric_width_cm: width,
+              marker_double_fold: doubleFold === "yes",
+            },
+            {
+              requiredPieceNames,
+              size: size || null,
+              garment_qty: qty,
+            }
+          )
+        : dxf?.pieces?.length
+          ? estimateNestFromDxf({
+              dxf,
+              fabric_width_cm: width,
+              double_fold: doubleFold === "yes",
+              size: size || null,
+              garment_qty: qty,
+            })
+          : tud
+            ? estimateNestFromTud({
+                tud,
+                fabric_width_cm: width,
+                double_fold: doubleFold === "yes",
+                size: size || null,
+                garment_qty: qty,
+              })
+            : null;
     if (!nest) return;
     setPlacements(nest.placements.map((p) => ({ ...p })));
     setAreaM2(nest.area_m2);

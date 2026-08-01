@@ -30,7 +30,9 @@ import { NestEstimatePanel } from "@/components/pattern/library/NestEstimatePane
 import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
 import { TudVersionHistory } from "@/components/pattern/library/TudVersionHistory";
 import {
+  DXF_UPLOAD_ACCEPT,
   findActiveMarkerAttachment,
+  listDxfFiles,
   listMarkerFiles,
   MARKER_UPLOAD_ACCEPT,
 } from "@/lib/pattern-library/cutting-completeness";
@@ -118,6 +120,10 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   const [libraryBases, setLibraryBases] = useState<BasePattern[]>([]);
   const [tudCascade, setTudCascade] = useState<BasePatternCascadeValue>(() => emptyCascadeValue());
   const [sheetMode, setSheetMode] = useState<"trials" | "detail">("trials");
+  /** Piece name -> sibling pattern id when CAD is borrowed for multi-piece shells. */
+  const [geometryBorrowedFrom, setGeometryBorrowedFrom] = useState<Record<string, string>>(
+    {}
+  );
 
   const load = useCallback(
     async (keepSelection = false) => {
@@ -130,6 +136,11 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         const data = await res.json();
         const loaded: ClientPattern = data.pattern;
         setPattern(loaded);
+        setGeometryBorrowedFrom(
+          data.geometry_borrowed_from && typeof data.geometry_borrowed_from === "object"
+            ? data.geometry_borrowed_from
+            : {}
+        );
         setLinkedJobs(data.linked_jobs ?? []);
         setSuggestedFabricWidthCm(
           typeof data.suggested_fabric_width_cm === "number" &&
@@ -160,6 +171,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
       } catch {
         setPattern(null);
         setLinkedBase(null);
+        setGeometryBorrowedFrom({});
       } finally {
         setLoading(false);
       }
@@ -1445,8 +1457,29 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           null
         }
         defaultFabricWidthSource={suggestedFabricWidthSource}
-        onPatternUpdated={(next) => setPattern(next)}
+        onPatternUpdated={() => void load(true)}
       />
+
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <LibraryFileList
+          files={listDxfFiles(pattern)}
+          uploadUrl={`/api/pattern/library/client-patterns/${pattern.id}/files`}
+          downloadUrlBase={`/api/pattern/library/client-patterns/${pattern.id}/files`}
+          onUploaded={handleUploaded}
+          title="DXF cut outlines (.dxf)"
+          accept={DXF_UPLOAD_ACCEPT}
+          emptyLabel="No .DXF yet. Upload the AAMA/TUKA cut outlines for the fabric nest board (preferred for real piece shapes; .TUD still works for the parts table)."
+          uploadLabel="Upload .DXF"
+        />
+        {Object.keys(geometryBorrowedFrom).length > 0 ? (
+          <p className="mt-2 text-xs text-slate-500">
+            Showing cut outlines from linked piece pattern
+            {Object.keys(geometryBorrowedFrom).length === 1 ? "" : "s"} (
+            {Object.keys(geometryBorrowedFrom).join(", ")}
+            ). Upload here to attach .DXF on this consolidated pattern.
+          </p>
+        ) : null}
+      </div>
 
       <TudVersionHistory
         pattern={pattern}
@@ -1462,11 +1495,13 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         />
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <LibraryFileList
-            files={pattern.files}
+            files={pattern.files.filter((file) => file.kind !== "dxf")}
             uploadUrl={`/api/pattern/library/client-patterns/${pattern.id}/files`}
             downloadUrlBase={`/api/pattern/library/client-patterns/${pattern.id}/files`}
             onUploaded={handleUploaded}
-            title="Other pattern files (Excel, DXF, RUL, PDF, images)"
+            title="Other pattern files (Excel, RUL, PDF, images)"
+            accept=".tud,.xlsx,.xls,.rul,.pdf,.png,.jpg,.jpeg,.webp,.heic"
+            emptyLabel="No other files yet — Excel, RUL, PDF, images."
             basePatternName={basePatternName}
           />
         </div>

@@ -19,6 +19,7 @@ import {
   backfillMarkerLayoutsForPatterns,
   patternNeedsMarkerBackfill,
 } from "@/lib/pattern-library/marker-layout-backfill";
+import { hydrateMultiPieceGeometry } from "@/lib/pattern-library/multi-piece-geometry";
 import { generatePatternRef } from "@/lib/pattern-library/refs";
 import {
   fillMeasurementsFromBase,
@@ -1407,7 +1408,9 @@ export async function seedMarkerLayoutIfMissing(
   if (index < 0) return { ok: false, status: 404, error: "Client pattern not found." };
 
   const existing = store.client_patterns[index]!;
-  if (!patternNeedsMarkerBackfill(existing)) {
+  // Multi-piece shells often have no own CAD - borrow sibling TUD/DXF for seeding only.
+  const hydrated = hydrateMultiPieceGeometry(existing, store.client_patterns).pattern;
+  if (!patternNeedsMarkerBackfill(hydrated)) {
     return { ok: true, pattern: existing, changed: false };
   }
 
@@ -1423,7 +1426,7 @@ export async function seedMarkerLayoutIfMissing(
         job.width_cm > 0
     )?.width_cm ?? null;
 
-  const result = backfillMarkerLayoutForPattern(existing, {
+  const result = backfillMarkerLayoutForPattern(hydrated, {
     updated_at: now(),
     hints: [jobHint],
     salesOrders: salesOrders.orders,
@@ -1433,7 +1436,16 @@ export async function seedMarkerLayoutIfMissing(
     return { ok: true, pattern: existing, changed: false };
   }
 
-  const next = { ...result.pattern, updated_at: now() };
+  // Persist nest fields only - never write borrowed sibling file rows onto the shell.
+  const next = {
+    ...existing,
+    marker_layout: result.pattern.marker_layout ?? existing.marker_layout,
+    marker_fabric_width_cm:
+      result.pattern.marker_fabric_width_cm ?? existing.marker_fabric_width_cm,
+    marker_double_fold: result.pattern.marker_double_fold ?? existing.marker_double_fold,
+    base_size: existing.base_size ?? result.pattern.base_size,
+    updated_at: now(),
+  };
   store.client_patterns[index] = next;
   await writePatternLibrary(store);
 

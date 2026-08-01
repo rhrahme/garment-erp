@@ -435,14 +435,30 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
           />
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <LibraryFileList
-            files={base.files}
-            uploadUrl={`/api/pattern/library/bases/${base.id}/files`}
-            downloadUrlBase={`/api/pattern/library/bases/${base.id}/files`}
-            onUploaded={() => void load()}
-            title="Base pattern files (.TUD, Excel, DXF, RUL, PDF, images)"
-          />
+        <div className="space-y-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <LibraryFileList
+              files={base.files.filter((file) => file.kind === "dxf")}
+              uploadUrl={`/api/pattern/library/bases/${base.id}/files`}
+              downloadUrlBase={`/api/pattern/library/bases/${base.id}/files`}
+              onUploaded={() => void load()}
+              title="DXF cut outlines (.dxf)"
+              accept=".dxf,.DXF"
+              emptyLabel="No .DXF yet. Upload cut outlines when this base is used for real nest layouts."
+              uploadLabel="Upload .DXF"
+            />
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <LibraryFileList
+              files={base.files.filter((file) => file.kind !== "dxf")}
+              uploadUrl={`/api/pattern/library/bases/${base.id}/files`}
+              downloadUrlBase={`/api/pattern/library/bases/${base.id}/files`}
+              onUploaded={() => void load()}
+              title="Base pattern files (.TUD, Excel, RUL, PDF, images)"
+              accept=".tud,.xlsx,.xls,.rul,.pdf,.png,.jpg,.jpeg,.webp,.heic"
+              emptyLabel="No other files yet — .TUD, Excel, RUL, PDF, images."
+            />
+          </div>
         </div>
       </div>
 

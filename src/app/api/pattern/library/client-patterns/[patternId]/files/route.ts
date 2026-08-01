@@ -123,7 +123,20 @@ export async function GET(request: Request, context: { params: Promise<{ pattern
       ...pattern.files,
       ...pattern.versions.flatMap((version) => version.files),
     ];
-    const resolved = resolveLibraryFileRequest(allFiles, storedFilename);
+    let resolved = resolveLibraryFileRequest(allFiles, storedFilename);
+    // Borrowed sibling DXF/TUD on multi-piece shells keep the sibling stored_filename.
+    if (!resolved) {
+      const library = await readPatternLibraryFresh();
+      for (const candidate of library.client_patterns) {
+        if (candidate.id === patternId) continue;
+        const candidateFiles = [
+          ...candidate.files,
+          ...candidate.versions.flatMap((version) => version.files),
+        ];
+        resolved = resolveLibraryFileRequest(candidateFiles, storedFilename);
+        if (resolved) break;
+      }
+    }
     if (!resolved) {
       return NextResponse.json({ error: "File not found." }, { status: 404 });
     }

@@ -119,6 +119,8 @@ describe("multi-piece-geometry", () => {
     assert.equal(garmentTypeMatchesPiece("trouser", "Trouser"), true);
     assert.equal(garmentTypeMatchesPiece("shorts", "Short"), true);
     assert.equal(garmentTypeMatchesPiece("shirt", "Jacket"), false);
+    assert.equal(garmentTypeMatchesPiece("overshirt", "Overshirt"), true);
+    assert.equal(garmentTypeMatchesPiece("shirt", "Overshirt"), true);
   });
 
   it("prefers sibling with overlapping fabric lines", () => {
@@ -186,5 +188,50 @@ describe("multi-piece-geometry", () => {
     assert.ok(pattern.files.some((f) => f.kind === "tud" && f.piece_name === "Trouser"));
     assert.equal(pattern.active_tud_by_piece?.Jacket?.includes("j-tud"), true);
     assert.equal(pattern.active_tud_by_piece?.Trouser?.includes("t-tud"), true);
+    assert.ok(
+      pattern.files.some(
+        (f) =>
+          f.kind === "dxf" &&
+          f.piece_name === "Jacket" &&
+          f.borrowed_from_pattern_id === "jacket"
+      )
+    );
+  });
+
+  it("hydrates Overshirt+Trouser shell from sibling Overshirt DXF", () => {
+    const shell = basePattern({
+      id: "shell",
+      garment_type: "Overshirt+Trouser",
+      linked_fabric_line_ids: ["line-l07"],
+    });
+    const overshirt = basePattern({
+      id: "cp-1785517898187-126",
+      garment_type: "Overshirt",
+      linked_fabric_line_ids: ["line-l07"],
+      files: [dxfFile("os-dxf"), tudFile("os-tud")],
+    });
+    const trouser = basePattern({
+      id: "trouser",
+      garment_type: "Trouser",
+      linked_fabric_line_ids: ["line-l07"],
+      files: [tudFile("tr-tud")],
+    });
+
+    const { pattern, borrowed, borrowed_from } = hydrateMultiPieceGeometry(shell, [
+      shell,
+      overshirt,
+      trouser,
+    ]);
+    assert.equal(borrowed, true);
+    assert.equal(borrowed_from.Overshirt, "cp-1785517898187-126");
+    assert.equal(borrowed_from.Trouser, "trouser");
+    assert.ok(
+      pattern.files.some(
+        (f) =>
+          f.kind === "dxf" &&
+          f.piece_name === "Overshirt" &&
+          f.borrowed_from_pattern_id === "cp-1785517898187-126"
+      )
+    );
   });
 });

@@ -172,7 +172,9 @@ export function ZapierSetup() {
             <li className="pl-4 text-slate-500">
               multipart: file, optional piece_name (Jacket/Trouser/...), optional
               slot=marker (optional archive only), optional uploaded_by; ?version=
-              for trial (.TUD preferred; marker upload is not a completion gate)
+              for trial (.TUD / .DXF cut outlines preferred; marker upload is not a
+              completion gate). Webhook pattern_library.file_uploaded includes
+              kind plus tud_* / dxf_* / tum_* / rul_* summary fields when parsed.
             </li>
             <li>PATCH {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]</li>
             <li className="pl-4 text-slate-500">

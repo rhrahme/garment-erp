@@ -8,6 +8,7 @@ import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readPatternJobs } from "@/lib/data/pattern-jobs";
 import { formatBasePatternDisplayName } from "@/lib/pattern-library/derived-from";
 import { resolveMarkerFabricWidthAsync } from "@/lib/pattern-library/marker-layout-server";
+import { hydrateMultiPieceGeometry } from "@/lib/pattern-library/multi-piece-geometry";
 import {
   seedMarkerLayoutIfMissing,
   updateClientPattern,
@@ -35,8 +36,12 @@ export async function GET(_request: Request, context: { params: Promise<{ patter
     }
 
     const library = await readPatternLibraryFresh();
-    const linkedBase = pattern.base_pattern_id
-      ? library.base_patterns.find((candidate) => candidate.id === pattern.base_pattern_id) ?? null
+    // Suit / Overshirt+Trouser shells: surface sibling piece TUD+DXF in the UI
+    // (virtual - not persisted on the consolidated pattern).
+    const hydration = hydrateMultiPieceGeometry(pattern, library.client_patterns);
+    const viewPattern = hydration.pattern;
+    const linkedBase = viewPattern.base_pattern_id
+      ? library.base_patterns.find((candidate) => candidate.id === viewPattern.base_pattern_id) ?? null
       : null;
     const linkedJobs = readPatternJobs()
       .jobs.filter((job) => job.client_pattern_id === patternId)
@@ -51,11 +56,13 @@ export async function GET(_request: Request, context: { params: Promise<{ patter
     const jobWidthHint =
       linkedJobs.find((job) => typeof job.width_cm === "number" && job.width_cm > 0)?.width_cm ??
       null;
-    const widthSuggestion = await resolveMarkerFabricWidthAsync(pattern, {
+    const widthSuggestion = await resolveMarkerFabricWidthAsync(viewPattern, {
       hints: [jobWidthHint],
     });
     return NextResponse.json({
-      pattern,
+      pattern: viewPattern,
+      geometry_borrowed: hydration.borrowed,
+      geometry_borrowed_from: hydration.borrowed_from,
       linked_jobs: linkedJobs,
       suggested_fabric_width_cm: widthSuggestion?.width_cm ?? null,
       suggested_fabric_width_source: widthSuggestion?.source ?? null,

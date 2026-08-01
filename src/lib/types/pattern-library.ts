@@ -154,6 +154,11 @@ export interface PatternLibraryAttachment {
    * Null/absent = unscoped (legacy single-slot uploads).
    */
   piece_name?: string | null;
+  /**
+   * When virtually borrowed from a sibling piece pattern for a multi-piece shell
+   * (Suit, Overshirt+Trouser, ...). Not persisted on the shell pattern.
+   */
+  borrowed_from_pattern_id?: string | null;
   /** Parsed TUKA CAD metadata for .tud uploads (absent/null when not parseable). */
   tud?: TudMetadata | null;
   /** Parsed TUKAmrk .tum metadata for marker uploads (absent/null when not parseable). */
