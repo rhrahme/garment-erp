@@ -15,6 +15,7 @@ import {
   isProductionOperatorAccess,
   isSalesOperatorAccess,
   isAccountingOperatorAccess,
+  isStitchOperatorAccess,
   isSuperAdminEmail,
   isSuperAdminRole,
   isTaskOperatorAccess,
@@ -37,6 +38,7 @@ export interface SessionContext {
   isAdmin: boolean;
   isClientManager: boolean;
   isTaskOperator: boolean;
+  isStitchOperator: boolean;
   isProductionOperator: boolean;
   isPatternOperator: boolean;
   isSalesOperator: boolean;
@@ -64,21 +66,29 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
   const isSuperAdmin = isSuperAdminRole(role) || isSuperAdminEmail(email);
   const isClientManager = !isSuperAdmin && isClientManagerAccess(role, email);
   const isTaskOperator = !isSuperAdmin && isTaskOperatorAccess(role, email);
+  const isStitchOperator =
+    !isSuperAdmin &&
+    !isClientManager &&
+    !isTaskOperator &&
+    isStitchOperatorAccess(role, email);
   const isProductionOperator =
     !isSuperAdmin &&
     !isClientManager &&
     !isTaskOperator &&
+    !isStitchOperator &&
     isProductionOperatorAccess(role, email);
   const isPatternOperator =
     !isSuperAdmin &&
     !isClientManager &&
     !isTaskOperator &&
+    !isStitchOperator &&
     !isProductionOperator &&
     isPatternOperatorAccess(role, email);
   const isSalesOperator =
     !isSuperAdmin &&
     !isClientManager &&
     !isTaskOperator &&
+    !isStitchOperator &&
     !isProductionOperator &&
     !isPatternOperator &&
     isSalesOperatorAccess(role, email);
@@ -86,6 +96,7 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
     !isSuperAdmin &&
     !isClientManager &&
     !isTaskOperator &&
+    !isStitchOperator &&
     !isProductionOperator &&
     !isPatternOperator &&
     !isSalesOperator &&
@@ -94,6 +105,7 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
     isSuperAdmin ||
     (!isClientManager &&
       !isTaskOperator &&
+      !isStitchOperator &&
       !isProductionOperator &&
       !isPatternOperator &&
       !isSalesOperator &&
@@ -107,15 +119,17 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
         ? "client_manager"
         : isTaskOperator
           ? "task_operator"
-          : isProductionOperator
-            ? "production_operator"
-            : isPatternOperator
-              ? "pattern_operator"
-              : isSalesOperator
-                ? "sales_operator"
-                : isAccountingOperator
-                  ? "accounting"
-                  : role;
+          : isStitchOperator
+            ? "stitch_operator"
+            : isProductionOperator
+              ? "production_operator"
+              : isPatternOperator
+                ? "pattern_operator"
+                : isSalesOperator
+                  ? "sales_operator"
+                  : isAccountingOperator
+                    ? "accounting"
+                    : role;
 
   return {
     role: effectiveRole,
@@ -123,6 +137,7 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
     isAdmin,
     isClientManager,
     isTaskOperator,
+    isStitchOperator,
     isProductionOperator,
     isPatternOperator,
     isSalesOperator,
@@ -139,6 +154,7 @@ function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<
     canAccessPattern:
       !isSalesOperator &&
       !isAccountingOperator &&
+      !isStitchOperator &&
       canAccessPatternModule(
         isClientManager,
         isAdmin,
@@ -186,6 +202,7 @@ export async function getSessionContext(): Promise<SessionContext> {
       isAdmin: false,
       isClientManager: false,
       isTaskOperator: false,
+      isStitchOperator: false,
       isProductionOperator: false,
       isPatternOperator: false,
       isSalesOperator: false,
@@ -272,7 +289,7 @@ export async function requirePatternAccess(): Promise<SessionContext | null> {
   return session;
 }
 
-/** Task / production operators may read orders for floor work but cannot create or edit them. */
+/** Task / production / stitch operators may read orders for floor work but cannot create or edit them. */
 export function canModifySalesOrders(session: SessionContext): boolean {
-  return !session.isTaskOperator && !session.isProductionOperator;
+  return !session.isTaskOperator && !session.isProductionOperator && !session.isStitchOperator;
 }

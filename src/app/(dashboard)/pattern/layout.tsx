@@ -9,6 +9,7 @@ export default async function PatternLayout({ children }: { children: React.Reac
       defaultPathForSession({
         isClientManager: session.isClientManager,
         isTaskOperator: session.isTaskOperator,
+        isStitchOperator: session.isStitchOperator,
         isProductionOperator: session.isProductionOperator,
         isPatternOperator: session.isPatternOperator,
         isSalesOperator: session.isSalesOperator,

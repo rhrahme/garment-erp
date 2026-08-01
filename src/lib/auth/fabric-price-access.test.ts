@@ -21,6 +21,7 @@ function session(
     | "admin"
     | "client_manager"
     | "task_operator"
+    | "stitch_operator"
     | "production_operator"
     | "pattern_operator"
     | "sales_operator"
@@ -35,6 +36,7 @@ function session(
     isAdmin,
     isClientManager: role === "client_manager",
     isTaskOperator: role === "task_operator",
+    isStitchOperator: role === "stitch_operator",
     isProductionOperator: role === "production_operator",
     isPatternOperator: role === "pattern_operator",
     isSalesOperator: role === "sales_operator",
@@ -194,6 +196,7 @@ describe("restricted price field allowlist", () => {
 
 for (const role of [
   "task_operator",
+  "stitch_operator",
   "production_operator",
   "pattern_operator",
   "client_manager",

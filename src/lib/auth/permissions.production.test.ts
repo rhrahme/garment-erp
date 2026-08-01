@@ -6,6 +6,7 @@ import {
   PRODUCTION_OPERATOR_BLOCKED_ROUTE_PREFIXES,
   PRODUCTION_OPERATOR_NAV_HREFS,
   SALES_OPERATOR_NAV_HREFS,
+  STITCH_OPERATOR_NAV_HREFS,
   canAccessClientMedia,
   canAccessPatternModule,
   canAssignClientPhotoToFabric,
@@ -16,6 +17,7 @@ import {
   isPatternOperatorRouteAllowed,
   isProductionOperatorRouteAllowed,
   isSalesOperatorRouteAllowed,
+  isStitchOperatorRouteAllowed,
   resolveRestrictedAccess,
 } from "./permissions.ts";
 
@@ -71,6 +73,7 @@ describe("production_operator home / nav gating", () => {
       "/pattern",
       "/inventory",
       "/production",
+      "/stitch",
       "/production/floor-map",
       "/orders",
       "/shipments",
@@ -140,6 +143,43 @@ describe("production_operator home / nav gating", () => {
     assert.equal(canAccessPatternModule(true, false, false, false), false);
     assert.equal(canAccessPatternModule(false, false, true, false), false);
     assert.equal(canAccessPatternModule(false, true, false, false), true);
+  });
+});
+
+describe("stitch_operator kiosk gating", () => {
+  it("classifies stitch@hagan.pro as stitch_operator", () => {
+    assert.equal(resolveRestrictedAccess(null, "stitch@hagan.pro", false), "stitch_operator");
+    assert.equal(
+      resolveRestrictedAccess("production_operator", "stitch@hagan.pro", false),
+      "stitch_operator"
+    );
+  });
+
+  it("lands stitch on /stitch", () => {
+    assert.equal(defaultPathForEmail("stitch@hagan.pro"), "/stitch");
+    assert.equal(defaultPathForSession({ isStitchOperator: true }), "/stitch");
+  });
+
+  it("stitch nav is kiosk-only", () => {
+    const nav = STITCH_OPERATOR_NAV_HREFS as readonly string[];
+    assert.deepEqual(nav, ["/stitch"]);
+  });
+
+  it("allows sewing kiosk routes and blocks the rest of the ERP", () => {
+    assert.equal(isStitchOperatorRouteAllowed("/stitch"), true);
+    assert.equal(isStitchOperatorRouteAllowed("/production/stitch"), true);
+    assert.equal(isStitchOperatorRouteAllowed("/api/production/sewing-session"), true);
+    assert.equal(isStitchOperatorRouteAllowed("/api/production/sewing-session/scan"), true);
+    assert.equal(isStitchOperatorRouteAllowed("/api/qr"), true);
+    assert.equal(isStitchOperatorRouteAllowed("/api/hr/employee-lookup"), true);
+    assert.equal(isStitchOperatorRouteAllowed("/api/auth/session"), true);
+
+    assert.equal(isStitchOperatorRouteAllowed("/production"), false);
+    assert.equal(isStitchOperatorRouteAllowed("/orders"), false);
+    assert.equal(isStitchOperatorRouteAllowed("/sales"), false);
+    assert.equal(isStitchOperatorRouteAllowed("/dashboard"), false);
+    assert.equal(isStitchOperatorRouteAllowed("/invoices"), false);
+    assert.equal(isStitchOperatorRouteAllowed("/api/sales-orders"), false);
   });
 });
 

@@ -43,6 +43,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       isAdmin: false,
       isClientManager: false,
       isTaskOperator: false,
+      isStitchOperator: false,
       isProductionOperator: false,
       isPatternOperator: false,
       isSalesOperator: false,
@@ -63,6 +64,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <>
       {!session.isClientManager &&
         !session.isTaskOperator &&
+        !session.isStitchOperator &&
         !session.isProductionOperator &&
         !session.isSalesOperator &&
         !session.isAccountingOperator &&
@@ -76,6 +78,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       )}
       {!session.isClientManager &&
         !session.isTaskOperator &&
+        !session.isStitchOperator &&
         !session.isProductionOperator &&
         !session.isSalesOperator &&
         !session.isAccountingOperator && <SupplierAvailabilityBanner />}

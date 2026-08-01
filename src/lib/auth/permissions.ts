@@ -66,10 +66,26 @@ const TASK_OPERATOR_ROUTE_PREFIXES = [
 const TASK_OPERATOR_BLOCKED_ROUTE_PREFIXES = ["/orders/new", "/fabric-orders"] as const;
 
 /**
+ * Stitch floor kiosk - sewing badge/A4 scans only.
+ * Landing `/stitch`; shared path `/production/stitch` also allowed.
+ */
+const STITCH_OPERATOR_ROUTE_PREFIXES = [
+  "/stitch",
+  "/production/stitch",
+  "/api/production/sewing-session",
+  "/api/qr",
+  "/api/hr/employee-lookup",
+  "/api/auth/session",
+  "/api/auth/dev-impersonate",
+  "/login",
+] as const;
+
+/**
  * Factory manager - everything inside the factory except accounting/costs.
  * Prefer allowing operational pages (with price lockdown) over hiding them.
  */
 const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
+  "/stitch",
   "/production",
   "/fabric-receiving",
   "/thread-buttons",
@@ -251,6 +267,11 @@ const BUILTIN_TASK_OPERATOR_EMAILS = ["hagan.task1@gmail.com"] as const;
  */
 const BUILTIN_PRODUCTION_OPERATOR_EMAILS = ["production@hagan.pro"] as const;
 
+/**
+ * Stitch floor kiosk logins - sewing session scans only; works without STITCH_EMAILS on deploy.
+ */
+const BUILTIN_STITCH_OPERATOR_EMAILS = ["stitch@hagan.pro"] as const;
+
 /** Tablet sales - client/catalog/order/invoice access; works without SALES_EMAILS on deploy. */
 const BUILTIN_SALES_OPERATOR_EMAILS = ["sales1@hagan.pro"] as const;
 
@@ -265,6 +286,9 @@ export const TASK_OPERATOR_ORDERS_NAV_LABEL = "Print orders";
 
 /** Sidebar label for factory-manager production orders. */
 export const PRODUCTION_OPERATOR_ORDERS_NAV_LABEL = "Factory orders";
+
+/** Sidebar label for stitch floor kiosk. */
+export const STITCH_OPERATOR_NAV_LABEL = "Stitch";
 
 /** Sidebar pages for QC / client-manager accounts (subset of admin ERP). */
 export const CLIENT_MANAGER_NAV_HREFS = [
@@ -304,7 +328,7 @@ export const PRODUCTION_OPERATOR_NAV_HREFS = [
   "/pattern",
   "/inventory",
   "/production",
-  "/production/stitch",
+  "/stitch",
   "/production/floor-map",
   "/orders",
   "/shipments",
@@ -312,6 +336,9 @@ export const PRODUCTION_OPERATOR_NAV_HREFS = [
   "/quality",
   "/hr/id-badges",
 ] as const;
+
+/** Sidebar for stitch floor - kiosk only. */
+export const STITCH_OPERATOR_NAV_HREFS = ["/stitch"] as const;
 
 export const SALES_OPERATOR_NAV_HREFS = [
   "/sales",
@@ -345,6 +372,7 @@ export const ACCOUNTING_OPERATOR_NAV_HREFS = [
 export type RestrictedAccessKind =
   | "client_manager"
   | "task_operator"
+  | "stitch_operator"
   | "production_operator"
   | "pattern_operator"
   | "sales_operator"
@@ -414,6 +442,15 @@ export function parseProductionEmails(): Set<string> {
   return new Set([...BUILTIN_PRODUCTION_OPERATOR_EMAILS, ...fromEnv]);
 }
 
+export function parseStitchEmails(): Set<string> {
+  const raw = process.env.STITCH_EMAILS?.trim() ?? "";
+  const fromEnv = raw
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+  return new Set([...BUILTIN_STITCH_OPERATOR_EMAILS, ...fromEnv]);
+}
+
 export function parsePatternEmails(): Set<string> {
   const raw = process.env.PATTERN_EMAILS?.trim() ?? "";
   return new Set(
@@ -454,6 +491,10 @@ export function isProductionOperatorRole(role: UserRole | null | undefined): boo
   return role === "production_operator";
 }
 
+export function isStitchOperatorRole(role: UserRole | null | undefined): boolean {
+  return role === "stitch_operator";
+}
+
 export function isSalesOperatorRole(role: UserRole | null | undefined): boolean {
   return role === "sales_operator";
 }
@@ -480,6 +521,11 @@ export function isTaskOperatorEmail(email: string | null | undefined): boolean {
 export function isProductionOperatorEmail(email: string | null | undefined): boolean {
   if (!email) return false;
   return parseProductionEmails().has(email.trim().toLowerCase());
+}
+
+export function isStitchOperatorEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return parseStitchEmails().has(email.trim().toLowerCase());
 }
 
 export function isSalesOperatorEmail(email: string | null | undefined): boolean {
@@ -512,13 +558,24 @@ export function isTaskOperatorAccess(
   return isTaskOperatorRole(role) || isTaskOperatorEmail(email);
 }
 
+export function isStitchOperatorAccess(
+  role: UserRole | null | undefined,
+  email: string | null | undefined
+): boolean {
+  if (isClientManagerAccess(role, email) || isTaskOperatorAccess(role, email)) {
+    return false;
+  }
+  return isStitchOperatorRole(role) || isStitchOperatorEmail(email);
+}
+
 export function isProductionOperatorAccess(
   role: UserRole | null | undefined,
   email: string | null | undefined
 ): boolean {
   if (
     isClientManagerAccess(role, email) ||
-    isTaskOperatorAccess(role, email)
+    isTaskOperatorAccess(role, email) ||
+    isStitchOperatorAccess(role, email)
   ) {
     return false;
   }
@@ -532,6 +589,7 @@ export function isPatternOperatorAccess(
   if (
     isClientManagerAccess(role, email) ||
     isTaskOperatorAccess(role, email) ||
+    isStitchOperatorAccess(role, email) ||
     isProductionOperatorAccess(role, email)
   ) {
     return false;
@@ -546,6 +604,7 @@ export function isSalesOperatorAccess(
   if (
     isClientManagerAccess(role, email) ||
     isTaskOperatorAccess(role, email) ||
+    isStitchOperatorAccess(role, email) ||
     isProductionOperatorAccess(role, email) ||
     isPatternOperatorAccess(role, email) ||
     isAccountingOperatorRole(role) ||
@@ -563,6 +622,7 @@ export function isAccountingOperatorAccess(
   if (
     isClientManagerAccess(role, email) ||
     isTaskOperatorAccess(role, email) ||
+    isStitchOperatorAccess(role, email) ||
     isProductionOperatorAccess(role, email) ||
     isPatternOperatorAccess(role, email) ||
     isSalesOperatorRole(role) ||
@@ -573,7 +633,7 @@ export function isAccountingOperatorAccess(
   return isAccountingOperatorRole(role) || isAccountingOperatorEmail(email);
 }
 
-/** Accounts that must never see prices (QC, task, factory manager, pattern, sales). */
+/** Accounts that must never see prices (QC, task, stitch, factory manager, pattern, sales). */
 export function isPriceRestrictedAccess(
   role: UserRole | null | undefined,
   email: string | null | undefined
@@ -581,6 +641,7 @@ export function isPriceRestrictedAccess(
   return (
     isClientManagerAccess(role, email) ||
     isTaskOperatorAccess(role, email) ||
+    isStitchOperatorAccess(role, email) ||
     isProductionOperatorAccess(role, email) ||
     isPatternOperatorAccess(role, email) ||
     isSalesOperatorAccess(role, email)
@@ -595,6 +656,7 @@ export function resolveRestrictedAccess(
   if (isSuperAdmin) return null;
   if (isClientManagerAccess(role, email)) return "client_manager";
   if (isTaskOperatorAccess(role, email)) return "task_operator";
+  if (isStitchOperatorAccess(role, email)) return "stitch_operator";
   if (isProductionOperatorAccess(role, email)) return "production_operator";
   if (isPatternOperatorAccess(role, email)) return "pattern_operator";
   if (isSalesOperatorAccess(role, email)) return "sales_operator";
@@ -658,6 +720,12 @@ export function isTaskOperatorRouteAllowed(pathname: string): boolean {
 /** ID badges under `/hr` - operational identity/QR, not the payroll register. */
 export function isHrIdBadgesPath(pathname: string): boolean {
   return pathname === "/hr/id-badges" || pathname.startsWith("/hr/id-badges/");
+}
+
+export function isStitchOperatorRouteAllowed(pathname: string): boolean {
+  return STITCH_OPERATOR_ROUTE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
 }
 
 export function isProductionOperatorRouteAllowed(pathname: string): boolean {
@@ -742,6 +810,7 @@ export function isRestrictedRouteAllowed(
 ): boolean {
   if (access === "client_manager") return isClientManagerRouteAllowed(pathname);
   if (access === "task_operator") return isTaskOperatorRouteAllowed(pathname);
+  if (access === "stitch_operator") return isStitchOperatorRouteAllowed(pathname);
   if (access === "production_operator") return isProductionOperatorRouteAllowed(pathname);
   if (access === "pattern_operator") return isPatternOperatorRouteAllowed(pathname);
   if (access === "accounting") return isAccountingOperatorRouteAllowed(pathname);
@@ -751,6 +820,7 @@ export function isRestrictedRouteAllowed(
 export type SessionLandingAccess = {
   isClientManager?: boolean;
   isTaskOperator?: boolean;
+  isStitchOperator?: boolean;
   isProductionOperator?: boolean;
   isPatternOperator?: boolean;
   isSalesOperator?: boolean;
@@ -763,6 +833,7 @@ export function landingAccessFromRestricted(
   return {
     isClientManager: restrictedAccess === "client_manager",
     isTaskOperator: restrictedAccess === "task_operator",
+    isStitchOperator: restrictedAccess === "stitch_operator",
     isProductionOperator: restrictedAccess === "production_operator",
     isPatternOperator: restrictedAccess === "pattern_operator",
     isSalesOperator: restrictedAccess === "sales_operator",
@@ -782,6 +853,8 @@ export function defaultPathForSession(access: boolean | SessionLandingAccess): s
     typeof access === "boolean" ? access : Boolean(access.isClientManager);
   const isTaskOperator =
     typeof access === "boolean" ? false : Boolean(access.isTaskOperator);
+  const isStitchOperator =
+    typeof access === "boolean" ? false : Boolean(access.isStitchOperator);
   const isProductionOperator =
     typeof access === "boolean" ? false : Boolean(access.isProductionOperator);
   const isPatternOperator =
@@ -790,7 +863,8 @@ export function defaultPathForSession(access: boolean | SessionLandingAccess): s
     typeof access === "boolean" ? false : Boolean(access.isSalesOperator);
   const isAccountingOperator =
     typeof access === "boolean" ? false : Boolean(access.isAccountingOperator);
-  // Production before sales: factory managers must never land on Sales Home.
+  // Stitch kiosk and production before sales: floor logins never land on Sales Home.
+  if (isStitchOperator) return "/stitch";
   if (isProductionOperator) return "/production";
   if (isPatternOperator) return "/pattern";
   if (isSalesOperator) return "/sales";

@@ -148,7 +148,7 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     label: "Sewing sessions",
     description: "Timed stitcher sessions (badge + A4 piece QR start/end) on factory laptops",
     category: "production",
-    appHref: "/production/stitch",
+    appHref: "/stitch",
     sourcePath: "src/data/sewing-sessions.json",
   },
   {

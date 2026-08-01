@@ -12,6 +12,7 @@ import {
   defaultPathForEmail,
   isClientManagerEmail,
   isProductionOperatorEmail,
+  isStitchOperatorEmail,
   isSalesOperatorEmail,
   isAccountingOperatorEmail,
   isTaskOperatorEmail,
@@ -61,6 +62,7 @@ export async function POST(request: Request) {
       /email not confirmed/i.test(authError.message) &&
       (isClientManagerEmail(email) ||
         isTaskOperatorEmail(email) ||
+        isStitchOperatorEmail(email) ||
         isProductionOperatorEmail(email) ||
         isSalesOperatorEmail(email) ||
         isAccountingOperatorEmail(email))

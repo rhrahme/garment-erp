@@ -40,6 +40,8 @@ import {
   PRODUCTION_OPERATOR_ORDERS_NAV_LABEL,
   SALES_OPERATOR_NAV_HREFS,
   ACCOUNTING_OPERATOR_NAV_HREFS,
+  STITCH_OPERATOR_NAV_HREFS,
+  STITCH_OPERATOR_NAV_LABEL,
   TASK_OPERATOR_NAV_HREFS,
   TASK_OPERATOR_ORDERS_NAV_LABEL,
 } from "@/lib/auth/permissions";
@@ -56,7 +58,7 @@ const navItems = [
   { href: "/pattern", label: "Pattern", icon: Ruler },
   { href: "/inventory", label: "Inventory", icon: Package },
   { href: "/production", label: "Production", icon: Factory },
-  { href: "/production/stitch", label: "Stitch kiosk", icon: ScanLine },
+  { href: "/stitch", label: "Stitch kiosk", icon: ScanLine },
   { href: "/production/floor-map", label: "Factory floor map", icon: Map },
   { href: "/fabric-orders", label: "Fabric Orders", icon: Truck },
   { href: "/orders", label: "Sales Orders", icon: ShoppingCart },
@@ -78,6 +80,8 @@ const qcNavHrefs = new Set<string>(CLIENT_MANAGER_NAV_HREFS);
 const qcNavItems = navItems.filter((item) => qcNavHrefs.has(item.href));
 const taskOperatorNavHrefs = new Set<string>(TASK_OPERATOR_NAV_HREFS);
 const taskOperatorNavItems = navItems.filter((item) => taskOperatorNavHrefs.has(item.href));
+const stitchOperatorNavHrefs = new Set<string>(STITCH_OPERATOR_NAV_HREFS);
+const stitchOperatorNavItems = navItems.filter((item) => stitchOperatorNavHrefs.has(item.href));
 const productionOperatorNavHrefs = new Set<string>(PRODUCTION_OPERATOR_NAV_HREFS);
 const productionOperatorNavItems = navItems.filter((item) =>
   productionOperatorNavHrefs.has(item.href)
@@ -104,6 +108,7 @@ function isNavActive(pathname: string, href: string): boolean {
 export function Sidebar({
   clientsOnly = false,
   taskOperatorOnly = false,
+  stitchOperatorOnly = false,
   productionOperatorOnly = false,
   patternOperatorOnly = false,
   salesOperatorOnly = false,
@@ -114,6 +119,7 @@ export function Sidebar({
 }: {
   clientsOnly?: boolean;
   taskOperatorOnly?: boolean;
+  stitchOperatorOnly?: boolean;
   productionOperatorOnly?: boolean;
   patternOperatorOnly?: boolean;
   salesOperatorOnly?: boolean;
@@ -125,21 +131,23 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  // Production before sales so a mis-set dual flag never shows Sales Home on the floor.
+  // Stitch / production before sales so a mis-set dual flag never shows Sales Home on the floor.
   const items = (
-    productionOperatorOnly
-      ? productionOperatorNavItems
-      : patternOperatorOnly
-        ? patternOperatorNavItems
-        : accountingOperatorOnly
-          ? accountingOperatorNavItems
-          : salesOperatorOnly
-            ? salesOperatorNavItems
-            : taskOperatorOnly
-              ? taskOperatorNavItems
-              : clientsOnly
-                ? qcNavItems
-                : navItems
+    stitchOperatorOnly
+      ? stitchOperatorNavItems
+      : productionOperatorOnly
+        ? productionOperatorNavItems
+        : patternOperatorOnly
+          ? patternOperatorNavItems
+          : accountingOperatorOnly
+            ? accountingOperatorNavItems
+            : salesOperatorOnly
+              ? salesOperatorNavItems
+              : taskOperatorOnly
+                ? taskOperatorNavItems
+                : clientsOnly
+                  ? qcNavItems
+                  : navItems
   ).filter((item) => {
     if (item.href === "/documents" && !isAdmin && !accountingOperatorOnly) return false;
     // Sales Home is sales-tablet (and admin) only — never for floor/QC/unscoped users.
@@ -190,19 +198,23 @@ export function Sidebar({
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
-                  {productionOperatorOnly && href === "/orders"
-                    ? PRODUCTION_OPERATOR_ORDERS_NAV_LABEL
-                    : productionOperatorOnly && href === "/production"
-                      ? "Factory floor"
-                      : taskOperatorOnly && href === "/orders"
-                        ? TASK_OPERATOR_ORDERS_NAV_LABEL
-                        : clientsOnly && href === "/orders"
-                          ? CLIENT_MANAGER_ORDERS_NAV_LABEL
-                          : clientsOnly && href === "/fabric-orders"
-                            ? "Fabric Orders"
-                            : clientsOnly && href === "/hr/id-badges"
-                              ? "ID Badges"
-                              : label}
+                  {stitchOperatorOnly && href === "/stitch"
+                    ? STITCH_OPERATOR_NAV_LABEL
+                    : productionOperatorOnly && href === "/orders"
+                      ? PRODUCTION_OPERATOR_ORDERS_NAV_LABEL
+                      : productionOperatorOnly && href === "/production"
+                        ? "Factory floor"
+                        : productionOperatorOnly && href === "/stitch"
+                          ? STITCH_OPERATOR_NAV_LABEL
+                          : taskOperatorOnly && href === "/orders"
+                            ? TASK_OPERATOR_ORDERS_NAV_LABEL
+                            : clientsOnly && href === "/orders"
+                              ? CLIENT_MANAGER_ORDERS_NAV_LABEL
+                              : clientsOnly && href === "/fabric-orders"
+                                ? "Fabric Orders"
+                                : clientsOnly && href === "/hr/id-badges"
+                                  ? "ID Badges"
+                                  : label}
                 </Link>
               </li>
             );

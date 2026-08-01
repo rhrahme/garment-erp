@@ -17,10 +17,12 @@ export function DashboardShell({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const clientsOnly = session.isClientManager;
   const taskOperatorOnly = session.isTaskOperator;
+  const stitchOperatorOnly = session.isStitchOperator;
   const productionOperatorOnly = session.isProductionOperator;
   const patternOperatorOnly = session.isPatternOperator;
   const salesOperatorOnly = session.isSalesOperator;
   const accountingOperatorOnly = session.isAccountingOperator;
+  const kioskMain = stitchOperatorOnly;
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 print:h-auto print:overflow-visible">
@@ -36,6 +38,7 @@ export function DashboardShell({
       <Sidebar
         clientsOnly={clientsOnly}
         taskOperatorOnly={taskOperatorOnly}
+        stitchOperatorOnly={stitchOperatorOnly}
         productionOperatorOnly={productionOperatorOnly}
         patternOperatorOnly={patternOperatorOnly}
         salesOperatorOnly={salesOperatorOnly}
@@ -49,7 +52,13 @@ export function DashboardShell({
         <Header session={session} onMenuClick={() => setMobileNavOpen((open) => !open)} />
         {headerExtra}
         {/* overflow-x-hidden makes Chrome tile wide print fragments onto extra pages */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 print:overflow-visible print:p-0">
+        <main
+          className={
+            kioskMain
+              ? "flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-3 print:overflow-visible print:p-0"
+              : "flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 print:overflow-visible print:p-0"
+          }
+        >
           {children}
         </main>
       </div>
