@@ -600,9 +600,12 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   if (!pattern) return <p className="text-sm text-rose-600">Client pattern not found.</p>;
 
   const unit = pattern.unit;
-  const printHref = `/pattern/client-patterns/${pattern.id}/print${version ? `?version=${version.id}` : ""}`;
+  const sheetQs = version ? `version=${encodeURIComponent(version.id)}` : "";
+  const printCutterHref = `/pattern/client-patterns/${pattern.id}/print?sheet=cutter${sheetQs ? `&${sheetQs}` : ""}`;
+  const printProductionHref = `/pattern/client-patterns/${pattern.id}/print?sheet=production${sheetQs ? `&${sheetQs}` : ""}`;
   const photosPrintHref = `/pattern/client-patterns/${pattern.id}/photos/print`;
-  const pdfHref = `/api/pattern/library/client-patterns/${pattern.id}/pdf${version ? `?version=${version.id}` : ""}`;
+  const pdfCutterHref = `/api/pattern/library/client-patterns/${pattern.id}/pdf?sheet=cutter${sheetQs ? `&${sheetQs}` : ""}`;
+  const pdfProductionHref = `/api/pattern/library/client-patterns/${pattern.id}/pdf?sheet=production${sheetQs ? `&${sheetQs}` : ""}`;
   const tudPreview = clientPatternTudPreview(pattern);
   const basePatternName = linkedBase?.display_name ?? null;
   const tudSizes = tudPreview?.attachment.tud?.sizes ?? (pattern.base_size ? [pattern.base_size] : []);
@@ -630,12 +633,20 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
             Client fabrics
           </Link>
           <Link
-            href={printHref}
+            href={printCutterHref}
             target="_blank"
             className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
           >
             <Printer className="h-4 w-4" />
-            Print A4
+            Print cutter
+          </Link>
+          <Link
+            href={printProductionHref}
+            target="_blank"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+          >
+            <Printer className="h-4 w-4" />
+            Print production
           </Link>
           <Link
             href={photosPrintHref}
@@ -646,12 +657,20 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
             Print images
           </Link>
           <a
-            href={pdfHref}
+            href={pdfCutterHref}
             download
             className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
           >
             <Download className="h-4 w-4" />
-            Download PDF
+            Download cutter sheet
+          </a>
+          <a
+            href={pdfProductionHref}
+            download
+            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+          >
+            <Download className="h-4 w-4" />
+            Download production sheet
           </a>
         </div>
       </div>

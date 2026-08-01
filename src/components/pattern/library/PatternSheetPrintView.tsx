@@ -8,6 +8,7 @@ import {
   clientPatternLabelCode,
   clientPatternQrUrl,
 } from "@/lib/pattern-library/pattern-qr";
+import type { PatternSheetKind } from "@/lib/pattern-library/pattern-sheet-kind";
 import type { PatternSheetData, PatternSheetSticker } from "@/lib/pattern-library/sheet-data";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 
@@ -40,6 +41,12 @@ function piecePageLabel(sticker: PatternSheetSticker): string {
     return `${sticker.piece_name} (${sticker.piece_index}/${sticker.piece_total})`;
   }
   return sticker.piece_name;
+}
+
+function sheetQuery(kind: PatternSheetKind, data: PatternSheetData): string {
+  const params = new URLSearchParams({ sheet: kind, version: data.version.id });
+  if (data.job) params.set("job", data.job.id);
+  return params.toString();
 }
 
 type SheetPageProps = {
@@ -188,21 +195,6 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
           {preview.missing_reason ?? "Upload TUD + set fabric width for length estimate."}
         </p>
         {preview.cutter_plan ? <CutterPartsFromTud plan={preview.cutter_plan} /> : null}
-        {data.tud_thumbnail_data_url ? (
-          <div className="mt-2 flex items-start gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={data.tud_thumbnail_data_url}
-              alt="TUD embedded preview"
-              width={160}
-              height={160}
-              className="h-40 w-40 rounded border border-slate-300 bg-white object-contain p-1"
-            />
-            <p className="text-[10px] text-slate-500">
-              TUD preview (100x100 embedded JFIF, enlarged) - visual reference only.
-            </p>
-          </div>
-        ) : null}
       </div>
     );
   }
@@ -241,27 +233,6 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
       {preview.cutter_plan ? (
         <div className="rounded-lg border border-slate-300 bg-white p-3">
           <CutterPartsFromTud plan={preview.cutter_plan} />
-        </div>
-      ) : null}
-
-      {data.tud_thumbnail_data_url ? (
-        <div className="flex items-start gap-3 rounded-lg border border-slate-300 bg-slate-50 p-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={data.tud_thumbnail_data_url}
-            alt="TUD embedded preview"
-            width={160}
-            height={160}
-            className="h-40 w-40 rounded border border-slate-300 bg-white object-contain p-1"
-          />
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-800">
-              TUD preview (embedded)
-            </p>
-            <p className="mt-1 text-[11px] text-slate-500">
-              100x100 JFIF from the .tud - visual reference only (not cuttable outlines).
-            </p>
-          </div>
         </div>
       ) : null}
 
@@ -372,34 +343,70 @@ function CutNestPreviewBlock({ data }: { data: PatternSheetData }) {
   );
 }
 
-/** One A4 page - shared sheet info + cut nest + floor scan QR. */
-function PatternSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProps) {
-  const {
-    pattern,
-    version,
-    fabric,
-    order,
-    job,
-    derived_from,
-    house_brand,
-    base_fill_warning,
-    resolved_base_size,
-  } = data;
-  const unit = pattern.unit;
-  const patternQrPayload = clientPatternQrUrl(pattern.id);
-  const patternQrLabel = clientPatternLabelCode(pattern);
-  const baseColLabel = resolved_base_size
-    ? `Base (${resolved_base_size})`
-    : pattern.base_size
-      ? `Base (${pattern.base_size})`
-      : "Base";
+function FabricSpecBlock({ data }: { data: PatternSheetData }) {
+  const { fabric, pattern } = data;
+  return (
+    <div className="mt-4 rounded-lg border border-slate-300 p-3">
+      <p className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-500">
+        Fabric specification
+      </p>
+      {fabric ? (
+        <div className="grid grid-cols-2 gap-x-6 gap-y-0.5 text-sm sm:grid-cols-3">
+          <p>
+            <span className="text-slate-500">Fabric:</span>{" "}
+            <span className="font-semibold">{fabric.fabric_number}</span>
+          </p>
+          <p>
+            <span className="text-slate-500">Supplier:</span>{" "}
+            <span className="font-semibold">{fabric.supplier_name}</span>
+          </p>
+          <p>
+            <span className="text-slate-500">Color:</span>{" "}
+            <span className="font-semibold">{fabric.color ?? "-"}</span>
+          </p>
+          <p>
+            <span className="text-slate-500">Composition:</span>{" "}
+            <span className="font-semibold">{fabric.composition ?? "-"}</span>
+          </p>
+          <p>
+            <span className="text-slate-500">Weight:</span>{" "}
+            <span className="font-semibold">{fabric.gsm ? `${fabric.gsm} gsm` : "-"}</span>
+          </p>
+          <p>
+            <span className="text-slate-500">Width:</span>{" "}
+            <span className="font-semibold">
+              {fabric.width_cm
+                ? `${fabric.width_cm} cm`
+                : fabric.width_inches
+                  ? `${fabric.width_inches}"`
+                  : "-"}
+            </span>
+          </p>
+          {fabric.ordered_meters != null ? (
+            <p>
+              <span className="text-slate-500">Ordered:</span>{" "}
+              <span className="font-semibold">{fabric.ordered_meters.toFixed(2)} m</span>
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <p className="text-sm text-slate-500">
+          {pattern.fabric ? `Fabric: ${pattern.fabric}` : "No linked order fabric line."}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Cutter A4 page - cut layout + floor QR only. */
+function CutterSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProps) {
+  const { pattern, version, order, job, house_brand } = data;
 
   return (
     <div className="pattern-sheet pattern-sheet-page rounded-xl border border-slate-200 p-6 shadow-sm print:shadow-none">
-      {/* Top row: title + house brand letterhead + fixed pattern QR */}
       <div className="flex items-start justify-between gap-4 border-b-2 border-slate-900 pb-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">PATTERN MEASUREMENT SHEET</h1>
+          <h1 className="text-xl font-bold tracking-tight">CUTTER SHEET</h1>
           <p className="mt-0.5 text-xs text-slate-500">
             Cutting handoff - fold fabric, place parts, cut, then scan floor QR
           </p>
@@ -415,6 +422,119 @@ function PatternSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProp
             </p>
           ) : null}
         </div>
+        <div className="min-w-[7.5rem] rounded-lg border-2 border-slate-900 px-4 py-2 text-center">
+          <p className="text-2xl font-black tracking-widest">{house_brand.code ?? "-"}</p>
+          <p className="mt-0.5 text-[11px] font-semibold leading-tight text-slate-800">
+            {house_brand.name ?? "House brand"}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <table className="w-full text-sm">
+          <tbody>
+            {[
+              ["Client", `${pattern.client_name} (${pattern.client_code})`],
+              ["Garment", pattern.garment_type],
+              [
+                "Order",
+                order
+                  ? `${order.so_number} - ordered ${formatDate(order.order_date)}${order.delivery_date ? ` - delivery ${formatDate(order.delivery_date)}` : ""}`
+                  : "-",
+              ],
+              [
+                "Trial",
+                `Trial ${version.version}${version.is_final ? " - FINAL" : ""} - ${formatDate(version.trial_date)}`,
+              ],
+            ].map(([label, value]) => (
+              <tr key={label} className="border-b border-slate-200">
+                <td className="w-28 py-1 pr-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {label}
+                </td>
+                <td className="py-1 font-medium">{value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <FabricSpecBlock data={data} />
+      <CutNestPreviewBlock data={data} />
+
+      {sticker ? (
+        <div className="mfg-qr-block mt-4 rounded-lg border-2 border-slate-900 p-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-900">
+            Floor scan QR - {piecePageLabel(sticker)}
+          </p>
+          <p className="mt-0.5 text-[11px] text-slate-600">
+            Cutter scans at cut. Same code is used later on the floor.
+          </p>
+          <div className="mt-3 flex justify-center">
+            <div className="flex w-[7.5rem] flex-col items-center text-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={qrImageUrl(sticker.qr_payload, 280)}
+                alt={`Scan ${stickerScanLabel(sticker)}`}
+                className="h-[6.5rem] w-[6.5rem] bg-white"
+              />
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-slate-900">
+                {stickerScanLabel(sticker)}
+              </p>
+              <p className="mt-0.5 max-w-full break-all font-mono text-[10px] leading-tight text-slate-800">
+                {sticker.production_code}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <p className="mt-4 pt-2 text-[10px] text-slate-400">
+        Printed {new Date().toLocaleDateString("en-GB")} - {pattern.pattern_ref} - Trial{" "}
+        {version.version}
+        {version.is_final ? " (Final)" : ""}
+        {sticker ? ` - ${sticker.production_code}` : ""}
+      </p>
+    </div>
+  );
+}
+
+/** Production / stitcher A4 - full measurements and sewing context. */
+function ProductionSheetPage({ data }: { data: PatternSheetData }) {
+  const {
+    pattern,
+    version,
+    order,
+    job,
+    derived_from,
+    house_brand,
+    base_fill_warning,
+    resolved_base_size,
+    stickers,
+  } = data;
+  const unit = pattern.unit;
+  const patternQrPayload = clientPatternQrUrl(pattern.id);
+  const patternQrLabel = clientPatternLabelCode(pattern);
+  const baseColLabel = resolved_base_size
+    ? `Base (${resolved_base_size})`
+    : pattern.base_size
+      ? `Base (${pattern.base_size})`
+      : "Base";
+
+  return (
+    <div className="pattern-sheet pattern-sheet-page rounded-xl border border-slate-200 p-6 shadow-sm print:shadow-none">
+      <div className="flex items-start justify-between gap-4 border-b-2 border-slate-900 pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight">PRODUCTION / STITCHER SHEET</h1>
+          <p className="mt-0.5 text-xs text-slate-500">
+            Sewing handoff - measurements, instructions, piece codes for floor scan
+          </p>
+          <p className="mt-1 font-mono text-sm font-semibold">{pattern.pattern_ref}</p>
+          {job?.pattern_code ? (
+            <p className="mt-0.5 font-mono text-xs text-slate-600">
+              TUD name: {job.pattern_code}
+            </p>
+          ) : null}
+        </div>
         <div className="flex items-start gap-3">
           <div className="min-w-[7.5rem] rounded-lg border-2 border-slate-900 px-4 py-2 text-center">
             <p className="text-2xl font-black tracking-widest">{house_brand.code ?? "-"}</p>
@@ -422,7 +542,6 @@ function PatternSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProp
               {house_brand.name ?? "House brand"}
             </p>
           </div>
-          {/* Pattern library QR - archive deep link (not the floor scan code) */}
           <div className="text-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -446,7 +565,6 @@ function PatternSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProp
         </div>
       ) : null}
 
-      {/* Header block */}
       <div className="mt-4">
         <table className="w-full text-sm">
           <tbody>
@@ -477,82 +595,8 @@ function PatternSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProp
         </table>
       </div>
 
-      {/* Fabric specification block */}
-      <div className="mt-4 rounded-lg border border-slate-300 p-3">
-        <p className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-500">
-          Fabric specification
-        </p>
-        {fabric ? (
-          <div className="grid grid-cols-2 gap-x-6 gap-y-0.5 text-sm sm:grid-cols-3">
-            <p>
-              <span className="text-slate-500">Fabric:</span>{" "}
-              <span className="font-semibold">{fabric.fabric_number}</span>
-            </p>
-            <p>
-              <span className="text-slate-500">Supplier:</span>{" "}
-              <span className="font-semibold">{fabric.supplier_name}</span>
-            </p>
-            <p>
-              <span className="text-slate-500">Color:</span>{" "}
-              <span className="font-semibold">{fabric.color ?? "-"}</span>
-            </p>
-            <p>
-              <span className="text-slate-500">Composition:</span>{" "}
-              <span className="font-semibold">{fabric.composition ?? "-"}</span>
-            </p>
-            <p>
-              <span className="text-slate-500">Weight:</span>{" "}
-              <span className="font-semibold">{fabric.gsm ? `${fabric.gsm} gsm` : "-"}</span>
-            </p>
-            <p>
-              <span className="text-slate-500">Width:</span>{" "}
-              <span className="font-semibold">
-                {fabric.width_cm
-                  ? `${fabric.width_cm} cm`
-                  : fabric.width_inches
-                    ? `${fabric.width_inches}"`
-                    : "-"}
-              </span>
-            </p>
-          </div>
-        ) : (
-          <p className="text-sm text-slate-500">
-            {pattern.fabric ? `Fabric: ${pattern.fabric}` : "No linked order fabric line."}
-          </p>
-        )}
-      </div>
+      <FabricSpecBlock data={data} />
 
-      <CutNestPreviewBlock data={data} />
-
-      {/* Cutting / floor scan QR - this piece only */}
-      {sticker ? (
-        <div className="mfg-qr-block mt-4 rounded-lg border-2 border-slate-900 p-3">
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-900">
-            Cutting / floor scan QR - {piecePageLabel(sticker)}
-          </p>
-          <p className="mt-0.5 text-[11px] text-slate-600">
-            Handoff to cutting: cutter scans at cut; stitchers scan later (same code as stickers).
-          </p>
-          <div className="mt-3 flex justify-center">
-            <div className="flex w-[7.5rem] flex-col items-center text-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={qrImageUrl(sticker.qr_payload, 280)}
-                alt={`Scan ${stickerScanLabel(sticker)}`}
-                className="h-[6.5rem] w-[6.5rem] bg-white"
-              />
-              <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-slate-900">
-                {stickerScanLabel(sticker)}
-              </p>
-              <p className="mt-0.5 max-w-full break-all font-mono text-[10px] leading-tight text-slate-800">
-                {sticker.production_code}
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {/* Measurement grid */}
       <table className="mt-4 w-full border-collapse text-sm">
         <thead>
           <tr className="border-b-2 border-slate-900 text-left text-xs font-bold uppercase tracking-wide">
@@ -591,7 +635,6 @@ function PatternSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProp
         </tbody>
       </table>
 
-      {/* Footer: special instructions + physical pattern */}
       <div className="mt-4 space-y-2 text-sm">
         <p>
           <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
@@ -599,6 +642,22 @@ function PatternSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProp
           </span>{" "}
           {version.special_instructions || pattern.special_instructions || "-"}
         </p>
+        {version.notes?.trim() ? (
+          <p>
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
+              Trial notes:
+            </span>{" "}
+            {version.notes}
+          </p>
+        ) : null}
+        {pattern.notes?.trim() ? (
+          <p>
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
+              Pattern notes:
+            </span>{" "}
+            {pattern.notes}
+          </p>
+        ) : null}
         {pattern.physical_pattern_kept ? (
           <p>
             <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
@@ -607,27 +666,76 @@ function PatternSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProp
             kept{pattern.physical_pattern_location ? ` - ${pattern.physical_pattern_location}` : ""}
           </p>
         ) : null}
-        <p className="pt-2 text-[10px] text-slate-400">
-          Printed {new Date().toLocaleDateString("en-GB")} - {pattern.pattern_ref} - Trial{" "}
-          {version.version}
-          {version.is_final ? " (Final)" : ""}
-          {sticker ? ` - ${sticker.production_code}` : ""}
+        <p className="text-xs text-slate-500">
+          Linked client photos/sketches: use Print images on the pattern detail page.
         </p>
       </div>
+
+      {stickers.length > 0 ? (
+        <div className="mfg-qr-block mt-4 rounded-lg border-2 border-slate-900 p-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-900">
+            Piece / floor scan QR
+          </p>
+          <p className="mt-0.5 text-[11px] text-slate-600">
+            Stitchers scan the same codes as stickers / cutter sheet.
+          </p>
+          <div className="mt-3 flex flex-wrap justify-center gap-6">
+            {stickers.map((sticker) => (
+              <div
+                key={`${sticker.role}-${sticker.qr_payload}`}
+                className="flex w-[7rem] flex-col items-center text-center"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={qrImageUrl(sticker.qr_payload, 240)}
+                  alt={`Scan ${stickerScanLabel(sticker)}`}
+                  className="h-24 w-24 bg-white"
+                />
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-slate-900">
+                  {stickerScanLabel(sticker)}
+                </p>
+                <p className="mt-0.5 max-w-full break-all font-mono text-[10px] leading-tight text-slate-800">
+                  {sticker.production_code}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="mt-4 text-sm text-slate-500">
+          No manufacturing QRs linked (attach a fabric line with stickers).
+        </p>
+      )}
+
+      <p className="mt-4 pt-2 text-[10px] text-slate-400">
+        Printed {new Date().toLocaleDateString("en-GB")} - {pattern.pattern_ref} - Trial{" "}
+        {version.version}
+        {version.is_final ? " (Final)" : ""}
+      </p>
     </div>
   );
 }
 
-/** Printable A4 client-pattern measurement sheet - one page per manufacturing piece. */
-export function PatternSheetPrintView({ data }: { data: PatternSheetData }) {
+/** Printable A4 client-pattern sheet - cutter or production/stitcher. */
+export function PatternSheetPrintView({
+  data,
+  kind = "cutter",
+}: {
+  data: PatternSheetData;
+  kind?: PatternSheetKind;
+}) {
   const { pattern, version, stickers } = data;
+  const isProduction = kind === "production";
   const pages: Array<PatternSheetSticker | null> =
-    stickers.length > 0 ? stickers : [null];
+    !isProduction && stickers.length > 0 ? stickers : [null];
   const pageTotal = pages.length;
   const mfgSummary =
     stickers.length > 0
-      ? ` - ${stickers.length} page${stickers.length === 1 ? "" : "s"}: ${stickers.map((s) => piecePageLabel(s)).join(", ")}`
+      ? ` - ${stickers.length} piece QR${stickers.length === 1 ? "" : "s"}: ${stickers.map((s) => piecePageLabel(s)).join(", ")}`
       : " - No manufacturing QRs (link a fabric line with stickers)";
+  const qs = sheetQuery(kind, data);
+  const otherKind: PatternSheetKind = isProduction ? "cutter" : "production";
+  const otherQs = sheetQuery(otherKind, data);
 
   return (
     <div className="mx-auto min-h-screen max-w-[210mm] bg-white p-6 text-slate-900 print:p-0">
@@ -642,20 +750,27 @@ export function PatternSheetPrintView({ data }: { data: PatternSheetData }) {
             Back to {pattern.pattern_ref}
           </Link>
           <p className="mt-1 text-xs text-slate-500">
-            A4 portrait - Trial {version.version}
+            A4 portrait - {isProduction ? "Production / stitcher" : "Cutter"} - Trial{" "}
+            {version.version}
             {version.is_final ? " (Final)" : ""}
-            {` - Pattern QR ${clientPatternLabelCode(pattern)}`}
+            {isProduction ? ` - Pattern QR ${clientPatternLabelCode(pattern)}` : ""}
             {mfgSummary}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/pattern/client-patterns/${pattern.id}/print?${otherQs}`}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"
+          >
+            Switch to {isProduction ? "cutter" : "production"}
+          </Link>
           <a
-            href={`/api/pattern/library/client-patterns/${pattern.id}/pdf?version=${version.id}${data.job ? `&job=${data.job.id}` : ""}`}
+            href={`/api/pattern/library/client-patterns/${pattern.id}/pdf?${qs}`}
             download
             className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"
           >
             <Download className="h-4 w-4" />
-            Download PDF
+            Download {isProduction ? "production" : "cutter"} PDF
           </a>
           <button
             type="button"
@@ -669,15 +784,19 @@ export function PatternSheetPrintView({ data }: { data: PatternSheetData }) {
       </div>
 
       <div className="space-y-8 print:space-y-0">
-        {pages.map((sticker, index) => (
-          <PatternSheetPage
-            key={sticker ? `${sticker.role}-${sticker.qr_payload}` : "no-sticker"}
-            data={data}
-            sticker={sticker}
-            pageIndex={index + 1}
-            pageTotal={pageTotal}
-          />
-        ))}
+        {isProduction ? (
+          <ProductionSheetPage data={data} />
+        ) : (
+          pages.map((sticker, index) => (
+            <CutterSheetPage
+              key={sticker ? `${sticker.role}-${sticker.qr_payload}` : "no-sticker"}
+              data={data}
+              sticker={sticker}
+              pageIndex={index + 1}
+              pageTotal={pageTotal}
+            />
+          ))
+        )}
       </div>
     </div>
   );

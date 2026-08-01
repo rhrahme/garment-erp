@@ -102,19 +102,24 @@ describe("slugPdfToken", () => {
 });
 
 describe("buildPatternSheetPdfFilename", () => {
-  it("uses client, garment, size, fabric, SO, and Sample for trial 1", () => {
+  it("uses client, garment, size, fabric, SO, Sample, and Cutter by default", () => {
     const name = buildPatternSheetPdfFilename(sheet());
     assert.equal(
       name,
-      "FR-0526-0002-Youssef-Al-Rashed-shorts-M-S10008-SO-2026-0002-Sample.pdf"
+      "FR-0526-0002-Youssef-Al-Rashed-shorts-M-S10008-SO-2026-0002-Sample-Cutter.pdf"
     );
+  });
+
+  it("labels production sheets with Production suffix", () => {
+    const name = buildPatternSheetPdfFilename(sheet(), "production");
+    assert.match(name, /Sample-Production\.pdf$/);
   });
 
   it("labels final sheets as Final", () => {
     const name = buildPatternSheetPdfFilename(
       sheet({ version: version({ version: 2, is_final: true }) })
     );
-    assert.match(name, /Final\.pdf$/);
+    assert.match(name, /Final-Cutter\.pdf$/);
   });
 
   it("falls back when only pattern_ref is available", () => {
@@ -132,6 +137,6 @@ describe("buildPatternSheetPdfFilename", () => {
         resolved_base_size: null,
       })
     );
-    assert.equal(name, "SHORTS-LINEN-CUSTOM-Sample.pdf");
+    assert.equal(name, "SHORTS-LINEN-CUSTOM-Sample-Cutter.pdf");
   });
 });

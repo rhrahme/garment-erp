@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requirePatternAccess } from "@/lib/auth/session";
 import { generatePatternSheetPdf } from "@/lib/pattern-library/generate-pattern-sheet-pdf";
+import { parsePatternSheetKind } from "@/lib/pattern-library/pattern-sheet-kind";
 import { buildPatternSheetPdfFilename } from "@/lib/pattern-library/pattern-sheet-pdf-filename";
 import { contentDisposition } from "@/lib/pdf/download-filename";
 import { buildPatternSheetData } from "@/lib/pattern-library/sheet-data";
@@ -16,6 +17,7 @@ export async function GET(request: Request, context: { params: Promise<{ pattern
 
     const { patternId } = await context.params;
     const url = new URL(request.url);
+    const kind = parsePatternSheetKind(url.searchParams.get("sheet"));
     const data = await buildPatternSheetData(patternId, {
       versionId: url.searchParams.get("version"),
       jobId: url.searchParams.get("job"),
@@ -24,8 +26,8 @@ export async function GET(request: Request, context: { params: Promise<{ pattern
       return NextResponse.json({ error: "Client pattern not found." }, { status: 404 });
     }
 
-    const pdfBytes = await generatePatternSheetPdf(data);
-    const filename = buildPatternSheetPdfFilename(data);
+    const pdfBytes = await generatePatternSheetPdf(data, kind);
+    const filename = buildPatternSheetPdfFilename(data, kind);
 
     return new NextResponse(Buffer.from(pdfBytes), {
       headers: {

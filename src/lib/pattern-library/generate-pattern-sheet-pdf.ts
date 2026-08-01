@@ -10,6 +10,7 @@ import {
   clientPatternLabelCode,
   clientPatternQrUrl,
 } from "@/lib/pattern-library/pattern-qr";
+import type { PatternSheetKind } from "@/lib/pattern-library/pattern-sheet-kind";
 import { renderQrPngBuffer } from "@/lib/production/qr-render";
 import type { PatternSheetData, PatternSheetSticker } from "@/lib/pattern-library/sheet-data";
 
@@ -36,32 +37,148 @@ function piecePageLabel(sticker: PatternSheetSticker): string {
   return sticker.piece_name;
 }
 
-async function drawPatternSheetPage(
+function drawBrandLetterhead(
+  doc: jsPDF,
+  houseBrand: PatternSheetData["house_brand"],
+  options: { rightInsetMm?: number } = {}
+): { brandH: number; brandX: number } {
+  const brandCode = houseBrand.code ?? "-";
+  const brandName = houseBrand.name ?? "House brand";
+  const brandW = 38;
+  const brandH = houseBrand.name ? 16 : 14;
+  const rightInset = options.rightInsetMm ?? 0;
+  const brandX = PAGE_W - MARGIN - brandW - rightInset;
+  doc.setDrawColor(...INK);
+  doc.setLineWidth(0.6);
+  doc.rect(brandX, MARGIN, brandW, brandH);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.setTextColor(...INK);
+  doc.text(brandCode, brandX + brandW / 2, MARGIN + 7.5, { align: "center" });
+  doc.setFontSize(6.5);
+  doc.text(brandName.toUpperCase(), brandX + brandW / 2, MARGIN + 13, { align: "center" });
+  return { brandH, brandX };
+}
+
+async function drawPatternLibraryQr(
+  doc: jsPDF,
+  pattern: PatternSheetData["pattern"],
+  patternQrPng: Buffer
+): Promise<{ size: number; labelLines: string[] }> {
+  const patternQrLabel = clientPatternLabelCode(pattern);
+  const patternQrSize = 18;
+  const patternQrX = PAGE_W - MARGIN - patternQrSize;
+  doc.addImage(
+    `data:image/png;base64,${patternQrPng.toString("base64")}`,
+    "PNG",
+    patternQrX,
+    MARGIN,
+    patternQrSize,
+    patternQrSize
+  );
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(4);
+  doc.setTextColor(...SLATE);
+  doc.text("PATTERN LIBRARY", patternQrX + patternQrSize / 2, MARGIN + patternQrSize + 2, {
+    align: "center",
+  });
+  doc.setFont("courier", "normal");
+  doc.setFontSize(4);
+  doc.setTextColor(...INK);
+  const patternLabelLines = doc.splitTextToSize(patternQrLabel, patternQrSize + 6);
+  doc.text(patternLabelLines, patternQrX + patternQrSize / 2, MARGIN + patternQrSize + 4.5, {
+    align: "center",
+  });
+  return { size: patternQrSize, labelLines: patternLabelLines };
+}
+
+function drawHeaderRows(
+  doc: jsPDF,
+  rows: [string, string][],
+  startY: number
+): number {
+  let headerY = startY;
+  doc.setFontSize(8.5);
+  for (const [label, value] of rows) {
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...SLATE);
+    doc.text(label.toUpperCase(), MARGIN, headerY);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...INK);
+    const wrapped = doc.splitTextToSize(value, PAGE_W - MARGIN * 2 - 30);
+    doc.text(wrapped, MARGIN + 30, headerY);
+    headerY += 5 * Math.max(1, wrapped.length);
+  }
+  return headerY;
+}
+
+function drawFabricSpec(doc: jsPDF, data: PatternSheetData, startY: number): number {
+  const { fabric, pattern } = data;
+  let y = startY;
+  doc.setDrawColor(148, 163, 184);
+  doc.setLineWidth(0.3);
+  const ordered =
+    fabric?.ordered_meters != null ? `Ordered: ${fabric.ordered_meters.toFixed(2)} m` : null;
+  const fabricRows = fabric
+    ? [
+        [`Fabric: ${fabric.fabric_number}`, `Supplier: ${fabric.supplier_name}`, `Color: ${fabric.color ?? "-"}`],
+        [
+          `Composition: ${fabric.composition ?? "-"}`,
+          `Weight: ${fabric.gsm ? `${fabric.gsm} gsm` : "-"}`,
+          `Width: ${fabric.width_cm ? `${fabric.width_cm} cm` : fabric.width_inches ? `${fabric.width_inches}"` : "-"}`,
+        ],
+        ...(ordered ? [[ordered, "", ""]] : []),
+      ]
+    : [[pattern.fabric ? `Fabric: ${pattern.fabric}` : "No linked order fabric line.", "", ""]];
+  const fabricBoxH = 6 + fabricRows.length * 5;
+  doc.rect(MARGIN, y, PAGE_W - MARGIN * 2, fabricBoxH);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(...SLATE);
+  doc.text("FABRIC SPECIFICATION", MARGIN + 3, y + 4.5);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...INK);
+  fabricRows.forEach((row, rowIndex) => {
+    row.forEach((cell, colIndex) => {
+      if (cell) doc.text(cell, MARGIN + 3 + colIndex * 62, y + 9.5 + rowIndex * 5);
+    });
+  });
+  return y + fabricBoxH + 4;
+}
+
+function drawPrintedFooter(
+  doc: jsPDF,
+  data: PatternSheetData,
+  startY: number,
+  extra?: string
+): void {
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.5);
+  doc.setTextColor(...SLATE);
+  const footerBits = [
+    `Printed ${new Date().toLocaleDateString("en-GB")}`,
+    data.pattern.pattern_ref,
+    `Trial ${data.version.version}${data.version.is_final ? " (Final)" : ""}`,
+  ];
+  if (extra) footerBits.push(extra);
+  doc.text(footerBits.join(" - "), MARGIN, startY);
+}
+
+/** Cutter A4: identity, fabric, cut layout/parts, floor QR. No measurements / TUD thumb. */
+async function drawCutterSheetPage(
   doc: jsPDF,
   data: PatternSheetData,
   sticker: PatternSheetSticker | null,
   pageIndex: number,
-  pageTotal: number,
-  patternQrPng: Buffer
+  pageTotal: number
 ): Promise<void> {
-  const {
-    pattern,
-    version,
-    fabric,
-    order,
-    job,
-    derived_from,
-    house_brand,
-    base_fill_warning,
-    resolved_base_size,
-  } = data;
-  const unit = pattern.unit;
+  const { pattern, version, order, job, house_brand } = data;
 
-  // Title + brand letterhead
   doc.setTextColor(...INK);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(15);
-  doc.text("PATTERN MEASUREMENT SHEET", MARGIN, MARGIN + 5);
+  doc.text("CUTTER SHEET", MARGIN, MARGIN + 5);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(...SLATE);
@@ -91,134 +208,35 @@ async function drawPatternSheetPage(
     doc.text(`Piece ${pageIndex}/${pageTotal}: ${piecePageLabel(sticker)}`, MARGIN, titleExtraY);
   }
 
-  const brandCode = house_brand.code ?? "-";
-  const brandName = house_brand.name ?? "House brand";
-  const brandW = 38;
-  const brandH = house_brand.name ? 16 : 14;
-  const patternQrLabel = clientPatternLabelCode(pattern);
-  const patternQrSize = 18;
-  const brandX = PAGE_W - MARGIN - brandW - patternQrSize - 4;
-  doc.setDrawColor(...INK);
-  doc.setLineWidth(0.6);
-  doc.rect(brandX, MARGIN, brandW, brandH);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.setTextColor(...INK);
-  doc.text(brandCode, brandX + brandW / 2, MARGIN + 7.5, { align: "center" });
-  doc.setFontSize(6.5);
-  doc.text(brandName.toUpperCase(), brandX + brandW / 2, MARGIN + 13, { align: "center" });
-
-  // Pattern library QR (archive deep link) - not the floor scan code
-  const patternQrX = PAGE_W - MARGIN - patternQrSize;
-  doc.addImage(
-    `data:image/png;base64,${patternQrPng.toString("base64")}`,
-    "PNG",
-    patternQrX,
-    MARGIN,
-    patternQrSize,
-    patternQrSize
-  );
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(4);
-  doc.setTextColor(...SLATE);
-  doc.text("PATTERN LIBRARY", patternQrX + patternQrSize / 2, MARGIN + patternQrSize + 2, {
-    align: "center",
-  });
-  doc.setFont("courier", "normal");
-  doc.setFontSize(4);
-  doc.setTextColor(...INK);
-  const patternLabelLines = doc.splitTextToSize(patternQrLabel, patternQrSize + 6);
-  doc.text(patternLabelLines, patternQrX + patternQrSize / 2, MARGIN + patternQrSize + 4.5, {
-    align: "center",
-  });
+  const { brandH } = drawBrandLetterhead(doc, house_brand);
 
   doc.setDrawColor(...INK);
   doc.setLineWidth(0.7);
-  const ruleY = Math.max(
-    titleExtraY + 4,
-    MARGIN + Math.max(16, brandH + 2, patternQrSize + 2 + patternLabelLines.length * 2)
-  );
+  const ruleY = Math.max(titleExtraY + 4, MARGIN + Math.max(16, brandH + 2));
   doc.line(MARGIN, ruleY, PAGE_W - MARGIN, ruleY);
 
-  // Header block
-  const headerRows: [string, string][] = [
-    ["Client", `${pattern.client_name} (${pattern.client_code})`],
-    ["Garment", pattern.garment_type],
-    ["Description", pattern.description ?? "-"],
-    ["Origin", derived_from ?? "Custom"],
+  const headerY = drawHeaderRows(
+    doc,
     [
-      "Order",
-      order
-        ? `${order.so_number} - ordered ${formatDate(order.order_date)}${order.delivery_date ? ` - delivery ${formatDate(order.delivery_date)}` : ""}`
-        : "-",
+      ["Client", `${pattern.client_name} (${pattern.client_code})`],
+      ["Garment", pattern.garment_type],
+      [
+        "Order",
+        order
+          ? `${order.so_number} - ordered ${formatDate(order.order_date)}${order.delivery_date ? ` - delivery ${formatDate(order.delivery_date)}` : ""}`
+          : "-",
+      ],
+      [
+        "Trial",
+        `Trial ${version.version}${version.is_final ? " - FINAL" : ""} - ${formatDate(version.trial_date)}`,
+      ],
     ],
-    [
-      "Trial",
-      `Trial ${version.version}${version.is_final ? " - FINAL" : ""} - ${formatDate(version.trial_date)}`,
-    ],
-  ];
+    ruleY + 5
+  );
 
-  let headerY = ruleY + 5;
-  doc.setFontSize(8.5);
-  for (const [label, value] of headerRows) {
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...SLATE);
-    doc.text(label.toUpperCase(), MARGIN, headerY);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...INK);
-    const wrapped = doc.splitTextToSize(value, PAGE_W - MARGIN * 2 - 30);
-    doc.text(wrapped, MARGIN + 30, headerY);
-    headerY += 5 * Math.max(1, wrapped.length);
-  }
-
-  let y = headerY + 3;
-  if (base_fill_warning) {
-    doc.setFillColor(255, 251, 235);
-    doc.setDrawColor(251, 191, 36);
-    doc.setLineWidth(0.3);
-    const warnLines = doc.splitTextToSize(base_fill_warning, PAGE_W - MARGIN * 2 - 4);
-    const warnH = 4 + warnLines.length * 4;
-    doc.rect(MARGIN, y, PAGE_W - MARGIN * 2, warnH, "FD");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(120, 53, 15);
-    doc.text(warnLines, MARGIN + 2, y + 3.5);
-    y += warnH + 3;
-  }
-
-  // Fabric specification block
-  doc.setDrawColor(148, 163, 184);
-  doc.setLineWidth(0.3);
-  const fabricRows = fabric
-    ? [
-        [`Fabric: ${fabric.fabric_number}`, `Supplier: ${fabric.supplier_name}`, `Color: ${fabric.color ?? "-"}`],
-        [
-          `Composition: ${fabric.composition ?? "-"}`,
-          `Weight: ${fabric.gsm ? `${fabric.gsm} gsm` : "-"}`,
-          `Width: ${fabric.width_cm ? `${fabric.width_cm} cm` : fabric.width_inches ? `${fabric.width_inches}"` : "-"}`,
-        ],
-      ]
-    : [[pattern.fabric ? `Fabric: ${pattern.fabric}` : "No linked order fabric line.", "", ""]];
-  const fabricBoxH = 6 + fabricRows.length * 5;
-  doc.rect(MARGIN, y, PAGE_W - MARGIN * 2, fabricBoxH);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
-  doc.setTextColor(...SLATE);
-  doc.text("FABRIC SPECIFICATION", MARGIN + 3, y + 4.5);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(...INK);
-  fabricRows.forEach((row, rowIndex) => {
-    row.forEach((cell, colIndex) => {
-      if (cell) doc.text(cell, MARGIN + 3 + colIndex * 62, y + 9.5 + rowIndex * 5);
-    });
-  });
-  y += fabricBoxH + 4;
-
-  // Cut nest preview for cutter (folded fabric placement)
+  let y = drawFabricSpec(doc, data, headerY + 3);
   y = drawCutNestPreview(doc, data, y);
 
-  // Manufacturing scan QR - this piece only (cutter / floor stages)
   if (sticker) {
     const qrSize = 28;
     const labelH = 10;
@@ -230,18 +248,14 @@ async function drawPatternSheetPage(
     doc.setFontSize(7);
     doc.setTextColor(...INK);
     doc.text(
-      `CUTTING / FLOOR SCAN QR - ${piecePageLabel(sticker).toUpperCase()}`,
+      `FLOOR SCAN QR - ${piecePageLabel(sticker).toUpperCase()}`,
       MARGIN + 3,
       y + 4
     );
     doc.setFont("helvetica", "normal");
     doc.setFontSize(5.5);
     doc.setTextColor(...SLATE);
-    doc.text(
-      "Handoff to cutting: cutter scans at cut; stitchers scan later (same as stickers)",
-      MARGIN + 3,
-      y + 7.5
-    );
+    doc.text("Cutter scans at cut. Same code is used later on the floor.", MARGIN + 3, y + 7.5);
 
     const { png } = await renderQrPngBuffer(sticker.qr_payload, 300);
     const qrX = (PAGE_W - qrSize) / 2;
@@ -266,6 +280,105 @@ async function drawPatternSheetPage(
     doc.text(codeLines, qrX + qrSize / 2, qrY + qrSize + 6.5, { align: "center" });
     y += boxH + 4;
   }
+
+  drawPrintedFooter(doc, data, y + 2, sticker?.production_code);
+}
+
+/** Production / stitcher A4: full measurements, notes, library QR, piece QRs. */
+async function drawProductionSheetPage(
+  doc: jsPDF,
+  data: PatternSheetData,
+  patternQrPng: Buffer
+): Promise<void> {
+  const {
+    pattern,
+    version,
+    order,
+    job,
+    derived_from,
+    house_brand,
+    base_fill_warning,
+    resolved_base_size,
+    stickers,
+  } = data;
+  const unit = pattern.unit;
+
+  doc.setTextColor(...INK);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  doc.text("PRODUCTION / STITCHER SHEET", MARGIN, MARGIN + 5);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(...SLATE);
+  doc.text(
+    "Sewing handoff - measurements, instructions, piece codes for floor scan",
+    MARGIN,
+    MARGIN + 9.5
+  );
+  doc.setTextColor(...INK);
+  doc.setFont("courier", "bold");
+  doc.setFontSize(11);
+  doc.text(pattern.pattern_ref, MARGIN, MARGIN + 16);
+  let titleExtraY = MARGIN + 16;
+  if (job?.pattern_code) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...SLATE);
+    titleExtraY += 5;
+    doc.text(`TUD name: ${job.pattern_code}`, MARGIN, titleExtraY);
+    doc.setTextColor(...INK);
+  }
+
+  const patternQr = await drawPatternLibraryQr(doc, pattern, patternQrPng);
+  const { brandH } = drawBrandLetterhead(doc, house_brand, {
+    rightInsetMm: patternQr.size + 4,
+  });
+
+  doc.setDrawColor(...INK);
+  doc.setLineWidth(0.7);
+  const ruleY = Math.max(
+    titleExtraY + 4,
+    MARGIN + Math.max(16, brandH + 2, patternQr.size + 2 + patternQr.labelLines.length * 2)
+  );
+  doc.line(MARGIN, ruleY, PAGE_W - MARGIN, ruleY);
+
+  let headerY = drawHeaderRows(
+    doc,
+    [
+      ["Client", `${pattern.client_name} (${pattern.client_code})`],
+      ["Garment", pattern.garment_type],
+      ["Description", pattern.description ?? "-"],
+      ["Origin", derived_from ?? "Custom"],
+      [
+        "Order",
+        order
+          ? `${order.so_number} - ordered ${formatDate(order.order_date)}${order.delivery_date ? ` - delivery ${formatDate(order.delivery_date)}` : ""}`
+          : "-",
+      ],
+      [
+        "Trial",
+        `Trial ${version.version}${version.is_final ? " - FINAL" : ""} - ${formatDate(version.trial_date)}`,
+      ],
+    ],
+    ruleY + 5
+  );
+
+  let y = headerY + 3;
+  if (base_fill_warning) {
+    doc.setFillColor(255, 251, 235);
+    doc.setDrawColor(251, 191, 36);
+    doc.setLineWidth(0.3);
+    const warnLines = doc.splitTextToSize(base_fill_warning, PAGE_W - MARGIN * 2 - 4);
+    const warnH = 4 + warnLines.length * 4;
+    doc.rect(MARGIN, y, PAGE_W - MARGIN * 2, warnH, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(120, 53, 15);
+    doc.text(warnLines, MARGIN + 2, y + 3.5);
+    y += warnH + 3;
+  }
+
+  y = drawFabricSpec(doc, data, y);
 
   // Measurement grid
   autoTable(doc, {
@@ -305,7 +418,6 @@ async function drawPatternSheetPage(
     theme: "grid",
   });
 
-  // Footer
   let footerY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 6;
   doc.setFontSize(8.5);
   doc.setFont("helvetica", "bold");
@@ -317,6 +429,30 @@ async function drawPatternSheetPage(
   const instructionLines = doc.splitTextToSize(instructions, PAGE_W - MARGIN * 2 - 42);
   doc.text(instructionLines, MARGIN + 42, footerY);
   footerY += 5 * Math.max(1, instructionLines.length);
+
+  const trialNotes = version.notes?.trim();
+  if (trialNotes) {
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...SLATE);
+    doc.text("TRIAL NOTES:", MARGIN, footerY);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...INK);
+    const noteLines = doc.splitTextToSize(trialNotes, PAGE_W - MARGIN * 2 - 42);
+    doc.text(noteLines, MARGIN + 42, footerY);
+    footerY += 5 * Math.max(1, noteLines.length);
+  }
+
+  const patternNotes = pattern.notes?.trim();
+  if (patternNotes) {
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...SLATE);
+    doc.text("PATTERN NOTES:", MARGIN, footerY);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...INK);
+    const noteLines = doc.splitTextToSize(patternNotes, PAGE_W - MARGIN * 2 - 42);
+    doc.text(noteLines, MARGIN + 42, footerY);
+    footerY += 5 * Math.max(1, noteLines.length);
+  }
 
   if (pattern.physical_pattern_kept) {
     doc.setFont("helvetica", "bold");
@@ -335,13 +471,75 @@ async function drawPatternSheetPage(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
   doc.setTextColor(...SLATE);
-  const footerBits = [
-    `Printed ${new Date().toLocaleDateString("en-GB")}`,
-    pattern.pattern_ref,
-    `Trial ${version.version}${version.is_final ? " (Final)" : ""}`,
-  ];
-  if (sticker) footerBits.push(sticker.production_code);
-  doc.text(footerBits.join(" - "), MARGIN, footerY + 2);
+  doc.text(
+    "Linked client photos/sketches: use Print images on the pattern detail page.",
+    MARGIN,
+    footerY
+  );
+  footerY += 5;
+
+  // Piece QRs for stitchers (all on this sheet; cutter sheet has per-piece pages)
+  if (stickers.length > 0) {
+    const qrSize = 22;
+    const colW = (PAGE_W - MARGIN * 2) / Math.min(stickers.length, 4);
+    const rowsNeeded = Math.ceil(stickers.length / 4);
+    const boxH = 10 + rowsNeeded * (qrSize + 14);
+    if (footerY + boxH > 280) {
+      doc.addPage();
+      footerY = MARGIN;
+    }
+    doc.setDrawColor(...INK);
+    doc.setLineWidth(0.5);
+    doc.rect(MARGIN, footerY, PAGE_W - MARGIN * 2, boxH);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(...INK);
+    doc.text("PIECE / FLOOR SCAN QR", MARGIN + 3, footerY + 4);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(5.5);
+    doc.setTextColor(...SLATE);
+    doc.text("Stitchers scan the same codes as stickers / cutter sheet.", MARGIN + 3, footerY + 7.5);
+
+    for (let i = 0; i < stickers.length; i++) {
+      const sticker = stickers[i]!;
+      const col = i % 4;
+      const row = Math.floor(i / 4);
+      const { png } = await renderQrPngBuffer(sticker.qr_payload, 280);
+      const qrX = MARGIN + col * colW + (colW - qrSize) / 2;
+      const qrY = footerY + 10 + row * (qrSize + 14);
+      doc.addImage(
+        `data:image/png;base64,${png.toString("base64")}`,
+        "PNG",
+        qrX,
+        qrY,
+        qrSize,
+        qrSize
+      );
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(5.5);
+      doc.setTextColor(...INK);
+      doc.text(stickerScanLabel(sticker).toUpperCase(), qrX + qrSize / 2, qrY + qrSize + 3, {
+        align: "center",
+      });
+      doc.setFont("courier", "normal");
+      doc.setFontSize(5);
+      const codeLines = doc.splitTextToSize(sticker.production_code, colW - 4);
+      doc.text(codeLines, qrX + qrSize / 2, qrY + qrSize + 6, { align: "center" });
+    }
+    footerY += boxH + 4;
+  } else {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(...SLATE);
+    doc.text(
+      "No manufacturing QRs linked (attach a fabric line with stickers).",
+      MARGIN,
+      footerY
+    );
+    footerY += 5;
+  }
+
+  drawPrintedFooter(doc, data, footerY + 2);
 }
 
 /** Draw TUD parts list for the cutter. Returns next Y. */
@@ -506,42 +704,6 @@ function drawTumMarkerPreview(doc: jsPDF, data: PatternSheetData, startY: number
   return y + boxH + 3;
 }
 
-/** Draw TUD embedded preview (100x100 JFIF, printed larger). Returns next Y. */
-function drawTudThumbnailPreview(doc: jsPDF, data: PatternSheetData, startY: number): number {
-  if (!data.tud_thumbnail_data_url) return startY;
-  const boxW = PAGE_W - MARGIN * 2;
-  const thumbSize = 48;
-  const boxH = thumbSize + 12;
-  let y = startY;
-
-  doc.setDrawColor(100, 116, 139);
-  doc.setLineWidth(0.3);
-  doc.setFillColor(248, 250, 252);
-  doc.rect(MARGIN, y, boxW, boxH, "FD");
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
-  doc.setTextColor(...INK);
-  doc.text("TUD PREVIEW (EMBEDDED)", MARGIN + 3, y + 4);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(5.5);
-  doc.setTextColor(...SLATE);
-  doc.text(
-    "100x100 JFIF from the .tud - visual reference only (not cuttable outlines).",
-    MARGIN + 3,
-    y + 7.5
-  );
-
-  const thumbX = PAGE_W - MARGIN - thumbSize - 3;
-  const thumbY = y + 3;
-  try {
-    doc.addImage(data.tud_thumbnail_data_url, "JPEG", thumbX, thumbY, thumbSize, thumbSize);
-  } catch {
-    // Odd JPEGs still leave the label.
-  }
-  return y + boxH + 3;
-}
-
 /** Draw approximate folded-fabric nest for the cutter. Returns next Y. */
 function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number): number {
   // Optional .tum archive path - only when a marker is actually attached.
@@ -557,9 +719,6 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
   if (preview.cutter_plan) {
     y = drawCutterPartsFromTud(doc, preview.cutter_plan, y);
   }
-
-  // Larger TUD thumbnail for visual recognition on A4.
-  y = drawTudThumbnailPreview(doc, data, y);
 
   doc.setDrawColor(100, 116, 139);
   doc.setLineWidth(0.35);
@@ -610,7 +769,8 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
   doc.rect(MARGIN, y, boxW, boxH, "FD");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
-  doc.setTextColor(...(hasDxf ? ([6, 78, 59] as [number, number, number]) : [120, 53, 15]));
+  const titleColor: [number, number, number] = hasDxf ? [6, 78, 59] : [120, 53, 15];
+  doc.setTextColor(...titleColor);
   doc.text(
     hasDxf
       ? "FABRIC CUT LAYOUT - DXF PIECE OUTLINES"
@@ -723,17 +883,28 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
   return y + boxH + 3;
 }
 
-/** A4 portrait client-pattern measurement sheet - one page per manufacturing piece. */
-export async function generatePatternSheetPdf(data: PatternSheetData): Promise<ArrayBuffer> {
+/** A4 portrait sheet - cutter (per piece) or production (full sewing detail). */
+export async function generatePatternSheetPdf(
+  data: PatternSheetData,
+  kind: PatternSheetKind = "cutter"
+): Promise<ArrayBuffer> {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+  if (kind === "production") {
+    const { png: patternQrPng } = await renderQrPngBuffer(
+      clientPatternQrUrl(data.pattern.id),
+      300
+    );
+    await drawProductionSheetPage(doc, data, patternQrPng);
+    return doc.output("arraybuffer");
+  }
+
   const pages: Array<PatternSheetSticker | null> =
     data.stickers.length > 0 ? data.stickers : [null];
 
-  const { png: patternQrPng } = await renderQrPngBuffer(clientPatternQrUrl(data.pattern.id), 300);
-
   for (let i = 0; i < pages.length; i++) {
     if (i > 0) doc.addPage();
-    await drawPatternSheetPage(doc, data, pages[i]!, i + 1, pages.length, patternQrPng);
+    await drawCutterSheetPage(doc, data, pages[i]!, i + 1, pages.length);
   }
 
   return doc.output("arraybuffer");
