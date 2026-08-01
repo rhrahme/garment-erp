@@ -17,13 +17,18 @@ import {
   decidePieceStart,
 } from "@/lib/production/sewing-session-recovery";
 import {
+  enrichSewingSessionsGarmentFields,
+} from "@/lib/production/sewing-session-garment";
+import {
   employeeArmsOnKiosk,
   expireStaleSewingState,
   pieceArmsOnKiosk,
   productionCodesMatch,
   resolveUniqueEmployeeArm,
   sessionPhase,
+  sewingSessionsDashboard as sewingSessionsDashboardBase,
 } from "@/lib/production/sewing-session-state";
+import type { SewingSessionsDashboardOptions } from "@/lib/production/sewing-session-state";
 import { resolveScanToLine } from "@/lib/production/stage-scan";
 import {
   pieceProductionCodeFromSticker,
@@ -49,7 +54,6 @@ export {
   SEWING_CLOSING_TIMEOUT_MS,
   sewingFailedScansForPeriod,
   sewingPeriodWindow,
-  sewingSessionsDashboard,
 } from "@/lib/production/sewing-session-state";
 export type {
   SewingDashboardPeriod,
@@ -57,6 +61,25 @@ export type {
   SewingPeriodWindow,
   SewingSessionsDashboardOptions,
 } from "@/lib/production/sewing-session-state";
+export { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
+export {
+  enrichSewingSessionGarmentFields,
+  enrichSewingSessionsGarmentFields,
+} from "@/lib/production/sewing-session-garment";
+
+/** Dashboard payload with null garment_type backfilled from live SO sticker lookup. */
+export function sewingSessionsDashboard(
+  store: SewingSessionsFile,
+  at = Date.now(),
+  options: SewingSessionsDashboardOptions = {}
+) {
+  const dash = sewingSessionsDashboardBase(store, at, options);
+  return {
+    ...dash,
+    open_sessions: enrichSewingSessionsGarmentFields(dash.open_sessions),
+    sessions: enrichSewingSessionsGarmentFields(dash.sessions),
+  };
+}
 
 function nowIso(at = Date.now()): string {
   return new Date(at).toISOString();
@@ -80,7 +103,7 @@ function result(
   },
   extras?: Partial<SewingKioskScanResult>
 ): SewingKioskScanResult {
-  const open = openOnKiosk(store, kioskId);
+  const open = enrichSewingSessionsGarmentFields(openOnKiosk(store, kioskId));
   const arm =
     focus.arm !== undefined
       ? focus.arm
@@ -93,7 +116,10 @@ function result(
       : pieceArmsOnKiosk(store, kioskId).sort((a, b) =>
           b.armed_at.localeCompare(a.armed_at)
         )[0] ?? null;
-  const session = focus.session ?? open[0] ?? null;
+  const focusSession = focus.session
+    ? enrichSewingSessionsGarmentFields([focus.session])[0]!
+    : null;
+  const session = focusSession ?? open[0] ?? null;
   return {
     ok,
     message,
@@ -181,13 +207,15 @@ function lookupPieceMeta(scanCode: string): {
     siblings
   );
   const attribution = pieceScanAttribution(lookup.sticker, lookup.order.client_code, siblings);
+  const lineType = lookup.line.garment_type?.trim() || null;
   return {
     production_code,
     so_number: lookup.order.so_number,
     piece_mark: attribution.piece_mark,
     fabric_cut_code: supplierFabricProductionCode(lookup.sticker.code, lookup.order.client_code),
     client_name: lookup.order.client_name?.trim() || null,
-    garment_type: lookup.line.garment_type?.trim() || null,
+    // Persist SO line garment type; fall back to sticker piece name when line type is blank.
+    garment_type: lineType || attribution.piece_name?.trim() || null,
     fabric_number: lookup.line.fabric_number?.trim() || null,
     work_order_id: null,
   };

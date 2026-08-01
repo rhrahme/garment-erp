@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
 import type { SewingSession } from "@/lib/types/sewing-sessions";
 import { cn } from "@/lib/utils";
 
@@ -91,6 +92,9 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
               <li key={session.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
                 <div>
                   <p className="font-medium text-slate-900">{session.employee_name}</p>
+                  <p className="text-slate-700">
+                    {sewingSessionArticleLabel(session) || "-"}
+                  </p>
                   <p className="text-slate-500">
                     {session.production_code}
                     {session.piece_mark ? ` - ${session.piece_mark}` : ""}

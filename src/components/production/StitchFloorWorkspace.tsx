@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { StitchKioskPanel } from "@/components/production/StitchKioskPanel";
+import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
 import {
   SEWING_LIVE_LONG_RUNNING_SEC,
   sewingSessionElapsedSec,
@@ -80,6 +81,8 @@ function sessionSearchBlob(row: SewingSession): string {
     row.client_name,
     row.piece_mark,
     row.fabric_cut_code,
+    row.garment_type,
+    sewingSessionArticleLabel(row),
     row.status,
   ]
     .filter(Boolean)
@@ -286,7 +289,7 @@ export function StitchFloorWorkspace() {
                             ) : null}
                           </div>
                           <p className="text-base font-semibold text-slate-800">
-                            {session.garment_type?.trim() || "-"}
+                            {sewingSessionArticleLabel(session) || "-"}
                           </p>
                           <p className="text-sm font-medium text-slate-700">
                             {session.production_code}
@@ -445,9 +448,12 @@ export function StitchFloorWorkspace() {
                                 className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 py-3 last:border-b-0"
                               >
                                 <div>
-                                  <p className="font-medium text-slate-900">{piece.production_code}</p>
+                                  <p className="font-medium text-slate-900">
+                                    {sewingSessionArticleLabel(piece) || piece.production_code}
+                                  </p>
                                   <p className="text-sm text-slate-500">
-                                    {piece.client_name || "No client"}
+                                    {piece.production_code}
+                                    {piece.client_name ? ` / ${piece.client_name}` : ""}
                                     {piece.so_number ? ` / ${piece.so_number}` : ""}
                                   </p>
                                 </div>
@@ -543,6 +549,7 @@ export function StitchFloorWorkspace() {
                   <thead className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     <tr>
                       <th className="px-3 py-3">Employee</th>
+                      <th className="px-3 py-3">Article</th>
                       <th className="px-3 py-3">Piece</th>
                       <th className="px-3 py-3">SO / Client</th>
                       <th className="px-3 py-3">Start</th>
@@ -555,6 +562,9 @@ export function StitchFloorWorkspace() {
                     {historyRows.map((row) => (
                       <tr key={row.id} className="text-slate-800">
                         <td className="px-3 py-3 font-medium">{row.employee_name}</td>
+                        <td className="px-3 py-3 font-medium text-slate-900">
+                          {sewingSessionArticleLabel(row) || "-"}
+                        </td>
                         <td className="px-3 py-3 font-mono text-xs sm:text-sm">
                           {row.production_code}
                         </td>

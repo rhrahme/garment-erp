@@ -15,6 +15,8 @@ import {
   decideBadgeScan,
   decidePieceStart,
 } from "@/lib/production/sewing-session-recovery";
+import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
+import { enrichSewingSessionGarmentFields } from "@/lib/production/sewing-session-garment";
 import {
   expireStaleSewingState,
   SEWING_ARM_TIMEOUT_MS,
@@ -22,6 +24,7 @@ import {
   sewingPeriodWindow,
   sewingSessionsDashboard,
 } from "@/lib/production/sewing-session-state";
+import { pieceNameFromPieceMark } from "@/lib/sales-orders/label-codes";
 import type { SewingScanFailure } from "@/lib/types/sewing-scan-failures";
 import type {
   SewingKioskArm,
@@ -73,6 +76,61 @@ function session(
     ...partial,
   };
 }
+
+describe("sewingSessionArticleLabel", () => {
+  it("maps OS-1/2 piece mark to Overshirt without stored garment_type", () => {
+    assert.equal(pieceNameFromPieceMark("OS-1/2"), "Overshirt");
+    assert.equal(
+      sewingSessionArticleLabel({ garment_type: null, piece_mark: "OS-1/2" }),
+      "Overshirt"
+    );
+  });
+
+  it("prefers piece name for multi-piece SO line types", () => {
+    assert.equal(
+      sewingSessionArticleLabel({
+        garment_type: "Overshirt+Trouser",
+        piece_mark: "OS-1/2",
+      }),
+      "Overshirt"
+    );
+    assert.equal(
+      sewingSessionArticleLabel({
+        garment_type: "Overshirt+Trouser",
+        piece_mark: "TR-2/2",
+      }),
+      "Trouser"
+    );
+  });
+
+  it("keeps single-piece garment type as the article label", () => {
+    assert.equal(
+      sewingSessionArticleLabel({ garment_type: "Jacket", piece_mark: "JKT" }),
+      "Jacket"
+    );
+  });
+});
+
+describe("enrichSewingSessionGarmentFields", () => {
+  it("backfills garment_type from SO-2026-0131 Overshirt+Trouser sticker", () => {
+    const open = session({
+      id: "legacy-os",
+      employee_id: "e1",
+      employee_name: "Ali",
+      status: "open",
+      production_code: "FR-0131-L04-OS-1/2",
+      scan_code: "FR-0626-0037-SO-2026-0131-L04-OS",
+      piece_mark: "OS-1/2",
+      so_number: "SO-2026-0131",
+      garment_type: null,
+      fabric_number: null,
+    });
+    const enriched = enrichSewingSessionGarmentFields(open);
+    assert.equal(enriched.garment_type, "Overshirt+Trouser");
+    assert.equal(enriched.fabric_number, "66046");
+    assert.equal(sewingSessionArticleLabel(enriched), "Overshirt");
+  });
+});
 
 describe("expireStaleSewingState", () => {
   it("drops arms older than timeout", () => {

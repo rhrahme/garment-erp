@@ -89,6 +89,10 @@ export function pieceAbbrev(pieceName: string): string {
   return PIECE_ABBREV[pieceName] ?? pieceName.replace(/[^A-Za-z0-9]/g, "").slice(0, 6).toUpperCase();
 }
 
+const PIECE_ABBREV_TO_NAME: Record<string, string> = Object.fromEntries(
+  Object.entries(PIECE_ABBREV).map(([name, abbrev]) => [abbrev.toUpperCase(), name])
+);
+
 /** Trailing piece index on manufacturing codes — e.g. -1/2, -2/3. */
 const PIECE_INDEX_MARK_RE = /-(\d+)\/(\d+)$/i;
 
@@ -104,6 +108,14 @@ export function parsePieceIndexMark(code: string): { index: number; total: numbe
 /** Strip trailing -n/N so old and new piece codes can dual-match. */
 export function stripPieceIndexMark(code: string): string {
   return code.replace(PIECE_INDEX_MARK_RE, "");
+}
+
+/** Reverse piece mark / abbrev to a human piece name — OS-1/2 -> Overshirt, JKT -> Jacket. */
+export function pieceNameFromPieceMark(pieceMark: string | null | undefined): string | null {
+  if (!pieceMark?.trim()) return null;
+  const base = stripPieceIndexMark(pieceMark.trim()).toUpperCase();
+  if (!base) return null;
+  return PIECE_ABBREV_TO_NAME[base] ?? null;
 }
 
 /** Format piece index mark — e.g. 1/2. */
