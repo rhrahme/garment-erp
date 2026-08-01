@@ -6,6 +6,7 @@ import {
   BADGE_CARDS_PER_ROW,
   BADGE_ROWS_PER_PAGE,
   badgeDisplayName,
+  badgePrintDateLabel,
   chunkBadgePages,
 } from "@/lib/hr/badge-print";
 import { employeeQrPayload } from "@/lib/hr/employee-qr";
@@ -59,7 +60,8 @@ function drawBadgeCard(
   group: IdBadgeGroup,
   qrDataUrl: string,
   x: number,
-  y: number
+  y: number,
+  printedLabel: string
 ) {
   const w = BADGE_CARD_WIDTH_MM;
   const h = BADGE_CARD_HEIGHT_MM;
@@ -129,7 +131,7 @@ function drawBadgeCard(
   doc.text(nameLines.slice(0, 3), textX, textY);
   textY += Math.min(nameLines.length, 3) * 4.2;
 
-  const idY = y + h - 6;
+  const idY = y + h - 8;
   doc.setTextColor(100, 116, 139);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6);
@@ -138,6 +140,14 @@ function drawBadgeCard(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.text(employee.employee_id_number, textX, idY, {
+    maxWidth: textMaxW,
+  });
+
+  // Print-date version stamp (bottom of right column; does not crowd name/QR)
+  doc.setTextColor(148, 163, 184);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(5);
+  doc.text(printedLabel, textX, y + h - 2.2, {
     maxWidth: textMaxW,
   });
 }
@@ -152,6 +162,7 @@ export async function generateEmployeeBadgePdf(
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const pages = chunkBadgePages(employees, BADGE_CARDS_PER_PAGE);
   const qrCache = new Map<string, string>();
+  const printedLabel = badgePrintDateLabel();
 
   if (pages.length === 0) {
     doc.setFontSize(12);
@@ -179,7 +190,7 @@ export async function generateEmployeeBadgePdf(
         qrCache.set(payload, qrDataUrl);
       }
 
-      drawBadgeCard(doc, employee, group, qrDataUrl, x, y);
+      drawBadgeCard(doc, employee, group, qrDataUrl, x, y, printedLabel);
     }
   }
 

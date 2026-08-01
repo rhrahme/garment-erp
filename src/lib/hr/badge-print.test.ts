@@ -4,6 +4,7 @@ import {
   badgeDisplayName,
   badgeGroupFromSlug,
   badgePdfHref,
+  badgePrintDateLabel,
   badgePrintHref,
   chunkBadgePages,
   isBadgePrintableEmployee,
@@ -49,6 +50,11 @@ describe("badge-print helpers", () => {
       badgeDisplayName(emp({ id: "3", full_name: "Legal Name Only", short_name: null })),
       "Legal Name Only"
     );
+  });
+
+  it("stamps print date as a version label", () => {
+    assert.equal(badgePrintDateLabel(new Date("2026-08-01T12:00:00+03:00")), "Printed 01 Aug 2026");
+    assert.match(badgePrintDateLabel(), /^Printed \d{2} [A-Z][a-z]{2} \d{4}$/);
   });
 
   it("keeps short_name on badge-safe employee shape", () => {
