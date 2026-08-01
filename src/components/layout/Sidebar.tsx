@@ -42,6 +42,7 @@ import {
   ACCOUNTING_OPERATOR_NAV_HREFS,
   STITCH_OPERATOR_NAV_HREFS,
   STITCH_OPERATOR_NAV_LABEL,
+  STITCH_OPERATOR_ORDERS_NAV_LABEL,
   TASK_OPERATOR_NAV_HREFS,
   TASK_OPERATOR_ORDERS_NAV_LABEL,
 } from "@/lib/auth/permissions";
@@ -59,6 +60,7 @@ const navItems = [
   { href: "/inventory", label: "Inventory", icon: Package },
   { href: "/production", label: "Production", icon: Factory },
   { href: "/stitch", label: "Stitch kiosk", icon: ScanLine },
+  { href: "/stitch/orders", label: "Orders", icon: ShoppingCart },
   { href: "/production/floor-map", label: "Factory floor map", icon: Map },
   { href: "/fabric-orders", label: "Fabric Orders", icon: Truck },
   { href: "/orders", label: "Sales Orders", icon: ShoppingCart },
@@ -100,6 +102,10 @@ function isNavActive(pathname: string, href: string): boolean {
     href === "/production" &&
     (pathname.startsWith("/production/floor-map") || pathname.startsWith("/production/stitch"))
   ) {
+    return false;
+  }
+  // Stitch kiosk vs stitch Orders are sibling left-nav entries.
+  if (href === "/stitch" && pathname.startsWith("/stitch/orders")) {
     return false;
   }
   return true;
@@ -152,6 +158,8 @@ export function Sidebar({
     if (item.href === "/documents" && !isAdmin && !accountingOperatorOnly) return false;
     // Sales Home is sales-tablet (and admin) only — never for floor/QC/unscoped users.
     if (item.href === "/sales" && !salesOperatorOnly && !isAdmin) return false;
+    // Stitch Orders left-nav is for stitch floor accounts (not full QC `/orders`).
+    if (item.href === "/stitch/orders" && !stitchOperatorOnly) return false;
     // Employees / ID Badges entry for factory manager + QC; admins use HR & Payroll.
     if (item.href === "/hr/id-badges" && !productionOperatorOnly && !clientsOnly) return false;
     return true;
@@ -200,21 +208,23 @@ export function Sidebar({
                   <Icon className="h-4 w-4 shrink-0" />
                   {stitchOperatorOnly && href === "/stitch"
                     ? STITCH_OPERATOR_NAV_LABEL
-                    : productionOperatorOnly && href === "/orders"
-                      ? PRODUCTION_OPERATOR_ORDERS_NAV_LABEL
-                      : productionOperatorOnly && href === "/production"
-                        ? "Factory floor"
-                        : productionOperatorOnly && href === "/stitch"
-                          ? STITCH_OPERATOR_NAV_LABEL
-                          : taskOperatorOnly && href === "/orders"
-                            ? TASK_OPERATOR_ORDERS_NAV_LABEL
-                            : clientsOnly && href === "/orders"
-                              ? CLIENT_MANAGER_ORDERS_NAV_LABEL
-                              : clientsOnly && href === "/fabric-orders"
-                                ? "Fabric Orders"
-                                : clientsOnly && href === "/hr/id-badges"
-                                  ? "ID Badges"
-                                  : label}
+                    : stitchOperatorOnly && href === "/stitch/orders"
+                      ? STITCH_OPERATOR_ORDERS_NAV_LABEL
+                      : productionOperatorOnly && href === "/orders"
+                        ? PRODUCTION_OPERATOR_ORDERS_NAV_LABEL
+                        : productionOperatorOnly && href === "/production"
+                          ? "Factory floor"
+                          : productionOperatorOnly && href === "/stitch"
+                            ? STITCH_OPERATOR_NAV_LABEL
+                            : taskOperatorOnly && href === "/orders"
+                              ? TASK_OPERATOR_ORDERS_NAV_LABEL
+                              : clientsOnly && href === "/orders"
+                                ? CLIENT_MANAGER_ORDERS_NAV_LABEL
+                                : clientsOnly && href === "/fabric-orders"
+                                  ? "Fabric Orders"
+                                  : clientsOnly && href === "/hr/id-badges"
+                                    ? "ID Badges"
+                                    : label}
                 </Link>
               </li>
             );

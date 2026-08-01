@@ -293,6 +293,9 @@ export const PRODUCTION_OPERATOR_ORDERS_NAV_LABEL = "Factory orders";
 /** Sidebar label for stitch floor kiosk. */
 export const STITCH_OPERATOR_NAV_LABEL = "Stitch";
 
+/** Sidebar label for stitch floor orders board (under Stitch, not full `/orders`). */
+export const STITCH_OPERATOR_ORDERS_NAV_LABEL = "Orders";
+
 /** Sidebar pages for QC / client-manager accounts (subset of admin ERP). */
 export const CLIENT_MANAGER_NAV_HREFS = [
   "/fabric-orders",
@@ -340,8 +343,8 @@ export const PRODUCTION_OPERATOR_NAV_HREFS = [
   "/hr/id-badges",
 ] as const;
 
-/** Sidebar for stitch floor - kiosk only. */
-export const STITCH_OPERATOR_NAV_HREFS = ["/stitch"] as const;
+/** Sidebar for stitch floor - kiosk + orders board (not full QC `/orders`). */
+export const STITCH_OPERATOR_NAV_HREFS = ["/stitch", "/stitch/orders"] as const;
 
 export const SALES_OPERATOR_NAV_HREFS = [
   "/sales",

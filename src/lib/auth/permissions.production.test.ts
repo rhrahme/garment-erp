@@ -160,13 +160,14 @@ describe("stitch_operator kiosk gating", () => {
     assert.equal(defaultPathForSession({ isStitchOperator: true }), "/stitch");
   });
 
-  it("stitch nav is kiosk-only", () => {
+  it("stitch nav includes kiosk and orders board", () => {
     const nav = STITCH_OPERATOR_NAV_HREFS as readonly string[];
-    assert.deepEqual(nav, ["/stitch"]);
+    assert.deepEqual(nav, ["/stitch", "/stitch/orders"]);
   });
 
   it("allows sewing kiosk routes and read-only order APIs; blocks the rest of the ERP", () => {
     assert.equal(isStitchOperatorRouteAllowed("/stitch"), true);
+    assert.equal(isStitchOperatorRouteAllowed("/stitch/orders"), true);
     assert.equal(isStitchOperatorRouteAllowed("/production/stitch"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/production/sewing-session"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/production/sewing-session/scan"), true);

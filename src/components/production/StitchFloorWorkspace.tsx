@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { StitchKioskPanel } from "@/components/production/StitchKioskPanel";
 import { StitchOrdersPanel } from "@/components/production/StitchOrdersPanel";
 import {
@@ -20,6 +21,22 @@ import { cn } from "@/lib/utils";
 
 type FloorTab = "scan" | "orders" | "live" | "performance" | "history";
 type HistoryMode = "sessions" | "failures";
+
+const FLOOR_TABS = new Set<FloorTab>(["scan", "orders", "live", "performance", "history"]);
+
+function tabFromLocation(
+  pathname: string,
+  searchTab: string | null,
+  initialTab: FloorTab
+): FloorTab {
+  if (pathname === "/stitch/orders" || pathname.startsWith("/stitch/orders/")) {
+    return "orders";
+  }
+  if (searchTab && FLOOR_TABS.has(searchTab as FloorTab)) {
+    return searchTab as FloorTab;
+  }
+  return initialTab;
+}
 
 type DashboardPayload = {
   period: SewingDashboardPeriod;
@@ -114,8 +131,18 @@ function failureSearchBlob(row: SewingScanFailure): string {
     .toLowerCase();
 }
 
-export function StitchFloorWorkspace() {
-  const [tab, setTab] = useState<FloorTab>("scan");
+export function StitchFloorWorkspace({
+  initialTab = "scan",
+}: {
+  /** Preferred when URL does not already select a tab (`/stitch/orders` or `?tab=`). */
+  initialTab?: FloorTab;
+} = {}) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState<FloorTab>(() =>
+    tabFromLocation(pathname, searchParams.get("tab"), initialTab)
+  );
   const [period, setPeriod] = useState<SewingDashboardPeriod>("day");
   const [historyMode, setHistoryMode] = useState<HistoryMode>("sessions");
   const [data, setData] = useState<DashboardPayload | null>(null);
@@ -123,6 +150,27 @@ export function StitchFloorWorkspace() {
   const [search, setSearch] = useState("");
   const [expandedEmployeeId, setExpandedEmployeeId] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    setTab(tabFromLocation(pathname, searchParams.get("tab"), initialTab));
+  }, [pathname, searchParams, initialTab]);
+
+  const selectTab = useCallback(
+    (next: FloorTab) => {
+      setTab(next);
+      // Keep left-nav Orders deep-linked; other floor tabs stay on `/stitch`.
+      if (next === "orders") {
+        if (pathname !== "/stitch/orders") {
+          router.replace("/stitch/orders");
+        }
+        return;
+      }
+      if (pathname === "/stitch/orders" || pathname.startsWith("/stitch/orders/")) {
+        router.replace("/stitch");
+      }
+    },
+    [pathname, router]
+  );
 
   const load = useCallback(async () => {
     try {
@@ -201,7 +249,7 @@ export function StitchFloorWorkspace() {
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => setTab(item.id)}
+                  onClick={() => selectTab(item.id)}
                   className={cn(
                     "min-h-[52px] min-w-[96px] flex-1 rounded-xl px-4 py-3 text-base font-semibold transition-colors sm:flex-none",
                     active
