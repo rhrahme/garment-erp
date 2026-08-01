@@ -193,7 +193,11 @@ export function OrdersList({
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Order #, client, fabric, supplier..."
+            placeholder={
+              stitchMode
+                ? "Employee, garment, brand, client, SO..."
+                : "Order #, client, fabric, supplier..."
+            }
             className="mt-1 block w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm"
           />
         </label>

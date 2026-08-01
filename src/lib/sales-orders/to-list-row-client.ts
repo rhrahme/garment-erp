@@ -5,6 +5,7 @@ import {
   resolveSoArticleForFabricLine,
 } from "@/lib/sales-orders/label-codes";
 import { totalProductionLabels } from "@/lib/sales-orders/label-display";
+import { productionBrandNameForOrder } from "@/lib/sales-orders/production-brand";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import type { SalesOrderListRow } from "@/lib/data/sales-orders";
 import type { SalesOrder } from "@/lib/types/sales-orders";
@@ -18,6 +19,7 @@ export function toSalesOrderListRowClient(order: SalesOrder): SalesOrderListRow 
     order.client_reference,
     order.product_article,
     order.retail_brand,
+    productionBrandNameForOrder(order),
     order.delivery_destination,
     order.status,
     order.notes,

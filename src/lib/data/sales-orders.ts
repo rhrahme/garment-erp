@@ -12,6 +12,7 @@ import { orderLineHasStockAlert } from "@/lib/fabric-sourcing/fabric-stock";
 import { isSalesOrderArchived } from "@/lib/sales-orders/archive";
 import { totalProductionLabels } from "@/lib/sales-orders/label-display";
 import { formatFabricLineArticle, resolveSoArticleForFabricLine } from "@/lib/sales-orders/label-codes";
+import { productionBrandNameForOrder } from "@/lib/sales-orders/production-brand";
 import { summarizeSalesOrderSupplierEmail } from "@/lib/sales-orders/supplier-email-status";
 import type { PurchaseOrder } from "@/lib/types/fabric-sourcing";
 import type { SalesOrder, SalesOrdersFile } from "@/lib/types/sales-orders";
@@ -93,6 +94,7 @@ function buildSalesOrderSearchText(order: SalesOrder): string {
     order.client_reference,
     order.product_article,
     order.retail_brand,
+    productionBrandNameForOrder(order),
     order.delivery_destination,
     order.status,
     order.notes,

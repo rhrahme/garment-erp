@@ -11,6 +11,7 @@ import {
   type ScanHighlightStage,
 } from "@/lib/production/scan-stage-highlight";
 import { formatLabelGarmentDescription } from "@/lib/sales-orders/label-codes";
+import { productionBrandNameForOrder } from "@/lib/sales-orders/production-brand";
 import type { ProductionWorkOrder } from "@/lib/types/production";
 import type { SalesOrder } from "@/lib/types/sales-orders";
 import type { SewingSession } from "@/lib/types/sewing-sessions";
@@ -79,6 +80,30 @@ function garmentSummary(order: SalesOrder): string {
   return `${types.slice(0, 3).join(", ")} +${types.length - 3}`;
 }
 
+function pieceSearchBlob(
+  order: SalesOrder,
+  wo: ProductionWorkOrder,
+  live: SewingSession | null
+): string {
+  return [
+    order.client_name,
+    order.client_code,
+    order.so_number,
+    productionBrandNameForOrder(order),
+    wo.garment_type,
+    wo.piece_name,
+    formatLabelGarmentDescription(wo.garment_type, wo.piece_name),
+    wo.sticker_code,
+    wo.fabric_number,
+    wo.supplier_name,
+    live?.employee_name,
+    live?.employee_id_number,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
 export function StitchOrderBoard({
   order,
   workOrders,
@@ -91,6 +116,7 @@ export function StitchOrderBoard({
   onBack: () => void;
 }) {
   const [filter, setFilter] = useState<PieceFilter>("all");
+  const [search, setSearch] = useState("");
 
   const pieces = useMemo(() => {
     const forOrder = workOrders
@@ -105,19 +131,27 @@ export function StitchOrderBoard({
   }, [order.id, openSessions, workOrders]);
 
   const filtered = useMemo(() => {
-    if (filter === "all") return pieces;
-    return pieces.filter((row) => row.bucket === filter);
-  }, [filter, pieces]);
+    const q = search.trim().toLowerCase();
+    return pieces.filter((row) => {
+      if (filter !== "all" && row.bucket !== filter) return false;
+      if (!q) return true;
+      return pieceSearchBlob(order, row.wo, row.live).includes(q);
+    });
+  }, [filter, order, pieces, search]);
 
   const counts = useMemo(() => {
-    const next = { all: pieces.length, ready: 0, in_process: 0, done: 0 };
-    for (const row of pieces) {
+    const q = search.trim().toLowerCase();
+    const scoped = q
+      ? pieces.filter((row) => pieceSearchBlob(order, row.wo, row.live).includes(q))
+      : pieces;
+    const next = { all: scoped.length, ready: 0, in_process: 0, done: 0 };
+    for (const row of scoped) {
       if (row.bucket === "ready") next.ready += 1;
       if (row.bucket === "in_process") next.in_process += 1;
       if (row.bucket === "done") next.done += 1;
     }
     return next;
-  }, [pieces]);
+  }, [order, pieces, search]);
 
   return (
     <div className="space-y-4">
@@ -161,6 +195,14 @@ export function StitchOrderBoard({
         </div>
       </div>
 
+      <input
+        type="search"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search employee, garment, brand, client..."
+        className="min-h-[52px] w-full rounded-xl border border-slate-300 px-4 text-base text-slate-900 outline-none ring-indigo-500 focus:ring-2"
+      />
+
       <div className="flex flex-wrap gap-2">
         {FILTERS.map((item) => {
           const active = filter === item.id;
@@ -192,7 +234,7 @@ export function StitchOrderBoard({
         </p>
       ) : filtered.length === 0 ? (
         <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
-          No pieces match this filter.
+          No pieces match this search or filter.
         </p>
       ) : (
         <ul className="space-y-3">
