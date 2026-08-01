@@ -13,16 +13,27 @@ import type { PatternSheetData, PatternSheetSticker } from "@/lib/pattern-librar
 import { qrImageUrl } from "@/lib/production/qr-labels";
 
 const SHEET_PRINT_CSS = `
-@page { size: A4 portrait; margin: 10mm; }
+@page { size: A4 portrait; margin: 8mm; }
 @media print {
   .no-print { display: none !important; }
   .pattern-sheet { border: none !important; box-shadow: none !important; padding: 0 !important; }
+  .pattern-sheet-production {
+    font-size: 10px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  .pattern-sheet-production table { page-break-inside: avoid; }
+  .pattern-sheet-production tr { page-break-inside: avoid; }
   .pattern-sheet table { page-break-inside: auto; }
   .pattern-sheet tr { page-break-inside: avoid; }
   .mfg-qr-block { page-break-inside: avoid; }
   .cut-nest-block { page-break-inside: avoid; }
   .pattern-sheet-page { break-after: page; page-break-after: always; }
   .pattern-sheet-page:last-child { break-after: auto; page-break-after: auto; }
+  .pattern-sheet-production.pattern-sheet-page {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
 }
 `;
 
@@ -498,7 +509,40 @@ function CutterSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProps
   );
 }
 
-/** Production / stitcher A4 - full measurements and sewing context. */
+/** Compact fabric line for production (single-page stitcher sheet). */
+function FabricSpecCompact({ data }: { data: PatternSheetData }) {
+  const { fabric, pattern } = data;
+  if (!fabric) {
+    return (
+      <p className="mt-2 text-[11px] text-slate-600">
+        {pattern.fabric ? `Fabric: ${pattern.fabric}` : "No linked order fabric line."}
+      </p>
+    );
+  }
+  const bits = [
+    `Fabric: ${fabric.fabric_number}`,
+    `Supplier: ${fabric.supplier_name}`,
+    `Color: ${fabric.color ?? "-"}`,
+    fabric.gsm ? `${fabric.gsm} gsm` : null,
+    fabric.width_cm
+      ? `${fabric.width_cm} cm`
+      : fabric.width_inches
+        ? `${fabric.width_inches}"`
+        : null,
+    fabric.ordered_meters != null ? `Ordered: ${fabric.ordered_meters.toFixed(2)} m` : null,
+  ].filter(Boolean);
+  return (
+    <div className="mt-2 border border-slate-300 px-2 py-1.5">
+      <p className="text-[9px] font-bold uppercase tracking-wide text-slate-500">Fabric</p>
+      <p className="text-[11px] leading-snug text-slate-900">{bits.join("  |  ")}</p>
+      {fabric.composition ? (
+        <p className="text-[10px] text-slate-600">Composition: {fabric.composition}</p>
+      ) : null}
+    </div>
+  );
+}
+
+/** Production / stitcher A4 - measurements + sewing context (exactly one page). */
 function ProductionSheetPage({ data }: { data: PatternSheetData }) {
   const {
     pattern,
@@ -519,40 +563,36 @@ function ProductionSheetPage({ data }: { data: PatternSheetData }) {
     : pattern.base_size
       ? `Base (${pattern.base_size})`
       : "Base";
+  const useTwoCol = version.measurements.length > 28;
 
   return (
-    <div className="pattern-sheet pattern-sheet-page rounded-xl border border-slate-200 p-6 shadow-sm print:shadow-none">
-      <div className="flex items-start justify-between gap-4 border-b-2 border-slate-900 pb-3">
+    <div className="pattern-sheet pattern-sheet-page pattern-sheet-production rounded-xl border border-slate-200 p-4 shadow-sm print:p-0 print:shadow-none">
+      <div className="flex items-start justify-between gap-3 border-b border-slate-900 pb-2">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">PRODUCTION / STITCHER SHEET</h1>
-          <p className="mt-0.5 text-xs text-slate-500">
-            Sewing handoff - measurements, instructions, piece codes for floor scan
-          </p>
-          <p className="mt-1 font-mono text-sm font-semibold">{pattern.pattern_ref}</p>
+          <h1 className="text-base font-bold tracking-tight">PRODUCTION / STITCHER SHEET</h1>
+          <p className="mt-0.5 font-mono text-xs font-semibold">{pattern.pattern_ref}</p>
           {job?.pattern_code ? (
-            <p className="mt-0.5 font-mono text-xs text-slate-600">
-              TUD name: {job.pattern_code}
-            </p>
+            <p className="font-mono text-[10px] text-slate-600">TUD: {job.pattern_code}</p>
           ) : null}
         </div>
-        <div className="flex items-start gap-3">
-          <div className="min-w-[7.5rem] rounded-lg border-2 border-slate-900 px-4 py-2 text-center">
-            <p className="text-2xl font-black tracking-widest">{house_brand.code ?? "-"}</p>
-            <p className="mt-0.5 text-[11px] font-semibold leading-tight text-slate-800">
+        <div className="flex items-start gap-2">
+          <div className="min-w-[5.5rem] rounded border-2 border-slate-900 px-2 py-1 text-center">
+            <p className="text-lg font-black tracking-widest">{house_brand.code ?? "-"}</p>
+            <p className="text-[9px] font-semibold leading-tight text-slate-800">
               {house_brand.name ?? "House brand"}
             </p>
           </div>
           <div className="text-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={qrImageUrl(patternQrPayload, 200)}
+              src={qrImageUrl(patternQrPayload, 160)}
               alt={patternQrLabel}
-              className="h-20 w-20"
+              className="h-14 w-14"
             />
-            <p className="mt-0.5 text-[8px] font-bold uppercase tracking-wide text-slate-500">
+            <p className="mt-0.5 text-[7px] font-bold uppercase tracking-wide text-slate-500">
               Pattern library
             </p>
-            <p className="max-w-24 break-all font-mono text-[8px] leading-tight">
+            <p className="max-w-20 break-all font-mono text-[7px] leading-tight">
               {patternQrLabel}
             </p>
           </div>
@@ -560,91 +600,102 @@ function ProductionSheetPage({ data }: { data: PatternSheetData }) {
       </div>
 
       {base_fill_warning ? (
-        <div className="mt-3 rounded-md border border-amber-400 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-950">
+        <div className="mt-1.5 rounded border border-amber-400 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-950">
           {base_fill_warning}
         </div>
       ) : null}
 
-      <div className="mt-4">
-        <table className="w-full text-sm">
-          <tbody>
-            {[
-              ["Client", `${pattern.client_name} (${pattern.client_code})`],
-              ["Garment", pattern.garment_type],
-              ["Description", pattern.description ?? "-"],
-              ["Origin", derived_from ?? "Custom"],
-              [
-                "Order",
-                order
-                  ? `${order.so_number} - ordered ${formatDate(order.order_date)}${order.delivery_date ? ` - delivery ${formatDate(order.delivery_date)}` : ""}`
-                  : "-",
-              ],
-              [
-                "Trial",
-                `Trial ${version.version}${version.is_final ? " - FINAL" : ""} - ${formatDate(version.trial_date)}`,
-              ],
-            ].map(([label, value]) => (
-              <tr key={label} className="border-b border-slate-200">
-                <td className="w-28 py-1 pr-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  {label}
-                </td>
-                <td className="py-1 font-medium">{value}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <FabricSpecBlock data={data} />
-
-      <table className="mt-4 w-full border-collapse text-sm">
-        <thead>
-          <tr className="border-b-2 border-slate-900 text-left text-xs font-bold uppercase tracking-wide">
-            <th className="py-1.5 pr-2">Measurement point ({unitLabel(unit)})</th>
-            <th className="px-2 py-1.5 text-center">{baseColLabel}</th>
-            <th className="px-2 py-1.5 text-center">Target</th>
-            <th className="px-2 py-1.5 text-center">Sewn</th>
-            <th className="px-2 py-1.5 text-center">Adjust +/-</th>
-            <th className="py-1.5 pl-2">Remarks</th>
-          </tr>
-        </thead>
+      <table className="mt-2 w-full text-[11px]">
         <tbody>
-          {version.measurements.map((row) => (
-            <tr key={row.point_id} className="border-b border-slate-300">
-              <td className="py-1.5 pr-2 font-medium">
-                {row.name}
-                {row.remark ? <span className="text-xs text-slate-500"> - {row.remark}</span> : null}
+          {[
+            ["Client", `${pattern.client_name} (${pattern.client_code})`],
+            ["Garment", pattern.garment_type],
+            ["Origin", derived_from ?? "Custom"],
+            [
+              "Order",
+              order
+                ? `${order.so_number} - ordered ${formatDate(order.order_date)}${order.delivery_date ? ` - delivery ${formatDate(order.delivery_date)}` : ""}`
+                : "-",
+            ],
+            [
+              "Trial",
+              `Trial ${version.version}${version.is_final ? " - FINAL" : ""} - ${formatDate(version.trial_date)}`,
+            ],
+          ].map(([label, value]) => (
+            <tr key={label} className="border-b border-slate-200">
+              <td className="w-16 py-0.5 pr-2 text-[9px] font-semibold uppercase tracking-wide text-slate-500">
+                {label}
               </td>
-              <td className="px-2 py-1.5 text-center tabular-nums text-slate-600">
-                {formatMeasurement(row.base_value, unit)}
-              </td>
-              <td className="px-2 py-1.5 text-center font-semibold tabular-nums">
-                {formatMeasurement(row.target_value, unit)}
-              </td>
-              <td className="px-2 py-1.5 text-center tabular-nums">
-                {formatMeasurement(row.sewn_value, unit)}
-              </td>
-              <td className="px-2 py-1.5 text-center tabular-nums">
-                {row.adjustment !== null
-                  ? `${row.adjustment > 0 ? "+" : row.adjustment < 0 ? "-" : ""}${formatMeasurement(Math.abs(row.adjustment), unit)}`
-                  : "-"}
-              </td>
-              <td className="py-1.5 pl-2 text-xs">{row.remarks ?? ""}</td>
+              <td className="py-0.5 font-medium">{value}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <div className="mt-4 space-y-2 text-sm">
+      <FabricSpecCompact data={data} />
+
+      <div className={useTwoCol ? "mt-2 grid grid-cols-2 gap-2" : "mt-2"}>
+        {(useTwoCol
+          ? [
+              version.measurements.slice(0, Math.ceil(version.measurements.length / 2)),
+              version.measurements.slice(Math.ceil(version.measurements.length / 2)),
+            ]
+          : [version.measurements]
+        ).map((chunk, chunkIndex) => (
+          <table key={chunkIndex} className="w-full border-collapse text-[10px]">
+            <thead>
+              <tr className="border-b border-slate-900 text-left text-[9px] font-bold uppercase tracking-wide">
+                <th className="py-0.5 pr-1">Meas. ({unitLabel(unit)})</th>
+                <th className="px-1 py-0.5 text-center">{baseColLabel}</th>
+                <th className="px-1 py-0.5 text-center">Tgt</th>
+                <th className="px-1 py-0.5 text-center">Sewn</th>
+                <th className="px-1 py-0.5 text-center">+/-</th>
+                <th className="py-0.5 pl-1">Rmk</th>
+              </tr>
+            </thead>
+            <tbody>
+              {chunk.map((row) => (
+                <tr key={row.point_id} className="border-b border-slate-300">
+                  <td className="py-0.5 pr-1 font-medium leading-tight">
+                    {row.name}
+                    {row.remark ? (
+                      <span className="text-[9px] text-slate-500"> - {row.remark}</span>
+                    ) : null}
+                  </td>
+                  <td className="px-1 py-0.5 text-center tabular-nums text-slate-600">
+                    {formatMeasurement(row.base_value, unit)}
+                  </td>
+                  <td className="px-1 py-0.5 text-center font-semibold tabular-nums">
+                    {formatMeasurement(row.target_value, unit)}
+                  </td>
+                  <td className="px-1 py-0.5 text-center tabular-nums">
+                    {formatMeasurement(row.sewn_value, unit)}
+                  </td>
+                  <td className="px-1 py-0.5 text-center tabular-nums">
+                    {row.adjustment !== null
+                      ? `${row.adjustment > 0 ? "+" : row.adjustment < 0 ? "-" : ""}${formatMeasurement(Math.abs(row.adjustment), unit)}`
+                      : "-"}
+                  </td>
+                  <td className="max-w-[4rem] truncate py-0.5 pl-1 text-[9px]">
+                    {row.remarks ?? ""}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ))}
+      </div>
+
+      <div className="mt-2 space-y-0.5 text-[11px] leading-snug">
         <p>
-          <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
-            Special instructions:
+          <span className="text-[9px] font-bold uppercase tracking-wide text-slate-500">
+            Instructions:
           </span>{" "}
           {version.special_instructions || pattern.special_instructions || "-"}
         </p>
         {version.notes?.trim() ? (
           <p>
-            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            <span className="text-[9px] font-bold uppercase tracking-wide text-slate-500">
               Trial notes:
             </span>{" "}
             {version.notes}
@@ -652,7 +703,7 @@ function ProductionSheetPage({ data }: { data: PatternSheetData }) {
         ) : null}
         {pattern.notes?.trim() ? (
           <p>
-            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            <span className="text-[9px] font-bold uppercase tracking-wide text-slate-500">
               Pattern notes:
             </span>{" "}
             {pattern.notes}
@@ -660,41 +711,35 @@ function ProductionSheetPage({ data }: { data: PatternSheetData }) {
         ) : null}
         {pattern.physical_pattern_kept ? (
           <p>
-            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
-              Physical pattern:
+            <span className="text-[9px] font-bold uppercase tracking-wide text-slate-500">
+              Physical:
             </span>{" "}
             kept{pattern.physical_pattern_location ? ` - ${pattern.physical_pattern_location}` : ""}
           </p>
         ) : null}
-        <p className="text-xs text-slate-500">
-          Linked client photos/sketches: use Print images on the pattern detail page.
-        </p>
       </div>
 
       {stickers.length > 0 ? (
-        <div className="mfg-qr-block mt-4 rounded-lg border-2 border-slate-900 p-3">
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-900">
+        <div className="mfg-qr-block mt-2 border border-slate-900 p-1.5">
+          <p className="text-[9px] font-bold uppercase tracking-wide text-slate-900">
             Piece / floor scan QR
           </p>
-          <p className="mt-0.5 text-[11px] text-slate-600">
-            Stitchers scan the same codes as stickers / cutter sheet.
-          </p>
-          <div className="mt-3 flex flex-wrap justify-center gap-6">
+          <div className="mt-1 flex flex-wrap justify-center gap-3">
             {stickers.map((sticker) => (
               <div
                 key={`${sticker.role}-${sticker.qr_payload}`}
-                className="flex w-[7rem] flex-col items-center text-center"
+                className="flex w-[4.5rem] flex-col items-center text-center"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={qrImageUrl(sticker.qr_payload, 240)}
+                  src={qrImageUrl(sticker.qr_payload, 160)}
                   alt={`Scan ${stickerScanLabel(sticker)}`}
-                  className="h-24 w-24 bg-white"
+                  className="h-14 w-14 bg-white"
                 />
-                <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-slate-900">
+                <p className="mt-0.5 text-[8px] font-bold uppercase tracking-wide text-slate-900">
                   {stickerScanLabel(sticker)}
                 </p>
-                <p className="mt-0.5 max-w-full break-all font-mono text-[10px] leading-tight text-slate-800">
+                <p className="max-w-full break-all font-mono text-[8px] leading-tight text-slate-800">
                   {sticker.production_code}
                 </p>
               </div>
@@ -702,12 +747,10 @@ function ProductionSheetPage({ data }: { data: PatternSheetData }) {
           </div>
         </div>
       ) : (
-        <p className="mt-4 text-sm text-slate-500">
-          No manufacturing QRs linked (attach a fabric line with stickers).
-        </p>
+        <p className="mt-2 text-[11px] text-slate-500">No manufacturing QRs linked.</p>
       )}
 
-      <p className="mt-4 pt-2 text-[10px] text-slate-400">
+      <p className="mt-1.5 text-[9px] text-slate-400">
         Printed {new Date().toLocaleDateString("en-GB")} - {pattern.pattern_ref} - Trial{" "}
         {version.version}
         {version.is_final ? " (Final)" : ""}
