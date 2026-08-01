@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { StitchKioskPanel } from "@/components/production/StitchKioskPanel";
+import {
+  StitchScanCaptureProvider,
+  StitchScannerReadyBadge,
+} from "@/components/production/stitch-scan-capture";
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
 import {
   SEWING_LIVE_LONG_RUNNING_SEC,
@@ -177,59 +181,61 @@ export function StitchFloorWorkspace() {
   }, [data?.sessions]);
 
   return (
-    <div className="flex min-h-[calc(100vh-5.5rem)] w-full flex-col gap-4">
-      <div className="sticky top-0 z-10 -mx-1 border-b border-slate-200 bg-slate-50/95 px-1 pb-3 pt-1 backdrop-blur">
-        <div className="flex flex-wrap gap-2">
-          {TABS.map((item) => {
-            const active = tab === item.id;
-            const badge =
-              item.id === "live"
-                ? data?.open_sessions.length
-                : item.id === "performance"
-                  ? data?.closed_in_period
-                  : item.id === "history"
-                    ? data?.sessions.length
-                    : null;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setTab(item.id)}
-                className={cn(
-                  "min-h-[52px] min-w-[96px] flex-1 rounded-xl px-4 py-3 text-base font-semibold transition-colors sm:flex-none",
-                  active
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"
-                )}
-              >
-                {item.label}
-                {badge != null && (
-                  <span
-                    className={cn(
-                      "ml-2 tabular-nums",
-                      active ? "text-indigo-100" : "text-slate-500"
-                    )}
-                  >
-                    {badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+    <StitchScanCaptureProvider rearmKey={tab}>
+      <div className="flex min-h-[calc(100vh-5.5rem)] w-full flex-col gap-4">
+        <div className="sticky top-0 z-10 -mx-1 border-b border-slate-200 bg-slate-50/95 px-1 pb-3 pt-1 backdrop-blur">
+          <div className="flex flex-wrap items-center gap-2">
+            {TABS.map((item) => {
+              const active = tab === item.id;
+              const badge =
+                item.id === "live"
+                  ? data?.open_sessions.length
+                  : item.id === "performance"
+                    ? data?.closed_in_period
+                    : item.id === "history"
+                      ? data?.sessions.length
+                      : null;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setTab(item.id)}
+                  className={cn(
+                    "min-h-[52px] min-w-[96px] flex-1 rounded-xl px-4 py-3 text-base font-semibold transition-colors sm:flex-none",
+                    active
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"
+                  )}
+                >
+                  {item.label}
+                  {badge != null && (
+                    <span
+                      className={cn(
+                        "ml-2 tabular-nums",
+                        active ? "text-indigo-100" : "text-slate-500"
+                      )}
+                    >
+                      {badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+            <StitchScannerReadyBadge className="ml-auto" />
+          </div>
         </div>
-      </div>
 
-      {error && tab !== "scan" && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {error}
-        </div>
-      )}
+        {error && tab !== "scan" && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {error}
+          </div>
+        )}
 
-      {tab === "scan" && (
-        <div className="mx-auto w-full max-w-5xl flex-1">
-          <StitchKioskPanel />
-        </div>
-      )}
+        {tab === "scan" && (
+          <div className="mx-auto w-full max-w-5xl flex-1">
+            <StitchKioskPanel />
+          </div>
+        )}
 
       {tab === "live" && (
         <section className="rounded-xl border border-slate-200 bg-white">
@@ -657,6 +663,7 @@ export function StitchFloorWorkspace() {
           </div>
         </section>
       )}
-    </div>
+      </div>
+    </StitchScanCaptureProvider>
   );
 }

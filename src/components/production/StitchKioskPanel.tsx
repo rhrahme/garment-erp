@@ -1,53 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { normalizeScannerInput, splitScanInput } from "@/lib/production/scan-input";
-import type { SewingKioskScanResult, SewingKioskUiPhase, SewingSession } from "@/lib/types/sewing-sessions";
+import { useMemo, useState, useEffect } from "react";
+import { useStitchScanCapture } from "@/components/production/stitch-scan-capture";
+import type { SewingKioskUiPhase } from "@/lib/types/sewing-sessions";
 import { cn } from "@/lib/utils";
-
-const KIOSK_STORAGE_KEY = "hagan-sewing-kiosk-id";
-const QUEUE_STORAGE_KEY = "hagan-sewing-scan-queue";
-const MAX_LOG = 40;
-
-type QueuedScan = {
-  id: string;
-  code: string;
-  captured_at: number;
-};
-
-type ScanLogRow = {
-  id: string;
-  code: string;
-  ok: boolean;
-  message: string;
-  at: number;
-};
-
-function readKioskId(): string {
-  if (typeof window === "undefined") return "laptop-1";
-  const existing = window.localStorage.getItem(KIOSK_STORAGE_KEY)?.trim();
-  if (existing) return existing;
-  const generated = `laptop-${Math.random().toString(36).slice(2, 8)}`;
-  window.localStorage.setItem(KIOSK_STORAGE_KEY, generated);
-  return generated;
-}
-
-function loadPersistedQueue(): QueuedScan[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.sessionStorage.getItem(QUEUE_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as QueuedScan[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function persistQueue(queue: QueuedScan[]) {
-  if (typeof window === "undefined") return;
-  window.sessionStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
-}
 
 function formatElapsed(startedAt: string | null, now: number): string {
   if (!startedAt) return "0:00";
@@ -92,200 +48,29 @@ function phaseCopy(phase: SewingKioskUiPhase): { title: string; hint: string; to
   }
 }
 
-function playTone(
-  ctx: AudioContext,
-  frequency: number,
-  startAt: number,
-  durationSec: number,
-  gainValue = 0.04
-) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.frequency.value = frequency;
-  gain.gain.value = gainValue;
-  osc.start(startAt);
-  osc.stop(startAt + durationSec);
-}
-
-function playBeep(kind: "ok" | "error" | "progress" | "capture") {
-  try {
-    const Ctx =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (!Ctx) return;
-    const ctx = new Ctx();
-    if (kind === "error") {
-      // Longer low double buzz - unmistakable on a far screen.
-      playTone(ctx, 180, ctx.currentTime, 0.18);
-      playTone(ctx, 180, ctx.currentTime + 0.26, 0.22);
-      return;
-    }
-    const frequency = kind === "capture" ? 1200 : kind === "progress" ? 520 : 880;
-    const duration = kind === "capture" ? 0.05 : 0.1;
-    playTone(ctx, frequency, ctx.currentTime, duration);
-  } catch {
-    /* ignore */
-  }
-}
-
 export function StitchKioskPanel() {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const flushTimerRef = useRef<number | null>(null);
-  const queueRef = useRef<QueuedScan[]>([]);
-  const drainingRef = useRef(false);
-  const kioskIdRef = useRef("laptop-1");
-  const workstationRef = useRef("");
+  const {
+    focusInput,
+    kioskId,
+    workstationId,
+    setWorkstationId,
+    phase,
+    message,
+    error,
+    last,
+    openSessions,
+    queue,
+    log,
+    draining,
+    captureArmed,
+  } = useStitchScanCapture();
 
-  const [kioskId, setKioskId] = useState("laptop-1");
-  const [workstationId, setWorkstationId] = useState("");
-  const [phase, setPhase] = useState<SewingKioskUiPhase>("idle");
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [last, setLast] = useState<SewingKioskScanResult | null>(null);
-  const [openSessions, setOpenSessions] = useState<SewingSession[]>([]);
-  const [queue, setQueue] = useState<QueuedScan[]>([]);
-  const [log, setLog] = useState<ScanLogRow[]>([]);
-  const [draining, setDraining] = useState(false);
   const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    const id = readKioskId();
-    setKioskId(id);
-    kioskIdRef.current = id;
-    const restored = loadPersistedQueue();
-    queueRef.current = restored;
-    setQueue(restored);
-  }, []);
-
-  useEffect(() => {
-    kioskIdRef.current = kioskId;
-  }, [kioskId]);
-
-  useEffect(() => {
-    workstationRef.current = workstationId;
-  }, [workstationId]);
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
-
-  const focusInput = useCallback(() => {
-    inputRef.current?.focus({ preventScroll: true });
-  }, []);
-
-  useEffect(() => {
-    focusInput();
-    const id = window.setInterval(focusInput, 1500);
-    return () => window.clearInterval(id);
-  }, [focusInput]);
-
-  const syncQueueState = useCallback((next: QueuedScan[]) => {
-    queueRef.current = next;
-    setQueue(next);
-    persistQueue(next);
-  }, []);
-
-  const drainQueue = useCallback(async () => {
-    if (drainingRef.current) return;
-    drainingRef.current = true;
-    setDraining(true);
-
-    while (queueRef.current.length > 0) {
-      const item = queueRef.current[0]!;
-      try {
-        const res = await fetch("/api/production/sewing-session/scan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            raw: item.code,
-            kiosk_id: kioskIdRef.current,
-            workstation_id: workstationRef.current.trim() || null,
-          }),
-        });
-        const data = (await res.json()) as SewingKioskScanResult & { error?: string };
-        const ok = Boolean(data.ok ?? res.ok);
-        const msg = data.message ?? data.error ?? (ok ? "OK" : "Scan failed");
-
-        setLast(data);
-        if (data.phase) setPhase(data.phase);
-        setMessage(msg);
-        setError(ok ? null : msg);
-        if (data.open_sessions) setOpenSessions(data.open_sessions);
-        playBeep(data.beep ?? (ok ? "ok" : "error"));
-        setLog((prev) =>
-          [
-            { id: item.id, code: item.code, ok, message: msg, at: Date.now() },
-            ...prev,
-          ].slice(0, MAX_LOG)
-        );
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Scan failed";
-        setError(msg);
-        playBeep("error");
-        setLog((prev) =>
-          [
-            { id: item.id, code: item.code, ok: false, message: msg, at: Date.now() },
-            ...prev,
-          ].slice(0, MAX_LOG)
-        );
-      }
-
-      // Drop from front only after attempt (never lose capture; failed still consumed + logged)
-      syncQueueState(queueRef.current.slice(1));
-      focusInput();
-    }
-
-    drainingRef.current = false;
-    setDraining(false);
-    focusInput();
-  }, [focusInput, syncQueueState]);
-
-  const captureCodes = useCallback(
-    (parts: string[]) => {
-      const added: QueuedScan[] = [];
-      for (const part of parts) {
-        const code = normalizeScannerInput(part);
-        if (!code) continue;
-        added.push({
-          id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-          code,
-          captured_at: Date.now(),
-        });
-      }
-      if (added.length === 0) return;
-
-      // Instant record - never wait for API
-      const next = [...queueRef.current, ...added];
-      syncQueueState(next);
-      playBeep("capture");
-      focusInput();
-      void drainQueue();
-    },
-    [drainQueue, focusInput, syncQueueState]
-  );
-
-  function flushInputNow() {
-    const el = inputRef.current;
-    if (!el) return;
-    const parts = splitScanInput(el.value);
-    el.value = "";
-    captureCodes(parts);
-  }
-
-  function scheduleFlush() {
-    if (flushTimerRef.current) window.clearTimeout(flushTimerRef.current);
-    flushTimerRef.current = window.setTimeout(() => {
-      flushInputNow();
-    }, 60);
-  }
-
-  // Resume drain after restore
-  useEffect(() => {
-    if (queue.length > 0) void drainQueue();
-  }, [drainQueue, queue.length]);
 
   const copy = phaseCopy(phase);
   const highlight =
@@ -341,29 +126,23 @@ export function StitchKioskPanel() {
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-4">
-        <label className="block text-sm font-medium text-slate-700">
-          Scanner input - always open (scans are queued instantly)
-        </label>
-        <input
-          ref={inputRef}
-          type="text"
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck={false}
-          onBlur={() => {
-            window.setTimeout(focusInput, 50);
-          }}
-          onChange={scheduleFlush}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              if (flushTimerRef.current) window.clearTimeout(flushTimerRef.current);
-              flushInputNow();
-            }
-          }}
-          className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-4 text-lg font-mono tracking-wide outline-none ring-indigo-500 focus:ring-2"
-          placeholder="Scan EMP badge or A4 piece QR - many stitchers OK..."
-        />
+        <p className="text-sm font-medium text-slate-700">
+          Scanner input - always open on every floor tab (scans are queued instantly)
+        </p>
+        <button
+          type="button"
+          onClick={() => focusInput()}
+          className={cn(
+            "mt-2 flex w-full min-h-[56px] items-center justify-center rounded-lg border-2 border-dashed px-4 py-4 text-left text-lg font-mono tracking-wide transition-colors",
+            captureArmed
+              ? "border-emerald-400 bg-emerald-50/50 text-emerald-900"
+              : "border-amber-400 bg-amber-50/50 text-amber-950"
+          )}
+        >
+          {captureArmed
+            ? "Armed - scan EMP badge or A4 piece QR"
+            : "Tap to arm scanner (paused while typing elsewhere)"}
+        </button>
         <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
           <span>
             Kiosk id: <span className="font-mono text-slate-700">{kioskId}</span>
