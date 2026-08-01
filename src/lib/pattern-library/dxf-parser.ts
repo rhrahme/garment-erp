@@ -172,9 +172,19 @@ function unitsFromTexts(texts: string[]): "mm" | "cm" | "in" | null {
     const m = t.trim().match(/^Units\s*:\s*(.+)$/i);
     if (!m?.[1]) continue;
     const u = m[1].trim().toUpperCase();
-    if (u.includes("METRIC") || u.includes("MM")) return "mm";
-    if (u.includes("CM")) return "cm";
-    if (u.includes("INCH") || u === "IN") return "in";
+    // TUKA imperial exports label "Units: ENGLISH" (inches). Without this,
+    // unitsFromTexts returns null and parseDxfFile defaults to mm -> tiny nests.
+    if (
+      u.includes("ENGLISH") ||
+      u.includes("IMPERIAL") ||
+      u.includes("INCH") ||
+      u === "IN" ||
+      u === "INCHES"
+    ) {
+      return "in";
+    }
+    if (u.includes("METRIC") || u === "MM" || u.includes("MILLIM")) return "mm";
+    if (u.includes("CM") || u.includes("CENTIM")) return "cm";
   }
   return null;
 }

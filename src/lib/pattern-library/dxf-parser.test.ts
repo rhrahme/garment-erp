@@ -171,6 +171,18 @@ describe("parseDxfFile", () => {
     assert.ok(entities.some((e) => e.type === "POLYLINE"));
     assert.ok(entities.some((e) => e.type === "LWPOLYLINE"));
   });
+
+  it("treats Units: ENGLISH as inches", () => {
+    const englishDxf = MINI_DXF.replace("Units: METRIC", "Units: ENGLISH");
+    const parsed = parseDxfFile(Buffer.from(englishDxf, "utf8"));
+    assert.ok(parsed);
+    assert.equal(parsed.metadata.units, "in");
+    const front = parsed.metadata.pieces.find((p) => p.name === "FRONT");
+    assert.ok(front);
+    // 400x200 drawing units * 2.54 cm/in
+    assert.equal(front.width_cm, 1016);
+    assert.equal(front.height_cm, 508);
+  });
 });
 
 describe("parseRulFile", () => {
