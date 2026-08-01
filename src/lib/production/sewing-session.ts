@@ -30,18 +30,28 @@ function nowIso(at = Date.now()): string {
   return new Date(at).toISOString();
 }
 
+function openOnKiosk(store: SewingSessionsFile, kioskId: string): SewingSession[] {
+  return store.sessions.filter(
+    (row) => row.kiosk_id === kioskId && (row.status === "open" || row.status === "closing")
+  );
+}
+
 function result(
   ok: boolean,
   message: string,
   store: SewingSessionsFile,
   kioskId: string,
+  focus: { arm?: SewingKioskArm | null; session?: SewingSession | null },
   extras?: Partial<SewingKioskScanResult>
 ): SewingKioskScanResult {
-  const arm = store.kiosk_arms.find((row) => row.kiosk_id === kioskId) ?? null;
-  const session =
-    store.sessions.find(
-      (row) => row.kiosk_id === kioskId && (row.status === "open" || row.status === "closing")
-    ) ?? null;
+  const open = openOnKiosk(store, kioskId);
+  const arm =
+    focus.arm ??
+    store.kiosk_arms
+      .filter((row) => row.kiosk_id === kioskId)
+      .sort((a, b) => b.armed_at.localeCompare(a.armed_at))[0] ??
+    null;
+  const session = focus.session ?? open[0] ?? null;
   return {
     ok,
     message,
@@ -49,16 +59,9 @@ function result(
     beep: ok ? (extras?.beep ?? "ok") : "error",
     arm,
     session,
+    open_sessions: open,
     ...extras,
   };
-}
-
-function activeSessionForKiosk(store: SewingSessionsFile, kioskId: string): SewingSession | null {
-  return (
-    store.sessions.find(
-      (row) => row.kiosk_id === kioskId && (row.status === "open" || row.status === "closing")
-    ) ?? null
-  );
 }
 
 function lookupPieceMeta(scanCode: string): {
@@ -90,18 +93,40 @@ function lookupPieceMeta(scanCode: string): {
   };
 }
 
+function findSessionForPiece(
+  store: SewingSessionsFile,
+  kioskId: string,
+  productionCode: string,
+  scanCode: string
+): SewingSession | null {
+  return (
+    openOnKiosk(store, kioskId).find(
+      (row) =>
+        productionCodesMatch(row.production_code, productionCode) ||
+        productionCodesMatch(row.scan_code, scanCode)
+    ) ?? null
+  );
+}
+
+function mostRecentArm(store: SewingSessionsFile, kioskId: string): SewingKioskArm | null {
+  return (
+    store.kiosk_arms
+      .filter((row) => row.kiosk_id === kioskId)
+      .sort((a, b) => b.armed_at.localeCompare(a.armed_at))[0] ?? null
+  );
+}
+
 export type ProcessSewingKioskScanInput = {
   raw: string;
   kiosk_id: string;
   workstation_id?: string | null;
   source?: "erp" | "zapier" | "api";
-  /** Injected clock for tests. */
   now?: number;
 };
 
 /**
- * Single-scan kiosk handler: EMP badge arm / piece start / piece close-arm / EMP end.
- * Ending a session also runs sewing stage scan (timed session + stage advance).
+ * Multi-stitcher kiosk scan: many employees can be armed / sewing on one laptop.
+ * Sessions are keyed by employee + piece; ending still advances sewing stage.
  */
 export async function processSewingKioskScan(
   input: ProcessSewingKioskScanInput
@@ -118,23 +143,22 @@ export async function processSewingKioskScan(
   const raw = normalizeScannerInput(input.raw);
   if (!raw) {
     const store = expireStaleSewingState(await readSewingSessionsAsync(), at);
-    return result(false, "Empty scan.", store, kioskId);
+    return result(false, "Empty scan.", store, kioskId, {});
   }
 
   let store = expireStaleSewingState(await readSewingSessionsAsync(), at);
-  const active = activeSessionForKiosk(store, kioskId);
 
   if (isEmployeeQrPayload(raw)) {
     const badgeValue = parseEmployeeQrPayload(raw);
     if (!badgeValue) {
-      return result(false, "Invalid employee badge.", store, kioskId);
+      return result(false, "Invalid employee badge.", store, kioskId, {});
     }
     const employee = findPayrollEmployeeByBadgeValue(raw);
     if (!employee) {
-      return result(false, "Employee not found - scan your badge again.", store, kioskId);
+      return result(false, "Employee not found - scan your badge again.", store, kioskId, {});
     }
     if (!employee.is_active) {
-      return result(false, "Employee is inactive - contact HR.", store, kioskId);
+      return result(false, "Employee is inactive - contact HR.", store, kioskId, {});
     }
 
     const ctx = resolveScanEmployeeContext({
@@ -142,27 +166,22 @@ export async function processSewingKioskScan(
       workstation_id: input.workstation_id ?? employee.assigned_workstation_id,
     });
 
-    if (active?.status === "closing") {
-      if (active.employee_id !== ctx.employee_id) {
-        return result(
-          false,
-          `Wrong badge - expected ${active.employee_name} to close this piece.`,
-          store,
-          kioskId
-        );
-      }
+    const closingForEmployee = openOnKiosk(store, kioskId).find(
+      (row) => row.status === "closing" && row.employee_id === ctx.employee_id
+    );
 
+    if (closingForEmployee) {
       const endedAt = nowIso(at);
       const durationSec = Math.max(
         0,
-        Math.round((at - new Date(active.started_at).getTime()) / 1000)
+        Math.round((at - new Date(closingForEmployee.started_at).getTime()) / 1000)
       );
       let stageAdvanced = false;
       let stageMessage = "";
 
       try {
         const stage = await executeStageScan({
-          code: active.scan_code,
+          code: closingForEmployee.scan_code,
           station: "sewing",
           context: "production",
           employee_id: ctx.employee_id,
@@ -172,26 +191,29 @@ export async function processSewingKioskScan(
         });
         stageAdvanced = true;
         stageMessage = stage.message;
-        active.work_order_id = stage.work_order?.id ?? active.work_order_id;
-        active.fabric_cut_code = stage.fabric_cut_code ?? active.fabric_cut_code;
-        active.so_number = stage.so_number ?? active.so_number;
-        active.piece_mark = stage.piece_mark ?? active.piece_mark;
+        closingForEmployee.work_order_id = stage.work_order?.id ?? closingForEmployee.work_order_id;
+        closingForEmployee.fabric_cut_code =
+          stage.fabric_cut_code ?? closingForEmployee.fabric_cut_code;
+        closingForEmployee.so_number = stage.so_number ?? closingForEmployee.so_number;
+        closingForEmployee.piece_mark = stage.piece_mark ?? closingForEmployee.piece_mark;
       } catch (error) {
         stageMessage = error instanceof Error ? error.message : "Sewing stage scan failed.";
       }
 
       const closed: SewingSession = {
-        ...active,
+        ...closingForEmployee,
         status: "closed",
         ended_at: endedAt,
         duration_sec: durationSec,
         closing_armed_at: null,
-        workstation_id: ctx.workstation_id ?? active.workstation_id,
+        workstation_id: ctx.workstation_id ?? closingForEmployee.workstation_id,
       };
 
       store = {
         ...store,
-        kiosk_arms: store.kiosk_arms.filter((arm) => arm.kiosk_id !== kioskId),
+        kiosk_arms: store.kiosk_arms.filter(
+          (arm) => !(arm.kiosk_id === kioskId && arm.employee_id === ctx.employee_id)
+        ),
         sessions: store.sessions.map((row) => (row.id === closed.id ? closed : row)),
       };
       await writeSewingSessions(store);
@@ -224,20 +246,25 @@ export async function processSewingKioskScan(
       return result(
         true,
         stageAdvanced
-          ? `Done - ${closed.production_code} in ${timeLabel}. ${stageMessage}`
+          ? `Done - ${closed.employee_name} / ${closed.production_code} in ${timeLabel}. ${stageMessage}`
           : `Session closed (${timeLabel}). Stage note: ${stageMessage}`,
         store,
         kioskId,
+        { session: closed },
         { beep: "ok", duration_sec: durationSec, stage_advanced: stageAdvanced, session: closed }
       );
     }
 
-    if (active?.status === "open") {
+    const openForEmployee = openOnKiosk(store, kioskId).find(
+      (row) => row.status === "open" && row.employee_id === ctx.employee_id
+    );
+    if (openForEmployee) {
       return result(
         false,
-        "Piece is open - scan the A4 sheet first, then your badge to finish.",
+        `${ctx.employee_name} already sewing ${openForEmployee.production_code} - scan that A4 first to close.`,
         store,
-        kioskId
+        kioskId,
+        { session: openForEmployee }
       );
     }
 
@@ -251,14 +278,20 @@ export async function processSewingKioskScan(
     };
     store = {
       ...store,
-      kiosk_arms: [...store.kiosk_arms.filter((row) => row.kiosk_id !== kioskId), arm],
+      kiosk_arms: [
+        ...store.kiosk_arms.filter(
+          (row) => !(row.kiosk_id === kioskId && row.employee_id === arm.employee_id)
+        ),
+        arm,
+      ],
     };
     await writeSewingSessions(store);
     return result(
       true,
-      `${arm.employee_name} ready - scan the A4 piece QR within 30 seconds.`,
+      `${arm.employee_name} ready - scan A4 piece QR within 30 seconds.`,
       store,
       kioskId,
+      { arm },
       { beep: "progress" }
     );
   }
@@ -271,33 +304,25 @@ export async function processSewingKioskScan(
       false,
       error instanceof Error ? error.message : "Piece code not recognized.",
       store,
-      kioskId
+      kioskId,
+      {}
     );
   }
 
-  if (active?.status === "open" || active?.status === "closing") {
-    if (
-      !productionCodesMatch(active.production_code, meta.production_code) &&
-      !productionCodesMatch(active.scan_code, raw)
-    ) {
-      return result(
-        false,
-        `Different piece - finish ${active.production_code} first (${active.employee_name}).`,
-        store,
-        kioskId
-      );
-    }
-    if (active.status === "closing") {
+  const pieceSession = findSessionForPiece(store, kioskId, meta.production_code, raw);
+  if (pieceSession) {
+    if (pieceSession.status === "closing") {
       return result(
         true,
-        `Closing ${active.production_code} - ${active.employee_name}, scan your badge.`,
+        `Closing ${pieceSession.production_code} - ${pieceSession.employee_name}, scan badge.`,
         store,
         kioskId,
+        { session: pieceSession },
         { beep: "progress" }
       );
     }
     const closing: SewingSession = {
-      ...active,
+      ...pieceSession,
       status: "closing",
       closing_armed_at: nowIso(at),
     };
@@ -308,16 +333,31 @@ export async function processSewingKioskScan(
     await writeSewingSessions(store);
     return result(
       true,
-      `Closing ${closing.production_code} - ${closing.employee_name}, scan your badge within 30 seconds.`,
+      `Closing ${closing.production_code} - ${closing.employee_name}, scan badge within 30 seconds.`,
       store,
       kioskId,
+      { session: closing },
       { beep: "progress", session: closing }
     );
   }
 
-  const arm = store.kiosk_arms.find((row) => row.kiosk_id === kioskId) ?? null;
+  const arm = mostRecentArm(store, kioskId);
   if (!arm) {
-    return result(false, "Scan your employee badge first.", store, kioskId);
+    return result(false, "Scan employee badge first (then A4).", store, kioskId, {});
+  }
+
+  if (
+    openOnKiosk(store, kioskId).some(
+      (row) => row.employee_id === arm.employee_id && row.status !== "closed"
+    )
+  ) {
+    return result(
+      false,
+      `${arm.employee_name} already has an open piece - close it before starting another.`,
+      store,
+      kioskId,
+      { arm }
+    );
   }
 
   const session: SewingSession = {
@@ -343,7 +383,9 @@ export async function processSewingKioskScan(
 
   store = {
     ...store,
-    kiosk_arms: store.kiosk_arms.filter((row) => row.kiosk_id !== kioskId),
+    kiosk_arms: store.kiosk_arms.filter(
+      (row) => !(row.kiosk_id === kioskId && row.employee_id === arm.employee_id)
+    ),
     sessions: [session, ...store.sessions],
   };
   await writeSewingSessions(store);
@@ -370,9 +412,10 @@ export async function processSewingKioskScan(
     true,
     `${session.employee_name} sewing ${session.production_code}${
       session.piece_mark ? ` (${session.piece_mark})` : ""
-    }. Scan A4 then badge when done.`,
+    }.`,
     store,
     kioskId,
+    { session },
     { beep: "ok", session }
   );
 }

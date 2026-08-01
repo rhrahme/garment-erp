@@ -52,6 +52,8 @@ export type SewingKioskScanResult = {
   beep: "ok" | "error" | "progress";
   arm: SewingKioskArm | null;
   session: SewingSession | null;
+  /** Active open/closing sessions on this kiosk (many stitchers). */
+  open_sessions?: SewingSession[];
   duration_sec?: number | null;
   stage_advanced?: boolean;
 };
