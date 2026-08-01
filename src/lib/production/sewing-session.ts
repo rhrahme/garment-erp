@@ -11,7 +11,11 @@ import {
   sessionPhase,
 } from "@/lib/production/sewing-session-state";
 import { resolveScanToLine } from "@/lib/production/stage-scan";
-import { pieceProductionCodeFromSticker, pieceScanAttribution } from "@/lib/sales-orders/label-codes";
+import {
+  pieceProductionCodeFromSticker,
+  pieceScanAttribution,
+  supplierFabricProductionCode,
+} from "@/lib/sales-orders/label-codes";
 import type {
   SewingKioskArm,
   SewingKioskScanResult,
@@ -78,6 +82,8 @@ function lookupPieceMeta(scanCode: string): {
   piece_mark: string | null;
   fabric_cut_code: string | null;
   client_name: string | null;
+  garment_type: string | null;
+  fabric_number: string | null;
   work_order_id: null;
 } {
   const lookup = resolveScanToLine(scanCode);
@@ -95,8 +101,10 @@ function lookupPieceMeta(scanCode: string): {
     production_code,
     so_number: lookup.order.so_number,
     piece_mark: attribution.piece_mark,
-    fabric_cut_code: null,
+    fabric_cut_code: supplierFabricProductionCode(lookup.sticker.code, lookup.order.client_code),
     client_name: lookup.order.client_name?.trim() || null,
+    garment_type: lookup.line.garment_type?.trim() || null,
+    fabric_number: lookup.line.fabric_number?.trim() || null,
     work_order_id: null,
   };
 }
@@ -387,6 +395,8 @@ export async function processSewingKioskScan(
     piece_mark: meta.piece_mark,
     fabric_cut_code: meta.fabric_cut_code,
     client_name: meta.client_name,
+    garment_type: meta.garment_type,
+    fabric_number: meta.fabric_number,
   };
 
   store = {

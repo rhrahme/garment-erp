@@ -184,10 +184,22 @@ export function sewingSessionsDashboard(
     closed_today: closedToday.length,
     closed_in_period: closedInPeriod.length,
     completed_by_employee: aggregateClosedByEmployee(closedInPeriod),
+    /** Always today (local day) - for Live "today so far" per stitcher. */
+    today_by_employee: aggregateClosedByEmployee(closedToday),
     sessions: historyCandidates.slice(0, historyCap),
     kiosk_arms: fresh.kiosk_arms,
   };
 }
+
+/** Elapsed seconds for an open session; null if invalid. */
+export function sewingSessionElapsedSec(startedAt: string, at = Date.now()): number {
+  const start = new Date(startedAt).getTime();
+  if (!Number.isFinite(start)) return 0;
+  return Math.max(0, Math.floor((at - start) / 1000));
+}
+
+/** Warn when a piece has been open longer than this (45 minutes). */
+export const SEWING_LIVE_LONG_RUNNING_SEC = 45 * 60;
 
 export function productionCodesMatch(a: string, b: string): boolean {
   const left = a.trim().toUpperCase();

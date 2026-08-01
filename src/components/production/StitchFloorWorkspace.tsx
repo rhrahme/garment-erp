@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { StitchKioskPanel } from "@/components/production/StitchKioskPanel";
-import type { SewingDashboardPeriod, SewingEmployeeAggregate } from "@/lib/production/sewing-session-state";
+import {
+  SEWING_LIVE_LONG_RUNNING_SEC,
+  sewingSessionElapsedSec,
+  type SewingDashboardPeriod,
+  type SewingEmployeeAggregate,
+} from "@/lib/production/sewing-session-state";
 import type { SewingSession } from "@/lib/types/sewing-sessions";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +21,7 @@ type DashboardPayload = {
   closed_today: number;
   closed_in_period: number;
   completed_by_employee: SewingEmployeeAggregate[];
+  today_by_employee?: SewingEmployeeAggregate[];
   sessions: SewingSession[];
 };
 
@@ -191,10 +197,21 @@ export function StitchFloorWorkspace() {
       {tab === "live" && (
         <section className="rounded-xl border border-slate-200 bg-white">
           <div className="border-b border-slate-100 px-5 py-4">
-            <h2 className="text-xl font-semibold text-slate-900">Who is sewing now</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Open sessions across kiosks. Refresh every 12s.
-            </p>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900">Who is sewing now</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Open sessions across kiosks. Refresh every 12s. Red elapsed = over 45 min.
+                </p>
+              </div>
+              {data && (
+                <p className="text-sm font-semibold tabular-nums text-slate-700">
+                  {data.open_sessions.filter((s) => s.status === "open").length} sewing
+                  {" / "}
+                  {data.open_sessions.filter((s) => s.status === "closing").length} closing
+                </p>
+              )}
+            </div>
           </div>
           <div className="p-4 sm:p-5">
             {!data ? (
@@ -203,39 +220,90 @@ export function StitchFloorWorkspace() {
               <p className="text-base text-slate-500">No one sewing right now.</p>
             ) : (
               <ul className="divide-y divide-slate-100 rounded-xl border border-slate-100">
-                {data.open_sessions.map((session) => (
-                  <li
-                    key={session.id}
-                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-4"
-                  >
-                    <div className="min-w-0 space-y-1">
-                      <p className="text-lg font-semibold text-slate-900">{session.employee_name}</p>
-                      <p className="text-sm text-slate-600">
-                        {session.production_code}
-                        {session.piece_mark ? ` / ${session.piece_mark}` : ""}
-                      </p>
-                      <p className="text-sm text-slate-500">
-                        {session.client_name || "No client"}
-                        {session.so_number ? ` / ${session.so_number}` : ""}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <span className="text-2xl font-semibold tabular-nums text-slate-900">
-                        {formatElapsed(session.started_at, now)}
-                      </span>
-                      <span
+                {[...data.open_sessions]
+                  .sort(
+                    (a, b) =>
+                      sewingSessionElapsedSec(b.started_at, now) -
+                      sewingSessionElapsedSec(a.started_at, now)
+                  )
+                  .map((session) => {
+                    const elapsedSec = sewingSessionElapsedSec(session.started_at, now);
+                    const longRunning = elapsedSec >= SEWING_LIVE_LONG_RUNNING_SEC;
+                    const today =
+                      data.today_by_employee?.find((row) => row.employee_id === session.employee_id) ??
+                      null;
+                    return (
+                      <li
+                        key={session.id}
                         className={cn(
-                          "rounded-lg px-3 py-1 text-sm font-semibold",
-                          session.status === "closing"
-                            ? "bg-sky-100 text-sky-800"
-                            : "bg-emerald-100 text-emerald-800"
+                          "flex flex-wrap items-start justify-between gap-3 px-4 py-4",
+                          longRunning && "bg-red-50/60"
                         )}
                       >
-                        {session.status === "closing" ? "Closing" : "Sewing"}
-                      </span>
-                    </div>
-                  </li>
-                ))}
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                            <p className="text-lg font-semibold text-slate-900">
+                              {session.employee_name}
+                            </p>
+                            {session.employee_id_number ? (
+                              <p className="font-mono text-sm text-slate-500">
+                                ID {session.employee_id_number}
+                              </p>
+                            ) : null}
+                          </div>
+                          <p className="text-sm font-medium text-slate-700">
+                            {session.production_code}
+                            {session.piece_mark ? ` / ${session.piece_mark}` : ""}
+                            {session.garment_type ? ` / ${session.garment_type}` : ""}
+                          </p>
+                          <p className="text-sm text-slate-500">
+                            {session.client_name || "No client"}
+                            {session.so_number ? ` / ${session.so_number}` : ""}
+                            {session.fabric_number ? ` / fabric ${session.fabric_number}` : ""}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Started {formatClock(session.started_at)}
+                            {session.workstation_id
+                              ? ` / station ${session.workstation_id}`
+                              : ""}
+                            {session.kiosk_id ? ` / kiosk ${session.kiosk_id}` : ""}
+                          </p>
+                          {today && today.count > 0 ? (
+                            <p className="text-xs font-medium text-slate-600">
+                              Today so far: {today.count} pcs / {formatDuration(today.duration_sec)}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-slate-400">Today so far: first piece</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <span
+                            className={cn(
+                              "text-2xl font-semibold tabular-nums",
+                              longRunning ? "text-red-700" : "text-slate-900"
+                            )}
+                          >
+                            {formatElapsed(session.started_at, now)}
+                          </span>
+                          {longRunning ? (
+                            <span className="rounded-lg bg-red-100 px-3 py-1 text-sm font-semibold text-red-800">
+                              Long running
+                            </span>
+                          ) : null}
+                          <span
+                            className={cn(
+                              "rounded-lg px-3 py-1 text-sm font-semibold",
+                              session.status === "closing"
+                                ? "bg-sky-100 text-sky-800"
+                                : "bg-emerald-100 text-emerald-800"
+                            )}
+                          >
+                            {session.status === "closing" ? "Closing" : "Sewing"}
+                          </span>
+                        </div>
+                      </li>
+                    );
+                  })}
               </ul>
             )}
           </div>

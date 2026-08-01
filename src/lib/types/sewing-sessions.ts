@@ -31,6 +31,9 @@ export type SewingSession = {
   piece_mark: string | null;
   fabric_cut_code: string | null;
   client_name: string | null;
+  /** Optional enrichments from sticker lookup (may be null on older sessions). */
+  garment_type?: string | null;
+  fabric_number?: string | null;
 };
 
 export type SewingSessionsFile = {
