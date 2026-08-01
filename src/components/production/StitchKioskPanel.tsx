@@ -141,7 +141,7 @@ export function StitchKioskPanel() {
         >
           {captureArmed
             ? "Armed - scan EMP badge or A4 piece QR"
-            : "Tap to arm scanner (paused while typing elsewhere)"}
+            : "Tap to arm scanner (paused while selecting text or editing)"}
         </button>
         <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
           <span>

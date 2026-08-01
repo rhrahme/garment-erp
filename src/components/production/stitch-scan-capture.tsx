@@ -18,6 +18,10 @@ import { cn } from "@/lib/utils";
 const KIOSK_STORAGE_KEY = "hagan-sewing-kiosk-id";
 const QUEUE_STORAGE_KEY = "hagan-sewing-scan-queue";
 const MAX_LOG = 40;
+/** Gap after last wedge keystroke before treating the buffer as a complete scan. */
+const WEDGE_IDLE_FLUSH_MS = 80;
+/** Reclaim hidden-input focus only while the page is idle (no selection / editing). */
+const RECLAIM_INTERVAL_MS = 2000;
 
 export type QueuedScan = {
   id: string;
@@ -141,6 +145,26 @@ function isTextEntryElement(el: Element | null): boolean {
   return false;
 }
 
+/** User is selecting text to copy - do not reclaim focus or buffer wedge keys. */
+function hasActiveTextSelection(): boolean {
+  if (typeof window === "undefined") return false;
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed || sel.rangeCount === 0) return false;
+  const text = sel.toString();
+  return text.trim().length > 0;
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  return isTextEntryElement(target);
+}
+
+function isCopyOrEditShortcut(event: KeyboardEvent): boolean {
+  if (!(event.ctrlKey || event.metaKey || event.altKey)) return false;
+  const key = event.key.toLowerCase();
+  return ["c", "x", "v", "a", "z", "y", "f"].includes(key);
+}
+
 type ProviderProps = {
   children: ReactNode;
   /** Bump when floor tab changes so capture re-arms after navigating away from text fields. */
@@ -150,6 +174,8 @@ type ProviderProps = {
 export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const flushTimerRef = useRef<number | null>(null);
+  const wedgeBufferRef = useRef("");
+  const wedgeFlushTimerRef = useRef<number | null>(null);
   const queueRef = useRef<QueuedScan[]>([]);
   const drainingRef = useRef(false);
   const kioskIdRef = useRef("laptop-1");
@@ -194,12 +220,23 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
     setWorkstationIdState(id);
   }, []);
 
+  const isCapturePaused = useCallback(() => {
+    const active = document.activeElement;
+    if (active && active !== inputRef.current && isTextEntryElement(active)) return true;
+    if (hasActiveTextSelection()) return true;
+    return false;
+  }, []);
+
+  const refreshArmedState = useCallback(() => {
+    setCaptureArmed(!isCapturePaused());
+  }, [isCapturePaused]);
+
   const shouldReclaimFocus = useCallback(() => {
+    if (isCapturePaused()) return false;
     const active = document.activeElement;
     if (active === inputRef.current) return false;
-    if (isTextEntryElement(active) && active !== inputRef.current) return false;
     return true;
-  }, []);
+  }, [isCapturePaused]);
 
   const focusInput = useCallback(() => {
     if (!shouldReclaimFocus()) {
@@ -207,27 +244,33 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       return;
     }
     inputRef.current?.focus({ preventScroll: true });
-    setCaptureArmed(document.activeElement === inputRef.current);
-  }, [shouldReclaimFocus]);
+    setCaptureArmed(!isCapturePaused());
+  }, [isCapturePaused, shouldReclaimFocus]);
 
   useEffect(() => {
     focusInput();
-    const id = window.setInterval(focusInput, 1500);
+    const id = window.setInterval(() => {
+      if (shouldReclaimFocus()) focusInput();
+      else refreshArmedState();
+    }, RECLAIM_INTERVAL_MS);
     return () => window.clearInterval(id);
-  }, [focusInput]);
+  }, [focusInput, refreshArmedState, shouldReclaimFocus]);
 
   useEffect(() => {
-    focusInput();
-  }, [rearmKey, focusInput]);
+    if (!isCapturePaused()) focusInput();
+    else refreshArmedState();
+  }, [rearmKey, focusInput, isCapturePaused, refreshArmedState]);
 
   useEffect(() => {
-    const onFocusIn = () => {
-      const active = document.activeElement;
-      setCaptureArmed(active === inputRef.current);
-    };
+    const onFocusIn = () => refreshArmedState();
+    const onSelectionChange = () => refreshArmedState();
     document.addEventListener("focusin", onFocusIn);
-    return () => document.removeEventListener("focusin", onFocusIn);
-  }, []);
+    document.addEventListener("selectionchange", onSelectionChange);
+    return () => {
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("selectionchange", onSelectionChange);
+    };
+  }, [refreshArmedState]);
 
   const syncQueueState = useCallback((next: QueuedScan[]) => {
     queueRef.current = next;
@@ -281,13 +324,15 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       }
 
       syncQueueState(queueRef.current.slice(1));
-      focusInput();
+      if (shouldReclaimFocus()) focusInput();
+      else refreshArmedState();
     }
 
     drainingRef.current = false;
     setDraining(false);
-    focusInput();
-  }, [focusInput, syncQueueState]);
+    if (shouldReclaimFocus()) focusInput();
+    else refreshArmedState();
+  }, [focusInput, refreshArmedState, shouldReclaimFocus, syncQueueState]);
 
   const captureCodes = useCallback(
     (parts: string[]) => {
@@ -306,10 +351,11 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       const next = [...queueRef.current, ...added];
       syncQueueState(next);
       playBeep("capture");
-      focusInput();
+      if (shouldReclaimFocus()) focusInput();
+      else refreshArmedState();
       void drainQueue();
     },
-    [drainQueue, focusInput, syncQueueState]
+    [drainQueue, focusInput, refreshArmedState, shouldReclaimFocus, syncQueueState]
   );
 
   const flushInputNow = useCallback(() => {
@@ -326,6 +372,62 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       flushInputNow();
     }, 60);
   }, [flushInputNow]);
+
+  const flushWedgeBuffer = useCallback(() => {
+    if (wedgeFlushTimerRef.current) {
+      window.clearTimeout(wedgeFlushTimerRef.current);
+      wedgeFlushTimerRef.current = null;
+    }
+    const raw = wedgeBufferRef.current;
+    wedgeBufferRef.current = "";
+    if (!raw) return;
+    captureCodes(splitScanInput(raw));
+  }, [captureCodes]);
+
+  const scheduleWedgeFlush = useCallback(() => {
+    if (wedgeFlushTimerRef.current) window.clearTimeout(wedgeFlushTimerRef.current);
+    wedgeFlushTimerRef.current = window.setTimeout(() => {
+      flushWedgeBuffer();
+    }, WEDGE_IDLE_FLUSH_MS);
+  }, [flushWedgeBuffer]);
+
+  /**
+   * Warehouse-kiosk style: buffer rapid USB-wedge keystrokes at document level
+   * when the user is not editing a field or selecting text. Avoids forcing the
+   * hidden input to stay focused (which blocks copy/select on Live/History).
+   */
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
+      if (event.isComposing) return;
+      if (isCopyOrEditShortcut(event)) return;
+
+      const target = event.target;
+      if (target === inputRef.current) return;
+      if (isEditableTarget(target)) return;
+      if (hasActiveTextSelection()) return;
+
+      if (event.key === "Enter") {
+        if (!wedgeBufferRef.current) return;
+        event.preventDefault();
+        flushWedgeBuffer();
+        return;
+      }
+
+      if (event.key.length !== 1) return;
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+
+      wedgeBufferRef.current += event.key;
+      event.preventDefault();
+      scheduleWedgeFlush();
+    };
+
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown, true);
+      if (wedgeFlushTimerRef.current) window.clearTimeout(wedgeFlushTimerRef.current);
+    };
+  }, [flushWedgeBuffer, scheduleWedgeFlush]);
 
   useEffect(() => {
     if (queue.length > 0) void drainQueue();
@@ -373,7 +475,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
 
   return (
     <StitchScanCaptureContext.Provider value={value}>
-      {/* Stable DOM node - never display:none so USB wedge can always target it. */}
+      {/* Stable DOM node - never display:none so USB wedge can still target it when armed. */}
       <input
         ref={inputRef}
         type="text"
@@ -381,9 +483,13 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
         autoCorrect="off"
         spellCheck={false}
         aria-label="Stitch floor scanner capture"
-        tabIndex={0}
+        tabIndex={-1}
         onBlur={() => {
-          window.setTimeout(focusInput, 50);
+          // Only reclaim when idle - never yank focus during selection or text editing.
+          window.setTimeout(() => {
+            if (shouldReclaimFocus()) focusInput();
+            else refreshArmedState();
+          }, 50);
         }}
         onChange={scheduleFlush}
         onKeyDown={(event) => {
@@ -416,7 +522,11 @@ export function StitchScannerReadyBadge({ className }: { className?: string }) {
           : "bg-amber-50 text-amber-950 ring-1 ring-amber-200 hover:bg-amber-100",
         className
       )}
-      title="Tap to arm scanner capture"
+      title={
+        captureArmed
+          ? "Scanner capture armed"
+          : "Scanner paused while selecting text or editing a field - tap to re-arm"
+      }
     >
       <span
         className={cn(
