@@ -134,10 +134,17 @@ function parseLwPolyline(entity: DxfEntity): Point2[] {
   return closeRing(pts);
 }
 
+type PolyWithLayer = {
+  points: Point2[];
+  /** DXF layer name (AAMA: "1" = cut outline, "14" = net, "8" = internal). */
+  layer: string;
+};
+
 type BlockAcc = {
   texts: string[];
-  polylines: Point2[][];
+  polylines: PolyWithLayer[];
   currentVerts: Point2[] | null;
+  currentLayer: string;
 };
 
 function labelValue(texts: string[], prefix: string): string | null {
@@ -217,13 +224,21 @@ export function parseDxfFile(buffer: Buffer): ParsedDxfFile | null {
   for (const entity of entities) {
     if (entity.type === "BLOCK") {
       inBlock = true;
-      current = { texts: [], polylines: [], currentVerts: null };
+      current = {
+        texts: [],
+        polylines: [],
+        currentVerts: null,
+        currentLayer: "0",
+      };
       blocks.push(current);
       continue;
     }
     if (entity.type === "ENDBLK") {
       if (current?.currentVerts) {
-        current.polylines.push(closeRing(current.currentVerts));
+        current.polylines.push({
+          points: closeRing(current.currentVerts),
+          layer: current.currentLayer,
+        });
         current.currentVerts = null;
       }
       current = null;
@@ -238,11 +253,16 @@ export function parseDxfFile(buffer: Buffer): ParsedDxfFile | null {
     }
 
     if (entity.type === "POLYLINE") {
+      const layer = first(entity, 8) ?? "0";
       if (inBlock && current) {
         if (current.currentVerts) {
-          current.polylines.push(closeRing(current.currentVerts));
+          current.polylines.push({
+            points: closeRing(current.currentVerts),
+            layer: current.currentLayer,
+          });
         }
         current.currentVerts = [];
+        current.currentLayer = layer;
       } else {
         if (modelVerts) modelPolys.push(closeRing(modelVerts));
         modelVerts = [];
@@ -258,7 +278,10 @@ export function parseDxfFile(buffer: Buffer): ParsedDxfFile | null {
 
     if (entity.type === "SEQEND") {
       if (inBlock && current?.currentVerts) {
-        current.polylines.push(closeRing(current.currentVerts));
+        current.polylines.push({
+          points: closeRing(current.currentVerts),
+          layer: current.currentLayer,
+        });
         current.currentVerts = null;
       } else if (modelVerts) {
         modelPolys.push(closeRing(modelVerts));
@@ -269,9 +292,11 @@ export function parseDxfFile(buffer: Buffer): ParsedDxfFile | null {
 
     if (entity.type === "LWPOLYLINE") {
       const pts = parseLwPolyline(entity);
+      const layer = first(entity, 8) ?? "0";
       if (pts.length >= 3) {
-        if (inBlock && current) current.polylines.push(pts);
-        else modelPolys.push(pts);
+        if (inBlock && current) {
+          current.polylines.push({ points: pts, layer });
+        } else modelPolys.push(pts);
       }
     }
   }
@@ -297,11 +322,15 @@ export function parseDxfFile(buffer: Buffer): ParsedDxfFile | null {
     const name = labelValue(block.texts, "Piece Name");
     if (!name) continue;
 
-    const usable = block.polylines.filter((p) => p.length >= 3);
+    const usable = block.polylines.filter((p) => p.points.length >= 3);
     if (usable.length === 0) continue;
 
-    usable.sort((a, b) => polyArea(b) - polyArea(a));
-    const outerMm = usable[0]!;
+    // AAMA: layer "1" is the cut outline. Prefer it over internal/net layers so
+    // darts / seam-allowance rings are never chosen as the piece boundary.
+    const cutLayer = usable.filter((p) => p.layer.trim() === "1");
+    const pool = cutLayer.length > 0 ? cutLayer : usable;
+    pool.sort((a, b) => polyArea(b.points) - polyArea(a.points));
+    const outerMm = pool[0]!.points;
     const box = bboxOf(outerMm);
     const widthMm = box.maxX - box.minX;
     const heightMm = box.maxY - box.minY;

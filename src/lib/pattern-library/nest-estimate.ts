@@ -1,3 +1,4 @@
+import { augmentDxfWithDerivedBelt } from "@/lib/pattern-library/derived-belt";
 import { findActiveDxfAttachmentForPiece } from "@/lib/pattern-library/multi-piece-geometry";
 import {
   findActiveTudAttachment,
@@ -144,7 +145,10 @@ export function findActiveDxfAttachment(
 }
 
 export function collectNestDxfMetadata(pattern: ClientPattern): DxfMetadata | null {
-  return findActiveDxfAttachment(pattern)?.dxf ?? null;
+  const dxf = findActiveDxfAttachment(pattern)?.dxf ?? null;
+  if (!dxf) return null;
+  // AAMA DXF exports often omit the waistband strip that TUKAmark still nests.
+  return augmentDxfWithDerivedBelt(dxf, pattern);
 }
 
 /** Merge active TUD metadata across piece slots (or single active TUD). */
@@ -372,9 +376,72 @@ export function buildNestRectsFromDxf(
   return rects;
 }
 
+function orientNestRect(
+  rect: NestRect,
+  usableWidthCm: number
+): { width_cm: number; height_cm: number; rotated: boolean } {
+  const fits0 = rect.height_cm <= usableWidthCm + 1e-6;
+  const fits90 = rect.width_cm <= usableWidthCm + 1e-6;
+  if (fits0 && fits90) {
+    // Prefer orientation that is shorter along length (smaller width_cm in pack space).
+    if (rect.width_cm <= rect.height_cm) {
+      return { width_cm: rect.width_cm, height_cm: rect.height_cm, rotated: false };
+    }
+    return { width_cm: rect.height_cm, height_cm: rect.width_cm, rotated: true };
+  }
+  if (fits0) {
+    return { width_cm: rect.width_cm, height_cm: rect.height_cm, rotated: false };
+  }
+  if (fits90) {
+    return { width_cm: rect.height_cm, height_cm: rect.width_cm, rotated: true };
+  }
+  // Piece wider than fabric: still place, clamped visually by using width as length.
+  return {
+    width_cm: Math.max(rect.width_cm, rect.height_cm),
+    height_cm: Math.min(rect.width_cm, rect.height_cm, usableWidthCm),
+    rotated: rect.width_cm > usableWidthCm,
+  };
+}
+
+/** Long thin strips (belt / waistband) - nest along length like TUKAmark. */
+function isStripRect(rect: NestRect, usableWidthCm: number): boolean {
+  const longSide = Math.max(rect.width_cm, rect.height_cm);
+  const shortSide = Math.min(rect.width_cm, rect.height_cm);
+  if (!(shortSide > 0) || !(longSide > 0)) return false;
+  if (longSide / shortSide < 5) return false;
+  // Strip must fit across the usable width on its thin side.
+  return shortSide <= usableWidthCm * 0.35 + 1e-6;
+}
+
+function placementFromRect(
+  rect: NestRect,
+  x_cm: number,
+  y_cm: number,
+  width_cm: number,
+  height_cm: number,
+  rotated: boolean
+): NestPlacement {
+  return {
+    id: rect.id,
+    name: rect.name,
+    fabric: rect.fabric,
+    x_cm: round1(x_cm),
+    y_cm: round1(y_cm),
+    width_cm: round1(width_cm),
+    height_cm: round1(height_cm),
+    rotated,
+    secondary: rect.secondary,
+    outline_cm: rect.outline_cm ?? null,
+    outline_width_cm: rect.outline_width_cm ?? rect.width_cm,
+    geometry_source: rect.geometry_source ?? null,
+  };
+}
+
 /**
  * Shelf / row bin-pack into usable width. Allows 0 or 90 deg rotation when both fit.
  * x runs along fabric length; y across usable width.
+ * Long thin strips (belt) are reserved as a top lane so body pieces nest under them
+ * (same strategy TUKAmark uses for waistband strips).
  */
 export function packNestRects(
   rects: NestRect[],
@@ -384,62 +451,49 @@ export function packNestRects(
     return { placements: [], packed_length_cm: 0 };
   }
 
+  const strips = rects.filter((r) => isStripRect(r, usableWidthCm));
+  const bodies = rects.filter((r) => !isStripRect(r, usableWidthCm));
+
+  // Orient strips with the thin side across fabric width.
+  let stripLaneH = 0;
+  const stripOrients = strips.map((rect) => {
+    const thin = Math.min(rect.width_cm, rect.height_cm);
+    const long = Math.max(rect.width_cm, rect.height_cm);
+    const rotated = rect.width_cm < rect.height_cm;
+    stripLaneH += thin;
+    return { rect, width_cm: long, height_cm: thin, rotated };
+  });
+
+  const bodyUsable =
+    strips.length > 0
+      ? Math.max(1, usableWidthCm - stripLaneH)
+      : usableWidthCm;
+
   let cursorX = 0;
   let shelfHeight = 0;
   let shelfUsedY = 0;
   let maxX = 0;
-  const placements: NestPlacement[] = [];
+  const bodyPlacements: NestPlacement[] = [];
 
-  const orient = (
-    rect: NestRect
-  ): { width_cm: number; height_cm: number; rotated: boolean } | null => {
-    const fits0 = rect.height_cm <= usableWidthCm + 1e-6;
-    const fits90 = rect.width_cm <= usableWidthCm + 1e-6;
-    if (fits0 && fits90) {
-      // Prefer orientation that is shorter along length (smaller width_cm in pack space).
-      if (rect.width_cm <= rect.height_cm) {
-        return { width_cm: rect.width_cm, height_cm: rect.height_cm, rotated: false };
-      }
-      return { width_cm: rect.height_cm, height_cm: rect.width_cm, rotated: true };
-    }
-    if (fits0) {
-      return { width_cm: rect.width_cm, height_cm: rect.height_cm, rotated: false };
-    }
-    if (fits90) {
-      return { width_cm: rect.height_cm, height_cm: rect.width_cm, rotated: true };
-    }
-    // Piece wider than fabric: still place, clamped visually by using width as length.
-    return {
-      width_cm: Math.max(rect.width_cm, rect.height_cm),
-      height_cm: Math.min(rect.width_cm, rect.height_cm, usableWidthCm),
-      rotated: rect.width_cm > usableWidthCm,
-    };
-  };
+  for (const rect of bodies) {
+    const o = orientNestRect(rect, bodyUsable);
 
-  for (const rect of rects) {
-    const o = orient(rect);
-    if (!o) continue;
-
-    if (shelfUsedY > 0 && shelfUsedY + o.height_cm > usableWidthCm + 1e-6) {
+    if (shelfUsedY > 0 && shelfUsedY + o.height_cm > bodyUsable + 1e-6) {
       cursorX += shelfHeight;
       shelfHeight = 0;
       shelfUsedY = 0;
     }
 
-    placements.push({
-      id: rect.id,
-      name: rect.name,
-      fabric: rect.fabric,
-      x_cm: round1(cursorX),
-      y_cm: round1(shelfUsedY),
-      width_cm: o.width_cm,
-      height_cm: o.height_cm,
-      rotated: o.rotated,
-      secondary: rect.secondary,
-      outline_cm: rect.outline_cm ?? null,
-      outline_width_cm: rect.outline_width_cm ?? rect.width_cm,
-      geometry_source: rect.geometry_source ?? null,
-    });
+    bodyPlacements.push(
+      placementFromRect(
+        rect,
+        cursorX,
+        stripLaneH + shelfUsedY,
+        o.width_cm,
+        o.height_cm,
+        o.rotated
+      )
+    );
 
     shelfUsedY += o.height_cm;
     shelfHeight = Math.max(shelfHeight, o.width_cm);
@@ -447,7 +501,43 @@ export function packNestRects(
   }
 
   maxX = Math.max(maxX, cursorX + shelfHeight);
-  return { placements, packed_length_cm: round1(maxX) };
+  const bodyLength = maxX;
+
+  const stripPlacements: NestPlacement[] = [];
+  let stripY = 0;
+  let stripLength = bodyLength;
+  for (const s of stripOrients) {
+    stripLength = Math.max(stripLength, s.width_cm);
+  }
+  for (const s of stripOrients) {
+    stripPlacements.push(
+      placementFromRect(s.rect, 0, stripY, stripLength, s.height_cm, s.rotated)
+    );
+    // Stretch outline to the placed length when we elongated the strip lane.
+    const last = stripPlacements[stripPlacements.length - 1]!;
+    if (
+      last.outline_cm &&
+      last.outline_cm.length >= 3 &&
+      Math.abs(stripLength - s.width_cm) > 0.05
+    ) {
+      const scaleX = stripLength / Math.max(s.width_cm, 1e-6);
+      last.outline_cm = last.outline_cm.map((p) => ({
+        x: round1(p.x * scaleX),
+        y: p.y,
+      }));
+      last.outline_width_cm = stripLength;
+      last.width_cm = round1(stripLength);
+    }
+    stripY += s.height_cm;
+  }
+
+  const placements = [...stripPlacements, ...bodyPlacements];
+  const packed = Math.max(
+    bodyLength,
+    ...stripPlacements.map((p) => p.x_cm + p.width_cm),
+    0
+  );
+  return { placements, packed_length_cm: round1(packed) };
 }
 
 export function estimateNestFromTud(input: {
@@ -684,7 +774,7 @@ export function estimateNestFromMultiPieceSources(input: {
     usedDxf && usedTud
       ? "Mixed nest: DXF outlines where available, TUD area estimates for other pieces. Verify in TUKAmark before cutting."
       : usedDxf
-        ? "Piece outlines from DXF polylines. Shelf packing uses bounding boxes — verify nest in TUKAmark before cutting."
+        ? "Piece outlines from DXF polylines. Shelf packing uses bounding boxes - verify nest in TUKAmark before cutting."
         : "Approximate from TUD areas - verify in TUKAmark before cutting. Not a CAD cutting marker.";
 
   return estimateNestFromRects({
@@ -725,7 +815,7 @@ export function estimateNestFromDxf(input: {
     size,
     garment_qty: garmentQty,
     disclaimer:
-      "Piece outlines from DXF polylines. Shelf packing uses bounding boxes — verify nest in TUKAmark before cutting.",
+      "Piece outlines from DXF polylines. Shelf packing uses bounding boxes - verify nest in TUKAmark before cutting.",
   });
 }
 

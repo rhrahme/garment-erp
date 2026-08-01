@@ -54,7 +54,7 @@ function widthSourceLabel(source: MarkerFabricWidthSource | "manual" | null): st
   }
 }
 
-/** Muted fills + green strokes — estimate rects, not candy "fake CAD". */
+/** Muted fills + green strokes - estimate rects, not candy "fake CAD". */
 const PIECE_COLORS = [
   "#ecfdf5",
   "#f0fdf4",
@@ -249,16 +249,36 @@ export function NestEstimatePanel({
     (p) => p.geometry_source === "dxf" && (p.outline_cm?.length ?? 0) >= 3
   );
 
-  // Seed / upgrade local board: empty → any estimate; TUD-approx → DXF outlines when available.
+  const boardPieceNamesKey = placements
+    .map((p) => p.name.trim().toLowerCase())
+    .sort()
+    .join("|");
+  const livePieceNamesKey = (liveEstimate?.placements ?? [])
+    .map((p) => p.name.trim().toLowerCase())
+    .sort()
+    .join("|");
+
+  // Seed / upgrade local board: empty -> any estimate; TUD-approx -> DXF;
+  // also refresh when live DXF nest gains pieces (e.g. derived belt).
   useEffect(() => {
     if (!liveEstimate) return;
-    if (placements.length > 0) {
-      // Keep a saved/manual DXF board; only replace TUD-estimate placements with DXF.
-      if (!liveEstimate.has_dxf_outlines || boardHasDxfOutlines) return;
+    if (placements.length === 0) {
+      setPlacements(liveEstimate.placements.map((p) => ({ ...p })));
+      setAreaM2(liveEstimate.area_m2);
+      return;
     }
-    setPlacements(liveEstimate.placements.map((p) => ({ ...p })));
-    setAreaM2(liveEstimate.area_m2);
-  }, [liveEstimate, placements.length, boardHasDxfOutlines]);
+    if (!liveEstimate.has_dxf_outlines) return;
+    if (!boardHasDxfOutlines || boardPieceNamesKey !== livePieceNamesKey) {
+      setPlacements(liveEstimate.placements.map((p) => ({ ...p })));
+      setAreaM2(liveEstimate.area_m2);
+    }
+  }, [
+    liveEstimate,
+    placements.length,
+    boardHasDxfOutlines,
+    boardPieceNamesKey,
+    livePieceNamesKey,
+  ]);
 
   const metrics = useMemo(
     () => recomputeMarkerMetrics(placements, usableWidthCm, areaM2),
@@ -375,13 +395,13 @@ export function NestEstimatePanel({
         {hasDxfOutlines ? (
           <p className="mt-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-950">
             <span className="font-semibold">DXF piece outlines.</span> Green shapes are cut
-            polylines from the uploaded DXF. Nesting still uses bounding-box shelves — verify
+            polylines from the uploaded DXF. Nesting still uses bounding-box shelves - verify
             the final marker in TUKAmark before cutting.
           </p>
         ) : (
           <p className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
             <span className="font-semibold">Estimate only.</span> Green boxes are approximate
-            rectangles from TUD area + perimeter — not TUKA piece outlines. Upload a .DXF for
+            rectangles from TUD area + perimeter - not TUKA piece outlines. Upload a .DXF for
             real outlines; the board is for fabric-length planning.
           </p>
         )}
@@ -394,7 +414,7 @@ export function NestEstimatePanel({
             <p className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
               Optional archive marker attached: <span className="font-medium">{marker.filename}</span>
               {tum?.efficiency_pct != null || lengthM != null
-                ? ` — ${[
+                ? ` - ${[
                     lengthM != null ? `${lengthM.toFixed(2)} m` : null,
                     tum?.width_cm != null ? `${tum.width_cm.toFixed(0)} cm wide` : null,
                     tum?.efficiency_pct != null
@@ -402,7 +422,7 @@ export function NestEstimatePanel({
                       : null,
                   ]
                     .filter(Boolean)
-                    .join(" — ")}`
+                    .join(" - ")}`
                 : ""}
               . Not required for the TUD-only workflow.
             </p>
@@ -568,7 +588,7 @@ export function NestEstimatePanel({
       {cutterPlan ? (
         <div className="rounded-lg border border-slate-300 bg-white p-3 space-y-2 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-800">
-            Parts from TUD (size {cutterPlan.size}) — {cutterPlan.total_cut_pieces} to cut
+            Parts from TUD (size {cutterPlan.size}) - {cutterPlan.total_cut_pieces} to cut
           </p>
           <p className="text-sm font-medium text-slate-800">{cutterPlan.instruction}</p>
           <div className="overflow-x-auto rounded-md border border-slate-200">
@@ -594,7 +614,7 @@ export function NestEstimatePanel({
                     <td className="px-2 py-1.5 tabular-nums">{row.cut_quantity}</td>
                     <td className="px-2 py-1.5">{row.fabric_label}</td>
                     <td className="px-2 py-1.5 tabular-nums text-slate-700">
-                      ~{row.approx_width_cm.toFixed(0)} — {row.approx_height_cm.toFixed(0)} cm
+                      ~{row.approx_width_cm.toFixed(0)} - {row.approx_height_cm.toFixed(0)} cm
                     </td>
                     <td className="px-2 py-1.5 text-slate-700">{row.place_hint}</td>
                   </tr>
@@ -887,8 +907,8 @@ function MarkerBoard({
         }`}
       >
         {hasDxfOutlines
-          ? "DXF OUTLINES — real cut polylines. Nest uses bounding-box shelves; verify in TUKAmark before cutting."
-          : "ESTIMATE ONLY — green outline boxes from TUD header area/perimeter. Not CAD piece shapes. Drag / rotate for length planning only."}
+          ? "DXF OUTLINES - real cut polylines. Nest uses bounding-box shelves; verify in TUKAmark before cutting."
+          : "ESTIMATE ONLY - green outline boxes from TUD header area/perimeter. Not CAD piece shapes. Drag / rotate for length planning only."}
       </p>
     </div>
   );

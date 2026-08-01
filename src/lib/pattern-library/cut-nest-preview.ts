@@ -159,18 +159,26 @@ export function buildCutNestPreview(
   }
 
   if (layoutMatchesSheet(pattern, width, doubleFold, size, garmentQty) && pattern.marker_layout) {
-    const nest = nestResultFromMarkerLayout(pattern.marker_layout);
-    return withBoardFields(
-      {
-        nest,
-        cutter_plan,
-        fold_assumed,
-        missing_reason: null,
-        source: "saved",
-      },
-      nest,
-      ordered
+    // Stale saved boards (e.g. front+back only) must not hide newly derived belt pieces.
+    const savedNames = new Set(
+      pattern.marker_layout.placements.map((p) => p.name.trim().toLowerCase())
     );
+    const dxfMissingFromSaved =
+      dxf?.pieces.some((p) => !savedNames.has(p.name.trim().toLowerCase())) ?? false;
+    if (!dxfMissingFromSaved) {
+      const nest = nestResultFromMarkerLayout(pattern.marker_layout);
+      return withBoardFields(
+        {
+          nest,
+          cutter_plan,
+          fold_assumed,
+          missing_reason: null,
+          source: "saved",
+        },
+        nest,
+        ordered
+      );
+    }
   }
 
   const pieceNames = getGarmentPieces(pattern.garment_type);
