@@ -54,7 +54,6 @@ type DashboardPayload = {
 
 const TABS: { id: FloorTab; label: string }[] = [
   { id: "scan", label: "Scan" },
-  { id: "orders", label: "Orders" },
   { id: "live", label: "Live" },
   { id: "performance", label: "Performance" },
   { id: "history", label: "History" },
@@ -158,13 +157,7 @@ export function StitchFloorWorkspace({
   const selectTab = useCallback(
     (next: FloorTab) => {
       setTab(next);
-      // Keep left-nav Orders deep-linked; other floor tabs stay on `/stitch`.
-      if (next === "orders") {
-        if (pathname !== "/stitch/orders") {
-          router.replace("/stitch/orders");
-        }
-        return;
-      }
+      // Orders lives only in left-nav at `/stitch/orders`; floor tabs stay on `/stitch`.
       if (pathname === "/stitch/orders" || pathname.startsWith("/stitch/orders/")) {
         router.replace("/stitch");
       }
