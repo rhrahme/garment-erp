@@ -353,14 +353,14 @@ export function OrdersList({
                           onClick={() => onOrderOpen(order.id)}
                           className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
                         >
-                          Open ->
+                          {"Open ->"}
                         </button>
                       ) : (
                         <Link
                           href={`/orders/${order.id}`}
                           className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
                         >
-                          Open ->
+                          {"Open ->"}
                         </Link>
                       )}
                     </div>
