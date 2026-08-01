@@ -152,6 +152,14 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/sewing-sessions.json",
   },
   {
+    key: "sewing_scan_failures",
+    label: "Sewing scan failures",
+    description: "Failed stitch-kiosk badge/A4 scans for QC sequence reconstruction",
+    category: "production",
+    appHref: "/stitch",
+    sourcePath: "src/data/sewing-scan-failures.json",
+  },
+  {
     key: "factory_floor_map",
     label: "Factory floor map",
     description: "Hagan factory layout PDF for shop-floor stations",

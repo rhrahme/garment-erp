@@ -65,6 +65,12 @@ function phaseCopy(phase: SewingKioskUiPhase): { title: string; hint: string; to
         hint: "Scan the A4 piece QR within 30 seconds",
         tone: "bg-amber-50 border-amber-300 text-amber-950",
       };
+    case "piece_armed":
+      return {
+        title: "Piece armed",
+        hint: "Scan your employee badge within 30 seconds",
+        tone: "bg-amber-50 border-amber-300 text-amber-950",
+      };
     case "piece_open":
       return {
         title: "Sewing in progress",
@@ -74,7 +80,7 @@ function phaseCopy(phase: SewingKioskUiPhase): { title: string; hint: string; to
     case "piece_closing":
       return {
         title: "Closing piece",
-        hint: "Scan your employee badge to confirm finish",
+        hint: "Scan badge or matching A4 to confirm finish",
         tone: "bg-sky-50 border-sky-300 text-sky-950",
       };
     default:
@@ -86,6 +92,23 @@ function phaseCopy(phase: SewingKioskUiPhase): { title: string; hint: string; to
   }
 }
 
+function playTone(
+  ctx: AudioContext,
+  frequency: number,
+  startAt: number,
+  durationSec: number,
+  gainValue = 0.04
+) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.frequency.value = frequency;
+  gain.gain.value = gainValue;
+  osc.start(startAt);
+  osc.stop(startAt + durationSec);
+}
+
 function playBeep(kind: "ok" | "error" | "progress" | "capture") {
   try {
     const Ctx =
@@ -93,15 +116,15 @@ function playBeep(kind: "ok" | "error" | "progress" | "capture") {
       (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!Ctx) return;
     const ctx = new Ctx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.value =
-      kind === "error" ? 220 : kind === "capture" ? 1200 : kind === "progress" ? 520 : 880;
-    gain.gain.value = 0.04;
-    osc.start();
-    osc.stop(ctx.currentTime + (kind === "error" ? 0.22 : kind === "capture" ? 0.05 : 0.1));
+    if (kind === "error") {
+      // Longer low double buzz - unmistakable on a far screen.
+      playTone(ctx, 180, ctx.currentTime, 0.18);
+      playTone(ctx, 180, ctx.currentTime + 0.26, 0.22);
+      return;
+    }
+    const frequency = kind === "capture" ? 1200 : kind === "progress" ? 520 : 880;
+    const duration = kind === "capture" ? 0.05 : 0.1;
+    playTone(ctx, frequency, ctx.currentTime, duration);
   } catch {
     /* ignore */
   }

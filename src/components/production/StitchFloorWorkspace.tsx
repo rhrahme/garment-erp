@@ -8,10 +8,12 @@ import {
   type SewingDashboardPeriod,
   type SewingEmployeeAggregate,
 } from "@/lib/production/sewing-session-state";
+import type { SewingScanFailure } from "@/lib/types/sewing-scan-failures";
 import type { SewingSession } from "@/lib/types/sewing-sessions";
 import { cn } from "@/lib/utils";
 
 type FloorTab = "scan" | "live" | "performance" | "history";
+type HistoryMode = "sessions" | "failures";
 
 type DashboardPayload = {
   period: SewingDashboardPeriod;
@@ -23,6 +25,8 @@ type DashboardPayload = {
   completed_by_employee: SewingEmployeeAggregate[];
   today_by_employee?: SewingEmployeeAggregate[];
   sessions: SewingSession[];
+  failed_scans?: SewingScanFailure[];
+  failed_scans_in_period?: number;
 };
 
 const TABS: { id: FloorTab; label: string }[] = [
@@ -83,9 +87,28 @@ function sessionSearchBlob(row: SewingSession): string {
     .toLowerCase();
 }
 
+function failureSearchBlob(row: SewingScanFailure): string {
+  return [
+    row.employee_name,
+    row.employee_id_number,
+    row.raw_code,
+    row.reason,
+    row.reason_code,
+    row.scan_kind,
+    row.kiosk_id,
+    row.related_production_code,
+    row.arm_employee_name,
+    row.phase,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
 export function StitchFloorWorkspace() {
   const [tab, setTab] = useState<FloorTab>("scan");
   const [period, setPeriod] = useState<SewingDashboardPeriod>("day");
+  const [historyMode, setHistoryMode] = useState<HistoryMode>("sessions");
   const [data, setData] = useState<DashboardPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -119,6 +142,10 @@ export function StitchFloorWorkspace() {
     setExpandedEmployeeId(null);
   }, [period]);
 
+  useEffect(() => {
+    setSearch("");
+  }, [historyMode]);
+
   const periodHint = PERIODS.find((row) => row.id === period)?.hint ?? "";
 
   const historyRows = useMemo(() => {
@@ -127,6 +154,13 @@ export function StitchFloorWorkspace() {
     if (!q) return rows;
     return rows.filter((row) => sessionSearchBlob(row).includes(q));
   }, [data?.sessions, search]);
+
+  const failureRows = useMemo(() => {
+    const rows = data?.failed_scans ?? [];
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((row) => failureSearchBlob(row).includes(q));
+  }, [data?.failed_scans, search]);
 
   const piecesByEmployee = useMemo(() => {
     const map = new Map<string, SewingSession[]>();
@@ -251,10 +285,12 @@ export function StitchFloorWorkspace() {
                               </p>
                             ) : null}
                           </div>
+                          <p className="text-base font-semibold text-slate-800">
+                            {session.garment_type?.trim() || "-"}
+                          </p>
                           <p className="text-sm font-medium text-slate-700">
                             {session.production_code}
                             {session.piece_mark ? ` / ${session.piece_mark}` : ""}
-                            {session.garment_type ? ` / ${session.garment_type}` : ""}
                           </p>
                           <p className="text-sm text-slate-500">
                             {session.client_name || "No client"}
@@ -438,65 +474,170 @@ export function StitchFloorWorkspace() {
       {tab === "history" && (
         <section className="rounded-xl border border-slate-200 bg-white">
           <div className="border-b border-slate-100 px-5 py-4">
-            <h2 className="text-xl font-semibold text-slate-900">Session history</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Closed in period plus open sessions. Search employee, piece, SO, or client.
-            </p>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900">
+                  {historyMode === "sessions" ? "Session history" : "Failed scans"}
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {historyMode === "sessions"
+                    ? "Closed in period plus open sessions. Search employee, piece, SO, or client."
+                    : "Rejected badge/A4 scans in period. Use for QC sequence reconstruction."}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setHistoryMode("sessions")}
+                  className={cn(
+                    "min-h-[44px] rounded-xl px-4 py-2 text-sm font-semibold transition-colors",
+                    historyMode === "sessions"
+                      ? "bg-slate-900 text-white"
+                      : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"
+                  )}
+                >
+                  Sessions
+                  {data ? (
+                    <span className="ml-2 tabular-nums opacity-80">{data.sessions.length}</span>
+                  ) : null}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHistoryMode("failures")}
+                  className={cn(
+                    "min-h-[44px] rounded-xl px-4 py-2 text-sm font-semibold transition-colors",
+                    historyMode === "failures"
+                      ? "bg-red-700 text-white"
+                      : "bg-white text-red-800 ring-1 ring-red-200 hover:bg-red-50"
+                  )}
+                >
+                  Failed scans
+                  {data ? (
+                    <span className="ml-2 tabular-nums opacity-80">
+                      {data.failed_scans_in_period ?? 0}
+                    </span>
+                  ) : null}
+                </button>
+              </div>
+            </div>
             <input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search employee, piece, SO, client..."
+              placeholder={
+                historyMode === "sessions"
+                  ? "Search employee, piece, SO, client..."
+                  : "Search employee, code, reason, kiosk..."
+              }
               className="mt-4 min-h-[52px] w-full rounded-xl border border-slate-300 px-4 text-base text-slate-900 outline-none ring-indigo-500 focus:ring-2"
             />
           </div>
           <div className="overflow-x-auto p-2 sm:p-4">
             {!data ? (
               <p className="px-3 py-4 text-base text-slate-500">Loading...</p>
-            ) : historyRows.length === 0 ? (
-              <p className="px-3 py-4 text-base text-slate-500">No sessions match.</p>
+            ) : historyMode === "sessions" ? (
+              historyRows.length === 0 ? (
+                <p className="px-3 py-4 text-base text-slate-500">No sessions match.</p>
+              ) : (
+                <table className="min-w-full text-left text-sm">
+                  <thead className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th className="px-3 py-3">Employee</th>
+                      <th className="px-3 py-3">Piece</th>
+                      <th className="px-3 py-3">SO / Client</th>
+                      <th className="px-3 py-3">Start</th>
+                      <th className="px-3 py-3">End</th>
+                      <th className="px-3 py-3">Duration</th>
+                      <th className="px-3 py-3">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {historyRows.map((row) => (
+                      <tr key={row.id} className="text-slate-800">
+                        <td className="px-3 py-3 font-medium">{row.employee_name}</td>
+                        <td className="px-3 py-3 font-mono text-xs sm:text-sm">
+                          {row.production_code}
+                        </td>
+                        <td className="px-3 py-3">
+                          <div>{row.so_number || "-"}</div>
+                          <div className="text-slate-500">{row.client_name || "-"}</div>
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          {formatClock(row.started_at)}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          {formatClock(row.ended_at)}
+                        </td>
+                        <td className="px-3 py-3 tabular-nums font-semibold">
+                          {row.status === "closed"
+                            ? formatDuration(row.duration_sec)
+                            : formatElapsed(row.started_at, now)}
+                        </td>
+                        <td className="px-3 py-3">
+                          <span
+                            className={cn(
+                              "rounded-lg px-2.5 py-1 text-xs font-semibold capitalize",
+                              row.status === "closed"
+                                ? "bg-slate-100 text-slate-700"
+                                : row.status === "closing"
+                                  ? "bg-sky-100 text-sky-800"
+                                  : "bg-emerald-100 text-emerald-800"
+                            )}
+                          >
+                            {row.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
+            ) : failureRows.length === 0 ? (
+              <p className="px-3 py-4 text-base text-slate-500">No failed scans in this period.</p>
             ) : (
               <table className="min-w-full text-left text-sm">
                 <thead className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <tr>
-                    <th className="px-3 py-3">Employee</th>
-                    <th className="px-3 py-3">Piece</th>
-                    <th className="px-3 py-3">SO / Client</th>
-                    <th className="px-3 py-3">Start</th>
-                    <th className="px-3 py-3">End</th>
-                    <th className="px-3 py-3">Duration</th>
-                    <th className="px-3 py-3">Status</th>
+                    <th className="px-3 py-3">When</th>
+                    <th className="px-3 py-3">Kind</th>
+                    <th className="px-3 py-3">Code</th>
+                    <th className="px-3 py-3">Reason</th>
+                    <th className="px-3 py-3">Employee / Arm</th>
+                    <th className="px-3 py-3">Kiosk</th>
+                    <th className="px-3 py-3">Related piece</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {historyRows.map((row) => (
-                    <tr key={row.id} className="text-slate-800">
-                      <td className="px-3 py-3 font-medium">{row.employee_name}</td>
-                      <td className="px-3 py-3 font-mono text-xs sm:text-sm">{row.production_code}</td>
-                      <td className="px-3 py-3">
-                        <div>{row.so_number || "-"}</div>
-                        <div className="text-slate-500">{row.client_name || "-"}</div>
-                      </td>
-                      <td className="px-3 py-3 whitespace-nowrap">{formatClock(row.started_at)}</td>
-                      <td className="px-3 py-3 whitespace-nowrap">{formatClock(row.ended_at)}</td>
-                      <td className="px-3 py-3 tabular-nums font-semibold">
-                        {row.status === "closed"
-                          ? formatDuration(row.duration_sec)
-                          : formatElapsed(row.started_at, now)}
+                  {failureRows.map((row) => (
+                    <tr key={row.id} className="bg-red-50/40 text-slate-800">
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        {formatClock(row.scanned_at)}
                       </td>
                       <td className="px-3 py-3">
-                        <span
-                          className={cn(
-                            "rounded-lg px-2.5 py-1 text-xs font-semibold capitalize",
-                            row.status === "closed"
-                              ? "bg-slate-100 text-slate-700"
-                              : row.status === "closing"
-                                ? "bg-sky-100 text-sky-800"
-                                : "bg-emerald-100 text-emerald-800"
-                          )}
-                        >
-                          {row.status}
+                        <span className="rounded-lg bg-red-100 px-2.5 py-1 text-xs font-semibold capitalize text-red-800">
+                          {row.scan_kind}
                         </span>
+                      </td>
+                      <td className="px-3 py-3 font-mono text-xs sm:text-sm">{row.raw_code || "-"}</td>
+                      <td className="px-3 py-3">
+                        <div className="font-medium text-red-900">{row.reason}</div>
+                        <div className="text-xs text-slate-500">{row.reason_code}</div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div>{row.employee_name || row.arm_employee_name || "-"}</div>
+                        <div className="text-slate-500">
+                          {row.employee_id_number ||
+                            (row.arm_employee_id ? `arm ${row.arm_employee_id}` : "-")}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <div>{row.kiosk_id}</div>
+                        {row.workstation_id ? (
+                          <div className="text-slate-500">{row.workstation_id}</div>
+                        ) : null}
+                      </td>
+                      <td className="px-3 py-3 font-mono text-xs sm:text-sm">
+                        {row.related_production_code || "-"}
                       </td>
                     </tr>
                   ))}

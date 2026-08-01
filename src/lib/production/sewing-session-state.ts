@@ -1,5 +1,7 @@
+import type { SewingScanFailure } from "@/lib/types/sewing-scan-failures";
 import type {
   SewingKioskArm,
+  SewingKioskPieceArm,
   SewingKioskUiPhase,
   SewingSession,
   SewingSessionsFile,
@@ -8,6 +10,7 @@ import type {
 export const SEWING_ARM_TIMEOUT_MS = 30_000;
 export const SEWING_CLOSING_TIMEOUT_MS = 30_000;
 export const SEWING_HISTORY_CAP = 500;
+export const SEWING_FAILED_SCAN_HISTORY_CAP = 200;
 
 export type SewingDashboardPeriod = "day" | "week" | "month";
 
@@ -32,13 +35,69 @@ function ageMs(iso: string, at: number): number {
   return at - new Date(iso).getTime();
 }
 
+/** Normalize older documents that predate kiosk_piece_arms. */
+export function normalizeSewingSessionsFile(store: SewingSessionsFile): SewingSessionsFile {
+  return {
+    ...store,
+    kiosk_arms: store.kiosk_arms ?? [],
+    kiosk_piece_arms: store.kiosk_piece_arms ?? [],
+    sessions: store.sessions ?? [],
+  };
+}
+
+export function employeeArmsOnKiosk(
+  store: SewingSessionsFile,
+  kioskId: string
+): SewingKioskArm[] {
+  return (store.kiosk_arms ?? []).filter((row) => row.kiosk_id === kioskId);
+}
+
+export function pieceArmsOnKiosk(
+  store: SewingSessionsFile,
+  kioskId: string
+): SewingKioskPieceArm[] {
+  return (store.kiosk_piece_arms ?? []).filter((row) => row.kiosk_id === kioskId);
+}
+
+/**
+ * Start-arm selection: exactly one employee arm, or none / ambiguous.
+ * Never pick "most recent" when multiple arms exist.
+ */
+export function resolveUniqueEmployeeArm(
+  store: SewingSessionsFile,
+  kioskId: string
+):
+  | { status: "one"; arm: SewingKioskArm }
+  | { status: "none" }
+  | { status: "many"; arms: SewingKioskArm[] } {
+  const arms = employeeArmsOnKiosk(store, kioskId);
+  if (arms.length === 0) return { status: "none" };
+  if (arms.length === 1) return { status: "one", arm: arms[0]! };
+  return { status: "many", arms };
+}
+
+export function resolveUniquePieceArm(
+  store: SewingSessionsFile,
+  kioskId: string
+):
+  | { status: "one"; arm: SewingKioskPieceArm }
+  | { status: "none" }
+  | { status: "many"; arms: SewingKioskPieceArm[] } {
+  const arms = pieceArmsOnKiosk(store, kioskId);
+  if (arms.length === 0) return { status: "none" };
+  if (arms.length === 1) return { status: "one", arm: arms[0]! };
+  return { status: "many", arms };
+}
+
 export function sessionPhase(
   session: SewingSession | null,
-  arm: SewingKioskArm | null
+  arm: SewingKioskArm | null,
+  pieceArm: SewingKioskPieceArm | null = null
 ): SewingKioskUiPhase {
   if (session?.status === "closing") return "piece_closing";
   if (session?.status === "open") return "piece_open";
   if (arm) return "identity_armed";
+  if (pieceArm) return "piece_armed";
   return "idle";
 }
 
@@ -47,18 +106,27 @@ export function expireStaleSewingState(
   store: SewingSessionsFile,
   at = Date.now()
 ): SewingSessionsFile {
-  const arms = store.kiosk_arms.filter(
+  const base = normalizeSewingSessionsFile(store);
+  const arms = base.kiosk_arms.filter(
     (arm) => ageMs(arm.armed_at, at) <= SEWING_ARM_TIMEOUT_MS
   );
-  const sessions = store.sessions.map((session) => {
+  const pieceArms = (base.kiosk_piece_arms ?? []).filter(
+    (arm) => ageMs(arm.armed_at, at) <= SEWING_ARM_TIMEOUT_MS
+  );
+  const sessions = base.sessions.map((session) => {
     if (session.status === "closing" && session.closing_armed_at) {
       if (ageMs(session.closing_armed_at, at) > SEWING_CLOSING_TIMEOUT_MS) {
-        return { ...session, status: "open" as const, closing_armed_at: null };
+        return {
+          ...session,
+          status: "open" as const,
+          closing_armed_at: null,
+          closing_confirm: null,
+        };
       }
     }
     return session;
   });
-  return { ...store, kiosk_arms: arms, sessions };
+  return { ...base, kiosk_arms: arms, kiosk_piece_arms: pieceArms, sessions };
 }
 
 /**
@@ -144,7 +212,24 @@ export type SewingSessionsDashboardOptions = {
   from?: string | null;
   to?: string | null;
   history_cap?: number;
+  failed_scan_cap?: number;
+  failed_scans?: SewingScanFailure[];
 };
+
+/** Failed kiosk scans in the period window, newest first (optionally capped). */
+export function sewingFailedScansForPeriod(
+  failures: SewingScanFailure[],
+  at = Date.now(),
+  options: SewingSessionsDashboardOptions = {}
+): SewingScanFailure[] {
+  const period = options.period ?? "day";
+  const cap = options.failed_scan_cap ?? SEWING_FAILED_SCAN_HISTORY_CAP;
+  const window = sewingPeriodWindow(period, at, { from: options.from, to: options.to });
+  const inWindow = failures
+    .filter((row) => inPeriod(row.scanned_at, window))
+    .sort((a, b) => new Date(b.scanned_at).getTime() - new Date(a.scanned_at).getTime());
+  return inWindow.slice(0, cap);
+}
 
 export function sewingSessionsDashboard(
   store: SewingSessionsFile,
@@ -164,6 +249,10 @@ export function sewingSessionsDashboard(
   const closedInPeriod = fresh.sessions.filter(
     (row) => row.status === "closed" && inPeriod(row.ended_at, window)
   );
+  const failedInPeriod = (options.failed_scans ?? []).filter((row) =>
+    inPeriod(row.scanned_at, window)
+  );
+  const failedScans = sewingFailedScansForPeriod(options.failed_scans ?? [], at, options);
 
   // History: closed in period + currently open/closing (for floor lookup). Cap newest-first.
   const historyCandidates = [
@@ -188,6 +277,9 @@ export function sewingSessionsDashboard(
     today_by_employee: aggregateClosedByEmployee(closedToday),
     sessions: historyCandidates.slice(0, historyCap),
     kiosk_arms: fresh.kiosk_arms,
+    kiosk_piece_arms: fresh.kiosk_piece_arms ?? [],
+    failed_scans: failedScans,
+    failed_scans_in_period: failedInPeriod.length,
   };
 }
 

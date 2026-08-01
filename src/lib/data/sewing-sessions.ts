@@ -3,7 +3,12 @@ import { readJsonFile, readJsonFileAsync, saveDocument } from "@/lib/data/docume
 import type { SewingSessionsFile } from "@/lib/types/sewing-sessions";
 
 const STORE_PATH = path.join(process.cwd(), "src/data/sewing-sessions.json");
-const EMPTY: SewingSessionsFile = { updated_at: null, kiosk_arms: [], sessions: [] };
+const EMPTY: SewingSessionsFile = {
+  updated_at: null,
+  kiosk_arms: [],
+  kiosk_piece_arms: [],
+  sessions: [],
+};
 
 export function readSewingSessions(): SewingSessionsFile {
   return readJsonFile(STORE_PATH, EMPTY);

@@ -10,6 +10,23 @@ export type SewingKioskArm = {
   armed_at: string;
 };
 
+/** Short-lived: A4 scanned first, waiting for idle employee badge to start. */
+export type SewingKioskPieceArm = {
+  kiosk_id: string;
+  production_code: string;
+  scan_code: string;
+  so_number: string | null;
+  piece_mark: string | null;
+  fabric_cut_code: string | null;
+  client_name: string | null;
+  garment_type: string | null;
+  fabric_number: string | null;
+  work_order_id: string | null;
+  armed_at: string;
+};
+
+export type SewingSessionClosingConfirm = "badge" | "piece";
+
 export type SewingSession = {
   id: string;
   kiosk_id: string;
@@ -26,6 +43,12 @@ export type SewingSession = {
   status: SewingSessionStatus;
   /** When piece was re-scanned to start close; needs matching EMP. */
   closing_armed_at: string | null;
+  /**
+   * Which scan confirms finish while status is closing.
+   * - badge: A4-first close (default / legacy)
+   * - piece: badge-first close recovery
+   */
+  closing_confirm?: SewingSessionClosingConfirm | null;
   work_order_id: string | null;
   so_number: string | null;
   piece_mark: string | null;
@@ -39,14 +62,19 @@ export type SewingSession = {
 export type SewingSessionsFile = {
   updated_at: string | null;
   kiosk_arms: SewingKioskArm[];
+  /** Piece-first pending starts (A4 before badge). */
+  kiosk_piece_arms?: SewingKioskPieceArm[];
   sessions: SewingSession[];
 };
 
 export type SewingKioskUiPhase =
   | "idle"
   | "identity_armed"
+  | "piece_armed"
   | "piece_open"
   | "piece_closing";
+
+export type SewingSessionRecovery = "piece_first_start" | "badge_first_close";
 
 export type SewingKioskScanResult = {
   ok: boolean;
@@ -59,4 +87,8 @@ export type SewingKioskScanResult = {
   open_sessions?: SewingSession[];
   duration_sec?: number | null;
   stage_advanced?: boolean;
+  /** True when an out-of-order scan was accepted unambiguously. */
+  recovered?: boolean;
+  recovery?: SewingSessionRecovery;
+  piece_arm?: SewingKioskPieceArm | null;
 };

@@ -58,6 +58,7 @@ export type IntegrationEventType =
   | "production.scan"
   | "production.sewing_session_started"
   | "production.sewing_session_ended"
+  | "production.sewing_scan_failed"
   | "production.stage_advanced"
   | "production.handed_to_driver"
   | "invoice.sent"
