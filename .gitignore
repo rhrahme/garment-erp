@@ -74,3 +74,6 @@ data/suppliers/loro-piana/images/*
 data/suppliers/caccioppoli/images/*
 !data/suppliers/caccioppoli/images/manifest.json
 .env*
+
+# Obsidian workspace settings
+.obsidian/
