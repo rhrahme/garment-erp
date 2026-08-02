@@ -1,47 +1,45 @@
 /**
  * Print CSS for A4 sheets (Chrome + Safari):
- * - /orders/[id]/print?team=receiving|production|full
- * - /orders/[id]/print-pack
+ * - /orders/[id]/print?team=receiving|production|full  (served from (print) layout)
+ * - /orders/[id]/print-pack                            (still under dashboard; shell kills retained)
  *
  * CLASSIC REGRESSION (IMG_9922 / SO-2026-0129): "tiny table in the middle of A4"
  * with huge side margins. Root causes that MUST stay fixed:
  *
- * 1) Centered max-width wrappers (e.g. max-w-4xl + mx-auto) on a print canvas that is
- *    wider than the paper -> browser shrink-to-fit scales the whole page, leaving the
- *    constrained column looking microscopic and centered.
- * 2) DashboardShell overflow-x-hidden -> Chrome/Safari tile wide tables horizontally
- *    (left columns on page 1, right columns on page 2).
+ * 1) Centered max-width wrappers (e.g. max-w-4xl + mx-auto) wider than the paper
+ *    content box -> browser shrink-to-fit scales the whole page microscopic.
+ * 2) DashboardShell overflow-x-hidden / h-screen -> horizontal tile or shrink.
+ *    Production A4 now lives under (print) layout (no shell). Shell kills remain
+ *    for print-pack only.
  * 3) transform:scale / zoom on print ancestors (never allow).
  * 4) Sub-10pt Tailwind print text utilities without CSS overrides.
- * 5) Landscape @page while the printer dialog defaults to Portrait -> browsers embed the
- *    landscape page into a portrait sheet and shrink (looks like a thin strip). Use
- *    portrait A4 so @page matches the tray and both Chrome/Safari dialogs.
- * 6) break-inside:avoid-page on tall production sections -> engines shrink the block to
- *    one page. Allow row pagination instead.
- *
- * Safari notes:
- * - Prefer page-break-* alongside break-* (Safari has long supported the former).
- * - Do not rely on zoom (WebKit ignores or mishandles); keep transform:none.
- * - Set -webkit-print-color-adjust for ink/QR contrast.
+ * 5) Landscape @page while the printer dialog defaults to Portrait -> browsers
+ *    embed the landscape page into a portrait sheet and shrink (thin strip).
+ * 6) break-inside:avoid-page on tall production sections -> engines shrink the
+ *    block to one page. Allow row pagination instead.
+ * 7) html/body width:auto at print time -> Chromium can lay out to the screen
+ *    viewport then shrink-to-fit A4. Lock width to the page content box.
  *
  * Invariants (receiving-print-styles.test.ts):
- * - A4 portrait, margins 10-15mm
- * - No transform:scale / zoom shrink
- * - Sheet wrappers width 100% / max-width none
- * - Body table text >= 10pt
+ * - A4 portrait, margins 12mm
+ * - html/body width 100% of page (not auto), no zoom/scale
+ * - Sheet wrappers width 100% / max-width none in print
+ * - Body table text 10-12pt
  * - Tables table-layout:fixed; width 100%
- * - Overflow visible on shell ancestors
  * - No avoid-page on .print-prod-section
+ * - Print page lives under app/(print)/...
  */
 export const RECEIVING_A4_PRINT_CSS = `
-  /* Screen preview approximates portrait A4 so layout matches print. */
-  .sales-order-print .print-a4-sheet,
-  .order-print-pack .print-a4-sheet {
-    width: 100%;
-    max-width: 210mm;
-    margin-left: auto;
-    margin-right: auto;
-    box-sizing: border-box;
+  /* Screen preview: content-box width (A4 minus 12mm margins), not full 210mm paper. */
+  @media screen {
+    .sales-order-print .print-a4-sheet,
+    .order-print-pack .print-a4-sheet {
+      width: 186mm;
+      max-width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+      box-sizing: border-box;
+    }
   }
 
   @media print {
@@ -49,10 +47,20 @@ export const RECEIVING_A4_PRINT_CSS = `
       size: A4 portrait;
       margin: 12mm;
     }
-    html,
+    html {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: white !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      color-adjust: exact;
+    }
     body {
-      width: auto !important;
-      max-width: none !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
       height: auto !important;
       margin: 0 !important;
       padding: 0 !important;
@@ -63,7 +71,7 @@ export const RECEIVING_A4_PRINT_CSS = `
       print-color-adjust: exact;
       color-adjust: exact;
     }
-    /* DashboardShell: h-screen + overflow-hidden / overflow-x-hidden / min-w-0 */
+    /* Belt-and-suspenders for print-pack still inside DashboardShell */
     .flex.h-screen,
     .flex.h-screen > div,
     .min-w-0,

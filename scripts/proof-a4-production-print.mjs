@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 /**
  * Local proof: render a production A4 print HTML fixture with RECEIVING_A4_PRINT_CSS
- * and measure content width vs page width (must fill nearly full portrait A4).
+ * under print media, emit PDF/PNG, and fail if Chrome would shrink-to-fit.
  *
  * Usage: node scripts/proof-a4-production-print.mjs
- * Output: tmp-pdf-inspect/a4-production-print-proof.html (+ .png if playwright available)
+ * Output: tmp-pdf-inspect/a4-production-print-proof.*
  */
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
+import { spawnSync } from "node:child_process";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
@@ -35,27 +36,9 @@ const rows = [
 ];
 
 const fabricRows = [
-  [
-    "1",
-    "LORO PIANA",
-    "71% WOOL 15% SILK 14% LINEN 'SUMMERTIME'",
-    "250 gsm",
-    "150 cm",
-    "Jacket / Suit",
-    "FR-0129-L01-JK-1/2",
-    "160111",
-  ],
-  [
-    "1",
-    "LORO PIANA",
-    "71% WOOL 15% SILK 14% LINEN 'SUMMERTIME'",
-    "250 gsm",
-    "150 cm",
-    "Trouser / Suit",
-    "FR-0129-L01-TR-2/2",
-    "160111",
-  ],
-  ["2", "ZEGNA", "100% WOOL", "260 gsm", "150 cm", "Trouser", "FR-0129-L02-TR", "66046"],
+  ["1", "LORO PIANA", "71% WOOL 15% SILK 14% LINEN 'SUMMERTIME'", "250 gsm / 150 cm", "160111"],
+  ["2", "ZEGNA", "100% WOOL", "260 gsm / 150 cm", "66046"],
+  ["3", "LORO PIANA", "FELCE blend", "240 gsm / 150 cm", "FELCE"],
 ];
 
 const qrSvg =
@@ -72,24 +55,18 @@ const html = `<!DOCTYPE html>
 <style>
   body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 0; color: #0f172a; background: #e2e8f0; }
   ${css}
-  .proof-frame {
-    width: 210mm;
-    min-height: 297mm;
-    margin: 12px auto;
-    padding: 12mm;
-    box-sizing: border-box;
-    border: 1px dashed #94a3b8;
-    background: white;
+  @media screen {
+    .proof-chrome { max-width: 210mm; margin: 12px auto; padding: 12px; }
   }
   @media print {
-    body { background: white; }
-    .proof-frame { border: none; margin: 0; padding: 0; width: 100%; min-height: 0; }
+    body { background: white !important; }
+    .proof-chrome { margin: 0; padding: 0; max-width: none; }
   }
 </style>
 </head>
 <body>
-<div class="sales-order-print">
-  <div class="print-a4-sheet proof-frame" id="sheet">
+<div class="sales-order-print proof-chrome">
+  <div class="print-a4-sheet" id="sheet">
     <p style="font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;font-size:11pt;margin:0">Production - piece stickers</p>
     <h1 style="margin:4px 0 0;font-size:22pt">SO-2026-0129</h1>
     <p style="margin:6px 0 0;font-weight:700;font-size:14pt">FOUAD RAHME</p>
@@ -100,7 +77,7 @@ const html = `<!DOCTYPE html>
       <h2 style="font-size:11pt;text-transform:uppercase;margin:0 0 8px">Piece sticker codes - cutting / sewing</h2>
       <table class="print-receiving-table" style="border-collapse:collapse;width:100%">
         <colgroup>
-          <col style="width:6%"/><col style="width:12%"/><col style="width:36%"/><col style="width:16%"/><col style="width:30%"/>
+          <col style="width:8%"/><col style="width:14%"/><col style="width:34%"/><col style="width:16%"/><col style="width:28%"/>
         </colgroup>
         <thead>
           <tr>
@@ -128,13 +105,11 @@ const html = `<!DOCTYPE html>
       <h2 style="font-size:11pt;text-transform:uppercase;margin:0 0 8px">Fabric / composition reference</h2>
       <table class="print-receiving-table" style="border-collapse:collapse;width:100%">
         <colgroup>
-          <col style="width:5%"/><col style="width:12%"/><col style="width:28%"/><col style="width:8%"/>
-          <col style="width:8%"/><col style="width:14%"/><col style="width:15%"/><col style="width:10%"/>
+          <col style="width:8%"/><col style="width:16%"/><col style="width:36%"/><col style="width:18%"/><col style="width:22%"/>
         </colgroup>
         <thead>
           <tr>
-            <th>Art.</th><th>Brand</th><th>Composition</th><th>Weight</th>
-            <th>Width</th><th>Garment</th><th>Piece code</th><th>Fabric #</th>
+            <th>Art.</th><th>Brand</th><th>Composition</th><th>Spec</th><th>Fabric #</th>
           </tr>
         </thead>
         <tbody>
@@ -146,10 +121,7 @@ const html = `<!DOCTYPE html>
               <td>${r[1]}</td>
               <td class="print-composition">${r[2]}</td>
               <td>${r[3]}</td>
-              <td>${r[4]}</td>
-              <td class="print-garment">${r[5]}</td>
-              <td style="font-family:ui-monospace,monospace;color:#3730a3">${r[6]}</td>
-              <td style="font-family:ui-monospace,monospace">${r[7]}</td>
+              <td style="font-family:ui-monospace,monospace">${r[4]}</td>
             </tr>`
             )
             .join("")}
@@ -159,26 +131,6 @@ const html = `<!DOCTYPE html>
     <p style="margin-top:12px;font-size:9pt;color:#94a3b8">Generated proof fixture  SO-2026-0129</p>
   </div>
 </div>
-<script>
-  window.__proofGeometry = () => {
-    const sheet = document.getElementById('sheet');
-    const table = document.querySelector('.print-receiving-table');
-    const sr = sheet.getBoundingClientRect();
-    const tr = table.getBoundingClientRect();
-    const style = getComputedStyle(sheet);
-    const padX = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
-    const contentWidth = sr.width - padX;
-    return {
-      sheetWidth: sr.width,
-      sheetHeight: sr.height,
-      contentWidth,
-      tableWidth: tr.width,
-      // Fill of the printable content box (excludes preview padding that mimics @page margin).
-      fillRatio: tr.width / contentWidth,
-      isPortraitFrame: sr.height >= sr.width,
-    };
-  };
-</script>
 </body>
 </html>
 `;
@@ -192,9 +144,12 @@ const checks = [
   ["no landscape @page", !/size:\s*A4\s+landscape/i.test(html)],
   ["no transform:scale", !/transform\s*:\s*scale\s*\(/i.test(html)],
   ["no zoom control", !/zoom\s*:/i.test(html)],
+  ["no width:auto body", !/body\s*\{[^}]*width:\s*auto\s*!important/i.test(html)],
+  ["body width 100%", /body\s*\{[^}]*width:\s*100%\s*!important/s.test(html)],
   ["table width 100%", /width:\s*100%\s*!important/.test(html)],
   ["td font >= 10pt", /font-size:\s*11pt\s*!important/.test(html)],
   ["max-width none on print sheet", /max-width:\s*none\s*!important/.test(html)],
+  ["screen preview 186mm not 210mm", /width:\s*186mm/.test(html) && !/max-width:\s*210mm/.test(css)],
   ["webkit print color", /-webkit-print-color-adjust:\s*exact/.test(html)],
   ["no avoid-page on prod section", !/\.print-prod-section\s*\{[^}]*avoid-page/i.test(html)],
   ["page-break-before fabric", /page-break-before:\s*always/.test(html)],
@@ -217,19 +172,38 @@ try {
 }
 
 if (!playwright?.chromium) {
-  console.log("Playwright not installed - skipped PNG/fillRatio. Open HTML in Chrome/Safari print preview.");
+  console.log("Playwright not installed - skipped PNG/PDF. Open HTML in Chrome/Safari print preview.");
   process.exit(ok ? 0 : 1);
 }
 
 const { chromium } = playwright;
 const browser = await chromium.launch();
-const page = await browser.newPage();
+const page = await browser.newPage({ viewport: { width: 794, height: 1123 } });
 await page.goto("file://" + htmlPath, { waitUntil: "networkidle" });
-const geom = await page.evaluate(() => window.__proofGeometry());
+await page.emulateMedia({ media: "print" });
+
+const geom = await page.evaluate(() => {
+  const sheet = document.getElementById("sheet");
+  const table = document.querySelector(".print-receiving-table");
+  const td = document.querySelector(".print-receiving-table td");
+  const sr = sheet.getBoundingClientRect();
+  const tr = table.getBoundingClientRect();
+  return {
+    sheetWidth: sr.width,
+    tableWidth: tr.width,
+    fillRatio: tr.width / sr.width,
+    docScrollWidth: document.documentElement.scrollWidth,
+    viewportWidth: window.innerWidth,
+    overflowRatio: document.documentElement.scrollWidth / window.innerWidth,
+    tdFontPx: parseFloat(getComputedStyle(td).fontSize),
+    bodyWidthCss: getComputedStyle(document.body).width,
+    sheetMaxWidth: getComputedStyle(sheet).maxWidth,
+  };
+});
+
 const pngPath = resolve(outDir, "a4-production-print-proof.png");
 await page.locator("#sheet").screenshot({ path: pngPath });
 
-// Emulated print PDF for layout proof (Chromium). Safari uses same CSS invariants.
 const pdfPath = resolve(outDir, "a4-production-print-proof.pdf");
 await page.pdf({
   path: pdfPath,
@@ -244,14 +218,72 @@ await browser.close();
 console.log("Geometry:", geom);
 console.log("Wrote", pngPath);
 console.log("Wrote", pdfPath);
-if (!geom.isPortraitFrame) {
-  console.error("FAIL: proof frame is not portrait");
+
+if (geom.overflowRatio > 1.02) {
+  console.error(`FAIL: document scrollWidth exceeds viewport (ratio ${geom.overflowRatio.toFixed(3)}) - Chrome will shrink-to-fit`);
   ok = false;
+} else {
+  console.log(`OK: no viewport overflow (ratio ${geom.overflowRatio.toFixed(3)})`);
 }
-if (geom.fillRatio < 0.92) {
-  console.error(`FAIL: table only fills ${(geom.fillRatio * 100).toFixed(1)}% of sheet (need >= 92%)`);
+if (geom.fillRatio < 0.95) {
+  console.error(`FAIL: table only fills ${(geom.fillRatio * 100).toFixed(1)}% of sheet (need >= 95%)`);
   ok = false;
 } else {
   console.log(`OK: table fills ${(geom.fillRatio * 100).toFixed(1)}% of sheet width`);
 }
+// 11pt at 96dpi ~= 14.67px
+if (!(geom.tdFontPx >= 13.5 && geom.tdFontPx <= 16)) {
+  console.error(`FAIL: td font ${geom.tdFontPx}px not in 11pt band`);
+  ok = false;
+} else {
+  console.log(`OK: td font ${geom.tdFontPx}px (~11pt)`);
+}
+
+// Measure PDF ink fill with PyMuPDF when available.
+const py = spawnSync(
+  "python3",
+  [
+    "-c",
+    `
+import sys
+try:
+  import fitz
+except Exception as e:
+  print('SKIP_PYMUPDF', e)
+  sys.exit(0)
+doc = fitz.open(${JSON.stringify(pdfPath)})
+ok = True
+for i, page in enumerate(doc):
+  blocks = page.get_text('dict')['blocks']
+  xs=[]; xe=[]; sizes=set()
+  for b in blocks:
+    if b.get('type') == 0:
+      xs.append(b['bbox'][0]); xe.append(b['bbox'][2])
+      for line in b.get('lines', []):
+        for span in line.get('spans', []):
+          sizes.add(round(span['size'], 1))
+    elif b.get('type') == 1:
+      xs.append(b['bbox'][0]); xe.append(b['bbox'][2])
+  if not xs:
+    continue
+  left, right = min(xs), max(xe)
+  pw = page.rect.width
+  content_w = pw - 2 * 34  # ~12mm margins in points
+  fill = (right - left) / content_w
+  print(f'PDF page{i}: fill={fill*100:.1f}% fonts={sorted(sizes)}')
+  if i == 1 and fill < 0.92:
+    print('FAIL: fabric page ink fill < 92%')
+    ok = False
+  if 11.0 not in sizes and not any(s >= 10.5 for s in sizes):
+    print('FAIL: missing >=10.5pt body text')
+    ok = False
+sys.exit(0 if ok else 2)
+`,
+  ],
+  { encoding: "utf8" }
+);
+if (py.stdout) process.stdout.write(py.stdout);
+if (py.stderr) process.stderr.write(py.stderr);
+if (py.status === 2) ok = false;
+
 process.exit(ok ? 0 : 1);

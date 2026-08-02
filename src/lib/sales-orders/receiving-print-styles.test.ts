@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve as resolvePath } from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import { RECEIVING_A4_PRINT_CSS } from "@/lib/sales-orders/receiving-print-styles";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const printPagePath = resolvePath(here, "../../app/(dashboard)/orders/[id]/print/page.tsx");
+const printPagePath = resolvePath(here, "../../app/(print)/orders/[id]/print/page.tsx");
+const dashboardPrintPath = resolvePath(here, "../../app/(dashboard)/orders/[id]/print/page.tsx");
 const printPackPath = resolvePath(here, "../../app/(dashboard)/orders/[id]/print-pack/page.tsx");
 
 /** Extract first font-size declaration for a selector block (best-effort). */
@@ -24,11 +25,20 @@ function pageMarginMm(css: string): number | null {
 }
 
 describe("RECEIVING_A4_PRINT_CSS - A4 shrink regression guards (Chrome + Safari)", () => {
-  it("uses portrait A4 with sensible margins (10-15mm)", () => {
+  it("uses portrait A4 with 12mm margins (not landscape)", () => {
     assert.match(RECEIVING_A4_PRINT_CSS, /@page\s*\{[^}]*size:\s*A4\s+portrait/i);
     assert.doesNotMatch(RECEIVING_A4_PRINT_CSS, /size:\s*A4\s+landscape/i);
     const margin = pageMarginMm(RECEIVING_A4_PRINT_CSS);
-    assert.ok(margin != null && margin >= 10 && margin <= 15, `margin must be 10-15mm, got ${margin}`);
+    assert.equal(margin, 12, `margin must be 12mm, got ${margin}`);
+  });
+
+  it("locks html/body to page width (not width:auto shrink trap)", () => {
+    // b4d6533 regression: width:auto let Chromium lay out to the viewport then shrink-to-fit.
+    assert.doesNotMatch(RECEIVING_A4_PRINT_CSS, /html[\s\S]{0,200}?width:\s*auto\s*!important/i);
+    assert.doesNotMatch(RECEIVING_A4_PRINT_CSS, /body\s*\{[^}]*width:\s*auto\s*!important/i);
+    assert.match(RECEIVING_A4_PRINT_CSS, /html\s*\{[^}]*width:\s*100%\s*!important/s);
+    assert.match(RECEIVING_A4_PRINT_CSS, /body\s*\{[^}]*width:\s*100%\s*!important/s);
+    assert.match(RECEIVING_A4_PRINT_CSS, /body\s*\{[^}]*max-width:\s*100%\s*!important/s);
   });
 
   it("does not shrink the print sheet with transform:scale or zoom tricks", () => {
@@ -48,6 +58,9 @@ describe("RECEIVING_A4_PRINT_CSS - A4 shrink regression guards (Chrome + Safari)
     // Explicitly neutralize the historical max-w-4xl + mx-auto trap (IMG_9922).
     assert.match(RECEIVING_A4_PRINT_CSS, /\.max-w-4xl/);
     assert.match(RECEIVING_A4_PRINT_CSS, /margin-left:\s*0\s*!important/);
+    // Screen preview must use content-box 186mm, never full paper 210mm (overflows @page margins).
+    assert.match(RECEIVING_A4_PRINT_CSS, /width:\s*186mm/);
+    assert.doesNotMatch(RECEIVING_A4_PRINT_CSS, /max-width:\s*210mm/);
   });
 
   it("keeps body table text floor-readable (>= 10pt) and QR large enough to scan", () => {
@@ -82,16 +95,21 @@ describe("RECEIVING_A4_PRINT_CSS - A4 shrink regression guards (Chrome + Safari)
     assert.match(RECEIVING_A4_PRINT_CSS, /page-break-before:\s*always/);
   });
 
-  it("production / print-pack pages do not reintroduce centered max-w-4xl shrink wrappers", () => {
+  it("production print page lives under (print) layout - not DashboardShell", () => {
+    assert.equal(existsSync(printPagePath), true, `missing print page at ${printPagePath}`);
+    assert.equal(existsSync(dashboardPrintPath), false, "dashboard print page must be removed (shell shrink trap)");
     const printPage = readFileSync(printPagePath, "utf8");
     const printPack = readFileSync(printPackPath, "utf8");
     assert.match(printPage, /print-a4-sheet/);
     assert.match(printPack, /print-a4-sheet/);
     assert.doesNotMatch(printPage, /max-w-4xl/);
     assert.doesNotMatch(printPack, /max-w-4xl/);
-    // Production must split QR list vs fabric reference (avoids 9-col horizontal tile).
+    // Production must split QR list vs fabric reference (avoids wide horizontal tile).
     assert.match(printPage, /print-prod-fabric-section/);
     assert.match(printPage, /Fabric \/ composition reference/);
+    // Fabric reference stays simple (no piece-code column / no 8-col overflow).
+    assert.match(printPage, />Spec</);
+    assert.doesNotMatch(printPage, /print-prod-fabric-section[\s\S]*Piece code/);
     // No Chrome-only zoom/scale hacks in the print page markup.
     assert.doesNotMatch(printPage, /transform:\s*scale|print:scale|zoom:\s*0/i);
   });

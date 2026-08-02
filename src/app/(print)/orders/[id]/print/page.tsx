@@ -46,22 +46,31 @@ function fabricBrandLabel(line: SalesOrderFabricLine): string {
 }
 
 function fabricWeightLabel(line: SalesOrderFabricLine): string {
-  return line.weight_gsm != null ? `${line.weight_gsm} gsm` : "—";
+  return line.weight_gsm != null ? `${line.weight_gsm} gsm` : "-";
 }
 
 function formatWidth(line: SalesOrderFabricLine): string {
   if (line.width_cm != null) return `${line.width_cm} cm`;
   if (line.width_inches != null) return `${line.width_inches}"`;
-  return "—";
+  return "-";
 }
 
-/** Screen density; print sizes come from RECEIVING_A4_PRINT_CSS (11pt body) — do not add print:text-[Npx] shrink. */
+function fabricSpecLabel(line: SalesOrderFabricLine): string {
+  const weight = fabricWeightLabel(line);
+  const width = formatWidth(line);
+  if (weight === "-" && width === "-") return "-";
+  if (weight === "-") return width;
+  if (width === "-") return weight;
+  return `${weight} / ${width}`;
+}
+
+/** Screen density; print sizes come from RECEIVING_A4_PRINT_CSS (11pt body) - do not add print:text-[Npx] shrink. */
 const teamPrintCell = "py-4 pr-2 align-top";
 const teamPrintHead = "py-2 pr-2 text-xs font-bold uppercase tracking-wide text-slate-500";
 
 function formatLinePrice(line: SalesOrderFabricLine, showPrices: boolean): string {
-  if (!showPrices) return "—";
-  if (!line.unit_price) return "—";
+  if (!showPrices) return "-";
+  if (!line.unit_price) return "-";
   return formatSupplierUnitPrice(line.unit_price, line.supplier_id, line.unit);
 }
 
@@ -90,7 +99,7 @@ export default async function SalesOrderPrintPage({
   const team =
     teamParam === "receiving" || teamParam === "production" ? teamParam : ("full" as const);
   await ensureDocumentsLoaded(["sales_orders"]);
-  // Same heal as the list read paths — the printed sheet resolves client names for every role.
+  // Same heal as the list read paths - the printed sheet resolves client names for every role.
   await healClientDataForRead();
   const rawOrder = getSalesOrderById(id);
   if (!rawOrder) notFound();
@@ -135,7 +144,7 @@ export default async function SalesOrderPrintPage({
         sheetLineCount={team === "receiving" ? a4PrintLines.length : undefined}
       />
 
-      {/* print-a4-sheet: portrait A4 width on screen; print CSS forces full printable width. */}
+      {/* print-a4-sheet: 186mm content preview on screen; print CSS forces full page width. */}
       <div className="print-a4-sheet w-full">
         <div className="mb-8 flex items-start justify-between border-b border-slate-200 pb-6 print:mb-3 print:pb-2">
           <div>
@@ -143,7 +152,7 @@ export default async function SalesOrderPrintPage({
               {team === "receiving"
                 ? "Fabric receiving & wash"
                 : team === "production"
-                  ? "Production — piece stickers"
+                  ? "Production - piece stickers"
                   : "Sales order"}
             </p>
             <h1 className="mt-1 text-3xl font-bold print:text-2xl">{order.so_number}</h1>
@@ -151,7 +160,7 @@ export default async function SalesOrderPrintPage({
               {productionBrand}
             </p>
             <p className="mt-1 text-xs text-slate-500 print:text-[10pt]">
-              Production brand — follow this brand&apos;s stitching specification
+              Production brand - follow this brand&apos;s stitching specification
             </p>
             <p className="mt-3 text-sm text-slate-600 print:mt-1">Order date: {formatDate(order.order_date)}</p>
             {order.delivery_date && (
@@ -185,22 +194,22 @@ export default async function SalesOrderPrintPage({
             </p>
             <p className="text-sm text-slate-600">Status: {order.status.replace(/_/g, " ")}</p>
             <p className="text-sm text-slate-600">
-              {order.fabric_lines.length} fabric line{order.fabric_lines.length !== 1 ? "s" : ""} ·{" "}
+              {order.fabric_lines.length} fabric line{order.fabric_lines.length !== 1 ? "s" : ""} |{" "}
               {totalMeters.toFixed(1)} m total
-              {totalWeightLabel ? ` · ${totalWeightLabel}` : ""}
+              {totalWeightLabel ? ` | ${totalWeightLabel}` : ""}
             </p>
           </div>
         </div>
 
         {team === "receiving" && (
           <p className="mb-6 text-sm text-slate-600 print:mb-2">
-            One fabric cut QR per line — receiving & washing scan these when fabric arrives (before jacket / trouser
+            One fabric cut QR per line - receiving and washing scan these when fabric arrives (before jacket / trouser
             split).
           </p>
         )}
         {team === "production" && (
           <p className="mb-6 text-sm text-slate-600 print:mb-2">
-            One QR per garment piece — after fabric prep, stick on jacket, trouser, shirt, etc. Suit fabric = 2 piece
+            One QR per garment piece - after fabric prep, stick on jacket, trouser, shirt, etc. Suit fabric = 2 piece
             codes.
           </p>
         )}
@@ -236,9 +245,9 @@ export default async function SalesOrderPrintPage({
                       <td className="py-3 pr-3 font-mono font-medium">{line.fabric_number}</td>
                       <td className="py-3 pr-3">{line.garment_type}</td>
                       <td className="py-3 pr-3">{line.label_count}</td>
-                      <td className="py-3 pr-3 text-slate-600">{line.composition ?? "—"}</td>
+                      <td className="py-3 pr-3 text-slate-600">{line.composition ?? "-"}</td>
                       <td className="py-3 pr-3 text-slate-600">
-                        {line.weight_gsm != null ? `${line.weight_gsm} gsm` : "—"}
+                        {line.weight_gsm != null ? `${line.weight_gsm} gsm` : "-"}
                       </td>
                       <td className="py-3 pr-3 text-slate-600">{formatWidth(line)}</td>
                       <td className="py-3 pr-3 font-medium">
@@ -246,7 +255,7 @@ export default async function SalesOrderPrintPage({
                       </td>
                       {showStock ? (
                         <td className="py-3 pr-3 text-amber-800">
-                          {formatSalesOrderLineStock(line) ?? "—"}
+                          {formatSalesOrderLineStock(line) ?? "-"}
                         </td>
                       ) : null}
                       {canViewFabricPrices ? (
@@ -265,7 +274,7 @@ export default async function SalesOrderPrintPage({
           <div className="mt-8 border-t border-slate-200 pt-6 print:mt-0 print:border-0 print:pt-0">
             {PRINTING_FREE ? (
               <p className="no-print mb-4 text-sm text-slate-500">
-                Full order sheet ({a4PrintLines.length} lines) — reprint anytime.
+                Full order sheet ({a4PrintLines.length} lines) - reprint anytime.
               </p>
             ) : a4PrintLines.length > 0 ? (
               <p className="no-print mb-4 text-sm text-slate-500">
@@ -273,7 +282,7 @@ export default async function SalesOrderPrintPage({
               </p>
             ) : null}
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-700 print:mb-2">
-              Fabric cut QR — receive / wash
+              Fabric cut QR - receive / wash
             </h2>
             <SalesOrderReceivingCutTableWithSwatches
               swatchLoading="eager"
@@ -299,29 +308,30 @@ export default async function SalesOrderPrintPage({
           ) && (
           <>
             {/*
-              Two intentional full-width tables (not one 9-col mega-table).
+              Two intentional full-width tables (not one wide mega-table).
               A single wide table historically overflowed the shell and Chrome tiled
               left/right column fragments onto separate pages (IMG_9922).
+              Fabric reference stays to 5 columns so A4 portrait cannot overflow.
             */}
             <div className="print-prod-section mt-8 border-t border-slate-200 pt-6 print:mt-2 print:border-0 print:pt-0">
               <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-700 print:mb-2">
-                {team === "production" ? "Piece sticker codes — cutting / sewing" : "Label sticker codes"}
+                {team === "production" ? "Piece sticker codes - cutting / sewing" : "Label sticker codes"}
               </h2>
               <p className="mb-6 text-xs text-slate-500 print:hidden">
-                Art. # matches fabric table — one row per piece (suit = jacket + trouser)
+                Art. # matches fabric table - one row per piece (suit = jacket + trouser)
                 {team === "production"
                   ? PRINTING_FREE
-                    ? ` · ${prodPrintLines.length} line${prodPrintLines.length === 1 ? "" : "s"} — reprint anytime`
-                    : ` · ${prodPrintLines.length} line${prodPrintLines.length === 1 ? "" : "s"} to print`
+                    ? ` | ${prodPrintLines.length} line${prodPrintLines.length === 1 ? "" : "s"} - reprint anytime`
+                    : ` | ${prodPrintLines.length} line${prodPrintLines.length === 1 ? "" : "s"} to print`
                   : ""}
               </p>
               <table className="print-receiving-table w-full text-sm">
                 <colgroup>
-                  <col className="w-[6%]" />
-                  <col className="w-[12%]" />
-                  <col className="w-[36%]" />
-                  <col className="w-[16%]" />
-                  <col className="w-[30%]" />
+                  <col style={{ width: "8%" }} />
+                  <col style={{ width: "14%" }} />
+                  <col style={{ width: "34%" }} />
+                  <col style={{ width: "16%" }} />
+                  <col style={{ width: "28%" }} />
                 </colgroup>
                 <thead>
                   <tr className="border-b border-slate-300 text-left">
@@ -375,55 +385,40 @@ export default async function SalesOrderPrintPage({
                 </h2>
                 <table className="print-receiving-table w-full text-sm">
                   <colgroup>
-                    <col className="w-[5%]" />
-                    <col className="w-[12%]" />
-                    <col className="w-[28%]" />
-                    <col className="w-[8%]" />
-                    <col className="w-[8%]" />
-                    <col className="w-[14%]" />
-                    <col className="w-[15%]" />
-                    <col className="w-[10%]" />
+                    <col style={{ width: "8%" }} />
+                    <col style={{ width: "16%" }} />
+                    <col style={{ width: "36%" }} />
+                    <col style={{ width: "18%" }} />
+                    <col style={{ width: "22%" }} />
                   </colgroup>
                   <thead>
                     <tr className="border-b border-slate-300 text-left">
                       <th className={teamPrintHead}>Art.</th>
                       <th className={teamPrintHead}>Brand</th>
                       <th className={teamPrintHead}>Composition</th>
-                      <th className={teamPrintHead}>Weight</th>
-                      <th className={teamPrintHead}>Width</th>
-                      <th className={teamPrintHead}>Garment</th>
-                      <th className={teamPrintHead}>Piece code</th>
+                      <th className={teamPrintHead}>Spec</th>
                       <th className={teamPrintHead}>Fabric #</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {prodPrintLines.flatMap((line) =>
-                      [...(line.label_stickers ?? [])]
-                        .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
-                        .map((sticker) => {
-                          const productionCode = productionCodeFromSticker(sticker.code, order.client_code);
-                          return (
-                            <tr key={`fab-${sticker.code}`} className="border-b border-slate-200 align-top">
-                              <td className={`${teamPrintCell} text-center font-semibold text-slate-900`}>
-                                {articleByLineId.get(line.id)}
-                              </td>
-                              <td className={`${teamPrintCell} whitespace-normal text-slate-700`}>
-                                {fabricBrandLabel(line)}
-                              </td>
-                              <CompositionCell composition={line.composition} className="print-composition" />
-                              <td className={`${teamPrintCell} text-slate-700`}>{fabricWeightLabel(line)}</td>
-                              <td className={`${teamPrintCell} text-slate-700`}>{formatWidth(line)}</td>
-                              <td className={`${teamPrintCell} print-garment whitespace-normal text-slate-800`}>
-                                {formatLabelGarmentDescription(line.garment_type, sticker.piece_name)}
-                              </td>
-                              <td className={`${teamPrintCell} break-all font-mono text-indigo-800`}>
-                                {productionCode}
-                              </td>
-                              <td className={`${teamPrintCell} font-mono text-slate-700`}>{line.fabric_number}</td>
-                            </tr>
-                          );
-                        })
-                    )}
+                    {prodPrintLines.map((line) => (
+                      <tr key={`fab-${line.id}`} className="border-b border-slate-200 align-top">
+                        <td className={`${teamPrintCell} text-center font-semibold text-slate-900`}>
+                          {articleByLineId.get(line.id)}
+                        </td>
+                        <td className={`${teamPrintCell} whitespace-normal text-slate-700`}>
+                          {fabricBrandLabel(line)}
+                        </td>
+                        <CompositionCell composition={line.composition} className="print-composition" />
+                        <td className={`${teamPrintCell} whitespace-normal text-slate-700`}>
+                          {fabricSpecLabel(line)}
+                          <span className="mt-0.5 block print-garment text-slate-800">
+                            {line.garment_type}
+                          </span>
+                        </td>
+                        <td className={`${teamPrintCell} font-mono text-slate-700`}>{line.fabric_number}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -439,7 +434,7 @@ export default async function SalesOrderPrintPage({
         )}
 
         <p className="mt-10 text-xs text-slate-400 print:mt-4">
-          Generated {new Date().toLocaleString()} · {order.so_number}
+          Generated {new Date().toLocaleString()} | {order.so_number}
         </p>
       </div>
     </div>

@@ -447,13 +447,13 @@ export function SalesOrderActions({
               <Link href={`/orders/${order.id}/print-pack`}>
                 <Button>Print packs (receiving + cutting)</Button>
               </Link>
-              <Link href={`/orders/${order.id}/print?team=receiving`}>
+              <Link href={`/orders/${order.id}/print?team=receiving`} target="_blank" rel="noreferrer">
                 <Button variant="secondary">A4 receiving list</Button>
               </Link>
               <Link href={`/orders/${order.id}/stickers?sheet=fabric-cuts`}>
                 <Button variant="secondary">Print fabric cuts (receive)</Button>
               </Link>
-              <Link href={`/orders/${order.id}/print?team=production`}>
+              <Link href={`/orders/${order.id}/print?team=production`} target="_blank" rel="noreferrer">
                 <Button variant="secondary">A4 production list</Button>
               </Link>
               <Link href={`/orders/${order.id}/stickers?sheet=pieces`}>

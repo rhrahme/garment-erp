@@ -93,8 +93,10 @@ export function SalesOrderPrintToolbar({
         ))}
       </div>
       <p className="text-xs text-slate-500">
-        Chrome and Safari: paper <span className="font-medium text-slate-700">A4 Portrait</span>, scale{" "}
-        <span className="font-medium text-slate-700">100%</span> / no shrink-to-fit, margins default (about 12mm).
+        Print dialog: paper <span className="font-medium text-slate-700">A4</span>, layout{" "}
+        <span className="font-medium text-slate-700">Portrait</span>, scale{" "}
+        <span className="font-medium text-slate-700">100% / Actual size</span> (not Fit to page), margins{" "}
+        <span className="font-medium text-slate-700">Default</span>.
       </p>
     </div>
   );
