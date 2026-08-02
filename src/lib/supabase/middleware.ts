@@ -22,7 +22,10 @@ function hasSupabaseAuthCookie(request: NextRequest): boolean {
   return request.cookies.getAll().some((cookie) => cookie.name.includes("-auth-token"));
 }
 
-export async function updateSession(request: NextRequest) {
+/** Hard ceiling under Vercel's ~25s middleware limit when GoTrue hangs. */
+const MIDDLEWARE_WALL_CLOCK_MS = 10_000;
+
+async function updateSessionInner(request: NextRequest) {
   if (!isSupabaseConfigured()) {
     return NextResponse.next({ request });
   }
@@ -144,4 +147,50 @@ export async function updateSession(request: NextRequest) {
   }
 
   return supabaseResponse;
+}
+
+function failClosedOnMiddlewareTimeout(request: NextRequest): NextResponse {
+  const pathname = request.nextUrl.pathname;
+  const isAuthPage = pathname.startsWith("/login");
+  const isApiRoute = pathname.startsWith("/api/");
+  const isPublicApiRoute =
+    pathname.startsWith("/api/v1/") ||
+    pathname.startsWith("/api/webhooks/") ||
+    pathname.startsWith("/api/cron/") ||
+    pathname === "/api/health/auth";
+  const isOpenAuthRoute =
+    pathname.startsWith("/api/auth/login") ||
+    pathname.startsWith("/api/auth/dev-impersonate") ||
+    pathname.startsWith("/api/auth/confirm-client-manager") ||
+    pathname === "/api/qr";
+
+  if (isAuthPage || isPublicApiRoute || isOpenAuthRoute) {
+    return NextResponse.next({ request });
+  }
+  if (isApiRoute) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+  const url = request.nextUrl.clone();
+  url.pathname = "/login";
+  return NextResponse.redirect(url);
+}
+
+export async function updateSession(request: NextRequest) {
+  try {
+    return await Promise.race([
+      updateSessionInner(request),
+      new Promise<NextResponse>((resolve) => {
+        setTimeout(() => {
+          console.warn("[auth] middleware wall-clock timeout; failing closed");
+          resolve(failClosedOnMiddlewareTimeout(request));
+        }, MIDDLEWARE_WALL_CLOCK_MS);
+      }),
+    ]);
+  } catch (error) {
+    console.warn(
+      "[auth] middleware updateSession failed:",
+      error instanceof Error ? error.message : error
+    );
+    return failClosedOnMiddlewareTimeout(request);
+  }
 }
