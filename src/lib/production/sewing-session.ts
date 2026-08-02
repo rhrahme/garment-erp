@@ -67,6 +67,7 @@ export {
   expireStaleSewingState,
   normalizeSewingSessionsFile,
   parseSewingDashboardPeriod,
+  pickFifoEmployeeArm,
   resolveUniqueEmployeeArm,
   resolveUniquePieceArm,
   SEWING_ARM_TIMEOUT_MS,
@@ -503,7 +504,8 @@ export type ProcessSewingKioskScanInput = {
  * Multi-stitcher kiosk scan: many employees can be armed / sewing on one laptop.
  * Sessions are keyed by employee + piece; ending still advances sewing stage.
  *
- * Blind-floor recovery: accept unambiguous out-of-order scans; reject when ambiguous.
+ * Blind-floor: badge-ready employees form a FIFO arm queue (oldest armed_at first).
+ * Matching open/closing A4 scans always close that piece before FIFO start logic runs.
  */
 export async function processSewingKioskScan(
   input: ProcessSewingKioskScanInput
@@ -857,8 +859,22 @@ export async function processSewingKioskScan(
   }
 
   if (pieceDecision.type === "reject_ambiguous_employee_arms") {
+    // Legacy branch: starts now use FIFO (oldest ready first). Keep clear floor copy
+    // if an older client or unexpected path still surfaces this reason.
+    const names = pieceDecision.arms
+      .slice()
+      .sort(
+        (a, b) =>
+          a.armed_at.localeCompare(b.armed_at) || a.employee_id.localeCompare(b.employee_id)
+      )
+      .map((arm) => arm.employee_name)
+      .filter(Boolean);
+    const queueHint =
+      names.length > 0
+        ? ` Queue order: ${names.join(", ")}. Rescan A4 to assign to the first ready employee.`
+        : " Rescan badge then A4.";
     return failResult(
-      "Multiple employees ready - scan badge again, then A4 (one at a time).",
+      `Could not pick who starts this piece.${queueHint}`,
       "ambiguous_employee_arms",
       "piece",
       store,

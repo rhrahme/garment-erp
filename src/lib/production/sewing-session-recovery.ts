@@ -1,5 +1,6 @@
 import {
-  resolveUniqueEmployeeArm,
+  employeeArmsOnKiosk,
+  pickFifoEmployeeArm,
   resolveUniquePieceArm,
 } from "@/lib/production/sewing-session-state";
 import type {
@@ -10,6 +11,7 @@ import type {
 } from "@/lib/types/sewing-sessions";
 
 export {
+  pickFifoEmployeeArm,
   resolveUniqueEmployeeArm,
   resolveUniquePieceArm,
 } from "@/lib/production/sewing-session-state";
@@ -26,6 +28,7 @@ export function openSessionsOnKiosk(
 export type PieceStartDecision =
   | { type: "start_with_employee_arm"; arm: SewingKioskArm }
   | { type: "arm_piece" }
+  /** @deprecated Multi-ready arms use FIFO; kept for typed exhaustiveness / legacy logs. */
   | { type: "reject_ambiguous_employee_arms"; arms: SewingKioskArm[] }
   | { type: "reject_employee_has_open_piece"; arm: SewingKioskArm; session: SewingSession }
   | {
@@ -56,6 +59,9 @@ export function badgeDecisionRequiresSewCapability(type: BadgeDecision["type"]):
 
 /**
  * Pure decision for an A4 that does not match an already-open/closing piece on the kiosk.
+ *
+ * Shared kiosk: multiple badge-ready employees form a FIFO queue (oldest armed_at first).
+ * Each A4 start consumes only that arm; other ready employees stay queued.
  */
 export function decidePieceStart(
   store: SewingSessionsFile,
@@ -72,21 +78,30 @@ export function decidePieceStart(
     };
   }
 
-  const armPick = resolveUniqueEmployeeArm(store, kioskId);
-  if (armPick.status === "many") {
-    return { type: "reject_ambiguous_employee_arms", arms: armPick.arms };
+  const readyArms = employeeArmsOnKiosk(store, kioskId)
+    .slice()
+    .sort(
+      (a, b) =>
+        a.armed_at.localeCompare(b.armed_at) || a.employee_id.localeCompare(b.employee_id)
+    );
+  if (readyArms.length === 0) {
+    return { type: "arm_piece" };
   }
-  if (armPick.status === "one") {
-    const arm = armPick.arm;
+
+  for (const arm of readyArms) {
     const openForArmed = openSessionsOnKiosk(store, kioskId).find(
       (row) => row.employee_id === arm.employee_id && row.status !== "closed"
     );
-    if (openForArmed) {
-      return { type: "reject_employee_has_open_piece", arm, session: openForArmed };
-    }
+    if (openForArmed) continue;
     return { type: "start_with_employee_arm", arm };
   }
-  return { type: "arm_piece" };
+
+  // Every ready employee already has open work - surface the oldest arm.
+  const oldest = pickFifoEmployeeArm(store, kioskId)!;
+  const openForOldest = openSessionsOnKiosk(store, kioskId).find(
+    (row) => row.employee_id === oldest.employee_id && row.status !== "closed"
+  )!;
+  return { type: "reject_employee_has_open_piece", arm: oldest, session: openForOldest };
 }
 
 /**

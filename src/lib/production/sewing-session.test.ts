@@ -14,6 +14,7 @@ import {
   applyStartFromPieceArm,
   decideBadgeScan,
   decidePieceStart,
+  openSessionsOnKiosk,
 } from "@/lib/production/sewing-session-recovery";
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
 import {
@@ -22,6 +23,8 @@ import {
 } from "@/lib/production/sewing-session-garment";
 import {
   expireStaleSewingState,
+  pickFifoEmployeeArm,
+  productionCodesMatch,
   SEWING_ARM_TIMEOUT_MS,
   sewingFailedScansForPeriod,
   sewingPeriodWindow,
@@ -689,21 +692,6 @@ describe("blind-floor stitch scan recovery", () => {
     assert.equal(store.sessions[0]?.status, "closed");
   });
 
-  it("A4 with two employee arms -> reject, no session", () => {
-    const store: SewingSessionsFile = {
-      updated_at: null,
-      kiosk_arms: [
-        empArm({ employee_id: "e1", employee_name: "Ali" }),
-        empArm({ employee_id: "e2", employee_name: "Sara", employee_id_number: "200" }),
-      ],
-      kiosk_piece_arms: [],
-      sessions: [],
-    };
-    const decision = decidePieceStart(store, "k1");
-    assert.equal(decision.type, "reject_ambiguous_employee_arms");
-    assert.equal(store.sessions.length, 0);
-  });
-
   it("A4 with one employee arm -> start (happy path)", () => {
     const arm = empArm({ employee_id: "e1", employee_name: "Ali" });
     let store: SewingSessionsFile = {
@@ -728,6 +716,144 @@ describe("blind-floor stitch scan recovery", () => {
     assert.equal(store.sessions.length, 1);
     assert.equal(store.kiosk_arms.length, 0);
     assert.equal(store.sessions[0]?.production_code, "FR-HAPPY");
+  });
+
+  it("3 EMP ready -> 3 A4 starts assign FIFO (oldest armed_at first)", () => {
+    const t0 = "2026-08-02T17:18:25.000Z";
+    const t1 = "2026-08-02T17:18:27.000Z";
+    const t2 = "2026-08-02T17:18:30.000Z";
+    let store: SewingSessionsFile = {
+      updated_at: null,
+      kiosk_arms: [
+        empArm({
+          employee_id: "e-imran",
+          employee_name: "Imran",
+          employee_id_number: "200",
+          armed_at: t1,
+        }),
+        empArm({
+          employee_id: "e-adnan",
+          employee_name: "Adnan",
+          employee_id_number: "100",
+          armed_at: t0,
+        }),
+        empArm({
+          employee_id: "e-kashif",
+          employee_name: "Kashif",
+          employee_id_number: "300",
+          armed_at: t2,
+        }),
+      ],
+      kiosk_piece_arms: [],
+      sessions: [],
+    };
+
+    assert.equal(pickFifoEmployeeArm(store, "k1")?.employee_id, "e-adnan");
+
+    const order: string[] = [];
+    for (const code of ["FR-L04", "FR-L02", "FR-L06"] as const) {
+      const decision = decidePieceStart(store, "k1");
+      assert.equal(decision.type, "start_with_employee_arm");
+      if (decision.type !== "start_with_employee_arm") return;
+      order.push(decision.arm.employee_id);
+      const started = session({
+        id: `sew-${code}`,
+        employee_id: decision.arm.employee_id,
+        employee_name: decision.arm.employee_name,
+        production_code: code,
+        scan_code: code,
+        status: "open",
+        started_at: decision.arm.armed_at,
+      });
+      store = applyStartFromEmployeeArm(store, "k1", decision.arm, started);
+    }
+
+    assert.deepEqual(order, ["e-adnan", "e-imran", "e-kashif"]);
+    assert.equal(store.kiosk_arms.length, 0);
+    assert.equal(store.sessions.length, 3);
+    assert.equal(store.sessions.find((row) => row.production_code === "FR-L04")?.employee_id, "e-adnan");
+    assert.equal(store.sessions.find((row) => row.production_code === "FR-L02")?.employee_id, "e-imran");
+    assert.equal(store.sessions.find((row) => row.production_code === "FR-L06")?.employee_id, "e-kashif");
+  });
+
+  it("closing / open piece match is not blocked by other ready EMPs", () => {
+    const openAshraf = session({
+      id: "sew-ashraf",
+      employee_id: "e-ashraf",
+      employee_name: "Ashraf",
+      production_code: "FR-0129-L06-TR-2/2",
+      scan_code: "FR-0129-L06-TR-2/2",
+      status: "open",
+    });
+    const store: SewingSessionsFile = {
+      updated_at: null,
+      kiosk_arms: [
+        empArm({
+          employee_id: "e-adnan",
+          employee_name: "Adnan",
+          armed_at: "2026-08-02T17:18:25.000Z",
+        }),
+        empArm({
+          employee_id: "e-kashif",
+          employee_name: "Kashif",
+          employee_id_number: "300",
+          armed_at: "2026-08-02T17:18:30.000Z",
+        }),
+      ],
+      kiosk_piece_arms: [],
+      sessions: [openAshraf],
+    };
+
+    // Kiosk matches open/closing piece before FIFO start (same order as processSewingKioskScan).
+    const pieceCode = "FR-0129-L06-TR-2/2";
+    const matched =
+      openSessionsOnKiosk(store, "k1").find(
+        (row) =>
+          productionCodesMatch(row.production_code, pieceCode) ||
+          productionCodesMatch(row.scan_code, pieceCode)
+      ) ?? null;
+    assert.equal(matched?.id, "sew-ashraf");
+    assert.equal(matched?.employee_id, "e-ashraf");
+
+    // FIFO start would go to Adnan - must not run when a matching open piece exists.
+    const startIfNoMatch = decidePieceStart(store, "k1");
+    assert.equal(startIfNoMatch.type, "start_with_employee_arm");
+    if (startIfNoMatch.type === "start_with_employee_arm") {
+      assert.equal(startIfNoMatch.arm.employee_id, "e-adnan");
+    }
+  });
+
+  it("FIFO skips ready EMP who already has an open piece", () => {
+    const store: SewingSessionsFile = {
+      updated_at: null,
+      kiosk_arms: [
+        empArm({
+          employee_id: "e1",
+          employee_name: "Ali",
+          armed_at: "2026-08-02T17:00:00.000Z",
+        }),
+        empArm({
+          employee_id: "e2",
+          employee_name: "Sara",
+          employee_id_number: "200",
+          armed_at: "2026-08-02T17:00:01.000Z",
+        }),
+      ],
+      kiosk_piece_arms: [],
+      sessions: [
+        session({
+          id: "open-ali",
+          employee_id: "e1",
+          employee_name: "Ali",
+          production_code: "FR-OPEN-ALI",
+          status: "open",
+        }),
+      ],
+    };
+    const decision = decidePieceStart(store, "k1");
+    assert.equal(decision.type, "start_with_employee_arm");
+    if (decision.type !== "start_with_employee_arm") return;
+    assert.equal(decision.arm.employee_id, "e2");
   });
 
   it("expires stale piece arms with the 30s arm timeout", () => {
