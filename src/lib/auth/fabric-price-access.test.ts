@@ -257,6 +257,46 @@ for (const role of [
   });
 }
 
+describe("pattern operator order board payload (GET /api/pattern/orders/:soId)", () => {
+  it("cannot pass the price gate, so the board order is always redacted", () => {
+    assert.equal(canViewPrices(session("pattern_operator")), false);
+    assert.equal(
+      hasFabricPriceAccess(session("pattern_operator"), "1:/pattern/orders/so-1", "/pattern/orders/so-1"),
+      false,
+      "pattern operator must not unlock prices even with a valid unlock cookie"
+    );
+  });
+
+  it("board payload carries no restricted price fields after redaction", () => {
+    // Mirrors the route response: { order, jobs, awaiting_lines, mismatch }.
+    const payload = {
+      order: redactSalesOrderFabricPrices(order),
+      jobs: [
+        {
+          id: "job-1",
+          sales_order_id: order.id,
+          sales_order_line_id: line.id,
+          so_number: order.so_number,
+          fabric_number: line.fabric_number,
+          supplier: line.supplier_name,
+          supplier_id: line.supplier_id,
+          meters: line.quantity,
+          status: "pending",
+        },
+      ],
+      awaiting_lines: false,
+      mismatch: {
+        has_mismatch: false,
+        fabric_line_count: 1,
+        active_pattern_job_count: 1,
+      },
+    };
+    assertNoRestrictedPriceFields(payload, "pattern order board payload");
+    assert.equal(payload.order.fabric_lines[0].fabric_number, "781050");
+    assert.equal(payload.order.fabric_lines[0].quantity, 2.5);
+  });
+});
+
 describe("fabric stock visibility", () => {
   it("hides stock from sales operators only", () => {
     assert.equal(canViewFabricStock(session("sales_operator")), false);

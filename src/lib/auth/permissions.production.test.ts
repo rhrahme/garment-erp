@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   ACCOUNTING_OPERATOR_NAV_HREFS,
   CLIENT_MANAGER_NAV_HREFS,
+  PATTERN_OPERATOR_NAV_HREFS,
   PRODUCTION_OPERATOR_BLOCKED_ROUTE_PREFIXES,
   PRODUCTION_OPERATOR_NAV_HREFS,
   SALES_OPERATOR_NAV_HREFS,
@@ -262,6 +263,106 @@ describe("pattern_operator fabric swatch image routes", () => {
     assert.equal(isPatternOperatorRouteAllowed("/orders"), false);
     assert.equal(isPatternOperatorRouteAllowed("/invoices"), false);
     assert.equal(isPatternOperatorRouteAllowed("/costing"), false);
+  });
+});
+
+describe("pattern_operator price surface lockdown (hagan.dp1@gmail.com)", () => {
+  it("classifies the PATTERN_EMAILS login as pattern_operator and lands on /pattern", () => {
+    const previous = process.env.PATTERN_EMAILS;
+    process.env.PATTERN_EMAILS = "hagan.dp1@gmail.com";
+    try {
+      assert.equal(
+        resolveRestrictedAccess(null, "hagan.dp1@gmail.com", false),
+        "pattern_operator"
+      );
+      assert.equal(defaultPathForEmail("hagan.dp1@gmail.com"), "/pattern");
+    } finally {
+      if (previous === undefined) delete process.env.PATTERN_EMAILS;
+      else process.env.PATTERN_EMAILS = previous;
+    }
+  });
+
+  it("pattern nav contains no price-bearing pages", () => {
+    const nav = PATTERN_OPERATOR_NAV_HREFS as readonly string[];
+    assert.deepEqual(nav, ["/pattern", "/clients", "/fabric-specification"]);
+    for (const href of [
+      "/orders",
+      "/invoices",
+      "/costing",
+      "/fabric-orders",
+      "/purchasing",
+      "/supplier-invoices",
+      "/sales",
+      "/dashboard",
+    ]) {
+      assert.ok(!nav.includes(href), `nav must not include ${href}`);
+    }
+  });
+
+  it("allows only price-redacted or price-free surfaces", () => {
+    for (const path of [
+      "/pattern",
+      "/pattern/library",
+      "/pattern/jobs/job-1",
+      "/pattern/orders/so-1",
+      "/clients",
+      "/fabric-specification",
+      "/api/pattern/overview",
+      "/api/pattern/orders/so-1",
+      "/api/pattern/jobs/job-1",
+      "/api/pattern/library/client-fabrics/client-1",
+      "/api/pattern/washed-ready",
+      "/api/clients",
+      "/api/custom-fabrics",
+      "/api/fabric-search",
+      "/api/fabric-brands",
+      "/api/garment-type-changes",
+      "/api/fabric-change-alerts",
+      "/api/hr/employee-lookup",
+      "/api/sales/client-photos",
+      "/api/qr",
+      "/api/auth/session",
+    ]) {
+      assert.equal(isPatternOperatorRouteAllowed(path), true, `expected allow: ${path}`);
+    }
+  });
+
+  it("blocks every price-bearing route (API leaks count, not just UI)", () => {
+    for (const path of [
+      "/orders",
+      "/orders/so-1",
+      "/orders/new",
+      "/invoices",
+      "/invoices/inv-1",
+      "/costing",
+      "/fabric-orders",
+      "/purchasing",
+      "/supplier-invoices",
+      "/supplier-emails",
+      "/supplier-inbox",
+      "/documents",
+      "/sales",
+      "/hr",
+      "/dashboard",
+      "/api/sales-orders",
+      "/api/sales-orders/so-1",
+      "/api/sales-orders/so-1/pdf",
+      "/api/sales-orders/so-1/fabric-pos",
+      "/api/supplier-fabrics",
+      "/api/customer-invoices",
+      "/api/customer-invoices/inv-1",
+      "/api/fabric-orders",
+      "/api/supplier-invoices",
+      "/api/price-list-items",
+      "/api/transporter-invoices",
+      "/api/exchange-rates",
+      "/api/auth/invoice-amounts",
+      "/api/hr/payroll-employees",
+      "/api/production",
+      "/api/shipments",
+    ]) {
+      assert.equal(isPatternOperatorRouteAllowed(path), false, `expected block: ${path}`);
+    }
   });
 });
 
