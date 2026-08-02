@@ -69,6 +69,11 @@ export type SewingSession = {
    * UI should prefer this over employee_name via sewingSessionEmployeeDisplayName.
    */
   employee_short_name?: string | null;
+  /**
+   * Client first+last (no middle) when resolved from profiles on the dashboard.
+   * UI should prefer this over client_name via sewingSessionClientDisplayName.
+   */
+  client_short_name?: string | null;
 };
 
 export type SewingSessionsFile = {

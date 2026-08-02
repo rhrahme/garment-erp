@@ -8,6 +8,11 @@ export function formatClientDisplayName(client: Pick<ClientProfile, "first_name"
   return [client.first_name, client.middle_name, client.last_name].filter(Boolean).join(" ").trim();
 }
 
+/** Floor / list short label: first + last only (drops middle), matching Sales client pickers. */
+export function formatClientShortName(client: Pick<ClientProfile, "first_name" | "last_name">): string {
+  return [client.first_name, client.last_name].filter(Boolean).join(" ").trim();
+}
+
 export function formatReferredByName(
   client: Pick<ClientProfile, "referred_by_first_name" | "referred_by_middle_name" | "referred_by_last_name">
 ): string {

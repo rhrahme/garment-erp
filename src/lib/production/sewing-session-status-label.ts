@@ -1,3 +1,4 @@
+import { formatClientDisplayName, formatClientShortName } from "@/lib/clients/names";
 import { badgeDisplayName } from "@/lib/hr/badge-print";
 import {
   isTailorJobFunction,
@@ -5,6 +6,7 @@ import {
   type EmployeeJobFunction,
 } from "@/lib/hr/job-functions";
 import type { SewingEmployeeAggregate } from "@/lib/production/sewing-session-state";
+import type { ClientProfile } from "@/lib/types/clients";
 import type { SewingSession, SewingSessionStatus } from "@/lib/types/sewing-sessions";
 
 /** Client-safe short_name trim (avoids pulling payroll document I/O into the browser bundle). */
@@ -12,6 +14,15 @@ function normalizeShortName(value: unknown): string | null {
   if (value === undefined || value === null) return null;
   const trimmed = String(value).trim();
   return trimmed || null;
+}
+
+/** Collapse accidental spaces around hyphens/slashes so piece QRs stay machine-readable. */
+export function normalizeScanQrDisplay(value: string): string {
+  return value
+    .trim()
+    .replace(/\s*-\s*/g, "-")
+    .replace(/\s*\/\s*/g, "/")
+    .replace(/\s+/g, "");
 }
 
 /**
@@ -56,10 +67,21 @@ export function sewingSessionEmployeeDisplayName(
 export function sewingSessionScanQrLabel(
   session: Pick<SewingSession, "scan_code" | "production_code">
 ): string {
-  const scan = String(session.scan_code ?? "").trim();
+  const scan = normalizeScanQrDisplay(String(session.scan_code ?? ""));
   if (scan) return scan;
-  const production = String(session.production_code ?? "").trim();
+  const production = normalizeScanQrDisplay(String(session.production_code ?? ""));
   return production || "-";
+}
+
+/** Prefer profile first+last; fall back to stored full client_name. */
+export function sewingSessionClientDisplayName(
+  session: Pick<SewingSession, "client_name" | "client_short_name">,
+  emptyLabel = "No client"
+): string {
+  const short = normalizeShortName(session.client_short_name);
+  if (short) return short;
+  const full = normalizeShortName(session.client_name);
+  return full || emptyLabel;
 }
 
 export type SewingSessionPayrollLookup = {
@@ -90,6 +112,31 @@ export function attachSewingSessionJobFunctions(
 
     if (sameJobs && sameShort) return session;
     return { ...session, job_functions, employee_short_name };
+  });
+}
+
+/** Attach client first+last short names from client profiles (match full display name). */
+export function attachSewingSessionClientShortNames(
+  sessions: SewingSession[],
+  clients: ReadonlyArray<Pick<ClientProfile, "first_name" | "middle_name" | "last_name">>
+): SewingSession[] {
+  const byFull = new Map<string, string>();
+  for (const client of clients) {
+    const full = formatClientDisplayName(client);
+    const short = formatClientShortName(client);
+    if (!full || !short) continue;
+    byFull.set(full.toLowerCase(), short);
+  }
+
+  return sessions.map((session) => {
+    const full = normalizeShortName(session.client_name);
+    if (!full) {
+      if (!session.client_short_name) return session;
+      return { ...session, client_short_name: null };
+    }
+    const client_short_name = byFull.get(full.toLowerCase()) ?? null;
+    if (normalizeShortName(session.client_short_name) === client_short_name) return session;
+    return { ...session, client_short_name };
   });
 }
 

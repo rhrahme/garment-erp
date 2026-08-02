@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
 import {
+  sewingSessionClientDisplayName,
   sewingSessionEmployeeDisplayName,
   sewingSessionScanQrLabel,
   sewingSessionStatusLabel,
@@ -102,13 +103,13 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
                   <p className="text-slate-700">
                     {sewingSessionArticleLabel(session) || "-"}
                   </p>
-                  <p className="font-mono text-xs text-slate-800 break-all">
+                  <p className="font-mono text-xs tracking-normal text-slate-800 whitespace-nowrap">
                     {sewingSessionScanQrLabel(session)}
                   </p>
                   <p className="text-slate-500">
-                    {session.production_code}
-                    {session.piece_mark ? ` - ${session.piece_mark}` : ""}
-                    {session.client_name ? ` - ${session.client_name}` : ""}
+                    {[session.piece_mark, sewingSessionClientDisplayName(session, "")]
+                      .filter(Boolean)
+                      .join(" - ")}
                   </p>
                 </div>
                 <span

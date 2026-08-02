@@ -1,3 +1,4 @@
+import { readClients } from "@/lib/data/clients";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSewingSessionsAsync, writeSewingSessions } from "@/lib/data/sewing-sessions";
 import { isEmployeeQrPayload, parseEmployeeQrPayload } from "@/lib/hr/employee-qr";
@@ -42,6 +43,7 @@ import {
 import type { SewingSessionsDashboardOptions } from "@/lib/production/sewing-session-state";
 import {
   applyShortNamesToEmployeeAggregates,
+  attachSewingSessionClientShortNames,
   attachSewingSessionJobFunctions,
 } from "@/lib/production/sewing-session-status-label";
 import { resolveScanToLine } from "@/lib/production/stage-scan";
@@ -83,8 +85,10 @@ export {
 } from "@/lib/production/sewing-session-garment";
 export {
   applyShortNamesToEmployeeAggregates,
+  attachSewingSessionClientShortNames,
   attachSewingSessionJobFunctions,
   floorActivityLabelFromJobFunctions,
+  sewingSessionClientDisplayName,
   sewingSessionEmployeeDisplayName,
   sewingSessionScanQrLabel,
   sewingSessionStatusLabel,
@@ -93,7 +97,7 @@ export {
 /**
  * Dashboard payload with null garment_type backfilled from live SO sticker lookup.
  * Enrich before aggregation so Performance employee rows include article labels.
- * Also joins payroll job_functions + short_name for Live status / display names.
+ * Also joins payroll job_functions + short_name and client first+last for floor UI.
  */
 export function sewingSessionsDashboard(
   store: SewingSessionsFile,
@@ -113,10 +117,13 @@ export function sewingSessionsDashboard(
       short_name: employee.short_name,
     };
   };
+  const clients = readClients().clients;
+  const withJobsOpen = attachSewingSessionJobFunctions(dash.open_sessions, lookup);
+  const withJobsSessions = attachSewingSessionJobFunctions(dash.sessions, lookup);
   return {
     ...dash,
-    open_sessions: attachSewingSessionJobFunctions(dash.open_sessions, lookup),
-    sessions: attachSewingSessionJobFunctions(dash.sessions, lookup),
+    open_sessions: attachSewingSessionClientShortNames(withJobsOpen, clients),
+    sessions: attachSewingSessionClientShortNames(withJobsSessions, clients),
     completed_by_employee: applyShortNamesToEmployeeAggregates(
       dash.completed_by_employee,
       lookup

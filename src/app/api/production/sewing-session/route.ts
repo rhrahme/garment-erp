@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
       "sewing_scan_failures",
       "sales_orders",
       "payroll_employees",
+      "clients",
     ]);
     const store = await readSewingSessionsAsync();
     const failures = await readSewingScanFailuresAsync();

@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   applyShortNamesToEmployeeAggregates,
+  attachSewingSessionClientShortNames,
   attachSewingSessionJobFunctions,
   floorActivityLabelFromJobFunctions,
+  normalizeScanQrDisplay,
+  sewingSessionClientDisplayName,
   sewingSessionEmployeeDisplayName,
   sewingSessionScanQrLabel,
   sewingSessionStatusLabel,
@@ -96,6 +99,59 @@ describe("sewingSessionScanQrLabel", () => {
       "FR-PIECE"
     );
     assert.equal(sewingSessionScanQrLabel({ scan_code: "", production_code: "" }), "-");
+  });
+
+  it("collapses spaces around hyphens and slashes", () => {
+    assert.equal(normalizeScanQrDisplay("FR - 8129 - L08 - TR - 2/2"), "FR-8129-L08-TR-2/2");
+    assert.equal(
+      sewingSessionScanQrLabel({
+        scan_code: "FR - 8129 - L08 - TR - 2 / 2",
+        production_code: "FR-OTHER",
+      }),
+      "FR-8129-L08-TR-2/2"
+    );
+  });
+});
+
+describe("sewingSessionClientDisplayName", () => {
+  it("prefers client_short_name over full client_name", () => {
+    assert.equal(
+      sewingSessionClientDisplayName({
+        client_name: "Abdel Aziz Fahd Al Ajlan",
+        client_short_name: "Abdel Ajlan",
+      }),
+      "Abdel Ajlan"
+    );
+    assert.equal(
+      sewingSessionClientDisplayName({
+        client_name: "Abdel Aziz Fahd Al Ajlan",
+        client_short_name: null,
+      }),
+      "Abdel Aziz Fahd Al Ajlan"
+    );
+  });
+});
+
+describe("attachSewingSessionClientShortNames", () => {
+  it("joins first+last from matching client profiles", () => {
+    const rows = attachSewingSessionClientShortNames(
+      [
+        session({
+          id: "s1",
+          employee_id: "e1",
+          client_name: "Abdel Aziz Fahd Al Ajlan",
+        }),
+      ],
+      [
+        {
+          first_name: "Abdel",
+          middle_name: "Aziz Fahd Al",
+          last_name: "Ajlan",
+        },
+      ]
+    );
+    assert.equal(rows[0]?.client_short_name, "Abdel Ajlan");
+    assert.equal(sewingSessionClientDisplayName(rows[0]!), "Abdel Ajlan");
   });
 });
 
