@@ -177,8 +177,8 @@ export function SalesOrderReceivingCutTable({
                   className="h-16 w-16"
                 />
               </td>
-              <td className={cell("break-all font-mono font-medium text-indigo-800")}>{row.fabric_cut_code}</td>
-              <td className={cell("font-mono")}>
+              <td className={cell("print-code break-all font-medium text-indigo-800")}>{row.fabric_cut_code}</td>
+              <td className={cell("print-code")}>
                 <span className="inline-flex items-center gap-1.5">
                   <FabricSwatchPreview
                     supplierId={row.supplier_id}

@@ -19,6 +19,11 @@
  *    block to one page. Allow row pagination instead.
  * 7) html/body width:auto at print time -> Chromium can lay out to the screen
  *    viewport then shrink-to-fit A4. Lock width to the page content box.
+ * 8) Tailwind font-mono / ui-monospace -> Chromium print embeds Courier (Type0)
+ *    with advances that visually stack glyphs ("overlapping letters" on piece
+ *    codes). Force Helvetica/Arial (standard PDF fonts) for print text — not
+ *    ui-sans-serif/system-ui, which Chrome embeds as Type3 with a negative
+ *    FontMatrix and cramped advances.
  *
  * Invariants (receiving-print-styles.test.ts):
  * - A4 portrait, margins 12mm
@@ -28,6 +33,7 @@
  * - Tables table-layout:fixed; width 100%
  * - No avoid-page on .print-prod-section
  * - Print page lives under app/(print)/...
+ * - No monospace/Courier for table codes in print
  */
 export const RECEIVING_A4_PRINT_CSS = `
   /* Screen preview: content-box width (A4 minus 12mm margins), not full 210mm paper. */
@@ -134,6 +140,14 @@ export const RECEIVING_A4_PRINT_CSS = `
       break-inside: auto;
       font-size: 11pt !important;
       line-height: 1.35 !important;
+      /*
+       * Helvetica/Arial are built-in PDF fonts. Avoid ui-sans-serif / system-ui /
+       * ui-monospace: Chrome print embeds those as Type3/Courier and glyphs stack.
+       */
+      font-family: Helvetica, Arial, sans-serif !important;
+      letter-spacing: 0 !important;
+      font-kerning: none !important;
+      font-variant-ligatures: none !important;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
@@ -151,6 +165,8 @@ export const RECEIVING_A4_PRINT_CSS = `
       font-size: 9pt !important;
       font-weight: 700 !important;
       line-height: 1.3 !important;
+      font-family: inherit !important;
+      letter-spacing: normal !important;
       overflow-wrap: anywhere;
       word-break: break-word;
       vertical-align: bottom;
@@ -159,15 +175,40 @@ export const RECEIVING_A4_PRINT_CSS = `
     .print-receiving-table td {
       font-size: 11pt !important;
       line-height: 1.35 !important;
+      font-family: inherit !important;
+      letter-spacing: normal !important;
       overflow-wrap: anywhere;
       word-break: break-word;
       vertical-align: top;
       padding: 1.5mm 1mm !important;
     }
+    /* Kill Tailwind font-mono / system UI fonts so Chrome cannot embed Courier/Type3. */
+    .print-receiving-table .font-mono,
+    .print-receiving-table .print-code,
+    .sales-order-print,
+    .sales-order-print .font-mono,
+    .sales-order-print .print-code,
+    .order-print-pack,
+    .order-print-pack .font-mono,
+    .order-print-pack .print-code {
+      font-family: Helvetica, Arial, sans-serif !important;
+      letter-spacing: 0 !important;
+      font-variant-numeric: normal !important;
+      font-kerning: none !important;
+      font-variant-ligatures: none !important;
+    }
+    .print-receiving-table .print-code,
+    .sales-order-print .print-code,
+    .order-print-pack .print-code {
+      /* Extra tracking so piece codes stay readable after Chrome print embedding. */
+      letter-spacing: 0.1em !important;
+    }
     .print-receiving-table .print-composition,
     .print-receiving-table .print-garment {
       font-size: 11pt !important;
       line-height: 1.4 !important;
+      font-family: inherit !important;
+      letter-spacing: 0 !important;
     }
     .print-receiving-table img {
       max-width: 14mm !important;

@@ -103,6 +103,17 @@ describe("RECEIVING_A4_PRINT_CSS - A4 shrink regression guards (Chrome + Safari)
     assert.match(RECEIVING_A4_PRINT_CSS, /page-break-before:\s*always/);
   });
 
+  it("forces Helvetica/Arial (not mono/system UI) so Chrome print cannot stack glyphs", () => {
+    // Chromium print embeds font-mono as Courier and ui-sans-serif as Type3; both stack glyphs.
+    assert.match(RECEIVING_A4_PRINT_CSS, /\.print-receiving-table\s*\{[^}]*font-family:\s*Helvetica,\s*Arial,\s*sans-serif/s);
+    assert.match(RECEIVING_A4_PRINT_CSS, /\.print-code[\s\S]*?font-family:\s*Helvetica,\s*Arial,\s*sans-serif/);
+    assert.match(RECEIVING_A4_PRINT_CSS, /\.font-mono\s*,/);
+    assert.doesNotMatch(RECEIVING_A4_PRINT_CSS, /font-family:\s*[^;]*(Courier|ui-monospace|ui-sans-serif|system-ui|SFMono)/i);
+    const printPage = readFileSync(printPagePath, "utf8");
+    assert.match(printPage, /print-code/);
+    assert.doesNotMatch(printPage, /font-mono/);
+  });
+
   it("production print page lives under (print) layout - not DashboardShell", () => {
     assert.equal(existsSync(printPagePath), true, `missing print page at ${printPagePath}`);
     assert.equal(existsSync(dashboardPrintPath), false, "dashboard print page must be removed (shell shrink trap)");

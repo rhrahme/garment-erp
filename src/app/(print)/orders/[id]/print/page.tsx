@@ -179,7 +179,7 @@ export default async function SalesOrderPrintPage({
               {order.retail_brand ? "Retail brand" : "Client"}
             </p>
             <p className="mt-2 font-semibold print:mt-1">{order.client_name}</p>
-            <p className="font-mono text-sm text-slate-600">{order.client_code}</p>
+            <p className="print-code text-sm text-slate-600">{order.client_code}</p>
             {order.product_article && (
               <p className="mt-1 text-sm text-slate-600">Article: {order.product_article}</p>
             )}
@@ -242,7 +242,7 @@ export default async function SalesOrderPrintPage({
                       <td className="py-3 pr-3 text-center font-semibold text-slate-900">
                         {articleByLineId.get(line.id)}
                       </td>
-                      <td className="py-3 pr-3 font-mono font-medium">{line.fabric_number}</td>
+                      <td className="py-3 pr-3 print-code font-medium">{line.fabric_number}</td>
                       <td className="py-3 pr-3">{line.garment_type}</td>
                       <td className="py-3 pr-3">{line.label_count}</td>
                       <td className="py-3 pr-3 text-slate-600">{line.composition ?? "-"}</td>
@@ -363,10 +363,10 @@ export default async function SalesOrderPrintPage({
                                 className="h-16 w-16"
                               />
                             </td>
-                            <td className={`${teamPrintCell} break-all font-mono font-medium text-indigo-800`}>
+                            <td className={`${teamPrintCell} print-code break-all font-medium text-indigo-800`}>
                               {productionCode}
                             </td>
-                            <td className={`${teamPrintCell} font-mono text-slate-700`}>{line.fabric_number}</td>
+                            <td className={`${teamPrintCell} print-code text-slate-700`}>{line.fabric_number}</td>
                             <td className={`${teamPrintCell} print-garment whitespace-normal text-slate-800`}>
                               {formatLabelGarmentDescription(line.garment_type, sticker.piece_name)}
                             </td>
@@ -416,7 +416,7 @@ export default async function SalesOrderPrintPage({
                             {line.garment_type}
                           </span>
                         </td>
-                        <td className={`${teamPrintCell} font-mono text-slate-700`}>{line.fabric_number}</td>
+                        <td className={`${teamPrintCell} print-code text-slate-700`}>{line.fabric_number}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -53,7 +53,7 @@ const html = `<!DOCTYPE html>
 <meta charset="utf-8"/>
 <title>A4 production print proof - SO-2026-0129 fixture</title>
 <style>
-  body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 0; color: #0f172a; background: #e2e8f0; }
+  body { font-family: Helvetica, Arial, sans-serif; margin: 0; color: #0f172a; background: #e2e8f0; }
   ${css}
   @media screen {
     .proof-chrome { max-width: 210mm; margin: 12px auto; padding: 12px; }
@@ -91,8 +91,8 @@ const html = `<!DOCTYPE html>
             <tr>
               <td style="text-align:center;font-weight:700">${art}</td>
               <td><img src="${qrSvg}" alt=""/></td>
-              <td style="font-family:ui-monospace,monospace;color:#3730a3">${code}</td>
-              <td style="font-family:ui-monospace,monospace">${fab}</td>
+              <td class="print-code" style="color:#3730a3">${code}</td>
+              <td class="print-code">${fab}</td>
               <td class="print-garment">${garment}</td>
             </tr>`
             )
@@ -121,7 +121,7 @@ const html = `<!DOCTYPE html>
               <td>${r[1]}</td>
               <td class="print-composition">${r[2]}</td>
               <td>${r[3]}</td>
-              <td style="font-family:ui-monospace,monospace">${r[4]}</td>
+              <td class="print-code">${r[4]}</td>
             </tr>`
             )
             .join("")}
@@ -153,6 +153,8 @@ const checks = [
   ["webkit print color", /-webkit-print-color-adjust:\s*exact/.test(html)],
   ["no avoid-page on prod section", !/\.print-prod-section\s*\{[^}]*avoid-page/i.test(html)],
   ["page-break-before fabric", /page-break-before:\s*always/.test(html)],
+  ["Helvetica/Arial print font", /font-family:\s*Helvetica,\s*Arial,\s*sans-serif/.test(html)],
+  ["fixture cells not monospace", !/font-family:\s*ui-monospace|font-family:\s*monospace/i.test(html)],
 ];
 let ok = true;
 for (const [label, pass] of checks) {
@@ -285,5 +287,41 @@ sys.exit(0 if ok else 2)
 if (py.stdout) process.stdout.write(py.stdout);
 if (py.stderr) process.stderr.write(py.stderr);
 if (py.status === 2) ok = false;
+
+// Fail if Chromium embedded Courier / Type3-only stacks for piece codes.
+const fontCheck = spawnSync(
+  "python3",
+  [
+    "-c",
+    `
+import fitz, sys
+doc = fitz.open(${JSON.stringify(pdfPath)})
+page = doc[0]
+fonts = page.get_fonts()
+names = sorted({(f[3] or f[4] or "") for f in fonts})
+types = {f[2] for f in fonts}
+print("PDF font names:", names)
+print("PDF font types:", sorted(types))
+courier = [n for n in names if "courier" in n.lower()]
+if courier:
+  print("FAIL: Courier embedded for print codes:", courier)
+  sys.exit(2)
+# Prefer built-in Helvetica (Type1/Type0 with Helvetica base), not only Type3 system UI.
+has_helvetica = any("helvetica" in n.lower() or "arial" in n.lower() for n in names)
+only_type3 = types <= {"Type3"} or types == {"Type3"}
+if only_type3 and not has_helvetica:
+  print("FAIL: print PDF used only Type3 system fonts (glyph-stack risk)")
+  sys.exit(2)
+if has_helvetica:
+  print("OK: Helvetica/Arial present in production print PDF")
+else:
+  print("OK: no Courier; font types", sorted(types))
+`,
+  ],
+  { encoding: "utf8" }
+);
+if (fontCheck.stdout) process.stdout.write(fontCheck.stdout);
+if (fontCheck.stderr) process.stderr.write(fontCheck.stderr);
+if (fontCheck.status === 2) ok = false;
 
 process.exit(ok ? 0 : 1);
