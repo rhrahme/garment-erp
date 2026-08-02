@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
 import {
   createCustomFabric,
+  customFabricCreatedEventData,
   ensureCustomFabricsLoaded,
   listCustomFabricsAsSupplierFabrics,
   peekNextCustomFabricNumber,
   readCustomFabrics,
   validateCreateCustomFabricInput,
 } from "@/lib/data/custom-fabrics";
+import { parseCreateCustomFabricRequest } from "@/lib/fabric-sourcing/parse-custom-fabric-request";
 import { notifyIntegration } from "@/lib/integrations";
 import { verifyApiKey } from "@/lib/integrations/api-auth";
-import type { CreateCustomFabricInput } from "@/lib/types/custom-fabrics";
+
+export const maxDuration = 60;
 
 export async function GET(request: Request) {
   const authError = verifyApiKey(request);
@@ -34,8 +37,14 @@ export async function POST(request: Request) {
   if (authError) return authError;
 
   try {
-    const body = (await request.json()) as CreateCustomFabricInput;
-    const validated = validateCreateCustomFabricInput(body);
+    const parsed = await parseCreateCustomFabricRequest(request, {
+      uploadedBy: "api",
+    });
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: parsed.status });
+    }
+
+    const validated = validateCreateCustomFabricInput(parsed.data);
     if (!validated.ok) {
       return NextResponse.json({ error: validated.error }, { status: 400 });
     }
@@ -43,30 +52,7 @@ export async function POST(request: Request) {
     await ensureCustomFabricsLoaded();
     const { fabric, supplierFabric } = await createCustomFabric(validated.data);
 
-    await notifyIntegration(
-      "custom_fabric.created",
-      {
-        id: fabric.id,
-        fabric_number: fabric.fabric_number,
-        description: fabric.description,
-        color: fabric.color,
-        composition: fabric.composition,
-        weight_gsm: fabric.weight_gsm,
-        width_cm: fabric.width_cm,
-        unit_price: fabric.unit_price,
-        currency: fabric.currency,
-        source_note: fabric.source_note,
-        supplier_name: fabric.supplier_name,
-        client_id: fabric.client_id,
-        client_name: fabric.client_name,
-        sales_order_id: fabric.sales_order_id,
-        one_off: true,
-        kind: "custom",
-        created_at: fabric.created_at,
-        created_by: fabric.created_by,
-      },
-      "api"
-    );
+    await notifyIntegration("custom_fabric.created", customFabricCreatedEventData(fabric), "api");
 
     return NextResponse.json(
       {

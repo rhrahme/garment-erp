@@ -42,6 +42,8 @@ interface FabricSpecViewProps {
   items: SupplierFabric[];
   canViewPrices?: boolean;
   canViewStock?: boolean;
+  /** Admin / QC / task / production / pattern — not sales. */
+  canCreateCustomFabric?: boolean;
   catalogSummary?: FabricSpecCatalogSummary;
 }
 
@@ -50,6 +52,7 @@ export function FabricSpecView({
   items: initialItems,
   canViewPrices = false,
   canViewStock = true,
+  canCreateCustomFabric = false,
   catalogSummary,
 }: FabricSpecViewProps) {
   const [items, setItems] = useState(initialItems);
@@ -114,7 +117,7 @@ export function FabricSpecView({
   const isCustomTab = brandId === CUSTOM_SUPPLIER_ID;
 
   useEffect(() => {
-    if (!isCustomTab) {
+    if (!isCustomTab || !canCreateCustomFabric) {
       setShowCreateForm(false);
       return;
     }
@@ -131,7 +134,7 @@ export function FabricSpecView({
     return () => {
       cancelled = true;
     };
-  }, [isCustomTab, displayItems]);
+  }, [isCustomTab, canCreateCustomFabric, displayItems]);
 
   const filtered = useMemo(() => {
     const resolvedBrandId = brandId === "all" ? "all" : resolveFabricSupplierId(brandId);
@@ -331,19 +334,23 @@ export function FabricSpecView({
               );
             })}
           </ul>
-          <button
-            type="button"
-            onClick={() => {
-              setBrandId(CUSTOM_SUPPLIER_ID);
-              setShowCreateForm(true);
-            }}
-            className="mt-3 flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-amber-400 px-3 py-2 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-50"
-          >
-            + New fabric
-          </button>
-          <p className="mt-1.5 px-1 text-[11px] leading-tight text-slate-400">
-            Add a one-off fabric (mill leftover, shop buy, client swatch).
-          </p>
+          {canCreateCustomFabric ? (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setBrandId(CUSTOM_SUPPLIER_ID);
+                  setShowCreateForm(true);
+                }}
+                className="mt-3 flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-amber-400 px-3 py-2 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-50"
+              >
+                + New fabric
+              </button>
+              <p className="mt-1.5 px-1 text-[11px] leading-tight text-slate-400">
+                Add a one-off fabric (mill leftover, shop buy, client swatch).
+              </p>
+            </>
+          ) : null}
         </aside>
 
         {/* Specs table — main panel */}
@@ -394,7 +401,7 @@ export function FabricSpecView({
                   {showPrices ? "Hide" : "Show"}
                 </button>
               ) : null}
-              {isCustomTab ? (
+              {isCustomTab && canCreateCustomFabric ? (
                 <button
                   type="button"
                   onClick={() => setShowCreateForm((open) => !open)}
@@ -414,7 +421,7 @@ export function FabricSpecView({
             </div>
           </div>
 
-          {isCustomTab && showCreateForm ? (
+          {isCustomTab && canCreateCustomFabric && showCreateForm ? (
             <CreateCustomFabricForm
               nextFabricNumber={nextFabricNumber}
               onCreated={handleCustomFabricCreated}
@@ -453,8 +460,10 @@ export function FabricSpecView({
               preview: (
                 <FabricSpecPreview
                   fabric={f}
-                  swatchSrc={getSwatch(f.supplier_id, f.fabric_number)?.square}
-                  zoomSrc={getSwatch(f.supplier_id, f.fabric_number)?.zoom}
+                  swatchSrc={
+                    f.swatch_square ?? getSwatch(f.supplier_id, f.fabric_number)?.square
+                  }
+                  zoomSrc={f.swatch_zoom ?? getSwatch(f.supplier_id, f.fabric_number)?.zoom}
                   canViewPrices={showPrices}
                   canViewStock={canViewStock}
                 />
@@ -506,9 +515,11 @@ export function FabricSpecView({
             }))}
             emptyMessage={
               isCustomTab
-                ? showCreateForm
-                  ? "Fill the form above to create the first custom fabric."
-                  : "No custom fabrics yet — click Create fabric."
+                ? canCreateCustomFabric
+                  ? showCreateForm
+                    ? "Fill the form above to create the first custom fabric."
+                    : "No custom fabrics yet — click Create fabric."
+                  : "No custom fabrics yet."
                 : activeBrand?.count === 0
                   ? "No price list uploaded for this brand yet."
                   : "No fabrics match your search."

@@ -77,6 +77,7 @@ export function validateCreateCustomFabricInput(
       client_name: normalizeText(input.client_name),
       sales_order_id: normalizeText(input.sales_order_id),
       created_by: normalizeText(input.created_by),
+      image: input.image ?? null,
     },
   };
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { canCreateCustomFabric } from "@/lib/auth/custom-fabric-access";
 import {
   canViewPrices,
   redactPriceFields,
@@ -8,14 +9,18 @@ import {
 import { requireAuthenticated } from "@/lib/auth/session";
 import {
   createCustomFabric,
+  customFabricCreatedEventData,
   ensureCustomFabricsLoaded,
   listCustomFabricsAsSupplierFabrics,
   peekNextCustomFabricNumber,
   readCustomFabrics,
   validateCreateCustomFabricInput,
 } from "@/lib/data/custom-fabrics";
+import { parseCreateCustomFabricRequest } from "@/lib/fabric-sourcing/parse-custom-fabric-request";
 import { notifyIntegration } from "@/lib/integrations";
-import type { CreateCustomFabricInput, CustomFabric } from "@/lib/types/custom-fabrics";
+import type { CustomFabric } from "@/lib/types/custom-fabrics";
+
+export const maxDuration = 60;
 
 function redactCustomFabric(fabric: CustomFabric): CustomFabric {
   return redactPriceFields(fabric);
@@ -34,6 +39,7 @@ export async function GET() {
     return NextResponse.json({
       fabrics: canViewPrices(session) ? fabrics : redactSupplierFabricPrices(fabrics),
       next_fabric_number: peekNextCustomFabricNumber(store.fabrics),
+      can_create: canCreateCustomFabric(session),
       updated_at: store.updated_at,
     });
   } catch (error) {
@@ -48,15 +54,23 @@ export async function POST(request: Request) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
+    if (!canCreateCustomFabric(session)) {
+      return NextResponse.json(
+        { error: "Sales operators cannot create custom fabrics." },
+        { status: 403 }
+      );
+    }
 
-    const body = (await request.json()) as CreateCustomFabricInput;
     const canSetPrice = canViewPrices(session);
-    const validated = validateCreateCustomFabricInput({
-      ...body,
-      // Non-admins cannot set list price via the session UI/API.
-      ...(canSetPrice ? {} : { unit_price: null, currency: null }),
-      created_by: body.created_by ?? session.email ?? session.userId,
+    const parsed = await parseCreateCustomFabricRequest(request, {
+      uploadedBy: session.email ?? session.userId,
+      stripPrice: !canSetPrice,
     });
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: parsed.status });
+    }
+
+    const validated = validateCreateCustomFabricInput(parsed.data);
     if (!validated.ok) {
       return NextResponse.json({ error: validated.error }, { status: 400 });
     }
@@ -64,26 +78,7 @@ export async function POST(request: Request) {
     await ensureCustomFabricsLoaded();
     const { fabric, supplierFabric } = await createCustomFabric(validated.data);
 
-    await notifyIntegration("custom_fabric.created", {
-      id: fabric.id,
-      fabric_number: fabric.fabric_number,
-      description: fabric.description,
-      color: fabric.color,
-      composition: fabric.composition,
-      weight_gsm: fabric.weight_gsm,
-      width_cm: fabric.width_cm,
-      unit_price: fabric.unit_price,
-      currency: fabric.currency,
-      source_note: fabric.source_note,
-      supplier_name: fabric.supplier_name,
-      client_id: fabric.client_id,
-      client_name: fabric.client_name,
-      sales_order_id: fabric.sales_order_id,
-      one_off: true,
-      kind: "custom",
-      created_at: fabric.created_at,
-      created_by: fabric.created_by,
-    });
+    await notifyIntegration("custom_fabric.created", customFabricCreatedEventData(fabric));
 
     return NextResponse.json(
       {

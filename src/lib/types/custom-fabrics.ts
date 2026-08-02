@@ -3,6 +3,17 @@ import type { PriceCurrency } from "@/lib/currency/config";
 export const CUSTOM_SUPPLIER_ID = "custom";
 export const CUSTOM_SUPPLIER_NAME = "Custom / One-off";
 
+/** Uploaded swatch/photo for a custom / one-off fabric. */
+export interface CustomFabricImage {
+  id: string;
+  filename: string;
+  stored_filename: string;
+  content_type: string;
+  size_bytes: number;
+  uploaded_at: string;
+  uploaded_by: string | null;
+}
+
 /** Persisted one-off / custom fabric (not a mill price-list row). */
 export interface CustomFabric {
   id: string;
@@ -20,6 +31,8 @@ export interface CustomFabric {
   client_id: string | null;
   client_name: string | null;
   sales_order_id: string | null;
+  /** Optional swatch/photo uploaded with the fabric. */
+  image?: CustomFabricImage | null;
   one_off: true;
   kind: "custom";
   created_at: string;
@@ -46,4 +59,5 @@ export interface CreateCustomFabricInput {
   client_name?: string | null;
   sales_order_id?: string | null;
   created_by?: string | null;
+  image?: CustomFabricImage | null;
 }

@@ -1,5 +1,6 @@
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FabricSpecView } from "@/components/fabric-specification/FabricSpecView";
+import { canCreateCustomFabric } from "@/lib/auth/custom-fabric-access";
 import { canViewFabricStock, canViewPrices, redactSupplierFabricPrices } from "@/lib/auth/fabric-price-access";
 import { getSessionContext } from "@/lib/auth/session";
 import { getBrandsByFabricSourcing } from "@/lib/data/factory-brands";
@@ -11,6 +12,7 @@ export default async function FabricSpecificationPage() {
   const [suppliers, rawItems] = await Promise.all([getFabricSuppliers(), getPriceListItems()]);
   const showPrices = canViewPrices(session);
   const showStock = canViewFabricStock(session);
+  const allowCreateCustom = canCreateCustomFabric(session);
   /** Sales never receive price fields; admin gets full catalog (eye toggle hides in the client UI). */
   const items = showPrices ? rawItems : redactSupplierFabricPrices(rawItems);
 
@@ -36,6 +38,7 @@ export default async function FabricSpecificationPage() {
         items={items}
         canViewPrices={showPrices}
         canViewStock={showStock}
+        canCreateCustomFabric={allowCreateCustom}
         catalogSummary={{
           brandNames: supplierBrands.map((b) => b.name),
           suppliersWithData: brandsWithData,

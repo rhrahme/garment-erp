@@ -43,8 +43,10 @@ describe("validateCreateCustomFabricInput", () => {
     assert.equal(result.ok, true);
     if (result.ok) {
       assert.equal(result.data.description, "Navy leftover");
+      assert.equal(result.data.color, "Navy");
       assert.equal(result.data.currency, "EUR");
       assert.equal(result.data.unit_price, 42.5);
+      assert.equal(result.data.image, null);
     }
   });
 

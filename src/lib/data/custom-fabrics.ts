@@ -11,6 +11,7 @@ import {
   generateCustomFabricNumber,
   validateCreateCustomFabricInput,
 } from "@/lib/fabric-sourcing/custom-fabric-number";
+import { customFabricSwatchImageUrl } from "@/lib/fabric-sourcing/custom-fabric-swatch-url";
 import {
   CUSTOM_SUPPLIER_ID,
   CUSTOM_SUPPLIER_NAME,
@@ -90,6 +91,7 @@ export function peekNextCustomFabricNumber(
 
 export function customFabricToSupplierFabric(fabric: CustomFabric): SupplierFabric {
   const displaySupplierName = fabric.supplier_name?.trim() || CUSTOM_SUPPLIER_NAME;
+  const swatchUrl = fabric.image?.id ? customFabricSwatchImageUrl(fabric.image.id) : null;
   return {
     id: fabric.id,
     // Still lives in the Custom bucket / storage; supplier_name is display-only.
@@ -122,6 +124,8 @@ export function customFabricToSupplierFabric(fabric: CustomFabric): SupplierFabr
     created_at: fabric.created_at,
     created_by: fabric.created_by,
     currency: fabric.currency,
+    swatch_square: swatchUrl,
+    swatch_zoom: swatchUrl,
     supplier: { ...CUSTOM_SUPPLIER, name: displaySupplierName },
   };
 }
@@ -197,6 +201,7 @@ export async function createCustomFabric(
     client_id: validated.data.client_id ?? null,
     client_name: validated.data.client_name ?? null,
     sales_order_id: validated.data.sales_order_id ?? null,
+    image: validated.data.image ?? null,
     one_off: true,
     kind: "custom",
     created_at: new Date().toISOString(),
@@ -208,4 +213,45 @@ export async function createCustomFabric(
   await writeCustomFabrics(store);
 
   return { fabric, supplierFabric: customFabricToSupplierFabric(fabric) };
+}
+
+export function findCustomFabricImage(
+  imageId: string,
+  store: CustomFabricsFile = readCustomFabrics()
+): { fabric: CustomFabric; image: NonNullable<CustomFabric["image"]> } | null {
+  const trimmed = imageId.trim();
+  if (!trimmed) return null;
+  for (const fabric of store.fabrics) {
+    if (fabric.image?.id === trimmed) {
+      return { fabric, image: fabric.image };
+    }
+  }
+  return null;
+}
+
+/** Payload fields shared by ERP + Zapier `custom_fabric.created` events. */
+export function customFabricCreatedEventData(fabric: CustomFabric) {
+  const imageUrl = fabric.image?.id ? customFabricSwatchImageUrl(fabric.image.id) : null;
+  return {
+    id: fabric.id,
+    fabric_number: fabric.fabric_number,
+    description: fabric.description,
+    color: fabric.color,
+    composition: fabric.composition,
+    weight_gsm: fabric.weight_gsm,
+    width_cm: fabric.width_cm,
+    unit_price: fabric.unit_price,
+    currency: fabric.currency,
+    source_note: fabric.source_note,
+    supplier_name: fabric.supplier_name,
+    client_id: fabric.client_id,
+    client_name: fabric.client_name,
+    sales_order_id: fabric.sales_order_id,
+    image_url: imageUrl,
+    image: fabric.image,
+    one_off: true as const,
+    kind: "custom" as const,
+    created_at: fabric.created_at,
+    created_by: fabric.created_by,
+  };
 }

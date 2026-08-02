@@ -260,7 +260,8 @@ const SALES_OPERATOR_ROUTE_PREFIXES = [
 const BUILTIN_CLIENT_MANAGER_EMAILS = ["hagan.qc@gmail.com"] as const;
 
 /**
- * Production-floor task operators - print labels/A4, wash/iron scan, and custom fabric create.
+ * Production-floor task operators - print labels/A4, wash/iron scan, and custom fabric create
+ * (sales can view Fabric Spec / custom fabrics but cannot POST create — see canCreateCustomFabric).
  * No prices, no order editing, minimal sidebar.
  */
 const BUILTIN_TASK_OPERATOR_EMAILS = ["hagan.task1@gmail.com"] as const;

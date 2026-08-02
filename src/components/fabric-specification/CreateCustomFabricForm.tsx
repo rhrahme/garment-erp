@@ -51,6 +51,8 @@ export function CreateCustomFabricForm({
 }: CreateCustomFabricFormProps) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [clients, setClients] = useState<ClientProfile[]>([]);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,6 +72,16 @@ export function CreateCustomFabricForm({
     };
   }, []);
 
+  useEffect(() => {
+    if (!photo) {
+      setPhotoPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(photo);
+    setPhotoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photo]);
+
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
@@ -80,28 +92,26 @@ export function CreateCustomFabricForm({
     setSaving(true);
     try {
       const selected = clients.find((c) => c.id === form.client_id);
-      const priceFields = canViewPrices
-        ? {
-            unit_price: form.unit_price.trim() ? Number(form.unit_price) : null,
-            currency: form.unit_price.trim() ? form.currency : null,
-          }
-        : {};
+      const body = new FormData();
+      body.set("description", form.description.trim());
+      if (form.supplier_name.trim()) body.set("supplier_name", form.supplier_name.trim());
+      if (form.color.trim()) body.set("color", form.color.trim());
+      if (form.composition.trim()) body.set("composition", form.composition.trim());
+      if (form.weight_gsm.trim()) body.set("weight_gsm", form.weight_gsm.trim());
+      if (form.width_cm.trim()) body.set("width_cm", form.width_cm.trim());
+      if (form.source_note.trim()) body.set("source_note", form.source_note.trim());
+      if (form.client_id) body.set("client_id", form.client_id);
+      if (selected) body.set("client_name", formatClientDisplayName(selected));
+      if (form.sales_order_id.trim()) body.set("sales_order_id", form.sales_order_id.trim());
+      if (canViewPrices && form.unit_price.trim()) {
+        body.set("unit_price", form.unit_price.trim());
+        body.set("currency", form.currency);
+      }
+      if (photo) body.set("photo", photo);
+
       const res = await fetch("/api/custom-fabrics", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          description: form.description.trim(),
-          supplier_name: form.supplier_name.trim() || null,
-          color: form.color.trim() || null,
-          composition: form.composition.trim() || null,
-          weight_gsm: form.weight_gsm.trim() ? Number(form.weight_gsm) : null,
-          width_cm: form.width_cm.trim() ? Number(form.width_cm) : null,
-          ...priceFields,
-          source_note: form.source_note.trim() || null,
-          client_id: form.client_id || null,
-          client_name: selected ? formatClientDisplayName(selected) : null,
-          sales_order_id: form.sales_order_id.trim() || null,
-        }),
+        body,
       });
       const data = await res.json();
       if (!res.ok) {
@@ -109,6 +119,7 @@ export function CreateCustomFabricForm({
       }
       onCreated(data.supplier_fabric as SupplierFabric);
       setForm(EMPTY_FORM);
+      setPhoto(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create fabric.");
     } finally {
@@ -171,10 +182,12 @@ export function CreateCustomFabricForm({
         <div>
           <label className={labelClass}>Color</label>
           <input
+            type="text"
             value={form.color}
             onChange={(e) => update("color", e.target.value)}
             placeholder="Navy"
             className={inputClass}
+            autoComplete="off"
           />
         </div>
 
@@ -246,6 +259,34 @@ export function CreateCustomFabricForm({
             </div>
           </div>
         ) : null}
+
+        <div className="sm:col-span-2 lg:col-span-3">
+          <label className={labelClass}>Swatch / photo (optional)</label>
+          <input
+            type="file"
+            accept="image/*,image/heic,image/heif"
+            onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
+            className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-amber-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-amber-900 hover:file:bg-amber-200"
+          />
+          <p className="mt-1 text-xs text-slate-500">JPG, PNG, WebP, or HEIC under 15 MB.</p>
+          {photoPreview ? (
+            <div className="mt-2 flex items-start gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photoPreview}
+                alt="Swatch preview"
+                className="h-20 w-20 rounded-lg border border-slate-200 object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => setPhoto(null)}
+                className="text-xs font-medium text-slate-500 hover:text-slate-800"
+              >
+                Remove photo
+              </button>
+            </div>
+          ) : null}
+        </div>
 
         <div className="sm:col-span-2">
           <label className={labelClass}>Client (optional)</label>

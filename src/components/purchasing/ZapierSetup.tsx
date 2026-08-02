@@ -144,6 +144,9 @@ export function ZapierSetup() {
             <li>GET {baseUrl}/api/v1/suppliers</li>
             <li>GET {baseUrl}/api/v1/price-list-items</li>
             <li>GET/POST {baseUrl}/api/v1/custom-fabrics</li>
+            <li className="pl-4 text-slate-500">
+              POST: JSON or multipart; optional photo/image/swatch file, or image_url (http/https)
+            </li>
             <li>GET/POST {baseUrl}/api/v1/fabric-orders</li>
             <li>POST {baseUrl}/api/v1/fabric-orders/cancel</li>
             <li>POST {baseUrl}/api/v1/fabric-orders/[id]/send</li>
