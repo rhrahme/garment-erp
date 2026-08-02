@@ -12,16 +12,31 @@ import {
   type RefObject,
 } from "react";
 import { normalizeScannerInput, splitScanInput } from "@/lib/production/scan-input";
+import {
+  looksLikePartialScanFragment,
+  tryMergeScanFragments,
+} from "@/lib/production/stitch-scan-buffer";
 import type { SewingKioskScanResult, SewingKioskUiPhase, SewingSession } from "@/lib/types/sewing-sessions";
 import { cn } from "@/lib/utils";
 
 const KIOSK_STORAGE_KEY = "hagan-sewing-kiosk-id";
 const QUEUE_STORAGE_KEY = "hagan-sewing-scan-queue";
 const MAX_LOG = 40;
-/** Gap after last wedge keystroke before treating the buffer as a complete scan. */
-const WEDGE_IDLE_FLUSH_MS = 80;
+/**
+ * Gap after last wedge keystroke before treating the buffer as complete.
+ * 80ms was splitting real floor scans (FR-0129 | -L02-..., EMP | :id).
+ */
+const WEDGE_IDLE_FLUSH_MS = 400;
+/** Hard cap so a stuck partial fragment still flushes. */
+const WEDGE_MAX_BUFFER_MS = 1600;
+/** Hidden-input idle flush (Enter still flushes immediately). */
+const INPUT_IDLE_FLUSH_MS = 350;
+/** Do not steal focus / idle-flush while keys arrived this recently. */
+const SCAN_BURST_GUARD_MS = 700;
 /** Reclaim hidden-input focus only while the page is idle (no selection / editing). */
 const RECLAIM_INTERVAL_MS = 2000;
+/** Hold incomplete fragments briefly so the next burst can merge. */
+const PARTIAL_MERGE_WINDOW_MS = 900;
 
 export type QueuedScan = {
   id: string;
@@ -175,7 +190,11 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
   const inputRef = useRef<HTMLInputElement>(null);
   const flushTimerRef = useRef<number | null>(null);
   const wedgeBufferRef = useRef("");
+  const wedgeBufferStartedAtRef = useRef(0);
   const wedgeFlushTimerRef = useRef<number | null>(null);
+  const lastKeyAtRef = useRef(0);
+  const pendingPartialRef = useRef<{ code: string; at: number } | null>(null);
+  const partialMergeTimerRef = useRef<number | null>(null);
   const queueRef = useRef<QueuedScan[]>([]);
   const drainingRef = useRef(false);
   const kioskIdRef = useRef("laptop-1");
@@ -220,6 +239,16 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
     setWorkstationIdState(id);
   }, []);
 
+  const markScanKey = useCallback(() => {
+    lastKeyAtRef.current = Date.now();
+  }, []);
+
+  const inScanBurst = useCallback(() => {
+    if (wedgeBufferRef.current.length > 0) return true;
+    if ((inputRef.current?.value?.length ?? 0) > 0) return true;
+    return Date.now() - lastKeyAtRef.current < SCAN_BURST_GUARD_MS;
+  }, []);
+
   const isCapturePaused = useCallback(() => {
     const active = document.activeElement;
     if (active && active !== inputRef.current && isTextEntryElement(active)) return true;
@@ -232,11 +261,13 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
   }, [isCapturePaused]);
 
   const shouldReclaimFocus = useCallback(() => {
+    // Never yank focus mid-scan - that splits USB wedge input across two buffers.
+    if (inScanBurst()) return false;
     if (isCapturePaused()) return false;
     const active = document.activeElement;
     if (active === inputRef.current) return false;
     return true;
-  }, [isCapturePaused]);
+  }, [inScanBurst, isCapturePaused]);
 
   const focusInput = useCallback(() => {
     if (!shouldReclaimFocus()) {
@@ -299,7 +330,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
         try {
           data = (await res.json()) as SewingKioskScanResult & { error?: string };
         } catch {
-          data = {};
+          data = {} as SewingKioskScanResult & { error?: string };
         }
         // Auth/middleware rejects never reach processSewingKioskScan, so they are
         // not written to sewing_scan_failures — surface that clearly on the kiosk.
@@ -349,7 +380,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
     else refreshArmedState();
   }, [focusInput, refreshArmedState, shouldReclaimFocus, syncQueueState]);
 
-  const captureCodes = useCallback(
+  const enqueueCodes = useCallback(
     (parts: string[]) => {
       const added: QueuedScan[] = [];
       for (const part of parts) {
@@ -366,11 +397,74 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       const next = [...queueRef.current, ...added];
       syncQueueState(next);
       playBeep("capture");
-      if (shouldReclaimFocus()) focusInput();
-      else refreshArmedState();
+      // Defer focus reclaim until the burst window ends - reclaiming mid-QR
+      // was splitting scans across document buffer + hidden input.
+      window.setTimeout(() => {
+        if (shouldReclaimFocus()) focusInput();
+        else refreshArmedState();
+      }, SCAN_BURST_GUARD_MS);
       void drainQueue();
     },
     [drainQueue, focusInput, refreshArmedState, shouldReclaimFocus, syncQueueState]
+  );
+
+  const flushPendingPartial = useCallback(() => {
+    if (partialMergeTimerRef.current) {
+      window.clearTimeout(partialMergeTimerRef.current);
+      partialMergeTimerRef.current = null;
+    }
+    const pending = pendingPartialRef.current;
+    pendingPartialRef.current = null;
+    if (!pending) return;
+    enqueueCodes([pending.code]);
+  }, [enqueueCodes]);
+
+  const captureCodes = useCallback(
+    (parts: string[]) => {
+      for (const part of parts) {
+        const code = normalizeScannerInput(part);
+        if (!code) continue;
+
+        const pending = pendingPartialRef.current;
+        if (pending) {
+          const merged = tryMergeScanFragments(pending.code, code);
+          if (merged) {
+            pendingPartialRef.current = null;
+            if (partialMergeTimerRef.current) {
+              window.clearTimeout(partialMergeTimerRef.current);
+              partialMergeTimerRef.current = null;
+            }
+            if (looksLikePartialScanFragment(merged)) {
+              pendingPartialRef.current = { code: merged, at: Date.now() };
+              partialMergeTimerRef.current = window.setTimeout(
+                () => flushPendingPartial(),
+                PARTIAL_MERGE_WINDOW_MS
+              );
+            } else {
+              enqueueCodes([merged]);
+            }
+            continue;
+          }
+          // Different code - submit the held fragment, then handle the new one.
+          flushPendingPartial();
+        }
+
+        if (looksLikePartialScanFragment(code)) {
+          pendingPartialRef.current = { code, at: Date.now() };
+          if (partialMergeTimerRef.current) {
+            window.clearTimeout(partialMergeTimerRef.current);
+          }
+          partialMergeTimerRef.current = window.setTimeout(
+            () => flushPendingPartial(),
+            PARTIAL_MERGE_WINDOW_MS
+          );
+          continue;
+        }
+
+        enqueueCodes([code]);
+      }
+    },
+    [enqueueCodes, flushPendingPartial]
   );
 
   const flushInputNow = useCallback(() => {
@@ -382,27 +476,56 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
   }, [captureCodes]);
 
   const scheduleFlush = useCallback(() => {
+    markScanKey();
     if (flushTimerRef.current) window.clearTimeout(flushTimerRef.current);
     flushTimerRef.current = window.setTimeout(() => {
+      const value = inputRef.current?.value ?? "";
+      const age = Date.now() - lastKeyAtRef.current;
+      // Hold incomplete-looking input a bit longer (same race as wedge path).
+      if (
+        looksLikePartialScanFragment(value) &&
+        age < WEDGE_MAX_BUFFER_MS
+      ) {
+        flushTimerRef.current = window.setTimeout(() => flushInputNow(), INPUT_IDLE_FLUSH_MS);
+        return;
+      }
       flushInputNow();
-    }, 60);
-  }, [flushInputNow]);
+    }, INPUT_IDLE_FLUSH_MS);
+  }, [flushInputNow, markScanKey]);
 
-  const flushWedgeBuffer = useCallback(() => {
-    if (wedgeFlushTimerRef.current) {
-      window.clearTimeout(wedgeFlushTimerRef.current);
-      wedgeFlushTimerRef.current = null;
-    }
-    const raw = wedgeBufferRef.current;
-    wedgeBufferRef.current = "";
-    if (!raw) return;
-    captureCodes(splitScanInput(raw));
-  }, [captureCodes]);
+  const flushWedgeBuffer = useCallback(
+    (force = false) => {
+      if (wedgeFlushTimerRef.current) {
+        window.clearTimeout(wedgeFlushTimerRef.current);
+        wedgeFlushTimerRef.current = null;
+      }
+      const raw = wedgeBufferRef.current;
+      if (!raw) return;
+
+      const age = Date.now() - wedgeBufferStartedAtRef.current;
+      if (
+        !force &&
+        looksLikePartialScanFragment(raw) &&
+        age < WEDGE_MAX_BUFFER_MS
+      ) {
+        // Still looks incomplete - wait for more keystrokes or Enter.
+        wedgeFlushTimerRef.current = window.setTimeout(() => {
+          flushWedgeBuffer(false);
+        }, WEDGE_IDLE_FLUSH_MS);
+        return;
+      }
+
+      wedgeBufferRef.current = "";
+      wedgeBufferStartedAtRef.current = 0;
+      captureCodes(splitScanInput(raw));
+    },
+    [captureCodes]
+  );
 
   const scheduleWedgeFlush = useCallback(() => {
     if (wedgeFlushTimerRef.current) window.clearTimeout(wedgeFlushTimerRef.current);
     wedgeFlushTimerRef.current = window.setTimeout(() => {
-      flushWedgeBuffer();
+      flushWedgeBuffer(false);
     }, WEDGE_IDLE_FLUSH_MS);
   }, [flushWedgeBuffer]);
 
@@ -423,15 +546,27 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       if (hasActiveTextSelection()) return;
 
       if (event.key === "Enter") {
-        if (!wedgeBufferRef.current) return;
+        if (!wedgeBufferRef.current) {
+          // Enter after a held partial fragment - commit it.
+          if (pendingPartialRef.current) {
+            event.preventDefault();
+            flushPendingPartial();
+          }
+          return;
+        }
         event.preventDefault();
-        flushWedgeBuffer();
+        markScanKey();
+        flushWedgeBuffer(true);
         return;
       }
 
       if (event.key.length !== 1) return;
       if (event.ctrlKey || event.metaKey || event.altKey) return;
 
+      markScanKey();
+      if (!wedgeBufferRef.current) {
+        wedgeBufferStartedAtRef.current = Date.now();
+      }
       wedgeBufferRef.current += event.key;
       event.preventDefault();
       scheduleWedgeFlush();
@@ -441,8 +576,9 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
     return () => {
       document.removeEventListener("keydown", onKeyDown, true);
       if (wedgeFlushTimerRef.current) window.clearTimeout(wedgeFlushTimerRef.current);
+      if (partialMergeTimerRef.current) window.clearTimeout(partialMergeTimerRef.current);
     };
-  }, [flushWedgeBuffer, scheduleWedgeFlush]);
+  }, [flushPendingPartial, flushWedgeBuffer, markScanKey, scheduleWedgeFlush]);
 
   useEffect(() => {
     if (queue.length > 0) void drainQueue();
@@ -511,7 +647,9 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
           if (event.key === "Enter") {
             event.preventDefault();
             if (flushTimerRef.current) window.clearTimeout(flushTimerRef.current);
-            flushInputNow();
+            const value = inputRef.current?.value ?? "";
+            if (value) flushInputNow();
+            else if (pendingPartialRef.current) flushPendingPartial();
           }
         }}
         // Keep focusable (never display:none). Near-zero opacity so USB HID can target it on any tab.
@@ -520,6 +658,14 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       {children}
     </StitchScanCaptureContext.Provider>
   );
+}
+
+function formatLogTime(at: number): string {
+  const d = new Date(at);
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  const ss = String(d.getSeconds()).padStart(2, "0");
+  return `${hh}:${mm}:${ss}`;
 }
 
 /** Compact status chip - visible on every stitch floor tab. */
@@ -555,5 +701,98 @@ export function StitchScannerReadyBadge({ className }: { className?: string }) {
       )}
       {draining && <span className="opacity-80">Processing...</span>}
     </button>
+  );
+}
+
+/**
+ * Always-visible last-scan strip so Live/Performance/History show feedback
+ * immediately (Processed log previously lived only on the Scan tab).
+ */
+export function StitchScanFeedbackBanner({
+  className,
+  onScanSettled,
+}: {
+  className?: string;
+  /** Fired after each processed scan so Live can refresh immediately. */
+  onScanSettled?: (row: ScanLogRow) => void;
+}) {
+  const { log, queue, draining, message, error, captureArmed } = useStitchScanCapture();
+  const lastRow = log[0] ?? null;
+  const settledKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!lastRow || !onScanSettled) return;
+    const key = `${lastRow.id}-${lastRow.at}`;
+    if (settledKeyRef.current === key) return;
+    settledKeyRef.current = key;
+    onScanSettled(lastRow);
+  }, [lastRow, onScanSettled]);
+
+  if (!lastRow && queue.length === 0 && !message && !error) {
+    return (
+      <div
+        className={cn(
+          "rounded-xl border border-dashed border-slate-200 bg-white px-4 py-3 text-sm text-slate-500",
+          className
+        )}
+      >
+        {captureArmed
+          ? "Scan EMP badge or A4 piece QR - result appears here on every tab."
+          : "Scanner paused (text selected or editing a field). Tap Scanner ready to re-arm."}
+      </div>
+    );
+  }
+
+  const tone = error
+    ? "border-red-300 bg-red-50 text-red-900"
+    : lastRow && !lastRow.ok
+      ? "border-red-300 bg-red-50 text-red-900"
+      : queue.length > 0 || draining
+        ? "border-indigo-300 bg-indigo-50 text-indigo-950"
+        : "border-emerald-300 bg-emerald-50 text-emerald-950";
+
+  const headline = error
+    ? error
+    : lastRow
+      ? lastRow.message
+      : message || (draining ? "Processing scan..." : "Scan captured");
+
+  return (
+    <div className={cn("rounded-xl border-2 px-4 py-3", tone, className)}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide opacity-70">Last scan</p>
+        {lastRow ? (
+          <p className="font-mono text-xs tabular-nums opacity-70">{formatLogTime(lastRow.at)}</p>
+        ) : null}
+      </div>
+      {lastRow ? (
+        <p className="mt-1 font-mono text-base font-semibold tracking-normal">{lastRow.code}</p>
+      ) : queue[0] ? (
+        <p className="mt-1 font-mono text-base font-semibold tracking-normal">{queue[0].code}</p>
+      ) : null}
+      <p className="mt-1 text-sm font-medium">{headline}</p>
+      {(queue.length > 0 || draining) && (
+        <p className="mt-1 text-xs opacity-80">
+          {draining ? "Processing..." : ""}
+          {queue.length > 0 ? ` Queue ${queue.length}` : ""}
+        </p>
+      )}
+      {log.length > 1 && (
+        <ul className="mt-2 max-h-24 space-y-1 overflow-y-auto border-t border-black/10 pt-2 text-xs">
+          {log.slice(1, 6).map((row) => (
+            <li
+              key={`${row.id}-${row.at}`}
+              className={cn(
+                "font-mono",
+                row.ok ? "text-emerald-900/80" : "text-red-800/90"
+              )}
+            >
+              <span className="tabular-nums opacity-70">{formatLogTime(row.at)}</span>{" "}
+              <span className="font-semibold">{row.code}</span> - {row.message}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

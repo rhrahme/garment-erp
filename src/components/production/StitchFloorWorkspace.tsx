@@ -7,6 +7,7 @@ import { StitchKioskPanel } from "@/components/production/StitchKioskPanel";
 import { StitchOrdersPanel } from "@/components/production/StitchOrdersPanel";
 import {
   StitchScanCaptureProvider,
+  StitchScanFeedbackBanner,
   StitchScannerReadyBadge,
 } from "@/components/production/stitch-scan-capture";
 import { SortableTableHeader } from "@/components/ui/SortableTableHeader";
@@ -423,6 +424,14 @@ export function StitchFloorWorkspace({
             })}
             <StitchScannerReadyBadge className="ml-auto" />
           </div>
+          {tab !== "scan" && (
+            <StitchScanFeedbackBanner
+              className="mt-3"
+              onScanSettled={() => {
+                void load();
+              }}
+            />
+          )}
         </div>
 
         {error && tab !== "scan" && (
