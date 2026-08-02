@@ -48,6 +48,8 @@ export type IntegrationEventType =
   | "pattern.scan"
   | "base_pattern.created"
   | "base_pattern.updated"
+  | "base_pattern.client_column_saved"
+  | "base_pattern.client_column_removed"
   | "client_pattern.created"
   | "client_pattern.updated"
   | "client_pattern.trial_added"

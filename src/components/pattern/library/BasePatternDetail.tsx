@@ -2,14 +2,35 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Printer, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Printer, Trash2, UserPlus, X } from "lucide-react";
 import { MeasurementInput } from "@/components/pattern/library/MeasurementInput";
 import { LibraryFileList } from "@/components/pattern/library/LibraryFileList";
 import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
-import { unitLabel } from "@/lib/pattern-library/measurements";
+import {
+  clientColumnDelta,
+  clientColumnHeaderLabel,
+  orderedGridColumns,
+} from "@/lib/pattern-library/client-fit-columns";
+import { formatMeasurement, unitLabel } from "@/lib/pattern-library/measurements";
 import { basePatternLabelCode, basePatternQrUrl } from "@/lib/pattern-library/pattern-qr";
-import type { BasePattern, BasePatternPoint } from "@/lib/types/pattern-library";
+import type {
+  BasePattern,
+  BasePatternClientColumn,
+  BasePatternPoint,
+} from "@/lib/types/pattern-library";
 import { cn } from "@/lib/utils";
+
+interface FitClientOption {
+  id: string;
+  code: string;
+  first_name: string;
+  middle_name: string | null;
+  last_name: string;
+}
+
+function fitClientName(client: FitClientOption): string {
+  return [client.first_name, client.middle_name, client.last_name].filter(Boolean).join(" ");
+}
 
 export function BasePatternDetail({ baseId }: { baseId: string }) {
   const [base, setBase] = useState<BasePattern | null>(null);
@@ -19,6 +40,13 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [newPointName, setNewPointName] = useState("");
   const [newSize, setNewSize] = useState("");
+  const [clients, setClients] = useState<FitClientOption[]>([]);
+  /** Client picked in the "client fit column" selector (empty = control idle). */
+  const [fitClientId, setFitClientId] = useState("");
+  /** Client ids whose fit column changed locally and needs a PUT on save. */
+  const [pendingFitClientIds, setPendingFitClientIds] = useState<Set<string>>(new Set());
+  /** Client ids whose fit column was removed locally and needs a DELETE on save. */
+  const [removedFitClientIds, setRemovedFitClientIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     try {
@@ -29,6 +57,8 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
       const data = await res.json();
       setBase(data.base);
       setDirty(false);
+      setPendingFitClientIds(new Set());
+      setRemovedFitClientIds(new Set());
     } catch {
       setBase(null);
     } finally {
@@ -40,8 +70,30 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    fetch("/api/clients", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setClients(data?.clients ?? []))
+      .catch(() => setClients([]));
+  }, []);
+
+  // Deep links from a client context (?client=<id>) preselect the fit picker.
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get("client");
+    if (fromUrl) setFitClientId(fromUrl);
+  }, []);
+
   const gradedPoints = useMemo(() => base?.points.filter((point) => point.is_graded) ?? [], [base]);
   const trimPoints = useMemo(() => base?.points.filter((point) => !point.is_graded) ?? [], [base]);
+
+  /** Size + client fit columns in display order (client column follows its base size). */
+  const gridColumns = useMemo(
+    () => (base ? orderedGridColumns(base.sizes, base.client_columns) : []),
+    [base]
+  );
+  const fitClient = clients.find((candidate) => candidate.id === fitClientId) ?? null;
+  const fitClientColumn =
+    base?.client_columns?.find((column) => column.client_id === fitClientId) ?? null;
 
   function mutate(updater: (draft: BasePattern) => BasePattern) {
     setBase((current) => (current ? updater(current) : current));
@@ -111,6 +163,76 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
     setNewSize("");
   }
 
+  function markFitColumnPending(clientId: string) {
+    setPendingFitClientIds((current) => new Set(current).add(clientId));
+    setRemovedFitClientIds((current) => {
+      if (!current.has(clientId)) return current;
+      const next = new Set(current);
+      next.delete(clientId);
+      return next;
+    });
+  }
+
+  /** Anchor (or re-anchor) the selected client's fit column to this size. */
+  function anchorFitColumnToSize(size: string) {
+    if (!fitClient) return;
+    const clientId = fitClient.id;
+    const timestamp = new Date().toISOString();
+    mutate((draft) => {
+      const columns = draft.client_columns ?? [];
+      const existing = columns.find((column) => column.client_id === clientId) ?? null;
+      const column: BasePatternClientColumn = existing
+        ? { ...existing, base_size: size, updated_at: timestamp }
+        : {
+            id: `bpcc-local-${Date.now()}`,
+            client_id: clientId,
+            client_code: fitClient.code || null,
+            client_name: fitClientName(fitClient),
+            base_size: size,
+            values: {},
+            created_by: null,
+            updated_by: null,
+            created_at: timestamp,
+            updated_at: timestamp,
+          };
+      return {
+        ...draft,
+        client_columns: existing
+          ? columns.map((candidate) => (candidate.client_id === clientId ? column : candidate))
+          : [...columns, column],
+      };
+    });
+    markFitColumnPending(clientId);
+  }
+
+  function setClientCell(clientId: string, pointId: string, value: number | null) {
+    mutate((draft) => ({
+      ...draft,
+      client_columns: (draft.client_columns ?? []).map((column) =>
+        column.client_id === clientId
+          ? { ...column, values: { ...column.values, [pointId]: value } }
+          : column
+      ),
+    }));
+    markFitColumnPending(clientId);
+  }
+
+  function removeFitColumn(clientId: string) {
+    mutate((draft) => ({
+      ...draft,
+      client_columns: (draft.client_columns ?? []).filter(
+        (column) => column.client_id !== clientId
+      ),
+    }));
+    setPendingFitClientIds((current) => {
+      if (!current.has(clientId)) return current;
+      const next = new Set(current);
+      next.delete(clientId);
+      return next;
+    });
+    setRemovedFitClientIds((current) => new Set(current).add(clientId));
+  }
+
   async function save() {
     if (!base) return;
     setSaving(true);
@@ -133,8 +255,47 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
         throw new Error(body?.error ?? "Failed to save.");
       }
       const data = await res.json();
-      setBase(data.base);
-      setDirty(false);
+
+      // Client fit columns persist through their own endpoint (Zapier parity).
+      for (const clientId of removedFitClientIds) {
+        const del = await fetch(
+          `/api/pattern/library/bases/${baseId}/client-columns?client_id=${encodeURIComponent(clientId)}`,
+          { method: "DELETE" }
+        );
+        // 404 = the column was never saved server-side; nothing to remove.
+        if (!del.ok && del.status !== 404) {
+          const body = await del.json().catch(() => null);
+          throw new Error(body?.error ?? "Failed to remove client fit column.");
+        }
+      }
+      for (const clientId of pendingFitClientIds) {
+        const column = base.client_columns?.find(
+          (candidate) => candidate.client_id === clientId
+        );
+        if (!column) continue;
+        const put = await fetch(`/api/pattern/library/bases/${baseId}/client-columns`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            client_id: column.client_id,
+            client_code: column.client_code,
+            client_name: column.client_name,
+            base_size: column.base_size,
+            values: column.values,
+          }),
+        });
+        if (!put.ok) {
+          const body = await put.json().catch(() => null);
+          throw new Error(body?.error ?? "Failed to save client fit column.");
+        }
+      }
+
+      if (removedFitClientIds.size > 0 || pendingFitClientIds.size > 0) {
+        await load();
+      } else {
+        setBase(data.base);
+        setDirty(false);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save.");
     } finally {
@@ -240,7 +401,28 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
               Tap a size to open its A4 working sheet
             </span>
           </p>
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex items-center gap-1.5 rounded-lg bg-indigo-50/70 px-2 py-1 ring-1 ring-indigo-100">
+              <UserPlus className="h-4 w-4 shrink-0 text-indigo-600" />
+              <select
+                value={fitClientId}
+                onChange={(e) => setFitClientId(e.target.value)}
+                className="max-w-52 rounded-md border border-indigo-200 bg-white px-2 py-1 text-sm"
+                aria-label="Client fit column"
+              >
+                <option value="">Client fit column...</option>
+                {clients.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.code} - {fitClientName(option)}
+                  </option>
+                ))}
+              </select>
+              {fitClient && !fitClientColumn ? (
+                <span className="text-xs text-indigo-700">
+                  now tap &quot;Use as base&quot; under a size
+                </span>
+              ) : null}
+            </div>
             <input
               value={newSize}
               onChange={(e) => setNewSize(e.target.value)}
@@ -263,18 +445,57 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                 <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2">Measurement point</th>
-                {base.sizes.map((size) => (
-                  <th key={size} className="px-0.5 py-1 text-center font-semibold">
-                    <Link
-                      href={`/pattern/bases/${base.id}/sizes/${encodeURIComponent(size)}/print`}
-                      target="_blank"
-                      title={`Open A4 working sheet for size ${size}`}
-                      className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg px-2 py-1.5 text-indigo-700 underline decoration-indigo-300 decoration-dotted underline-offset-2 hover:bg-indigo-50 hover:text-indigo-900"
+                {gridColumns.map((entry) =>
+                  entry.kind === "size" ? (
+                    <th key={`size-${entry.size}`} className="px-0.5 py-1 text-center font-semibold">
+                      <Link
+                        href={`/pattern/bases/${base.id}/sizes/${encodeURIComponent(entry.size)}/print`}
+                        target="_blank"
+                        title={`Open A4 working sheet for size ${entry.size}`}
+                        className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg px-2 py-1.5 text-indigo-700 underline decoration-indigo-300 decoration-dotted underline-offset-2 hover:bg-indigo-50 hover:text-indigo-900"
+                      >
+                        {entry.size}
+                      </Link>
+                      {fitClient && fitClientColumn?.base_size !== entry.size ? (
+                        <button
+                          type="button"
+                          onClick={() => anchorFitColumnToSize(entry.size)}
+                          title={`Use ${entry.size} as base size for ${fitClientName(fitClient)}`}
+                          className="mx-auto block whitespace-nowrap rounded-md bg-indigo-600 px-1.5 py-0.5 text-[10px] font-medium normal-case tracking-normal text-white hover:bg-indigo-700"
+                        >
+                          Use as base
+                        </button>
+                      ) : null}
+                    </th>
+                  ) : (
+                    <th
+                      key={`client-${entry.column.client_id}`}
+                      className="bg-amber-50 px-1 py-1 text-center align-top font-semibold text-amber-900"
                     >
-                      {size}
-                    </Link>
-                  </th>
-                ))}
+                      <span className="flex items-center justify-center gap-1 whitespace-nowrap px-1 pt-1.5">
+                        <span title={`${entry.column.client_name} - adjusted from size ${entry.column.base_size}`}>
+                          {clientColumnHeaderLabel(entry.column)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeFitColumn(entry.column.client_id)}
+                          title={`Remove ${entry.column.client_name}'s fit column`}
+                          aria-label={`Remove ${entry.column.client_name}'s fit column`}
+                          className="rounded p-0.5 text-amber-400 hover:bg-rose-50 hover:text-rose-600"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                      <Link
+                        href={`/pattern/bases/${base.id}/sizes/${encodeURIComponent(entry.column.base_size)}/print?client=${encodeURIComponent(entry.column.client_id)}`}
+                        target="_blank"
+                        className="block pb-1 text-[10px] font-normal normal-case tracking-normal text-amber-700 underline decoration-dotted underline-offset-2 hover:text-amber-900"
+                      >
+                        A4 sheet
+                      </Link>
+                    </th>
+                  )
+                )}
                 <th className="px-3 py-2">Remarks</th>
                 <th className="w-8 px-1 py-2" />
               </tr>
@@ -285,15 +506,46 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
                   <td className="sticky left-0 z-10 whitespace-nowrap bg-white px-3 py-1.5 font-medium text-slate-800">
                     {point.name}
                   </td>
-                  {base.sizes.map((size) => (
-                    <td key={size} className="px-0.5 py-1 text-center">
-                      <MeasurementInput
-                        value={point.values[size] ?? null}
-                        unit={base.unit}
-                        onCommit={(value) => setCell(point.point_id, size, value)}
-                      />
-                    </td>
-                  ))}
+                  {gridColumns.map((entry) => {
+                    if (entry.kind === "size") {
+                      return (
+                        <td key={`size-${entry.size}`} className="px-0.5 py-1 text-center">
+                          <MeasurementInput
+                            value={point.values[entry.size] ?? null}
+                            unit={base.unit}
+                            onCommit={(value) => setCell(point.point_id, entry.size, value)}
+                          />
+                        </td>
+                      );
+                    }
+                    const column = entry.column;
+                    const baseValue = point.values[column.base_size] ?? null;
+                    const clientValue = column.values[point.point_id] ?? null;
+                    const delta = clientColumnDelta(baseValue, clientValue);
+                    return (
+                      <td
+                        key={`client-${column.client_id}`}
+                        className="bg-amber-50/60 px-0.5 py-1 text-center"
+                      >
+                        <MeasurementInput
+                          value={clientValue}
+                          unit={base.unit}
+                          placeholder={
+                            baseValue !== null ? formatMeasurement(baseValue, base.unit) : "—"
+                          }
+                          onCommit={(value) =>
+                            setClientCell(column.client_id, point.point_id, value)
+                          }
+                          className="border-amber-200 bg-white placeholder:text-amber-300 focus:border-amber-500"
+                        />
+                        <p className="h-3 text-[10px] leading-3 text-amber-600">
+                          {delta !== null
+                            ? `${delta > 0 ? "+" : "-"}${formatMeasurement(Math.abs(delta), base.unit)}`
+                            : "\u00a0"}
+                        </p>
+                      </td>
+                    );
+                  })}
                   <td className="px-3 py-1.5">
                     <input
                       value={point.remark ?? ""}

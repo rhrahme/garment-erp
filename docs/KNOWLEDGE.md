@@ -24,6 +24,20 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   of production piece QR) and persist to `sewing_scan_failures`.
 - Employee/client names display short form when available.
 
+## Pattern library
+
+- **Client fit columns on base patterns** (owner request, Aug 2 2026): the
+  size grid on `/pattern/library/bases/[baseId]` supports per-client columns.
+  Pick a client in the "Client fit column" selector, tap "Use as base" under a
+  size; an editable amber column appears next to that size with the client's
+  adjusted measurements (placeholder = base value, deltas shown underneath).
+  Stored as `client_columns` on the BasePattern (one per client per base) -
+  saved via `/api/pattern/library/bases/[baseId]/client-columns` (PUT/DELETE)
+  and `/api/v1/...` parity; events `base_pattern.client_column_saved` /
+  `_removed`. The A4 working sheet + PDF accept `?client=` to print the
+  client's column next to the base size. Do not strip this without the user
+  asking.
+
 ## Printing
 
 - When the user says "PO" they usually mean the **production A4 piece sheet**

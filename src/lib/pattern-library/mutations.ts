@@ -6,6 +6,11 @@ import {
 } from "@/lib/pattern-library/base-pattern-picker";
 import { readPatternLibraryFresh, writePatternLibrary } from "@/lib/data/pattern-library";
 import { readPatternJobsFresh } from "@/lib/data/pattern-jobs";
+import {
+  removeClientFitColumn,
+  upsertClientFitColumn,
+  type ClientFitColumnInput,
+} from "@/lib/pattern-library/client-fit-columns";
 import { readSalesOrders, readSalesOrdersFresh } from "@/lib/data/sales-orders";
 import { applyFabricLineAssignment } from "@/lib/pattern-library/client-fabric-board";
 import {
@@ -27,6 +32,7 @@ import {
 } from "@/lib/pattern-library/tud-size-fill";
 import type {
   BasePattern,
+  BasePatternClientColumn,
   BasePatternPoint,
   ClientPattern,
   ClientPatternMeasurement,
@@ -224,6 +230,97 @@ export async function updateBasePattern(
       garment_type: next.garment_type,
       cut_variant: next.cut_variant,
       updated_by: options.updatedBy ?? null,
+    });
+  }
+
+  return { ok: true, base: next };
+}
+
+export type { ClientFitColumnInput };
+
+/**
+ * Upserts a client's fit column on a base pattern: the size grid column where
+ * the client's adjusted measurements live next to their chosen base size.
+ * One column per client per base pattern; values are replaced on each save.
+ */
+export async function saveBasePatternClientColumn(
+  baseId: string,
+  input: ClientFitColumnInput,
+  options: { savedBy?: string | null; notify?: boolean } = {}
+): Promise<Ok<{ base: BasePattern; column: BasePatternClientColumn }> | Err> {
+  const store = await readPatternLibraryFresh();
+  const index = store.base_patterns.findIndex((base) => base.id === baseId);
+  if (index < 0) return { ok: false, status: 404, error: "Base pattern not found." };
+
+  const existing = store.base_patterns[index]!;
+  const result = upsertClientFitColumn(existing, input, {
+    actor: options.savedBy ?? null,
+  });
+  if (!result.ok) return { ok: false, status: 400, error: result.error };
+
+  const next: BasePattern = {
+    ...existing,
+    client_columns: result.columns,
+    updated_at: now(),
+  };
+  store.base_patterns[index] = next;
+  await writePatternLibrary(store);
+
+  if (options.notify !== false) {
+    await notifyIntegration("base_pattern.client_column_saved", {
+      id: next.id,
+      base_pattern_name: next.name,
+      house_brand_code: next.house_brand_code,
+      client_id: result.column.client_id,
+      client_code: result.column.client_code,
+      client_name: result.column.client_name,
+      base_size: result.column.base_size,
+      filled_points: Object.values(result.column.values).filter(
+        (value) => value !== null
+      ).length,
+      saved_by: options.savedBy ?? null,
+    });
+  }
+
+  return { ok: true, base: next, column: result.column };
+}
+
+/** Removes a client's fit column from a base pattern size grid. */
+export async function deleteBasePatternClientColumn(
+  baseId: string,
+  clientId: string,
+  options: { removedBy?: string | null; notify?: boolean } = {}
+): Promise<Ok<{ base: BasePattern }> | Err> {
+  if (!clientId?.trim()) {
+    return { ok: false, status: 400, error: "client_id is required." };
+  }
+  const store = await readPatternLibraryFresh();
+  const index = store.base_patterns.findIndex((base) => base.id === baseId);
+  if (index < 0) return { ok: false, status: 404, error: "Base pattern not found." };
+
+  const existing = store.base_patterns[index]!;
+  const result = removeClientFitColumn(existing.client_columns, clientId);
+  if (!result) {
+    return { ok: false, status: 404, error: "No fit column for this client." };
+  }
+
+  const next: BasePattern = {
+    ...existing,
+    client_columns: result.columns,
+    updated_at: now(),
+  };
+  store.base_patterns[index] = next;
+  await writePatternLibrary(store);
+
+  if (options.notify !== false) {
+    await notifyIntegration("base_pattern.client_column_removed", {
+      id: next.id,
+      base_pattern_name: next.name,
+      client_id: result.removed.client_id,
+      client_code: result.removed.client_code,
+      client_name: result.removed.client_name,
+      base_size: result.removed.base_size,
+      removed_by: options.removedBy ?? null,
     });
   }
 

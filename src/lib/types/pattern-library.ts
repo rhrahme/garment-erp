@@ -188,6 +188,26 @@ export interface BasePatternPoint {
   values: Record<string, number | null>;
 }
 
+/**
+ * Client-specific fit column on a base pattern size grid: the operator picks a
+ * base size for the client, then records the client's adjusted measurements
+ * next to it. One column per client per base pattern.
+ */
+export interface BasePatternClientColumn {
+  id: string;
+  client_id: string;
+  client_code: string | null;
+  client_name: string;
+  /** Size column the client is graded from (must be one of BasePattern.sizes). */
+  base_size: string;
+  /** point_id -> client value; null/absent = not entered (base size value applies). */
+  values: Record<string, number | null>;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface BasePattern {
   id: string;
   /** Factory brand id (fouad-rahme, gliani) + display code (FR, GL). */
@@ -213,6 +233,11 @@ export interface BasePattern {
   files: PatternLibraryAttachment[];
   /** Original Excel filename when imported. */
   source_file: string | null;
+  /**
+   * Per-client fit columns shown next to their chosen base size in the grid.
+   * Additive - absent on older base patterns.
+   */
+  client_columns?: BasePatternClientColumn[];
   notes: string | null;
   created_at: string;
   updated_at: string;

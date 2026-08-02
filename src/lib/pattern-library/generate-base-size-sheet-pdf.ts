@@ -4,7 +4,7 @@ import { formatMeasurementAscii, unitLabel } from "@/lib/pattern-library/measure
 import { basePatternLabelCode, basePatternQrUrl } from "@/lib/pattern-library/pattern-qr";
 import { buildBaseSizeSheetRows } from "@/lib/pattern-library/size-sheet";
 import { renderQrPngBuffer } from "@/lib/production/qr-render";
-import type { BasePattern } from "@/lib/types/pattern-library";
+import type { BasePattern, BasePatternClientColumn } from "@/lib/types/pattern-library";
 
 const MARGIN = 12;
 const PAGE_W = 210;
@@ -15,9 +15,10 @@ const INK: [number, number, number] = [15, 23, 42];
 /** A4 portrait per-size working sheet — mirrors BaseSizeSheetPrintView. */
 export async function generateBaseSizeSheetPdf(
   base: BasePattern,
-  size: string
+  size: string,
+  clientColumn: BasePatternClientColumn | null = null
 ): Promise<ArrayBuffer> {
-  const rows = buildBaseSizeSheetRows(base, size);
+  const rows = buildBaseSizeSheetRows(base, size, clientColumn);
   const labelCode = basePatternLabelCode(base);
   const doc = new jsPDF({ unit: "mm", format: "a4" });
 
@@ -52,6 +53,14 @@ export async function generateBaseSizeSheetPdf(
     ["Garment", base.garment_type],
     ["Variant", base.cut_variant ?? "-"],
     ["Size", size],
+    ...(clientColumn
+      ? ([
+          [
+            "Client",
+            `${clientColumn.client_name}${clientColumn.client_code ? ` (${clientColumn.client_code})` : ""}`,
+          ],
+        ] as [string, string][])
+      : []),
     ["Pattern ref", labelCode],
     ["Date", new Date().toLocaleDateString("en-GB")],
   ];
@@ -96,6 +105,9 @@ export async function generateBaseSizeSheetPdf(
       [
         `Point (${unitLabel(base.unit)})`,
         `Size ${size}`,
+        ...(clientColumn
+          ? [`${clientColumn.client_name.trim().split(/\s+/)[0]} target`]
+          : []),
         "Sewing",
         "Adjust",
         "Trial 1",
@@ -109,6 +121,13 @@ export async function generateBaseSizeSheetPdf(
     body: rows.map((row) => [
       row.is_graded ? row.name : `${row.name} (trim)`,
       formatMeasurementAscii(row.base_value, base.unit),
+      ...(clientColumn
+        ? [
+            row.client_value !== null && row.client_value !== undefined
+              ? formatMeasurementAscii(row.client_value, base.unit)
+              : "",
+          ]
+        : []),
       "",
       "",
       "",
@@ -120,17 +139,30 @@ export async function generateBaseSizeSheetPdf(
     ]),
     styles: { fontSize: 7.5, cellPadding: 1.8, textColor: INK, minCellHeight: 7 },
     headStyles: { fillColor: NAVY, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 6.5 },
-    columnStyles: {
-      0: { cellWidth: 40 },
-      1: { halign: "center", cellWidth: 14, fontStyle: "bold" },
-      2: { cellWidth: 14 },
-      3: { cellWidth: 14 },
-      4: { cellWidth: 14 },
-      5: { cellWidth: 14 },
-      6: { cellWidth: 14 },
-      7: { cellWidth: 14 },
-      8: { cellWidth: 14 },
-    },
+    columnStyles: clientColumn
+      ? {
+          0: { cellWidth: 36 },
+          1: { halign: "center", cellWidth: 13, fontStyle: "bold" },
+          2: { halign: "center", cellWidth: 14, fontStyle: "bold" },
+          3: { cellWidth: 13 },
+          4: { cellWidth: 13 },
+          5: { cellWidth: 13 },
+          6: { cellWidth: 13 },
+          7: { cellWidth: 13 },
+          8: { cellWidth: 13 },
+          9: { cellWidth: 13 },
+        }
+      : {
+          0: { cellWidth: 40 },
+          1: { halign: "center", cellWidth: 14, fontStyle: "bold" },
+          2: { cellWidth: 14 },
+          3: { cellWidth: 14 },
+          4: { cellWidth: 14 },
+          5: { cellWidth: 14 },
+          6: { cellWidth: 14 },
+          7: { cellWidth: 14 },
+          8: { cellWidth: 14 },
+        },
     theme: "grid",
   });
 

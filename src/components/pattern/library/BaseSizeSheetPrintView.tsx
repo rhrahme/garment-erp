@@ -6,7 +6,7 @@ import { qrImageUrl } from "@/lib/production/qr-labels";
 import { formatMeasurement, unitLabel } from "@/lib/pattern-library/measurements";
 import { basePatternLabelCode, basePatternQrUrl } from "@/lib/pattern-library/pattern-qr";
 import { buildBaseSizeSheetRows } from "@/lib/pattern-library/size-sheet";
-import type { BasePattern } from "@/lib/types/pattern-library";
+import type { BasePattern, BasePatternClientColumn } from "@/lib/types/pattern-library";
 
 const SHEET_PRINT_CSS = `
 @page { size: A4 portrait; margin: 10mm; }
@@ -23,8 +23,17 @@ const SHEET_PRINT_CSS = `
  * one size of a base pattern: base values pre-filled, trial columns left empty
  * for handwriting during fittings.
  */
-export function BaseSizeSheetPrintView({ base, size }: { base: BasePattern; size: string }) {
-  const rows = buildBaseSizeSheetRows(base, size);
+export function BaseSizeSheetPrintView({
+  base,
+  size,
+  clientColumn = null,
+}: {
+  base: BasePattern;
+  size: string;
+  /** When set, the client's fit column prints next to the base size values. */
+  clientColumn?: BasePatternClientColumn | null;
+}) {
+  const rows = buildBaseSizeSheetRows(base, size, clientColumn);
   const labelCode = basePatternLabelCode(base);
   const qrPayload = basePatternQrUrl(base.id);
 
@@ -40,11 +49,14 @@ export function BaseSizeSheetPrintView({ base, size }: { base: BasePattern; size
           >
             ← Back to {base.name}
           </Link>
-          <p className="mt-1 text-xs text-slate-500">A4 portrait · size {size} working sheet</p>
+          <p className="mt-1 text-xs text-slate-500">
+            A4 portrait · size {size} working sheet
+            {clientColumn ? ` · ${clientColumn.client_name} fit column` : ""}
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <a
-            href={`/api/pattern/library/bases/${base.id}/size-pdf?size=${encodeURIComponent(size)}`}
+            href={`/api/pattern/library/bases/${base.id}/size-pdf?size=${encodeURIComponent(size)}${clientColumn ? `&client=${encodeURIComponent(clientColumn.client_id)}` : ""}`}
             className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"
           >
             <Download className="h-4 w-4" />
@@ -83,6 +95,14 @@ export function BaseSizeSheetPrintView({ base, size }: { base: BasePattern; size
                 ["Garment", base.garment_type],
                 ["Variant", base.cut_variant ?? "—"],
                 ["Size", size],
+                ...(clientColumn
+                  ? [
+                      [
+                        "Client",
+                        `${clientColumn.client_name}${clientColumn.client_code ? ` (${clientColumn.client_code})` : ""}`,
+                      ] as [string, string],
+                    ]
+                  : []),
                 ["Pattern ref", labelCode],
                 ["Date", new Date().toLocaleDateString("en-GB")],
               ].map(([label, value]) => (
@@ -110,6 +130,11 @@ export function BaseSizeSheetPrintView({ base, size }: { base: BasePattern; size
                 Point ({unitLabel(base.unit)})
               </th>
               <th className="border border-slate-300 px-1.5 py-1.5 text-center">Size {size}</th>
+              {clientColumn ? (
+                <th className="border border-slate-300 px-1.5 py-1.5 text-center">
+                  {clientColumn.client_name.trim().split(/\s+/)[0]} target
+                </th>
+              ) : null}
               <th className="border border-slate-300 px-1.5 py-1.5 text-center">Sewing</th>
               <th className="border border-slate-300 px-1.5 py-1.5 text-center">Adjust</th>
               <th className="border border-slate-300 px-1.5 py-1.5 text-center">Trial 1</th>
@@ -132,6 +157,13 @@ export function BaseSizeSheetPrintView({ base, size }: { base: BasePattern; size
                 <td className="border border-slate-300 px-1.5 py-2 text-center font-semibold tabular-nums">
                   {formatMeasurement(row.base_value, base.unit)}
                 </td>
+                {clientColumn ? (
+                  <td className="border border-slate-300 px-1.5 py-2 text-center font-semibold tabular-nums">
+                    {row.client_value !== null && row.client_value !== undefined
+                      ? formatMeasurement(row.client_value, base.unit)
+                      : ""}
+                  </td>
+                ) : null}
                 {/* Handwriting cells — deliberately empty */}
                 {Array.from({ length: 7 }).map((_, i) => (
                   <td key={i} className="border border-slate-300 px-1.5 py-2" />

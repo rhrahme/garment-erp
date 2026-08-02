@@ -7,10 +7,13 @@ export const dynamic = "force-dynamic";
 
 export default async function BaseSizeSheetPrintPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ baseId: string; size: string }>;
+  searchParams: Promise<{ client?: string }>;
 }) {
   const { baseId, size: rawSize } = await params;
+  const { client: clientId } = await searchParams;
   const size = decodeURIComponent(rawSize);
 
   const session = await getSessionContext();
@@ -20,5 +23,10 @@ export default async function BaseSizeSheetPrintPage({
   const base = await getBasePatternByIdFresh(baseId);
   if (!base || !base.sizes.includes(size)) notFound();
 
-  return <BaseSizeSheetPrintView base={base} size={size} />;
+  // ?client= prints the client's fit column next to the base size values.
+  const clientColumn = clientId
+    ? base.client_columns?.find((column) => column.client_id === clientId) ?? null
+    : null;
+
+  return <BaseSizeSheetPrintView base={base} size={size} clientColumn={clientColumn} />;
 }

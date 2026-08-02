@@ -51,6 +51,8 @@ const OUTBOUND_EVENTS = [
   "pattern.scan",
   "base_pattern.created",
   "base_pattern.updated",
+  "base_pattern.client_column_saved",
+  "base_pattern.client_column_removed",
   "client_pattern.created",
   "client_pattern.updated",
   "client_pattern.trial_added",
@@ -193,6 +195,12 @@ export function ZapierSetup() {
             <li>PATCH {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]/versions/[versionId]</li>
             <li className="pl-4 text-slate-500">
               trial sheet updates (Sample / Trial N / Final columns via measurements)
+            </li>
+            <li>GET/PUT/DELETE {baseUrl}/api/v1/pattern/library/bases/[baseId]/client-columns</li>
+            <li className="pl-4 text-slate-500">
+              PUT body: client_id, client_name, base_size, values (point_id to
+              number), optional client_code / saved_by - upserts the client fit
+              column next to its base size; DELETE body/query: client_id
             </li>
             <li>POST {baseUrl}/api/v1/sales-orders/[id]/fabric-lines/print</li>
             <li>POST {baseUrl}/api/v1/fabric-receiving/reset-testing</li>

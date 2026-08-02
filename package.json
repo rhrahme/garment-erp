@@ -35,6 +35,7 @@
     "proof:dxf-outlines": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs scripts/proof-dxf-outlines.mjs",
     "test:tud-size-fill": "node --experimental-strip-types --test src/lib/pattern-library/tud-size-fill.test.ts",
     "test:base-pattern-picker": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/pattern-library/base-pattern-picker.test.ts",
+    "test:client-fit-columns": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/pattern-library/client-fit-columns.test.ts",
     "test:a4-print-styles": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/sales-orders/receiving-print-styles.test.ts",
     "proof:a4-production-print": "node scripts/proof-a4-production-print.mjs",
     "smoke:production": "node scripts/smoke-production.mjs",

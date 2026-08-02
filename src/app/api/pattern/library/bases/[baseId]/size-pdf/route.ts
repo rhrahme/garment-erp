@@ -33,7 +33,13 @@ export async function GET(request: Request, context: { params: Promise<{ baseId:
       );
     }
 
-    const pdfBytes = await generateBaseSizeSheetPdf(base, size);
+    // ?client= includes the client's fit column next to the base size values.
+    const clientId = url.searchParams.get("client")?.trim();
+    const clientColumn = clientId
+      ? base.client_columns?.find((column) => column.client_id === clientId) ?? null
+      : null;
+
+    const pdfBytes = await generateBaseSizeSheetPdf(base, size, clientColumn);
     const filename = buildBaseSizeSheetPdfFilename(base, size);
 
     return new NextResponse(Buffer.from(pdfBytes), {
