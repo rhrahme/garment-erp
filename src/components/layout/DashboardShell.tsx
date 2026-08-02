@@ -26,7 +26,7 @@ export function DashboardShell({
   const kioskMain = stitchOperatorOnly;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 print:h-auto print:overflow-visible">
+    <div className="flex h-screen overflow-hidden bg-slate-50 print:h-auto print:max-w-none print:overflow-visible print:w-full">
       <PriceRevealLockOnNavigate />
       {mobileNavOpen ? (
         <button
@@ -50,15 +50,15 @@ export function DashboardShell({
         onNavigate={() => setMobileNavOpen(false)}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:overflow-visible">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:max-w-none print:overflow-visible print:w-full">
         <Header session={session} onMenuClick={() => setMobileNavOpen((open) => !open)} />
         {headerExtra}
-        {/* overflow-x-hidden makes Chrome tile wide print fragments onto extra pages */}
+        {/* overflow-x-hidden makes Chrome tile wide print fragments onto extra pages — must be visible for print */}
         <main
           className={
             kioskMain
-              ? "flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-3 print:overflow-visible print:p-0"
-              : "flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 print:overflow-visible print:p-0"
+              ? "flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-3 print:max-w-none print:overflow-visible print:p-0 print:w-full"
+              : "flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 print:max-w-none print:overflow-visible print:p-0 print:w-full"
           }
         >
           {children}

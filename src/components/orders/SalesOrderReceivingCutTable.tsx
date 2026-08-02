@@ -23,8 +23,9 @@ export type ReceivingCutTableRow = {
   fabric_meters: number;
 };
 
-const teamPrintCell = "py-4 pr-2 align-top print:py-1 print:pr-1 print:text-[9px]";
-const teamPrintHead = "py-2 pr-2 print:py-1 print:pr-1 print:text-[8px]";
+/** Screen density; print body/header sizes come from RECEIVING_A4_PRINT_CSS (do not add print:text-[Npx]). */
+const teamPrintCell = "py-4 pr-2 align-top";
+const teamPrintHead = "py-2 pr-2 text-xs font-bold uppercase tracking-wide text-slate-500";
 
 function formatWidth(line: Pick<ReceivingCutTableRow, "width_cm" | "width_inches">): string {
   if (line.width_cm != null) return `${line.width_cm} cm`;
@@ -76,7 +77,7 @@ export function CompositionCell({
 }) {
   const { line1, line2 } = compositionDisplayLines(composition);
   return (
-    <td className={cn(teamPrintCell, "whitespace-normal text-slate-600", className)}>
+    <td className={cn(teamPrintCell, "print-composition whitespace-normal text-slate-600", className)}>
       <span className="block leading-snug">{line1}</span>
       {line2 ? <span className="mt-0.5 block leading-snug text-slate-500">{line2}</span> : null}
     </td>
@@ -132,19 +133,19 @@ export function SalesOrderReceivingCutTable({
     <table className="print-receiving-table w-full table-fixed text-sm">
       <colgroup>
         <col className="w-[4%]" />
-        <col className="w-[7%]" />
+        <col className="w-[8%]" />
         <col className="w-[14%]" />
-        <col className="w-[10%]" />
-        <col className="w-[12%]" />
-        <col className="w-[18%]" />
-        <col className="w-[8%]" />
-        <col className="w-[8%]" />
+        <col className="w-[9%]" />
         <col className="w-[11%]" />
-        <col className="w-[8%]" />
+        <col className="w-[22%]" />
+        <col className="w-[7%]" />
+        <col className="w-[7%]" />
+        <col className="w-[12%]" />
+        <col className="w-[6%]" />
         {hasTrailing ? <col className="w-[8%]" /> : null}
       </colgroup>
       <thead>
-        <tr className="border-b border-slate-300 text-left text-xs uppercase tracking-wide text-slate-500">
+        <tr className="border-b border-slate-300 text-left">
           <th className={teamPrintHead}>Art.</th>
           <th className={teamPrintHead}>QR</th>
           <th className={teamPrintHead}>Fabric cut</th>
@@ -172,8 +173,8 @@ export function SalesOrderReceivingCutTable({
               <td className={cell()}>
                 <FabricCutQrImage
                   fabricCutCode={row.fabric_cut_code}
-                  size={96}
-                  className="h-14 w-14 print:h-9 print:w-9"
+                  size={128}
+                  className="h-16 w-16"
                 />
               </td>
               <td className={cell("break-all font-mono font-medium text-indigo-800")}>{row.fabric_cut_code}</td>
@@ -191,12 +192,12 @@ export function SalesOrderReceivingCutTable({
               <CompositionCell composition={row.composition} className={highlight} />
               <td className={cell("text-slate-600")}>{fabricWeightLabel(row)}</td>
               <td className={cell("text-slate-600")}>{formatWidth(row)}</td>
-              <td className={cell()}>
+              <td className={cell("print-garment")}>
                 <span className="font-medium text-slate-900">{row.garment_type}</span>
                 <GarmentPiecesNest
                   garmentType={row.garment_type}
                   pieces={row.pieces}
-                  className="mt-0.5 space-y-0.5 text-xs text-slate-600 print:text-[8px]"
+                  className="mt-0.5 space-y-0.5 text-xs text-slate-600"
                 />
               </td>
               <td className={cell("font-medium")}>{row.fabric_meters} m</td>

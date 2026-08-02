@@ -75,32 +75,34 @@ export default async function OrderPrintPackPage({ params }: { params: Promise<{
           </p>
         </div>
 
-        <header className="mb-6 border-b border-slate-200 pb-4 print:mb-4 print:pb-2">
-          <h1 className="text-xl font-bold text-slate-900 print:text-lg">
-            Fabric receiving — {order.so_number}
-          </h1>
-          <p className="mt-1 text-sm text-slate-600">
-            {order.client_name} · <span className="font-mono font-semibold">{order.client_code}</span>
-            {order.client_reference ? ` · Ref ${order.client_reference}` : ""}
-          </p>
-        </header>
+        <div className="print-a4-sheet w-full">
+          <header className="mb-6 border-b border-slate-200 pb-4 print:mb-3 print:pb-2">
+            <h1 className="text-xl font-bold text-slate-900">
+              Fabric receiving — {order.so_number}
+            </h1>
+            <p className="mt-1 text-sm text-slate-600">
+              {order.client_name} · <span className="font-mono font-semibold">{order.client_code}</span>
+              {order.client_reference ? ` · Ref ${order.client_reference}` : ""}
+            </p>
+          </header>
 
-        {a4PrintLines.length > 0 ? (
-          <SalesOrderReceivingCutTableWithSwatches
-            swatchLoading="eager"
-            rows={a4PrintLines.map((line) => {
-              const art = articleByLineId.get(line.id) ?? 0;
-              const stickers = line.label_stickers ?? [];
-              const firstCode =
-                stickers[0]?.code ??
-                `${order.client_reference ?? order.so_number}-L${String(art).padStart(2, "0")}`;
-              const fabricCutCode = supplierFabricProductionCode(firstCode, order.client_code);
-              return receivingCutRowFromFabricLine(line, art, fabricCutCode);
-            })}
-          />
-        ) : (
-          <p className="text-sm text-slate-500">No fabric lines on this order.</p>
-        )}
+          {a4PrintLines.length > 0 ? (
+            <SalesOrderReceivingCutTableWithSwatches
+              swatchLoading="eager"
+              rows={a4PrintLines.map((line) => {
+                const art = articleByLineId.get(line.id) ?? 0;
+                const stickers = line.label_stickers ?? [];
+                const firstCode =
+                  stickers[0]?.code ??
+                  `${order.client_reference ?? order.so_number}-L${String(art).padStart(2, "0")}`;
+                const fabricCutCode = supplierFabricProductionCode(firstCode, order.client_code);
+                return receivingCutRowFromFabricLine(line, art, fabricCutCode);
+              })}
+            />
+          ) : (
+            <p className="text-sm text-slate-500">No fabric lines on this order.</p>
+          )}
+        </div>
       </section>
 
       <OrderPrintPack salesOrderId={id} />

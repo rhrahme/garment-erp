@@ -55,8 +55,9 @@ function formatWidth(line: SalesOrderFabricLine): string {
   return "—";
 }
 
-const teamPrintCell = "py-4 pr-2 align-top print:py-1.5 print:pr-1.5 print:text-[10px]";
-const teamPrintHead = "py-2 pr-2 print:pr-1.5 print:text-[9px]";
+/** Screen density; print sizes come from RECEIVING_A4_PRINT_CSS (11pt body) — do not add print:text-[Npx] shrink. */
+const teamPrintCell = "py-4 pr-2 align-top";
+const teamPrintHead = "py-2 pr-2 text-xs font-bold uppercase tracking-wide text-slate-500";
 
 function formatLinePrice(line: SalesOrderFabricLine, showPrices: boolean): string {
   if (!showPrices) return "—";
@@ -134,8 +135,9 @@ export default async function SalesOrderPrintPage({
         sheetLineCount={team === "receiving" ? a4PrintLines.length : undefined}
       />
 
-      <div className="mx-auto max-w-4xl print:max-w-none">
-        <div className="mb-8 flex items-start justify-between border-b border-slate-200 pb-6 print:mb-4 print:pb-3">
+      {/* print-a4-sheet: full printable width. Never reintroduce max-w-* + mx-auto here (IMG_9922 shrink). */}
+      <div className="print-a4-sheet w-full">
+        <div className="mb-8 flex items-start justify-between border-b border-slate-200 pb-6 print:mb-3 print:pb-2">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
               {team === "receiving"
@@ -144,12 +146,14 @@ export default async function SalesOrderPrintPage({
                   ? "Production — piece stickers"
                   : "Sales order"}
             </p>
-            <h1 className="mt-1 text-3xl font-bold">{order.so_number}</h1>
-            <p className="mt-3 text-xl font-bold uppercase tracking-wide text-slate-900">{productionBrand}</p>
-            <p className="mt-1 text-xs text-slate-500">
+            <h1 className="mt-1 text-3xl font-bold print:text-2xl">{order.so_number}</h1>
+            <p className="mt-3 text-xl font-bold uppercase tracking-wide text-slate-900 print:mt-1 print:text-lg">
+              {productionBrand}
+            </p>
+            <p className="mt-1 text-xs text-slate-500 print:text-[10pt]">
               Production brand — follow this brand&apos;s stitching specification
             </p>
-            <p className="mt-3 text-sm text-slate-600">Order date: {formatDate(order.order_date)}</p>
+            <p className="mt-3 text-sm text-slate-600 print:mt-1">Order date: {formatDate(order.order_date)}</p>
             {order.delivery_date && (
               <p className="text-sm text-slate-600">Delivery: {formatDate(order.delivery_date)}</p>
             )}
@@ -160,12 +164,12 @@ export default async function SalesOrderPrintPage({
           </div>
         </div>
 
-        <div className="mb-8 grid gap-6 sm:grid-cols-2 print:mb-4 print:gap-4">
+        <div className="mb-8 grid gap-6 sm:grid-cols-2 print:mb-3 print:gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               {order.retail_brand ? "Retail brand" : "Client"}
             </p>
-            <p className="mt-2 font-semibold">{order.client_name}</p>
+            <p className="mt-2 font-semibold print:mt-1">{order.client_name}</p>
             <p className="font-mono text-sm text-slate-600">{order.client_code}</p>
             {order.product_article && (
               <p className="mt-1 text-sm text-slate-600">Article: {order.product_article}</p>
@@ -174,7 +178,7 @@ export default async function SalesOrderPrintPage({
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Order details</p>
             {order.client_reference && (
-              <p className="mt-2 text-sm">Client reference: {order.client_reference}</p>
+              <p className="mt-2 text-sm print:mt-1">Client reference: {order.client_reference}</p>
             )}
             <p className="text-sm text-slate-600">
               Ship fabrics to: {shipLabel}
@@ -189,13 +193,13 @@ export default async function SalesOrderPrintPage({
         </div>
 
         {team === "receiving" && (
-          <p className="mb-6 text-sm text-slate-600 print:mb-3 print:text-xs">
+          <p className="mb-6 text-sm text-slate-600 print:mb-2">
             One fabric cut QR per line — receiving & washing scan these when fabric arrives (before jacket / trouser
             split).
           </p>
         )}
         {team === "production" && (
-          <p className="mb-6 text-sm text-slate-600 print:mb-3 print:text-xs">
+          <p className="mb-6 text-sm text-slate-600 print:mb-2">
             One QR per garment piece — after fabric prep, stick on jacket, trouser, shirt, etc. Suit fabric = 2 piece
             codes.
           </p>
@@ -293,73 +297,138 @@ export default async function SalesOrderPrintPage({
           (team === "production" ? prodPrintLines : order.fabric_lines).some(
             (line) => (line.label_stickers ?? []).length > 0
           ) && (
-          <div className="mt-8 border-t border-slate-200 pt-6 print:mt-0 print:border-0 print:pt-0">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-700 print:mb-2">
-              {team === "production" ? "Piece sticker codes — cutting / sewing" : "Label sticker codes"}
-            </h2>
-            <p className="mb-6 text-xs text-slate-500 print:hidden">
-              Art. # matches fabric table — one row per piece (suit = jacket + trouser)
-              {team === "production"
-                ? PRINTING_FREE
-                  ? ` · ${prodPrintLines.length} line${prodPrintLines.length === 1 ? "" : "s"} — reprint anytime`
-                  : ` · ${prodPrintLines.length} line${prodPrintLines.length === 1 ? "" : "s"} to print`
-                : ""}
-            </p>
-            <table className="print-receiving-table w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-300 text-left text-xs uppercase tracking-wide text-slate-500">
-                  <th className={teamPrintHead}>Art.</th>
-                  <th className={teamPrintHead}>QR</th>
-                  <th className={teamPrintHead}>Piece code</th>
-                  <th className={teamPrintHead}>Fabric #</th>
-                  <th className={teamPrintHead}>Brand</th>
-                  <th className={teamPrintHead}>Composition</th>
-                  <th className={teamPrintHead}>Weight</th>
-                  <th className={teamPrintHead}>Width</th>
-                  <th className={teamPrintHead}>Garment</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(team === "production" ? prodPrintLines : order.fabric_lines).flatMap((line) =>
-                  [...(line.label_stickers ?? [])]
-                    .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
-                    .map((sticker) => {
-                    const productionCode = productionCodeFromSticker(sticker.code, order.client_code);
-                    return (
-                      <tr key={sticker.code} className="border-b border-slate-200 align-top">
-                        <td className={`${teamPrintCell} text-center font-semibold text-slate-900`}>
-                          {articleByLineId.get(line.id)}
-                        </td>
-                        <td className={teamPrintCell}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={qrImageUrl(productionCode, 96)}
-                            alt=""
-                            width={48}
-                            height={48}
-                            className="h-14 w-14 print:h-11 print:w-11"
-                          />
-                        </td>
-                        <td className={`${teamPrintCell} font-mono font-medium text-indigo-800`}>
-                          {productionCode}
-                        </td>
-                        <td className={`${teamPrintCell} font-mono text-slate-700`}>{line.fabric_number}</td>
-                        <td className={`${teamPrintCell} max-w-[24mm] whitespace-normal text-slate-700`}>
-                          {fabricBrandLabel(line)}
-                        </td>
-                        <CompositionCell composition={line.composition} />
-                        <td className={`${teamPrintCell} text-slate-600`}>{fabricWeightLabel(line)}</td>
-                        <td className={`${teamPrintCell} text-slate-600`}>{formatWidth(line)}</td>
-                        <td className={`${teamPrintCell} text-slate-600`}>
-                          {formatLabelGarmentDescription(line.garment_type, sticker.piece_name)}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {/*
+              Two intentional full-width tables (not one 9-col mega-table).
+              A single wide table historically overflowed the shell and Chrome tiled
+              left/right column fragments onto separate pages (IMG_9922).
+            */}
+            <div className="print-prod-section mt-8 border-t border-slate-200 pt-6 print:mt-2 print:border-0 print:pt-0">
+              <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-700 print:mb-2">
+                {team === "production" ? "Piece sticker codes — cutting / sewing" : "Label sticker codes"}
+              </h2>
+              <p className="mb-6 text-xs text-slate-500 print:hidden">
+                Art. # matches fabric table — one row per piece (suit = jacket + trouser)
+                {team === "production"
+                  ? PRINTING_FREE
+                    ? ` · ${prodPrintLines.length} line${prodPrintLines.length === 1 ? "" : "s"} — reprint anytime`
+                    : ` · ${prodPrintLines.length} line${prodPrintLines.length === 1 ? "" : "s"} to print`
+                  : ""}
+              </p>
+              <table className="print-receiving-table w-full text-sm">
+                <colgroup>
+                  <col className="w-[6%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[36%]" />
+                  <col className="w-[16%]" />
+                  <col className="w-[30%]" />
+                </colgroup>
+                <thead>
+                  <tr className="border-b border-slate-300 text-left">
+                    <th className={teamPrintHead}>Art.</th>
+                    <th className={teamPrintHead}>QR</th>
+                    <th className={teamPrintHead}>Piece code</th>
+                    <th className={teamPrintHead}>Fabric #</th>
+                    <th className={teamPrintHead}>Garment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(team === "production" ? prodPrintLines : order.fabric_lines).flatMap((line) =>
+                    [...(line.label_stickers ?? [])]
+                      .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
+                      .map((sticker) => {
+                        const productionCode = productionCodeFromSticker(sticker.code, order.client_code);
+                        return (
+                          <tr key={sticker.code} className="border-b border-slate-200 align-top">
+                            <td className={`${teamPrintCell} text-center font-semibold text-slate-900`}>
+                              {articleByLineId.get(line.id)}
+                            </td>
+                            <td className={teamPrintCell}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={qrImageUrl(productionCode, 128)}
+                                alt=""
+                                width={64}
+                                height={64}
+                                className="h-16 w-16"
+                              />
+                            </td>
+                            <td className={`${teamPrintCell} break-all font-mono font-medium text-indigo-800`}>
+                              {productionCode}
+                            </td>
+                            <td className={`${teamPrintCell} font-mono text-slate-700`}>{line.fabric_number}</td>
+                            <td className={`${teamPrintCell} print-garment whitespace-normal text-slate-800`}>
+                              {formatLabelGarmentDescription(line.garment_type, sticker.piece_name)}
+                            </td>
+                          </tr>
+                        );
+                      })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {team === "production" ? (
+              <div className="print-prod-fabric-section mt-8 border-t border-slate-200 pt-6 print:mt-0 print:border-0 print:pt-0">
+                <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-700 print:mb-2">
+                  Fabric / composition reference
+                </h2>
+                <table className="print-receiving-table w-full text-sm">
+                  <colgroup>
+                    <col className="w-[5%]" />
+                    <col className="w-[12%]" />
+                    <col className="w-[28%]" />
+                    <col className="w-[8%]" />
+                    <col className="w-[8%]" />
+                    <col className="w-[14%]" />
+                    <col className="w-[15%]" />
+                    <col className="w-[10%]" />
+                  </colgroup>
+                  <thead>
+                    <tr className="border-b border-slate-300 text-left">
+                      <th className={teamPrintHead}>Art.</th>
+                      <th className={teamPrintHead}>Brand</th>
+                      <th className={teamPrintHead}>Composition</th>
+                      <th className={teamPrintHead}>Weight</th>
+                      <th className={teamPrintHead}>Width</th>
+                      <th className={teamPrintHead}>Garment</th>
+                      <th className={teamPrintHead}>Piece code</th>
+                      <th className={teamPrintHead}>Fabric #</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {prodPrintLines.flatMap((line) =>
+                      [...(line.label_stickers ?? [])]
+                        .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
+                        .map((sticker) => {
+                          const productionCode = productionCodeFromSticker(sticker.code, order.client_code);
+                          return (
+                            <tr key={`fab-${sticker.code}`} className="border-b border-slate-200 align-top">
+                              <td className={`${teamPrintCell} text-center font-semibold text-slate-900`}>
+                                {articleByLineId.get(line.id)}
+                              </td>
+                              <td className={`${teamPrintCell} whitespace-normal text-slate-700`}>
+                                {fabricBrandLabel(line)}
+                              </td>
+                              <CompositionCell composition={line.composition} className="print-composition" />
+                              <td className={`${teamPrintCell} text-slate-700`}>{fabricWeightLabel(line)}</td>
+                              <td className={`${teamPrintCell} text-slate-700`}>{formatWidth(line)}</td>
+                              <td className={`${teamPrintCell} print-garment whitespace-normal text-slate-800`}>
+                                {formatLabelGarmentDescription(line.garment_type, sticker.piece_name)}
+                              </td>
+                              <td className={`${teamPrintCell} break-all font-mono text-indigo-800`}>
+                                {productionCode}
+                              </td>
+                              <td className={`${teamPrintCell} font-mono text-slate-700`}>{line.fabric_number}</td>
+                            </tr>
+                          );
+                        })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+          </>
         )}
 
         {order.notes && team === "full" && (
