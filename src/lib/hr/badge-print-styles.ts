@@ -100,7 +100,7 @@ export const EMPLOYEE_BADGE_PRINT_CSS = `
     }
 
     .badge-print-date {
-      color: #475569 !important;
+      color: #0f172a !important;
       font-size: 7px !important;
       font-weight: 500 !important;
       line-height: 1.15 !important;

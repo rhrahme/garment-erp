@@ -159,7 +159,7 @@ function drawBadgeCard(
   });
 
   // Print-date version stamp - inset from bottom so cutting does not remove it
-  doc.setTextColor(71, 85, 105);
+  doc.setTextColor(15, 23, 42);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
   doc.text(printedLabel, textX, printY, {

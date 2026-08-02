@@ -106,7 +106,7 @@ export function EmployeeBadgeCard({
               <p className="truncate font-mono text-[11px] font-semibold text-[#0B2C5A]">
                 {employee.employee_id_number}
               </p>
-              <p className="badge-print-date mt-0.5 truncate text-[7px] font-medium leading-tight text-slate-600">
+              <p className="badge-print-date mt-0.5 truncate text-[7px] font-medium leading-tight text-slate-900">
                 {printedLabel}
               </p>
             </div>
