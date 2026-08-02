@@ -17,9 +17,14 @@ export async function resolveAuthUser(supabase: SupabaseClient): Promise<User | 
 
   if (user) return user;
 
+  // getSession may still hit GoTrue for refresh when auth is 522/degraded — cap it too.
   const {
     data: { session },
-  } = await supabase.auth.getSession();
+  } = await withSupabaseTimeout(
+    supabase.auth.getSession(),
+    "resolveAuthUser getSession",
+    { data: { session: null } }
+  );
 
   return session?.user ?? null;
 }
