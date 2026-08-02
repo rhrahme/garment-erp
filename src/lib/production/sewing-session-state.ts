@@ -63,8 +63,8 @@ export function pieceArmsOnKiosk(
 }
 
 /**
- * Start-arm selection: exactly one employee arm, or none / ambiguous.
- * Prefer {@link pickFifoEmployeeArm} for shared-kiosk piece starts (FIFO queue).
+ * Diagnostic helper: exactly one employee arm, or none / many.
+ * Piece starts use {@link mostRecentArm} (original shared-kiosk queue), not this.
  */
 export function resolveUniqueEmployeeArm(
   store: SewingSessionsFile,
@@ -80,20 +80,22 @@ export function resolveUniqueEmployeeArm(
 }
 
 /**
- * Shared-kiosk arm queue: oldest badge-ready employee first (FIFO by armed_at).
- * Remaining ready employees stay armed until their A4 is scanned.
+ * Original shared-kiosk arm pick (restored): newest badge-ready employee wins.
+ * Other ready employees stay armed until their A4 is scanned.
+ * Matches pre-09033b3 mostRecentArm behavior from 2ac1d24.
  */
-export function pickFifoEmployeeArm(
+export function mostRecentArm(
   store: SewingSessionsFile,
   kioskId: string
 ): SewingKioskArm | null {
-  const arms = employeeArmsOnKiosk(store, kioskId)
-    .slice()
-    .sort(
-      (a, b) =>
-        a.armed_at.localeCompare(b.armed_at) || a.employee_id.localeCompare(b.employee_id)
-    );
-  return arms[0] ?? null;
+  return (
+    employeeArmsOnKiosk(store, kioskId)
+      .slice()
+      .sort(
+        (a, b) =>
+          b.armed_at.localeCompare(a.armed_at) || a.employee_id.localeCompare(b.employee_id)
+      )[0] ?? null
+  );
 }
 
 export function resolveUniquePieceArm(

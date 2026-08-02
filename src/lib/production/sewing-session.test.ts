@@ -23,7 +23,7 @@ import {
 } from "@/lib/production/sewing-session-garment";
 import {
   expireStaleSewingState,
-  pickFifoEmployeeArm,
+  mostRecentArm,
   productionCodesMatch,
   SEWING_ARM_TIMEOUT_MS,
   sewingFailedScansForPeriod,
@@ -718,7 +718,7 @@ describe("blind-floor stitch scan recovery", () => {
     assert.equal(store.sessions[0]?.production_code, "FR-HAPPY");
   });
 
-  it("3 EMP ready -> 3 A4 starts assign FIFO (oldest armed_at first)", () => {
+  it("3 EMP ready -> A4 starts use mostRecentArm (original queue, not reject)", () => {
     const t0 = "2026-08-02T17:18:25.000Z";
     const t1 = "2026-08-02T17:18:27.000Z";
     const t2 = "2026-08-02T17:18:30.000Z";
@@ -748,7 +748,9 @@ describe("blind-floor stitch scan recovery", () => {
       sessions: [],
     };
 
-    assert.equal(pickFifoEmployeeArm(store, "k1")?.employee_id, "e-adnan");
+    // Regression guard: 09033b3 rejected multi-arm; original 2ac1d24 used mostRecentArm.
+    assert.equal(mostRecentArm(store, "k1")?.employee_id, "e-kashif");
+    assert.notEqual(decidePieceStart(store, "k1").type, "reject_ambiguous_employee_arms");
 
     const order: string[] = [];
     for (const code of ["FR-L04", "FR-L02", "FR-L06"] as const) {
@@ -768,12 +770,10 @@ describe("blind-floor stitch scan recovery", () => {
       store = applyStartFromEmployeeArm(store, "k1", decision.arm, started);
     }
 
-    assert.deepEqual(order, ["e-adnan", "e-imran", "e-kashif"]);
+    // Newest armed first (badge-then-piece at shared scanner).
+    assert.deepEqual(order, ["e-kashif", "e-imran", "e-adnan"]);
     assert.equal(store.kiosk_arms.length, 0);
     assert.equal(store.sessions.length, 3);
-    assert.equal(store.sessions.find((row) => row.production_code === "FR-L04")?.employee_id, "e-adnan");
-    assert.equal(store.sessions.find((row) => row.production_code === "FR-L02")?.employee_id, "e-imran");
-    assert.equal(store.sessions.find((row) => row.production_code === "FR-L06")?.employee_id, "e-kashif");
   });
 
   it("closing / open piece match is not blocked by other ready EMPs", () => {
@@ -804,7 +804,7 @@ describe("blind-floor stitch scan recovery", () => {
       sessions: [openAshraf],
     };
 
-    // Kiosk matches open/closing piece before FIFO start (same order as processSewingKioskScan).
+    // Kiosk matches open/closing piece before arm start (same order as processSewingKioskScan).
     const pieceCode = "FR-0129-L06-TR-2/2";
     const matched =
       openSessionsOnKiosk(store, "k1").find(
@@ -815,15 +815,15 @@ describe("blind-floor stitch scan recovery", () => {
     assert.equal(matched?.id, "sew-ashraf");
     assert.equal(matched?.employee_id, "e-ashraf");
 
-    // FIFO start would go to Adnan - must not run when a matching open piece exists.
+    // Without a piece match, start would go to most recent ready EMP (Kashif).
     const startIfNoMatch = decidePieceStart(store, "k1");
     assert.equal(startIfNoMatch.type, "start_with_employee_arm");
     if (startIfNoMatch.type === "start_with_employee_arm") {
-      assert.equal(startIfNoMatch.arm.employee_id, "e-adnan");
+      assert.equal(startIfNoMatch.arm.employee_id, "e-kashif");
     }
   });
 
-  it("FIFO skips ready EMP who already has an open piece", () => {
+  it("most recent ready EMP with open piece is rejected (original behavior)", () => {
     const store: SewingSessionsFile = {
       updated_at: null,
       kiosk_arms: [
@@ -842,18 +842,45 @@ describe("blind-floor stitch scan recovery", () => {
       kiosk_piece_arms: [],
       sessions: [
         session({
-          id: "open-ali",
-          employee_id: "e1",
-          employee_name: "Ali",
-          production_code: "FR-OPEN-ALI",
+          id: "open-sara",
+          employee_id: "e2",
+          employee_name: "Sara",
+          production_code: "FR-OPEN-SARA",
           status: "open",
         }),
       ],
     };
     const decision = decidePieceStart(store, "k1");
+    assert.equal(decision.type, "reject_employee_has_open_piece");
+    if (decision.type !== "reject_employee_has_open_piece") return;
+    assert.equal(decision.arm.employee_id, "e2");
+  });
+
+  it("badge then A4 with a second ready EMP still assigns to most recent badge", () => {
+    // Floor pattern: Adnan badges, Imran badges, Imran scans A4 -> Imran starts.
+    const store: SewingSessionsFile = {
+      updated_at: null,
+      kiosk_arms: [
+        empArm({
+          employee_id: "e-adnan",
+          employee_name: "Adnan",
+          armed_at: "2026-08-02T17:18:25.000Z",
+        }),
+        empArm({
+          employee_id: "e-imran",
+          employee_name: "Imran",
+          employee_id_number: "200",
+          armed_at: "2026-08-02T17:18:27.000Z",
+        }),
+      ],
+      kiosk_piece_arms: [],
+      sessions: [],
+    };
+    const decision = decidePieceStart(store, "k1");
     assert.equal(decision.type, "start_with_employee_arm");
     if (decision.type !== "start_with_employee_arm") return;
-    assert.equal(decision.arm.employee_id, "e2");
+    assert.equal(decision.arm.employee_id, "e-imran");
+    assert.notEqual(decision.type, "reject_ambiguous_employee_arms");
   });
 
   it("expires stale piece arms with the 30s arm timeout", () => {
