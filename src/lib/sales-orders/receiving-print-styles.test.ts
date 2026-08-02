@@ -18,14 +18,26 @@ function fontSizeFor(css: string, needle: string): number | null {
   return match ? Number(match[1]) : null;
 }
 
-describe("RECEIVING_A4_PRINT_CSS — A4 shrink regression guards", () => {
+function pageMarginMm(css: string): number | null {
+  const match = css.match(/@page\s*\{[^}]*margin:\s*([\d.]+)mm/i);
+  return match ? Number(match[1]) : null;
+}
+
+describe("RECEIVING_A4_PRINT_CSS - A4 shrink regression guards (Chrome + Safari)", () => {
+  it("uses portrait A4 with sensible margins (10-15mm)", () => {
+    assert.match(RECEIVING_A4_PRINT_CSS, /@page\s*\{[^}]*size:\s*A4\s+portrait/i);
+    assert.doesNotMatch(RECEIVING_A4_PRINT_CSS, /size:\s*A4\s+landscape/i);
+    const margin = pageMarginMm(RECEIVING_A4_PRINT_CSS);
+    assert.ok(margin != null && margin >= 10 && margin <= 15, `margin must be 10-15mm, got ${margin}`);
+  });
+
   it("does not shrink the print sheet with transform:scale or zoom tricks", () => {
-    // Allow "transform: none" / "zoom: 1" (explicit kill switches). Fail on scale()/zoom:<1.
     assert.doesNotMatch(RECEIVING_A4_PRINT_CSS, /transform\s*:\s*scale\s*\(/i);
     assert.doesNotMatch(RECEIVING_A4_PRINT_CSS, /zoom\s*:\s*0\./i);
     assert.doesNotMatch(RECEIVING_A4_PRINT_CSS, /zoom\s*:\s*[0-9]?[0-9]%/i);
+    // zoom is Chrome-oriented and Safari-unreliable - do not use it as a print control.
+    assert.doesNotMatch(RECEIVING_A4_PRINT_CSS, /zoom\s*:/i);
     assert.match(RECEIVING_A4_PRINT_CSS, /transform:\s*none\s*!important/i);
-    assert.match(RECEIVING_A4_PRINT_CSS, /zoom:\s*1\s*!important/i);
   });
 
   it("forces full printable width (no max-width shrink trap)", () => {
@@ -43,12 +55,31 @@ describe("RECEIVING_A4_PRINT_CSS — A4 shrink regression guards", () => {
     const tableSize = fontSizeFor(RECEIVING_A4_PRINT_CSS, ".print-receiving-table {");
     assert.ok(tdSize != null && tdSize >= 10, `td font-size must be >= 10pt, got ${tdSize}`);
     assert.ok(tableSize != null && tableSize >= 10, `table font-size must be >= 10pt, got ${tableSize}`);
-    assert.match(RECEIVING_A4_PRINT_CSS, /\.print-receiving-table img\s*\{[^}]*width:\s*1[4-9]mm/s);
+    assert.ok(tdSize != null && tdSize <= 12, `td font-size should stay ~10-12pt, got ${tdSize}`);
+    assert.match(RECEIVING_A4_PRINT_CSS, /\.print-receiving-table img\s*\{[^}]*width:\s*1[2-8]mm/s);
   });
 
-  it("keeps shell overflow visible so Chrome cannot tile columns across pages", () => {
+  it("keeps shell overflow visible so browsers cannot tile columns across pages", () => {
     assert.match(RECEIVING_A4_PRINT_CSS, /overflow-x:\s*visible\s*!important/);
     assert.match(RECEIVING_A4_PRINT_CSS, /aside[\s\S]*display:\s*none\s*!important/);
+  });
+
+  it("avoids avoid-page shrink on production sections (74ddfca regression)", () => {
+    // Tall piece lists must paginate by row. avoid-page makes engines shrink-to-fit.
+    const prodBlock = RECEIVING_A4_PRINT_CSS.match(/\.print-prod-section\s*\{[^}]*\}/);
+    assert.ok(prodBlock, "missing .print-prod-section rules");
+    assert.doesNotMatch(prodBlock![0], /avoid-page/i);
+    assert.match(prodBlock![0], /page-break-inside:\s*auto/);
+    // Fabric reference still starts on a new sheet (Safari needs page-break-before).
+    assert.match(RECEIVING_A4_PRINT_CSS, /\.print-prod-fabric-section\s*\{[^}]*page-break-before:\s*always/s);
+    assert.match(RECEIVING_A4_PRINT_CSS, /\.print-prod-fabric-section\s*\{[^}]*break-before:\s*page/s);
+  });
+
+  it("includes Safari print color / page-break parity hooks", () => {
+    assert.match(RECEIVING_A4_PRINT_CSS, /-webkit-print-color-adjust:\s*exact/);
+    assert.match(RECEIVING_A4_PRINT_CSS, /print-color-adjust:\s*exact/);
+    assert.match(RECEIVING_A4_PRINT_CSS, /page-break-inside:\s*avoid/);
+    assert.match(RECEIVING_A4_PRINT_CSS, /page-break-before:\s*always/);
   });
 
   it("production / print-pack pages do not reintroduce centered max-w-4xl shrink wrappers", () => {
@@ -61,5 +92,7 @@ describe("RECEIVING_A4_PRINT_CSS — A4 shrink regression guards", () => {
     // Production must split QR list vs fabric reference (avoids 9-col horizontal tile).
     assert.match(printPage, /print-prod-fabric-section/);
     assert.match(printPage, /Fabric \/ composition reference/);
+    // No Chrome-only zoom/scale hacks in the print page markup.
+    assert.doesNotMatch(printPage, /transform:\s*scale|print:scale|zoom:\s*0/i);
   });
 });

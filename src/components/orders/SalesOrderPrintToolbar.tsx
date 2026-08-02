@@ -20,7 +20,7 @@ export function SalesOrderPrintToolbar({
   soNumber: string;
   team?: "full" | "receiving" | "production";
   printKind?: FabricLinePrintKind;
-  /** Unprinted line ids only — passed to mark-print API after print. */
+  /** Unprinted line ids only - passed to mark-print API after print. */
   printLineIds?: string[];
   /** Receiving A4: enable print when full sheet has lines even if all already marked. */
   sheetLineCount?: number;
@@ -36,7 +36,7 @@ export function SalesOrderPrintToolbar({
 
   const printHint =
     PRINTING_FREE && printKind && hasLines
-      ? `${lineCount} line${lineCount === 1 ? "" : "s"} — reprint anytime`
+      ? `${lineCount} line${lineCount === 1 ? "" : "s"} - reprint anytime`
       : team === "receiving" && canPrintReceivingA4
         ? PRINTING_FREE
           ? `Full order sheet (${sheetLineCount} lines)`
@@ -44,7 +44,7 @@ export function SalesOrderPrintToolbar({
         : canPrintProduction
           ? `Print dialog covers ${lineCount} line${lineCount === 1 ? "" : "s"}`
           : team === "full"
-            ? "Print dialog → Save as PDF (full order summary)"
+            ? "Print dialog -> Save as PDF (full order summary)"
             : "No fabric lines on this sheet";
 
   const printLinks = [
@@ -92,6 +92,10 @@ export function SalesOrderPrintToolbar({
           </Link>
         ))}
       </div>
+      <p className="text-xs text-slate-500">
+        Chrome and Safari: paper <span className="font-medium text-slate-700">A4 Portrait</span>, scale{" "}
+        <span className="font-medium text-slate-700">100%</span> / no shrink-to-fit, margins default (about 12mm).
+      </p>
     </div>
   );
 }

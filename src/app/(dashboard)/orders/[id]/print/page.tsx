@@ -135,7 +135,7 @@ export default async function SalesOrderPrintPage({
         sheetLineCount={team === "receiving" ? a4PrintLines.length : undefined}
       />
 
-      {/* print-a4-sheet: full printable width. Never reintroduce max-w-* + mx-auto here (IMG_9922 shrink). */}
+      {/* print-a4-sheet: portrait A4 width on screen; print CSS forces full printable width. */}
       <div className="print-a4-sheet w-full">
         <div className="mb-8 flex items-start justify-between border-b border-slate-200 pb-6 print:mb-3 print:pb-2">
           <div>

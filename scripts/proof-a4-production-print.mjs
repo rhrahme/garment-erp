@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Local proof: render a production A4 print HTML fixture with RECEIVING_A4_PRINT_CSS
- * and measure content width vs page width (must fill nearly full landscape A4).
+ * and measure content width vs page width (must fill nearly full portrait A4).
  *
  * Usage: node scripts/proof-a4-production-print.mjs
  * Output: tmp-pdf-inspect/a4-production-print-proof.html (+ .png if playwright available)
@@ -18,7 +18,6 @@ mkdirSync(outDir, { recursive: true });
 
 const require = createRequire(import.meta.url);
 
-// Load CSS via a tiny TS strip: read the export string literally from source.
 const stylesSrc = readFileSync(resolve(root, "src/lib/sales-orders/receiving-print-styles.ts"), "utf8");
 const cssMatch = stylesSrc.match(/export const RECEIVING_A4_PRINT_CSS = `([\s\S]*?)`;/);
 if (!cssMatch) {
@@ -62,66 +61,68 @@ const fabricRows = [
 const qrSvg =
   "data:image/svg+xml," +
   encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" fill="#000"/><rect x="16" y="16" width="96" height="96" fill="#fff"/><rect x="32" y="32" width="64" height="64" fill="#000"/></svg>`
+    '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" fill="#000"/><rect x="16" y="16" width="96" height="96" fill="#fff"/><rect x="32" y="32" width="64" height="64" fill="#000"/></svg>'
   );
 
 const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>A4 production print proof — SO-2026-0129 fixture</title>
+<title>A4 production print proof - SO-2026-0129 fixture</title>
 <style>
-  body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 0; color: #0f172a; }
+  body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 0; color: #0f172a; background: #e2e8f0; }
   ${css}
-  /* Screen preview mimics print box */
   .proof-frame {
-    width: 297mm;
-    min-height: 210mm;
+    width: 210mm;
+    min-height: 297mm;
     margin: 12px auto;
-    padding: 6mm;
+    padding: 12mm;
     box-sizing: border-box;
     border: 1px dashed #94a3b8;
     background: white;
   }
   @media print {
-    .proof-frame { border: none; margin: 0; padding: 0; width: 100%; }
+    body { background: white; }
+    .proof-frame { border: none; margin: 0; padding: 0; width: 100%; min-height: 0; }
   }
 </style>
 </head>
 <body>
 <div class="sales-order-print">
   <div class="print-a4-sheet proof-frame" id="sheet">
-    <p style="font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;font-size:11pt;margin:0">Production — piece stickers</p>
+    <p style="font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;font-size:11pt;margin:0">Production - piece stickers</p>
     <h1 style="margin:4px 0 0;font-size:22pt">SO-2026-0129</h1>
     <p style="margin:6px 0 0;font-weight:700;font-size:14pt">FOUAD RAHME</p>
     <p style="margin:4px 0 12px;font-size:11pt">Client: Abdel Aziz Fahd Al Ajlan</p>
-    <p style="margin:0 0 10px;font-size:11pt">One QR per garment piece — after fabric prep, stick on jacket, trouser, shirt, etc.</p>
+    <p style="margin:0 0 10px;font-size:11pt">One QR per garment piece - after fabric prep, stick on jacket, trouser, shirt, etc.</p>
 
-    <h2 style="font-size:11pt;text-transform:uppercase;margin:0 0 8px">Piece sticker codes — cutting / sewing</h2>
-    <table class="print-receiving-table" style="border-collapse:collapse;width:100%">
-      <colgroup>
-        <col style="width:6%"/><col style="width:12%"/><col style="width:36%"/><col style="width:16%"/><col style="width:30%"/>
-      </colgroup>
-      <thead>
-        <tr>
-          <th>Art.</th><th>QR</th><th>Piece code</th><th>Fabric #</th><th>Garment</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rows
-          .map(
-            ([art, code, fab, garment]) => `
+    <div class="print-prod-section">
+      <h2 style="font-size:11pt;text-transform:uppercase;margin:0 0 8px">Piece sticker codes - cutting / sewing</h2>
+      <table class="print-receiving-table" style="border-collapse:collapse;width:100%">
+        <colgroup>
+          <col style="width:6%"/><col style="width:12%"/><col style="width:36%"/><col style="width:16%"/><col style="width:30%"/>
+        </colgroup>
+        <thead>
           <tr>
-            <td style="text-align:center;font-weight:700">${art}</td>
-            <td><img src="${qrSvg}" alt=""/></td>
-            <td style="font-family:ui-monospace,monospace;color:#3730a3">${code}</td>
-            <td style="font-family:ui-monospace,monospace">${fab}</td>
-            <td class="print-garment">${garment}</td>
-          </tr>`
-          )
-          .join("")}
-      </tbody>
-    </table>
+            <th>Art.</th><th>QR</th><th>Piece code</th><th>Fabric #</th><th>Garment</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows
+            .map(
+              ([art, code, fab, garment]) => `
+            <tr>
+              <td style="text-align:center;font-weight:700">${art}</td>
+              <td><img src="${qrSvg}" alt=""/></td>
+              <td style="font-family:ui-monospace,monospace;color:#3730a3">${code}</td>
+              <td style="font-family:ui-monospace,monospace">${fab}</td>
+              <td class="print-garment">${garment}</td>
+            </tr>`
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
 
     <div class="print-prod-fabric-section" style="margin-top:18px">
       <h2 style="font-size:11pt;text-transform:uppercase;margin:0 0 8px">Fabric / composition reference</h2>
@@ -155,20 +156,26 @@ const html = `<!DOCTYPE html>
         </tbody>
       </table>
     </div>
-    <p style="margin-top:12px;font-size:9pt;color:#94a3b8">Generated proof fixture · SO-2026-0129</p>
+    <p style="margin-top:12px;font-size:9pt;color:#94a3b8">Generated proof fixture  SO-2026-0129</p>
   </div>
 </div>
 <script>
-  // Expose geometry for headless measurement
   window.__proofGeometry = () => {
     const sheet = document.getElementById('sheet');
     const table = document.querySelector('.print-receiving-table');
     const sr = sheet.getBoundingClientRect();
     const tr = table.getBoundingClientRect();
+    const style = getComputedStyle(sheet);
+    const padX = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+    const contentWidth = sr.width - padX;
     return {
       sheetWidth: sr.width,
+      sheetHeight: sr.height,
+      contentWidth,
       tableWidth: tr.width,
-      fillRatio: tr.width / sr.width,
+      // Fill of the printable content box (excludes preview padding that mimics @page margin).
+      fillRatio: tr.width / contentWidth,
+      isPortraitFrame: sr.height >= sr.width,
     };
   };
 </script>
@@ -180,7 +187,24 @@ const htmlPath = resolve(outDir, "a4-production-print-proof.html");
 writeFileSync(htmlPath, html, "utf8");
 console.log("Wrote", htmlPath);
 
-// Geometry check in screen preview frame (297mm wide).
+const checks = [
+  ["portrait @page", /size:\s*A4\s+portrait/i.test(html)],
+  ["no landscape @page", !/size:\s*A4\s+landscape/i.test(html)],
+  ["no transform:scale", !/transform\s*:\s*scale\s*\(/i.test(html)],
+  ["no zoom control", !/zoom\s*:/i.test(html)],
+  ["table width 100%", /width:\s*100%\s*!important/.test(html)],
+  ["td font >= 10pt", /font-size:\s*11pt\s*!important/.test(html)],
+  ["max-width none on print sheet", /max-width:\s*none\s*!important/.test(html)],
+  ["webkit print color", /-webkit-print-color-adjust:\s*exact/.test(html)],
+  ["no avoid-page on prod section", !/\.print-prod-section\s*\{[^}]*avoid-page/i.test(html)],
+  ["page-break-before fabric", /page-break-before:\s*always/.test(html)],
+];
+let ok = true;
+for (const [label, pass] of checks) {
+  console.log(pass ? "OK " : "FAIL ", label);
+  if (!pass) ok = false;
+}
+
 let playwright;
 try {
   playwright = require("playwright");
@@ -193,20 +217,7 @@ try {
 }
 
 if (!playwright?.chromium) {
-  // Fallback: assert CSS invariants from the written HTML (no browser).
-  const checks = [
-    ["no transform:scale", !/transform\s*:\s*scale\s*\(/i.test(html)],
-    ["zoom:1 present", /zoom:\s*1\s*!important/i.test(html)],
-    ["table width 100%", /width:\s*100%\s*!important/.test(html)],
-    ["td font >= 10pt", /font-size:\s*11pt\s*!important/.test(html)],
-    ["max-width none on sheet", /max-width:\s*none\s*!important/.test(html)],
-  ];
-  let ok = true;
-  for (const [label, pass] of checks) {
-    console.log(pass ? "OK " : "FAIL ", label);
-    if (!pass) ok = false;
-  }
-  console.log("Playwright not installed — skipped PNG/fillRatio. Open HTML in browser print preview.");
+  console.log("Playwright not installed - skipped PNG/fillRatio. Open HTML in Chrome/Safari print preview.");
   process.exit(ok ? 0 : 1);
 }
 
@@ -217,12 +228,30 @@ await page.goto("file://" + htmlPath, { waitUntil: "networkidle" });
 const geom = await page.evaluate(() => window.__proofGeometry());
 const pngPath = resolve(outDir, "a4-production-print-proof.png");
 await page.locator("#sheet").screenshot({ path: pngPath });
+
+// Emulated print PDF for layout proof (Chromium). Safari uses same CSS invariants.
+const pdfPath = resolve(outDir, "a4-production-print-proof.pdf");
+await page.pdf({
+  path: pdfPath,
+  format: "A4",
+  landscape: false,
+  printBackground: true,
+  margin: { top: "12mm", right: "12mm", bottom: "12mm", left: "12mm" },
+  preferCSSPageSize: true,
+});
 await browser.close();
 
 console.log("Geometry:", geom);
 console.log("Wrote", pngPath);
+console.log("Wrote", pdfPath);
+if (!geom.isPortraitFrame) {
+  console.error("FAIL: proof frame is not portrait");
+  ok = false;
+}
 if (geom.fillRatio < 0.92) {
   console.error(`FAIL: table only fills ${(geom.fillRatio * 100).toFixed(1)}% of sheet (need >= 92%)`);
-  process.exit(1);
+  ok = false;
+} else {
+  console.log(`OK: table fills ${(geom.fillRatio * 100).toFixed(1)}% of sheet width`);
 }
-console.log(`OK: table fills ${(geom.fillRatio * 100).toFixed(1)}% of sheet width`);
+process.exit(ok ? 0 : 1);
