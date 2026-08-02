@@ -95,7 +95,7 @@ export function EmployeeBadgeCard({
                 {displayName}
               </h2>
               {jobsLine ? (
-                <p className="badge-job-functions mt-0.5 line-clamp-2 text-[7px] font-medium leading-tight text-slate-600">
+                <p className="badge-job-functions mt-0.5 line-clamp-2 text-[11px] font-semibold leading-snug text-slate-700">
                   {jobsLine}
                 </p>
               ) : null}

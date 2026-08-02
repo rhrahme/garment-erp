@@ -107,10 +107,10 @@ export const EMPLOYEE_BADGE_PRINT_CSS = `
     }
 
     .badge-job-functions {
-      color: #475569 !important;
-      font-size: 7px !important;
-      font-weight: 500 !important;
-      line-height: 1.15 !important;
+      color: #334155 !important;
+      font-size: 11px !important;
+      font-weight: 600 !important;
+      line-height: 1.25 !important;
     }
   }
 `;

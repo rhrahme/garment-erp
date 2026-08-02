@@ -137,11 +137,11 @@ function drawBadgeCard(
 
   // Job roles under name (only when set) - keep clear of QR/left panel
   if (jobsLine) {
-    doc.setTextColor(71, 85, 105);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.5);
+    doc.setTextColor(51, 65, 85);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
     const jobLines = doc.splitTextToSize(jobsLine, textMaxW);
-    doc.text(jobLines.slice(0, 2), textX, textY + 0.5);
+    doc.text(jobLines.slice(0, 2), textX, textY + 0.8);
   }
 
   // Footer reserved inside cut edge: ID + always-visible print date
