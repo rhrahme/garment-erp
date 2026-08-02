@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { GarmentTypeColorLegend } from "@/components/production/GarmentTypeColorLegend";
+import ScanQrSvg from "@/components/production/ScanQrSvg";
 import { StitchKioskPanel } from "@/components/production/StitchKioskPanel";
 import { StitchOrdersPanel } from "@/components/production/StitchOrdersPanel";
 import {
@@ -481,6 +482,7 @@ export function StitchFloorWorkspace({
               <table className="min-w-full text-left text-sm">
                 <thead className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <tr>
+                    <th className="px-3 py-3 text-left font-semibold">QR</th>
                     <SortableTableHeader
                       label="Employee"
                       sortKey="employee"
@@ -554,6 +556,9 @@ export function StitchFloorWorkspace({
                         key={session.id}
                         className={cn("text-slate-800", longRunning && "bg-red-50/60")}
                       >
+                        <td className="px-3 py-3">
+                          <ScanQrSvg value={scanQr} sizePx={60} className="rounded border border-slate-200" />
+                        </td>
                         <td className="px-3 py-3">
                           <div className="font-semibold text-slate-900">
                             {sewingSessionEmployeeDisplayName(session)}
@@ -745,7 +750,13 @@ export function StitchFloorWorkspace({
                                   articleColor.bg
                                 )}
                               >
-                                <div className="min-w-0 space-y-0.5 px-1">
+                                <div className="flex min-w-0 items-center gap-3 px-1">
+                                  <ScanQrSvg
+                                    value={scanQr}
+                                    sizePx={56}
+                                    className="shrink-0 rounded border border-slate-200"
+                                  />
+                                  <div className="min-w-0 space-y-0.5">
                                   <p className={cn("text-base font-semibold", articleColor.text)}>
                                     {article || "-"}
                                     {piece.piece_mark ? (
@@ -761,6 +772,7 @@ export function StitchFloorWorkspace({
                                     {sewingSessionClientDisplayName(piece)}
                                     {piece.so_number ? ` / ${piece.so_number}` : ""}
                                   </p>
+                                  </div>
                                 </div>
                                 <div className="px-1 text-right text-sm">
                                   <p className="tabular-nums font-semibold text-slate-800">
@@ -855,6 +867,7 @@ export function StitchFloorWorkspace({
                 <table className="min-w-full text-left text-sm">
                   <thead className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     <tr>
+                      <th className="px-3 py-3 text-left font-semibold">QR</th>
                       <SortableTableHeader
                         label="Employee"
                         sortKey="employee"
@@ -944,6 +957,9 @@ export function StitchFloorWorkspace({
                       const scanQr = sewingSessionScanQrLabel(row);
                       return (
                       <tr key={row.id} className="text-slate-800">
+                        <td className="px-3 py-3">
+                          <ScanQrSvg value={scanQr} sizePx={60} className="rounded border border-slate-200" />
+                        </td>
                         <td className="px-3 py-3 font-medium">
                           {sewingSessionEmployeeDisplayName(row)}
                         </td>
