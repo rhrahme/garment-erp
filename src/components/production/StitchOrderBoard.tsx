@@ -2,10 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
+import { GarmentTypeColorLegend } from "@/components/production/GarmentTypeColorLegend";
 import { ScanStageLegend } from "@/components/production/ScanStageLegend";
 import { StatusBadge } from "@/components/ui/PageHeader";
 import { SortableTableHeader } from "@/components/ui/SortableTableHeader";
 import { FabricSupplierName } from "@/components/fabric/FabricSupplierName";
+import { garmentTypeColorClasses } from "@/lib/production/garment-type-colors";
 import {
   productionStageToHighlight,
   scanStageStyles,
@@ -220,6 +222,7 @@ export function StitchOrderBoard({
       </div>
 
       <ScanStageLegend />
+      <GarmentTypeColorLegend />
 
       <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -339,6 +342,10 @@ export function StitchOrderBoard({
                 const stage = highlightForPiece(wo, live);
                 const styles = scanStageStyles(stage);
                 const caption = stitchCaption(bucket);
+                const articleLabel = formatLabelGarmentDescription(wo.garment_type, wo.piece_name);
+                const articleColor = garmentTypeColorClasses(
+                  wo.piece_name?.trim() || wo.garment_type || articleLabel
+                );
                 return (
                   <tr key={wo.id} className={cn("text-slate-800", styles.row)}>
                     <td className="px-3 py-3">
@@ -353,8 +360,10 @@ export function StitchOrderBoard({
                         <span className="text-slate-400">-</span>
                       )}
                     </td>
-                    <td className="px-3 py-3 font-semibold text-slate-900">
-                      {formatLabelGarmentDescription(wo.garment_type, wo.piece_name)}
+                    <td className={cn("px-3 py-3", articleColor.bg)}>
+                      <span className={cn("font-semibold", articleColor.text)}>
+                        {articleLabel}
+                      </span>
                     </td>
                     <td className="px-3 py-3 font-mono text-xs font-semibold text-indigo-800 sm:text-sm">
                       {wo.sticker_code}

@@ -13,7 +13,8 @@ export type SewingScanFailureReasonCode =
   | "employee_has_open_piece"
   | "ambiguous_employee_arms"
   | "ambiguous_piece_arms"
-  | "wrong_piece_for_close";
+  | "wrong_piece_for_close"
+  | "job_not_stitcher";
 
 /** One failed stitch-kiosk scan attempt (badge or A4 piece QR). */
 export type SewingScanFailure = {

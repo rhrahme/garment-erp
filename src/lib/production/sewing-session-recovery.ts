@@ -43,6 +43,18 @@ export type BadgeDecision =
   | { type: "arm_employee" };
 
 /**
+ * Close / finish badge paths must not be blocked by the stitcher job gate.
+ * Arm / start / piece-arm ambiguity still require a tailor (or empty legacy jobs).
+ */
+export function badgeDecisionRequiresSewCapability(type: BadgeDecision["type"]): boolean {
+  return (
+    type === "arm_employee" ||
+    type === "start_with_piece_arm" ||
+    type === "reject_ambiguous_piece_arms"
+  );
+}
+
+/**
  * Pure decision for an A4 that does not match an already-open/closing piece on the kiosk.
  */
 export function decidePieceStart(

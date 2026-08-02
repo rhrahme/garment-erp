@@ -1,7 +1,12 @@
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSewingSessionsAsync, writeSewingSessions } from "@/lib/data/sewing-sessions";
 import { isEmployeeQrPayload, parseEmployeeQrPayload } from "@/lib/hr/employee-qr";
-import { findPayrollEmployeeByBadgeValue, resolveScanEmployeeContext } from "@/lib/hr/payroll-lookup";
+import { employeeCanSewOnStitchKiosk } from "@/lib/hr/job-functions";
+import {
+  findPayrollEmployeeByBadgeValue,
+  findPayrollEmployeeById,
+  resolveScanEmployeeContext,
+} from "@/lib/hr/payroll-lookup";
 import { notifyIntegration } from "@/lib/integrations";
 import { executeStageScan } from "@/lib/production/execute-stage-scan";
 import { recordSewingScanFailure } from "@/lib/production/record-sewing-scan-failure";
@@ -13,6 +18,7 @@ import {
   applyPieceArm,
   applyStartFromEmployeeArm,
   applyStartFromPieceArm,
+  badgeDecisionRequiresSewCapability,
   decideBadgeScan,
   decidePieceStart,
 } from "@/lib/production/sewing-session-recovery";
@@ -554,6 +560,27 @@ export async function processSewingKioskScan(
       );
     }
 
+    // After close paths: block non-tailors from arming / starting (legacy empty jobs still allowed).
+    if (
+      badgeDecisionRequiresSewCapability(badgeDecision.type) &&
+      !employeeCanSewOnStitchKiosk(employee.job_functions)
+    ) {
+      return failResult(
+        "Not a stitcher - only tailor jobs can start sewing on this kiosk.",
+        "job_not_stitcher",
+        "badge",
+        store,
+        kioskId,
+        {},
+        {
+          ...failMeta,
+          employee_id: ctx.employee_id,
+          employee_name: ctx.employee_name,
+          employee_id_number: ctx.employee_id_number,
+        }
+      );
+    }
+
     if (badgeDecision.type === "reject_ambiguous_piece_arms") {
       return failResult(
         "Multiple pieces waiting - scan one A4 again, then badge.",
@@ -788,6 +815,24 @@ export async function processSewingKioskScan(
 
   if (pieceDecision.type === "start_with_employee_arm") {
     const arm = pieceDecision.arm;
+    const armedEmployee = findPayrollEmployeeById(arm.employee_id);
+    if (armedEmployee && !employeeCanSewOnStitchKiosk(armedEmployee.job_functions)) {
+      return failResult(
+        "Not a stitcher - only tailor jobs can start sewing on this kiosk.",
+        "job_not_stitcher",
+        "piece",
+        store,
+        kioskId,
+        { arm },
+        {
+          ...failMeta,
+          employee_id: arm.employee_id,
+          employee_name: arm.employee_name,
+          employee_id_number: arm.employee_id_number,
+          related_production_code: meta.production_code,
+        }
+      );
+    }
     const session = buildSessionFromArmAndMeta(arm, meta, raw, kioskId, at);
     store = applyStartFromEmployeeArm(store, kioskId, arm, session);
     await writeSewingSessions(store);

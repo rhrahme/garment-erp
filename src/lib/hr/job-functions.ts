@@ -96,3 +96,19 @@ export function formatJobFunctionsSummary(values: readonly string[]): string {
   }
   return `${normalized.length} roles`;
 }
+
+/** True when the role is a sewing specialty (any *_tailor). */
+export function isTailorJobFunction(value: EmployeeJobFunction): boolean {
+  return value.endsWith("_tailor");
+}
+
+/**
+ * Who may arm / start a sewing session on the stitch kiosk.
+ * Empty job_functions = legacy badge (allow). Any *_tailor = allow.
+ * Only non-sewing roles (cutter, qc, ...) = reject.
+ */
+export function employeeCanSewOnStitchKiosk(jobFunctions: unknown): boolean {
+  const jobs = normalizeJobFunctions(jobFunctions);
+  if (jobs.length === 0) return true;
+  return jobs.some(isTailorJobFunction);
+}

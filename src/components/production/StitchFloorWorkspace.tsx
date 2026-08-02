@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { GarmentTypeColorLegend } from "@/components/production/GarmentTypeColorLegend";
 import { StitchKioskPanel } from "@/components/production/StitchKioskPanel";
 import { StitchOrdersPanel } from "@/components/production/StitchOrdersPanel";
 import {
@@ -9,6 +10,7 @@ import {
   StitchScannerReadyBadge,
 } from "@/components/production/stitch-scan-capture";
 import { SortableTableHeader } from "@/components/ui/SortableTableHeader";
+import { garmentTypeColorClasses } from "@/lib/production/garment-type-colors";
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
 import {
   SEWING_LIVE_LONG_RUNNING_SEC,
@@ -422,6 +424,8 @@ export function StitchFloorWorkspace({
         )}
 
       {tab === "live" && (
+        <div className="space-y-4">
+        <GarmentTypeColorLegend />
         <section className="rounded-xl border border-slate-200 bg-white">
           <div className="border-b border-slate-100 px-5 py-4">
             <div className="flex flex-wrap items-end justify-between gap-3">
@@ -514,6 +518,8 @@ export function StitchFloorWorkspace({
                     const today =
                       data.today_by_employee?.find((row) => row.employee_id === session.employee_id) ??
                       null;
+                    const article = sewingSessionArticleLabel(session);
+                    const articleColor = garmentTypeColorClasses(article || null);
                     return (
                       <tr
                         key={session.id}
@@ -534,8 +540,10 @@ export function StitchFloorWorkspace({
                             <div className="mt-1 text-xs text-slate-400">Today: first piece</div>
                           )}
                         </td>
-                        <td className="px-3 py-3 font-semibold text-slate-900">
-                          {sewingSessionArticleLabel(session) || "-"}
+                        <td className={cn("px-3 py-3", articleColor.bg)}>
+                          <span className={cn("font-semibold", articleColor.text)}>
+                            {article || "-"}
+                          </span>
                         </td>
                         <td className="px-3 py-3 font-mono text-xs sm:text-sm">
                           {session.production_code}
@@ -591,6 +599,7 @@ export function StitchFloorWorkspace({
             )}
           </div>
         </section>
+        </div>
       )}
 
       {(tab === "performance" || tab === "history") && (
@@ -691,14 +700,20 @@ export function StitchFloorWorkspace({
                           {pieces.length === 0 ? (
                             <li className="py-3 text-sm text-slate-500">No piece rows loaded.</li>
                           ) : (
-                            pieces.map((piece) => (
+                            pieces.map((piece) => {
+                              const article = sewingSessionArticleLabel(piece);
+                              const articleColor = garmentTypeColorClasses(article || null);
+                              return (
                               <li
                                 key={piece.id}
-                                className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 py-3 last:border-b-0"
+                                className={cn(
+                                  "flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 py-3 last:border-b-0",
+                                  articleColor.bg
+                                )}
                               >
-                                <div className="min-w-0 space-y-0.5">
-                                  <p className="text-base font-semibold text-slate-800">
-                                    {sewingSessionArticleLabel(piece) || "-"}
+                                <div className="min-w-0 space-y-0.5 px-1">
+                                  <p className={cn("text-base font-semibold", articleColor.text)}>
+                                    {article || "-"}
                                   </p>
                                   <p className="text-sm font-medium text-slate-700">
                                     {piece.production_code}
@@ -709,14 +724,15 @@ export function StitchFloorWorkspace({
                                     {piece.so_number ? ` / ${piece.so_number}` : ""}
                                   </p>
                                 </div>
-                                <div className="text-right text-sm">
+                                <div className="px-1 text-right text-sm">
                                   <p className="tabular-nums font-semibold text-slate-800">
                                     {formatDuration(piece.duration_sec)}
                                   </p>
                                   <p className="text-slate-500">{formatClock(piece.ended_at)}</p>
                                 </div>
                               </li>
-                            ))
+                              );
+                            })
                           )}
                         </ul>
                       )}
@@ -883,12 +899,15 @@ export function StitchFloorWorkspace({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {historyRows.map((row) => (
+                    {historyRows.map((row) => {
+                      const article = sewingSessionArticleLabel(row);
+                      const articleColor = garmentTypeColorClasses(article || null);
+                      return (
                       <tr key={row.id} className="text-slate-800">
                         <td className="px-3 py-3 font-medium">{row.employee_name}</td>
-                        <td className="px-3 py-3">
-                          <div className="font-semibold text-slate-900">
-                            {sewingSessionArticleLabel(row) || "-"}
+                        <td className={cn("px-3 py-3", articleColor.bg)}>
+                          <div className={cn("font-semibold", articleColor.text)}>
+                            {article || "-"}
                           </div>
                           {row.piece_mark ? (
                             <div className="text-xs text-slate-500">{row.piece_mark}</div>
@@ -927,7 +946,8 @@ export function StitchFloorWorkspace({
                           </span>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               )
