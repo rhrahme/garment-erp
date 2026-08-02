@@ -245,6 +245,7 @@ export function StitchOrderBoard({
         type="search"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
+        data-stitch-manual-entry="true"
         placeholder="Search employee, garment, brand, client..."
         className="min-h-[52px] w-full rounded-xl border border-slate-300 px-4 text-base text-slate-900 outline-none ring-indigo-500 focus:ring-2"
       />

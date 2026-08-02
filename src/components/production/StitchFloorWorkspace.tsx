@@ -424,14 +424,12 @@ export function StitchFloorWorkspace({
             })}
             <StitchScannerReadyBadge className="ml-auto" />
           </div>
-          {tab !== "scan" && (
-            <StitchScanFeedbackBanner
-              className="mt-3"
-              onScanSettled={() => {
-                void load();
-              }}
-            />
-          )}
+          <StitchScanFeedbackBanner
+            className="mt-3"
+            onScanSettled={() => {
+              void load();
+            }}
+          />
         </div>
 
         {error && tab !== "scan" && (
@@ -838,6 +836,7 @@ export function StitchFloorWorkspace({
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              data-stitch-manual-entry="true"
               placeholder={
                 historyMode === "sessions"
                   ? "Search employee, article, Scan QR, SO, client..."

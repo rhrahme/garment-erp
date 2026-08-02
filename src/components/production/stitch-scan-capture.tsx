@@ -16,6 +16,10 @@ import {
   looksLikePartialScanFragment,
   tryMergeScanFragments,
 } from "@/lib/production/stitch-scan-buffer";
+import {
+  isWedgeTerminatorKey,
+  shouldStealKeyAsWedge,
+} from "@/lib/production/stitch-scan-wedge";
 import type { SewingKioskScanResult, SewingKioskUiPhase, SewingSession } from "@/lib/types/sewing-sessions";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +41,13 @@ const SCAN_BURST_GUARD_MS = 700;
 const RECLAIM_INTERVAL_MS = 2000;
 /** Hold incomplete fragments briefly so the next burst can merge. */
 const PARTIAL_MERGE_WINDOW_MS = 900;
+/**
+ * Inter-key gap under this = USB wedge burst. Steal even over search boxes /
+ * text selection so scans cannot disappear silently.
+ */
+const WEDGE_RAPID_GAP_MS = 90;
+/** Manual-entry fields (search / workstation) opt into slow human typing. */
+const MANUAL_ENTRY_ATTR = "data-stitch-manual-entry";
 
 export type QueuedScan = {
   id: string;
@@ -68,6 +79,8 @@ type StitchScanCaptureValue = {
   log: ScanLogRow[];
   draining: boolean;
   captureArmed: boolean;
+  /** Live raw wedge buffer / held partial - shown before API. */
+  hearingPreview: string | null;
   flushInputNow: () => void;
   scheduleFlush: () => void;
 };
@@ -145,7 +158,7 @@ function playBeep(kind: "ok" | "error" | "progress" | "capture") {
   }
 }
 
-/** True when focus is on a real text field (search, workstation, etc.) - do not steal. */
+/** True when focus is on a real text field (search, workstation, etc.). */
 function isTextEntryElement(el: Element | null): boolean {
   if (!el || !(el instanceof HTMLElement)) return false;
   if (el.isContentEditable) return true;
@@ -160,7 +173,7 @@ function isTextEntryElement(el: Element | null): boolean {
   return false;
 }
 
-/** User is selecting text to copy - do not reclaim focus or buffer wedge keys. */
+/** User is selecting text to copy - do not reclaim focus (scans still capture). */
 function hasActiveTextSelection(): boolean {
   if (typeof window === "undefined") return false;
   const sel = window.getSelection();
@@ -169,15 +182,24 @@ function hasActiveTextSelection(): boolean {
   return text.trim().length > 0;
 }
 
-function isEditableTarget(target: EventTarget | null): boolean {
+function isManualEntryTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false;
-  return isTextEntryElement(target);
+  if (target instanceof HTMLElement && target.getAttribute(MANUAL_ENTRY_ATTR) === "true") {
+    return true;
+  }
+  return Boolean(target.closest?.(`[${MANUAL_ENTRY_ATTR}="true"]`));
 }
 
 function isCopyOrEditShortcut(event: KeyboardEvent): boolean {
   if (!(event.ctrlKey || event.metaKey || event.altKey)) return false;
   const key = event.key.toLowerCase();
   return ["c", "x", "v", "a", "z", "y", "f"].includes(key);
+}
+
+function clearPageTextSelection() {
+  if (typeof window === "undefined") return;
+  const sel = window.getSelection();
+  if (sel && !sel.isCollapsed) sel.removeAllRanges();
 }
 
 type ProviderProps = {
@@ -211,6 +233,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
   const [log, setLog] = useState<ScanLogRow[]>([]);
   const [draining, setDraining] = useState(false);
   const [captureArmed, setCaptureArmed] = useState(true);
+  const [hearingPreview, setHearingPreview] = useState<string | null>(null);
 
   useEffect(() => {
     const id = readKioskId();
@@ -249,34 +272,44 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
     return Date.now() - lastKeyAtRef.current < SCAN_BURST_GUARD_MS;
   }, []);
 
-  const isCapturePaused = useCallback(() => {
+  /**
+   * Focus reclaim only - never used to drop wedge keys.
+   * Manual fields + text selection keep focus; rapid USB scans still capture.
+   */
+  const isFocusReclaimBlocked = useCallback(() => {
     const active = document.activeElement;
+    if (active && active !== inputRef.current && isManualEntryTarget(active)) return true;
     if (active && active !== inputRef.current && isTextEntryElement(active)) return true;
     if (hasActiveTextSelection()) return true;
     return false;
   }, []);
 
   const refreshArmedState = useCallback(() => {
-    setCaptureArmed(!isCapturePaused());
-  }, [isCapturePaused]);
+    // Armed means USB wedge capture is live (always, except we show amber when
+    // a manual field is focused so staff know slow typing goes to that field).
+    const active = document.activeElement;
+    const manual = Boolean(active && isManualEntryTarget(active));
+    setCaptureArmed(!manual || inScanBurst());
+  }, [inScanBurst]);
 
   const shouldReclaimFocus = useCallback(() => {
     // Never yank focus mid-scan - that splits USB wedge input across two buffers.
     if (inScanBurst()) return false;
-    if (isCapturePaused()) return false;
+    if (isFocusReclaimBlocked()) return false;
     const active = document.activeElement;
     if (active === inputRef.current) return false;
     return true;
-  }, [inScanBurst, isCapturePaused]);
+  }, [inScanBurst, isFocusReclaimBlocked]);
 
   const focusInput = useCallback(() => {
     if (!shouldReclaimFocus()) {
-      setCaptureArmed(false);
+      refreshArmedState();
       return;
     }
+    clearPageTextSelection();
     inputRef.current?.focus({ preventScroll: true });
-    setCaptureArmed(!isCapturePaused());
-  }, [isCapturePaused, shouldReclaimFocus]);
+    setCaptureArmed(true);
+  }, [refreshArmedState, shouldReclaimFocus]);
 
   useEffect(() => {
     focusInput();
@@ -288,9 +321,9 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
   }, [focusInput, refreshArmedState, shouldReclaimFocus]);
 
   useEffect(() => {
-    if (!isCapturePaused()) focusInput();
+    if (!isFocusReclaimBlocked()) focusInput();
     else refreshArmedState();
-  }, [rearmKey, focusInput, isCapturePaused, refreshArmedState]);
+  }, [rearmKey, focusInput, isFocusReclaimBlocked, refreshArmedState]);
 
   useEffect(() => {
     const onFocusIn = () => refreshArmedState();
@@ -394,6 +427,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       }
       if (added.length === 0) return;
 
+      setHearingPreview(null);
       const next = [...queueRef.current, ...added];
       syncQueueState(next);
       playBeep("capture");
@@ -436,6 +470,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
             }
             if (looksLikePartialScanFragment(merged)) {
               pendingPartialRef.current = { code: merged, at: Date.now() };
+              setHearingPreview(merged);
               partialMergeTimerRef.current = window.setTimeout(
                 () => flushPendingPartial(),
                 PARTIAL_MERGE_WINDOW_MS
@@ -451,6 +486,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
 
         if (looksLikePartialScanFragment(code)) {
           pendingPartialRef.current = { code, at: Date.now() };
+          setHearingPreview(code);
           if (partialMergeTimerRef.current) {
             window.clearTimeout(partialMergeTimerRef.current);
           }
@@ -530,9 +566,9 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
   }, [flushWedgeBuffer]);
 
   /**
-   * Warehouse-kiosk style: buffer rapid USB-wedge keystrokes at document level
-   * when the user is not editing a field or selecting text. Avoids forcing the
-   * hidden input to stay focused (which blocks copy/select on Live/History).
+   * Single document-level wedge path. Rapid USB keystrokes are ALWAYS stolen
+   * (even over search/workstation or text selection). Slow typing in marked
+   * manual-entry fields is left alone. Never silently drop a scan burst.
    */
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -540,35 +576,61 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       if (event.isComposing) return;
       if (isCopyOrEditShortcut(event)) return;
 
+      const now = Date.now();
+      const gapMs = lastKeyAtRef.current > 0 ? now - lastKeyAtRef.current : Number.POSITIVE_INFINITY;
+      const alreadyBuffering = wedgeBufferRef.current.length > 0;
       const target = event.target;
-      if (target === inputRef.current) return;
-      if (isEditableTarget(target)) return;
-      if (hasActiveTextSelection()) return;
+      const inManual = target !== inputRef.current && isManualEntryTarget(target);
 
-      if (event.key === "Enter") {
-        if (!wedgeBufferRef.current) {
-          // Enter after a held partial fragment - commit it.
-          if (pendingPartialRef.current) {
-            event.preventDefault();
-            flushPendingPartial();
-          }
-          return;
-        }
+      if (isWedgeTerminatorKey(event.key)) {
+        if (!wedgeBufferRef.current && !pendingPartialRef.current) return;
         event.preventDefault();
+        event.stopPropagation();
         markScanKey();
-        flushWedgeBuffer(true);
+        if (wedgeBufferRef.current) {
+          flushWedgeBuffer(true);
+        } else {
+          flushPendingPartial();
+        }
         return;
       }
 
       if (event.key.length !== 1) return;
       if (event.ctrlKey || event.metaKey || event.altKey) return;
 
+      const steal = shouldStealKeyAsWedge({
+        alreadyBuffering,
+        gapMs,
+        rapidGapMs: WEDGE_RAPID_GAP_MS,
+        inManualEntryField: inManual,
+      });
+      if (!steal) return;
+
+      // Recover the first char if a rapid burst started in a manual field
+      // (that first keystroke was allowed through before we detected the burst).
+      if (!alreadyBuffering && inManual && gapMs < WEDGE_RAPID_GAP_MS) {
+        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+          const value = target.value;
+          if (value.length > 0) {
+            const prefix = value.slice(-1);
+            target.value = value.slice(0, -1);
+            target.dispatchEvent(new Event("input", { bubbles: true }));
+            wedgeBufferRef.current = prefix;
+            wedgeBufferStartedAtRef.current = now - gapMs;
+          }
+        }
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      clearPageTextSelection();
       markScanKey();
       if (!wedgeBufferRef.current) {
-        wedgeBufferStartedAtRef.current = Date.now();
+        wedgeBufferStartedAtRef.current = now;
       }
       wedgeBufferRef.current += event.key;
-      event.preventDefault();
+      setHearingPreview(wedgeBufferRef.current);
+      setCaptureArmed(true);
       scheduleWedgeFlush();
     };
 
@@ -601,6 +663,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       log,
       draining,
       captureArmed,
+      hearingPreview,
       flushInputNow,
       scheduleFlush,
     }),
@@ -619,6 +682,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       log,
       draining,
       captureArmed,
+      hearingPreview,
       flushInputNow,
       scheduleFlush,
     ]
@@ -642,14 +706,21 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
             else refreshArmedState();
           }, 50);
         }}
-        onChange={scheduleFlush}
+        onChange={() => {
+          const value = inputRef.current?.value ?? "";
+          if (value) setHearingPreview(value);
+          scheduleFlush();
+        }}
         onKeyDown={(event) => {
-          if (event.key === "Enter") {
+          // Backup path if a key reaches the hidden input without the document
+          // capture listener (should be rare - document handler owns the wedge).
+          if (isWedgeTerminatorKey(event.key)) {
             event.preventDefault();
             if (flushTimerRef.current) window.clearTimeout(flushTimerRef.current);
             const value = inputRef.current?.value ?? "";
             if (value) flushInputNow();
             else if (pendingPartialRef.current) flushPendingPartial();
+            else if (wedgeBufferRef.current) flushWedgeBuffer(true);
           }
         }}
         // Keep focusable (never display:none). Near-zero opacity so USB HID can target it on any tab.
@@ -670,32 +741,50 @@ function formatLogTime(at: number): string {
 
 /** Compact status chip - visible on every stitch floor tab. */
 export function StitchScannerReadyBadge({ className }: { className?: string }) {
-  const { captureArmed, queue, draining, focusInput } = useStitchScanCapture();
+  const { captureArmed, queue, draining, hearingPreview, focusInput } =
+    useStitchScanCapture();
 
   return (
     <button
       type="button"
-      onClick={() => focusInput()}
+      onClick={() => {
+        clearPageTextSelection();
+        focusInput();
+      }}
       className={cn(
         "inline-flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition-colors",
-        captureArmed
-          ? "bg-emerald-50 text-emerald-900 ring-1 ring-emerald-200 hover:bg-emerald-100"
-          : "bg-amber-50 text-amber-950 ring-1 ring-amber-200 hover:bg-amber-100",
+        hearingPreview
+          ? "bg-indigo-50 text-indigo-950 ring-1 ring-indigo-200 hover:bg-indigo-100"
+          : captureArmed
+            ? "bg-emerald-50 text-emerald-900 ring-1 ring-emerald-200 hover:bg-emerald-100"
+            : "bg-amber-50 text-amber-950 ring-1 ring-amber-200 hover:bg-amber-100",
         className
       )}
       title={
-        captureArmed
-          ? "Scanner capture armed"
-          : "Scanner paused while selecting text or editing a field - tap to re-arm"
+        hearingPreview
+          ? "Hearing USB scan..."
+          : captureArmed
+            ? "USB scanner capture armed - rapid scans always captured"
+            : "Typing in a field - USB scans still capture; tap to focus scanner"
       }
     >
       <span
         className={cn(
           "inline-block h-2 w-2 rounded-full",
-          captureArmed ? "bg-emerald-500" : "bg-amber-500"
+          hearingPreview
+            ? "bg-indigo-500"
+            : captureArmed
+              ? "bg-emerald-500"
+              : "bg-amber-500"
         )}
       />
-      <span>{captureArmed ? "Scanner ready" : "Scanner paused"}</span>
+      <span>
+        {hearingPreview
+          ? "Hearing scan..."
+          : captureArmed
+            ? "Scanner ready"
+            : "Field focused"}
+      </span>
       {queue.length > 0 && (
         <span className="tabular-nums opacity-80">Queue {queue.length}</span>
       )}
@@ -716,7 +805,8 @@ export function StitchScanFeedbackBanner({
   /** Fired after each processed scan so Live can refresh immediately. */
   onScanSettled?: (row: ScanLogRow) => void;
 }) {
-  const { log, queue, draining, message, error, captureArmed } = useStitchScanCapture();
+  const { log, queue, draining, message, error, captureArmed, hearingPreview } =
+    useStitchScanCapture();
   const lastRow = log[0] ?? null;
   const settledKeyRef = useRef<string | null>(null);
 
@@ -728,6 +818,24 @@ export function StitchScanFeedbackBanner({
     onScanSettled(lastRow);
   }, [lastRow, onScanSettled]);
 
+  // Optimistic raw capture - show while keys arrive, before API.
+  if (hearingPreview) {
+    return (
+      <div
+        className={cn(
+          "rounded-xl border-2 border-indigo-400 bg-indigo-50 px-4 py-3 text-indigo-950",
+          className
+        )}
+      >
+        <p className="text-xs font-semibold uppercase tracking-wide opacity-70">Last scan</p>
+        <p className="mt-1 font-mono text-base font-semibold tracking-normal break-all">
+          {hearingPreview}
+        </p>
+        <p className="mt-1 text-sm font-medium">Hearing scan... (not sent yet)</p>
+      </div>
+    );
+  }
+
   if (!lastRow && queue.length === 0 && !message && !error) {
     return (
       <div
@@ -737,8 +845,8 @@ export function StitchScanFeedbackBanner({
         )}
       >
         {captureArmed
-          ? "Scan EMP badge or A4 piece QR - result appears here on every tab."
-          : "Scanner paused (text selected or editing a field). Tap Scanner ready to re-arm."}
+          ? "Scan EMP badge or A4 piece QR - raw code appears here instantly on every tab."
+          : "Typing in a field - USB scans still appear here. Tap Scanner ready to focus capture."}
       </div>
     );
   }
@@ -766,9 +874,13 @@ export function StitchScanFeedbackBanner({
         ) : null}
       </div>
       {lastRow ? (
-        <p className="mt-1 font-mono text-base font-semibold tracking-normal">{lastRow.code}</p>
+        <p className="mt-1 font-mono text-base font-semibold tracking-normal break-all">
+          {lastRow.code}
+        </p>
       ) : queue[0] ? (
-        <p className="mt-1 font-mono text-base font-semibold tracking-normal">{queue[0].code}</p>
+        <p className="mt-1 font-mono text-base font-semibold tracking-normal break-all">
+          {queue[0].code}
+        </p>
       ) : null}
       <p className="mt-1 text-sm font-medium">{headline}</p>
       {(queue.length > 0 || draining) && (

@@ -149,7 +149,7 @@ export function StitchKioskPanel() {
         >
           {captureArmed
             ? "Armed - scan EMP badge or A4 piece QR"
-            : "Tap to arm scanner (paused while selecting text or editing)"}
+            : "Field focused - USB scans still capture; tap to focus scanner"}
         </button>
         <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
           <span>
@@ -160,6 +160,7 @@ export function StitchKioskPanel() {
             <input
               value={workstationId}
               onChange={(event) => setWorkstationId(event.target.value.toUpperCase())}
+              data-stitch-manual-entry="true"
               placeholder="PL-3-5"
               className="w-28 rounded border border-slate-200 px-2 py-1 font-mono"
             />
