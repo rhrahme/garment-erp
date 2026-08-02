@@ -166,6 +166,21 @@ async function writeToSupabase<T>(documentKey: ErpDocumentKey, payload: T): Prom
     }
   }
 
+  if (documentKey === "fabric_orders") {
+    const incoming = payload as { orders?: unknown[] };
+    const incomingCount = Array.isArray(incoming?.orders) ? incoming.orders.length : 0;
+    if (incomingCount === 0) {
+      const remote = await readFromSupabase<{ orders?: unknown[] }>("fabric_orders");
+      const remoteCount = Array.isArray(remote?.orders) ? remote.orders.length : 0;
+      if (remoteCount > 0) {
+        console.error(
+          `[fabric_orders] Refusing Supabase write — would wipe ${remoteCount} purchase orders to [].`
+        );
+        return false;
+      }
+    }
+  }
+
   const updated_at = new Date().toISOString();
   const { error } = await admin.from("erp_documents").upsert(
     { id: documentKey, data: dataToWrite, updated_at },

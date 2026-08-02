@@ -53,10 +53,18 @@ const order = {
 } as Pick<SalesOrder, "id" | "so_number" | "fabric_po_ids" | "fabric_lines">;
 
 describe("summarizeSalesOrderSupplierEmail", () => {
-  it("returns none when no fabric POs", () => {
-    const summary = summarizeSalesOrderSupplierEmail(order, []);
+  it("returns none when there are no fabric lines", () => {
+    const empty = { ...order, fabric_lines: [], fabric_po_ids: [] };
+    const summary = summarizeSalesOrderSupplierEmail(empty, []);
     assert.equal(summary.status, "none");
     assert.equal(supplierEmailStatusShortLabel(summary), "—");
+  });
+
+  it("returns pending when fabric lines exist but linked POs are missing", () => {
+    const summary = summarizeSalesOrderSupplierEmail(order, []);
+    assert.equal(summary.status, "pending");
+    assert.equal(summary.pending, 1);
+    assert.equal(supplierEmailStatusShortLabel(summary), "Email pending");
   });
 
   it("returns pending when PO lines are unsent", () => {

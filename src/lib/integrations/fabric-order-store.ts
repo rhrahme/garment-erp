@@ -37,7 +37,22 @@ async function readStoreFresh(): Promise<FabricOrderStore> {
   return readJsonFileFreshAsync(STORE_PATH, { orders: [] }, { force: true });
 }
 
-function writeStore(store: FabricOrderStore): void {
+function assertFabricOrderWriteSafe(
+  nextOrders: PurchaseOrder[],
+  previousCount: number,
+  context: string
+): void {
+  // Cold serverless instances used to read [] then persist, wiping production POs
+  // and every Email sent/pending badge. Refuse accidental empty overwrites.
+  if (nextOrders.length === 0 && previousCount > 0) {
+    throw new Error(
+      `Refusing to wipe fabric_orders (${previousCount} existing -> 0) during ${context}.`
+    );
+  }
+}
+
+function writeStore(store: FabricOrderStore, previousCount = store.orders.length): void {
+  assertFabricOrderWriteSafe(store.orders, previousCount, "writeStore");
   writeJsonFile(STORE_PATH, store);
 }
 
@@ -45,8 +60,10 @@ export function updateStoredFabricOrders(
   updater: (orders: PurchaseOrder[]) => PurchaseOrder[]
 ): PurchaseOrder[] {
   const store = readStore();
-  store.orders = updater(store.orders);
-  writeStore(store);
+  const previousCount = store.orders.length;
+  store.orders = updater([...store.orders]);
+  assertFabricOrderWriteSafe(store.orders, previousCount, "updateStoredFabricOrders");
+  writeJsonFile(STORE_PATH, store);
   return store.orders;
 }
 
@@ -55,7 +72,9 @@ export async function updateStoredFabricOrdersAsync(
   updater: (orders: PurchaseOrder[]) => PurchaseOrder[]
 ): Promise<PurchaseOrder[]> {
   const store = await readStoreFresh();
-  store.orders = updater(store.orders);
+  const previousCount = store.orders.length;
+  store.orders = updater([...store.orders]);
+  assertFabricOrderWriteSafe(store.orders, previousCount, "updateStoredFabricOrdersAsync");
   await writeJsonFileAsync(STORE_PATH, store);
   return store.orders;
 }
@@ -90,6 +109,7 @@ export function createStoredFabricOrder(input: {
   supplier?: PurchaseOrder["supplier"];
 }): PurchaseOrder {
   const store = readStore();
+  const previousCount = store.orders.length;
   const nextNum = store.orders.length + 1;
   const id = `po-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const po_number = `PO-${new Date().getFullYear()}-${String(nextNum).padStart(4, "0")}`;
@@ -123,7 +143,7 @@ export function createStoredFabricOrder(input: {
   };
 
   store.orders.unshift(order);
-  writeStore(store);
+  writeStore(store, previousCount);
   return order;
 }
 

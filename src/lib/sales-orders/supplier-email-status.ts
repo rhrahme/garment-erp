@@ -28,6 +28,18 @@ export function summarizeSalesOrderSupplierEmail(
 ): SupplierEmailOrderSummary {
   const linkedPos = getFabricPosForSalesOrder(order, fabricPos);
   if (linkedPos.length === 0) {
+    const lineCount = order.fabric_lines?.length ?? 0;
+    // Teams (QC/sales/etc.) need a pending cue when fabrics exist but no email yet —
+    // including when fabric_po_ids are orphaned after a store wipe.
+    if (lineCount > 0) {
+      return {
+        status: "pending",
+        sent: 0,
+        pending: lineCount,
+        unmatched: lineCount,
+        has_fabric_orders: (order.fabric_po_ids?.length ?? 0) > 0,
+      };
+    }
     return {
       status: "none",
       sent: 0,

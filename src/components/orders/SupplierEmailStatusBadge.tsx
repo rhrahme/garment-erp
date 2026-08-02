@@ -19,17 +19,22 @@ export function SupplierEmailStatusBadge({
   className?: string;
 }) {
   if (!summary || summary.status === "none") {
-    return <span className={`text-slate-400 ${className}`.trim()}>—</span>;
+    return <span className={`text-slate-400 ${className}`.trim()}>-</span>;
   }
+
+  const title =
+    summary.status === "partial"
+      ? `${summary.sent} emailed / ${summary.pending} pending`
+      : summary.status === "pending"
+        ? "Supplier email not sent yet — remind admin/purchasing if needed"
+        : summary.status === "sent"
+          ? "All linked supplier fabric emails have been sent"
+          : undefined;
 
   return (
     <span
       className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STYLES[summary.status]} ${className}`.trim()}
-      title={
-        summary.status === "partial"
-          ? `${summary.sent} emailed · ${summary.pending} pending`
-          : undefined
-      }
+      title={title}
     >
       {supplierEmailStatusShortLabel(summary)}
     </span>
