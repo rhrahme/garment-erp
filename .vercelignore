@@ -1,6 +1,8 @@
 # Local-only supplier image caches (production serves from Supabase storage).
 data/suppliers/loro-piana/images/*
 !data/suppliers/loro-piana/images/manifest.json
+data/suppliers/caccioppoli/images/*
+!data/suppliers/caccioppoli/images/manifest.json
 data/suppliers/drapers/images/*
 !data/suppliers/drapers/images/manifest.json
 data/suppliers/drapers/images-higher/*

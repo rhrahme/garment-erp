@@ -70,6 +70,14 @@ describe("RECEIVING_A4_PRINT_CSS - A4 shrink regression guards (Chrome + Safari)
     assert.ok(tableSize != null && tableSize >= 10, `table font-size must be >= 10pt, got ${tableSize}`);
     assert.ok(tdSize != null && tdSize <= 12, `td font-size should stay ~10-12pt, got ${tdSize}`);
     assert.match(RECEIVING_A4_PRINT_CSS, /\.print-receiving-table img\s*\{[^}]*width:\s*1[2-8]mm/s);
+    // Swatch thumbs use opacity-0 until onLoad; print must force them visible.
+    assert.match(RECEIVING_A4_PRINT_CSS, /\.print-receiving-table img\s*\{[^}]*opacity:\s*1\s*!important/s);
+  });
+
+  it("traces Caccioppoli swatch manifest into the image API (production print)", () => {
+    const nextConfig = readFileSync(resolvePath(here, "../../../next.config.ts"), "utf8");
+    assert.match(nextConfig, /\/api\/suppliers\/caccioppoli\/images\/\*\*/);
+    assert.match(nextConfig, /data\/suppliers\/caccioppoli\/images\/manifest\.json/);
   });
 
   it("keeps shell overflow visible so browsers cannot tile columns across pages", () => {

@@ -20,6 +20,8 @@ const nextConfig: NextConfig = {
   eslint: { ignoreDuringBuilds: true },
   serverExternalPackages: ["sharp", "heic-convert", "heic-decode", "libheif-js"],
   // Local supplier image folders can be multi-GB on dev machines; production uses Supabase storage.
+  // Manifests MUST be traced into the image API lambdas — without them lookup returns empty and
+  // SO print swatches (esp. Caccioppoli) never get an <img src>.
   outputFileTracingIncludes: {
     "/orders/[id]": SUPPLIER_CATALOG_JSON,
     "/fabric-orders/[id]": SUPPLIER_CATALOG_JSON,
@@ -27,6 +29,12 @@ const nextConfig: NextConfig = {
     "/api/v1/health/fabric-catalog": SUPPLIER_CATALOG_JSON,
     "/api/suppliers/loro-piana/images/**": [
       "./data/suppliers/loro-piana/images/manifest.json",
+    ],
+    "/api/suppliers/caccioppoli/images/**": [
+      "./data/suppliers/caccioppoli/images/manifest.json",
+    ],
+    "/api/suppliers/drapers/images/**": [
+      "./data/suppliers/drapers/images/manifest.json",
     ],
     "/api/reference-documents/[id]": [
       "./documents-and-data/riyadh-bank-details.pdf",
@@ -40,11 +48,27 @@ const nextConfig: NextConfig = {
       "./data/suppliers/loro-piana/images/*.png",
       "./data/suppliers/loro-piana/images/*.webp",
     ],
+    "/api/suppliers/caccioppoli/images/**": [
+      "./data/suppliers/caccioppoli/images/*.jpg",
+      "./data/suppliers/caccioppoli/images/*.jpeg",
+      "./data/suppliers/caccioppoli/images/*.png",
+      "./data/suppliers/caccioppoli/images/*.webp",
+    ],
+    "/api/suppliers/drapers/images/**": [
+      "./data/suppliers/drapers/images/*.jpg",
+      "./data/suppliers/drapers/images/*.jpeg",
+      "./data/suppliers/drapers/images/*.png",
+      "./data/suppliers/drapers/images/*.webp",
+    ],
     "*": [
       "./data/suppliers/loro-piana/images/*.jpg",
       "./data/suppliers/loro-piana/images/*.jpeg",
       "./data/suppliers/loro-piana/images/*.png",
       "./data/suppliers/loro-piana/images/*.webp",
+      "./data/suppliers/caccioppoli/images/*.jpg",
+      "./data/suppliers/caccioppoli/images/*.jpeg",
+      "./data/suppliers/caccioppoli/images/*.png",
+      "./data/suppliers/caccioppoli/images/*.webp",
       "./data/suppliers/drapers/images/*.jpg",
       "./data/suppliers/drapers/images/*.jpeg",
       "./data/suppliers/drapers/images/*.png",

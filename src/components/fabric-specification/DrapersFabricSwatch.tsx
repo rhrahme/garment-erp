@@ -81,7 +81,11 @@ export function DrapersFabricSwatch({
       width={28}
       height={28}
       loading={loading}
-      className={cn("h-7 w-7 rounded object-cover", !loaded && "opacity-0")}
+      // Keep eager/print thumbs visible even before onLoad (opacity-0 blanked SO prints).
+      className={cn(
+        "h-7 w-7 rounded object-cover print:opacity-100",
+        loading !== "eager" && !loaded && "opacity-0"
+      )}
       onLoad={() => setLoaded(true)}
       onError={() => setFailed(true)}
     />

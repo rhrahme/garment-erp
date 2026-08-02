@@ -174,6 +174,7 @@ export const RECEIVING_A4_PRINT_CSS = `
       max-height: 14mm !important;
       width: 14mm !important;
       height: 14mm !important;
+      opacity: 1 !important;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }

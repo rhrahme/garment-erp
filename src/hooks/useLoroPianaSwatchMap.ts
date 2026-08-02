@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { provisionalLoroPianaSwatchUrls } from "@/lib/fabric-sourcing/fabric-swatch-keys";
 import { loroPianaSwatchImageUrl } from "@/lib/fabric-sourcing/loro-piana-swatch-url";
+import { normalizeLoroPianaFabricNumber } from "@/lib/fabric-sourcing/loro-piana-styles";
 
 const CHUNK_SIZE = 30;
 
@@ -19,20 +21,34 @@ type MediasItem = {
   url?: string;
 };
 
+function seedProvisionalMap(fabricNumbers: string[]): Map<string, LoroPianaSwatchUrls> {
+  const seeded = new Map<string, LoroPianaSwatchUrls>();
+  for (const fabricNumber of fabricNumbers) {
+    const trimmed = fabricNumber.trim();
+    if (!trimmed) continue;
+    const normalized = normalizeLoroPianaFabricNumber(trimmed);
+    const urls = provisionalLoroPianaSwatchUrls(normalized);
+    seeded.set(trimmed, urls);
+    seeded.set(normalized, urls);
+    seeded.set(fabricNumber, urls);
+  }
+  return seeded;
+}
+
 export function useLoroPianaSwatchMap(fabricNumbers: string[]): Map<string, LoroPianaSwatchUrls> {
-  const [map, setMap] = useState<Map<string, LoroPianaSwatchUrls>>(() => new Map());
   const requestKey = fabricNumbers.join("\u0001");
+  const provisional = useMemo(() => seedProvisionalMap(fabricNumbers), [requestKey]);
+  const [map, setMap] = useState<Map<string, LoroPianaSwatchUrls>>(provisional);
 
   useEffect(() => {
-    if (fabricNumbers.length === 0) {
-      setMap(new Map());
-      return;
-    }
+    setMap(provisional);
+
+    if (fabricNumbers.length === 0) return;
 
     let cancelled = false;
 
     void (async () => {
-      const next = new Map<string, LoroPianaSwatchUrls>();
+      const next = new Map(provisional);
 
       for (let i = 0; i < fabricNumbers.length; i += CHUNK_SIZE) {
         const chunk = fabricNumbers.slice(i, i + CHUNK_SIZE);
@@ -65,7 +81,7 @@ export function useLoroPianaSwatchMap(fabricNumbers: string[]): Map<string, Loro
     return () => {
       cancelled = true;
     };
-  }, [requestKey]);
+  }, [requestKey, provisional]);
 
   return map;
 }

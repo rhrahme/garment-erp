@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { caccioppoliSwatchImageUrl } from "@/lib/fabric-sourcing/caccioppoli-swatch-url";
+import { provisionalCaccioppoliSwatchUrls } from "@/lib/fabric-sourcing/fabric-swatch-keys";
 
 const CHUNK_SIZE = 30;
 
@@ -19,21 +20,33 @@ type SwatchItem = {
   url?: string;
 };
 
+function seedProvisionalMap(fabricNumbers: string[]): Map<string, CaccioppoliSwatchUrls> {
+  const seeded = new Map<string, CaccioppoliSwatchUrls>();
+  for (const fabricNumber of fabricNumbers) {
+    const trimmed = fabricNumber.trim();
+    if (!trimmed) continue;
+    const urls = provisionalCaccioppoliSwatchUrls(trimmed);
+    seeded.set(trimmed, urls);
+    seeded.set(fabricNumber, urls);
+  }
+  return seeded;
+}
+
 /** Cached local/Supabase swatches — no live getItemImages on the hot path. */
 export function useCaccioppoliSwatchMap(fabricNumbers: string[]): Map<string, CaccioppoliSwatchUrls> {
-  const [map, setMap] = useState<Map<string, CaccioppoliSwatchUrls>>(() => new Map());
   const requestKey = fabricNumbers.join("\u0001");
+  const provisional = useMemo(() => seedProvisionalMap(fabricNumbers), [requestKey]);
+  const [map, setMap] = useState<Map<string, CaccioppoliSwatchUrls>>(provisional);
 
   useEffect(() => {
-    if (fabricNumbers.length === 0) {
-      setMap(new Map());
-      return;
-    }
+    setMap(provisional);
+
+    if (fabricNumbers.length === 0) return;
 
     let cancelled = false;
 
     void (async () => {
-      const next = new Map<string, CaccioppoliSwatchUrls>();
+      const next = new Map(provisional);
 
       for (let i = 0; i < fabricNumbers.length; i += CHUNK_SIZE) {
         const chunk = fabricNumbers.slice(i, i + CHUNK_SIZE);
@@ -66,7 +79,7 @@ export function useCaccioppoliSwatchMap(fabricNumbers: string[]): Map<string, Ca
     return () => {
       cancelled = true;
     };
-  }, [requestKey]);
+  }, [requestKey, provisional]);
 
   return map;
 }

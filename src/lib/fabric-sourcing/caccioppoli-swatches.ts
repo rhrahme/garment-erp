@@ -114,6 +114,18 @@ export function lookupCaccioppoliSwatch(fabricNumber: string): {
     };
   }
 
+  // Production serves bytes from Supabase. If the manifest is missing from the
+  // lambda bundle (or the code is not listed yet), still expose the proxy URL so
+  // the image route can try `{code}.jpg` in storage.
+  if (isSupabaseCaccioppoliSwatchStorage() && normalized) {
+    return {
+      ok: true,
+      fabric_number: normalized,
+      requested_code: requested,
+      url: buildCaccioppoliSwatchImageUrl(normalized),
+    };
+  }
+
   return { ok: false, fabric_number: normalized, requested_code: requested };
 }
 

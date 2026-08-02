@@ -1,3 +1,5 @@
+import { caccioppoliSwatchImageUrl } from "@/lib/fabric-sourcing/caccioppoli-swatch-url";
+import { loroPianaSwatchImageUrl } from "@/lib/fabric-sourcing/loro-piana-swatch-url";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import {
   isLoroPianaStyleSupplier,
@@ -27,6 +29,18 @@ export function isCaccioppoliSwatchSupplier(supplierId: string): boolean {
 
 export function isLoroPianaSwatchSupplier(supplierId: string): boolean {
   return isLoroPianaStyleSupplier(supplierId);
+}
+
+/** Deterministic proxy URL — safe to set before the batch lookup returns. */
+export function provisionalCaccioppoliSwatchUrls(fabricNumber: string): FabricSwatchUrls {
+  const url = caccioppoliSwatchImageUrl(fabricNumber);
+  return { square: url, zoom: url };
+}
+
+/** Deterministic proxy URL — safe to set before the batch lookup returns. */
+export function provisionalLoroPianaSwatchUrls(fabricNumber: string): FabricSwatchUrls {
+  const url = loroPianaSwatchImageUrl(fabricNumber);
+  return { square: url, zoom: url };
 }
 
 export function collectFabricSwatchKeys(fabrics: FabricSwatchKey[]): {
@@ -76,12 +90,18 @@ export function resolveFabricSwatchUrls(
   }
 
   if (isCaccioppoliSwatchSupplier(supplierId)) {
-    return caccioppoliMap.get(trimmed);
+    // Always return the proxy URL immediately so print/preview can start loading
+    // without waiting for the batch lookup (and even if the manifest is empty).
+    return caccioppoliMap.get(trimmed) ?? provisionalCaccioppoliSwatchUrls(trimmed);
   }
 
   if (isLoroPianaSwatchSupplier(supplierId)) {
     const normalized = normalizeLoroPianaFabricNumber(trimmed);
-    return loroPianaMap.get(normalized) ?? loroPianaMap.get(trimmed);
+    return (
+      loroPianaMap.get(normalized) ??
+      loroPianaMap.get(trimmed) ??
+      provisionalLoroPianaSwatchUrls(normalized)
+    );
   }
 
   return undefined;
