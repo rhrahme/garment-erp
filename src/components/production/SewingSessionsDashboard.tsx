@@ -126,7 +126,7 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-slate-500">No open sewing sessions.</p>
+          <p className="text-sm text-slate-500">No open sessions.</p>
         )}
 
         {data && data.completed_by_employee.length > 0 && (

@@ -2,7 +2,11 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useStitchScanCapture } from "@/components/production/stitch-scan-capture";
-import type { SewingKioskUiPhase } from "@/lib/types/sewing-sessions";
+import {
+  floorActivityInProgressLabel,
+  sewingSessionEmployeeDisplayName,
+} from "@/lib/production/sewing-session-status-label";
+import type { SewingKioskUiPhase, SewingSession } from "@/lib/types/sewing-sessions";
 import { cn } from "@/lib/utils";
 
 function formatElapsed(startedAt: string | null, now: number): string {
@@ -21,7 +25,10 @@ function formatLogTime(at: number): string {
   return `${hh}:${mm}:${ss}`;
 }
 
-function phaseCopy(phase: SewingKioskUiPhase): { title: string; hint: string; tone: string } {
+function phaseCopy(
+  phase: SewingKioskUiPhase,
+  focusSession: SewingSession | null
+): { title: string; hint: string; tone: string } {
   switch (phase) {
     case "identity_armed":
       return {
@@ -37,7 +44,7 @@ function phaseCopy(phase: SewingKioskUiPhase): { title: string; hint: string; to
       };
     case "piece_open":
       return {
-        title: "Sewing in progress",
+        title: floorActivityInProgressLabel(focusSession?.job_functions),
         hint: "When finished: scan the same A4 QR, then your badge",
         tone: "bg-emerald-50 border-emerald-300 text-emerald-950",
       };
@@ -80,12 +87,12 @@ export function StitchKioskPanel() {
     return () => window.clearInterval(id);
   }, []);
 
-  const copy = phaseCopy(phase);
   const highlight =
     last?.session && (last.session.status === "open" || last.session.status === "closing")
       ? last.session
       : openSessions[0] ?? null;
 
+  const copy = phaseCopy(phase, highlight);
   const elapsed = useMemo(
     () => formatElapsed(highlight?.started_at ?? null, now),
     [highlight?.started_at, now]
@@ -116,7 +123,9 @@ export function StitchKioskPanel() {
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl bg-white/70 px-4 py-3">
               <p className="text-xs uppercase text-slate-500">Last / focus</p>
-              <p className="text-lg font-semibold text-slate-900">{highlight.employee_name}</p>
+              <p className="text-lg font-semibold text-slate-900">
+                {sewingSessionEmployeeDisplayName(highlight)}
+              </p>
             </div>
             <div className="rounded-xl bg-white/70 px-4 py-3">
               <p className="text-xs uppercase text-slate-500">Piece</p>
@@ -188,7 +197,9 @@ export function StitchKioskPanel() {
           <ul className="mt-2 divide-y divide-slate-100 text-sm">
             {openSessions.map((session) => (
               <li key={session.id} className="flex flex-wrap justify-between gap-2 py-2">
-                <span className="font-medium text-slate-800">{session.employee_name}</span>
+                <span className="font-medium text-slate-800">
+                  {sewingSessionEmployeeDisplayName(session)}
+                </span>
                 <span className="font-mono text-slate-600">
                   {session.production_code}
                   {session.status === "closing" ? " (closing)" : ""}

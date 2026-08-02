@@ -17,6 +17,10 @@ import { formatLabelGarmentDescription } from "@/lib/sales-orders/label-codes";
 import { productionBrandNameForOrder } from "@/lib/sales-orders/production-brand";
 import type { ProductionWorkOrder } from "@/lib/types/production";
 import type { SalesOrder } from "@/lib/types/sales-orders";
+import {
+  floorActivityNowLabel,
+  sewingSessionEmployeeDisplayName,
+} from "@/lib/production/sewing-session-status-label";
 import type { SewingSession } from "@/lib/types/sewing-sessions";
 import {
   applyTableSort,
@@ -66,9 +70,11 @@ function stitchBucket(
   return "not_ready";
 }
 
-function stitchCaption(bucket: StitchBucket): string | null {
+function stitchCaption(bucket: StitchBucket, live: SewingSession | null): string | null {
   if (bucket === "ready") return "Ready";
-  if (bucket === "in_process") return "Sewing now";
+  if (bucket === "in_process") {
+    return live ? floorActivityNowLabel(live.job_functions) : "On floor now";
+  }
   if (bucket === "done") return "Left";
   return null;
 }
@@ -122,7 +128,10 @@ function comparePieceRows(
 ): number {
   switch (key) {
     case "employee":
-      return compareSortStrings(a.live?.employee_name ?? "", b.live?.employee_name ?? "");
+      return compareSortStrings(
+        a.live ? sewingSessionEmployeeDisplayName(a.live) : "",
+        b.live ? sewingSessionEmployeeDisplayName(b.live) : ""
+      );
     case "article":
       return compareSortStrings(
         formatLabelGarmentDescription(a.wo.garment_type, a.wo.piece_name),
@@ -141,7 +150,10 @@ function comparePieceRows(
         scanStageStyles(highlightForPiece(b.wo, b.live)).label
       );
     case "stitch":
-      return compareSortStrings(stitchCaption(a.bucket) ?? "", stitchCaption(b.bucket) ?? "");
+      return compareSortStrings(
+        stitchCaption(a.bucket, a.live) ?? "",
+        stitchCaption(b.bucket, b.live) ?? ""
+      );
     default:
       return 0;
   }
@@ -233,7 +245,7 @@ export function StitchOrderBoard({
             Ready
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-900">
-            Sewing now
+            On floor now
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-cyan-100 px-2.5 py-1 text-xs font-medium text-cyan-900">
             Left
@@ -342,7 +354,7 @@ export function StitchOrderBoard({
               {filtered.map(({ wo, live, bucket }) => {
                 const stage = highlightForPiece(wo, live);
                 const styles = scanStageStyles(stage);
-                const caption = stitchCaption(bucket);
+                const caption = stitchCaption(bucket, live);
                 const articleLabel = formatLabelGarmentDescription(wo.garment_type, wo.piece_name);
                 const articleColor = garmentTypeColorClasses(
                   wo.piece_name?.trim() || wo.garment_type || articleLabel
@@ -352,7 +364,9 @@ export function StitchOrderBoard({
                     <td className="px-3 py-3">
                       {live ? (
                         <div>
-                          <div className="font-medium text-emerald-800">{live.employee_name}</div>
+                          <div className="font-medium text-emerald-800">
+                            {sewingSessionEmployeeDisplayName(live)}
+                          </div>
                           {live.status === "closing" ? (
                             <div className="text-xs text-slate-500">closing</div>
                           ) : null}

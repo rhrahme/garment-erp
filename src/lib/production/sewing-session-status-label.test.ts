@@ -4,7 +4,10 @@ import {
   applyShortNamesToEmployeeAggregates,
   attachSewingSessionClientShortNames,
   attachSewingSessionJobFunctions,
+  floorActivityInProgressLabel,
   floorActivityLabelFromJobFunctions,
+  floorActivityNowLabel,
+  floorActivitySessionStartedMessage,
   normalizeScanQrDisplay,
   sewingSessionClientDisplayName,
   sewingSessionEmployeeDisplayName,
@@ -63,6 +66,40 @@ describe("sewingSessionStatusLabel", () => {
     assert.equal(sewingSessionStatusLabel("abandoned", ["cutter"]), "Abandoned");
     assert.equal(sewingSessionStatusLabel("open", ["cutter"]), "Cutting");
     assert.equal(sewingSessionStatusLabel("open", ["shirt_tailor"]), "Sewing");
+  });
+});
+
+describe("floorActivityInProgressLabel / Now / session started message", () => {
+  it("builds Scan kiosk and Orders captions from badge jobs", () => {
+    assert.equal(floorActivityInProgressLabel(["cutter"]), "Cutting in progress");
+    assert.equal(floorActivityInProgressLabel(["overshirt_tailor"]), "Sewing in progress");
+    assert.equal(
+      floorActivityInProgressLabel([
+        "trouser_tailor",
+        "cutter",
+        "wash_iron",
+        "buttons",
+      ]),
+      "Sewing in progress"
+    );
+    assert.equal(floorActivityNowLabel(["cutter"]), "Cutting now");
+    assert.equal(floorActivityNowLabel(["wash_iron"]), "Wash / iron now");
+  });
+
+  it("builds last-scan start lines from badge jobs (Ashraf cutter / Abdullah tailor)", () => {
+    assert.equal(
+      floorActivitySessionStartedMessage("Ashraf", ["cutter"], "FR-0129-L06-TR-2/2"),
+      "Ashraf cutting FR-0129-L06-TR-2/2."
+    );
+    assert.equal(
+      floorActivitySessionStartedMessage(
+        "Abdullah",
+        ["trouser_tailor", "cutter", "wash_iron", "buttons"],
+        "FR-0129-L10-OS-1/2",
+        "OS-1/2"
+      ),
+      "Abdullah sewing FR-0129-L10-OS-1/2 (OS-1/2)."
+    );
   });
 });
 

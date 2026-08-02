@@ -45,6 +45,8 @@ import {
   applyShortNamesToEmployeeAggregates,
   attachSewingSessionClientShortNames,
   attachSewingSessionJobFunctions,
+  floorActivitySessionStartedMessage,
+  sewingSessionEmployeeDisplayName,
 } from "@/lib/production/sewing-session-status-label";
 import { resolveScanToLine } from "@/lib/production/stage-scan";
 import {
@@ -87,12 +89,30 @@ export {
   applyShortNamesToEmployeeAggregates,
   attachSewingSessionClientShortNames,
   attachSewingSessionJobFunctions,
+  floorActivityInProgressLabel,
   floorActivityLabelFromJobFunctions,
+  floorActivityNowLabel,
+  floorActivitySessionStartedMessage,
   sewingSessionClientDisplayName,
   sewingSessionEmployeeDisplayName,
   sewingSessionScanQrLabel,
   sewingSessionStatusLabel,
 } from "@/lib/production/sewing-session-status-label";
+
+function payrollLookupForSessionUi(employeeId: string) {
+  const employee = findPayrollEmployeeById(employeeId);
+  if (!employee) return null;
+  return {
+    job_functions: employee.job_functions,
+    short_name: employee.short_name,
+  };
+}
+
+/** Join payroll job_functions + short_name (+ client short names) for floor / kiosk UI. */
+function enrichSessionsForFloorUi(sessions: SewingSession[]): SewingSession[] {
+  const withJobs = attachSewingSessionJobFunctions(sessions, payrollLookupForSessionUi);
+  return attachSewingSessionClientShortNames(withJobs, readClients().clients);
+}
 
 /**
  * Dashboard payload with null garment_type backfilled from live SO sticker lookup.
@@ -109,26 +129,20 @@ export function sewingSessionsDashboard(
     sessions: enrichSewingSessionsGarmentFields(store.sessions ?? []),
   };
   const dash = sewingSessionsDashboardBase(enrichedStore, at, options);
-  const lookup = (employeeId: string) => {
-    const employee = findPayrollEmployeeById(employeeId);
-    if (!employee) return null;
-    return {
-      job_functions: employee.job_functions,
-      short_name: employee.short_name,
-    };
-  };
-  const clients = readClients().clients;
-  const withJobsOpen = attachSewingSessionJobFunctions(dash.open_sessions, lookup);
-  const withJobsSessions = attachSewingSessionJobFunctions(dash.sessions, lookup);
+  const withJobsOpen = enrichSessionsForFloorUi(dash.open_sessions);
+  const withJobsSessions = enrichSessionsForFloorUi(dash.sessions);
   return {
     ...dash,
-    open_sessions: attachSewingSessionClientShortNames(withJobsOpen, clients),
-    sessions: attachSewingSessionClientShortNames(withJobsSessions, clients),
+    open_sessions: withJobsOpen,
+    sessions: withJobsSessions,
     completed_by_employee: applyShortNamesToEmployeeAggregates(
       dash.completed_by_employee,
-      lookup
+      payrollLookupForSessionUi
     ),
-    today_by_employee: applyShortNamesToEmployeeAggregates(dash.today_by_employee, lookup),
+    today_by_employee: applyShortNamesToEmployeeAggregates(
+      dash.today_by_employee,
+      payrollLookupForSessionUi
+    ),
   };
 }
 
@@ -154,7 +168,9 @@ function result(
   },
   extras?: Partial<SewingKioskScanResult>
 ): SewingKioskScanResult {
-  const open = enrichSewingSessionsGarmentFields(openOnKiosk(store, kioskId));
+  const open = enrichSessionsForFloorUi(
+    enrichSewingSessionsGarmentFields(openOnKiosk(store, kioskId))
+  );
   const arm =
     focus.arm !== undefined
       ? focus.arm
@@ -168,19 +184,22 @@ function result(
           b.armed_at.localeCompare(a.armed_at)
         )[0] ?? null;
   const focusSession = focus.session
-    ? enrichSewingSessionsGarmentFields([focus.session])[0]!
+    ? enrichSessionsForFloorUi(enrichSewingSessionsGarmentFields([focus.session]))[0]!
     : null;
   const session = focusSession ?? open[0] ?? null;
+  // Prefer enriched session from open_sessions / focus (extras.session may be bare).
+  const { session: _ignoreExtraSession, open_sessions: _ignoreExtraOpen, ...restExtras } =
+    extras ?? {};
   return {
     ok,
     message,
     phase: sessionPhase(session, arm, pieceArm),
-    beep: ok ? (extras?.beep ?? "ok") : "error",
+    beep: ok ? (restExtras.beep ?? "ok") : "error",
     arm,
     piece_arm: pieceArm,
     session,
     open_sessions: open,
-    ...extras,
+    ...restExtras,
   };
 }
 
@@ -622,7 +641,7 @@ export async function processSewingKioskScan(
       !employeeCanSewOnStitchKiosk(employee)
     ) {
       return failResult(
-        "Not on the Expats ID list - only expat badge holders can start sewing on this kiosk.",
+        "Not on the Expats ID list - only expat badge holders can use this kiosk.",
         "not_expat_badge",
         "badge",
         store,
@@ -690,17 +709,20 @@ export async function processSewingKioskScan(
         input.source ?? "erp"
       );
 
+      const started = enrichSessionsForFloorUi([session])[0]!;
       return result(
         true,
-        `${session.employee_name} sewing ${session.production_code}${
-          session.piece_mark ? ` (${session.piece_mark})` : ""
-        }.`,
+        floorActivitySessionStartedMessage(
+          sewingSessionEmployeeDisplayName(started),
+          started.job_functions,
+          started.production_code,
+          started.piece_mark
+        ),
         store,
         kioskId,
-        { session },
+        { session: started },
         {
           beep: "ok",
-          session,
           recovered: true,
           recovery: "piece_first_start",
         }
@@ -874,7 +896,7 @@ export async function processSewingKioskScan(
     const armedEmployee = findPayrollEmployeeById(arm.employee_id);
     if (armedEmployee && !employeeCanSewOnStitchKiosk(armedEmployee)) {
       return failResult(
-        "Not on the Expats ID list - only expat badge holders can start sewing on this kiosk.",
+        "Not on the Expats ID list - only expat badge holders can use this kiosk.",
         "not_expat_badge",
         "piece",
         store,
@@ -911,15 +933,19 @@ export async function processSewingKioskScan(
       input.source ?? "erp"
     );
 
+    const started = enrichSessionsForFloorUi([session])[0]!;
     return result(
       true,
-      `${session.employee_name} sewing ${session.production_code}${
-        session.piece_mark ? ` (${session.piece_mark})` : ""
-      }.`,
+      floorActivitySessionStartedMessage(
+        sewingSessionEmployeeDisplayName(started),
+        started.job_functions,
+        started.production_code,
+        started.piece_mark
+      ),
       store,
       kioskId,
-      { session },
-      { beep: "ok", session }
+      { session: started },
+      { beep: "ok" }
     );
   }
 

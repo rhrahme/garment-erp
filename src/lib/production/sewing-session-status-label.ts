@@ -26,9 +26,9 @@ export function normalizeScanQrDisplay(value: string): string {
 }
 
 /**
- * Floor activity verb for an open stitch-kiosk session, derived from HR job roles.
- * Tailors stay "Sewing"; cutters / wash / buttons / etc. get matching labels so Live
- * does not claim a cutter is sewing.
+ * Single source of truth for Stitch activity language: the employee's badge
+ * job_functions (expat ID badge roles). Tailor roles -> Sewing; cutter-only ->
+ * Cutting; wash/iron, buttons, etc. match their badge job.
  */
 export function floorActivityLabelFromJobFunctions(values: unknown): string {
   const jobs = normalizeJobFunctions(values);
@@ -51,6 +51,31 @@ export function sewingSessionStatusLabel(
   if (status === "closed") return "Closed";
   if (status === "abandoned") return "Abandoned";
   return floorActivityLabelFromJobFunctions(jobFunctions);
+}
+
+/** Scan kiosk primary heading while a piece session is open. */
+export function floorActivityInProgressLabel(values: unknown): string {
+  return `${floorActivityLabelFromJobFunctions(values)} in progress`;
+}
+
+/** Orders board caption for a live open session (Cutting now / Sewing now / ...). */
+export function floorActivityNowLabel(values: unknown): string {
+  return `${floorActivityLabelFromJobFunctions(values)} now`;
+}
+
+/**
+ * Last-scan / log line when a session starts, e.g. "Abdullah sewing FR-0129-L10-OS-1/2."
+ * Same badge-job helper as Live / Scan ("Cutting" / "Sewing" / ...).
+ */
+export function floorActivitySessionStartedMessage(
+  employeeName: string,
+  jobFunctions: unknown,
+  productionCode: string,
+  pieceMark?: string | null
+): string {
+  const activity = floorActivityLabelFromJobFunctions(jobFunctions).toLowerCase();
+  const mark = pieceMark?.trim() ? ` (${pieceMark.trim()})` : "";
+  return `${employeeName} ${activity} ${productionCode}${mark}.`;
 }
 
 /** Badge short name when set; otherwise the stored session employee_name. */

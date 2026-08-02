@@ -244,6 +244,52 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
     setQueue(restored);
   }, []);
 
+  // Hydrate open sessions (with badge job_functions) so Scan shows
+  // "Cutting in progress" etc. after hard-refresh without waiting for a new scan.
+  useEffect(() => {
+    let cancelled = false;
+    const hydrate = async () => {
+      try {
+        const res = await fetch("/api/production/sewing-session?period=day");
+        if (!res.ok) return;
+        const json = (await res.json()) as {
+          open_sessions?: SewingSession[];
+        };
+        if (cancelled) return;
+        const mine = (json.open_sessions ?? []).filter(
+          (row) =>
+            row.kiosk_id === kioskId &&
+            (row.status === "open" || row.status === "closing")
+        );
+        setOpenSessions((prev) => (prev.length > 0 ? prev : mine));
+        setPhase((prev) => {
+          if (prev !== "idle" || mine.length === 0) return prev;
+          return mine[0]!.status === "closing" ? "piece_closing" : "piece_open";
+        });
+        setLast((prev) => {
+          if (prev?.session || mine.length === 0) return prev;
+          const focus = mine[0]!;
+          return {
+            ok: true,
+            message: "",
+            phase: focus.status === "closing" ? "piece_closing" : "piece_open",
+            beep: "ok",
+            arm: null,
+            piece_arm: null,
+            session: focus,
+            open_sessions: mine,
+          };
+        });
+      } catch {
+        // Keep idle UI; next scan will refresh.
+      }
+    };
+    void hydrate();
+    return () => {
+      cancelled = true;
+    };
+  }, [kioskId]);
+
   useEffect(() => {
     kioskIdRef.current = kioskId;
   }, [kioskId]);
