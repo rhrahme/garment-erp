@@ -13,6 +13,14 @@ function formatElapsed(startedAt: string | null, now: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+function formatLogTime(at: number): string {
+  const d = new Date(at);
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  const ss = String(d.getSeconds()).padStart(2, "0");
+  return `${hh}:${mm}:${ss}`;
+}
+
 function phaseCopy(phase: SewingKioskUiPhase): { title: string; hint: string; tone: string } {
   switch (phase) {
     case "identity_armed":
@@ -216,6 +224,7 @@ export function StitchKioskPanel() {
                   row.ok ? "bg-emerald-50 text-emerald-900" : "bg-red-50 text-red-800"
                 )}
               >
+                <span className="tabular-nums text-slate-500">{formatLogTime(row.at)}</span>{" "}
                 <span className="font-semibold">{row.code}</span> - {row.message}
               </li>
             ))}
