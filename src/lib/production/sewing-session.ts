@@ -40,6 +40,10 @@ import {
   sewingSessionsDashboard as sewingSessionsDashboardBase,
 } from "@/lib/production/sewing-session-state";
 import type { SewingSessionsDashboardOptions } from "@/lib/production/sewing-session-state";
+import {
+  applyShortNamesToEmployeeAggregates,
+  attachSewingSessionJobFunctions,
+} from "@/lib/production/sewing-session-status-label";
 import { resolveScanToLine } from "@/lib/production/stage-scan";
 import {
   pieceProductionCodeFromSticker,
@@ -77,10 +81,19 @@ export {
   enrichSewingSessionGarmentFields,
   enrichSewingSessionsGarmentFields,
 } from "@/lib/production/sewing-session-garment";
+export {
+  applyShortNamesToEmployeeAggregates,
+  attachSewingSessionJobFunctions,
+  floorActivityLabelFromJobFunctions,
+  sewingSessionEmployeeDisplayName,
+  sewingSessionScanQrLabel,
+  sewingSessionStatusLabel,
+} from "@/lib/production/sewing-session-status-label";
 
 /**
  * Dashboard payload with null garment_type backfilled from live SO sticker lookup.
  * Enrich before aggregation so Performance employee rows include article labels.
+ * Also joins payroll job_functions + short_name for Live status / display names.
  */
 export function sewingSessionsDashboard(
   store: SewingSessionsFile,
@@ -91,7 +104,25 @@ export function sewingSessionsDashboard(
     ...store,
     sessions: enrichSewingSessionsGarmentFields(store.sessions ?? []),
   };
-  return sewingSessionsDashboardBase(enrichedStore, at, options);
+  const dash = sewingSessionsDashboardBase(enrichedStore, at, options);
+  const lookup = (employeeId: string) => {
+    const employee = findPayrollEmployeeById(employeeId);
+    if (!employee) return null;
+    return {
+      job_functions: employee.job_functions,
+      short_name: employee.short_name,
+    };
+  };
+  return {
+    ...dash,
+    open_sessions: attachSewingSessionJobFunctions(dash.open_sessions, lookup),
+    sessions: attachSewingSessionJobFunctions(dash.sessions, lookup),
+    completed_by_employee: applyShortNamesToEmployeeAggregates(
+      dash.completed_by_employee,
+      lookup
+    ),
+    today_by_employee: applyShortNamesToEmployeeAggregates(dash.today_by_employee, lookup),
+  };
 }
 
 function nowIso(at = Date.now()): string {

@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
+import {
+  sewingSessionEmployeeDisplayName,
+  sewingSessionScanQrLabel,
+  sewingSessionStatusLabel,
+} from "@/lib/production/sewing-session-status-label";
 import type { SewingSession } from "@/lib/types/sewing-sessions";
 import { cn } from "@/lib/utils";
 
@@ -50,9 +55,9 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
       <div className="border-b border-slate-100 px-5 py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Sewing floor now</h2>
+            <h2 className="text-lg font-semibold text-slate-900">Floor now</h2>
             <p className="mt-1 text-sm text-slate-500">
-              Live stitcher sessions from laptop kiosks (badge + A4 QR).
+              Live floor sessions from laptop kiosks (badge + A4 QR). Status follows job role.
             </p>
           </div>
           <a
@@ -91,9 +96,14 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
             {data.open_sessions.map((session) => (
               <li key={session.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
                 <div>
-                  <p className="font-medium text-slate-900">{session.employee_name}</p>
+                  <p className="font-medium text-slate-900">
+                    {sewingSessionEmployeeDisplayName(session)}
+                  </p>
                   <p className="text-slate-700">
                     {sewingSessionArticleLabel(session) || "-"}
+                  </p>
+                  <p className="font-mono text-xs text-slate-800 break-all">
+                    {sewingSessionScanQrLabel(session)}
                   </p>
                   <p className="text-slate-500">
                     {session.production_code}
@@ -109,7 +119,7 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
                       : "bg-emerald-100 text-emerald-800"
                   )}
                 >
-                  {session.status === "closing" ? "Closing" : "Sewing"}
+                  {sewingSessionStatusLabel(session.status, session.job_functions)}
                 </span>
               </li>
             ))}

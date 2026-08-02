@@ -18,6 +18,11 @@ import {
   type SewingDashboardPeriod,
   type SewingEmployeeAggregate,
 } from "@/lib/production/sewing-session-state";
+import {
+  sewingSessionEmployeeDisplayName,
+  sewingSessionScanQrLabel,
+  sewingSessionStatusLabel,
+} from "@/lib/production/sewing-session-status-label";
 import type { SewingScanFailure } from "@/lib/types/sewing-scan-failures";
 import type { SewingSession } from "@/lib/types/sewing-sessions";
 import {
@@ -35,6 +40,7 @@ type HistoryMode = "sessions" | "failures";
 type LiveSortKey =
   | "employee"
   | "article"
+  | "scan"
   | "piece"
   | "client"
   | "started"
@@ -44,6 +50,7 @@ type LiveSortKey =
 type HistorySortKey =
   | "employee"
   | "article"
+  | "scan"
   | "piece"
   | "client"
   | "start"
@@ -133,7 +140,9 @@ function formatClock(iso: string | null | undefined): string {
 
 function sessionSearchBlob(row: SewingSession): string {
   return [
+    sewingSessionEmployeeDisplayName(row),
     row.employee_name,
+    row.employee_short_name,
     row.employee_id_number,
     row.production_code,
     row.scan_code,
@@ -176,9 +185,14 @@ function compareLiveSessions(
 ): number {
   switch (key) {
     case "employee":
-      return compareSortStrings(a.employee_name ?? "", b.employee_name ?? "");
+      return compareSortStrings(
+        sewingSessionEmployeeDisplayName(a),
+        sewingSessionEmployeeDisplayName(b)
+      );
     case "article":
       return compareSortStrings(sewingSessionArticleLabel(a), sewingSessionArticleLabel(b));
+    case "scan":
+      return compareSortStrings(sewingSessionScanQrLabel(a), sewingSessionScanQrLabel(b));
     case "piece":
       return compareSortStrings(
         `${a.production_code ?? ""} ${a.piece_mark ?? ""}`,
@@ -197,7 +211,10 @@ function compareLiveSessions(
         sewingSessionElapsedSec(b.started_at, now)
       );
     case "status":
-      return compareSortStrings(a.status, b.status);
+      return compareSortStrings(
+        sewingSessionStatusLabel(a.status, a.job_functions),
+        sewingSessionStatusLabel(b.status, b.job_functions)
+      );
     default:
       return 0;
   }
@@ -206,9 +223,14 @@ function compareLiveSessions(
 function compareHistorySessions(a: SewingSession, b: SewingSession, key: HistorySortKey): number {
   switch (key) {
     case "employee":
-      return compareSortStrings(a.employee_name ?? "", b.employee_name ?? "");
+      return compareSortStrings(
+        sewingSessionEmployeeDisplayName(a),
+        sewingSessionEmployeeDisplayName(b)
+      );
     case "article":
       return compareSortStrings(sewingSessionArticleLabel(a), sewingSessionArticleLabel(b));
+    case "scan":
+      return compareSortStrings(sewingSessionScanQrLabel(a), sewingSessionScanQrLabel(b));
     case "piece":
       return compareSortStrings(a.production_code ?? "", b.production_code ?? "");
     case "client":
@@ -226,7 +248,10 @@ function compareHistorySessions(a: SewingSession, b: SewingSession, key: History
     case "duration":
       return compareSortNumbers(a.duration_sec, b.duration_sec);
     case "status":
-      return compareSortStrings(a.status, b.status);
+      return compareSortStrings(
+        sewingSessionStatusLabel(a.status, a.job_functions),
+        sewingSessionStatusLabel(b.status, b.job_functions)
+      );
     default:
       return 0;
   }
@@ -430,14 +455,15 @@ export function StitchFloorWorkspace({
           <div className="border-b border-slate-100 px-5 py-4">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
-                <h2 className="text-xl font-semibold text-slate-900">Who is sewing now</h2>
+                <h2 className="text-xl font-semibold text-slate-900">Who is on the floor now</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Open sessions across kiosks. Refresh every 12s. Red elapsed = over 45 min.
+                  Open sessions across kiosks. Status follows each employee job (Cutting, Sewing,
+                  Wash / iron, ...). Refresh every 12s. Red elapsed = over 45 min.
                 </p>
               </div>
               {data && (
                 <p className="text-sm font-semibold tabular-nums text-slate-700">
-                  {data.open_sessions.filter((s) => s.status === "open").length} sewing
+                  {data.open_sessions.filter((s) => s.status === "open").length} open
                   {" / "}
                   {data.open_sessions.filter((s) => s.status === "closing").length} closing
                 </p>
@@ -448,7 +474,7 @@ export function StitchFloorWorkspace({
             {!data ? (
               <p className="px-3 py-4 text-base text-slate-500">Loading...</p>
             ) : liveRows.length === 0 ? (
-              <p className="px-3 py-4 text-base text-slate-500">No one sewing right now.</p>
+              <p className="px-3 py-4 text-base text-slate-500">No one on the floor right now.</p>
             ) : (
               <table className="min-w-full text-left text-sm">
                 <thead className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -464,6 +490,14 @@ export function StitchFloorWorkspace({
                     <SortableTableHeader
                       label="Article"
                       sortKey="article"
+                      activeSortKey={liveSort?.key ?? null}
+                      direction={liveSort?.direction ?? null}
+                      onSort={(key) => setLiveSort((prev) => nextTableSort(prev, key as LiveSortKey))}
+                      className="px-3 py-3"
+                    />
+                    <SortableTableHeader
+                      label="Scan QR"
+                      sortKey="scan"
                       activeSortKey={liveSort?.key ?? null}
                       direction={liveSort?.direction ?? null}
                       onSort={(key) => setLiveSort((prev) => nextTableSort(prev, key as LiveSortKey))}
@@ -520,13 +554,16 @@ export function StitchFloorWorkspace({
                       null;
                     const article = sewingSessionArticleLabel(session);
                     const articleColor = garmentTypeColorClasses(article || null);
+                    const scanQr = sewingSessionScanQrLabel(session);
                     return (
                       <tr
                         key={session.id}
                         className={cn("text-slate-800", longRunning && "bg-red-50/60")}
                       >
                         <td className="px-3 py-3">
-                          <div className="font-semibold text-slate-900">{session.employee_name}</div>
+                          <div className="font-semibold text-slate-900">
+                            {sewingSessionEmployeeDisplayName(session)}
+                          </div>
                           {session.employee_id_number ? (
                             <div className="font-mono text-xs text-slate-500">
                               ID {session.employee_id_number}
@@ -544,6 +581,9 @@ export function StitchFloorWorkspace({
                           <span className={cn("font-semibold", articleColor.text)}>
                             {article || "-"}
                           </span>
+                        </td>
+                        <td className="px-3 py-3 font-mono text-xs sm:text-sm break-all">
+                          {scanQr}
                         </td>
                         <td className="px-3 py-3 font-mono text-xs sm:text-sm">
                           {session.production_code}
@@ -588,7 +628,7 @@ export function StitchFloorWorkspace({
                                 : "bg-emerald-100 text-emerald-800"
                             )}
                           >
-                            {session.status === "closing" ? "Closing" : "Sewing"}
+                            {sewingSessionStatusLabel(session.status, session.job_functions)}
                           </span>
                         </td>
                       </tr>
@@ -665,7 +705,7 @@ export function StitchFloorWorkspace({
                             </p>
                           ) : null}
                           <p className="text-sm text-slate-500">
-                            Tap to {expanded ? "hide" : "show"} pieces
+                            Tap to {expanded ? "hide" : "show"} pieces (Scan QR + times)
                           </p>
                         </div>
                         <div className="grid grid-cols-3 gap-4 text-center">
@@ -703,6 +743,7 @@ export function StitchFloorWorkspace({
                             pieces.map((piece) => {
                               const article = sewingSessionArticleLabel(piece);
                               const articleColor = garmentTypeColorClasses(article || null);
+                              const scanQr = sewingSessionScanQrLabel(piece);
                               return (
                               <li
                                 key={piece.id}
@@ -715,7 +756,10 @@ export function StitchFloorWorkspace({
                                   <p className={cn("text-base font-semibold", articleColor.text)}>
                                     {article || "-"}
                                   </p>
-                                  <p className="text-sm font-medium text-slate-700">
+                                  <p className="font-mono text-sm font-medium text-slate-800 break-all">
+                                    {scanQr}
+                                  </p>
+                                  <p className="text-sm text-slate-600">
                                     {piece.production_code}
                                     {piece.piece_mark ? ` / ${piece.piece_mark}` : ""}
                                   </p>
@@ -837,6 +881,16 @@ export function StitchFloorWorkspace({
                         className="px-3 py-3"
                       />
                       <SortableTableHeader
+                        label="Scan QR"
+                        sortKey="scan"
+                        activeSortKey={historySort?.key ?? null}
+                        direction={historySort?.direction ?? null}
+                        onSort={(key) =>
+                          setHistorySort((prev) => nextTableSort(prev, key as HistorySortKey))
+                        }
+                        className="px-3 py-3"
+                      />
+                      <SortableTableHeader
                         label="Piece"
                         sortKey="piece"
                         activeSortKey={historySort?.key ?? null}
@@ -902,9 +956,12 @@ export function StitchFloorWorkspace({
                     {historyRows.map((row) => {
                       const article = sewingSessionArticleLabel(row);
                       const articleColor = garmentTypeColorClasses(article || null);
+                      const scanQr = sewingSessionScanQrLabel(row);
                       return (
                       <tr key={row.id} className="text-slate-800">
-                        <td className="px-3 py-3 font-medium">{row.employee_name}</td>
+                        <td className="px-3 py-3 font-medium">
+                          {sewingSessionEmployeeDisplayName(row)}
+                        </td>
                         <td className={cn("px-3 py-3", articleColor.bg)}>
                           <div className={cn("font-semibold", articleColor.text)}>
                             {article || "-"}
@@ -912,6 +969,9 @@ export function StitchFloorWorkspace({
                           {row.piece_mark ? (
                             <div className="text-xs text-slate-500">{row.piece_mark}</div>
                           ) : null}
+                        </td>
+                        <td className="px-3 py-3 font-mono text-xs sm:text-sm break-all">
+                          {scanQr}
                         </td>
                         <td className="px-3 py-3 font-mono text-xs sm:text-sm">
                           {row.production_code}
@@ -934,7 +994,7 @@ export function StitchFloorWorkspace({
                         <td className="px-3 py-3">
                           <span
                             className={cn(
-                              "rounded-lg px-2.5 py-1 text-xs font-semibold capitalize",
+                              "rounded-lg px-2.5 py-1 text-xs font-semibold",
                               row.status === "closed"
                                 ? "bg-slate-100 text-slate-700"
                                 : row.status === "closing"
@@ -942,7 +1002,7 @@ export function StitchFloorWorkspace({
                                   : "bg-emerald-100 text-emerald-800"
                             )}
                           >
-                            {row.status}
+                            {sewingSessionStatusLabel(row.status, row.job_functions)}
                           </span>
                         </td>
                       </tr>

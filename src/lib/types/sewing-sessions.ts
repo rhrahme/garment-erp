@@ -1,3 +1,5 @@
+import type { EmployeeJobFunction } from "@/lib/hr/job-functions";
+
 export type SewingSessionStatus = "open" | "closing" | "closed" | "abandoned";
 
 /** Short-lived: badge scanned, waiting for A4 piece QR. */
@@ -57,6 +59,16 @@ export type SewingSession = {
   /** Optional enrichments from sticker lookup (may be null on older sessions). */
   garment_type?: string | null;
   fabric_number?: string | null;
+  /**
+   * HR job roles for status display (Cutting vs Sewing, etc.).
+   * Dashboard payloads join from payroll; not required on persisted session rows.
+   */
+  job_functions?: EmployeeJobFunction[] | null;
+  /**
+   * Badge short name from payroll when available (dashboard join).
+   * UI should prefer this over employee_name via sewingSessionEmployeeDisplayName.
+   */
+  employee_short_name?: string | null;
 };
 
 export type SewingSessionsFile = {

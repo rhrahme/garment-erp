@@ -183,7 +183,7 @@ export function StitchKioskPanel() {
 
       {openSessions.length > 0 && (
         <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-          <p className="text-sm font-semibold text-slate-900">Open sewing now</p>
+          <p className="text-sm font-semibold text-slate-900">Open on floor now</p>
           <ul className="mt-2 divide-y divide-slate-100 text-sm">
             {openSessions.map((session) => (
               <li key={session.id} className="flex flex-wrap justify-between gap-2 py-2">

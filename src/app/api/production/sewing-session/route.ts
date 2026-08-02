@@ -9,7 +9,12 @@ import {
 
 export async function GET(request: NextRequest) {
   try {
-    await ensureDocumentsLoaded(["sewing_sessions", "sewing_scan_failures", "sales_orders"]);
+    await ensureDocumentsLoaded([
+      "sewing_sessions",
+      "sewing_scan_failures",
+      "sales_orders",
+      "payroll_employees",
+    ]);
     const store = await readSewingSessionsAsync();
     const failures = await readSewingScanFailuresAsync();
     const { searchParams } = request.nextUrl;

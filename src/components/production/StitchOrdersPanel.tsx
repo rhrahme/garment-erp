@@ -120,7 +120,7 @@ export function StitchOrdersPanel({ openSessions }: { openSessions: SewingSessio
         <h2 className="text-xl font-semibold text-slate-900">Production Orders</h2>
         <p className="mt-1 text-sm text-slate-500">
           Search by employee, garment, brand, or client. Open an order to see pieces ready,
-          sewing now, or already left. Scan still works on this tab.
+          on the floor now, or already left. Scan still works on this tab.
         </p>
       </div>
 
