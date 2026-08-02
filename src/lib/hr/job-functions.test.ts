@@ -3,7 +3,6 @@ import { describe, it } from "node:test";
 import {
   EMPLOYEE_JOB_FUNCTIONS,
   EMPLOYEE_JOB_FUNCTION_LABELS,
-  employeeCanSewOnStitchKiosk,
   formatJobFunctionsSummary,
   normalizeJobFunctions,
 } from "@/lib/hr/job-functions";
@@ -71,25 +70,5 @@ describe("formatJobFunctionsSummary", () => {
     assert.equal(formatJobFunctionsSummary(["shorts_tailor"]), "Shorts tailor");
     assert.equal(formatJobFunctionsSummary(["tshirt_tailor"]), "T-shirt tailor");
     assert.equal(formatJobFunctionsSummary(["cleaner"]), "Cleaner");
-  });
-});
-
-describe("employeeCanSewOnStitchKiosk", () => {
-  it("rejects cutter-only and other non-sewing roles", () => {
-    assert.equal(employeeCanSewOnStitchKiosk(["cutter"]), false);
-    assert.equal(employeeCanSewOnStitchKiosk(["qc"]), false);
-    assert.equal(employeeCanSewOnStitchKiosk(["wash_iron", "buttons", "pattern", "cleaner"]), false);
-  });
-
-  it("allows any tailor specialty", () => {
-    assert.equal(employeeCanSewOnStitchKiosk(["jacket_tailor"]), true);
-    assert.equal(employeeCanSewOnStitchKiosk(["overshirt_tailor", "cutter"]), true);
-    assert.equal(employeeCanSewOnStitchKiosk(["shirt_ls_tailor"]), true);
-  });
-
-  it("allows empty / unset jobs for legacy badges", () => {
-    assert.equal(employeeCanSewOnStitchKiosk([]), true);
-    assert.equal(employeeCanSewOnStitchKiosk(undefined), true);
-    assert.equal(employeeCanSewOnStitchKiosk(null), true);
   });
 });

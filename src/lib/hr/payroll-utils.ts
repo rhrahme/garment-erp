@@ -21,6 +21,18 @@ export function isExpatEmployee(employee: Pick<PayrollEmployee, "bank_name">): b
   return EXPAT_BANK_PATTERNS.some((pattern) => pattern.test(bank));
 }
 
+/**
+ * Who may arm / start a sewing session on the stitch kiosk.
+ * Any employee on the HR Expats ID-badge list (BSF/ANB bank group) may scan —
+ * cutters, wash/iron, buttons, tailors, etc. Saudis / unknown badges stay out.
+ */
+export function employeeCanSewOnStitchKiosk(
+  employee: Pick<PayrollEmployee, "bank_name"> | null | undefined
+): boolean {
+  if (!employee) return false;
+  return isExpatEmployee(employee);
+}
+
 export function idBadgeGroup(employee: Pick<PayrollEmployee, "bank_name">): IdBadgeGroup {
   return isExpatEmployee(employee) ? "expat" : "saudi";
 }

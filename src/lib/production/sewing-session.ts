@@ -1,12 +1,12 @@
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSewingSessionsAsync, writeSewingSessions } from "@/lib/data/sewing-sessions";
 import { isEmployeeQrPayload, parseEmployeeQrPayload } from "@/lib/hr/employee-qr";
-import { employeeCanSewOnStitchKiosk } from "@/lib/hr/job-functions";
 import {
   findPayrollEmployeeByBadgeValue,
   findPayrollEmployeeById,
   resolveScanEmployeeContext,
 } from "@/lib/hr/payroll-lookup";
+import { employeeCanSewOnStitchKiosk } from "@/lib/hr/payroll-utils";
 import { notifyIntegration } from "@/lib/integrations";
 import { executeStageScan } from "@/lib/production/execute-stage-scan";
 import { recordSewingScanFailure } from "@/lib/production/record-sewing-scan-failure";
@@ -560,14 +560,14 @@ export async function processSewingKioskScan(
       );
     }
 
-    // After close paths: block non-tailors from arming / starting (legacy empty jobs still allowed).
+    // After close paths: only Expats ID-badge list may arm / start (any job on that list).
     if (
       badgeDecisionRequiresSewCapability(badgeDecision.type) &&
-      !employeeCanSewOnStitchKiosk(employee.job_functions)
+      !employeeCanSewOnStitchKiosk(employee)
     ) {
       return failResult(
-        "Not a stitcher - only tailor jobs can start sewing on this kiosk.",
-        "job_not_stitcher",
+        "Not on the Expats ID list - only expat badge holders can start sewing on this kiosk.",
+        "not_expat_badge",
         "badge",
         store,
         kioskId,
@@ -816,10 +816,10 @@ export async function processSewingKioskScan(
   if (pieceDecision.type === "start_with_employee_arm") {
     const arm = pieceDecision.arm;
     const armedEmployee = findPayrollEmployeeById(arm.employee_id);
-    if (armedEmployee && !employeeCanSewOnStitchKiosk(armedEmployee.job_functions)) {
+    if (armedEmployee && !employeeCanSewOnStitchKiosk(armedEmployee)) {
       return failResult(
-        "Not a stitcher - only tailor jobs can start sewing on this kiosk.",
-        "job_not_stitcher",
+        "Not on the Expats ID list - only expat badge holders can start sewing on this kiosk.",
+        "not_expat_badge",
         "piece",
         store,
         kioskId,

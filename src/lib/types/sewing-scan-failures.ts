@@ -14,6 +14,8 @@ export type SewingScanFailureReasonCode =
   | "ambiguous_employee_arms"
   | "ambiguous_piece_arms"
   | "wrong_piece_for_close"
+  | "not_expat_badge"
+  // Legacy rows may still store job_not_stitcher from the old tailor-only gate.
   | "job_not_stitcher";
 
 /** One failed stitch-kiosk scan attempt (badge or A4 piece QR). */

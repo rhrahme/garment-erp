@@ -43,8 +43,8 @@ export type BadgeDecision =
   | { type: "arm_employee" };
 
 /**
- * Close / finish badge paths must not be blocked by the stitcher job gate.
- * Arm / start / piece-arm ambiguity still require a tailor (or empty legacy jobs).
+ * Close / finish badge paths must not be blocked by the stitch kiosk gate.
+ * Arm / start / piece-arm ambiguity still require an Expats ID-badge employee.
  */
 export function badgeDecisionRequiresSewCapability(type: BadgeDecision["type"]): boolean {
   return (

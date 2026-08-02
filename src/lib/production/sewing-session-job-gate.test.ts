@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { employeeCanSewOnStitchKiosk } from "@/lib/hr/job-functions";
+import { employeeCanSewOnStitchKiosk } from "@/lib/hr/payroll-utils";
 import {
   badgeDecisionRequiresSewCapability,
   decideBadgeScan,
@@ -30,13 +30,14 @@ function session(
 }
 
 describe("stitch kiosk job gate", () => {
-  it("rejects cutter-only; allows tailor and empty jobs", () => {
-    assert.equal(employeeCanSewOnStitchKiosk(["cutter"]), false);
-    assert.equal(employeeCanSewOnStitchKiosk(["jacket_tailor"]), true);
-    assert.equal(employeeCanSewOnStitchKiosk([]), true);
+  it("allows cutter/wash/buttons/tailor when on Expats ID list; rejects saudi", () => {
+    assert.equal(employeeCanSewOnStitchKiosk({ bank_name: "Arab National Bank" }), true);
+    assert.equal(employeeCanSewOnStitchKiosk({ bank_name: "Banque Saudi Fransi" }), true);
+    assert.equal(employeeCanSewOnStitchKiosk({ bank_name: "AL RAJHI BANK" }), false);
+    assert.equal(employeeCanSewOnStitchKiosk({ bank_name: "" }), false);
   });
 
-  it("close still works for cutter with open session (gate skipped)", () => {
+  it("close still works without sew capability (gate skipped)", () => {
     assert.equal(badgeDecisionRequiresSewCapability("arm_employee"), true);
     assert.equal(badgeDecisionRequiresSewCapability("start_with_piece_arm"), true);
     assert.equal(badgeDecisionRequiresSewCapability("close"), false);
@@ -59,12 +60,6 @@ describe("stitch kiosk job gate", () => {
     const enterClose = decideBadgeScan(openStore, "k1", "cutter-1");
     assert.equal(enterClose.type, "enter_closing_badge_first");
     assert.equal(badgeDecisionRequiresSewCapability(enterClose.type), false);
-    // Non-tailor would be rejected for arm/start, but close path is allowed.
-    assert.equal(
-      badgeDecisionRequiresSewCapability(enterClose.type) ||
-        employeeCanSewOnStitchKiosk(["cutter"]),
-      false
-    );
 
     const closingStore: SewingSessionsFile = {
       updated_at: null,
