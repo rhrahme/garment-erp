@@ -295,9 +295,21 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
             workstation_id: workstationRef.current.trim() || null,
           }),
         });
-        const data = (await res.json()) as SewingKioskScanResult & { error?: string };
-        const ok = Boolean(data.ok ?? res.ok);
-        const msg = data.message ?? data.error ?? (ok ? "OK" : "Scan failed");
+        let data = {} as SewingKioskScanResult & { error?: string };
+        try {
+          data = (await res.json()) as SewingKioskScanResult & { error?: string };
+        } catch {
+          data = {};
+        }
+        // Auth/middleware rejects never reach processSewingKioskScan, so they are
+        // not written to sewing_scan_failures — surface that clearly on the kiosk.
+        const authBlocked = res.status === 401 || res.status === 403;
+        const ok = !authBlocked && Boolean(data.ok ?? res.ok);
+        const msg = authBlocked
+          ? res.status === 403
+            ? "Scan blocked - this login cannot use the stitch kiosk. Sign in as stitch@hagan.pro."
+            : "Login expired or auth timed out - refresh and sign in again, then rescan."
+          : data.message ?? data.error ?? (ok ? "OK" : `Scan failed (HTTP ${res.status})`);
 
         setLast(data);
         if (data.phase) setPhase(data.phase);
@@ -312,7 +324,10 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
           ].slice(0, MAX_LOG)
         );
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Scan failed";
+        const msg =
+          err instanceof Error
+            ? `Network error - scan not saved. ${err.message}`
+            : "Network error - scan not saved.";
         setError(msg);
         playBeep("error");
         setLog((prev) =>
