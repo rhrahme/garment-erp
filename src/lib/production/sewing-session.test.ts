@@ -767,7 +767,8 @@ describe("blind-floor stitch scan recovery", () => {
 
     const unknown = buildSewingScanFailure({
       raw_code: "ZZZ-NOT-A-PIECE",
-      reason: "Piece / A4 code not recognized - check the production sheet QR.",
+      reason:
+        "Code not recognized: ZZZ-NOT-A-PIECE. Stitch accepts EMP badge (EMP:{id}) or production A4 piece QR (e.g. FR-0132-L07-JKT-1/2).",
       reason_code: "piece_not_recognized",
       scan_kind: "piece",
       kiosk_id: "k1",
@@ -776,6 +777,7 @@ describe("blind-floor stitch scan recovery", () => {
     });
     assert.equal(unknown.reason_code, "piece_not_recognized");
     assert.equal(unknown.raw_code, "ZZZ-NOT-A-PIECE");
+    assert.match(unknown.reason, /Code not recognized: ZZZ-NOT-A-PIECE/);
   });
 
   it("multiple open sessions for one employee reject badge-first close", () => {

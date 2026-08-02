@@ -13,6 +13,11 @@ import { recordSewingScanFailure } from "@/lib/production/record-sewing-scan-fai
 import type { BuildSewingScanFailureInput } from "@/lib/production/sewing-scan-failure-build";
 import { normalizeScannerInput } from "@/lib/production/scan-input";
 import {
+  explainUnrecognizedStitchScan,
+  fabricCutWashRejectMessage,
+  isFabricCutOnlyStitchScan,
+} from "@/lib/production/sewing-scan-code-explain";
+import {
   applyBadgeFirstClosing,
   applyCloseSession,
   applyPieceArm,
@@ -206,9 +211,22 @@ function lookupPieceMeta(scanCode: string): {
 } {
   const lookup = resolveScanToLine(scanCode);
   if (!lookup) {
-    throw new Error("Piece / A4 code not recognized - check the production sheet QR.");
+    throw new Error(explainUnrecognizedStitchScan(scanCode));
   }
   const siblings = lookup.line.label_stickers ?? [lookup.sticker];
+  const fabric_cut_code = supplierFabricProductionCode(
+    lookup.sticker.code,
+    lookup.order.client_code
+  );
+  if (
+    isFabricCutOnlyStitchScan(scanCode, {
+      fabric_cut_code,
+      client_code: lookup.order.client_code,
+      stickers: siblings,
+    })
+  ) {
+    throw new Error(fabricCutWashRejectMessage(scanCode, fabric_cut_code));
+  }
   const production_code = pieceProductionCodeFromSticker(
     lookup.sticker,
     lookup.order.client_code,
@@ -220,7 +238,7 @@ function lookupPieceMeta(scanCode: string): {
     production_code,
     so_number: lookup.order.so_number,
     piece_mark: attribution.piece_mark,
-    fabric_cut_code: supplierFabricProductionCode(lookup.sticker.code, lookup.order.client_code),
+    fabric_cut_code,
     client_name: lookup.order.client_name?.trim() || null,
     // Persist SO line garment type; fall back to sticker piece name when line type is blank.
     garment_type: lineType || attribution.piece_name?.trim() || null,
@@ -685,7 +703,7 @@ export async function processSewingKioskScan(
   } catch (error) {
     const armHint = resolveUniqueEmployeeArm(store, kioskId);
     return failResult(
-      error instanceof Error ? error.message : "Piece code not recognized.",
+      error instanceof Error ? error.message : explainUnrecognizedStitchScan(raw),
       "piece_not_recognized",
       "piece",
       store,
