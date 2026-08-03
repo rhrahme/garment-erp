@@ -9,6 +9,12 @@ const DISPLAY_NAME_BY_EMAIL: Record<string, string> = {
   "sales1@hagan.pro": "Sales 1",
 };
 
+/** Friendly name for a known account email (e.g. "QC Hossein"), or null. */
+export function displayNameForEmail(email: string | null | undefined): string | null {
+  const normalized = email?.trim().toLowerCase() ?? "";
+  return normalized ? DISPLAY_NAME_BY_EMAIL[normalized] ?? null : null;
+}
+
 export function resolveUserDisplay(session: SessionContext): {
   name: string;
   title: string;

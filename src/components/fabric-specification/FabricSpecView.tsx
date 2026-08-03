@@ -17,6 +17,10 @@ import {
   isLoroPianaStyleSupplier,
   normalizeLoroPianaFabricNumber,
 } from "@/lib/fabric-sourcing/loro-piana-styles";
+import {
+  isRecentlyAddedCustomFabric,
+  recentCustomFabricAddedLabel,
+} from "@/lib/fabric-sourcing/recent-fabric-highlight";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import { formatFabricPatternLabel, formatFabricTextLabel } from "@/lib/fabric-sourcing/fabric-display";
@@ -447,7 +451,12 @@ export function FabricSpecView({
               ...(showPrices ? [{ key: "price", label: "Account price/m" }] : []),
               ...(showStockColumn ? [{ key: "stock", label: "Stock" }] : []),
             ]}
-            rows={sortedDisplay.map((f) => ({
+            rows={sortedDisplay.map((f) => {
+              const isNewCustom = isRecentlyAddedCustomFabric(f);
+              return {
+              ...(isNewCustom
+                ? { rowClassName: "bg-orange-50 hover:bg-orange-100/60" }
+                : {}),
               ...(brandId === "all"
                 ? {
                     brand: formatFabricSupplierName(
@@ -468,7 +477,21 @@ export function FabricSpecView({
                   canViewStock={canViewStock}
                 />
               ),
-              fabricNo: <span className="font-mono font-medium">{f.fabric_number}</span>,
+              fabricNo: (
+                <span className="flex flex-col gap-1">
+                  <span className="font-mono font-medium">{f.fabric_number}</span>
+                  {isNewCustom ? (
+                    <span className="inline-flex w-fit items-center gap-1 rounded border border-orange-300 bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-800">
+                      <span className="uppercase tracking-wide">New</span>
+                      {recentCustomFabricAddedLabel(f) ? (
+                        <span className="font-normal text-orange-700">
+                          {recentCustomFabricAddedLabel(f)}
+                        </span>
+                      ) : null}
+                    </span>
+                  ) : null}
+                </span>
+              ),
               composition: <span className="text-xs">{f.composition ?? "—"}</span>,
               color: f.color ?? "—",
               pattern: formatFabricPatternLabel(f) ?? "—",
@@ -512,7 +535,8 @@ export function FabricSpecView({
                     })(),
                   }
                 : {}),
-            }))}
+              };
+            })}
             emptyMessage={
               isCustomTab
                 ? canCreateCustomFabric
