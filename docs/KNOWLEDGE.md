@@ -70,6 +70,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
+- [session-2026-08-03](session-2026-08-03.md) - orange highlight for recently added custom fabrics
 - [session-2026-08-02](session-2026-08-02.md) - stitch scan capture, job-aware labels, queue restore, A4 print, email pills
 - [session-2026-07-08](session-2026-07-08.md) - supplier email per-line status, AWB tracker
 - [session-2026-07-03](session-2026-07-03.md)
