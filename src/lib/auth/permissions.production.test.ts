@@ -235,6 +235,24 @@ describe("client_manager QC ID badges (not payroll)", () => {
   });
 });
 
+describe("quality inspections access (QC + factory manager)", () => {
+  it("QC (client_manager) can open the Quality page and its APIs", () => {
+    assert.equal(isClientManagerRouteAllowed("/quality"), true);
+    assert.equal(isClientManagerRouteAllowed("/api/quality/inspections"), true);
+  });
+
+  it("factory manager can open the Quality page and its APIs", () => {
+    assert.equal(isProductionOperatorRouteAllowed("/quality"), true);
+    assert.equal(isProductionOperatorRouteAllowed("/api/quality/inspections"), true);
+  });
+
+  it("pattern and accounting stay blocked from quality APIs", () => {
+    assert.equal(isPatternOperatorRouteAllowed("/api/quality/inspections"), false);
+    assert.equal(isAccountingOperatorRouteAllowed("/api/quality/inspections"), false);
+    assert.equal(isAccountingOperatorRouteAllowed("/quality"), false);
+  });
+});
+
 describe("pattern_operator fabric swatch image routes", () => {
   const imageRoutes = [
     "/api/suppliers/loro-piana/images",

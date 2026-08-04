@@ -187,11 +187,22 @@ export async function getWashingBatches() {
   return (data ?? []) as WashingBatch[];
 }
 
-export async function getQualityInspections() {
-  if (DEMO_MODE) return demoInspections;
+export type QualityInspectionRow = QualityInspection & {
+  work_order_label?: string | null;
+};
+
+export async function getQualityInspections(): Promise<QualityInspectionRow[]> {
+  const { listQualityInspectionsAsync } = await import("@/lib/data/quality-inspections");
+  const stored = await listQualityInspectionsAsync();
+  if (DEMO_MODE) {
+    return stored.length > 0 ? stored : demoInspections;
+  }
   const supabase = await createClient();
   const { data } = await supabase.from("quality_inspections").select("*").order("inspection_date", { ascending: false });
-  return (data ?? []) as QualityInspection[];
+  const legacy = (data ?? []) as QualityInspection[];
+  return [...stored, ...legacy].sort((a, b) =>
+    (b.inspection_date ?? "").localeCompare(a.inspection_date ?? "")
+  );
 }
 
 export async function getEmployees() {

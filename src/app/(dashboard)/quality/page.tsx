@@ -1,10 +1,23 @@
 import { PageHeader, DataTable, StatusBadge } from "@/components/ui/PageHeader";
-import { Button } from "@/components/ui/Button";
-import { getQualityInspections } from "@/lib/data/queries";
+import {
+  NewInspectionButton,
+  type WorkOrderOption,
+} from "@/components/quality/NewInspectionButton";
+import { getQualityInspections, getWorkOrders } from "@/lib/data/queries";
 import { formatDate } from "@/lib/utils";
 
 export default async function QualityPage() {
-  const inspections = await getQualityInspections();
+  const [inspections, workOrders] = await Promise.all([
+    getQualityInspections(),
+    getWorkOrders(),
+  ]);
+
+  const workOrderOptions: WorkOrderOption[] = workOrders.slice(0, 200).map((wo) => ({
+    id: wo.id,
+    label: [wo.wo_number, wo.client_name, wo.style?.name]
+      .filter((part) => part && part !== "-")
+      .join(" / "),
+  }));
 
   const passCount = inspections.filter((i) => i.result === "pass").length;
   const failCount = inspections.filter((i) => i.result === "fail").length;
@@ -15,7 +28,7 @@ export default async function QualityPage() {
       <PageHeader
         title="Quality Control"
         description="Inspections, AQL sampling, and defect tracking"
-        action={<Button>+ New Inspection</Button>}
+        action={<NewInspectionButton workOrders={workOrderOptions} />}
       />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-4">
@@ -47,10 +60,10 @@ export default async function QualityPage() {
         ]}
         rows={inspections.map((i) => ({
           date: formatDate(i.inspection_date),
-          wo: i.work_order_id ? `WO-${i.work_order_id}` : "—",
+          wo: i.work_order_label ?? (i.work_order_id ? `WO-${i.work_order_id}` : "-"),
           sample: i.sample_size,
           result: <StatusBadge status={i.result} />,
-          notes: i.notes ?? "—",
+          notes: i.notes ?? "-",
         }))}
       />
     </div>

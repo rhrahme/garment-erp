@@ -34,6 +34,7 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/api/qr",
   "/api/factory/floor-stations",
   "/api/production",
+  "/api/quality",
   "/api/sales",
   "/api/hr/employees",
   "/api/hr/employee-lookup",
@@ -105,6 +106,7 @@ const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   /** Employee list + QR badges only - payroll register stays blocked via `/hr`. */
   "/hr/id-badges",
   "/api/production",
+  "/api/quality",
   "/api/fabric-receiving",
   "/api/thread-button-matching",
   "/api/factory/floor-stations",

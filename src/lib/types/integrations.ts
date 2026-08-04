@@ -79,6 +79,7 @@ export type IntegrationEventType =
   | "sales_fitting.created"
   | "sales_fitting.updated"
   | "sales_order.milestone_updated"
+  | "quality_inspection.created"
   | "custom_fabric.created"
   | "employee.created"
   | "employee.updated"
