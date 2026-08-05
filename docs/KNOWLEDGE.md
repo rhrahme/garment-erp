@@ -37,6 +37,16 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `_removed`. The A4 working sheet + PDF accept `?client=` to print the
   client's column next to the base size. Do not strip this without the user
   asking.
+- **"Load from base pattern" Sample fill** (pattern request, Aug 5 2026): the
+  client sheet's Sample/Trials/Final toolbar has a "Load from base pattern"
+  button - pick a library base (defaults to the sheet garment) and a size
+  column or the client's fit column (preselected when the base has one), and
+  the values copy into the editable Sample cells. Units convert cm <-> in
+  (inches snap to 1/16"); points match by id / normalized name / dictionary
+  aliases / unique containment, one base point claimed once - ambiguous rows
+  stay empty and are listed in the notice. Copy is client-side; persistence
+  is the existing Save sheet flow (no new write path, no new /api/v1 route
+  needed). Helpers + tests: `src/lib/pattern-library/load-from-base.ts`.
 
 ## Printing
 
@@ -70,6 +80,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
+- [session-2026-08-05](session-2026-08-05.md) - Load from base pattern fills the Sample column on client sheets
 - [session-2026-08-04](session-2026-08-04.md) - Al Ajlan draft invoices prefilled with agreed proposal prices
 - [session-2026-08-03](session-2026-08-03.md) - orange highlight for recently added custom fabrics
 - [session-2026-08-02](session-2026-08-02.md) - stitch scan capture, job-aware labels, queue restore, A4 print, email pills
