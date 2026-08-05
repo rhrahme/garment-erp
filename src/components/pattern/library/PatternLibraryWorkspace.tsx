@@ -18,6 +18,7 @@ import {
   resolveSelectedBase,
   type BasePatternCascadeValue,
 } from "@/lib/pattern-library/base-pattern-picker";
+import { invalidateBasePickerCache } from "@/lib/pattern-library/base-picker-cache";
 import { formatBasePatternDisplayName } from "@/lib/pattern-library/derived-from";
 import { generatePatternRef } from "@/lib/pattern-library/refs";
 import { unitLabel } from "@/lib/pattern-library/measurements";
@@ -609,6 +610,7 @@ function CreateBaseForm({ brands, onCreated }: { brands: BrandOption[]; onCreate
         const body = await res.json().catch(() => null);
         throw new Error(body?.error ?? "Failed to create base pattern.");
       }
+      invalidateBasePickerCache();
       onCreated();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create base pattern.");

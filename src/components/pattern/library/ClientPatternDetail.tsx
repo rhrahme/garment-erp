@@ -46,6 +46,7 @@ import {
   preferredBrandCodeFromClientCode,
   type BasePatternCascadeValue,
 } from "@/lib/pattern-library/base-pattern-picker";
+import { preloadBasePickerData } from "@/lib/pattern-library/base-picker-cache";
 import { formatMeasurement, unitLabel } from "@/lib/pattern-library/measurements";
 import { clientPatternQrUrl } from "@/lib/pattern-library/pattern-qr";
 import { TudViewerModal } from "@/components/pattern/library/TudViewerModal";
@@ -187,6 +188,12 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Warm the base-pattern picker cache while the operator looks at the sheet,
+  // so "Load from base pattern" (and the TUD fill picker) opens instantly.
+  useEffect(() => {
+    preloadBasePickerData().catch(() => {});
+  }, []);
 
   const version = useMemo(
     () => pattern?.versions.find((candidate) => candidate.id === selectedVersionId) ?? null,
@@ -568,9 +575,8 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         basePatternId: firstBase?.id ?? "",
         baseSize: firstBase?.matches[0]?.base_size ?? "",
       });
-      void fetch("/api/pattern/library", { cache: "no-store" })
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => setLibraryBases(data?.base_patterns ?? []))
+      void preloadBasePickerData()
+        .then((data) => setLibraryBases(data.base_patterns))
         .catch(() => setLibraryBases([]));
     }
   }

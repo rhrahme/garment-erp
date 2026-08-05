@@ -7,6 +7,10 @@ import {
   garmentMatchesLibraryBase,
 } from "@/lib/pattern-library/base-pattern-picker";
 import {
+  peekBasePickerData,
+  preloadBasePickerData,
+} from "@/lib/pattern-library/base-picker-cache";
+import {
   buildSampleFillFromBase,
   summarizeSampleFill,
   type BaseGridColumn,
@@ -39,9 +43,14 @@ export function LoadFromBaseModal({
   onClose: () => void;
   onApply: (values: Record<string, number>, notice: string) => void;
 }) {
-  const [bases, setBases] = useState<BasePattern[]>([]);
-  const [dictionary, setDictionary] = useState<MeasurementPointDef[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Instant open: the page preloads the slim picker payload on mount, so the
+  // cache is normally already warm here and no network wait happens at all.
+  const preloaded = peekBasePickerData();
+  const [bases, setBases] = useState<BasePattern[]>(preloaded?.base_patterns ?? []);
+  const [dictionary, setDictionary] = useState<MeasurementPointDef[]>(
+    preloaded?.dictionary ?? []
+  );
+  const [loading, setLoading] = useState(preloaded === null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [allGarments, setAllGarments] = useState(false);
@@ -50,12 +59,11 @@ export function LoadFromBaseModal({
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/pattern/library", { cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("load failed"))))
+    preloadBasePickerData()
       .then((data) => {
         if (cancelled) return;
-        setBases(data?.base_patterns ?? []);
-        setDictionary(data?.dictionary ?? []);
+        setBases(data.base_patterns);
+        setDictionary(data.dictionary);
         setLoading(false);
       })
       .catch(() => {
@@ -186,7 +194,22 @@ export function LoadFromBaseModal({
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-          {loading ? <p className="text-sm text-slate-500">Loading pattern library...</p> : null}
+          {loading ? (
+            <ul
+              aria-label="Loading base patterns"
+              className="animate-pulse divide-y divide-slate-100 rounded-lg border border-slate-200"
+            >
+              {[0, 1, 2, 3, 4].map((row) => (
+                <li key={row} className="flex items-center justify-between gap-3 px-3 py-3">
+                  <span className="min-w-0 flex-1 space-y-1.5">
+                    <span className="block h-3.5 w-2/5 rounded bg-slate-200" />
+                    <span className="block h-3 w-3/5 rounded bg-slate-100" />
+                  </span>
+                  <span className="h-3 w-1/4 shrink-0 rounded bg-slate-100" />
+                </li>
+              ))}
+            </ul>
+          ) : null}
           {loadError ? <p className="text-sm text-rose-600">{loadError}</p> : null}
 
           {!loading && !loadError && !selectedBase ? (

@@ -1,17 +1,29 @@
 import { NextResponse } from "next/server";
 import { requirePatternAccess } from "@/lib/auth/session";
-import { ensurePatternLibraryLoaded, readPatternLibraryFresh } from "@/lib/data/pattern-library";
+import {
+  ensurePatternLibraryDocLoaded,
+  ensurePatternLibraryLoaded,
+  readPatternLibraryFresh,
+} from "@/lib/data/pattern-library";
 import { createBasePattern } from "@/lib/pattern-library/mutations";
 
+/**
+ * Slim read used by base-pattern pickers: bases + dictionary only (no
+ * client_patterns, which dominate the full-store payload). Loads only the
+ * pattern library document server-side.
+ */
 export async function GET() {
   try {
     const session = await requirePatternAccess();
     if (!session) {
       return NextResponse.json({ error: "Pattern access required." }, { status: 403 });
     }
-    await ensurePatternLibraryLoaded();
+    await ensurePatternLibraryDocLoaded();
     const store = await readPatternLibraryFresh();
-    return NextResponse.json({ base_patterns: store.base_patterns });
+    return NextResponse.json({
+      base_patterns: store.base_patterns,
+      dictionary: store.dictionary,
+    });
   } catch (error) {
     console.error("Failed to list base patterns:", error);
     return NextResponse.json({ error: "Failed to list base patterns." }, { status: 500 });

@@ -45,6 +45,15 @@ export async function ensurePatternLibraryLoaded(): Promise<void> {
   await ensureDocumentsLoaded(["pattern_library", "clients", "sales_orders"]);
 }
 
+/**
+ * Loads only the pattern library document. Read-only endpoints (e.g. the
+ * base-pattern picker) should use this instead of ensurePatternLibraryLoaded
+ * so they never wait on the much larger clients/sales_orders documents.
+ */
+export async function ensurePatternLibraryDocLoaded(): Promise<void> {
+  await ensureDocumentsLoaded(["pattern_library"]);
+}
+
 export async function getBasePatternByIdFresh(id: string): Promise<BasePattern | null> {
   const store = await readPatternLibraryFresh();
   return store.base_patterns.find((base) => base.id === id) ?? null;

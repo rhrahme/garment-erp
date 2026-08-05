@@ -6,6 +6,7 @@ import { ArrowLeft, Plus, Printer, Trash2, UserPlus, X } from "lucide-react";
 import { MeasurementInput } from "@/components/pattern/library/MeasurementInput";
 import { LibraryFileList } from "@/components/pattern/library/LibraryFileList";
 import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
+import { invalidateBasePickerCache } from "@/lib/pattern-library/base-picker-cache";
 import {
   clientColumnDelta,
   clientColumnHeaderLabel,
@@ -296,6 +297,8 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
         setBase(data.base);
         setDirty(false);
       }
+      // Grids/sizes/client columns changed - pickers must not serve stale data.
+      invalidateBasePickerCache();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save.");
     } finally {

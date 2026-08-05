@@ -47,6 +47,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   stay empty and are listed in the notice. Copy is client-side; persistence
   is the existing Save sheet flow (no new write path, no new /api/v1 route
   needed). Helpers + tests: `src/lib/pattern-library/load-from-base.ts`.
+- **Base-pattern pickers must preload the slim payload** (perf fix, Aug 5
+  2026): use `GET /api/pattern/library/bases` (bases + dictionary, ~218 KB)
+  via `preloadBasePickerData()` in `base-picker-cache.ts` - never the
+  full-store `GET /api/pattern/library` (2.5 MB, client_patterns dominate).
+  Pages hosting a picker preload on mount so the dialog opens with zero
+  network wait; the cache is invalidated after base create / fit-column
+  save. Keep picker search client-side.
 
 ## Printing
 
@@ -80,7 +87,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
-- [session-2026-08-05](session-2026-08-05.md) - Load from base pattern fills the Sample column on client sheets
+- [session-2026-08-05](session-2026-08-05.md) - Load from base pattern fills the Sample column on client sheets; picker preload perf
 - [session-2026-08-04](session-2026-08-04.md) - Al Ajlan draft invoices prefilled with agreed proposal prices
 - [session-2026-08-03](session-2026-08-03.md) - orange highlight for recently added custom fabrics
 - [session-2026-08-02](session-2026-08-02.md) - stitch scan capture, job-aware labels, queue restore, A4 print, email pills
