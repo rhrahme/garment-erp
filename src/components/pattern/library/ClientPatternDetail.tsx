@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  Copy,
   Download,
   History,
   Layers,
@@ -19,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { BasePatternCascadePicker } from "@/components/pattern/library/BasePatternCascadePicker";
+import { LoadFromBaseModal } from "@/components/pattern/library/LoadFromBaseModal";
 import { ClientPhotoAssignmentPanel } from "@/components/pattern/library/ClientPhotoAssignmentPanel";
 import { MeasurementInput } from "@/components/pattern/library/MeasurementInput";
 import {
@@ -120,6 +122,9 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   const [libraryBases, setLibraryBases] = useState<BasePattern[]>([]);
   const [tudCascade, setTudCascade] = useState<BasePatternCascadeValue>(() => emptyCascadeValue());
   const [sheetMode, setSheetMode] = useState<"trials" | "detail">("trials");
+  // "Load from base pattern" -> Sample column copy (picker modal + result notice).
+  const [loadFromBaseOpen, setLoadFromBaseOpen] = useState(false);
+  const [sampleFillNotice, setSampleFillNotice] = useState<string | null>(null);
   /** Piece name -> sibling pattern id when CAD is borrowed for multi-piece shells. */
   const [geometryBorrowedFrom, setGeometryBorrowedFrom] = useState<Record<string, string>>(
     {}
@@ -361,6 +366,25 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         ),
       })),
     }));
+  }
+
+  /**
+   * Bulk Sample fill from a base grid column (Load from base pattern).
+   * Writes base_value on every trial's matching rows - same cells as
+   * setSampleValue - then the operator reviews and hits Save sheet.
+   */
+  function applySampleFill(values: Record<string, number>, notice: string) {
+    mutatePattern((draft) => ({
+      ...draft,
+      versions: draft.versions.map((trial) => ({
+        ...trial,
+        measurements: trial.measurements.map((row) =>
+          values[row.point_id] !== undefined ? { ...row, base_value: values[row.point_id]! } : row
+        ),
+      })),
+    }));
+    setSampleFillNotice(notice);
+    setLoadFromBaseOpen(false);
   }
 
   function setTrialTarget(versionId: string, pointId: string, value: number | null) {
@@ -1101,20 +1125,48 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   Measurement sheet{" "}
                   <span className="font-normal text-slate-500">({unitLabel(unit)})</span>
                 </p>
-                <button
-                  type="button"
-                  onClick={() => void saveTrialSheet()}
-                  disabled={!dirty || saving}
-                  className={cn(
-                    "rounded-lg px-4 py-2 text-sm font-medium",
-                    dirty
-                      ? "bg-indigo-600 text-white hover:bg-indigo-700"
-                      : "bg-slate-100 text-slate-400"
-                  )}
-                >
-                  {saving ? "Saving..." : dirty ? "Save sheet" : "Sheet saved"}
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setLoadFromBaseOpen(true)}
+                    disabled={saving || trialSheetPoints(pattern).length === 0}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-indigo-700 ring-1 ring-slate-200 hover:bg-indigo-50 disabled:opacity-50"
+                    title="Copy a base pattern size (or this client's fit column) into the Sample column"
+                  >
+                    <Copy className="h-4 w-4" />
+                    Load from base pattern
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void saveTrialSheet()}
+                    disabled={!dirty || saving}
+                    className={cn(
+                      "rounded-lg px-4 py-2 text-sm font-medium",
+                      dirty
+                        ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                        : "bg-slate-100 text-slate-400"
+                    )}
+                  >
+                    {saving ? "Saving..." : dirty ? "Save sheet" : "Sheet saved"}
+                  </button>
+                </div>
               </div>
+              {sampleFillNotice ? (
+                <div className="flex items-start justify-between gap-3 border-b border-emerald-100 bg-emerald-50 px-4 py-2.5">
+                  <p className="flex items-start gap-2 text-sm text-emerald-800">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                    {sampleFillNotice}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setSampleFillNotice(null)}
+                    className="rounded p-1 text-emerald-500 hover:bg-emerald-100"
+                    aria-label="Dismiss Sample fill notice"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : null}
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -1533,6 +1585,15 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           )}
         </div>
       </div>
+
+      {loadFromBaseOpen ? (
+        <LoadFromBaseModal
+          pattern={pattern}
+          rows={trialSheetPoints(pattern)}
+          onClose={() => setLoadFromBaseOpen(false)}
+          onApply={applySampleFill}
+        />
+      ) : null}
 
       {error ? <p className="text-sm text-rose-600">{error}</p> : null}
     </div>
