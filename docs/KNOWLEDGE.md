@@ -80,6 +80,16 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `/fabric-orders` and `/orders` (status only, never the email body) so they
   can remind admin about unsent POs. Do not hide behind admin-only roles.
 - Audit lives in `supplier-email-sent-audit.md`.
+- **Never put client names in supplier emails** (LP chase, PO follow-ups,
+  etc.). Use references only: FR code, SO, PO, line codes
+  (e.g. `FR-0726-0037/0130-L28`). Owner rule Aug 5 2026.
+- **LP chase line format** = what they print on the fabric, not what we
+  stitch: `Fabric No.` + short **Code** (`FR-…/ 0xxx-Lxx`) + Labels +
+  meters. Do **not** list garment types (Shirt / Overshirt / Trouser).
+  Match the original PO email table. Owner rule Aug 5 2026.
+- **Draft only — owner clicks Send**: prepare supplier chase/follow-up
+  email text in chat (or in-app draft); do **not** SMTP-send unless the
+  owner explicitly says to send. Owner rule Aug 5 2026.
 
 ## Deploy / infra
 
