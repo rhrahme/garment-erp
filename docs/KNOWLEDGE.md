@@ -26,6 +26,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Pattern library
 
+- **Two ways to use a base for a client** (do not collapse into one):
+  (1) on the base pattern page - client fit column (Use as base under a size);
+  (2) on the client job measurement sheet - Load from base pattern into Sample.
+  Same idea, different screens - keep both.
 - **Client fit columns on base patterns** (owner request, Aug 2 2026): the
   size grid on `/pattern/library/bases/[baseId]` supports per-client columns.
   Pick a client in the "Client fit column" selector, tap "Use as base" under a
