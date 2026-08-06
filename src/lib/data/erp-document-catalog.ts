@@ -137,6 +137,15 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/pattern-alteration-pending.json",
   },
   {
+    key: "pattern_operator_notices",
+    label: "Pattern operator notices",
+    description:
+      "How-to / instruction notices shown on Pattern home until acknowledged (also emailed to PATTERN_EMAILS)",
+    category: "production",
+    appHref: "/pattern",
+    sourcePath: "src/data/pattern-operator-notices.json",
+  },
+  {
     key: "production_work_orders",
     label: "Production work orders",
     description: "Sticker-based work orders on the production floor",

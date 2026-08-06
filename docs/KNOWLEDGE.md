@@ -76,6 +76,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Pages hosting a picker preload on mount so the dialog opens with zero
   network wait; the cache is invalidated after base create / fit-column
   save. Keep picker search client-side.
+- **Pattern operator notices** (Aug 6 2026): instructional how-tos appear at
+  the top of `/pattern` until Pattern taps Got it, and are emailed to
+  `PATTERN_EMAILS`. Store `pattern_operator_notices`; APIs
+  `/api/pattern/notices` + `/api/v1/pattern/notices` (create/list/ack) with
+  events `pattern.operator_notice_created` /
+  `pattern.operator_notice_acknowledged`. First notice explains consolidate
+  fabrics then add/link pattern (`howto-consolidate-fabrics-v1`).
 - **Pattern owns the client measurement sheet** (Aug 6 2026): on Sample /
   Trials / Final (and Trial detail), Pattern can add, rename, reorder, and
   remove any measurement row; edits sync across every trial. Cell writes

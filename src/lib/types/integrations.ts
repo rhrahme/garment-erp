@@ -68,6 +68,8 @@ export type IntegrationEventType =
   | "pattern.alteration_chart_acknowledged"
   | "pattern.alteration_chart_updated"
   | "pattern.alteration_stitcher_comment"
+  | "pattern.operator_notice_created"
+  | "pattern.operator_notice_acknowledged"
   | "invoice.sent"
   | "invoice.created"
   | "invoice.updated"

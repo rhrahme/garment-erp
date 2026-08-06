@@ -1,0 +1,65 @@
+import { NextResponse } from "next/server";
+import { requireAuthenticated } from "@/lib/auth/session";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { listOpenPatternOperatorNotices } from "@/lib/data/pattern-operator-notices";
+import {
+  createPatternOperatorNotice,
+  ensureConsolidateFabricsHowToNotice,
+} from "@/lib/pattern/pattern-operator-notice-actions";
+
+export async function GET() {
+  const session = await requireAuthenticated();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+  if (!session.isAdmin && !session.isPatternOperator) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+
+  await ensureDocumentsLoaded(["pattern_operator_notices"]);
+  try {
+    await ensureConsolidateFabricsHowToNotice(session.email ?? "system");
+  } catch (error) {
+    console.error("Failed to ensure Pattern consolidate how-to notice:", error);
+  }
+
+  return NextResponse.json({ notices: listOpenPatternOperatorNotices(50) });
+}
+
+export async function POST(request: Request) {
+  const session = await requireAuthenticated();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+  if (!session.isAdmin) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+
+  await ensureDocumentsLoaded(["pattern_operator_notices"]);
+  try {
+    const body = (await request.json()) as {
+      id?: string;
+      title?: string;
+      body?: string;
+      href?: string | null;
+      href_label?: string | null;
+      email?: boolean;
+    };
+    if (!body.title?.trim() || !body.body?.trim()) {
+      return NextResponse.json({ error: "title and body are required." }, { status: 400 });
+    }
+    const result = await createPatternOperatorNotice({
+      id: body.id,
+      title: body.title,
+      body: body.body,
+      href: body.href,
+      href_label: body.href_label,
+      created_by: session.email ?? "admin",
+      email: body.email !== false,
+    });
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error("Failed to create Pattern operator notice:", error);
+    return NextResponse.json({ error: "Failed to create notice." }, { status: 500 });
+  }
+}
