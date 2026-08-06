@@ -34,6 +34,15 @@ export type PatternAlterationPendingItem = {
   fabric_cut_code: string | null;
   /** Same SO + same fabric_number (consolidated fabric siblings). */
   related_articles: PatternAlterationRelatedArticle[];
+  /**
+   * Pattern comments for the tailor - synced onto the Production / stitcher
+   * sheet (special_instructions) when a linked client pattern exists.
+   */
+  stitcher_comments: string | null;
+  stitcher_comments_at: string | null;
+  stitcher_comments_by: string | null;
+  /** Linked client pattern for deep-link / sheet sync when resolved. */
+  client_pattern_id: string | null;
   acknowledged_at: string | null;
   acknowledged_by: string | null;
   chart_updated_at: string | null;

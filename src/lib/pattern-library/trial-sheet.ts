@@ -127,3 +127,24 @@ export function findMeasurementRow(
 ): ClientPatternMeasurement | null {
   return version.measurements.find((m) => m.point_id === pointId) ?? null;
 }
+
+/** Prefer current/final trial remarks, then any version that has one. */
+export function remarksForPoint(
+  pattern: ClientPattern,
+  pointId: string
+): string | null {
+  const preferred =
+    currentTrialVersion(pattern) ??
+    pattern.versions.find((version) => version.is_final) ??
+    pattern.versions[0] ??
+    null;
+  if (preferred) {
+    const row = findMeasurementRow(preferred, pointId);
+    if (row?.remarks?.trim()) return row.remarks.trim();
+  }
+  for (const version of pattern.versions) {
+    const row = findMeasurementRow(version, pointId);
+    if (row?.remarks?.trim()) return row.remarks.trim();
+  }
+  return null;
+}

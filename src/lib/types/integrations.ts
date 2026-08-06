@@ -67,6 +67,7 @@ export type IntegrationEventType =
   | "pattern.alteration_chart_pending"
   | "pattern.alteration_chart_acknowledged"
   | "pattern.alteration_chart_updated"
+  | "pattern.alteration_stitcher_comment"
   | "invoice.sent"
   | "invoice.created"
   | "invoice.updated"

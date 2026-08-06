@@ -70,6 +70,7 @@ const OUTBOUND_EVENTS = [
   "pattern.alteration_chart_pending",
   "pattern.alteration_chart_acknowledged",
   "pattern.alteration_chart_updated",
+  "pattern.alteration_stitcher_comment",
   "invoice.sent",
   "invoice.created",
   "invoice.updated",
@@ -176,7 +177,7 @@ export function ZapierSetup() {
             <li>GET {baseUrl}/api/v1/pattern/alterations/pending</li>
             <li>
               PATCH {baseUrl}/api/v1/pattern/alterations/pending/[id] (action:
-              acknowledge | chart_updated)
+              acknowledge | chart_updated | stitcher_comments)
             </li>
             <li>POST {baseUrl}/api/v1/production/sewing-session/scan</li>
             <li className="pl-4 text-slate-500">

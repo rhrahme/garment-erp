@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { AlertTriangle, CheckCircle2, Scissors } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ExternalLink, Scissors } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -19,6 +20,11 @@ export function PatternAlterationPendingPanelClient({
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
+  const [drafts, setDrafts] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      initialItems.map((item) => [item.id, item.stitcher_comments ?? ""])
+    )
+  );
   const [actingId, setActingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +36,17 @@ export function PatternAlterationPendingPanelClient({
       if (!res.ok) return;
       const data = (await res.json()) as { items?: PatternAlterationPendingItem[] };
       if (Array.isArray(data.items)) {
-        setItems(data.items.filter((row) => row.status !== "chart_updated"));
+        const next = data.items.filter((row) => row.status !== "chart_updated");
+        setItems(next);
+        setDrafts((prev) => {
+          const merged = { ...prev };
+          for (const item of next) {
+            if (merged[item.id] === undefined) {
+              merged[item.id] = item.stitcher_comments ?? "";
+            }
+          }
+          return merged;
+        });
       }
     } catch {
       // Keep showing the last good list; next poll retries.
@@ -39,6 +55,11 @@ export function PatternAlterationPendingPanelClient({
 
   useEffect(() => {
     setItems(initialItems);
+    setDrafts(
+      Object.fromEntries(
+        initialItems.map((item) => [item.id, item.stitcher_comments ?? ""])
+      )
+    );
   }, [initialItems]);
 
   useEffect(() => {
@@ -48,14 +69,18 @@ export function PatternAlterationPendingPanelClient({
     return () => window.clearInterval(id);
   }, [refreshList]);
 
-  async function patch(id: string, action: "acknowledge" | "chart_updated") {
+  async function patch(
+    id: string,
+    action: "acknowledge" | "chart_updated" | "stitcher_comments",
+    stitcher_comments?: string
+  ) {
     setActingId(id);
     setError(null);
     try {
       const res = await fetch(`/api/pattern/alterations/pending/${encodeURIComponent(id)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, stitcher_comments }),
       });
       const data = (await res.json()) as {
         error?: string;
@@ -68,6 +93,12 @@ export function PatternAlterationPendingPanelClient({
           .map((row) => (row.id === id ? data.item! : row))
           .filter((row) => row.status !== "chart_updated")
       );
+      if (data.item) {
+        setDrafts((prev) => ({
+          ...prev,
+          [id]: data.item!.stitcher_comments ?? "",
+        }));
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Update failed");
@@ -95,8 +126,8 @@ export function PatternAlterationPendingPanelClient({
         </CardTitle>
         <p className="mt-2 flex items-start gap-2 text-sm font-medium text-amber-950">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-          A tailor started an alteration (EMPALT badge). Update the size chart from the
-          paper note, then mark chart updated. Same fabric on the SO is listed as related.
+          Add stitcher comments here (they sync onto the Production sheet). Update the
+          size chart, then mark chart updated. Same fabric on the SO is listed as related.
         </p>
         {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
       </CardHeader>
@@ -116,6 +147,14 @@ export function PatternAlterationPendingPanelClient({
                   .filter(Boolean)
                   .join(", ")
               : null;
+          const sheetHref = item.client_pattern_id
+            ? `/pattern/client-patterns/${encodeURIComponent(item.client_pattern_id)}`
+            : null;
+          const printHref = item.client_pattern_id
+            ? `/pattern/client-patterns/${encodeURIComponent(item.client_pattern_id)}/print?sheet=production`
+            : null;
+          const draft = drafts[item.id] ?? item.stitcher_comments ?? "";
+          const dirty = draft.trim() !== (item.stitcher_comments ?? "").trim();
 
           return (
             <div
@@ -147,6 +186,26 @@ export function PatternAlterationPendingPanelClient({
                       Consolidated fabric articles: {related}
                     </p>
                   ) : null}
+                  {sheetHref ? (
+                    <p className="flex flex-wrap gap-3 text-xs">
+                      <Link
+                        href={sheetHref}
+                        className="inline-flex items-center gap-1 font-medium text-indigo-700 hover:underline"
+                      >
+                        Open measurement sheet <ExternalLink className="h-3 w-3" />
+                      </Link>
+                      {printHref ? (
+                        <Link
+                          href={printHref}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 font-medium text-indigo-700 hover:underline"
+                        >
+                          Print Production sheet <ExternalLink className="h-3 w-3" />
+                        </Link>
+                      ) : null}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {item.status === "pending" ? (
@@ -170,6 +229,30 @@ export function PatternAlterationPendingPanelClient({
                     onClick={() => void patch(item.id, "chart_updated")}
                   >
                     Chart updated
+                  </Button>
+                </div>
+              </div>
+              <div className="mt-3 space-y-2 border-t border-amber-100 pt-3">
+                <label className="block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Stitcher comments (syncs to Production sheet)
+                </label>
+                <textarea
+                  value={draft}
+                  onChange={(e) =>
+                    setDrafts((prev) => ({ ...prev, [item.id]: e.target.value }))
+                  }
+                  rows={2}
+                  placeholder="e.g. shorten trousers 2cm / take in seat 1cm"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                />
+                <div className="flex justify-end">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={actingId === item.id || !dirty}
+                    onClick={() => void patch(item.id, "stitcher_comments", draft)}
+                  >
+                    Save comments
                   </Button>
                 </div>
               </div>

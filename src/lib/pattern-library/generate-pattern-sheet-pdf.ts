@@ -575,11 +575,11 @@ async function drawProductionSheetPage(
   };
 
   drawNoteLine(
-    "INSTRUCTIONS:",
+    "STITCHER COMMENTS:",
     version.special_instructions || pattern.special_instructions || "-"
   );
   const trialNotes = version.notes?.trim();
-  if (trialNotes) drawNoteLine("TRIAL NOTES:", trialNotes);
+  if (trialNotes) drawNoteLine("SHEET NOTES:", trialNotes);
   const patternNotes = pattern.notes?.trim();
   if (patternNotes) drawNoteLine("PATTERN NOTES:", patternNotes);
   if (pattern.physical_pattern_kept) {

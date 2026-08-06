@@ -23,8 +23,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   on the SO (article # from sticker L## when present). Pending write/notify
   failures must not fail the stitch scan; `/pattern` heals missing rows from
   open alteration sessions. Pattern clears via Acknowledge / Chart updated.
-  Pattern is not required before the tailor starts (paper note still carries
-  measurement detail). Reprint Expats badges after this change.
+  Pattern is not required before the tailor starts. Pattern enters stitcher
+  comments on the client measurement sheet (per-line Remark + bottom Stitcher
+  comments) and/or from the alteration queue; those print on the Production /
+  stitcher A4. Reprint Expats badges after the dual-QR change.
 - **All employees on the Expats ID badge list may use the kiosk** - cutters,
   wash/iron, buttons, not only tailors. Do not re-add a tailor-only gate.
 - **Multi-arm queue is intentional**: several employees may be badge-ready at

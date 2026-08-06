@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   buildTrialSheetColumns,
+  remarksForPoint,
   trialSheetStatusLabel,
 } from "@/lib/pattern-library/trial-sheet";
 import type { ClientPattern, ClientPatternVersion } from "@/lib/types/pattern-library";
@@ -83,5 +84,14 @@ describe("trial sheet columns", () => {
     assert.equal(cols.find((c) => c.kind === "final")?.versionId, "v2");
     assert.equal(cols.find((c) => c.kind === "final")?.isCurrent, true);
     assert.equal(trialSheetStatusLabel(p), "Final (Trial 2)");
+  });
+
+  it("reads stitcher remarks from the current trial row", () => {
+    const v1 = version(1);
+    const v2 = version(2);
+    v2.measurements[0]!.remarks = "shorten 2cm";
+    const p = pattern([v1, v2]);
+    assert.equal(remarksForPoint(p, "chest"), "shorten 2cm");
+    assert.equal(remarksForPoint(p, "missing"), null);
   });
 });

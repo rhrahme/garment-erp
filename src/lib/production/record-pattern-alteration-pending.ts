@@ -6,6 +6,7 @@ import {
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import { readSewingSessionsAsync } from "@/lib/data/sewing-sessions";
 import { notifyIntegration } from "@/lib/integrations";
+import { resolveClientPatternForAlteration } from "@/lib/pattern/resolve-client-pattern-for-alteration";
 import { resolveSoArticleForFabricLine } from "@/lib/sales-orders/label-codes";
 import type {
   PatternAlterationPendingItem,
@@ -40,7 +41,7 @@ function relatedArticlesForSession(session: SewingSession): PatternAlterationRel
 /**
  * Persist Pattern chart-pending item when a tailor starts an alteration session.
  * Fans out related articles on the same SO sharing the same fabric number.
- * Idempotent per session_id � safe to retry after a failed notify/write.
+ * Idempotent per session_id - safe to retry after a failed notify/write.
  */
 export async function recordPatternAlterationPendingFromSession(
   session: SewingSession,
@@ -48,7 +49,11 @@ export async function recordPatternAlterationPendingFromSession(
 ): Promise<PatternAlterationPendingItem | null> {
   if (session.work_kind !== "alteration") return null;
 
-  await ensureDocumentsLoaded(["sales_orders", "pattern_alteration_pending"]);
+  await ensureDocumentsLoaded([
+    "sales_orders",
+    "pattern_alteration_pending",
+    "pattern_library",
+  ]);
 
   const existing = getPatternAlterationPendingBySessionId(session.id);
   if (existing) return existing;
@@ -56,6 +61,15 @@ export async function recordPatternAlterationPendingFromSession(
   const order = session.so_number
     ? readSalesOrders().orders.find((row) => row.so_number === session.so_number)
     : null;
+
+  const related_articles = relatedArticlesForSession(session);
+  const draftForResolve = {
+    client_id: order?.client_id ?? null,
+    garment_type: session.garment_type ?? null,
+    related_articles,
+    client_pattern_id: null as string | null,
+  };
+  const linkedPattern = resolveClientPatternForAlteration(draftForResolve);
 
   const item: PatternAlterationPendingItem = {
     id: `alt-pending-${session.id}`,
@@ -76,7 +90,11 @@ export async function recordPatternAlterationPendingFromSession(
     garment_type: session.garment_type ?? null,
     piece_mark: session.piece_mark ?? null,
     fabric_cut_code: session.fabric_cut_code ?? null,
-    related_articles: relatedArticlesForSession(session),
+    related_articles,
+    stitcher_comments: null,
+    stitcher_comments_at: null,
+    stitcher_comments_by: null,
+    client_pattern_id: linkedPattern?.id ?? null,
     acknowledged_at: null,
     acknowledged_by: null,
     chart_updated_at: null,

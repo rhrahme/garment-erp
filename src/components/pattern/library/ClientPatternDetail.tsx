@@ -54,6 +54,7 @@ import { formatTudSizeDerivedLine } from "@/lib/pattern-library/derived-from";
 import {
   buildTrialSheetColumns,
   currentTrialVersion,
+  remarksForPoint,
   sampleValueForPoint,
   trialColumnValue,
   trialSheetPoints,
@@ -406,6 +407,45 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                 row.point_id === pointId ? { ...row, target_value: value } : row
               ),
             }
+      ),
+    }));
+  }
+
+  /** Per-line stitcher remark - kept on every trial so Production A4 always prints it. */
+  function setPointRemarks(pointId: string, remarks: string | null) {
+    const next = remarks?.trim() || null;
+    mutatePattern((draft) => ({
+      ...draft,
+      versions: draft.versions.map((trial) => ({
+        ...trial,
+        measurements: trial.measurements.map((row) =>
+          row.point_id === pointId ? { ...row, remarks: next } : row
+        ),
+      })),
+    }));
+  }
+
+  function setCurrentTrialStitcherComments(value: string | null) {
+    const current = currentTrialVersion(pattern!);
+    if (!current) return;
+    const next = value?.trim() || null;
+    mutatePattern((draft) => ({
+      ...draft,
+      special_instructions: next,
+      versions: draft.versions.map((trial) =>
+        trial.id === current.id ? { ...trial, special_instructions: next } : trial
+      ),
+    }));
+  }
+
+  function setCurrentTrialSheetNotes(value: string | null) {
+    const current = currentTrialVersion(pattern!);
+    if (!current) return;
+    const next = value?.trim() || null;
+    mutatePattern((draft) => ({
+      ...draft,
+      versions: draft.versions.map((trial) =>
+        trial.id === current.id ? { ...trial, notes: next } : trial
       ),
     }));
   }
@@ -814,7 +854,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           </label>
           <label className="text-sm">
             <span className="mb-1 block text-xs font-medium text-slate-600">
-              Special instructions
+              Stitcher comments (prints on Production sheet)
             </span>
             <input
               value={pattern.special_instructions ?? ""}
@@ -824,7 +864,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   true
                 )
               }
-              placeholder="e.g. 2 pleat at slv"
+              placeholder="e.g. shorten 2cm / take in waist"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             />
           </label>
@@ -1195,6 +1235,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                           ) : null}
                         </th>
                       ))}
+                      <th className="min-w-[10rem] px-3 py-2">Remark</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1250,6 +1291,16 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                             </td>
                           );
                         })}
+                        <td className="px-2 py-1">
+                          <input
+                            value={remarksForPoint(pattern, point.point_id) ?? ""}
+                            onChange={(e) =>
+                              setPointRemarks(point.point_id, e.target.value || null)
+                            }
+                            className="w-full min-w-[9rem] rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-300 focus:outline-none"
+                            placeholder="Remark for stitcher"
+                          />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1295,6 +1346,46 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   After client trial: edit the current Trial column, update Tuka, re-upload .TUD.
                 </p>
               </div>
+              {(() => {
+                const current = currentTrialVersion(pattern);
+                if (!current) return null;
+                return (
+                  <div className="grid gap-3 border-t border-slate-100 bg-slate-50/60 p-4 lg:grid-cols-2">
+                    <label className="text-sm">
+                      <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                        Stitcher comments (bottom of Production sheet)
+                      </span>
+                      <textarea
+                        value={
+                          current.special_instructions ??
+                          pattern.special_instructions ??
+                          ""
+                        }
+                        onChange={(e) =>
+                          setCurrentTrialStitcherComments(e.target.value || null)
+                        }
+                        rows={3}
+                        placeholder="Overall notes for the tailor - length, take-in, etc."
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="text-sm">
+                      <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                        Sheet notes (prints under comments)
+                      </span>
+                      <textarea
+                        value={current.notes ?? ""}
+                        onChange={(e) =>
+                          setCurrentTrialSheetNotes(e.target.value || null)
+                        }
+                        rows={3}
+                        placeholder="Extra Pattern notes for this trial"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                      />
+                    </label>
+                  </div>
+                );
+              })()}
             </div>
           ) : null}
 
@@ -1405,7 +1496,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                             )}
                           />
                         </td>
-                        <td className="px-3 py-1.5">
+                        <td className="px-2 py-1.5">
                           <input
                             value={row.remarks ?? ""}
                             onChange={(e) =>
@@ -1413,8 +1504,8 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                                 remarks: e.target.value || null,
                               })
                             }
-                            className="w-36 rounded-md border border-transparent px-1.5 py-1 text-xs text-slate-600 hover:border-slate-200 focus:border-indigo-300 focus:outline-none"
-                            placeholder="-"
+                            className="w-full min-w-[9rem] rounded-md border border-slate-200 px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-300 focus:outline-none"
+                            placeholder="Remark for stitcher"
                           />
                         </td>
                         <td className="px-1 py-1.5 text-center">
@@ -1442,7 +1533,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
               <div className="grid gap-4 border-t border-slate-100 p-4 lg:grid-cols-2">
                 <label className="text-sm">
                   <span className="mb-1 block text-xs font-medium text-slate-600">
-                    Trial notes / special instructions
+                    Stitcher comments (prints on Production sheet)
                   </span>
                   <textarea
                     value={version.special_instructions ?? ""}
@@ -1453,6 +1544,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                       }))
                     }
                     rows={2}
+                    placeholder="Overall notes for the tailor"
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                   />
                 </label>

@@ -36,6 +36,19 @@ export async function writePatternAlterationPending(
   return saveDocument(STORE_PATH, payload);
 }
 
+function normalizePendingItem(
+  item: PatternAlterationPendingItem
+): PatternAlterationPendingItem {
+  return {
+    ...item,
+    stitcher_comments: item.stitcher_comments ?? null,
+    stitcher_comments_at: item.stitcher_comments_at ?? null,
+    stitcher_comments_by: item.stitcher_comments_by ?? null,
+    client_pattern_id: item.client_pattern_id ?? null,
+    related_articles: item.related_articles ?? [],
+  };
+}
+
 export function listPatternAlterationPending(
   status?: PatternAlterationPendingStatus | PatternAlterationPendingStatus[],
   limit = 50
@@ -45,6 +58,7 @@ export function listPatternAlterationPending(
     : null;
   return readPatternAlterationPendingFresh()
     .items.filter((item) => (wanted ? wanted.has(item.status) : true))
+    .map(normalizePendingItem)
     .slice(0, limit);
 }
 
@@ -55,7 +69,9 @@ export function listOutstandingPatternAlterationPending(limit = 50): PatternAlte
 export function getPatternAlterationPendingById(id: string): PatternAlterationPendingItem | null {
   const trimmed = id.trim();
   if (!trimmed) return null;
-  return readPatternAlterationPendingFresh().items.find((item) => item.id === trimmed) ?? null;
+  const item =
+    readPatternAlterationPendingFresh().items.find((row) => row.id === trimmed) ?? null;
+  return item ? normalizePendingItem(item) : null;
 }
 
 export function getPatternAlterationPendingBySessionId(
@@ -90,6 +106,10 @@ export async function upsertPatternAlterationPending(
       ...item,
       id: existing.id,
       status: existing.status,
+      stitcher_comments: existing.stitcher_comments ?? item.stitcher_comments ?? null,
+      stitcher_comments_at: existing.stitcher_comments_at ?? item.stitcher_comments_at ?? null,
+      stitcher_comments_by: existing.stitcher_comments_by ?? item.stitcher_comments_by ?? null,
+      client_pattern_id: existing.client_pattern_id ?? item.client_pattern_id ?? null,
       acknowledged_at: existing.acknowledged_at,
       acknowledged_by: existing.acknowledged_by,
       chart_updated_at: existing.chart_updated_at,
@@ -119,6 +139,10 @@ export async function updatePatternAlterationPending(
     Pick<
       PatternAlterationPendingItem,
       | "status"
+      | "stitcher_comments"
+      | "stitcher_comments_at"
+      | "stitcher_comments_by"
+      | "client_pattern_id"
       | "acknowledged_at"
       | "acknowledged_by"
       | "chart_updated_at"

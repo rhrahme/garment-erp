@@ -689,14 +689,14 @@ function ProductionSheetPage({ data }: { data: PatternSheetData }) {
       <div className="mt-2 space-y-0.5 text-[11px] leading-snug">
         <p>
           <span className="text-[9px] font-bold uppercase tracking-wide text-slate-500">
-            Instructions:
+            Stitcher comments:
           </span>{" "}
           {version.special_instructions || pattern.special_instructions || "-"}
         </p>
         {version.notes?.trim() ? (
           <p>
             <span className="text-[9px] font-bold uppercase tracking-wide text-slate-500">
-              Trial notes:
+              Sheet notes:
             </span>{" "}
             {version.notes}
           </p>
