@@ -147,8 +147,9 @@ export function PatternAlterationPendingPanelClient({
                   .filter(Boolean)
                   .join(", ")
               : null;
+          // Editor lives under /library/clients; /client-patterns is print-only.
           const sheetHref = item.client_pattern_id
-            ? `/pattern/client-patterns/${encodeURIComponent(item.client_pattern_id)}`
+            ? `/pattern/library/clients/${encodeURIComponent(item.client_pattern_id)}`
             : null;
           const printHref = item.client_pattern_id
             ? `/pattern/client-patterns/${encodeURIComponent(item.client_pattern_id)}/print?sheet=production`
