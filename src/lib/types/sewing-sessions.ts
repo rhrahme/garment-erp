@@ -118,4 +118,11 @@ export type SewingKioskScanResult = {
   recovered?: boolean;
   recovery?: SewingSessionRecovery;
   piece_arm?: SewingKioskPieceArm | null;
+  /** Reject path persisted to sewing_scan_failures (after retries). */
+  failure_recorded?: boolean;
+  /**
+   * Server accepted the scan for durable storage (success write or failure log).
+   * Kiosk may dequeue only when durable is true (or ok is true).
+   */
+  durable?: boolean;
 };

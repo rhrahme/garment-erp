@@ -64,6 +64,7 @@ const OUTBOUND_EVENTS = [
   "production.sewing_session_started",
   "production.sewing_session_ended",
   "production.sewing_scan_failed",
+  "production.sewing_testing_reset",
   "production.alteration_started",
   "production.stage_advanced",
   "production.handed_to_driver",
@@ -224,6 +225,7 @@ export function ZapierSetup() {
             </li>
             <li>POST {baseUrl}/api/v1/sales-orders/[id]/fabric-lines/print</li>
             <li>POST {baseUrl}/api/v1/fabric-receiving/reset-testing</li>
+            <li>POST {baseUrl}/api/v1/production/sewing-session/reset-testing</li>
             <li>POST {baseUrl}/api/v1/fabric-receiving/defects</li>
             <li>GET/POST {baseUrl}/api/v1/thread-button-matching</li>
             <li>POST {baseUrl}/api/v1/thread-button-matching/photos</li>

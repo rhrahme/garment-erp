@@ -44,6 +44,14 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Silence on scan is a bug, never acceptable.
 - Rejects must explain themselves (e.g. washing/fabric-cut QR scanned instead
   of production piece QR) and persist to `sewing_scan_failures`.
+- **Scan durability (do not regress)**: every kiosk scan stays in
+  `sessionStorage` (`hagan-sewing-scan-queue`) until the server durably
+  accepts it (`ok` write) or records the reject (`failure_recorded`). Network
+  / 401 / 403 / non-JSON errors must **not** dequeue. Wedge + partial buffers
+  flush on `pagehide`. Server uses force-fresh `sewing_sessions` /
+  `sewing_scan_failures` reads, retries failure persistence, and
+  `protectSewing*Write` refuses accidental empty wipes (explicit testing reset
+  via `allow_testing_reset` / `POST .../sewing-session/reset-testing` only).
 - Employee/client names display short form when available.
 
 ## Pattern library

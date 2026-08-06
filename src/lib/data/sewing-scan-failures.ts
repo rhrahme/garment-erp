@@ -1,5 +1,10 @@
 import path from "path";
-import { readJsonFile, readJsonFileAsync, saveDocument } from "@/lib/data/document-persistence";
+import {
+  readJsonFile,
+  readJsonFileAsync,
+  readJsonFileFreshAsync,
+  saveDocument,
+} from "@/lib/data/document-persistence";
 import {
   pruneSewingScanFailures,
   SEWING_SCAN_FAILURE_MAX_ROWS,
@@ -27,16 +32,35 @@ export async function readSewingScanFailuresAsync(): Promise<SewingScanFailuresF
   return readJsonFileAsync(STORE_PATH, EMPTY);
 }
 
+export async function readSewingScanFailuresFresh(): Promise<SewingScanFailuresFile> {
+  return readJsonFileFreshAsync(STORE_PATH, EMPTY, { force: true });
+}
+
+export async function writeSewingScanFailures(
+  store: SewingScanFailuresFile,
+  options: { allowTestingReset?: boolean } = {}
+): Promise<SewingScanFailuresFile> {
+  const next = {
+    ...store,
+    updated_at: new Date().toISOString(),
+    ...(options.allowTestingReset ? { allow_testing_reset: true } : {}),
+  };
+  await saveDocument(STORE_PATH, next);
+  const { allow_testing_reset: _flag, ...clean } = next as SewingScanFailuresFile & {
+    allow_testing_reset?: boolean;
+  };
+  return clean;
+}
+
 export async function appendSewingScanFailure(
   failure: SewingScanFailure,
   at = Date.now()
 ): Promise<SewingScanFailure> {
-  const store = await readSewingScanFailuresAsync();
+  const store = await readSewingScanFailuresFresh();
   const failures = pruneSewingScanFailures([failure, ...store.failures], at);
-  await saveDocument(STORE_PATH, {
+  await writeSewingScanFailures({
     ...store,
     failures,
-    updated_at: new Date(at).toISOString(),
   });
   return failure;
 }

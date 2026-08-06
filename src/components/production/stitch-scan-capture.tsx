@@ -395,6 +395,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
 
     while (queueRef.current.length > 0) {
       const item = queueRef.current[0]!;
+      let dequeue = false;
       try {
         const res = await fetch("/api/production/sewing-session/scan", {
           method: "POST",
@@ -412,14 +413,25 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
           data = {} as SewingKioskScanResult & { error?: string };
         }
         // Auth/middleware rejects never reach processSewingKioskScan, so they are
-        // not written to sewing_scan_failures — surface that clearly on the kiosk.
+        // not written to sewing_scan_failures — keep in queue and rescan after login.
         const authBlocked = res.status === 401 || res.status === 403;
-        const ok = !authBlocked && Boolean(data.ok ?? res.ok);
+        const serverProcessed =
+          typeof data.ok === "boolean" &&
+          (Boolean(data.phase) || Boolean(data.beep) || typeof data.failure_recorded === "boolean");
+        const ok = !authBlocked && Boolean(data.ok);
+        // Dequeue only when the server durably accepted success or logged the reject.
+        const durable =
+          !authBlocked &&
+          serverProcessed &&
+          (ok || data.durable === true || data.failure_recorded === true);
+        dequeue = durable;
         const msg = authBlocked
           ? res.status === 403
             ? "Scan blocked - this login cannot use the stitch kiosk. Sign in as stitch@hagan.pro."
-            : "Login expired or auth timed out - refresh and sign in again, then rescan."
-          : data.message ?? data.error ?? (ok ? "OK" : `Scan failed (HTTP ${res.status})`);
+            : "Login expired or auth timed out - refresh and sign in again. Scan kept in queue."
+          : !serverProcessed
+            ? `Server error - scan kept in queue (HTTP ${res.status}).`
+            : data.message ?? data.error ?? (ok ? "OK" : `Scan failed (HTTP ${res.status})`);
 
         setLast(data);
         if (data.phase) setPhase(data.phase);
@@ -429,15 +441,27 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
         playBeep(data.beep ?? (ok ? "ok" : "error"));
         setLog((prev) =>
           [
-            { id: item.id, code: item.code, ok, message: msg, at: Date.now() },
+            {
+              id: item.id,
+              code: item.code,
+              ok,
+              message: dequeue ? msg : `${msg} (retrying)`,
+              at: Date.now(),
+            },
             ...prev,
           ].slice(0, MAX_LOG)
         );
+
+        if (!dequeue) {
+          // Back off briefly so a flaky network / auth blip can recover.
+          await new Promise((resolve) => setTimeout(resolve, 1200));
+          break;
+        }
       } catch (err) {
         const msg =
           err instanceof Error
-            ? `Network error - scan not saved. ${err.message}`
-            : "Network error - scan not saved.";
+            ? `Network error - scan kept in queue. ${err.message}`
+            : "Network error - scan kept in queue.";
         setError(msg);
         playBeep("error");
         setLog((prev) =>
@@ -446,9 +470,13 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
             ...prev,
           ].slice(0, MAX_LOG)
         );
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+        break;
       }
 
-      syncQueueState(queueRef.current.slice(1));
+      if (dequeue) {
+        syncQueueState(queueRef.current.slice(1));
+      }
       if (shouldReclaimFocus()) focusInput();
       else refreshArmedState();
     }
@@ -691,6 +719,82 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
   useEffect(() => {
     if (queue.length > 0) void drainQueue();
   }, [drainQueue, queue.length]);
+
+  // Flush wedge / partial buffers before unload so scans never die in memory.
+  useEffect(() => {
+    const flushCaptureBuffers = () => {
+      if (wedgeFlushTimerRef.current) {
+        window.clearTimeout(wedgeFlushTimerRef.current);
+        wedgeFlushTimerRef.current = null;
+      }
+      const wedge = wedgeBufferRef.current.trim();
+      if (wedge) {
+        wedgeBufferRef.current = "";
+        wedgeBufferStartedAtRef.current = 0;
+        const parts = splitScanInput(wedge);
+        if (parts.length > 0) {
+          const added: QueuedScan[] = parts
+            .map((part) => normalizeScannerInput(part))
+            .filter(Boolean)
+            .map((code) => ({
+              id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+              code,
+              captured_at: Date.now(),
+            }));
+          if (added.length > 0) {
+            const next = [...queueRef.current, ...added];
+            queueRef.current = next;
+            persistQueue(next);
+          }
+        }
+      }
+      if (partialMergeTimerRef.current) {
+        window.clearTimeout(partialMergeTimerRef.current);
+        partialMergeTimerRef.current = null;
+      }
+      const pending = pendingPartialRef.current;
+      if (pending?.code) {
+        pendingPartialRef.current = null;
+        const code = normalizeScannerInput(pending.code);
+        if (code) {
+          const next = [
+            ...queueRef.current,
+            {
+              id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+              code,
+              captured_at: Date.now(),
+            },
+          ];
+          queueRef.current = next;
+          persistQueue(next);
+        }
+      }
+    };
+    window.addEventListener("pagehide", flushCaptureBuffers);
+    window.addEventListener("beforeunload", flushCaptureBuffers);
+    return () => {
+      window.removeEventListener("pagehide", flushCaptureBuffers);
+      window.removeEventListener("beforeunload", flushCaptureBuffers);
+    };
+  }, []);
+
+  // Retry stuck queue after network/auth recovery (tab focus / online).
+  useEffect(() => {
+    const retry = () => {
+      if (queueRef.current.length > 0 && !drainingRef.current) void drainQueue();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") retry();
+    };
+    window.addEventListener("online", retry);
+    document.addEventListener("visibilitychange", onVisibility);
+    const timer = window.setInterval(retry, 8000);
+    return () => {
+      window.removeEventListener("online", retry);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.clearInterval(timer);
+    };
+  }, [drainQueue]);
 
   const value = useMemo<StitchScanCaptureValue>(
     () => ({

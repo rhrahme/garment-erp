@@ -220,6 +220,50 @@ async function writeToSupabase<T>(documentKey: ErpDocumentKey, payload: T): Prom
     }
   }
 
+  if (documentKey === "sewing_sessions") {
+    try {
+      const { protectSewingSessionsWrite } = await import(
+        "@/lib/production/protect-sewing-document-write"
+      );
+      const remote = await readFromSupabaseForced<Record<string, unknown>>("sewing_sessions");
+      if (remote) {
+        dataToWrite = protectSewingSessionsWrite(
+          remote as Parameters<typeof protectSewingSessionsWrite>[0],
+          dataToWrite as Parameters<typeof protectSewingSessionsWrite>[1]
+        ) as T;
+      }
+    } catch (error) {
+      console.error(
+        "[sewing_sessions] Refusing Supabase write — protect merge failed:",
+        error instanceof Error ? error.message : error
+      );
+      return false;
+    }
+  }
+
+  if (documentKey === "sewing_scan_failures") {
+    try {
+      const { protectSewingScanFailuresWrite } = await import(
+        "@/lib/production/protect-sewing-document-write"
+      );
+      const remote = await readFromSupabaseForced<Record<string, unknown>>(
+        "sewing_scan_failures"
+      );
+      if (remote) {
+        dataToWrite = protectSewingScanFailuresWrite(
+          remote as Parameters<typeof protectSewingScanFailuresWrite>[0],
+          dataToWrite as Parameters<typeof protectSewingScanFailuresWrite>[1]
+        ) as T;
+      }
+    } catch (error) {
+      console.error(
+        "[sewing_scan_failures] Refusing Supabase write — protect merge failed:",
+        error instanceof Error ? error.message : error
+      );
+      return false;
+    }
+  }
+
   const updated_at = new Date().toISOString();
   const expectedRowUpdatedAt = rowUpdatedAtCache.get(documentKey) ?? null;
 

@@ -4,7 +4,7 @@ import {
   upsertPatternAlterationPending,
 } from "@/lib/data/pattern-alteration-pending";
 import { readSalesOrders } from "@/lib/data/sales-orders";
-import { readSewingSessionsAsync } from "@/lib/data/sewing-sessions";
+import { readSewingSessionsFresh } from "@/lib/data/sewing-sessions";
 import { notifyIntegration } from "@/lib/integrations";
 import { resolveClientPatternForAlteration } from "@/lib/pattern/resolve-client-pattern-for-alteration";
 import { resolveSoArticleForFabricLine } from "@/lib/sales-orders/label-codes";
@@ -167,7 +167,7 @@ export async function healMissingPatternAlterationPendingFromOpenSessions(): Pro
     "pattern_alteration_pending",
     "sales_orders",
   ]);
-  const store = await readSewingSessionsAsync();
+  const store = await readSewingSessionsFresh();
   let created = 0;
   for (const session of store.sessions) {
     if (session.work_kind !== "alteration") continue;

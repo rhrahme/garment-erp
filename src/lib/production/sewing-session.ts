@@ -1,6 +1,6 @@
 import { readClients } from "@/lib/data/clients";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { readSewingSessionsAsync, writeSewingSessions } from "@/lib/data/sewing-sessions";
+import { readSewingSessionsFresh, writeSewingSessions } from "@/lib/data/sewing-sessions";
 import {
   isAnyEmployeeBadgeQrPayload,
   parseEmployeeBadgeScan,
@@ -207,6 +207,8 @@ function result(
     session,
     open_sessions: open,
     ...restExtras,
+    // Successful path already wrote sewing_sessions before returning.
+    durable: restExtras.durable ?? (ok ? true : undefined),
   };
 }
 
@@ -255,12 +257,31 @@ async function failResult(
     source: meta.source ?? "erp",
     now: meta.now,
   };
-  try {
-    await recordSewingScanFailure(payload);
-  } catch {
-    // Persistence must not block the kiosk response.
+  let failureRecorded = false;
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await recordSewingScanFailure(payload);
+      failureRecorded = true;
+      break;
+    } catch (error) {
+      lastError = error;
+      if (attempt < 2) {
+        await new Promise((resolve) => setTimeout(resolve, 40 * (attempt + 1)));
+      }
+    }
   }
-  return scanResult;
+  if (!failureRecorded) {
+    console.error(
+      "[sewing_scan_failures] Failed to persist reject after retries:",
+      lastError instanceof Error ? lastError.message : lastError
+    );
+  }
+  return {
+    ...scanResult,
+    failure_recorded: failureRecorded,
+    durable: failureRecorded,
+  };
 }
 
 function lookupPieceMeta(scanCode: string): {
@@ -542,11 +563,11 @@ export async function processSewingKioskScan(
   };
   const raw = normalizeScannerInput(input.raw);
   if (!raw) {
-    const store = expireStaleSewingState(await readSewingSessionsAsync(), at);
+    const store = expireStaleSewingState(await readSewingSessionsFresh(), at);
     return failResult("Empty scan.", "empty_scan", "unknown", store, kioskId, {}, failMeta);
   }
 
-  let store = expireStaleSewingState(await readSewingSessionsAsync(), at);
+  let store = expireStaleSewingState(await readSewingSessionsFresh(), at);
   failMeta.raw = raw;
 
   if (isAnyEmployeeBadgeQrPayload(raw)) {
