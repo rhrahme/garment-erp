@@ -87,6 +87,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   events `pattern.operator_notice_created` /
   `pattern.operator_notice_acknowledged`. First notice explains consolidate
   fabrics then add/link pattern (`howto-consolidate-fabrics-v1`).
+- **Pattern measurement saves must be atomic + force-fresh** (Aug 6 2026):
+  `pattern_library` RMW uses `readPatternLibraryFresh({ force: true })`. Sheet
+  Save writes all trials in one `trial_sheet_versions` PATCH (not N version
+  PATCHes). Never let a stale Vercel cache rewrite the whole library after a
+  successful save - that wiped Pattern's Abdullah Al Moussa House Thobe sheet
+  until restored from a duplicate filled pattern.
 - **Pattern owns the client measurement sheet** (Aug 6 2026): on Sample /
   Trials / Final (and Trial detail), Pattern can add, rename, reorder, and
   remove any measurement row; edits sync across every trial. Cell writes

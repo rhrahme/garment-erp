@@ -12,6 +12,7 @@ import { hydrateMultiPieceGeometry } from "@/lib/pattern-library/multi-piece-geo
 import {
   seedMarkerLayoutIfMissing,
   updateClientPattern,
+  updateClientPatternTrialSheet,
 } from "@/lib/pattern-library/mutations";
 
 export async function GET(_request: Request, context: { params: Promise<{ patternId: string }> }) {
@@ -94,6 +95,20 @@ export async function PATCH(request: Request, context: { params: Promise<{ patte
     await ensurePatternLibraryLoaded();
     const { patternId } = await context.params;
     const body = await request.json();
+
+    // Atomic Sample / Trials / Final sheet save (all trials, one document write).
+    if (Array.isArray(body?.trial_sheet_versions)) {
+      const result = await updateClientPatternTrialSheet(
+        patternId,
+        body.trial_sheet_versions,
+        { updatedBy: session.email }
+      );
+      if (!result.ok) {
+        return NextResponse.json({ error: result.error }, { status: result.status });
+      }
+      return NextResponse.json({ pattern: result.pattern });
+    }
+
     const result = await updateClientPattern(patternId, body, { updatedBy: session.email });
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });

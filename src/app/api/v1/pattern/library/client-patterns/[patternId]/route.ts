@@ -4,7 +4,10 @@ import {
   ensurePatternLibraryLoaded,
   getClientPatternByIdFresh,
 } from "@/lib/data/pattern-library";
-import { updateClientPattern } from "@/lib/pattern-library/mutations";
+import {
+  updateClientPattern,
+  updateClientPatternTrialSheet,
+} from "@/lib/pattern-library/mutations";
 
 export async function GET(request: Request, context: { params: Promise<{ patternId: string }> }) {
   const authError = verifyApiKey(request);
@@ -32,9 +35,21 @@ export async function PATCH(request: Request, context: { params: Promise<{ patte
     await ensurePatternLibraryLoaded();
     const { patternId } = await context.params;
     const body = await request.json();
-    const result = await updateClientPattern(patternId, body, {
-      updatedBy: typeof body.updated_by === "string" ? body.updated_by : "api",
-    });
+    const updatedBy = typeof body.updated_by === "string" ? body.updated_by : "api";
+
+    if (Array.isArray(body?.trial_sheet_versions)) {
+      const result = await updateClientPatternTrialSheet(
+        patternId,
+        body.trial_sheet_versions,
+        { updatedBy }
+      );
+      if (!result.ok) {
+        return NextResponse.json({ error: result.error }, { status: result.status });
+      }
+      return NextResponse.json({ pattern: result.pattern, source: "api" });
+    }
+
+    const result = await updateClientPattern(patternId, body, { updatedBy });
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }

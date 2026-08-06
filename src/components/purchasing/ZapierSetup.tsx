@@ -208,11 +208,13 @@ export function ZapierSetup() {
             <li className="pl-4 text-slate-500">
               body may include garment_type, rebuild_template, active_tud_file_id,
               active_tud_by_piece, marker_fabric_width_cm, marker_double_fold
-              (nest estimate inputs), measurement header fields
+              (nest estimate inputs), measurement header fields, or
+              trial_sheet_versions (atomic Sample/Trials/Final sheet save)
             </li>
             <li>PATCH {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]/versions/[versionId]</li>
             <li className="pl-4 text-slate-500">
-              trial sheet updates (Sample / Trial N / Final columns via measurements)
+              single-trial updates; prefer trial_sheet_versions on the pattern
+              PATCH for full sheet saves
             </li>
             <li>GET/PUT/DELETE {baseUrl}/api/v1/pattern/library/bases/[baseId]/client-columns</li>
             <li className="pl-4 text-slate-500">

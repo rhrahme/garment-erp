@@ -1065,35 +1065,89 @@ export async function updateClientPatternVersion(
   },
   options: { updatedBy?: string | null; notify?: boolean } = {}
 ): Promise<Ok<{ pattern: ClientPattern; version: ClientPatternVersion }> | Err> {
+  const result = await updateClientPatternTrialSheet(
+    patternId,
+    [
+      {
+        id: versionId,
+        measurements: patch.measurements,
+        trial_date: patch.trial_date,
+        special_instructions: patch.special_instructions,
+        notes: patch.notes,
+      },
+    ],
+    options
+  );
+  if (!result.ok) return result;
+  const version = result.pattern.versions.find((row) => row.id === versionId);
+  if (!version) return { ok: false, status: 404, error: "Version not found." };
+  return { ok: true, pattern: result.pattern, version };
+}
+
+export type TrialSheetVersionPatch = {
+  id: string;
+  measurements?: Partial<ClientPatternMeasurement>[];
+  trial_date?: string | null;
+  special_instructions?: string | null;
+  notes?: string | null;
+};
+
+/**
+ * Atomic Sample/Trials/Final sheet save - one forced read, patch every trial,
+ * one write. Avoids N sequential whole-document RMWs that can clobber each other.
+ */
+export async function updateClientPatternTrialSheet(
+  patternId: string,
+  versionPatches: TrialSheetVersionPatch[],
+  options: { updatedBy?: string | null; notify?: boolean } = {}
+): Promise<Ok<{ pattern: ClientPattern }> | Err> {
+  if (!Array.isArray(versionPatches) || versionPatches.length === 0) {
+    return { ok: false, status: 400, error: "versions are required." };
+  }
+
   const store = await readPatternLibraryFresh();
   const index = store.client_patterns.findIndex((pattern) => pattern.id === patternId);
   if (index < 0) return { ok: false, status: 404, error: "Client pattern not found." };
 
   const existing = store.client_patterns[index]!;
-  const versionIndex = existing.versions.findIndex((version) => version.id === versionId);
-  if (versionIndex < 0) return { ok: false, status: 404, error: "Version not found." };
+  const timestamp = now();
+  const byId = new Map(versionPatches.map((patch) => [patch.id, patch]));
 
-  const previous = existing.versions[versionIndex]!;
-  const version: ClientPatternVersion = {
-    ...previous,
-    measurements: patch.measurements
-      ? patch.measurements.map(sanitizeMeasurement).filter((row) => row.name)
-      : previous.measurements,
-    trial_date:
-      patch.trial_date === undefined ? previous.trial_date : patch.trial_date?.trim() || null,
-    special_instructions:
-      patch.special_instructions === undefined
-        ? previous.special_instructions
-        : patch.special_instructions?.trim() || null,
-    notes: patch.notes === undefined ? previous.notes : patch.notes?.trim() || null,
-    updated_by: options.updatedBy ?? previous.updated_by,
-    updated_at: now(),
-  };
+  for (const patch of versionPatches) {
+    if (!existing.versions.some((version) => version.id === patch.id)) {
+      return { ok: false, status: 404, error: `Version not found: ${patch.id}` };
+    }
+  }
+
+  let patternSpecial = existing.special_instructions;
+  const versions = existing.versions.map((previous) => {
+    const patch = byId.get(previous.id);
+    if (!patch) return previous;
+    if (patch.special_instructions !== undefined) {
+      patternSpecial = patch.special_instructions?.trim() || null;
+    }
+    return {
+      ...previous,
+      measurements: patch.measurements
+        ? patch.measurements.map(sanitizeMeasurement).filter((row) => row.name)
+        : previous.measurements,
+      trial_date:
+        patch.trial_date === undefined ? previous.trial_date : patch.trial_date?.trim() || null,
+      special_instructions:
+        patch.special_instructions === undefined
+          ? previous.special_instructions
+          : patch.special_instructions?.trim() || null,
+      notes: patch.notes === undefined ? previous.notes : patch.notes?.trim() || null,
+      updated_by: options.updatedBy ?? previous.updated_by,
+      updated_at: timestamp,
+    };
+  });
 
   const next: ClientPattern = {
     ...existing,
-    versions: existing.versions.map((candidate, i) => (i === versionIndex ? version : candidate)),
-    updated_at: version.updated_at,
+    special_instructions: patternSpecial,
+    versions,
+    updated_at: timestamp,
   };
   store.client_patterns[index] = next;
   await writePatternLibrary(store);
@@ -1102,13 +1156,13 @@ export async function updateClientPatternVersion(
     await notifyIntegration("client_pattern.updated", {
       id: next.id,
       pattern_ref: next.pattern_ref,
-      version_id: version.id,
-      version: version.version,
+      version_ids: versionPatches.map((patch) => patch.id),
+      sheet_save: true,
       updated_by: options.updatedBy ?? null,
     });
   }
 
-  return { ok: true, pattern: next, version };
+  return { ok: true, pattern: next };
 }
 
 export async function finalizeClientPatternVersion(

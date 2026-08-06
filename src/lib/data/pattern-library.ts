@@ -32,8 +32,17 @@ export async function readPatternLibraryAsync(): Promise<PatternLibraryFile> {
   return normalize(await readJsonFileAsync(PATTERN_LIBRARY_PATH, EMPTY_PATTERN_LIBRARY));
 }
 
+/**
+ * Always force a Supabase read for RMW paths. A warm 30s cache on another
+ * Vercel instance can otherwise overwrite a successful measurement save with
+ * a stale whole-document write (Pattern reported empty sheet after Save).
+ */
 export async function readPatternLibraryFresh(): Promise<PatternLibraryFile> {
-  return normalize(await readJsonFileFreshAsync(PATTERN_LIBRARY_PATH, EMPTY_PATTERN_LIBRARY));
+  return normalize(
+    await readJsonFileFreshAsync(PATTERN_LIBRARY_PATH, EMPTY_PATTERN_LIBRARY, {
+      force: true,
+    })
+  );
 }
 
 export async function writePatternLibrary(data: PatternLibraryFile): Promise<PatternLibraryFile> {

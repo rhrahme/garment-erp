@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -105,6 +105,8 @@ function formatDate(value: string | null): string {
 
 export function ClientPatternDetail({ patternId }: { patternId: string }) {
   const [pattern, setPattern] = useState<ClientPattern | null>(null);
+  /** Always-latest sheet for Save - blur commits may land after click otherwise. */
+  const patternRef = useRef<ClientPattern | null>(null);
   const [linkedJobs, setLinkedJobs] = useState<LinkedJob[]>([]);
   const [suggestedFabricWidthCm, setSuggestedFabricWidthCm] = useState<number | null>(null);
   const [suggestedFabricWidthSource, setSuggestedFabricWidthSource] = useState<
@@ -195,6 +197,10 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    patternRef.current = pattern;
+  }, [pattern]);
 
   // Warm the base-pattern picker cache while the operator looks at the sheet,
   // so "Load from base pattern" (and the TUD fill picker) opens instantly.
@@ -336,31 +342,38 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
 
   /** Persist Sample / Trial / Final cell edits across versions in one save. */
   async function saveTrialSheet() {
-    if (!pattern) return;
+    // Flush the focused MeasurementInput before reading pattern state.
+    if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+      await new Promise((resolve) => window.setTimeout(resolve, 50));
+    }
+    const sheet = patternRef.current;
+    if (!sheet) return;
     setSaving(true);
     setError(null);
     try {
-      for (const trial of pattern.versions) {
-        const res = await fetch(
-          `/api/pattern/library/client-patterns/${patternId}/versions/${trial.id}`,
-          {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              measurements: trial.measurements,
-              trial_date: trial.trial_date,
-              special_instructions: trial.special_instructions,
-              notes: trial.notes,
-            }),
-          }
-        );
-        if (!res.ok) {
-          const body = await res.json().catch(() => null);
-          throw new Error(body?.error ?? `Failed to save Trial ${trial.version}.`);
-        }
+      const res = await fetch(`/api/pattern/library/client-patterns/${patternId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trial_sheet_versions: sheet.versions.map((trial) => ({
+            id: trial.id,
+            measurements: trial.measurements,
+            trial_date: trial.trial_date,
+            special_instructions: trial.special_instructions,
+            notes: trial.notes,
+          })),
+        }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(body?.error ?? "Failed to save sheet.");
+      }
+      if (body?.pattern) {
+        setPattern(body.pattern);
+        patternRef.current = body.pattern;
       }
       setDirty(false);
-      await load(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save sheet.");
     } finally {
