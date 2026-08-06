@@ -73,7 +73,7 @@ function stitchBucket(
 function stitchCaption(bucket: StitchBucket, live: SewingSession | null): string | null {
   if (bucket === "ready") return "Ready";
   if (bucket === "in_process") {
-    return live ? floorActivityNowLabel(live.job_functions) : "On floor now";
+    return live ? floorActivityNowLabel(live.job_functions, live.work_kind) : "On floor now";
   }
   if (bucket === "done") return "Left";
   return null;
@@ -364,7 +364,14 @@ export function StitchOrderBoard({
                     <td className="px-3 py-3">
                       {live ? (
                         <div>
-                          <div className="font-medium text-emerald-800">
+                          <div
+                            className={cn(
+                              "font-medium",
+                              live.work_kind === "alteration"
+                                ? "text-amber-900"
+                                : "text-emerald-800"
+                            )}
+                          >
                             {sewingSessionEmployeeDisplayName(live)}
                           </div>
                           {live.status === "closing" ? (
@@ -398,7 +405,14 @@ export function StitchOrderBoard({
                     </td>
                     <td className="px-3 py-3">
                       {caption ? (
-                        <span className="rounded-full bg-white/80 px-2.5 py-0.5 text-xs font-semibold text-slate-800 ring-1 ring-slate-200">
+                        <span
+                          className={cn(
+                            "rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1",
+                            live?.work_kind === "alteration"
+                              ? "bg-amber-100 text-amber-900 ring-amber-200"
+                              : "bg-white/80 text-slate-800 ring-slate-200"
+                          )}
+                        >
                           {caption}
                         </span>
                       ) : (

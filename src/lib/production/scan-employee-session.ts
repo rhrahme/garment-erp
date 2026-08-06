@@ -1,4 +1,4 @@
-import { parseEmployeeQrPayload } from "@/lib/hr/employee-qr";
+import { isAnyEmployeeBadgeQrPayload } from "@/lib/hr/employee-qr";
 
 const SESSION_KEY = "garment-erp.scan-employee-session";
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
@@ -71,5 +71,5 @@ export function createScanEmployeeSession(input: {
 }
 
 export function isEmployeeBadgeCode(raw: string): boolean {
-  return parseEmployeeQrPayload(raw) !== null;
+  return isAnyEmployeeBadgeQrPayload(raw);
 }

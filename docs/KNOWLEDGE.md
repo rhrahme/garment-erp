@@ -12,6 +12,19 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Badge `job_functions` is the source of truth for activity labels** (Cutting /
   Sewing / Wash / Iron / Buttons) site-wide - Scan, Live, Performance, History,
   Orders. Never hardcode "Sewing".
+- **ID badges carry two QRs**: `EMP:{id}` (normal sew) and `EMPALT:{id}`
+  (alteration). Alteration QR arms the next piece as `work_kind=alteration`;
+  Live/History/Orders highlight **Alteration** (amber) without replacing
+  job_functions. USB wedge reassembly must treat `EMPALT` / `EMPALT:` as
+  partial fragments (never collapse to `EMP:`). Starting an alteration
+  session writes `pattern_alteration_pending` (idempotent per session) and
+  notifies Pattern (`production.alteration_started` /
+  `pattern.alteration_chart_pending`) for that article + same-fabric siblings
+  on the SO (article # from sticker L## when present). Pending write/notify
+  failures must not fail the stitch scan; `/pattern` heals missing rows from
+  open alteration sessions. Pattern clears via Acknowledge / Chart updated.
+  Pattern is not required before the tailor starts (paper note still carries
+  measurement detail). Reprint Expats badges after this change.
 - **All employees on the Expats ID badge list may use the kiosk** - cutters,
   wash/iron, buttons, not only tailors. Do not re-add a tailor-only gate.
 - **Multi-arm queue is intentional**: several employees may be badge-ready at

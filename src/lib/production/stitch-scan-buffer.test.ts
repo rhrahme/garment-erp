@@ -11,12 +11,17 @@ describe("looksLikePartialScanFragment", () => {
     assert.equal(looksLikePartialScanFragment("-L02-OS-1/2"), true);
     assert.equal(looksLikePartialScanFragment("EMP"), true);
     assert.equal(looksLikePartialScanFragment("EMP:"), true);
+    assert.equal(looksLikePartialScanFragment("EMPALT"), true);
+    assert.equal(looksLikePartialScanFragment("EMPALT:"), true);
+    assert.equal(looksLikePartialScanFragment("EMPA"), true);
+    assert.equal(looksLikePartialScanFragment("EMPAL"), true);
     assert.equal(looksLikePartialScanFragment(":2613429014"), true);
     assert.equal(looksLikePartialScanFragment("s"), true);
   });
 
   it("accepts complete badge and piece codes", () => {
     assert.equal(looksLikePartialScanFragment("EMP:2631625072"), false);
+    assert.equal(looksLikePartialScanFragment("EMPALT:2631625072"), false);
     assert.equal(looksLikePartialScanFragment("FR-0129-L08-TR-2/2"), false);
     assert.equal(looksLikePartialScanFragment("FR-0132-L07-JKT-1/2"), false);
   });
@@ -36,9 +41,32 @@ describe("tryMergeScanFragments", () => {
     assert.equal(tryMergeScanFragments("EMP", "2625917816"), "EMP:2625917816");
   });
 
+  it("rejoins EMPALT alteration badge splits without collapsing to EMP", () => {
+    assert.equal(
+      tryMergeScanFragments("EMPALT", ":2613429014"),
+      "EMPALT:2613429014"
+    );
+    assert.equal(
+      tryMergeScanFragments("EMPALT:", "2625917816"),
+      "EMPALT:2625917816"
+    );
+    assert.equal(
+      tryMergeScanFragments("EMPALT", "2625917816"),
+      "EMPALT:2625917816"
+    );
+    assert.equal(
+      tryMergeScanFragments("EMPAL", "T:2613429014"),
+      "EMPALT:2613429014"
+    );
+  });
+
   it("does not merge two complete codes", () => {
     assert.equal(
       tryMergeScanFragments("EMP:2631625072", "FR-0129-L08-TR-2/2"),
+      null
+    );
+    assert.equal(
+      tryMergeScanFragments("EMPALT:2631625072", "FR-0129-L08-TR-2/2"),
       null
     );
   });

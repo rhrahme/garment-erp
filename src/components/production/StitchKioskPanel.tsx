@@ -6,7 +6,11 @@ import {
   floorActivityInProgressLabel,
   sewingSessionEmployeeDisplayName,
 } from "@/lib/production/sewing-session-status-label";
-import type { SewingKioskUiPhase, SewingSession } from "@/lib/types/sewing-sessions";
+import type {
+  SewingKioskArm,
+  SewingKioskUiPhase,
+  SewingSession,
+} from "@/lib/types/sewing-sessions";
 import { cn } from "@/lib/utils";
 
 function formatElapsed(startedAt: string | null, now: number): string {
@@ -27,30 +31,45 @@ function formatLogTime(at: number): string {
 
 function phaseCopy(
   phase: SewingKioskUiPhase,
-  focusSession: SewingSession | null
+  focusSession: SewingSession | null,
+  lastArm: SewingKioskArm | null
 ): { title: string; hint: string; tone: string } {
+  const alterationArmed = lastArm?.work_kind === "alteration";
   switch (phase) {
     case "identity_armed":
-      return {
-        title: "Badge armed",
-        hint: "Scan the A4 piece QR within 30 seconds",
-        tone: "bg-amber-50 border-amber-300 text-amber-950",
-      };
+      return alterationArmed
+        ? {
+            title: "Alteration armed",
+            hint: "Scan the A4 piece QR within 30 seconds",
+            tone: "bg-amber-50 border-amber-400 text-amber-950",
+          }
+        : {
+            title: "Badge armed",
+            hint: "Scan the A4 piece QR within 30 seconds",
+            tone: "bg-amber-50 border-amber-300 text-amber-950",
+          };
     case "piece_armed":
       return {
         title: "Piece armed",
-        hint: "Scan your employee badge within 30 seconds",
+        hint: "Scan EMP or Alteration badge within 30 seconds",
         tone: "bg-amber-50 border-amber-300 text-amber-950",
       };
     case "piece_open":
       return {
-        title: floorActivityInProgressLabel(focusSession?.job_functions),
+        title: floorActivityInProgressLabel(
+          focusSession?.job_functions,
+          focusSession?.work_kind
+        ),
         hint: "When finished: scan the same A4 QR, then your badge",
-        tone: "bg-emerald-50 border-emerald-300 text-emerald-950",
+        tone:
+          focusSession?.work_kind === "alteration"
+            ? "bg-amber-50 border-amber-400 text-amber-950"
+            : "bg-emerald-50 border-emerald-300 text-emerald-950",
       };
     case "piece_closing":
       return {
-        title: "Closing piece",
+        title:
+          focusSession?.work_kind === "alteration" ? "Closing alteration" : "Closing piece",
         hint: "Scan badge or matching A4 to confirm finish",
         tone: "bg-sky-50 border-sky-300 text-sky-950",
       };
@@ -92,7 +111,8 @@ export function StitchKioskPanel() {
       ? last.session
       : openSessions[0] ?? null;
 
-  const copy = phaseCopy(phase, highlight);
+  const lastArm = last?.arm ?? null;
+  const copy = phaseCopy(phase, highlight, lastArm);
   const elapsed = useMemo(
     () => formatElapsed(highlight?.started_at ?? null, now),
     [highlight?.started_at, now]
@@ -157,7 +177,7 @@ export function StitchKioskPanel() {
           )}
         >
           {captureArmed
-            ? "Armed - scan EMP badge or A4 piece QR"
+            ? "Armed - scan EMP / EMPALT badge or A4 piece QR"
             : "Field focused - USB scans still capture; tap to focus scanner"}
         </button>
         <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">

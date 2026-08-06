@@ -6,6 +6,7 @@ import {
   sewingSessionClientDisplayName,
   sewingSessionEmployeeDisplayName,
   sewingSessionScanQrLabel,
+  sewingSessionStatusBadgeClass,
   sewingSessionStatusLabel,
 } from "@/lib/production/sewing-session-status-label";
 import type { SewingSession } from "@/lib/types/sewing-sessions";
@@ -115,12 +116,14 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
                 <span
                   className={cn(
                     "rounded-full px-2 py-0.5 text-xs font-semibold",
-                    session.status === "closing"
-                      ? "bg-sky-100 text-sky-800"
-                      : "bg-emerald-100 text-emerald-800"
+                    sewingSessionStatusBadgeClass(session.status, session.work_kind)
                   )}
                 >
-                  {sewingSessionStatusLabel(session.status, session.job_functions)}
+                  {sewingSessionStatusLabel(
+                    session.status,
+                    session.job_functions,
+                    session.work_kind
+                  )}
                 </span>
               </li>
             ))}

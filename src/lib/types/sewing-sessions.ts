@@ -2,6 +2,9 @@ import type { EmployeeJobFunction } from "@/lib/hr/job-functions";
 
 export type SewingSessionStatus = "open" | "closing" | "closed" | "abandoned";
 
+/** How the piece session was armed — normal badge EMP: vs Alteration EMPALT:. */
+export type SewingWorkKind = "first_make" | "alteration";
+
 /** Short-lived: badge scanned, waiting for A4 piece QR. */
 export type SewingKioskArm = {
   kiosk_id: string;
@@ -10,6 +13,8 @@ export type SewingKioskArm = {
   employee_id_number: string;
   workstation_id: string | null;
   armed_at: string;
+  /** Set when armed via EMPALT: alteration badge QR. */
+  work_kind?: SewingWorkKind | null;
 };
 
 /** Short-lived: A4 scanned first, waiting for idle employee badge to start. */
@@ -74,6 +79,11 @@ export type SewingSession = {
    * UI should prefer this over client_name via sewingSessionClientDisplayName.
    */
   client_short_name?: string | null;
+  /**
+   * Alteration when started via EMPALT: badge QR; otherwise first_make / unset.
+   * Live / History show Alteration without replacing job_functions activity.
+   */
+  work_kind?: SewingWorkKind | null;
 };
 
 export type SewingSessionsFile = {

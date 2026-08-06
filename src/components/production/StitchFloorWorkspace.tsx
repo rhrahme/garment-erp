@@ -24,6 +24,7 @@ import {
   sewingSessionClientDisplayName,
   sewingSessionEmployeeDisplayName,
   sewingSessionScanQrLabel,
+  sewingSessionStatusBadgeClass,
   sewingSessionStatusLabel,
 } from "@/lib/production/sewing-session-status-label";
 import type { SewingScanFailure } from "@/lib/types/sewing-scan-failures";
@@ -211,8 +212,8 @@ function compareLiveSessions(
       );
     case "status":
       return compareSortStrings(
-        sewingSessionStatusLabel(a.status, a.job_functions),
-        sewingSessionStatusLabel(b.status, b.job_functions)
+        sewingSessionStatusLabel(a.status, a.job_functions, a.work_kind),
+        sewingSessionStatusLabel(b.status, b.job_functions, b.work_kind)
       );
     default:
       return 0;
@@ -246,8 +247,8 @@ function compareHistorySessions(a: SewingSession, b: SewingSession, key: History
       return compareSortNumbers(a.duration_sec, b.duration_sec);
     case "status":
       return compareSortStrings(
-        sewingSessionStatusLabel(a.status, a.job_functions),
-        sewingSessionStatusLabel(b.status, b.job_functions)
+        sewingSessionStatusLabel(a.status, a.job_functions, a.work_kind),
+        sewingSessionStatusLabel(b.status, b.job_functions, b.work_kind)
       );
     default:
       return 0;
@@ -621,12 +622,14 @@ export function StitchFloorWorkspace({
                           <span
                             className={cn(
                               "rounded-lg px-2.5 py-1 text-xs font-semibold",
-                              session.status === "closing"
-                                ? "bg-sky-100 text-sky-800"
-                                : "bg-emerald-100 text-emerald-800"
+                              sewingSessionStatusBadgeClass(session.status, session.work_kind)
                             )}
                           >
-                            {sewingSessionStatusLabel(session.status, session.job_functions)}
+                            {sewingSessionStatusLabel(
+                              session.status,
+                              session.job_functions,
+                              session.work_kind
+                            )}
                           </span>
                         </td>
                       </tr>
@@ -995,14 +998,10 @@ export function StitchFloorWorkspace({
                           <span
                             className={cn(
                               "rounded-lg px-2.5 py-1 text-xs font-semibold",
-                              row.status === "closed"
-                                ? "bg-slate-100 text-slate-700"
-                                : row.status === "closing"
-                                  ? "bg-sky-100 text-sky-800"
-                                  : "bg-emerald-100 text-emerald-800"
+                              sewingSessionStatusBadgeClass(row.status, row.work_kind)
                             )}
                           >
-                            {sewingSessionStatusLabel(row.status, row.job_functions)}
+                            {sewingSessionStatusLabel(row.status, row.job_functions, row.work_kind)}
                           </span>
                         </td>
                       </tr>

@@ -10,7 +10,7 @@ import {
   badgePrintDateLabel,
   chunkBadgePages,
 } from "@/lib/hr/badge-print";
-import { employeeQrPayload } from "@/lib/hr/employee-qr";
+import { employeeAlterationQrPayload, employeeQrPayload } from "@/lib/hr/employee-qr";
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageFetchUrl } from "@/lib/production/qr-labels";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
@@ -23,8 +23,9 @@ const PAGE_MARGIN_MM = 8;
 const GAP_X_MM = 8;
 const GAP_Y_MM = 6;
 const COMPANY_BAND_H_MM = 7;
-const QR_DISPLAY_MM = 30;
-const QR_FETCH_PX = 200;
+/** Two stacked QRs (Sew + Alteration) on the left panel. */
+const QR_DISPLAY_MM = 16;
+const QR_FETCH_PX = 160;
 const CROP_ARM_MM = 2.5;
 const CROP_THICK_MM = 0.25;
 const CROP_GAP_MM = 0.5;
@@ -60,6 +61,7 @@ function drawBadgeCard(
   employee: PayrollEmployee,
   group: IdBadgeGroup,
   qrDataUrl: string,
+  altQrDataUrl: string,
   x: number,
   y: number,
   printedLabel: string
@@ -96,21 +98,29 @@ function drawBadgeCard(
   doc.setLineWidth(0.2);
   doc.line(x + leftW, bodyY, x + leftW, y + h);
 
-  // QR
+  // Sew QR (top) + Alteration QR (bottom)
   const qrX = x + (leftW - QR_DISPLAY_MM) / 2;
-  const qrY = bodyY + (bodyH - QR_DISPLAY_MM - 4) / 2;
+  const stackH = QR_DISPLAY_MM * 2 + 7;
+  let qrY = bodyY + Math.max(1.5, (bodyH - stackH) / 2);
+
   doc.addImage(qrDataUrl, "PNG", qrX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
   doc.setDrawColor(226, 232, 240);
   doc.rect(qrX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
-
-  const payload = employeeQrPayload(employee);
-  doc.setTextColor(100, 116, 139);
-  doc.setFont("helvetica", "normal");
+  doc.setTextColor(71, 85, 105);
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(5);
-  doc.text(payload, x + leftW / 2, qrY + QR_DISPLAY_MM + 2.2, {
-    align: "center",
-    maxWidth: leftW - 2,
-  });
+  doc.text("SEW", x + leftW / 2, qrY + QR_DISPLAY_MM + 2, { align: "center" });
+
+  qrY += QR_DISPLAY_MM + 3.5;
+  doc.addImage(altQrDataUrl, "PNG", qrX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
+  doc.setDrawColor(180, 83, 9);
+  doc.setLineWidth(0.35);
+  doc.rect(qrX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
+  doc.setTextColor(146, 64, 14);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(5);
+  doc.text("ALTERATION", x + leftW / 2, qrY + QR_DISPLAY_MM + 2, { align: "center" });
+  doc.setLineWidth(0.2);
 
   // Right text column
   const textX = x + leftW + 2.5;
@@ -199,13 +209,19 @@ export async function generateEmployeeBadgePdf(
       const y = PAGE_MARGIN_MM + row * (BADGE_CARD_HEIGHT_MM + GAP_Y_MM);
 
       const payload = employeeQrPayload(employee);
+      const altPayload = employeeAlterationQrPayload(employee);
       let qrDataUrl = qrCache.get(payload);
       if (!qrDataUrl) {
         qrDataUrl = await fetchQrDataUrl(payload);
         qrCache.set(payload, qrDataUrl);
       }
+      let altQrDataUrl = qrCache.get(altPayload);
+      if (!altQrDataUrl) {
+        altQrDataUrl = await fetchQrDataUrl(altPayload);
+        qrCache.set(altPayload, altQrDataUrl);
+      }
 
-      drawBadgeCard(doc, employee, group, qrDataUrl, x, y, printedLabel);
+      drawBadgeCard(doc, employee, group, qrDataUrl, altQrDataUrl, x, y, printedLabel);
     }
   }
 

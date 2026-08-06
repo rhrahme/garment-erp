@@ -883,6 +883,48 @@ describe("blind-floor stitch scan recovery", () => {
     assert.notEqual(decision.type, "reject_ambiguous_employee_arms");
   });
 
+  it("most recent EMPALT arm keeps work_kind=alteration for the next A4 start", () => {
+    const arm = empArm({
+      employee_id: "e-imran",
+      employee_name: "Imran",
+      work_kind: "alteration",
+      armed_at: "2026-08-02T17:18:27.000Z",
+    });
+    const store: SewingSessionsFile = {
+      updated_at: null,
+      kiosk_arms: [
+        empArm({
+          employee_id: "e-adnan",
+          employee_name: "Adnan",
+          work_kind: "first_make",
+          armed_at: "2026-08-02T17:18:25.000Z",
+        }),
+        arm,
+      ],
+      kiosk_piece_arms: [],
+      sessions: [],
+    };
+    const decision = decidePieceStart(store, "k1");
+    assert.equal(decision.type, "start_with_employee_arm");
+    if (decision.type !== "start_with_employee_arm") return;
+    assert.equal(decision.arm.employee_id, "e-imran");
+    assert.equal(decision.arm.work_kind, "alteration");
+
+    const started = session({
+      id: "sew-alt",
+      employee_id: decision.arm.employee_id,
+      employee_name: decision.arm.employee_name,
+      status: "open",
+      work_kind: decision.arm.work_kind === "alteration" ? "alteration" : "first_make",
+    });
+    const next = applyStartFromEmployeeArm(store, "k1", decision.arm, started);
+    assert.equal(next.sessions[0]?.work_kind, "alteration");
+    assert.equal(
+      next.kiosk_arms.some((row) => row.employee_id === "e-imran"),
+      false
+    );
+  });
+
   it("expires stale piece arms with the 30s arm timeout", () => {
     const at = Date.parse("2026-08-01T12:00:00.000Z");
     const store: SewingSessionsFile = {
@@ -921,7 +963,7 @@ describe("blind-floor stitch scan recovery", () => {
     const unknown = buildSewingScanFailure({
       raw_code: "ZZZ-NOT-A-PIECE",
       reason:
-        "Code not recognized: ZZZ-NOT-A-PIECE. Stitch accepts EMP badge (EMP:{id}) or production A4 piece QR (e.g. FR-0132-L07-JKT-1/2).",
+        "Code not recognized: ZZZ-NOT-A-PIECE. Stitch accepts EMP badge (EMP:{id}), Alteration badge (EMPALT:{id}), or production A4 piece QR (e.g. FR-0132-L07-JKT-1/2).",
       reason_code: "piece_not_recognized",
       scan_kind: "piece",
       kiosk_id: "k1",

@@ -64,8 +64,12 @@ const OUTBOUND_EVENTS = [
   "production.sewing_session_started",
   "production.sewing_session_ended",
   "production.sewing_scan_failed",
+  "production.alteration_started",
   "production.stage_advanced",
   "production.handed_to_driver",
+  "pattern.alteration_chart_pending",
+  "pattern.alteration_chart_acknowledged",
+  "pattern.alteration_chart_updated",
   "invoice.sent",
   "invoice.created",
   "invoice.updated",
@@ -169,6 +173,12 @@ export function ZapierSetup() {
             <li>POST {baseUrl}/api/v1/pattern/jobs/[id]/fittings</li>
             <li>POST {baseUrl}/api/v1/pattern/jobs/[id]/revisions</li>
             <li>POST {baseUrl}/api/v1/pattern/auto-consolidate</li>
+            <li>GET {baseUrl}/api/v1/pattern/alterations/pending</li>
+            <li>
+              PATCH {baseUrl}/api/v1/pattern/alterations/pending/[id] (action:
+              acknowledge | chart_updated)
+            </li>
+            <li>POST {baseUrl}/api/v1/production/sewing-session/scan</li>
             <li className="pl-4 text-slate-500">
               body optional: sales_order_id, client_id, dry_run, acted_by - groups jobs by
               garment + composition + gsm per client and links/creates ClientPatterns

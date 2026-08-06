@@ -1,4 +1,9 @@
-import { EMPLOYEE_QR_PREFIX, isEmployeeQrPayload } from "@/lib/hr/employee-qr";
+import {
+  EMPLOYEE_ALTERATION_QR_PREFIX,
+  EMPLOYEE_QR_PREFIX,
+  isAnyEmployeeBadgeQrPayload,
+  isEmployeeQrPayload,
+} from "@/lib/hr/employee-qr";
 import { normalizeAwbScanInput } from "@/lib/integrations/normalize-awb-scan";
 import { fabricCutCodesMatch } from "@/lib/production/scan-input";
 import {
@@ -38,9 +43,18 @@ export function looksLikeProductionPieceCode(raw: string): boolean {
 
 function looksLikeMalformedEmployeeBadge(raw: string): boolean {
   const trimmed = raw.trim();
-  if (!trimmed || isEmployeeQrPayload(trimmed)) return false;
+  if (!trimmed || isAnyEmployeeBadgeQrPayload(trimmed) || isEmployeeQrPayload(trimmed)) {
+    return false;
+  }
   const upper = trimmed.toUpperCase();
   if (upper === EMPLOYEE_QR_PREFIX || upper === `${EMPLOYEE_QR_PREFIX}:`) return true;
+  if (
+    upper === EMPLOYEE_ALTERATION_QR_PREFIX ||
+    upper === `${EMPLOYEE_ALTERATION_QR_PREFIX}:`
+  ) {
+    return true;
+  }
+  if (upper.startsWith(`${EMPLOYEE_ALTERATION_QR_PREFIX}:`)) return true;
   if (upper.startsWith(`${EMPLOYEE_QR_PREFIX}:`)) return true; // EMP: with empty value already handled
   // EMP123 / EMP-001 / EMP_... without the required colon payload.
   return /^EMP[\s_-]?\d/i.test(trimmed) || /^EMP[^A-Z0-9:]/i.test(trimmed);
@@ -122,22 +136,22 @@ export function explainUnrecognizedStitchScan(raw: string): string {
 
   if (looksLikeMalformedEmployeeBadge(trimmed)) {
     return (
-      `Malformed employee badge (${display}) - expected EMP:{id}. ` +
-      "Scan your EMP badge or a production A4 piece QR."
+      `Malformed employee badge (${display}) - expected EMP:{id} or EMPALT:{id}. ` +
+      "Scan your EMP / Alteration badge or a production A4 piece QR."
     );
   }
 
   if (looksLikeWorkstationPlacard(trimmed)) {
     return (
       `This is a workstation placard QR (${display}) - not a piece code. ` +
-      "Scan your EMP badge or a production A4 piece QR."
+      "Scan your EMP / Alteration badge or a production A4 piece QR."
     );
   }
 
   if (normalizeAwbScanInput(trimmed)) {
     return (
       `This looks like a shipping AWB barcode (${display}) - not a stitch piece. ` +
-      "Scan your EMP badge or a production A4 piece QR."
+      "Scan your EMP / Alteration badge or a production A4 piece QR."
     );
   }
 
@@ -150,7 +164,7 @@ export function explainUnrecognizedStitchScan(raw: string): string {
 
   return (
     `Code not recognized: ${display}. ` +
-    "Stitch accepts EMP badge (EMP:{id}) or production A4 piece QR " +
+    "Stitch accepts EMP badge (EMP:{id}), Alteration badge (EMPALT:{id}), or production A4 piece QR " +
     "(e.g. FR-0132-L07-JKT-1/2)."
   );
 }

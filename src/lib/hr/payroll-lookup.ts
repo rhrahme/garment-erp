@@ -1,11 +1,12 @@
-import { parseEmployeeQrPayload } from "@/lib/hr/employee-qr";
+import { parseEmployeeBadgeScan, parseEmployeeQrPayload } from "@/lib/hr/employee-qr";
 import { readPayrollEmployees } from "@/lib/data/payroll-employees";
 import { normalizeWorkstationId } from "@/lib/production/factory-workstations";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 import type { ScanEmployeeContext } from "@/lib/types/production-scan";
 
 export function findPayrollEmployeeByBadgeValue(badgeValue: string): PayrollEmployee | null {
-  const parsed = parseEmployeeQrPayload(badgeValue) ?? badgeValue.trim();
+  const fromBadge = parseEmployeeBadgeScan(badgeValue);
+  const parsed = fromBadge?.value ?? parseEmployeeQrPayload(badgeValue) ?? badgeValue.trim();
   if (!parsed) return null;
 
   const normalized = parsed.trim();

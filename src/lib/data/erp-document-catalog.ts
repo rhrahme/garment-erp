@@ -128,6 +128,15 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/fabric-change-alerts.json",
   },
   {
+    key: "pattern_alteration_pending",
+    label: "Pattern alteration pending",
+    description:
+      "Chart updates owed after a tailor started an alteration session (EMPALT badge QR)",
+    category: "production",
+    appHref: "/pattern",
+    sourcePath: "src/data/pattern-alteration-pending.json",
+  },
+  {
     key: "production_work_orders",
     label: "Production work orders",
     description: "Sticker-based work orders on the production floor",

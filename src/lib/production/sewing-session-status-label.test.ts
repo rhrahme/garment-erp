@@ -12,6 +12,7 @@ import {
   sewingSessionClientDisplayName,
   sewingSessionEmployeeDisplayName,
   sewingSessionScanQrLabel,
+  sewingSessionStatusBadgeClass,
   sewingSessionStatusLabel,
 } from "@/lib/production/sewing-session-status-label";
 import type { SewingSession } from "@/lib/types/sewing-sessions";
@@ -66,6 +67,37 @@ describe("sewingSessionStatusLabel", () => {
     assert.equal(sewingSessionStatusLabel("abandoned", ["cutter"]), "Abandoned");
     assert.equal(sewingSessionStatusLabel("open", ["cutter"]), "Cutting");
     assert.equal(sewingSessionStatusLabel("open", ["shirt_tailor"]), "Sewing");
+    assert.equal(
+      sewingSessionStatusLabel("open", ["shirt_tailor"], "alteration"),
+      "Alteration"
+    );
+    assert.equal(
+      sewingSessionStatusLabel("closing", ["shirt_tailor"], "alteration"),
+      "Closing alteration"
+    );
+    assert.equal(
+      sewingSessionStatusLabel("closed", ["shirt_tailor"], "alteration"),
+      "Alteration done"
+    );
+  });
+
+  it("uses amber tone for open/closing alteration sessions", () => {
+    assert.equal(
+      sewingSessionStatusBadgeClass("open", "alteration"),
+      "bg-amber-100 text-amber-900"
+    );
+    assert.equal(
+      sewingSessionStatusBadgeClass("closing", "alteration"),
+      "bg-amber-100 text-amber-900"
+    );
+    assert.equal(
+      sewingSessionStatusBadgeClass("closed", "alteration"),
+      "bg-slate-100 text-slate-700"
+    );
+    assert.equal(
+      sewingSessionStatusBadgeClass("open", "first_make"),
+      "bg-emerald-100 text-emerald-800"
+    );
   });
 });
 
@@ -84,6 +116,11 @@ describe("floorActivityInProgressLabel / Now / session started message", () => {
     );
     assert.equal(floorActivityNowLabel(["cutter"]), "Cutting now");
     assert.equal(floorActivityNowLabel(["wash_iron"]), "Wash / iron now");
+    assert.equal(
+      floorActivityInProgressLabel(["shirt_tailor"], "alteration"),
+      "Alteration in progress"
+    );
+    assert.equal(floorActivityNowLabel(["shirt_tailor"], "alteration"), "Alteration now");
   });
 
   it("builds last-scan start lines from badge jobs (Ashraf cutter / Abdullah tailor)", () => {
@@ -99,6 +136,16 @@ describe("floorActivityInProgressLabel / Now / session started message", () => {
         "OS-1/2"
       ),
       "Abdullah sewing FR-0129-L10-OS-1/2 (OS-1/2)."
+    );
+    assert.equal(
+      floorActivitySessionStartedMessage(
+        "Abdullah",
+        ["trouser_tailor"],
+        "FR-0129-L10-OS-1/2",
+        "OS-1/2",
+        "alteration"
+      ),
+      "Abdullah alteration FR-0129-L10-OS-1/2 (OS-1/2)."
     );
   });
 });

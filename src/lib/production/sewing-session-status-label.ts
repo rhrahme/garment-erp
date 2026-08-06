@@ -7,7 +7,11 @@ import {
 } from "@/lib/hr/job-functions";
 import type { SewingEmployeeAggregate } from "@/lib/production/sewing-session-state";
 import type { ClientProfile } from "@/lib/types/clients";
-import type { SewingSession, SewingSessionStatus } from "@/lib/types/sewing-sessions";
+import type {
+  SewingSession,
+  SewingSessionStatus,
+  SewingWorkKind,
+} from "@/lib/types/sewing-sessions";
 
 /** Client-safe short_name trim (avoids pulling payroll document I/O into the browser bundle). */
 function normalizeShortName(value: unknown): string | null {
@@ -45,21 +49,49 @@ export function floorActivityLabelFromJobFunctions(values: unknown): string {
 /** Display label for Live / History status badges (job-aware when open). */
 export function sewingSessionStatusLabel(
   status: SewingSessionStatus,
-  jobFunctions?: unknown
+  jobFunctions?: unknown,
+  workKind?: SewingWorkKind | null
 ): string {
-  if (status === "closing") return "Closing";
-  if (status === "closed") return "Closed";
+  if (status === "closing") {
+    return workKind === "alteration" ? "Closing alteration" : "Closing";
+  }
+  if (status === "closed") {
+    return workKind === "alteration" ? "Alteration done" : "Closed";
+  }
   if (status === "abandoned") return "Abandoned";
+  if (workKind === "alteration") return "Alteration";
   return floorActivityLabelFromJobFunctions(jobFunctions);
 }
 
+/** Tailwind classes for Live / History status pills (amber = alteration). */
+export function sewingSessionStatusBadgeClass(
+  status: SewingSessionStatus,
+  workKind?: SewingWorkKind | null
+): string {
+  if (workKind === "alteration" && status !== "closed" && status !== "abandoned") {
+    return "bg-amber-100 text-amber-900";
+  }
+  if (status === "closed") return "bg-slate-100 text-slate-700";
+  if (status === "closing") return "bg-sky-100 text-sky-800";
+  if (status === "abandoned") return "bg-slate-100 text-slate-600";
+  return "bg-emerald-100 text-emerald-800";
+}
+
 /** Scan kiosk primary heading while a piece session is open. */
-export function floorActivityInProgressLabel(values: unknown): string {
+export function floorActivityInProgressLabel(
+  values: unknown,
+  workKind?: SewingWorkKind | null
+): string {
+  if (workKind === "alteration") return "Alteration in progress";
   return `${floorActivityLabelFromJobFunctions(values)} in progress`;
 }
 
 /** Orders board caption for a live open session (Cutting now / Sewing now / ...). */
-export function floorActivityNowLabel(values: unknown): string {
+export function floorActivityNowLabel(
+  values: unknown,
+  workKind?: SewingWorkKind | null
+): string {
+  if (workKind === "alteration") return "Alteration now";
   return `${floorActivityLabelFromJobFunctions(values)} now`;
 }
 
@@ -71,9 +103,13 @@ export function floorActivitySessionStartedMessage(
   employeeName: string,
   jobFunctions: unknown,
   productionCode: string,
-  pieceMark?: string | null
+  pieceMark?: string | null,
+  workKind?: SewingWorkKind | null
 ): string {
-  const activity = floorActivityLabelFromJobFunctions(jobFunctions).toLowerCase();
+  const activity =
+    workKind === "alteration"
+      ? "alteration"
+      : floorActivityLabelFromJobFunctions(jobFunctions).toLowerCase();
   const mark = pieceMark?.trim() ? ` (${pieceMark.trim()})` : "";
   return `${employeeName} ${activity} ${productionCode}${mark}.`;
 }

@@ -7,12 +7,12 @@ import { EmployeeBadgePrintControls } from "@/components/hr/EmployeeBadgePrintCo
 import { JobFunctionsEditor } from "@/components/hr/JobFunctionsEditor";
 import { ShortNameEditor } from "@/components/hr/ShortNameEditor";
 import { badgeDisplayName, listActiveBadgeEmployees } from "@/lib/hr/badge-print";
-import { employeeQrPayload } from "@/lib/hr/employee-qr";
+import { employeeAlterationQrPayload, employeeQrPayload } from "@/lib/hr/employee-qr";
 import { type IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 
-const QR_SIZE = 120;
+const QR_SIZE = 96;
 
 const GROUP_COPY: Record<
   IdBadgeGroup,
@@ -21,13 +21,13 @@ const GROUP_COPY: Record<
   saudi: {
     title: "Saudi employee ID badges",
     description:
-      "Saudi badge group. Each QR encodes a unique employee identifier for attendance, access control, or floor scanning.",
+      "Saudi badge group. Sew QR (EMP) for normal stitching; Alteration QR (EMPALT) starts alteration work and notifies Pattern to update the chart.",
     emptyHint: "No active Saudi employees yet. Add one below or switch to Expats.",
   },
   expat: {
     title: "Expat employee ID badges",
     description:
-      "Expat badge group. Each QR encodes a unique employee identifier for attendance, access control, or floor scanning.",
+      "Expat badge group. Sew QR (EMP) for normal stitching; Alteration QR (EMPALT) starts alteration work and notifies Pattern to update the chart.",
     emptyHint: "No active Expat employees yet. Add one below.",
   },
 };
@@ -134,7 +134,9 @@ export function EmployeeQrWorkspace({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((employee) => {
             const payload = employeeQrPayload(employee);
+            const altPayload = employeeAlterationQrPayload(employee);
             const qrSrc = qrImageUrl(payload, QR_SIZE);
+            const altQrSrc = qrImageUrl(altPayload, QR_SIZE);
 
             return (
               <div
@@ -167,17 +169,32 @@ export function EmployeeQrWorkspace({
                     />
                   </div>
                 ) : null}
-                <div className="mt-3 flex justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={qrSrc}
-                    alt={`QR code for ${employee.full_name}`}
-                    width={QR_SIZE}
-                    height={QR_SIZE}
-                    className="rounded-lg border border-slate-200"
-                  />
+                <div className="mt-3 flex w-full justify-center gap-3">
+                  <div className="flex flex-col items-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={qrSrc}
+                      alt={`Sew QR for ${employee.full_name}`}
+                      width={QR_SIZE}
+                      height={QR_SIZE}
+                      className="rounded-lg border border-slate-200"
+                    />
+                    <p className="mt-1 text-[10px] font-semibold uppercase text-slate-600">Sew</p>
+                    <p className="font-mono text-[9px] text-slate-400">{payload}</p>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={altQrSrc}
+                      alt={`Alteration QR for ${employee.full_name}`}
+                      width={QR_SIZE}
+                      height={QR_SIZE}
+                      className="rounded-lg border-2 border-amber-600"
+                    />
+                    <p className="mt-1 text-[10px] font-bold uppercase text-amber-800">Alteration</p>
+                    <p className="font-mono text-[9px] text-slate-400">{altPayload}</p>
+                  </div>
                 </div>
-                <p className="mt-2 font-mono text-[10px] text-slate-400">{payload}</p>
               </div>
             );
           })}

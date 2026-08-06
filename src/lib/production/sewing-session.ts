@@ -1,7 +1,11 @@
 import { readClients } from "@/lib/data/clients";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSewingSessionsAsync, writeSewingSessions } from "@/lib/data/sewing-sessions";
-import { isEmployeeQrPayload, parseEmployeeQrPayload } from "@/lib/hr/employee-qr";
+import {
+  isAnyEmployeeBadgeQrPayload,
+  parseEmployeeBadgeScan,
+} from "@/lib/hr/employee-qr";
+import { safeRecordPatternAlterationPendingFromSession } from "@/lib/production/record-pattern-alteration-pending";
 import {
   findPayrollEmployeeByBadgeValue,
   findPayrollEmployeeById,
@@ -62,6 +66,7 @@ import type {
   SewingKioskScanResult,
   SewingSession,
   SewingSessionsFile,
+  SewingWorkKind,
 } from "@/lib/types/sewing-sessions";
 
 export {
@@ -350,6 +355,7 @@ function buildSessionFromArmAndMeta(
     client_name: meta.client_name,
     garment_type: meta.garment_type,
     fabric_number: meta.fabric_number,
+    work_kind: arm.work_kind === "alteration" ? "alteration" : "first_make",
   };
 }
 
@@ -362,7 +368,8 @@ function buildSessionFromPieceArm(
     workstation_id: string | null;
   },
   kioskId: string,
-  at: number
+  at: number,
+  workKind: SewingWorkKind = "first_make"
 ): SewingSession {
   return {
     id: `sew-${at}-${Math.random().toString(36).slice(2, 8)}`,
@@ -386,6 +393,7 @@ function buildSessionFromPieceArm(
     client_name: pieceArm.client_name,
     garment_type: pieceArm.garment_type,
     fabric_number: pieceArm.fabric_number,
+    work_kind: workKind,
   };
 }
 
@@ -456,27 +464,32 @@ async function closeSessionWithBadgeOrPiece(input: {
   store = applyCloseSession(store, closingForEmployee, closed);
   await writeSewingSessions(store);
 
-  await notifyIntegration(
-    "production.sewing_session_ended",
-    {
-      session_id: closed.id,
-      kiosk_id: closed.kiosk_id,
-      employee_id: closed.employee_id,
-      employee_name: closed.employee_name,
-      production_code: closed.production_code,
-      scan_code: closed.scan_code,
-      workstation_id: closed.workstation_id,
-      started_at: closed.started_at,
-      ended_at: closed.ended_at,
-      duration_sec: closed.duration_sec,
-      so_number: closed.so_number,
-      piece_mark: closed.piece_mark,
-      work_order_id: closed.work_order_id,
-      stage_advanced: stageAdvanced,
-      stage_message: stageMessage,
-    },
-    source ?? "erp"
-  );
+  try {
+    await notifyIntegration(
+      "production.sewing_session_ended",
+      {
+        session_id: closed.id,
+        kiosk_id: closed.kiosk_id,
+        employee_id: closed.employee_id,
+        employee_name: closed.employee_name,
+        production_code: closed.production_code,
+        scan_code: closed.scan_code,
+        workstation_id: closed.workstation_id,
+        started_at: closed.started_at,
+        ended_at: closed.ended_at,
+        duration_sec: closed.duration_sec,
+        so_number: closed.so_number,
+        piece_mark: closed.piece_mark,
+        work_order_id: closed.work_order_id,
+        work_kind: closed.work_kind ?? "first_make",
+        stage_advanced: stageAdvanced,
+        stage_message: stageMessage,
+      },
+      source ?? "erp"
+    );
+  } catch (error) {
+    console.error("Failed to notify sewing_session_ended:", closed.id, error);
+  }
 
   const mins = Math.floor(durationSec / 60);
   const secs = durationSec % 60;
@@ -536,9 +549,9 @@ export async function processSewingKioskScan(
   let store = expireStaleSewingState(await readSewingSessionsAsync(), at);
   failMeta.raw = raw;
 
-  if (isEmployeeQrPayload(raw)) {
-    const badgeValue = parseEmployeeQrPayload(raw);
-    if (!badgeValue) {
+  if (isAnyEmployeeBadgeQrPayload(raw)) {
+    const badgeScan = parseEmployeeBadgeScan(raw);
+    if (!badgeScan) {
       return failResult(
         "Invalid employee badge.",
         "invalid_badge",
@@ -549,6 +562,7 @@ export async function processSewingKioskScan(
         failMeta
       );
     }
+    const workKind = badgeScan.work_kind;
     const employee = findPayrollEmployeeByBadgeValue(raw);
     if (!employee) {
       return failResult(
@@ -687,30 +701,37 @@ export async function processSewingKioskScan(
           workstation_id: ctx.workstation_id,
         },
         kioskId,
-        at
+        at,
+        workKind
       );
       store = applyStartFromPieceArm(store, kioskId, pieceArm, session);
       await writeSewingSessions(store);
 
-      await notifyIntegration(
-        "production.sewing_session_started",
-        {
-          session_id: session.id,
-          kiosk_id: session.kiosk_id,
-          employee_id: session.employee_id,
-          employee_name: session.employee_name,
-          production_code: session.production_code,
-          scan_code: session.scan_code,
-          workstation_id: session.workstation_id,
-          started_at: session.started_at,
-          so_number: session.so_number,
-          piece_mark: session.piece_mark,
-          client_name: session.client_name,
-          recovered: true,
-          recovery: "piece_first_start",
-        },
-        input.source ?? "erp"
-      );
+      try {
+        await notifyIntegration(
+          "production.sewing_session_started",
+          {
+            session_id: session.id,
+            kiosk_id: session.kiosk_id,
+            employee_id: session.employee_id,
+            employee_name: session.employee_name,
+            production_code: session.production_code,
+            scan_code: session.scan_code,
+            workstation_id: session.workstation_id,
+            started_at: session.started_at,
+            so_number: session.so_number,
+            piece_mark: session.piece_mark,
+            client_name: session.client_name,
+            work_kind: session.work_kind ?? "first_make",
+            recovered: true,
+            recovery: "piece_first_start",
+          },
+          input.source ?? "erp"
+        );
+      } catch (error) {
+        console.error("Failed to notify sewing_session_started:", session.id, error);
+      }
+      await safeRecordPatternAlterationPendingFromSession(session, input.source ?? "erp");
 
       const started = enrichSessionsForFloorUi([session])[0]!;
       return result(
@@ -719,7 +740,8 @@ export async function processSewingKioskScan(
           sewingSessionEmployeeDisplayName(started),
           started.job_functions,
           started.production_code,
-          started.piece_mark
+          started.piece_mark,
+          started.work_kind
         ),
         store,
         kioskId,
@@ -739,6 +761,7 @@ export async function processSewingKioskScan(
       employee_id_number: ctx.employee_id_number,
       workstation_id: ctx.workstation_id,
       armed_at: nowIso(at),
+      work_kind: workKind,
     };
     store = {
       ...store,
@@ -750,14 +773,11 @@ export async function processSewingKioskScan(
       ],
     };
     await writeSewingSessions(store);
-    return result(
-      true,
-      `${arm.employee_name} ready - scan A4 piece QR within 30 seconds.`,
-      store,
-      kioskId,
-      { arm },
-      { beep: "progress" }
-    );
+    const readyHint =
+      workKind === "alteration"
+        ? `${arm.employee_name} ready for ALTERATION - scan A4 piece QR within 30 seconds.`
+        : `${arm.employee_name} ready - scan A4 piece QR within 30 seconds.`;
+    return result(true, readyHint, store, kioskId, { arm }, { beep: "progress" });
   }
 
   let meta: ReturnType<typeof lookupPieceMeta>;
@@ -922,23 +942,29 @@ export async function processSewingKioskScan(
     store = applyStartFromEmployeeArm(store, kioskId, arm, session);
     await writeSewingSessions(store);
 
-    await notifyIntegration(
-      "production.sewing_session_started",
-      {
-        session_id: session.id,
-        kiosk_id: session.kiosk_id,
-        employee_id: session.employee_id,
-        employee_name: session.employee_name,
-        production_code: session.production_code,
-        scan_code: session.scan_code,
-        workstation_id: session.workstation_id,
-        started_at: session.started_at,
-        so_number: session.so_number,
-        piece_mark: session.piece_mark,
-        client_name: session.client_name,
-      },
-      input.source ?? "erp"
-    );
+    try {
+      await notifyIntegration(
+        "production.sewing_session_started",
+        {
+          session_id: session.id,
+          kiosk_id: session.kiosk_id,
+          employee_id: session.employee_id,
+          employee_name: session.employee_name,
+          production_code: session.production_code,
+          scan_code: session.scan_code,
+          workstation_id: session.workstation_id,
+          started_at: session.started_at,
+          so_number: session.so_number,
+          piece_mark: session.piece_mark,
+          client_name: session.client_name,
+          work_kind: session.work_kind ?? "first_make",
+        },
+        input.source ?? "erp"
+      );
+    } catch (error) {
+      console.error("Failed to notify sewing_session_started:", session.id, error);
+    }
+    await safeRecordPatternAlterationPendingFromSession(session, input.source ?? "erp");
 
     const started = enrichSessionsForFloorUi([session])[0]!;
     return result(
@@ -947,7 +973,8 @@ export async function processSewingKioskScan(
         sewingSessionEmployeeDisplayName(started),
         started.job_functions,
         started.production_code,
-        started.piece_mark
+        started.piece_mark,
+        started.work_kind
       ),
       store,
       kioskId,
@@ -974,7 +1001,7 @@ export async function processSewingKioskScan(
   await writeSewingSessions(store);
   return result(
     true,
-    `Piece ${pieceArm.production_code} ready - scan employee badge within 30 seconds.`,
+    `Piece ${pieceArm.production_code} ready - scan EMP or Alteration badge within 30 seconds.`,
     store,
     kioskId,
     { piece_arm: pieceArm },

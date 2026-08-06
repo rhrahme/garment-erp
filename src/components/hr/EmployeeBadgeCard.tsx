@@ -3,13 +3,13 @@ import {
   badgeJobFunctionsLine,
   badgePrintDateLabel,
 } from "@/lib/hr/badge-print";
-import { employeeQrPayload } from "@/lib/hr/employee-qr";
+import { employeeAlterationQrPayload, employeeQrPayload } from "@/lib/hr/employee-qr";
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 
 /** Pixel size for QR image generation (display size is mm below). */
-const QR_SIZE = 144;
+const QR_SIZE = 120;
 
 /** Saudi badges keep a group label; expat cards show no EIB/Expat chrome. */
 function groupLabel(group: IdBadgeGroup): string | null {
@@ -47,7 +47,9 @@ export function EmployeeBadgeCard({
   group: IdBadgeGroup;
 }) {
   const payload = employeeQrPayload(employee);
+  const altPayload = employeeAlterationQrPayload(employee);
   const qrSrc = qrImageUrl(payload, QR_SIZE);
+  const altQrSrc = qrImageUrl(altPayload, QR_SIZE);
   const label = groupLabel(group);
   const displayName = badgeDisplayName(employee);
   const jobsLine = badgeJobFunctionsLine(employee);
@@ -67,18 +69,33 @@ export function EmployeeBadgeCard({
         </div>
 
         <div className="flex min-h-0 flex-1">
-          <div className="flex w-[44%] flex-col items-center justify-center border-r border-slate-200 bg-slate-50 px-1.5 py-1">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={qrSrc}
-              alt=""
-              width={QR_SIZE}
-              height={QR_SIZE}
-              className="h-[30mm] w-[30mm] shrink-0 rounded-sm border border-slate-200 bg-white"
-            />
-            <p className="mt-0.5 max-w-full truncate font-mono text-[6px] leading-tight text-slate-500">
-              {payload}
-            </p>
+          <div className="flex w-[44%] flex-col items-center justify-center gap-1 border-r border-slate-200 bg-slate-50 px-1 py-0.5">
+            <div className="flex flex-col items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={qrSrc}
+                alt=""
+                width={QR_SIZE}
+                height={QR_SIZE}
+                className="h-[16mm] w-[16mm] shrink-0 rounded-sm border border-slate-200 bg-white"
+              />
+              <p className="mt-0.5 text-[5px] font-semibold uppercase leading-none tracking-wide text-slate-600">
+                Sew
+              </p>
+            </div>
+            <div className="flex flex-col items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={altQrSrc}
+                alt=""
+                width={QR_SIZE}
+                height={QR_SIZE}
+                className="h-[16mm] w-[16mm] shrink-0 rounded-sm border-2 border-amber-600 bg-white"
+              />
+              <p className="mt-0.5 text-[5px] font-bold uppercase leading-none tracking-wide text-amber-800">
+                Alteration
+              </p>
+            </div>
           </div>
           <div className="flex min-w-0 flex-1 flex-col justify-between px-2.5 py-1.5 text-left">
             <div className="min-w-0">
