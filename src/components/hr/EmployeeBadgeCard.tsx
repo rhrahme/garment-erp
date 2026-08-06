@@ -70,7 +70,7 @@ export function EmployeeBadgeCard({
 
         <div className="flex min-h-0 flex-1">
           {/* Wide gap between Sew / Alt so the USB wedge cannot grab the wrong QR. */}
-          <div className="flex w-[52%] items-center justify-center gap-[6.5mm] border-r border-slate-200 bg-slate-50 px-1 py-1">
+          <div className="flex w-[56%] items-center justify-center gap-[6.5mm] border-r border-slate-200 bg-slate-50 px-1 py-1">
             <div className="flex shrink-0 flex-col items-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -78,7 +78,7 @@ export function EmployeeBadgeCard({
                 alt=""
                 width={QR_SIZE}
                 height={QR_SIZE}
-                className="h-[12mm] w-[12mm] shrink-0 rounded-sm border border-slate-200 bg-white"
+                className="h-[14mm] w-[14mm] shrink-0 rounded-sm border border-slate-200 bg-white"
               />
               <p className="mt-0.5 text-[5px] font-semibold uppercase leading-none tracking-wide text-slate-600">
                 Sew
@@ -91,7 +91,7 @@ export function EmployeeBadgeCard({
                 alt=""
                 width={QR_SIZE}
                 height={QR_SIZE}
-                className="h-[12mm] w-[12mm] shrink-0 rounded-sm border-2 border-amber-600 bg-white"
+                className="h-[14mm] w-[14mm] shrink-0 rounded-sm border-2 border-amber-600 bg-white"
               />
               <p className="mt-0.5 text-[5px] font-bold uppercase leading-none tracking-wide text-amber-800">
                 Alt

@@ -24,7 +24,7 @@ const GAP_X_MM = 8;
 const GAP_Y_MM = 6;
 const COMPANY_BAND_H_MM = 7;
 /** Two side-by-side QRs (Sew + Alteration). Gap kept wide so USB wedge cannot grab both. */
-const QR_DISPLAY_MM = 12;
+const QR_DISPLAY_MM = 14;
 const QR_FETCH_PX = 160;
 const QR_GAP_MM = 6.5;
 const CROP_ARM_MM = 2.5;
@@ -90,7 +90,7 @@ function drawBadgeCard(
 
   const bodyY = y + COMPANY_BAND_H_MM;
   const bodyH = h - COMPANY_BAND_H_MM;
-  const leftW = w * 0.52;
+  const leftW = w * 0.56;
 
   // Left panel background
   doc.setFillColor(248, 250, 252);
