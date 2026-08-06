@@ -23,9 +23,10 @@ const PAGE_MARGIN_MM = 8;
 const GAP_X_MM = 8;
 const GAP_Y_MM = 6;
 const COMPANY_BAND_H_MM = 7;
-/** Two stacked QRs (Sew + Alteration) on the left panel. */
-const QR_DISPLAY_MM = 16;
+/** Two side-by-side QRs (Sew + Alteration) on the left panel - both fit CR80 cut. */
+const QR_DISPLAY_MM = 14;
 const QR_FETCH_PX = 160;
+const QR_GAP_MM = 1.2;
 const CROP_ARM_MM = 2.5;
 const CROP_THICK_MM = 0.25;
 const CROP_GAP_MM = 0.5;
@@ -89,7 +90,7 @@ function drawBadgeCard(
 
   const bodyY = y + COMPANY_BAND_H_MM;
   const bodyH = h - COMPANY_BAND_H_MM;
-  const leftW = w * 0.44;
+  const leftW = w * 0.48;
 
   // Left panel background
   doc.setFillColor(248, 250, 252);
@@ -98,33 +99,37 @@ function drawBadgeCard(
   doc.setLineWidth(0.2);
   doc.line(x + leftW, bodyY, x + leftW, y + h);
 
-  // Sew QR (top) + Alteration QR (bottom)
-  const qrX = x + (leftW - QR_DISPLAY_MM) / 2;
-  const stackH = QR_DISPLAY_MM * 2 + 7;
-  let qrY = bodyY + Math.max(1.5, (bodyH - stackH) / 2);
+  // Sew QR (left) + Alteration QR (right) - side by side so both stay inside cut
+  const pairW = QR_DISPLAY_MM * 2 + QR_GAP_MM;
+  const qrY = bodyY + Math.max(2, (bodyH - QR_DISPLAY_MM - 4) / 2);
+  const sewX = x + (leftW - pairW) / 2;
+  const altX = sewX + QR_DISPLAY_MM + QR_GAP_MM;
 
-  doc.addImage(qrDataUrl, "PNG", qrX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
+  doc.addImage(qrDataUrl, "PNG", sewX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
   doc.setDrawColor(226, 232, 240);
-  doc.rect(qrX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
+  doc.rect(sewX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
   doc.setTextColor(71, 85, 105);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(5);
-  doc.text("SEW", x + leftW / 2, qrY + QR_DISPLAY_MM + 2, { align: "center" });
+  doc.setFontSize(5.5);
+  doc.text("SEW", sewX + QR_DISPLAY_MM / 2, qrY + QR_DISPLAY_MM + 2.2, {
+    align: "center",
+  });
 
-  qrY += QR_DISPLAY_MM + 3.5;
-  doc.addImage(altQrDataUrl, "PNG", qrX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
+  doc.addImage(altQrDataUrl, "PNG", altX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
   doc.setDrawColor(180, 83, 9);
-  doc.setLineWidth(0.35);
-  doc.rect(qrX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
+  doc.setLineWidth(0.4);
+  doc.rect(altX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
   doc.setTextColor(146, 64, 14);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(5);
-  doc.text("ALTERATION", x + leftW / 2, qrY + QR_DISPLAY_MM + 2, { align: "center" });
+  doc.setFontSize(5.5);
+  doc.text("ALT", altX + QR_DISPLAY_MM / 2, qrY + QR_DISPLAY_MM + 2.2, {
+    align: "center",
+  });
   doc.setLineWidth(0.2);
 
   // Right text column
-  const textX = x + leftW + 2.5;
-  const textMaxW = w - leftW - 4;
+  const textX = x + leftW + 2;
+  const textMaxW = w - leftW - 3.5;
   let textY = bodyY + 4;
 
   if (group === "saudi") {

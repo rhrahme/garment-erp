@@ -69,35 +69,36 @@ export function EmployeeBadgeCard({
         </div>
 
         <div className="flex min-h-0 flex-1">
-          <div className="flex w-[44%] flex-col items-center justify-center gap-1 border-r border-slate-200 bg-slate-50 px-1 py-0.5">
-            <div className="flex flex-col items-center">
+          {/* Side-by-side Sew + Alteration QRs so both stay inside CR80 cut. */}
+          <div className="flex w-[48%] items-center justify-center gap-1 border-r border-slate-200 bg-slate-50 px-0.5 py-1">
+            <div className="flex min-w-0 flex-col items-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={qrSrc}
                 alt=""
                 width={QR_SIZE}
                 height={QR_SIZE}
-                className="h-[16mm] w-[16mm] shrink-0 rounded-sm border border-slate-200 bg-white"
+                className="h-[14mm] w-[14mm] shrink-0 rounded-sm border border-slate-200 bg-white"
               />
               <p className="mt-0.5 text-[5px] font-semibold uppercase leading-none tracking-wide text-slate-600">
                 Sew
               </p>
             </div>
-            <div className="flex flex-col items-center">
+            <div className="flex min-w-0 flex-col items-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={altQrSrc}
                 alt=""
                 width={QR_SIZE}
                 height={QR_SIZE}
-                className="h-[16mm] w-[16mm] shrink-0 rounded-sm border-2 border-amber-600 bg-white"
+                className="h-[14mm] w-[14mm] shrink-0 rounded-sm border-2 border-amber-600 bg-white"
               />
               <p className="mt-0.5 text-[5px] font-bold uppercase leading-none tracking-wide text-amber-800">
-                Alteration
+                Alt
               </p>
             </div>
           </div>
-          <div className="flex min-w-0 flex-1 flex-col justify-between px-2.5 py-1.5 text-left">
+          <div className="flex min-w-0 flex-1 flex-col justify-between px-2 py-1.5 text-left">
             <div className="min-w-0">
               {label ? (
                 <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0B2C5A]">
