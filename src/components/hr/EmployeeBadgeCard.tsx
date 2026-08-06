@@ -68,36 +68,22 @@ export function EmployeeBadgeCard({
           </p>
         </div>
 
+        {/* Sew left + Alt right (>= 30mm clear gap) with name/ID in the middle. */}
         <div className="flex min-h-0 flex-1">
-          {/* Wide gap between Sew / Alt so the USB wedge cannot grab the wrong QR. */}
-          <div className="flex w-[56%] items-center justify-center gap-[6.5mm] border-r border-slate-200 bg-slate-50 px-1 py-1">
-            <div className="flex shrink-0 flex-col items-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={qrSrc}
-                alt=""
-                width={QR_SIZE}
-                height={QR_SIZE}
-                className="h-[14mm] w-[14mm] shrink-0 rounded-sm border border-slate-200 bg-white"
-              />
-              <p className="mt-0.5 text-[5px] font-semibold uppercase leading-none tracking-wide text-slate-600">
-                Sew
-              </p>
-            </div>
-            <div className="flex shrink-0 flex-col items-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={altQrSrc}
-                alt=""
-                width={QR_SIZE}
-                height={QR_SIZE}
-                className="h-[14mm] w-[14mm] shrink-0 rounded-sm border-2 border-amber-600 bg-white"
-              />
-              <p className="mt-0.5 text-[5px] font-bold uppercase leading-none tracking-wide text-amber-800">
-                Alt
-              </p>
-            </div>
+          <div className="flex w-[17mm] shrink-0 flex-col items-center justify-center bg-slate-50 px-0.5 py-1">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={qrSrc}
+              alt=""
+              width={QR_SIZE}
+              height={QR_SIZE}
+              className="h-[14mm] w-[14mm] shrink-0 rounded-sm border border-slate-200 bg-white"
+            />
+            <p className="mt-0.5 text-[5px] font-semibold uppercase leading-none tracking-wide text-slate-600">
+              Sew
+            </p>
           </div>
+
           <div className="flex min-w-0 flex-1 flex-col justify-between px-2 py-1.5 text-left">
             <div className="min-w-0">
               {label ? (
@@ -118,7 +104,6 @@ export function EmployeeBadgeCard({
                 </p>
               ) : null}
             </div>
-            {/* Footer reserved so print date is never clipped by overflow / name length */}
             <div className="badge-card-footer mt-1 min-w-0 shrink-0">
               <p className="text-[7px] uppercase tracking-wide text-slate-500">Employee ID</p>
               <p className="truncate font-mono text-[11px] font-semibold text-[#0B2C5A]">
@@ -128,6 +113,20 @@ export function EmployeeBadgeCard({
                 {printedLabel}
               </p>
             </div>
+          </div>
+
+          <div className="flex w-[17mm] shrink-0 flex-col items-center justify-center bg-slate-50 px-0.5 py-1">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={altQrSrc}
+              alt=""
+              width={QR_SIZE}
+              height={QR_SIZE}
+              className="h-[14mm] w-[14mm] shrink-0 rounded-sm border-2 border-amber-600 bg-white"
+            />
+            <p className="mt-0.5 text-[5px] font-bold uppercase leading-none tracking-wide text-amber-800">
+              Alt
+            </p>
           </div>
         </div>
       </article>

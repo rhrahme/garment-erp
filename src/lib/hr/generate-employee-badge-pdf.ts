@@ -23,10 +23,14 @@ const PAGE_MARGIN_MM = 8;
 const GAP_X_MM = 8;
 const GAP_Y_MM = 6;
 const COMPANY_BAND_H_MM = 7;
-/** Two side-by-side QRs (Sew + Alteration). Gap kept wide so USB wedge cannot grab both. */
+/**
+ * Sew QR on the left edge, Alteration on the right edge.
+ * Minimum clear gap between codes = 30mm (3cm) so the USB wedge cannot grab both.
+ */
 const QR_DISPLAY_MM = 14;
 const QR_FETCH_PX = 160;
-const QR_GAP_MM = 6.5;
+const QR_GAP_MM = 30;
+const QR_SIDE_PAD_MM = 1.5;
 const CROP_ARM_MM = 2.5;
 const CROP_THICK_MM = 0.25;
 const CROP_GAP_MM = 0.5;
@@ -90,24 +94,33 @@ function drawBadgeCard(
 
   const bodyY = y + COMPANY_BAND_H_MM;
   const bodyH = h - COMPANY_BAND_H_MM;
-  const leftW = w * 0.56;
 
-  // Left panel background
-  doc.setFillColor(248, 250, 252);
-  doc.rect(x, bodyY, leftW, bodyH, "F");
-  doc.setDrawColor(226, 232, 240);
-  doc.setLineWidth(0.2);
-  doc.line(x + leftW, bodyY, x + leftW, y + h);
+  // Sew left / Alt right - forces >= 30mm clear gap across the middle (name + ID).
+  const sewX = x + QR_SIDE_PAD_MM;
+  const altX = x + w - QR_SIDE_PAD_MM - QR_DISPLAY_MM;
+  const clearGap = altX - (sewX + QR_DISPLAY_MM);
+  if (clearGap < QR_GAP_MM) {
+    throw new Error(
+      `Badge QR gap ${clearGap.toFixed(1)}mm is under the required ${QR_GAP_MM}mm.`
+    );
+  }
 
-  // Sew QR (left) + Alteration QR (right) with a wide quiet zone between them
-  const pairW = QR_DISPLAY_MM * 2 + QR_GAP_MM;
   const qrY = bodyY + Math.max(2, (bodyH - QR_DISPLAY_MM - 4) / 2);
-  const sewX = x + Math.max(1.2, (leftW - pairW) / 2);
-  const altX = sewX + QR_DISPLAY_MM + QR_GAP_MM;
-  const midX = sewX + QR_DISPLAY_MM + QR_GAP_MM / 2;
+
+  // Soft side panels behind each QR
+  doc.setFillColor(248, 250, 252);
+  doc.rect(x, bodyY, QR_DISPLAY_MM + QR_SIDE_PAD_MM * 2, bodyH, "F");
+  doc.rect(
+    x + w - (QR_DISPLAY_MM + QR_SIDE_PAD_MM * 2),
+    bodyY,
+    QR_DISPLAY_MM + QR_SIDE_PAD_MM * 2,
+    bodyH,
+    "F"
+  );
 
   doc.addImage(qrDataUrl, "PNG", sewX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
   doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.2);
   doc.rect(sewX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
   doc.setTextColor(71, 85, 105);
   doc.setFont("helvetica", "bold");
@@ -115,11 +128,6 @@ function drawBadgeCard(
   doc.text("SEW", sewX + QR_DISPLAY_MM / 2, qrY + QR_DISPLAY_MM + 2.2, {
     align: "center",
   });
-
-  // Hairline between QRs - aim cue, not a second code
-  doc.setDrawColor(203, 213, 225);
-  doc.setLineWidth(0.25);
-  doc.line(midX, qrY + 1, midX, qrY + QR_DISPLAY_MM - 1);
 
   doc.addImage(altQrDataUrl, "PNG", altX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
   doc.setDrawColor(180, 83, 9);
@@ -133,9 +141,9 @@ function drawBadgeCard(
   });
   doc.setLineWidth(0.2);
 
-  // Right text column
-  const textX = x + leftW + 2;
-  const textMaxW = w - leftW - 3.5;
+  // Center text column between the two QRs
+  const textX = sewX + QR_DISPLAY_MM + 2.5;
+  const textMaxW = clearGap - 5;
   let textY = bodyY + 4;
 
   if (group === "saudi") {
@@ -156,7 +164,6 @@ function drawBadgeCard(
   doc.text(nameLines.slice(0, nameMaxLines), textX, textY);
   textY += Math.min(nameLines.length, nameMaxLines) * 4.2;
 
-  // Job roles under name (only when set) - keep clear of QR/left panel
   if (jobsLine) {
     doc.setTextColor(51, 65, 85);
     doc.setFont("helvetica", "bold");
@@ -179,7 +186,6 @@ function drawBadgeCard(
     maxWidth: textMaxW,
   });
 
-  // Print-date version stamp - inset from bottom so cutting does not remove it
   doc.setTextColor(15, 23, 42);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
