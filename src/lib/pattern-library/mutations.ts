@@ -1586,18 +1586,30 @@ export async function seedMarkerLayoutIfMissing(
     return { ok: true, pattern: existing, changed: false };
   }
 
+  // Re-read immediately before write so a concurrent measurement save is not
+  // overwritten by this marker-only seed (protect-merge is the backstop).
+  const latestStore = await readPatternLibraryFresh();
+  const latestIndex = latestStore.client_patterns.findIndex(
+    (pattern) => pattern.id === patternId
+  );
+  if (latestIndex < 0) {
+    return { ok: false, status: 404, error: "Client pattern not found." };
+  }
+  const latestExisting = latestStore.client_patterns[latestIndex]!;
+
   // Persist nest fields only - never write borrowed sibling file rows onto the shell.
   const next = {
-    ...existing,
-    marker_layout: result.pattern.marker_layout ?? existing.marker_layout,
+    ...latestExisting,
+    marker_layout: result.pattern.marker_layout ?? latestExisting.marker_layout,
     marker_fabric_width_cm:
-      result.pattern.marker_fabric_width_cm ?? existing.marker_fabric_width_cm,
-    marker_double_fold: result.pattern.marker_double_fold ?? existing.marker_double_fold,
-    base_size: existing.base_size ?? result.pattern.base_size,
+      result.pattern.marker_fabric_width_cm ?? latestExisting.marker_fabric_width_cm,
+    marker_double_fold:
+      result.pattern.marker_double_fold ?? latestExisting.marker_double_fold,
+    base_size: latestExisting.base_size ?? result.pattern.base_size,
     updated_at: now(),
   };
-  store.client_patterns[index] = next;
-  await writePatternLibrary(store);
+  latestStore.client_patterns[latestIndex] = next;
+  await writePatternLibrary(latestStore);
 
   if (options.notify !== false && next.marker_layout) {
     await notifyIntegration("client_pattern.marker_layout_saved", {

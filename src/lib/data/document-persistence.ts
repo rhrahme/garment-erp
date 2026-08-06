@@ -25,6 +25,8 @@ type CacheEntry = {
 const fileCache = new Map<string, CacheEntry>();
 const loadedKeys = new Set<ErpDocumentKey>();
 const loadingByKey = new Map<ErpDocumentKey, Promise<void>>();
+/** Last seen erp_documents.updated_at per key (for compare-and-swap writes). */
+const rowUpdatedAtCache = new Map<ErpDocumentKey, string>();
 let erpBootstrapPromise: Promise<void> | null = null;
 
 /** Per-read cap so a degraded Supabase never blocks SSR for minutes. */
@@ -109,7 +111,11 @@ async function readFromSupabase<T>(documentKey: ErpDocumentKey): Promise<T | nul
   if (!admin) return null;
 
   const result = await withTimeout(
-    admin.from("erp_documents").select("data").eq("id", documentKey).maybeSingle(),
+    admin
+      .from("erp_documents")
+      .select("data, updated_at")
+      .eq("id", documentKey)
+      .maybeSingle(),
     SUPABASE_READ_TIMEOUT_MS,
     `read ${documentKey}`
   );
@@ -121,6 +127,10 @@ async function readFromSupabase<T>(documentKey: ErpDocumentKey): Promise<T | nul
     return null;
   }
   if (!data?.data) return null;
+  // Stash row updated_at for compare-and-swap writers (pattern_library).
+  if (data.updated_at) {
+    rowUpdatedAtCache.set(documentKey, String(data.updated_at));
+  }
   return data.data as T;
 }
 
@@ -181,7 +191,71 @@ async function writeToSupabase<T>(documentKey: ErpDocumentKey, payload: T): Prom
     }
   }
 
+  if (documentKey === "pattern_library") {
+    try {
+      const { protectPatternLibraryWrite } = await import(
+        "@/lib/pattern-library/protect-pattern-library-write"
+      );
+      const remote = await readFromSupabaseForced<Record<string, unknown>>("pattern_library");
+      if (remote) {
+        dataToWrite = protectPatternLibraryWrite(
+          remote as Parameters<typeof protectPatternLibraryWrite>[0],
+          dataToWrite as Parameters<typeof protectPatternLibraryWrite>[1]
+        ) as T;
+      } else {
+        const incoming = dataToWrite as { client_patterns?: unknown[] };
+        if (!Array.isArray(incoming.client_patterns) || incoming.client_patterns.length === 0) {
+          console.error(
+            "[pattern_library] Refusing Supabase write — empty client_patterns with no remote baseline."
+          );
+          return false;
+        }
+      }
+    } catch (error) {
+      console.error(
+        "[pattern_library] Refusing Supabase write — protect merge failed:",
+        error instanceof Error ? error.message : error
+      );
+      return false;
+    }
+  }
+
   const updated_at = new Date().toISOString();
+  const expectedRowUpdatedAt = rowUpdatedAtCache.get(documentKey) ?? null;
+
+  // Compare-and-swap for pattern_library: if another instance wrote since our
+  // forced read, retry path (caller / protect merge) must win — never blind upsert.
+  if (documentKey === "pattern_library" && expectedRowUpdatedAt) {
+    const { data: casRows, error: casError } = await admin
+      .from("erp_documents")
+      .update({ data: dataToWrite, updated_at })
+      .eq("id", documentKey)
+      .eq("updated_at", expectedRowUpdatedAt)
+      .select("id");
+    if (casError) {
+      console.error(`Supabase CAS write failed for ${documentKey}:`, casError.message);
+      return false;
+    }
+    if (Array.isArray(casRows) && casRows.length > 0) {
+      rowUpdatedAtCache.set(documentKey, updated_at);
+      return true;
+    }
+    // Conflict — re-read + protect-merge once, then upsert as last resort with merge.
+    console.warn(
+      `[pattern_library] CAS conflict (expected ${expectedRowUpdatedAt}) — re-merging against latest remote.`
+    );
+    const { protectPatternLibraryWrite } = await import(
+      "@/lib/pattern-library/protect-pattern-library-write"
+    );
+    const latest = await readFromSupabaseForced<Record<string, unknown>>("pattern_library");
+    if (latest) {
+      dataToWrite = protectPatternLibraryWrite(
+        latest as Parameters<typeof protectPatternLibraryWrite>[0],
+        dataToWrite as Parameters<typeof protectPatternLibraryWrite>[1]
+      ) as T;
+    }
+  }
+
   const { error } = await admin.from("erp_documents").upsert(
     { id: documentKey, data: dataToWrite, updated_at },
     { onConflict: "id" }
@@ -191,6 +265,7 @@ async function writeToSupabase<T>(documentKey: ErpDocumentKey, payload: T): Prom
     console.error(`Supabase write failed for ${documentKey}:`, error.message);
     return false;
   }
+  rowUpdatedAtCache.set(documentKey, updated_at);
   return true;
 }
 
@@ -449,12 +524,16 @@ export function invalidateDocumentCache(filePath?: string): void {
   if (filePath) {
     fileCache.delete(filePath);
     const key = documentKeyForPath(filePath);
-    if (key) loadedKeys.delete(key);
+    if (key) {
+      loadedKeys.delete(key);
+      rowUpdatedAtCache.delete(key);
+    }
     return;
   }
   fileCache.clear();
   loadedKeys.clear();
   loadingByKey.clear();
+  rowUpdatedAtCache.clear();
   erpBootstrapPromise = null;
 }
 
