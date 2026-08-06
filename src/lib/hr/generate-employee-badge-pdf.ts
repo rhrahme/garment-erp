@@ -23,10 +23,10 @@ const PAGE_MARGIN_MM = 8;
 const GAP_X_MM = 8;
 const GAP_Y_MM = 6;
 const COMPANY_BAND_H_MM = 7;
-/** Two side-by-side QRs (Sew + Alteration) on the left panel - both fit CR80 cut. */
-const QR_DISPLAY_MM = 14;
+/** Two side-by-side QRs (Sew + Alteration). Gap kept wide so USB wedge cannot grab both. */
+const QR_DISPLAY_MM = 12;
 const QR_FETCH_PX = 160;
-const QR_GAP_MM = 1.2;
+const QR_GAP_MM = 6.5;
 const CROP_ARM_MM = 2.5;
 const CROP_THICK_MM = 0.25;
 const CROP_GAP_MM = 0.5;
@@ -90,7 +90,7 @@ function drawBadgeCard(
 
   const bodyY = y + COMPANY_BAND_H_MM;
   const bodyH = h - COMPANY_BAND_H_MM;
-  const leftW = w * 0.48;
+  const leftW = w * 0.52;
 
   // Left panel background
   doc.setFillColor(248, 250, 252);
@@ -99,11 +99,12 @@ function drawBadgeCard(
   doc.setLineWidth(0.2);
   doc.line(x + leftW, bodyY, x + leftW, y + h);
 
-  // Sew QR (left) + Alteration QR (right) - side by side so both stay inside cut
+  // Sew QR (left) + Alteration QR (right) with a wide quiet zone between them
   const pairW = QR_DISPLAY_MM * 2 + QR_GAP_MM;
   const qrY = bodyY + Math.max(2, (bodyH - QR_DISPLAY_MM - 4) / 2);
-  const sewX = x + (leftW - pairW) / 2;
+  const sewX = x + Math.max(1.2, (leftW - pairW) / 2);
   const altX = sewX + QR_DISPLAY_MM + QR_GAP_MM;
+  const midX = sewX + QR_DISPLAY_MM + QR_GAP_MM / 2;
 
   doc.addImage(qrDataUrl, "PNG", sewX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
   doc.setDrawColor(226, 232, 240);
@@ -114,6 +115,11 @@ function drawBadgeCard(
   doc.text("SEW", sewX + QR_DISPLAY_MM / 2, qrY + QR_DISPLAY_MM + 2.2, {
     align: "center",
   });
+
+  // Hairline between QRs - aim cue, not a second code
+  doc.setDrawColor(203, 213, 225);
+  doc.setLineWidth(0.25);
+  doc.line(midX, qrY + 1, midX, qrY + QR_DISPLAY_MM - 1);
 
   doc.addImage(altQrDataUrl, "PNG", altX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
   doc.setDrawColor(180, 83, 9);

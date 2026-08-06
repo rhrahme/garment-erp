@@ -69,29 +69,29 @@ export function EmployeeBadgeCard({
         </div>
 
         <div className="flex min-h-0 flex-1">
-          {/* Side-by-side Sew + Alteration QRs so both stay inside CR80 cut. */}
-          <div className="flex w-[48%] items-center justify-center gap-1 border-r border-slate-200 bg-slate-50 px-0.5 py-1">
-            <div className="flex min-w-0 flex-col items-center">
+          {/* Wide gap between Sew / Alt so the USB wedge cannot grab the wrong QR. */}
+          <div className="flex w-[52%] items-center justify-center gap-[6.5mm] border-r border-slate-200 bg-slate-50 px-1 py-1">
+            <div className="flex shrink-0 flex-col items-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={qrSrc}
                 alt=""
                 width={QR_SIZE}
                 height={QR_SIZE}
-                className="h-[14mm] w-[14mm] shrink-0 rounded-sm border border-slate-200 bg-white"
+                className="h-[12mm] w-[12mm] shrink-0 rounded-sm border border-slate-200 bg-white"
               />
               <p className="mt-0.5 text-[5px] font-semibold uppercase leading-none tracking-wide text-slate-600">
                 Sew
               </p>
             </div>
-            <div className="flex min-w-0 flex-col items-center">
+            <div className="flex shrink-0 flex-col items-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={altQrSrc}
                 alt=""
                 width={QR_SIZE}
                 height={QR_SIZE}
-                className="h-[14mm] w-[14mm] shrink-0 rounded-sm border-2 border-amber-600 bg-white"
+                className="h-[12mm] w-[12mm] shrink-0 rounded-sm border-2 border-amber-600 bg-white"
               />
               <p className="mt-0.5 text-[5px] font-bold uppercase leading-none tracking-wide text-amber-800">
                 Alt
