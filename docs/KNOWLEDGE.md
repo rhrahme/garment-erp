@@ -26,7 +26,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Pattern is not required before the tailor starts. Pattern enters stitcher
   comments on the client measurement sheet (per-line Remark + bottom Stitcher
   comments) and/or from the alteration queue; those print on the Production /
-  stitcher A4. Reprint Expats badges after the dual-QR change.
+  stitcher A4. **Badge layout**: QRs are 20mm with full labels **SEWING** /
+  **ALTERATION**, centered as a pair with a fixed **3cm** clear gap between
+  code edges (not opposite card edges, not abbreviated SEW/ALT). Reprint
+  Expats badges after dual-QR / layout changes.
 - **All employees on the Expats ID badge list may use the kiosk** - cutters,
   wash/iron, buttons, not only tailors. Do not re-add a tailor-only gate.
 - **Multi-arm queue is intentional**: several employees may be badge-ready at

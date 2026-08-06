@@ -4,6 +4,12 @@ import {
   BADGE_CARD_WIDTH_MM,
   BADGE_CARDS_PER_PAGE,
   BADGE_CARDS_PER_ROW,
+  BADGE_QR_ALT_LABEL,
+  BADGE_QR_DISPLAY_MM,
+  BADGE_QR_FETCH_PX,
+  BADGE_QR_GAP_MM,
+  BADGE_QR_PAIR_WIDTH_MM,
+  BADGE_QR_SEW_LABEL,
   BADGE_ROWS_PER_PAGE,
   badgeDisplayName,
   badgeJobFunctionsLine,
@@ -23,20 +29,12 @@ const PAGE_MARGIN_MM = 8;
 const GAP_X_MM = 8;
 const GAP_Y_MM = 6;
 const COMPANY_BAND_H_MM = 7;
-/**
- * Sew QR on the left edge, Alteration on the right edge.
- * Minimum clear gap between codes = 30mm (3cm) so the USB wedge cannot grab both.
- */
-const QR_DISPLAY_MM = 14;
-const QR_FETCH_PX = 160;
-const QR_GAP_MM = 30;
-const QR_SIDE_PAD_MM = 1.5;
 const CROP_ARM_MM = 2.5;
 const CROP_THICK_MM = 0.25;
 const CROP_GAP_MM = 0.5;
 
 async function fetchQrDataUrl(payload: string): Promise<string> {
-  const res = await fetch(qrImageFetchUrl(payload, QR_FETCH_PX));
+  const res = await fetch(qrImageFetchUrl(payload, BADGE_QR_FETCH_PX));
   if (!res.ok) throw new Error("Failed to load QR code image.");
   const buffer = Buffer.from(await res.arrayBuffer());
   return `data:image/png;base64,${buffer.toString("base64")}`;
@@ -94,104 +92,103 @@ function drawBadgeCard(
 
   const bodyY = y + COMPANY_BAND_H_MM;
   const bodyH = h - COMPANY_BAND_H_MM;
-
-  // Sew left / Alt right - forces >= 30mm clear gap across the middle (name + ID).
-  const sewX = x + QR_SIDE_PAD_MM;
-  const altX = x + w - QR_SIDE_PAD_MM - QR_DISPLAY_MM;
-  const clearGap = altX - (sewX + QR_DISPLAY_MM);
-  if (clearGap < QR_GAP_MM) {
-    throw new Error(
-      `Badge QR gap ${clearGap.toFixed(1)}mm is under the required ${QR_GAP_MM}mm.`
-    );
-  }
-
-  const qrY = bodyY + Math.max(2, (bodyH - QR_DISPLAY_MM - 4) / 2);
-
-  // Soft side panels behind each QR
-  doc.setFillColor(248, 250, 252);
-  doc.rect(x, bodyY, QR_DISPLAY_MM + QR_SIDE_PAD_MM * 2, bodyH, "F");
-  doc.rect(
-    x + w - (QR_DISPLAY_MM + QR_SIDE_PAD_MM * 2),
-    bodyY,
-    QR_DISPLAY_MM + QR_SIDE_PAD_MM * 2,
-    bodyH,
-    "F"
-  );
-
-  doc.addImage(qrDataUrl, "PNG", sewX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
-  doc.setDrawColor(226, 232, 240);
-  doc.setLineWidth(0.2);
-  doc.rect(sewX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
-  doc.setTextColor(71, 85, 105);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(5.5);
-  doc.text("SEW", sewX + QR_DISPLAY_MM / 2, qrY + QR_DISPLAY_MM + 2.2, {
-    align: "center",
-  });
-
-  doc.addImage(altQrDataUrl, "PNG", altX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
-  doc.setDrawColor(180, 83, 9);
-  doc.setLineWidth(0.4);
-  doc.rect(altX, qrY, QR_DISPLAY_MM, QR_DISPLAY_MM);
-  doc.setTextColor(146, 64, 14);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(5.5);
-  doc.text("ALT", altX + QR_DISPLAY_MM / 2, qrY + QR_DISPLAY_MM + 2.2, {
-    align: "center",
-  });
-  doc.setLineWidth(0.2);
-
-  // Center text column between the two QRs
-  const textX = sewX + QR_DISPLAY_MM + 2.5;
-  const textMaxW = clearGap - 5;
-  let textY = bodyY + 4;
+  const textX = x + 2.5;
+  const textMaxW = w - 5;
+  let textY = bodyY + 3.2;
 
   if (group === "saudi") {
     doc.setTextColor(BADGE_NAVY);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     doc.text("SAUDI", textX, textY);
-    textY += 4;
+    textY += 3.2;
   }
 
   const jobsLine = badgeJobFunctionsLine(employee);
-  const nameMaxLines = jobsLine ? 2 : 3;
 
   doc.setTextColor(15, 23, 42);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   const nameLines = doc.splitTextToSize(badgeDisplayName(employee), textMaxW);
-  doc.text(nameLines.slice(0, nameMaxLines), textX, textY);
-  textY += Math.min(nameLines.length, nameMaxLines) * 4.2;
+  doc.text(nameLines.slice(0, jobsLine ? 1 : 2), textX, textY);
+  textY += Math.min(nameLines.length, jobsLine ? 1 : 2) * 3.8;
 
   if (jobsLine) {
     doc.setTextColor(51, 65, 85);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     const jobLines = doc.splitTextToSize(jobsLine, textMaxW);
-    doc.text(jobLines.slice(0, 2), textX, textY + 0.8);
+    doc.text(jobLines.slice(0, 1), textX, textY + 0.4);
   }
 
-  // Footer reserved inside cut edge: ID + always-visible print date
-  const printY = y + h - 3.5;
-  const idY = printY - 4.2;
+  // Footer reserved at bottom of card
+  const printY = y + h - 2.8;
+  const idY = printY - 3.8;
   doc.setTextColor(100, 116, 139);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6);
-  doc.text("EMPLOYEE ID", textX, idY - 3.5);
+  doc.text("EMPLOYEE ID", textX, idY - 3.2);
   doc.setTextColor(11, 44, 90);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.text(employee.employee_id_number, textX, idY, {
     maxWidth: textMaxW,
   });
-
   doc.setTextColor(15, 23, 42);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
   doc.text(printedLabel, textX, printY, {
     maxWidth: textMaxW,
   });
+
+  // QR pair centered between name block and footer - fixed 3cm clear gap.
+  const footerTop = idY - 4.5;
+  const qrBlockH = BADGE_QR_DISPLAY_MM + 3.5;
+  const qrY = bodyY + Math.max(
+    textY + 1.5,
+    (footerTop + textY) / 2 - qrBlockH / 2
+  );
+  const pairX = x + (w - BADGE_QR_PAIR_WIDTH_MM) / 2;
+  const sewX = pairX;
+  const altX = pairX + BADGE_QR_DISPLAY_MM + BADGE_QR_GAP_MM;
+  const clearGap = altX - (sewX + BADGE_QR_DISPLAY_MM);
+  if (Math.abs(clearGap - BADGE_QR_GAP_MM) > 0.01) {
+    throw new Error(
+      `Badge QR gap ${clearGap.toFixed(1)}mm must equal ${BADGE_QR_GAP_MM}mm (3cm).`
+    );
+  }
+
+  // Keep QRs above the ID footer when the name/jobs block runs long.
+  const qrDrawY = Math.min(qrY, footerTop - qrBlockH);
+
+  doc.addImage(qrDataUrl, "PNG", sewX, qrDrawY, BADGE_QR_DISPLAY_MM, BADGE_QR_DISPLAY_MM);
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.2);
+  doc.rect(sewX, qrDrawY, BADGE_QR_DISPLAY_MM, BADGE_QR_DISPLAY_MM);
+  doc.setTextColor(51, 65, 85);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(6.5);
+  doc.text(
+    BADGE_QR_SEW_LABEL,
+    sewX + BADGE_QR_DISPLAY_MM / 2,
+    qrDrawY + BADGE_QR_DISPLAY_MM + 2.4,
+    { align: "center" }
+  );
+
+  doc.addImage(altQrDataUrl, "PNG", altX, qrDrawY, BADGE_QR_DISPLAY_MM, BADGE_QR_DISPLAY_MM);
+  doc.setDrawColor(180, 83, 9);
+  doc.setLineWidth(0.45);
+  doc.rect(altX, qrDrawY, BADGE_QR_DISPLAY_MM, BADGE_QR_DISPLAY_MM);
+  doc.setTextColor(146, 64, 14);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(6.5);
+  doc.text(
+    BADGE_QR_ALT_LABEL,
+    altX + BADGE_QR_DISPLAY_MM / 2,
+    qrDrawY + BADGE_QR_DISPLAY_MM + 2.4,
+    { align: "center" }
+  );
+  doc.setLineWidth(0.2);
 }
 
 /**

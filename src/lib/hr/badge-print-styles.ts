@@ -108,9 +108,40 @@ export const EMPLOYEE_BADGE_PRINT_CSS = `
 
     .badge-job-functions {
       color: #334155 !important;
-      font-size: 11px !important;
+      font-size: 10px !important;
       font-weight: 600 !important;
       line-height: 1.25 !important;
+    }
+
+    /* Physical QR size - do not let browsers shrink these for "fit". */
+    .badge-qr-img {
+      width: 20mm !important;
+      height: 20mm !important;
+      max-width: 20mm !important;
+      max-height: 20mm !important;
+    }
+
+    .badge-qr-pair {
+      width: 70mm !important; /* 20 + 30 + 20 */
+    }
+
+    .badge-qr-gap {
+      width: 30mm !important; /* exactly 3cm clear between QR edges */
+      min-width: 30mm !important;
+      max-width: 30mm !important;
+    }
+
+    .badge-qr-label {
+      font-size: 6.5px !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.04em !important;
+      line-height: 1 !important;
+      white-space: nowrap !important;
+      color: #334155 !important;
+    }
+
+    .badge-qr-label-alt {
+      color: #92400e !important;
     }
   }
 `;

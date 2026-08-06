@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  BADGE_QR_ALT_LABEL,
+  BADGE_QR_DISPLAY_MM,
+  BADGE_QR_GAP_MM,
+  BADGE_QR_PAIR_WIDTH_MM,
+  BADGE_QR_SEW_LABEL,
   badgeDisplayName,
   badgeGroupFromSlug,
   badgeJobFunctionLabels,
@@ -39,6 +44,14 @@ function emp(partial: Partial<PayrollEmployee> & Pick<PayrollEmployee, "id" | "f
 }
 
 describe("badge-print helpers", () => {
+  it("keeps dual badge QRs large with a fixed 3cm clear gap and full labels", () => {
+    assert.equal(BADGE_QR_DISPLAY_MM, 20);
+    assert.equal(BADGE_QR_GAP_MM, 30);
+    assert.equal(BADGE_QR_PAIR_WIDTH_MM, 70);
+    assert.equal(BADGE_QR_SEW_LABEL, "SEWING");
+    assert.equal(BADGE_QR_ALT_LABEL, "ALTERATION");
+  });
+
   it("prefers short_name on badge label when set", () => {
     assert.equal(
       badgeDisplayName(emp({ id: "1", full_name: "Rone Astar Dhar Sutradhar", short_name: "Rone" })),

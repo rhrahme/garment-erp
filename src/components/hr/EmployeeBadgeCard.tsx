@@ -1,4 +1,10 @@
 import {
+  BADGE_QR_ALT_LABEL,
+  BADGE_QR_DISPLAY_MM,
+  BADGE_QR_FETCH_PX,
+  BADGE_QR_GAP_MM,
+  BADGE_QR_PAIR_WIDTH_MM,
+  BADGE_QR_SEW_LABEL,
   badgeDisplayName,
   badgeJobFunctionsLine,
   badgePrintDateLabel,
@@ -7,9 +13,6 @@ import { employeeAlterationQrPayload, employeeQrPayload } from "@/lib/hr/employe
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
-
-/** Pixel size for QR image generation (display size is mm below). */
-const QR_SIZE = 120;
 
 /** Saudi badges keep a group label; expat cards show no EIB/Expat chrome. */
 function groupLabel(group: IdBadgeGroup): string | null {
@@ -48,8 +51,8 @@ export function EmployeeBadgeCard({
 }) {
   const payload = employeeQrPayload(employee);
   const altPayload = employeeAlterationQrPayload(employee);
-  const qrSrc = qrImageUrl(payload, QR_SIZE);
-  const altQrSrc = qrImageUrl(altPayload, QR_SIZE);
+  const qrSrc = qrImageUrl(payload, BADGE_QR_FETCH_PX);
+  const altQrSrc = qrImageUrl(altPayload, BADGE_QR_FETCH_PX);
   const label = groupLabel(group);
   const displayName = badgeDisplayName(employee);
   const jobsLine = badgeJobFunctionsLine(employee);
@@ -68,64 +71,88 @@ export function EmployeeBadgeCard({
           </p>
         </div>
 
-        {/* Sew left + Alt right (>= 30mm clear gap) with name/ID in the middle. */}
-        <div className="flex min-h-0 flex-1">
-          <div className="flex w-[17mm] shrink-0 flex-col items-center justify-center bg-slate-50 px-0.5 py-1">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={qrSrc}
-              alt=""
-              width={QR_SIZE}
-              height={QR_SIZE}
-              className="h-[14mm] w-[14mm] shrink-0 rounded-sm border border-slate-200 bg-white"
-            />
-            <p className="mt-0.5 text-[5px] font-semibold uppercase leading-none tracking-wide text-slate-600">
-              Sew
-            </p>
+        <div className="flex min-h-0 flex-1 flex-col px-2 py-1">
+          <div className="min-w-0 shrink-0 text-left">
+            {label ? (
+              <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#0B2C5A]">
+                {label}
+              </p>
+            ) : null}
+            <h2
+              className={`${
+                jobsLine ? "line-clamp-1" : "line-clamp-2"
+              } text-[12px] font-semibold leading-snug text-slate-900 ${label ? "mt-0.5" : ""}`}
+            >
+              {displayName}
+            </h2>
+            {jobsLine ? (
+              <p className="badge-job-functions mt-0.5 line-clamp-1 text-[10px] font-semibold leading-snug text-slate-700">
+                {jobsLine}
+              </p>
+            ) : null}
           </div>
 
-          <div className="flex min-w-0 flex-1 flex-col justify-between px-2 py-1.5 text-left">
-            <div className="min-w-0">
-              {label ? (
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0B2C5A]">
-                  {label}
-                </p>
-              ) : null}
-              <h2
-                className={`${
-                  jobsLine ? "line-clamp-2" : "line-clamp-3"
-                } text-[12px] font-semibold leading-snug text-slate-900 ${label ? "mt-0.5" : ""}`}
+          {/* Fixed 3cm clear gap between QR edges; pair centered. Labels are full words. */}
+          <div className="flex min-h-0 flex-1 items-center justify-center">
+            <div
+              className="badge-qr-pair flex shrink-0 items-start"
+              style={{ width: `${BADGE_QR_PAIR_WIDTH_MM}mm` }}
+            >
+              <div
+                className="flex shrink-0 flex-col items-center"
+                style={{ width: `${BADGE_QR_DISPLAY_MM}mm` }}
               >
-                {displayName}
-              </h2>
-              {jobsLine ? (
-                <p className="badge-job-functions mt-0.5 line-clamp-2 text-[11px] font-semibold leading-snug text-slate-700">
-                  {jobsLine}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={qrSrc}
+                  alt=""
+                  width={BADGE_QR_FETCH_PX}
+                  height={BADGE_QR_FETCH_PX}
+                  className="badge-qr-img shrink-0 rounded-sm border border-slate-200 bg-white"
+                  style={{
+                    width: `${BADGE_QR_DISPLAY_MM}mm`,
+                    height: `${BADGE_QR_DISPLAY_MM}mm`,
+                  }}
+                />
+                <p className="badge-qr-label mt-0.5 whitespace-nowrap text-center text-[6.5px] font-bold uppercase leading-none tracking-wide text-slate-700">
+                  {BADGE_QR_SEW_LABEL}
                 </p>
-              ) : null}
-            </div>
-            <div className="badge-card-footer mt-1 min-w-0 shrink-0">
-              <p className="text-[7px] uppercase tracking-wide text-slate-500">Employee ID</p>
-              <p className="truncate font-mono text-[11px] font-semibold text-[#0B2C5A]">
-                {employee.employee_id_number}
-              </p>
-              <p className="badge-print-date mt-0.5 truncate text-[7px] font-medium leading-tight text-slate-900">
-                {printedLabel}
-              </p>
+              </div>
+              <div
+                className="badge-qr-gap shrink-0"
+                style={{ width: `${BADGE_QR_GAP_MM}mm` }}
+                aria-hidden
+              />
+              <div
+                className="flex shrink-0 flex-col items-center"
+                style={{ width: `${BADGE_QR_DISPLAY_MM}mm` }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={altQrSrc}
+                  alt=""
+                  width={BADGE_QR_FETCH_PX}
+                  height={BADGE_QR_FETCH_PX}
+                  className="badge-qr-img shrink-0 rounded-sm border-2 border-amber-600 bg-white"
+                  style={{
+                    width: `${BADGE_QR_DISPLAY_MM}mm`,
+                    height: `${BADGE_QR_DISPLAY_MM}mm`,
+                  }}
+                />
+                <p className="badge-qr-label badge-qr-label-alt mt-0.5 whitespace-nowrap text-center text-[6.5px] font-bold uppercase leading-none tracking-wide text-amber-800">
+                  {BADGE_QR_ALT_LABEL}
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="flex w-[17mm] shrink-0 flex-col items-center justify-center bg-slate-50 px-0.5 py-1">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={altQrSrc}
-              alt=""
-              width={QR_SIZE}
-              height={QR_SIZE}
-              className="h-[14mm] w-[14mm] shrink-0 rounded-sm border-2 border-amber-600 bg-white"
-            />
-            <p className="mt-0.5 text-[5px] font-bold uppercase leading-none tracking-wide text-amber-800">
-              Alt
+          <div className="badge-card-footer min-w-0 shrink-0 text-left">
+            <p className="text-[7px] uppercase tracking-wide text-slate-500">Employee ID</p>
+            <p className="truncate font-mono text-[11px] font-semibold text-[#0B2C5A]">
+              {employee.employee_id_number}
+            </p>
+            <p className="badge-print-date mt-0.5 truncate text-[7px] font-medium leading-tight text-slate-900">
+              {printedLabel}
             </p>
           </div>
         </div>
