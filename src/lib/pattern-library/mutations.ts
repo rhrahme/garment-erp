@@ -816,42 +816,41 @@ export async function updateClientPattern(
 
   // Explicit rebuild_template seeds/refreshes points even when garment is unchanged
   // (empty custom/vest sheets, or "Load template" on an empty Sample/Trial grid).
-  const shouldRebuildTemplate =
-    Boolean(patch.rebuild_template) && !nextBaseId && versions.length > 0;
+  // Pattern owns the sheet: allowed with or without a linked base, and applied to
+  // every trial so Sample / Trials / Final stay in sync.
+  const shouldRebuildTemplate = Boolean(patch.rebuild_template) && versions.length > 0;
   if (shouldRebuildTemplate) {
     const template = buildMeasurementsFromTemplate(store.dictionary, nextGarmentType);
-    const lastIndex = versions.length - 1;
-    const last = versions[lastIndex]!;
-    const existingByPoint = new Map(last.measurements.map((row) => [row.point_id, row]));
-    const merged = template.map((row) => {
-      const prior = existingByPoint.get(row.point_id);
-      if (!prior) return row;
+    versions = versions.map((candidate) => {
+      const existingByPoint = new Map(
+        candidate.measurements.map((row) => [row.point_id, row])
+      );
+      const merged = template.map((row) => {
+        const prior = existingByPoint.get(row.point_id);
+        if (!prior) return row;
+        return {
+          ...row,
+          base_value: prior.base_value,
+          target_value: prior.target_value,
+          sewn_value: prior.sewn_value,
+          adjustment: prior.adjustment,
+          remarks: prior.remarks,
+          remark: prior.remark ?? row.remark,
+        };
+      });
+      // Keep any custom points not in the new template.
+      for (const prior of candidate.measurements) {
+        if (!merged.some((row) => row.point_id === prior.point_id)) {
+          merged.push(prior);
+        }
+      }
       return {
-        ...row,
-        base_value: prior.base_value,
-        target_value: prior.target_value,
-        sewn_value: prior.sewn_value,
-        adjustment: prior.adjustment,
-        remarks: prior.remarks,
-        remark: prior.remark ?? row.remark,
+        ...candidate,
+        measurements: merged,
+        updated_by: options.updatedBy ?? candidate.updated_by,
+        updated_at: now(),
       };
     });
-    // Keep any custom points not in the new template.
-    for (const prior of last.measurements) {
-      if (!merged.some((row) => row.point_id === prior.point_id)) {
-        merged.push(prior);
-      }
-    }
-    versions = versions.map((candidate, i) =>
-      i === lastIndex
-        ? {
-            ...candidate,
-            measurements: merged,
-            updated_by: options.updatedBy ?? candidate.updated_by,
-            updated_at: now(),
-          }
-        : candidate
-    );
   }
 
   const nextActiveTud =

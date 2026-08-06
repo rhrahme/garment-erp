@@ -73,6 +73,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Pages hosting a picker preload on mount so the dialog opens with zero
   network wait; the cache is invalidated after base create / fit-column
   save. Keep picker search client-side.
+- **Pattern owns the client measurement sheet** (Aug 6 2026): on Sample /
+  Trials / Final (and Trial detail), Pattern can add, rename, reorder, and
+  remove any measurement row; edits sync across every trial. Cell writes
+  upsert missing rows. "Load template points" works with or without a linked
+  base and merges dictionary points onto all trials (keeps entered values).
+  Do not re-lock row add/remove to a single trial or hide template load when
+  `base_pattern_id` is set.
 
 ## Printing
 

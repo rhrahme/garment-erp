@@ -148,3 +148,185 @@ export function remarksForPoint(
   }
   return null;
 }
+
+export function slugifyPointId(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "point";
+}
+
+export function emptyClientMeasurement(
+  pointId: string,
+  name: string,
+  remark: string | null = null
+): ClientPatternMeasurement {
+  return {
+    point_id: pointId,
+    name,
+    remark,
+    is_graded: true,
+    base_value: null,
+    target_value: null,
+    sewn_value: null,
+    adjustment: null,
+    remarks: null,
+  };
+}
+
+/** Pattern owns the sheet: add the same point on every trial. */
+export function addPointToAllVersions(
+  pattern: ClientPattern,
+  name: string
+): ClientPattern | null {
+  const trimmed = name.trim();
+  if (!trimmed || pattern.versions.length === 0) return null;
+  const pointId = slugifyPointId(trimmed);
+  if (trialSheetPoints(pattern).some((point) => point.point_id === pointId)) {
+    return null;
+  }
+  const row = emptyClientMeasurement(pointId, trimmed);
+  return {
+    ...pattern,
+    versions: pattern.versions.map((version) => ({
+      ...version,
+      measurements: [...version.measurements, { ...row }],
+    })),
+  };
+}
+
+/** Pattern owns the sheet: remove the point from every trial. */
+export function removePointFromAllVersions(
+  pattern: ClientPattern,
+  pointId: string
+): ClientPattern {
+  return {
+    ...pattern,
+    versions: pattern.versions.map((version) => ({
+      ...version,
+      measurements: version.measurements.filter((row) => row.point_id !== pointId),
+    })),
+  };
+}
+
+/** Rename keeps point_id stable so load-from-base / evolution still match. */
+export function renamePointOnAllVersions(
+  pattern: ClientPattern,
+  pointId: string,
+  name: string
+): ClientPattern {
+  // Reject blank names; keep trailing spaces while typing so the cursor stays put.
+  if (!name.trim()) return pattern;
+  return {
+    ...pattern,
+    versions: pattern.versions.map((version) => ({
+      ...version,
+      measurements: version.measurements.map((row) =>
+        row.point_id === pointId ? { ...row, name } : row
+      ),
+    })),
+  };
+}
+
+/** Reorder rows the same way on every trial (Sample/Trials/Final grid order). */
+export function movePointOnAllVersions(
+  pattern: ClientPattern,
+  pointId: string,
+  direction: -1 | 1
+): ClientPattern {
+  const points = trialSheetPoints(pattern);
+  const index = points.findIndex((point) => point.point_id === pointId);
+  if (index < 0) return pattern;
+  const nextIndex = index + direction;
+  if (nextIndex < 0 || nextIndex >= points.length) return pattern;
+  const order = points.map((point) => point.point_id);
+  const swap = order[index]!;
+  order[index] = order[nextIndex]!;
+  order[nextIndex] = swap;
+
+  return {
+    ...pattern,
+    versions: pattern.versions.map((version) => {
+      const byId = new Map(version.measurements.map((row) => [row.point_id, row]));
+      const reordered: ClientPatternMeasurement[] = [];
+      for (const id of order) {
+        const row = byId.get(id);
+        if (row) {
+          reordered.push(row);
+          byId.delete(id);
+        }
+      }
+      for (const row of byId.values()) reordered.push(row);
+      return { ...version, measurements: reordered };
+    }),
+  };
+}
+
+function withEnsuredRow(
+  measurements: ClientPatternMeasurement[],
+  pointId: string,
+  nameHint: string,
+  remarkHint: string | null
+): ClientPatternMeasurement[] {
+  if (measurements.some((row) => row.point_id === pointId)) return measurements;
+  return [...measurements, emptyClientMeasurement(pointId, nameHint, remarkHint)];
+}
+
+/** Patch a point on every trial, creating the row when missing. */
+export function patchPointOnAllVersions(
+  pattern: ClientPattern,
+  pointId: string,
+  patch: Partial<ClientPatternMeasurement>,
+  hints?: { name?: string; remark?: string | null }
+): ClientPattern {
+  const nameHint =
+    hints?.name ??
+    trialSheetPoints(pattern).find((point) => point.point_id === pointId)?.name ??
+    pointId;
+  const remarkHint =
+    hints?.remark ??
+    trialSheetPoints(pattern).find((point) => point.point_id === pointId)?.remark ??
+    null;
+  return {
+    ...pattern,
+    versions: pattern.versions.map((version) => ({
+      ...version,
+      measurements: withEnsuredRow(
+        version.measurements,
+        pointId,
+        nameHint,
+        remarkHint
+      ).map((row) => (row.point_id === pointId ? { ...row, ...patch } : row)),
+    })),
+  };
+}
+
+/** Patch a point on one trial, creating the row when missing. */
+export function patchPointOnVersion(
+  pattern: ClientPattern,
+  versionId: string,
+  pointId: string,
+  patch: Partial<ClientPatternMeasurement>,
+  hints?: { name?: string; remark?: string | null }
+): ClientPattern {
+  const nameHint =
+    hints?.name ??
+    trialSheetPoints(pattern).find((point) => point.point_id === pointId)?.name ??
+    pointId;
+  const remarkHint =
+    hints?.remark ??
+    trialSheetPoints(pattern).find((point) => point.point_id === pointId)?.remark ??
+    null;
+  return {
+    ...pattern,
+    versions: pattern.versions.map((version) => {
+      if (version.id !== versionId) return version;
+      return {
+        ...version,
+        measurements: withEnsuredRow(
+          version.measurements,
+          pointId,
+          nameHint,
+          remarkHint
+        ).map((row) => (row.point_id === pointId ? { ...row, ...patch } : row)),
+      };
+    }),
+  };
+}

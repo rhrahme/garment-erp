@@ -1,8 +1,14 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  addPointToAllVersions,
   buildTrialSheetColumns,
+  movePointOnAllVersions,
+  patchPointOnAllVersions,
   remarksForPoint,
+  removePointFromAllVersions,
+  renamePointOnAllVersions,
+  trialSheetPoints,
   trialSheetStatusLabel,
 } from "@/lib/pattern-library/trial-sheet";
 import type { ClientPattern, ClientPatternVersion } from "@/lib/types/pattern-library";
@@ -93,5 +99,56 @@ describe("trial sheet columns", () => {
     const p = pattern([v1, v2]);
     assert.equal(remarksForPoint(p, "chest"), "shorten 2cm");
     assert.equal(remarksForPoint(p, "missing"), null);
+  });
+});
+
+describe("pattern sheet-wide measurement edits", () => {
+  it("adds, renames, reorders, and removes a point on every trial", () => {
+    const start = pattern([version(1), version(2)]);
+    const withSleeve = addPointToAllVersions(start, "Sleeve");
+    assert.ok(withSleeve);
+    assert.deepEqual(
+      trialSheetPoints(withSleeve).map((p) => p.point_id),
+      ["chest", "sleeve"]
+    );
+    assert.equal(withSleeve.versions[0]!.measurements.length, 2);
+    assert.equal(withSleeve.versions[1]!.measurements.length, 2);
+
+    const renamed = renamePointOnAllVersions(withSleeve, "sleeve", "Sleeve length");
+    assert.equal(
+      renamed.versions.every((v) =>
+        v.measurements.some((m) => m.point_id === "sleeve" && m.name === "Sleeve length")
+      ),
+      true
+    );
+
+    const moved = movePointOnAllVersions(renamed, "sleeve", -1);
+    assert.deepEqual(
+      trialSheetPoints(moved).map((p) => p.point_id),
+      ["sleeve", "chest"]
+    );
+
+    const removed = removePointFromAllVersions(moved, "chest");
+    assert.deepEqual(
+      trialSheetPoints(removed).map((p) => p.point_id),
+      ["sleeve"]
+    );
+    assert.equal(removed.versions.every((v) => v.measurements.length === 1), true);
+  });
+
+  it("creates a missing row when patching Sample across trials", () => {
+    const v1 = version(1);
+    const v2 = version(2);
+    v2.measurements = [];
+    const p = pattern([v1, v2]);
+    const next = patchPointOnAllVersions(p, "chest", { base_value: 42 });
+    assert.equal(
+      next.versions[0]!.measurements.find((m) => m.point_id === "chest")?.base_value,
+      42
+    );
+    assert.equal(
+      next.versions[1]!.measurements.find((m) => m.point_id === "chest")?.base_value,
+      42
+    );
   });
 });

@@ -52,9 +52,15 @@ import { clientPatternQrUrl } from "@/lib/pattern-library/pattern-qr";
 import { TudViewerModal } from "@/components/pattern/library/TudViewerModal";
 import { formatTudSizeDerivedLine } from "@/lib/pattern-library/derived-from";
 import {
+  addPointToAllVersions,
   buildTrialSheetColumns,
   currentTrialVersion,
+  movePointOnAllVersions,
+  patchPointOnAllVersions,
+  patchPointOnVersion,
   remarksForPoint,
+  removePointFromAllVersions,
+  renamePointOnAllVersions,
   sampleValueForPoint,
   trialColumnValue,
   trialSheetPoints,
@@ -226,29 +232,27 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
     }));
   }
 
+  /** Add / remove / rename / reorder apply to every trial - Pattern owns the sheet. */
   function addMeasurementRow() {
-    const name = newPointName.trim();
-    if (!name || !version) return;
-    const pointId = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-    if (version.measurements.some((row) => row.point_id === pointId)) return;
-    mutateVersion((draft) => ({
-      ...draft,
-      measurements: [
-        ...draft.measurements,
-        {
-          point_id: pointId,
-          name,
-          remark: null,
-          is_graded: true,
-          base_value: null,
-          target_value: null,
-          sewn_value: null,
-          adjustment: null,
-          remarks: null,
-        },
-      ],
-    }));
+    if (!pattern) return;
+    const next = addPointToAllVersions(pattern, newPointName);
+    if (!next) return;
+    mutatePattern(() => next);
     setNewPointName("");
+  }
+
+  function removeMeasurementRow(pointId: string, label: string) {
+    if (!pattern) return;
+    if (!window.confirm(`Remove "${label}" from this measurement sheet?`)) return;
+    mutatePattern((draft) => removePointFromAllVersions(draft, pointId));
+  }
+
+  function renameMeasurementRow(pointId: string, name: string) {
+    mutatePattern((draft) => renamePointOnAllVersions(draft, pointId, name));
+  }
+
+  function moveMeasurementRow(pointId: string, direction: -1 | 1) {
+    mutatePattern((draft) => movePointOnAllVersions(draft, pointId, direction));
   }
 
   async function saveHeader(extra: { rebuild_template?: boolean } = {}) {
@@ -365,15 +369,9 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   }
 
   function setSampleValue(pointId: string, value: number | null) {
-    mutatePattern((draft) => ({
-      ...draft,
-      versions: draft.versions.map((trial) => ({
-        ...trial,
-        measurements: trial.measurements.map((row) =>
-          row.point_id === pointId ? { ...row, base_value: value } : row
-        ),
-      })),
-    }));
+    mutatePattern((draft) =>
+      patchPointOnAllVersions(draft, pointId, { base_value: value })
+    );
   }
 
   /**
@@ -382,47 +380,29 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
    * setSampleValue - then the operator reviews and hits Save sheet.
    */
   function applySampleFill(values: Record<string, number>, notice: string) {
-    mutatePattern((draft) => ({
-      ...draft,
-      versions: draft.versions.map((trial) => ({
-        ...trial,
-        measurements: trial.measurements.map((row) =>
-          values[row.point_id] !== undefined ? { ...row, base_value: values[row.point_id]! } : row
-        ),
-      })),
-    }));
+    mutatePattern((draft) => {
+      let next = draft;
+      for (const [pointId, value] of Object.entries(values)) {
+        next = patchPointOnAllVersions(next, pointId, { base_value: value });
+      }
+      return next;
+    });
     setSampleFillNotice(notice);
     setLoadFromBaseOpen(false);
   }
 
   function setTrialTarget(versionId: string, pointId: string, value: number | null) {
-    mutatePattern((draft) => ({
-      ...draft,
-      versions: draft.versions.map((trial) =>
-        trial.id !== versionId
-          ? trial
-          : {
-              ...trial,
-              measurements: trial.measurements.map((row) =>
-                row.point_id === pointId ? { ...row, target_value: value } : row
-              ),
-            }
-      ),
-    }));
+    mutatePattern((draft) =>
+      patchPointOnVersion(draft, versionId, pointId, { target_value: value })
+    );
   }
 
   /** Per-line stitcher remark - kept on every trial so Production A4 always prints it. */
   function setPointRemarks(pointId: string, remarks: string | null) {
     const next = remarks?.trim() || null;
-    mutatePattern((draft) => ({
-      ...draft,
-      versions: draft.versions.map((trial) => ({
-        ...trial,
-        measurements: trial.measurements.map((row) =>
-          row.point_id === pointId ? { ...row, remarks: next } : row
-        ),
-      })),
-    }));
+    mutatePattern((draft) =>
+      patchPointOnAllVersions(draft, pointId, { remarks: next })
+    );
   }
 
   function setCurrentTrialStitcherComments(value: string | null) {
@@ -452,11 +432,9 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
 
   async function changeGarmentType(nextGarment: string) {
     if (!pattern || !nextGarment || nextGarment === pattern.garment_type) return;
-    const rebuild =
-      !pattern.base_pattern_id &&
-      window.confirm(
-        `Switch garment type to ${garmentLabel(nextGarment)} and refresh the measurement template points? Entered values on matching points are kept.`
-      );
+    const rebuild = window.confirm(
+      `Switch garment type to ${garmentLabel(nextGarment)} and refresh the measurement template points? Entered values on matching points are kept.`
+    );
     setSaving(true);
     setError(null);
     try {
@@ -483,9 +461,9 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
     }
   }
 
-  /** Seed Sample/Trial/Final rows from the garment dictionary when the grid is empty. */
+  /** Seed Sample/Trial/Final rows from the garment dictionary (Pattern can reload anytime). */
   async function loadTemplatePoints() {
-    if (!pattern || pattern.base_pattern_id) return;
+    if (!pattern) return;
     setSaving(true);
     setError(null);
     try {
@@ -1236,15 +1214,23 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                         </th>
                       ))}
                       <th className="min-w-[10rem] px-3 py-2">Remark</th>
+                      <th className="w-24 px-1 py-2 text-center">Edit</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {trialSheetPoints(pattern).map((point) => (
+                    {trialSheetPoints(pattern).map((point, pointIndex, allPoints) => (
                       <tr key={point.point_id} className="border-b border-slate-100">
-                        <td className="sticky left-0 z-10 whitespace-nowrap bg-white px-3 py-1.5 font-medium text-slate-800">
-                          {point.name}
+                        <td className="sticky left-0 z-10 bg-white px-2 py-1.5">
+                          <input
+                            value={point.name}
+                            onChange={(e) =>
+                              renameMeasurementRow(point.point_id, e.target.value)
+                            }
+                            className="w-full min-w-[8rem] rounded-md border border-transparent bg-transparent px-1 py-1 font-medium text-slate-800 hover:border-slate-200 focus:border-indigo-300 focus:bg-white focus:outline-none"
+                            aria-label={`Rename ${point.name}`}
+                          />
                           {point.remark ? (
-                            <span className="ml-2 text-xs font-normal text-slate-400">
+                            <span className="mt-0.5 block px-1 text-xs font-normal text-slate-400">
                               {point.remark}
                             </span>
                           ) : null}
@@ -1301,6 +1287,38 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                             placeholder="Remark for stitcher"
                           />
                         </td>
+                        <td className="px-1 py-1.5">
+                          <div className="flex items-center justify-center gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => moveMeasurementRow(point.point_id, -1)}
+                              disabled={pointIndex === 0}
+                              className="rounded p-1 text-slate-300 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-30"
+                              aria-label={`Move ${point.name} up`}
+                            >
+                              <MoveUp className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveMeasurementRow(point.point_id, 1)}
+                              disabled={pointIndex >= allPoints.length - 1}
+                              className="rounded p-1 text-slate-300 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-30"
+                              aria-label={`Move ${point.name} down`}
+                            >
+                              <MoveDown className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                removeMeasurementRow(point.point_id, point.name)
+                              }
+                              className="rounded p-1 text-slate-300 hover:bg-rose-50 hover:text-rose-600"
+                              aria-label={`Remove ${point.name}`}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1311,19 +1329,17 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   <p className="text-sm text-slate-600">
                     No measurement rows yet for{" "}
                     <span className="font-medium">{garmentLabel(pattern.garment_type)}</span>.
-                    Load the garment template to enter Sample / Trial / Final sizes.
+                    Load the garment template, or add custom points below.
                   </p>
-                  {!pattern.base_pattern_id ? (
-                    <button
-                      type="button"
-                      onClick={() => void loadTemplatePoints()}
-                      disabled={saving}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-                    >
-                      <Ruler className="h-4 w-4" />
-                      {saving ? "Loading..." : "Load template points"}
-                    </button>
-                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => void loadTemplatePoints()}
+                    disabled={saving}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    <Ruler className="h-4 w-4" />
+                    {saving ? "Loading..." : "Load template points"}
+                  </button>
                 </div>
               ) : null}
               <div className="flex flex-wrap items-center gap-1.5 border-t border-slate-100 px-4 py-3">
@@ -1342,8 +1358,18 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   <Plus className="h-4 w-4" />
                   Add point
                 </button>
+                <button
+                  type="button"
+                  onClick={() => void loadTemplatePoints()}
+                  disabled={saving}
+                  className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-50"
+                  title="Merge garment dictionary points onto every trial (keeps existing values)"
+                >
+                  <Ruler className="h-4 w-4" />
+                  Load template points
+                </button>
                 <p className="ml-auto text-[11px] text-slate-400">
-                  After client trial: edit the current Trial column, update Tuka, re-upload .TUD.
+                  Pattern can add, rename, reorder, or remove any row. Save sheet to keep.
                 </p>
               </div>
               {(() => {
@@ -1456,8 +1482,15 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   <tbody>
                     {version.measurements.map((row) => (
                       <tr key={row.point_id} className="border-b border-slate-100">
-                        <td className="sticky left-0 z-10 whitespace-nowrap bg-white px-3 py-1.5 font-medium text-slate-800">
-                          {row.name}
+                        <td className="sticky left-0 z-10 bg-white px-2 py-1.5">
+                          <input
+                            value={row.name}
+                            onChange={(e) =>
+                              renameMeasurementRow(row.point_id, e.target.value)
+                            }
+                            className="w-full min-w-[8rem] rounded-md border border-transparent bg-transparent px-1 py-1 font-medium text-slate-800 hover:border-slate-200 focus:border-indigo-300 focus:bg-white focus:outline-none"
+                            aria-label={`Rename ${row.name}`}
+                          />
                         </td>
                         <td className="px-2 py-1.5 text-center tabular-nums text-slate-500">
                           {formatMeasurement(row.base_value, unit)}
@@ -1500,9 +1533,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                           <input
                             value={row.remarks ?? ""}
                             onChange={(e) =>
-                              setMeasurement(row.point_id, {
-                                remarks: e.target.value || null,
-                              })
+                              setPointRemarks(row.point_id, e.target.value || null)
                             }
                             className="w-full min-w-[9rem] rounded-md border border-slate-200 px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-300 focus:outline-none"
                             placeholder="Remark for stitcher"
@@ -1512,12 +1543,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                           <button
                             type="button"
                             onClick={() =>
-                              mutateVersion((draft) => ({
-                                ...draft,
-                                measurements: draft.measurements.filter(
-                                  (candidate) => candidate.point_id !== row.point_id
-                                ),
-                              }))
+                              removeMeasurementRow(row.point_id, row.name)
                             }
                             className="rounded p-1 text-slate-300 hover:bg-rose-50 hover:text-rose-600"
                             aria-label={`Remove ${row.name}`}
@@ -1529,6 +1555,26 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                     ))}
                   </tbody>
                 </table>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5 border-t border-slate-100 px-4 py-3">
+                <input
+                  value={newPointName}
+                  onChange={(e) => setNewPointName(e.target.value)}
+                  placeholder="Add measurement point..."
+                  className="w-64 rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+                  onKeyDown={(e) => e.key === "Enter" && addMeasurementRow()}
+                />
+                <button
+                  type="button"
+                  onClick={addMeasurementRow}
+                  className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 ring-1 ring-slate-200 hover:bg-slate-50"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add point
+                </button>
+                <p className="text-[11px] text-slate-400">
+                  Add / rename / remove updates every trial on this sheet.
+                </p>
               </div>
               <div className="grid gap-4 border-t border-slate-100 p-4 lg:grid-cols-2">
                 <label className="text-sm">
