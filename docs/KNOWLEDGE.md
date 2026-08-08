@@ -131,6 +131,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   - one A4 per article with that line's floor piece QR(s) + shared
   measurements. Distinct from single-page **Print production** (primary
   line only). Do not collapse back to first-linked-line-only for sewing packs.
+- **Empty measurement sheet heal**: if Pattern opens a fabric-linked /
+  consolidated client pattern with no filled sizes, copy from the best
+  same-client + same-garment sibling (Moussa House Thobe case). Also runs
+  after fabric-line assign. Do not strip this heal.
 
 ## Supplier emails
 

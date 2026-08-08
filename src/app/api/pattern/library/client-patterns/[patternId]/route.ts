@@ -9,6 +9,7 @@ import { readPatternJobs } from "@/lib/data/pattern-jobs";
 import { formatBasePatternDisplayName } from "@/lib/pattern-library/derived-from";
 import { resolveMarkerFabricWidthAsync } from "@/lib/pattern-library/marker-layout-server";
 import { hydrateMultiPieceGeometry } from "@/lib/pattern-library/multi-piece-geometry";
+import { healEmptyClientPatternMeasurements } from "@/lib/pattern-library/heal-empty-measurements";
 import {
   seedMarkerLayoutIfMissing,
   updateClientPattern,
@@ -27,11 +28,17 @@ export async function GET(_request: Request, context: { params: Promise<{ patter
 
     // Existing TUDs: fill width/marker layout on open (no re-upload).
     const seeded = await seedMarkerLayoutIfMissing(patternId, { notify: false });
-    const pattern = seeded.ok
-      ? seeded.pattern
-      : (await readPatternLibraryFresh()).client_patterns.find(
-          (candidate) => candidate.id === patternId
-        ) ?? null;
+    // If this consolidated sheet is blank but a sibling has filled sizes,
+    // copy them so Pattern does not see an empty grid on the fabric-linked id.
+    const healed = await healEmptyClientPatternMeasurements(patternId);
+    const pattern =
+      healed.ok && healed.changed
+        ? healed.pattern
+        : seeded.ok
+          ? seeded.pattern
+          : (await readPatternLibraryFresh()).client_patterns.find(
+              (candidate) => candidate.id === patternId
+            ) ?? null;
     if (!pattern) {
       return NextResponse.json({ error: "Client pattern not found." }, { status: 404 });
     }

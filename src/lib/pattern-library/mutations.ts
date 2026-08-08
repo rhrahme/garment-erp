@@ -632,13 +632,21 @@ export async function assignFabricLinesToClientPattern(
       updated_at: timestamp,
     };
   }
-  const next: ClientPattern = {
+  let next: ClientPattern = {
     ...existing,
     linked_fabric_line_ids: targetLinkedLineIds,
     updated_at: timestamp,
   };
   store.client_patterns[index] = next;
   await writePatternLibrary(store);
+
+  // After fabrics land on this pattern, heal an empty sheet from a filled sibling
+  // (common when Pattern entered sizes on a duplicate before consolidate).
+  const { healEmptyClientPatternMeasurements } = await import(
+    "@/lib/pattern-library/heal-empty-measurements"
+  );
+  const healed = await healEmptyClientPatternMeasurements(patternId);
+  if (healed.ok && healed.changed) next = healed.pattern;
 
   if (options.notify !== false) {
     await notifyIntegration("client_pattern.fabric_lines_assigned", {
