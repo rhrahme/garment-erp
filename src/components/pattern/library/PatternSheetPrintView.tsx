@@ -15,12 +15,12 @@ import {
   clientPatternQrUrl,
 } from "@/lib/pattern-library/pattern-qr";
 import type { PatternSheetKind } from "@/lib/pattern-library/pattern-sheet-kind";
+import { expandCutterPrintPages } from "@/lib/pattern-library/expand-cutter-print-pages";
 import type {
   PatternSheetArticlePage,
   PatternSheetData,
   PatternSheetSticker,
 } from "@/lib/pattern-library/sheet-data";
-import { expandCutterPrintPages } from "@/lib/pattern-library/sheet-data";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 
 const SHEET_PRINT_CSS = `

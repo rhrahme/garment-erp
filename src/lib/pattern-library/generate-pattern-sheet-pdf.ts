@@ -16,12 +16,12 @@ import {
 } from "@/lib/pattern-library/pattern-qr";
 import type { PatternSheetKind } from "@/lib/pattern-library/pattern-sheet-kind";
 import { renderQrPngBuffer } from "@/lib/production/qr-render";
+import { expandCutterPrintPages } from "@/lib/pattern-library/expand-cutter-print-pages";
 import type {
   PatternSheetArticlePage,
   PatternSheetData,
   PatternSheetSticker,
 } from "@/lib/pattern-library/sheet-data";
-import { expandCutterPrintPages } from "@/lib/pattern-library/sheet-data";
 
 const MARGIN = 12;
 /** Tighter margin for single-page production / stitcher sheets. */
