@@ -690,6 +690,11 @@ export async function assignFabricLinesToClientPattern(
   );
   const healed = await healEmptyClientPatternMeasurements(patternId);
   if (healed.ok && healed.changed) next = healed.pattern;
+  const { healMislabeledInchClientPatternUnit } = await import(
+    "@/lib/pattern-library/heal-measurement-unit"
+  );
+  const unitHealed = await healMislabeledInchClientPatternUnit(patternId);
+  if (unitHealed.ok && unitHealed.changed) next = unitHealed.pattern;
 
   if (options.notify !== false) {
     await notifyIntegration("client_pattern.fabric_lines_assigned", {

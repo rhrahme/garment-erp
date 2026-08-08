@@ -79,7 +79,8 @@ export function isMeasurementSheetEmpty(pattern: ClientPattern): boolean {
 
 export function applySiblingMeasurementHeal(
   target: ClientPattern,
-  sourceVersion: ClientPatternVersion
+  sourceVersion: ClientPatternVersion,
+  options: { sourceUnit?: ClientPattern["unit"] } = {}
 ): ClientPattern | null {
   if (!isMeasurementSheetEmpty(target)) return null;
   const version = activeVersion(target);
@@ -98,6 +99,8 @@ export function applySiblingMeasurementHeal(
 
   return {
     ...target,
+    // Copied inch numbers must keep the source unit (do not leave target as cm).
+    unit: options.sourceUnit ?? target.unit,
     versions: target.versions.map((candidate) =>
       candidate.id === version.id ? nextVersion : candidate
     ),
@@ -131,7 +134,9 @@ export async function healEmptyClientPatternMeasurements(
     return { ok: true, pattern: existing, changed: false, source_pattern_id: null };
   }
 
-  const healed = applySiblingMeasurementHeal(existing, source.version);
+  const healed = applySiblingMeasurementHeal(existing, source.version, {
+    sourceUnit: source.pattern.unit,
+  });
   if (!healed) {
     return { ok: true, pattern: existing, changed: false, source_pattern_id: null };
   }

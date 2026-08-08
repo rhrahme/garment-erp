@@ -24,7 +24,6 @@ import type {
   BasePattern,
   BasePatternClientColumn,
   BasePatternPoint,
-  MeasurementUnit,
 } from "@/lib/types/pattern-library";
 import { cn } from "@/lib/utils";
 
@@ -314,34 +313,6 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
     }
   }
 
-  async function alignStoredUnit(nextUnit: MeasurementUnit) {
-    if (!base || base.unit === nextUnit) return;
-    if (dirty) {
-      setError("Save your changes before converting stored units on this base.");
-      return;
-    }
-    setSaving(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/pattern/library/bases/${baseId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ unit: nextUnit }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        throw new Error(body?.error ?? "Failed to change unit.");
-      }
-      const data = await res.json().catch(() => null);
-      if (data?.base) setBase(data.base);
-      invalidateBasePickerCache();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to change unit.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   if (loading) return <p className="text-sm text-slate-500">Loading base pattern…</p>;
   if (!base) return <p className="text-sm text-rose-600">Base pattern not found.</p>;
 
@@ -358,10 +329,7 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
           Pattern library
         </Link>
         <div className="flex flex-wrap items-center gap-2">
-          <MeasurementUnitToggle
-            disabled={saving}
-            onUnitChange={(next) => void alignStoredUnit(next)}
-          />
+          <MeasurementUnitToggle disabled={saving} />
           <Link
             href={withMeasurementUnitParam(`/pattern/bases/${base.id}/print`, displayUnit)}
             target="_blank"

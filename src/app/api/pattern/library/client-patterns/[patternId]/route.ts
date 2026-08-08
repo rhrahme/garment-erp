@@ -10,6 +10,7 @@ import { formatBasePatternDisplayName } from "@/lib/pattern-library/derived-from
 import { resolveMarkerFabricWidthAsync } from "@/lib/pattern-library/marker-layout-server";
 import { hydrateMultiPieceGeometry } from "@/lib/pattern-library/multi-piece-geometry";
 import { healEmptyClientPatternMeasurements } from "@/lib/pattern-library/heal-empty-measurements";
+import { healMislabeledInchClientPatternUnit } from "@/lib/pattern-library/heal-measurement-unit";
 import {
   seedMarkerLayoutIfMissing,
   updateClientPattern,
@@ -31,14 +32,18 @@ export async function GET(_request: Request, context: { params: Promise<{ patter
     // If this consolidated sheet is blank but a sibling has filled sizes,
     // copy them so Pattern does not see an empty grid on the fabric-linked id.
     const healed = await healEmptyClientPatternMeasurements(patternId);
+    // Inch numbers wrongly labeled cm (common after empty-sheet heal) -> relabel.
+    const unitHealed = await healMislabeledInchClientPatternUnit(patternId);
     const pattern =
-      healed.ok && healed.changed
-        ? healed.pattern
-        : seeded.ok
-          ? seeded.pattern
-          : (await readPatternLibraryFresh()).client_patterns.find(
-              (candidate) => candidate.id === patternId
-            ) ?? null;
+      unitHealed.ok && unitHealed.changed
+        ? unitHealed.pattern
+        : healed.ok && healed.changed
+          ? healed.pattern
+          : seeded.ok
+            ? seeded.pattern
+            : (await readPatternLibraryFresh()).client_patterns.find(
+                (candidate) => candidate.id === patternId
+              ) ?? null;
     if (!pattern) {
       return NextResponse.json({ error: "Client pattern not found." }, { status: 404 });
     }

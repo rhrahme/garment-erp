@@ -139,10 +139,33 @@ describe("heal empty measurements from siblings", () => {
         remarks: "keep",
       },
     ]);
-    const healed = applySiblingMeasurementHeal(empty, source);
+    const healed = applySiblingMeasurementHeal(empty, source, { sourceUnit: "in" });
     assert.ok(healed);
     assert.equal(healed!.versions[0]!.measurements.length, 1);
     assert.equal(healed!.versions[0]!.measurements[0]!.target_value, 27.5);
     assert.equal(healed!.versions[0]!.measurements[0]!.remarks, "keep");
+    assert.equal(healed!.unit, "in");
+  });
+
+  it("copies source unit when healing onto a cm-labeled empty target", () => {
+    const empty = pattern("empty", "House Thobe", [version("v-empty", [])]);
+    empty.unit = "cm";
+    const source = version("v-filled", [
+      {
+        point_id: "p1",
+        name: "Chest",
+        remark: null,
+        is_graded: true,
+        base_value: null,
+        target_value: 58.625,
+        sewn_value: null,
+        adjustment: null,
+        remarks: null,
+      },
+    ]);
+    const healed = applySiblingMeasurementHeal(empty, source, { sourceUnit: "in" });
+    assert.ok(healed);
+    assert.equal(healed!.unit, "in");
+    assert.equal(healed!.versions[0]!.measurements[0]!.target_value, 58.625);
   });
 });

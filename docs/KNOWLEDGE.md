@@ -86,11 +86,17 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   print previews, and PDFs (`?unit=`) show values in that unit via display
   conversion; edits convert back to each pattern's stored unit. Typed cell
   numbers mean the selected unit (not auto-detected) - pick cm or inches,
-  then type. Toggling on an open client/base sheet also PATCHes that record
-  to convert stored numbers when the sheet is clean. New client/base
-  patterns inherit the preference. Helpers:
+  then type. The Units toggle is display-only (does not rewrite stored
+  numbers). New client/base patterns inherit the preference. Helpers:
   `useMeasurementUnitPreference`, `MeasurementUnitToggle`,
   `formatMeasurementForDisplay`. Ship: `0c2e27c`.
+- **Historical sheets store inches** (Aug 8 2026): filled client measurement
+  numbers are inches (1/16"). If `unit` was wrongly `"cm"`, relabel to `"in"`
+  without converting numbers; if numbers were accidentally converted to cm,
+  convert them back to inches (`heal-measurement-unit.ts`, on pattern open +
+  `scripts/relabel-inch-client-patterns.mjs`). Empty-sheet sibling heal must
+  copy the source `unit` too. After restore, the Units toggle converts for
+  cm display only.
 - **Base-pattern pickers must preload the slim payload** (perf fix, Aug 5
   2026): use `GET /api/pattern/library/bases` (bases + dictionary, ~218 KB)
   via `preloadBasePickerData()` in `base-picker-cache.ts` - never the

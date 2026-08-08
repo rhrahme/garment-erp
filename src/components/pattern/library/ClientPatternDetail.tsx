@@ -80,7 +80,6 @@ import type {
   ClientPattern,
   ClientPatternMeasurement,
   ClientPatternVersion,
-  MeasurementUnit,
 } from "@/lib/types/pattern-library";
 import { cn } from "@/lib/utils";
 
@@ -301,37 +300,6 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
       if (extra.rebuild_template) setDirty(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  /**
-   * Align this sheet's stored unit with the site-wide preference (converts numbers).
-   * Display already follows the preference even before this completes.
-   */
-  async function alignStoredUnit(nextUnit: MeasurementUnit) {
-    if (!pattern || pattern.unit === nextUnit) return;
-    if (dirty || headerDirty) {
-      setError("Save your changes before converting stored units on this sheet.");
-      return;
-    }
-    setSaving(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/pattern/library/client-patterns/${patternId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ unit: nextUnit }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        throw new Error(body?.error ?? "Failed to change unit.");
-      }
-      const data = await res.json().catch(() => null);
-      if (data?.pattern) setPattern(data.pattern);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to change unit.");
     } finally {
       setSaving(false);
     }
@@ -1218,10 +1186,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
                 <div className="flex flex-wrap items-center gap-3">
                   <p className="text-sm font-semibold text-slate-800">Measurement sheet</p>
-                  <MeasurementUnitToggle
-                    disabled={saving}
-                    onUnitChange={(next) => void alignStoredUnit(next)}
-                  />
+                  <MeasurementUnitToggle disabled={saving} />
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
