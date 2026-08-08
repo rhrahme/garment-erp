@@ -149,12 +149,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   article (fabric code + floor QR); use Sewing A4s to tick a subset.
   Do not collapse either pack back to first-linked-line-only.
 - **Consolidated masters + fabric jobs**: N fabric jobs share one client
-  pattern / measurements. Open sheet / Print A4 from a job must pass
+  pattern / measurements. After consolidate, always open sheet / Print A4
+  from the **job** (or Master pattern link with that job's fabric) using
   `?job={jobId}&line={sales_order_line_id}` so fabric + floor QR stay on
-  that article (e.g. L31 `722026` not a sibling `206155`). Never guess
-  "most recently updated job" when multiple fabric lines are linked.
-  Master **Print cutter** / **Print production** without `job=` expand
-  one page group per linked article.
+  that article (e.g. L31 `722026` not a sibling `206155`). Never open the
+  bare master URL to print one fabric. Never guess "most recently updated
+  job" when multiple lines are linked. Master **Print cutter** /
+  **Print production** without `job=` expand one page per linked article.
 - **Empty measurement sheet heal**: if Pattern opens a fabric-linked /
   consolidated client pattern with no filled sizes, copy from the best
   same-client + same-garment sibling (Moussa House Thobe case). Also runs

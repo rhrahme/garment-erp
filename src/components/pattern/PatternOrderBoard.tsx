@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, Eye, ImageOff, Layers, Link2, Sparkles, Star, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
@@ -42,6 +43,8 @@ type PatternOrderBoardProps = {
 };
 
 export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
+  const searchParams = useSearchParams();
+  const justConsolidatedId = searchParams.get("consolidated")?.trim() || null;
   const [order, setOrder] = useState<SalesOrder | null>(null);
   const [jobs, setJobs] = useState<PatternJob[]>([]);
   const [mismatch, setMismatch] = useState<PatternSalesOrderMismatch | null>(null);
@@ -322,6 +325,13 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
               {autoSummary}
             </p>
           ) : null}
+          {justConsolidatedId ? (
+            <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+              Fabrics consolidated onto one measurement sheet. Open each job (or Master
+              pattern · fabric code) to print that job&apos;s fabric - do not print from the
+              bare master link.
+            </p>
+          ) : null}
           {patternsForClient.length > 0 ? (
             <ul className="mt-3 flex flex-wrap gap-2">
               {patternsForClient.map((pattern) => (
@@ -504,10 +514,13 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
                         Master pattern:{" "}
                         {linked ? (
                           <Link
-                            href={`/pattern/library/clients/${linked.id}`}
+                            href={`/pattern/library/clients/${linked.id}?job=${encodeURIComponent(job.id)}&line=${encodeURIComponent(job.sales_order_line_id)}`}
                             className="font-medium text-indigo-700 hover:text-indigo-900"
                           >
                             {linked.pattern_ref}
+                            <span className="ml-1 font-mono font-normal text-slate-500">
+                              · {job.fabric_number}
+                            </span>
                           </Link>
                         ) : (
                           <span className="text-amber-700">Not linked — select &amp; consolidate</span>

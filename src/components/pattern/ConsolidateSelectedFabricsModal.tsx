@@ -148,7 +148,9 @@ export function ConsolidateSelectedFabricsModal({
       }
 
       await onLinked();
-      router.push(`/pattern/library/clients/${patternId}`);
+      // Back to the order board - do not open the bare master sheet (no job/line),
+      // or Print A4 would show a sibling fabric. Open each job for that fabric's print.
+      router.push(`/pattern/orders/${order.id}?consolidated=${encodeURIComponent(patternId)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Consolidate failed.");
       setBusy(false);

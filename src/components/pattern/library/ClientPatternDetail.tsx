@@ -758,6 +758,9 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
     displayUnit
   );
   const fabricFieldValue = scopedJob?.fabric_number?.trim() || pattern.fabric || "";
+  const multiFabric =
+    (pattern.linked_fabric_line_ids?.length ?? 0) > 1 || linkedJobs.length > 1;
+  const needsFabricScope = multiFabric && !scopedJobId && !scopedLineId;
   const tudPreview = clientPatternTudPreview(pattern);
   const basePatternName = linkedBase?.display_name ?? null;
   const tudSizes = tudPreview?.attachment.tud?.sizes ?? (pattern.base_size ? [pattern.base_size] : []);
@@ -768,6 +771,16 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
 
   return (
     <div className="space-y-5">
+      {needsFabricScope ? (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-semibold">Shared sheet after consolidate</p>
+          <p className="mt-1 text-amber-900/90">
+            This measurement sheet is used by several fabrics. Open a fabric job
+            (or pick one under Linked drafting jobs) before Print A4 so the
+            printed fabric code matches that job - not a sibling article.
+          </p>
+        </div>
+      ) : null}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/pattern/library"
@@ -1831,7 +1844,11 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
               {linkedJobs.map((job) => (
                 <li key={job.id} className="flex items-center gap-1">
                   <Link
-                    href={`/pattern/library/clients/${pattern.id}?job=${encodeURIComponent(job.id)}`}
+                    href={`/pattern/library/clients/${pattern.id}?job=${encodeURIComponent(job.id)}${
+                      job.sales_order_line_id
+                        ? `&line=${encodeURIComponent(job.sales_order_line_id)}`
+                        : ""
+                    }`}
                     className={cn(
                       "flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-slate-50",
                       scopedJobId === job.id

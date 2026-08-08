@@ -459,11 +459,12 @@ function CatalogFabricCard({ row }: { row: ClientFabricCatalogRow }) {
             </p>
             <p className="mt-0.5 truncate text-xs text-slate-500">{specs || "No specs"}</p>
             <Link
-              href={`/pattern/library/clients/${row.assigned_pattern.pattern_id}`}
+              href={`/pattern/library/clients/${row.assigned_pattern.pattern_id}?line=${encodeURIComponent(row.line_id)}`}
               className="mt-2 inline-flex max-w-full items-center gap-1 truncate rounded-full bg-teal-50 px-2.5 py-1 text-xs font-medium text-teal-800 hover:bg-teal-100"
             >
               <Layers className="h-3 w-3 shrink-0" />
               {row.assigned_pattern.garment_type} · {row.assigned_pattern.pattern_ref}
+              <span className="font-mono">· {row.fabric_number}</span>
             </Link>
           </div>
         </div>
@@ -840,11 +841,12 @@ function FabricDetailDialog({
           {row.assigned_pattern ? (
             <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
               <Link
-                href={`/pattern/library/clients/${row.assigned_pattern.pattern_id}`}
+                href={`/pattern/library/clients/${row.assigned_pattern.pattern_id}?line=${encodeURIComponent(row.line_id)}`}
                 className="inline-flex items-center gap-1.5 text-sm font-medium text-indigo-700 hover:underline"
               >
                 <Layers className="h-4 w-4" />
                 {row.assigned_pattern.garment_type} · {row.assigned_pattern.pattern_ref}
+                <span className="font-mono text-slate-500">· {row.fabric_number}</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
               <button
