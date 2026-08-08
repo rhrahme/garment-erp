@@ -9,7 +9,11 @@ import {
   clientPatternQrUrl,
 } from "@/lib/pattern-library/pattern-qr";
 import type { PatternSheetKind } from "@/lib/pattern-library/pattern-sheet-kind";
-import type { PatternSheetData, PatternSheetSticker } from "@/lib/pattern-library/sheet-data";
+import type {
+  PatternSheetArticlePage,
+  PatternSheetData,
+  PatternSheetSticker,
+} from "@/lib/pattern-library/sheet-data";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 
 const SHEET_PRINT_CSS = `
@@ -30,7 +34,16 @@ const SHEET_PRINT_CSS = `
   .cut-nest-block { page-break-inside: avoid; }
   .pattern-sheet-page { break-after: page; page-break-after: always; }
   .pattern-sheet-page:last-child { break-after: auto; page-break-after: auto; }
-  .pattern-sheet-production.pattern-sheet-page {
+  /* Single production sheet must stay one page; sewing pack paginates per article. */
+  .pattern-sheet-production.pattern-sheet-page:not(.pattern-sheet-sewing) {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+  .pattern-sheet-sewing.pattern-sheet-page {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+  .pattern-sheet-sewing.pattern-sheet-page:last-child {
     break-after: auto !important;
     page-break-after: auto !important;
   }
@@ -54,9 +67,15 @@ function piecePageLabel(sticker: PatternSheetSticker): string {
   return sticker.piece_name;
 }
 
-function sheetQuery(kind: PatternSheetKind, data: PatternSheetData): string {
+function sheetQuery(
+  kind: PatternSheetKind,
+  data: PatternSheetData,
+  lineIds?: string[] | null
+): string {
   const params = new URLSearchParams({ sheet: kind, version: data.version.id });
   if (data.job) params.set("job", data.job.id);
+  const lines = lineIds ?? data.article_pages.map((page) => page.line_id);
+  if (kind === "sewing" && lines.length > 0) params.set("lines", lines.join(","));
   return params.toString();
 }
 
@@ -510,12 +529,17 @@ function CutterSheetPage({ data, sticker, pageIndex, pageTotal }: SheetPageProps
 }
 
 /** Compact fabric line for production (single-page stitcher sheet). */
-function FabricSpecCompact({ data }: { data: PatternSheetData }) {
-  const { fabric, pattern } = data;
+function FabricSpecCompact({
+  fabric,
+  patternFabric,
+}: {
+  fabric: PatternSheetData["fabric"];
+  patternFabric: string | null | undefined;
+}) {
   if (!fabric) {
     return (
       <p className="mt-2 text-[11px] text-slate-600">
-        {pattern.fabric ? `Fabric: ${pattern.fabric}` : "No linked order fabric line."}
+        {patternFabric ? `Fabric: ${patternFabric}` : "No linked order fabric line."}
       </p>
     );
   }
@@ -543,18 +567,31 @@ function FabricSpecCompact({ data }: { data: PatternSheetData }) {
 }
 
 /** Production / stitcher A4 - measurements + sewing context (exactly one page). */
-function ProductionSheetPage({ data }: { data: PatternSheetData }) {
+function ProductionSheetPage({
+  data,
+  article = null,
+  sewing = false,
+  pageIndex,
+  pageTotal,
+}: {
+  data: PatternSheetData;
+  article?: PatternSheetArticlePage | null;
+  sewing?: boolean;
+  pageIndex?: number;
+  pageTotal?: number;
+}) {
   const {
     pattern,
     version,
-    order,
     job,
     derived_from,
     house_brand,
     base_fill_warning,
     resolved_base_size,
-    stickers,
   } = data;
+  const order = article?.order ?? data.order;
+  const fabric = article?.fabric ?? data.fabric;
+  const stickers = article?.stickers ?? data.stickers;
   const unit = pattern.unit;
   const patternQrPayload = clientPatternQrUrl(pattern.id);
   const patternQrLabel = clientPatternLabelCode(pattern);
@@ -564,13 +601,26 @@ function ProductionSheetPage({ data }: { data: PatternSheetData }) {
       ? `Base (${pattern.base_size})`
       : "Base";
   const useTwoCol = version.measurements.length > 28;
+  const title = sewing ? "SEWING / STITCHER SHEET" : "PRODUCTION / STITCHER SHEET";
 
   return (
-    <div className="pattern-sheet pattern-sheet-page pattern-sheet-production rounded-xl border border-slate-200 p-4 shadow-sm print:p-0 print:shadow-none">
+    <div
+      className={`pattern-sheet pattern-sheet-page pattern-sheet-production rounded-xl border border-slate-200 p-4 shadow-sm print:p-0 print:shadow-none${
+        sewing ? " pattern-sheet-sewing" : ""
+      }`}
+    >
       <div className="flex items-start justify-between gap-3 border-b border-slate-900 pb-2">
         <div>
-          <h1 className="text-base font-bold tracking-tight">PRODUCTION / STITCHER SHEET</h1>
+          <h1 className="text-base font-bold tracking-tight">{title}</h1>
           <p className="mt-0.5 font-mono text-xs font-semibold">{pattern.pattern_ref}</p>
+          {article ? (
+            <p className="mt-0.5 font-mono text-sm font-black tracking-wide text-slate-900">
+              Article {article.article_code}
+              {pageIndex != null && pageTotal != null && pageTotal > 1
+                ? ` · page ${pageIndex}/${pageTotal}`
+                : ""}
+            </p>
+          ) : null}
           {job?.pattern_code ? (
             <p className="font-mono text-[10px] text-slate-600">TUD: {job.pattern_code}</p>
           ) : null}
@@ -609,7 +659,10 @@ function ProductionSheetPage({ data }: { data: PatternSheetData }) {
         <tbody>
           {[
             ["Client", `${pattern.client_name} (${pattern.client_code})`],
-            ["Garment", pattern.garment_type],
+            ["Garment", article?.garment_type || pattern.garment_type],
+            ...(article
+              ? ([["Article", article.article_code]] as Array<[string, string]>)
+              : []),
             ["Origin", derived_from ?? "Custom"],
             [
               "Order",
@@ -632,7 +685,7 @@ function ProductionSheetPage({ data }: { data: PatternSheetData }) {
         </tbody>
       </table>
 
-      <FabricSpecCompact data={data} />
+      <FabricSpecCompact fabric={fabric} patternFabric={pattern.fabric} />
 
       <div className={useTwoCol ? "mt-2 grid grid-cols-2 gap-2" : "mt-2"}>
         {(useTwoCol
@@ -759,7 +812,7 @@ function ProductionSheetPage({ data }: { data: PatternSheetData }) {
   );
 }
 
-/** Printable A4 client-pattern sheet - cutter or production/stitcher. */
+/** Printable A4 client-pattern sheet - cutter, production, or sewing pack. */
 export function PatternSheetPrintView({
   data,
   kind = "cutter",
@@ -767,18 +820,61 @@ export function PatternSheetPrintView({
   data: PatternSheetData;
   kind?: PatternSheetKind;
 }) {
-  const { pattern, version, stickers } = data;
+  const { pattern, version, stickers, article_pages } = data;
   const isProduction = kind === "production";
-  const pages: Array<PatternSheetSticker | null> =
-    !isProduction && stickers.length > 0 ? stickers : [null];
-  const pageTotal = pages.length;
-  const mfgSummary =
-    stickers.length > 0
+  const isSewing = kind === "sewing";
+  const sewingPages =
+    article_pages.length > 0
+      ? article_pages
+      : stickers.length > 0 || data.fabric
+        ? [
+            {
+              line_id: "primary",
+              article_code: pattern.pattern_ref,
+              garment_type: pattern.garment_type,
+              so_number: data.order?.so_number ?? "",
+              order: data.order ?? {
+                so_number: "-",
+                order_date: null,
+                delivery_date: null,
+              },
+              fabric: data.fabric ?? {
+                fabric_number: pattern.fabric ?? "-",
+                supplier_name: "-",
+                composition: null,
+                gsm: null,
+                width_cm: null,
+                width_inches: null,
+                color: null,
+              },
+              stickers,
+            } satisfies PatternSheetArticlePage,
+          ]
+        : [];
+  const cutterPages: Array<PatternSheetSticker | null> =
+    !isProduction && !isSewing && stickers.length > 0 ? stickers : [null];
+  const pageTotal = isSewing ? sewingPages.length : cutterPages.length;
+  const mfgSummary = isSewing
+    ? sewingPages.length > 0
+      ? ` - ${sewingPages.length} article page${sewingPages.length === 1 ? "" : "s"}: ${sewingPages
+          .map((page) => page.article_code)
+          .join(", ")}`
+      : " - No linked articles with SO fabric lines"
+    : stickers.length > 0
       ? ` - ${stickers.length} piece QR${stickers.length === 1 ? "" : "s"}: ${stickers.map((s) => piecePageLabel(s)).join(", ")}`
       : " - No manufacturing QRs (link a fabric line with stickers)";
   const qs = sheetQuery(kind, data);
-  const otherKind: PatternSheetKind = isProduction ? "cutter" : "production";
-  const otherQs = sheetQuery(otherKind, data);
+  const switchKind: PatternSheetKind = isSewing
+    ? "production"
+    : isProduction
+      ? "cutter"
+      : "production";
+  const otherQs = sheetQuery(switchKind, data);
+  const kindLabel = isSewing
+    ? "Sewing A4s (one page per article)"
+    : isProduction
+      ? "Production / stitcher"
+      : "Cutter";
 
   return (
     <div className="mx-auto min-h-screen max-w-[210mm] bg-white p-6 text-slate-900 print:p-0">
@@ -793,10 +889,9 @@ export function PatternSheetPrintView({
             Back to {pattern.pattern_ref}
           </Link>
           <p className="mt-1 text-xs text-slate-500">
-            A4 portrait - {isProduction ? "Production / stitcher" : "Cutter"} - Trial{" "}
-            {version.version}
+            A4 portrait - {kindLabel} - Trial {version.version}
             {version.is_final ? " (Final)" : ""}
-            {isProduction ? ` - Pattern QR ${clientPatternLabelCode(pattern)}` : ""}
+            {isProduction || isSewing ? ` - Pattern QR ${clientPatternLabelCode(pattern)}` : ""}
             {mfgSummary}
           </p>
         </div>
@@ -805,7 +900,7 @@ export function PatternSheetPrintView({
             href={`/pattern/client-patterns/${pattern.id}/print?${otherQs}`}
             className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"
           >
-            Switch to {isProduction ? "cutter" : "production"}
+            Switch to {switchKind === "cutter" ? "cutter" : switchKind === "sewing" ? "sewing" : "production"}
           </Link>
           <a
             href={`/api/pattern/library/client-patterns/${pattern.id}/pdf?${qs}`}
@@ -813,7 +908,7 @@ export function PatternSheetPrintView({
             className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"
           >
             <Download className="h-4 w-4" />
-            Download {isProduction ? "production" : "cutter"} PDF
+            Download {isSewing ? "sewing" : isProduction ? "production" : "cutter"} PDF
           </a>
           <button
             type="button"
@@ -827,10 +922,27 @@ export function PatternSheetPrintView({
       </div>
 
       <div className="space-y-8 print:space-y-0">
-        {isProduction ? (
+        {isSewing ? (
+          sewingPages.length > 0 ? (
+            sewingPages.map((article, index) => (
+              <ProductionSheetPage
+                key={article.line_id}
+                data={data}
+                article={article}
+                sewing
+                pageIndex={index + 1}
+                pageTotal={pageTotal}
+              />
+            ))
+          ) : (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              No linked fabric articles to print. Group SO fabric lines into this pattern first.
+            </p>
+          )
+        ) : isProduction ? (
           <ProductionSheetPage data={data} />
         ) : (
-          pages.map((sticker, index) => (
+          cutterPages.map((sticker, index) => (
             <CutterSheetPage
               key={sticker ? `${sticker.role}-${sticker.qr_payload}` : "no-sticker"}
               data={data}

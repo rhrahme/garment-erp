@@ -2,25 +2,22 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   parsePatternSheetKind,
+  parsePatternSheetLineIds,
   patternSheetKindLabel,
-} from "./pattern-sheet-kind.ts";
+} from "@/lib/pattern-library/pattern-sheet-kind";
 
-describe("parsePatternSheetKind", () => {
-  it("defaults to cutter", () => {
-    assert.equal(parsePatternSheetKind(null), "cutter");
-    assert.equal(parsePatternSheetKind(undefined), "cutter");
-    assert.equal(parsePatternSheetKind("cutter"), "cutter");
-    assert.equal(parsePatternSheetKind("other"), "cutter");
-  });
-
-  it("accepts production", () => {
+describe("pattern sheet kind", () => {
+  it("parses sewing / production / cutter", () => {
+    assert.equal(parsePatternSheetKind("sewing"), "sewing");
     assert.equal(parsePatternSheetKind("production"), "production");
+    assert.equal(parsePatternSheetKind("cutter"), "cutter");
+    assert.equal(parsePatternSheetKind("nope"), "cutter");
+    assert.equal(patternSheetKindLabel("sewing"), "Sewing");
   });
-});
 
-describe("patternSheetKindLabel", () => {
-  it("labels for filenames", () => {
-    assert.equal(patternSheetKindLabel("cutter"), "Cutter");
-    assert.equal(patternSheetKindLabel("production"), "Production");
+  it("parses selected line ids for sewing A4 preview", () => {
+    assert.equal(parsePatternSheetLineIds(null), null);
+    assert.deepEqual(parsePatternSheetLineIds(""), []);
+    assert.deepEqual(parsePatternSheetLineIds("a,b , c"), ["a", "b", "c"]);
   });
 });

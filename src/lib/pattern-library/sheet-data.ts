@@ -6,6 +6,7 @@ import { pieceStickersForFabricLine } from "@/lib/pattern/manufacturing-stickers
 import path from "path";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 import type { PatternJob } from "@/lib/types/pattern";
+import { fabricLineArticleCode } from "@/lib/pattern-library/client-fabric-board";
 import { findActiveMarkerAttachment } from "@/lib/pattern-library/cutting-completeness";
 import {
   buildCutNestPreview,
@@ -65,6 +66,17 @@ export interface PatternSheetMarker {
   thumbnail_data_url: string | null;
 }
 
+/** One sewing A4 page = one linked SO fabric line (article) + its piece QRs. */
+export interface PatternSheetArticlePage {
+  line_id: string;
+  article_code: string;
+  garment_type: string;
+  so_number: string;
+  order: { so_number: string; order_date: string | null; delivery_date: string | null };
+  fabric: PatternSheetFabric;
+  stickers: PatternSheetSticker[];
+}
+
 export interface PatternSheetData {
   pattern: ClientPattern;
   version: ClientPatternVersion;
@@ -73,6 +85,11 @@ export interface PatternSheetData {
   order: { so_number: string; order_date: string | null; delivery_date: string | null } | null;
   fabric: PatternSheetFabric | null;
   stickers: PatternSheetSticker[];
+  /**
+   * Sewing pack: one page per selected/linked article. Empty when the pattern
+   * has no SO fabric lines with stickers.
+   */
+  article_pages: PatternSheetArticlePage[];
   derived_from: string | null;
   /** Letterhead brand (code + name) for the top-right block. */
   house_brand: SheetHouseBrand;
@@ -90,7 +107,7 @@ export interface PatternSheetData {
    */
   marker: PatternSheetMarker | null;
   /**
-   * Embedded TUD JFIF preview (100×100 source) as data URL for A4 — visual
+   * Embedded TUD JFIF preview (100x100 source) as data URL for A4 - visual
    * reference only; not a substitute for CAD outlines.
    */
   tud_thumbnail_data_url: string | null;
@@ -200,15 +217,60 @@ export function applySheetBaseMeasurements(
   };
 }
 
+function buildArticlePagesForPattern(
+  pattern: ClientPattern,
+  salesOrders: SalesOrder[],
+  lineIds: string[] | null | undefined
+): PatternSheetArticlePage[] {
+  const linked = pattern.linked_fabric_line_ids ?? [];
+  // Default = all linked articles. Explicit selection keeps linked order first.
+  const orderedIds =
+    lineIds == null
+      ? linked
+      : [
+          ...linked.filter((id) => lineIds.includes(id)),
+          ...lineIds.filter((id) => !linked.includes(id)),
+        ];
+  const pages: PatternSheetArticlePage[] = [];
+  const seen = new Set<string>();
+  for (const lineId of orderedIds) {
+    if (seen.has(lineId)) continue;
+    seen.add(lineId);
+    const found = findOrderLine(salesOrders, lineId);
+    if (!found) continue;
+    const lineIndex = found.order.fabric_lines.findIndex((row) => row.id === lineId);
+    pages.push({
+      line_id: lineId,
+      article_code: fabricLineArticleCode(found.order, found.line, Math.max(0, lineIndex)),
+      garment_type: found.line.garment_type || pattern.garment_type,
+      so_number: found.order.so_number,
+      order: {
+        so_number: found.order.so_number,
+        order_date: found.order.order_date ?? null,
+        delivery_date: found.order.delivery_date ?? null,
+      },
+      fabric: fabricFromLine(found.line),
+      stickers: stickersFromLine(found.line, found.order.client_code),
+    });
+  }
+  return pages;
+}
+
 /**
  * Assembles everything the printable A4 sheet needs: pattern + trial, its base
  * pattern, the linked pattern job (explicit jobId first, else the most recent
  * job referencing this pattern), fabric spec from the job or first linked fabric
  * line, order header, and sticker QRs (job line, else primary linked fabric).
+ * Optional `lineIds` selects which linked articles appear in `article_pages`
+ * (sewing A4 pack).
  */
 export async function buildPatternSheetData(
   patternId: string,
-  options: { versionId?: string | null; jobId?: string | null } = {}
+  options: {
+    versionId?: string | null;
+    jobId?: string | null;
+    lineIds?: string[] | null;
+  } = {}
 ): Promise<PatternSheetData | null> {
   await ensureDocumentsLoaded(["pattern_library", "pattern_jobs", "sales_orders", "clients"]);
   const library = await readPatternLibraryFresh();
@@ -310,6 +372,17 @@ export async function buildPatternSheetData(
     if (stickers.length > 0 || fabric) break;
   }
 
+  const article_pages = buildArticlePagesForPattern(pattern, salesOrders, options.lineIds);
+
+  // Sewing pack with an explicit selection: seed primary fabric/stickers from
+  // the first selected article so cutter/production fallbacks stay coherent.
+  if (options.lineIds != null && article_pages[0]) {
+    const first = article_pages[0];
+    if (!fabric) fabric = first.fabric;
+    if (stickers.length === 0) stickers = first.stickers;
+    if (!order) order = first.order;
+  }
+
   const cut_nest = buildCutNestPreview(pattern, fabric?.width_cm ?? job?.width_cm ?? null, {
     size: filled.resolved_base_size ?? pattern.base_size,
     garmentQty: 1,
@@ -350,6 +423,7 @@ export async function buildPatternSheetData(
     order,
     fabric,
     stickers,
+    article_pages,
     derived_from: describeDerivedFrom(base, pattern.base_size),
     house_brand: resolveSheetHouseBrand(pattern, base),
     base_fill_warning: filled.base_fill_warning,

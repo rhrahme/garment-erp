@@ -126,6 +126,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - Fabric swatch images on print sheets require the swatch manifest to ship
   into the Vercel image lambda (Caccioppoli fix `b5ac64f`); new fabric codes
   need a swatch download/sync before thumbs appear.
+- **Sewing A4s (Pattern)**: on a client pattern, **Sewing A4s** opens a
+  tick-list of grouped articles and previews `/pattern/client-patterns/{id}/print?sheet=sewing&lines=...`
+  - one A4 per article with that line's floor piece QR(s) + shared
+  measurements. Distinct from single-page **Print production** (primary
+  line only). Do not collapse back to first-linked-line-only for sewing packs.
 
 ## Supplier emails
 

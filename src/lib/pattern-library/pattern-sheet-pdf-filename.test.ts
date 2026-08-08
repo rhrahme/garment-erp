@@ -74,6 +74,7 @@ function sheet(overrides: Partial<PatternSheetData> = {}): PatternSheetData {
       color: null,
     },
     stickers: [],
+    article_pages: [],
     derived_from: "Custom",
     house_brand: { code: "FR", name: "Fouad Rahme" },
     base_fill_warning: null,

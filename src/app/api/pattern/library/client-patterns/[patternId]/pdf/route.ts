@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { requirePatternAccess } from "@/lib/auth/session";
 import { generatePatternSheetPdf } from "@/lib/pattern-library/generate-pattern-sheet-pdf";
-import { parsePatternSheetKind } from "@/lib/pattern-library/pattern-sheet-kind";
+import {
+  parsePatternSheetKind,
+  parsePatternSheetLineIds,
+} from "@/lib/pattern-library/pattern-sheet-kind";
 import { buildPatternSheetPdfFilename } from "@/lib/pattern-library/pattern-sheet-pdf-filename";
 import { contentDisposition } from "@/lib/pdf/download-filename";
 import { buildPatternSheetData } from "@/lib/pattern-library/sheet-data";
@@ -18,9 +21,11 @@ export async function GET(request: Request, context: { params: Promise<{ pattern
     const { patternId } = await context.params;
     const url = new URL(request.url);
     const kind = parsePatternSheetKind(url.searchParams.get("sheet"));
+    const lineIds = parsePatternSheetLineIds(url.searchParams.get("lines"));
     const data = await buildPatternSheetData(patternId, {
       versionId: url.searchParams.get("version"),
       jobId: url.searchParams.get("job"),
+      lineIds: kind === "sewing" ? (lineIds && lineIds.length > 0 ? lineIds : null) : null,
     });
     if (!data) {
       return NextResponse.json({ error: "Client pattern not found." }, { status: 404 });

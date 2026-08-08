@@ -98,6 +98,7 @@ function sheet(overrides: Partial<PatternSheetData> = {}): PatternSheetData {
       color: "Navy",
       ordered_meters: 2.5,
     },
+    article_pages: [],
     stickers: [
       {
         code: "P1",

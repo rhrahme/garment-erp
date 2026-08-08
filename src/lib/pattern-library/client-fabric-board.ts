@@ -116,7 +116,12 @@ export interface ClientFabricBoard {
   summary: { total: number; assigned: number; catalog: number };
 }
 
-function articleCode(order: SalesOrder, line: SalesOrderFabricLine, lineIndex: number): string {
+/** Short article code for floor sheets (e.g. 0109-L16). */
+export function fabricLineArticleCode(
+  order: SalesOrder,
+  line: SalesOrderFabricLine,
+  lineIndex: number
+): string {
   const article = resolveSoArticleForFabricLine(line, lineIndex);
   const articleLabel = `L${String(article).padStart(2, "0")}`;
   const firstSticker = line.label_stickers[0]?.code;
@@ -126,6 +131,10 @@ function articleCode(order: SalesOrder, line: SalesOrderFabricLine, lineIndex: n
   }
   const soDigits = order.so_number.match(/SO-\d{4}-(\d{4,})$/)?.[1] ?? order.so_number;
   return `${soDigits}-${articleLabel}`;
+}
+
+function articleCode(order: SalesOrder, line: SalesOrderFabricLine, lineIndex: number): string {
+  return fabricLineArticleCode(order, line, lineIndex);
 }
 
 export function buildClientFabricBoard(input: {

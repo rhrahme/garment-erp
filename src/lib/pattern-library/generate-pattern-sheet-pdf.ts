@@ -12,7 +12,11 @@ import {
 } from "@/lib/pattern-library/pattern-qr";
 import type { PatternSheetKind } from "@/lib/pattern-library/pattern-sheet-kind";
 import { renderQrPngBuffer } from "@/lib/production/qr-render";
-import type { PatternSheetData, PatternSheetSticker } from "@/lib/pattern-library/sheet-data";
+import type {
+  PatternSheetArticlePage,
+  PatternSheetData,
+  PatternSheetSticker,
+} from "@/lib/pattern-library/sheet-data";
 
 const MARGIN = 12;
 /** Tighter margin for single-page production / stitcher sheets. */
@@ -354,32 +358,54 @@ async function drawCutterSheetPage(
 async function drawProductionSheetPage(
   doc: jsPDF,
   data: PatternSheetData,
-  patternQrPng: Buffer
+  patternQrPng: Buffer,
+  options: {
+    sewing?: boolean;
+    article?: PatternSheetArticlePage | null;
+    pageIndex?: number;
+    pageTotal?: number;
+  } = {}
 ): Promise<void> {
+  const article = options.article ?? null;
   const {
     pattern,
     version,
-    order,
     job,
     derived_from,
     house_brand,
     base_fill_warning,
     resolved_base_size,
-    stickers,
   } = data;
+  const order = article?.order ?? data.order;
+  const stickers = article?.stickers ?? data.stickers;
+  const pageData: PatternSheetData = article
+    ? { ...data, fabric: article.fabric, stickers, order }
+    : data;
   const unit = pattern.unit;
   const m = PROD_MARGIN;
   const contentBottom = PAGE_H - m - 5;
+  const title = options.sewing ? "SEWING / STITCHER SHEET" : "PRODUCTION / STITCHER SHEET";
 
   doc.setTextColor(...INK);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text("PRODUCTION / STITCHER SHEET", m, m + 3.5);
+  doc.text(title, m, m + 3.5);
   doc.setTextColor(...INK);
   doc.setFont("courier", "bold");
   doc.setFontSize(9);
   doc.text(pattern.pattern_ref, m, m + 9);
   let titleExtraY = m + 9;
+  if (article) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(...INK);
+    titleExtraY += 4;
+    const pageBit =
+      options.pageIndex != null && options.pageTotal != null && options.pageTotal > 1
+        ? ` · page ${options.pageIndex}/${options.pageTotal}`
+        : "";
+    doc.text(`Article ${article.article_code}${pageBit}`, m, titleExtraY);
+  }
   if (job?.pattern_code) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(6.5);
@@ -409,7 +435,8 @@ async function drawProductionSheetPage(
 
   const metaRows: [string, string][] = [
     ["Client", `${pattern.client_name} (${pattern.client_code})`],
-    ["Garment", pattern.garment_type],
+    ["Garment", article?.garment_type || pattern.garment_type],
+    ...(article ? ([["Article", article.article_code]] as [string, string][]) : []),
     ["Origin", derived_from ?? "Custom"],
     [
       "Order",
@@ -444,7 +471,7 @@ async function drawProductionSheetPage(
     y += warnH + 2;
   }
 
-  y = drawFabricSpec(doc, data, y, { marginMm: m, compact: true });
+  y = drawFabricSpec(doc, pageData, y, { marginMm: m, compact: true });
 
   // Reserve space for instructions + piece QRs + footer so the table densifies into page 1.
   const stickerCount = stickers.length;
@@ -1012,6 +1039,49 @@ async function buildPatternSheetDoc(
     return doc;
   }
 
+  if (kind === "sewing") {
+    const { png: patternQrPng } = await renderQrPngBuffer(
+      clientPatternQrUrl(data.pattern.id),
+      240
+    );
+    const pages =
+      data.article_pages.length > 0
+        ? data.article_pages
+        : ([
+            {
+              line_id: "primary",
+              article_code: data.pattern.pattern_ref,
+              garment_type: data.pattern.garment_type,
+              so_number: data.order?.so_number ?? "",
+              order: data.order ?? {
+                so_number: "-",
+                order_date: null,
+                delivery_date: null,
+              },
+              fabric: data.fabric ?? {
+                fabric_number: data.pattern.fabric ?? "-",
+                supplier_name: "-",
+                composition: null,
+                gsm: null,
+                width_cm: null,
+                width_inches: null,
+                color: null,
+              },
+              stickers: data.stickers,
+            },
+          ] satisfies PatternSheetArticlePage[]);
+    for (let i = 0; i < pages.length; i++) {
+      if (i > 0) doc.addPage();
+      await drawProductionSheetPage(doc, data, patternQrPng, {
+        sewing: true,
+        article: pages[i]!,
+        pageIndex: i + 1,
+        pageTotal: pages.length,
+      });
+    }
+    return doc;
+  }
+
   const pages: Array<PatternSheetSticker | null> =
     data.stickers.length > 0 ? data.stickers : [null];
 
@@ -1023,7 +1093,7 @@ async function buildPatternSheetDoc(
   return doc;
 }
 
-/** A4 portrait sheet - cutter (per piece) or production (full sewing detail). */
+/** A4 portrait sheet - cutter, production, or sewing pack (one page per article). */
 export async function generatePatternSheetPdf(
   data: PatternSheetData,
   kind: PatternSheetKind = "cutter"

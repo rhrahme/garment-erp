@@ -30,6 +30,7 @@ import {
 import { LinkedFabricsCard } from "@/components/pattern/library/LinkedFabricsCard";
 import { NestEstimatePanel } from "@/components/pattern/library/NestEstimatePanel";
 import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
+import { SewingA4PrintControls } from "@/components/pattern/library/SewingA4PrintControls";
 import { TudVersionHistory } from "@/components/pattern/library/TudVersionHistory";
 import {
   DXF_UPLOAD_ACCEPT,
@@ -721,6 +722,11 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
             <Printer className="h-4 w-4" />
             Print production
           </Link>
+          <SewingA4PrintControls
+            patternId={pattern.id}
+            clientId={pattern.client_id}
+            versionId={version?.id ?? null}
+          />
           <Link
             href={photosPrintHref}
             target="_blank"
