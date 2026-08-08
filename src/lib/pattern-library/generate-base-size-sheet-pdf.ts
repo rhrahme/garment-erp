@@ -1,10 +1,17 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import { formatMeasurementAscii, unitLabel } from "@/lib/pattern-library/measurements";
+import {
+  formatMeasurementAsciiForDisplay,
+  unitLabel,
+} from "@/lib/pattern-library/measurements";
 import { basePatternLabelCode, basePatternQrUrl } from "@/lib/pattern-library/pattern-qr";
 import { buildBaseSizeSheetRows } from "@/lib/pattern-library/size-sheet";
 import { renderQrPngBuffer } from "@/lib/production/qr-render";
-import type { BasePattern, BasePatternClientColumn } from "@/lib/types/pattern-library";
+import type {
+  BasePattern,
+  BasePatternClientColumn,
+  MeasurementUnit,
+} from "@/lib/types/pattern-library";
 
 const MARGIN = 12;
 const PAGE_W = 210;
@@ -16,8 +23,11 @@ const INK: [number, number, number] = [15, 23, 42];
 export async function generateBaseSizeSheetPdf(
   base: BasePattern,
   size: string,
-  clientColumn: BasePatternClientColumn | null = null
+  clientColumn: BasePatternClientColumn | null = null,
+  options: { displayUnit?: MeasurementUnit } = {}
 ): Promise<ArrayBuffer> {
+  const storedUnit = base.unit;
+  const displayUnit = options.displayUnit ?? storedUnit;
   const rows = buildBaseSizeSheetRows(base, size, clientColumn);
   const labelCode = basePatternLabelCode(base);
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -103,7 +113,7 @@ export async function generateBaseSizeSheetPdf(
     margin: { left: MARGIN, right: MARGIN },
     head: [
       [
-        `Point (${unitLabel(base.unit)})`,
+        `Point (${unitLabel(displayUnit)})`,
         `Size ${size}`,
         ...(clientColumn
           ? [`${clientColumn.client_name.trim().split(/\s+/)[0]} target`]
@@ -120,11 +130,11 @@ export async function generateBaseSizeSheetPdf(
     ],
     body: rows.map((row) => [
       row.is_graded ? row.name : `${row.name} (trim)`,
-      formatMeasurementAscii(row.base_value, base.unit),
+      formatMeasurementAsciiForDisplay(row.base_value, storedUnit, displayUnit),
       ...(clientColumn
         ? [
             row.client_value !== null && row.client_value !== undefined
-              ? formatMeasurementAscii(row.client_value, base.unit)
+              ? formatMeasurementAsciiForDisplay(row.client_value, storedUnit, displayUnit)
               : "",
           ]
         : []),

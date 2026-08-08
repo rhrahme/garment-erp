@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { Download, Printer } from "lucide-react";
 import { qrImageUrl } from "@/lib/production/qr-labels";
-import { formatMeasurement, unitLabel } from "@/lib/pattern-library/measurements";
+import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
+import { withMeasurementUnitParam } from "@/lib/pattern-library/measurement-unit-preference";
+import {
+  formatMeasurementForDisplay,
+  unitLabel,
+} from "@/lib/pattern-library/measurements";
 import { basePatternLabelCode, basePatternQrUrl } from "@/lib/pattern-library/pattern-qr";
 import { buildBaseSizeSheetRows } from "@/lib/pattern-library/size-sheet";
 import type { BasePattern, BasePatternClientColumn } from "@/lib/types/pattern-library";
@@ -33,6 +38,8 @@ export function BaseSizeSheetPrintView({
   /** When set, the client's fit column prints next to the base size values. */
   clientColumn?: BasePatternClientColumn | null;
 }) {
+  const { unit: displayUnit } = useMeasurementUnitPreference();
+  const storedUnit = base.unit;
   const rows = buildBaseSizeSheetRows(base, size, clientColumn);
   const labelCode = basePatternLabelCode(base);
   const qrPayload = basePatternQrUrl(base.id);
@@ -56,7 +63,10 @@ export function BaseSizeSheetPrintView({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <a
-            href={`/api/pattern/library/bases/${base.id}/size-pdf?size=${encodeURIComponent(size)}${clientColumn ? `&client=${encodeURIComponent(clientColumn.client_id)}` : ""}`}
+            href={withMeasurementUnitParam(
+              `/api/pattern/library/bases/${base.id}/size-pdf?size=${encodeURIComponent(size)}${clientColumn ? `&client=${encodeURIComponent(clientColumn.client_id)}` : ""}`,
+              displayUnit
+            )}
             className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"
           >
             <Download className="h-4 w-4" />
@@ -127,7 +137,7 @@ export function BaseSizeSheetPrintView({
           <thead>
             <tr className="border-b-2 border-slate-900 text-left text-[10px] font-bold uppercase tracking-wide">
               <th className="border border-slate-300 px-1.5 py-1.5">
-                Point ({unitLabel(base.unit)})
+                Point ({unitLabel(displayUnit)})
               </th>
               <th className="border border-slate-300 px-1.5 py-1.5 text-center">Size {size}</th>
               {clientColumn ? (
@@ -155,12 +165,12 @@ export function BaseSizeSheetPrintView({
                   ) : null}
                 </td>
                 <td className="border border-slate-300 px-1.5 py-2 text-center font-semibold tabular-nums">
-                  {formatMeasurement(row.base_value, base.unit)}
+                  {formatMeasurementForDisplay(row.base_value, storedUnit, displayUnit)}
                 </td>
                 {clientColumn ? (
                   <td className="border border-slate-300 px-1.5 py-2 text-center font-semibold tabular-nums">
                     {row.client_value !== null && row.client_value !== undefined
-                      ? formatMeasurement(row.client_value, base.unit)
+                      ? formatMeasurementForDisplay(row.client_value, storedUnit, displayUnit)
                       : ""}
                   </td>
                 ) : null}

@@ -1,3 +1,5 @@
+import { convertMeasurementUnit } from "@/lib/pattern-library/measurements";
+import type { TrialSheetPoint } from "@/lib/pattern-library/trial-sheet";
 import type {
   BasePattern,
   BasePatternClientColumn,
@@ -5,7 +7,6 @@ import type {
   MeasurementPointDef,
   MeasurementUnit,
 } from "@/lib/types/pattern-library";
-import type { TrialSheetPoint } from "@/lib/pattern-library/trial-sheet";
 
 /**
  * "Load from base pattern" on the client measurement sheet: copy one column of
@@ -27,13 +28,7 @@ export function convertUnitValue(
   fromUnit: MeasurementUnit,
   toUnit: MeasurementUnit
 ): number {
-  if (fromUnit === toUnit) return value;
-  if (fromUnit === "cm" && toUnit === "in") {
-    // Sheets record inches to 1/16" (see formatMeasurement).
-    return Math.round((value / 2.54) * 16) / 16;
-  }
-  // in -> cm: cm sheets display 2 decimals.
-  return Math.round(value * 2.54 * 100) / 100;
+  return convertMeasurementUnit(value, fromUnit, toUnit);
 }
 
 /** Case/spacing/punctuation-insensitive key: "1/2 Waist  (relax)" -> "1 2 waist relax". */

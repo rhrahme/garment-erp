@@ -81,6 +81,14 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   stay empty and are listed in the notice. Copy is client-side; persistence
   is the existing Save sheet flow (no new write path, no new /api/v1 route
   needed). Helpers + tests: `src/lib/pattern-library/load-from-base.ts`.
+- **Site-wide Pattern cm / inches** (Aug 8 2026): Pattern pages share one
+  Units toggle (`erp-pattern-measurement-unit` localStorage). Sheets, bases,
+  print previews, and PDFs (`?unit=`) show values in that unit via display
+  conversion; edits convert back to each pattern's stored unit. Toggling on
+  an open client/base sheet also PATCHes that record to convert stored
+  numbers when the sheet is clean. New client/base patterns inherit the
+  preference. Helpers: `useMeasurementUnitPreference`,
+  `MeasurementUnitToggle`, `formatMeasurementForDisplay`.
 - **Base-pattern pickers must preload the slim payload** (perf fix, Aug 5
   2026): use `GET /api/pattern/library/bases` (bases + dictionary, ~218 KB)
   via `preloadBasePickerData()` in `base-picker-cache.ts` - never the

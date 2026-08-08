@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requirePatternAccess } from "@/lib/auth/session";
 import { ensurePatternLibraryLoaded, getBasePatternByIdFresh } from "@/lib/data/pattern-library";
 import { generateBaseSizeSheetPdf } from "@/lib/pattern-library/generate-base-size-sheet-pdf";
+import { parseMeasurementUnit } from "@/lib/pattern-library/measurement-unit-preference";
 import { buildBaseSizeSheetPdfFilename, contentDisposition } from "@/lib/pdf/download-filename";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +40,8 @@ export async function GET(request: Request, context: { params: Promise<{ baseId:
       ? base.client_columns?.find((column) => column.client_id === clientId) ?? null
       : null;
 
-    const pdfBytes = await generateBaseSizeSheetPdf(base, size, clientColumn);
+    const displayUnit = parseMeasurementUnit(url.searchParams.get("unit")) ?? undefined;
+    const pdfBytes = await generateBaseSizeSheetPdf(base, size, clientColumn, { displayUnit });
     const filename = buildBaseSizeSheetPdfFilename(base, size);
 
     return new NextResponse(Buffer.from(pdfBytes), {

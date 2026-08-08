@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Layers, Plus } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
+import { MeasurementUnitToggle } from "@/components/pattern/library/MeasurementUnitToggle";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
+import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
 import { orderMatchesBrandClientPrefix } from "@/lib/clients/orphan-reconciliation";
 import { matchesNormalizedSearch } from "@/lib/search/normalize";
@@ -230,7 +232,8 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
           Client patterns
           <span className="ml-1.5 text-xs opacity-80">({brandScopedClientPatterns.length})</span>
         </button>
-        <div className="ml-auto">
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <MeasurementUnitToggle />
           <button
             type="button"
             onClick={() => setShowCreate((open) => !open)}
@@ -379,7 +382,7 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
                               Sizes {sizeRangeLabel(base.sizes)} ({base.sizes.length})
                             </p>
                             <p className="mt-2 text-xs text-slate-500">
-                              {base.house_brand_code} · {base.points.length} points · {unitLabel(base.unit)}
+                              {base.house_brand_code} · {base.points.length} points
                             </p>
                             {base.style_code || base.fabric ? (
                               <p className="mt-1 text-xs text-slate-400">
@@ -575,11 +578,11 @@ function ClientPatternCard({
 }
 
 function CreateBaseForm({ brands, onCreated }: { brands: BrandOption[]; onCreated: () => void }) {
+  const { unit } = useMeasurementUnitPreference();
   const [brandId, setBrandId] = useState(brands[0]?.id ?? "");
   const [cutFamily, setCutFamily] = useState("");
   const [garment, setGarment] = useState("");
   const [variant, setVariant] = useState("");
-  const [unit, setUnit] = useState<"in" | "cm">("in");
   const [sizesText, setSizesText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -665,15 +668,12 @@ function CreateBaseForm({ brands, onCreated }: { brands: BrandOption[]; onCreate
           />
         </label>
         <label className="text-sm">
-          <span className="mb-1 block text-xs font-medium text-slate-600">Unit</span>
-          <select
-            value={unit}
-            onChange={(e) => setUnit(e.target.value as "in" | "cm")}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-          >
-            <option value="in">Inches (fractions)</option>
-            <option value="cm">Centimeters</option>
-          </select>
+          <span className="mb-1 block text-xs font-medium text-slate-600">
+            Unit (site-wide: {unitLabel(unit)})
+          </span>
+          <p className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+            Uses the Pattern Units toggle above
+          </p>
         </label>
         <label className="text-sm">
           <span className="mb-1 block text-xs font-medium text-slate-600">Sizes (comma-separated)</span>
@@ -708,6 +708,7 @@ function CreateClientPatternForm({
   garments: string[];
   onCreated: () => void;
 }) {
+  const { unit } = useMeasurementUnitPreference();
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [clientId, setClientId] = useState("");
   const [cascade, setCascade] = useState<BasePatternCascadeValue>(() => emptyCascadeValue());
@@ -771,6 +772,7 @@ function CreateClientPatternForm({
           fabric: fabric || null,
           description: description || null,
           pattern_ref: refOverride || null,
+          unit,
         }),
       });
       if (!res.ok) {

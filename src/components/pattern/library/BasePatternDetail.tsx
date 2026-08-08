@@ -4,20 +4,27 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, Printer, Trash2, UserPlus, X } from "lucide-react";
 import { MeasurementInput } from "@/components/pattern/library/MeasurementInput";
+import { MeasurementUnitToggle } from "@/components/pattern/library/MeasurementUnitToggle";
 import { LibraryFileList } from "@/components/pattern/library/LibraryFileList";
 import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
+import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
 import { invalidateBasePickerCache } from "@/lib/pattern-library/base-picker-cache";
 import {
   clientColumnDelta,
   clientColumnHeaderLabel,
   orderedGridColumns,
 } from "@/lib/pattern-library/client-fit-columns";
-import { formatMeasurement, unitLabel } from "@/lib/pattern-library/measurements";
+import { withMeasurementUnitParam } from "@/lib/pattern-library/measurement-unit-preference";
+import {
+  formatMeasurementForDisplay,
+  unitLabel,
+} from "@/lib/pattern-library/measurements";
 import { basePatternLabelCode, basePatternQrUrl } from "@/lib/pattern-library/pattern-qr";
 import type {
   BasePattern,
   BasePatternClientColumn,
   BasePatternPoint,
+  MeasurementUnit,
 } from "@/lib/types/pattern-library";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +41,7 @@ function fitClientName(client: FitClientOption): string {
 }
 
 export function BasePatternDetail({ baseId }: { baseId: string }) {
+  const { unit: displayUnit } = useMeasurementUnitPreference();
   const [base, setBase] = useState<BasePattern | null>(null);
   const [loading, setLoading] = useState(true);
   const [dirty, setDirty] = useState(false);
@@ -306,8 +314,38 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
     }
   }
 
+  async function alignStoredUnit(nextUnit: MeasurementUnit) {
+    if (!base || base.unit === nextUnit) return;
+    if (dirty) {
+      setError("Save your changes before converting stored units on this base.");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/pattern/library/bases/${baseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ unit: nextUnit }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? "Failed to change unit.");
+      }
+      const data = await res.json().catch(() => null);
+      if (data?.base) setBase(data.base);
+      invalidateBasePickerCache();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to change unit.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (loading) return <p className="text-sm text-slate-500">Loading base pattern…</p>;
   if (!base) return <p className="text-sm text-rose-600">Base pattern not found.</p>;
+
+  const storedUnit = base.unit;
 
   return (
     <div className="space-y-5">
@@ -320,8 +358,12 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
           Pattern library
         </Link>
         <div className="flex flex-wrap items-center gap-2">
+          <MeasurementUnitToggle
+            disabled={saving}
+            onUnitChange={(next) => void alignStoredUnit(next)}
+          />
           <Link
-            href={`/pattern/bases/${base.id}/print`}
+            href={withMeasurementUnitParam(`/pattern/bases/${base.id}/print`, displayUnit)}
             target="_blank"
             className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
           >
@@ -350,7 +392,7 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
             <h1 className="text-lg font-bold text-slate-900">{base.name}</h1>
             <p className="mt-1 text-sm text-slate-600">
               {base.house_brand_code} · {base.cut_family} · {base.garment_type}
-              {base.cut_variant ? ` · ${base.cut_variant}` : ""} · {unitLabel(base.unit)}
+              {base.cut_variant ? ` · ${base.cut_variant}` : ""} · {unitLabel(displayUnit)}
             </p>
             <p className="mt-1 text-xs text-slate-500">
               {[
@@ -399,7 +441,7 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
           <p className="text-sm font-semibold text-slate-800">
-            Size grid <span className="font-normal text-slate-500">({unitLabel(base.unit)})</span>
+            Size grid <span className="font-normal text-slate-500">({unitLabel(displayUnit)})</span>
             <span className="ml-2 text-xs font-normal text-slate-400">
               Tap a size to open its A4 working sheet
             </span>
@@ -452,7 +494,10 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
                   entry.kind === "size" ? (
                     <th key={`size-${entry.size}`} className="px-0.5 py-1 text-center font-semibold">
                       <Link
-                        href={`/pattern/bases/${base.id}/sizes/${encodeURIComponent(entry.size)}/print`}
+                        href={withMeasurementUnitParam(
+                          `/pattern/bases/${base.id}/sizes/${encodeURIComponent(entry.size)}/print`,
+                          displayUnit
+                        )}
                         target="_blank"
                         title={`Open A4 working sheet for size ${entry.size}`}
                         className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg px-2 py-1.5 text-indigo-700 underline decoration-indigo-300 decoration-dotted underline-offset-2 hover:bg-indigo-50 hover:text-indigo-900"
@@ -490,7 +535,10 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
                         </button>
                       </span>
                       <Link
-                        href={`/pattern/bases/${base.id}/sizes/${encodeURIComponent(entry.column.base_size)}/print?client=${encodeURIComponent(entry.column.client_id)}`}
+                        href={withMeasurementUnitParam(
+                          `/pattern/bases/${base.id}/sizes/${encodeURIComponent(entry.column.base_size)}/print?client=${encodeURIComponent(entry.column.client_id)}`,
+                          displayUnit
+                        )}
                         target="_blank"
                         className="block pb-1 text-[10px] font-normal normal-case tracking-normal text-amber-700 underline decoration-dotted underline-offset-2 hover:text-amber-900"
                       >
@@ -515,7 +563,8 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
                         <td key={`size-${entry.size}`} className="px-0.5 py-1 text-center">
                           <MeasurementInput
                             value={point.values[entry.size] ?? null}
-                            unit={base.unit}
+                            unit={storedUnit}
+                            displayUnit={displayUnit}
                             onCommit={(value) => setCell(point.point_id, entry.size, value)}
                           />
                         </td>
@@ -532,9 +581,12 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
                       >
                         <MeasurementInput
                           value={clientValue}
-                          unit={base.unit}
+                          unit={storedUnit}
+                          displayUnit={displayUnit}
                           placeholder={
-                            baseValue !== null ? formatMeasurement(baseValue, base.unit) : "—"
+                            baseValue !== null
+                              ? formatMeasurementForDisplay(baseValue, storedUnit, displayUnit)
+                              : "—"
                           }
                           onCommit={(value) =>
                             setClientCell(column.client_id, point.point_id, value)
@@ -543,7 +595,11 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
                         />
                         <p className="h-3 text-[10px] leading-3 text-amber-600">
                           {delta !== null
-                            ? `${delta > 0 ? "+" : "-"}${formatMeasurement(Math.abs(delta), base.unit)}`
+                            ? `${delta > 0 ? "+" : "-"}${formatMeasurementForDisplay(
+                                Math.abs(delta),
+                                storedUnit,
+                                displayUnit
+                              )}`
                             : "\u00a0"}
                         </p>
                       </td>
@@ -628,7 +684,8 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
                       <td className="px-3 py-1 text-center">
                         <MeasurementInput
                           value={firstValue}
-                          unit={base.unit}
+                          unit={storedUnit}
+                          displayUnit={displayUnit}
                           onCommit={(value) =>
                             setPointField(point.point_id, {
                               values: Object.fromEntries(base.sizes.map((size) => [size, value])),

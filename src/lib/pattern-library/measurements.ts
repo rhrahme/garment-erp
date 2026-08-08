@@ -1,4 +1,7 @@
-import type { MeasurementUnit } from "@/lib/types/pattern-library";
+import type {
+  ClientPatternMeasurement,
+  MeasurementUnit,
+} from "@/lib/types/pattern-library";
 
 const UNICODE_FRACTIONS: Record<string, string> = {
   "1/2": "½",
@@ -94,4 +97,79 @@ export function parseMeasurement(input: string): number | null {
 
 export function unitLabel(unit: MeasurementUnit): string {
   return unit === "cm" ? "cm" : "inches";
+}
+
+/** Convert a stored measurement between sheet units (inches snap to 1/16"). */
+export function convertMeasurementUnit(
+  value: number,
+  fromUnit: MeasurementUnit,
+  toUnit: MeasurementUnit
+): number {
+  if (fromUnit === toUnit) return value;
+  if (fromUnit === "cm" && toUnit === "in") {
+    return Math.round((value / 2.54) * 16) / 16;
+  }
+  return Math.round(value * 2.54 * 100) / 100;
+}
+
+function convertNullable(
+  value: number | null | undefined,
+  fromUnit: MeasurementUnit,
+  toUnit: MeasurementUnit
+): number | null {
+  if (value == null || Number.isNaN(value)) return null;
+  return convertMeasurementUnit(value, fromUnit, toUnit);
+}
+
+/** Convert one measurement row when the sheet unit changes. */
+export function convertMeasurementRowUnit(
+  row: ClientPatternMeasurement,
+  fromUnit: MeasurementUnit,
+  toUnit: MeasurementUnit
+): ClientPatternMeasurement {
+  if (fromUnit === toUnit) return row;
+  return {
+    ...row,
+    base_value: convertNullable(row.base_value, fromUnit, toUnit),
+    target_value: convertNullable(row.target_value, fromUnit, toUnit),
+    sewn_value: convertNullable(row.sewn_value, fromUnit, toUnit),
+    adjustment: convertNullable(row.adjustment, fromUnit, toUnit),
+  };
+}
+
+/** Convert a size/point value map (base grid or client fit column). */
+export function convertMeasurementValueMap(
+  values: Record<string, number | null>,
+  fromUnit: MeasurementUnit,
+  toUnit: MeasurementUnit
+): Record<string, number | null> {
+  if (fromUnit === toUnit) return values;
+  const next: Record<string, number | null> = {};
+  for (const [key, value] of Object.entries(values)) {
+    next[key] = convertNullable(value, fromUnit, toUnit);
+  }
+  return next;
+}
+
+/** Format a stored value for a (possibly different) display unit. */
+export function formatMeasurementForDisplay(
+  value: number | null | undefined,
+  storedUnit: MeasurementUnit,
+  displayUnit: MeasurementUnit
+): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return "—";
+  return formatMeasurement(convertMeasurementUnit(value, storedUnit, displayUnit), displayUnit);
+}
+
+/** ASCII variant for PDFs / plain text. */
+export function formatMeasurementAsciiForDisplay(
+  value: number | null | undefined,
+  storedUnit: MeasurementUnit,
+  displayUnit: MeasurementUnit
+): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return "-";
+  return formatMeasurementAscii(
+    convertMeasurementUnit(value, storedUnit, displayUnit),
+    displayUnit
+  );
 }

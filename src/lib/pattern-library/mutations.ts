@@ -24,6 +24,11 @@ import {
   backfillMarkerLayoutsForPatterns,
   patternNeedsMarkerBackfill,
 } from "@/lib/pattern-library/marker-layout-backfill";
+import {
+  convertMeasurementRowUnit,
+  convertMeasurementUnit,
+  convertMeasurementValueMap,
+} from "@/lib/pattern-library/measurements";
 import { hydrateMultiPieceGeometry } from "@/lib/pattern-library/multi-piece-geometry";
 import { generatePatternRef } from "@/lib/pattern-library/refs";
 import {
@@ -186,6 +191,40 @@ export async function updateBasePattern(
   const sizes = patch.sizes
     ? patch.sizes.map((size) => size.trim()).filter(Boolean)
     : existing.sizes;
+
+  let nextUnit = existing.unit;
+  if (patch.unit !== undefined) {
+    if (!VALID_UNITS.includes(patch.unit)) {
+      return { ok: false, status: 400, error: "unit must be in or cm." };
+    }
+    nextUnit = patch.unit;
+  }
+
+  let points = patch.points
+    ? patch.points.map((point) => sanitizePoint(point, sizes)).filter((p) => p.name)
+    : existing.points.map((point) => sanitizePoint(point, sizes));
+  let clientColumns = existing.client_columns;
+  if (nextUnit !== existing.unit) {
+    points = points.map((point) => ({
+      ...point,
+      values: convertMeasurementValueMap(point.values, existing.unit, nextUnit),
+      tolerance:
+        point.tolerance == null
+          ? null
+          : convertMeasurementUnit(point.tolerance, existing.unit, nextUnit),
+      grading_increment:
+        point.grading_increment == null
+          ? null
+          : convertMeasurementUnit(point.grading_increment, existing.unit, nextUnit),
+    }));
+    if (clientColumns?.length) {
+      clientColumns = clientColumns.map((column) => ({
+        ...column,
+        values: convertMeasurementValueMap(column.values, existing.unit, nextUnit),
+      }));
+    }
+  }
+
   const next: BasePattern = {
     ...existing,
     house_brand_id: patch.house_brand_id?.trim() || existing.house_brand_id,
@@ -195,11 +234,10 @@ export async function updateBasePattern(
     cut_variant:
       patch.cut_variant === undefined ? existing.cut_variant : patch.cut_variant?.trim() || null,
     name: patch.name?.trim() || existing.name,
-    unit: patch.unit && VALID_UNITS.includes(patch.unit) ? patch.unit : existing.unit,
+    unit: nextUnit,
     sizes,
-    points: patch.points
-      ? patch.points.map((point) => sanitizePoint(point, sizes)).filter((p) => p.name)
-      : existing.points.map((point) => sanitizePoint(point, sizes)),
+    points,
+    client_columns: clientColumns,
     style_code: patch.style_code === undefined ? existing.style_code : patch.style_code?.trim() || null,
     fabric: patch.fabric === undefined ? existing.fabric : patch.fabric?.trim() || null,
     season: patch.season === undefined ? existing.season : patch.season?.trim() || null,
@@ -469,10 +507,15 @@ export async function createClientPattern(
   const unit = input.unit && VALID_UNITS.includes(input.unit) ? input.unit : base?.unit ?? "in";
   // Base + size copies the graded values; otherwise the garment-type template
   // pre-fills the point list so the team never starts from a blank grid.
-  const measurements =
+  let measurements =
     base && baseSize
       ? buildMeasurementsFromBase(base, baseSize)
       : buildMeasurementsFromTemplate(store.dictionary, garmentType);
+  if (base && base.unit !== unit) {
+    measurements = measurements.map((row) =>
+      convertMeasurementRowUnit(row, base.unit, unit)
+    );
+  }
   const version: ClientPatternVersion = {
     id: `cpv-${Date.now()}-1`,
     version: 1,
@@ -746,6 +789,7 @@ export async function updateClientPattern(
       | "base_pattern_id"
       | "base_size"
       | "garment_type"
+      | "unit"
       | "active_tud_file_id"
       | "active_tud_by_piece"
       | "active_marker_file_id"
@@ -820,6 +864,27 @@ export async function updateClientPattern(
         );
       }
     }
+  }
+
+  let nextUnit = existing.unit;
+  if (patch.unit !== undefined) {
+    if (!VALID_UNITS.includes(patch.unit)) {
+      return { ok: false, status: 400, error: "unit must be in or cm." };
+    }
+    nextUnit = patch.unit;
+  }
+  // Switching cm <-> in converts every numeric cell on every trial so labels
+  // and stored values stay consistent (not a display-only toggle).
+  if (nextUnit !== existing.unit && versions.length > 0) {
+    const convertedAt = now();
+    versions = versions.map((candidate) => ({
+      ...candidate,
+      measurements: candidate.measurements.map((row) =>
+        convertMeasurementRowUnit(row, existing.unit, nextUnit)
+      ),
+      updated_by: options.updatedBy ?? candidate.updated_by,
+      updated_at: convertedAt,
+    }));
   }
 
   // Explicit rebuild_template seeds/refreshes points even when garment is unchanged
@@ -913,6 +978,7 @@ export async function updateClientPattern(
     description:
       patch.description === undefined ? existing.description : patch.description?.trim() || null,
     garment_type: nextGarmentType,
+    unit: nextUnit,
     fabric: patch.fabric === undefined ? existing.fabric : patch.fabric?.trim() || null,
     base_pattern_id: nextBaseId,
     base_size: nextBaseSize,
@@ -962,6 +1028,8 @@ export async function updateClientPattern(
       pattern_ref: next.pattern_ref,
       client_id: next.client_id,
       garment_type: next.garment_type,
+      unit: next.unit,
+      unit_converted: nextUnit !== existing.unit,
       rebuilt_template: shouldRebuildTemplate,
       active_tud_file_id: next.active_tud_file_id ?? null,
       active_marker_file_id: next.active_marker_file_id ?? null,

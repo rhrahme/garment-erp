@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, LibraryBig } from "lucide-react";
 import { FabricChangeAlertsPanel } from "@/components/dashboard/FabricChangeAlertsPanel";
+import { PatternMeasurementUnitControl } from "@/components/pattern/library/PatternMeasurementUnitControl";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PatternAlterationPendingPanel } from "@/components/pattern/PatternAlterationPendingPanel";
 import { PatternOperatorNoticesPanel } from "@/components/pattern/PatternOperatorNoticesPanel";
@@ -13,6 +14,7 @@ export default function PatternPage() {
       <PageHeader
         title="Pattern"
         description="Pattern drafting queue grouped by client + sales order. Open an order to work fabric lines and link shared master patterns."
+        action={<PatternMeasurementUnitControl />}
       />
       <PatternOperatorNoticesPanel />
       <PatternAlterationPendingPanel />

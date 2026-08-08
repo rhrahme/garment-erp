@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { Printer } from "lucide-react";
 import { qrImageUrl } from "@/lib/production/qr-labels";
-import { formatMeasurement, unitLabel } from "@/lib/pattern-library/measurements";
+import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
+import {
+  formatMeasurementForDisplay,
+  unitLabel,
+} from "@/lib/pattern-library/measurements";
 import { basePatternLabelCode, basePatternQrUrl } from "@/lib/pattern-library/pattern-qr";
 import type { BasePattern } from "@/lib/types/pattern-library";
 
@@ -18,6 +22,8 @@ const SHEET_PRINT_CSS = `
 
 /** Printable A4 base-pattern size grid (landscape — wide size runs). */
 export function BasePatternPrintView({ base }: { base: BasePattern }) {
+  const { unit: displayUnit } = useMeasurementUnitPreference();
+  const storedUnit = base.unit;
   const gradedPoints = base.points.filter((point) => point.is_graded);
   const trimPoints = base.points.filter((point) => !point.is_graded);
 
@@ -47,7 +53,7 @@ export function BasePatternPrintView({ base }: { base: BasePattern }) {
           <div>
             <h1 className="text-xl font-bold tracking-tight">BASE PATTERN — SIZE GRID</h1>
             <p className="mt-1 text-sm font-semibold">
-              {base.name} · {unitLabel(base.unit)}
+              {base.name} · {unitLabel(displayUnit)}
               {base.style_code ? ` · Style ${base.style_code}` : ""}
               {base.season ? ` · ${base.season}` : ""}
             </p>
@@ -90,7 +96,11 @@ export function BasePatternPrintView({ base }: { base: BasePattern }) {
                 <td className="whitespace-nowrap py-1.5 pr-2 font-medium">{point.name}</td>
                 {base.sizes.map((size) => (
                   <td key={size} className="px-1.5 py-1.5 text-center tabular-nums">
-                    {formatMeasurement(point.values[size] ?? null, base.unit)}
+                    {formatMeasurementForDisplay(
+                      point.values[size] ?? null,
+                      storedUnit,
+                      displayUnit
+                    )}
                   </td>
                 ))}
                 <td className="py-1.5 pl-2 text-xs">{point.remark ?? ""}</td>
@@ -111,7 +121,7 @@ export function BasePatternPrintView({ base }: { base: BasePattern }) {
                   <p key={point.point_id}>
                     <span className="text-slate-600">{point.name}:</span>{" "}
                     <span className="font-semibold tabular-nums">
-                      {formatMeasurement(value, base.unit)}
+                      {formatMeasurementForDisplay(value, storedUnit, displayUnit)}
                     </span>
                     {point.remark ? (
                       <span className="text-xs text-slate-500"> — {point.remark}</span>

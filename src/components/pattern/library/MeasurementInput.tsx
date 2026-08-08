@@ -1,28 +1,39 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatMeasurement, parseMeasurement } from "@/lib/pattern-library/measurements";
+import {
+  convertMeasurementUnit,
+  formatMeasurement,
+  parseMeasurement,
+} from "@/lib/pattern-library/measurements";
 import type { MeasurementUnit } from "@/lib/types/pattern-library";
 import { cn } from "@/lib/utils";
 
 /**
  * Numeric cell that displays inch fractions (5⅝) but accepts "5 5/8", "5.625",
  * or "5⅝". Commits the parsed number on blur / Enter.
+ *
+ * `value` / `onCommit` stay in `unit` (stored). When `displayUnit` differs,
+ * the field shows and accepts numbers in the site-wide display unit.
  */
 export function MeasurementInput({
   value,
   unit,
+  displayUnit = unit,
   onCommit,
   className,
   placeholder = "—",
 }: {
   value: number | null;
   unit: MeasurementUnit;
+  displayUnit?: MeasurementUnit;
   onCommit: (next: number | null) => void;
   className?: string;
   placeholder?: string;
 }) {
-  const display = value === null ? "" : formatMeasurement(value, unit);
+  const displayValue =
+    value === null ? null : convertMeasurementUnit(value, unit, displayUnit);
+  const display = displayValue === null ? "" : formatMeasurement(displayValue, displayUnit);
   const [text, setText] = useState(display);
   const [focused, setFocused] = useState(false);
 
@@ -38,13 +49,14 @@ export function MeasurementInput({
       setText("");
       return;
     }
-    const parsed = parseMeasurement(trimmed);
-    if (parsed === null) {
+    const parsedDisplay = parseMeasurement(trimmed);
+    if (parsedDisplay === null) {
       setText(display);
       return;
     }
-    if (parsed !== value) onCommit(parsed);
-    setText(formatMeasurement(parsed, unit));
+    const parsedStored = convertMeasurementUnit(parsedDisplay, displayUnit, unit);
+    if (parsedStored !== value) onCommit(parsedStored);
+    setText(formatMeasurement(parsedDisplay, displayUnit));
   }
 
   return (

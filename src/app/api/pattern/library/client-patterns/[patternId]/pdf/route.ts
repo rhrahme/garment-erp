@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requirePatternAccess } from "@/lib/auth/session";
+import { parseMeasurementUnit } from "@/lib/pattern-library/measurement-unit-preference";
 import { generatePatternSheetPdf } from "@/lib/pattern-library/generate-pattern-sheet-pdf";
 import {
   parsePatternSheetKind,
@@ -22,6 +23,7 @@ export async function GET(request: Request, context: { params: Promise<{ pattern
     const url = new URL(request.url);
     const kind = parsePatternSheetKind(url.searchParams.get("sheet"));
     const lineIds = parsePatternSheetLineIds(url.searchParams.get("lines"));
+    const displayUnit = parseMeasurementUnit(url.searchParams.get("unit")) ?? undefined;
     const data = await buildPatternSheetData(patternId, {
       versionId: url.searchParams.get("version"),
       jobId: url.searchParams.get("job"),
@@ -31,7 +33,7 @@ export async function GET(request: Request, context: { params: Promise<{ pattern
       return NextResponse.json({ error: "Client pattern not found." }, { status: 404 });
     }
 
-    const pdfBytes = await generatePatternSheetPdf(data, kind);
+    const pdfBytes = await generatePatternSheetPdf(data, kind, { displayUnit });
     const filename = buildPatternSheetPdfFilename(data, kind);
 
     return new NextResponse(Buffer.from(pdfBytes), {

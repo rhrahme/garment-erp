@@ -23,6 +23,7 @@ import { BasePatternCascadePicker } from "@/components/pattern/library/BasePatte
 import { LoadFromBaseModal } from "@/components/pattern/library/LoadFromBaseModal";
 import { ClientPhotoAssignmentPanel } from "@/components/pattern/library/ClientPhotoAssignmentPanel";
 import { MeasurementInput } from "@/components/pattern/library/MeasurementInput";
+import { MeasurementUnitToggle } from "@/components/pattern/library/MeasurementUnitToggle";
 import {
   LibraryFileList,
   type LibraryUploadResponse,
@@ -32,6 +33,7 @@ import { NestEstimatePanel } from "@/components/pattern/library/NestEstimatePane
 import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
 import { SewingA4PrintControls } from "@/components/pattern/library/SewingA4PrintControls";
 import { TudVersionHistory } from "@/components/pattern/library/TudVersionHistory";
+import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
 import {
   DXF_UPLOAD_ACCEPT,
   findActiveMarkerAttachment,
@@ -48,7 +50,11 @@ import {
   type BasePatternCascadeValue,
 } from "@/lib/pattern-library/base-pattern-picker";
 import { preloadBasePickerData } from "@/lib/pattern-library/base-picker-cache";
-import { formatMeasurement, unitLabel } from "@/lib/pattern-library/measurements";
+import { withMeasurementUnitParam } from "@/lib/pattern-library/measurement-unit-preference";
+import {
+  formatMeasurementForDisplay,
+  unitLabel,
+} from "@/lib/pattern-library/measurements";
 import { clientPatternQrUrl } from "@/lib/pattern-library/pattern-qr";
 import { TudViewerModal } from "@/components/pattern/library/TudViewerModal";
 import { formatTudSizeDerivedLine } from "@/lib/pattern-library/derived-from";
@@ -74,6 +80,7 @@ import type {
   ClientPattern,
   ClientPatternMeasurement,
   ClientPatternVersion,
+  MeasurementUnit,
 } from "@/lib/types/pattern-library";
 import { cn } from "@/lib/utils";
 
@@ -105,6 +112,7 @@ function formatDate(value: string | null): string {
 }
 
 export function ClientPatternDetail({ patternId }: { patternId: string }) {
+  const { unit: displayUnit } = useMeasurementUnitPreference();
   const [pattern, setPattern] = useState<ClientPattern | null>(null);
   /** Always-latest sheet for Save - blur commits may land after click otherwise. */
   const patternRef = useRef<ClientPattern | null>(null);
@@ -275,6 +283,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           description: pattern.description,
           fabric: pattern.fabric,
           garment_type: pattern.garment_type,
+          unit: pattern.unit,
           special_instructions: pattern.special_instructions,
           physical_pattern_kept: pattern.physical_pattern_kept,
           physical_pattern_location: pattern.physical_pattern_location,
@@ -292,6 +301,37 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
       if (extra.rebuild_template) setDirty(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  /**
+   * Align this sheet's stored unit with the site-wide preference (converts numbers).
+   * Display already follows the preference even before this completes.
+   */
+  async function alignStoredUnit(nextUnit: MeasurementUnit) {
+    if (!pattern || pattern.unit === nextUnit) return;
+    if (dirty || headerDirty) {
+      setError("Save your changes before converting stored units on this sheet.");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/pattern/library/client-patterns/${patternId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ unit: nextUnit }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? "Failed to change unit.");
+      }
+      const data = await res.json().catch(() => null);
+      if (data?.pattern) setPattern(data.pattern);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to change unit.");
     } finally {
       setSaving(false);
     }
@@ -673,13 +713,25 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   if (loading) return <p className="text-sm text-slate-500">Loading client pattern...</p>;
   if (!pattern) return <p className="text-sm text-rose-600">Client pattern not found.</p>;
 
-  const unit = pattern.unit;
+  const storedUnit = pattern.unit;
   const sheetQs = version ? `version=${encodeURIComponent(version.id)}` : "";
-  const printCutterHref = `/pattern/client-patterns/${pattern.id}/print?sheet=cutter${sheetQs ? `&${sheetQs}` : ""}`;
-  const printProductionHref = `/pattern/client-patterns/${pattern.id}/print?sheet=production${sheetQs ? `&${sheetQs}` : ""}`;
+  const printCutterHref = withMeasurementUnitParam(
+    `/pattern/client-patterns/${pattern.id}/print?sheet=cutter${sheetQs ? `&${sheetQs}` : ""}`,
+    displayUnit
+  );
+  const printProductionHref = withMeasurementUnitParam(
+    `/pattern/client-patterns/${pattern.id}/print?sheet=production${sheetQs ? `&${sheetQs}` : ""}`,
+    displayUnit
+  );
   const photosPrintHref = `/pattern/client-patterns/${pattern.id}/photos/print`;
-  const pdfCutterHref = `/api/pattern/library/client-patterns/${pattern.id}/pdf?sheet=cutter${sheetQs ? `&${sheetQs}` : ""}`;
-  const pdfProductionHref = `/api/pattern/library/client-patterns/${pattern.id}/pdf?sheet=production${sheetQs ? `&${sheetQs}` : ""}`;
+  const pdfCutterHref = withMeasurementUnitParam(
+    `/api/pattern/library/client-patterns/${pattern.id}/pdf?sheet=cutter${sheetQs ? `&${sheetQs}` : ""}`,
+    displayUnit
+  );
+  const pdfProductionHref = withMeasurementUnitParam(
+    `/api/pattern/library/client-patterns/${pattern.id}/pdf?sheet=production${sheetQs ? `&${sheetQs}` : ""}`,
+    displayUnit
+  );
   const tudPreview = clientPatternTudPreview(pattern);
   const basePatternName = linkedBase?.display_name ?? null;
   const tudSizes = tudPreview?.attachment.tud?.sizes ?? (pattern.base_size ? [pattern.base_size] : []);
@@ -1164,10 +1216,13 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           {sheetMode === "trials" ? (
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
-                <p className="text-sm font-semibold text-slate-800">
-                  Measurement sheet{" "}
-                  <span className="font-normal text-slate-500">({unitLabel(unit)})</span>
-                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-sm font-semibold text-slate-800">Measurement sheet</p>
+                  <MeasurementUnitToggle
+                    disabled={saving}
+                    onUnitChange={(next) => void alignStoredUnit(next)}
+                  />
+                </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
@@ -1260,7 +1315,8 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                               <td key={col.key} className="px-1 py-1 text-center">
                                 <MeasurementInput
                                   value={sampleValueForPoint(pattern, point.point_id)}
-                                  unit={unit}
+                                  unit={storedUnit}
+                                  displayUnit={displayUnit}
                                   onCommit={(value) => setSampleValue(point.point_id, value)}
                                 />
                               </td>
@@ -1288,7 +1344,8 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                             >
                               <MeasurementInput
                                 value={trialColumnValue(trial, point.point_id)}
-                                unit={unit}
+                                unit={storedUnit}
+                                displayUnit={displayUnit}
                                 onCommit={(value) =>
                                   setTrialTarget(col.versionId!, point.point_id, value)
                                 }
@@ -1512,12 +1569,13 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                           />
                         </td>
                         <td className="px-2 py-1.5 text-center tabular-nums text-slate-500">
-                          {formatMeasurement(row.base_value, unit)}
+                          {formatMeasurementForDisplay(row.base_value, storedUnit, displayUnit)}
                         </td>
                         <td className="px-1 py-1 text-center">
                           <MeasurementInput
                             value={row.target_value}
-                            unit={unit}
+                            unit={storedUnit}
+                            displayUnit={displayUnit}
                             onCommit={(value) =>
                               setMeasurement(row.point_id, { target_value: value })
                             }
@@ -1526,7 +1584,8 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                         <td className="px-1 py-1 text-center">
                           <MeasurementInput
                             value={row.sewn_value}
-                            unit={unit}
+                            unit={storedUnit}
+                            displayUnit={displayUnit}
                             onCommit={(value) =>
                               setMeasurement(row.point_id, { sewn_value: value })
                             }
@@ -1535,7 +1594,8 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                         <td className="px-1 py-1 text-center">
                           <MeasurementInput
                             value={row.adjustment}
-                            unit={unit}
+                            unit={storedUnit}
+                            displayUnit={displayUnit}
                             onCommit={(value) =>
                               setMeasurement(row.point_id, { adjustment: value })
                             }
@@ -1768,7 +1828,8 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
  * vs the previous trial colored (emerald = increased, rose = decreased).
  */
 function EvolutionView({ pattern }: { pattern: ClientPattern }) {
-  const unit = pattern.unit;
+  const { unit: displayUnit } = useMeasurementUnitPreference();
+  const storedUnit = pattern.unit;
   const versions = pattern.versions;
 
   // Union of points in the order of the latest trial (older-only points appended).
@@ -1802,7 +1863,7 @@ function EvolutionView({ pattern }: { pattern: ClientPattern }) {
         <p className="text-sm font-semibold text-slate-800">
           Evolution across trials{" "}
           <span className="font-normal text-slate-500">
-            (target values, {unitLabel(unit)} - delta vs previous trial)
+            (target values, {unitLabel(displayUnit)} - delta vs previous trial)
           </span>
         </p>
       </div>
@@ -1834,7 +1895,7 @@ function EvolutionView({ pattern }: { pattern: ClientPattern }) {
                     {name}
                   </td>
                   <td className="px-3 py-2 text-center tabular-nums text-slate-500">
-                    {formatMeasurement(baseValue, unit)}
+                    {formatMeasurementForDisplay(baseValue, storedUnit, displayUnit)}
                   </td>
                   {versions.map((version) => {
                     const value = valueFor(version, point_id);
@@ -1846,7 +1907,7 @@ function EvolutionView({ pattern }: { pattern: ClientPattern }) {
                     return (
                       <td key={version.id} className="whitespace-nowrap px-3 py-2 text-center">
                         <span className="tabular-nums font-medium text-slate-800">
-                          {formatMeasurement(value, unit)}
+                          {formatMeasurementForDisplay(value, storedUnit, displayUnit)}
                         </span>
                         {delta !== null && value !== null ? (
                           <span
@@ -1866,7 +1927,9 @@ function EvolutionView({ pattern }: { pattern: ClientPattern }) {
                             ) : (
                               <Minus className="h-2.5 w-2.5" />
                             )}
-                            {delta === 0 ? "=" : formatMeasurement(Math.abs(delta), unit)}
+                            {delta === 0
+                              ? "="
+                              : formatMeasurementForDisplay(Math.abs(delta), storedUnit, displayUnit)}
                           </span>
                         ) : null}
                       </td>

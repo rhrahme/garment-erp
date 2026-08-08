@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { Download, Printer } from "lucide-react";
 import { outlinePointsForPlacement } from "@/lib/pattern-library/dxf-parser";
-import { formatMeasurement, unitLabel } from "@/lib/pattern-library/measurements";
+import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
+import { withMeasurementUnitParam } from "@/lib/pattern-library/measurement-unit-preference";
+import {
+  formatMeasurementForDisplay,
+  unitLabel,
+} from "@/lib/pattern-library/measurements";
+import type { MeasurementUnit } from "@/lib/types/pattern-library";
 import {
   clientPatternLabelCode,
   clientPatternQrUrl,
@@ -573,12 +579,14 @@ function ProductionSheetPage({
   sewing = false,
   pageIndex,
   pageTotal,
+  displayUnit,
 }: {
   data: PatternSheetData;
   article?: PatternSheetArticlePage | null;
   sewing?: boolean;
   pageIndex?: number;
   pageTotal?: number;
+  displayUnit: MeasurementUnit;
 }) {
   const {
     pattern,
@@ -592,7 +600,7 @@ function ProductionSheetPage({
   const order = article?.order ?? data.order;
   const fabric = article?.fabric ?? data.fabric;
   const stickers = article?.stickers ?? data.stickers;
-  const unit = pattern.unit;
+  const storedUnit = pattern.unit;
   const patternQrPayload = clientPatternQrUrl(pattern.id);
   const patternQrLabel = clientPatternLabelCode(pattern);
   const baseColLabel = resolved_base_size
@@ -698,7 +706,7 @@ function ProductionSheetPage({
           <table key={chunkIndex} className="w-full border-collapse text-[10px]">
             <thead>
               <tr className="border-b border-slate-900 text-left text-[9px] font-bold uppercase tracking-wide">
-                <th className="py-0.5 pr-1">Meas. ({unitLabel(unit)})</th>
+                <th className="py-0.5 pr-1">Meas. ({unitLabel(displayUnit)})</th>
                 <th className="px-1 py-0.5 text-center">{baseColLabel}</th>
                 <th className="px-1 py-0.5 text-center">Tgt</th>
                 <th className="px-1 py-0.5 text-center">Sewn</th>
@@ -716,17 +724,17 @@ function ProductionSheetPage({
                     ) : null}
                   </td>
                   <td className="px-1 py-0.5 text-center tabular-nums text-slate-600">
-                    {formatMeasurement(row.base_value, unit)}
+                    {formatMeasurementForDisplay(row.base_value, storedUnit, displayUnit)}
                   </td>
                   <td className="px-1 py-0.5 text-center font-semibold tabular-nums">
-                    {formatMeasurement(row.target_value, unit)}
+                    {formatMeasurementForDisplay(row.target_value, storedUnit, displayUnit)}
                   </td>
                   <td className="px-1 py-0.5 text-center tabular-nums">
-                    {formatMeasurement(row.sewn_value, unit)}
+                    {formatMeasurementForDisplay(row.sewn_value, storedUnit, displayUnit)}
                   </td>
                   <td className="px-1 py-0.5 text-center tabular-nums">
                     {row.adjustment !== null
-                      ? `${row.adjustment > 0 ? "+" : row.adjustment < 0 ? "-" : ""}${formatMeasurement(Math.abs(row.adjustment), unit)}`
+                      ? `${row.adjustment > 0 ? "+" : row.adjustment < 0 ? "-" : ""}${formatMeasurementForDisplay(Math.abs(row.adjustment), storedUnit, displayUnit)}`
                       : "-"}
                   </td>
                   <td className="max-w-[4rem] truncate py-0.5 pl-1 text-[9px]">
@@ -820,6 +828,7 @@ export function PatternSheetPrintView({
   data: PatternSheetData;
   kind?: PatternSheetKind;
 }) {
+  const { unit: displayUnit } = useMeasurementUnitPreference();
   const { pattern, version, stickers, article_pages } = data;
   const isProduction = kind === "production";
   const isSewing = kind === "sewing";
@@ -863,13 +872,19 @@ export function PatternSheetPrintView({
     : stickers.length > 0
       ? ` - ${stickers.length} piece QR${stickers.length === 1 ? "" : "s"}: ${stickers.map((s) => piecePageLabel(s)).join(", ")}`
       : " - No manufacturing QRs (link a fabric line with stickers)";
-  const qs = sheetQuery(kind, data);
+  const qs = withMeasurementUnitParam(
+    `/pattern/client-patterns/${pattern.id}/print?${sheetQuery(kind, data)}`,
+    displayUnit
+  ).split("?")[1]!;
   const switchKind: PatternSheetKind = isSewing
     ? "production"
     : isProduction
       ? "cutter"
       : "production";
-  const otherQs = sheetQuery(switchKind, data);
+  const otherQs = withMeasurementUnitParam(
+    `/pattern/client-patterns/${pattern.id}/print?${sheetQuery(switchKind, data)}`,
+    displayUnit
+  ).split("?")[1]!;
   const kindLabel = isSewing
     ? "Sewing A4s (one page per article)"
     : isProduction
@@ -893,6 +908,7 @@ export function PatternSheetPrintView({
             {version.is_final ? " (Final)" : ""}
             {isProduction || isSewing ? ` - Pattern QR ${clientPatternLabelCode(pattern)}` : ""}
             {mfgSummary}
+            {` - ${unitLabel(displayUnit)}`}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -932,6 +948,7 @@ export function PatternSheetPrintView({
                 sewing
                 pageIndex={index + 1}
                 pageTotal={pageTotal}
+                displayUnit={displayUnit}
               />
             ))
           ) : (
@@ -940,7 +957,7 @@ export function PatternSheetPrintView({
             </p>
           )
         ) : isProduction ? (
-          <ProductionSheetPage data={data} />
+          <ProductionSheetPage data={data} displayUnit={displayUnit} />
         ) : (
           cutterPages.map((sticker, index) => (
             <CutterSheetPage

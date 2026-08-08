@@ -207,7 +207,9 @@ export function ZapierSetup() {
             </li>
             <li>PATCH {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]</li>
             <li className="pl-4 text-slate-500">
-              body may include garment_type, rebuild_template, active_tud_file_id,
+              body may include garment_type, unit (in|cm; converts all trial
+              measurement numbers - Pattern UI also has a site-wide Units
+              preference for display/print), rebuild_template, active_tud_file_id,
               active_tud_by_piece, marker_fabric_width_cm, marker_double_fold
               (nest estimate inputs), measurement header fields, or
               trial_sheet_versions (atomic Sample/Trials/Final sheet save)

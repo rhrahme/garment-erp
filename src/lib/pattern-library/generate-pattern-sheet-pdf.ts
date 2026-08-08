@@ -1,7 +1,11 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { outlinePointsForPlacement } from "@/lib/pattern-library/dxf-parser";
-import { formatMeasurementAscii, unitLabel } from "@/lib/pattern-library/measurements";
+import {
+  formatMeasurementAsciiForDisplay,
+  unitLabel,
+} from "@/lib/pattern-library/measurements";
+import type { MeasurementUnit } from "@/lib/types/pattern-library";
 import {
   nestMapHeight,
   nestMapTransform,
@@ -364,6 +368,7 @@ async function drawProductionSheetPage(
     article?: PatternSheetArticlePage | null;
     pageIndex?: number;
     pageTotal?: number;
+    displayUnit?: MeasurementUnit;
   } = {}
 ): Promise<void> {
   const article = options.article ?? null;
@@ -381,7 +386,8 @@ async function drawProductionSheetPage(
   const pageData: PatternSheetData = article
     ? { ...data, fabric: article.fabric, stickers, order }
     : data;
-  const unit = pattern.unit;
+  const storedUnit = pattern.unit;
+  const displayUnit = options.displayUnit ?? storedUnit;
   const m = PROD_MARGIN;
   const contentBottom = PAGE_H - m - 5;
   const title = options.sewing ? "SEWING / STITCHER SHEET" : "PRODUCTION / STITCHER SHEET";
@@ -499,7 +505,7 @@ async function drawProductionSheetPage(
       ? `Base (${pattern.base_size})`
       : "Base";
   const head = [[
-    `Meas. (${unitLabel(unit)})`,
+    `Meas. (${unitLabel(displayUnit)})`,
     baseCol,
     "Tgt",
     "Sewn",
@@ -508,11 +514,11 @@ async function drawProductionSheetPage(
   ]];
   const toBodyRow = (row: (typeof measurements)[number]) => [
     row.remark ? `${row.name} - ${row.remark}` : row.name,
-    formatMeasurementAscii(row.base_value, unit),
-    formatMeasurementAscii(row.target_value, unit),
-    formatMeasurementAscii(row.sewn_value, unit),
+    formatMeasurementAsciiForDisplay(row.base_value, storedUnit, displayUnit),
+    formatMeasurementAsciiForDisplay(row.target_value, storedUnit, displayUnit),
+    formatMeasurementAsciiForDisplay(row.sewn_value, storedUnit, displayUnit),
     row.adjustment !== null
-      ? `${row.adjustment > 0 ? "+" : row.adjustment < 0 ? "-" : ""}${formatMeasurementAscii(Math.abs(row.adjustment), unit)}`
+      ? `${row.adjustment > 0 ? "+" : row.adjustment < 0 ? "-" : ""}${formatMeasurementAsciiForDisplay(Math.abs(row.adjustment), storedUnit, displayUnit)}`
       : "-",
     (row.remarks ?? "").slice(0, 28),
   ];
@@ -1026,7 +1032,8 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
 
 async function buildPatternSheetDoc(
   data: PatternSheetData,
-  kind: PatternSheetKind
+  kind: PatternSheetKind,
+  displayUnit?: MeasurementUnit
 ): Promise<jsPDF> {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
 
@@ -1035,7 +1042,7 @@ async function buildPatternSheetDoc(
       clientPatternQrUrl(data.pattern.id),
       240
     );
-    await drawProductionSheetPage(doc, data, patternQrPng);
+    await drawProductionSheetPage(doc, data, patternQrPng, { displayUnit });
     return doc;
   }
 
@@ -1077,6 +1084,7 @@ async function buildPatternSheetDoc(
         article: pages[i]!,
         pageIndex: i + 1,
         pageTotal: pages.length,
+        displayUnit,
       });
     }
     return doc;
@@ -1096,17 +1104,19 @@ async function buildPatternSheetDoc(
 /** A4 portrait sheet - cutter, production, or sewing pack (one page per article). */
 export async function generatePatternSheetPdf(
   data: PatternSheetData,
-  kind: PatternSheetKind = "cutter"
+  kind: PatternSheetKind = "cutter",
+  options: { displayUnit?: MeasurementUnit } = {}
 ): Promise<ArrayBuffer> {
-  const doc = await buildPatternSheetDoc(data, kind);
+  const doc = await buildPatternSheetDoc(data, kind, options.displayUnit);
   return doc.output("arraybuffer");
 }
 
 /** Page count for generated sheet (tests assert production === 1). */
 export async function patternSheetPdfPageCount(
   data: PatternSheetData,
-  kind: PatternSheetKind = "cutter"
+  kind: PatternSheetKind = "cutter",
+  options: { displayUnit?: MeasurementUnit } = {}
 ): Promise<number> {
-  const doc = await buildPatternSheetDoc(data, kind);
+  const doc = await buildPatternSheetDoc(data, kind, options.displayUnit);
   return doc.getNumberOfPages();
 }

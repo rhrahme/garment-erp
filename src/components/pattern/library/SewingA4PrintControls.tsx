@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CheckSquare, CircleHelp, Printer, Square, X } from "lucide-react";
+import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
 import type { ClientFabricBoard, ClientFabricBoardRow } from "@/lib/pattern-library/client-fabric-board";
+import { withMeasurementUnitParam } from "@/lib/pattern-library/measurement-unit-preference";
+import type { MeasurementUnit } from "@/lib/types/pattern-library";
 import { cn } from "@/lib/utils";
 
 type SewingA4PrintControlsProps = {
@@ -18,12 +21,16 @@ const HELP_TEXT =
 function sewingPrintHref(
   patternId: string,
   versionId: string | null | undefined,
-  lineIds: string[]
+  lineIds: string[],
+  unit: MeasurementUnit
 ): string {
   const params = new URLSearchParams({ sheet: "sewing" });
   if (versionId) params.set("version", versionId);
   if (lineIds.length > 0) params.set("lines", lineIds.join(","));
-  return `/pattern/client-patterns/${patternId}/print?${params.toString()}`;
+  return withMeasurementUnitParam(
+    `/pattern/client-patterns/${patternId}/print?${params.toString()}`,
+    unit
+  );
 }
 
 /**
@@ -35,6 +42,7 @@ export function SewingA4PrintControls({
   clientId,
   versionId,
 }: SewingA4PrintControlsProps) {
+  const { unit: displayUnit } = useMeasurementUnitPreference();
   const [open, setOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [rows, setRows] = useState<ClientFabricBoardRow[] | null>(null);
@@ -68,7 +76,7 @@ export function SewingA4PrintControls({
   const selectedCount = selected.size;
   const allSelected = allIds.length > 0 && selectedCount === allIds.length;
   const selectedList = useMemo(() => allIds.filter((id) => selected.has(id)), [allIds, selected]);
-  const previewHref = sewingPrintHref(patternId, versionId, selectedList);
+  const previewHref = sewingPrintHref(patternId, versionId, selectedList, displayUnit);
 
   function toggleOne(lineId: string) {
     setSelected((prev) => {
