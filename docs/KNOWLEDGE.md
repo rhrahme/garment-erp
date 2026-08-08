@@ -84,11 +84,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Site-wide Pattern cm / inches** (Aug 8 2026): Pattern pages share one
   Units toggle (`erp-pattern-measurement-unit` localStorage). Sheets, bases,
   print previews, and PDFs (`?unit=`) show values in that unit via display
-  conversion; edits convert back to each pattern's stored unit. Toggling on
-  an open client/base sheet also PATCHes that record to convert stored
-  numbers when the sheet is clean. New client/base patterns inherit the
-  preference. Helpers: `useMeasurementUnitPreference`,
-  `MeasurementUnitToggle`, `formatMeasurementForDisplay`.
+  conversion; edits convert back to each pattern's stored unit. Typed cell
+  numbers mean the selected unit (not auto-detected) - pick cm or inches,
+  then type. Toggling on an open client/base sheet also PATCHes that record
+  to convert stored numbers when the sheet is clean. New client/base
+  patterns inherit the preference. Helpers:
+  `useMeasurementUnitPreference`, `MeasurementUnitToggle`,
+  `formatMeasurementForDisplay`. Ship: `0c2e27c`.
 - **Base-pattern pickers must preload the slim payload** (perf fix, Aug 5
   2026): use `GET /api/pattern/library/bases` (bases + dictionary, ~218 KB)
   via `preloadBasePickerData()` in `base-picker-cache.ts` - never the
