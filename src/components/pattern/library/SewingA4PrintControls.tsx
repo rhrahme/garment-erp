@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CheckSquare, Printer, Square, X } from "lucide-react";
+import { CheckSquare, CircleHelp, Printer, Square, X } from "lucide-react";
 import type { ClientFabricBoard, ClientFabricBoardRow } from "@/lib/pattern-library/client-fabric-board";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,9 @@ type SewingA4PrintControlsProps = {
   clientId: string;
   versionId?: string | null;
 };
+
+const HELP_TEXT =
+  "New: print one A4 per article for the sewing team. Each page has that article's floor QR so stitchers can scan the right piece. Tick which articles to include, open preview, then print. Different from Print production (one sheet for the primary fabric only).";
 
 function sewingPrintHref(
   patternId: string,
@@ -33,6 +36,7 @@ export function SewingA4PrintControls({
   versionId,
 }: SewingA4PrintControlsProps) {
   const [open, setOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [rows, setRows] = useState<ClientFabricBoardRow[] | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
@@ -80,21 +84,75 @@ export function SewingA4PrintControls({
   }
 
   return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-      >
-        <Printer className="h-4 w-4" />
-        Sewing A4s
-      </button>
+    <div className="relative flex items-center gap-1">
+      <div className="inline-flex items-stretch overflow-hidden rounded-lg shadow-sm ring-2 ring-amber-400">
+        <button
+          type="button"
+          onClick={() => {
+            setHelpOpen(false);
+            setOpen((prev) => !prev);
+          }}
+          className="inline-flex items-center gap-1.5 bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+        >
+          <Printer className="h-4 w-4" />
+          Sewing A4s
+          <span className="rounded bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-950">
+            New
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(false);
+            setHelpOpen((prev) => !prev);
+          }}
+          className="inline-flex items-center border-l border-indigo-500 bg-indigo-600 px-2 text-white hover:bg-indigo-700"
+          aria-label="What is Sewing A4s?"
+          aria-expanded={helpOpen}
+          title="What is Sewing A4s?"
+        >
+          <CircleHelp className="h-4 w-4" />
+        </button>
+      </div>
+
+      {helpOpen ? (
+        <div className="absolute right-0 z-30 mt-2 top-full w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-amber-200 bg-amber-50 p-3 shadow-lg">
+          <div className="mb-1 flex items-start justify-between gap-2">
+            <p className="text-sm font-semibold text-amber-950">Sewing A4s - what is this?</p>
+            <button
+              type="button"
+              onClick={() => setHelpOpen(false)}
+              className="rounded-md p-1 text-amber-700 hover:bg-amber-100"
+              aria-label="Close help"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <p className="text-xs leading-relaxed text-amber-900">{HELP_TEXT}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setHelpOpen(false);
+              setOpen(true);
+            }}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
+          >
+            <Printer className="h-3.5 w-3.5" />
+            Open Sewing A4s
+          </button>
+        </div>
+      ) : null}
 
       {open ? (
-        <div className="absolute right-0 z-30 mt-2 w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
+        <div className="absolute right-0 z-30 mt-2 top-full w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
           <div className="mb-2 flex items-start justify-between gap-2">
             <div>
-              <p className="text-sm font-semibold text-slate-900">Preview sewing A4s</p>
+              <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-900">
+                Preview sewing A4s
+                <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
+                  New
+                </span>
+              </p>
               <p className="mt-0.5 text-xs text-slate-500">
                 One A4 per article with the floor QR. Tick pages, then open preview.
               </p>
