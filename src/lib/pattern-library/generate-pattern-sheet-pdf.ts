@@ -21,6 +21,7 @@ import type {
   PatternSheetData,
   PatternSheetSticker,
 } from "@/lib/pattern-library/sheet-data";
+import { expandCutterPrintPages } from "@/lib/pattern-library/sheet-data";
 
 const MARGIN = 12;
 /** Tighter margin for single-page production / stitcher sheets. */
@@ -1090,12 +1091,18 @@ async function buildPatternSheetDoc(
     return doc;
   }
 
-  const pages: Array<PatternSheetSticker | null> =
-    data.stickers.length > 0 ? data.stickers : [null];
+  const pages = expandCutterPrintPages(data);
 
   for (let i = 0; i < pages.length; i++) {
+    const page = pages[i]!;
     if (i > 0) doc.addPage();
-    await drawCutterSheetPage(doc, data, pages[i]!, i + 1, pages.length);
+    await drawCutterSheetPage(
+      doc,
+      page.data,
+      page.sticker,
+      page.pageIndex,
+      page.pageTotal
+    );
   }
 
   return doc;

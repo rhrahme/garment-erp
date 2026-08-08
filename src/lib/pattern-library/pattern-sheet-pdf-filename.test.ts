@@ -63,6 +63,7 @@ function sheet(overrides: Partial<PatternSheetData> = {}): PatternSheetData {
       so_number: "SO-2026-0002",
       fabric_number: "S10008",
     } as PatternSheetData["job"],
+    scoped_job_id: null,
     order: { so_number: "SO-2026-0002", order_date: null, delivery_date: null },
     fabric: {
       fabric_number: "S10008",

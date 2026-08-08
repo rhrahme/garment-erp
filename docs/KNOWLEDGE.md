@@ -146,7 +146,15 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   tick-list of grouped articles and previews `/pattern/client-patterns/{id}/print?sheet=sewing&lines=...`
   - one A4 per article with that line's floor piece QR(s) + shared
   measurements. Distinct from single-page **Print production** (primary
-  line only). Do not collapse back to first-linked-line-only for sewing packs.
+  line only, or `?job=` for that fabric job). Do not collapse back to
+  first-linked-line-only for sewing packs.
+- **Consolidated masters + fabric jobs**: N fabric jobs share one client
+  pattern / measurements. Open sheet from a job uses
+  `/pattern/library/clients/{id}?job={jobId}` so the Fabric field and
+  Print cutter / production / PDF use that job's fabric code + stickers.
+  Never guess "most recently updated job" when multiple fabric lines are
+  linked. Master **Print cutter** without `job=` expands one page group
+  per linked article (same idea as Sewing A4s).
 - **Empty measurement sheet heal**: if Pattern opens a fabric-linked /
   consolidated client pattern with no filled sizes, copy from the best
   same-client + same-garment sibling (Moussa House Thobe case). Also runs

@@ -168,8 +168,10 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
   }, [clientPatterns, job]);
 
   const printHref = job?.client_pattern_id
-    ? `/pattern/client-patterns/${job.client_pattern_id}/print?job=${job.id}${
-        job.client_pattern_version_id ? `&version=${job.client_pattern_version_id}` : ""
+    ? `/pattern/client-patterns/${job.client_pattern_id}/print?sheet=cutter&job=${encodeURIComponent(job.id)}${
+        job.client_pattern_version_id
+          ? `&version=${encodeURIComponent(job.client_pattern_version_id)}`
+          : ""
       }`
     : null;
 
@@ -178,7 +180,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
     : null;
 
   const sheetHref = job?.client_pattern_id
-    ? `/pattern/library/clients/${job.client_pattern_id}`
+    ? `/pattern/library/clients/${job.client_pattern_id}?job=${encodeURIComponent(job.id)}`
     : null;
 
   const patternCode = job
@@ -239,7 +241,9 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       setShowTemplatePicker(false);
       setLinkPatternId("");
       await loadSheetFiles(linkPatternId);
-      router.push(`/pattern/library/clients/${linkPatternId}`);
+      router.push(
+        `/pattern/library/clients/${linkPatternId}?job=${encodeURIComponent(jobId)}`
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Link failed");
     } finally {
@@ -278,7 +282,9 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       const linkData = await linkRes.json().catch(() => null);
       if (!linkRes.ok) throw new Error(linkData?.error ?? "Failed to link sheet");
 
-      router.push(`/pattern/library/clients/${patternId}`);
+      router.push(
+        `/pattern/library/clients/${patternId}?job=${encodeURIComponent(jobId)}`
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create sheet");
       setActing(false);

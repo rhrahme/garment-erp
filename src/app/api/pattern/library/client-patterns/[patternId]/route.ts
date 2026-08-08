@@ -65,6 +65,8 @@ export async function GET(_request: Request, context: { params: Promise<{ patter
         status: job.status,
         client_pattern_version_id: job.client_pattern_version_id ?? null,
         width_cm: job.width_cm ?? null,
+        fabric_number: job.fabric_number ?? null,
+        sales_order_line_id: job.sales_order_line_id ?? null,
       }));
     const jobWidthHint =
       linkedJobs.find((job) => typeof job.width_cm === "number" && job.width_cm > 0)?.width_cm ??

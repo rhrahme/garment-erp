@@ -20,6 +20,7 @@ import type {
   PatternSheetData,
   PatternSheetSticker,
 } from "@/lib/pattern-library/sheet-data";
+import { expandCutterPrintPages } from "@/lib/pattern-library/sheet-data";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 
 const SHEET_PRINT_CSS = `
@@ -79,7 +80,8 @@ function sheetQuery(
   lineIds?: string[] | null
 ): string {
   const params = new URLSearchParams({ sheet: kind, version: data.version.id });
-  if (data.job) params.set("job", data.job.id);
+  // Only pass job when the sheet was opened for a specific fabric job.
+  if (data.scoped_job_id) params.set("job", data.scoped_job_id);
   const lines = lineIds ?? data.article_pages.map((page) => page.line_id);
   if (kind === "sewing" && lines.length > 0) params.set("lines", lines.join(","));
   return params.toString();
@@ -860,18 +862,21 @@ export function PatternSheetPrintView({
             } satisfies PatternSheetArticlePage,
           ]
         : [];
-  const cutterPages: Array<PatternSheetSticker | null> =
-    !isProduction && !isSewing && stickers.length > 0 ? stickers : [null];
-  const pageTotal = isSewing ? sewingPages.length : cutterPages.length;
+  const cutterPages = !isProduction && !isSewing ? expandCutterPrintPages(data) : [];
+  const pageTotal = isSewing ? sewingPages.length : cutterPages.length || 1;
   const mfgSummary = isSewing
     ? sewingPages.length > 0
       ? ` - ${sewingPages.length} article page${sewingPages.length === 1 ? "" : "s"}: ${sewingPages
           .map((page) => page.article_code)
           .join(", ")}`
       : " - No linked articles with SO fabric lines"
-    : stickers.length > 0
-      ? ` - ${stickers.length} piece QR${stickers.length === 1 ? "" : "s"}: ${stickers.map((s) => piecePageLabel(s)).join(", ")}`
-      : " - No manufacturing QRs (link a fabric line with stickers)";
+    : cutterPages.length > 1 && cutterPages.some((page) => page.article_code)
+      ? ` - ${cutterPages.length} page${cutterPages.length === 1 ? "" : "s"} (per article fabric): ${[
+          ...new Set(cutterPages.map((page) => page.article_code).filter(Boolean)),
+        ].join(", ")}`
+      : stickers.length > 0
+        ? ` - ${stickers.length} piece QR${stickers.length === 1 ? "" : "s"}: ${stickers.map((s) => piecePageLabel(s)).join(", ")}`
+        : " - No manufacturing QRs (link a fabric line with stickers)";
   const qs = withMeasurementUnitParam(
     `/pattern/client-patterns/${pattern.id}/print?${sheetQuery(kind, data)}`,
     displayUnit
@@ -890,6 +895,9 @@ export function PatternSheetPrintView({
     : isProduction
       ? "Production / stitcher"
       : "Cutter";
+  const backHref = data.scoped_job_id
+    ? `/pattern/library/clients/${pattern.id}?job=${encodeURIComponent(data.scoped_job_id)}`
+    : `/pattern/library/clients/${pattern.id}`;
 
   return (
     <div className="mx-auto min-h-screen max-w-[210mm] bg-white p-6 text-slate-900 print:p-0">
@@ -898,7 +906,7 @@ export function PatternSheetPrintView({
       <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
         <div>
           <Link
-            href={`/pattern/library/clients/${pattern.id}`}
+            href={backHref}
             className="text-sm font-medium text-indigo-700 hover:text-indigo-900"
           >
             Back to {pattern.pattern_ref}
@@ -906,6 +914,7 @@ export function PatternSheetPrintView({
           <p className="mt-1 text-xs text-slate-500">
             A4 portrait - {kindLabel} - Trial {version.version}
             {version.is_final ? " (Final)" : ""}
+            {data.fabric ? ` - Fabric ${data.fabric.fabric_number}` : ""}
             {isProduction || isSewing ? ` - Pattern QR ${clientPatternLabelCode(pattern)}` : ""}
             {mfgSummary}
             {` - ${unitLabel(displayUnit)}`}
@@ -916,7 +925,7 @@ export function PatternSheetPrintView({
             href={`/pattern/client-patterns/${pattern.id}/print?${otherQs}`}
             className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"
           >
-            Switch to {switchKind === "cutter" ? "cutter" : switchKind === "sewing" ? "sewing" : "production"}
+            Switch to {switchKind === "cutter" ? "cutter" : "production"}
           </Link>
           <a
             href={`/api/pattern/library/client-patterns/${pattern.id}/pdf?${qs}`}
@@ -959,13 +968,17 @@ export function PatternSheetPrintView({
         ) : isProduction ? (
           <ProductionSheetPage data={data} displayUnit={displayUnit} />
         ) : (
-          cutterPages.map((sticker, index) => (
+          cutterPages.map((page) => (
             <CutterSheetPage
-              key={sticker ? `${sticker.role}-${sticker.qr_payload}` : "no-sticker"}
-              data={data}
-              sticker={sticker}
-              pageIndex={index + 1}
-              pageTotal={pageTotal}
+              key={
+                page.sticker
+                  ? `${page.article_code ?? "primary"}-${page.sticker.role}-${page.sticker.qr_payload}`
+                  : `${page.article_code ?? "primary"}-no-sticker-${page.pageIndex}`
+              }
+              data={page.data}
+              sticker={page.sticker}
+              pageIndex={page.pageIndex}
+              pageTotal={page.pageTotal}
             />
           ))
         )}

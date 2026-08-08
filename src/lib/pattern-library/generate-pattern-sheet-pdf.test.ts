@@ -83,6 +83,7 @@ function sheet(overrides: Partial<PatternSheetData> = {}): PatternSheetData {
       fabric_number: "S10008",
       pattern_code: "Youssef-shorts-M",
     } as PatternSheetData["job"],
+    scoped_job_id: null,
     order: {
       so_number: "SO-2026-0002",
       order_date: "2026-06-01",

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
@@ -90,6 +91,8 @@ interface LinkedJob {
   status: string;
   client_pattern_version_id: string | null;
   width_cm?: number | null;
+  fabric_number?: string | null;
+  sales_order_line_id?: string | null;
 }
 
 interface LinkedBaseSummary {
@@ -112,6 +115,8 @@ function formatDate(value: string | null): string {
 
 export function ClientPatternDetail({ patternId }: { patternId: string }) {
   const { unit: displayUnit } = useMeasurementUnitPreference();
+  const searchParams = useSearchParams();
+  const scopedJobId = searchParams.get("job")?.trim() || null;
   const [pattern, setPattern] = useState<ClientPattern | null>(null);
   /** Always-latest sheet for Save - blur commits may land after click otherwise. */
   const patternRef = useRef<ClientPattern | null>(null);
@@ -682,7 +687,15 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   if (!pattern) return <p className="text-sm text-rose-600">Client pattern not found.</p>;
 
   const storedUnit = pattern.unit;
-  const sheetQs = version ? `version=${encodeURIComponent(version.id)}` : "";
+  const scopedJob =
+    scopedJobId != null
+      ? linkedJobs.find((job) => job.id === scopedJobId) ?? null
+      : null;
+  const sheetQsParts = [
+    version ? `version=${encodeURIComponent(version.id)}` : "",
+    scopedJob ? `job=${encodeURIComponent(scopedJob.id)}` : "",
+  ].filter(Boolean);
+  const sheetQs = sheetQsParts.join("&");
   const printCutterHref = withMeasurementUnitParam(
     `/pattern/client-patterns/${pattern.id}/print?sheet=cutter${sheetQs ? `&${sheetQs}` : ""}`,
     displayUnit
@@ -700,6 +713,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
     `/api/pattern/library/client-patterns/${pattern.id}/pdf?sheet=production${sheetQs ? `&${sheetQs}` : ""}`,
     displayUnit
   );
+  const fabricFieldValue = scopedJob?.fabric_number?.trim() || pattern.fabric || "";
   const tudPreview = clientPatternTudPreview(pattern);
   const basePatternName = linkedBase?.display_name ?? null;
   const tudSizes = tudPreview?.attachment.tud?.sizes ?? (pattern.base_size ? [pattern.base_size] : []);
@@ -860,13 +874,30 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
             />
           </label>
           <label className="text-sm">
-            <span className="mb-1 block text-xs font-medium text-slate-600">Fabric</span>
+            <span className="mb-1 block text-xs font-medium text-slate-600">
+              Fabric
+              {scopedJob?.fabric_number ? (
+                <span className="ml-1 font-normal text-indigo-600">
+                  (job {scopedJob.so_number})
+                </span>
+              ) : null}
+            </span>
             <input
-              value={pattern.fabric ?? ""}
-              onChange={(e) =>
-                mutatePattern((draft) => ({ ...draft, fabric: e.target.value || null }), true)
+              value={fabricFieldValue}
+              onChange={(e) => {
+                if (scopedJob) return;
+                mutatePattern((draft) => ({ ...draft, fabric: e.target.value || null }), true);
+              }}
+              readOnly={Boolean(scopedJob)}
+              title={
+                scopedJob
+                  ? "Fabric from the opened pattern job (consolidated masters share one measurement sheet)."
+                  : undefined
               }
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className={cn(
+                "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm",
+                scopedJob ? "bg-indigo-50 font-semibold text-slate-900" : ""
+              )}
             />
           </label>
           <label className="text-sm">
@@ -1754,18 +1785,34 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           ) : (
             <ul className="space-y-1.5">
               {linkedJobs.map((job) => (
-                <li key={job.id}>
+                <li key={job.id} className="flex items-center gap-1">
+                  <Link
+                    href={`/pattern/library/clients/${pattern.id}?job=${encodeURIComponent(job.id)}`}
+                    className={cn(
+                      "flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-slate-50",
+                      scopedJobId === job.id
+                        ? "bg-indigo-50 font-medium text-indigo-900 ring-1 ring-indigo-200"
+                        : "text-slate-700"
+                    )}
+                  >
+                    <span className="truncate">
+                      {job.so_number} / {job.garment_type}
+                      {job.fabric_number ? (
+                        <span className="ml-1 font-mono text-xs text-slate-500">
+                          {job.fabric_number}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="shrink-0 text-xs text-slate-500">
+                      {job.status.replace(/_/g, " ")}
+                    </span>
+                  </Link>
                   <Link
                     href={`/pattern/jobs/${job.id}`}
-                    className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+                    title="Open drafting job"
+                    className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-50 hover:text-indigo-700"
                   >
-                    <span>
-                      {job.so_number} / {job.garment_type}
-                    </span>
-                    <span className="flex items-center gap-2 text-xs text-slate-500">
-                      {job.status.replace(/_/g, " ")}
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </span>
+                    <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </li>
               ))}

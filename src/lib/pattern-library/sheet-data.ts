@@ -82,6 +82,11 @@ export interface PatternSheetData {
   version: ClientPatternVersion;
   base: BasePattern | null;
   job: PatternJob | null;
+  /**
+   * When set, cutter/production are scoped to this pattern job's fabric line
+   * (Open job -> print). Null means consolidated multi-article pack may expand.
+   */
+  scoped_job_id: string | null;
   order: { so_number: string; order_date: string | null; delivery_date: string | null } | null;
   fabric: PatternSheetFabric | null;
   stickers: PatternSheetSticker[];
@@ -299,11 +304,16 @@ export async function buildPatternSheetData(
   const version = filled.version;
 
   const jobs = readPatternJobs().jobs;
+  const linkedLineIds = pattern.linked_fabric_line_ids ?? [];
+  const multiArticle = linkedLineIds.length > 1;
   let job: PatternJob | null = null;
   if (options.jobId) {
     job = jobs.find((candidate) => candidate.id === options.jobId) ?? null;
   }
-  if (!job) {
+  // Consolidated masters: never guess "most recent job" - that stamps every
+  // cutter/production sheet with one fabric. Single-article patterns still
+  // fall back to the latest linked job when jobId is omitted.
+  if (!job && !multiArticle) {
     job =
       jobs
         .filter((candidate) => candidate.client_pattern_id === pattern.id)
@@ -316,6 +326,7 @@ export async function buildPatternSheetData(
   let fabric: PatternSheetData["fabric"] = null;
 
   let orderedMeters: number | null = null;
+  const explicitJob = Boolean(options.jobId && job);
 
   if (job) {
     fabric = {
@@ -345,31 +356,32 @@ export async function buildPatternSheetData(
     }
   }
 
-  // Linked fabric lines (client fabric board) - primary/first for article QR +
-  // fabric block when no pattern job is attached.
-  const linkedLineIds = pattern.linked_fabric_line_ids ?? [];
-  for (const lineId of linkedLineIds) {
-    const found = findOrderLine(salesOrders, lineId);
-    if (!found) continue;
-    if (!fabric) fabric = fabricFromLine(found.line);
-    if (orderedMeters == null) {
-      orderedMeters = metersFromFabricLineQuantity(found.line.quantity, found.line.unit);
-      if (fabric && fabric.ordered_meters == null) {
-        fabric = { ...fabric, ordered_meters: orderedMeters };
+  // Linked fabric lines - only when this sheet is not scoped to an explicit job.
+  // Otherwise U17/U18 would inherit the first consolidated line's QR/fabric.
+  if (!explicitJob) {
+    for (const lineId of linkedLineIds) {
+      const found = findOrderLine(salesOrders, lineId);
+      if (!found) continue;
+      if (!fabric) fabric = fabricFromLine(found.line);
+      if (orderedMeters == null) {
+        orderedMeters = metersFromFabricLineQuantity(found.line.quantity, found.line.unit);
+        if (fabric && fabric.ordered_meters == null) {
+          fabric = { ...fabric, ordered_meters: orderedMeters };
+        }
       }
+      if (!order) {
+        order = {
+          so_number: found.order.so_number,
+          order_date: found.order.order_date ?? null,
+          delivery_date: found.order.delivery_date ?? null,
+        };
+      }
+      if (stickers.length === 0 && (found.line.label_stickers?.length ?? 0) > 0) {
+        stickers = stickersFromLine(found.line, found.order.client_code);
+      }
+      // Primary = first linked id; stop after first resolved line for QR source.
+      if (stickers.length > 0 || fabric) break;
     }
-    if (!order) {
-      order = {
-        so_number: found.order.so_number,
-        order_date: found.order.order_date ?? null,
-        delivery_date: found.order.delivery_date ?? null,
-      };
-    }
-    if (stickers.length === 0 && (found.line.label_stickers?.length ?? 0) > 0) {
-      stickers = stickersFromLine(found.line, found.order.client_code);
-    }
-    // Primary = first linked id; stop after first resolved line for QR source.
-    if (stickers.length > 0 || fabric) break;
   }
 
   const article_pages = buildArticlePagesForPattern(pattern, salesOrders, options.lineIds);
@@ -420,6 +432,7 @@ export async function buildPatternSheetData(
     version,
     base,
     job,
+    scoped_job_id: options.jobId?.trim() || null,
     order,
     fabric,
     stickers,
@@ -432,4 +445,77 @@ export async function buildPatternSheetData(
     marker,
     tud_thumbnail_data_url,
   };
+}
+
+export type CutterPrintPage = {
+  data: PatternSheetData;
+  sticker: PatternSheetSticker | null;
+  pageIndex: number;
+  pageTotal: number;
+  article_code: string | null;
+};
+
+/**
+ * Cutter pages: one article's fabric + piece QR(s) per page group.
+ * Scoped job / single-article -> classic stickers on primary fabric.
+ * Consolidated master without job -> one (or more piece) page per article.
+ */
+export function expandCutterPrintPages(data: PatternSheetData): CutterPrintPage[] {
+  const useArticlePack =
+    !data.scoped_job_id && data.article_pages.length > 1;
+
+  if (!useArticlePack) {
+    const stickers = data.stickers.length > 0 ? data.stickers : [null];
+    const pageTotal = stickers.length;
+    return stickers.map((sticker, index) => ({
+      data,
+      sticker,
+      pageIndex: index + 1,
+      pageTotal,
+      article_code: null,
+    }));
+  }
+
+  const pages: CutterPrintPage[] = [];
+  let pageIndex = 0;
+  const flat: Array<{
+    data: PatternSheetData;
+    sticker: PatternSheetSticker | null;
+    article_code: string;
+  }> = [];
+
+  for (const article of data.article_pages) {
+    const pageData: PatternSheetData = {
+      ...data,
+      order: article.order,
+      fabric: article.fabric,
+      stickers: article.stickers,
+      cut_nest: buildCutNestPreview(
+        data.pattern,
+        article.fabric.width_cm ?? data.job?.width_cm ?? null,
+        {
+          size: data.resolved_base_size ?? data.pattern.base_size,
+          garmentQty: 1,
+          ordered_length_m: article.fabric.ordered_meters ?? null,
+        }
+      ),
+    };
+    const stickers = article.stickers.length > 0 ? article.stickers : [null];
+    for (const sticker of stickers) {
+      flat.push({ data: pageData, sticker, article_code: article.article_code });
+    }
+  }
+
+  const pageTotal = flat.length;
+  for (const entry of flat) {
+    pageIndex += 1;
+    pages.push({
+      data: entry.data,
+      sticker: entry.sticker,
+      pageIndex,
+      pageTotal,
+      article_code: entry.article_code,
+    });
+  }
+  return pages;
 }
