@@ -15,7 +15,10 @@ import {
   clientPatternQrUrl,
 } from "@/lib/pattern-library/pattern-qr";
 import type { PatternSheetKind } from "@/lib/pattern-library/pattern-sheet-kind";
-import { expandCutterPrintPages } from "@/lib/pattern-library/expand-cutter-print-pages";
+import {
+  expandCutterPrintPages,
+  expandProductionArticlePages,
+} from "@/lib/pattern-library/expand-cutter-print-pages";
 import type {
   PatternSheetArticlePage,
   PatternSheetData,
@@ -834,49 +837,31 @@ export function PatternSheetPrintView({
   const { pattern, version, stickers, article_pages } = data;
   const isProduction = kind === "production";
   const isSewing = kind === "sewing";
-  const sewingPages =
-    article_pages.length > 0
-      ? article_pages
-      : stickers.length > 0 || data.fabric
-        ? [
-            {
-              line_id: "primary",
-              article_code: pattern.pattern_ref,
-              garment_type: pattern.garment_type,
-              so_number: data.order?.so_number ?? "",
-              order: data.order ?? {
-                so_number: "-",
-                order_date: null,
-                delivery_date: null,
-              },
-              fabric: data.fabric ?? {
-                fabric_number: pattern.fabric ?? "-",
-                supplier_name: "-",
-                composition: null,
-                gsm: null,
-                width_cm: null,
-                width_inches: null,
-                color: null,
-              },
-              stickers,
-            } satisfies PatternSheetArticlePage,
-          ]
-        : [];
+  const sewingPages = isSewing ? expandProductionArticlePages(data) : [];
+  const productionPages = isProduction ? expandProductionArticlePages(data) : [];
   const cutterPages = !isProduction && !isSewing ? expandCutterPrintPages(data) : [];
-  const pageTotal = isSewing ? sewingPages.length : cutterPages.length || 1;
-  const mfgSummary = isSewing
-    ? sewingPages.length > 0
-      ? ` - ${sewingPages.length} article page${sewingPages.length === 1 ? "" : "s"}: ${sewingPages
-          .map((page) => page.article_code)
+  const pageTotal = isSewing
+    ? sewingPages.length
+    : isProduction
+      ? productionPages.length || 1
+      : cutterPages.length || 1;
+  const articleSummary = (pages: PatternSheetArticlePage[]) =>
+    pages.length > 0
+      ? ` - ${pages.length} article page${pages.length === 1 ? "" : "s"}: ${pages
+          .map((page) => `${page.article_code} (${page.fabric.fabric_number})`)
           .join(", ")}`
-      : " - No linked articles with SO fabric lines"
-    : cutterPages.length > 1 && cutterPages.some((page) => page.article_code)
-      ? ` - ${cutterPages.length} page${cutterPages.length === 1 ? "" : "s"} (per article fabric): ${[
-          ...new Set(cutterPages.map((page) => page.article_code).filter(Boolean)),
-        ].join(", ")}`
-      : stickers.length > 0
-        ? ` - ${stickers.length} piece QR${stickers.length === 1 ? "" : "s"}: ${stickers.map((s) => piecePageLabel(s)).join(", ")}`
-        : " - No manufacturing QRs (link a fabric line with stickers)";
+      : " - No linked articles with SO fabric lines";
+  const mfgSummary = isSewing
+    ? articleSummary(sewingPages)
+    : isProduction
+      ? articleSummary(productionPages)
+      : cutterPages.length > 1 && cutterPages.some((page) => page.article_code)
+        ? ` - ${cutterPages.length} page${cutterPages.length === 1 ? "" : "s"} (per article fabric): ${[
+            ...new Set(cutterPages.map((page) => page.article_code).filter(Boolean)),
+          ].join(", ")}`
+        : stickers.length > 0
+          ? ` - ${stickers.length} piece QR${stickers.length === 1 ? "" : "s"}: ${stickers.map((s) => piecePageLabel(s)).join(", ")}`
+          : " - No manufacturing QRs (link a fabric line with stickers)";
   const qs = withMeasurementUnitParam(
     `/pattern/client-patterns/${pattern.id}/print?${sheetQuery(kind, data)}`,
     displayUnit
@@ -893,11 +878,18 @@ export function PatternSheetPrintView({
   const kindLabel = isSewing
     ? "Sewing A4s (one page per article)"
     : isProduction
-      ? "Production / stitcher"
+      ? "Production / stitcher (one page per article)"
       : "Cutter";
   const backHref = data.scoped_job_id
     ? `/pattern/library/clients/${pattern.id}?job=${encodeURIComponent(data.scoped_job_id)}`
     : `/pattern/library/clients/${pattern.id}`;
+  const headerFabric =
+    (isProduction || isSewing) &&
+    (isProduction ? productionPages : sewingPages).length === 1
+      ? (isProduction ? productionPages : sewingPages)[0]?.fabric.fabric_number
+      : !isProduction && !isSewing
+        ? data.fabric?.fabric_number
+        : null;
 
   return (
     <div className="mx-auto min-h-screen max-w-[210mm] bg-white p-6 text-slate-900 print:p-0">
@@ -914,7 +906,7 @@ export function PatternSheetPrintView({
           <p className="mt-1 text-xs text-slate-500">
             A4 portrait - {kindLabel} - Trial {version.version}
             {version.is_final ? " (Final)" : ""}
-            {data.fabric ? ` - Fabric ${data.fabric.fabric_number}` : ""}
+            {headerFabric ? ` - Fabric ${headerFabric}` : ""}
             {isProduction || isSewing ? ` - Pattern QR ${clientPatternLabelCode(pattern)}` : ""}
             {mfgSummary}
             {` - ${unitLabel(displayUnit)}`}
@@ -966,7 +958,22 @@ export function PatternSheetPrintView({
             </p>
           )
         ) : isProduction ? (
-          <ProductionSheetPage data={data} displayUnit={displayUnit} />
+          productionPages.length > 0 ? (
+            productionPages.map((article, index) => (
+              <ProductionSheetPage
+                key={article.line_id}
+                data={data}
+                article={article}
+                pageIndex={index + 1}
+                pageTotal={pageTotal}
+                displayUnit={displayUnit}
+              />
+            ))
+          ) : (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              No linked fabric articles to print. Group SO fabric lines into this pattern first.
+            </p>
+          )
         ) : (
           cutterPages.map((page) => (
             <CutterSheetPage

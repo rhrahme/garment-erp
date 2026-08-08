@@ -16,7 +16,10 @@ import {
 } from "@/lib/pattern-library/pattern-qr";
 import type { PatternSheetKind } from "@/lib/pattern-library/pattern-sheet-kind";
 import { renderQrPngBuffer } from "@/lib/production/qr-render";
-import { expandCutterPrintPages } from "@/lib/pattern-library/expand-cutter-print-pages";
+import {
+  expandCutterPrintPages,
+  expandProductionArticlePages,
+} from "@/lib/pattern-library/expand-cutter-print-pages";
 import type {
   PatternSheetArticlePage,
   PatternSheetData,
@@ -1038,50 +1041,16 @@ async function buildPatternSheetDoc(
 ): Promise<jsPDF> {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
 
-  if (kind === "production") {
+  if (kind === "production" || kind === "sewing") {
     const { png: patternQrPng } = await renderQrPngBuffer(
       clientPatternQrUrl(data.pattern.id),
       240
     );
-    await drawProductionSheetPage(doc, data, patternQrPng, { displayUnit });
-    return doc;
-  }
-
-  if (kind === "sewing") {
-    const { png: patternQrPng } = await renderQrPngBuffer(
-      clientPatternQrUrl(data.pattern.id),
-      240
-    );
-    const pages =
-      data.article_pages.length > 0
-        ? data.article_pages
-        : ([
-            {
-              line_id: "primary",
-              article_code: data.pattern.pattern_ref,
-              garment_type: data.pattern.garment_type,
-              so_number: data.order?.so_number ?? "",
-              order: data.order ?? {
-                so_number: "-",
-                order_date: null,
-                delivery_date: null,
-              },
-              fabric: data.fabric ?? {
-                fabric_number: data.pattern.fabric ?? "-",
-                supplier_name: "-",
-                composition: null,
-                gsm: null,
-                width_cm: null,
-                width_inches: null,
-                color: null,
-              },
-              stickers: data.stickers,
-            },
-          ] satisfies PatternSheetArticlePage[]);
+    const pages = expandProductionArticlePages(data);
     for (let i = 0; i < pages.length; i++) {
       if (i > 0) doc.addPage();
       await drawProductionSheetPage(doc, data, patternQrPng, {
-        sewing: true,
+        sewing: kind === "sewing",
         article: pages[i]!,
         pageIndex: i + 1,
         pageTotal: pages.length,
@@ -1118,7 +1087,7 @@ export async function generatePatternSheetPdf(
   return doc.output("arraybuffer");
 }
 
-/** Page count for generated sheet (tests assert production === 1). */
+/** Page count for generated sheet (single-article production stays 1 page). */
 export async function patternSheetPdfPageCount(
   data: PatternSheetData,
   kind: PatternSheetKind = "cutter",
