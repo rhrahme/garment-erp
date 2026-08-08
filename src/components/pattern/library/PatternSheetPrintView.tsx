@@ -83,8 +83,12 @@ function sheetQuery(
   lineIds?: string[] | null
 ): string {
   const params = new URLSearchParams({ sheet: kind, version: data.version.id });
-  // Only pass job when the sheet was opened for a specific fabric job.
+  // Keep fabric-job scope when switching cutter <-> production / PDF.
   if (data.scoped_job_id) params.set("job", data.scoped_job_id);
+  const scopedLine =
+    data.job?.sales_order_line_id ||
+    (data.article_pages.length === 1 ? data.article_pages[0]?.line_id : null);
+  if (data.scoped_job_id && scopedLine) params.set("line", scopedLine);
   const lines = lineIds ?? data.article_pages.map((page) => page.line_id);
   if (kind === "sewing" && lines.length > 0) params.set("lines", lines.join(","));
   return params.toString();

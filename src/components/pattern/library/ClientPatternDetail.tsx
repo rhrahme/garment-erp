@@ -117,10 +117,13 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   const { unit: displayUnit } = useMeasurementUnitPreference();
   const searchParams = useSearchParams();
   const scopedJobId = searchParams.get("job")?.trim() || null;
+  const scopedLineId = searchParams.get("line")?.trim() || null;
   const [pattern, setPattern] = useState<ClientPattern | null>(null);
   /** Always-latest sheet for Save - blur commits may land after click otherwise. */
   const patternRef = useRef<ClientPattern | null>(null);
   const [linkedJobs, setLinkedJobs] = useState<LinkedJob[]>([]);
+  /** When ?job= is present but not yet in linkedJobs, load fabric from the job API. */
+  const [scopedJobExtra, setScopedJobExtra] = useState<LinkedJob | null>(null);
   const [suggestedFabricWidthCm, setSuggestedFabricWidthCm] = useState<number | null>(null);
   const [suggestedFabricWidthSource, setSuggestedFabricWidthSource] = useState<
     "saved" | "hint" | "fabric_ref" | "sales_order_line" | null
@@ -214,6 +217,44 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   useEffect(() => {
     patternRef.current = pattern;
   }, [pattern]);
+
+  useEffect(() => {
+    if (!scopedJobId) {
+      setScopedJobExtra(null);
+      return;
+    }
+    if (linkedJobs.some((job) => job.id === scopedJobId)) {
+      setScopedJobExtra(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/pattern/jobs/${encodeURIComponent(scopedJobId)}`, {
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const body = await res.json();
+        const job = body?.job;
+        if (!job || cancelled) return;
+        setScopedJobExtra({
+          id: job.id,
+          so_number: job.so_number,
+          garment_type: job.garment_type,
+          status: job.status,
+          client_pattern_version_id: job.client_pattern_version_id ?? null,
+          width_cm: job.width_cm ?? null,
+          fabric_number: job.fabric_number ?? null,
+          sales_order_line_id: job.sales_order_line_id ?? null,
+        });
+      } catch {
+        if (!cancelled) setScopedJobExtra(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [scopedJobId, linkedJobs]);
 
   // Warm the base-pattern picker cache while the operator looks at the sheet,
   // so "Load from base pattern" (and the TUD fill picker) opens instantly.
@@ -689,11 +730,14 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   const storedUnit = pattern.unit;
   const scopedJob =
     scopedJobId != null
-      ? linkedJobs.find((job) => job.id === scopedJobId) ?? null
+      ? linkedJobs.find((job) => job.id === scopedJobId) ?? scopedJobExtra
       : null;
+  // Always forward ?job= / ?line= from the URL (do not require linkedJobs match).
+  const sheetLineId = scopedLineId || scopedJob?.sales_order_line_id || null;
   const sheetQsParts = [
     version ? `version=${encodeURIComponent(version.id)}` : "",
-    scopedJob ? `job=${encodeURIComponent(scopedJob.id)}` : "",
+    scopedJobId ? `job=${encodeURIComponent(scopedJobId)}` : "",
+    sheetLineId ? `line=${encodeURIComponent(sheetLineId)}` : "",
   ].filter(Boolean);
   const sheetQs = sheetQsParts.join("&");
   const printCutterHref = withMeasurementUnitParam(

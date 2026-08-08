@@ -274,6 +274,8 @@ export async function buildPatternSheetData(
   options: {
     versionId?: string | null;
     jobId?: string | null;
+    /** Force one SO fabric line (from Open job / Print A4). */
+    lineId?: string | null;
     lineIds?: string[] | null;
   } = {}
 ): Promise<PatternSheetData | null> {
@@ -306,14 +308,26 @@ export async function buildPatternSheetData(
   const jobs = readPatternJobs().jobs;
   const linkedLineIds = pattern.linked_fabric_line_ids ?? [];
   const multiArticle = linkedLineIds.length > 1;
+  const requestedJobId = options.jobId?.trim() || null;
+  const requestedLineId = options.lineId?.trim() || null;
   let job: PatternJob | null = null;
-  if (options.jobId) {
-    job = jobs.find((candidate) => candidate.id === options.jobId) ?? null;
+  if (requestedJobId) {
+    job = jobs.find((candidate) => candidate.id === requestedJobId) ?? null;
+  }
+  // Job id missing/stale: resolve by the fabric line opened from the job page.
+  if (!job && requestedLineId) {
+    const byLine = jobs.filter(
+      (candidate) => candidate.sales_order_line_id === requestedLineId
+    );
+    job =
+      byLine.find((candidate) => candidate.client_pattern_id === pattern.id) ??
+      byLine[0] ??
+      null;
   }
   // Consolidated masters: never guess "most recent job" - that stamps every
   // cutter/production sheet with one fabric. Single-article patterns still
   // fall back to the latest linked job when jobId is omitted.
-  if (!job && !multiArticle) {
+  if (!job && !requestedJobId && !requestedLineId && !multiArticle) {
     job =
       jobs
         .filter((candidate) => candidate.client_pattern_id === pattern.id)
@@ -326,7 +340,10 @@ export async function buildPatternSheetData(
   let fabric: PatternSheetData["fabric"] = null;
 
   let orderedMeters: number | null = null;
-  const explicitJob = Boolean(options.jobId && job);
+  const scopedLineId = requestedLineId || job?.sales_order_line_id || null;
+  // Opened from a fabric job (or explicit line): never fall back to another
+  // linked article's fabric / QR.
+  const explicitScope = Boolean(requestedJobId || requestedLineId);
 
   if (job) {
     fabric = {
@@ -346,19 +363,40 @@ export async function buildPatternSheetData(
         delivery_date: salesOrder.delivery_date ?? null,
       };
       const line = salesOrder.fabric_lines.find(
-        (candidate) => candidate.id === job!.sales_order_line_id
+        (candidate) => candidate.id === (scopedLineId || job!.sales_order_line_id)
       );
       if (line) {
         stickers = stickersFromLine(line, salesOrder.client_code);
         orderedMeters = metersFromFabricLineQuantity(line.quantity, line.unit);
-        fabric = { ...fabric, ordered_meters: orderedMeters };
+        const fromLine = fabricFromLine(line);
+        fabric = {
+          ...fromLine,
+          fabric_number: job.fabric_number || fromLine.fabric_number,
+          supplier_name: job.supplier || fromLine.supplier_name,
+          ordered_meters: orderedMeters,
+        };
       }
     }
   }
 
-  // Linked fabric lines - only when this sheet is not scoped to an explicit job.
-  // Otherwise U17/U18 would inherit the first consolidated line's QR/fabric.
-  if (!explicitJob) {
+  // Explicit line without a job row: still load that SO line's fabric + stickers.
+  if (explicitScope && scopedLineId && !fabric) {
+    const found = findOrderLine(salesOrders, scopedLineId);
+    if (found) {
+      fabric = fabricFromLine(found.line);
+      stickers = stickersFromLine(found.line, found.order.client_code);
+      orderedMeters = metersFromFabricLineQuantity(found.line.quantity, found.line.unit);
+      fabric = { ...fabric, ordered_meters: orderedMeters };
+      order = {
+        so_number: found.order.so_number,
+        order_date: found.order.order_date ?? null,
+        delivery_date: found.order.delivery_date ?? null,
+      };
+    }
+  }
+
+  // Linked fabric lines - only when this sheet is not scoped to a job/line.
+  if (!explicitScope) {
     for (const lineId of linkedLineIds) {
       const found = findOrderLine(salesOrders, lineId);
       if (!found) continue;
@@ -384,11 +422,16 @@ export async function buildPatternSheetData(
     }
   }
 
-  const article_pages = buildArticlePagesForPattern(pattern, salesOrders, options.lineIds);
+  // Job/line scope -> only that article. Else sewing tick-list / all linked.
+  const articleLineFilter =
+    explicitScope && scopedLineId
+      ? [scopedLineId]
+      : options.lineIds;
+  const article_pages = buildArticlePagesForPattern(pattern, salesOrders, articleLineFilter);
 
   // Sewing pack with an explicit selection: seed primary fabric/stickers from
   // the first selected article so cutter/production fallbacks stay coherent.
-  if (options.lineIds != null && article_pages[0]) {
+  if (!explicitScope && options.lineIds != null && article_pages[0]) {
     const first = article_pages[0];
     if (!fabric) fabric = first.fabric;
     if (stickers.length === 0) stickers = first.stickers;
@@ -432,7 +475,7 @@ export async function buildPatternSheetData(
     version,
     base,
     job,
-    scoped_job_id: options.jobId?.trim() || null,
+    scoped_job_id: requestedJobId || (explicitScope && job ? job.id : null),
     order,
     fabric,
     stickers,

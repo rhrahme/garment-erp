@@ -11,12 +11,18 @@ export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{ patternId: string }>;
-  searchParams: Promise<{ version?: string; job?: string; sheet?: string; lines?: string }>;
+  searchParams: Promise<{
+    version?: string;
+    job?: string;
+    line?: string;
+    sheet?: string;
+    lines?: string;
+  }>;
 };
 
 export default async function ClientPatternPrintPage({ params, searchParams }: PageProps) {
   const { patternId } = await params;
-  const { version, job, sheet, lines } = await searchParams;
+  const { version, job, line, sheet, lines } = await searchParams;
 
   const session = await getSessionContext();
   if (!session.canAccessPattern) notFound();
@@ -27,6 +33,7 @@ export default async function ClientPatternPrintPage({ params, searchParams }: P
   const data = await buildPatternSheetData(patternId, {
     versionId: version ?? null,
     jobId: job ?? null,
+    lineId: line ?? null,
     // Sewing pack: honor tick selection. Other sheets keep all linked articles
     // available but still use the classic primary fabric/sticker resolution.
     // Missing/empty lines = all linked articles (preview defaults).

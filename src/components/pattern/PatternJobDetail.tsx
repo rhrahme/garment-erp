@@ -167,12 +167,24 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
     );
   }, [clientPatterns, job]);
 
-  const printHref = job?.client_pattern_id
-    ? `/pattern/client-patterns/${job.client_pattern_id}/print?sheet=cutter&job=${encodeURIComponent(job.id)}${
+  const jobSheetQuery = job
+    ? [
+        `job=${encodeURIComponent(job.id)}`,
+        `line=${encodeURIComponent(job.sales_order_line_id)}`,
         job.client_pattern_version_id
-          ? `&version=${encodeURIComponent(job.client_pattern_version_id)}`
-          : ""
-      }`
+          ? `version=${encodeURIComponent(job.client_pattern_version_id)}`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("&")
+    : "";
+
+  const printHref = job?.client_pattern_id
+    ? `/pattern/client-patterns/${job.client_pattern_id}/print?sheet=production&${jobSheetQuery}`
+    : null;
+
+  const printCutterHref = job?.client_pattern_id
+    ? `/pattern/client-patterns/${job.client_pattern_id}/print?sheet=cutter&${jobSheetQuery}`
     : null;
 
   const photosPrintHref = job?.client_pattern_id
@@ -180,7 +192,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
     : null;
 
   const sheetHref = job?.client_pattern_id
-    ? `/pattern/library/clients/${job.client_pattern_id}?job=${encodeURIComponent(job.id)}`
+    ? `/pattern/library/clients/${job.client_pattern_id}?job=${encodeURIComponent(job.id)}&line=${encodeURIComponent(job.sales_order_line_id)}`
     : null;
 
   const patternCode = job
@@ -241,8 +253,11 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       setShowTemplatePicker(false);
       setLinkPatternId("");
       await loadSheetFiles(linkPatternId);
+      const lineId = data.job?.sales_order_line_id ?? job?.sales_order_line_id ?? "";
       router.push(
-        `/pattern/library/clients/${linkPatternId}?job=${encodeURIComponent(jobId)}`
+        `/pattern/library/clients/${linkPatternId}?job=${encodeURIComponent(jobId)}${
+          lineId ? `&line=${encodeURIComponent(lineId)}` : ""
+        }`
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Link failed");
@@ -283,7 +298,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       if (!linkRes.ok) throw new Error(linkData?.error ?? "Failed to link sheet");
 
       router.push(
-        `/pattern/library/clients/${patternId}?job=${encodeURIComponent(jobId)}`
+        `/pattern/library/clients/${patternId}?job=${encodeURIComponent(jobId)}&line=${encodeURIComponent(job.sales_order_line_id)}`
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create sheet");
@@ -666,7 +681,8 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
           Print A4 size sheet
         </h3>
         <p className="text-sm text-slate-500">
-          Print sheet is one A4 page per piece, each with that piece&apos;s manufacturing QR (e.g. Suit = Jacket + Trouser pages).
+          Prints this job&apos;s fabric ({job.fabric_number}) only - even when the
+          measurement sheet is shared with other fabrics.
         </p>
         {printHref ? (
           <div className="flex flex-wrap gap-2">
@@ -676,8 +692,18 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
               className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
             >
               <Printer className="h-4 w-4" />
-              Print A4
+              Print A4 · {job.fabric_number}
             </Link>
+            {printCutterHref ? (
+              <Link
+                href={printCutterHref}
+                target="_blank"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+              >
+                <Printer className="h-4 w-4" />
+                Print cutter · {job.fabric_number}
+              </Link>
+            ) : null}
             {photosPrintHref ? (
               <Link
                 href={photosPrintHref}

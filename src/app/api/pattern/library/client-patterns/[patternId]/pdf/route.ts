@@ -27,6 +27,7 @@ export async function GET(request: Request, context: { params: Promise<{ pattern
     const data = await buildPatternSheetData(patternId, {
       versionId: url.searchParams.get("version"),
       jobId: url.searchParams.get("job"),
+      lineId: url.searchParams.get("line"),
       lineIds: kind === "sewing" ? (lineIds && lineIds.length > 0 ? lineIds : null) : null,
     });
     if (!data) {
