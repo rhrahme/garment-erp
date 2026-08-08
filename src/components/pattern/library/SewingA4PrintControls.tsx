@@ -159,8 +159,8 @@ export function SewingA4PrintControls({
                           </span>
                           <span className="mt-0.5 block truncate text-xs text-slate-500">
                             {row.fabric_number}
-                            {row.color ? ` · ${row.color}` : ""}
-                            {row.garment_type ? ` · ${row.garment_type}` : ""}
+                            {row.color ? ` - ${row.color}` : ""}
+                            {row.garment_type ? ` - ${row.garment_type}` : ""}
                           </span>
                         </span>
                       </label>
