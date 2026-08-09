@@ -180,6 +180,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   bare master URL to print one fabric. Never guess "most recently updated
   job" when multiple lines are linked. Master **Print cutter** /
   **Print production** without `job=` expand one page per linked article.
+- **Add fabrics from order on the sheet** (Aug 9 2026): on a client pattern
+  Measurements toolbar, **Add fabrics from order** (and Grouped fabrics →
+  Add from order) opens the client's SO fabric list to tick more lines onto
+  this master. Uses `POST .../client-patterns/{id}/fabric-lines` (reassigns
+  from other patterns). Do not force Pattern back to the fabric board only.
 - **Empty measurement sheet heal**: if Pattern opens a fabric-linked /
   consolidated client pattern with no filled sizes, copy from the best
   same-client + same-garment sibling (Moussa House Thobe case). Also runs

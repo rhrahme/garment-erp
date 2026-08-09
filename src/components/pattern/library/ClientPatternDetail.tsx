@@ -29,6 +29,7 @@ import {
   LibraryFileList,
   type LibraryUploadResponse,
 } from "@/components/pattern/library/LibraryFileList";
+import { AddOrderFabricsModal } from "@/components/pattern/library/AddOrderFabricsModal";
 import { LinkedFabricsCard } from "@/components/pattern/library/LinkedFabricsCard";
 import { NestEstimatePanel } from "@/components/pattern/library/NestEstimatePanel";
 import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
@@ -156,6 +157,9 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   // "Load from base pattern" -> Sample column copy (picker modal + result notice).
   const [loadFromBaseOpen, setLoadFromBaseOpen] = useState(false);
   const [sampleFillNotice, setSampleFillNotice] = useState<string | null>(null);
+  const [addOrderFabricsOpen, setAddOrderFabricsOpen] = useState(false);
+  /** Bump so LinkedFabricsCard reloads after assign from this page. */
+  const [fabricsRevision, setFabricsRevision] = useState(0);
   /** Piece name -> sibling pattern id when CAD is borrowed for multi-piece shells. */
   const [geometryBorrowedFrom, setGeometryBorrowedFrom] = useState<Record<string, string>>(
     {}
@@ -1259,6 +1263,16 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
               <Plus className="h-4 w-4" />
               Add trial
             </button>
+            <button
+              type="button"
+              onClick={() => setAddOrderFabricsOpen(true)}
+              disabled={saving}
+              className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-sm font-medium text-indigo-700 ring-1 ring-slate-200 hover:bg-indigo-50 disabled:opacity-50"
+              title="Group more SO fabric lines onto this measurement sheet"
+            >
+              <Layers className="h-4 w-4" />
+              Add fabrics from order
+            </button>
             {(() => {
               const current = currentTrialVersion(pattern) ?? version;
               if (!current) return null;
@@ -1875,9 +1889,11 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <LinkedFabricsCard
+          key={`fabrics-${fabricsRevision}`}
           clientId={pattern.client_id}
           patternId={pattern.id}
           fabricRefs={pattern.linked_fabric_refs ?? []}
+          onAddFromOrder={() => setAddOrderFabricsOpen(true)}
         />
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <LibraryFileList
@@ -1946,6 +1962,30 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           rows={trialSheetPoints(pattern)}
           onClose={() => setLoadFromBaseOpen(false)}
           onApply={applySampleFill}
+        />
+      ) : null}
+
+      {addOrderFabricsOpen ? (
+        <AddOrderFabricsModal
+          clientId={pattern.client_id}
+          patternId={pattern.id}
+          patternRef={pattern.pattern_ref}
+          preferredSoNumbers={[
+            ...new Set(
+              linkedJobs
+                .map((job) => job.so_number)
+                .concat(scopedJobExtra?.so_number ? [scopedJobExtra.so_number] : [])
+                .filter(Boolean)
+            ),
+          ]}
+          onClose={() => setAddOrderFabricsOpen(false)}
+          onAssigned={(nextPattern) => {
+            if (nextPattern && typeof nextPattern === "object" && "id" in nextPattern) {
+              setPattern(nextPattern as ClientPattern);
+            }
+            setFabricsRevision((n) => n + 1);
+            void load(true);
+          }}
         />
       ) : null}
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Eye, ImageOff, Layers, X } from "lucide-react";
+import { ArrowRight, Eye, ImageOff, Layers, Plus, X } from "lucide-react";
 import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
 import { FabricSwatchProvider, useFabricSwatch } from "@/components/fabric/FabricSwatchProvider";
 import type {
@@ -27,10 +27,13 @@ export function LinkedFabricsCard({
   clientId,
   patternId,
   fabricRefs = [],
+  onAddFromOrder,
 }: {
   clientId: string;
   patternId: string;
   fabricRefs?: ClientPatternFabricRef[];
+  /** Opens the order-list fabric picker on the parent sheet. */
+  onAddFromOrder?: () => void;
 }) {
   const [rows, setRows] = useState<ClientFabricBoardRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -103,19 +106,32 @@ export function LinkedFabricsCard({
             <Layers className="h-4 w-4 text-slate-400" />
             Grouped fabrics {rows ? `(${totalCount})` : ""}
           </p>
-          <Link
-            href={`/pattern/library/fabrics/${clientId}`}
-            className="inline-flex items-center gap-1 text-xs font-medium text-indigo-700 hover:underline"
-          >
-            Client fabric board
-            <ArrowRight className="h-3 w-3" />
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {onAddFromOrder ? (
+              <button
+                type="button"
+                onClick={onAddFromOrder}
+                className="inline-flex items-center gap-1 text-xs font-medium text-indigo-700 hover:underline"
+              >
+                <Plus className="h-3 w-3" />
+                Add from order
+              </button>
+            ) : null}
+            <Link
+              href={`/pattern/library/fabrics/${clientId}`}
+              className="inline-flex items-center gap-1 text-xs font-medium text-indigo-700 hover:underline"
+            >
+              Client fabric board
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
         </div>
         {rows === null ? (
           <p className="text-xs text-slate-400">Loading fabrics…</p>
         ) : totalCount === 0 ? (
           <p className="text-xs text-slate-400">
-            No fabrics grouped into this garment yet — tick them on the client fabric board.
+            No fabrics grouped into this garment yet — use Add fabrics from order, or tick them
+            on the client fabric board.
           </p>
         ) : (
           <ul className="space-y-1.5">
