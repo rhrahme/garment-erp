@@ -8,6 +8,7 @@ import {
   garmentOffersReducedMeasurementTemplate,
   mergeTemplateMeasurements,
   parseMeasurementTemplateMode,
+  reducedPointSpecsForGarment,
 } from "@/lib/pattern-library/measurement-template-mode";
 import type {
   ClientPatternMeasurement,
@@ -32,6 +33,24 @@ const dictionary: MeasurementPointDef[] = [
     name: "Loops width (6 pcs)",
     aliases: [],
     garment_types: ["trouser"],
+  },
+  {
+    id: "1-2-chest",
+    name: "1/2 Chest",
+    aliases: [],
+    garment_types: ["overshirt", "shirt"],
+  },
+  {
+    id: "slv-length",
+    name: "Slv Length",
+    aliases: [],
+    garment_types: ["overshirt"],
+  },
+  {
+    id: "1-2-hem-width",
+    name: "1/2 Hem Width",
+    aliases: [],
+    garment_types: ["overshirt", "trouser"],
   },
   {
     id: "chest",
@@ -64,8 +83,10 @@ function row(
 test("trousers offer reduced template and default to reduced", () => {
   assert.equal(garmentOffersReducedMeasurementTemplate("Trouser"), true);
   assert.equal(garmentOffersReducedMeasurementTemplate("pants"), true);
+  assert.equal(garmentOffersReducedMeasurementTemplate("Overshirt+Trouser"), true);
   assert.equal(garmentOffersReducedMeasurementTemplate("jacket"), false);
   assert.equal(defaultMeasurementTemplateMode("trouser"), "reduced");
+  assert.equal(defaultMeasurementTemplateMode("Overshirt+Trouser"), "reduced");
   assert.equal(defaultMeasurementTemplateMode("shirt"), "entire");
 });
 
@@ -84,6 +105,23 @@ test("reduced trouser list is the 17 Pattern stitcher points in order", () => {
   assert.equal(built[0]?.point_id, "1-2-waist-relux");
   assert.equal(built[0]?.name, "1/2 Waist Relax");
   assert.equal(built[3]?.name, "Front Rise");
+});
+
+test("Overshirt+Trouser reduced includes overshirt points then trouser set", () => {
+  const specs = reducedPointSpecsForGarment(dictionary, "Overshirt+Trouser");
+  assert.ok(specs.some((s) => s.point_id === "1-2-chest"));
+  assert.ok(specs.some((s) => s.point_id === "slv-length"));
+  assert.ok(specs.some((s) => s.point_id === "front-rise"));
+  assert.ok(!specs.some((s) => s.point_id === "loops-width-6-pcs"));
+  // Overshirt section first
+  assert.equal(specs[0]?.point_id, "1-2-chest");
+  // Shared hem id kept once (first wins - overshirt dictionary name)
+  assert.equal(specs.filter((s) => s.point_id === "1-2-hem-width").length, 1);
+
+  const built = buildReducedMeasurementsFromTemplate(dictionary, "Overshirt+Trouser");
+  assert.ok(built.length > 17);
+  assert.ok(built.some((row) => row.name === "1/2 Chest"));
+  assert.ok(built.some((row) => row.name === "Front Rise"));
 });
 
 test("buildMeasurementsFromTemplate respects entire vs reduced", () => {

@@ -1,6 +1,8 @@
 /**
  * Measurement sheet templates: entire dictionary vs a curated reduced list.
  * Trousers default to reduced - Pattern asked for the common stitcher set.
+ * Compounds (Overshirt+Trouser, Suit) keep other pieces' full dictionaries
+ * plus the reduced trouser set.
  */
 
 import { libraryGarmentKeysForSheet } from "@/lib/pattern-library/base-pattern-picker";
@@ -45,24 +47,84 @@ export function parseMeasurementTemplateMode(
   return null;
 }
 
-export function garmentOffersReducedMeasurementTemplate(garmentType: string): boolean {
-  const keys = libraryGarmentKeysForSheet(garmentType).map((key) => key.toLowerCase());
-  keys.push(garmentType.trim().toLowerCase());
+/** Piece tokens in sheet order (Overshirt+Trouser -> overshirt, trouser). */
+export function measurementPieceTokensForGarment(garmentType: string): string[] {
+  const lower = garmentType.trim().toLowerCase();
+  if (!lower) return [];
+  if (lower.includes("+")) {
+    return lower
+      .split("+")
+      .map((part) => part.trim())
+      .filter(Boolean);
+  }
+  // Suit is one sheet for jacket + trouser.
+  if (lower === "suit") return ["jacket", "trouser"];
+  return [lower];
+}
+
+function pieceHasTrouser(token: string): boolean {
+  const keys = libraryGarmentKeysForSheet(token).map((key) => key.toLowerCase());
   return keys.some((key) => key === "trouser" || key === "trousers" || key === "pants");
 }
 
-/** Default when creating a sheet: reduced for trousers, entire otherwise. */
+export function garmentOffersReducedMeasurementTemplate(garmentType: string): boolean {
+  return measurementPieceTokensForGarment(garmentType).some((token) =>
+    pieceHasTrouser(token)
+  );
+}
+
+/** Default when creating a sheet: reduced when any piece is trouser. */
 export function defaultMeasurementTemplateMode(
   garmentType: string
 ): MeasurementTemplateMode {
   return garmentOffersReducedMeasurementTemplate(garmentType) ? "reduced" : "entire";
 }
 
+function dictionaryPointsForPiece(
+  dictionary: MeasurementPointDef[],
+  token: string
+): Array<{ point_id: string; name: string }> {
+  const keys = new Set(
+    libraryGarmentKeysForSheet(token).map((key) => key.toLowerCase())
+  );
+  keys.add(token.trim().toLowerCase());
+  return dictionary
+    .filter((point) =>
+      point.garment_types.some((type) => keys.has(type.toLowerCase()))
+    )
+    .map((point) => ({ point_id: point.id, name: point.name }));
+}
+
+/**
+ * Reduced specs for one piece: curated trouser list, else full dictionary
+ * for that piece (overshirt / jacket / shirt / …).
+ */
+export function reducedPointSpecsForPiece(
+  dictionary: MeasurementPointDef[],
+  token: string
+): ReadonlyArray<{ point_id: string; name: string }> {
+  if (pieceHasTrouser(token)) return REDUCED_TROUSER_POINTS;
+  return dictionaryPointsForPiece(dictionary, token);
+}
+
+/**
+ * Composed reduced list for the sheet garment (deduped by point_id, piece order).
+ */
 export function reducedPointSpecsForGarment(
+  dictionary: MeasurementPointDef[],
   garmentType: string
 ): ReadonlyArray<{ point_id: string; name: string }> {
   if (!garmentOffersReducedMeasurementTemplate(garmentType)) return [];
-  return REDUCED_TROUSER_POINTS;
+  const seen = new Set<string>();
+  const specs: Array<{ point_id: string; name: string }> = [];
+  for (const token of measurementPieceTokensForGarment(garmentType)) {
+    for (const spec of reducedPointSpecsForPiece(dictionary, token)) {
+      if (seen.has(spec.point_id)) continue;
+      seen.add(spec.point_id);
+      specs.push(spec);
+    }
+  }
+  return specs;
 }
 
 export function emptyMeasurementRow(
@@ -96,15 +158,14 @@ export function measurementRowHasEnteredValue(
 }
 
 /**
- * Curated reduced rows in Pattern's preferred order / names.
- * Falls back to dictionary name when a preferred id is missing.
+ * Curated / composed reduced rows in Pattern's preferred order / names.
  */
 export function buildReducedMeasurementsFromTemplate(
   dictionary: MeasurementPointDef[],
   garmentType: string
 ): ClientPatternMeasurement[] {
   const byId = new Map(dictionary.map((point) => [point.id, point]));
-  return reducedPointSpecsForGarment(garmentType).map((spec) => {
+  return reducedPointSpecsForGarment(dictionary, garmentType).map((spec) => {
     const point = byId.get(spec.point_id);
     return emptyMeasurementRow(spec.point_id, spec.name || point?.name || spec.point_id);
   });

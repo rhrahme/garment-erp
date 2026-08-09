@@ -494,7 +494,8 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
                   <span>
                     <span className="font-medium">Reduced</span>
                     <span className="block text-xs text-slate-500">
-                      17 stitcher points (waist, hip, rise, thigh, knee, inseam, …)
+                      Trouser stitcher set (17 points); multi-piece sheets also
+                      keep the other piece (e.g. overshirt) points
                     </span>
                   </span>
                 </label>
