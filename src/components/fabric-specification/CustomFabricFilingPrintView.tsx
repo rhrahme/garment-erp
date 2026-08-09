@@ -58,7 +58,7 @@ export function CustomFabricFilingPrintView({ fabric }: { fabric: CustomFabric }
             Back to Fabric Specification
           </Link>
           <p className="mt-1 text-xs text-slate-500">
-            A4 filing card · empty 5x5 cm square (top right) for a physical swatch
+            A4 filing card - empty 5x5 cm square (top right) for a physical swatch
           </p>
         </div>
         <Button type="button" onClick={() => window.print()}>

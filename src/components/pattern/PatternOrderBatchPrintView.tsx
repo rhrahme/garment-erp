@@ -47,13 +47,13 @@ export function PatternOrderBatchPrintView({
               href={`/pattern/orders/${soId}`}
               className="text-sm font-medium text-indigo-700 hover:text-indigo-900"
             >
-              Back to {clientName} · {soNumber}
+              Back to {clientName} - {soNumber}
             </Link>
             <p className="mt-1 text-xs text-slate-500">
-              Batch {kindLabel} A4 · {sheets.length} fabric
+              Batch {kindLabel} A4 - {sheets.length} fabric
               {sheets.length === 1 ? "" : "s"} selected
               {kind === "production" || kind === "sewing"
-                ? " · multi-piece garments split per stitcher piece"
+                ? " - multi-piece garments split per stitcher piece"
                 : ""}
             </p>
           </div>
@@ -74,7 +74,7 @@ export function PatternOrderBatchPrintView({
                 key={sheet.jobId}
                 className="rounded-full bg-white px-2.5 py-1 ring-1 ring-slate-200"
               >
-                {sheet.articleLabel} · {sheet.fabricNumber}
+                {sheet.articleLabel} - {sheet.fabricNumber}
               </li>
             ))}
           </ul>
