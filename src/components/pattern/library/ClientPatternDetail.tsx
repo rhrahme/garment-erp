@@ -30,6 +30,7 @@ import {
   type LibraryUploadResponse,
 } from "@/components/pattern/library/LibraryFileList";
 import { AddOrderFabricsModal } from "@/components/pattern/library/AddOrderFabricsModal";
+import { CopySizesToConsolidationsPanel } from "@/components/pattern/library/CopySizesToConsolidationsPanel";
 import { LinkedFabricsCard } from "@/components/pattern/library/LinkedFabricsCard";
 import { NestEstimatePanel } from "@/components/pattern/library/NestEstimatePanel";
 import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
@@ -111,7 +112,7 @@ interface LinkedBaseSummary {
   display_name: string | null;
 }
 
-type ViewTab = "measurements" | "evolution" | "history";
+type ViewTab = "measurements" | "copy_sizes" | "evolution" | "history";
 
 function versionLabel(version: ClientPatternVersion): string {
   return `Trial ${version.version}`;
@@ -1254,6 +1255,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         {(
           [
             { id: "measurements", label: "Measurements" },
+            { id: "copy_sizes", label: "Copy sizes" },
             { id: "evolution", label: "Evolution" },
             { id: "history", label: "History" },
           ] as { id: ViewTab; label: string }[]
@@ -1958,6 +1960,13 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         </>
       ) : null}
 
+      {view === "copy_sizes" ? (
+        <CopySizesToConsolidationsPanel
+          patternId={pattern.id}
+          patternRef={pattern.pattern_ref}
+          dirty={dirty || headerDirty}
+        />
+      ) : null}
       {view === "evolution" ? <EvolutionView pattern={pattern} /> : null}
       {view === "history" ? <HistoryTimeline pattern={pattern} /> : null}
 

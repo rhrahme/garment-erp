@@ -59,6 +59,7 @@ const OUTBOUND_EVENTS = [
   "client_pattern.finalized",
   "client_pattern.fabric_lines_assigned",
   "client_pattern.fabric_lines_unassigned",
+  "client_pattern.measurements_copied",
   "pattern_library.file_uploaded",
   "production.scan",
   "production.sewing_session_started",
@@ -202,6 +203,14 @@ export function ZapierSetup() {
               body: size, optional base_pattern_id / version_id / applied_by - sets
               base size from a .tud size and fills empty measurement cells (extends
               client_pattern.updated with action tud_size_fill)
+            </li>
+            <li>
+              GET/POST {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]/copy-measurements
+            </li>
+            <li className="pl-4 text-slate-500">
+              POST body: target_pattern_ids[], optional mode overwrite|fill_empty_only,
+              optional acted_by - copies sizes onto same-client same-garment
+              consolidations; event client_pattern.measurements_copied
             </li>
             <li>POST {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]/files</li>
             <li className="pl-4 text-slate-500">

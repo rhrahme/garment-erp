@@ -40,6 +40,11 @@ import {
   type MeasurementTemplateMode,
 } from "@/lib/pattern-library/measurement-template-mode";
 import {
+  applyCopyMeasurementsToPattern,
+  listCopyMeasurementSiblings,
+  type CopyMeasurementsMode,
+} from "@/lib/pattern-library/copy-measurements-to-siblings";
+import {
   fillMeasurementsFromBase,
   findBaseSizeMatch,
 } from "@/lib/pattern-library/tud-size-fill";
@@ -1796,5 +1801,119 @@ export async function seedMissingMarkerLayoutsForLibrary(
     skipped_no_tud: summary.skipped_no_tud,
     skipped_no_width: summary.skipped_no_width,
     unchanged: summary.unchanged,
+  };
+}
+
+/**
+ * Push this sheet's sizes onto other same-client + same-garment consolidations.
+ */
+export async function copyClientPatternMeasurementsToSiblings(
+  sourcePatternId: string,
+  input: {
+    target_pattern_ids: string[];
+    mode?: CopyMeasurementsMode | null;
+  },
+  options: { actedBy?: string | null; notify?: boolean } = {}
+): Promise<
+  | Ok<{
+      source_pattern_id: string;
+      mode: CopyMeasurementsMode;
+      updated: Array<{ id: string; pattern_ref: string }>;
+      skipped: Array<{ id: string; pattern_ref: string; reason: string }>;
+    }>
+  | Err
+> {
+  const mode: CopyMeasurementsMode =
+    input.mode === "fill_empty_only" ? "fill_empty_only" : "overwrite";
+  const requested = [
+    ...new Set(
+      (input.target_pattern_ids ?? [])
+        .map((id) => (typeof id === "string" ? id.trim() : ""))
+        .filter(Boolean)
+    ),
+  ];
+  if (requested.length === 0) {
+    return { ok: false, status: 400, error: "target_pattern_ids are required." };
+  }
+
+  const store = await readPatternLibraryFresh();
+  const source = store.client_patterns.find((pattern) => pattern.id === sourcePatternId);
+  if (!source) return { ok: false, status: 404, error: "Source client pattern not found." };
+
+  const siblings = listCopyMeasurementSiblings(store.client_patterns, source);
+  const siblingById = new Map(siblings.map((row) => [row.id, row]));
+  const updated: Array<{ id: string; pattern_ref: string }> = [];
+  const skipped: Array<{ id: string; pattern_ref: string; reason: string }> = [];
+  const timestamp = now();
+
+  for (const targetId of requested) {
+    if (targetId === sourcePatternId) {
+      skipped.push({
+        id: targetId,
+        pattern_ref: source.pattern_ref,
+        reason: "Cannot copy a sheet onto itself.",
+      });
+      continue;
+    }
+    const meta = siblingById.get(targetId);
+    const index = store.client_patterns.findIndex((pattern) => pattern.id === targetId);
+    if (!meta || index < 0) {
+      skipped.push({
+        id: targetId,
+        pattern_ref: targetId,
+        reason: "Not a same-client / same-garment consolidation sheet.",
+      });
+      continue;
+    }
+    const existing = store.client_patterns[index]!;
+    const next = applyCopyMeasurementsToPattern(existing, source, mode);
+    if (!next) {
+      skipped.push({
+        id: targetId,
+        pattern_ref: existing.pattern_ref,
+        reason:
+          mode === "fill_empty_only"
+            ? "Target already has sizes (fill-empty mode)."
+            : "Source has no filled sizes, or target has no trial version.",
+      });
+      continue;
+    }
+    store.client_patterns[index] = { ...next, updated_at: timestamp };
+    updated.push({ id: next.id, pattern_ref: next.pattern_ref });
+  }
+
+  if (updated.length > 0) {
+    store.updated_at = timestamp;
+    await writePatternLibrary(store);
+  }
+
+  if (options.notify !== false) {
+    for (const row of updated) {
+      await notifyIntegration("client_pattern.updated", {
+        id: row.id,
+        pattern_ref: row.pattern_ref,
+        sheet_save: true,
+        copied_from_pattern_id: sourcePatternId,
+        updated_by: options.actedBy ?? null,
+      });
+    }
+    await notifyIntegration("client_pattern.measurements_copied", {
+      source_pattern_id: sourcePatternId,
+      source_pattern_ref: source.pattern_ref,
+      client_id: source.client_id,
+      garment_type: source.garment_type,
+      mode,
+      updated_pattern_ids: updated.map((row) => row.id),
+      skipped,
+      acted_by: options.actedBy ?? null,
+    });
+  }
+
+  return {
+    ok: true,
+    source_pattern_id: sourcePatternId,
+    mode,
+    updated,
+    skipped,
   };
 }

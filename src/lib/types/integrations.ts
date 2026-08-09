@@ -56,6 +56,7 @@ export type IntegrationEventType =
   | "client_pattern.finalized"
   | "client_pattern.fabric_lines_assigned"
   | "client_pattern.fabric_lines_unassigned"
+  | "client_pattern.measurements_copied"
   | "pattern_library.file_uploaded"
   | "production.scan"
   | "production.sewing_session_started"
