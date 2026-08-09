@@ -151,6 +151,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   (deduped). Do not treat the word "Suit" as trouser-only. Shirt+Short /
   Thobe+Jacket have no trouser piece so they stay Entire-only (no Reduced
   control).
+- **Set-garment measurement sheet: pick piece first** (Aug 9 2026): for
+  compounds on one fabric article (Overshirt+Trouser, Shirt+Trouser,
+  Shirt+Short, Suit, …) the Sample / Trials / Final (and Trial detail) UI
+  shows a Piece select before the grid. Choosing Overshirt / Trouser / …
+  shows only that piece's points (same allow-list as stitcher A4s). One
+  garment per article stays a normal flat sheet with no select.
 
 ## Printing
 

@@ -225,22 +225,11 @@ export function renamePointOnAllVersions(
   };
 }
 
-/** Reorder rows the same way on every trial (Sample/Trials/Final grid order). */
-export function movePointOnAllVersions(
+/** Apply a point_id order to every trial's measurement rows. */
+export function applyPointOrderOnAllVersions(
   pattern: ClientPattern,
-  pointId: string,
-  direction: -1 | 1
+  order: string[]
 ): ClientPattern {
-  const points = trialSheetPoints(pattern);
-  const index = points.findIndex((point) => point.point_id === pointId);
-  if (index < 0) return pattern;
-  const nextIndex = index + direction;
-  if (nextIndex < 0 || nextIndex >= points.length) return pattern;
-  const order = points.map((point) => point.point_id);
-  const swap = order[index]!;
-  order[index] = order[nextIndex]!;
-  order[nextIndex] = swap;
-
   return {
     ...pattern,
     versions: pattern.versions.map((version) => {
@@ -257,6 +246,48 @@ export function movePointOnAllVersions(
       return { ...version, measurements: reordered };
     }),
   };
+}
+
+/**
+ * Reorder rows the same way on every trial (Sample/Trials/Final grid order).
+ * Pass `subsetOrder` when the UI shows one set-garment piece only - swaps
+ * within that piece and keeps other pieces' positions in the full sheet.
+ */
+export function movePointOnAllVersions(
+  pattern: ClientPattern,
+  pointId: string,
+  direction: -1 | 1,
+  subsetOrder?: string[]
+): ClientPattern {
+  const fullOrder = trialSheetPoints(pattern).map((point) => point.point_id);
+  if (!subsetOrder?.length) {
+    const index = fullOrder.findIndex((id) => id === pointId);
+    if (index < 0) return pattern;
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= fullOrder.length) return pattern;
+    const order = [...fullOrder];
+    const swap = order[index]!;
+    order[index] = order[nextIndex]!;
+    order[nextIndex] = swap;
+    return applyPointOrderOnAllVersions(pattern, order);
+  }
+
+  const subset = [...subsetOrder];
+  const index = subset.findIndex((id) => id === pointId);
+  if (index < 0) return pattern;
+  const nextIndex = index + direction;
+  if (nextIndex < 0 || nextIndex >= subset.length) return pattern;
+  const swap = subset[index]!;
+  subset[index] = subset[nextIndex]!;
+  subset[nextIndex] = swap;
+
+  const subsetSet = new Set(subset);
+  let cursor = 0;
+  const merged = fullOrder.map((id) => {
+    if (!subsetSet.has(id)) return id;
+    return subset[cursor++]!;
+  });
+  return applyPointOrderOnAllVersions(pattern, merged);
 }
 
 function withEnsuredRow(

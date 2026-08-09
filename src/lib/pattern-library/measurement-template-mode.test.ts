@@ -6,6 +6,9 @@ import {
   buildReducedMeasurementsFromTemplate,
   defaultMeasurementTemplateMode,
   garmentOffersReducedMeasurementTemplate,
+  filterTrialSheetPointsForPiece,
+  garmentIsMeasurementSet,
+  groupTrialSheetPointsByPiece,
   mergeTemplateMeasurements,
   parseMeasurementTemplateMode,
   reducedPointSpecsForGarment,
@@ -166,6 +169,73 @@ test("buildMeasurementsFromTemplate respects entire vs reduced", () => {
   assert.equal(reduced.length, 17);
   assert.ok(!reduced.some((point) => point.point_id === "loops-width-6-pcs"));
   assert.ok(reduced.some((point) => point.point_id === "front-rise"));
+});
+
+test("set garments need piece select; filter shows one piece sheet", () => {
+  assert.equal(garmentIsMeasurementSet("Overshirt+Trouser"), true);
+  assert.equal(garmentIsMeasurementSet("Shirt+Short"), true);
+  assert.equal(garmentIsMeasurementSet("Overshirt"), false);
+
+  const points = [
+    { point_id: "front-rise", name: "Front Rise" },
+    { point_id: "1-2-chest", name: "1/2 Chest" },
+    { point_id: "1-2-hem-width", name: "1/2 Hem Width" },
+    { point_id: "slv-length", name: "Slv Length" },
+  ];
+  const overshirt = filterTrialSheetPointsForPiece(points, "Overshirt", dictionary);
+  assert.deepEqual(
+    overshirt.map((p) => p.point_id),
+    ["1-2-chest", "1-2-hem-width", "slv-length"]
+  );
+  const trouser = filterTrialSheetPointsForPiece(points, "Trouser", dictionary);
+  assert.ok(trouser.some((p) => p.point_id === "front-rise"));
+  assert.ok(trouser.some((p) => p.point_id === "1-2-hem-width"));
+  assert.ok(!trouser.some((p) => p.point_id === "1-2-chest"));
+  assert.deepEqual(filterTrialSheetPointsForPiece(points, "", dictionary), []);
+});
+
+test("groupTrialSheetPointsByPiece splits Overshirt+Trouser with Shared for dual tags", () => {
+  const points = [
+    { point_id: "front-rise", name: "Front Rise" },
+    { point_id: "1-2-chest", name: "1/2 Chest" },
+    { point_id: "1-2-hem-width", name: "1/2 Hem Width" },
+    { point_id: "slv-length", name: "Slv Length" },
+    { point_id: "custom-x", name: "Custom X" },
+  ];
+  const sections = groupTrialSheetPointsByPiece(
+    points,
+    "Overshirt+Trouser",
+    dictionary
+  );
+  assert.deepEqual(
+    sections.map((section) => section.label),
+    ["Overshirt", "Trouser", "Shared", "Other"]
+  );
+  assert.deepEqual(
+    sections.find((s) => s.label === "Overshirt")?.points.map((p) => p.point_id),
+    ["1-2-chest", "slv-length"]
+  );
+  assert.deepEqual(
+    sections.find((s) => s.label === "Trouser")?.points.map((p) => p.point_id),
+    ["front-rise"]
+  );
+  assert.deepEqual(
+    sections.find((s) => s.label === "Shared")?.points.map((p) => p.point_id),
+    ["1-2-hem-width"]
+  );
+  assert.deepEqual(
+    sections.find((s) => s.label === "Other")?.points.map((p) => p.point_id),
+    ["custom-x"]
+  );
+
+  const flat = groupTrialSheetPointsByPiece(points, "Overshirt", dictionary);
+  assert.equal(flat.length, 1);
+  assert.equal(flat[0]?.label, null);
+  assert.equal(flat[0]?.points.length, 5);
+
+  const unloaded = groupTrialSheetPointsByPiece(points, "Overshirt+Trouser", []);
+  assert.equal(unloaded.length, 1);
+  assert.equal(unloaded[0]?.label, null);
 });
 
 test("mergeTemplateMeasurements keeps values and drops empty clutter on reduced", () => {

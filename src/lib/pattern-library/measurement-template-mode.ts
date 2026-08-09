@@ -136,6 +136,101 @@ export function pointIdsForStitcherPiece(
   return stitcherPieceAllowList(pieceName, dictionary).ids;
 }
 
+/** True for set garments (Overshirt+Trouser, Shirt+Short, Suit, ...). */
+export function garmentIsMeasurementSet(garmentType: string): boolean {
+  return measurementPieceTokensForGarment(garmentType).length > 1;
+}
+
+/**
+ * Sheet rows for one selected set-garment piece (same allow-list as stitcher A4).
+ * Preserves sheet order. Empty piece name returns no rows.
+ */
+export function filterTrialSheetPointsForPiece<
+  T extends { point_id: string; name?: string | null },
+>(
+  points: T[],
+  pieceName: string,
+  dictionary: DictionaryPointRef[]
+): T[] {
+  const trimmed = pieceName.trim();
+  if (!trimmed) return [];
+  const allow = stitcherPieceAllowList(trimmed, dictionary);
+  return filterMeasurementsForStitcherPiece(points, allow.ids, allow.names);
+}
+
+export type TrialSheetPieceSection<
+  T extends { point_id: string; name?: string | null } = {
+    point_id: string;
+    name: string;
+  },
+> = {
+  key: string;
+  /** Null when the garment is a single piece (no section chrome). */
+  label: string | null;
+  points: T[];
+};
+
+/**
+ * Bucket sheet rows by stitcher piece for compound garments
+ * (Overshirt+Trouser, Suit, ...). Preserves relative order within each bucket.
+ * Points that match more than one piece go under Shared; unmatched under Other.
+ * Single-piece garments return one unlabeled section with all rows.
+ */
+export function groupTrialSheetPointsByPiece<
+  T extends { point_id: string; name?: string | null },
+>(
+  points: T[],
+  garmentType: string,
+  dictionary: DictionaryPointRef[]
+): TrialSheetPieceSection<T>[] {
+  const pieces = measurementPieceTokensForGarment(garmentType);
+  if (pieces.length <= 1) {
+    return [{ key: "all", label: null, points: [...points] }];
+  }
+  // Without dictionary, top pieces have empty allow-lists - keep flat until loaded.
+  if (dictionary.length === 0) {
+    return [{ key: "all", label: null, points: [...points] }];
+  }
+
+  const allows = pieces.map((piece) => ({
+    piece,
+    allow: stitcherPieceAllowList(piece, dictionary),
+  }));
+
+  const byPiece = new Map<string, T[]>(pieces.map((piece) => [piece, []]));
+  const shared: T[] = [];
+  const other: T[] = [];
+
+  for (const point of points) {
+    const label = point.name?.trim().toLowerCase() ?? "";
+    const matching = allows.filter(
+      ({ allow }) =>
+        allow.ids.has(point.point_id) || (label !== "" && allow.names.has(label))
+    );
+    if (matching.length === 1) {
+      byPiece.get(matching[0]!.piece)!.push(point);
+    } else if (matching.length > 1) {
+      shared.push(point);
+    } else {
+      other.push(point);
+    }
+  }
+
+  const sections: TrialSheetPieceSection<T>[] = [];
+  for (const piece of pieces) {
+    const bucket = byPiece.get(piece) ?? [];
+    if (bucket.length === 0) continue;
+    sections.push({ key: `piece:${piece}`, label: piece, points: bucket });
+  }
+  if (shared.length > 0) {
+    sections.push({ key: "shared", label: "Shared", points: shared });
+  }
+  if (other.length > 0) {
+    sections.push({ key: "other", label: "Other", points: other });
+  }
+  return sections;
+}
+
 /**
  * Keep sheet rows for one stitcher piece. Preserves sheet order.
  * Matches point_id and/or measurement name (sheet rows sometimes drift ids).

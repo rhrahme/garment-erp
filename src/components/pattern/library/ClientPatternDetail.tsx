@@ -45,7 +45,10 @@ import {
 } from "@/lib/pattern-library/cutting-completeness";
 import {
   defaultMeasurementTemplateMode,
+  filterTrialSheetPointsForPiece,
+  garmentIsMeasurementSet,
   garmentOffersReducedMeasurementTemplate,
+  measurementPieceTokensForGarment,
   type MeasurementTemplateMode,
 } from "@/lib/pattern-library/measurement-template-mode";
 import { getGarmentPieces } from "@/lib/sales-orders/label-codes";
@@ -87,6 +90,7 @@ import type {
   ClientPattern,
   ClientPatternMeasurement,
   ClientPatternVersion,
+  MeasurementPointDef,
 } from "@/lib/types/pattern-library";
 import { cn } from "@/lib/utils";
 
@@ -152,6 +156,9 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   const [tudFillBusy, setTudFillBusy] = useState(false);
   const [tudFillNotice, setTudFillNotice] = useState<string | null>(null);
   const [libraryBases, setLibraryBases] = useState<BasePattern[]>([]);
+  const [dictionary, setDictionary] = useState<MeasurementPointDef[]>([]);
+  /** Set garments only: which piece sheet is open (Overshirt / Trouser / ...). */
+  const [sheetPiece, setSheetPiece] = useState("");
   const [tudCascade, setTudCascade] = useState<BasePatternCascadeValue>(() => emptyCascadeValue());
   const [sheetMode, setSheetMode] = useState<"trials" | "detail">("trials");
   // "Load from base pattern" -> Sample column copy (picker modal + result notice).
@@ -267,14 +274,52 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
 
   // Warm the base-pattern picker cache while the operator looks at the sheet,
   // so "Load from base pattern" (and the TUD fill picker) opens instantly.
+  // Dictionary drives set-garment piece filtering (Overshirt vs Trouser, ...).
   useEffect(() => {
-    preloadBasePickerData().catch(() => {});
+    void preloadBasePickerData()
+      .then((data) => {
+        setLibraryBases(data.base_patterns);
+        setDictionary(data.dictionary);
+      })
+      .catch(() => {});
   }, []);
+
+  // Set garments: clear piece choice when the sheet garment changes.
+  useEffect(() => {
+    setSheetPiece("");
+  }, [patternId, pattern?.garment_type]);
 
   const version = useMemo(
     () => pattern?.versions.find((candidate) => candidate.id === selectedVersionId) ?? null,
     [pattern, selectedVersionId]
   );
+
+  const setGarmentPieces = useMemo(() => {
+    if (!pattern || !garmentIsMeasurementSet(pattern.garment_type)) return [];
+    return measurementPieceTokensForGarment(pattern.garment_type);
+  }, [pattern]);
+
+  const isSetGarment = setGarmentPieces.length > 1;
+
+  const visibleTrialPoints = useMemo(() => {
+    if (!pattern) return [];
+    const all = trialSheetPoints(pattern);
+    if (!isSetGarment) return all;
+    if (!sheetPiece) return [];
+    return filterTrialSheetPointsForPiece(all, sheetPiece, dictionary);
+  }, [pattern, isSetGarment, sheetPiece, dictionary]);
+
+  const visibleTrialPointIds = useMemo(
+    () => visibleTrialPoints.map((point) => point.point_id),
+    [visibleTrialPoints]
+  );
+
+  const visibleDetailRows = useMemo(() => {
+    if (!version) return [];
+    if (!isSetGarment) return version.measurements;
+    if (!sheetPiece) return [];
+    return filterTrialSheetPointsForPiece(version.measurements, sheetPiece, dictionary);
+  }, [version, isSetGarment, sheetPiece, dictionary]);
 
   function mutatePattern(updater: (draft: ClientPattern) => ClientPattern, header = false) {
     setPattern((current) => (current ? updater(current) : current));
@@ -321,7 +366,14 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   }
 
   function moveMeasurementRow(pointId: string, direction: -1 | 1) {
-    mutatePattern((draft) => movePointOnAllVersions(draft, pointId, direction));
+    mutatePattern((draft) =>
+      movePointOnAllVersions(
+        draft,
+        pointId,
+        direction,
+        isSetGarment ? visibleTrialPointIds : undefined
+      )
+    );
   }
 
   async function saveHeader(extra: { rebuild_template?: boolean } = {}) {
@@ -678,7 +730,10 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         baseSize: firstBase?.matches[0]?.base_size ?? "",
       });
       void preloadBasePickerData()
-        .then((data) => setLibraryBases(data.base_patterns))
+        .then((data) => {
+          setLibraryBases(data.base_patterns);
+          setDictionary(data.dictionary);
+        })
         .catch(() => setLibraryBases([]));
     }
   }
@@ -1306,7 +1361,11 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   <button
                     type="button"
                     onClick={() => setLoadFromBaseOpen(true)}
-                    disabled={saving || trialSheetPoints(pattern).length === 0}
+                    disabled={
+                      saving ||
+                      trialSheetPoints(pattern).length === 0 ||
+                      (isSetGarment && !sheetPiece)
+                    }
                     className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-indigo-700 ring-1 ring-slate-200 hover:bg-indigo-50 disabled:opacity-50"
                     title="Copy a base pattern size (or this client's fit column) into the Sample column"
                   >
@@ -1328,6 +1387,30 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   </button>
                 </div>
               </div>
+              {isSetGarment ? (
+                <div className="flex flex-wrap items-center gap-3 border-b border-amber-100 bg-amber-50/70 px-4 py-3">
+                  <label className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
+                    <span className="font-medium">Piece</span>
+                    <select
+                      value={sheetPiece}
+                      onChange={(e) => setSheetPiece(e.target.value)}
+                      className="min-w-[12rem] rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 focus:border-indigo-400 focus:outline-none"
+                      aria-label="Select set garment piece"
+                    >
+                      <option value="">Select piece...</option>
+                      {setGarmentPieces.map((piece) => (
+                        <option key={piece} value={piece}>
+                          {piece}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <p className="text-xs text-slate-600">
+                    Set garment on one fabric article — choose Overshirt, Trouser, etc.,
+                    then enter that piece's measurements only.
+                  </p>
+                </div>
+              ) : null}
               {sampleFillNotice ? (
                 <div className="flex items-start justify-between gap-3 border-b border-emerald-100 bg-emerald-50 px-4 py-2.5">
                   <p className="flex items-start gap-2 text-sm text-emerald-800">
@@ -1344,6 +1427,17 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   </button>
                 </div>
               ) : null}
+              {isSetGarment && !sheetPiece ? (
+                <div className="px-4 py-10 text-center">
+                  <p className="text-sm font-medium text-slate-800">
+                    Select which piece you are measuring
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {setGarmentPieces.join(" / ")} — same fabric article, separate measurement
+                    sheets.
+                  </p>
+                </div>
+              ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -1371,115 +1465,121 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {trialSheetPoints(pattern).map((point, pointIndex, allPoints) => (
-                      <tr key={point.point_id} className="border-b border-slate-100">
-                        <td className="sticky left-0 z-10 bg-white px-2 py-1.5">
-                          <input
-                            value={point.name}
-                            onChange={(e) =>
-                              renameMeasurementRow(point.point_id, e.target.value)
+                    {visibleTrialPoints.map((point, pointIndex) => {
+                      const sheetColumns = buildTrialSheetColumns(pattern);
+                      return (
+                        <tr key={point.point_id} className="border-b border-slate-100">
+                          <td className="sticky left-0 z-10 bg-white px-2 py-1.5">
+                            <input
+                              value={point.name}
+                              onChange={(e) =>
+                                renameMeasurementRow(point.point_id, e.target.value)
+                              }
+                              className="w-full min-w-[8rem] rounded-md border border-transparent bg-transparent px-1 py-1 font-medium text-slate-800 hover:border-slate-200 focus:border-indigo-300 focus:bg-white focus:outline-none"
+                              aria-label={`Rename ${point.name}`}
+                            />
+                            {point.remark ? (
+                              <span className="mt-0.5 block px-1 text-xs font-normal text-slate-400">
+                                {point.remark}
+                              </span>
+                            ) : null}
+                          </td>
+                          {sheetColumns.map((col) => {
+                            if (col.kind === "sample") {
+                              return (
+                                <td key={col.key} className="px-1 py-1 text-center">
+                                  <MeasurementInput
+                                    value={sampleValueForPoint(pattern, point.point_id)}
+                                    unit={storedUnit}
+                                    displayUnit={displayUnit}
+                                    onCommit={(value) =>
+                                      setSampleValue(point.point_id, value)
+                                    }
+                                  />
+                                </td>
+                              );
                             }
-                            className="w-full min-w-[8rem] rounded-md border border-transparent bg-transparent px-1 py-1 font-medium text-slate-800 hover:border-slate-200 focus:border-indigo-300 focus:bg-white focus:outline-none"
-                            aria-label={`Rename ${point.name}`}
-                          />
-                          {point.remark ? (
-                            <span className="mt-0.5 block px-1 text-xs font-normal text-slate-400">
-                              {point.remark}
-                            </span>
-                          ) : null}
-                        </td>
-                        {buildTrialSheetColumns(pattern).map((col) => {
-                          if (col.kind === "sample") {
-                            return (
-                              <td key={col.key} className="px-1 py-1 text-center">
-                                <MeasurementInput
-                                  value={sampleValueForPoint(pattern, point.point_id)}
-                                  unit={storedUnit}
-                                  displayUnit={displayUnit}
-                                  onCommit={(value) => setSampleValue(point.point_id, value)}
-                                />
-                              </td>
-                            );
-                          }
-                          if (!col.versionId) {
+                            if (!col.versionId) {
+                              return (
+                                <td
+                                  key={col.key}
+                                  className="px-2 py-1.5 text-center text-xs text-slate-300"
+                                >
+                                  -
+                                </td>
+                              );
+                            }
+                            const trial =
+                              pattern.versions.find((v) => v.id === col.versionId) ?? null;
                             return (
                               <td
                                 key={col.key}
-                                className="px-2 py-1.5 text-center text-xs text-slate-300"
+                                className={cn(
+                                  "px-1 py-1 text-center",
+                                  col.isCurrent ? "bg-amber-50/40" : null
+                                )}
                               >
-                                -
+                                <MeasurementInput
+                                  value={trialColumnValue(trial, point.point_id)}
+                                  unit={storedUnit}
+                                  displayUnit={displayUnit}
+                                  onCommit={(value) =>
+                                    setTrialTarget(col.versionId!, point.point_id, value)
+                                  }
+                                />
                               </td>
                             );
-                          }
-                          const trial =
-                            pattern.versions.find((v) => v.id === col.versionId) ?? null;
-                          return (
-                            <td
-                              key={col.key}
-                              className={cn(
-                                "px-1 py-1 text-center",
-                                col.isCurrent ? "bg-amber-50/40" : null
-                              )}
-                            >
-                              <MeasurementInput
-                                value={trialColumnValue(trial, point.point_id)}
-                                unit={storedUnit}
-                                displayUnit={displayUnit}
-                                onCommit={(value) =>
-                                  setTrialTarget(col.versionId!, point.point_id, value)
-                                }
-                              />
-                            </td>
-                          );
-                        })}
-                        <td className="px-2 py-1">
-                          <input
-                            value={remarksForPoint(pattern, point.point_id) ?? ""}
-                            onChange={(e) =>
-                              setPointRemarks(point.point_id, e.target.value || null)
-                            }
-                            className="w-full min-w-[9rem] rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-300 focus:outline-none"
-                            placeholder="Remark for stitcher"
-                          />
-                        </td>
-                        <td className="px-1 py-1.5">
-                          <div className="flex items-center justify-center gap-0.5">
-                            <button
-                              type="button"
-                              onClick={() => moveMeasurementRow(point.point_id, -1)}
-                              disabled={pointIndex === 0}
-                              className="rounded p-1 text-slate-300 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-30"
-                              aria-label={`Move ${point.name} up`}
-                            >
-                              <MoveUp className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => moveMeasurementRow(point.point_id, 1)}
-                              disabled={pointIndex >= allPoints.length - 1}
-                              className="rounded p-1 text-slate-300 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-30"
-                              aria-label={`Move ${point.name} down`}
-                            >
-                              <MoveDown className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                removeMeasurementRow(point.point_id, point.name)
+                          })}
+                          <td className="px-2 py-1">
+                            <input
+                              value={remarksForPoint(pattern, point.point_id) ?? ""}
+                              onChange={(e) =>
+                                setPointRemarks(point.point_id, e.target.value || null)
                               }
-                              className="rounded p-1 text-slate-300 hover:bg-rose-50 hover:text-rose-600"
-                              aria-label={`Remove ${point.name}`}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              className="w-full min-w-[9rem] rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-300 focus:outline-none"
+                              placeholder="Remark for stitcher"
+                            />
+                          </td>
+                          <td className="px-1 py-1.5">
+                            <div className="flex items-center justify-center gap-0.5">
+                              <button
+                                type="button"
+                                onClick={() => moveMeasurementRow(point.point_id, -1)}
+                                disabled={pointIndex <= 0}
+                                className="rounded p-1 text-slate-300 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-30"
+                                aria-label={`Move ${point.name} up`}
+                              >
+                                <MoveUp className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => moveMeasurementRow(point.point_id, 1)}
+                                disabled={pointIndex >= visibleTrialPoints.length - 1}
+                                className="rounded p-1 text-slate-300 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-30"
+                                aria-label={`Move ${point.name} down`}
+                              >
+                                <MoveDown className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeMeasurementRow(point.point_id, point.name)
+                                }
+                                className="rounded p-1 text-slate-300 hover:bg-rose-50 hover:text-rose-600"
+                                aria-label={`Remove ${point.name}`}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
-              {trialSheetPoints(pattern).length === 0 ? (
+              )}
+              {(!isSetGarment || sheetPiece) && trialSheetPoints(pattern).length === 0 ? (
                 <div className="border-t border-slate-100 px-4 py-6 text-center space-y-3">
                   <p className="text-sm text-slate-600">
                     No measurement rows yet for{" "}
@@ -1519,6 +1619,18 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   )}
                 </div>
               ) : null}
+              {isSetGarment &&
+              sheetPiece &&
+              visibleTrialPoints.length === 0 &&
+              trialSheetPoints(pattern).length > 0 ? (
+                <div className="border-t border-slate-100 px-4 py-6 text-center">
+                  <p className="text-sm text-slate-600">
+                    No <span className="font-medium">{sheetPiece}</span> points on this
+                    sheet yet. Load reduced / entire template, or add a custom point.
+                  </p>
+                </div>
+              ) : null}
+              {(!isSetGarment || sheetPiece) ? (
               <div className="flex flex-wrap items-center gap-1.5 border-t border-slate-100 px-4 py-3">
                 <input
                   value={newPointName}
@@ -1573,6 +1685,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   Pattern can add, rename, reorder, or remove any row. Save sheet to keep.
                 </p>
               </div>
+              ) : null}
               {(() => {
                 const current = currentTrialVersion(pattern);
                 if (!current) return null;
@@ -1667,6 +1780,36 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   {saving ? "Saving..." : dirty ? "Save detail" : "Detail saved"}
                 </button>
               </div>
+              {isSetGarment ? (
+                <div className="flex flex-wrap items-center gap-3 border-b border-amber-100 bg-amber-50/70 px-4 py-3">
+                  <label className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
+                    <span className="font-medium">Piece</span>
+                    <select
+                      value={sheetPiece}
+                      onChange={(e) => setSheetPiece(e.target.value)}
+                      className="min-w-[12rem] rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 focus:border-indigo-400 focus:outline-none"
+                      aria-label="Select set garment piece"
+                    >
+                      <option value="">Select piece...</option>
+                      {setGarmentPieces.map((piece) => (
+                        <option key={piece} value={piece}>
+                          {piece}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              ) : null}
+              {isSetGarment && !sheetPiece ? (
+                <div className="px-4 py-10 text-center">
+                  <p className="text-sm font-medium text-slate-800">
+                    Select which piece you are measuring
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {setGarmentPieces.join(" / ")}
+                  </p>
+                </div>
+              ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -1681,7 +1824,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {version.measurements.map((row) => (
+                    {visibleDetailRows.map((row) => (
                       <tr key={row.point_id} className="border-b border-slate-100">
                         <td className="sticky left-0 z-10 bg-white px-2 py-1.5">
                           <input
@@ -1760,6 +1903,8 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   </tbody>
                 </table>
               </div>
+              )}
+              {(!isSetGarment || sheetPiece) ? (
               <div className="flex flex-wrap items-center gap-1.5 border-t border-slate-100 px-4 py-3">
                 <input
                   value={newPointName}
@@ -1780,6 +1925,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   Add / rename / remove updates every trial on this sheet.
                 </p>
               </div>
+              ) : null}
               <div className="grid gap-4 border-t border-slate-100 p-4 lg:grid-cols-2">
                 <label className="text-sm">
                   <span className="mb-1 block text-xs font-medium text-slate-600">
@@ -1959,7 +2105,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
       {loadFromBaseOpen ? (
         <LoadFromBaseModal
           pattern={pattern}
-          rows={trialSheetPoints(pattern)}
+          rows={isSetGarment ? visibleTrialPoints : trialSheetPoints(pattern)}
           onClose={() => setLoadFromBaseOpen(false)}
           onApply={applySampleFill}
         />
