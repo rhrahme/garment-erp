@@ -146,12 +146,19 @@ export const PRODUCTION_OPERATOR_BLOCKED_ROUTE_PREFIXES = [
 
 /**
  * Pattern team - pattern library + drafting queue, clients (contacts hidden),
- * fabric specification. No prices, no orders create, no accounting/HR/sales CRM.
+ * fabric specification, stitch kiosk visibility. No prices, no orders create,
+ * no accounting/HR/sales CRM. Pause control stays admin-only.
  */
 const PATTERN_OPERATOR_ROUTE_PREFIXES = [
   "/pattern",
   "/clients",
   "/fabric-specification",
+  // Stitch kiosk (Scan / Live / History / Orders) - same APIs as stitch@.
+  "/stitch",
+  "/production/stitch",
+  "/api/production/sewing-session",
+  "/api/production/work-orders",
+  "/api/sales-orders",
   "/api/pattern",
   "/api/clients",
   "/api/custom-fabrics",
@@ -357,11 +364,12 @@ export const SALES_OPERATOR_NAV_HREFS = [
   "/invoices",
 ] as const;
 
-/** Sidebar for the pattern team - library + queue, clients (contacts hidden), fabric spec. */
+/** Sidebar for the pattern team - library + queue, clients, fabric spec, stitch kiosk. */
 export const PATTERN_OPERATOR_NAV_HREFS = [
   "/pattern",
   "/clients",
   "/fabric-specification",
+  "/stitch",
 ] as const;
 
 /** Sidebar for accounting - finance & supplier billing, no factory floor or sales CRM. */
@@ -779,6 +787,27 @@ export function isProductionOperatorRouteAllowed(pathname: string): boolean {
 }
 
 export function isPatternOperatorRouteAllowed(pathname: string): boolean {
+  // Never open full QC /orders pages (print, edit, fabric PO).
+  if (pathname === "/orders" || pathname.startsWith("/orders/")) {
+    return false;
+  }
+  // Stage advance stays factory-manager only.
+  if (
+    pathname === "/api/production/stage-scan" ||
+    pathname.startsWith("/api/production/stage-scan/")
+  ) {
+    return false;
+  }
+  // Sales-order reads only: list + `/api/sales-orders/:id` - no stickers/print/transfers.
+  if (pathname.startsWith("/api/sales-orders/")) {
+    const rest = pathname.slice("/api/sales-orders/".length);
+    if (!rest || rest.includes("/")) return false;
+  }
+  // Work-order reads only: list + `/api/production/work-orders/:id` (PATCH gated in handler).
+  if (pathname.startsWith("/api/production/work-orders/")) {
+    const rest = pathname.slice("/api/production/work-orders/".length);
+    if (!rest || rest.includes("/")) return false;
+  }
   return PATTERN_OPERATOR_ROUTE_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );

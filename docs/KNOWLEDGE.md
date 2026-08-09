@@ -47,6 +47,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `processSewingKioskScan` blocks all badge/A4 work (UI + `/api/v1/.../scan`)
   with `reason_code=kiosk_paused` without writing `sewing_scan_failures`. Do
   not remove this gate or hide the admin control.
+- **Pattern can open the stitch kiosk** (Aug 9 2026): `pattern_operator` has
+  `/stitch` in nav and the same kiosk APIs as stitch@ (sewing-session scan,
+  work-order / sales-order reads only). Pause control stays admin-only. Do not
+  strip this visibility without an explicit ask.
 - Rejects must explain themselves (e.g. washing/fabric-cut QR scanned instead
   of production piece QR) and persist to `sewing_scan_failures`.
 - **Scan durability (do not regress)**: every kiosk scan stays in

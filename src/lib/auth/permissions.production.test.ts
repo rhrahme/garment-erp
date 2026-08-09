@@ -302,7 +302,12 @@ describe("pattern_operator price surface lockdown (hagan.dp1@gmail.com)", () => 
 
   it("pattern nav contains no price-bearing pages", () => {
     const nav = PATTERN_OPERATOR_NAV_HREFS as readonly string[];
-    assert.deepEqual(nav, ["/pattern", "/clients", "/fabric-specification"]);
+    assert.deepEqual(nav, [
+      "/pattern",
+      "/clients",
+      "/fabric-specification",
+      "/stitch",
+    ]);
     for (const href of [
       "/orders",
       "/invoices",
@@ -325,6 +330,15 @@ describe("pattern_operator price surface lockdown (hagan.dp1@gmail.com)", () => 
       "/pattern/orders/so-1",
       "/clients",
       "/fabric-specification",
+      "/stitch",
+      "/stitch/orders",
+      "/production/stitch",
+      "/api/production/sewing-session",
+      "/api/production/sewing-session/scan",
+      "/api/production/work-orders",
+      "/api/production/work-orders/wo-1",
+      "/api/sales-orders",
+      "/api/sales-orders/so-1",
       "/api/pattern/overview",
       "/api/pattern/orders/so-1",
       "/api/pattern/jobs/job-1",
@@ -362,8 +376,6 @@ describe("pattern_operator price surface lockdown (hagan.dp1@gmail.com)", () => 
       "/sales",
       "/hr",
       "/dashboard",
-      "/api/sales-orders",
-      "/api/sales-orders/so-1",
       "/api/sales-orders/so-1/pdf",
       "/api/sales-orders/so-1/fabric-pos",
       "/api/supplier-fabrics",
@@ -377,6 +389,7 @@ describe("pattern_operator price surface lockdown (hagan.dp1@gmail.com)", () => 
       "/api/auth/invoice-amounts",
       "/api/hr/payroll-employees",
       "/api/production",
+      "/api/production/stage-scan",
       "/api/shipments",
     ]) {
       assert.equal(isPatternOperatorRouteAllowed(path), false, `expected block: ${path}`);
