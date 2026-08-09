@@ -4,6 +4,7 @@ import {
   applyCmUnitRelabel,
   applyConvertedCmBackToInches,
   applyInchUnitRelabel,
+  applyRestoreStoredMeasurementUnit,
   looksLikeConvertedCmFromInches,
   looksLikeStoredCmMislabeledAsInches,
   looksLikeStoredInchMeasurements,
@@ -106,6 +107,12 @@ test("Khaled-style CM typed as inches is detected and relabeled without converti
 test("true cm sheets labeled cm are not flipped to inches by sixteenth coincidence", () => {
   const sheet = pattern("cm", [76, 63, 16.5, 66.5, 13.3, 81.5, 23.3, 42.7, 48, 42.5]);
   assert.equal(applyInchUnitRelabel(sheet), null);
+});
+
+test("true cm sheets are not converted to inches by accidental-convert heal", () => {
+  const sheet = pattern("cm", [76, 63, 16.5, 66.5, 13.3, 81.5, 23.3, 42.7, 48, 42.5]);
+  assert.equal(applyConvertedCmBackToInches(sheet), null);
+  assert.equal(applyRestoreStoredMeasurementUnit(sheet), null);
 });
 
 test("true inch sheets labeled in are not flipped to cm", () => {

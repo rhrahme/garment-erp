@@ -114,6 +114,10 @@ export function looksLikeConvertedCmFromInches(pattern: ClientPattern): boolean 
 /** Convert cm cells back to inches and set unit=in (for accidental cm converts). */
 export function applyConvertedCmBackToInches(pattern: ClientPattern): ClientPattern | null {
   if (!looksLikeConvertedCmFromInches(pattern)) return null;
+  // True cm sheets (body/chest/sleeve in the 60+ band) can look like
+  // "converted inches" after cm->in round-trip. Never destroy Pattern's
+  // typed centimeters (76 -> 29.9375).
+  if (looksLikeStoredCmMagnitude(pattern)) return null;
   return {
     ...pattern,
     unit: "in",

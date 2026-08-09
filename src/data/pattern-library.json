@@ -1102,7 +1102,7 @@
       ]
     }
   ],
-  "updated_at": "2026-08-09T19:24:10.684Z",
+  "updated_at": "2026-08-09T19:59:28.291Z",
   "base_patterns": [
     {
       "id": "bp-fr-beirut-jacket",
@@ -68938,7 +68938,7 @@
     },
     {
       "id": "cp-1785002623350-68",
-      "unit": "in",
+      "unit": "cm",
       "files": [
         {
           "id": "plf-1785002623995-580196",
@@ -69626,7 +69626,7 @@
       "base_size": "M",
       "client_id": "new-1782858921783",
       "created_at": "2026-07-25T18:03:43.350Z",
-      "updated_at": "2026-08-09T19:24:10.672Z",
+      "updated_at": "2026-08-09T19:38:23.462Z",
       "client_code": "FR-0626-0037",
       "client_name": "Pr Khaled Bin Salman",
       "description": "shirt pattern imported from Base Patterns /ALL/Prince Khaled",
@@ -150965,7 +150965,7 @@
       "base_size": "M",
       "client_id": "new-1782858921783",
       "created_at": "2026-07-31T20:42:28.283Z",
-      "updated_at": "2026-08-09T19:24:10.672Z",
+      "updated_at": "2026-08-09T19:59:28.291Z",
       "client_code": "FR-0626-0037",
       "client_name": "Pr Khaled Bin Salman",
       "description": null,
