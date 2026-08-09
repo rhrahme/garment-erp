@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Printer } from "lucide-react";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
+import { resolvePatternDisplayUnit } from "@/lib/pattern-library/measurement-unit-preference";
 import {
   formatMeasurementForDisplay,
   unitLabel,
@@ -22,7 +24,9 @@ const SHEET_PRINT_CSS = `
 
 /** Printable A4 base-pattern size grid (landscape — wide size runs). */
 export function BasePatternPrintView({ base }: { base: BasePattern }) {
-  const { unit: displayUnit } = useMeasurementUnitPreference();
+  const searchParams = useSearchParams();
+  const { unit: preferenceUnit } = useMeasurementUnitPreference();
+  const displayUnit = resolvePatternDisplayUnit(searchParams.get("unit"), preferenceUnit);
   const storedUnit = base.unit;
   const gradedPoints = base.points.filter((point) => point.is_graded);
   const trimPoints = base.points.filter((point) => !point.is_graded);

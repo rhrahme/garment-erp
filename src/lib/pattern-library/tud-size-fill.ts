@@ -1,8 +1,10 @@
+import { convertMeasurementUnit } from "@/lib/pattern-library/measurements";
 import type {
   BasePattern,
   BasePatternPoint,
   ClientPattern,
   ClientPatternMeasurement,
+  MeasurementUnit,
   PatternLibraryAttachment,
 } from "@/lib/types/pattern-library";
 
@@ -83,14 +85,23 @@ export interface TudFillOutcome {
  * Fills empty base/target cells of an existing measurement sheet from the base
  * pattern's values at `size`, and appends base points not on the sheet yet.
  * Never overwrites an entered value; sewn/adjustment/remarks are untouched.
+ * When `sheetUnit` differs from `base.unit`, values are converted before write
+ * so inch bases never stamp raw numbers onto a cm sheet (or the reverse).
  */
 export function fillMeasurementsFromBase(
   rows: ClientPatternMeasurement[],
-  base: Pick<BasePattern, "points">,
-  size: string
+  base: Pick<BasePattern, "points"> & { unit?: MeasurementUnit },
+  size: string,
+  options?: { sheetUnit?: MeasurementUnit | null }
 ): TudFillOutcome {
   const byId = new Map(base.points.map((point) => [point.point_id, point]));
   const byName = new Map(base.points.map((point) => [pointNameKey(point.name), point]));
+  const baseUnit = base.unit;
+  const sheetUnit = options?.sheetUnit ?? null;
+  const toSheet = (value: number): number => {
+    if (!baseUnit || !sheetUnit || baseUnit === sheetUnit) return value;
+    return convertMeasurementUnit(value, baseUnit, sheetUnit);
+  };
 
   const matchedPointIds = new Set<string>();
   let filled = 0;
@@ -98,8 +109,9 @@ export function fillMeasurementsFromBase(
     const point = byId.get(row.point_id) ?? byName.get(pointNameKey(row.name)) ?? null;
     if (!point) return row;
     matchedPointIds.add(point.point_id);
-    const value = basePointValue(point, size);
-    if (value === null) return row;
+    const raw = basePointValue(point, size);
+    if (raw === null) return row;
+    const value = toSheet(raw);
     const nextBase = row.base_value === null ? value : row.base_value;
     const nextTarget = row.target_value === null ? value : row.target_value;
     if (nextBase === row.base_value && nextTarget === row.target_value) return row;
@@ -110,7 +122,8 @@ export function fillMeasurementsFromBase(
   let added = 0;
   for (const point of base.points) {
     if (matchedPointIds.has(point.point_id)) continue;
-    const value = basePointValue(point, size);
+    const raw = basePointValue(point, size);
+    const value = raw === null ? null : toSheet(raw);
     measurements.push({
       point_id: point.point_id,
       name: point.name,
@@ -214,7 +227,9 @@ export function buildTudFillSuggestion(input: {
       (pattern.base_size
         ? candidate.matches.find((match) => sizesMatch(match.base_size, pattern.base_size!))
         : null) ?? candidate.matches[0]!;
-    const outcome = fillMeasurementsFromBase(version?.measurements ?? [], base, preferred.base_size);
+    const outcome = fillMeasurementsFromBase(version?.measurements ?? [], base, preferred.base_size, {
+      sheetUnit: pattern.unit,
+    });
     suggestion.fillable_points = outcome.filled_points;
     suggestion.addable_points = outcome.added_points;
 

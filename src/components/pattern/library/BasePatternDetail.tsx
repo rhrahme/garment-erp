@@ -329,7 +329,7 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
           Pattern library
         </Link>
         <div className="flex flex-wrap items-center gap-2">
-          <MeasurementUnitToggle disabled={saving} />
+          <MeasurementUnitToggle disabled={saving} storedUnit={base.unit} />
           <Link
             href={withMeasurementUnitParam(`/pattern/bases/${base.id}/print`, displayUnit)}
             target="_blank"

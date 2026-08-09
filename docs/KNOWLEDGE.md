@@ -113,7 +113,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   while Pattern is typing centimeters (76 cm must not be stamped as 76 inch).
   APIs accept optional `unit` (`/api/pattern/auto-consolidate`,
   `/api/v1/pattern/auto-consolidate`). Inverse heal: unit `"in"` but values
-  look like cm (and not inch 1/16") -> relabel to `"cm"` without converting.
+  look like cm (cm magnitude band) -> relabel to `"cm"` without converting.
+- **Stored vs display unit must stay obvious** (Aug 9 2026): sheet UI shows
+  "Show X | sheet stores Y (auto-converts)" next to the Units toggle.
+  Toggle is display-only; cells convert on type. TUD / base fill must convert
+  when `base.unit !== sheet.unit` (`fillMeasurementsFromBase` options).
+  HTML print honors `?unit=` via `resolvePatternDisplayUnit` (same as PDF).
 - **Base-pattern pickers must preload the slim payload** (perf fix, Aug 5
   2026): use `GET /api/pattern/library/bases` (bases + dictionary, ~218 KB)
   via `preloadBasePickerData()` in `base-picker-cache.ts` - never the

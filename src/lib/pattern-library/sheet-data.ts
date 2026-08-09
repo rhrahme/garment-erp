@@ -29,6 +29,7 @@ import type {
   BasePattern,
   ClientPattern,
   ClientPatternVersion,
+  MeasurementUnit,
   PatternLibraryAttachment,
   TumMetadata,
 } from "@/lib/types/pattern-library";
@@ -185,13 +186,14 @@ function findOrderLine(
 
 /**
  * Pre-fills empty base/target cells for the printable sheet when a base + size
- * are linked. Pure — does not persist. Returns a warning when fill is impossible
+ * are linked. Pure - does not persist. Returns a warning when fill is impossible
  * and the sheet still has empty base cells.
  */
 export function applySheetBaseMeasurements(
   version: ClientPatternVersion,
   base: BasePattern | null,
-  baseSize: string | null
+  baseSize: string | null,
+  sheetUnit?: MeasurementUnit | null
 ): {
   version: ClientPatternVersion;
   resolved_base_size: string | null;
@@ -228,7 +230,9 @@ export function applySheetBaseMeasurements(
     };
   }
 
-  const outcome = fillMeasurementsFromBase(version.measurements, base, resolved);
+  const outcome = fillMeasurementsFromBase(version.measurements, base, resolved, {
+    sheetUnit: sheetUnit ?? null,
+  });
   return {
     version: { ...version, measurements: outcome.measurements },
     resolved_base_size: resolved,
@@ -316,7 +320,12 @@ export async function buildPatternSheetData(
     ? library.base_patterns.find((candidate) => candidate.id === pattern.base_pattern_id) ?? null
     : null;
 
-  const filled = applySheetBaseMeasurements(rawVersion, base, pattern.base_size);
+  const filled = applySheetBaseMeasurements(
+    rawVersion,
+    base,
+    pattern.base_size,
+    pattern.unit
+  );
   const version = filled.version;
 
   const jobs = readPatternJobs().jobs;

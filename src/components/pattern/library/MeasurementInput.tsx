@@ -59,12 +59,19 @@ export function MeasurementInput({
     setText(formatMeasurement(parsedDisplay, displayUnit));
   }
 
+  const unitHint =
+    displayUnit !== unit
+      ? `Type in ${displayUnit === "cm" ? "cm" : "inches"}; saved as ${unit === "cm" ? "cm" : "inches"}`
+      : undefined;
+
   return (
     <input
       type="text"
       inputMode="decimal"
       value={text}
       placeholder={placeholder}
+      title={unitHint}
+      aria-label={unitHint}
       onFocus={() => setFocused(true)}
       onChange={(e) => setText(e.target.value)}
       onBlur={commit}

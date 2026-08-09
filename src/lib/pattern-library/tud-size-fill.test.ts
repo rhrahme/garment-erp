@@ -160,6 +160,23 @@ test("fillMeasurementsFromBase leaves cells empty when the base has no value at 
   assert.equal(outcome.filled_points, 0);
 });
 
+test("fillMeasurementsFromBase converts inch base values onto a cm sheet", () => {
+  const rows = [row({ point_id: "half-chest", name: "1/2 Chest" })];
+  const inchBase = { ...BASE, unit: "in" as const };
+  const outcome = fillMeasurementsFromBase(rows, inchBase, "XXL", { sheetUnit: "cm" });
+  const chest = outcome.measurements.find((r) => r.point_id === "half-chest")!;
+  // 25.5 in -> 64.77 cm
+  assert.equal(chest.base_value, 64.77);
+  assert.equal(chest.target_value, 64.77);
+});
+
+test("fillMeasurementsFromBase keeps numbers when base and sheet unit match", () => {
+  const rows = [row({ point_id: "half-chest", name: "1/2 Chest" })];
+  const inchBase = { ...BASE, unit: "in" as const };
+  const outcome = fillMeasurementsFromBase(rows, inchBase, "XXL", { sheetUnit: "in" });
+  assert.equal(outcome.measurements[0]!.base_value, 25.5);
+});
+
 // --- upload suggestion --------------------------------------------------------
 
 function makeBase(overrides: Partial<BasePattern>): BasePattern {

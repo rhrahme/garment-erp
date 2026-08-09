@@ -881,7 +881,9 @@ export async function updateClientPattern(
     if (resolvedSize && versions.length > 0) {
       const lastIndex = versions.length - 1;
       const last = versions[lastIndex]!;
-      const outcome = fillMeasurementsFromBase(last.measurements, base, resolvedSize);
+      const outcome = fillMeasurementsFromBase(last.measurements, base, resolvedSize, {
+        sheetUnit: existing.unit,
+      });
       if (outcome.filled_points > 0 || outcome.added_points > 0) {
         versions = versions.map((candidate, i) =>
           i === lastIndex
@@ -1592,7 +1594,9 @@ export async function applyTudSizeFill(
   const targetVersion = existing.versions[versionIndex]!;
 
   const timestamp = now();
-  const outcome = fillMeasurementsFromBase(targetVersion.measurements, base, baseSize);
+  const outcome = fillMeasurementsFromBase(targetVersion.measurements, base, baseSize, {
+    sheetUnit: existing.unit,
+  });
   const version: ClientPatternVersion = {
     ...targetVersion,
     measurements: outcome.measurements,

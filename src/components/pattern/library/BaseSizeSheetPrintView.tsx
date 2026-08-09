@@ -1,10 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Download, Printer } from "lucide-react";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
-import { withMeasurementUnitParam } from "@/lib/pattern-library/measurement-unit-preference";
+import {
+  resolvePatternDisplayUnit,
+  withMeasurementUnitParam,
+} from "@/lib/pattern-library/measurement-unit-preference";
 import {
   formatMeasurementForDisplay,
   unitLabel,
@@ -38,7 +42,9 @@ export function BaseSizeSheetPrintView({
   /** When set, the client's fit column prints next to the base size values. */
   clientColumn?: BasePatternClientColumn | null;
 }) {
-  const { unit: displayUnit } = useMeasurementUnitPreference();
+  const searchParams = useSearchParams();
+  const { unit: preferenceUnit } = useMeasurementUnitPreference();
+  const displayUnit = resolvePatternDisplayUnit(searchParams.get("unit"), preferenceUnit);
   const storedUnit = base.unit;
   const rows = buildBaseSizeSheetRows(base, size, clientColumn);
   const labelCode = basePatternLabelCode(base);

@@ -1355,7 +1355,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
                 <div className="flex flex-wrap items-center gap-3">
                   <p className="text-sm font-semibold text-slate-800">Measurement sheet</p>
-                  <MeasurementUnitToggle disabled={saving} />
+                  <MeasurementUnitToggle disabled={saving} storedUnit={storedUnit} />
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <button

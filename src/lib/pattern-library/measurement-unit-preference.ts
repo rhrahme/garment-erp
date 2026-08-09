@@ -9,6 +9,17 @@ export function parseMeasurementUnit(value: unknown): MeasurementUnit | null {
   return value === "cm" || value === "in" ? value : null;
 }
 
+/**
+ * Display unit for Pattern sheets/print: URL `?unit=` wins (PDF + shared links),
+ * else the site-wide localStorage preference.
+ */
+export function resolvePatternDisplayUnit(
+  urlUnit: string | null | undefined,
+  preferenceUnit: MeasurementUnit
+): MeasurementUnit {
+  return parseMeasurementUnit(urlUnit) ?? preferenceUnit;
+}
+
 export function readMeasurementUnitPreference(): MeasurementUnit {
   if (typeof window === "undefined") return DEFAULT_MEASUREMENT_UNIT;
   return parseMeasurementUnit(window.localStorage.getItem(MEASUREMENT_UNIT_PREF_KEY))

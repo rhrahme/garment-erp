@@ -1,10 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Download, Printer } from "lucide-react";
 import { outlinePointsForPlacement } from "@/lib/pattern-library/dxf-parser";
 import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
-import { withMeasurementUnitParam } from "@/lib/pattern-library/measurement-unit-preference";
+import {
+  resolvePatternDisplayUnit,
+  withMeasurementUnitParam,
+} from "@/lib/pattern-library/measurement-unit-preference";
 import {
   formatMeasurementForDisplay,
   unitLabel,
@@ -874,7 +878,9 @@ export function PatternSheetPrintView({
   kind?: PatternSheetKind;
   embedded?: boolean;
 }) {
-  const { unit: displayUnit } = useMeasurementUnitPreference();
+  const searchParams = useSearchParams();
+  const { unit: preferenceUnit } = useMeasurementUnitPreference();
+  const displayUnit = resolvePatternDisplayUnit(searchParams.get("unit"), preferenceUnit);
   const { pattern, version, stickers, article_pages } = data;
   const isProduction = kind === "production";
   const isSewing = kind === "sewing";
