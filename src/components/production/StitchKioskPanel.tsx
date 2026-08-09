@@ -58,7 +58,8 @@ function phaseCopy(
       return {
         title: floorActivityInProgressLabel(
           focusSession?.job_functions,
-          focusSession?.work_kind
+          focusSession?.work_kind,
+          focusSession?.activity_job_function
         ),
         hint: "When finished: scan the same A4 QR, then your badge",
         tone:

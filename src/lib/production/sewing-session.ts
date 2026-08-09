@@ -4,7 +4,9 @@ import { readSewingSessionsFresh, writeSewingSessions } from "@/lib/data/sewing-
 import {
   isAnyEmployeeBadgeQrPayload,
   parseEmployeeBadgeScan,
+  type EmployeeBadgeActivityJobFunction,
 } from "@/lib/hr/employee-qr";
+import { normalizeJobFunctions } from "@/lib/hr/job-functions";
 import { safeRecordPatternAlterationPendingFromSession } from "@/lib/production/record-pattern-alteration-pending";
 import {
   findPayrollEmployeeByBadgeValue,
@@ -378,6 +380,7 @@ function buildSessionFromArmAndMeta(
     garment_type: meta.garment_type,
     fabric_number: meta.fabric_number,
     work_kind: arm.work_kind === "alteration" ? "alteration" : "first_make",
+    activity_job_function: arm.activity_job_function ?? null,
   };
 }
 
@@ -391,7 +394,8 @@ function buildSessionFromPieceArm(
   },
   kioskId: string,
   at: number,
-  workKind: SewingWorkKind = "first_make"
+  workKind: SewingWorkKind = "first_make",
+  activityJobFunction: EmployeeBadgeActivityJobFunction | null = null
 ): SewingSession {
   return {
     id: `sew-${at}-${Math.random().toString(36).slice(2, 8)}`,
@@ -416,6 +420,7 @@ function buildSessionFromPieceArm(
     garment_type: pieceArm.garment_type,
     fabric_number: pieceArm.fabric_number,
     work_kind: workKind,
+    activity_job_function: activityJobFunction,
   };
 }
 
@@ -607,6 +612,7 @@ export async function processSewingKioskScan(
       );
     }
     const workKind = badgeScan.work_kind;
+    const activityJobFunction = badgeScan.activity_job_function ?? null;
     const employee = findPayrollEmployeeByBadgeValue(raw);
     if (!employee) {
       return failResult(
@@ -623,6 +629,26 @@ export async function processSewingKioskScan(
       return failResult(
         "Employee is inactive - contact HR.",
         "employee_inactive",
+        "badge",
+        store,
+        kioskId,
+        {},
+        {
+          ...failMeta,
+          employee_id: employee.id,
+          employee_name: employee.full_name,
+          employee_id_number: employee.employee_id_number,
+        }
+      );
+    }
+    if (
+      activityJobFunction &&
+      !normalizeJobFunctions(employee.job_functions).includes(activityJobFunction)
+    ) {
+      const needed = activityJobFunction === "wash_iron" ? "Ironing" : "Buttons";
+      return failResult(
+        `Badge role ${needed} is not assigned on this employee - contact HR.`,
+        "invalid_badge",
         "badge",
         store,
         kioskId,
@@ -746,7 +772,8 @@ export async function processSewingKioskScan(
         },
         kioskId,
         at,
-        workKind
+        workKind,
+        activityJobFunction
       );
       store = applyStartFromPieceArm(store, kioskId, pieceArm, session);
       await writeSewingSessions(store);
@@ -767,6 +794,7 @@ export async function processSewingKioskScan(
             piece_mark: session.piece_mark,
             client_name: session.client_name,
             work_kind: session.work_kind ?? "first_make",
+            activity_job_function: session.activity_job_function ?? null,
             recovered: true,
             recovery: "piece_first_start",
           },
@@ -785,7 +813,8 @@ export async function processSewingKioskScan(
           started.job_functions,
           started.production_code,
           started.piece_mark,
-          started.work_kind
+          started.work_kind,
+          started.activity_job_function
         ),
         store,
         kioskId,
@@ -806,6 +835,7 @@ export async function processSewingKioskScan(
       workstation_id: ctx.workstation_id,
       armed_at: nowIso(at),
       work_kind: workKind,
+      activity_job_function: activityJobFunction,
     };
     store = {
       ...store,
@@ -820,7 +850,11 @@ export async function processSewingKioskScan(
     const readyHint =
       workKind === "alteration"
         ? `${arm.employee_name} ready for ALTERATION - scan A4 piece QR within 30 seconds.`
-        : `${arm.employee_name} ready - scan A4 piece QR within 30 seconds.`;
+        : activityJobFunction === "wash_iron"
+          ? `${arm.employee_name} ready for IRONING - scan A4 piece QR within 30 seconds.`
+          : activityJobFunction === "buttons"
+            ? `${arm.employee_name} ready for BUTTONS - scan A4 piece QR within 30 seconds.`
+            : `${arm.employee_name} ready - scan A4 piece QR within 30 seconds.`;
     return result(true, readyHint, store, kioskId, { arm }, { beep: "progress" });
   }
 
@@ -1002,6 +1036,7 @@ export async function processSewingKioskScan(
           piece_mark: session.piece_mark,
           client_name: session.client_name,
           work_kind: session.work_kind ?? "first_make",
+          activity_job_function: session.activity_job_function ?? null,
         },
         input.source ?? "erp"
       );
@@ -1018,7 +1053,8 @@ export async function processSewingKioskScan(
         started.job_functions,
         started.production_code,
         started.piece_mark,
-        started.work_kind
+        started.work_kind,
+        started.activity_job_function
       ),
       store,
       kioskId,

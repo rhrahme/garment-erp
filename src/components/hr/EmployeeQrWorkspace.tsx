@@ -6,8 +6,21 @@ import { CreateEmployeeForm } from "@/components/hr/CreateEmployeeForm";
 import { EmployeeBadgePrintControls } from "@/components/hr/EmployeeBadgePrintControls";
 import { JobFunctionsEditor } from "@/components/hr/JobFunctionsEditor";
 import { ShortNameEditor } from "@/components/hr/ShortNameEditor";
-import { badgeDisplayName, listActiveBadgeEmployees } from "@/lib/hr/badge-print";
-import { employeeAlterationQrPayload, employeeQrPayload } from "@/lib/hr/employee-qr";
+import {
+  BADGE_QR_ALT_LABEL,
+  BADGE_QR_BUTTONS_LABEL,
+  BADGE_QR_IRON_LABEL,
+  BADGE_QR_SEW_LABEL,
+  badgeDisplayName,
+  badgeQrPairKind,
+  listActiveBadgeEmployees,
+} from "@/lib/hr/badge-print";
+import {
+  employeeAlterationQrPayload,
+  employeeButtonsQrPayload,
+  employeeIroningQrPayload,
+  employeeQrPayload,
+} from "@/lib/hr/employee-qr";
 import { type IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
@@ -27,7 +40,7 @@ const GROUP_COPY: Record<
   expat: {
     title: "Expat employee ID badges",
     description:
-      "Expat badge group. Sew QR (EMP) for normal stitching; Alteration QR (EMPALT) starts alteration work and notifies Pattern to update the chart.",
+      "Expat badge group. Tailors: Sew (EMP) + Alteration (EMPALT). Wash/iron + Buttons workers (e.g. Cherry): Ironing (EMPIRON) + Buttons (EMPBTN) so Live shows the chosen job.",
     emptyHint: "No active Expat employees yet. Add one below.",
   },
 };
@@ -133,8 +146,19 @@ export function EmployeeQrWorkspace({
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((employee) => {
-            const payload = employeeQrPayload(employee);
-            const altPayload = employeeAlterationQrPayload(employee);
+            const pairKind = badgeQrPairKind(employee);
+            const payload =
+              pairKind === "iron_buttons"
+                ? employeeIroningQrPayload(employee)
+                : employeeQrPayload(employee);
+            const altPayload =
+              pairKind === "iron_buttons"
+                ? employeeButtonsQrPayload(employee)
+                : employeeAlterationQrPayload(employee);
+            const leftLabel =
+              pairKind === "iron_buttons" ? BADGE_QR_IRON_LABEL : BADGE_QR_SEW_LABEL;
+            const rightLabel =
+              pairKind === "iron_buttons" ? BADGE_QR_BUTTONS_LABEL : BADGE_QR_ALT_LABEL;
             const qrSrc = qrImageUrl(payload, QR_SIZE);
             const altQrSrc = qrImageUrl(altPayload, QR_SIZE);
 
@@ -174,24 +198,28 @@ export function EmployeeQrWorkspace({
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={qrSrc}
-                      alt={`Sew QR for ${employee.full_name}`}
+                      alt={`${leftLabel} QR for ${employee.full_name}`}
                       width={QR_SIZE}
                       height={QR_SIZE}
                       className="rounded-lg border border-slate-200"
                     />
-                    <p className="mt-1 text-[10px] font-semibold uppercase text-slate-600">Sew</p>
+                    <p className="mt-1 text-[10px] font-semibold uppercase text-slate-600">
+                      {leftLabel}
+                    </p>
                     <p className="font-mono text-[9px] text-slate-400">{payload}</p>
                   </div>
                   <div className="flex flex-col items-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={altQrSrc}
-                      alt={`Alteration QR for ${employee.full_name}`}
+                      alt={`${rightLabel} QR for ${employee.full_name}`}
                       width={QR_SIZE}
                       height={QR_SIZE}
                       className="rounded-lg border-2 border-amber-600"
                     />
-                    <p className="mt-1 text-[10px] font-bold uppercase text-amber-800">Alteration</p>
+                    <p className="mt-1 text-[10px] font-bold uppercase text-amber-800">
+                      {rightLabel}
+                    </p>
                     <p className="font-mono text-[9px] text-slate-400">{altPayload}</p>
                   </div>
                 </div>

@@ -73,7 +73,9 @@ function stitchBucket(
 function stitchCaption(bucket: StitchBucket, live: SewingSession | null): string | null {
   if (bucket === "ready") return "Ready";
   if (bucket === "in_process") {
-    return live ? floorActivityNowLabel(live.job_functions, live.work_kind) : "On floor now";
+    return live
+      ? floorActivityNowLabel(live.job_functions, live.work_kind, live.activity_job_function)
+      : "On floor now";
   }
   if (bucket === "done") return "Left";
   return null;

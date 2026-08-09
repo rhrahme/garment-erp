@@ -1,3 +1,4 @@
+import { employeeUsesIronButtonsBadgePair } from "@/lib/hr/employee-qr";
 import {
   EMPLOYEE_JOB_FUNCTION_LABELS,
   normalizeJobFunctions,
@@ -57,7 +58,8 @@ export const BADGE_CARD_WIDTH_MM = 85.6;
 export const BADGE_CARD_HEIGHT_MM = 54;
 
 /**
- * Dual badge QRs: Sew (EMP) + Alteration (EMPALT).
+ * Dual badge QRs: Sew (EMP) + Alteration (EMPALT), or Ironing (EMPIRON) +
+ * Buttons (EMPBTN) for wash_iron + buttons floor workers.
  * Gap is a fixed 3cm clear distance between code edges - not "opposite card edges".
  */
 export const BADGE_QR_DISPLAY_MM = 20;
@@ -65,9 +67,20 @@ export const BADGE_QR_GAP_MM = 30;
 export const BADGE_QR_FETCH_PX = 240;
 export const BADGE_QR_SEW_LABEL = "SEWING";
 export const BADGE_QR_ALT_LABEL = "ALTERATION";
+export const BADGE_QR_IRON_LABEL = "IRONING";
+export const BADGE_QR_BUTTONS_LABEL = "BUTTONS";
 /** Pair width = QR + 3cm gap + QR (centered on the card). */
 export const BADGE_QR_PAIR_WIDTH_MM =
   BADGE_QR_DISPLAY_MM + BADGE_QR_GAP_MM + BADGE_QR_DISPLAY_MM;
+
+export type BadgeQrPairKind = "sew_alt" | "iron_buttons";
+
+/** Which dual-QR pair to print for this employee. */
+export function badgeQrPairKind(
+  employee: Pick<PayrollEmployee, "job_functions">
+): BadgeQrPairKind {
+  return employeeUsesIronButtonsBadgePair(employee) ? "iron_buttons" : "sew_alt";
+}
 
 /** A4 portrait grid: 2 x 5 = 10 cards per sheet. */
 export const BADGE_CARDS_PER_ROW = 2;

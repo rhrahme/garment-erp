@@ -5,18 +5,26 @@ import {
   BADGE_CARDS_PER_PAGE,
   BADGE_CARDS_PER_ROW,
   BADGE_QR_ALT_LABEL,
+  BADGE_QR_BUTTONS_LABEL,
   BADGE_QR_DISPLAY_MM,
   BADGE_QR_FETCH_PX,
   BADGE_QR_GAP_MM,
+  BADGE_QR_IRON_LABEL,
   BADGE_QR_PAIR_WIDTH_MM,
   BADGE_QR_SEW_LABEL,
   BADGE_ROWS_PER_PAGE,
   badgeDisplayName,
   badgeJobFunctionsLine,
   badgePrintDateLabel,
+  badgeQrPairKind,
   chunkBadgePages,
 } from "@/lib/hr/badge-print";
-import { employeeAlterationQrPayload, employeeQrPayload } from "@/lib/hr/employee-qr";
+import {
+  employeeAlterationQrPayload,
+  employeeButtonsQrPayload,
+  employeeIroningQrPayload,
+  employeeQrPayload,
+} from "@/lib/hr/employee-qr";
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageFetchUrl } from "@/lib/production/qr-labels";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
@@ -67,7 +75,9 @@ function drawBadgeCard(
   altQrDataUrl: string,
   x: number,
   y: number,
-  printedLabel: string
+  printedLabel: string,
+  leftLabel: string,
+  rightLabel: string
 ) {
   const w = BADGE_CARD_WIDTH_MM;
   const h = BADGE_CARD_HEIGHT_MM;
@@ -169,7 +179,7 @@ function drawBadgeCard(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.text(
-    BADGE_QR_SEW_LABEL,
+    leftLabel,
     sewX + BADGE_QR_DISPLAY_MM / 2,
     qrDrawY + BADGE_QR_DISPLAY_MM + 2.4,
     { align: "center" }
@@ -183,7 +193,7 @@ function drawBadgeCard(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.text(
-    BADGE_QR_ALT_LABEL,
+    rightLabel,
     altX + BADGE_QR_DISPLAY_MM / 2,
     qrDrawY + BADGE_QR_DISPLAY_MM + 2.4,
     { align: "center" }
@@ -222,8 +232,18 @@ export async function generateEmployeeBadgePdf(
       const x = PAGE_MARGIN_MM + col * (BADGE_CARD_WIDTH_MM + GAP_X_MM);
       const y = PAGE_MARGIN_MM + row * (BADGE_CARD_HEIGHT_MM + GAP_Y_MM);
 
-      const payload = employeeQrPayload(employee);
-      const altPayload = employeeAlterationQrPayload(employee);
+      const pairKind = badgeQrPairKind(employee);
+      const payload =
+        pairKind === "iron_buttons"
+          ? employeeIroningQrPayload(employee)
+          : employeeQrPayload(employee);
+      const altPayload =
+        pairKind === "iron_buttons"
+          ? employeeButtonsQrPayload(employee)
+          : employeeAlterationQrPayload(employee);
+      const leftLabel = pairKind === "iron_buttons" ? BADGE_QR_IRON_LABEL : BADGE_QR_SEW_LABEL;
+      const rightLabel =
+        pairKind === "iron_buttons" ? BADGE_QR_BUTTONS_LABEL : BADGE_QR_ALT_LABEL;
       let qrDataUrl = qrCache.get(payload);
       if (!qrDataUrl) {
         qrDataUrl = await fetchQrDataUrl(payload);
@@ -235,7 +255,18 @@ export async function generateEmployeeBadgePdf(
         qrCache.set(altPayload, altQrDataUrl);
       }
 
-      drawBadgeCard(doc, employee, group, qrDataUrl, altQrDataUrl, x, y, printedLabel);
+      drawBadgeCard(
+        doc,
+        employee,
+        group,
+        qrDataUrl,
+        altQrDataUrl,
+        x,
+        y,
+        printedLabel,
+        leftLabel,
+        rightLabel
+      );
     }
   }
 

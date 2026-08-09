@@ -12,28 +12,35 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Badge `job_functions` is the source of truth for activity labels** (Cutting /
   Sewing / Wash / Iron / Buttons) site-wide - Scan, Live, Performance, History,
   Orders. Never hardcode "Sewing".
-- **ID badges carry two QRs**: `EMP:{id}` (normal sew) and `EMPALT:{id}`
-  (alteration). Alteration QR arms the next piece as `work_kind=alteration`;
-  Live/History/Orders highlight **Alteration** (amber) without replacing
-  job_functions. **Any tailor may run alterations for now** - that is why
-  EMPALT is a separate QR/mode, not a payroll `job_function`. Later, when
-  headcount allows a dedicated alterations team, we may add Alteration as a
-  job_function; until then do not require a special role and do not strip
-  EMPALT. USB wedge reassembly must treat `EMPALT` / `EMPALT:` as partial
-  fragments (never collapse to `EMP:`). Starting an alteration session writes
-  `pattern_alteration_pending` (idempotent per session) and notifies Pattern
-  (`production.alteration_started` / `pattern.alteration_chart_pending`) for
-  that article + same-fabric siblings on the SO (article # from sticker L##
-  when present). Pending write/notify failures must not fail the stitch scan;
-  `/pattern` heals missing rows from open alteration sessions. Pattern clears
-  via Acknowledge / Chart updated. Pattern is not required before the tailor
-  starts. Pattern enters stitcher comments on the client measurement sheet
-  (per-line Remark + bottom Stitcher comments) and/or from the alteration
-  queue; those print on the Production / stitcher A4. **Badge layout**: QRs
-  are 20mm with full labels **SEWING** / **ALTERATION**, centered as a pair
-  with a fixed **3cm** clear gap between code edges (not opposite card edges,
-  not abbreviated SEW/ALT). Reprint Expats badges after dual-QR / layout
-  changes.
+- **ID badges carry two QRs**. Tailors (and most roles): `EMP:{id}` (normal
+  sew) and `EMPALT:{id}` (alteration). Alteration QR arms the next piece as
+  `work_kind=alteration`; Live/History/Orders highlight **Alteration** (amber)
+  without replacing job_functions. **Any tailor may run alterations for now**
+  - that is why EMPALT is a separate QR/mode, not a payroll `job_function`.
+  Later, when headcount allows a dedicated alterations team, we may add
+  Alteration as a job_function; until then do not require a special role and
+  do not strip EMPALT.
+- **Wash/iron + Buttons dual-role badges** (Aug 10 2026): when an employee has
+  both `wash_iron` and `buttons` and no tailor role (e.g. Cherry), the card
+  prints **IRONING** (`EMPIRON:{id}`) + **BUTTONS** (`EMPBTN:{id}`) instead of
+  SEWING/ALTERATION. Scanning arms `activity_job_function` so Live shows
+  Ironing or Buttons for that session (not always Wash / iron from role
+  priority). Rohan (wash_iron only) keeps SEWING/ALTERATION. USB wedge
+  reassembly must treat `EMPALT` / `EMPIRON` / `EMPBTN` (and `:` variants) as
+  partial fragments (never collapse to `EMP:`). Starting an alteration session
+  writes `pattern_alteration_pending` (idempotent per session) and notifies
+  Pattern (`production.alteration_started` / `pattern.alteration_chart_pending`)
+  for that article + same-fabric siblings on the SO (article # from sticker
+  L## when present). Pending write/notify failures must not fail the stitch
+  scan; `/pattern` heals missing rows from open alteration sessions. Pattern
+  clears via Acknowledge / Chart updated. Pattern is not required before the
+  tailor starts. Pattern enters stitcher comments on the client measurement
+  sheet (per-line Remark + bottom Stitcher comments) and/or from the
+  alteration queue; those print on the Production / stitcher A4. **Badge
+  layout**: QRs are 20mm with full labels (**SEWING** / **ALTERATION**, or
+  **IRONING** / **BUTTONS**), centered as a pair with a fixed **3cm** clear
+  gap between code edges (not opposite card edges, not abbreviated). Reprint
+  Expats badges after dual-QR / layout changes.
 - **All employees on the Expats ID badge list may use the kiosk** - cutters,
   wash/iron, buttons, not only tailors. Do not re-add a tailor-only gate.
 - **Multi-arm queue is intentional**: several employees may be badge-ready at

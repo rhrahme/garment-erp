@@ -133,7 +133,8 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
                   {sewingSessionStatusLabel(
                     session.status,
                     session.job_functions,
-                    session.work_kind
+                    session.work_kind,
+                    session.activity_job_function
                   )}
                 </span>
               </li>

@@ -46,11 +46,36 @@ export function floorActivityLabelFromJobFunctions(values: unknown): string {
   return "Sewing";
 }
 
+/**
+ * Label when a dual-role badge armed a specific activity (EMPIRON / EMPBTN).
+ * wash_iron arms show "Ironing" (not the payroll "Wash / iron" catalog label).
+ */
+export function floorActivityLabelFromActivityJobFunction(
+  activity: EmployeeJobFunction | null | undefined
+): string | null {
+  if (activity === "wash_iron") return "Ironing";
+  if (activity === "buttons") return "Buttons";
+  return null;
+}
+
+/** Resolve Live/Scan activity label: armed role wins, else job_functions priority. */
+export function resolveFloorActivityLabel(
+  jobFunctions?: unknown,
+  workKind?: SewingWorkKind | null,
+  activityJobFunction?: EmployeeJobFunction | null
+): string {
+  if (workKind === "alteration") return "Alteration";
+  const armed = floorActivityLabelFromActivityJobFunction(activityJobFunction);
+  if (armed) return armed;
+  return floorActivityLabelFromJobFunctions(jobFunctions);
+}
+
 /** Display label for Live / History status badges (job-aware when open). */
 export function sewingSessionStatusLabel(
   status: SewingSessionStatus,
   jobFunctions?: unknown,
-  workKind?: SewingWorkKind | null
+  workKind?: SewingWorkKind | null,
+  activityJobFunction?: EmployeeJobFunction | null
 ): string {
   if (status === "closing") {
     return workKind === "alteration" ? "Closing alteration" : "Closing";
@@ -59,8 +84,7 @@ export function sewingSessionStatusLabel(
     return workKind === "alteration" ? "Alteration done" : "Closed";
   }
   if (status === "abandoned") return "Abandoned";
-  if (workKind === "alteration") return "Alteration";
-  return floorActivityLabelFromJobFunctions(jobFunctions);
+  return resolveFloorActivityLabel(jobFunctions, workKind, activityJobFunction);
 }
 
 /** Tailwind classes for Live / History status pills (amber = alteration). */
@@ -80,19 +104,21 @@ export function sewingSessionStatusBadgeClass(
 /** Scan kiosk primary heading while a piece session is open. */
 export function floorActivityInProgressLabel(
   values: unknown,
-  workKind?: SewingWorkKind | null
+  workKind?: SewingWorkKind | null,
+  activityJobFunction?: EmployeeJobFunction | null
 ): string {
   if (workKind === "alteration") return "Alteration in progress";
-  return `${floorActivityLabelFromJobFunctions(values)} in progress`;
+  return `${resolveFloorActivityLabel(values, workKind, activityJobFunction)} in progress`;
 }
 
 /** Orders board caption for a live open session (Cutting now / Sewing now / ...). */
 export function floorActivityNowLabel(
   values: unknown,
-  workKind?: SewingWorkKind | null
+  workKind?: SewingWorkKind | null,
+  activityJobFunction?: EmployeeJobFunction | null
 ): string {
   if (workKind === "alteration") return "Alteration now";
-  return `${floorActivityLabelFromJobFunctions(values)} now`;
+  return `${resolveFloorActivityLabel(values, workKind, activityJobFunction)} now`;
 }
 
 /**
@@ -104,12 +130,14 @@ export function floorActivitySessionStartedMessage(
   jobFunctions: unknown,
   productionCode: string,
   pieceMark?: string | null,
-  workKind?: SewingWorkKind | null
+  workKind?: SewingWorkKind | null,
+  activityJobFunction?: EmployeeJobFunction | null
 ): string {
-  const activity =
-    workKind === "alteration"
-      ? "alteration"
-      : floorActivityLabelFromJobFunctions(jobFunctions).toLowerCase();
+  const activity = resolveFloorActivityLabel(
+    jobFunctions,
+    workKind,
+    activityJobFunction
+  ).toLowerCase();
   const mark = pieceMark?.trim() ? ` (${pieceMark.trim()})` : "";
   return `${employeeName} ${activity} ${productionCode}${mark}.`;
 }

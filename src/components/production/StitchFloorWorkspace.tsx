@@ -212,8 +212,18 @@ function compareLiveSessions(
       );
     case "status":
       return compareSortStrings(
-        sewingSessionStatusLabel(a.status, a.job_functions, a.work_kind),
-        sewingSessionStatusLabel(b.status, b.job_functions, b.work_kind)
+        sewingSessionStatusLabel(
+          a.status,
+          a.job_functions,
+          a.work_kind,
+          a.activity_job_function
+        ),
+        sewingSessionStatusLabel(
+          b.status,
+          b.job_functions,
+          b.work_kind,
+          b.activity_job_function
+        )
       );
     default:
       return 0;
@@ -247,8 +257,18 @@ function compareHistorySessions(a: SewingSession, b: SewingSession, key: History
       return compareSortNumbers(a.duration_sec, b.duration_sec);
     case "status":
       return compareSortStrings(
-        sewingSessionStatusLabel(a.status, a.job_functions, a.work_kind),
-        sewingSessionStatusLabel(b.status, b.job_functions, b.work_kind)
+        sewingSessionStatusLabel(
+          a.status,
+          a.job_functions,
+          a.work_kind,
+          a.activity_job_function
+        ),
+        sewingSessionStatusLabel(
+          b.status,
+          b.job_functions,
+          b.work_kind,
+          b.activity_job_function
+        )
       );
     default:
       return 0;
@@ -628,7 +648,8 @@ export function StitchFloorWorkspace({
                             {sewingSessionStatusLabel(
                               session.status,
                               session.job_functions,
-                              session.work_kind
+                              session.work_kind,
+                              session.activity_job_function
                             )}
                           </span>
                         </td>
@@ -1001,7 +1022,12 @@ export function StitchFloorWorkspace({
                               sewingSessionStatusBadgeClass(row.status, row.work_kind)
                             )}
                           >
-                            {sewingSessionStatusLabel(row.status, row.job_functions, row.work_kind)}
+                            {sewingSessionStatusLabel(
+                              row.status,
+                              row.job_functions,
+                              row.work_kind,
+                              row.activity_job_function
+                            )}
                           </span>
                         </td>
                       </tr>

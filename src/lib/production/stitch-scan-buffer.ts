@@ -1,13 +1,18 @@
 /**
  * USB wedge scanners sometimes pause mid-code long enough that an aggressive
  * idle flush splits one QR into fragments (FR-0129 + -L02-OS-1/2, EMP + :id,
- * EMPALT + :id). These helpers detect and reassemble those fragments.
+ * EMPALT / EMPIRON / EMPBTN + :id). These helpers detect and reassemble those
+ * fragments.
  */
 
-/** Incomplete EMP / EMPALT badge prefixes the wedge may flush alone. */
+/** Incomplete EMP* badge prefixes the wedge may flush alone. */
 function looksLikePartialEmployeeBadgePrefix(code: string): boolean {
-  // EMP, EMP:, EMPA, EMPAL, EMPALT, EMPALT: (and case variants)
-  return /^EMP(?:A(?:L(?:T)?)?)?:?$/i.test(code.trim());
+  const c = code.trim();
+  // EMP / EMP: / EMPA..EMPALT: / EMPI..EMPIRON: / EMPB..EMPBTN:
+  if (/^EMP(?:A(?:L(?:T)?)?)?:?$/i.test(c)) return true;
+  if (/^EMP(?:I(?:R(?:O(?:N)?)?)?)?:?$/i.test(c)) return true;
+  if (/^EMP(?:B(?:T(?:N)?)?)?:?$/i.test(c)) return true;
+  return false;
 }
 
 /** True when a flushed buffer looks like an incomplete wedge fragment. */
@@ -34,23 +39,56 @@ export function tryMergeScanFragments(prev: string, next: string): string | null
   const b = next.trim();
   if (!a || !b) return null;
 
-  // EMPALT before EMP — EMP is a prefix of EMPALT and must not steal alteration scans.
-  // EMPALT + :2613429014  /  EMPALT: + 2613429014  /  EMPALT + 2613429014
+  // Longest EMP* prefixes before EMP — EMP is a prefix of EMPIRON / EMPBTN / EMPALT.
+
+  // EMPIRON + :id / EMPIRON: + id / EMPIRON + id
+  if (/^EMPIRON:?$/i.test(a) && /^:?\d{4,}$/.test(b)) {
+    return `EMPIRON:${b.replace(/^:/, "")}`;
+  }
+  // Mid-prefix EMPIR + ON:id / EMPI + RON:id / EMP + IRON:id
+  if (/^EMPIR$/i.test(a) && /^ON:?\d{4,}$/i.test(b)) {
+    return `EMPIRON:${b.replace(/^ON:?/i, "")}`;
+  }
+  if (/^EMPI$/i.test(a) && /^RON:?\d{4,}$/i.test(b)) {
+    return `EMPIRON:${b.replace(/^RON:?/i, "")}`;
+  }
+  if (/^EMP$/i.test(a) && /^IRON:?\d{4,}$/i.test(b)) {
+    return `EMPIRON:${b.replace(/^IRON:?/i, "")}`;
+  }
+
+  // EMPBTN + :id / EMPBTN: + id / EMPBTN + id
+  if (/^EMPBTN:?$/i.test(a) && /^:?\d{4,}$/.test(b)) {
+    return `EMPBTN:${b.replace(/^:/, "")}`;
+  }
+  if (/^EMPBT$/i.test(a) && /^N:?\d{4,}$/i.test(b)) {
+    return `EMPBTN:${b.replace(/^N:?/i, "")}`;
+  }
+  if (/^EMPB$/i.test(a) && /^TN:?\d{4,}$/i.test(b)) {
+    return `EMPBTN:${b.replace(/^TN:?/i, "")}`;
+  }
+  if (/^EMP$/i.test(a) && /^BTN:?\d{4,}$/i.test(b)) {
+    return `EMPBTN:${b.replace(/^BTN:?/i, "")}`;
+  }
+
+  // EMPALT + :id / EMPALT: + id / EMPALT + id
   if (/^EMPALT:?$/i.test(a) && /^:?\d{4,}$/.test(b)) {
     return `EMPALT:${b.replace(/^:/, "")}`;
   }
 
-  // EMP + :2613429014  /  EMP: + 2613429014  /  EMP + 2613429014
-  if (/^EMP:?$/i.test(a) && /^:?\d{4,}$/.test(b)) {
-    return `EMP:${b.replace(/^:/, "")}`;
-  }
-
-  // Mid-prefix EMPAL + T:2613... / EMPA + LT:2613... (rare but seen on slow wedges)
+  // Mid-prefix EMPAL + T:2613... / EMPA + LT:2613... / EMP + ALT:2613...
   if (/^EMPAL$/i.test(a) && /^T:?\d{4,}$/i.test(b)) {
     return `EMPALT:${b.replace(/^T:?/i, "")}`;
   }
   if (/^EMPA$/i.test(a) && /^LT:?\d{4,}$/i.test(b)) {
     return `EMPALT:${b.replace(/^LT:?/i, "")}`;
+  }
+  if (/^EMP$/i.test(a) && /^ALT:?\d{4,}$/i.test(b)) {
+    return `EMPALT:${b.replace(/^ALT:?/i, "")}`;
+  }
+
+  // EMP + :2613429014  /  EMP: + 2613429014  /  EMP + 2613429014
+  if (/^EMP:?$/i.test(a) && /^:?\d{4,}$/.test(b)) {
+    return `EMP:${b.replace(/^:/, "")}`;
   }
 
   // FR-0129 + -L02-OS-1/2

@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   BADGE_QR_ALT_LABEL,
+  BADGE_QR_BUTTONS_LABEL,
   BADGE_QR_DISPLAY_MM,
   BADGE_QR_GAP_MM,
+  BADGE_QR_IRON_LABEL,
   BADGE_QR_PAIR_WIDTH_MM,
   BADGE_QR_SEW_LABEL,
   badgeDisplayName,
@@ -13,6 +15,7 @@ import {
   badgePdfHref,
   badgePrintDateLabel,
   badgePrintHref,
+  badgeQrPairKind,
   chunkBadgePages,
   isBadgePrintableEmployee,
   listActiveBadgeEmployees,
@@ -50,6 +53,29 @@ describe("badge-print helpers", () => {
     assert.equal(BADGE_QR_PAIR_WIDTH_MM, 70);
     assert.equal(BADGE_QR_SEW_LABEL, "SEWING");
     assert.equal(BADGE_QR_ALT_LABEL, "ALTERATION");
+    assert.equal(BADGE_QR_IRON_LABEL, "IRONING");
+    assert.equal(BADGE_QR_BUTTONS_LABEL, "BUTTONS");
+  });
+
+  it("prints IRONING/BUTTONS for wash_iron+buttons (Cherry), SEWING/ALTERATION otherwise", () => {
+    assert.equal(
+      badgeQrPairKind(
+        emp({ id: "2543411918", full_name: "Cherry", job_functions: ["wash_iron", "buttons"] })
+      ),
+      "iron_buttons"
+    );
+    assert.equal(
+      badgeQrPairKind(
+        emp({ id: "2625918129", full_name: "Rohan", job_functions: ["wash_iron"] })
+      ),
+      "sew_alt"
+    );
+    assert.equal(
+      badgeQrPairKind(
+        emp({ id: "t1", full_name: "Tailor", job_functions: ["shirt_tailor"] })
+      ),
+      "sew_alt"
+    );
   });
 
   it("prefers short_name on badge label when set", () => {

@@ -1,15 +1,23 @@
 import {
   BADGE_QR_ALT_LABEL,
+  BADGE_QR_BUTTONS_LABEL,
   BADGE_QR_DISPLAY_MM,
   BADGE_QR_FETCH_PX,
   BADGE_QR_GAP_MM,
+  BADGE_QR_IRON_LABEL,
   BADGE_QR_PAIR_WIDTH_MM,
   BADGE_QR_SEW_LABEL,
   badgeDisplayName,
   badgeJobFunctionsLine,
   badgePrintDateLabel,
+  badgeQrPairKind,
 } from "@/lib/hr/badge-print";
-import { employeeAlterationQrPayload, employeeQrPayload } from "@/lib/hr/employee-qr";
+import {
+  employeeAlterationQrPayload,
+  employeeButtonsQrPayload,
+  employeeIroningQrPayload,
+  employeeQrPayload,
+} from "@/lib/hr/employee-qr";
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
@@ -49,10 +57,19 @@ export function EmployeeBadgeCard({
   employee: PayrollEmployee;
   group: IdBadgeGroup;
 }) {
-  const payload = employeeQrPayload(employee);
-  const altPayload = employeeAlterationQrPayload(employee);
-  const qrSrc = qrImageUrl(payload, BADGE_QR_FETCH_PX);
-  const altQrSrc = qrImageUrl(altPayload, BADGE_QR_FETCH_PX);
+  const pairKind = badgeQrPairKind(employee);
+  const leftPayload =
+    pairKind === "iron_buttons"
+      ? employeeIroningQrPayload(employee)
+      : employeeQrPayload(employee);
+  const rightPayload =
+    pairKind === "iron_buttons"
+      ? employeeButtonsQrPayload(employee)
+      : employeeAlterationQrPayload(employee);
+  const leftLabel = pairKind === "iron_buttons" ? BADGE_QR_IRON_LABEL : BADGE_QR_SEW_LABEL;
+  const rightLabel = pairKind === "iron_buttons" ? BADGE_QR_BUTTONS_LABEL : BADGE_QR_ALT_LABEL;
+  const qrSrc = qrImageUrl(leftPayload, BADGE_QR_FETCH_PX);
+  const altQrSrc = qrImageUrl(rightPayload, BADGE_QR_FETCH_PX);
   const label = groupLabel(group);
   const displayName = badgeDisplayName(employee);
   const jobsLine = badgeJobFunctionsLine(employee);
@@ -115,7 +132,7 @@ export function EmployeeBadgeCard({
                   }}
                 />
                 <p className="badge-qr-label mt-0.5 whitespace-nowrap text-center text-[6.5px] font-bold uppercase leading-none tracking-wide text-slate-700">
-                  {BADGE_QR_SEW_LABEL}
+                  {leftLabel}
                 </p>
               </div>
               <div
@@ -140,7 +157,7 @@ export function EmployeeBadgeCard({
                   }}
                 />
                 <p className="badge-qr-label badge-qr-label-alt mt-0.5 whitespace-nowrap text-center text-[6.5px] font-bold uppercase leading-none tracking-wide text-amber-800">
-                  {BADGE_QR_ALT_LABEL}
+                  {rightLabel}
                 </p>
               </div>
             </div>

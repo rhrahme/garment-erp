@@ -68,6 +68,14 @@ describe("sewingSessionStatusLabel", () => {
     assert.equal(sewingSessionStatusLabel("open", ["cutter"]), "Cutting");
     assert.equal(sewingSessionStatusLabel("open", ["shirt_tailor"]), "Sewing");
     assert.equal(
+      sewingSessionStatusLabel("open", ["wash_iron", "buttons"], "first_make", "wash_iron"),
+      "Ironing"
+    );
+    assert.equal(
+      sewingSessionStatusLabel("open", ["wash_iron", "buttons"], "first_make", "buttons"),
+      "Buttons"
+    );
+    assert.equal(
       sewingSessionStatusLabel("open", ["shirt_tailor"], "alteration"),
       "Alteration"
     );
@@ -116,6 +124,14 @@ describe("floorActivityInProgressLabel / Now / session started message", () => {
     );
     assert.equal(floorActivityNowLabel(["cutter"]), "Cutting now");
     assert.equal(floorActivityNowLabel(["wash_iron"]), "Wash / iron now");
+    assert.equal(
+      floorActivityNowLabel(["wash_iron", "buttons"], "first_make", "wash_iron"),
+      "Ironing now"
+    );
+    assert.equal(
+      floorActivityInProgressLabel(["wash_iron", "buttons"], "first_make", "buttons"),
+      "Buttons in progress"
+    );
     assert.equal(
       floorActivityInProgressLabel(["shirt_tailor"], "alteration"),
       "Alteration in progress"

@@ -136,8 +136,8 @@ export function explainUnrecognizedStitchScan(raw: string): string {
 
   if (looksLikeMalformedEmployeeBadge(trimmed)) {
     return (
-      `Malformed employee badge (${display}) - expected EMP:{id} or EMPALT:{id}. ` +
-      "Scan your EMP / Alteration badge or a production A4 piece QR."
+      `Malformed employee badge (${display}) - expected EMP:{id}, EMPALT:{id}, EMPIRON:{id}, or EMPBTN:{id}. ` +
+      "Scan your badge (Sew / Alteration / Ironing / Buttons) or a production A4 piece QR."
     );
   }
 
@@ -164,7 +164,7 @@ export function explainUnrecognizedStitchScan(raw: string): string {
 
   return (
     `Code not recognized: ${display}. ` +
-    "Stitch accepts EMP badge (EMP:{id}), Alteration badge (EMPALT:{id}), or production A4 piece QR " +
+    "Stitch accepts EMP / EMPALT / EMPIRON / EMPBTN badge QRs, or production A4 piece QR " +
     "(e.g. FR-0132-L07-JKT-1/2)."
   );
 }

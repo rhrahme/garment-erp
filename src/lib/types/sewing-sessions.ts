@@ -15,6 +15,11 @@ export type SewingKioskArm = {
   armed_at: string;
   /** Set when armed via EMPALT: alteration badge QR. */
   work_kind?: SewingWorkKind | null;
+  /**
+   * Role chosen by EMPIRON / EMPBTN dual-role badges.
+   * Live labels use this instead of the full job_functions priority list.
+   */
+  activity_job_function?: Extract<EmployeeJobFunction, "wash_iron" | "buttons"> | null;
 };
 
 /** Short-lived: A4 scanned first, waiting for idle employee badge to start. */
@@ -84,6 +89,11 @@ export type SewingSession = {
    * Live / History show Alteration without replacing job_functions activity.
    */
   work_kind?: SewingWorkKind | null;
+  /**
+   * Role chosen by EMPIRON / EMPBTN when the session started.
+   * Live / History show Ironing or Buttons for that session.
+   */
+  activity_job_function?: Extract<EmployeeJobFunction, "wash_iron" | "buttons"> | null;
 };
 
 export type SewingSessionsFile = {
