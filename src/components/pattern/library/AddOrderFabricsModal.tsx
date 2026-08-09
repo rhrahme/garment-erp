@@ -286,7 +286,7 @@ export function AddOrderFabricsModal({
                                   </span>
                                   {other ? (
                                     <span className="mt-0.5 block text-[11px] text-amber-700">
-                                      On {other.pattern_ref}  -  will move here
+                                      On {other.pattern_ref} - will move here
                                     </span>
                                   ) : null}
                                 </span>
