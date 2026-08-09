@@ -97,7 +97,7 @@ function dictionaryPointsForPiece(
 
 /**
  * Reduced specs for one piece: curated trouser list, else full dictionary
- * for that piece (overshirt / jacket / shirt / …).
+ * for that piece (overshirt / jacket / shirt / ...).
  */
 export function reducedPointSpecsForPiece(
   dictionary: MeasurementPointDef[],
