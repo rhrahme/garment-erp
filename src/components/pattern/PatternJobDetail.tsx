@@ -15,6 +15,7 @@ import {
   type LibraryUploadResponse,
 } from "@/components/pattern/library/LibraryFileList";
 import { NestEstimatePanel } from "@/components/pattern/library/NestEstimatePanel";
+import { SewingA4PrintControls } from "@/components/pattern/library/SewingA4PrintControls";
 import { PatternStageScanPanel } from "@/components/pattern/PatternStageScanPanel";
 import type { GarmentTypeChangeFlag } from "@/lib/sales-orders/garment-type-change-flags";
 import {
@@ -736,11 +737,12 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
           Print A4 size sheet
         </h3>
         <p className="text-sm text-slate-500">
-          Prints this job&apos;s fabric ({job.fabric_number}) only - even when the
-          measurement sheet is shared with other fabrics.
+          Print A4 / cutter = this job&apos;s fabric ({job.fabric_number}) only.
+          Sewing A4s / Print production let you Select all consolidated fabrics
+          (each with its own QR) or tick a subset.
         </p>
-        {printHref ? (
-          <div className="flex flex-wrap gap-2">
+        {printHref && job.client_pattern_id ? (
+          <div className="flex flex-wrap items-center gap-2">
             <Link
               href={printHref}
               target="_blank"
@@ -759,6 +761,23 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
                 Print cutter · {job.fabric_number}
               </Link>
             ) : null}
+            <SewingA4PrintControls
+              patternId={job.client_pattern_id}
+              clientId={job.client_id}
+              versionId={job.client_pattern_version_id}
+              sheetKind="production"
+              label="Print production"
+              showNewBadge={false}
+              emphasize={false}
+              defaultLineIds={[job.sales_order_line_id]}
+            />
+            <SewingA4PrintControls
+              patternId={job.client_pattern_id}
+              clientId={job.client_id}
+              versionId={job.client_pattern_version_id}
+              sheetKind="sewing"
+              defaultLineIds={[job.sales_order_line_id]}
+            />
             {photosPrintHref ? (
               <Link
                 href={photosPrintHref}

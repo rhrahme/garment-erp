@@ -148,11 +148,25 @@ export function PatternAlterationPendingPanelClient({
                   .join(", ")
               : null;
           // Editor lives under /library/clients; /client-patterns is print-only.
+          // Scope print to this article's SO line when known (not every consolidated fabric).
+          const scopedLineId =
+            item.related_articles.find(
+              (row) =>
+                row.sales_order_line_id &&
+                (row.fabric_number?.trim() === item.fabric_number?.trim() ||
+                  row.production_code?.trim() === item.production_code?.trim())
+            )?.sales_order_line_id ??
+            item.related_articles.find((row) => row.sales_order_line_id)?.sales_order_line_id ??
+            null;
           const sheetHref = item.client_pattern_id
-            ? `/pattern/library/clients/${encodeURIComponent(item.client_pattern_id)}`
+            ? `/pattern/library/clients/${encodeURIComponent(item.client_pattern_id)}${
+                scopedLineId ? `?line=${encodeURIComponent(scopedLineId)}` : ""
+              }`
             : null;
           const printHref = item.client_pattern_id
-            ? `/pattern/client-patterns/${encodeURIComponent(item.client_pattern_id)}/print?sheet=production`
+            ? `/pattern/client-patterns/${encodeURIComponent(item.client_pattern_id)}/print?sheet=production${
+                scopedLineId ? `&line=${encodeURIComponent(scopedLineId)}` : ""
+              }`
             : null;
           const draft = drafts[item.id] ?? item.stitcher_comments ?? "";
           const dirty = draft.trim() !== (item.stitcher_comments ?? "").trim();

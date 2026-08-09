@@ -51,22 +51,18 @@ export const PATTERN_SHEET_PRINT_CSS = `
   .cut-nest-block { page-break-inside: auto; }
   .pattern-sheet-page { break-after: page; page-break-after: always; }
   .pattern-sheet-page:last-child { break-after: auto; page-break-after: auto; }
-  /* Single production sheet stays one A4; sewing pack paginates per piece. */
-  .pattern-sheet-production.pattern-sheet-page:not(.pattern-sheet-sewing) {
+  /* Production + sewing: one A4 per stitcher page (article x piece), each with its QR. */
+  .pattern-sheet-production.pattern-sheet-page {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+  .pattern-sheet-production.pattern-sheet-page:last-child {
     break-after: auto !important;
     page-break-after: auto !important;
   }
   /* Cutter: one fabric article per A4 - keep nest short so QRs stay on the same page. */
   .pattern-sheet-cutter .cut-nest-svg {
     max-height: 28mm !important;
-  }
-  .pattern-sheet-sewing.pattern-sheet-page {
-    break-after: page !important;
-    page-break-after: always !important;
-  }
-  .pattern-sheet-sewing.pattern-sheet-page:last-child {
-    break-after: auto !important;
-    page-break-after: auto !important;
   }
   /* Batch: keep page breaks between jobs; only the last page of the pack stops. */
   .pattern-batch-root .pattern-batch-job-block .pattern-sheet-page {
@@ -110,7 +106,8 @@ function sheetQuery(
     (data.article_pages.length === 1 ? data.article_pages[0]?.line_id : null);
   if (data.scoped_job_id && scopedLine) params.set("line", scopedLine);
   const lines = lineIds ?? data.article_pages.map((page) => page.line_id);
-  if (kind === "sewing" && lines.length > 0) params.set("lines", lines.join(","));
+  // Keep fabric subset when switching sheet kinds / PDF (unscoped masters).
+  if (!data.scoped_job_id && lines.length > 0) params.set("lines", lines.join(","));
   return params.toString();
 }
 
@@ -920,7 +917,7 @@ export function PatternSheetPrintView({
     ? "production"
     : isProduction
       ? "cutter"
-      : "production";
+      : "sewing";
   const otherQs = withMeasurementUnitParam(
     `/pattern/client-patterns/${pattern.id}/print?${sheetQuery(switchKind, data)}`,
     displayUnit

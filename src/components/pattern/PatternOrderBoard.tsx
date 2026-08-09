@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
+  CircleHelp,
   Eye,
   ImageOff,
   Layers,
@@ -71,6 +72,7 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
   /** Sheet kind for batch Print selected (order board). */
   const [printSheetKind, setPrintSheetKind] = useState<PatternSheetKind>("production");
+  const [printHelpOpen, setPrintHelpOpen] = useState(false);
   const [consolidateOpen, setConsolidateOpen] = useState(false);
   const [autoBusy, setAutoBusy] = useState(false);
   const [autoSummary, setAutoSummary] = useState<string | null>(null);
@@ -357,9 +359,9 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
           ) : null}
           {justConsolidatedId ? (
             <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
-              Fabrics consolidated onto one measurement sheet. Tick the fabrics you need,
-              choose Production / Sewing / Cutter, then Print selected - do not print from
-              the bare master link.
+              Fabrics consolidated onto one measurement sheet. Tick Select all or a
+              subset, choose Production / Sewing / Cutter, then Print selected - each
+              fabric prints with its own QR (piece-split when needed).
             </p>
           ) : null}
           {patternsForClient.length > 0 ? (
@@ -461,32 +463,73 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
                   <option value="cutter">Cutter</option>
                 </select>
               </label>
-              {batchPrintHref ? (
-                <Link
-                  href={batchPrintHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium",
-                    selectedLinkedCount > 0
-                      ? "bg-indigo-600 text-white hover:bg-indigo-700"
-                      : "pointer-events-none bg-slate-200 text-slate-400"
+              <div className="relative">
+                <div className="inline-flex items-stretch overflow-hidden rounded-lg shadow-sm ring-2 ring-amber-400">
+                  {batchPrintHref ? (
+                    <Link
+                      href={batchPrintHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium",
+                        selectedLinkedCount > 0
+                          ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                          : "pointer-events-none bg-slate-200 text-slate-400"
+                      )}
+                      aria-disabled={selectedLinkedCount === 0}
+                      onClick={() => setPrintHelpOpen(false)}
+                    >
+                      <Printer className="h-3.5 w-3.5" />
+                      Print selected
+                      <span className="rounded bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-950">
+                        New
+                      </span>
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      className="inline-flex items-center gap-1.5 bg-slate-200 px-3 py-1.5 text-sm font-medium text-slate-400"
+                    >
+                      <Printer className="h-3.5 w-3.5" />
+                      Print selected
+                    </button>
                   )}
-                  aria-disabled={selectedLinkedCount === 0}
-                >
-                  <Printer className="h-3.5 w-3.5" />
-                  Print selected
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  disabled
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-200 px-3 py-1.5 text-sm font-medium text-slate-400"
-                >
-                  <Printer className="h-3.5 w-3.5" />
-                  Print selected
-                </button>
-              )}
+                  <button
+                    type="button"
+                    onClick={() => setPrintHelpOpen((prev) => !prev)}
+                    className="inline-flex items-center border-l border-indigo-500 bg-indigo-600 px-2 text-white hover:bg-indigo-700"
+                    aria-label="What is Print selected?"
+                    aria-expanded={printHelpOpen}
+                    title="What is Print selected?"
+                  >
+                    <CircleHelp className="h-4 w-4" />
+                  </button>
+                </div>
+                {printHelpOpen ? (
+                  <div className="absolute right-0 z-30 mt-2 top-full w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-amber-200 bg-amber-50 p-3 shadow-lg">
+                    <div className="mb-1 flex items-start justify-between gap-2">
+                      <p className="text-sm font-semibold text-amber-950">
+                        Print selected - what is this?
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setPrintHelpOpen(false)}
+                        className="rounded-md p-1 text-amber-700 hover:bg-amber-100"
+                        aria-label="Close help"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <p className="text-xs leading-relaxed text-amber-900">
+                      Tick Select all or only the fabrics you need, choose Production /
+                      Sewing / Cutter, then open one preview. Each fabric prints with its
+                      own floor QR; multi-piece garments split Overshirt / Trouser onto
+                      separate A4s for different stitchers.
+                    </p>
+                  </div>
+                ) : null}
+              </div>
               <Button
                 size="sm"
                 onClick={() => setConsolidateOpen(true)}

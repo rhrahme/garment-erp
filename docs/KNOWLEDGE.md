@@ -177,7 +177,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Copy sizes to consolidations** (Aug 9 2026): on a filled client sheet,
   tab **Copy sizes** lists other same-client + same-garment consolidated
   sheets and can overwrite (or fill-empty) their measurements + unit from
-  this sheet. API: `/api/pattern/library/client-patterns/[id]/copy-measurements`
+  this sheet. Tab shows amber **New** badge + **?** help tip (same pattern
+  as Sewing A4s). API: `/api/pattern/library/client-patterns/[id]/copy-measurements`
   + `/api/v1/...` (event `client_pattern.measurements_copied`).
 
 ## Printing
@@ -210,9 +211,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Overshirt (or Jacket/Shirt) on page 1 and Trouser on page 2 - each with that
   piece's floor QR + filtered measurements - so different stitchers get their
   own sheet. Single-piece garments (Shorts, Shirt, Thobe, ...) stay one page.
-  **Sewing A4s** ticks which fabric articles to include; **Print production**
-  expands the same piece split for linked articles. Do not collapse back to
-  first-linked-line-only or put Overshirt+Trouser QRs on one shared page.
+  **Print production** and **Sewing A4s** both open the fabric tick picker
+  (Select all or subset) on the client sheet and job page; each ticked fabric
+  gets its own QR pages via `?lines=`. Order board **Print selected** is the
+  same idea across jobs. Browser print must page-break between stitcher A4s
+  (production CSS matches sewing - do not force `page-break-after: auto` on
+  multi-page production packs). Do not collapse back to first-linked-line-only
+  or put Overshirt+Trouser QRs on one shared page.
 - **Cutter sheet = one A4 per fabric** (Aug 9 2026): Print cutter keeps nest +
   all piece floor QRs (Overshirt and Trouser) on **one** page. Do not split
   cutter by piece (that wasted a blank QR-only page). Multi-article masters
@@ -224,8 +229,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `?job={jobId}&line={sales_order_line_id}` so fabric + floor QR stay on
   that article (e.g. L31 `722026` not a sibling `206155`). Never open the
   bare master URL to print one fabric. Never guess "most recently updated
-  job" when multiple lines are linked. Master **Print cutter** /
-  **Print production** without `job=` expand one page per linked article.
+  job" when multiple lines are linked. Master **Print cutter** without `job=`
+  expands one page per linked article; stitcher packs use the tick picker
+  (`?lines=`) or job scope.
 - **Add fabrics from order on the sheet** (Aug 9 2026): on a client pattern
   Measurements toolbar, **Add fabrics from order** (and Grouped fabrics →
   Add from order) opens the client's SO fabric list to tick more lines onto

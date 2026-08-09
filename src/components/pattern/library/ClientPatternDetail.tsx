@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  CircleHelp,
   Copy,
   Download,
   History,
@@ -142,6 +143,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   const [linkedBase, setLinkedBase] = useState<LinkedBaseSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewTab>("measurements");
+  const [copySizesHelpOpen, setCopySizesHelpOpen] = useState(false);
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [headerDirty, setHeaderDirty] = useState(false);
@@ -816,10 +818,6 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
     `/pattern/client-patterns/${pattern.id}/print?sheet=cutter${sheetQs ? `&${sheetQs}` : ""}`,
     displayUnit
   );
-  const printProductionHref = withMeasurementUnitParam(
-    `/pattern/client-patterns/${pattern.id}/print?sheet=production${sheetQs ? `&${sheetQs}` : ""}`,
-    displayUnit
-  );
   const photosPrintHref = `/pattern/client-patterns/${pattern.id}/photos/print`;
   const pdfCutterHref = withMeasurementUnitParam(
     `/api/pattern/library/client-patterns/${pattern.id}/pdf?sheet=cutter${sheetQs ? `&${sheetQs}` : ""}`,
@@ -847,9 +845,11 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           <p className="font-semibold">Shared sheet after consolidate</p>
           <p className="mt-1 text-amber-900/90">
-            This measurement sheet is used by several fabrics. Open a fabric job
-            (or pick one under Linked drafting jobs) before Print A4 so the
-            printed fabric code matches that job - not a sibling article.
+            Several fabrics share these measurements. Use{" "}
+            <span className="font-semibold">Print production</span> or{" "}
+            <span className="font-semibold">Sewing A4s</span> and tick Select all
+            (or a subset) so each paper gets that fabric&apos;s QR - or open a
+            fabric job to print one article only.
           </p>
         </div>
       ) : null}
@@ -877,18 +877,22 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
             <Printer className="h-4 w-4" />
             Print cutter
           </Link>
-          <Link
-            href={printProductionHref}
-            target="_blank"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
-          >
-            <Printer className="h-4 w-4" />
-            Print production
-          </Link>
           <SewingA4PrintControls
             patternId={pattern.id}
             clientId={pattern.client_id}
             versionId={version?.id ?? null}
+            sheetKind="production"
+            label="Print production"
+            showNewBadge={false}
+            emphasize={false}
+            defaultLineIds={scopedLineId ? [scopedLineId] : null}
+          />
+          <SewingA4PrintControls
+            patternId={pattern.id}
+            clientId={pattern.client_id}
+            versionId={version?.id ?? null}
+            sheetKind="sewing"
+            defaultLineIds={scopedLineId ? [scopedLineId] : null}
           />
           <Link
             href={photosPrintHref}
@@ -1250,12 +1254,101 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         </div>
       ) : null}
 
-      {/* View tabs */}
-      <div className="flex flex-wrap gap-2">
+      {/* View tabs - Copy sizes keeps New badge + ? help like Sewing A4s */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            setCopySizesHelpOpen(false);
+            setView("measurements");
+          }}
+          className={cn(
+            "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+            view === "measurements"
+              ? "bg-indigo-600 text-white"
+              : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+          )}
+        >
+          Measurements
+        </button>
+        <div className="relative">
+          <div className="inline-flex items-stretch overflow-hidden rounded-lg shadow-sm ring-2 ring-amber-400">
+            <button
+              type="button"
+              onClick={() => {
+                setCopySizesHelpOpen(false);
+                setView("copy_sizes");
+              }}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors",
+                view === "copy_sizes"
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white text-slate-700 hover:bg-slate-50"
+              )}
+            >
+              Copy sizes
+              <span
+                className={cn(
+                  "rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+                  view === "copy_sizes"
+                    ? "bg-amber-400 text-amber-950"
+                    : "bg-amber-100 text-amber-800"
+                )}
+              >
+                New
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCopySizesHelpOpen((prev) => !prev)}
+              className={cn(
+                "inline-flex items-center border-l px-2",
+                view === "copy_sizes"
+                  ? "border-indigo-500 bg-indigo-600 text-white hover:bg-indigo-700"
+                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+              )}
+              aria-label="What is Copy sizes?"
+              aria-expanded={copySizesHelpOpen}
+              title="What is Copy sizes?"
+            >
+              <CircleHelp className="h-4 w-4" />
+            </button>
+          </div>
+          {copySizesHelpOpen ? (
+            <div className="absolute left-0 z-30 mt-2 top-full w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-amber-200 bg-amber-50 p-3 shadow-lg">
+              <div className="mb-1 flex items-start justify-between gap-2">
+                <p className="text-sm font-semibold text-amber-950">Copy sizes - what is this?</p>
+                <button
+                  type="button"
+                  onClick={() => setCopySizesHelpOpen(false)}
+                  className="rounded-md p-1 text-amber-700 hover:bg-amber-100"
+                  aria-label="Close help"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <p className="text-xs leading-relaxed text-amber-900">
+                Push measurements from this filled sheet onto other consolidated fabric groups
+                for the same client and garment (different composition / weight). Choose
+                Overwrite to replace numbers, or Fill empty to only write blank cells. Save
+                this sheet first if you have unsaved edits. Linked fabrics stay the same -
+                only the size numbers are copied.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setCopySizesHelpOpen(false);
+                  setView("copy_sizes");
+                }}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
+              >
+                Open Copy sizes
+              </button>
+            </div>
+          ) : null}
+        </div>
         {(
           [
-            { id: "measurements", label: "Measurements" },
-            { id: "copy_sizes", label: "Copy sizes" },
             { id: "evolution", label: "Evolution" },
             { id: "history", label: "History" },
           ] as { id: ViewTab; label: string }[]
@@ -1263,7 +1356,10 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           <button
             key={tabDef.id}
             type="button"
-            onClick={() => setView(tabDef.id)}
+            onClick={() => {
+              setCopySizesHelpOpen(false);
+              setView(tabDef.id);
+            }}
             className={cn(
               "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
               view === tabDef.id
