@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  applyCmUnitRelabel,
   applyConvertedCmBackToInches,
   applyInchUnitRelabel,
   looksLikeConvertedCmFromInches,
+  looksLikeStoredCmMislabeledAsInches,
   looksLikeStoredInchMeasurements,
 } from "@/lib/pattern-library/heal-measurement-unit";
 import type { ClientPattern, ClientPatternVersion } from "@/lib/types/pattern-library";
@@ -88,4 +90,27 @@ test("accidental cm convert (Moussa 148.91) restores to inches", () => {
   assert.ok(next);
   assert.equal(next!.unit, "in");
   assert.equal(next!.versions[0]!.measurements[0]!.target_value, 58.625);
+});
+
+test("Khaled-style CM typed as inches is detected and relabeled without converting", () => {
+  // Length 76, Chest 63, Slv 66.5 — often on 1/16" too, so inch heuristic alone
+  // must not block cm relabel when several values sit in the cm band (>= 60).
+  const sheet = pattern("in", [76, 63, 16.5, 66.5, 13.3, 81.5, 23.3, 42.7, 48, 42.5]);
+  assert.equal(looksLikeStoredCmMislabeledAsInches(sheet), true);
+  const next = applyCmUnitRelabel(sheet);
+  assert.ok(next);
+  assert.equal(next!.unit, "cm");
+  assert.equal(next!.versions[0]!.measurements[0]!.target_value, 76);
+});
+
+test("true cm sheets labeled cm are not flipped to inches by sixteenth coincidence", () => {
+  const sheet = pattern("cm", [76, 63, 16.5, 66.5, 13.3, 81.5, 23.3, 42.7, 48, 42.5]);
+  assert.equal(applyInchUnitRelabel(sheet), null);
+});
+
+test("true inch sheets labeled in are not flipped to cm", () => {
+  const sheet = pattern("in", [58.625, 27.75, 28.5, 25.25, 30.625, 34.125, 20.75]);
+  assert.equal(looksLikeStoredInchMeasurements(sheet), true);
+  assert.equal(looksLikeStoredCmMislabeledAsInches(sheet), false);
+  assert.equal(applyCmUnitRelabel(sheet), null);
 });

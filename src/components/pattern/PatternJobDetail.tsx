@@ -23,6 +23,7 @@ import {
 } from "@/lib/pattern/tud-pattern-code";
 import { filterTudFilesForPiece } from "@/lib/pattern-library/tud-versions";
 import { isMultiPieceGarment, piecesForPatternJob } from "@/lib/sales-orders/label-codes";
+import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
 import {
   defaultMeasurementTemplateMode,
   garmentOffersReducedMeasurementTemplate,
@@ -51,6 +52,7 @@ type PatternJobDetailProps = {
 
 export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
   const router = useRouter();
+  const { unit: measurementUnit } = useMeasurementUnitPreference();
   const [job, setJob] = useState<PatternJob | null>(null);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
@@ -295,6 +297,8 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
           )
             ? measurementTemplateMode
             : "entire",
+          // Match Pattern Units toggle (never stamp CM typing as inches).
+          unit: measurementUnit,
         }),
       });
       const data = await res.json().catch(() => null);

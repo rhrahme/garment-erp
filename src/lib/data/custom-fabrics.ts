@@ -139,6 +139,16 @@ export function listCustomFabricsAsSupplierFabrics(
     .sort((a, b) => a.fabric_number.localeCompare(b.fabric_number, undefined, { numeric: true }));
 }
 
+/** Lookup one custom fabric by id (active or inactive). */
+export function getCustomFabricById(
+  id: string,
+  store: CustomFabricsFile = readCustomFabrics()
+): CustomFabric | null {
+  const trimmed = id.trim();
+  if (!trimmed) return null;
+  return store.fabrics.find((fabric) => fabric.id === trimmed) ?? null;
+}
+
 export function searchCustomFabrics(query: string, limit: number): SupplierFabric[] {
   const items = listCustomFabricsAsSupplierFabrics();
   const trimmed = query.trim();

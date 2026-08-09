@@ -98,6 +98,12 @@ export type AutoConsolidateOptions = {
   dry_run?: boolean;
   actedBy?: string | null;
   notify?: boolean;
+  /**
+   * Unit for newly created measurement sheets. Must match how Pattern types
+   * numbers (Units toggle). Defaulting to inches without this mislabels CM
+   * entries as inches with no conversion (e.g. 76 cm stored as 76 in).
+   */
+  unit?: "cm" | "in" | null;
 };
 
 /** Short/shorts/Shorts and case variants map to the sales stitch label. */

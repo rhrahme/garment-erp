@@ -24,11 +24,14 @@ export async function GET(request: Request, context: { params: Promise<{ pattern
     const kind = parsePatternSheetKind(url.searchParams.get("sheet"));
     const lineIds = parsePatternSheetLineIds(url.searchParams.get("lines"));
     const displayUnit = parseMeasurementUnit(url.searchParams.get("unit")) ?? undefined;
+    const jobId = url.searchParams.get("job");
+    const lineId = url.searchParams.get("line");
     const data = await buildPatternSheetData(patternId, {
       versionId: url.searchParams.get("version"),
-      jobId: url.searchParams.get("job"),
-      lineId: url.searchParams.get("line"),
-      lineIds: kind === "sewing" ? (lineIds && lineIds.length > 0 ? lineIds : null) : null,
+      jobId,
+      lineId,
+      lineIds:
+        !jobId && !lineId && lineIds && lineIds.length > 0 ? lineIds : null,
     });
     if (!data) {
       return NextResponse.json({ error: "Client pattern not found." }, { status: 404 });

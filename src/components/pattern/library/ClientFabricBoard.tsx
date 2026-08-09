@@ -13,6 +13,7 @@ import {
   preferredBrandCodeFromClientCode,
   type BasePatternCascadeValue,
 } from "@/lib/pattern-library/base-pattern-picker";
+import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
 import type {
   ClientFabricBoard as ClientFabricBoardData,
   ClientFabricBoardRow,
@@ -484,6 +485,7 @@ function AssignDialog({
   onClose: () => void;
   onDone: (message: string, patternId?: string) => Promise<void>;
 }) {
+  const { unit: measurementUnit } = useMeasurementUnitPreference();
   const [mode, setMode] = useState<"new" | "existing">(board.patterns.length > 0 ? "existing" : "new");
   const [patternId, setPatternId] = useState(board.patterns[0]?.id ?? "");
   const [bases, setBases] = useState<BasePattern[]>([]);
@@ -556,6 +558,7 @@ function AssignDialog({
           base_size: cascade.origin === "library" ? cascade.baseSize || null : null,
           description: description || null,
           linked_fabric_line_ids: lineIds,
+          unit: measurementUnit,
         }),
       });
       if (!res.ok) {

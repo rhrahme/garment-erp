@@ -20,7 +20,9 @@ export async function POST(request: Request) {
       sales_order_id?: string | null;
       client_id?: string | null;
       dry_run?: boolean;
+      unit?: string | null;
     };
+    const unit = body.unit === "cm" || body.unit === "in" ? body.unit : null;
 
     const result = await runAutoConsolidate({
       sales_order_id: typeof body.sales_order_id === "string" ? body.sales_order_id : null,
@@ -28,6 +30,7 @@ export async function POST(request: Request) {
       dry_run: Boolean(body.dry_run),
       actedBy: session.email,
       notify: !body.dry_run,
+      unit,
     });
 
     return NextResponse.json(result);

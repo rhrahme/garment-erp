@@ -34,10 +34,10 @@ export default async function ClientPatternPrintPage({ params, searchParams }: P
     versionId: version ?? null,
     jobId: job ?? null,
     lineId: line ?? null,
-    // Sewing pack: honor tick selection. Other sheets keep all linked articles
-    // available but still use the classic primary fabric/sticker resolution.
+    // Honor ?lines= for cutter / production / sewing when not job-scoped.
     // Missing/empty lines = all linked articles (preview defaults).
-    lineIds: kind === "sewing" ? (lineIds && lineIds.length > 0 ? lineIds : null) : null,
+    lineIds:
+      !job && !line && lineIds && lineIds.length > 0 ? lineIds : null,
   });
   if (!data) notFound();
 

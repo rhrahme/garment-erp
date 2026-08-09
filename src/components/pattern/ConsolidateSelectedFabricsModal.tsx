@@ -12,6 +12,7 @@ import {
   preferredBrandCodeFromClientCode,
   type BasePatternCascadeValue,
 } from "@/lib/pattern-library/base-pattern-picker";
+import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
 import {
   formatGarmentWithPieceList,
   piecesForPatternJob,
@@ -41,6 +42,7 @@ export function ConsolidateSelectedFabricsModal({
   onLinked,
 }: ConsolidateSelectedFabricsModalProps) {
   const router = useRouter();
+  const { unit: measurementUnit } = useMeasurementUnitPreference();
   const preferredBrand = preferredBrandCodeFromClientCode(order.client_code);
   const selectedGarments = useMemo(
     () => [...new Set(selectedJobs.map((job) => job.garment_type))],
@@ -138,6 +140,8 @@ export function ConsolidateSelectedFabricsModal({
               cascade.origin === "library" ? cascade.basePatternId || null : null,
             base_size: cascade.origin === "library" ? cascade.baseSize || null : null,
             linked_fabric_line_ids: selectedJobs.map((job) => job.sales_order_line_id),
+            // Match Pattern's Units toggle so CM typing is not stamped as inches.
+            unit: measurementUnit,
           }),
         });
         const data = await res.json().catch(() => null);

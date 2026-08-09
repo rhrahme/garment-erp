@@ -99,13 +99,21 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   numbers). New client/base patterns inherit the preference. Helpers:
   `useMeasurementUnitPreference`, `MeasurementUnitToggle`,
   `formatMeasurementForDisplay`. Ship: `0c2e27c`.
-- **Historical sheets store inches** (Aug 8 2026): filled client measurement
-  numbers are inches (1/16"). If `unit` was wrongly `"cm"`, relabel to `"in"`
-  without converting numbers; if numbers were accidentally converted to cm,
-  convert them back to inches (`heal-measurement-unit.ts`, on pattern open +
-  `scripts/relabel-inch-client-patterns.mjs`). Empty-sheet sibling heal must
-  copy the source `unit` too. After restore, the Units toggle converts for
-  cm display only.
+- **Historical sheets store inches** (Aug 8 2026): many filled client
+  measurement numbers are inches (1/16"). If `unit` was wrongly `"cm"`,
+  relabel to `"in"` without converting numbers; if numbers were accidentally
+  converted to cm, convert them back to inches (`heal-measurement-unit.ts`,
+  on pattern open + `scripts/relabel-inch-client-patterns.mjs`). Empty-sheet
+  sibling heal must copy the source `unit` too. After restore, the Units
+  toggle converts for cm display only.
+- **Consolidate / create inherits Units toggle** (Aug 9 2026): auto-consolidate
+  and every UI create path (manual consolidate, job Create & open sheet,
+  fabric-board new pattern) must pass `unit` from
+  `useMeasurementUnitPreference`. Never create with silent default `"in"`
+  while Pattern is typing centimeters (76 cm must not be stamped as 76 inch).
+  APIs accept optional `unit` (`/api/pattern/auto-consolidate`,
+  `/api/v1/pattern/auto-consolidate`). Inverse heal: unit `"in"` but values
+  look like cm (and not inch 1/16") -> relabel to `"cm"` without converting.
 - **Base-pattern pickers must preload the slim payload** (perf fix, Aug 5
   2026): use `GET /api/pattern/library/bases` (bases + dictionary, ~218 KB)
   via `preloadBasePickerData()` in `base-picker-cache.ts` - never the
@@ -172,6 +180,17 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - Fabric swatch images on print sheets require the swatch manifest to ship
   into the Vercel image lambda (Caccioppoli fix `b5ac64f`); new fabric codes
   need a swatch download/sync before thumbs appear.
+- **Custom / one-off fabric filing A4** (Aug 9 2026): after Task creates a
+  CF-YYYY-#### fabric (outside supplier / mill leftover), print
+  `/custom-fabrics/[id]/print` — one A4 with fabric details and an empty
+  **5x5 cm** square top-right to cut and glue a physical swatch for the
+  file. No prices on the card. Print A4 from the create success banner or
+  each Custom tab row.
+- **Pattern order-board batch print** (Aug 9 2026): on `/pattern/orders/[soId]`,
+  tick fabrics (Select all / subset), choose Production / Sewing / Cutter,
+  then **Print selected** opens one preview with all selected jobs' A4s
+  (`/pattern/orders/[soId]/print?sheet=...&jobs=...`). Do not force Pattern
+  to open each job one-by-one after consolidate.
 - **Sewing / production stitcher A4s**: one A4 per **stitcher piece**, not one
   page with every piece QR. Overshirt+Trouser / Suit / Shirt+Trouser print
   Overshirt (or Jacket/Shirt) on page 1 and Trouser on page 2 - each with that

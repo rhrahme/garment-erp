@@ -3,7 +3,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, Eye, ImageOff, Layers, Link2, Sparkles, Star, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Eye,
+  ImageOff,
+  Layers,
+  Link2,
+  Printer,
+  Sparkles,
+  Star,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
 import { FabricSwatchProvider, useFabricSwatch } from "@/components/fabric/FabricSwatchProvider";
@@ -12,7 +23,9 @@ import { ChangeGarmentTypeControl } from "@/components/orders/ChangeGarmentTypeC
 import { GarmentPiecesNest } from "@/components/garment/GarmentPiecesNest";
 import { GarmentTypeChangeBadge } from "@/components/garment-type/GarmentTypeChangeBadge";
 import { PatternMismatchBanner } from "@/components/pattern/PatternMismatchBanner";
+import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
 import type { CrossClientFitFamily } from "@/lib/pattern/auto-consolidate-grouping";
+import type { PatternSheetKind } from "@/lib/pattern-library/pattern-sheet-kind";
 import type { GarmentTypeChangeFlag } from "@/lib/sales-orders/garment-type-change-flags";
 import { piecesForPatternJob } from "@/lib/sales-orders/label-codes";
 import { productionBrandNameForOrder } from "@/lib/sales-orders/production-brand";
@@ -44,6 +57,7 @@ type PatternOrderBoardProps = {
 
 export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
   const searchParams = useSearchParams();
+  const { unit: measurementUnit } = useMeasurementUnitPreference();
   const justConsolidatedId = searchParams.get("consolidated")?.trim() || null;
   const [order, setOrder] = useState<SalesOrder | null>(null);
   const [jobs, setJobs] = useState<PatternJob[]>([]);
@@ -55,6 +69,8 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
   const [clientPatterns, setClientPatterns] = useState<ClientPattern[]>([]);
   const [previewJobId, setPreviewJobId] = useState<string | null>(null);
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
+  /** Sheet kind for batch Print selected (order board). */
+  const [printSheetKind, setPrintSheetKind] = useState<PatternSheetKind>("production");
   const [consolidateOpen, setConsolidateOpen] = useState(false);
   const [autoBusy, setAutoBusy] = useState(false);
   const [autoSummary, setAutoSummary] = useState<string | null>(null);
@@ -162,6 +178,20 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
     [jobs, selectedJobIds]
   );
 
+  const selectedLinkedCount = useMemo(
+    () => selectedJobs.filter((job) => Boolean(job.client_pattern_id?.trim())).length,
+    [selectedJobs]
+  );
+
+  const batchPrintHref = useMemo(() => {
+    if (selectedJobIds.size === 0) return null;
+    const params = new URLSearchParams({
+      sheet: printSheetKind,
+      jobs: [...selectedJobIds].join(","),
+    });
+    return `/pattern/orders/${soId}/print?${params.toString()}`;
+  }, [selectedJobIds, printSheetKind, soId]);
+
   function toggleJob(jobId: string) {
     setSelectedJobIds((prev) => {
       const next = new Set(prev);
@@ -203,7 +233,7 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
       const res = await fetch("/api/pattern/auto-consolidate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dry_run: true }),
+        body: JSON.stringify({ dry_run: true, unit: measurementUnit }),
       });
       const data = res.ok ? await res.json() : null;
       const families = (data?.cross_client_fit_families ?? []) as CrossClientFitFamily[];
@@ -226,7 +256,7 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
       const res = await fetch("/api/pattern/auto-consolidate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ client_id: order.client_id }),
+        body: JSON.stringify({ client_id: order.client_id, unit: measurementUnit }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error ?? "Auto-consolidate failed");
@@ -327,9 +357,9 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
           ) : null}
           {justConsolidatedId ? (
             <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
-              Fabrics consolidated onto one measurement sheet. Open each job (or Master
-              pattern · fabric code) to print that job&apos;s fabric - do not print from the
-              bare master link.
+              Fabrics consolidated onto one measurement sheet. Tick the fabrics you need,
+              choose Production / Sewing / Cutter, then Print selected - do not print from
+              the bare master link.
             </p>
           ) : null}
           {patternsForClient.length > 0 ? (
@@ -400,11 +430,17 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
 
         {jobs.length > 0 ? (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-indigo-100 bg-indigo-50/60 px-4 py-3">
-            <p className="text-sm text-indigo-900">
-              <span className="font-semibold">{selectedJobIds.size}</span> selected · tick fabrics that
-              share one .TUD / measurement sheet
-            </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="space-y-1">
+              <p className="text-sm text-indigo-900">
+                <span className="font-semibold">{selectedJobIds.size}</span> selected · tick fabrics
+                to consolidate or to print A4 papers together
+              </p>
+              <p className="text-xs text-indigo-800/80">
+                {selectedLinkedCount} of {selectedJobIds.size || 0} selected have a master
+                pattern (printable)
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={toggleAll}
@@ -412,6 +448,45 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
               >
                 {selectedJobIds.size === jobs.length ? "Clear selection" : "Select all"}
               </button>
+              <label className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-900">
+                Sheet
+                <select
+                  value={printSheetKind}
+                  onChange={(e) => setPrintSheetKind(e.target.value as PatternSheetKind)}
+                  className="rounded-lg border border-indigo-200 bg-white px-2 py-1.5 text-sm text-slate-800"
+                  aria-label="Print sheet kind"
+                >
+                  <option value="production">Production</option>
+                  <option value="sewing">Sewing</option>
+                  <option value="cutter">Cutter</option>
+                </select>
+              </label>
+              {batchPrintHref ? (
+                <Link
+                  href={batchPrintHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium",
+                    selectedLinkedCount > 0
+                      ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                      : "pointer-events-none bg-slate-200 text-slate-400"
+                  )}
+                  aria-disabled={selectedLinkedCount === 0}
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  Print selected
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-200 px-3 py-1.5 text-sm font-medium text-slate-400"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  Print selected
+                </button>
+              )}
               <Button
                 size="sm"
                 onClick={() => setConsolidateOpen(true)}

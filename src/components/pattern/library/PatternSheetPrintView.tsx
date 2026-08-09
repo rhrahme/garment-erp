@@ -27,7 +27,8 @@ import type {
 } from "@/lib/pattern-library/sheet-data";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 
-const SHEET_PRINT_CSS = `
+/** Shared with order-board batch print (page breaks between selected jobs). */
+export const PATTERN_SHEET_PRINT_CSS = `
 @page { size: A4 portrait; margin: 8mm; }
 @media print {
   .no-print { display: none !important; }
@@ -60,6 +61,15 @@ const SHEET_PRINT_CSS = `
     page-break-after: always !important;
   }
   .pattern-sheet-sewing.pattern-sheet-page:last-child {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+  /* Batch: keep page breaks between jobs; only the last page of the pack stops. */
+  .pattern-batch-root .pattern-batch-job-block .pattern-sheet-page {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+  .pattern-batch-root .pattern-batch-job-block:last-child .pattern-sheet-page:last-child {
     break-after: auto !important;
     page-break-after: auto !important;
   }
@@ -857,9 +867,12 @@ function ProductionSheetPage({
 export function PatternSheetPrintView({
   data,
   kind = "cutter",
+  /** When true, only sheet pages (for order-board batch print chrome). */
+  embedded = false,
 }: {
   data: PatternSheetData;
   kind?: PatternSheetKind;
+  embedded?: boolean;
 }) {
   const { unit: displayUnit } = useMeasurementUnitPreference();
   const { pattern, version, stickers, article_pages } = data;
@@ -922,9 +935,64 @@ export function PatternSheetPrintView({
         ? data.fabric?.fabric_number
         : null;
 
+  const pages = (
+    <div className="space-y-8 print:space-y-0">
+      {isSewing ? (
+        sewingPages.length > 0 ? (
+          sewingPages.map((article, index) => (
+            <ProductionSheetPage
+              key={`${article.line_id}-${article.piece_name ?? index}`}
+              data={data}
+              article={article}
+              sewing
+              pageIndex={index + 1}
+              pageTotal={pageTotal}
+              displayUnit={displayUnit}
+            />
+          ))
+        ) : (
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            No linked fabric articles to print. Group SO fabric lines into this pattern first.
+          </p>
+        )
+      ) : isProduction ? (
+        productionPages.length > 0 ? (
+          productionPages.map((article, index) => (
+            <ProductionSheetPage
+              key={`${article.line_id}-${article.piece_name ?? index}`}
+              data={data}
+              article={article}
+              pageIndex={index + 1}
+              pageTotal={pageTotal}
+              displayUnit={displayUnit}
+            />
+          ))
+        ) : (
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            No linked fabric articles to print. Group SO fabric lines into this pattern first.
+          </p>
+        )
+      ) : (
+        cutterPages.map((page) => (
+          <CutterSheetPage
+            key={`${page.article_code ?? "primary"}-${page.pageIndex}`}
+            data={page.data}
+            stickers={page.stickers}
+            pageIndex={page.pageIndex}
+            pageTotal={page.pageTotal}
+          />
+        ))
+      )}
+    </div>
+  );
+
+  if (embedded) {
+    return <div className="pattern-batch-job-block bg-white text-slate-900">{pages}</div>;
+  }
+
   return (
     <div className="mx-auto min-h-screen max-w-[210mm] bg-white p-6 text-slate-900 print:p-0">
-      <style dangerouslySetInnerHTML={{ __html: SHEET_PRINT_CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: PATTERN_SHEET_PRINT_CSS }} />
 
       <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
         <div>
@@ -969,54 +1037,7 @@ export function PatternSheetPrintView({
         </div>
       </div>
 
-      <div className="space-y-8 print:space-y-0">
-        {isSewing ? (
-          sewingPages.length > 0 ? (
-            sewingPages.map((article, index) => (
-              <ProductionSheetPage
-                key={`${article.line_id}-${article.piece_name ?? index}`}
-                data={data}
-                article={article}
-                sewing
-                pageIndex={index + 1}
-                pageTotal={pageTotal}
-                displayUnit={displayUnit}
-              />
-            ))
-          ) : (
-            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-              No linked fabric articles to print. Group SO fabric lines into this pattern first.
-            </p>
-          )
-        ) : isProduction ? (
-          productionPages.length > 0 ? (
-            productionPages.map((article, index) => (
-              <ProductionSheetPage
-                key={`${article.line_id}-${article.piece_name ?? index}`}
-                data={data}
-                article={article}
-                pageIndex={index + 1}
-                pageTotal={pageTotal}
-                displayUnit={displayUnit}
-              />
-            ))
-          ) : (
-            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-              No linked fabric articles to print. Group SO fabric lines into this pattern first.
-            </p>
-          )
-        ) : (
-          cutterPages.map((page) => (
-            <CutterSheetPage
-              key={`${page.article_code ?? "primary"}-${page.pageIndex}`}
-              data={page.data}
-              stickers={page.stickers}
-              pageIndex={page.pageIndex}
-              pageTotal={page.pageTotal}
-            />
-          ))
-        )}
-      </div>
+      {pages}
     </div>
   );
 }

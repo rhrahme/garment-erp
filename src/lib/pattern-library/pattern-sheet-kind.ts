@@ -14,7 +14,7 @@ export function patternSheetKindLabel(kind: PatternSheetKind): string {
   return "Cutter";
 }
 
-/** Parse `?lines=id1,id2` for sewing A4 page selection. */
+/** Parse `?lines=id1,id2` for sewing / multi-article A4 page selection. */
 export function parsePatternSheetLineIds(raw: string | null | undefined): string[] | null {
   if (raw == null) return null;
   const ids = String(raw)
@@ -22,4 +22,13 @@ export function parsePatternSheetLineIds(raw: string | null | undefined): string
     .map((part) => part.trim())
     .filter(Boolean);
   return ids.length > 0 ? ids : [];
+}
+
+/** Parse `?jobs=id1,id2` for Pattern order-board batch print. */
+export function parsePatternSheetJobIds(raw: string | null | undefined): string[] {
+  if (raw == null) return [];
+  return String(raw)
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
 }

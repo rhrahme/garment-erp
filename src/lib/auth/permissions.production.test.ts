@@ -99,6 +99,7 @@ describe("production_operator home / nav gating", () => {
     assert.equal(isProductionOperatorRouteAllowed("/brands"), true);
     assert.equal(isProductionOperatorRouteAllowed("/clients"), true);
     assert.equal(isProductionOperatorRouteAllowed("/fabric-specification"), true);
+    assert.equal(isProductionOperatorRouteAllowed("/custom-fabrics/cf-1/print"), true);
     assert.equal(isProductionOperatorRouteAllowed("/orders/SO-1/stickers"), true);
     assert.equal(isProductionOperatorRouteAllowed("/hr/id-badges"), true);
     assert.equal(isProductionOperatorRouteAllowed("/hr/id-badges/saudis"), true);
@@ -330,6 +331,7 @@ describe("pattern_operator price surface lockdown (hagan.dp1@gmail.com)", () => 
       "/pattern/orders/so-1",
       "/clients",
       "/fabric-specification",
+      "/custom-fabrics/cf-1/print",
       "/stitch",
       "/stitch/orders",
       "/production/stitch",

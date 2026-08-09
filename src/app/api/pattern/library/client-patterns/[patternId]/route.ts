@@ -32,7 +32,7 @@ export async function GET(_request: Request, context: { params: Promise<{ patter
     // If this consolidated sheet is blank but a sibling has filled sizes,
     // copy them so Pattern does not see an empty grid on the fabric-linked id.
     const healed = await healEmptyClientPatternMeasurements(patternId);
-    // Inch numbers wrongly labeled cm (common after empty-sheet heal) -> relabel.
+    // Fix unit mislabels both ways (inch-as-cm, or CM typed then stamped "in").
     const unitHealed = await healMislabeledInchClientPatternUnit(patternId);
     const pattern =
       unitHealed.ok && unitHealed.changed

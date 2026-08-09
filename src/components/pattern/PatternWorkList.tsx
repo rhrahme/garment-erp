@@ -6,6 +6,7 @@ import { ArrowRight, Sparkles, Star } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { Button } from "@/components/ui/Button";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
+import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
 import { orderMatchesBrandClientPrefix } from "@/lib/clients/orphan-reconciliation";
 import { groupPatternJobsBySalesOrder } from "@/lib/pattern/queue-groups";
@@ -60,6 +61,7 @@ export function PatternWorkList({
   const [autoBusy, setAutoBusy] = useState(false);
   const [autoSummary, setAutoSummary] = useState<string | null>(null);
   const [autoError, setAutoError] = useState<string | null>(null);
+  const { unit: measurementUnit } = useMeasurementUnitPreference();
   const { brandId: storedBrandId, setBrandId, hydrated } = useFactoryBrandFilter();
   const brandId = brandIdProp !== undefined ? brandIdProp : storedBrandId;
 
@@ -148,7 +150,7 @@ export function PatternWorkList({
       const res = await fetch("/api/pattern/auto-consolidate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ unit: measurementUnit }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error ?? "Auto-consolidate failed");

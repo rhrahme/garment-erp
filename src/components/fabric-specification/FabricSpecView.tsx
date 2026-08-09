@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Printer, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { CreateCustomFabricForm } from "@/components/fabric-specification/CreateCustomFabricForm";
 import { DownloadLoroPianaMissingSwatchesPdfButton } from "@/components/fabric-specification/DownloadLoroPianaMissingSwatchesPdfButton";
@@ -62,6 +62,11 @@ export function FabricSpecView({
   const [items, setItems] = useState(initialItems);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [nextFabricNumber, setNextFabricNumber] = useState("CF-2026-0001");
+  /** After create: offer Print A4 filing sheet with 5x5 cm swatch square. */
+  const [lastCreatedFabric, setLastCreatedFabric] = useState<{
+    id: string;
+    fabric_number: string;
+  } | null>(null);
   const {
     visible: pricesVisible,
     unlock: unlockPrices,
@@ -214,6 +219,10 @@ export function FabricSpecView({
     });
     setShowCreateForm(false);
     setBrandId(CUSTOM_SUPPLIER_ID);
+    setLastCreatedFabric({
+      id: safeFabric.id,
+      fabric_number: safeFabric.fabric_number,
+    });
   }
 
   function handlePriceToggle() {
@@ -434,6 +443,37 @@ export function FabricSpecView({
             />
           ) : null}
 
+          {isCustomTab && lastCreatedFabric ? (
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+              <p className="text-sm text-emerald-900">
+                Saved{" "}
+                <span className="font-mono font-semibold">
+                  {lastCreatedFabric.fabric_number}
+                </span>
+                . Print the A4 filing card and attach a 5x5 cm fabric swatch.
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/custom-fabrics/${lastCreatedFabric.id}/print`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-800"
+                >
+                  <Printer className="h-4 w-4" />
+                  Print A4
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setLastCreatedFabric(null)}
+                  className="rounded p-1.5 text-emerald-700 hover:bg-emerald-100"
+                  aria-label="Dismiss create notice"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           <DataTable
             key={showPrices ? "prices-on" : "prices-off"}
             columns={[
@@ -489,6 +529,17 @@ export function FabricSpecView({
                         </span>
                       ) : null}
                     </span>
+                  ) : null}
+                  {f.kind === "custom" || f.supplier_id === CUSTOM_SUPPLIER_ID ? (
+                    <Link
+                      href={`/custom-fabrics/${f.id}/print`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex w-fit items-center gap-1 text-xs font-medium text-indigo-700 hover:text-indigo-900"
+                    >
+                      <Printer className="h-3 w-3" />
+                      Print A4
+                    </Link>
                   ) : null}
                 </span>
               ),

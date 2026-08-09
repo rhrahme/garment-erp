@@ -32,7 +32,11 @@ export * from "@/lib/pattern/auto-consolidate-grouping";
  */
 export async function executeAutoConsolidatePlan(
   plan: AutoConsolidatePlan,
-  options: { actedBy?: string | null; notify?: boolean } = {}
+  options: {
+    actedBy?: string | null;
+    notify?: boolean;
+    unit?: "cm" | "in" | null;
+  } = {}
 ): Promise<AutoConsolidateResult> {
   let jobs_linked = 0;
   let patterns_created = 0;
@@ -62,6 +66,9 @@ export async function executeAutoConsolidatePlan(
           fabric: group.composition_display || null,
           linked_fabric_line_ids: group.line_ids,
           notes: `Auto-consolidated: ${group.composition_display} ${group.weight_gsm} gsm`,
+          // Prefer caller's Units toggle. Never silently stamp "in" when Pattern
+          // is typing centimeters (76 cm must not become "76 inch").
+          ...(options.unit === "cm" || options.unit === "in" ? { unit: options.unit } : {}),
         },
         { createdBy: options.actedBy ?? null, notify: options.notify !== false }
       );
@@ -163,6 +170,7 @@ export async function runAutoConsolidate(
   const result = await executeAutoConsolidatePlan(plan, {
     actedBy: options.actedBy ?? null,
     notify: options.notify,
+    unit: options.unit ?? null,
   });
 
   if (options.notify !== false) {
