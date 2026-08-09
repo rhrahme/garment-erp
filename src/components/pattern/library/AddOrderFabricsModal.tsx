@@ -226,7 +226,7 @@ export function AddOrderFabricsModal({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3">
           {loading ? (
-            <p className="text-sm text-slate-400">Loading order fabrics…</p>
+            <p className="text-sm text-slate-400">Loading order fabrics...</p>
           ) : error && !board ? (
             <p className="text-sm text-rose-600">{error}</p>
           ) : orderGroups.length === 0 ? (
@@ -282,11 +282,11 @@ export function AddOrderFabricsModal({
                                     {row.article_code}
                                   </span>
                                   <span className="ml-2 text-xs text-slate-500">
-                                    {row.fabric_number} · {row.garment_type}
+                                    {row.fabric_number} / {row.garment_type}
                                   </span>
                                   {other ? (
                                     <span className="mt-0.5 block text-[11px] text-amber-700">
-                                      On {other.pattern_ref} — will move here
+                                      On {other.pattern_ref}  -  will move here
                                     </span>
                                   ) : null}
                                 </span>
@@ -321,7 +321,7 @@ export function AddOrderFabricsModal({
               className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
             >
               {busy
-                ? "Adding…"
+                ? "Adding..."
                 : `Add ${selected.size || ""} fabric${selected.size === 1 ? "" : "s"}`.trim()}
             </button>
           </div>
