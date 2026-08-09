@@ -100,6 +100,7 @@ function sheet(overrides: Partial<PatternSheetData> = {}): PatternSheetData {
       ordered_meters: 2.5,
     },
     article_pages: [],
+    measurement_point_index: [],
     stickers: [
       {
         code: "P1",

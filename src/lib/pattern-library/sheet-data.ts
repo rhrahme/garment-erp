@@ -66,7 +66,7 @@ export interface PatternSheetMarker {
   thumbnail_data_url: string | null;
 }
 
-/** One sewing A4 page = one linked SO fabric line (article) + its piece QRs. */
+/** One sewing / production A4 = one fabric article, optionally one stitcher piece. */
 export interface PatternSheetArticlePage {
   line_id: string;
   article_code: string;
@@ -75,6 +75,15 @@ export interface PatternSheetArticlePage {
   order: { so_number: string; order_date: string | null; delivery_date: string | null };
   fabric: PatternSheetFabric;
   stickers: PatternSheetSticker[];
+  /** When set, this page is for one stitcher piece (Overshirt / Trouser / ...). */
+  piece_name?: string | null;
+  /**
+   * When set, print only these measurement point_ids (piece-split stitcher sheets).
+   * Null/undefined = print the full trial sheet.
+   */
+  measurement_point_ids?: string[] | null;
+  /** Companion names for piece filter when sheet point_ids drift from the dictionary. */
+  measurement_point_names?: string[] | null;
 }
 
 export interface PatternSheetData {
@@ -91,10 +100,15 @@ export interface PatternSheetData {
   fabric: PatternSheetFabric | null;
   stickers: PatternSheetSticker[];
   /**
-   * Sewing pack: one page per selected/linked article. Empty when the pattern
-   * has no SO fabric lines with stickers.
+   * Sewing / production pack: one page per linked article (then split per piece
+   * at print time). Empty when the pattern has no SO fabric lines with stickers.
    */
   article_pages: PatternSheetArticlePage[];
+  /**
+   * Slim dictionary ids + garment_types so stitcher piece pages can filter
+   * Overshirt vs Trouser measurements client-side.
+   */
+  measurement_point_index: Array<{ id: string; name?: string; garment_types: string[] }>;
   derived_from: string | null;
   /** Letterhead brand (code + name) for the top-right block. */
   house_brand: SheetHouseBrand;
@@ -470,6 +484,12 @@ export async function buildPatternSheetData(
     }
   }
 
+  const measurement_point_index = (library.dictionary ?? []).map((point) => ({
+    id: point.id,
+    name: point.name,
+    garment_types: Array.isArray(point.garment_types) ? point.garment_types : [],
+  }));
+
   return {
     pattern,
     version,
@@ -480,6 +500,7 @@ export async function buildPatternSheetData(
     fabric,
     stickers,
     article_pages,
+    measurement_point_index,
     derived_from: describeDerivedFrom(base, pattern.base_size),
     house_brand: resolveSheetHouseBrand(pattern, base),
     base_fill_warning: filled.base_fill_warning,

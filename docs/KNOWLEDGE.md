@@ -166,12 +166,19 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - Fabric swatch images on print sheets require the swatch manifest to ship
   into the Vercel image lambda (Caccioppoli fix `b5ac64f`); new fabric codes
   need a swatch download/sync before thumbs appear.
-- **Sewing A4s (Pattern)**: on a client pattern, **Sewing A4s** opens a
-  tick-list of grouped articles and previews `/pattern/client-patterns/{id}/print?sheet=sewing&lines=...`
-  - one A4 per article with that line's floor piece QR(s) + shared
-  measurements. **Print production** also expands one page per linked
-  article (fabric code + floor QR); use Sewing A4s to tick a subset.
-  Do not collapse either pack back to first-linked-line-only.
+- **Sewing / production stitcher A4s**: one A4 per **stitcher piece**, not one
+  page with every piece QR. Overshirt+Trouser / Suit / Shirt+Trouser print
+  Overshirt (or Jacket/Shirt) on page 1 and Trouser on page 2 - each with that
+  piece's floor QR + filtered measurements - so different stitchers get their
+  own sheet. Single-piece garments (Shorts, Shirt, Thobe, ...) stay one page.
+  **Sewing A4s** ticks which fabric articles to include; **Print production**
+  expands the same piece split for linked articles. Do not collapse back to
+  first-linked-line-only or put Overshirt+Trouser QRs on one shared page.
+- **Cutter sheet = one A4 per fabric** (Aug 9 2026): Print cutter keeps nest +
+  all piece floor QRs (Overshirt and Trouser) on **one** page. Do not split
+  cutter by piece (that wasted a blank QR-only page). Multi-article masters
+  still get one cutter page per fabric article. Densify nest so QRs stay on
+  page 1 site-wide (print view + PDF).
 - **Consolidated masters + fabric jobs**: N fabric jobs share one client
   pattern / measurements. After consolidate, always open sheet / Print A4
   from the **job** (or Master pattern link with that job's fabric) using

@@ -1,4 +1,9 @@
 import { buildCutNestPreview } from "@/lib/pattern-library/cut-nest-preview";
+import { stitcherPieceAllowList } from "@/lib/pattern-library/measurement-template-mode";
+import {
+  getGarmentPieces,
+  isMultiPieceGarment,
+} from "@/lib/sales-orders/label-codes";
 import type {
   PatternSheetArticlePage,
   PatternSheetData,
@@ -7,16 +12,17 @@ import type {
 
 export type CutterPrintPage = {
   data: PatternSheetData;
-  sticker: PatternSheetSticker | null;
+  /** All floor QRs for this fabric article - kept on one A4 (not one page per piece). */
+  stickers: PatternSheetSticker[];
   pageIndex: number;
   pageTotal: number;
   article_code: string | null;
 };
 
 /**
- * Cutter pages: one article's fabric + piece QR(s) per page group.
- * Scoped job / single-article -> classic stickers on primary fabric.
- * Consolidated master without job -> one (or more piece) page per article.
+ * Cutter pages: one A4 per fabric article with every piece QR on that page.
+ * Cutter cuts the full nest once - do not split Overshirt/Trouser across pages.
+ * Consolidated master without job -> one page per linked fabric article.
  *
  * Client-safe (no Node fs) so PatternSheetPrintView can import it.
  */
@@ -24,26 +30,19 @@ export function expandCutterPrintPages(data: PatternSheetData): CutterPrintPage[
   const useArticlePack = !data.scoped_job_id && data.article_pages.length > 1;
 
   if (!useArticlePack) {
-    const stickers = data.stickers.length > 0 ? data.stickers : [null];
-    const pageTotal = stickers.length;
-    return stickers.map((sticker, index) => ({
-      data,
-      sticker,
-      pageIndex: index + 1,
-      pageTotal,
-      article_code: null,
-    }));
+    return [
+      {
+        data,
+        stickers: data.stickers,
+        pageIndex: 1,
+        pageTotal: 1,
+        article_code: null,
+      },
+    ];
   }
 
-  const pages: CutterPrintPage[] = [];
-  let pageIndex = 0;
-  const flat: Array<{
-    data: PatternSheetData;
-    sticker: PatternSheetSticker | null;
-    article_code: string;
-  }> = [];
-
-  for (const article of data.article_pages) {
+  const pageTotal = data.article_pages.length;
+  return data.article_pages.map((article, index) => {
     const pageData: PatternSheetData = {
       ...data,
       order: article.order,
@@ -59,24 +58,14 @@ export function expandCutterPrintPages(data: PatternSheetData): CutterPrintPage[
         }
       ),
     };
-    const stickers = article.stickers.length > 0 ? article.stickers : [null];
-    for (const sticker of stickers) {
-      flat.push({ data: pageData, sticker, article_code: article.article_code });
-    }
-  }
-
-  const pageTotal = flat.length;
-  for (const entry of flat) {
-    pageIndex += 1;
-    pages.push({
-      data: entry.data,
-      sticker: entry.sticker,
-      pageIndex,
+    return {
+      data: pageData,
+      stickers: article.stickers,
+      pageIndex: index + 1,
       pageTotal,
-      article_code: entry.article_code,
-    });
-  }
-  return pages;
+      article_code: article.article_code,
+    };
+  });
 }
 
 function fallbackProductionArticle(data: PatternSheetData): PatternSheetArticlePage | null {
@@ -105,30 +94,124 @@ function fallbackProductionArticle(data: PatternSheetData): PatternSheetArticleP
 }
 
 /**
- * Production / stitcher pages: one A4 per fabric article (code + floor QR).
+ * Split a multi-piece fabric article into one stitcher A4 per garment piece
+ * (Overshirt / Trouser / Jacket...). Single-piece garments (Shorts, Shirt, ...)
+ * stay one page even if they have multiple cut-panel QRs.
+ */
+export function splitArticleIntoStitcherPiecePages(
+  article: PatternSheetArticlePage,
+  measurements: Array<{ point_id: string; name?: string | null }>,
+  dictionary: Array<{ id: string; garment_types: string[]; name?: string }>
+): PatternSheetArticlePage[] {
+  const pieceStickers = article.stickers.filter((sticker) => sticker.role === "piece");
+  const compoundGarment = isMultiPieceGarment(article.garment_type);
+  if (!compoundGarment || pieceStickers.length <= 1) {
+    return [
+      {
+        ...article,
+        stickers: pieceStickers.length > 0 ? pieceStickers : article.stickers,
+        piece_name: article.piece_name ?? null,
+        measurement_point_ids: article.measurement_point_ids ?? null,
+        measurement_point_names: article.measurement_point_names ?? null,
+      },
+    ];
+  }
+
+  const expected = new Set(
+    getGarmentPieces(article.garment_type).map((name) => name.trim().toLowerCase())
+  );
+  const stitcherStickers = pieceStickers.filter((sticker) =>
+    expected.has(sticker.piece_name.trim().toLowerCase())
+  );
+  const toSplit = stitcherStickers.length > 1 ? stitcherStickers : pieceStickers;
+  if (toSplit.length <= 1) {
+    return [
+      {
+        ...article,
+        stickers: pieceStickers,
+        piece_name: article.piece_name ?? null,
+        measurement_point_ids: article.measurement_point_ids ?? null,
+        measurement_point_names: article.measurement_point_names ?? null,
+      },
+    ];
+  }
+
+  // Trouser still gets the reduced stitcher set even with an empty dictionary.
+  const allowBySticker = toSplit.map((sticker) => ({
+    sticker,
+    allow: stitcherPieceAllowList(sticker.piece_name, dictionary),
+  }));
+  const ownedIds = new Set<string>();
+  const ownedNames = new Set<string>();
+  for (const entry of allowBySticker) {
+    for (const id of entry.allow.ids) ownedIds.add(id);
+    for (const name of entry.allow.names) ownedNames.add(name);
+  }
+  const orphanIds: string[] = [];
+  const orphanNames: string[] = [];
+  for (const row of measurements) {
+    const label = row.name?.trim().toLowerCase() ?? "";
+    if (ownedIds.has(row.point_id) || (label && ownedNames.has(label))) continue;
+    if (row.point_id) orphanIds.push(row.point_id);
+    if (label) orphanNames.push(label);
+  }
+
+  return allowBySticker.map((entry, index) => {
+    const ids = new Set(entry.allow.ids);
+    const names = new Set(entry.allow.names);
+    if (index === 0) {
+      for (const id of orphanIds) ids.add(id);
+      for (const name of orphanNames) names.add(name);
+    }
+    return {
+      ...article,
+      garment_type: entry.sticker.piece_name,
+      stickers: [entry.sticker],
+      piece_name: entry.sticker.piece_name,
+      measurement_point_ids: [...ids],
+      measurement_point_names: [...names],
+    };
+  });
+}
+
+/**
+ * Production / stitcher pages: one A4 per fabric article, then one per piece QR
+ * when the article is multi-piece (Overshirt+Trouser, Suit, ...).
  * Scoped job -> that job's article only. Unscoped multi-link -> every article.
  */
 export function expandProductionArticlePages(
   data: PatternSheetData
 ): PatternSheetArticlePage[] {
+  let articles: PatternSheetArticlePage[] = [];
   if (data.scoped_job_id) {
     const lineId = data.job?.sales_order_line_id ?? null;
     const byLine =
       lineId != null
         ? data.article_pages.find((page) => page.line_id === lineId)
         : null;
-    if (byLine) return [byLine];
-    const byFabric = data.fabric?.fabric_number
-      ? data.article_pages.find(
-          (page) => page.fabric.fabric_number === data.fabric!.fabric_number
-        )
-      : null;
-    if (byFabric) return [byFabric];
+    if (byLine) articles = [byLine];
+    else {
+      const byFabric = data.fabric?.fabric_number
+        ? data.article_pages.find(
+            (page) => page.fabric.fabric_number === data.fabric!.fabric_number
+          )
+        : null;
+      if (byFabric) articles = [byFabric];
+      else {
+        const fallback = fallbackProductionArticle(data);
+        articles = fallback ? [fallback] : [];
+      }
+    }
+  } else if (data.article_pages.length > 0) {
+    articles = data.article_pages;
+  } else {
     const fallback = fallbackProductionArticle(data);
-    return fallback ? [fallback] : [];
+    articles = fallback ? [fallback] : [];
   }
 
-  if (data.article_pages.length > 0) return data.article_pages;
-  const fallback = fallbackProductionArticle(data);
-  return fallback ? [fallback] : [];
+  const dictionary = data.measurement_point_index ?? [];
+  const measurements = data.version?.measurements ?? [];
+  return articles.flatMap((article) =>
+    splitArticleIntoStitcherPiecePages(article, measurements, dictionary)
+  );
 }

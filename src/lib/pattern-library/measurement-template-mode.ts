@@ -84,8 +84,12 @@ export function defaultMeasurementTemplateMode(
   return garmentOffersReducedMeasurementTemplate(garmentType) ? "reduced" : "entire";
 }
 
+type DictionaryPointRef = Pick<MeasurementPointDef, "id" | "garment_types"> & {
+  name?: string;
+};
+
 function dictionaryPointsForPiece(
-  dictionary: MeasurementPointDef[],
+  dictionary: DictionaryPointRef[],
   token: string
 ): Array<{ point_id: string; name: string }> {
   const keys = new Set(
@@ -96,7 +100,66 @@ function dictionaryPointsForPiece(
     .filter((point) =>
       point.garment_types.some((type) => keys.has(type.toLowerCase()))
     )
-    .map((point) => ({ point_id: point.id, name: point.name }));
+    .map((point) => ({
+      point_id: point.id,
+      name: point.name ?? point.id,
+    }));
+}
+
+/** Allow-list for one stitcher piece page (ids + display names). */
+export function stitcherPieceAllowList(
+  pieceName: string,
+  dictionary: DictionaryPointRef[]
+): { ids: Set<string>; names: Set<string> } {
+  const specs = dictionaryPointsForPiece(dictionary, pieceName);
+  const ids = new Set(specs.map((point) => point.point_id));
+  const names = new Set(
+    specs.map((point) => point.name.trim().toLowerCase()).filter(Boolean)
+  );
+  if (pieceIsTrouser(pieceName)) {
+    for (const point of REDUCED_TROUSER_POINTS) {
+      ids.add(point.point_id);
+      names.add(point.name.trim().toLowerCase());
+    }
+  }
+  return { ids, names };
+}
+
+/**
+ * Point ids that belong on one stitcher piece page (Overshirt / Trouser / ...).
+ * Trouser always includes the reduced stitcher set.
+ */
+export function pointIdsForStitcherPiece(
+  pieceName: string,
+  dictionary: DictionaryPointRef[]
+): Set<string> {
+  return stitcherPieceAllowList(pieceName, dictionary).ids;
+}
+
+/**
+ * Keep sheet rows for one stitcher piece. Preserves sheet order.
+ * Matches point_id and/or measurement name (sheet rows sometimes drift ids).
+ * When `allowedIds` is null/undefined, returns all rows (no filter).
+ * Empty allow-list returns no rows (never dump the full compound sheet).
+ */
+export function filterMeasurementsForStitcherPiece<
+  T extends { point_id: string; name?: string | null },
+>(
+  measurements: T[],
+  allowedIds: Iterable<string> | null | undefined,
+  allowedNames?: Iterable<string> | null
+): T[] {
+  if (allowedIds == null && allowedNames == null) return measurements;
+  const ids = allowedIds instanceof Set ? allowedIds : new Set(allowedIds ?? []);
+  const names = new Set(
+    [...(allowedNames ?? [])].map((name) => name.trim().toLowerCase()).filter(Boolean)
+  );
+  if (ids.size === 0 && names.size === 0) return [];
+  return measurements.filter((row) => {
+    if (ids.has(row.point_id)) return true;
+    const label = row.name?.trim().toLowerCase();
+    return Boolean(label && names.has(label));
+  });
 }
 
 /**
@@ -104,7 +167,7 @@ function dictionaryPointsForPiece(
  * for that piece (overshirt / jacket / shirt / ...).
  */
 export function reducedPointSpecsForPiece(
-  dictionary: MeasurementPointDef[],
+  dictionary: DictionaryPointRef[],
   token: string
 ): ReadonlyArray<{ point_id: string; name: string }> {
   if (pieceIsTrouser(token)) return REDUCED_TROUSER_POINTS;

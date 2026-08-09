@@ -20,6 +20,7 @@ import {
   expandCutterPrintPages,
   expandProductionArticlePages,
 } from "@/lib/pattern-library/expand-cutter-print-pages";
+import { filterMeasurementsForStitcherPiece } from "@/lib/pattern-library/measurement-template-mode";
 import type {
   PatternSheetArticlePage,
   PatternSheetData,
@@ -239,11 +240,11 @@ function drawPrintedFooter(
   doc.text(footerBits.join(" - "), margin, startY);
 }
 
-/** Cutter A4: identity, fabric, cut layout/parts, floor QR. No measurements / TUD thumb. */
+/** Cutter A4: identity, fabric, cut layout/parts, all floor QRs on one page. */
 async function drawCutterSheetPage(
   doc: jsPDF,
   data: PatternSheetData,
-  sticker: PatternSheetSticker | null,
+  stickers: PatternSheetSticker[],
   pageIndex: number,
   pageTotal: number
 ): Promise<void> {
@@ -251,42 +252,42 @@ async function drawCutterSheetPage(
 
   doc.setTextColor(...INK);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
-  doc.text("CUTTER SHEET", MARGIN, MARGIN + 5);
+  doc.setFontSize(14);
+  doc.text("CUTTER SHEET", MARGIN, MARGIN + 4.5);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.setTextColor(...SLATE);
   doc.text(
     "Cutting handoff - fold fabric, place parts, cut, then scan floor QR",
     MARGIN,
-    MARGIN + 9.5
+    MARGIN + 8.5
   );
   doc.setTextColor(...INK);
   doc.setFont("courier", "bold");
-  doc.setFontSize(11);
-  doc.text(pattern.pattern_ref, MARGIN, MARGIN + 16);
-  let titleExtraY = MARGIN + 16;
+  doc.setFontSize(10);
+  doc.text(pattern.pattern_ref, MARGIN, MARGIN + 14);
+  let titleExtraY = MARGIN + 14;
   if (job?.pattern_code) {
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     doc.setTextColor(...SLATE);
-    titleExtraY += 5;
+    titleExtraY += 4;
     doc.text(`TUD name: ${job.pattern_code}`, MARGIN, titleExtraY);
     doc.setTextColor(...INK);
   }
-  if (pageTotal > 1 && sticker) {
+  if (pageTotal > 1) {
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
+    doc.setFontSize(7.5);
     doc.setTextColor(...INK);
-    titleExtraY += 5;
-    doc.text(`Piece ${pageIndex}/${pageTotal}: ${piecePageLabel(sticker)}`, MARGIN, titleExtraY);
+    titleExtraY += 4;
+    doc.text(`Fabric ${pageIndex}/${pageTotal}`, MARGIN, titleExtraY);
   }
 
   const { brandH } = drawBrandLetterhead(doc, house_brand);
 
   doc.setDrawColor(...INK);
   doc.setLineWidth(0.7);
-  const ruleY = Math.max(titleExtraY + 4, MARGIN + Math.max(16, brandH + 2));
+  const ruleY = Math.max(titleExtraY + 3, MARGIN + Math.max(14, brandH + 2));
   doc.line(MARGIN, ruleY, PAGE_W - MARGIN, ruleY);
 
   const headerY = drawHeaderRows(
@@ -305,57 +306,67 @@ async function drawCutterSheetPage(
         `Trial ${version.version}${version.is_final ? " - FINAL" : ""} - ${formatDate(version.trial_date)}`,
       ],
     ],
-    ruleY + 5
+    ruleY + 4,
+    { fontSize: 7, rowMm: 3.8 }
   );
 
-  let y = drawFabricSpec(doc, data, headerY + 3);
+  let y = drawFabricSpec(doc, data, headerY + 2, { compact: true });
   y = drawCutNestPreview(doc, data, y);
 
-  if (sticker) {
-    const qrSize = 28;
-    const labelH = 10;
-    const boxH = 8 + qrSize + labelH;
+  if (stickers.length > 0) {
+    const cols = Math.min(stickers.length, 4);
+    const qrSize = stickers.length > 2 ? 18 : 22;
+    const colW = (PAGE_W - MARGIN * 2) / cols;
+    const labelH = 9;
+    const boxH = 7 + qrSize + labelH;
+    // Keep QRs on page 1: if nest ran long, clamp QR block near the bottom.
+    const maxY = PAGE_H - MARGIN - boxH - 6;
+    if (y > maxY) y = Math.max(headerY + 2, maxY);
+
     doc.setDrawColor(...INK);
     doc.setLineWidth(0.5);
     doc.rect(MARGIN, y, PAGE_W - MARGIN * 2, boxH);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
+    doc.setFontSize(6.5);
     doc.setTextColor(...INK);
     doc.text(
-      `FLOOR SCAN QR - ${piecePageLabel(sticker).toUpperCase()}`,
+      stickers.length > 1 ? "FLOOR SCAN QRS" : "FLOOR SCAN QR",
       MARGIN + 3,
-      y + 4
+      y + 3.5
     );
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(5.5);
+    doc.setFontSize(5);
     doc.setTextColor(...SLATE);
-    doc.text("Cutter scans at cut. Same code is used later on the floor.", MARGIN + 3, y + 7.5);
+    doc.text("Cutter scans at cut. Same codes are used later on the floor.", MARGIN + 3, y + 6);
 
-    const { png } = await renderQrPngBuffer(sticker.qr_payload, 300);
-    const qrX = (PAGE_W - qrSize) / 2;
-    const qrY = y + 9;
-    doc.addImage(
-      `data:image/png;base64,${png.toString("base64")}`,
-      "PNG",
-      qrX,
-      qrY,
-      qrSize,
-      qrSize
-    );
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
-    doc.setTextColor(...INK);
-    doc.text(stickerScanLabel(sticker).toUpperCase(), qrX + qrSize / 2, qrY + qrSize + 3, {
-      align: "center",
-    });
-    doc.setFont("courier", "normal");
-    doc.setFontSize(6);
-    const codeLines = doc.splitTextToSize(sticker.production_code, 60);
-    doc.text(codeLines, qrX + qrSize / 2, qrY + qrSize + 6.5, { align: "center" });
-    y += boxH + 4;
+    for (let i = 0; i < stickers.length; i++) {
+      const sticker = stickers[i]!;
+      const { png } = await renderQrPngBuffer(sticker.qr_payload, 240);
+      const qrX = MARGIN + colW * i + (colW - qrSize) / 2;
+      const qrY = y + 7.5;
+      doc.addImage(
+        `data:image/png;base64,${png.toString("base64")}`,
+        "PNG",
+        qrX,
+        qrY,
+        qrSize,
+        qrSize
+      );
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(6);
+      doc.setTextColor(...INK);
+      doc.text(stickerScanLabel(sticker).toUpperCase(), qrX + qrSize / 2, qrY + qrSize + 2.5, {
+        align: "center",
+      });
+      doc.setFont("courier", "normal");
+      doc.setFontSize(5);
+      const codeLines = doc.splitTextToSize(sticker.production_code, colW - 4);
+      doc.text(codeLines, qrX + qrSize / 2, qrY + qrSize + 5, { align: "center" });
+    }
+    y += boxH + 3;
   }
 
-  drawPrintedFooter(doc, data, y + 2, sticker?.production_code);
+  drawPrintedFooter(doc, data, Math.min(y + 2, PAGE_H - MARGIN - 3));
 }
 
 /**
@@ -405,6 +416,7 @@ async function drawProductionSheetPage(
   doc.setFontSize(9);
   doc.text(pattern.pattern_ref, m, m + 9);
   let titleExtraY = m + 9;
+  const pieceLabel = article?.piece_name?.trim() || null;
   if (article) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
@@ -412,9 +424,10 @@ async function drawProductionSheetPage(
     titleExtraY += 4;
     const pageBit =
       options.pageIndex != null && options.pageTotal != null && options.pageTotal > 1
-        ? ` · page ${options.pageIndex}/${options.pageTotal}`
+        ? ` - page ${options.pageIndex}/${options.pageTotal}`
         : "";
-    doc.text(`Article ${article.article_code}${pageBit}`, m, titleExtraY);
+    const pieceBit = pieceLabel ? ` - ${pieceLabel}` : "";
+    doc.text(`Article ${article.article_code}${pieceBit}${pageBit}`, m, titleExtraY);
   }
   if (job?.pattern_code) {
     doc.setFont("helvetica", "normal");
@@ -445,8 +458,14 @@ async function drawProductionSheetPage(
 
   const metaRows: [string, string][] = [
     ["Client", `${pattern.client_name} (${pattern.client_code})`],
-    ["Garment", article?.garment_type || pattern.garment_type],
+    [
+      "Garment",
+      pieceLabel
+        ? `${pieceLabel} (${pattern.garment_type})`
+        : article?.garment_type || pattern.garment_type,
+    ],
     ...(article ? ([["Article", article.article_code]] as [string, string][]) : []),
+    ...(pieceLabel ? ([["Piece", pieceLabel]] as [string, string][]) : []),
     ["Origin", derived_from ?? "Custom"],
     [
       "Order",
@@ -490,7 +509,11 @@ async function drawProductionSheetPage(
   const qrReserve = stickerCount > 0 ? 8 + qrRowsGuess * 20 : 3;
   const notesReserve = 12 + (version.notes?.trim() ? 3.5 : 0) + (pattern.notes?.trim() ? 3.5 : 0);
   const tableBudget = Math.max(36, contentBottom - y - qrReserve - notesReserve);
-  const measurements = version.measurements;
+  const measurements = filterMeasurementsForStitcherPiece(
+    version.measurements,
+    article?.measurement_point_ids,
+    article?.measurement_point_names
+  );
   const rowCount = Math.max(measurements.length, 1);
   // Two side-by-side tables when a single dense column would still be too tall.
   const useTwoCol = rowCount > 28 || tableBudget / rowCount < 3.4;
@@ -905,10 +928,14 @@ function drawCutNestPreview(doc: jsPDF, data: PatternSheetData, startY: number):
   const mapW = boxW - 6;
   // Cap height for A4, but draw with uniform scale (letterbox) so DXF outlines
   // match NestEstimatePanel proportions instead of being squashed flat.
-  const mapH = nestMapHeight(mapW, lengthCm, usableW, { hasDxfOutlines: hasDxf });
-  const headerH = 14;
-  const footerH = 8;
-  const boxH = headerH + mapH + footerH + 4;
+  // Cap nest map so floor QRs stay on the same A4 as the cutter sheet.
+  const mapH = nestMapHeight(mapW, lengthCm, usableW, {
+    hasDxfOutlines: hasDxf,
+    maxH: hasDxf ? 32 : 24,
+  });
+  const headerH = 12;
+  const footerH = 6;
+  const boxH = headerH + mapH + footerH + 3;
 
   if (hasDxf) {
     doc.setFillColor(236, 253, 245);
@@ -1068,7 +1095,7 @@ async function buildPatternSheetDoc(
     await drawCutterSheetPage(
       doc,
       page.data,
-      page.sticker,
+      page.stickers,
       page.pageIndex,
       page.pageTotal
     );
@@ -1077,7 +1104,7 @@ async function buildPatternSheetDoc(
   return doc;
 }
 
-/** A4 portrait sheet - cutter, production, or sewing pack (one page per article). */
+/** A4 portrait sheet - cutter, or production/sewing pack (one page per stitcher piece). */
 export async function generatePatternSheetPdf(
   data: PatternSheetData,
   kind: PatternSheetKind = "cutter",

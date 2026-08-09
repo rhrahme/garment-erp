@@ -16,7 +16,7 @@ type SewingA4PrintControlsProps = {
 };
 
 const HELP_TEXT =
-  "New: print one A4 per article for the sewing team. Each page has that article's floor QR so stitchers can scan the right piece. Tick which articles to include, open preview, then print. Print production also prints one page per linked fabric; use Sewing A4s when you want to tick a subset.";
+  "Print one A4 per stitcher piece (Overshirt / Trouser / ...) with that piece's floor QR and measurements. Multi-piece garments split across pages for different stitchers. Tick which fabric articles to include, open preview, then print.";
 
 function sewingPrintHref(
   patternId: string,
