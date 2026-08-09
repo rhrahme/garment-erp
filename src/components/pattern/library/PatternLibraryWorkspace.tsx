@@ -120,7 +120,7 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(`/api/pattern/library?t=${Date.now()}`, { cache: "no-store" });
+      const res = await fetch("/api/pattern/library", { cache: "no-store" });
       if (!res.ok) throw new Error("load failed");
       setLibrary(await res.json());
     } catch {

@@ -32,7 +32,7 @@ import { piecesForPatternJob } from "@/lib/sales-orders/label-codes";
 import { productionBrandNameForOrder } from "@/lib/sales-orders/production-brand";
 import type { PatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mismatch";
 import type { PatternJob } from "@/lib/types/pattern";
-import type { ClientPattern } from "@/lib/types/pattern-library";
+import type { ClientPatternListSummary } from "@/lib/pattern-library/client-pattern-list";
 import type { SalesOrder } from "@/lib/types/sales-orders";
 import { cn } from "@/lib/utils";
 
@@ -67,7 +67,7 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
   const [loading, setLoading] = useState(true);
   const [actingId, setActingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [clientPatterns, setClientPatterns] = useState<ClientPattern[]>([]);
+  const [clientPatterns, setClientPatterns] = useState<ClientPatternListSummary[]>([]);
   const [previewJobId, setPreviewJobId] = useState<string | null>(null);
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
   /** Sheet kind for batch Print selected (order board). */
@@ -82,9 +82,12 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
     Record<string, GarmentTypeChangeFlag>
   >({});
 
-  const loadClientPatterns = useCallback(async () => {
+  const loadClientPatterns = useCallback(async (clientId: string) => {
     try {
-      const res = await fetch("/api/pattern/library/client-patterns", { cache: "no-store" });
+      const res = await fetch(
+        `/api/pattern/library/client-patterns?client_id=${encodeURIComponent(clientId)}&summary=1`,
+        { cache: "no-store" }
+      );
       const data = res.ok ? await res.json() : null;
       setClientPatterns(data?.client_patterns ?? []);
     } catch {
@@ -99,11 +102,17 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
       const res = await fetch(`/api/pattern/orders/${soId}`, { cache: "no-store" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to load");
-      setOrder(data.order);
+      const nextOrder = data.order as SalesOrder;
+      setOrder(nextOrder);
       const nextJobs = (data.jobs ?? []) as PatternJob[];
       setJobs(nextJobs);
       setMismatch(data.mismatch ?? null);
       setAwaitingLines(Boolean(data.awaiting_lines));
+      if (nextOrder?.client_id) {
+        await loadClientPatterns(nextOrder.client_id);
+      } else {
+        setClientPatterns([]);
+      }
       const flagsRes = await fetch(`/api/garment-type-changes?sales_order_id=${soId}`, {
         cache: "no-store",
       });
@@ -127,15 +136,11 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
     } finally {
       setLoading(false);
     }
-  }, [soId]);
+  }, [soId, loadClientPatterns]);
 
   useEffect(() => {
     void load();
   }, [load]);
-
-  useEffect(() => {
-    void loadClientPatterns();
-  }, [loadClientPatterns]);
 
   useEffect(() => {
     fetch("/api/auth/session")
@@ -154,10 +159,7 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
     [order]
   );
 
-  const patternsForClient = useMemo(() => {
-    if (!order) return [];
-    return clientPatterns.filter((pattern) => pattern.client_id === order.client_id);
-  }, [clientPatterns, order]);
+  const patternsForClient = clientPatterns;
 
   const swatchKeys = useMemo(
     () =>
@@ -273,7 +275,6 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
         )
       );
       await load();
-      await loadClientPatterns();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Auto-consolidate failed");
     } finally {
@@ -703,7 +704,6 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
               setSelectedJobIds(new Set());
               setConsolidateOpen(false);
               await load();
-              await loadClientPatterns();
             }}
           />
         ) : null}

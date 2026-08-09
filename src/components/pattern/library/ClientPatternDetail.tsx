@@ -38,6 +38,7 @@ import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
 import { SewingA4PrintControls } from "@/components/pattern/library/SewingA4PrintControls";
 import { TudVersionHistory } from "@/components/pattern/library/TudVersionHistory";
 import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
+import type { ClientFabricBoardRow } from "@/lib/pattern-library/client-fabric-board";
 import {
   DXF_UPLOAD_ACCEPT,
   findActiveMarkerAttachment,
@@ -134,6 +135,8 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   /** Always-latest sheet for Save - blur commits may land after click otherwise. */
   const patternRef = useRef<ClientPattern | null>(null);
   const [linkedJobs, setLinkedJobs] = useState<LinkedJob[]>([]);
+  /** Sheet-scoped fabric rows from GET (avoids full client fabric board). */
+  const [linkedFabricRows, setLinkedFabricRows] = useState<ClientFabricBoardRow[]>([]);
   /** When ?job= is present but not yet in linkedJobs, load fabric from the job API. */
   const [scopedJobExtra, setScopedJobExtra] = useState<LinkedJob | null>(null);
   const [suggestedFabricWidthCm, setSuggestedFabricWidthCm] = useState<number | null>(null);
@@ -178,10 +181,9 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   const load = useCallback(
     async (keepSelection = false) => {
       try {
-        const res = await fetch(
-          `/api/pattern/library/client-patterns/${patternId}?t=${Date.now()}`,
-          { cache: "no-store" }
-        );
+        const res = await fetch(`/api/pattern/library/client-patterns/${patternId}`, {
+          cache: "no-store",
+        });
         if (!res.ok) throw new Error("load failed");
         const data = await res.json();
         const loaded: ClientPattern = data.pattern;
@@ -192,6 +194,9 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
             : {}
         );
         setLinkedJobs(data.linked_jobs ?? []);
+        setLinkedFabricRows(
+          Array.isArray(data.linked_fabric_rows) ? data.linked_fabric_rows : []
+        );
         setSuggestedFabricWidthCm(
           typeof data.suggested_fabric_width_cm === "number" &&
             data.suggested_fabric_width_cm > 0
@@ -221,6 +226,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
       } catch {
         setPattern(null);
         setLinkedBase(null);
+        setLinkedFabricRows([]);
         setGeometryBorrowedFrom({});
       } finally {
         setLoading(false);
@@ -2144,6 +2150,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           clientId={pattern.client_id}
           patternId={pattern.id}
           fabricRefs={pattern.linked_fabric_refs ?? []}
+          initialRows={linkedFabricRows}
           onAddFromOrder={() => setAddOrderFabricsOpen(true)}
         />
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">

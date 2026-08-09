@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CheckSquare, CircleHelp, Printer, Square, X } from "lucide-react";
 import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
-import type { ClientFabricBoard, ClientFabricBoardRow } from "@/lib/pattern-library/client-fabric-board";
+import type { ClientFabricBoardRow } from "@/lib/pattern-library/client-fabric-board";
 import { withMeasurementUnitParam } from "@/lib/pattern-library/measurement-unit-preference";
 import type { PatternSheetKind } from "@/lib/pattern-library/pattern-sheet-kind";
 import type { MeasurementUnit } from "@/lib/types/pattern-library";
@@ -12,7 +12,8 @@ import { cn } from "@/lib/utils";
 
 type SewingA4PrintControlsProps = {
   patternId: string;
-  clientId: string;
+  /** @deprecated Unused - linked rows come from the sheet GET. Kept optional for callers. */
+  clientId?: string;
   versionId?: string | null;
   /** sewing (default) or production - same piece/QR expand; lines= selects papers. */
   sheetKind?: Extract<PatternSheetKind, "sewing" | "production">;
@@ -51,7 +52,6 @@ function stitcherPrintHref(
  */
 export function SewingA4PrintControls({
   patternId,
-  clientId,
   versionId,
   sheetKind = "sewing",
   label,
@@ -71,12 +71,15 @@ export function SewingA4PrintControls({
   const load = useCallback(async () => {
     setError(null);
     try {
-      const res = await fetch(`/api/pattern/library/client-fabrics/${clientId}?t=${Date.now()}`, {
+      // Sheet-scoped linked rows (not full client fabric board + archive).
+      const res = await fetch(`/api/pattern/library/client-patterns/${patternId}`, {
         cache: "no-store",
       });
       if (!res.ok) throw new Error("Could not load grouped fabrics.");
-      const board: ClientFabricBoard = await res.json();
-      const linked = board.rows.filter((row) => row.assigned_pattern?.pattern_id === patternId);
+      const data = await res.json();
+      const linked: ClientFabricBoardRow[] = Array.isArray(data.linked_fabric_rows)
+        ? data.linked_fabric_rows
+        : [];
       setRows(linked);
       const defaults = (defaultLineIds ?? [])
         .map((id) => id.trim())
@@ -90,7 +93,7 @@ export function SewingA4PrintControls({
       setSelected(new Set());
       setError(err instanceof Error ? err.message : "Could not load grouped fabrics.");
     }
-  }, [clientId, patternId, defaultLineIds]);
+  }, [patternId, defaultLineIds]);
 
   useEffect(() => {
     if (!open) return;

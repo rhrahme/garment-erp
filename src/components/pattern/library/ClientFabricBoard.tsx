@@ -497,7 +497,7 @@ function AssignDialog({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/pattern/library", { cache: "no-store" })
+    fetch("/api/pattern/library/bases", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setBases(data?.base_patterns ?? []))
       .catch(() => setBases([]));

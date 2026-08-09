@@ -3,14 +3,14 @@ import { requirePatternAccess } from "@/lib/auth/session";
 import {
   ensurePatternLibraryDocLoaded,
   ensurePatternLibraryLoaded,
-  readPatternLibraryFresh,
+  readPatternLibraryCached,
 } from "@/lib/data/pattern-library";
 import { createBasePattern } from "@/lib/pattern-library/mutations";
 
 /**
  * Slim read used by base-pattern pickers: bases + dictionary only (no
  * client_patterns, which dominate the full-store payload). Loads only the
- * pattern library document server-side.
+ * pattern library document server-side. Warm cache OK (read-only).
  */
 export async function GET() {
   try {
@@ -19,7 +19,7 @@ export async function GET() {
       return NextResponse.json({ error: "Pattern access required." }, { status: 403 });
     }
     await ensurePatternLibraryDocLoaded();
-    const store = await readPatternLibraryFresh();
+    const store = await readPatternLibraryCached();
     return NextResponse.json({
       base_patterns: store.base_patterns,
       dictionary: store.dictionary,

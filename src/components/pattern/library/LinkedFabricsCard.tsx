@@ -6,7 +6,6 @@ import { ArrowRight, Eye, ImageOff, Layers, Plus, X } from "lucide-react";
 import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
 import { FabricSwatchProvider, useFabricSwatch } from "@/components/fabric/FabricSwatchProvider";
 import type {
-  ClientFabricBoard,
   ClientFabricBoardRow,
   ClientFabricStatus,
 } from "@/lib/pattern-library/client-fabric-board";
@@ -27,35 +26,43 @@ export function LinkedFabricsCard({
   clientId,
   patternId,
   fabricRefs = [],
+  initialRows = null,
   onAddFromOrder,
 }: {
   clientId: string;
   patternId: string;
   fabricRefs?: ClientPatternFabricRef[];
+  /** From sheet GET linked_fabric_rows - skips full client fabric board. */
+  initialRows?: ClientFabricBoardRow[] | null;
   /** Opens the order-list fabric picker on the parent sheet. */
   onAddFromOrder?: () => void;
 }) {
-  const [rows, setRows] = useState<ClientFabricBoardRow[] | null>(null);
+  const [rows, setRows] = useState<ClientFabricBoardRow[] | null>(initialRows);
   const [error, setError] = useState<string | null>(null);
   const [detailLineId, setDetailLineId] = useState<string | null>(null);
   const [detailRef, setDetailRef] = useState<ClientPatternFabricRef | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(`/api/pattern/library/client-fabrics/${clientId}?t=${Date.now()}`, {
+      // Sheet-scoped rows (no archive / full board).
+      const res = await fetch(`/api/pattern/library/client-patterns/${patternId}`, {
         cache: "no-store",
       });
       if (!res.ok) throw new Error("load failed");
-      const board: ClientFabricBoard = await res.json();
-      setRows(board.rows.filter((row) => row.assigned_pattern?.pattern_id === patternId));
+      const data = await res.json();
+      setRows(Array.isArray(data.linked_fabric_rows) ? data.linked_fabric_rows : []);
     } catch {
       setRows([]);
     }
-  }, [clientId, patternId]);
+  }, [patternId]);
 
   useEffect(() => {
+    if (initialRows != null) {
+      setRows(initialRows);
+      return;
+    }
     void load();
-  }, [load]);
+  }, [initialRows, load]);
 
   const swatchKeys = useMemo(
     () => [

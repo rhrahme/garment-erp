@@ -149,6 +149,15 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   remote and **refuse** replacing a filled trial with an empty one, refuse
   wiping `client_patterns`, CAS retry on conflict. Marker seed on GET must
   re-read before write and only touch nest fields.
+- **Pattern GET/list use warm cache; writes stay force-fresh** (Aug 10 2026):
+  Sheet open and list endpoints call `readPatternLibraryCached()` (30s TTL).
+  Never put heal/seed RMW on the sheet GET critical path - they run in
+  `after()`. Do not open a sheet by downloading full `client-fabrics` board
+  or the unslimmed library: sheet GET returns `linked_fabric_rows`; order
+  board uses `GET .../client-patterns?client_id=&summary=1`; pickers use
+  `GET .../bases`; library index slims measurement grids. Consolidate batch-
+  links via `POST /api/pattern/jobs/link-client-pattern` (+ `/api/v1/...`).
+  Save / fabric-assign / heal paths keep force-fresh + protect/CAS.
 - **Pattern owns the client measurement sheet** (Aug 6 2026): on Sample /
   Trials / Final (and Trial detail), Pattern can add, rename, reorder, and
   remove any measurement row; edits sync across every trial. Cell writes

@@ -1,12 +1,16 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { requirePatternAccess } from "@/lib/auth/session";
+import { getClientById } from "@/lib/data/clients";
+import { readFabricReceipts } from "@/lib/data/fabric-receipts";
 import {
   ensurePatternLibraryLoaded,
-  readPatternLibraryFresh,
+  readPatternLibraryCached,
 } from "@/lib/data/pattern-library";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readPatternJobs } from "@/lib/data/pattern-jobs";
+import { readSalesOrders } from "@/lib/data/sales-orders";
 import { formatBasePatternDisplayName } from "@/lib/pattern-library/derived-from";
+import { linkedFabricRowsForPattern } from "@/lib/pattern-library/linked-fabric-rows-for-pattern";
 import { resolveMarkerFabricWidthAsync } from "@/lib/pattern-library/marker-layout-server";
 import { hydrateMultiPieceGeometry } from "@/lib/pattern-library/multi-piece-geometry";
 import { healEmptyClientPatternMeasurements } from "@/lib/pattern-library/heal-empty-measurements";
@@ -17,6 +21,10 @@ import {
   updateClientPatternTrialSheet,
 } from "@/lib/pattern-library/mutations";
 
+/**
+ * Open sheet GET: one warm-cache library read, no blocking heal/seed writes.
+ * Heals run in after() so first paint is not waiting on multi-MB RMW.
+ */
 export async function GET(_request: Request, context: { params: Promise<{ patternId: string }> }) {
   try {
     const session = await requirePatternAccess();
@@ -24,33 +32,27 @@ export async function GET(_request: Request, context: { params: Promise<{ patter
       return NextResponse.json({ error: "Pattern access required." }, { status: 403 });
     }
     await ensurePatternLibraryLoaded();
-    await ensureDocumentsLoaded(["pattern_jobs", "sales_orders"]);
+    await ensureDocumentsLoaded(["pattern_jobs", "sales_orders", "fabric_receipts"]);
     const { patternId } = await context.params;
 
-    // Existing TUDs: fill width/marker layout on open (no re-upload).
-    const seeded = await seedMarkerLayoutIfMissing(patternId, { notify: false });
-    // If this consolidated sheet is blank but a sibling has filled sizes,
-    // copy them so Pattern does not see an empty grid on the fabric-linked id.
-    const healed = await healEmptyClientPatternMeasurements(patternId);
-    // Fix unit mislabels both ways (inch-as-cm, or CM typed then stamped "in").
-    const unitHealed = await healMislabeledInchClientPatternUnit(patternId);
+    const library = await readPatternLibraryCached();
     const pattern =
-      unitHealed.ok && unitHealed.changed
-        ? unitHealed.pattern
-        : healed.ok && healed.changed
-          ? healed.pattern
-          : seeded.ok
-            ? seeded.pattern
-            : (await readPatternLibraryFresh()).client_patterns.find(
-                (candidate) => candidate.id === patternId
-              ) ?? null;
+      library.client_patterns.find((candidate) => candidate.id === patternId) ?? null;
     if (!pattern) {
       return NextResponse.json({ error: "Client pattern not found." }, { status: 404 });
     }
 
-    const library = await readPatternLibraryFresh();
-    // Suit / Overshirt+Trouser shells: surface sibling piece TUD+DXF in the UI
-    // (virtual - not persisted on the consolidated pattern).
+    // Background: seed marker + heal empty / unit - never blocks the sheet open.
+    after(async () => {
+      try {
+        await seedMarkerLayoutIfMissing(patternId, { notify: false });
+        await healEmptyClientPatternMeasurements(patternId);
+        await healMislabeledInchClientPatternUnit(patternId);
+      } catch (error) {
+        console.error("Background client-pattern heal failed:", patternId, error);
+      }
+    });
+
     const hydration = hydrateMultiPieceGeometry(pattern, library.client_patterns);
     const viewPattern = hydration.pattern;
     const linkedBase = viewPattern.base_pattern_id
@@ -74,14 +76,28 @@ export async function GET(_request: Request, context: { params: Promise<{ patter
     const widthSuggestion = await resolveMarkerFabricWidthAsync(viewPattern, {
       hints: [jobWidthHint],
     });
+
+    const client = getClientById(viewPattern.client_id);
+    const clientName = client
+      ? [client.first_name, client.middle_name, client.last_name].filter(Boolean).join(" ")
+      : viewPattern.client_name;
+    const linkedFabricRows = linkedFabricRowsForPattern({
+      pattern: viewPattern,
+      clientCode: client?.code ?? viewPattern.client_code,
+      clientName,
+      orders: readSalesOrders().orders,
+      receipts: readFabricReceipts().receipts,
+    });
+
     return NextResponse.json({
       pattern: viewPattern,
       geometry_borrowed: hydration.borrowed,
       geometry_borrowed_from: hydration.borrowed_from,
       linked_jobs: linkedJobs,
+      linked_fabric_rows: linkedFabricRows,
       suggested_fabric_width_cm: widthSuggestion?.width_cm ?? null,
       suggested_fabric_width_source: widthSuggestion?.source ?? null,
-      marker_backfilled: seeded.ok ? seeded.changed : false,
+      marker_backfilled: false,
       base: linkedBase
         ? {
             id: linkedBase.id,

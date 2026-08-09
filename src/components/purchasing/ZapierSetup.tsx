@@ -176,6 +176,10 @@ export function ZapierSetup() {
             <li>POST {baseUrl}/api/v1/sales-orders/[id]/fabric-order-request</li>
             <li>POST {baseUrl}/api/v1/sales-orders/[id]/fabric-pos</li>
             <li>GET/PATCH {baseUrl}/api/v1/pattern/jobs/[id]</li>
+            <li>POST {baseUrl}/api/v1/pattern/jobs/link-client-pattern</li>
+            <li className="pl-4 text-slate-500">
+              body: job_ids[], client_pattern_id - batch-link jobs to one sheet
+            </li>
             <li>POST {baseUrl}/api/v1/pattern/jobs/[id]/fittings</li>
             <li>POST {baseUrl}/api/v1/pattern/jobs/[id]/revisions</li>
             <li>POST {baseUrl}/api/v1/pattern/auto-consolidate</li>

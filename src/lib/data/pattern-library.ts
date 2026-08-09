@@ -45,6 +45,18 @@ export async function readPatternLibraryFresh(): Promise<PatternLibraryFile> {
   );
 }
 
+/**
+ * Read-only Pattern GETs/lists: use the 30s warm cache (reload when stale).
+ * Never use this for measurement Save / heal / fabric-assign RMW paths.
+ */
+export async function readPatternLibraryCached(): Promise<PatternLibraryFile> {
+  return normalize(
+    await readJsonFileFreshAsync(PATTERN_LIBRARY_PATH, EMPTY_PATTERN_LIBRARY, {
+      force: false,
+    })
+  );
+}
+
 export async function writePatternLibrary(data: PatternLibraryFile): Promise<PatternLibraryFile> {
   const next: PatternLibraryFile = { ...data, updated_at: new Date().toISOString() };
   return saveDocument(PATTERN_LIBRARY_PATH, next);

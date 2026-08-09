@@ -132,6 +132,68 @@ export async function updatePatternJob(
   return { ok: true, job: nextJob };
 }
 
+/**
+ * Link many drafting jobs to one client pattern in a single jobs-document write
+ * (consolidate modal). Emits pattern_job.updated per changed job.
+ */
+export async function linkPatternJobsToClientPattern(
+  jobIds: string[],
+  clientPatternId: string,
+  options: { updatedBy?: string | null; notify?: boolean } = {}
+): Promise<
+  | { ok: true; jobs: PatternJob[]; linked_count: number }
+  | { ok: false; status: number; error: string }
+> {
+  const uniqueIds = [...new Set(jobIds.map((id) => id.trim()).filter(Boolean))];
+  const patternId = clientPatternId.trim();
+  if (!patternId) {
+    return { ok: false, status: 400, error: "client_pattern_id is required." };
+  }
+  if (uniqueIds.length === 0) {
+    return { ok: false, status: 400, error: "job_ids is required." };
+  }
+
+  const store = await readPatternJobsFresh();
+  const now = new Date().toISOString();
+  const updated: PatternJob[] = [];
+
+  for (const jobId of uniqueIds) {
+    const index = store.jobs.findIndex((job) => job.id === jobId);
+    if (index < 0) {
+      return { ok: false, status: 404, error: `Pattern job not found: ${jobId}` };
+    }
+    const existing = store.jobs[index]!;
+    if (existing.client_pattern_id === patternId) {
+      updated.push(existing);
+      continue;
+    }
+    const nextJob: PatternJob = {
+      ...existing,
+      client_pattern_id: patternId,
+      updated_at: now,
+    };
+    store.jobs[index] = nextJob;
+    updated.push(nextJob);
+  }
+
+  await writePatternJobs(store);
+
+  if (options.notify !== false) {
+    for (const job of updated) {
+      await notifyIntegration("pattern_job.updated", {
+        id: job.id,
+        sales_order_id: job.sales_order_id,
+        so_number: job.so_number,
+        status: job.status,
+        client_pattern_id: job.client_pattern_id ?? null,
+        updated_by: options.updatedBy ?? null,
+      });
+    }
+  }
+
+  return { ok: true, jobs: updated, linked_count: uniqueIds.length };
+}
+
 export async function addPatternFitting(
   jobId: string,
   input: {

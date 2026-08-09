@@ -30,6 +30,7 @@ import {
   garmentOffersReducedMeasurementTemplate,
   type MeasurementTemplateMode,
 } from "@/lib/pattern-library/measurement-template-mode";
+import type { ClientPatternListSummary } from "@/lib/pattern-library/client-pattern-list";
 import type { PatternFittingOutcome, PatternJob, PatternJobStatus } from "@/lib/types/pattern";
 import type { ClientPattern, PatternLibraryAttachment } from "@/lib/types/pattern-library";
 
@@ -69,7 +70,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
   const [fittingNotes, setFittingNotes] = useState("");
   const [fittingOutcome, setFittingOutcome] = useState<PatternFittingOutcome>("pass");
   const [selectedFittingId, setSelectedFittingId] = useState("");
-  const [clientPatterns, setClientPatterns] = useState<ClientPattern[]>([]);
+  const [clientPatterns, setClientPatterns] = useState<ClientPatternListSummary[]>([]);
   const [sheetPattern, setSheetPattern] = useState<ClientPattern | null>(null);
   const [sheetFiles, setSheetFiles] = useState<PatternLibraryAttachment[]>([]);
   const [linkPatternId, setLinkPatternId] = useState("");
@@ -152,11 +153,15 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
   }, [load]);
 
   useEffect(() => {
-    fetch("/api/pattern/library/client-patterns", { cache: "no-store" })
+    if (!job?.client_id) return;
+    fetch(
+      `/api/pattern/library/client-patterns?client_id=${encodeURIComponent(job.client_id)}&summary=1`,
+      { cache: "no-store" }
+    )
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setClientPatterns(data?.client_patterns ?? []))
       .catch(() => setClientPatterns([]));
-  }, []);
+  }, [job?.client_id]);
 
   useEffect(() => {
     fetch("/api/auth/session")

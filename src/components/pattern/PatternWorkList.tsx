@@ -70,7 +70,7 @@ export function PatternWorkList({
   const loadOverview = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const res = await fetch(`/api/pattern/overview?t=${Date.now()}`, { cache: "no-store" });
+      const res = await fetch("/api/pattern/overview", { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load");
       setOverview(await res.json());
     } catch {

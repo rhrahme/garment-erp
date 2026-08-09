@@ -18,7 +18,8 @@ import {
   piecesForPatternJob,
 } from "@/lib/sales-orders/label-codes";
 import type { PatternJob } from "@/lib/types/pattern";
-import type { BasePattern, ClientPattern } from "@/lib/types/pattern-library";
+import type { ClientPatternListSummary } from "@/lib/pattern-library/client-pattern-list";
+import type { BasePattern } from "@/lib/types/pattern-library";
 import type { SalesOrder } from "@/lib/types/sales-orders";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +30,7 @@ function formatArticle(articleNumber: number): string {
 type ConsolidateSelectedFabricsModalProps = {
   order: SalesOrder;
   selectedJobs: PatternJob[];
-  clientPatterns: ClientPattern[];
+  clientPatterns: ClientPatternListSummary[];
   onClose: () => void;
   onLinked: () => Promise<void>;
 };
@@ -62,7 +63,7 @@ export function ConsolidateSelectedFabricsModal({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/pattern/library", { cache: "no-store" })
+    fetch("/api/pattern/library/bases", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setBases(data?.base_patterns ?? []))
       .catch(() => setBases([]));
@@ -88,15 +89,16 @@ export function ConsolidateSelectedFabricsModal({
   }, [existingForClient, existingPatternId, mode]);
 
   async function linkJobsToPattern(patternId: string) {
-    for (const job of selectedJobs) {
-      const res = await fetch(`/api/pattern/jobs/${job.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ client_pattern_id: patternId }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error ?? `Failed to link ${formatArticle(job.article_number)}`);
-    }
+    const res = await fetch("/api/pattern/jobs/link-client-pattern", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        job_ids: selectedJobs.map((job) => job.id),
+        client_pattern_id: patternId,
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(data?.error ?? "Failed to link selected fabrics.");
   }
 
   async function submit() {
