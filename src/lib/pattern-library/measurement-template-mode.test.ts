@@ -56,6 +56,12 @@ const dictionary: MeasurementPointDef[] = [
     garment_types: ["overshirt", "trouser"],
   },
   {
+    id: "bottom-width",
+    name: "Bottom width",
+    aliases: [],
+    garment_types: ["trouser"],
+  },
+  {
     id: "chest",
     name: "Chest",
     aliases: [],
@@ -118,8 +124,9 @@ test("Overshirt+Trouser reduced includes overshirt points then trouser set", () 
   assert.ok(!specs.some((s) => s.point_id === "loops-width-6-pcs"));
   // Overshirt section first
   assert.equal(specs[0]?.point_id, "1-2-chest");
-  // Shared hem id kept once (first wins - overshirt dictionary name)
+  // Overshirt keeps hem; trouser bottom uses a separate id (not shared hem).
   assert.equal(specs.filter((s) => s.point_id === "1-2-hem-width").length, 1);
+  assert.ok(specs.some((s) => s.point_id === "bottom-width"));
 
   const built = buildReducedMeasurementsFromTemplate(dictionary, "Overshirt+Trouser");
   assert.ok(built.length > 17);
@@ -181,6 +188,7 @@ test("set garments need piece select; filter shows one piece sheet", () => {
     { point_id: "1-2-chest", name: "1/2 Chest" },
     { point_id: "1-2-hem-width", name: "1/2 Hem Width" },
     { point_id: "slv-length", name: "Slv Length" },
+    { point_id: "bottom-width", name: "1/2 Bottom width" },
   ];
   const overshirt = filterTrialSheetPointsForPiece(points, "Overshirt", dictionary);
   assert.deepEqual(
@@ -189,9 +197,27 @@ test("set garments need piece select; filter shows one piece sheet", () => {
   );
   const trouser = filterTrialSheetPointsForPiece(points, "Trouser", dictionary);
   assert.ok(trouser.some((p) => p.point_id === "front-rise"));
-  assert.ok(trouser.some((p) => p.point_id === "1-2-hem-width"));
+  assert.ok(trouser.some((p) => p.point_id === "bottom-width"));
   assert.ok(!trouser.some((p) => p.point_id === "1-2-chest"));
+  assert.ok(!overshirt.some((p) => p.point_id === "front-rise"));
   assert.deepEqual(filterTrialSheetPointsForPiece(points, "", dictionary), []);
+});
+
+test("Waist Relax never appears under Overshirt even if stuck on hem id", () => {
+  const points = [
+    { point_id: "1-2-hem-width", name: "Waist Relax" },
+    { point_id: "1-2-chest", name: "1/2 Chest" },
+    { point_id: "1-2-waist-relux", name: "1/2 Hip" },
+  ];
+  const overshirt = filterTrialSheetPointsForPiece(points, "Overshirt", dictionary);
+  const trouser = filterTrialSheetPointsForPiece(points, "Trouser", dictionary);
+  assert.deepEqual(
+    overshirt.map((p) => p.name),
+    ["1/2 Chest"]
+  );
+  assert.ok(trouser.some((p) => p.name === "Waist Relax"));
+  assert.ok(trouser.some((p) => p.name === "1/2 Hip"));
+  assert.ok(!overshirt.some((p) => /waist|hip|relax/i.test(p.name)));
 });
 
 test("groupTrialSheetPointsByPiece splits Overshirt+Trouser with Shared for dual tags", () => {

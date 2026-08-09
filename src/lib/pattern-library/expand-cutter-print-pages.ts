@@ -1,5 +1,9 @@
 import { buildCutNestPreview } from "@/lib/pattern-library/cut-nest-preview";
-import { stitcherPieceAllowList } from "@/lib/pattern-library/measurement-template-mode";
+import {
+  filterTrialSheetPointsForPiece,
+  measurementPointExclusivePiece,
+  stitcherPieceAllowList,
+} from "@/lib/pattern-library/measurement-template-mode";
 import {
   getGarmentPieces,
   isMultiPieceGarment,
@@ -136,29 +140,44 @@ export function splitArticleIntoStitcherPiecePages(
     ];
   }
 
-  // Trouser still gets the reduced stitcher set even with an empty dictionary.
-  const allowBySticker = toSplit.map((sticker) => ({
+  // Match rows the same way as the sheet Piece select (trouser-exclusive
+  // labels like Waist Relax never land on the Overshirt A4).
+  const matchedBySticker = toSplit.map((sticker) => ({
     sticker,
-    allow: stitcherPieceAllowList(sticker.piece_name, dictionary),
+    rows: filterTrialSheetPointsForPiece(measurements, sticker.piece_name, dictionary),
   }));
   const ownedIds = new Set<string>();
   const ownedNames = new Set<string>();
-  for (const entry of allowBySticker) {
-    for (const id of entry.allow.ids) ownedIds.add(id);
-    for (const name of entry.allow.names) ownedNames.add(name);
+  for (const entry of matchedBySticker) {
+    for (const row of entry.rows) {
+      ownedIds.add(row.point_id);
+      const label = row.name?.trim().toLowerCase();
+      if (label) ownedNames.add(label);
+    }
+  }
+  // Also treat allow-list coverage as owned so true empty allow pieces still work.
+  for (const sticker of toSplit) {
+    const allow = stitcherPieceAllowList(sticker.piece_name, dictionary);
+    for (const id of allow.ids) ownedIds.add(id);
+    for (const name of allow.names) ownedNames.add(name);
   }
   const orphanIds: string[] = [];
   const orphanNames: string[] = [];
   for (const row of measurements) {
     const label = row.name?.trim().toLowerCase() ?? "";
+    if (measurementPointExclusivePiece(row)) continue;
     if (ownedIds.has(row.point_id) || (label && ownedNames.has(label))) continue;
     if (row.point_id) orphanIds.push(row.point_id);
     if (label) orphanNames.push(label);
   }
 
-  return allowBySticker.map((entry, index) => {
-    const ids = new Set(entry.allow.ids);
-    const names = new Set(entry.allow.names);
+  return matchedBySticker.map((entry, index) => {
+    const ids = new Set(entry.rows.map((row) => row.point_id));
+    const names = new Set(
+      entry.rows
+        .map((row) => row.name?.trim().toLowerCase() ?? "")
+        .filter(Boolean)
+    );
     if (index === 0) {
       for (const id of orphanIds) ids.add(id);
       for (const name of orphanNames) names.add(name);

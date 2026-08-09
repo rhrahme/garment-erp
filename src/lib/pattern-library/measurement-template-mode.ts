@@ -30,7 +30,9 @@ export const REDUCED_TROUSER_POINTS: ReadonlyArray<{
   { point_id: "back-rise", name: "Back Rise" },
   { point_id: "1-2-thigh", name: "1/2 Thigh" },
   { point_id: "1-2-knee", name: "1/2 Knee" },
-  { point_id: "1-2-hem-width", name: "1/2 Bottom width" },
+  // Prefer trouser-only Bottom width - do not reuse overshirt/shirt
+  // `1-2-hem-width` or Waist Relax lands under Overshirt on OT sheets.
+  { point_id: "bottom-width", name: "1/2 Bottom width" },
   { point_id: "inseam-length", name: "Inseam Length" },
   {
     point_id: "outside-excluding-w-b",
@@ -66,9 +68,86 @@ export function measurementPieceTokensForGarment(garmentType: string): string[] 
 }
 
 /** True only for the trouser piece - not Suit / Suit+Vest as a whole. */
-function pieceIsTrouser(pieceName: string): boolean {
+export function pieceIsTrouser(pieceName: string): boolean {
   const lower = pieceName.trim().toLowerCase();
   return lower === "trouser" || lower === "trousers" || lower === "pants";
+}
+
+function normalizePointLabel(name: string | null | undefined): string {
+  return (name ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+/** Extra display names Pattern types for reduced trouser points. */
+const TROUSER_POINT_NAME_ALIASES: ReadonlyArray<string> = [
+  "waist relax",
+  "1/2 waist relax",
+  "1/2 waist relux",
+  "waist relux",
+  "waist (relux)",
+  "waist (relax)",
+  "1/2 bottom hem",
+  "bottom hem",
+  "side pocket height",
+];
+
+/**
+ * Shared with tops (overshirt/shirt hem). Not trouser-exclusive by id alone.
+ */
+const SHARED_TOP_TROUSER_POINT_IDS = new Set(["1-2-hem-width", "1-2-waist"]);
+
+/**
+ * When a row is clearly a trouser measurement (by id or label), it must not
+ * appear under Overshirt / Jacket / Shirt even if a shared hem/waist id matches.
+ */
+export function measurementPointExclusivePiece(point: {
+  point_id: string;
+  name?: string | null;
+}): "trouser" | null {
+  const name = normalizePointLabel(point.name);
+  const id = point.point_id;
+
+  if (
+    /^(1\/2\s+)?waist\s*rel[au]x$/.test(name) ||
+    /^waist\s*\(\s*rel[au]x\s*\)$/.test(name) ||
+    name === "front rise" ||
+    name === "back rise" ||
+    name === "inseam length" ||
+    name.startsWith("outseam") ||
+    name === "fly length" ||
+    name === "waistband height" ||
+    name === "1/2 thigh" ||
+    name === "1/2 knee" ||
+    name === "1/2 hip" ||
+    name.startsWith("side pocket") ||
+    name === "front hip" ||
+    name === "front thigh" ||
+    name === "front knee" ||
+    name === "front hem" ||
+    /bottom/.test(name)
+  ) {
+    return "trouser";
+  }
+
+  for (const pointSpec of REDUCED_TROUSER_POINTS) {
+    if (pointSpec.point_id === id && !SHARED_TOP_TROUSER_POINT_IDS.has(id)) {
+      return "trouser";
+    }
+  }
+  if (id === "waist-relux" || id === "bottom-width" || id === "1-2-bottom-leg-opening") {
+    return "trouser";
+  }
+  return null;
+}
+
+function pointMatchesStitcherPiece(
+  point: { point_id: string; name?: string | null },
+  pieceName: string,
+  allow: { ids: Set<string>; names: Set<string> }
+): boolean {
+  const exclusive = measurementPointExclusivePiece(point);
+  if (exclusive === "trouser") return pieceIsTrouser(pieceName);
+  const label = normalizePointLabel(point.name);
+  return allow.ids.has(point.point_id) || (label !== "" && allow.names.has(label));
 }
 
 export function garmentOffersReducedMeasurementTemplate(garmentType: string): boolean {
@@ -121,6 +200,11 @@ export function stitcherPieceAllowList(
       ids.add(point.point_id);
       names.add(point.name.trim().toLowerCase());
     }
+    // Legacy shared hem id still present on older sheets.
+    ids.add("1-2-hem-width");
+    for (const alias of TROUSER_POINT_NAME_ALIASES) {
+      names.add(alias);
+    }
   }
   return { ids, names };
 }
@@ -155,7 +239,7 @@ export function filterTrialSheetPointsForPiece<
   const trimmed = pieceName.trim();
   if (!trimmed) return [];
   const allow = stitcherPieceAllowList(trimmed, dictionary);
-  return filterMeasurementsForStitcherPiece(points, allow.ids, allow.names);
+  return points.filter((point) => pointMatchesStitcherPiece(point, trimmed, allow));
 }
 
 export type TrialSheetPieceSection<
@@ -202,10 +286,8 @@ export function groupTrialSheetPointsByPiece<
   const other: T[] = [];
 
   for (const point of points) {
-    const label = point.name?.trim().toLowerCase() ?? "";
-    const matching = allows.filter(
-      ({ allow }) =>
-        allow.ids.has(point.point_id) || (label !== "" && allow.names.has(label))
+    const matching = allows.filter(({ piece, allow }) =>
+      pointMatchesStitcherPiece(point, piece, allow)
     );
     if (matching.length === 1) {
       byPiece.get(matching[0]!.piece)!.push(point);

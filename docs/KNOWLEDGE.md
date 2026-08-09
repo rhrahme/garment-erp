@@ -170,6 +170,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   shows a Piece select before the grid. Choosing Overshirt / Trouser / …
   shows only that piece's points (same allow-list as stitcher A4s). One
   garment per article stays a normal flat sheet with no select.
+- **Trouser points stay on Trouser** (Aug 9 2026): Waist Relax / rises /
+  inseam / bottom width are trouser-exclusive even if a shared id (e.g.
+  overshirt `1-2-hem-width`) was mislabeled. Reduced OT templates use
+  `bottom-width` for trouser bottom, not the overshirt hem id.
 
 ## Printing
 

@@ -1102,7 +1102,7 @@
       ]
     }
   ],
-  "updated_at": "2026-08-09T19:59:28.291Z",
+  "updated_at": "2026-08-09T20:07:03.478Z",
   "base_patterns": [
     {
       "id": "bp-fr-beirut-jacket",
@@ -150559,7 +150559,7 @@
           "created_at": "2026-07-31T20:42:28.283Z",
           "created_by": "script:run-auto-consolidate",
           "trial_date": null,
-          "updated_at": "2026-08-09T18:34:58.856Z",
+          "updated_at": "2026-08-09T20:07:03.478Z",
           "updated_by": "hagan.dp1@gmail.com",
           "measurements": [
             {
@@ -150585,7 +150585,7 @@
               "target_value": 63
             },
             {
-              "name": "Waist Extend",
+              "name": "1/2 Waist",
               "remark": null,
               "remarks": null,
               "point_id": "1-2-waist",
@@ -150662,7 +150662,7 @@
               "target_value": 42.7
             },
             {
-              "name": "Waist Relax",
+              "name": "1/2 Hem Width",
               "remark": null,
               "remarks": null,
               "point_id": "1-2-hem-width",
@@ -150670,7 +150670,7 @@
               "adjustment": null,
               "base_value": null,
               "sewn_value": null,
-              "target_value": 48
+              "target_value": null
             },
             {
               "name": "Slv Inseam",
@@ -150783,7 +150783,7 @@
               "target_value": 8.5
             },
             {
-              "name": "1/2 Hip",
+              "name": "1/2 Waist Relax",
               "remark": null,
               "remarks": null,
               "point_id": "1-2-waist-relux",
@@ -150791,13 +150791,35 @@
               "adjustment": null,
               "base_value": null,
               "sewn_value": null,
+              "target_value": 48
+            },
+            {
+              "name": "1/2 Hip",
+              "remark": null,
+              "remarks": null,
+              "point_id": "1-2-hip",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
               "target_value": 63
+            },
+            {
+              "name": "Side pocket opening length",
+              "remark": null,
+              "remarks": null,
+              "point_id": "side-pocket-opening-length",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": 18.5
             },
             {
               "name": "Front Rise",
               "remark": null,
               "remarks": null,
-              "point_id": "1-2-hip",
+              "point_id": "front-rise",
               "is_graded": true,
               "adjustment": null,
               "base_value": null,
@@ -150808,7 +150830,7 @@
               "name": "Back Rise",
               "remark": null,
               "remarks": null,
-              "point_id": "side-pocket-opening-length",
+              "point_id": "back-rise",
               "is_graded": true,
               "adjustment": null,
               "base_value": null,
@@ -150819,7 +150841,7 @@
               "name": "1/2 Thigh",
               "remark": null,
               "remarks": null,
-              "point_id": "front-rise",
+              "point_id": "1-2-thigh",
               "is_graded": true,
               "adjustment": null,
               "base_value": null,
@@ -150830,7 +150852,7 @@
               "name": "1/2 Knee",
               "remark": null,
               "remarks": null,
-              "point_id": "back-rise",
+              "point_id": "1-2-knee",
               "is_graded": true,
               "adjustment": null,
               "base_value": null,
@@ -150838,26 +150860,15 @@
               "target_value": 28.3
             },
             {
-              "name": "1/2 Bottom Hem",
+              "name": "1/2 Bottom width",
               "remark": null,
               "remarks": null,
-              "point_id": "1-2-thigh",
+              "point_id": "bottom-width",
               "is_graded": true,
               "adjustment": null,
               "base_value": null,
               "sewn_value": null,
               "target_value": 19
-            },
-            {
-              "name": "Side pocket Height",
-              "remark": null,
-              "remarks": null,
-              "point_id": "1-2-knee",
-              "is_graded": true,
-              "adjustment": null,
-              "base_value": null,
-              "sewn_value": null,
-              "target_value": 18.5
             },
             {
               "name": "Inseam Length",
@@ -150965,7 +150976,7 @@
       "base_size": "M",
       "client_id": "new-1782858921783",
       "created_at": "2026-07-31T20:42:28.283Z",
-      "updated_at": "2026-08-09T19:59:28.291Z",
+      "updated_at": "2026-08-09T20:07:03.478Z",
       "client_code": "FR-0626-0037",
       "client_name": "Pr Khaled Bin Salman",
       "description": null,
