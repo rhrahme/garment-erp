@@ -1,11 +1,16 @@
 /**
  * Measurement sheet templates: entire dictionary vs a curated reduced list.
  * Trousers default to reduced - Pattern asked for the common stitcher set.
- * Compounds (Overshirt+Trouser, Suit) keep other pieces' full dictionaries
- * plus the reduced trouser set.
+ * Compounds (Overshirt+Trouser, Suit, Suit+Vest, Shirt+Trouser, ...) keep
+ * other pieces' full dictionaries plus the reduced trouser set.
+ * Piece order comes from getGarmentPieces (same as stickers / nest).
  */
 
-import { libraryGarmentKeysForSheet } from "@/lib/pattern-library/base-pattern-picker";
+import {
+  libraryGarmentKeysForSheet,
+  normalizePatternSheetGarment,
+} from "@/lib/pattern-library/base-pattern-picker";
+import { getGarmentPieces } from "@/lib/sales-orders/label-codes";
 import type {
   ClientPatternMeasurement,
   MeasurementPointDef,
@@ -47,29 +52,28 @@ export function parseMeasurementTemplateMode(
   return null;
 }
 
-/** Piece tokens in sheet order (Overshirt+Trouser -> overshirt, trouser). */
+/**
+ * Piece tokens in sticker / nest order.
+ * Suit -> Jacket, Trouser; Suit+Vest -> Jacket, Vest, Trouser (not "suit" as one token).
+ */
 export function measurementPieceTokensForGarment(garmentType: string): string[] {
-  const lower = garmentType.trim().toLowerCase();
-  if (!lower) return [];
-  if (lower.includes("+")) {
-    return lower
-      .split("+")
-      .map((part) => part.trim())
-      .filter(Boolean);
-  }
-  // Suit is one sheet for jacket + trouser.
-  if (lower === "suit") return ["jacket", "trouser"];
-  return [lower];
+  const trimmed = garmentType.trim();
+  if (!trimmed) return [];
+  const normalized = normalizePatternSheetGarment(trimmed) || trimmed;
+  const pieces = getGarmentPieces(normalized);
+  if (pieces.length > 0) return pieces;
+  return [normalized];
 }
 
-function pieceHasTrouser(token: string): boolean {
-  const keys = libraryGarmentKeysForSheet(token).map((key) => key.toLowerCase());
-  return keys.some((key) => key === "trouser" || key === "trousers" || key === "pants");
+/** True only for the trouser piece - not Suit / Suit+Vest as a whole. */
+function pieceIsTrouser(pieceName: string): boolean {
+  const lower = pieceName.trim().toLowerCase();
+  return lower === "trouser" || lower === "trousers" || lower === "pants";
 }
 
 export function garmentOffersReducedMeasurementTemplate(garmentType: string): boolean {
   return measurementPieceTokensForGarment(garmentType).some((token) =>
-    pieceHasTrouser(token)
+    pieceIsTrouser(token)
   );
 }
 
@@ -103,7 +107,7 @@ export function reducedPointSpecsForPiece(
   dictionary: MeasurementPointDef[],
   token: string
 ): ReadonlyArray<{ point_id: string; name: string }> {
-  if (pieceHasTrouser(token)) return REDUCED_TROUSER_POINTS;
+  if (pieceIsTrouser(token)) return REDUCED_TROUSER_POINTS;
   return dictionaryPointsForPiece(dictionary, token);
 }
 

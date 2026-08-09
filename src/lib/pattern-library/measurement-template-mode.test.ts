@@ -124,6 +124,39 @@ test("Overshirt+Trouser reduced includes overshirt points then trouser set", () 
   assert.ok(built.some((row) => row.name === "Front Rise"));
 });
 
+test("Suit and Suit+Vest reduced keep jacket (and vest) before trouser set", () => {
+  const suit = reducedPointSpecsForGarment(dictionary, "Suit");
+  assert.ok(suit.some((s) => s.point_id === "chest"));
+  assert.ok(suit.some((s) => s.point_id === "front-rise"));
+  assert.equal(suit[0]?.point_id, "chest");
+
+  // Case-insensitive sheet garment
+  const suitLower = reducedPointSpecsForGarment(dictionary, "suit");
+  assert.ok(suitLower.some((s) => s.point_id === "chest"));
+
+  const suitVest = reducedPointSpecsForGarment(dictionary, "Suit+Vest");
+  // Must not collapse "suit" into trouser-only (bug: jacket dropped).
+  assert.ok(suitVest.some((s) => s.point_id === "chest"));
+  assert.ok(suitVest.some((s) => s.point_id === "front-rise"));
+  assert.equal(suitVest[0]?.point_id, "chest");
+});
+
+test("Shirt+Trouser and Shirt+Trouser+Short include shirt (+ short) with trouser reduced", () => {
+  const shirtTrouser = reducedPointSpecsForGarment(dictionary, "Shirt+Trouser");
+  assert.ok(shirtTrouser.some((s) => s.point_id === "1-2-chest"));
+  assert.ok(shirtTrouser.some((s) => s.point_id === "front-rise"));
+
+  const withShort = reducedPointSpecsForGarment(dictionary, "Shirt+Trouser+Short");
+  assert.ok(withShort.some((s) => s.point_id === "1-2-chest"));
+  assert.ok(withShort.some((s) => s.point_id === "front-rise"));
+});
+
+test("Shirt+Short has no trouser piece so reduced template is not offered", () => {
+  assert.equal(garmentOffersReducedMeasurementTemplate("Shirt+Short"), false);
+  assert.equal(defaultMeasurementTemplateMode("Shirt+Short"), "entire");
+  assert.equal(reducedPointSpecsForGarment(dictionary, "Shirt+Short").length, 0);
+});
+
 test("buildMeasurementsFromTemplate respects entire vs reduced", () => {
   const entire = buildMeasurementsFromTemplate(dictionary, "trouser", "entire");
   assert.equal(entire.length, 3);

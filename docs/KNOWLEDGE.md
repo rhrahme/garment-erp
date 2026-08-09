@@ -141,9 +141,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Back Pocket width, Front Hip, Front Thigh, Front Knee, Front Hem.
   **Entire** is the full trouser dictionary. Reduced rebuild drops empty
   unused dictionary rows but keeps any row that already has values.
-  **Compounds** (Overshirt+Trouser, Suit, …): Reduced = other piece(s) full
-  dictionary first, then the 17 trouser points (deduped). Do not drop
-  overshirt/jacket points when loading reduced on a multi-piece sheet.
+  **Compounds** (Overshirt+Trouser, Suit, Suit+Vest, Shirt+Trouser,
+  Shirt+Trouser+Short, …): piece order from `getGarmentPieces`. Reduced =
+  each non-trouser piece's full dictionary, then the 17 trouser points
+  (deduped). Do not treat the word "Suit" as trouser-only. Shirt+Short /
+  Thobe+Jacket have no trouser piece so they stay Entire-only (no Reduced
+  control).
 
 ## Printing
 
