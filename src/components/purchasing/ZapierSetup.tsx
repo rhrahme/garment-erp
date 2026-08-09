@@ -65,6 +65,7 @@ const OUTBOUND_EVENTS = [
   "production.sewing_session_ended",
   "production.sewing_scan_failed",
   "production.sewing_testing_reset",
+  "production.stitch_kiosk_pause_updated",
   "production.alteration_started",
   "production.stage_advanced",
   "production.handed_to_driver",
@@ -191,6 +192,11 @@ export function ZapierSetup() {
               body optional: sales_order_id, client_id, dry_run, acted_by - groups jobs by
               garment + composition + gsm per client and links/creates ClientPatterns
             </li>
+            <li>GET/PATCH {baseUrl}/api/v1/production/stitch-kiosk-pause</li>
+            <li className="pl-4 text-slate-500">
+              admin pause for floor stitch kiosk; PATCH body paused + optional
+              reason / acted_by; event production.stitch_kiosk_pause_updated
+            </li>
             <li>POST {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]/tud-fill</li>
             <li className="pl-4 text-slate-500">
               body: size, optional base_pattern_id / version_id / applied_by - sets
@@ -205,14 +211,21 @@ export function ZapierSetup() {
               completion gate). Webhook pattern_library.file_uploaded includes
               kind plus tud_* / dxf_* / tum_* / rul_* summary fields when parsed.
             </li>
+            <li>POST {baseUrl}/api/v1/pattern/library/client-patterns</li>
+            <li className="pl-4 text-slate-500">
+              create sheet; optional measurement_template_mode=entire|reduced
+              (trousers default reduced = 17 stitcher points)
+            </li>
             <li>PATCH {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]</li>
             <li className="pl-4 text-slate-500">
               body may include garment_type, unit (in|cm; converts all trial
               measurement numbers - Pattern UI also has a site-wide Units
-              preference for display/print), rebuild_template, active_tud_file_id,
-              active_tud_by_piece, marker_fabric_width_cm, marker_double_fold
-              (nest estimate inputs), measurement header fields, or
-              trial_sheet_versions (atomic Sample/Trials/Final sheet save)
+              preference for display/print), rebuild_template,
+              measurement_template_mode (entire|reduced with rebuild_template),
+              active_tud_file_id, active_tud_by_piece, marker_fabric_width_cm,
+              marker_double_fold (nest estimate inputs), measurement header
+              fields, or trial_sheet_versions (atomic Sample/Trials/Final sheet
+              save)
             </li>
             <li>PATCH {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]/versions/[versionId]</li>
             <li className="pl-4 text-slate-500">

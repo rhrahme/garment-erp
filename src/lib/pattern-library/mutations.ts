@@ -32,6 +32,14 @@ import {
 import { hydrateMultiPieceGeometry } from "@/lib/pattern-library/multi-piece-geometry";
 import { generatePatternRef } from "@/lib/pattern-library/refs";
 import {
+  buildReducedMeasurementsFromTemplate,
+  defaultMeasurementTemplateMode,
+  garmentOffersReducedMeasurementTemplate,
+  mergeTemplateMeasurements,
+  parseMeasurementTemplateMode,
+  type MeasurementTemplateMode,
+} from "@/lib/pattern-library/measurement-template-mode";
+import {
   fillMeasurementsFromBase,
   findBaseSizeMatch,
 } from "@/lib/pattern-library/tud-size-fill";
@@ -407,11 +415,19 @@ function buildMeasurementsFromBase(base: BasePattern, size: string): ClientPatte
 /**
  * Pre-made measurement template for a garment type - the dictionary points seen
  * on that garment (from imports + past patterns), as empty rows to fill in.
+ * Trousers support mode "reduced" (17 stitcher points) vs "entire" (full dict).
  */
 export function buildMeasurementsFromTemplate(
   dictionary: MeasurementPointDef[],
-  garmentType: string
+  garmentType: string,
+  mode: MeasurementTemplateMode = "entire"
 ): ClientPatternMeasurement[] {
+  if (
+    mode === "reduced" &&
+    garmentOffersReducedMeasurementTemplate(garmentType)
+  ) {
+    return buildReducedMeasurementsFromTemplate(dictionary, garmentType);
+  }
   const keys = new Set(
     libraryGarmentKeysForSheet(garmentType).map((key) => key.toLowerCase())
   );
@@ -466,6 +482,11 @@ export interface ClientPatternInput {
   trial_date?: string | null;
   /** Sales-order fabric line ids to group into this garment from the client fabric board. */
   linked_fabric_line_ids?: string[];
+  /**
+   * Measurement dictionary seed: entire (full garment dict) or reduced
+   * (trousers: 17 stitcher points). Defaults to reduced for trousers.
+   */
+  measurement_template_mode?: MeasurementTemplateMode | string | null;
 }
 
 /** Line ids of a client's fabric lines across all sales orders - assignment guard. */
@@ -505,12 +526,15 @@ export async function createClientPattern(
 
   const timestamp = now();
   const unit = input.unit && VALID_UNITS.includes(input.unit) ? input.unit : base?.unit ?? "in";
+  const templateMode =
+    parseMeasurementTemplateMode(input.measurement_template_mode) ??
+    defaultMeasurementTemplateMode(garmentType);
   // Base + size copies the graded values; otherwise the garment-type template
   // pre-fills the point list so the team never starts from a blank grid.
   let measurements =
     base && baseSize
       ? buildMeasurementsFromBase(base, baseSize)
-      : buildMeasurementsFromTemplate(store.dictionary, garmentType);
+      : buildMeasurementsFromTemplate(store.dictionary, garmentType, templateMode);
   if (base && base.unit !== unit) {
     measurements = measurements.map((row) =>
       convertMeasurementRowUnit(row, base.unit, unit)
@@ -805,6 +829,8 @@ export async function updateClientPattern(
   > & {
     /** When garment_type changes, rebuild empty template points on the latest trial. */
     rebuild_template?: boolean;
+    /** entire | reduced - used when rebuild_template is true (trousers). */
+    measurement_template_mode?: MeasurementTemplateMode | string | null;
   },
   options: { updatedBy?: string | null; notify?: boolean } = {}
 ): Promise<Ok<{ pattern: ClientPattern }> | Err> {
@@ -898,37 +924,24 @@ export async function updateClientPattern(
   // every trial so Sample / Trials / Final stay in sync.
   const shouldRebuildTemplate = Boolean(patch.rebuild_template) && versions.length > 0;
   if (shouldRebuildTemplate) {
-    const template = buildMeasurementsFromTemplate(store.dictionary, nextGarmentType);
-    versions = versions.map((candidate) => {
-      const existingByPoint = new Map(
-        candidate.measurements.map((row) => [row.point_id, row])
-      );
-      const merged = template.map((row) => {
-        const prior = existingByPoint.get(row.point_id);
-        if (!prior) return row;
-        return {
-          ...row,
-          base_value: prior.base_value,
-          target_value: prior.target_value,
-          sewn_value: prior.sewn_value,
-          adjustment: prior.adjustment,
-          remarks: prior.remarks,
-          remark: prior.remark ?? row.remark,
-        };
-      });
-      // Keep any custom points not in the new template.
-      for (const prior of candidate.measurements) {
-        if (!merged.some((row) => row.point_id === prior.point_id)) {
-          merged.push(prior);
-        }
-      }
-      return {
-        ...candidate,
-        measurements: merged,
-        updated_by: options.updatedBy ?? candidate.updated_by,
-        updated_at: now(),
-      };
-    });
+    const templateMode =
+      parseMeasurementTemplateMode(patch.measurement_template_mode) ??
+      defaultMeasurementTemplateMode(nextGarmentType);
+    const template = buildMeasurementsFromTemplate(
+      store.dictionary,
+      nextGarmentType,
+      templateMode
+    );
+    versions = versions.map((candidate) => ({
+      ...candidate,
+      measurements: mergeTemplateMeasurements(
+        template,
+        candidate.measurements,
+        templateMode
+      ),
+      updated_by: options.updatedBy ?? candidate.updated_by,
+      updated_at: now(),
+    }));
   }
 
   const nextActiveTud =

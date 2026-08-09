@@ -97,6 +97,7 @@ export function StitchKioskPanel() {
     log,
     draining,
     captureArmed,
+    kioskPaused,
   } = useStitchScanCapture();
 
   const [now, setNow] = useState(() => Date.now());
@@ -120,10 +121,28 @@ export function StitchKioskPanel() {
 
   return (
     <div className="space-y-4">
-      <div className={cn("rounded-2xl border-2 px-6 py-8 text-center", copy.tone)}>
+      {kioskPaused ? (
+        <div className="rounded-2xl border-2 border-amber-500 bg-amber-50 px-6 py-8 text-center text-amber-950">
+          <p className="text-sm font-semibold uppercase tracking-wide opacity-70">Stitch kiosk</p>
+          <h2 className="mt-2 text-3xl font-bold sm:text-4xl">Paused by admin</h2>
+          <p className="mt-3 text-lg font-medium opacity-90">
+            Badge and A4 scans are blocked until an admin resumes the kiosk on Production.
+          </p>
+        </div>
+      ) : null}
+      <div
+        className={cn(
+          "rounded-2xl border-2 px-6 py-8 text-center",
+          kioskPaused ? "border-slate-200 bg-slate-50 text-slate-500 opacity-60" : copy.tone
+        )}
+      >
         <p className="text-sm font-semibold uppercase tracking-wide opacity-70">Stitch kiosk</p>
-        <h2 className="mt-2 text-3xl font-bold sm:text-4xl">{copy.title}</h2>
-        <p className="mt-3 text-lg font-medium opacity-90">{copy.hint}</p>
+        <h2 className="mt-2 text-3xl font-bold sm:text-4xl">
+          {kioskPaused ? "Waiting for resume" : copy.title}
+        </h2>
+        <p className="mt-3 text-lg font-medium opacity-90">
+          {kioskPaused ? "Do not scan until the kiosk is resumed" : copy.hint}
+        </p>
 
         <div className="mt-5 flex flex-wrap justify-center gap-3 text-sm">
           <span className="rounded-full bg-white/80 px-3 py-1 font-semibold tabular-nums text-slate-800">

@@ -23,6 +23,11 @@ import {
 } from "@/lib/pattern/tud-pattern-code";
 import { filterTudFilesForPiece } from "@/lib/pattern-library/tud-versions";
 import { isMultiPieceGarment, piecesForPatternJob } from "@/lib/sales-orders/label-codes";
+import {
+  defaultMeasurementTemplateMode,
+  garmentOffersReducedMeasurementTemplate,
+  type MeasurementTemplateMode,
+} from "@/lib/pattern-library/measurement-template-mode";
 import type { PatternFittingOutcome, PatternJob, PatternJobStatus } from "@/lib/types/pattern";
 import type { ClientPattern, PatternLibraryAttachment } from "@/lib/types/pattern-library";
 
@@ -66,6 +71,8 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
   const [sheetFiles, setSheetFiles] = useState<PatternLibraryAttachment[]>([]);
   const [linkPatternId, setLinkPatternId] = useState("");
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [measurementTemplateMode, setMeasurementTemplateMode] =
+    useState<MeasurementTemplateMode>("reduced");
   const [canChangeGarmentType, setCanChangeGarmentType] = useState(false);
   const [garmentTypeChangeFlag, setGarmentTypeChangeFlag] = useState<GarmentTypeChangeFlag | null>(
     null
@@ -104,6 +111,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       if (!res.ok) throw new Error(data.error ?? "Failed to load");
       const nextJob = data.job as PatternJob;
       setJob(nextJob);
+      setMeasurementTemplateMode(defaultMeasurementTemplateMode(nextJob.garment_type));
       setAssignedTo(nextJob.assigned_to ?? "");
       setSizeNotes(nextJob.pattern_size_notes ?? "");
       setNotes(nextJob.notes ?? "");
@@ -282,6 +290,11 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
           garment_type: job.garment_type,
           fabric: job.fabric_number || null,
           linked_fabric_line_ids: [job.sales_order_line_id],
+          measurement_template_mode: garmentOffersReducedMeasurementTemplate(
+            job.garment_type
+          )
+            ? measurementTemplateMode
+            : "entire",
         }),
       });
       const data = await res.json().catch(() => null);
@@ -465,6 +478,43 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
               <span className="font-medium text-slate-800">{job.garment_type}</span> and enter
               sizes.
             </p>
+            {garmentOffersReducedMeasurementTemplate(job.garment_type) ? (
+              <fieldset className="space-y-2 rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-3">
+                <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Measurement points
+                </legend>
+                <label className="flex cursor-pointer items-start gap-2 text-sm text-slate-800">
+                  <input
+                    type="radio"
+                    name="measurement-template-mode"
+                    className="mt-0.5"
+                    checked={measurementTemplateMode === "reduced"}
+                    onChange={() => setMeasurementTemplateMode("reduced")}
+                  />
+                  <span>
+                    <span className="font-medium">Reduced</span>
+                    <span className="block text-xs text-slate-500">
+                      17 stitcher points (waist, hip, rise, thigh, knee, inseam, …)
+                    </span>
+                  </span>
+                </label>
+                <label className="flex cursor-pointer items-start gap-2 text-sm text-slate-800">
+                  <input
+                    type="radio"
+                    name="measurement-template-mode"
+                    className="mt-0.5"
+                    checked={measurementTemplateMode === "entire"}
+                    onChange={() => setMeasurementTemplateMode("entire")}
+                  />
+                  <span>
+                    <span className="font-medium">Entire</span>
+                    <span className="block text-xs text-slate-500">
+                      Full trouser dictionary (all points, including unused)
+                    </span>
+                  </span>
+                </label>
+              </fieldset>
+            ) : null}
             <button
               type="button"
               onClick={() => void createAndOpenSheet()}

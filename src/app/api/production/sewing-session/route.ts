@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSewingScanFailuresAsync } from "@/lib/data/sewing-scan-failures";
 import { readSewingSessionsAsync } from "@/lib/data/sewing-sessions";
+import { readStitchKioskSettings } from "@/lib/data/stitch-kiosk-settings";
 import {
   parseSewingDashboardPeriod,
   sewingSessionsDashboard,
@@ -15,9 +16,11 @@ export async function GET(request: NextRequest) {
       "sales_orders",
       "payroll_employees",
       "clients",
+      "stitch_kiosk_settings",
     ]);
     const store = await readSewingSessionsAsync();
     const failures = await readSewingScanFailuresAsync();
+    const kioskSettings = await readStitchKioskSettings();
     const { searchParams } = request.nextUrl;
     const period = parseSewingDashboardPeriod(searchParams.get("period"));
     const from = searchParams.get("from");
@@ -28,7 +31,12 @@ export async function GET(request: NextRequest) {
       to,
       failed_scans: failures.failures,
     });
-    return NextResponse.json(dashboard);
+    return NextResponse.json({
+      ...dashboard,
+      kiosk_paused: kioskSettings.paused,
+      kiosk_paused_at: kioskSettings.paused_at,
+      kiosk_paused_by: kioskSettings.paused_by,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load sewing sessions.";
     return NextResponse.json({ error: message }, { status: 500 });

@@ -11,6 +11,7 @@ import {
   findPayrollEmployeeById,
   resolveScanEmployeeContext,
 } from "@/lib/hr/payroll-lookup";
+import { isStitchKioskPaused } from "@/lib/data/stitch-kiosk-settings";
 import { employeeCanSewOnStitchKiosk } from "@/lib/hr/payroll-utils";
 import { notifyIntegration } from "@/lib/integrations";
 import { executeStageScan } from "@/lib/production/execute-stage-scan";
@@ -551,6 +552,7 @@ export async function processSewingKioskScan(
     "sewing_scan_failures",
     "sales_orders",
     "production_work_orders",
+    "stitch_kiosk_settings",
   ]);
 
   const at = input.now ?? Date.now();
@@ -561,6 +563,27 @@ export async function processSewingKioskScan(
     source: input.source,
     now: at,
   };
+
+  // Admin pause: block all badge/A4 work without spamming sewing_scan_failures.
+  if (await isStitchKioskPaused()) {
+    const store = expireStaleSewingState(await readSewingSessionsFresh(), at);
+    return result(
+      false,
+      "Stitch kiosk is paused by admin. Scans are blocked until resume.",
+      store,
+      kioskId,
+      {},
+      {
+        reason_code: "kiosk_paused",
+        kiosk_paused: true,
+        failure_recorded: false,
+        // Dequeue so the USB queue does not retry-spam while paused.
+        durable: true,
+        beep: "error",
+      }
+    );
+  }
+
   const raw = normalizeScannerInput(input.raw);
   if (!raw) {
     const store = expireStaleSewingState(await readSewingSessionsFresh(), at);

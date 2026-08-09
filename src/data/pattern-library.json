@@ -326,7 +326,9 @@
     {
       "id": "outside-excluding-w-b",
       "name": "Outside (excluding w/b)",
-      "aliases": [],
+      "aliases": [
+        "Outseam Length (without Waistband)"
+      ],
       "garment_types": [
         "shorts",
         "trouser"
@@ -885,9 +887,13 @@
     {
       "id": "1-2-waist-relux",
       "name": "1/2 Waist Relux",
-      "aliases": [],
+      "aliases": [
+        "1/2 Waist Relax",
+        "1/2 Waist Relux"
+      ],
       "garment_types": [
-        "shorts"
+        "shorts",
+        "trouser"
       ]
     },
     {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { StitchKioskPauseControl } from "@/components/production/StitchKioskPauseControl";
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
 import {
   sewingSessionClientDisplayName,
@@ -22,6 +23,7 @@ type DashboardPayload = {
     duration_sec: number;
     avg_duration_sec?: number;
   }[];
+  kiosk_paused?: boolean;
 };
 
 function formatDuration(sec: number): string {
@@ -33,6 +35,7 @@ function formatDuration(sec: number): string {
 export function SewingSessionsDashboard({ className }: { className?: string }) {
   const [data, setData] = useState<DashboardPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const kioskPaused = Boolean(data?.kiosk_paused);
 
   const load = useCallback(async () => {
     try {
@@ -62,16 +65,24 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
               Live floor sessions from laptop kiosks (badge + A4 QR). Status follows job role.
             </p>
           </div>
-          <a
-            href="/stitch"
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-          >
-            Open stitch kiosk
-          </a>
+          <div className="flex flex-wrap items-center gap-2">
+            <StitchKioskPauseControl />
+            <a
+              href="/stitch"
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            >
+              Open stitch kiosk
+            </a>
+          </div>
         </div>
       </div>
 
       <div className="space-y-4 px-5 py-4">
+        {kioskPaused ? (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+            Stitch kiosk is paused - badge and A4 scans are blocked on the floor.
+          </div>
+        ) : null}
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
             {error}

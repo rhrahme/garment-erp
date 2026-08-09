@@ -62,6 +62,7 @@ export type IntegrationEventType =
   | "production.sewing_session_ended"
   | "production.sewing_scan_failed"
   | "production.sewing_testing_reset"
+  | "production.stitch_kiosk_pause_updated"
   | "production.alteration_started"
   | "production.stage_advanced"
   | "production.handed_to_driver"

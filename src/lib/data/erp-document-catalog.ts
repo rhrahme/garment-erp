@@ -178,6 +178,14 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/sewing-scan-failures.json",
   },
   {
+    key: "stitch_kiosk_settings",
+    label: "Stitch kiosk settings",
+    description: "Admin pause / resume for the stitch floor kiosk",
+    category: "production",
+    appHref: "/production",
+    sourcePath: "src/data/stitch-kiosk-settings.json",
+  },
+  {
     key: "factory_floor_map",
     label: "Factory floor map",
     description: "Hagan factory layout PDF for shop-floor stations",
@@ -327,6 +335,8 @@ export function recordSummaryForKey(key: ErpDocumentKey, data: unknown): string 
       return `${Array.isArray(record.events) ? record.events.length : 0} events`;
     case "exchange_rate_state":
       return record.last_rate != null ? "Rate alert configured" : "No alert sent yet";
+    case "stitch_kiosk_settings":
+      return record.paused ? "Paused" : "Active";
     case "factory_floor_map":
       return "Hagan factory layout PDF";
     default:

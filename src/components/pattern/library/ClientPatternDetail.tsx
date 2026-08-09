@@ -42,6 +42,11 @@ import {
   listMarkerFiles,
   MARKER_UPLOAD_ACCEPT,
 } from "@/lib/pattern-library/cutting-completeness";
+import {
+  defaultMeasurementTemplateMode,
+  garmentOffersReducedMeasurementTemplate,
+  type MeasurementTemplateMode,
+} from "@/lib/pattern-library/measurement-template-mode";
 import { getGarmentPieces } from "@/lib/sales-orders/label-codes";
 import {
   emptyCascadeValue,
@@ -512,6 +517,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         body: JSON.stringify({
           garment_type: nextGarment,
           rebuild_template: rebuild,
+          measurement_template_mode: defaultMeasurementTemplateMode(nextGarment),
         }),
       });
       if (!res.ok) {
@@ -530,8 +536,13 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
   }
 
   /** Seed Sample/Trial/Final rows from the garment dictionary (Pattern can reload anytime). */
-  async function loadTemplatePoints() {
+  async function loadTemplatePoints(mode?: MeasurementTemplateMode) {
     if (!pattern) return;
+    const templateMode =
+      mode ??
+      (garmentOffersReducedMeasurementTemplate(pattern.garment_type)
+        ? defaultMeasurementTemplateMode(pattern.garment_type)
+        : "entire");
     setSaving(true);
     setError(null);
     try {
@@ -541,6 +552,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         body: JSON.stringify({
           garment_type: pattern.garment_type,
           rebuild_template: true,
+          measurement_template_mode: templateMode,
         }),
       });
       if (!res.ok) {
@@ -1460,15 +1472,37 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                     <span className="font-medium">{garmentLabel(pattern.garment_type)}</span>.
                     Load the garment template, or add custom points below.
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => void loadTemplatePoints()}
-                    disabled={saving}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-                  >
-                    <Ruler className="h-4 w-4" />
-                    {saving ? "Loading..." : "Load template points"}
-                  </button>
+                  {pattern && garmentOffersReducedMeasurementTemplate(pattern.garment_type) ? (
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void loadTemplatePoints("reduced")}
+                        disabled={saving}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                      >
+                        <Ruler className="h-4 w-4" />
+                        {saving ? "Loading..." : "Load reduced points"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void loadTemplatePoints("entire")}
+                        disabled={saving}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        {saving ? "Loading..." : "Load entire dictionary"}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => void loadTemplatePoints("entire")}
+                      disabled={saving}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                    >
+                      <Ruler className="h-4 w-4" />
+                      {saving ? "Loading..." : "Load template points"}
+                    </button>
+                  )}
                 </div>
               ) : null}
               <div className="flex flex-wrap items-center gap-1.5 border-t border-slate-100 px-4 py-3">
@@ -1487,16 +1521,40 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                   <Plus className="h-4 w-4" />
                   Add point
                 </button>
-                <button
-                  type="button"
-                  onClick={() => void loadTemplatePoints()}
-                  disabled={saving}
-                  className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-50"
-                  title="Merge garment dictionary points onto every trial (keeps existing values)"
-                >
-                  <Ruler className="h-4 w-4" />
-                  Load template points
-                </button>
+                {pattern && garmentOffersReducedMeasurementTemplate(pattern.garment_type) ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => void loadTemplatePoints("reduced")}
+                      disabled={saving}
+                      className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-50"
+                      title="Load the 17 common trouser stitcher points (keeps entered values)"
+                    >
+                      <Ruler className="h-4 w-4" />
+                      Load reduced
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void loadTemplatePoints("entire")}
+                      disabled={saving}
+                      className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-50"
+                      title="Merge full garment dictionary onto every trial (keeps existing values)"
+                    >
+                      Load entire
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void loadTemplatePoints("entire")}
+                    disabled={saving}
+                    className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-50"
+                    title="Merge garment dictionary points onto every trial (keeps existing values)"
+                  >
+                    <Ruler className="h-4 w-4" />
+                    Load template points
+                  </button>
+                )}
                 <p className="ml-auto text-[11px] text-slate-400">
                   Pattern can add, rename, reorder, or remove any row. Save sheet to keep.
                 </p>

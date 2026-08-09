@@ -35,6 +35,17 @@ export const ERP_DOCUMENT_SPECS = {
     path: path.join(ROOT, "src/data/sewing-scan-failures.json"),
     fallback: { updated_at: null, failures: [] },
   },
+  stitch_kiosk_settings: {
+    path: path.join(ROOT, "src/data/stitch-kiosk-settings.json"),
+    fallback: {
+      updated_at: null,
+      paused: false,
+      paused_at: null,
+      paused_by: null,
+      resumed_at: null,
+      resumed_by: null,
+    },
+  },
   production_work_orders_archive: {
     path: path.join(ROOT, "src/data/production-work-orders-archive.json"),
     fallback: { updated_at: null, work_orders: [] },
@@ -184,6 +195,7 @@ export const LAZY_ERP_DOCUMENT_KEYS = [
   "production_scan_events",
   "sewing_sessions",
   "sewing_scan_failures",
+  "stitch_kiosk_settings",
   "factory_floor_map",
   "factory_workstations",
   "fabric_order_drafts",

@@ -42,6 +42,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - USB wedge capture must always steal rapid keystrokes (even over selection or
   focused fields) and show an optimistic "Last scan" strip on every tab.
   Silence on scan is a bug, never acceptable.
+- **Admin pause stitch kiosk**: on `/production` Floor now, admin can Pause /
+  Resume. Persisted in `stitch_kiosk_settings` (`erp_documents`). While paused,
+  `processSewingKioskScan` blocks all badge/A4 work (UI + `/api/v1/.../scan`)
+  with `reason_code=kiosk_paused` without writing `sewing_scan_failures`. Do
+  not remove this gate or hide the admin control.
 - Rejects must explain themselves (e.g. washing/fabric-cut QR scanned instead
   of production piece QR) and persist to `sewing_scan_failures`.
 - **Scan durability (do not regress)**: every kiosk scan stays in
@@ -127,6 +132,15 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   base and merges dictionary points onto all trials (keeps entered values).
   Do not re-lock row add/remove to a single trial or hide template load when
   `base_pattern_id` is set.
+- **Trouser measurement template: Entire vs Reduced** (Aug 9 2026): when
+  creating a trouser sheet (or Load reduced / Load entire on the sheet),
+  Pattern chooses `measurement_template_mode`. **Reduced** (default) is the
+  17 stitcher points: 1/2 Waist Relax, 1/2 Hip, Side pocket opening length,
+  Front Rise, Back Rise, 1/2 Thigh, 1/2 Knee, 1/2 Bottom width, Inseam
+  Length, Outseam Length (without Waistband), Fly Length, Waistband Height,
+  Back Pocket width, Front Hip, Front Thigh, Front Knee, Front Hem.
+  **Entire** is the full trouser dictionary. Reduced rebuild drops empty
+  unused dictionary rows but keeps any row that already has values.
 
 ## Printing
 

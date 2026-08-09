@@ -125,4 +125,8 @@ export type SewingKioskScanResult = {
    * Kiosk may dequeue only when durable is true (or ok is true).
    */
   durable?: boolean;
+  /** Machine-readable reject reason when ok is false (e.g. kiosk_paused). */
+  reason_code?: string;
+  /** Admin pause flag mirrored on scan responses for kiosk UI. */
+  kiosk_paused?: boolean;
 };
