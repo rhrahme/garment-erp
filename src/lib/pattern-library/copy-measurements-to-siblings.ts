@@ -1,18 +1,28 @@
 /**
  * Copy filled measurement sizes from one client sheet onto other same-client +
  * same-garment consolidations (e.g. Khaled OT SUMMERTIME -> other OT fabric groups).
+ * Set garments can scope to one piece (Overshirt / Trouser / ...) or all pieces.
  */
 
 import { normalizePatternSheetGarment } from "@/lib/pattern-library/base-pattern-picker";
+import {
+  filterTrialSheetPointsForPiece,
+  garmentIsMeasurementSet,
+  measurementPieceTokensForGarment,
+} from "@/lib/pattern-library/measurement-template-mode";
 import { countFilledMeasurements } from "@/lib/pattern-library/protect-pattern-library-write";
 import type {
   ClientPattern,
   ClientPatternMeasurement,
   ClientPatternVersion,
+  MeasurementPointDef,
   MeasurementUnit,
 } from "@/lib/types/pattern-library";
 
 export type CopyMeasurementsMode = "overwrite" | "fill_empty_only";
+
+/** "all" = whole sheet; otherwise a piece token from measurementPieceTokensForGarment. */
+export type CopyMeasurementsPieceScope = "all" | string;
 
 export type CopyMeasurementSibling = {
   id: string;
@@ -24,6 +34,11 @@ export type CopyMeasurementSibling = {
   linked_fabric_count: number;
   filled_measurement_count: number;
   is_empty: boolean;
+};
+
+export type CopyMeasurementsApplyOptions = {
+  pieceScope?: CopyMeasurementsPieceScope | null;
+  dictionary?: Array<Pick<MeasurementPointDef, "id" | "garment_types"> & { name?: string }>;
 };
 
 function now(): string {
@@ -44,6 +59,26 @@ export function activeMeasurementVersion(
     if (final) return final;
   }
   return pattern.versions[pattern.versions.length - 1] ?? null;
+}
+
+/** Piece tokens Pattern can pick when copying (empty when single-piece garment). */
+export function copyMeasurementPieceOptions(garmentType: string): string[] {
+  if (!garmentIsMeasurementSet(garmentType)) return [];
+  return measurementPieceTokensForGarment(garmentType);
+}
+
+export function normalizeCopyMeasurementsPieceScope(
+  garmentType: string,
+  raw: unknown
+): CopyMeasurementsPieceScope {
+  const pieces = copyMeasurementPieceOptions(garmentType);
+  if (pieces.length === 0) return "all";
+  const value = typeof raw === "string" ? raw.trim() : "";
+  if (!value || value.toLowerCase() === "all" || value.toLowerCase() === "both") {
+    return "all";
+  }
+  const match = pieces.find((piece) => piece.toLowerCase() === value.toLowerCase());
+  return match ?? "all";
 }
 
 export function listCopyMeasurementSiblings(
@@ -76,23 +111,67 @@ export function listCopyMeasurementSiblings(
   return out.sort((a, b) => a.pattern_ref.localeCompare(b.pattern_ref));
 }
 
+function cloneMeasurement(row: ClientPatternMeasurement): ClientPatternMeasurement {
+  return {
+    ...structuredClone(row),
+    name: row.name?.trim() || row.point_id,
+  };
+}
+
 function cloneMeasurements(
   rows: ClientPatternMeasurement[]
 ): ClientPatternMeasurement[] {
-  return structuredClone(rows).map((row) => ({
-    ...row,
-    name: row.name?.trim() || row.point_id,
-  }));
+  return rows.map((row) => cloneMeasurement(row));
+}
+
+function rowIsFilled(row: ClientPatternMeasurement): boolean {
+  return (
+    row.target_value != null ||
+    row.base_value != null ||
+    row.sewn_value != null ||
+    row.adjustment != null
+  );
+}
+
+function mergePieceMeasurements(
+  targetRows: ClientPatternMeasurement[],
+  sourcePieceRows: ClientPatternMeasurement[],
+  mode: CopyMeasurementsMode
+): ClientPatternMeasurement[] {
+  const next = cloneMeasurements(targetRows);
+  const byId = new Map(next.map((row, index) => [row.point_id, index]));
+
+  for (const sourceRow of sourcePieceRows) {
+    if (!rowIsFilled(sourceRow) && mode === "fill_empty_only") continue;
+    const index = byId.get(sourceRow.point_id);
+    if (index == null) {
+      next.push(cloneMeasurement(sourceRow));
+      byId.set(sourceRow.point_id, next.length - 1);
+      continue;
+    }
+    const existing = next[index]!;
+    if (mode === "fill_empty_only" && rowIsFilled(existing)) continue;
+    next[index] = {
+      ...existing,
+      ...cloneMeasurement(sourceRow),
+      // Keep target remark/notes fields that are sheet-local if source blank.
+      remark: sourceRow.remark ?? existing.remark,
+      remarks: sourceRow.remarks ?? existing.remarks,
+    };
+  }
+  return next;
 }
 
 /**
  * Apply source active-trial measurements onto target active trial.
  * Copies unit with the numbers so CM stays CM.
+ * pieceScope "all" replaces the whole sheet; a piece name merges only that piece.
  */
 export function applyCopyMeasurementsToPattern(
   target: ClientPattern,
   source: ClientPattern,
-  mode: CopyMeasurementsMode
+  mode: CopyMeasurementsMode,
+  options: CopyMeasurementsApplyOptions = {}
 ): ClientPattern | null {
   const sourceVersion = activeMeasurementVersion(source);
   const targetVersion = activeMeasurementVersion(target);
@@ -101,16 +180,40 @@ export function applyCopyMeasurementsToPattern(
   const sourceMeasurements = sourceVersion.measurements ?? [];
   if (countFilledMeasurements(sourceMeasurements) === 0) return null;
 
-  if (mode === "fill_empty_only") {
-    const targetFilled = countFilledMeasurements(targetVersion.measurements ?? []);
-    if (targetFilled > 0) return null;
+  const pieceScope = normalizeCopyMeasurementsPieceScope(
+    source.garment_type,
+    options.pieceScope ?? "all"
+  );
+  const dictionary = options.dictionary ?? [];
+
+  let nextMeasurements: ClientPatternMeasurement[];
+  if (pieceScope === "all") {
+    if (mode === "fill_empty_only") {
+      const targetFilled = countFilledMeasurements(targetVersion.measurements ?? []);
+      if (targetFilled > 0) return null;
+    }
+    nextMeasurements = cloneMeasurements(sourceMeasurements);
+  } else {
+    const sourcePieceRows = filterTrialSheetPointsForPiece(
+      sourceMeasurements,
+      pieceScope,
+      dictionary
+    );
+    if (countFilledMeasurements(sourcePieceRows) === 0) return null;
+    nextMeasurements = mergePieceMeasurements(
+      targetVersion.measurements ?? [],
+      sourcePieceRows,
+      mode
+    );
   }
 
   const nextVersion: ClientPatternVersion = {
     ...targetVersion,
-    measurements: cloneMeasurements(sourceMeasurements),
+    measurements: nextMeasurements,
     special_instructions:
-      sourceVersion.special_instructions ?? targetVersion.special_instructions ?? null,
+      pieceScope === "all"
+        ? sourceVersion.special_instructions ?? targetVersion.special_instructions ?? null
+        : targetVersion.special_instructions,
     notes: targetVersion.notes,
     updated_at: now(),
   };
@@ -119,7 +222,9 @@ export function applyCopyMeasurementsToPattern(
     ...target,
     unit: source.unit,
     special_instructions:
-      sourceVersion.special_instructions ?? target.special_instructions ?? null,
+      pieceScope === "all"
+        ? sourceVersion.special_instructions ?? target.special_instructions ?? null
+        : target.special_instructions,
     versions: target.versions.map((candidate) =>
       candidate.id === targetVersion.id ? nextVersion : candidate
     ),

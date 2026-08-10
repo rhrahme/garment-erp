@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   ArrowRight,
   CircleHelp,
+  Copy,
   Eye,
   ImageOff,
   Layers,
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/Button";
 import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
 import { FabricSwatchProvider, useFabricSwatch } from "@/components/fabric/FabricSwatchProvider";
 import { ConsolidateSelectedFabricsModal } from "@/components/pattern/ConsolidateSelectedFabricsModal";
+import { CopySizesModal } from "@/components/pattern/library/CopySizesModal";
 import { ChangeGarmentTypeControl } from "@/components/orders/ChangeGarmentTypeControl";
 import { GarmentPiecesNest } from "@/components/garment/GarmentPiecesNest";
 import { GarmentTypeChangeBadge } from "@/components/garment-type/GarmentTypeChangeBadge";
@@ -74,6 +76,11 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
   const [printSheetKind, setPrintSheetKind] = useState<PatternSheetKind>("production");
   const [printHelpOpen, setPrintHelpOpen] = useState(false);
   const [consolidateOpen, setConsolidateOpen] = useState(false);
+  const [copySizesFor, setCopySizesFor] = useState<{
+    patternId: string;
+    patternRef: string;
+    garmentType: string | null;
+  } | null>(null);
   const [autoBusy, setAutoBusy] = useState(false);
   const [autoSummary, setAutoSummary] = useState<string | null>(null);
   const [fitFamilies, setFitFamilies] = useState<CrossClientFitFamily[]>([]);
@@ -663,6 +670,22 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
                     >
                       Open job
                     </Link>
+                    {linked ? (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() =>
+                          setCopySizesFor({
+                            patternId: linked.id,
+                            patternRef: linked.pattern_ref,
+                            garmentType: linked.garment_type ?? job.garment_type ?? null,
+                          })
+                        }
+                      >
+                        <Copy className="mr-1 h-3.5 w-3.5" />
+                        Copy sizes
+                      </Button>
+                    ) : null}
                     {!job.trial_priority ? (
                       <Button
                         size="sm"
@@ -705,6 +728,15 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
               setConsolidateOpen(false);
               await load();
             }}
+          />
+        ) : null}
+
+        {copySizesFor ? (
+          <CopySizesModal
+            patternId={copySizesFor.patternId}
+            patternRef={copySizesFor.patternRef}
+            garmentType={copySizesFor.garmentType}
+            onClose={() => setCopySizesFor(null)}
           />
         ) : null}
       </div>

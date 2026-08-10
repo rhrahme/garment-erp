@@ -4,7 +4,10 @@ import {
   ensurePatternLibraryLoaded,
   readPatternLibraryFresh,
 } from "@/lib/data/pattern-library";
-import { listCopyMeasurementSiblings } from "@/lib/pattern-library/copy-measurements-to-siblings";
+import {
+  copyMeasurementPieceOptions,
+  listCopyMeasurementSiblings,
+} from "@/lib/pattern-library/copy-measurements-to-siblings";
 import { copyClientPatternMeasurementsToSiblings } from "@/lib/pattern-library/mutations";
 
 /** List same-client + same-garment consolidation sheets that can receive sizes. */
@@ -26,6 +29,8 @@ export async function GET(
     }
     return NextResponse.json({
       source_pattern_id: source.id,
+      garment_type: source.garment_type,
+      piece_options: copyMeasurementPieceOptions(source.garment_type),
       siblings: listCopyMeasurementSiblings(store.client_patterns, source),
     });
   } catch (error) {
@@ -36,7 +41,11 @@ export async function GET(
 
 /**
  * Copy this sheet's sizes onto selected sibling consolidations.
- * Body: { target_pattern_ids: string[], mode?: "overwrite" | "fill_empty_only" }
+ * Body: {
+ *   target_pattern_ids: string[],
+ *   mode?: "overwrite" | "fill_empty_only",
+ *   piece_scope?: "all" | piece name (Overshirt / Trouser / ...)
+ * }
  */
 export async function POST(
   request: Request,
@@ -52,6 +61,7 @@ export async function POST(
     const body = (await request.json().catch(() => ({}))) as {
       target_pattern_ids?: unknown;
       mode?: string | null;
+      piece_scope?: string | null;
     };
     const targetIds = Array.isArray(body.target_pattern_ids)
       ? body.target_pattern_ids.filter((id): id is string => typeof id === "string")
@@ -61,6 +71,7 @@ export async function POST(
       {
         target_pattern_ids: targetIds,
         mode: body.mode === "fill_empty_only" ? "fill_empty_only" : "overwrite",
+        piece_scope: body.piece_scope,
       },
       { actedBy: session.email }
     );

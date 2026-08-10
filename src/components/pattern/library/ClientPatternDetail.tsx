@@ -1335,10 +1335,11 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
               </div>
               <p className="text-xs leading-relaxed text-amber-900">
                 Push measurements from this filled sheet onto other consolidated fabric groups
-                for the same client and garment (different composition / weight). Choose
-                Overwrite to replace numbers, or Fill empty to only write blank cells. Save
-                this sheet first if you have unsaved edits. Linked fabrics stay the same -
-                only the size numbers are copied.
+                for the same client and garment (different composition / weight). For
+                Overshirt+Trouser (and other sets), pick Overshirt only, Trouser only, or
+                Both. Choose Overwrite to replace numbers, or Fill empty to only write blank
+                cells. Save this sheet first if you have unsaved edits. Linked fabrics stay
+                the same - only the size numbers are copied.
               </p>
               <button
                 type="button"
@@ -2066,7 +2067,9 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
         <CopySizesToConsolidationsPanel
           patternId={pattern.id}
           patternRef={pattern.pattern_ref}
+          garmentType={pattern.garment_type}
           dirty={dirty || headerDirty}
+          defaultPieceScope={sheetPiece || null}
         />
       ) : null}
       {view === "evolution" ? <EvolutionView pattern={pattern} /> : null}

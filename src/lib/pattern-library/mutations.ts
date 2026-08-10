@@ -42,6 +42,7 @@ import {
 import {
   applyCopyMeasurementsToPattern,
   listCopyMeasurementSiblings,
+  normalizeCopyMeasurementsPieceScope,
   type CopyMeasurementsMode,
 } from "@/lib/pattern-library/copy-measurements-to-siblings";
 import {
@@ -1812,12 +1813,14 @@ export async function copyClientPatternMeasurementsToSiblings(
   input: {
     target_pattern_ids: string[];
     mode?: CopyMeasurementsMode | null;
+    piece_scope?: string | null;
   },
   options: { actedBy?: string | null; notify?: boolean } = {}
 ): Promise<
   | Ok<{
       source_pattern_id: string;
       mode: CopyMeasurementsMode;
+      piece_scope: string;
       updated: Array<{ id: string; pattern_ref: string }>;
       skipped: Array<{ id: string; pattern_ref: string; reason: string }>;
     }>
@@ -1839,6 +1842,11 @@ export async function copyClientPatternMeasurementsToSiblings(
   const store = await readPatternLibraryFresh();
   const source = store.client_patterns.find((pattern) => pattern.id === sourcePatternId);
   if (!source) return { ok: false, status: 404, error: "Source client pattern not found." };
+
+  const pieceScope = normalizeCopyMeasurementsPieceScope(
+    source.garment_type,
+    input.piece_scope
+  );
 
   const siblings = listCopyMeasurementSiblings(store.client_patterns, source);
   const siblingById = new Map(siblings.map((row) => [row.id, row]));
@@ -1866,15 +1874,20 @@ export async function copyClientPatternMeasurementsToSiblings(
       continue;
     }
     const existing = store.client_patterns[index]!;
-    const next = applyCopyMeasurementsToPattern(existing, source, mode);
+    const next = applyCopyMeasurementsToPattern(existing, source, mode, {
+      pieceScope,
+      dictionary: store.dictionary ?? [],
+    });
     if (!next) {
       skipped.push({
         id: targetId,
         pattern_ref: existing.pattern_ref,
         reason:
-          mode === "fill_empty_only"
+          mode === "fill_empty_only" && pieceScope === "all"
             ? "Target already has sizes (fill-empty mode)."
-            : "Source has no filled sizes, or target has no trial version.",
+            : pieceScope !== "all"
+              ? `Source has no filled ${pieceScope} sizes, or target has no trial version.`
+              : "Source has no filled sizes, or target has no trial version.",
       });
       continue;
     }
@@ -1903,6 +1916,7 @@ export async function copyClientPatternMeasurementsToSiblings(
       client_id: source.client_id,
       garment_type: source.garment_type,
       mode,
+      piece_scope: pieceScope,
       updated_pattern_ids: updated.map((row) => row.id),
       skipped,
       acted_by: options.actedBy ?? null,
@@ -1913,6 +1927,7 @@ export async function copyClientPatternMeasurementsToSiblings(
     ok: true,
     source_pattern_id: sourcePatternId,
     mode,
+    piece_scope: pieceScope,
     updated,
     skipped,
   };

@@ -4,7 +4,10 @@ import {
   ensurePatternLibraryLoaded,
   readPatternLibraryFresh,
 } from "@/lib/data/pattern-library";
-import { listCopyMeasurementSiblings } from "@/lib/pattern-library/copy-measurements-to-siblings";
+import {
+  copyMeasurementPieceOptions,
+  listCopyMeasurementSiblings,
+} from "@/lib/pattern-library/copy-measurements-to-siblings";
 import { copyClientPatternMeasurementsToSiblings } from "@/lib/pattern-library/mutations";
 
 export async function GET(
@@ -24,6 +27,8 @@ export async function GET(
     }
     return NextResponse.json({
       source_pattern_id: source.id,
+      garment_type: source.garment_type,
+      piece_options: copyMeasurementPieceOptions(source.garment_type),
       siblings: listCopyMeasurementSiblings(store.client_patterns, source),
       source: "api",
     });
@@ -46,6 +51,7 @@ export async function POST(
     const body = (await request.json().catch(() => ({}))) as {
       target_pattern_ids?: unknown;
       mode?: string | null;
+      piece_scope?: string | null;
       acted_by?: string | null;
     };
     const targetIds = Array.isArray(body.target_pattern_ids)
@@ -56,6 +62,7 @@ export async function POST(
       {
         target_pattern_ids: targetIds,
         mode: body.mode === "fill_empty_only" ? "fill_empty_only" : "overwrite",
+        piece_scope: body.piece_scope,
       },
       { actedBy: typeof body.acted_by === "string" ? body.acted_by : "api" }
     );

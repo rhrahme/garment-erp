@@ -242,6 +242,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   this sheet. Tab shows amber **New** badge + **?** help tip (same pattern
   as Sewing A4s). API: `/api/pattern/library/client-patterns/[id]/copy-measurements`
   + `/api/v1/...` (event `client_pattern.measurements_copied`).
+- **Copy sizes piece scope + board entry** (Aug 10 2026): for set garments
+  (Overshirt+Trouser, Suit, ...), Pattern picks **Both / Overshirt only /
+  Trouser only** (generic piece tokens) before copying. Same control on
+  sheet **Copy sizes** tab, Pattern order board row **Copy sizes**, and job
+  **Copy sizes**. Single-piece garments skip the piece picker. Do not
+  require Pattern to open the sheet only to find copy.
 
 ## Printing
 

@@ -10,6 +10,7 @@ import { ChangeGarmentTypeControl } from "@/components/orders/ChangeGarmentTypeC
 import { GarmentPiecesNest } from "@/components/garment/GarmentPiecesNest";
 import { GarmentTypeChangeBadge } from "@/components/garment-type/GarmentTypeChangeBadge";
 import { ClientPhotoAssignmentPanel } from "@/components/pattern/library/ClientPhotoAssignmentPanel";
+import { CopySizesModal } from "@/components/pattern/library/CopySizesModal";
 import {
   LibraryFileList,
   type LibraryUploadResponse,
@@ -78,6 +79,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
   const [measurementTemplateMode, setMeasurementTemplateMode] =
     useState<MeasurementTemplateMode>("reduced");
   const [canChangeGarmentType, setCanChangeGarmentType] = useState(false);
+  const [copySizesOpen, setCopySizesOpen] = useState(false);
   const [garmentTypeChangeFlag, setGarmentTypeChangeFlag] = useState<GarmentTypeChangeFlag | null>(
     null
   );
@@ -469,7 +471,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
           </p>
         )}
         {sheetHref && printHref ? (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Link
               href={sheetHref}
               className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
@@ -478,7 +480,16 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
               <ArrowRight className="h-4 w-4" />
             </Link>
             {linkedPattern ? (
-              <span className="self-center text-xs text-slate-500">{linkedPattern.pattern_ref}</span>
+              <>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setCopySizesOpen(true)}
+                >
+                  Copy sizes
+                </Button>
+                <span className="self-center text-xs text-slate-500">{linkedPattern.pattern_ref}</span>
+              </>
             ) : null}
           </div>
         ) : (
@@ -1009,6 +1020,15 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
           </div>
         </div>
       </details>
+
+      {copySizesOpen && linkedPattern ? (
+        <CopySizesModal
+          patternId={linkedPattern.id}
+          patternRef={linkedPattern.pattern_ref}
+          garmentType={linkedPattern.garment_type ?? job?.garment_type ?? null}
+          onClose={() => setCopySizesOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

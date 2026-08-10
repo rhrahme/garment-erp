@@ -219,7 +219,8 @@ export function ZapierSetup() {
             <li className="pl-4 text-slate-500">
               POST body: target_pattern_ids[], optional mode overwrite|fill_empty_only,
               optional acted_by - copies sizes onto same-client same-garment
-              consolidations; event client_pattern.measurements_copied
+              consolidations; piece_scope all|Overshirt|Trouser|...; event
+              client_pattern.measurements_copied
             </li>
             <li>POST {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]/files</li>
             <li className="pl-4 text-slate-500">

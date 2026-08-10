@@ -131,3 +131,36 @@ test("fill_empty_only skips sheets that already have sizes", () => {
   });
   assert.equal(applyCopyMeasurementsToPattern(filled, source, "fill_empty_only"), null);
 });
+
+test("piece scope merges only trouser points and leaves overshirt alone", () => {
+  const source = pattern("src", "SRC", {
+    values: [
+      { id: "total-length-hnp", name: "Total Length (HNP)", target: 76 },
+      { id: "waist-relux", name: "Waist Relax", target: 44 },
+      { id: "bottom-width", name: "Bottom Width", target: 22 },
+    ],
+  });
+  const target = pattern("tgt", "TGT", {
+    values: [
+      { id: "total-length-hnp", name: "Total Length (HNP)", target: 70 },
+      { id: "waist-relux", name: "Waist Relax", target: 40 },
+      { id: "bottom-width", name: "Bottom Width", target: 20 },
+    ],
+  });
+  const dictionary = [
+    { id: "total-length-hnp", name: "Total Length (HNP)", garment_types: ["Overshirt"] },
+    { id: "waist-relux", name: "Waist Relax", garment_types: ["Trouser"] },
+    { id: "bottom-width", name: "Bottom Width", garment_types: ["Trouser"] },
+  ];
+  const next = applyCopyMeasurementsToPattern(target, source, "overwrite", {
+    pieceScope: "Trouser",
+    dictionary,
+  });
+  assert.ok(next);
+  const byId = Object.fromEntries(
+    next!.versions[0]!.measurements.map((row) => [row.point_id, row.target_value])
+  );
+  assert.equal(byId["total-length-hnp"], 70);
+  assert.equal(byId["waist-relux"], 44);
+  assert.equal(byId["bottom-width"], 22);
+});
