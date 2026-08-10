@@ -49,11 +49,17 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Cutter stacked / consolidated nest** (Aug 10 2026): when badge activity is
   **Cutting** (cutter job_functions, not tailor), the cutter may open **many**
   piece sessions before closing - pile fabrics, scan each Trouser (or piece)
-  A4 to open, cut once, then rescan each A4 + badge to finish. Tailors stay
-  one-open-at-a-time **per stitcher** (a stitcher still closes their own piece
-  before starting another). Close for cutters is A4-first (never badge-first
-  close while stacked). After each open the cutter stays armed for the next A4.
-  Do not re-block cutters with `employee_has_open_piece` without an explicit ask.
+  A4 to open, cut once, then rescan each A4 + badge to finish. Close is
+  A4-first (never badge-first close while stacked). After each open the
+  cutter stays armed for the next A4. Do not re-block cutters with
+  `employee_has_open_piece` without an explicit ask.
+- **Stitchers chain-stitch several articles at once** (Aug 11 2026): Sewing
+  activity also stacks open pieces (e.g. a run of white shirts chained on
+  the machine). Badge -> A4 -> A4 -> ... opens one Live session per article;
+  after each open the stitcher stays armed for the next A4. Close is
+  A4-first per piece (rescan that article's A4, then badge).
+  `employeeAllowsStackedOpenPieces` = Cutting or Sewing; wash/iron and
+  buttons stay one-open-at-a-time. Do not re-add the tailor one-open gate.
 - **Multi-stitcher same article QR** (Aug 10 2026): garment work (especially
   jackets/overshirts) can be **divided across several stitchers** on the
   **same** A4/production QR at once. Each stitcher opens their own Live

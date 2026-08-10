@@ -47,11 +47,27 @@ export function floorActivityLabelFromJobFunctions(values: unknown): string {
 }
 
 /**
- * Cutters may open many A4s (stacked consolidated nest) before closing.
- * Tailors keep one-open-at-a-time (Sewing wins over cutter on dual roles).
+ * Cutters open many A4s (stacked consolidated nest) before cutting once.
+ * Stitchers chain-stitch several articles at once (e.g. a run of white
+ * shirts), so Sewing also stacks (Aug 11 2026). Close stays A4-first per
+ * piece: rescan that piece's A4, then badge. Wash/iron & buttons stay
+ * one-open-at-a-time.
  */
 export function employeeAllowsStackedOpenPieces(jobFunctions: unknown): boolean {
-  return floorActivityLabelFromJobFunctions(jobFunctions) === "Cutting";
+  const activity = floorActivityLabelFromJobFunctions(jobFunctions);
+  return activity === "Cutting" || activity === "Sewing";
+}
+
+/** Follow-up hint after a stacked open, worded for the floor activity. */
+export function stackedOpenFollowupMessage(
+  jobFunctions: unknown,
+  openCount: number
+): string {
+  const verb =
+    floorActivityLabelFromJobFunctions(jobFunctions) === "Cutting"
+      ? "cut pile"
+      : "chain stitch";
+  return `${openCount} pieces open - ${verb}, then rescan each A4 + badge to finish each piece.`;
 }
 
 /**

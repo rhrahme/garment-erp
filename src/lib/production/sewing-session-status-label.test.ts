@@ -15,6 +15,7 @@ import {
   sewingSessionScanQrLabel,
   sewingSessionStatusBadgeClass,
   sewingSessionStatusLabel,
+  stackedOpenFollowupMessage,
 } from "@/lib/production/sewing-session-status-label";
 import type { SewingSession } from "@/lib/types/sewing-sessions";
 
@@ -47,11 +48,23 @@ describe("floorActivityLabelFromJobFunctions", () => {
     assert.equal(floorActivityLabelFromJobFunctions(["trouser_tailor", "cutter"]), "Sewing");
   });
 
-  it("allows stacked open pieces only for Cutting activity", () => {
+  it("allows stacked open pieces for Cutting and Sewing (chain stitch), not wash/iron or buttons", () => {
     assert.equal(employeeAllowsStackedOpenPieces(["cutter"]), true);
-    assert.equal(employeeAllowsStackedOpenPieces(["trouser_tailor"]), false);
-    assert.equal(employeeAllowsStackedOpenPieces(["trouser_tailor", "cutter"]), false);
+    assert.equal(employeeAllowsStackedOpenPieces(["trouser_tailor"]), true);
+    assert.equal(employeeAllowsStackedOpenPieces(["trouser_tailor", "cutter"]), true);
     assert.equal(employeeAllowsStackedOpenPieces(["wash_iron"]), false);
+    assert.equal(employeeAllowsStackedOpenPieces(["buttons"]), false);
+  });
+
+  it("stacked open follow-up message matches the floor activity", () => {
+    assert.equal(
+      stackedOpenFollowupMessage(["cutter"], 3),
+      "3 pieces open - cut pile, then rescan each A4 + badge to finish each piece."
+    );
+    assert.equal(
+      stackedOpenFollowupMessage(["shirt_tailor"], 2),
+      "2 pieces open - chain stitch, then rescan each A4 + badge to finish each piece."
+    );
   });
 
   it("maps wash/iron, buttons, and other floor roles", () => {

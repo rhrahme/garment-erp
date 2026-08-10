@@ -64,6 +64,7 @@ import {
   employeeAllowsStackedOpenPieces,
   floorActivitySessionStartedMessage,
   sewingSessionEmployeeDisplayName,
+  stackedOpenFollowupMessage,
 } from "@/lib/production/sewing-session-status-label";
 import { resolveScanToLine } from "@/lib/production/stage-scan";
 import {
@@ -854,7 +855,7 @@ export async function processSewingKioskScan(
       return result(
         true,
         allowStackedOpen && openCount > 1
-          ? `${startMsg} ${openCount} pieces open - cut pile, then rescan each A4 to finish.`
+          ? `${startMsg} ${stackedOpenFollowupMessage(started.job_functions, openCount)}`
           : startMsg,
         store,
         kioskId,
@@ -1088,9 +1089,10 @@ export async function processSewingKioskScan(
     }
     const session = buildSessionFromArmAndMeta(arm, meta, raw, kioskId, at);
     store = applyStartFromEmployeeArm(store, kioskId, arm, session);
-    const stackedCutter = employeeAllowsStackedOpenPieces(armedEmployee?.job_functions);
-    if (stackedCutter) {
-      // Keep cutter ready for the next piled article without fighting close logic.
+    const stackedOpen = employeeAllowsStackedOpenPieces(armedEmployee?.job_functions);
+    if (stackedOpen) {
+      // Keep the cutter / chain-stitcher ready for the next article without
+      // fighting close logic (close stays A4-first per piece).
       store = applyEmployeeArm(store, {
         ...arm,
         armed_at: nowIso(at),
@@ -1142,8 +1144,8 @@ export async function processSewingKioskScan(
     );
     return result(
       true,
-      stackedCutter && openCount > 1
-        ? `${startMsg} ${openCount} pieces open - cut pile, then rescan each A4 to finish.`
+      stackedOpen && openCount > 1
+        ? `${startMsg} ${stackedOpenFollowupMessage(started.job_functions, openCount)}`
         : startMsg,
       store,
       kioskId,
