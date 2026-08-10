@@ -21,9 +21,11 @@ import { garmentTypeColorClasses } from "@/lib/production/garment-type-colors";
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
 import {
   SEWING_LIVE_LONG_RUNNING_SEC,
-  sewingSessionElapsedSec,
+  sewingLiveClockNowMs,
+  sewingSessionElapsedSecExcludingPauses,
   type SewingDashboardPeriod,
   type SewingEmployeeAggregate,
+  type SewingPauseIntervalLike,
 } from "@/lib/production/sewing-session-state";
 import {
   sewingSessionClientDisplayName,
@@ -102,6 +104,10 @@ type DashboardPayload = {
   sessions: SewingSession[];
   failed_scans?: SewingScanFailure[];
   failed_scans_in_period?: number;
+  kiosk_paused?: boolean;
+  kiosk_paused_at?: string | null;
+  kiosk_paused_by?: string | null;
+  kiosk_pause_intervals?: SewingPauseIntervalLike[];
 };
 
 const TABS: { id: FloorTab; label: string }[] = [
@@ -128,9 +134,12 @@ function formatDuration(sec: number | null | undefined): string {
   return `${s}s`;
 }
 
-function formatElapsed(startedAt: string, now: number): string {
-  const sec = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000));
-  return formatDuration(sec);
+function formatElapsed(
+  startedAt: string,
+  now: number,
+  pauses: SewingPauseIntervalLike[] = []
+): string {
+  return formatDuration(sewingSessionElapsedSecExcludingPauses(startedAt, now, pauses));
 }
 
 function formatClock(iso: string | null | undefined): string {
@@ -191,7 +200,8 @@ function compareLiveSessions(
   a: SewingSession,
   b: SewingSession,
   key: LiveSortKey,
-  now: number
+  now: number,
+  pauses: SewingPauseIntervalLike[] = []
 ): number {
   switch (key) {
     case "employee":
@@ -212,8 +222,8 @@ function compareLiveSessions(
       return compareSortNumbers(new Date(a.started_at).getTime(), new Date(b.started_at).getTime());
     case "elapsed":
       return compareSortNumbers(
-        sewingSessionElapsedSec(a.started_at, now),
-        sewingSessionElapsedSec(b.started_at, now)
+        sewingSessionElapsedSecExcludingPauses(a.started_at, now, pauses),
+        sewingSessionElapsedSecExcludingPauses(b.started_at, now, pauses)
       );
     case "status":
       return compareSortStrings(
@@ -440,10 +450,19 @@ export function StitchFloorWorkspace({
 
   const periodHint = PERIODS.find((row) => row.id === period)?.hint ?? "";
 
+  const pauseIntervals = data?.kiosk_pause_intervals ?? [];
+  const liveClockNow = sewingLiveClockNowMs({
+    wallNow: now,
+    kioskPaused: Boolean(data?.kiosk_paused),
+    kioskPausedAt: data?.kiosk_paused_at,
+  });
+
   const liveRows = useMemo(() => {
     const rows = data?.open_sessions ?? [];
-    return applyTableSort(rows, liveSort, (a, b, key) => compareLiveSessions(a, b, key, now));
-  }, [data?.open_sessions, liveSort, now]);
+    return applyTableSort(rows, liveSort, (a, b, key) =>
+      compareLiveSessions(a, b, key, liveClockNow, pauseIntervals)
+    );
+  }, [data?.open_sessions, liveSort, liveClockNow, pauseIntervals]);
 
   const historyRows = useMemo(() => {
     const rows = data?.sessions ?? [];
@@ -550,9 +569,17 @@ export function StitchFloorWorkspace({
                 <h2 className="text-xl font-semibold text-slate-900">Who is on the floor now</h2>
                 <p className="mt-1 text-sm text-slate-500">
                   Open sessions across kiosks. Status follows each employee job (Cutting, Sewing,
-                  Wash / iron, ...). Refresh every 12s. Red elapsed = over 45 min. Request admin
-                  approval to stop, edit, or delete a row.
+                  Wash / iron, ...). Refresh every 12s. Red elapsed = over 45 min. Elapsed freezes
+                  while the kiosk is paused (lunch). Request admin approval to stop, edit, or
+                  delete a row.
                 </p>
+                {data?.kiosk_paused ? (
+                  <p className="mt-2 text-sm font-semibold text-amber-800">
+                    Kiosk paused
+                    {data.kiosk_paused_by ? ` by ${data.kiosk_paused_by}` : ""}
+                    {" - Live clocks frozen."}
+                  </p>
+                ) : null}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {pendingPauseKiosk ? (
@@ -653,7 +680,11 @@ export function StitchFloorWorkspace({
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {liveRows.map((session) => {
-                    const elapsedSec = sewingSessionElapsedSec(session.started_at, now);
+                    const elapsedSec = sewingSessionElapsedSecExcludingPauses(
+                      session.started_at,
+                      liveClockNow,
+                      pauseIntervals
+                    );
                     const longRunning = elapsedSec >= SEWING_LIVE_LONG_RUNNING_SEC;
                     const today =
                       data.today_by_employee?.find((row) => row.employee_id === session.employee_id) ??
@@ -722,7 +753,10 @@ export function StitchFloorWorkspace({
                               longRunning ? "text-red-700" : "text-slate-900"
                             )}
                           >
-                            {formatElapsed(session.started_at, now)}
+                            {formatElapsed(session.started_at, liveClockNow, pauseIntervals)}
+                            {data.kiosk_paused ? (
+                              <div className="mt-1 text-xs font-semibold text-amber-800">Frozen</div>
+                            ) : null}
                           </div>
                           {longRunning ? (
                             <div className="mt-1 text-xs font-semibold text-red-800">Long running</div>
@@ -1131,7 +1165,7 @@ export function StitchFloorWorkspace({
                         <td className="px-3 py-3 tabular-nums font-semibold">
                           {row.status === "closed"
                             ? formatDuration(row.duration_sec)
-                            : formatElapsed(row.started_at, now)}
+                            : formatElapsed(row.started_at, liveClockNow, pauseIntervals)}
                         </td>
                         <td className="px-3 py-3">
                           <span

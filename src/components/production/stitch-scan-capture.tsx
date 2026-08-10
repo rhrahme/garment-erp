@@ -83,6 +83,7 @@ type StitchScanCaptureValue = {
   hearingPreview: string | null;
   /** Admin pause — floor scans are blocked until resume. */
   kioskPaused: boolean;
+  kioskPausedAt: string | null;
   flushInputNow: () => void;
   scheduleFlush: () => void;
 };
@@ -237,6 +238,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
   const [captureArmed, setCaptureArmed] = useState(true);
   const [hearingPreview, setHearingPreview] = useState<string | null>(null);
   const [kioskPaused, setKioskPaused] = useState(false);
+  const [kioskPausedAt, setKioskPausedAt] = useState<string | null>(null);
 
   useEffect(() => {
     const id = readKioskId();
@@ -258,9 +260,11 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
         const json = (await res.json()) as {
           open_sessions?: SewingSession[];
           kiosk_paused?: boolean;
+          kiosk_paused_at?: string | null;
         };
         if (cancelled) return;
         setKioskPaused(Boolean(json.kiosk_paused));
+        setKioskPausedAt(json.kiosk_paused_at ?? null);
         const mine = (json.open_sessions ?? []).filter(
           (row) =>
             row.kiosk_id === kioskId &&
@@ -447,6 +451,9 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
         if (data.open_sessions) setOpenSessions(data.open_sessions);
         if (typeof data.kiosk_paused === "boolean") setKioskPaused(data.kiosk_paused);
         else if (data.reason_code === "kiosk_paused") setKioskPaused(true);
+        if (typeof data.kiosk_paused_at === "string" || data.kiosk_paused_at === null) {
+          setKioskPausedAt(data.kiosk_paused_at);
+        }
         playBeep(data.beep ?? (ok ? "ok" : "error"));
         setLog((prev) =>
           [
@@ -824,6 +831,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       captureArmed,
       hearingPreview,
       kioskPaused,
+      kioskPausedAt,
       flushInputNow,
       scheduleFlush,
     }),
@@ -844,6 +852,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       captureArmed,
       hearingPreview,
       kioskPaused,
+      kioskPausedAt,
       flushInputNow,
       scheduleFlush,
     ]

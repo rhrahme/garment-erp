@@ -13,7 +13,7 @@ import {
   findPayrollEmployeeById,
   resolveScanEmployeeContext,
 } from "@/lib/hr/payroll-lookup";
-import { isStitchKioskPaused } from "@/lib/data/stitch-kiosk-settings";
+import { readStitchKioskSettingsFresh } from "@/lib/data/stitch-kiosk-settings";
 import { employeeCanSewOnStitchKiosk } from "@/lib/hr/payroll-utils";
 import { notifyIntegration } from "@/lib/integrations";
 import { notifyAdminsOfSewingSessionStarted } from "@/lib/integrations/sewing-session-started-alert";
@@ -559,7 +559,8 @@ export async function processSewingKioskScan(
   };
 
   // Admin pause: block all badge/A4 work without spamming sewing_scan_failures.
-  if (await isStitchKioskPaused()) {
+  const kioskSettings = await readStitchKioskSettingsFresh();
+  if (kioskSettings.paused) {
     const store = expireStaleSewingState(await readSewingSessionsFresh(), at);
     return result(
       false,
@@ -570,6 +571,7 @@ export async function processSewingKioskScan(
       {
         reason_code: "kiosk_paused",
         kiosk_paused: true,
+        kiosk_paused_at: kioskSettings.paused_at,
         failure_recorded: false,
         // Dequeue so the USB queue does not retry-spam while paused.
         durable: true,

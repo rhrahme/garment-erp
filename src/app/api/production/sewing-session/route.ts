@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
       kiosk_paused: kioskSettings.paused,
       kiosk_paused_at: kioskSettings.paused_at,
       kiosk_paused_by: kioskSettings.paused_by,
+      kiosk_pause_intervals: kioskSettings.pause_intervals ?? [],
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load sewing sessions.";

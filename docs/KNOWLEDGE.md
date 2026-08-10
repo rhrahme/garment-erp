@@ -73,8 +73,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Admin pause stitch kiosk**: on `/production` Floor now, admin can Pause /
   Resume. Persisted in `stitch_kiosk_settings` (`erp_documents`). While paused,
   `processSewingKioskScan` blocks all badge/A4 work (UI + `/api/v1/.../scan`)
-  with `reason_code=kiosk_paused` without writing `sewing_scan_failures`. Do
-  not remove this gate or hide the admin control.
+  with `reason_code=kiosk_paused` without writing `sewing_scan_failures`. Live
+  / Scan elapsed clocks **freeze** for the pause window (`pause_intervals`) so
+  lunch does not keep counting; after resume, paused time is excluded from
+  elapsed. Do not remove this gate or hide the admin control.
 - **Stitch/Pattern change requests** (Aug 10 2026): stitch@ and pattern@ may
   request admin approval to **stop**, **edit**, **delete** a Live/History
   session, **delete** a failed-scan row, or **pause the whole kiosk**. Nothing

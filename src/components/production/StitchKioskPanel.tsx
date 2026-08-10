@@ -11,6 +11,7 @@ import type {
   SewingKioskUiPhase,
   SewingSession,
 } from "@/lib/types/sewing-sessions";
+import { sewingLiveClockNowMs } from "@/lib/production/sewing-session-state";
 import { cn } from "@/lib/utils";
 
 function formatElapsed(startedAt: string | null, now: number): string {
@@ -99,6 +100,7 @@ export function StitchKioskPanel() {
     draining,
     captureArmed,
     kioskPaused,
+    kioskPausedAt,
   } = useStitchScanCapture();
 
   const [now, setNow] = useState(() => Date.now());
@@ -115,9 +117,14 @@ export function StitchKioskPanel() {
 
   const lastArm = last?.arm ?? null;
   const copy = phaseCopy(phase, highlight, lastArm);
+  const liveClockNow = sewingLiveClockNowMs({
+    wallNow: now,
+    kioskPaused,
+    kioskPausedAt,
+  });
   const elapsed = useMemo(
-    () => formatElapsed(highlight?.started_at ?? null, now),
-    [highlight?.started_at, now]
+    () => formatElapsed(highlight?.started_at ?? null, liveClockNow),
+    [highlight?.started_at, liveClockNow]
   );
 
   return (

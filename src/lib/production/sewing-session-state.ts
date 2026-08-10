@@ -322,6 +322,52 @@ export function sewingSessionElapsedSec(startedAt: string, at = Date.now()): num
   return Math.max(0, Math.floor((at - start) / 1000));
 }
 
+export type SewingPauseIntervalLike = {
+  started_at: string;
+  ended_at?: string | null;
+};
+
+/**
+ * Elapsed open time excluding stitch-kiosk pause windows (lunch / admin pause).
+ * While currently paused, wall clock stops at the open pause start.
+ */
+export function sewingSessionElapsedSecExcludingPauses(
+  startedAt: string,
+  at = Date.now(),
+  pauses: SewingPauseIntervalLike[] = []
+): number {
+  const start = new Date(startedAt).getTime();
+  if (!Number.isFinite(start)) return 0;
+  const end = Number.isFinite(at) ? at : Date.now();
+  if (end <= start) return 0;
+
+  let pausedMs = 0;
+  for (const pause of pauses) {
+    const pStart = new Date(pause.started_at).getTime();
+    if (!Number.isFinite(pStart)) continue;
+    const pEndRaw = pause.ended_at ? new Date(pause.ended_at).getTime() : end;
+    const pEnd = Number.isFinite(pEndRaw) ? pEndRaw : end;
+    const overlapStart = Math.max(start, pStart);
+    const overlapEnd = Math.min(end, pEnd);
+    if (overlapEnd > overlapStart) pausedMs += overlapEnd - overlapStart;
+  }
+
+  return Math.max(0, Math.floor((end - start - pausedMs) / 1000));
+}
+
+/** Effective "now" for Live clocks: freeze at current pause start when kiosk is paused. */
+export function sewingLiveClockNowMs(input: {
+  wallNow?: number;
+  kioskPaused?: boolean;
+  kioskPausedAt?: string | null;
+}): number {
+  const wall = input.wallNow ?? Date.now();
+  if (!input.kioskPaused || !input.kioskPausedAt) return wall;
+  const pausedAt = new Date(input.kioskPausedAt).getTime();
+  if (!Number.isFinite(pausedAt)) return wall;
+  return Math.min(wall, pausedAt);
+}
+
 /** Warn when a piece has been open longer than this (45 minutes). */
 export const SEWING_LIVE_LONG_RUNNING_SEC = 45 * 60;
 

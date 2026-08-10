@@ -139,4 +139,6 @@ export type SewingKioskScanResult = {
   reason_code?: string;
   /** Admin pause flag mirrored on scan responses for kiosk UI. */
   kiosk_paused?: boolean;
+  /** When paused, Live/Scan clocks freeze at this timestamp. */
+  kiosk_paused_at?: string | null;
 };
