@@ -79,10 +79,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   elapsed. Do not remove this gate or hide the admin control.
 - **Lunch auto-resume 16:00 Asia/Riyadh** (Aug 10 2026): pause/resume is the
   **floor scan gate only** (not per article). Pauses started in the lunch
-  window (14:00-16:00 Riyadh) get `auto_resume_at` = that day's 16:00. Vercel
-  cron `/api/cron/stitch-kiosk-lunch-resume` at 13:00 UTC plus scan/Live heal
-  reopen the gate so stitchers can scan again. Emergency pauses outside the
-  lunch window stay paused until an admin resumes. Do not strip auto-resume.
+  window (14:00-16:00 Riyadh) get `auto_resume_at` = that day's 16:00. Scan
+  and Live polls call `ensureStitchKioskLunchAutoResume` so the gate reopens
+  at/after 16:00 without restarting articles (route
+  `/api/cron/stitch-kiosk-lunch-resume` also exists for manual/cron trigger).
+  Emergency pauses outside the lunch window stay paused until an admin
+  resumes. Do not strip auto-resume.
 - **Stitch/Pattern change requests** (Aug 10 2026): stitch@ and pattern@ may
   request admin approval to **stop**, **edit**, **delete** a Live/History
   session, **delete** a failed-scan row, or **pause the whole kiosk**. Nothing
