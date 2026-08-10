@@ -260,8 +260,23 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   targets include same-client sheets whose garment shares a piece with the
   source (Overshirt+Trouser -> Overshirt-only, Overshirt -> OT, Shirt+
   Trouser via Trouser, ...). Cross-garment copies apply only the shared
-  piece(s) and never carry special instructions. Do not restrict copy back
-  to exact-garment matches - Pattern relies on OT -> Overshirt.
+  piece(s). Comments (`special_instructions`) travel with the sizes on
+  every scope; the target keeps only its own article + fabric number. Do
+  not restrict copy back to exact-garment matches - Pattern relies on
+  OT -> Overshirt.
+- **Paste sizes (pull direction)** (Aug 11 2026): board rows and the job
+  page also have **Paste sizes** - opened on the row that RECEIVES the
+  sizes, pick one filled source sheet, optional piece, paste. Same
+  copy API/guards with source and target swapped. Pattern thinks in
+  articles (L48), not pattern refs, so the pull direction must stay -
+  do not remove it in favor of push-only Copy sizes.
+- **Copy/Paste list must not 404 on degraded Supabase** (Aug 11 2026): a
+  forced pattern-library read that fails returns an EMPTY store; the
+  copy-measurements GET therefore reads warm cache first and answers 503
+  ("Sheets are still loading") instead of 404 when the store is empty.
+  Forms auto-retry once and guard against a stale request overwriting a
+  newer one. Symptom if regressed: copy/paste window randomly says
+  "Client pattern not found" or lists nothing.
 
 ## Printing
 

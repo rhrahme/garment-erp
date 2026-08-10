@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Copy, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { CopyMeasurementSibling } from "@/lib/pattern-library/copy-measurements-to-siblings";
@@ -37,17 +37,31 @@ export function CopySizesForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
+  // Concurrent loads (React strict-mode double effect / Refresh spam) must not
+  // let a failed older request overwrite a successful newer one.
+  const loadSeq = useRef(0);
 
   const load = useCallback(async () => {
+    const seq = ++loadSeq.current;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(
-        `/api/pattern/library/client-patterns/${patternId}/copy-measurements?t=${Date.now()}`,
-        { cache: "no-store" }
-      );
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error ?? "Failed to load target sheets.");
+      let data: {
+        error?: string;
+        siblings?: CopyMeasurementSibling[];
+        piece_options?: string[];
+      } | null = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const res = await fetch(
+          `/api/pattern/library/client-patterns/${patternId}/copy-measurements?t=${Date.now()}`,
+          { cache: "no-store" }
+        );
+        data = await res.json().catch(() => null);
+        if (res.ok) break;
+        if (attempt === 1) throw new Error(data?.error ?? "Failed to load target sheets.");
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+      }
+      if (seq !== loadSeq.current) return;
       const rows = (data?.siblings ?? []) as CopyMeasurementSibling[];
       const pieces = Array.isArray(data?.piece_options)
         ? (data.piece_options as string[])
@@ -65,12 +79,13 @@ export function CopySizesForm({
         return match ?? "all";
       });
     } catch (err) {
+      if (seq !== loadSeq.current) return;
       setSiblings([]);
       setPieceOptions([]);
       setSelected(new Set());
       setError(err instanceof Error ? err.message : "Failed to load target sheets.");
     } finally {
-      setLoading(false);
+      if (seq === loadSeq.current) setLoading(false);
     }
   }, [patternId, defaultPieceScope]);
 

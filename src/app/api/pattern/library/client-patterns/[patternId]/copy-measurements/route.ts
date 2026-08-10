@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requirePatternAccess } from "@/lib/auth/session";
 import {
   ensurePatternLibraryLoaded,
+  readPatternLibraryCached,
   readPatternLibraryFresh,
 } from "@/lib/data/pattern-library";
 import {
@@ -22,10 +23,24 @@ export async function GET(
     }
     await ensurePatternLibraryLoaded();
     const { patternId } = await context.params;
-    const store = await readPatternLibraryFresh();
-    const source = store.client_patterns.find((pattern) => pattern.id === patternId);
+    // Warm-cache read first; a degraded Supabase must not turn into a bogus
+    // "not found" (forced reads return an EMPTY store on failure).
+    let store = await readPatternLibraryCached();
+    let source = store.client_patterns.find((pattern) => pattern.id === patternId);
     if (!source) {
-      return NextResponse.json({ error: "Client pattern not found." }, { status: 404 });
+      store = await readPatternLibraryFresh();
+      source = store.client_patterns.find((pattern) => pattern.id === patternId);
+    }
+    if (!source) {
+      const degraded = store.client_patterns.length === 0;
+      return NextResponse.json(
+        {
+          error: degraded
+            ? "Sheets are still loading. Press Refresh list and try again."
+            : "Client pattern not found.",
+        },
+        { status: degraded ? 503 : 404 }
+      );
     }
     return NextResponse.json({
       source_pattern_id: source.id,

@@ -11,6 +11,7 @@ import { GarmentPiecesNest } from "@/components/garment/GarmentPiecesNest";
 import { GarmentTypeChangeBadge } from "@/components/garment-type/GarmentTypeChangeBadge";
 import { ClientPhotoAssignmentPanel } from "@/components/pattern/library/ClientPhotoAssignmentPanel";
 import { CopySizesModal } from "@/components/pattern/library/CopySizesModal";
+import { PasteSizesModal } from "@/components/pattern/library/PasteSizesModal";
 import {
   LibraryFileList,
   type LibraryUploadResponse,
@@ -80,6 +81,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
     useState<MeasurementTemplateMode>("reduced");
   const [canChangeGarmentType, setCanChangeGarmentType] = useState(false);
   const [copySizesOpen, setCopySizesOpen] = useState(false);
+  const [pasteSizesOpen, setPasteSizesOpen] = useState(false);
   const [garmentTypeChangeFlag, setGarmentTypeChangeFlag] = useState<GarmentTypeChangeFlag | null>(
     null
   );
@@ -487,6 +489,13 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
                   onClick={() => setCopySizesOpen(true)}
                 >
                   Copy sizes
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setPasteSizesOpen(true)}
+                >
+                  Paste sizes
                 </Button>
                 <span className="self-center text-xs text-slate-500">{linkedPattern.pattern_ref}</span>
               </>
@@ -1027,6 +1036,15 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
           patternRef={linkedPattern.pattern_ref}
           garmentType={linkedPattern.garment_type ?? job?.garment_type ?? null}
           onClose={() => setCopySizesOpen(false)}
+        />
+      ) : null}
+
+      {pasteSizesOpen && linkedPattern ? (
+        <PasteSizesModal
+          patternId={linkedPattern.id}
+          patternRef={linkedPattern.pattern_ref}
+          garmentType={linkedPattern.garment_type ?? job?.garment_type ?? null}
+          onClose={() => setPasteSizesOpen(false)}
         />
       ) : null}
     </div>

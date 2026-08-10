@@ -6,27 +6,29 @@ import { Copy } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { SessionContext } from "@/lib/auth/session";
 
-const DISMISS_KEY = "hagan-copy-sizes-guide-v1-dismissed";
+const DISMISS_KEY = "hagan-copy-sizes-guide-v2-dismissed";
 
 const STEPS: Array<{ title: string; body: string }> = [
   {
-    title: "Open the sheet that HAS the sizes",
+    title: "NEW: Paste sizes on the row that NEEDS them",
     body:
-      "On the Pattern order board or job page, press Copy sizes on the fabric row " +
-      "whose measurements are already filled. That sheet is the source.",
+      "On the order board, press Paste sizes on the article missing measurements. " +
+      "Pick which filled sheet to take them from and press Paste - done. " +
+      "Works across garments too (e.g. take the Overshirt sizes from an " +
+      "Overshirt+Trouser sheet).",
   },
   {
-    title: "Pick which piece",
+    title: "Or: Copy sizes on the sheet that HAS them",
+    body:
+      "Copy sizes on a filled row pushes its column to many sheets at once - " +
+      "tick the receiving sheets, press Copy once.",
+  },
+  {
+    title: "Pick which piece when asked",
     body:
       "For set garments choose Both, Overshirt only, or Trouser only. " +
-      "Single-piece garments skip this step.",
-  },
-  {
-    title: "Tick the sheets that should RECEIVE the sizes",
-    body:
-      "The window lists this client's other consolidations (all pre-ticked). " +
-      "Press the Copy button once - the whole column of measurements lands on " +
-      "every ticked sheet immediately.",
+      "Measurements and comments transfer; the receiving article keeps only " +
+      "its own article + fabric number.",
   },
 ];
 
@@ -82,11 +84,11 @@ export function CopySizesGuidePrompt({ session }: { session: SessionContext }) {
               id="copy-sizes-guide-title"
               className="text-lg font-semibold text-slate-900"
             >
-              How Copy sizes works
+              Copy &amp; Paste sizes - both directions now
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              There is no paste step. You choose the destination sheets inside the
-              copy window, and the whole column copies in one press.
+              Push sizes from a filled sheet with Copy sizes, or pull them onto an
+              empty article with the new Paste sizes button.
             </p>
           </div>
         </div>
