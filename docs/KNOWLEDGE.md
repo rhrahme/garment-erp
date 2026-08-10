@@ -46,6 +46,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Multi-arm queue is intentional**: several employees may be badge-ready at
   once; the next A4 scan assigns to the most recent badge (`mostRecentArm`).
   This was removed once (`09033b3`) and restored (`c158f4b`) - do not remove again.
+- **Cutter stacked / consolidated nest** (Aug 10 2026): when badge activity is
+  **Cutting** (cutter job_functions, not tailor), the cutter may open **many**
+  piece sessions before closing - pile fabrics, scan each Trouser (or piece)
+  A4 to open, cut once, then rescan each A4 + badge to finish. Tailors stay
+  one-open-at-a-time. Close for cutters is A4-first (never badge-first close
+  while stacked). After each open the cutter stays armed for the next A4.
+  Do not re-block cutters with `employee_has_open_piece` without an explicit ask.
 - USB wedge capture must always steal rapid keystrokes (even over selection or
   focused fields) and show an optimistic "Last scan" strip on every tab.
   Silence on scan is a bug, never acceptable.

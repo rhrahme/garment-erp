@@ -1000,4 +1000,137 @@ describe("blind-floor stitch scan recovery", () => {
     const decision = decideBadgeScan(store, "k1", "e1");
     assert.equal(decision.type, "reject_multi_open");
   });
+
+  it("cutter stacked open allows second piece while first stays open", () => {
+    const store: SewingSessionsFile = {
+      updated_at: null,
+      kiosk_arms: [
+        empArm({
+          employee_id: "e-ijaz",
+          employee_name: "Ijaz",
+          armed_at: "2026-08-10T07:00:00.000Z",
+        }),
+      ],
+      kiosk_piece_arms: [],
+      sessions: [
+        session({
+          id: "open-l26",
+          employee_id: "e-ijaz",
+          employee_name: "Ijaz",
+          production_code: "FR-0133-L26-TR-2/2",
+          status: "open",
+        }),
+      ],
+    };
+    assert.equal(
+      decidePieceStart(store, "k1").type,
+      "reject_employee_has_open_piece"
+    );
+    const stacked = decidePieceStart(store, "k1", { allowConcurrentOpen: true });
+    assert.equal(stacked.type, "start_with_employee_arm");
+    if (stacked.type === "start_with_employee_arm") {
+      assert.equal(stacked.arm.employee_id, "e-ijaz");
+    }
+  });
+
+  it("cutter stacked badge arms next open instead of closing / multi reject", () => {
+    const oneOpen: SewingSessionsFile = {
+      updated_at: null,
+      kiosk_arms: [],
+      kiosk_piece_arms: [],
+      sessions: [
+        session({
+          id: "open-l26",
+          employee_id: "e-ijaz",
+          employee_name: "Ijaz",
+          production_code: "FR-0133-L26-TR-2/2",
+          status: "open",
+        }),
+      ],
+    };
+    assert.equal(decideBadgeScan(oneOpen, "k1", "e-ijaz").type, "enter_closing_badge_first");
+    assert.equal(
+      decideBadgeScan(oneOpen, "k1", "e-ijaz", { allowStackedOpen: true }).type,
+      "arm_employee"
+    );
+
+    const twoOpen: SewingSessionsFile = {
+      ...oneOpen,
+      sessions: [
+        ...oneOpen.sessions,
+        session({
+          id: "open-l49",
+          employee_id: "e-ijaz",
+          employee_name: "Ijaz",
+          production_code: "FR-0133-L49-TR-2/2",
+          status: "open",
+        }),
+      ],
+    };
+    assert.equal(decideBadgeScan(twoOpen, "k1", "e-ijaz").type, "reject_multi_open");
+    assert.equal(
+      decideBadgeScan(twoOpen, "k1", "e-ijaz", { allowStackedOpen: true }).type,
+      "arm_employee"
+    );
+  });
+
+  it("cutter stacked badge with piece arm starts next piece (not close first)", () => {
+    const store: SewingSessionsFile = {
+      updated_at: null,
+      kiosk_arms: [],
+      kiosk_piece_arms: [
+        pieceArm({
+          production_code: "FR-0133-L49-TR-2/2",
+          scan_code: "FR-0133-L49-TR-2/2",
+          armed_at: "2026-08-10T07:00:01.000Z",
+        }),
+      ],
+      sessions: [
+        session({
+          id: "open-l26",
+          employee_id: "e-ijaz",
+          employee_name: "Ijaz",
+          production_code: "FR-0133-L26-TR-2/2",
+          status: "open",
+        }),
+      ],
+    };
+    assert.equal(decideBadgeScan(store, "k1", "e-ijaz").type, "enter_closing_badge_first");
+    const stacked = decideBadgeScan(store, "k1", "e-ijaz", { allowStackedOpen: true });
+    assert.equal(stacked.type, "start_with_piece_arm");
+    if (stacked.type === "start_with_piece_arm") {
+      assert.equal(stacked.piece_arm.production_code, "FR-0133-L49-TR-2/2");
+    }
+  });
+
+  it("cutter stacked close: wrong A4 rejected; matching A4 enters closing", () => {
+    const store: SewingSessionsFile = {
+      updated_at: null,
+      kiosk_arms: [],
+      kiosk_piece_arms: [],
+      sessions: [
+        session({
+          id: "open-l26",
+          employee_id: "e-ijaz",
+          employee_name: "Ijaz",
+          production_code: "FR-0133-L26-TR-2/2",
+          status: "closing",
+          closing_armed_at: "2026-08-10T07:00:00.000Z",
+          closing_confirm: "piece",
+        }),
+        session({
+          id: "open-l49",
+          employee_id: "e-ijaz",
+          employee_name: "Ijaz",
+          production_code: "FR-0133-L49-TR-2/2",
+          status: "open",
+        }),
+      ],
+    };
+    const wrong = decidePieceStart(store, "k1", { allowConcurrentOpen: true });
+    assert.equal(wrong.type, "reject_wrong_piece_for_close");
+    if (wrong.type === "reject_wrong_piece_for_close") {
+      assert.equal(wrong.session?.production_code, "FR-0133-L26-TR-2/2");
+    }
+  });
 });

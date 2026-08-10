@@ -47,6 +47,14 @@ export function floorActivityLabelFromJobFunctions(values: unknown): string {
 }
 
 /**
+ * Cutters may open many A4s (stacked consolidated nest) before closing.
+ * Tailors keep one-open-at-a-time (Sewing wins over cutter on dual roles).
+ */
+export function employeeAllowsStackedOpenPieces(jobFunctions: unknown): boolean {
+  return floorActivityLabelFromJobFunctions(jobFunctions) === "Cutting";
+}
+
+/**
  * Label when a dual-role badge armed a specific activity (EMPIRON / EMPBTN).
  * wash_iron arms show "Ironing" (not the payroll "Wash / iron" catalog label).
  */

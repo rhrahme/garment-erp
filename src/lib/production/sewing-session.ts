@@ -28,12 +28,14 @@ import {
 import {
   applyBadgeFirstClosing,
   applyCloseSession,
+  applyEmployeeArm,
   applyPieceArm,
   applyStartFromEmployeeArm,
   applyStartFromPieceArm,
   badgeDecisionRequiresSewCapability,
   decideBadgeScan,
   decidePieceStart,
+  openSessionsOnKiosk,
 } from "@/lib/production/sewing-session-recovery";
 import {
   enrichSewingSessionsGarmentFields,
@@ -53,6 +55,7 @@ import {
   applyShortNamesToEmployeeAggregates,
   attachSewingSessionClientShortNames,
   attachSewingSessionJobFunctions,
+  employeeAllowsStackedOpenPieces,
   floorActivitySessionStartedMessage,
   sewingSessionEmployeeDisplayName,
 } from "@/lib/production/sewing-session-status-label";
@@ -667,7 +670,10 @@ export async function processSewingKioskScan(
       workstation_id: input.workstation_id ?? employee.assigned_workstation_id,
     });
 
-    const badgeDecision = decideBadgeScan(store, kioskId, ctx.employee_id);
+    const allowStackedOpen = employeeAllowsStackedOpenPieces(employee.job_functions);
+    const badgeDecision = decideBadgeScan(store, kioskId, ctx.employee_id, {
+      allowStackedOpen,
+    });
 
     if (badgeDecision.type === "close") {
       return closeSessionWithBadgeOrPiece({
@@ -776,6 +782,18 @@ export async function processSewingKioskScan(
         activityJobFunction
       );
       store = applyStartFromPieceArm(store, kioskId, pieceArm, session);
+      if (allowStackedOpen) {
+        store = applyEmployeeArm(store, {
+          kiosk_id: kioskId,
+          employee_id: ctx.employee_id,
+          employee_name: ctx.employee_name,
+          employee_id_number: ctx.employee_id_number,
+          workstation_id: ctx.workstation_id,
+          armed_at: nowIso(at),
+          work_kind: workKind,
+          activity_job_function: activityJobFunction,
+        });
+      }
       await writeSewingSessions(store);
 
       try {
@@ -806,16 +824,22 @@ export async function processSewingKioskScan(
       await safeRecordPatternAlterationPendingFromSession(session, input.source ?? "erp");
 
       const started = enrichSessionsForFloorUi([session])[0]!;
+      const openCount = openSessionsOnKiosk(store, kioskId).filter(
+        (row) => row.employee_id === ctx.employee_id && row.status === "open"
+      ).length;
+      const startMsg = floorActivitySessionStartedMessage(
+        sewingSessionEmployeeDisplayName(started),
+        started.job_functions,
+        started.production_code,
+        started.piece_mark,
+        started.work_kind,
+        started.activity_job_function
+      );
       return result(
         true,
-        floorActivitySessionStartedMessage(
-          sewingSessionEmployeeDisplayName(started),
-          started.job_functions,
-          started.production_code,
-          started.piece_mark,
-          started.work_kind,
-          started.activity_job_function
-        ),
+        allowStackedOpen && openCount > 1
+          ? `${startMsg} ${openCount} pieces open - cut pile, then rescan each A4 to finish.`
+          : startMsg,
         store,
         kioskId,
         { session: started },
@@ -837,16 +861,11 @@ export async function processSewingKioskScan(
       work_kind: workKind,
       activity_job_function: activityJobFunction,
     };
-    store = {
-      ...store,
-      kiosk_arms: [
-        ...store.kiosk_arms.filter(
-          (row) => !(row.kiosk_id === kioskId && row.employee_id === arm.employee_id)
-        ),
-        arm,
-      ],
-    };
+    store = applyEmployeeArm(store, arm);
     await writeSewingSessions(store);
+    const openAlready = openSessionsOnKiosk(store, kioskId).filter(
+      (row) => row.employee_id === arm.employee_id && row.status === "open"
+    ).length;
     const readyHint =
       workKind === "alteration"
         ? `${arm.employee_name} ready for ALTERATION - scan A4 piece QR within 30 seconds.`
@@ -854,7 +873,9 @@ export async function processSewingKioskScan(
           ? `${arm.employee_name} ready for IRONING - scan A4 piece QR within 30 seconds.`
           : activityJobFunction === "buttons"
             ? `${arm.employee_name} ready for BUTTONS - scan A4 piece QR within 30 seconds.`
-            : `${arm.employee_name} ready - scan A4 piece QR within 30 seconds.`;
+            : allowStackedOpen && openAlready > 0
+              ? `${arm.employee_name} ready - scan next A4 to open (${openAlready} already open), or scan an open A4 to finish.`
+              : `${arm.employee_name} ready - scan A4 piece QR within 30 seconds.`;
     return result(true, readyHint, store, kioskId, { arm }, { beep: "progress" });
   }
 
@@ -921,7 +942,14 @@ export async function processSewingKioskScan(
     );
   }
 
-  const pieceDecision = decidePieceStart(store, kioskId);
+  const armedForStart = mostRecentArm(store, kioskId);
+  const armedEmployeeForStart = armedForStart
+    ? findPayrollEmployeeById(armedForStart.employee_id)
+    : null;
+  const allowConcurrentOpen = armedEmployeeForStart
+    ? employeeAllowsStackedOpenPieces(armedEmployeeForStart.job_functions)
+    : false;
+  const pieceDecision = decidePieceStart(store, kioskId, { allowConcurrentOpen });
 
   if (pieceDecision.type === "reject_wrong_piece_for_close") {
     const waiting = pieceDecision.session;
@@ -1018,6 +1046,14 @@ export async function processSewingKioskScan(
     }
     const session = buildSessionFromArmAndMeta(arm, meta, raw, kioskId, at);
     store = applyStartFromEmployeeArm(store, kioskId, arm, session);
+    const stackedCutter = employeeAllowsStackedOpenPieces(armedEmployee?.job_functions);
+    if (stackedCutter) {
+      // Keep cutter ready for the next piled article without fighting close logic.
+      store = applyEmployeeArm(store, {
+        ...arm,
+        armed_at: nowIso(at),
+      });
+    }
     await writeSewingSessions(store);
 
     try {
@@ -1046,16 +1082,22 @@ export async function processSewingKioskScan(
     await safeRecordPatternAlterationPendingFromSession(session, input.source ?? "erp");
 
     const started = enrichSessionsForFloorUi([session])[0]!;
+    const openCount = openSessionsOnKiosk(store, kioskId).filter(
+      (row) => row.employee_id === arm.employee_id && row.status === "open"
+    ).length;
+    const startMsg = floorActivitySessionStartedMessage(
+      sewingSessionEmployeeDisplayName(started),
+      started.job_functions,
+      started.production_code,
+      started.piece_mark,
+      started.work_kind,
+      started.activity_job_function
+    );
     return result(
       true,
-      floorActivitySessionStartedMessage(
-        sewingSessionEmployeeDisplayName(started),
-        started.job_functions,
-        started.production_code,
-        started.piece_mark,
-        started.work_kind,
-        started.activity_job_function
-      ),
+      stackedCutter && openCount > 1
+        ? `${startMsg} ${openCount} pieces open - cut pile, then rescan each A4 to finish.`
+        : startMsg,
       store,
       kioskId,
       { session: started },

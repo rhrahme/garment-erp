@@ -4,6 +4,7 @@ import {
   applyShortNamesToEmployeeAggregates,
   attachSewingSessionClientShortNames,
   attachSewingSessionJobFunctions,
+  employeeAllowsStackedOpenPieces,
   floorActivityInProgressLabel,
   floorActivityLabelFromJobFunctions,
   floorActivityNowLabel,
@@ -44,6 +45,13 @@ describe("floorActivityLabelFromJobFunctions", () => {
     assert.equal(floorActivityLabelFromJobFunctions(["cutter"]), "Cutting");
     assert.equal(floorActivityLabelFromJobFunctions(["jacket_tailor"]), "Sewing");
     assert.equal(floorActivityLabelFromJobFunctions(["trouser_tailor", "cutter"]), "Sewing");
+  });
+
+  it("allows stacked open pieces only for Cutting activity", () => {
+    assert.equal(employeeAllowsStackedOpenPieces(["cutter"]), true);
+    assert.equal(employeeAllowsStackedOpenPieces(["trouser_tailor"]), false);
+    assert.equal(employeeAllowsStackedOpenPieces(["trouser_tailor", "cutter"]), false);
+    assert.equal(employeeAllowsStackedOpenPieces(["wash_iron"]), false);
   });
 
   it("maps wash/iron, buttons, and other floor roles", () => {

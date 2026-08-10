@@ -44,6 +44,19 @@ export type BadgeDecision =
   | { type: "reject_ambiguous_piece_arms"; arms: SewingKioskPieceArm[] }
   | { type: "arm_employee" };
 
+export type DecidePieceStartOptions = {
+  /** Cutters opening a stacked nest - allow another start while pieces stay open. */
+  allowConcurrentOpen?: boolean;
+};
+
+export type DecideBadgeScanOptions = {
+  /**
+   * Cutters: badge arms the next open (or starts a piece arm); close is A4-first.
+   * Tailors keep badge-first close / multi-open reject.
+   */
+  allowStackedOpen?: boolean;
+};
+
 /**
  * Close / finish badge paths must not be blocked by the stitch kiosk gate.
  * Arm / start / piece-arm ambiguity still require an Expats ID-badge employee.
@@ -65,7 +78,8 @@ export function badgeDecisionRequiresSewCapability(type: BadgeDecision["type"]):
  */
 export function decidePieceStart(
   store: SewingSessionsFile,
-  kioskId: string
+  kioskId: string,
+  options: DecidePieceStartOptions = {}
 ): PieceStartDecision {
   const pieceConfirmClosing = openSessionsOnKiosk(store, kioskId).filter(
     (row) => row.status === "closing" && (row.closing_confirm ?? "badge") === "piece"
@@ -86,7 +100,7 @@ export function decidePieceStart(
   const openForArmed = openSessionsOnKiosk(store, kioskId).find(
     (row) => row.employee_id === arm.employee_id && row.status !== "closed"
   );
-  if (openForArmed) {
+  if (openForArmed && !options.allowConcurrentOpen) {
     return { type: "reject_employee_has_open_piece", arm, session: openForArmed };
   }
   return { type: "start_with_employee_arm", arm };
@@ -98,13 +112,28 @@ export function decidePieceStart(
 export function decideBadgeScan(
   store: SewingSessionsFile,
   kioskId: string,
-  employeeId: string
+  employeeId: string,
+  options: DecideBadgeScanOptions = {}
 ): BadgeDecision {
   const closingForEmployee = openSessionsOnKiosk(store, kioskId).find(
     (row) => row.status === "closing" && row.employee_id === employeeId
   );
   if (closingForEmployee) {
     return { type: "close", session: closingForEmployee };
+  }
+
+  const pieceArmPick = resolveUniquePieceArm(store, kioskId);
+
+  // Stacked cut: prefer starting a waiting A4, else re-arm for the next open.
+  // Close is always A4-first (scan open piece -> closing -> badge).
+  if (options.allowStackedOpen) {
+    if (pieceArmPick.status === "many") {
+      return { type: "reject_ambiguous_piece_arms", arms: pieceArmPick.arms };
+    }
+    if (pieceArmPick.status === "one") {
+      return { type: "start_with_piece_arm", piece_arm: pieceArmPick.arm };
+    }
+    return { type: "arm_employee" };
   }
 
   const openForEmployee = openSessionsOnKiosk(store, kioskId).filter(
@@ -117,7 +146,6 @@ export function decideBadgeScan(
     return { type: "enter_closing_badge_first", session: openForEmployee[0]! };
   }
 
-  const pieceArmPick = resolveUniquePieceArm(store, kioskId);
   if (pieceArmPick.status === "many") {
     return { type: "reject_ambiguous_piece_arms", arms: pieceArmPick.arms };
   }
@@ -142,6 +170,22 @@ export function applyBadgeFirstClosing(
   return {
     ...store,
     sessions: store.sessions.map((row) => (row.id === closing.id ? closing : row)),
+  };
+}
+
+/** Apply / refresh employee badge arm on a kiosk (pure). */
+export function applyEmployeeArm(
+  store: SewingSessionsFile,
+  arm: SewingKioskArm
+): SewingSessionsFile {
+  return {
+    ...store,
+    kiosk_arms: [
+      ...store.kiosk_arms.filter(
+        (row) => !(row.kiosk_id === arm.kiosk_id && row.employee_id === arm.employee_id)
+      ),
+      arm,
+    ],
   };
 }
 
