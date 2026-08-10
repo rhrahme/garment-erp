@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSewingScanFailuresAsync } from "@/lib/data/sewing-scan-failures";
 import { readSewingSessionsAsync } from "@/lib/data/sewing-sessions";
-import { readStitchKioskSettings } from "@/lib/data/stitch-kiosk-settings";
+import {
+  ensureStitchKioskLunchAutoResume,
+  readStitchKioskSettings,
+} from "@/lib/data/stitch-kiosk-settings";
 import {
   parseSewingDashboardPeriod,
   sewingSessionsDashboard,
@@ -20,6 +23,7 @@ export async function GET(request: NextRequest) {
     ]);
     const store = await readSewingSessionsAsync();
     const failures = await readSewingScanFailuresAsync();
+    await ensureStitchKioskLunchAutoResume({ notify: true });
     const kioskSettings = await readStitchKioskSettings();
     const { searchParams } = request.nextUrl;
     const period = parseSewingDashboardPeriod(searchParams.get("period"));

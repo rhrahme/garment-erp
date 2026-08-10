@@ -16,6 +16,11 @@ export type StitchKioskSettingsFile = {
   resumed_at: string | null;
   resumed_by: string | null;
   /**
+   * When set, cron / scan heal resume the kiosk gate at this instant
+   * (lunch = 16:00 Asia/Riyadh). Null for manual/emergency pauses.
+   */
+  auto_resume_at?: string | null;
+  /**
    * Pause history used so Live elapsed freezes during lunch and does not
    * keep counting paused wall-clock time after resume.
    */
@@ -29,5 +34,6 @@ export const EMPTY_STITCH_KIOSK_SETTINGS: StitchKioskSettingsFile = {
   paused_by: null,
   resumed_at: null,
   resumed_by: null,
+  auto_resume_at: null,
   pause_intervals: [],
 };

@@ -4,5 +4,7 @@
   "paused_at": null,
   "paused_by": null,
   "resumed_at": null,
-  "resumed_by": null
+  "resumed_by": null,
+  "auto_resume_at": null,
+  "pause_intervals": []
 }

@@ -13,7 +13,10 @@ import {
   findPayrollEmployeeById,
   resolveScanEmployeeContext,
 } from "@/lib/hr/payroll-lookup";
-import { readStitchKioskSettingsFresh } from "@/lib/data/stitch-kiosk-settings";
+import {
+  ensureStitchKioskLunchAutoResume,
+  readStitchKioskSettingsFresh,
+} from "@/lib/data/stitch-kiosk-settings";
 import { employeeCanSewOnStitchKiosk } from "@/lib/hr/payroll-utils";
 import { notifyIntegration } from "@/lib/integrations";
 import { notifyAdminsOfSewingSessionStarted } from "@/lib/integrations/sewing-session-started-alert";
@@ -557,6 +560,9 @@ export async function processSewingKioskScan(
     source: input.source,
     now: at,
   };
+
+  // Lunch auto-resume (16:00 Asia/Riyadh): open the scan gate if due.
+  await ensureStitchKioskLunchAutoResume({ nowMs: at, notify: true });
 
   // Admin pause: block all badge/A4 work without spamming sewing_scan_failures.
   const kioskSettings = await readStitchKioskSettingsFresh();

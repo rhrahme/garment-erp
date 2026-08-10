@@ -77,6 +77,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   / Scan elapsed clocks **freeze** for the pause window (`pause_intervals`) so
   lunch does not keep counting; after resume, paused time is excluded from
   elapsed. Do not remove this gate or hide the admin control.
+- **Lunch auto-resume 16:00 Asia/Riyadh** (Aug 10 2026): pause/resume is the
+  **floor scan gate only** (not per article). Pauses started in the lunch
+  window (14:00-16:00 Riyadh) get `auto_resume_at` = that day's 16:00. Vercel
+  cron `/api/cron/stitch-kiosk-lunch-resume` at 13:00 UTC plus scan/Live heal
+  reopen the gate so stitchers can scan again. Emergency pauses outside the
+  lunch window stay paused until an admin resumes. Do not strip auto-resume.
 - **Stitch/Pattern change requests** (Aug 10 2026): stitch@ and pattern@ may
   request admin approval to **stop**, **edit**, **delete** a Live/History
   session, **delete** a failed-scan row, or **pause the whole kiosk**. Nothing
@@ -318,6 +324,15 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Draft only — owner clicks Send**: prepare supplier chase/follow-up
   email text in chat (or in-app draft); do **not** SMTP-send unless the
   owner explicitly says to send. Owner rule Aug 5 2026.
+
+## Mobile login UX
+
+- **Post-login client photos prompt** (Aug 10 2026): on mobile/tablet
+  (UA + coarse pointer / narrow width), after dashboard shell loads, accounts
+  with `canAccessClientMedia` (admin, sales, client manager, production,
+  pattern) see a once-per-browser-session dialog asking to upload client
+  photos. Yes -> `/clients?mobileUpload=1`. Stitch kiosk and task-only
+  accounts never see it. Do not remove without an explicit ask.
 
 ## Deploy / infra
 

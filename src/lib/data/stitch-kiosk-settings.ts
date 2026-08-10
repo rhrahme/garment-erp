@@ -9,8 +9,15 @@ import {
   type StitchKioskPauseInterval,
   type StitchKioskSettingsFile,
 } from "@/lib/types/stitch-kiosk-settings";
+import {
+  shouldAutoResumeStitchKioskLunch,
+  stitchLunchAutoResumeAtIsoForPause,
+  stitchLunchResumeAtMs,
+} from "@/lib/production/stitch-kiosk-lunch";
+import { notifyIntegration } from "@/lib/integrations";
 
 const STORE_PATH = path.join(process.cwd(), "src/data/stitch-kiosk-settings.json");
+const AUTO_RESUME_ACTOR = "auto-resume-16:00-riyadh";
 
 function normalizeIntervals(
   raw: StitchKioskSettingsFile | null | undefined
@@ -49,6 +56,7 @@ function normalize(raw: StitchKioskSettingsFile | null | undefined): StitchKiosk
     paused_by: raw?.paused_by ?? null,
     resumed_at: raw?.resumed_at ?? null,
     resumed_by: raw?.resumed_by ?? null,
+    auto_resume_at: raw?.auto_resume_at ?? null,
     updated_at: raw?.updated_at ?? null,
     pause_intervals: normalizeIntervals(raw),
   };
@@ -71,14 +79,21 @@ export async function isStitchKioskPaused(): Promise<boolean> {
 
 export async function setStitchKioskPaused(
   paused: boolean,
-  options: { actedBy?: string | null } = {}
+  options: {
+    actedBy?: string | null;
+    /** Close the open pause interval at this instant (lunch = 16:00 Riyadh). */
+    endedAt?: string | null;
+    nowMs?: number;
+  } = {}
 ): Promise<StitchKioskSettingsFile> {
   const current = await readStitchKioskSettingsFresh();
-  const now = new Date().toISOString();
+  const nowMs = options.nowMs ?? Date.now();
+  const now = new Date(nowMs).toISOString();
   const actedBy = options.actedBy?.trim() || null;
   const intervals = [...(current.pause_intervals ?? [])];
 
   if (paused) {
+    const pauseStartedAt = current.paused ? current.paused_at ?? now : now;
     if (!current.paused) {
       intervals.push({
         started_at: now,
@@ -94,11 +109,16 @@ export async function setStitchKioskPaused(
         resumed_by: null,
       });
     }
+    const autoResumeAt =
+      current.paused && current.auto_resume_at
+        ? current.auto_resume_at
+        : stitchLunchAutoResumeAtIsoForPause(nowMs);
     const next: StitchKioskSettingsFile = {
       ...current,
       paused: true,
-      paused_at: current.paused ? current.paused_at ?? now : now,
+      paused_at: pauseStartedAt,
       paused_by: actedBy ?? current.paused_by,
+      auto_resume_at: autoResumeAt,
       pause_intervals: intervals,
       updated_at: now,
     };
@@ -106,22 +126,70 @@ export async function setStitchKioskPaused(
     return next;
   }
 
+  const endedAt = options.endedAt?.trim() || now;
   const openIndex = intervals.findIndex((row) => !row.ended_at);
   if (openIndex >= 0) {
     intervals[openIndex] = {
       ...intervals[openIndex]!,
-      ended_at: now,
+      ended_at: endedAt,
       resumed_by: actedBy,
     };
   }
   const next: StitchKioskSettingsFile = {
     ...current,
     paused: false,
-    resumed_at: now,
+    resumed_at: endedAt,
     resumed_by: actedBy,
+    auto_resume_at: null,
     pause_intervals: intervals,
     updated_at: now,
   };
   await saveDocument(STORE_PATH, next);
   return next;
+}
+
+/**
+ * If lunch auto-resume is due, open the kiosk scan gate (not per article).
+ * Safe to call from cron and from every scan / Live poll.
+ */
+export async function ensureStitchKioskLunchAutoResume(
+  options: { nowMs?: number; notify?: boolean } = {}
+): Promise<{ resumed: boolean; settings: StitchKioskSettingsFile }> {
+  const nowMs = options.nowMs ?? Date.now();
+  const current = await readStitchKioskSettingsFresh();
+  if (
+    !shouldAutoResumeStitchKioskLunch({
+      paused: current.paused,
+      paused_at: current.paused_at,
+      auto_resume_at: current.auto_resume_at,
+      nowMs,
+    })
+  ) {
+    return { resumed: false, settings: current };
+  }
+
+  const endedAt = current.auto_resume_at
+    ? current.auto_resume_at
+    : new Date(stitchLunchResumeAtMs(nowMs)).toISOString();
+  const settings = await setStitchKioskPaused(false, {
+    actedBy: AUTO_RESUME_ACTOR,
+    endedAt,
+    nowMs,
+  });
+
+  if (options.notify !== false) {
+    await notifyIntegration("production.stitch_kiosk_pause_updated", {
+      paused: settings.paused,
+      paused_at: settings.paused_at,
+      paused_by: settings.paused_by,
+      resumed_at: settings.resumed_at,
+      resumed_by: settings.resumed_by,
+      auto_resume_at: settings.auto_resume_at ?? null,
+      updated_at: settings.updated_at,
+      updated_by: AUTO_RESUME_ACTOR,
+      reason: "lunch_auto_resume",
+    });
+  }
+
+  return { resumed: true, settings };
 }
