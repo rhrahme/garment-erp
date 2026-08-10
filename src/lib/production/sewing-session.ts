@@ -20,7 +20,6 @@ import {
 } from "@/lib/data/stitch-kiosk-settings";
 import { notifyIntegration } from "@/lib/integrations";
 import { employeeCanSewOnStitchKiosk } from "@/lib/hr/payroll-utils";
-import { notifyIntegration } from "@/lib/integrations";
 import { notifyAdminsOfSewingSessionStarted } from "@/lib/integrations/sewing-session-started-alert";
 import { executeStageScan } from "@/lib/production/execute-stage-scan";
 import { recordSewingScanFailure } from "@/lib/production/record-sewing-scan-failure";
