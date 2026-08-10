@@ -36,6 +36,7 @@ import {
   decideBadgeScan,
   decidePieceStart,
   openSessionsOnKiosk,
+  resolveSharedPieceScan,
 } from "@/lib/production/sewing-session-recovery";
 import {
   enrichSewingSessionsGarmentFields,
@@ -45,7 +46,6 @@ import {
   expireStaleSewingState,
   mostRecentArm,
   pieceArmsOnKiosk,
-  productionCodesMatch,
   resolveUniqueEmployeeArm,
   sessionPhase,
   sewingSessionsDashboard as sewingSessionsDashboardBase,
@@ -336,21 +336,6 @@ function lookupPieceMeta(scanCode: string): {
     fabric_number: lookup.line.fabric_number?.trim() || null,
     work_order_id: null,
   };
-}
-
-function findSessionForPiece(
-  store: SewingSessionsFile,
-  kioskId: string,
-  productionCode: string,
-  scanCode: string
-): SewingSession | null {
-  return (
-    openOnKiosk(store, kioskId).find(
-      (row) =>
-        productionCodesMatch(row.production_code, productionCode) ||
-        productionCodesMatch(row.scan_code, scanCode)
-    ) ?? null
-  );
 }
 
 function buildSessionFromArmAndMeta(
@@ -895,8 +880,34 @@ export async function processSewingKioskScan(
     );
   }
 
-  const pieceSession = findSessionForPiece(store, kioskId, meta.production_code, raw);
-  if (pieceSession) {
+  const armedForShared = mostRecentArm(store, kioskId);
+  const sharedPiece = resolveSharedPieceScan(store, kioskId, meta.production_code, raw, {
+    armedEmployeeId: armedForShared?.employee_id ?? null,
+  });
+  if (sharedPiece.type === "reject_ambiguous_shared_piece") {
+    const names = sharedPiece.sessions
+      .map((row) => row.employee_name)
+      .filter(Boolean)
+      .slice(0, 4)
+      .join(", ");
+    return failResult(
+      names
+        ? `Several stitchers are on this piece (${names}) - scan the finishing stitcher's badge, then this A4.`
+        : "Several stitchers are on this piece - scan the finishing stitcher's badge, then this A4.",
+      "ambiguous_shared_piece",
+      "piece",
+      store,
+      kioskId,
+      {},
+      {
+        ...failMeta,
+        related_production_code: meta.production_code,
+        related_session_id: sharedPiece.sessions[0]?.id ?? null,
+      }
+    );
+  }
+  if (sharedPiece.type === "close_session") {
+    const pieceSession = sharedPiece.session;
     if (pieceSession.status === "closing") {
       const confirm = pieceSession.closing_confirm ?? "badge";
       if (confirm === "piece") {

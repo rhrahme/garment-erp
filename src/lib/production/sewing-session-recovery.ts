@@ -1,5 +1,6 @@
 import {
   mostRecentArm,
+  productionCodesMatch,
   resolveUniquePieceArm,
 } from "@/lib/production/sewing-session-state";
 import type {
@@ -22,6 +23,73 @@ export function openSessionsOnKiosk(
   return store.sessions.filter(
     (row) => row.kiosk_id === kioskId && (row.status === "open" || row.status === "closing")
   );
+}
+
+function sessionsMatchingPiece(
+  store: SewingSessionsFile,
+  kioskId: string,
+  productionCode: string,
+  scanCode: string
+): SewingSession[] {
+  return openSessionsOnKiosk(store, kioskId).filter(
+    (row) =>
+      productionCodesMatch(row.production_code, productionCode) ||
+      productionCodesMatch(row.scan_code, scanCode)
+  );
+}
+
+/**
+ * Same jacket/overshirt A4 may be open for several stitchers at once.
+ * - Armed stitcher who already has this QR open -> close their session.
+ * - Armed different stitcher -> start another open session on the same QR.
+ * - No arm + one open -> A4-first close.
+ * - No arm + several open on same QR -> ask for the finishing stitcher's badge.
+ */
+export type SharedPieceScanDecision =
+  | { type: "close_session"; session: SewingSession }
+  | { type: "start_new" }
+  | { type: "reject_ambiguous_shared_piece"; sessions: SewingSession[] };
+
+export function resolveSharedPieceScan(
+  store: SewingSessionsFile,
+  kioskId: string,
+  productionCode: string,
+  scanCode: string,
+  options: { armedEmployeeId?: string | null } = {}
+): SharedPieceScanDecision {
+  const matches = sessionsMatchingPiece(store, kioskId, productionCode, scanCode);
+  if (matches.length === 0) {
+    return { type: "start_new" };
+  }
+
+  const armedEmployeeId = options.armedEmployeeId?.trim() || null;
+  const closing = matches.filter((row) => row.status === "closing");
+  if (closing.length === 1) {
+    return { type: "close_session", session: closing[0]! };
+  }
+  if (closing.length > 1) {
+    if (armedEmployeeId) {
+      const mine = closing.find((row) => row.employee_id === armedEmployeeId);
+      if (mine) return { type: "close_session", session: mine };
+    }
+    return { type: "reject_ambiguous_shared_piece", sessions: closing };
+  }
+
+  const openMatches = matches.filter((row) => row.status === "open");
+  if (armedEmployeeId) {
+    const mine = openMatches.find((row) => row.employee_id === armedEmployeeId);
+    if (mine) return { type: "close_session", session: mine };
+    // Another stitcher is ready - open a parallel session on the same article QR.
+    return { type: "start_new" };
+  }
+
+  if (openMatches.length === 1) {
+    return { type: "close_session", session: openMatches[0]! };
+  }
+  if (openMatches.length > 1) {
+    return { type: "reject_ambiguous_shared_piece", sessions: openMatches };
+  }
+  return { type: "start_new" };
 }
 
 export type PieceStartDecision =

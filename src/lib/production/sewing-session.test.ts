@@ -15,6 +15,7 @@ import {
   decideBadgeScan,
   decidePieceStart,
   openSessionsOnKiosk,
+  resolveSharedPieceScan,
 } from "@/lib/production/sewing-session-recovery";
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
 import {
@@ -776,7 +777,7 @@ describe("blind-floor stitch scan recovery", () => {
     assert.equal(store.sessions.length, 3);
   });
 
-  it("closing / open piece match is not blocked by other ready EMPs", () => {
+  it("second ready EMP can open the same article QR while first stitcher stays open", () => {
     const openAshraf = session({
       id: "sew-ashraf",
       employee_id: "e-ashraf",
@@ -785,7 +786,7 @@ describe("blind-floor stitch scan recovery", () => {
       scan_code: "FR-0129-L06-TR-2/2",
       status: "open",
     });
-    const store: SewingSessionsFile = {
+    let store: SewingSessionsFile = {
       updated_at: null,
       kiosk_arms: [
         empArm({
@@ -804,23 +805,83 @@ describe("blind-floor stitch scan recovery", () => {
       sessions: [openAshraf],
     };
 
-    // Kiosk matches open/closing piece before arm start (same order as processSewingKioskScan).
     const pieceCode = "FR-0129-L06-TR-2/2";
-    const matched =
-      openSessionsOnKiosk(store, "k1").find(
-        (row) =>
-          productionCodesMatch(row.production_code, pieceCode) ||
-          productionCodesMatch(row.scan_code, pieceCode)
-      ) ?? null;
-    assert.equal(matched?.id, "sew-ashraf");
-    assert.equal(matched?.employee_id, "e-ashraf");
+    // Kashif is most recent arm and does not own Ashraf's open session -> start parallel.
+    const shared = resolveSharedPieceScan(store, "k1", pieceCode, pieceCode, {
+      armedEmployeeId: "e-kashif",
+    });
+    assert.equal(shared.type, "start_new");
 
-    // Without a piece match, start would go to most recent ready EMP (Kashif).
-    const startIfNoMatch = decidePieceStart(store, "k1");
-    assert.equal(startIfNoMatch.type, "start_with_employee_arm");
-    if (startIfNoMatch.type === "start_with_employee_arm") {
-      assert.equal(startIfNoMatch.arm.employee_id, "e-kashif");
+    const start = decidePieceStart(store, "k1");
+    assert.equal(start.type, "start_with_employee_arm");
+    assert.ok(start.type === "start_with_employee_arm");
+    assert.equal(start.arm.employee_id, "e-kashif");
+    const afterStart = applyStartFromEmployeeArm(
+      store,
+      "k1",
+      start.arm,
+      session({
+        id: "sew-kashif",
+        employee_id: "e-kashif",
+        employee_name: "Kashif",
+        production_code: pieceCode,
+        scan_code: pieceCode,
+        status: "open",
+      })
+    );
+    assert.equal(
+      afterStart.sessions.filter(
+        (row) => row.status === "open" && row.production_code === pieceCode
+      ).length,
+      2
+    );
+  });
+
+  it("resolveSharedPieceScan closes only the armed stitcher's shared QR session", () => {
+    const pieceCode = "FR-0133-L18-OS-1/2";
+    const store: SewingSessionsFile = {
+      updated_at: null,
+      kiosk_arms: [
+        empArm({
+          employee_id: "e-b",
+          employee_name: "B",
+          employee_id_number: "200",
+          armed_at: "2026-08-10T10:00:00.000Z",
+        }),
+      ],
+      kiosk_piece_arms: [],
+      sessions: [
+        session({
+          id: "sew-a",
+          employee_id: "e-a",
+          employee_name: "A",
+          production_code: pieceCode,
+          scan_code: pieceCode,
+          status: "open",
+        }),
+        session({
+          id: "sew-b",
+          employee_id: "e-b",
+          employee_name: "B",
+          employee_id_number: "200",
+          production_code: pieceCode,
+          scan_code: pieceCode,
+          status: "open",
+        }),
+      ],
+    };
+    const closeB = resolveSharedPieceScan(store, "k1", pieceCode, pieceCode, {
+      armedEmployeeId: "e-b",
+    });
+    assert.equal(closeB.type, "close_session");
+    if (closeB.type === "close_session") {
+      assert.equal(closeB.session.id, "sew-b");
     }
+
+    const ambiguous = resolveSharedPieceScan(store, "k1", pieceCode, pieceCode, {
+      armedEmployeeId: null,
+    });
+    assert.equal(ambiguous.type, "reject_ambiguous_shared_piece");
   });
 
   it("most recent ready EMP with open piece is rejected (original behavior)", () => {

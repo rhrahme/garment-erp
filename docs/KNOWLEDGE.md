@@ -50,9 +50,16 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   **Cutting** (cutter job_functions, not tailor), the cutter may open **many**
   piece sessions before closing - pile fabrics, scan each Trouser (or piece)
   A4 to open, cut once, then rescan each A4 + badge to finish. Tailors stay
-  one-open-at-a-time. Close for cutters is A4-first (never badge-first close
-  while stacked). After each open the cutter stays armed for the next A4.
+  one-open-at-a-time **per stitcher** (a stitcher still closes their own piece
+  before starting another). Close for cutters is A4-first (never badge-first
+  close while stacked). After each open the cutter stays armed for the next A4.
   Do not re-block cutters with `employee_has_open_piece` without an explicit ask.
+- **Multi-stitcher same article QR** (Aug 10 2026): jackets/overshirts often
+  have 2–3 stitchers on the **same** A4/production QR at once. Each stitcher
+  opens their own Live session (badge then A4). Do not treat an open session
+  for stitcher A as a close for stitcher B when B is armed. Close is per
+  stitcher (badge of the finisher when several are on that QR; A4 alone is
+  ambiguous if multiple open). `resolveSharedPieceScan` owns this.
 - USB wedge capture must always steal rapid keystrokes (even over selection or
   focused fields) and show an optimistic "Last scan" strip on every tab.
   Silence on scan is a bug, never acceptable.
