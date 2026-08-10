@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ClientProfilesEditor } from "@/components/clients/ClientProfilesEditor";
 
@@ -19,7 +20,15 @@ export default function ClientsPage() {
         </p>
       </div>
 
-      <ClientProfilesEditor />
+      <Suspense
+        fallback={
+          <div className="rounded-xl border border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-500">
+            Loading client profiles...
+          </div>
+        }
+      >
+        <ClientProfilesEditor />
+      </Suspense>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import type { FocusEvent as ReactFocusEvent, PointerEvent as ReactPointerEvent } from "react";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Camera, LayoutGrid, List, Plus, Search, Table2, Trash2, UserCircle, X } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { ClientFabricChangeAlerts } from "@/components/clients/ClientFabricChangeAlerts";
@@ -185,6 +186,8 @@ function formatJoinedLabel(client: ClientProfile): string {
 }
 
 export function ClientProfilesEditor() {
+  const searchParams = useSearchParams();
+  const showMobileUploadHint = searchParams.get("mobileUpload") === "1";
   const [saved, setSaved] = useState<ClientsFile>({ updated_at: null, clients: [] });
   const [draft, setDraft] = useState<ClientsFile>({ updated_at: null, clients: [] });
   const [loading, setLoading] = useState(true);
@@ -950,6 +953,15 @@ export function ClientProfilesEditor() {
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
+      )}
+
+      {showMobileUploadHint && canManageClientPhotos && (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+          <p className="font-medium">Upload client photos</p>
+          <p className="mt-1 text-indigo-800/90">
+            Search or open a client, then tap Photos to take or upload wearing images.
+          </p>
+        </div>
       )}
 
       {personClients.length === 0 ? (
