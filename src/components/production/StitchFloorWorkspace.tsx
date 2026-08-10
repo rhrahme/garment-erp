@@ -7,6 +7,10 @@ import ScanQrSvg from "@/components/production/ScanQrSvg";
 import { StitchKioskPanel } from "@/components/production/StitchKioskPanel";
 import { StitchOrdersPanel } from "@/components/production/StitchOrdersPanel";
 import {
+  SewingSessionChangeRequestModal,
+  type PendingChangeSummary,
+} from "@/components/production/SewingSessionChangeRequestModal";
+import {
   StitchScanCaptureProvider,
   StitchScanFeedbackBanner,
   StitchScannerReadyBadge,
@@ -324,6 +328,34 @@ export function StitchFloorWorkspace({
   });
   const [historySort, setHistorySort] = useState<TableSortState<HistorySortKey> | null>(null);
   const [failureSort, setFailureSort] = useState<TableSortState<FailureSortKey> | null>(null);
+  const [pendingRequests, setPendingRequests] = useState<PendingChangeSummary[]>([]);
+  const [changeTarget, setChangeTarget] = useState<
+    | { kind: "session"; session: SewingSession; live: boolean }
+    | { kind: "failure"; failure: SewingScanFailure }
+    | { kind: "kiosk" }
+    | null
+  >(null);
+
+  const pendingBySessionId = useMemo(() => {
+    const map = new Map<string, PendingChangeSummary>();
+    for (const row of pendingRequests) {
+      if (row.session_id) map.set(row.session_id, row);
+    }
+    return map;
+  }, [pendingRequests]);
+
+  const pendingByFailureId = useMemo(() => {
+    const map = new Map<string, PendingChangeSummary>();
+    for (const row of pendingRequests) {
+      if (row.failure_id) map.set(row.failure_id, row);
+    }
+    return map;
+  }, [pendingRequests]);
+
+  const pendingPauseKiosk = useMemo(
+    () => pendingRequests.find((row) => row.action === "pause_kiosk") ?? null,
+    [pendingRequests]
+  );
 
   useEffect(() => {
     setTab(tabFromLocation(pathname, searchParams.get("tab"), initialTab));
@@ -352,11 +384,45 @@ export function StitchFloorWorkspace({
     }
   }, [period]);
 
+  const loadPendingRequests = useCallback(async () => {
+    try {
+      const res = await fetch("/api/production/sewing-session/change-request", {
+        cache: "no-store",
+      });
+      if (!res.ok) return;
+      const json = (await res.json()) as { requests?: PendingChangeSummary[] };
+      setPendingRequests(json.requests ?? []);
+    } catch {
+      /* non-fatal */
+    }
+  }, []);
+
   useEffect(() => {
     void load();
-    const id = window.setInterval(() => void load(), 12_000);
+    void loadPendingRequests();
+    const id = window.setInterval(() => {
+      void load();
+      void loadPendingRequests();
+    }, 12_000);
     return () => window.clearInterval(id);
-  }, [load]);
+  }, [load, loadPendingRequests]);
+
+  async function cancelPendingRequest(requestId: string) {
+    try {
+      const res = await fetch("/api/production/sewing-session/change-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "cancel", request_id: requestId }),
+      });
+      if (!res.ok) {
+        const json = (await res.json()) as { error?: string };
+        throw new Error(json.error ?? "Failed to cancel request");
+      }
+      setPendingRequests((current) => current.filter((row) => row.id !== requestId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to cancel request");
+    }
+  }
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
@@ -482,16 +548,36 @@ export function StitchFloorWorkspace({
                 <h2 className="text-xl font-semibold text-slate-900">Who is on the floor now</h2>
                 <p className="mt-1 text-sm text-slate-500">
                   Open sessions across kiosks. Status follows each employee job (Cutting, Sewing,
-                  Wash / iron, ...). Refresh every 12s. Red elapsed = over 45 min.
+                  Wash / iron, ...). Refresh every 12s. Red elapsed = over 45 min. Request admin
+                  approval to stop, edit, or delete a row.
                 </p>
               </div>
-              {data && (
-                <p className="text-sm font-semibold tabular-nums text-slate-700">
-                  {data.open_sessions.filter((s) => s.status === "open").length} open
-                  {" / "}
-                  {data.open_sessions.filter((s) => s.status === "closing").length} closing
-                </p>
-              )}
+              <div className="flex flex-wrap items-center gap-2">
+                {pendingPauseKiosk ? (
+                  <button
+                    type="button"
+                    onClick={() => void cancelPendingRequest(pendingPauseKiosk.id)}
+                    className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900"
+                  >
+                    Pause pending - cancel
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setChangeTarget({ kind: "kiosk" })}
+                    className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800"
+                  >
+                    Request pause kiosk
+                  </button>
+                )}
+                {data && (
+                  <p className="text-sm font-semibold tabular-nums text-slate-700">
+                    {data.open_sessions.filter((s) => s.status === "open").length} open
+                    {" / "}
+                    {data.open_sessions.filter((s) => s.status === "closing").length} closing
+                  </p>
+                )}
+              </div>
             </div>
           </div>
           <div className="overflow-x-auto p-2 sm:p-4">
@@ -560,6 +646,7 @@ export function StitchFloorWorkspace({
                       onSort={(key) => setLiveSort((prev) => nextTableSort(prev, key as LiveSortKey))}
                       className="px-3 py-3"
                     />
+                    <th className="px-3 py-3 text-left font-semibold">Admin</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -572,6 +659,7 @@ export function StitchFloorWorkspace({
                     const article = sewingSessionArticleLabel(session);
                     const articleColor = garmentTypeColorClasses(article || null);
                     const scanQr = sewingSessionScanQrLabel(session);
+                    const pending = pendingBySessionId.get(session.id) ?? null;
                     return (
                       <tr
                         key={session.id}
@@ -652,6 +740,32 @@ export function StitchFloorWorkspace({
                               session.activity_job_function
                             )}
                           </span>
+                        </td>
+                        <td className="px-3 py-3">
+                          {pending ? (
+                            <div className="space-y-1">
+                              <span className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">
+                                Pending {pending.action}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => void cancelPendingRequest(pending.id)}
+                                className="block text-xs font-semibold text-slate-600 underline"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setChangeTarget({ kind: "session", session, live: true })
+                              }
+                              className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-800"
+                            >
+                              Request
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );
@@ -972,6 +1086,7 @@ export function StitchFloorWorkspace({
                         }
                         className="px-3 py-3"
                       />
+                      <th className="px-3 py-3 text-left font-semibold">Admin</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -979,6 +1094,7 @@ export function StitchFloorWorkspace({
                       const article = sewingSessionArticleLabel(row);
                       const articleColor = garmentTypeColorClasses(article || null);
                       const scanQr = sewingSessionScanQrLabel(row);
+                      const pending = pendingBySessionId.get(row.id) ?? null;
                       return (
                       <tr key={row.id} className="text-slate-800">
                         <td className="px-3 py-3">
@@ -1029,6 +1145,32 @@ export function StitchFloorWorkspace({
                               row.activity_job_function
                             )}
                           </span>
+                        </td>
+                        <td className="px-3 py-3">
+                          {pending ? (
+                            <div className="space-y-1">
+                              <span className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">
+                                Pending {pending.action}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => void cancelPendingRequest(pending.id)}
+                                className="block text-xs font-semibold text-slate-600 underline"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setChangeTarget({ kind: "session", session: row, live: false })
+                              }
+                              className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-800"
+                            >
+                              Request
+                            </button>
+                          )}
                         </td>
                       </tr>
                       );
@@ -1112,10 +1254,13 @@ export function StitchFloorWorkspace({
                       }
                       className="px-3 py-3"
                     />
+                    <th className="px-3 py-3 text-left font-semibold">Admin</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {failureRows.map((row) => (
+                  {failureRows.map((row) => {
+                    const pending = pendingByFailureId.get(row.id) ?? null;
+                    return (
                     <tr key={row.id} className="bg-red-50/40 text-slate-800">
                       <td className="px-3 py-3 whitespace-nowrap">
                         {formatClock(row.scanned_at)}
@@ -1146,14 +1291,47 @@ export function StitchFloorWorkspace({
                       <td className="px-3 py-3 font-mono text-xs sm:text-sm">
                         {row.related_production_code || "-"}
                       </td>
+                      <td className="px-3 py-3">
+                        {pending ? (
+                          <div className="space-y-1">
+                            <span className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">
+                              Pending delete
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => void cancelPendingRequest(pending.id)}
+                              className="block text-xs font-semibold text-slate-600 underline"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setChangeTarget({ kind: "failure", failure: row })}
+                            className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-800"
+                          >
+                            Request
+                          </button>
+                        )}
+                      </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             )}
           </div>
         </section>
       )}
+      <SewingSessionChangeRequestModal
+        open={changeTarget != null}
+        target={changeTarget}
+        onClose={() => setChangeTarget(null)}
+        onSubmitted={(request) => {
+          setPendingRequests((current) => [request, ...current.filter((row) => row.id !== request.id)]);
+        }}
+      />
       </div>
     </StitchScanCaptureProvider>
   );

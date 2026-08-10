@@ -60,6 +60,30 @@ describe("protectSewingSessionsWrite", () => {
       ["s-new", "s-old"]
     );
   });
+
+  it("honors allow_session_delete_ids so admin deletes stick", () => {
+    const next = protectSewingSessionsWrite(
+      {
+        kiosk_arms: [],
+        kiosk_piece_arms: [],
+        sessions: [
+          { id: "s-old", status: "closed" },
+          { id: "s-new", status: "open" },
+        ],
+      },
+      {
+        kiosk_arms: [],
+        kiosk_piece_arms: [],
+        sessions: [{ id: "s-new", status: "open" }],
+        allow_session_delete_ids: ["s-old"],
+      }
+    );
+    assert.deepEqual(
+      (next.sessions ?? []).map((session) => session.id),
+      ["s-new"]
+    );
+    assert.equal("allow_session_delete_ids" in next, false);
+  });
 });
 
 describe("protectSewingScanFailuresWrite", () => {
@@ -80,5 +104,19 @@ describe("protectSewingScanFailuresWrite", () => {
       { failures: [{ id: "f1" }] }
     );
     assert.equal(next.failures!.length, 3);
+  });
+
+  it("honors allow_failure_delete_ids so admin deletes stick", () => {
+    const next = protectSewingScanFailuresWrite(
+      { failures: [{ id: "f1" }, { id: "f2" }, { id: "f3" }] },
+      {
+        failures: [{ id: "f1" }, { id: "f3" }],
+        allow_failure_delete_ids: ["f2"],
+      }
+    );
+    assert.deepEqual(
+      (next.failures ?? []).map((row) => (row as { id: string }).id),
+      ["f1", "f3"]
+    );
   });
 });

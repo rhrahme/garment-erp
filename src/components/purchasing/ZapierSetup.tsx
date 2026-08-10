@@ -66,6 +66,9 @@ const OUTBOUND_EVENTS = [
   "production.sewing_session_ended",
   "production.sewing_scan_failed",
   "production.sewing_testing_reset",
+  "production.sewing_session_change_requested",
+  "production.sewing_session_change_approved",
+  "production.sewing_session_change_rejected",
   "production.stitch_kiosk_pause_updated",
   "production.alteration_started",
   "production.stage_advanced",
@@ -193,6 +196,7 @@ export function ZapierSetup() {
               PATCH {baseUrl}/api/v1/pattern/notices/[id] (action: acknowledge)
             </li>
             <li>POST {baseUrl}/api/v1/production/sewing-session/scan</li>
+            <li>GET/POST {baseUrl}/api/v1/production/sewing-session/change-request</li>
             <li className="pl-4 text-slate-500">
               body optional: sales_order_id, client_id, dry_run, acted_by - groups jobs by
               garment + composition + gsm per client and links/creates ClientPatterns

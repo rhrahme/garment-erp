@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { FabricChangeAlertsPanel } from "@/components/dashboard/FabricChangeAlertsPanel";
 import { FabricLineDeleteRequestsPanel } from "@/components/dashboard/FabricLineDeleteRequestsPanel";
+import { SewingSessionChangeRequestsPanel } from "@/components/dashboard/SewingSessionChangeRequestsPanel";
 import { GarmentTypeChangesPanel } from "@/components/dashboard/GarmentTypeChangesPanel";
 import { ThreadButtonPhotosReviewPanel } from "@/components/dashboard/ThreadButtonPhotosReviewPanel";
 import { TodaysFabricPanel } from "@/components/dashboard/TodaysFabricPanel";
@@ -176,6 +177,7 @@ export default async function DashboardPage() {
       )}
 
       {session.isAdmin ? <FabricLineDeleteRequestsPanel /> : null}
+      {session.isAdmin ? <SewingSessionChangeRequestsPanel /> : null}
       <FabricChangeAlertsPanel />
       {session.isAdmin ? <GarmentTypeChangesPanel /> : null}
       {session.isAdmin ? <ThreadButtonPhotosReviewPanel /> : null}

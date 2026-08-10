@@ -264,6 +264,29 @@ async function writeToSupabase<T>(documentKey: ErpDocumentKey, payload: T): Prom
     }
   }
 
+  if (documentKey === "sewing_session_change_requests") {
+    try {
+      const { protectSewingSessionChangeRequestsWrite } = await import(
+        "@/lib/production/protect-sewing-session-change-requests-write"
+      );
+      const remote = await readFromSupabaseForced<Record<string, unknown>>(
+        "sewing_session_change_requests"
+      );
+      if (remote) {
+        dataToWrite = protectSewingSessionChangeRequestsWrite(
+          remote as Parameters<typeof protectSewingSessionChangeRequestsWrite>[0],
+          dataToWrite as Parameters<typeof protectSewingSessionChangeRequestsWrite>[1]
+        ) as T;
+      }
+    } catch (error) {
+      console.error(
+        "[sewing_session_change_requests] Refusing Supabase write — protect merge failed:",
+        error instanceof Error ? error.message : error
+      );
+      return false;
+    }
+  }
+
   const updated_at = new Date().toISOString();
   const expectedRowUpdatedAt = rowUpdatedAtCache.get(documentKey) ?? null;
 

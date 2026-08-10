@@ -11,6 +11,8 @@ export type ProtectableSewingSessions = {
   sessions?: Array<{ id?: string; status?: string }> | null;
   /** Explicit testing reset may clear the floor. Stripped before persist. */
   allow_testing_reset?: boolean;
+  /** Admin-approved deletes: do not re-merge these ids from remote. */
+  allow_session_delete_ids?: string[] | null;
   [key: string]: unknown;
 };
 
@@ -18,6 +20,8 @@ export type ProtectableSewingScanFailures = {
   updated_at?: string | null;
   failures?: unknown[] | null;
   allow_testing_reset?: boolean;
+  /** Admin-approved deletes: prefer incoming list when these ids were removed. */
+  allow_failure_delete_ids?: string[] | null;
   [key: string]: unknown;
 };
 
@@ -47,7 +51,17 @@ export function protectSewingSessionsWrite(
   incoming: ProtectableSewingSessions
 ): ProtectableSewingSessions {
   const allowReset = incoming.allow_testing_reset === true;
-  const { allow_testing_reset: _flag, ...cleanIncoming } = incoming;
+  const deleteIds = new Set(
+    (Array.isArray(incoming.allow_session_delete_ids)
+      ? incoming.allow_session_delete_ids
+      : []
+    ).filter((id): id is string => typeof id === "string" && Boolean(id.trim()))
+  );
+  const {
+    allow_testing_reset: _flag,
+    allow_session_delete_ids: _deleteIds,
+    ...cleanIncoming
+  } = incoming;
 
   if (isSewingSessionsEmpty(cleanIncoming) && !isSewingSessionsEmpty(remote) && !allowReset) {
     throw new Error(
@@ -75,9 +89,8 @@ export function protectSewingSessionsWrite(
   );
   const mergedSessions = [...incomingSessions];
   for (const session of remoteSessions) {
-    if (session.id && !incomingIds.has(session.id)) {
-      mergedSessions.push(session);
-    }
+    if (!session.id || incomingIds.has(session.id) || deleteIds.has(session.id)) continue;
+    mergedSessions.push(session);
   }
 
   return {
@@ -98,7 +111,17 @@ export function protectSewingScanFailuresWrite(
   incoming: ProtectableSewingScanFailures
 ): ProtectableSewingScanFailures {
   const allowReset = incoming.allow_testing_reset === true;
-  const { allow_testing_reset: _flag, ...cleanIncoming } = incoming;
+  const deleteIds = new Set(
+    (Array.isArray(incoming.allow_failure_delete_ids)
+      ? incoming.allow_failure_delete_ids
+      : []
+    ).filter((id): id is string => typeof id === "string" && Boolean(id.trim()))
+  );
+  const {
+    allow_testing_reset: _flag,
+    allow_failure_delete_ids: _deleteIds,
+    ...cleanIncoming
+  } = incoming;
   const remoteFailures = Array.isArray(remote.failures) ? remote.failures : [];
   const incomingFailures = Array.isArray(cleanIncoming.failures) ? cleanIncoming.failures : [];
 
@@ -112,6 +135,14 @@ export function protectSewingScanFailuresWrite(
     return {
       ...cleanIncoming,
       failures: Array.isArray(cleanIncoming.failures) ? cleanIncoming.failures : [],
+    };
+  }
+
+  if (deleteIds.size > 0) {
+    return {
+      ...remote,
+      ...cleanIncoming,
+      failures: incomingFailures,
     };
   }
 

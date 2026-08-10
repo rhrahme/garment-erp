@@ -30,16 +30,23 @@ export async function readSewingSessionsFresh(): Promise<SewingSessionsFile> {
 
 export async function writeSewingSessions(
   store: SewingSessionsFile,
-  options: { allowTestingReset?: boolean } = {}
+  options: { allowTestingReset?: boolean; allowSessionDeleteIds?: string[] } = {}
 ): Promise<SewingSessionsFile> {
+  const deleteIds = (options.allowSessionDeleteIds ?? []).filter((id) => Boolean(id.trim()));
   const next = {
     ...store,
     updated_at: new Date().toISOString(),
     ...(options.allowTestingReset ? { allow_testing_reset: true } : {}),
+    ...(deleteIds.length > 0 ? { allow_session_delete_ids: deleteIds } : {}),
   };
   await saveDocument(STORE_PATH, next);
-  const { allow_testing_reset: _flag, ...clean } = next as SewingSessionsFile & {
+  const {
+    allow_testing_reset: _flag,
+    allow_session_delete_ids: _deleteIds,
+    ...clean
+  } = next as SewingSessionsFile & {
     allow_testing_reset?: boolean;
+    allow_session_delete_ids?: string[];
   };
   return clean;
 }

@@ -38,16 +38,23 @@ export async function readSewingScanFailuresFresh(): Promise<SewingScanFailuresF
 
 export async function writeSewingScanFailures(
   store: SewingScanFailuresFile,
-  options: { allowTestingReset?: boolean } = {}
+  options: { allowTestingReset?: boolean; allowFailureDeleteIds?: string[] } = {}
 ): Promise<SewingScanFailuresFile> {
+  const deleteIds = (options.allowFailureDeleteIds ?? []).filter((id) => Boolean(id.trim()));
   const next = {
     ...store,
     updated_at: new Date().toISOString(),
     ...(options.allowTestingReset ? { allow_testing_reset: true } : {}),
+    ...(deleteIds.length > 0 ? { allow_failure_delete_ids: deleteIds } : {}),
   };
   await saveDocument(STORE_PATH, next);
-  const { allow_testing_reset: _flag, ...clean } = next as SewingScanFailuresFile & {
+  const {
+    allow_testing_reset: _flag,
+    allow_failure_delete_ids: _deleteIds,
+    ...clean
+  } = next as SewingScanFailuresFile & {
     allow_testing_reset?: boolean;
+    allow_failure_delete_ids?: string[];
   };
   return clean;
 }
