@@ -1,6 +1,6 @@
 /**
  * Factory lunch: Asia/Riyadh. Scans pause for lunch; auto-resume at 16:00
- * so the floor can scan again (kiosk gate only — not per article).
+ * so the floor can scan again (kiosk gate only - not per article).
  */
 
 export const STITCH_LUNCH_TIMEZONE = "Asia/Riyadh";
@@ -90,7 +90,7 @@ export function isStitchLunchPauseWindow(
 
 /**
  * True when the kiosk is still paused for today's lunch and local time
- * is at/after 16:00 Riyadh — time to open the scan gate again.
+ * is at/after 16:00 Riyadh - time to open the scan gate again.
  */
 export function shouldAutoResumeStitchKioskLunch(input: {
   paused: boolean;

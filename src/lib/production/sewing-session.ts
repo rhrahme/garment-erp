@@ -16,7 +16,9 @@ import {
 import {
   ensureStitchKioskLunchAutoResume,
   readStitchKioskSettingsFresh,
+  STITCH_KIOSK_LUNCH_AUTO_RESUME_ACTOR,
 } from "@/lib/data/stitch-kiosk-settings";
+import { notifyIntegration } from "@/lib/integrations";
 import { employeeCanSewOnStitchKiosk } from "@/lib/hr/payroll-utils";
 import { notifyIntegration } from "@/lib/integrations";
 import { notifyAdminsOfSewingSessionStarted } from "@/lib/integrations/sewing-session-started-alert";
@@ -562,7 +564,20 @@ export async function processSewingKioskScan(
   };
 
   // Lunch auto-resume (16:00 Asia/Riyadh): open the scan gate if due.
-  await ensureStitchKioskLunchAutoResume({ nowMs: at, notify: true });
+  const lunchResume = await ensureStitchKioskLunchAutoResume({ nowMs: at });
+  if (lunchResume.resumed) {
+    void notifyIntegration("production.stitch_kiosk_pause_updated", {
+      paused: lunchResume.settings.paused,
+      paused_at: lunchResume.settings.paused_at,
+      paused_by: lunchResume.settings.paused_by,
+      resumed_at: lunchResume.settings.resumed_at,
+      resumed_by: lunchResume.settings.resumed_by,
+      auto_resume_at: lunchResume.settings.auto_resume_at ?? null,
+      updated_at: lunchResume.settings.updated_at,
+      updated_by: STITCH_KIOSK_LUNCH_AUTO_RESUME_ACTOR,
+      reason: "lunch_auto_resume",
+    });
+  }
 
   // Admin pause: block all badge/A4 work without spamming sewing_scan_failures.
   const kioskSettings = await readStitchKioskSettingsFresh();

@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { verifyCronSecret } from "@/lib/cron/verify-cron-secret";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { ensureStitchKioskLunchAutoResume } from "@/lib/data/stitch-kiosk-settings";
+import {
+  ensureStitchKioskLunchAutoResume,
+  STITCH_KIOSK_LUNCH_AUTO_RESUME_ACTOR,
+} from "@/lib/data/stitch-kiosk-settings";
+import { notifyIntegration } from "@/lib/integrations";
 
 /**
  * Daily 16:00 Asia/Riyadh (= 13:00 UTC): open the stitch kiosk scan gate
- * after lunch. Does not restart articles — only allows scanning again.
+ * after lunch. Does not restart articles - only allows scanning again.
  */
 async function handleCron(request: Request) {
   if (!verifyCronSecret(request)) {
@@ -14,7 +18,20 @@ async function handleCron(request: Request) {
 
   try {
     await ensureDocumentsLoaded(["stitch_kiosk_settings"]);
-    const result = await ensureStitchKioskLunchAutoResume({ notify: true });
+    const result = await ensureStitchKioskLunchAutoResume();
+    if (result.resumed) {
+      await notifyIntegration("production.stitch_kiosk_pause_updated", {
+        paused: result.settings.paused,
+        paused_at: result.settings.paused_at,
+        paused_by: result.settings.paused_by,
+        resumed_at: result.settings.resumed_at,
+        resumed_by: result.settings.resumed_by,
+        auto_resume_at: result.settings.auto_resume_at ?? null,
+        updated_at: result.settings.updated_at,
+        updated_by: STITCH_KIOSK_LUNCH_AUTO_RESUME_ACTOR,
+        reason: "lunch_auto_resume",
+      });
+    }
     console.info(
       "[stitch-kiosk-lunch-resume]",
       JSON.stringify({

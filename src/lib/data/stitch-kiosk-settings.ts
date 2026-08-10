@@ -14,10 +14,9 @@ import {
   stitchLunchAutoResumeAtIsoForPause,
   stitchLunchResumeAtMs,
 } from "@/lib/production/stitch-kiosk-lunch";
-import { notifyIntegration } from "@/lib/integrations";
 
 const STORE_PATH = path.join(process.cwd(), "src/data/stitch-kiosk-settings.json");
-const AUTO_RESUME_ACTOR = "auto-resume-16:00-riyadh";
+export const STITCH_KIOSK_LUNCH_AUTO_RESUME_ACTOR = "auto-resume-16:00-riyadh";
 
 function normalizeIntervals(
   raw: StitchKioskSettingsFile | null | undefined
@@ -151,9 +150,10 @@ export async function setStitchKioskPaused(
 /**
  * If lunch auto-resume is due, open the kiosk scan gate (not per article).
  * Safe to call from cron and from every scan / Live poll.
+ * Callers that need Zapier should notify after resumed=true.
  */
 export async function ensureStitchKioskLunchAutoResume(
-  options: { nowMs?: number; notify?: boolean } = {}
+  options: { nowMs?: number } = {}
 ): Promise<{ resumed: boolean; settings: StitchKioskSettingsFile }> {
   const nowMs = options.nowMs ?? Date.now();
   const current = await readStitchKioskSettingsFresh();
@@ -172,24 +172,10 @@ export async function ensureStitchKioskLunchAutoResume(
     ? current.auto_resume_at
     : new Date(stitchLunchResumeAtMs(nowMs)).toISOString();
   const settings = await setStitchKioskPaused(false, {
-    actedBy: AUTO_RESUME_ACTOR,
+    actedBy: STITCH_KIOSK_LUNCH_AUTO_RESUME_ACTOR,
     endedAt,
     nowMs,
   });
-
-  if (options.notify !== false) {
-    await notifyIntegration("production.stitch_kiosk_pause_updated", {
-      paused: settings.paused,
-      paused_at: settings.paused_at,
-      paused_by: settings.paused_by,
-      resumed_at: settings.resumed_at,
-      resumed_by: settings.resumed_by,
-      auto_resume_at: settings.auto_resume_at ?? null,
-      updated_at: settings.updated_at,
-      updated_by: AUTO_RESUME_ACTOR,
-      reason: "lunch_auto_resume",
-    });
-  }
 
   return { resumed: true, settings };
 }

@@ -5,7 +5,9 @@ import { readSewingSessionsAsync } from "@/lib/data/sewing-sessions";
 import {
   ensureStitchKioskLunchAutoResume,
   readStitchKioskSettings,
+  STITCH_KIOSK_LUNCH_AUTO_RESUME_ACTOR,
 } from "@/lib/data/stitch-kiosk-settings";
+import { notifyIntegration } from "@/lib/integrations";
 import {
   parseSewingDashboardPeriod,
   sewingSessionsDashboard,
@@ -23,7 +25,20 @@ export async function GET(request: NextRequest) {
     ]);
     const store = await readSewingSessionsAsync();
     const failures = await readSewingScanFailuresAsync();
-    await ensureStitchKioskLunchAutoResume({ notify: true });
+    const lunchResume = await ensureStitchKioskLunchAutoResume();
+    if (lunchResume.resumed) {
+      void notifyIntegration("production.stitch_kiosk_pause_updated", {
+        paused: lunchResume.settings.paused,
+        paused_at: lunchResume.settings.paused_at,
+        paused_by: lunchResume.settings.paused_by,
+        resumed_at: lunchResume.settings.resumed_at,
+        resumed_by: lunchResume.settings.resumed_by,
+        auto_resume_at: lunchResume.settings.auto_resume_at ?? null,
+        updated_at: lunchResume.settings.updated_at,
+        updated_by: STITCH_KIOSK_LUNCH_AUTO_RESUME_ACTOR,
+        reason: "lunch_auto_resume",
+      });
+    }
     const kioskSettings = await readStitchKioskSettings();
     const { searchParams } = request.nextUrl;
     const period = parseSewingDashboardPeriod(searchParams.get("period"));
