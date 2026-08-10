@@ -171,6 +171,34 @@ function mergePieceMeasurements(
 }
 
 /**
+ * Detect whether a computed copy result drops filled measurement values the
+ * target had before. Copy only adds or replaces values, so any per-point loss
+ * of a filled cell is a bug; callers must skip the write when this returns
+ * a loss. Checked per point id (not just counts) so a swap cannot hide a wipe.
+ */
+export function copyWouldLoseFilledValues(
+  before: ClientPattern,
+  after: ClientPattern
+): { versionId: string; lost: number } | null {
+  const afterById = new Map(after.versions.map((version) => [version.id, version]));
+  for (const beforeVersion of before.versions) {
+    const afterVersion = afterById.get(beforeVersion.id);
+    if (!afterVersion) return { versionId: beforeVersion.id, lost: 999 };
+    const afterRows = new Map(
+      (afterVersion.measurements ?? []).map((row) => [row.point_id, row])
+    );
+    let lost = 0;
+    for (const row of beforeVersion.measurements ?? []) {
+      if (!rowIsFilled(row)) continue;
+      const afterRow = afterRows.get(row.point_id);
+      if (!afterRow || !rowIsFilled(afterRow)) lost += 1;
+    }
+    if (lost > 0) return { versionId: beforeVersion.id, lost };
+  }
+  return null;
+}
+
+/**
  * Apply source active-trial measurements onto target active trial.
  * Copies unit with the numbers so CM stays CM.
  * pieceScope "all" replaces the whole sheet; a piece name merges only that piece.

@@ -252,6 +252,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   per point; a source row with no value must never null a filled target
   value (it only adds missing points). A wholesale replace once wiped
   Khaled OT 1/2 Waist 60.5 and it had to be restored from a printed sheet.
+  Enforced twice: merge logic + `copyWouldLoseFilledValues` write guard in
+  the copy mutation (skips the target and reports "Blocked ... it is a
+  bug"). Regression tests: `npm run test:copy-measurements` - run them
+  when touching copy-measurements-to-siblings.ts.
 
 ## Printing
 

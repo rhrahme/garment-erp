@@ -41,6 +41,7 @@ import {
 } from "@/lib/pattern-library/measurement-template-mode";
 import {
   applyCopyMeasurementsToPattern,
+  copyWouldLoseFilledValues,
   listCopyMeasurementSiblings,
   normalizeCopyMeasurementsPieceScope,
   type CopyMeasurementsMode,
@@ -1888,6 +1889,17 @@ export async function copyClientPatternMeasurementsToSiblings(
             : pieceScope !== "all"
               ? `Source has no filled ${pieceScope} sizes, or target has no trial version.`
               : "Source has no filled sizes, or target has no trial version.",
+      });
+      continue;
+    }
+    // Hard invariant: copy adds/replaces values; it must never end with fewer
+    // filled cells on the target (a wipe once lost Khaled OT 1/2 Waist).
+    const loss = copyWouldLoseFilledValues(existing, next);
+    if (loss) {
+      skipped.push({
+        id: targetId,
+        pattern_ref: existing.pattern_ref,
+        reason: `Blocked: copy would blank ${loss.lost} filled value(s) on ${loss.versionId}. Report this - it is a bug.`,
       });
       continue;
     }
