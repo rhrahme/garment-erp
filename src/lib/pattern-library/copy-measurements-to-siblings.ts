@@ -142,7 +142,15 @@ function mergePieceMeasurements(
   const byId = new Map(next.map((row, index) => [row.point_id, index]));
 
   for (const sourceRow of sourcePieceRows) {
-    if (!rowIsFilled(sourceRow) && mode === "fill_empty_only") continue;
+    // An empty source row must never blank a filled target value (lost
+    // Khaled OT 1/2 Waist this way). Empty rows only add missing points.
+    if (!rowIsFilled(sourceRow)) {
+      if (!byId.has(sourceRow.point_id)) {
+        next.push(cloneMeasurement(sourceRow));
+        byId.set(sourceRow.point_id, next.length - 1);
+      }
+      continue;
+    }
     const index = byId.get(sourceRow.point_id);
     if (index == null) {
       next.push(cloneMeasurement(sourceRow));
@@ -192,7 +200,13 @@ export function applyCopyMeasurementsToPattern(
       const targetFilled = countFilledMeasurements(targetVersion.measurements ?? []);
       if (targetFilled > 0) return null;
     }
-    nextMeasurements = cloneMeasurements(sourceMeasurements);
+    // Merge instead of wholesale replace: a point the source never filled
+    // must keep the target's existing value instead of going blank.
+    nextMeasurements = mergePieceMeasurements(
+      targetVersion.measurements ?? [],
+      sourceMeasurements,
+      mode
+    );
   } else {
     const sourcePieceRows = filterTrialSheetPointsForPiece(
       sourceMeasurements,

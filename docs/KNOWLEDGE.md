@@ -248,6 +248,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   sheet **Copy sizes** tab, Pattern order board row **Copy sizes**, and job
   **Copy sizes**. Single-piece garments skip the piece picker. Do not
   require Pattern to open the sheet only to find copy.
+- **Copy never blanks filled values** (Aug 10 2026): overwrite copy merges
+  per point; a source row with no value must never null a filled target
+  value (it only adds missing points). A wholesale replace once wiped
+  Khaled OT 1/2 Waist 60.5 and it had to be restored from a printed sheet.
 
 ## Printing
 
