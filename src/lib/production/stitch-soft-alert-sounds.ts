@@ -1,5 +1,5 @@
 /**
- * Soft overtime alert tones for the stitch kiosk (Web Audio, no asset files).
+ * Overtime alert tones for the stitch kiosk (Web Audio, no asset files).
  * Preview on Live; later used when Cutting (etc.) sessions run long.
  */
 
@@ -10,9 +10,9 @@ export const STITCH_SOFT_ALERT_SOUNDS: {
   label: string;
   hint: string;
 }[] = [
-  { id: "chime", label: "Soft chime", hint: "Two gentle tones" },
-  { id: "wood", label: "Wood tick", hint: "Quiet short click" },
-  { id: "bell", label: "Soft bell", hint: "One calm note" },
+  { id: "chime", label: "Strong chime", hint: "Two clear tones" },
+  { id: "wood", label: "Strong tick", hint: "Short firm click" },
+  { id: "bell", label: "Strong bell", hint: "One clear note" },
 ];
 
 function getAudioContext(): AudioContext | null {
@@ -40,13 +40,13 @@ function tone(
   osc.frequency.value = frequency;
   const t0 = startAt;
   gain.gain.setValueAtTime(0.0001, t0);
-  gain.gain.exponentialRampToValueAtTime(gainValue, t0 + 0.02);
+  gain.gain.exponentialRampToValueAtTime(gainValue, t0 + 0.015);
   gain.gain.exponentialRampToValueAtTime(0.0001, t0 + durationSec);
   osc.start(t0);
   osc.stop(t0 + durationSec + 0.02);
 }
 
-/** Play a candidate soft overtime alert (user must click - browser audio policy). */
+/** Play a candidate overtime alert (user must click - browser audio policy). */
 export async function playStitchSoftAlertSound(id: StitchSoftAlertSoundId): Promise<void> {
   try {
     const ctx = getAudioContext();
@@ -56,18 +56,20 @@ export async function playStitchSoftAlertSound(id: StitchSoftAlertSoundId): Prom
     }
     const t = ctx.currentTime;
     if (id === "chime") {
-      tone(ctx, 660, t, 0.22, 0.035);
-      tone(ctx, 880, t + 0.18, 0.28, 0.03);
+      // Louder two-tone; still cleaner than the error double-beep.
+      tone(ctx, 700, t, 0.28, 0.14);
+      tone(ctx, 940, t + 0.2, 0.34, 0.12);
       return;
     }
     if (id === "wood") {
-      tone(ctx, 220, t, 0.06, 0.04, "triangle");
-      tone(ctx, 140, t + 0.02, 0.05, 0.025, "triangle");
+      tone(ctx, 260, t, 0.09, 0.16, "triangle");
+      tone(ctx, 180, t + 0.03, 0.08, 0.1, "square");
       return;
     }
-    // bell
-    tone(ctx, 740, t, 0.45, 0.032);
-    tone(ctx, 980, t + 0.02, 0.35, 0.012);
+    // bell - stronger fundamental + harmonic
+    tone(ctx, 780, t, 0.55, 0.13);
+    tone(ctx, 1040, t + 0.03, 0.42, 0.06);
+    tone(ctx, 780, t + 0.12, 0.2, 0.05);
   } catch {
     /* ignore */
   }

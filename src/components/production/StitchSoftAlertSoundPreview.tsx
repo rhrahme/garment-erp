@@ -22,9 +22,9 @@ export function StitchSoftAlertSoundPreview() {
 
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-      <p className="text-sm font-semibold text-slate-900">Hear overtime soft sounds</p>
+      <p className="text-sm font-semibold text-slate-900">Hear overtime alert sounds</p>
       <p className="mt-0.5 text-xs text-slate-500">
-        Click each one (browser needs a tap). We will pick one for Cutting overtime next.
+        Louder previews — click each (browser needs a tap). Pick one for Cutting overtime next.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         {STITCH_SOFT_ALERT_SOUNDS.map((sound) => (
