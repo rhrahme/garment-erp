@@ -496,6 +496,9 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
                   onClick={() => setPasteSizesOpen(true)}
                 >
                   Paste sizes
+                  <span className="ml-1.5 rounded bg-amber-100 px-1 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
+                    New
+                  </span>
                 </Button>
                 <span className="self-center text-xs text-slate-500">{linkedPattern.pattern_ref}</span>
               </>

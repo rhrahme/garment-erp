@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Copy } from "lucide-react";
+import { ClipboardPaste, Copy, MoveDown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { SessionContext } from "@/lib/auth/session";
 
-const DISMISS_KEY = "hagan-copy-sizes-guide-v2-dismissed";
+const DISMISS_KEY = "hagan-copy-sizes-guide-v3-dismissed";
 
 const STEPS: Array<{ title: string; body: string }> = [
   {
@@ -90,6 +90,42 @@ export function CopySizesGuidePrompt({ session }: { session: SessionContext }) {
               Push sizes from a filled sheet with Copy sizes, or pull them onto an
               empty article with the new Paste sizes button.
             </p>
+          </div>
+        </div>
+
+        {/* Where-to-press visual: mock of an order board row with the Paste
+            sizes button highlighted. */}
+        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Where to press on the order board
+          </p>
+          <div className="rounded-lg border border-slate-200 bg-white p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-900">L48 &middot; Overshirt</p>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  771049 &middot; Loro Piana &middot; 1.8m
+                </p>
+                <p className="mt-1 text-[11px] uppercase tracking-wide text-slate-400">
+                  Sizes missing on this article
+                </p>
+              </div>
+              <div className="flex flex-none flex-col items-end gap-1.5">
+                <span className="text-xs font-medium text-indigo-700">Open job</span>
+                <span className="inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                  <Copy className="mr-1 h-3 w-3" aria-hidden />
+                  Copy sizes
+                </span>
+                <span className="relative inline-flex animate-pulse items-center rounded-lg bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white ring-2 ring-indigo-300 ring-offset-2">
+                  <ClipboardPaste className="mr-1 h-3 w-3" aria-hidden />
+                  Paste sizes
+                </span>
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700">
+                  <MoveDown className="h-3 w-3 -rotate-180" aria-hidden />
+                  press HERE to pull the sizes in
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
