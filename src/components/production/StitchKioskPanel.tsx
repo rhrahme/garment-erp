@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useStitchScanCapture } from "@/components/production/stitch-scan-capture";
 import {
   floorActivityInProgressLabel,
@@ -11,16 +11,9 @@ import type {
   SewingKioskUiPhase,
   SewingSession,
 } from "@/lib/types/sewing-sessions";
+import { SewingElapsedBreakdownView } from "@/components/production/SewingElapsedBreakdown";
 import { sewingLiveClockNowMs } from "@/lib/production/sewing-session-state";
 import { cn } from "@/lib/utils";
-
-function formatElapsed(startedAt: string | null, now: number): string {
-  if (!startedAt) return "0:00";
-  const sec = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000));
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
 
 function formatLogTime(at: number): string {
   const d = new Date(at);
@@ -101,6 +94,7 @@ export function StitchKioskPanel() {
     captureArmed,
     kioskPaused,
     kioskPausedAt,
+    kioskPauseIntervals,
   } = useStitchScanCapture();
 
   const [now, setNow] = useState(() => Date.now());
@@ -122,10 +116,6 @@ export function StitchKioskPanel() {
     kioskPaused,
     kioskPausedAt,
   });
-  const elapsed = useMemo(
-    () => formatElapsed(highlight?.started_at ?? null, liveClockNow),
-    [highlight?.started_at, liveClockNow]
-  );
 
   return (
     <div className="space-y-4">
@@ -181,9 +171,15 @@ export function StitchKioskPanel() {
                 {highlight.piece_mark ? ` - ${highlight.piece_mark}` : ""}
               </p>
             </div>
-            <div className="rounded-xl bg-white/70 px-4 py-3">
+            <div className="rounded-xl bg-white/70 px-4 py-3 text-left">
               <p className="text-xs uppercase text-slate-500">Elapsed</p>
-              <p className="text-3xl font-bold tabular-nums text-slate-900">{elapsed}</p>
+              <SewingElapsedBreakdownView
+                startedAt={highlight.started_at}
+                endAt={liveClockNow}
+                pauses={kioskPauseIntervals}
+                frozen={kioskPaused}
+                className="mt-1"
+              />
             </div>
           </div>
         )}
@@ -243,17 +239,24 @@ export function StitchKioskPanel() {
           <p className="text-sm font-semibold text-slate-900">Open on floor now</p>
           <ul className="mt-2 divide-y divide-slate-100 text-sm">
             {openSessions.map((session) => (
-              <li key={session.id} className="flex flex-wrap justify-between gap-2 py-2">
-                <span className="font-medium text-slate-800">
-                  {sewingSessionEmployeeDisplayName(session)}
-                </span>
-                <span className="font-mono text-slate-600">
-                  {session.production_code}
-                  {session.status === "closing" ? " (closing)" : ""}
-                </span>
-                <span className="tabular-nums text-slate-500">
-                  {formatElapsed(session.started_at, now)}
-                </span>
+              <li key={session.id} className="flex flex-wrap justify-between gap-3 py-2">
+                <div className="min-w-0">
+                  <span className="font-medium text-slate-800">
+                    {sewingSessionEmployeeDisplayName(session)}
+                  </span>
+                  <span className="ml-2 font-mono text-slate-600">
+                    {session.production_code}
+                    {session.status === "closing" ? " (closing)" : ""}
+                  </span>
+                </div>
+                <SewingElapsedBreakdownView
+                  startedAt={session.started_at}
+                  endAt={liveClockNow}
+                  pauses={kioskPauseIntervals}
+                  frozen={kioskPaused}
+                  compact
+                  className="min-w-[9rem] text-right"
+                />
               </li>
             ))}
           </ul>

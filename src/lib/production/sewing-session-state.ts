@@ -336,23 +336,144 @@ export function sewingSessionElapsedSecExcludingPauses(
   at = Date.now(),
   pauses: SewingPauseIntervalLike[] = []
 ): number {
-  const start = new Date(startedAt).getTime();
-  if (!Number.isFinite(start)) return 0;
-  const end = Number.isFinite(at) ? at : Date.now();
-  if (end <= start) return 0;
+  return sewingSessionElapsedBreakdown(startedAt, at, pauses).work_sec;
+}
 
-  let pausedMs = 0;
-  for (const pause of pauses) {
-    const pStart = new Date(pause.started_at).getTime();
-    if (!Number.isFinite(pStart)) continue;
-    const pEndRaw = pause.ended_at ? new Date(pause.ended_at).getTime() : end;
-    const pEnd = Number.isFinite(pEndRaw) ? pEndRaw : end;
-    const overlapStart = Math.max(start, pStart);
-    const overlapEnd = Math.min(end, pEnd);
-    if (overlapEnd > overlapStart) pausedMs += overlapEnd - overlapStart;
+export type SewingElapsedSegmentKind = "work" | "pause";
+
+export type SewingElapsedSegment = {
+  kind: SewingElapsedSegmentKind;
+  /** Short UI label, e.g. Before lunch / Lunch / After lunch. */
+  label: string;
+  started_at: string;
+  ended_at: string | null;
+  sec: number;
+};
+
+export type SewingElapsedBreakdown = {
+  work_sec: number;
+  pause_sec: number;
+  wall_sec: number;
+  segments: SewingElapsedSegment[];
+};
+
+function isLunchishPause(startedAtMs: number, endedAtMs: number): boolean {
+  // Asia/Riyadh lunch window roughly 14:00-16:00.
+  const mid = startedAtMs + Math.max(0, endedAtMs - startedAtMs) / 2;
+  const hour = Number(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Riyadh",
+      hour: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(new Date(mid)).find((p) => p.type === "hour")?.value ?? "NaN"
+  );
+  return Number.isFinite(hour) && hour >= 13 && hour < 17;
+}
+
+/**
+ * Work vs pause segments for a session timeline (for Live/History visibility).
+ * Pauses that do not overlap the session are ignored.
+ */
+export function sewingSessionElapsedBreakdown(
+  startedAt: string,
+  at = Date.now(),
+  pauses: SewingPauseIntervalLike[] = []
+): SewingElapsedBreakdown {
+  const start = new Date(startedAt).getTime();
+  const empty: SewingElapsedBreakdown = {
+    work_sec: 0,
+    pause_sec: 0,
+    wall_sec: 0,
+    segments: [],
+  };
+  if (!Number.isFinite(start)) return empty;
+  const end = Number.isFinite(at) ? at : Date.now();
+  if (end <= start) return empty;
+
+  const overlaps = pauses
+    .map((pause) => {
+      const pStart = new Date(pause.started_at).getTime();
+      if (!Number.isFinite(pStart)) return null;
+      const pEndRaw = pause.ended_at ? new Date(pause.ended_at).getTime() : end;
+      const pEnd = Number.isFinite(pEndRaw) ? pEndRaw : end;
+      const overlapStart = Math.max(start, pStart);
+      const overlapEnd = Math.min(end, pEnd);
+      if (overlapEnd <= overlapStart) return null;
+      return { start: overlapStart, end: overlapEnd, open: !pause.ended_at };
+    })
+    .filter((row): row is { start: number; end: number; open: boolean } => Boolean(row))
+    .sort((a, b) => a.start - b.start);
+
+  // Merge overlapping pause windows.
+  const merged: { start: number; end: number; open: boolean }[] = [];
+  for (const row of overlaps) {
+    const last = merged[merged.length - 1];
+    if (!last || row.start > last.end) {
+      merged.push({ ...row });
+      continue;
+    }
+    last.end = Math.max(last.end, row.end);
+    last.open = last.open || row.open;
   }
 
-  return Math.max(0, Math.floor((end - start - pausedMs) / 1000));
+  const segments: SewingElapsedSegment[] = [];
+  let cursor = start;
+  let workIndex = 0;
+  const workCount = merged.length + 1;
+
+  const pushWork = (from: number, to: number, openEnded: boolean) => {
+    if (to <= from) return;
+    workIndex += 1;
+    let label = "Work";
+    if (merged.length > 0) {
+      if (workIndex === 1) {
+        label = isLunchishPause(merged[0]!.start, merged[0]!.end)
+          ? "Before lunch"
+          : "Before pause";
+      } else if (workIndex >= workCount) {
+        label = isLunchishPause(merged[merged.length - 1]!.start, merged[merged.length - 1]!.end)
+          ? "After lunch"
+          : "After pause";
+      } else {
+        label = `Work ${workIndex}`;
+      }
+    }
+    segments.push({
+      kind: "work",
+      label,
+      started_at: new Date(from).toISOString(),
+      ended_at: openEnded ? null : new Date(to).toISOString(),
+      sec: Math.floor((to - from) / 1000),
+    });
+  };
+
+  for (const pause of merged) {
+    pushWork(cursor, pause.start, false);
+    const lunch = isLunchishPause(pause.start, pause.end);
+    segments.push({
+      kind: "pause",
+      label: lunch ? "Lunch" : "Paused",
+      started_at: new Date(pause.start).toISOString(),
+      ended_at: pause.open ? null : new Date(pause.end).toISOString(),
+      sec: Math.floor((pause.end - pause.start) / 1000),
+    });
+    cursor = pause.end;
+  }
+  pushWork(cursor, end, true);
+
+  const work_sec = segments
+    .filter((s) => s.kind === "work")
+    .reduce((sum, s) => sum + s.sec, 0);
+  const pause_sec = segments
+    .filter((s) => s.kind === "pause")
+    .reduce((sum, s) => sum + s.sec, 0);
+
+  return {
+    work_sec,
+    pause_sec,
+    wall_sec: Math.floor((end - start) / 1000),
+    segments,
+  };
 }
 
 /** Effective "now" for Live clocks: freeze at current pause start when kiosk is paused. */

@@ -85,6 +85,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `/api/cron/stitch-kiosk-lunch-resume` also exists for manual/cron trigger).
   Emergency pauses outside the lunch window stay paused until an admin
   resumes. Do not strip auto-resume.
+- **Elapsed breakdown** (Aug 10 2026): Live / History / Scan / Performance
+  show work total plus segment details when a kiosk pause overlapped the
+  session (Before lunch / Lunch off / After lunch). Closed `duration_sec`
+  excludes pause windows. Do not collapse back to a single opaque total when
+  pauses exist.
 - **Stitch/Pattern change requests** (Aug 10 2026): stitch@ and pattern@ may
   request admin approval to **stop**, **edit**, **delete** a Live/History
   session, **delete** a failed-scan row, or **pause the whole kiosk**. Nothing

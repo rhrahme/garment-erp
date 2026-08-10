@@ -53,6 +53,7 @@ import {
   pieceArmsOnKiosk,
   resolveUniqueEmployeeArm,
   sessionPhase,
+  sewingSessionElapsedSecExcludingPauses,
   sewingSessionsDashboard as sewingSessionsDashboardBase,
 } from "@/lib/production/sewing-session-state";
 import type { SewingSessionsDashboardOptions } from "@/lib/production/sewing-session-state";
@@ -440,9 +441,11 @@ async function closeSessionWithBadgeOrPiece(input: {
   } = input;
   let store = input.store;
   const endedAt = nowIso(at);
-  const durationSec = Math.max(
-    0,
-    Math.round((at - new Date(closingForEmployee.started_at).getTime()) / 1000)
+  const kioskSettingsForDuration = await readStitchKioskSettingsFresh();
+  const durationSec = sewingSessionElapsedSecExcludingPauses(
+    closingForEmployee.started_at,
+    at,
+    kioskSettingsForDuration.pause_intervals ?? []
   );
   let stageAdvanced = false;
   let stageMessage = "";

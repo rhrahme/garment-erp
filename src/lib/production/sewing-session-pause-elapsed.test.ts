@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   sewingLiveClockNowMs,
+  sewingSessionElapsedBreakdown,
   sewingSessionElapsedSecExcludingPauses,
 } from "@/lib/production/sewing-session-state";
 
@@ -39,5 +40,30 @@ describe("sewingLiveClockNowMs", () => {
       kioskPausedAt: "2026-08-10T10:30:00.000Z",
     });
     assert.equal(frozen, Date.parse("2026-08-10T10:30:00.000Z"));
+  });
+});
+
+describe("sewingSessionElapsedBreakdown", () => {
+  it("splits before lunch / lunch / after lunch", () => {
+    const breakdown = sewingSessionElapsedBreakdown(
+      "2026-08-10T10:00:00.000Z",
+      Date.parse("2026-08-10T13:30:00.000Z"),
+      [
+        {
+          started_at: "2026-08-10T11:00:00.000Z",
+          ended_at: "2026-08-10T13:00:00.000Z",
+        },
+      ]
+    );
+    assert.equal(breakdown.work_sec, 90 * 60);
+    assert.equal(breakdown.pause_sec, 120 * 60);
+    assert.deepEqual(
+      breakdown.segments.map((s) => s.label),
+      ["Before lunch", "Lunch", "After lunch"]
+    );
+    assert.deepEqual(
+      breakdown.segments.map((s) => s.sec),
+      [60 * 60, 120 * 60, 30 * 60]
+    );
   });
 });

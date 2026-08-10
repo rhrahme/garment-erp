@@ -84,6 +84,7 @@ type StitchScanCaptureValue = {
   /** Admin pause — floor scans are blocked until resume. */
   kioskPaused: boolean;
   kioskPausedAt: string | null;
+  kioskPauseIntervals: Array<{ started_at: string; ended_at?: string | null }>;
   flushInputNow: () => void;
   scheduleFlush: () => void;
 };
@@ -239,6 +240,9 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
   const [hearingPreview, setHearingPreview] = useState<string | null>(null);
   const [kioskPaused, setKioskPaused] = useState(false);
   const [kioskPausedAt, setKioskPausedAt] = useState<string | null>(null);
+  const [kioskPauseIntervals, setKioskPauseIntervals] = useState<
+    Array<{ started_at: string; ended_at?: string | null }>
+  >([]);
 
   useEffect(() => {
     const id = readKioskId();
@@ -261,10 +265,14 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
           open_sessions?: SewingSession[];
           kiosk_paused?: boolean;
           kiosk_paused_at?: string | null;
+          kiosk_pause_intervals?: Array<{ started_at: string; ended_at?: string | null }>;
         };
         if (cancelled) return;
         setKioskPaused(Boolean(json.kiosk_paused));
         setKioskPausedAt(json.kiosk_paused_at ?? null);
+        if (Array.isArray(json.kiosk_pause_intervals)) {
+          setKioskPauseIntervals(json.kiosk_pause_intervals);
+        }
         const mine = (json.open_sessions ?? []).filter(
           (row) =>
             row.kiosk_id === kioskId &&
@@ -832,6 +840,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       hearingPreview,
       kioskPaused,
       kioskPausedAt,
+      kioskPauseIntervals,
       flushInputNow,
       scheduleFlush,
     }),
@@ -853,6 +862,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       hearingPreview,
       kioskPaused,
       kioskPausedAt,
+      kioskPauseIntervals,
       flushInputNow,
       scheduleFlush,
     ]

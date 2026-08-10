@@ -10,6 +10,7 @@ import {
   SewingSessionChangeRequestModal,
   type PendingChangeSummary,
 } from "@/components/production/SewingSessionChangeRequestModal";
+import { SewingElapsedBreakdownView } from "@/components/production/SewingElapsedBreakdown";
 import { StitchSoftAlertSoundPreview } from "@/components/production/StitchSoftAlertSoundPreview";
 import {
   StitchScanCaptureProvider,
@@ -569,9 +570,9 @@ export function StitchFloorWorkspace({
                 <h2 className="text-xl font-semibold text-slate-900">Who is on the floor now</h2>
                 <p className="mt-1 text-sm text-slate-500">
                   Open sessions across kiosks. Status follows each employee job (Cutting, Sewing,
-                  Wash / iron, ...). Refresh every 12s. Red elapsed = over 45 min. Elapsed freezes
-                  while the kiosk is paused (lunch). Request admin approval to stop, edit, or
-                  delete a row.
+                  Wash / iron, ...). Refresh every 12s. Red elapsed = over 45 min. Elapsed shows
+                  work total plus before/lunch/after when a pause overlapped. Request admin
+                  approval to stop, edit, or delete a row.
                 </p>
                 {data?.kiosk_paused ? (
                   <p className="mt-2 text-sm font-semibold text-amber-800">
@@ -747,20 +748,13 @@ export function StitchFloorWorkspace({
                           ) : null}
                         </td>
                         <td className="px-3 py-3">
-                          <div
-                            className={cn(
-                              "text-lg font-semibold tabular-nums",
-                              longRunning ? "text-red-700" : "text-slate-900"
-                            )}
-                          >
-                            {formatElapsed(session.started_at, liveClockNow, pauseIntervals)}
-                            {data.kiosk_paused ? (
-                              <div className="mt-1 text-xs font-semibold text-amber-800">Frozen</div>
-                            ) : null}
-                          </div>
-                          {longRunning ? (
-                            <div className="mt-1 text-xs font-semibold text-red-800">Long running</div>
-                          ) : null}
+                          <SewingElapsedBreakdownView
+                            startedAt={session.started_at}
+                            endAt={liveClockNow}
+                            pauses={pauseIntervals}
+                            longRunning={longRunning}
+                            frozen={Boolean(data.kiosk_paused)}
+                          />
                         </td>
                         <td className="px-3 py-3">
                           <span
@@ -949,9 +943,18 @@ export function StitchFloorWorkspace({
                                   </div>
                                 </div>
                                 <div className="px-1 text-right text-sm">
-                                  <p className="tabular-nums font-semibold text-slate-800">
-                                    {formatDuration(piece.duration_sec)}
-                                  </p>
+                                  <SewingElapsedBreakdownView
+                                    startedAt={piece.started_at}
+                                    endAt={
+                                      piece.ended_at
+                                        ? Date.parse(piece.ended_at)
+                                        : liveClockNow
+                                    }
+                                    pauses={pauseIntervals}
+                                    fallbackSec={piece.duration_sec}
+                                    compact
+                                    className="items-end text-right"
+                                  />
                                   <p className="text-slate-500">{formatClock(piece.ended_at)}</p>
                                 </div>
                               </li>
@@ -1162,10 +1165,18 @@ export function StitchFloorWorkspace({
                         <td className="px-3 py-3 whitespace-nowrap">
                           {formatClock(row.ended_at)}
                         </td>
-                        <td className="px-3 py-3 tabular-nums font-semibold">
-                          {row.status === "closed"
-                            ? formatDuration(row.duration_sec)
-                            : formatElapsed(row.started_at, liveClockNow, pauseIntervals)}
+                        <td className="px-3 py-3">
+                          <SewingElapsedBreakdownView
+                            startedAt={row.started_at}
+                            endAt={
+                              row.status === "closed" && row.ended_at
+                                ? Date.parse(row.ended_at)
+                                : liveClockNow
+                            }
+                            pauses={pauseIntervals}
+                            fallbackSec={row.duration_sec}
+                            compact
+                          />
                         </td>
                         <td className="px-3 py-3">
                           <span
