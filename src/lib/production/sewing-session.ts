@@ -16,6 +16,7 @@ import {
 import { isStitchKioskPaused } from "@/lib/data/stitch-kiosk-settings";
 import { employeeCanSewOnStitchKiosk } from "@/lib/hr/payroll-utils";
 import { notifyIntegration } from "@/lib/integrations";
+import { notifyAdminsOfSewingSessionStarted } from "@/lib/integrations/sewing-session-started-alert";
 import { executeStageScan } from "@/lib/production/execute-stage-scan";
 import { recordSewingScanFailure } from "@/lib/production/record-sewing-scan-failure";
 import type { BuildSewingScanFailureInput } from "@/lib/production/sewing-scan-failure-build";
@@ -806,6 +807,11 @@ export async function processSewingKioskScan(
       } catch (error) {
         console.error("Failed to notify sewing_session_started:", session.id, error);
       }
+      try {
+        await notifyAdminsOfSewingSessionStarted(session);
+      } catch (error) {
+        console.error("Failed to email admins sewing_session_started:", session.id, error);
+      }
       await safeRecordPatternAlterationPendingFromSession(session, input.source ?? "erp");
 
       const started = enrichSessionsForFloorUi([session])[0]!;
@@ -1089,6 +1095,11 @@ export async function processSewingKioskScan(
       );
     } catch (error) {
       console.error("Failed to notify sewing_session_started:", session.id, error);
+    }
+    try {
+      await notifyAdminsOfSewingSessionStarted(session);
+    } catch (error) {
+      console.error("Failed to email admins sewing_session_started:", session.id, error);
     }
     await safeRecordPatternAlterationPendingFromSession(session, input.source ?? "erp");
 

@@ -61,6 +61,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   close for stitcher B when B is armed. Close is per stitcher (badge of the
   finisher when several are on that QR; A4 alone is ambiguous if multiple
   open). `resolveSharedPieceScan` owns this. Do not re-block shared QR opens.
+- **Admin email on new stitch session** (Aug 10 2026): when a stitch kiosk
+  opens a piece session (badge+A4 or A4+badge), email ADMIN_EMAILS +
+  SUPER_ADMIN_EMAILS with employee, production code, fabric, SO, client,
+  kiosk, work kind. Must not fail the scan if SMTP fails. Badge-only arms
+  and rejected scans do not email.
 
 - USB wedge capture must always steal rapid keystrokes (even over selection or
   focused fields) and show an optimistic "Last scan" strip on every tab.
