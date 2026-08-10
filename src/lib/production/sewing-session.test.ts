@@ -25,7 +25,6 @@ import {
 import {
   expireStaleSewingState,
   mostRecentArm,
-  productionCodesMatch,
   SEWING_ARM_TIMEOUT_MS,
   sewingFailedScansForPeriod,
   sewingPeriodWindow,
