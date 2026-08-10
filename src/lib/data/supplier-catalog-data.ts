@@ -16,6 +16,7 @@ import {
   normalizeLoroPianaFabricNumber,
   resolveLoroPianaFabricInput,
 } from "@/lib/fabric-sourcing/loro-piana-styles";
+import { resolveLoroPianaDisplayColor } from "@/lib/fabric-sourcing/loro-piana-swatch-colors";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import {
   drapersCatalogDisplayFields,
@@ -137,7 +138,10 @@ function toFabrics(catalog: RawCatalog, supplierId: string, supplier: Supplier, 
       weight_gsm: f.weight_gsm ?? null,
       width_cm: f.width_cm ?? null,
       width_inches: null,
-      color: f.color ?? null,
+      color:
+        supplierId === LORO_PIANA_ID || supplierId === SOLBIATI_ID
+          ? resolveLoroPianaDisplayColor(f.fabric_number, f.color)
+          : f.color ?? null,
       finish: f.category ?? null,
       description,
       weave_type: millName,

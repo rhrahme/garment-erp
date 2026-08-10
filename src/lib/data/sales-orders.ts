@@ -7,6 +7,7 @@ import {
   readJsonFileFreshAsync,
   saveDocument,
 } from "@/lib/data/document-persistence";
+import { resolveFabricDisplayColor } from "@/lib/fabric-sourcing/resolve-fabric-display-color";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import { orderLineHasStockAlert } from "@/lib/fabric-sourcing/fabric-stock";
 import { isSalesOrderArchived } from "@/lib/sales-orders/archive";
@@ -30,6 +31,12 @@ function normalizeSalesOrder(order: SalesOrder): SalesOrder {
     fabric_po_ids: fabricPoIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0),
     fabric_lines: fabricLines.map((line) => ({
       ...line,
+      // LP/Solbiati catalogs omit color - fill from swatch sample when blank.
+      color: resolveFabricDisplayColor({
+        supplier_id: line.supplier_id,
+        fabric_number: line.fabric_number,
+        color: line.color,
+      }),
       label_stickers: Array.isArray(line.label_stickers)
         ? line.label_stickers.filter(
             (sticker): sticker is { code: string; piece_name: string; sequence: number } =>

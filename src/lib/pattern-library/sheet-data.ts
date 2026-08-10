@@ -2,6 +2,7 @@ import { readPatternJobs } from "@/lib/data/pattern-jobs";
 import { readPatternLibraryFresh } from "@/lib/data/pattern-library";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readJsonFile } from "@/lib/data/document-persistence";
+import { resolveFabricDisplayColor } from "@/lib/fabric-sourcing/resolve-fabric-display-color";
 import { pieceStickersForFabricLine } from "@/lib/pattern/manufacturing-stickers";
 import path from "path";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
@@ -152,7 +153,11 @@ function fabricFromLine(line: SalesOrderFabricLine): PatternSheetFabric {
     gsm: line.weight_gsm ?? null,
     width_cm: line.width_cm ?? null,
     width_inches: line.width_inches ?? null,
-    color: line.color ?? null,
+    color: resolveFabricDisplayColor({
+      supplier_id: line.supplier_id,
+      fabric_number: line.fabric_number,
+      color: line.color,
+    }),
     ordered_meters: metersFromFabricLineQuantity(line.quantity, line.unit),
   };
 }

@@ -265,6 +265,17 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   same-client + same-garment sibling (Moussa House Thobe case). Also runs
   after fabric-line assign. Do not strip this heal.
 
+## Fabric catalog colors
+
+- **Loro Piana / Solbiati color from swatch** (Aug 10 2026): LP SS26 price-list
+  JSON has no mill color field (all null). ERP fills display color from local
+  swatch JPEGs (`data/suppliers/loro-piana/images`) via
+  `loro-piana-swatch-colors.json` (script
+  `scripts/extract-loro-piana-swatch-colors.mjs`). Catalog search, sales-order
+  line normalize, Pattern fabric board, and sheets use
+  `resolveFabricDisplayColor` when `color` is blank. Explicit stored colors
+  win. Re-run the extract script after importing new bunches.
+
 ## Supplier emails
 
 - QC and all teams see **Email sent / Email pending** status pills on

@@ -1,3 +1,4 @@
+import { resolveFabricDisplayColor } from "@/lib/fabric-sourcing/resolve-fabric-display-color";
 import type { ClientPattern, ClientPatternFabricRef } from "@/lib/types/pattern-library";
 import type { FabricReceipt } from "@/lib/types/fabric-receipts";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
@@ -188,7 +189,11 @@ export function buildClientFabricBoard(input: {
         weight_gsm: line.weight_gsm ?? null,
         width_cm: line.width_cm ?? null,
         width_inches: line.width_inches ?? null,
-        color: line.color ?? null,
+        color: resolveFabricDisplayColor({
+          supplier_id: line.supplier_id,
+          fabric_number: line.fabric_number,
+          color: line.color,
+        }),
         meters: line.quantity,
         unit: line.unit,
         status,
@@ -261,7 +266,11 @@ function catalogRowFromRef(
     composition: ref.composition ?? null,
     weight_gsm: ref.weight_gsm ?? null,
     width_cm: ref.width_cm ?? null,
-    color: ref.color ?? null,
+    color: resolveFabricDisplayColor({
+      supplier_id: ref.supplier_id,
+      fabric_number: ref.fabric_number,
+      color: ref.color,
+    }),
     description: ref.description ?? null,
     source: ref.source ?? null,
     assigned_pattern: {

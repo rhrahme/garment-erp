@@ -1,4 +1,5 @@
 import { readPatternJobsFresh, writePatternJobs } from "@/lib/data/pattern-jobs";
+import { resolveFabricDisplayColor } from "@/lib/fabric-sourcing/resolve-fabric-display-color";
 import { orphanPatternJobsToCancel } from "@/lib/sales-orders/pattern-so-mismatch";
 import { fabricLineArticleNumber, piecesForFabricLine } from "@/lib/sales-orders/label-codes";
 import { generateTudPatternCode } from "@/lib/pattern/tud-pattern-code";
@@ -30,7 +31,11 @@ function jobFieldsFromLine(
     gsm: line.weight_gsm,
     width_cm: line.width_cm,
     width_inches: line.width_inches,
-    color: line.color,
+    color: resolveFabricDisplayColor({
+      supplier_id: line.supplier_id,
+      fabric_number: line.fabric_number,
+      color: line.color,
+    }),
     meters: line.quantity,
   };
 }
