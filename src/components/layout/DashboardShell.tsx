@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PriceRevealLockOnNavigate } from "@/components/auth/PriceRevealLockOnNavigate";
 import { MobileClientPhotosPrompt } from "@/components/layout/MobileClientPhotosPrompt";
+import { CopySizesGuidePrompt } from "@/components/pattern/CopySizesGuidePrompt";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import type { SessionContext } from "@/lib/auth/session";
@@ -30,6 +31,7 @@ export function DashboardShell({
     <div className="flex h-screen overflow-hidden bg-slate-50 print:h-auto print:max-w-none print:overflow-visible print:w-full">
       <PriceRevealLockOnNavigate />
       <MobileClientPhotosPrompt session={session} />
+      <CopySizesGuidePrompt session={session} />
       {mobileNavOpen ? (
         <button
           type="button"
