@@ -54,12 +54,14 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   before starting another). Close for cutters is A4-first (never badge-first
   close while stacked). After each open the cutter stays armed for the next A4.
   Do not re-block cutters with `employee_has_open_piece` without an explicit ask.
-- **Multi-stitcher same article QR** (Aug 10 2026): jackets/overshirts often
-  have 2–3 stitchers on the **same** A4/production QR at once. Each stitcher
-  opens their own Live session (badge then A4). Do not treat an open session
-  for stitcher A as a close for stitcher B when B is armed. Close is per
-  stitcher (badge of the finisher when several are on that QR; A4 alone is
-  ambiguous if multiple open). `resolveSharedPieceScan` owns this.
+- **Multi-stitcher same article QR** (Aug 10 2026): garment work (especially
+  jackets/overshirts) can be **divided across several stitchers** on the
+  **same** A4/production QR at once. Each stitcher opens their own Live
+  session (badge then A4). Do not treat an open session for stitcher A as a
+  close for stitcher B when B is armed. Close is per stitcher (badge of the
+  finisher when several are on that QR; A4 alone is ambiguous if multiple
+  open). `resolveSharedPieceScan` owns this. Do not re-block shared QR opens.
+
 - USB wedge capture must always steal rapid keystrokes (even over selection or
   focused fields) and show an optimistic "Last scan" strip on every tab.
   Silence on scan is a bug, never acceptable.
