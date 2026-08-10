@@ -313,13 +313,27 @@ export function applyCopyMeasurementsToPattern(
     );
   }
 
-  const copyInstructions = pieceScope === "all" && sameGarment;
+  // Comments travel with the sizes: only article + fabric identity stays the
+  // target's own. Source comments replace the target's (overwrite) or fill an
+  // empty target (fill-empty). An empty source never blanks target comments.
+  const sourceVersionComments = sourceVersion.special_instructions?.trim() || null;
+  const sourceSheetComments = source.special_instructions?.trim() || null;
+  const mergeComments = (
+    incoming: string | null,
+    existing: string | null | undefined
+  ): string | null => {
+    if (!incoming) return existing ?? null;
+    if (mode === "fill_empty_only" && existing?.trim()) return existing;
+    return incoming;
+  };
+
   const nextVersion: ClientPatternVersion = {
     ...targetVersion,
     measurements: nextMeasurements,
-    special_instructions: copyInstructions
-      ? sourceVersion.special_instructions ?? targetVersion.special_instructions ?? null
-      : targetVersion.special_instructions,
+    special_instructions: mergeComments(
+      sourceVersionComments,
+      targetVersion.special_instructions
+    ),
     notes: targetVersion.notes,
     updated_at: now(),
   };
@@ -327,9 +341,7 @@ export function applyCopyMeasurementsToPattern(
   return {
     ...target,
     unit: source.unit,
-    special_instructions: copyInstructions
-      ? sourceVersion.special_instructions ?? target.special_instructions ?? null
-      : target.special_instructions,
+    special_instructions: mergeComments(sourceSheetComments, target.special_instructions),
     versions: target.versions.map((candidate) =>
       candidate.id === targetVersion.id ? nextVersion : candidate
     ),

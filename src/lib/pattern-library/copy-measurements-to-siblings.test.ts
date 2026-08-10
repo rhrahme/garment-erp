@@ -403,6 +403,72 @@ test("listCopyMeasurementSiblings includes cross-garment piece matches after sam
   assert.deepEqual(siblings[1]!.shared_pieces, ["Overshirt"]);
 });
 
+// ------------------------------------------------------------------- comments
+
+function withComments(p: ClientPattern, comments: string | null): ClientPattern {
+  const next = p as unknown as { special_instructions: string | null; versions: Array<{ special_instructions: string | null }> };
+  next.special_instructions = comments;
+  next.versions[0]!.special_instructions = comments;
+  return p;
+}
+
+test("comments copy with the sizes on piece-scoped and cross-garment copies", () => {
+  const source = withComments(
+    pattern("src", "Overshirt+Trouser", rows([["1-2-chest", "1/2 Chest", 63]])),
+    "Shorter 2cm / Neck in waist"
+  );
+  const targetPiece = withComments(
+    pattern("tgt-a", "Overshirt+Trouser", rows([["1-2-chest", "1/2 Chest", 60]])),
+    "old note"
+  );
+  const targetCross = withComments(
+    pattern("tgt-b", "Overshirt", rows([["1-2-chest", "1/2 Chest", 60]])),
+    null
+  );
+
+  const outPiece = applyCopyMeasurementsToPattern(targetPiece, source, "overwrite", {
+    pieceScope: "Overshirt",
+    dictionary: OT_DICTIONARY,
+  });
+  assert.equal(outPiece!.special_instructions, "Shorter 2cm / Neck in waist");
+  assert.equal(outPiece!.versions[0]!.special_instructions, "Shorter 2cm / Neck in waist");
+
+  const outCross = applyCopyMeasurementsToPattern(targetCross, source, "overwrite", {
+    pieceScope: "Overshirt",
+    dictionary: OT_DICTIONARY,
+  });
+  assert.equal(outCross!.special_instructions, "Shorter 2cm / Neck in waist");
+});
+
+test("a source without comments never blanks the target's comments", () => {
+  const source = withComments(
+    pattern("src", "Overshirt", rows([["1-2-chest", "1/2 Chest", 63]])),
+    null
+  );
+  const target = withComments(
+    pattern("tgt", "Overshirt", rows([["1-2-chest", "1/2 Chest", 60]])),
+    "keep me"
+  );
+
+  const out = applyCopyMeasurementsToPattern(target, source, "overwrite", {});
+  assert.equal(out!.special_instructions, "keep me");
+  assert.equal(out!.versions[0]!.special_instructions, "keep me");
+});
+
+test("fill_empty_only keeps existing target comments", () => {
+  const source = withComments(
+    pattern("src", "Overshirt", rows([["1-2-chest", "1/2 Chest", 63]])),
+    "source note"
+  );
+  const target = withComments(
+    pattern("tgt", "Overshirt", rows([["1-2-chest", "1/2 Chest", null]])),
+    "target note"
+  );
+
+  const out = applyCopyMeasurementsToPattern(target, source, "fill_empty_only", {});
+  assert.equal(out!.special_instructions, "target note");
+});
+
 // ----------------------------------------------------------------- piece norm
 
 test("normalizeCopyMeasurementsPieceScope maps Both/unknown to all and matches pieces", () => {
