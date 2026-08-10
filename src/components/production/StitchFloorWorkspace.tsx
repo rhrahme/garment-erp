@@ -10,6 +10,7 @@ import {
   SewingSessionChangeRequestModal,
   type PendingChangeSummary,
 } from "@/components/production/SewingSessionChangeRequestModal";
+import { StitchSoftAlertSoundPreview } from "@/components/production/StitchSoftAlertSoundPreview";
 import {
   StitchScanCaptureProvider,
   StitchScanFeedbackBanner,
@@ -541,6 +542,7 @@ export function StitchFloorWorkspace({
       {tab === "live" && (
         <div className="space-y-4">
         <GarmentTypeColorLegend />
+        <StitchSoftAlertSoundPreview />
         <section className="rounded-xl border border-slate-200 bg-white">
           <div className="border-b border-slate-100 px-5 py-4">
             <div className="flex flex-wrap items-end justify-between gap-3">
