@@ -1870,7 +1870,7 @@ export async function copyClientPatternMeasurementsToSiblings(
       skipped.push({
         id: targetId,
         pattern_ref: targetId,
-        reason: "Not a same-client / same-garment consolidation sheet.",
+        reason: "Not a same-client sheet with this garment or a shared piece.",
       });
       continue;
     }

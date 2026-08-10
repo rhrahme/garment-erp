@@ -3,7 +3,9 @@ import { test } from "node:test";
 import {
   applyCopyMeasurementsToPattern,
   copyWouldLoseFilledValues,
+  listCopyMeasurementSiblings,
   normalizeCopyMeasurementsPieceScope,
+  sharedCopyPieces,
 } from "@/lib/pattern-library/copy-measurements-to-siblings";
 import type {
   ClientPattern,
@@ -268,6 +270,137 @@ test("copyWouldLoseFilledValues flags a dropped version", () => {
 
   const loss = copyWouldLoseFilledValues(before, after);
   assert.ok(loss);
+});
+
+// -------------------------------------------- cross garment (OT -> Overshirt)
+
+test("sharedCopyPieces finds the overlap between garments", () => {
+  assert.deepEqual(sharedCopyPieces("Overshirt+Trouser", "Overshirt"), ["Overshirt"]);
+  assert.deepEqual(sharedCopyPieces("Overshirt+Trouser", "Trouser"), ["Trouser"]);
+  assert.deepEqual(sharedCopyPieces("Overshirt", "Overshirt+Trouser"), ["Overshirt"]);
+  assert.deepEqual(sharedCopyPieces("Overshirt+Trouser", "Shirt LS"), []);
+});
+
+test("OT source copies its Overshirt sizes onto an Overshirt-only sheet", () => {
+  const source = pattern(
+    "src-ot",
+    "Overshirt+Trouser",
+    rows([
+      ["1-2-chest", "1/2 Chest", 63],
+      ["slv-length", "Slv Length", 66.5],
+      ["inseam-length", "Inseam Length", 73],
+    ])
+  );
+  const target = pattern(
+    "tgt-os",
+    "Overshirt",
+    rows([
+      ["1-2-chest", "1/2 Chest", 60],
+      ["slv-length", "Slv Length", null],
+    ])
+  );
+
+  const out = applyCopyMeasurementsToPattern(target, source, "overwrite", {
+    pieceScope: "Overshirt",
+    dictionary: OT_DICTIONARY,
+  });
+  assert.ok(out);
+  assert.equal(targetOf(out, "1-2-chest"), 63);
+  assert.equal(targetOf(out, "slv-length"), 66.5);
+  // Trouser rows must not leak onto an Overshirt-only sheet.
+  assert.equal(targetOf(out, "inseam-length"), undefined);
+  assert.equal(copyWouldLoseFilledValues(target, out!), null);
+});
+
+test("OT source with Both scope still copies only the shared piece to an Overshirt sheet", () => {
+  const source = pattern(
+    "src-ot",
+    "Overshirt+Trouser",
+    rows([
+      ["1-2-chest", "1/2 Chest", 63],
+      ["inseam-length", "Inseam Length", 73],
+    ])
+  );
+  const target = pattern("tgt-os", "Overshirt", rows([["1-2-chest", "1/2 Chest", null]]));
+
+  const out = applyCopyMeasurementsToPattern(target, source, "overwrite", {
+    pieceScope: "all",
+    dictionary: OT_DICTIONARY,
+  });
+  assert.ok(out);
+  assert.equal(targetOf(out, "1-2-chest"), 63);
+  assert.equal(targetOf(out, "inseam-length"), undefined);
+});
+
+test("OT source with Trouser scope skips an Overshirt-only target", () => {
+  const source = pattern(
+    "src-ot",
+    "Overshirt+Trouser",
+    rows([
+      ["1-2-chest", "1/2 Chest", 63],
+      ["inseam-length", "Inseam Length", 73],
+    ])
+  );
+  const target = pattern("tgt-os", "Overshirt", rows([["1-2-chest", "1/2 Chest", null]]));
+
+  const out = applyCopyMeasurementsToPattern(target, source, "overwrite", {
+    pieceScope: "Trouser",
+    dictionary: OT_DICTIONARY,
+  });
+  assert.equal(out, null);
+});
+
+test("Overshirt-only source copies onto the Overshirt piece of an OT sheet", () => {
+  const source = pattern(
+    "src-os",
+    "Overshirt",
+    rows([
+      ["1-2-chest", "1/2 Chest", 63],
+      ["slv-length", "Slv Length", 66.5],
+    ])
+  );
+  const target = pattern(
+    "tgt-ot",
+    "Overshirt+Trouser",
+    rows([
+      ["1-2-chest", "1/2 Chest", null],
+      ["inseam-length", "Inseam Length", 70],
+    ])
+  );
+
+  const out = applyCopyMeasurementsToPattern(target, source, "overwrite", {
+    pieceScope: "all",
+    dictionary: OT_DICTIONARY,
+  });
+  assert.ok(out);
+  assert.equal(targetOf(out, "1-2-chest"), 63);
+  assert.equal(targetOf(out, "slv-length"), 66.5);
+  // Target's trouser values untouched.
+  assert.equal(targetOf(out, "inseam-length"), 70);
+});
+
+test("listCopyMeasurementSiblings includes cross-garment piece matches after same-garment ones", () => {
+  const source = pattern("src-ot", "Overshirt+Trouser", rows([["1-2-chest", "1/2 Chest", 63]]));
+  const sameGarment = pattern("sib-ot", "Overshirt+Trouser", rows([]));
+  const crossGarment = pattern("sib-os", "Overshirt", rows([]));
+  const unrelated = pattern("sib-shirt", "Shirt LS", rows([]));
+  const otherClient = {
+    ...pattern("other-os", "Overshirt", rows([])),
+    client_id: "client-2",
+  } as unknown as ClientPattern;
+
+  const siblings = listCopyMeasurementSiblings(
+    [source, sameGarment, crossGarment, unrelated, otherClient],
+    source
+  );
+  assert.deepEqual(
+    siblings.map((row) => [row.id, row.is_cross_garment]),
+    [
+      ["sib-ot", false],
+      ["sib-os", true],
+    ]
+  );
+  assert.deepEqual(siblings[1]!.shared_pieces, ["Overshirt"]);
 });
 
 // ----------------------------------------------------------------- piece norm

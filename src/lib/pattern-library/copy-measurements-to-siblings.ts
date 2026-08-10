@@ -34,6 +34,10 @@ export type CopyMeasurementSibling = {
   linked_fabric_count: number;
   filled_measurement_count: number;
   is_empty: boolean;
+  /** True when the target garment differs and only shared pieces will copy. */
+  is_cross_garment: boolean;
+  /** Pieces both garments have (e.g. OT -> Overshirt: ["Overshirt"]). */
+  shared_pieces: string[];
 };
 
 export type CopyMeasurementsApplyOptions = {
@@ -81,6 +85,23 @@ export function normalizeCopyMeasurementsPieceScope(
   return match ?? "all";
 }
 
+/**
+ * Pieces both garments have in common, in the source garment's order.
+ * OT source -> Overshirt target: ["Overshirt"]. Same garment: all pieces.
+ */
+export function sharedCopyPieces(
+  sourceGarment: string | null | undefined,
+  targetGarment: string | null | undefined
+): string[] {
+  const sourcePieces = measurementPieceTokensForGarment(sourceGarment ?? "");
+  const targetSet = new Set(
+    measurementPieceTokensForGarment(targetGarment ?? "").map((piece) =>
+      piece.trim().toLowerCase()
+    )
+  );
+  return sourcePieces.filter((piece) => targetSet.has(piece.trim().toLowerCase()));
+}
+
 export function listCopyMeasurementSiblings(
   patterns: ClientPattern[],
   source: ClientPattern
@@ -93,7 +114,13 @@ export function listCopyMeasurementSiblings(
   for (const pattern of patterns) {
     if (pattern.id === source.id) continue;
     if (pattern.client_id !== clientId) continue;
-    if (garmentKey(pattern.garment_type) !== garment) continue;
+    const sameGarment = garmentKey(pattern.garment_type) === garment;
+    const shared = sameGarment
+      ? measurementPieceTokensForGarment(source.garment_type)
+      : sharedCopyPieces(source.garment_type, pattern.garment_type);
+    // Cross-garment targets qualify when the garments share a piece
+    // (e.g. Overshirt+Trouser -> Overshirt, or -> Shirt+Trouser via Trouser).
+    if (!sameGarment && shared.length === 0) continue;
     const version = activeMeasurementVersion(pattern);
     const filled = countFilledMeasurements(version?.measurements ?? []);
     out.push({
@@ -106,9 +133,15 @@ export function listCopyMeasurementSiblings(
       linked_fabric_count: pattern.linked_fabric_line_ids?.length ?? 0,
       filled_measurement_count: filled,
       is_empty: filled === 0,
+      is_cross_garment: !sameGarment,
+      shared_pieces: shared,
     });
   }
-  return out.sort((a, b) => a.pattern_ref.localeCompare(b.pattern_ref));
+  return out.sort((a, b) => {
+    // Same-garment sheets first, then cross-garment piece matches.
+    if (a.is_cross_garment !== b.is_cross_garment) return a.is_cross_garment ? 1 : -1;
+    return a.pattern_ref.localeCompare(b.pattern_ref);
+  });
 }
 
 function cloneMeasurement(row: ClientPatternMeasurement): ClientPatternMeasurement {
@@ -222,8 +255,39 @@ export function applyCopyMeasurementsToPattern(
   );
   const dictionary = options.dictionary ?? [];
 
+  const sameGarment = garmentKey(target.garment_type) === garmentKey(source.garment_type);
+  // Cross-garment target (e.g. OT -> Overshirt): only the shared pieces copy,
+  // further narrowed by the chosen scope. No shared piece in scope = skip.
+  let crossPieces: string[] | null = null;
+  if (!sameGarment) {
+    let shared = sharedCopyPieces(source.garment_type, target.garment_type);
+    if (pieceScope !== "all") {
+      shared = shared.filter(
+        (piece) => piece.trim().toLowerCase() === pieceScope.trim().toLowerCase()
+      );
+    }
+    if (shared.length === 0) return null;
+    crossPieces = shared;
+  }
+
   let nextMeasurements: ClientPatternMeasurement[];
-  if (pieceScope === "all") {
+  if (crossPieces) {
+    const sourcePieces = measurementPieceTokensForGarment(source.garment_type);
+    // Single-piece source (e.g. Overshirt sheet): every row belongs to that
+    // piece, so piece-filtering would only lose mislabeled rows.
+    const sourcePieceRows =
+      sourcePieces.length <= 1
+        ? sourceMeasurements
+        : crossPieces.flatMap((piece) =>
+            filterTrialSheetPointsForPiece(sourceMeasurements, piece, dictionary)
+          );
+    if (countFilledMeasurements(sourcePieceRows) === 0) return null;
+    nextMeasurements = mergePieceMeasurements(
+      targetVersion.measurements ?? [],
+      sourcePieceRows,
+      mode
+    );
+  } else if (pieceScope === "all") {
     if (mode === "fill_empty_only") {
       const targetFilled = countFilledMeasurements(targetVersion.measurements ?? []);
       if (targetFilled > 0) return null;
@@ -249,13 +313,13 @@ export function applyCopyMeasurementsToPattern(
     );
   }
 
+  const copyInstructions = pieceScope === "all" && sameGarment;
   const nextVersion: ClientPatternVersion = {
     ...targetVersion,
     measurements: nextMeasurements,
-    special_instructions:
-      pieceScope === "all"
-        ? sourceVersion.special_instructions ?? targetVersion.special_instructions ?? null
-        : targetVersion.special_instructions,
+    special_instructions: copyInstructions
+      ? sourceVersion.special_instructions ?? targetVersion.special_instructions ?? null
+      : targetVersion.special_instructions,
     notes: targetVersion.notes,
     updated_at: now(),
   };
@@ -263,10 +327,9 @@ export function applyCopyMeasurementsToPattern(
   return {
     ...target,
     unit: source.unit,
-    special_instructions:
-      pieceScope === "all"
-        ? sourceVersion.special_instructions ?? target.special_instructions ?? null
-        : target.special_instructions,
+    special_instructions: copyInstructions
+      ? sourceVersion.special_instructions ?? target.special_instructions ?? null
+      : target.special_instructions,
     versions: target.versions.map((candidate) =>
       candidate.id === targetVersion.id ? nextVersion : candidate
     ),

@@ -164,8 +164,9 @@ export function CopySizesForm({
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-slate-600">
             Push sizes from <span className="font-medium text-slate-800">{patternRef}</span> (
-            {garmentLabel}) onto other sheets for this client with the same garment. For set
-            garments, pick Overshirt / Trouser / Both (all pieces) first.
+            {garmentLabel}) onto this client&apos;s other sheets with the same garment or a
+            shared piece (e.g. Overshirt+Trouser can copy its Overshirt sizes onto
+            Overshirt-only sheets). For set garments, pick Overshirt / Trouser / Both first.
           </p>
         </div>
         <Button
@@ -280,7 +281,17 @@ export function CopySizesForm({
                   className="mt-1 h-4 w-4 rounded border-slate-300"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-slate-900">{row.pattern_ref}</p>
+                  <p className="font-medium text-slate-900">
+                    {row.pattern_ref}
+                    <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">
+                      {row.garment_type}
+                    </span>
+                    {row.is_cross_garment ? (
+                      <span className="ml-1.5 rounded bg-indigo-50 px-1.5 py-0.5 text-[11px] font-medium text-indigo-700">
+                        {row.shared_pieces.join(" + ")} sizes only
+                      </span>
+                    ) : null}
+                  </p>
                   <p className="text-xs text-slate-500">
                     {row.fabric || "No fabric label"}
                     {row.linked_fabric_count

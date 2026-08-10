@@ -256,6 +256,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   the copy mutation (skips the target and reports "Blocked ... it is a
   bug"). Regression tests: `npm run test:copy-measurements` - run them
   when touching copy-measurements-to-siblings.ts.
+- **Copy works across garments via shared pieces** (Aug 10 2026): copy
+  targets include same-client sheets whose garment shares a piece with the
+  source (Overshirt+Trouser -> Overshirt-only, Overshirt -> OT, Shirt+
+  Trouser via Trouser, ...). Cross-garment copies apply only the shared
+  piece(s) and never carry special instructions. Do not restrict copy back
+  to exact-garment matches - Pattern relies on OT -> Overshirt.
 
 ## Printing
 
