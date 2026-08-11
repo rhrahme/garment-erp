@@ -343,8 +343,8 @@ export function ClientPhotoAssignmentPanel({
             Client photos
           </p>
           <p className="mt-0.5 text-[11px] text-slate-400">
-            Sales uploads on the client profile. Pattern sends each photo to the matching fabric /
-            article on this sheet, then prints.
+            Photos are uploaded on the client profile (Sales or Pattern). Pattern sends each photo
+            to the matching fabric / article on this sheet, then prints.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

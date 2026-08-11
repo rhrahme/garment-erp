@@ -394,6 +394,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   pattern) see a once-per-browser-session dialog asking to upload client
   photos. Yes -> `/clients?mobileUpload=1`. Stitch kiosk and task-only
   accounts never see it. Do not remove without an explicit ask.
+- **Every client-media role can UPLOAD client photos** (Aug 11 2026): the
+  old pattern-only 403 on POST `/api/sales/client-photos` ("Sales uploads
+  them") was removed on owner ask - Pattern shoots wearing photos on mobile
+  too. Do not re-add an upload block for pattern. Hard delete stays
+  admin-only (others request delete).
 
 ## Deploy / infra
 
