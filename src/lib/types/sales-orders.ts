@@ -1,6 +1,11 @@
 import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
 
-export type SalesOrderStatus = "open" | "fabric_pos_created" | "complete";
+/**
+ * "superseded": replaced by a re-entered order (duplicate client order with
+ * corrected lines). Kept visible with its original dates, but excluded from
+ * invoiceable lists, receiving floor, and catalog stock alerts.
+ */
+export type SalesOrderStatus = "open" | "fabric_pos_created" | "complete" | "superseded";
 
 export interface FabricLabelSticker {
   code: string;

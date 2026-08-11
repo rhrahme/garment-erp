@@ -89,6 +89,7 @@ export const STATUS_COLORS: Record<string, string> = {
   fabric_prep: "bg-amber-100 text-amber-800",
   planned: "bg-slate-100 text-slate-700",
   cancelled: "bg-red-100 text-red-700",
+  superseded: "bg-slate-200 text-slate-600",
   in_production: "bg-violet-100 text-violet-700",
   shipped: "bg-cyan-100 text-cyan-700",
   delivered: "bg-emerald-100 text-emerald-700",

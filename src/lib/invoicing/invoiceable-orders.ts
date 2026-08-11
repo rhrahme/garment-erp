@@ -21,6 +21,8 @@ export function getInvoiceableSalesOrders(
     .filter((order) => !isReadyMadeSalesOrder(order))
     .filter((order) => !invoicedOrderIds.has(order.id))
     .filter((order) => !isSalesOrderArchived(order))
+    // Superseded orders are invoiced through their replacement order.
+    .filter((order) => order.status !== "superseded")
     .filter((order) => order.fabric_lines.length > 0)
     .sort((a, b) => b.order_date.localeCompare(a.order_date))
     .slice(0, limit);
@@ -56,6 +58,7 @@ export function countInvoiceableSalesOrders(
       !isReadyMadeSalesOrder(order) &&
       !invoicedIds.has(order.id) &&
       !isSalesOrderArchived(order) &&
+      order.status !== "superseded" &&
       order.fabric_lines.length > 0
   ).length;
 }

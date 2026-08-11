@@ -88,7 +88,7 @@ export function propagateDrapersStockToOpenOrders(
 
   for (let orderIndex = 0; orderIndex < store.orders.length; orderIndex++) {
     const order = store.orders[orderIndex]!;
-    if (order.status === "complete") continue;
+    if (order.status === "complete" || order.status === "superseded") continue;
 
     for (const line of order.fabric_lines) {
       if (line.supplier_id !== "drapers") continue;
@@ -235,7 +235,7 @@ export function drapersFabricNumbersFromOpenOrders(): string[] {
 
   const numbers = new Set<string>();
   for (const order of orders.orders) {
-    if (order.status === "complete") continue;
+    if (order.status === "complete" || order.status === "superseded") continue;
     for (const line of order.fabric_lines) {
       if (line.supplier_id === "drapers") {
         numbers.add(line.fabric_number.trim());

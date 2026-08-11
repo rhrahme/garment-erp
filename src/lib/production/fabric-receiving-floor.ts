@@ -96,7 +96,12 @@ export function isSalesOrderFabricReceivingSettled(
   lineStatuses: Map<string, FabricLineReceiveStatus>,
   orderWorkOrders: ProductionWorkOrder[]
 ): boolean {
-  if (order.status === "complete" || order.status === "cancelled" || order.status === "delivered") {
+  if (
+    order.status === "complete" ||
+    order.status === "cancelled" ||
+    order.status === "delivered" ||
+    order.status === "superseded"
+  ) {
     return true;
   }
   if (order.fabric_lines.length === 0) return true;

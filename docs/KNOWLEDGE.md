@@ -369,6 +369,21 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `resolveFabricDisplayColor` when `color` is blank. Explicit stored colors
   win. Re-run the extract script after importing new bunches.
 
+## Sales orders / invoicing
+
+- **Superseded sales orders** (Aug 11 2026): when a client order is
+  re-entered (corrected lines/meterage), the old SO gets status
+  `"superseded"` instead of being deleted - it keeps all lines and its
+  original order date for factory reference (detail page shows a banner
+  linking the replacement SO parsed from the notes). Superseded orders are
+  excluded from the invoiceable-orders list/count, settle the fabric
+  receiving floor, and are skipped by catalog stock/enrichment syncs;
+  their pending pattern jobs must be cancelled ("Superseded by SO-xxxx")
+  so the pattern board shows one set of articles. First case:
+  SO-2026-0118 -> SO-2026-0125 (Abdelaziz Ajlan), invoiced once via
+  INV-2026-0009. Do not delete superseded orders or re-open them to
+  "fix" the invoiceable list.
+
 ## Supplier emails
 
 - QC and all teams see **Email sent / Email pending** status pills on

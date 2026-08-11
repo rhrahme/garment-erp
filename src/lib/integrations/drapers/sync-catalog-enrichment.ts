@@ -192,7 +192,7 @@ export function drapersFabricNumbersFromOpenOrders(): string[] {
 
   const numbers = new Set<string>();
   for (const order of orders.orders) {
-    if (order.status === "complete") continue;
+    if (order.status === "complete" || order.status === "superseded") continue;
     for (const line of order.fabric_lines) {
       if (line.supplier_id !== "drapers") continue;
       const code = line.fabric_number.trim();

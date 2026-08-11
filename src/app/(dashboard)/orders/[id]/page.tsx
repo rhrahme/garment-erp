@@ -22,7 +22,11 @@ import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { listGarmentTypeChangesForSalesOrder } from "@/lib/data/garment-type-changes";
 import { buildGarmentTypeChangeFlagsByLineId } from "@/lib/sales-orders/garment-type-change-flags";
 import { readPatternJobsFresh } from "@/lib/data/pattern-jobs";
-import { getSalesOrderByIdFresh, isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
+import {
+  getSalesOrderByIdFresh,
+  isReadyMadeSalesOrder,
+  readSalesOrders,
+} from "@/lib/data/sales-orders";
 import { ensureFabricOrdersLoaded, listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 import { getFabricPosForSalesOrder } from "@/lib/sales-orders/line-cross-reference";
 import { activePatternJobsForLine } from "@/lib/pattern/sync-guard";
@@ -104,6 +108,16 @@ export default async function SalesOrderDetailPage({
       );
   const supplierEmailSummary = summarizeSalesOrderSupplierEmail(order, fabricPos);
 
+  // Superseded orders keep their lines/dates for reference; link the replacement
+  // order (first other SO number mentioned in the notes) so nobody works this one.
+  const supersededByNumber =
+    order.status === "superseded"
+      ? (order.notes?.match(/SO-\d{4}-\d{4}/g) ?? []).find((so) => so !== order.so_number) ?? null
+      : null;
+  const supersededByOrder = supersededByNumber
+    ? readSalesOrders().orders.find((row) => row.so_number === supersededByNumber) ?? null
+    : null;
+
   return (
     <div>
       <PageHeader
@@ -143,6 +157,34 @@ export default async function SalesOrderDetailPage({
           </div>
         }
       />
+
+      {order.status === "superseded" && (
+        <div className="mb-6 rounded-xl border border-slate-300 bg-slate-100 p-4">
+          <p className="text-sm font-semibold text-slate-800">
+            This order was superseded
+            {supersededByNumber ? (
+              <>
+                {" by "}
+                {supersededByOrder ? (
+                  <Link
+                    href={`/orders/${supersededByOrder.id}`}
+                    className="text-indigo-600 underline hover:text-indigo-700"
+                  >
+                    {supersededByNumber}
+                  </Link>
+                ) : (
+                  supersededByNumber
+                )}
+              </>
+            ) : null}
+            . Lines and dates are kept here for reference only - do not produce, order fabric, or
+            invoice from this order.
+          </p>
+          {order.notes ? (
+            <p className="mt-2 whitespace-pre-line text-xs text-slate-600">{order.notes}</p>
+          ) : null}
+        </div>
+      )}
 
       {patternMismatch && <PatternMismatchBanner mismatch={patternMismatch} />}
 
