@@ -147,6 +147,13 @@ function pointMatchesStitcherPiece(
   const exclusive = measurementPointExclusivePiece(point);
   if (exclusive === "trouser") return pieceIsTrouser(pieceName);
   const label = normalizePointLabel(point.name);
+  // Shared hem id: only legacy trouser rows named "bottom" belong on Trouser
+  // (those hit the exclusive check above). Named "1/2 Hem Width" it is the
+  // top's hem - keep it off Trouser or an OT paste with Trouser scope drags
+  // the overshirt hem (e.g. 63.2) onto trouser sheets as an extra row.
+  if (point.point_id === "1-2-hem-width" && pieceIsTrouser(pieceName)) {
+    return false;
+  }
   return allow.ids.has(point.point_id) || (label !== "" && allow.names.has(label));
 }
 

@@ -242,6 +242,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   inseam / bottom width are trouser-exclusive even if a shared id (e.g.
   overshirt `1-2-hem-width`) was mislabeled. Reduced OT templates use
   `bottom-width` for trouser bottom, not the overshirt hem id.
+- **Top hem never lands on Trouser** (Aug 11 2026): the reverse of the rule
+  above - `1-2-hem-width` matches the Trouser piece ONLY when the row name
+  says "bottom" (legacy trouser sheets). Named "1/2 Hem Width" it is the
+  overshirt/shirt hem and stays off Trouser views, prints, and piece-scoped
+  copy/paste (`pointMatchesStitcherPiece`). Regressed once: an OT paste with
+  Trouser scope appended the overshirt hem 63.2 onto a Shirt+Trouser sheet.
 - **Copy sizes to consolidations** (Aug 9 2026): on a filled client sheet,
   tab **Copy sizes** lists other same-client + same-garment consolidated
   sheets and can overwrite (or fill-empty) their measurements + unit from

@@ -379,6 +379,46 @@ test("Overshirt-only source copies onto the Overshirt piece of an OT sheet", () 
   assert.equal(targetOf(out, "inseam-length"), 70);
 });
 
+test("OT -> Shirt+Trouser paste must not drag the overshirt 1/2 Hem Width onto trousers (FR-0626-0037 regression)", () => {
+  // Production dictionary tags the shared hem id with trouser too (legacy
+  // "1/2 Bottom Width" alias) - reproduce that so the leak is possible.
+  const dictionary = [
+    ...OT_DICTIONARY,
+    {
+      id: "1-2-hem-width",
+      name: "1/2 Hem Width",
+      garment_types: ["shirt", "trouser", "overshirt"],
+    },
+  ];
+  const source = pattern(
+    "src-ot",
+    "Overshirt+Trouser",
+    rows([
+      ["1-2-chest", "1/2 Chest", 63.2],
+      ["1-2-hem-width", "1/2 Hem Width", 63.2], // overshirt hem
+      ["inseam-length", "Inseam Length", 73],
+      ["bottom-width", "1/2 Bottom width", 19],
+    ])
+  );
+  const target = pattern(
+    "tgt-st",
+    "Shirt+Trouser",
+    rows([["inseam-length", "Inseam Length", null]])
+  );
+
+  const out = applyCopyMeasurementsToPattern(target, source, "overwrite", {
+    pieceScope: "all",
+    dictionary,
+  });
+  assert.ok(out);
+  // Shared Trouser piece copies.
+  assert.equal(targetOf(out, "inseam-length"), 73);
+  assert.equal(targetOf(out, "bottom-width"), 19);
+  // Overshirt-only rows stay out - the hem row was the reported extra.
+  assert.equal(targetOf(out, "1-2-hem-width"), undefined);
+  assert.equal(targetOf(out, "1-2-chest"), undefined);
+});
+
 test("listCopyMeasurementSiblings includes cross-garment piece matches after same-garment ones", () => {
   const source = pattern("src-ot", "Overshirt+Trouser", rows([["1-2-chest", "1/2 Chest", 63]]));
   const sameGarment = pattern("sib-ot", "Overshirt+Trouser", rows([]));

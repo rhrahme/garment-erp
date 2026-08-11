@@ -199,8 +199,28 @@ test("set garments need piece select; filter shows one piece sheet", () => {
   assert.ok(trouser.some((p) => p.point_id === "front-rise"));
   assert.ok(trouser.some((p) => p.point_id === "bottom-width"));
   assert.ok(!trouser.some((p) => p.point_id === "1-2-chest"));
+  // Top hem must never land on Trouser (OT paste dragged 63.2 onto trousers).
+  assert.ok(!trouser.some((p) => p.point_id === "1-2-hem-width"));
   assert.ok(!overshirt.some((p) => p.point_id === "front-rise"));
   assert.deepEqual(filterTrialSheetPointsForPiece(points, "", dictionary), []);
+});
+
+test("1/2 Hem Width (top hem) stays off Trouser; legacy Bottom Width rows stay on it", () => {
+  const points = [
+    { point_id: "1-2-hem-width", name: "1/2 Hem Width" },
+    // Old trouser sheets stored bottom width on the shared hem id.
+    { point_id: "1-2-hem-width", name: "1/2 Bottom Width" },
+  ];
+  const trouser = filterTrialSheetPointsForPiece(points, "Trouser", dictionary);
+  assert.deepEqual(
+    trouser.map((p) => p.name),
+    ["1/2 Bottom Width"]
+  );
+  const overshirt = filterTrialSheetPointsForPiece(points, "Overshirt", dictionary);
+  assert.deepEqual(
+    overshirt.map((p) => p.name),
+    ["1/2 Hem Width"]
+  );
 });
 
 test("Waist Relax never appears under Overshirt even if stuck on hem id", () => {
@@ -235,19 +255,16 @@ test("groupTrialSheetPointsByPiece splits Overshirt+Trouser with Shared for dual
   );
   assert.deepEqual(
     sections.map((section) => section.label),
-    ["Overshirt", "Trouser", "Shared", "Other"]
+    ["Overshirt", "Trouser", "Other"]
   );
+  // Top hem belongs to Overshirt only (was wrongly Shared before Aug 11).
   assert.deepEqual(
     sections.find((s) => s.label === "Overshirt")?.points.map((p) => p.point_id),
-    ["1-2-chest", "slv-length"]
+    ["1-2-chest", "1-2-hem-width", "slv-length"]
   );
   assert.deepEqual(
     sections.find((s) => s.label === "Trouser")?.points.map((p) => p.point_id),
     ["front-rise"]
-  );
-  assert.deepEqual(
-    sections.find((s) => s.label === "Shared")?.points.map((p) => p.point_id),
-    ["1-2-hem-width"]
   );
   assert.deepEqual(
     sections.find((s) => s.label === "Other")?.points.map((p) => p.point_id),
