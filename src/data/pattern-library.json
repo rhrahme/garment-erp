@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-08-10T21:22:36.317Z",
+  "updated_at": "2026-08-11T09:44:52.325Z",
   "dictionary": [
     {
       "id": "total-length-hnp",
@@ -69280,14 +69280,14 @@
               "thumbnail_stored_filename": "cp-1785002623350-68-1785002625020-Prince_Khaled_SS_SLV_2nd_Trial_Shirt___06.07.26.tud.thumb.jpg"
             }
           ],
-          "notes": "Trial file: Prince Khaled SS SLV 2nd Trial Shirt   06.07.26.tud | Filled empty cells from Prince Khaled Shirt SS Slv Shirt Final  206225       18.07.26.xlsx (Mahrab gap fill)",
+          "notes": null,
           "version": 1,
           "is_final": true,
           "created_at": "2026-07-25T18:03:43.350Z",
           "created_by": "info@hagan.pro",
           "trial_date": null,
-          "updated_at": "2026-08-10T21:22:36.317Z",
-          "updated_by": "info@hagan.pro",
+          "updated_at": "2026-08-11T07:21:58.316Z",
+          "updated_by": "hagan.dp1@gmail.com",
           "measurements": [
             {
               "name": "Total Length (HNP)",
@@ -69296,9 +69296,9 @@
               "point_id": "total-length-hnp",
               "is_graded": true,
               "adjustment": null,
-              "base_value": 78,
+              "base_value": 0,
               "sewn_value": null,
-              "target_value": 78
+              "target_value": 76
             },
             {
               "name": "1/2 Chest",
@@ -69307,9 +69307,9 @@
               "point_id": "1-2-chest",
               "is_graded": true,
               "adjustment": null,
-              "base_value": 63.2,
+              "base_value": 0,
               "sewn_value": null,
-              "target_value": 63.2
+              "target_value": 63
             },
             {
               "name": "1/2 Waist",
@@ -69318,9 +69318,9 @@
               "point_id": "1-2-waist",
               "is_graded": true,
               "adjustment": null,
-              "base_value": 62.5,
+              "base_value": 0,
               "sewn_value": null,
-              "target_value": 62.5
+              "target_value": 60.5
             },
             {
               "name": "1/2 Hem",
@@ -69340,9 +69340,9 @@
               "point_id": "slv-length",
               "is_graded": true,
               "adjustment": null,
-              "base_value": 25.5,
+              "base_value": 0,
               "sewn_value": null,
-              "target_value": 25.5
+              "target_value": 66.5
             },
             {
               "name": "Cuff Opening",
@@ -69362,9 +69362,9 @@
               "point_id": "cb-length",
               "is_graded": true,
               "adjustment": null,
-              "base_value": 77,
+              "base_value": 0,
               "sewn_value": null,
-              "target_value": 77
+              "target_value": 81.5
             },
             {
               "name": "Bicep",
@@ -69373,9 +69373,9 @@
               "point_id": "bicep",
               "is_graded": true,
               "adjustment": null,
-              "base_value": 23.5,
+              "base_value": 0,
               "sewn_value": null,
-              "target_value": 23.5
+              "target_value": 23.3
             },
             {
               "name": "Collar Outer Edge",
@@ -69384,20 +69384,9 @@
               "point_id": "collar-outer-edge",
               "is_graded": true,
               "adjustment": null,
-              "base_value": 48.5,
+              "base_value": 0,
               "sewn_value": null,
-              "target_value": 48.5
-            },
-            {
-              "name": "1/2 Hem Width",
-              "remark": null,
-              "remarks": null,
-              "point_id": "1-2-hem-width",
-              "is_graded": true,
-              "adjustment": null,
-              "base_value": 63.2,
-              "sewn_value": null,
-              "target_value": 63.2
+              "target_value": 42.7
             },
             {
               "name": "Slv Inseam",
@@ -69406,9 +69395,9 @@
               "point_id": "slv-inseam",
               "is_graded": true,
               "adjustment": null,
-              "base_value": 6,
+              "base_value": 0,
               "sewn_value": null,
-              "target_value": 6
+              "target_value": 42.5
             },
             {
               "name": "Elbow",
@@ -69433,26 +69422,15 @@
               "target_value": 49
             },
             {
-              "name": "Collar Height",
-              "remark": null,
-              "remarks": null,
-              "point_id": "collar-height",
-              "is_graded": true,
-              "adjustment": null,
-              "base_value": 6.8,
-              "sewn_value": null,
-              "target_value": 6.8
-            },
-            {
               "name": "Collar Point",
               "remark": null,
               "remarks": null,
               "point_id": "collar-point",
               "is_graded": true,
               "adjustment": null,
-              "base_value": 6.3,
+              "base_value": 0,
               "sewn_value": null,
-              "target_value": 6.3
+              "target_value": 6.7
             },
             {
               "name": "Collar Height (CB)",
@@ -69490,13 +69468,13 @@
             {
               "name": "Across Front",
               "remark": null,
-              "remarks": "17.5 cm down from Nps",
+              "remarks": null,
               "point_id": "across-front",
               "is_graded": true,
               "adjustment": null,
-              "base_value": 45.5,
+              "base_value": 0,
               "sewn_value": null,
-              "target_value": 45.5
+              "target_value": 44
             },
             {
               "name": "Across Back",
@@ -69505,12 +69483,12 @@
               "point_id": "across-back",
               "is_graded": true,
               "adjustment": null,
-              "base_value": 49.5,
+              "base_value": 0,
               "sewn_value": null,
-              "target_value": 49.5
+              "target_value": 48.5
             },
             {
-              "name": "Shoulder",
+              "name": "1/2 Shoulder",
               "remark": null,
               "remarks": null,
               "point_id": "shoulder",
@@ -69518,109 +69496,10 @@
               "adjustment": null,
               "base_value": null,
               "sewn_value": null,
-              "target_value": null
+              "target_value": 16.5
             },
             {
-              "name": "Slv Placket Length",
-              "remark": null,
-              "remarks": null,
-              "point_id": "slv-placket-length",
-              "is_graded": true,
-              "adjustment": null,
-              "base_value": null,
-              "sewn_value": null,
-              "target_value": null
-            },
-            {
-              "name": "Side Length",
-              "remark": null,
-              "remarks": null,
-              "point_id": "side-length",
-              "is_graded": true,
-              "adjustment": null,
-              "base_value": 45.5,
-              "sewn_value": null,
-              "target_value": 45.5
-            },
-            {
-              "name": "Hole To Button",
-              "remark": null,
-              "remarks": null,
-              "point_id": "hole-to-button",
-              "is_graded": true,
-              "adjustment": null,
-              "base_value": null,
-              "sewn_value": null,
-              "target_value": null
-            },
-            {
-              "name": "Yoke Height",
-              "remark": null,
-              "remarks": null,
-              "point_id": "yoke-height",
-              "is_graded": true,
-              "adjustment": null,
-              "base_value": null,
-              "sewn_value": null,
-              "target_value": null
-            },
-            {
-              "name": "Right Shoulder",
-              "remark": null,
-              "remarks": null,
-              "point_id": "right-shoulder",
-              "is_graded": true,
-              "adjustment": null,
-              "base_value": 17.5,
-              "sewn_value": null,
-              "target_value": 17.5
-            },
-            {
-              "name": "Left Shoulder",
-              "remark": null,
-              "remarks": null,
-              "point_id": "left-shoulder",
-              "is_graded": true,
-              "adjustment": null,
-              "base_value": 17,
-              "sewn_value": null,
-              "target_value": 17
-            },
-            {
-              "name": "Slv Opening",
-              "remark": null,
-              "remarks": null,
-              "point_id": "slv-opening",
-              "is_graded": true,
-              "adjustment": null,
-              "base_value": 21.8,
-              "sewn_value": null,
-              "target_value": 21.8
-            },
-            {
-              "name": "Chest Pkt Length",
-              "remark": null,
-              "remarks": null,
-              "point_id": "chest-pkt-length",
-              "is_graded": true,
-              "adjustment": null,
-              "base_value": 14.5,
-              "sewn_value": null,
-              "target_value": 14.5
-            },
-            {
-              "name": "Chest Pkt Width",
-              "remark": null,
-              "remarks": null,
-              "point_id": "chest-pkt-width",
-              "is_graded": true,
-              "adjustment": null,
-              "base_value": 13,
-              "sewn_value": null,
-              "target_value": 13
-            },
-            {
-              "name": "1/2 Shoulder",
+              "name": "Total Shoulder",
               "remark": null,
               "remarks": null,
               "point_id": "collar-height-cb",
@@ -69628,16 +69507,16 @@
               "adjustment": null,
               "base_value": null,
               "sewn_value": null,
-              "target_value": 16.5
+              "target_value": 49.5
             }
           ],
-          "special_instructions": "Crosspocket. Backsid elastic with prince stitch. Zipper and bios button tape inside fly."
+          "special_instructions": "Crosspocket only."
         }
       ],
       "base_size": "M",
       "client_id": "new-1782858921783",
       "created_at": "2026-07-25T18:03:43.350Z",
-      "updated_at": "2026-08-10T21:22:36.314Z",
+      "updated_at": "2026-08-11T07:57:21.187Z",
       "client_code": "FR-0626-0037",
       "client_name": "Pr Khaled Bin Salman",
       "description": "shirt pattern imported from Base Patterns /ALL/Prince Khaled",
@@ -70764,7 +70643,7 @@
         }
       ],
       "marker_double_fold": true,
-      "special_instructions": "Crosspocket. Backsid elastic with prince stitch. Zipper and bios button tape inside fly.",
+      "special_instructions": "Crosspocket only.",
       "physical_pattern_kept": false,
       "linked_fabric_line_ids": [
         "line-1782860741890-0",
@@ -151895,7 +151774,7 @@
           "created_at": "2026-07-31T20:42:28.283Z",
           "created_by": "script:run-auto-consolidate",
           "trial_date": null,
-          "updated_at": "2026-08-10T18:40:15.682Z",
+          "updated_at": "2026-08-11T09:21:33.383Z",
           "updated_by": "script:run-auto-consolidate",
           "measurements": [
             {
@@ -152441,10 +152320,10 @@
           "special_instructions": "Crosspocket. Backsid elastic with prince stitch. Zipper and bios button tape inside fly."
         }
       ],
-      "base_size": null,
+      "base_size": "M",
       "client_id": "new-1782858921783",
       "created_at": "2026-07-31T20:42:28.283Z",
-      "updated_at": "2026-08-10T18:40:15.678Z",
+      "updated_at": "2026-08-11T09:44:52.325Z",
       "client_code": "FR-0626-0037",
       "client_name": "Pr Khaled Bin Salman",
       "description": null,
@@ -152467,7 +152346,275 @@
         "line-1782862836944-16",
         "line-1782862836944-15"
       ],
-      "physical_pattern_location": null
+      "physical_pattern_location": null,
+      "marker_layout": {
+        "size": "40",
+        "garment_qty": 1,
+        "fabric_width_cm": 140,
+        "double_fold": true,
+        "usable_width_cm": 70,
+        "area_m2": 1.948,
+        "packed_length_m": 6.486,
+        "efficiency_pct": 42.91,
+        "placements": [
+          {
+            "id": "Overshirt-YOUK_INER-7-10",
+            "name": "Overshirt: YOUK_INER",
+            "fabric": "SHEEL",
+            "x_cm": 0,
+            "y_cm": 0,
+            "width_cm": 648.6,
+            "height_cm": 10.1,
+            "rotated": false,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 51.7,
+            "geometry_source": "tud_estimate"
+          },
+          {
+            "id": "Overshirt-YOUK_INER-8-11",
+            "name": "Overshirt: YOUK_INER",
+            "fabric": "SHEEL",
+            "x_cm": 0,
+            "y_cm": 10.1,
+            "width_cm": 648.6,
+            "height_cm": 10.1,
+            "rotated": false,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 51.7,
+            "geometry_source": "tud_estimate"
+          },
+          {
+            "id": "Overshirt-FRONT_FASHING-15-12",
+            "name": "Overshirt: FRONT_FASHING",
+            "fabric": "SHEEL",
+            "x_cm": 0,
+            "y_cm": 20.2,
+            "width_cm": 648.6,
+            "height_cm": 5,
+            "rotated": false,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 81.4,
+            "geometry_source": "tud_estimate"
+          },
+          {
+            "id": "Overshirt-FRONT_FASHING-16-13",
+            "name": "Overshirt: FRONT_FASHING",
+            "fabric": "SHEEL",
+            "x_cm": 0,
+            "y_cm": 25.2,
+            "width_cm": 648.6,
+            "height_cm": 5,
+            "rotated": false,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 81.4,
+            "geometry_source": "tud_estimate"
+          },
+          {
+            "id": "Overshirt-COLLAR-5-14",
+            "name": "Overshirt: COLLAR",
+            "fabric": "SHEEL",
+            "x_cm": 0,
+            "y_cm": 30.2,
+            "width_cm": 648.6,
+            "height_cm": 6.5,
+            "rotated": false,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 47.1,
+            "geometry_source": "tud_estimate"
+          },
+          {
+            "id": "Overshirt-COLLAR-6-15",
+            "name": "Overshirt: COLLAR",
+            "fabric": "SHEEL",
+            "x_cm": 0,
+            "y_cm": 36.7,
+            "width_cm": 648.6,
+            "height_cm": 6.5,
+            "rotated": false,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 47.1,
+            "geometry_source": "tud_estimate"
+          },
+          {
+            "id": "Overshirt-FRONT-1-0",
+            "name": "Overshirt: FRONT",
+            "fabric": "SHEEL",
+            "x_cm": 0,
+            "y_cm": 43.2,
+            "width_cm": 76.1,
+            "height_cm": 26.8,
+            "rotated": true,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 76.1,
+            "geometry_source": "tud_estimate"
+          },
+          {
+            "id": "Overshirt-FRONT-2-1",
+            "name": "Overshirt: FRONT",
+            "fabric": "SHEEL",
+            "x_cm": 76.1,
+            "y_cm": 43.2,
+            "width_cm": 76.1,
+            "height_cm": 26.8,
+            "rotated": true,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 76.1,
+            "geometry_source": "tud_estimate"
+          },
+          {
+            "id": "Overshirt-FRONT_1-17-2",
+            "name": "Overshirt: FRONT_1",
+            "fabric": "SHEEL",
+            "x_cm": 152.2,
+            "y_cm": 43.2,
+            "width_cm": 75.7,
+            "height_cm": 26.8,
+            "rotated": true,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 75.7,
+            "geometry_source": "tud_estimate"
+          },
+          {
+            "id": "Overshirt-FRONT_1-18-3",
+            "name": "Overshirt: FRONT_1",
+            "fabric": "SHEEL",
+            "x_cm": 227.9,
+            "y_cm": 43.2,
+            "width_cm": 75.7,
+            "height_cm": 26.8,
+            "rotated": true,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 75.7,
+            "geometry_source": "tud_estimate"
+          },
+          {
+            "id": "Overshirt-BACK-3-4",
+            "name": "Overshirt: BACK",
+            "fabric": "SHEEL",
+            "x_cm": 303.6,
+            "y_cm": 43.2,
+            "width_cm": 68.9,
+            "height_cm": 26.8,
+            "rotated": true,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 68.9,
+            "geometry_source": "tud_estimate"
+          },
+          {
+            "id": "Overshirt-BACK-4-5",
+            "name": "Overshirt: BACK",
+            "fabric": "SHEEL",
+            "x_cm": 372.5,
+            "y_cm": 43.2,
+            "width_cm": 68.9,
+            "height_cm": 26.8,
+            "rotated": true,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 68.9,
+            "geometry_source": "tud_estimate"
+          },
+          {
+            "id": "Overshirt-COLLAR_3-9-6",
+            "name": "Overshirt: COLLAR_3",
+            "fabric": "SHEEL",
+            "x_cm": 441.4,
+            "y_cm": 43.2,
+            "width_cm": 50.5,
+            "height_cm": 19.1,
+            "rotated": false,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 50.5,
+            "geometry_source": "tud_estimate"
+          },
+          {
+            "id": "Overshirt-COLLAR_3-10-7",
+            "name": "Overshirt: COLLAR_3",
+            "fabric": "SHEEL",
+            "x_cm": 491.9,
+            "y_cm": 43.2,
+            "width_cm": 50.5,
+            "height_cm": 19.1,
+            "rotated": false,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 50.5,
+            "geometry_source": "tud_estimate"
+          },
+          {
+            "id": "Overshirt-SLV_2-11-8",
+            "name": "Overshirt: SLV_2",
+            "fabric": "SHEEL",
+            "x_cm": 542.4,
+            "y_cm": 43.2,
+            "width_cm": 39.4,
+            "height_cm": 20.2,
+            "rotated": false,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 39.4,
+            "geometry_source": "tud_estimate"
+          },
+          {
+            "id": "Overshirt-SLV_2-12-9",
+            "name": "Overshirt: SLV_2",
+            "fabric": "SHEEL",
+            "x_cm": 581.8,
+            "y_cm": 43.2,
+            "width_cm": 39.4,
+            "height_cm": 20.2,
+            "rotated": false,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 39.4,
+            "geometry_source": "tud_estimate"
+          },
+          {
+            "id": "Overshirt-POCKET-13-16",
+            "name": "Overshirt: POCKET",
+            "fabric": "SHEEL",
+            "x_cm": 621.2,
+            "y_cm": 43.2,
+            "width_cm": 13.7,
+            "height_cm": 13.7,
+            "rotated": false,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 13.7,
+            "geometry_source": "tud_estimate"
+          },
+          {
+            "id": "Overshirt-POCKET-14-17",
+            "name": "Overshirt: POCKET",
+            "fabric": "SHEEL",
+            "x_cm": 634.9,
+            "y_cm": 43.2,
+            "width_cm": 13.7,
+            "height_cm": 13.7,
+            "rotated": false,
+            "secondary": false,
+            "outline_cm": null,
+            "outline_width_cm": 13.7,
+            "geometry_source": "tud_estimate"
+          }
+        ],
+        "updated_at": "2026-08-11T09:44:49.879Z",
+        "source": "auto"
+      },
+      "marker_fabric_width_cm": 140,
+      "marker_double_fold": true
     },
     {
       "id": "cp-1785530548415-8690",
@@ -155195,17 +155342,18 @@
       "base_size": null,
       "client_id": "new-1782858921783",
       "created_at": "2026-07-31T20:42:28.283Z",
-      "updated_at": "2026-07-31T20:42:28.283Z",
+      "updated_at": "2026-08-11T07:11:28.147Z",
       "client_code": "FR-0626-0037",
       "client_name": "Pr Khaled Bin Salman",
       "description": null,
       "pattern_ref": "FR-0626-0037-Shirt-LS",
       "garment_type": "Shirt LS",
-      "house_brand_id": null,
+      "house_brand_id": "fouad-rahme",
       "base_pattern_id": null,
       "final_version_id": null,
-      "house_brand_code": null,
+      "house_brand_code": "FR",
       "linked_fabric_refs": [],
+      "marker_double_fold": true,
       "special_instructions": null,
       "physical_pattern_kept": false,
       "linked_fabric_line_ids": [
@@ -155220,6 +155368,7 @@
         "line-1785314435415-2",
         "line-1785314435415-1"
       ],
+      "marker_fabric_width_cm": 150,
       "physical_pattern_location": null
     },
     {
@@ -155702,16 +155851,215 @@
           "created_at": "2026-07-31T20:42:28.283Z",
           "created_by": "script:run-auto-consolidate",
           "trial_date": null,
-          "updated_at": "2026-07-31T20:42:28.283Z",
+          "updated_at": "2026-08-11T09:39:38.889Z",
           "updated_by": "script:run-auto-consolidate",
-          "measurements": [],
-          "special_instructions": null
+          "measurements": [
+            {
+              "name": "1/2 Waist",
+              "remark": null,
+              "remarks": null,
+              "point_id": "1-2-waist",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": 62.5,
+              "sewn_value": null,
+              "target_value": 62.5
+            },
+            {
+              "name": "Waist Relax",
+              "remark": null,
+              "remarks": null,
+              "point_id": "1-2-waist-relux",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": 48
+            },
+            {
+              "name": "1/2 Hip",
+              "remark": null,
+              "remarks": null,
+              "point_id": "1-2-hip",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": 63
+            },
+            {
+              "name": "Side pocket opening length",
+              "remark": null,
+              "remarks": null,
+              "point_id": "side-pocket-opening-length",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": 18.5
+            },
+            {
+              "name": "Front Rise",
+              "remark": null,
+              "remarks": null,
+              "point_id": "front-rise",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": 28.3
+            },
+            {
+              "name": "Back Rise",
+              "remark": null,
+              "remarks": null,
+              "point_id": "back-rise",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": 48
+            },
+            {
+              "name": "1/2 Thigh",
+              "remark": null,
+              "remarks": null,
+              "point_id": "1-2-thigh",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": 38.5
+            },
+            {
+              "name": "1/2 Knee",
+              "remark": null,
+              "remarks": null,
+              "point_id": "1-2-knee",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": 28.3
+            },
+            {
+              "name": "1/2 Bottom width",
+              "remark": null,
+              "remarks": null,
+              "point_id": "bottom-width",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": 19
+            },
+            {
+              "name": "Inseam Length",
+              "remark": null,
+              "remarks": null,
+              "point_id": "inseam-length",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": 73
+            },
+            {
+              "name": "Outseam Length (without Waistband)",
+              "remark": null,
+              "remarks": null,
+              "point_id": "outside-excluding-w-b",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": 100.5
+            },
+            {
+              "name": "Fly Length",
+              "remark": null,
+              "remarks": null,
+              "point_id": "fly-length",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": 18
+            },
+            {
+              "name": "Waistband Height",
+              "remark": null,
+              "remarks": null,
+              "point_id": "waistband-height",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": 4
+            },
+            {
+              "name": "Back Pocket width",
+              "remark": null,
+              "remarks": null,
+              "point_id": "back-pocket-width",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": 14
+            },
+            {
+              "name": "Front Hip",
+              "remark": null,
+              "remarks": null,
+              "point_id": "front-hip",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": null
+            },
+            {
+              "name": "Front Thigh",
+              "remark": null,
+              "remarks": null,
+              "point_id": "front-thigh",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": null
+            },
+            {
+              "name": "Front Knee",
+              "remark": null,
+              "remarks": null,
+              "point_id": "front-knee",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": null
+            },
+            {
+              "name": "Front Hem",
+              "remark": null,
+              "remarks": null,
+              "point_id": "front-hem",
+              "is_graded": true,
+              "adjustment": null,
+              "base_value": null,
+              "sewn_value": null,
+              "target_value": null
+            }
+          ],
+          "special_instructions": "Crosspocket. Backsid elastic with prince stitch. Zipper and bios button tape inside fly."
         }
       ],
       "base_size": null,
       "client_id": "new-1782858921783",
       "created_at": "2026-07-31T20:42:28.283Z",
-      "updated_at": "2026-07-31T20:42:28.283Z",
+      "updated_at": "2026-08-11T09:39:38.890Z",
       "client_code": "FR-0626-0037",
       "client_name": "Pr Khaled Bin Salman",
       "description": null,
