@@ -304,6 +304,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - Fabric swatch images on print sheets require the swatch manifest to ship
   into the Vercel image lambda (Caccioppoli fix `b5ac64f`); new fabric codes
   need a swatch download/sync before thumbs appear.
+- **Every swatch image API must be in `FABRIC_SWATCH_ROUTE_PREFIXES`**
+  (permissions.ts) or restricted roles get middleware 403 and the UI shows
+  "No photo" while admins see images fine (hides the bug). Regressed Aug 11
+  2026 when the Drapers proxy moved to `/api/suppliers/drapers/images` but
+  only the old medias route was allowlisted. When adding/moving a swatch
+  route, add the prefix there AND to the swatch-route list in
+  `permissions.production.test.ts`.
 - **Custom / one-off fabric filing A4** (Aug 9 2026): after Task creates a
   CF-YYYY-#### fabric (outside supplier / mill leftover), print
   `/custom-fabrics/[id]/print` — one A4 with fabric details and an empty

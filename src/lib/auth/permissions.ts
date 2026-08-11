@@ -4,6 +4,8 @@ import type { UserRole } from "@/lib/types/database";
 const FABRIC_SWATCH_ROUTE_PREFIXES = [
   "/api/suppliers/loro-piana",
   "/api/suppliers/caccioppoli",
+  /** Cached Drapers swatch list + image proxy (drapersSwatchImageUrl). */
+  "/api/suppliers/drapers",
   "/api/integrations/drapers/medias",
   /** Legacy live getItemImages route (admin/diagnostic); UI thumbs use /api/suppliers/caccioppoli. */
   "/api/integrations/caccioppoli/images",

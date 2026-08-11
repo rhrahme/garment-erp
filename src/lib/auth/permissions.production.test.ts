@@ -260,6 +260,10 @@ describe("pattern_operator fabric swatch image routes", () => {
     "/api/suppliers/loro-piana/images/722042",
     "/api/suppliers/caccioppoli/images",
     "/api/suppliers/caccioppoli/images/360102",
+    // Cached Drapers swatches - regressed once: missing here meant 403 ->
+    // "No photo" on Fabric Specification for every non-admin role.
+    "/api/suppliers/drapers/images",
+    "/api/suppliers/drapers/images/26130",
     "/api/integrations/drapers/medias",
     "/api/integrations/caccioppoli/images",
   ];
