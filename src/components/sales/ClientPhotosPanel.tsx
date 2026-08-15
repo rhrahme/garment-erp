@@ -52,76 +52,152 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function uploadClientPhoto(
+/** XHR with upload progress; resolves the parsed JSON-ish response. */
+function xhrSend(
+  method: string,
+  url: string,
+  body: FormData | File,
+  contentType: string | null,
+  onProgress: (loaded: number, total: number) => void
+): Promise<{ status: number; response: unknown }> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(method, url);
+    if (contentType) xhr.setRequestHeader("Content-Type", contentType);
+
+    xhr.upload.onprogress = (event) => {
+      if (!event.lengthComputable) return;
+      onProgress(event.loaded, event.total);
+    };
+    xhr.onload = () => {
+      let parsed: unknown = null;
+      try {
+        parsed = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+      } catch {
+        parsed = null;
+      }
+      resolve({ status: xhr.status, response: parsed });
+    };
+    xhr.onerror = () => reject(new Error("Network error during upload."));
+    xhr.onabort = () => reject(new Error("Upload cancelled."));
+    xhr.send(body);
+  });
+}
+
+type SignedUpload = {
+  mode?: "signed" | "direct";
+  photo_id?: string;
+  stored_filename?: string;
+  content_type?: string;
+  upload_url?: string;
+  error?: string;
+};
+
+/**
+ * Upload path: ask the API for a Supabase signed upload URL, PUT the file
+ * straight to storage (Vercel caps API request bodies at ~4.5 MB, so large
+ * phone photos/videos can never go through /api/sales/client-photos in
+ * production), then register the photo. Falls back to the legacy multipart
+ * POST when the API says direct (local dev) or the signed step is unavailable.
+ */
+async function uploadViaSignedUrl(
+  target: { client_id: string } | { replace_photo_id: string },
+  file: File,
+  onProgress: (loaded: number, total: number) => void
+): Promise<ClientPhoto | null> {
+  const prepareResponse = await fetch("/api/sales/client-photos/upload-url", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...target,
+      filename: file.name || "upload",
+      content_type: file.type || "",
+      size_bytes: file.size,
+    }),
+  });
+  const prepared = (await prepareResponse.json().catch(() => ({}))) as SignedUpload;
+  if (!prepareResponse.ok) {
+    throw new Error(prepared.error ?? "Failed to prepare upload.");
+  }
+  if (prepared.mode !== "signed" || !prepared.upload_url) return null;
+
+  const put = await xhrSend(
+    "PUT",
+    prepared.upload_url,
+    file,
+    prepared.content_type ?? file.type ?? "application/octet-stream",
+    onProgress
+  );
+  if (put.status < 200 || put.status >= 300) {
+    throw new Error("Failed to upload the file to storage. Check the connection and retry.");
+  }
+
+  const registerResponse = await fetch("/api/sales/client-photos/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...target,
+      photo_id: prepared.photo_id,
+      stored_filename: prepared.stored_filename,
+      filename: file.name || "upload",
+      content_type: prepared.content_type ?? file.type ?? "",
+    }),
+  });
+  const registered = (await registerResponse.json().catch(() => ({}))) as {
+    photo?: ClientPhoto;
+    error?: string;
+  };
+  if (!registerResponse.ok || !registered.photo) {
+    throw new Error(registered.error ?? "Uploaded, but failed to save the photo. Retry.");
+  }
+  onProgress(file.size, file.size);
+  return registered.photo;
+}
+
+async function uploadClientPhoto(
   clientId: string,
   file: File,
   onProgress: (loaded: number, total: number) => void
 ): Promise<ClientPhoto> {
-  return new Promise((resolve, reject) => {
-    const form = new FormData();
-    form.set("client_id", clientId);
-    form.set("photo", file);
+  const signed = await uploadViaSignedUrl({ client_id: clientId }, file, onProgress);
+  if (signed) return signed;
 
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/sales/client-photos");
-    xhr.responseType = "json";
-
-    xhr.upload.onprogress = (event) => {
-      if (!event.lengthComputable) return;
-      onProgress(event.loaded, event.total);
-    };
-
-    xhr.onload = () => {
-      const body = (xhr.response ?? {}) as { photo?: ClientPhoto; error?: string };
-      if (xhr.status >= 200 && xhr.status < 300 && body.photo) {
-        onProgress(file.size, file.size);
-        resolve(body.photo);
-        return;
-      }
-      reject(new Error(body.error ?? "Failed to upload photo."));
-    };
-
-    xhr.onerror = () => reject(new Error("Failed to upload photo."));
-    xhr.onabort = () => reject(new Error("Upload cancelled."));
-
-    xhr.send(form);
-  });
+  const form = new FormData();
+  form.set("client_id", clientId);
+  form.set("photo", file);
+  const result = await xhrSend("POST", "/api/sales/client-photos", form, null, onProgress);
+  const body = (result.response ?? {}) as { photo?: ClientPhoto; error?: string };
+  if (result.status >= 200 && result.status < 300 && body.photo) {
+    onProgress(file.size, file.size);
+    return body.photo;
+  }
+  throw new Error(body.error ?? "Failed to upload photo.");
 }
 
-function replaceClientPhoto(
+async function replaceClientPhoto(
   photoId: string,
   file: File,
   onProgress: (loaded: number, total: number) => void
 ): Promise<ClientPhoto> {
-  return new Promise((resolve, reject) => {
-    const form = new FormData();
-    form.set("action", "replace");
-    form.set("photo", file);
+  const signed = await uploadViaSignedUrl({ replace_photo_id: photoId }, file, onProgress);
+  if (signed) return signed;
 
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", `/api/sales/client-photos/${encodeURIComponent(photoId)}`);
-    xhr.responseType = "json";
-
-    xhr.upload.onprogress = (event) => {
-      if (!event.lengthComputable) return;
-      onProgress(event.loaded, event.total);
-    };
-
-    xhr.onload = () => {
-      const body = (xhr.response ?? {}) as { photo?: ClientPhoto; error?: string };
-      if (xhr.status >= 200 && xhr.status < 300 && body.photo) {
-        onProgress(file.size, file.size);
-        resolve(body.photo);
-        return;
-      }
-      reject(new Error(body.error ?? "Failed to replace photo."));
-    };
-
-    xhr.onerror = () => reject(new Error("Failed to replace photo."));
-    xhr.onabort = () => reject(new Error("Replace cancelled."));
-
-    xhr.send(form);
-  });
+  const form = new FormData();
+  form.set("action", "replace");
+  form.set("photo", file);
+  const result = await xhrSend(
+    "POST",
+    `/api/sales/client-photos/${encodeURIComponent(photoId)}`,
+    form,
+    null,
+    onProgress
+  );
+  const body = (result.response ?? {}) as { photo?: ClientPhoto; error?: string };
+  if (result.status >= 200 && result.status < 300 && body.photo) {
+    onProgress(file.size, file.size);
+    return body.photo;
+  }
+  throw new Error(body.error ?? "Failed to replace photo.");
 }
 
 export function ClientPhotosPanel({

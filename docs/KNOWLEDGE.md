@@ -414,6 +414,17 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   them") was removed on owner ask - Pattern shoots wearing photos on mobile
   too. Do not re-add an upload block for pattern. Hard delete stays
   admin-only (others request delete).
+- **Client photo/video uploads must go direct to storage** (Aug 15 2026):
+  Vercel caps API request bodies at ~4.5 MB, so multipart POST alone can
+  never accept normal phone photos (platform 413 before our code runs; our
+  15 MB / 50 MB limits are unreachable through the API). The browser asks
+  `POST /api/sales/client-photos/upload-url` for a Supabase signed upload
+  URL (erp-client-photos bucket), PUTs the file straight to storage, then
+  `POST /api/sales/client-photos/register` verifies the object + size and
+  attaches (or replaces) the photo. Local dev without Supabase storage
+  answers `mode: "direct"` and the panel falls back to legacy multipart.
+  Do not route uploads back through a Vercel function body, and keep the
+  register-side size/filename re-checks.
 
 ## Deploy / infra
 
