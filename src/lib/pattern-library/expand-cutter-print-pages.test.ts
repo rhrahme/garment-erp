@@ -184,6 +184,73 @@ test("production Overshirt+Trouser: one stitcher page per piece QR", () => {
   assert.ok(pages[1]?.measurement_point_names?.includes("front rise"));
 });
 
+test("another garment's dictionary rows never print on a piece A4 (FR-0626-0037 regression)", () => {
+  // Khaled's OT sheet carried Shirt SS rows (Collar Height, Side Length, ...).
+  // The screen piece view hides them; the print orphan-append must too.
+  const compound: PatternSheetArticlePage = {
+    ...article("line-57", "0133-L57", "771057"),
+    garment_type: "Overshirt+Trouser",
+    stickers: [
+      {
+        code: "OS",
+        piece_name: "Overshirt",
+        production_code: "FR-0133-L57-OS-1/2",
+        qr_payload: "https://example.test/os",
+        role: "piece",
+        piece_index: 1,
+        piece_total: 2,
+      },
+      {
+        code: "TR",
+        piece_name: "Trouser",
+        production_code: "FR-0133-L57-TR-2/2",
+        qr_payload: "https://example.test/tr",
+        role: "piece",
+        piece_index: 2,
+        piece_total: 2,
+      },
+    ],
+  };
+  const pages = expandProductionArticlePages(
+    consolidatedSheet({
+      scoped_job_id: "pj-l57",
+      job: {
+        id: "pj-l57",
+        sales_order_line_id: "line-57",
+        fabric_number: "771057",
+      } as PatternSheetData["job"],
+      fabric: compound.fabric,
+      stickers: compound.stickers,
+      article_pages: [compound],
+      measurement_point_index: [
+        { id: "1-2-chest", name: "1/2 Chest", garment_types: ["overshirt"] },
+        { id: "front-rise", name: "Front Rise", garment_types: ["trouser"] },
+        // Shirt-only dictionary points - must not ride on the Overshirt A4.
+        { id: "collar-height", name: "Collar Height", garment_types: ["shirt", "jacket"] },
+        { id: "side-length", name: "Side Length", garment_types: ["shirt", "t-shirt"] },
+        // Untagged = custom-like, still orphan-appended to the first piece.
+        { id: "custom-extra", name: "Custom", garment_types: [] },
+      ],
+      version: {
+        id: "v1",
+        version: 1,
+        measurements: [
+          { point_id: "1-2-chest", name: "1/2 Chest" },
+          { point_id: "front-rise", name: "Front Rise" },
+          { point_id: "collar-height", name: "Collar Height" },
+          { point_id: "side-length", name: "Side Length" },
+          { point_id: "custom-extra", name: "Custom" },
+        ],
+      } as PatternSheetData["version"],
+    })
+  );
+  assert.equal(pages.length, 2);
+  assert.ok(!pages[0]?.measurement_point_ids?.includes("collar-height"));
+  assert.ok(!pages[0]?.measurement_point_ids?.includes("side-length"));
+  assert.ok(!pages[1]?.measurement_point_ids?.includes("collar-height"));
+  assert.ok(pages[0]?.measurement_point_ids?.includes("custom-extra"));
+});
+
 test("cutter from L31 job: stays on 722026 fabric pages", () => {
   const data = consolidatedSheet({
     scoped_job_id: "pj-l31",

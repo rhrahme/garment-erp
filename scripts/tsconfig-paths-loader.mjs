@@ -48,5 +48,14 @@ export async function resolve(specifier, context, nextResolve) {
     if (resolved) return resolved;
   }
 
+  // "next/server" has no ESM exports entry - map bare next/* subpaths to
+  // their .js files so tests can import modules that touch next APIs.
+  if (specifier.startsWith("next/") && !path.extname(specifier)) {
+    const candidate = path.join(ROOT, "node_modules", `${specifier}.js`);
+    if (fs.existsSync(candidate)) {
+      return nextResolve(pathToFileURL(candidate).href, context);
+    }
+  }
+
   return nextResolve(specifier, context);
 }

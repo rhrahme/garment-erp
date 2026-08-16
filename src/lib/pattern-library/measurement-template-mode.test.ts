@@ -168,8 +168,10 @@ test("Shirt+Short has no trouser piece so reduced template is not offered", () =
 });
 
 test("buildMeasurementsFromTemplate respects entire vs reduced", () => {
+  // Every trouser-tagged dictionary point above: hip, front rise, loops,
+  // shared hem, bottom width.
   const entire = buildMeasurementsFromTemplate(dictionary, "trouser", "entire");
-  assert.equal(entire.length, 3);
+  assert.equal(entire.length, 5);
   assert.ok(entire.some((point) => point.point_id === "loops-width-6-pcs"));
 
   const reduced = buildMeasurementsFromTemplate(dictionary, "trouser", "reduced");
