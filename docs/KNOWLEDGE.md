@@ -351,6 +351,15 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   (production CSS matches sewing - do not force `page-break-after: auto` on
   multi-page production packs). Do not collapse back to first-linked-line-only
   or put Overshirt+Trouser QRs on one shared page.
+- **Stitcher A4 rows must match the screen piece view** (Aug 16 2026): the
+  piece A4 appends "orphan" rows (not owned by any piece) to the FIRST piece
+  page so a Pattern-added custom point is never lost - but dictionary points
+  tagged to OTHER garments are NOT orphans and must never print (the screen
+  piece view hides them). Regressed on FR-0626-0037: 8 Shirt SS rows (Collar
+  Height, Side Length, Sleeve Opening, Chest Pocket...) printed under the
+  Overshirt A4 while the screen view was clean. Guard lives in
+  `expand-cutter-print-pages.ts` (otherGarmentIds skip) with a regression
+  test; untagged dictionary entries stay orphan-eligible like custom points.
 - **Cutter sheet = one A4 per fabric** (Aug 9 2026): Print cutter keeps nest +
   all piece floor QRs (Overshirt and Trouser) on **one** page. Do not split
   cutter by piece (that wasted a blank QR-only page). Multi-article masters
@@ -400,6 +409,26 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   SO-2026-0118 -> SO-2026-0125 (Abdelaziz Ajlan), invoiced once via
   INV-2026-0009. Do not delete superseded orders or re-open them to
   "fix" the invoiceable list.
+
+## Inventory (trims / hangers)
+
+- **Inventory tab** (Aug 16 2026, owner ask): `/inventory` tracks trims and
+  accessories (first case: suit hangers vs laundry hangers) in the
+  `inventory_store` erp_document - items with stock + low-stock threshold,
+  per-garment-type **recipes** (e.g. Shirt LS -> 1 laundry hanger,
+  Suit -> 1 suit hanger, Shirt+Trouser -> one of each), and a movement
+  ledger.
+- **Deduction happens at finishing -> packed** (stage-scan), NOT at cutting:
+  hangers are consumed when the garment is packed. Dedup guard: the same
+  sales-order line + item never deducts twice. Unknown garment types simply
+  skip (no recipe = no deduction). Stock may go negative so the floor is
+  never blocked; low stock fires `inventory.low_stock`.
+- API parity per the Zapier rule: session routes under `/api/inventory/*`
+  (items, adjust, recipes; production operators allowed) and API-key routes
+  `/api/v1/inventory` + `/api/v1/inventory/adjust`. Events:
+  `inventory.item_created/updated`, `inventory.stock_adjusted`,
+  `inventory.recipe_updated`, `inventory.garment_deducted`,
+  `inventory.low_stock`. Tests: `npm run test:inventory`.
 
 ## Supplier emails
 

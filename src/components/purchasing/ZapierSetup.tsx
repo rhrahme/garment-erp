@@ -100,6 +100,12 @@ const OUTBOUND_EVENTS = [
   "employee.created",
   "employee.updated",
   "employee.job_functions_updated",
+  "inventory.item_created",
+  "inventory.item_updated",
+  "inventory.stock_adjusted",
+  "inventory.recipe_updated",
+  "inventory.garment_deducted",
+  "inventory.low_stock",
 ];
 
 export function ZapierSetup() {

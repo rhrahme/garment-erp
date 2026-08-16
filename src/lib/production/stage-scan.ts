@@ -26,6 +26,8 @@ import {
 } from "@/lib/production/fabric-receiving-scan";
 import { getGarmentPieces } from "@/lib/sales-orders/label-codes";
 import { fabricCutCodesMatch } from "@/lib/production/scan-input";
+import { applyGarmentInventoryDeduction } from "@/lib/data/inventory-store";
+import { notifyIntegration } from "@/lib/integrations";
 import type { FabricReceipt } from "@/lib/types/fabric-receipts";
 import type { PatternJob } from "@/lib/types/pattern";
 import type { ProductionWorkOrder } from "@/lib/types/production";
@@ -315,6 +317,39 @@ export async function scanAtStation(scanInput: string, station: ScanStation): Pr
   if (station === "packed") {
     if (workOrder.status === "finishing") {
       const updated = await advanceProductionWorkOrder(workOrder.id);
+      // Inventory: packing consumes the garment's recipe (hangers etc.).
+      // Deduped per fabric line inside - a Suit set deducts ONE suit hanger
+      // even though each piece gets its own packed scan.
+      const deduction = await applyGarmentInventoryDeduction({
+        garmentType: line.garment_type,
+        salesOrderLineId: line.id,
+        soNumber: order.so_number,
+        productionCode: production_code,
+        actedBy: "stage-scan:packed",
+      }).catch((error) => {
+        console.error("Inventory deduction failed (packed scan continues):", error);
+        return null;
+      });
+      if (deduction?.deducted) {
+        notifyIntegration("inventory.garment_deducted", {
+          garment_type: line.garment_type,
+          so_number: order.so_number,
+          production_code,
+          entries: deduction.entries.map((entry) => ({
+            item_id: entry.item_id,
+            delta: entry.delta,
+            balance_after: entry.balance_after,
+          })),
+        }).catch(() => {});
+        for (const item of deduction.low_stock_items) {
+          notifyIntegration("inventory.low_stock", {
+            item_id: item.id,
+            name: item.name,
+            quantity_on_hand: item.quantity_on_hand,
+            low_stock_threshold: item.low_stock_threshold,
+          }).catch(() => {});
+        }
+      }
       return {
         ...base,
         message: `Finishing done — moved to packed (${sticker.piece_name}).`,

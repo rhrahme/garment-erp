@@ -124,6 +124,7 @@ const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   "/api/custom-fabrics",
   "/api/clients",
   "/api/pattern",
+  "/api/inventory",
   "/api/shipments",
   "/api/hr/employees",
   "/api/hr/employee-lookup",

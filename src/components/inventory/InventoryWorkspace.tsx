@@ -1,0 +1,490 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  inventoryItemIsLow,
+  type GarmentRecipe,
+  type InventoryItem,
+  type InventoryLedgerEntry,
+} from "@/lib/types/inventory";
+
+const REASON_LABELS: Record<string, string> = {
+  garment_packed: "Garment packed",
+  manual_adjust: "Manual adjust",
+  received: "Stock received",
+  correction: "Correction",
+};
+
+function formatWhen(iso: string): string {
+  const date = new Date(iso);
+  return date.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+async function postJson(url: string, body: unknown): Promise<{ ok: boolean; error?: string }> {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = (await response.json().catch(() => ({}))) as { error?: string };
+  return { ok: response.ok, error: data.error };
+}
+
+export function InventoryWorkspace({
+  initialItems,
+  initialRecipes,
+  initialLedger,
+  garmentTypes,
+}: {
+  initialItems: InventoryItem[];
+  initialRecipes: GarmentRecipe[];
+  initialLedger: InventoryLedgerEntry[];
+  garmentTypes: string[];
+}) {
+  const router = useRouter();
+  const [items] = useState(initialItems);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const itemName = useMemo(
+    () => new Map(items.map((item) => [item.id, item.name])),
+    [items]
+  );
+  const lowItems = items.filter(inventoryItemIsLow);
+
+  // ---- add / edit item form
+  const [newItem, setNewItem] = useState({ name: "", category: "", unit: "pcs", threshold: "" });
+
+  // ---- adjust state per item
+  const [adjust, setAdjust] = useState<Record<string, string>>({});
+
+  // ---- recipe editor
+  const [recipeGarment, setRecipeGarment] = useState("");
+  const [recipeLines, setRecipeLines] = useState<Array<{ item_id: string; qty: string }>>([
+    { item_id: "", qty: "1" },
+  ]);
+
+  const run = async (action: () => Promise<{ ok: boolean; error?: string }>) => {
+    setBusy(true);
+    setError(null);
+    const result = await action().catch((err) => ({
+      ok: false,
+      error: err instanceof Error ? err.message : "Request failed.",
+    }));
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.error ?? "Request failed.");
+      return false;
+    }
+    router.refresh();
+    return true;
+  };
+
+  const submitNewItem = () =>
+    run(() =>
+      postJson("/api/inventory/items", {
+        name: newItem.name,
+        category: newItem.category || null,
+        unit: newItem.unit || "pcs",
+        low_stock_threshold: newItem.threshold === "" ? null : Number(newItem.threshold),
+      })
+    ).then((ok) => {
+      if (ok) setNewItem({ name: "", category: "", unit: "pcs", threshold: "" });
+    });
+
+  const submitAdjust = (itemId: string, sign: 1 | -1) => {
+    const qty = Number(adjust[itemId] ?? "");
+    if (!Number.isFinite(qty) || qty <= 0) {
+      setError("Enter a quantity first.");
+      return;
+    }
+    void run(() =>
+      postJson(`/api/inventory/items/${encodeURIComponent(itemId)}/adjust`, {
+        delta: sign * qty,
+        reason: sign > 0 ? "received" : "manual_adjust",
+      })
+    ).then((ok) => {
+      if (ok) setAdjust((prev) => ({ ...prev, [itemId]: "" }));
+    });
+  };
+
+  const loadRecipe = (garment: string) => {
+    setRecipeGarment(garment);
+    const recipe = initialRecipes.find(
+      (row) => row.garment_type.toLowerCase() === garment.toLowerCase()
+    );
+    setRecipeLines(
+      recipe && recipe.lines.length > 0
+        ? recipe.lines.map((line) => ({
+            item_id: line.item_id,
+            qty: String(line.quantity_per_garment),
+          }))
+        : [{ item_id: "", qty: "1" }]
+    );
+  };
+
+  const submitRecipe = () =>
+    run(() =>
+      postJson("/api/inventory/recipes", {
+        garment_type: recipeGarment,
+        lines: recipeLines
+          .filter((line) => line.item_id)
+          .map((line) => ({ item_id: line.item_id, quantity_per_garment: Number(line.qty) || 0 })),
+      })
+    );
+
+  return (
+    <div className="space-y-6">
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-4 text-sm text-indigo-900">
+        <p className="font-medium">Automatic deduction</p>
+        <p className="mt-1 text-indigo-800">
+          When an article is scanned <strong>Packed</strong> on the production floor, its garment
+          recipe below is subtracted automatically (e.g. a Suit takes 1 suit hanger, a Shirt takes
+          1 laundry hanger). One deduction per order line - a Suit set never takes two hangers.
+          Negative red counts mean the shelf and the system disagree - do a correction.
+        </p>
+      </div>
+
+      {lowItems.length > 0 && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-800">
+          <span className="font-semibold">Low stock:</span>{" "}
+          {lowItems.map((item) => `${item.name} (${item.quantity_on_hand} ${item.unit})`).join(", ")}
+        </div>
+      )}
+
+      {/* ------------------------------------------------ stock table */}
+      <section className="rounded-xl border border-slate-200 bg-white">
+        <div className="border-b border-slate-100 px-5 py-3">
+          <h2 className="text-sm font-semibold text-slate-800">Stock on hand</h2>
+        </div>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs uppercase tracking-wide text-slate-400">
+              <th className="px-5 py-2">Item</th>
+              <th className="px-3 py-2">Category</th>
+              <th className="px-3 py-2">On hand</th>
+              <th className="px-3 py-2">Alert at</th>
+              <th className="px-3 py-2">Status</th>
+              <th className="px-3 py-2">Receive / use</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-5 py-8 text-center text-slate-400">
+                  No items yet - add the first one below.
+                </td>
+              </tr>
+            )}
+            {items.map((item) => {
+              const low = inventoryItemIsLow(item);
+              const negative = item.quantity_on_hand < 0;
+              return (
+                <tr key={item.id} className="border-t border-slate-100">
+                  <td className="px-5 py-2 font-medium text-slate-800">{item.name}</td>
+                  <td className="px-3 py-2 text-slate-500">{item.category ?? "-"}</td>
+                  <td
+                    className={`px-3 py-2 font-semibold ${
+                      negative ? "text-red-600" : low ? "text-amber-600" : "text-slate-800"
+                    }`}
+                  >
+                    {item.quantity_on_hand} {item.unit}
+                  </td>
+                  <td className="px-3 py-2 text-slate-500">
+                    {item.low_stock_threshold ?? "-"}
+                  </td>
+                  <td className="px-3 py-2">
+                    {negative ? (
+                      <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
+                        Negative
+                      </span>
+                    ) : low ? (
+                      <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                        Low
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                        OK
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        min="0"
+                        value={adjust[item.id] ?? ""}
+                        onChange={(event) =>
+                          setAdjust((prev) => ({ ...prev, [item.id]: event.target.value }))
+                        }
+                        placeholder="Qty"
+                        className="w-16 rounded-md border border-slate-200 px-2 py-1 text-sm"
+                      />
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => submitAdjust(item.id, 1)}
+                        className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        + In
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => submitAdjust(item.id, -1)}
+                        className="rounded-md bg-slate-600 px-2 py-1 text-xs font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+                      >
+                        - Out
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        <div className="flex flex-wrap items-end gap-2 border-t border-slate-100 px-5 py-3">
+          <div>
+            <label className="block text-xs text-slate-500">New item</label>
+            <input
+              value={newItem.name}
+              onChange={(event) => setNewItem({ ...newItem, name: event.target.value })}
+              placeholder="e.g. Suit hanger"
+              className="mt-0.5 w-44 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-slate-500">Category</label>
+            <input
+              value={newItem.category}
+              onChange={(event) => setNewItem({ ...newItem, category: event.target.value })}
+              placeholder="Hangers"
+              className="mt-0.5 w-32 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-slate-500">Unit</label>
+            <input
+              value={newItem.unit}
+              onChange={(event) => setNewItem({ ...newItem, unit: event.target.value })}
+              className="mt-0.5 w-20 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-slate-500">Alert at</label>
+            <input
+              type="number"
+              min="0"
+              value={newItem.threshold}
+              onChange={(event) => setNewItem({ ...newItem, threshold: event.target.value })}
+              placeholder="10"
+              className="mt-0.5 w-20 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+            />
+          </div>
+          <button
+            type="button"
+            disabled={busy || !newItem.name.trim()}
+            onClick={() => void submitNewItem()}
+            className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            Add item
+          </button>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------ recipes */}
+      <section className="rounded-xl border border-slate-200 bg-white">
+        <div className="border-b border-slate-100 px-5 py-3">
+          <h2 className="text-sm font-semibold text-slate-800">
+            Garment recipes - what one garment consumes when packed
+          </h2>
+        </div>
+        <div className="grid gap-4 px-5 py-4 lg:grid-cols-2">
+          <div>
+            {initialRecipes.length === 0 ? (
+              <p className="text-sm text-slate-400">No recipes yet.</p>
+            ) : (
+              <ul className="space-y-2">
+                {initialRecipes.map((recipe) => (
+                  <li
+                    key={recipe.garment_type}
+                    className="flex items-start justify-between rounded-lg border border-slate-100 px-3 py-2"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-slate-800">{recipe.garment_type}</p>
+                      <p className="text-xs text-slate-500">
+                        {recipe.lines
+                          .map(
+                            (line) =>
+                              `${line.quantity_per_garment} x ${itemName.get(line.item_id) ?? "?"}`
+                          )
+                          .join(", ")}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => loadRecipe(recipe.garment_type)}
+                      className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+                    >
+                      Edit
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className="rounded-lg border border-slate-100 p-3">
+            <label className="block text-xs text-slate-500">Garment type</label>
+            <input
+              list="inventory-garment-types"
+              value={recipeGarment}
+              onChange={(event) => setRecipeGarment(event.target.value)}
+              placeholder="e.g. Suit"
+              className="mt-0.5 w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+            />
+            <datalist id="inventory-garment-types">
+              {garmentTypes.map((garment) => (
+                <option key={garment} value={garment} />
+              ))}
+            </datalist>
+            <div className="mt-2 space-y-1.5">
+              {recipeLines.map((line, index) => (
+                <div key={index} className="flex items-center gap-1.5">
+                  <select
+                    value={line.item_id}
+                    onChange={(event) =>
+                      setRecipeLines((prev) =>
+                        prev.map((row, i) =>
+                          i === index ? { ...row, item_id: event.target.value } : row
+                        )
+                      )
+                    }
+                    className="flex-1 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+                  >
+                    <option value="">Select item...</option>
+                    {items.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={line.qty}
+                    onChange={(event) =>
+                      setRecipeLines((prev) =>
+                        prev.map((row, i) =>
+                          i === index ? { ...row, qty: event.target.value } : row
+                        )
+                      )
+                    }
+                    className="w-16 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setRecipeLines((prev) =>
+                        prev.length > 1 ? prev.filter((_, i) => i !== index) : prev
+                      )
+                    }
+                    className="text-slate-400 hover:text-red-500"
+                    aria-label="Remove line"
+                  >
+                    x
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setRecipeLines((prev) => [...prev, { item_id: "", qty: "1" }])}
+                className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+              >
+                + Add line
+              </button>
+              <button
+                type="button"
+                disabled={busy || !recipeGarment.trim()}
+                onClick={() => void submitRecipe()}
+                className="ml-auto rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              >
+                Save recipe
+              </button>
+            </div>
+            <p className="mt-2 text-[11px] text-slate-400">
+              Save with no lines to remove a recipe. Compound garments count once per order line
+              (Suit = jacket + trouser = one recipe).
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------ ledger */}
+      <section className="rounded-xl border border-slate-200 bg-white">
+        <div className="border-b border-slate-100 px-5 py-3">
+          <h2 className="text-sm font-semibold text-slate-800">Recent movements</h2>
+        </div>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs uppercase tracking-wide text-slate-400">
+              <th className="px-5 py-2">When</th>
+              <th className="px-3 py-2">Item</th>
+              <th className="px-3 py-2">Change</th>
+              <th className="px-3 py-2">Balance</th>
+              <th className="px-3 py-2">Reason</th>
+              <th className="px-3 py-2">Order</th>
+            </tr>
+          </thead>
+          <tbody>
+            {initialLedger.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-5 py-8 text-center text-slate-400">
+                  No movements yet.
+                </td>
+              </tr>
+            )}
+            {initialLedger.map((entry) => (
+              <tr key={entry.id} className="border-t border-slate-100">
+                <td className="px-5 py-2 text-slate-500">{formatWhen(entry.created_at)}</td>
+                <td className="px-3 py-2 font-medium text-slate-800">
+                  {itemName.get(entry.item_id) ?? entry.item_id}
+                </td>
+                <td
+                  className={`px-3 py-2 font-semibold ${
+                    entry.delta < 0 ? "text-red-600" : "text-emerald-600"
+                  }`}
+                >
+                  {entry.delta > 0 ? `+${entry.delta}` : entry.delta}
+                </td>
+                <td className="px-3 py-2 text-slate-600">{entry.balance_after}</td>
+                <td className="px-3 py-2 text-slate-500">
+                  {REASON_LABELS[entry.reason] ?? entry.reason}
+                  {entry.garment_type ? ` - ${entry.garment_type}` : ""}
+                </td>
+                <td className="px-3 py-2 text-slate-500">
+                  {entry.so_number ?? "-"}
+                  {entry.production_code ? ` (${entry.production_code})` : ""}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    </div>
+  );
+}

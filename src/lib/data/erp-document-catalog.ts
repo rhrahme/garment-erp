@@ -95,6 +95,14 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/thread-button-matches.json",
   },
   {
+    key: "inventory_store",
+    label: "Inventory",
+    description: "Factory stock items, garment consumption recipes, movement ledger",
+    category: "production",
+    appHref: "/inventory",
+    sourcePath: "src/data/inventory-store.json",
+  },
+  {
     key: "pattern_jobs",
     label: "Pattern jobs",
     description: "Pattern drafting queue, fittings, and revisions per fabric line",

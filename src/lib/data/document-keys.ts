@@ -167,6 +167,10 @@ export const ERP_DOCUMENT_SPECS = {
     path: path.join(ROOT, "src/data/quality-inspections.json"),
     fallback: { updated_at: null, inspections: [] },
   },
+  inventory_store: {
+    path: path.join(ROOT, "src/data/inventory-store.json"),
+    fallback: { updated_at: null, items: [], recipes: [], ledger: [] },
+  },
 } as const;
 
 export type ErpDocumentKey = keyof typeof ERP_DOCUMENT_SPECS;
@@ -216,6 +220,7 @@ export const LAZY_ERP_DOCUMENT_KEYS = [
   "sales_workspace",
   "thread_button_matches",
   "quality_inspections",
+  "inventory_store",
 ] as const satisfies readonly ErpDocumentKey[];
 
 export const ALL_ERP_DOCUMENT_KEYS = [
