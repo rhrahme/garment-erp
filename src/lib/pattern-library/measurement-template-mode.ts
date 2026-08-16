@@ -409,6 +409,20 @@ export function measurementRowHasEnteredValue(
 }
 
 /**
+ * One comparable label per physical measurement. "1/2 Hem Width" and
+ * "1/2 Hem" are the same hem; older sheets store it under a shifted id with
+ * the short label. Every path that ADDS rows to an existing sheet (copy,
+ * paste, template load) must skip rows whose normalized label already exists
+ * under another id, or sheets grow duplicate rows (the twice-cleaned phantom
+ * 63.2 "1/2 Hem Width" on Khaled's sheets).
+ */
+export function normalizeMeasurementRowLabel(name: string | null | undefined): string {
+  const label = (name ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+  if (label === "1/2 hem width") return "1/2 hem";
+  return label;
+}
+
+/**
  * Curated / composed reduced rows in Pattern's preferred order / names.
  */
 export function buildReducedMeasurementsFromTemplate(
@@ -434,10 +448,31 @@ export function mergeTemplateMeasurements(
   mode: MeasurementTemplateMode
 ): ClientPatternMeasurement[] {
   const existingByPoint = new Map(existing.map((row) => [row.point_id, row]));
-  const merged = template.map((row) => {
+  // Prior rows that will survive the merge (entire keeps all; reduced keeps
+  // filled ones). A template row must not duplicate a surviving row's label
+  // under a different id - shifted-id sheets ("1/2 Hem" on 1-2-shoulder)
+  // otherwise gain a second hem row on every template load.
+  const survivingPrior = existing.filter(
+    (row) => mode !== "reduced" || measurementRowHasEnteredValue(row)
+  );
+  const priorLabelsOtherIds = new Map<string, Set<string>>();
+  for (const row of survivingPrior) {
+    const label = normalizeMeasurementRowLabel(row.name);
+    if (label === "") continue;
+    if (!priorLabelsOtherIds.has(label)) priorLabelsOtherIds.set(label, new Set());
+    priorLabelsOtherIds.get(label)!.add(row.point_id);
+  }
+  const merged: ClientPatternMeasurement[] = [];
+  for (const row of template) {
     const prior = existingByPoint.get(row.point_id);
-    if (!prior) return row;
-    return {
+    if (!prior) {
+      const label = normalizeMeasurementRowLabel(row.name);
+      const holders = priorLabelsOtherIds.get(label);
+      if (label !== "" && holders && !holders.has(row.point_id)) continue;
+      merged.push(row);
+      continue;
+    }
+    merged.push({
       ...row,
       base_value: prior.base_value,
       target_value: prior.target_value,
@@ -445,8 +480,8 @@ export function mergeTemplateMeasurements(
       adjustment: prior.adjustment,
       remarks: prior.remarks,
       remark: prior.remark ?? row.remark,
-    };
-  });
+    });
+  }
   const inTemplate = new Set(merged.map((row) => row.point_id));
   for (const prior of existing) {
     if (inTemplate.has(prior.point_id)) continue;

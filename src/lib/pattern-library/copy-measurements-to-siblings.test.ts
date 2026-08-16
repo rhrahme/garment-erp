@@ -7,6 +7,7 @@ import {
   normalizeCopyMeasurementsPieceScope,
   sharedCopyPieces,
 } from "@/lib/pattern-library/copy-measurements-to-siblings";
+import { mergeTemplateMeasurements } from "@/lib/pattern-library/measurement-template-mode";
 import type {
   ClientPattern,
   ClientPatternMeasurement,
@@ -153,6 +154,34 @@ test("a source row is not added when the target has the same label under another
     (row: Row) => row.point_id
   );
   assert.ok(!pointIds.includes("1-2-hem-width"));
+});
+
+test("template load never duplicates a label held by another id (shifted-id sheets)", () => {
+  // Khaled-style sheet: hem lives on 1-2-shoulder named "1/2 Hem". Loading
+  // the dictionary template (which has 1-2-hem-width "1/2 Hem Width") must
+  // not create a second hem row.
+  const template = rows([
+    ["1-2-chest", "1/2 Chest", null],
+    ["1-2-hem-width", "1/2 Hem Width", null],
+  ]);
+  const existing = rows([
+    ["1-2-chest", "1/2 Chest", 63.2],
+    ["1-2-shoulder", "1/2 Hem", 62.5],
+  ]);
+
+  for (const mode of ["entire", "reduced"] as const) {
+    const merged = mergeTemplateMeasurements(template, existing, mode);
+    const hemRows = merged.filter((row) =>
+      (row.name ?? "").toLowerCase().includes("hem")
+    );
+    assert.equal(hemRows.length, 1, `${mode}: one hem row expected`);
+    assert.equal(hemRows[0]!.point_id, "1-2-shoulder");
+    assert.equal(hemRows[0]!.target_value, 62.5);
+    assert.equal(
+      merged.find((row) => row.point_id === "1-2-chest")?.target_value,
+      63.2
+    );
+  }
 });
 
 test("overwrite copies the source unit", () => {

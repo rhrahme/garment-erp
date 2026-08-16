@@ -36,6 +36,7 @@ import {
   defaultMeasurementTemplateMode,
   garmentOffersReducedMeasurementTemplate,
   mergeTemplateMeasurements,
+  normalizeMeasurementRowLabel,
   parseMeasurementTemplateMode,
   type MeasurementTemplateMode,
 } from "@/lib/pattern-library/measurement-template-mode";
@@ -439,8 +440,19 @@ export function buildMeasurementsFromTemplate(
     libraryGarmentKeysForSheet(garmentType).map((key) => key.toLowerCase())
   );
   keys.add(garmentType.trim().toLowerCase());
+  // The dictionary can hold two points with the same label for one garment
+  // (legacy imports, e.g. two "1/2 Hip" ids); a fresh sheet must get one row
+  // per label or it starts life with duplicate rows.
+  const seenLabels = new Set<string>();
   return dictionary
     .filter((point) => point.garment_types.some((type) => keys.has(type.toLowerCase())))
+    .filter((point) => {
+      const label = normalizeMeasurementRowLabel(point.name);
+      if (label === "") return true;
+      if (seenLabels.has(label)) return false;
+      seenLabels.add(label);
+      return true;
+    })
     .map((point) => ({
       point_id: point.id,
       name: point.name,

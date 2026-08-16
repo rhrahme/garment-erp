@@ -9,6 +9,7 @@ import {
   filterTrialSheetPointsForPiece,
   garmentIsMeasurementSet,
   measurementPieceTokensForGarment,
+  normalizeMeasurementRowLabel,
 } from "@/lib/pattern-library/measurement-template-mode";
 import { countFilledMeasurements } from "@/lib/pattern-library/protect-pattern-library-write";
 import type {
@@ -166,16 +167,6 @@ function rowIsFilled(row: ClientPatternMeasurement): boolean {
   );
 }
 
-function normalizeRowLabel(name: string | null | undefined): string {
-  const label = (name ?? "").trim().toLowerCase().replace(/\s+/g, " ");
-  // "1/2 Hem" and "1/2 Hem Width" are the same physical measurement; older
-  // sheets stored the hem under a shifted id with the short label. Treating
-  // them as one label stops copies from re-creating the duplicate hem row
-  // (the "extra red size" 63.2 leak, cleaned twice from Khaled sheets).
-  if (label === "1/2 hem width") return "1/2 hem";
-  return label;
-}
-
 function mergePieceMeasurements(
   targetRows: ClientPatternMeasurement[],
   sourcePieceRows: ClientPatternMeasurement[],
@@ -184,7 +175,7 @@ function mergePieceMeasurements(
   const next = cloneMeasurements(targetRows);
   const byId = new Map(next.map((row, index) => [row.point_id, index]));
   const targetLabels = new Set(
-    next.map((row) => normalizeRowLabel(row.name)).filter((label) => label !== "")
+    next.map((row) => normalizeMeasurementRowLabel(row.name)).filter((label) => label !== "")
   );
 
   for (const sourceRow of sourcePieceRows) {
@@ -198,7 +189,7 @@ function mergePieceMeasurements(
       // New point for this target. Skip when the target already has a row
       // with the same (normalized) label under a different id - shifted-id
       // sheets otherwise end up with duplicate rows ("1/2 Hem" twice).
-      const label = normalizeRowLabel(sourceRow.name);
+      const label = normalizeMeasurementRowLabel(sourceRow.name);
       if (label !== "" && targetLabels.has(label)) continue;
       next.push(cloneMeasurement(sourceRow));
       byId.set(sourceRow.point_id, next.length - 1);

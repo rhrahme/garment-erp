@@ -267,6 +267,16 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   normalized label under a different point id ("1/2 Hem Width" == "1/2
   Hem", the twice-cleaned phantom 63.2 hem). Tests in
   `test:copy-measurements`. Do not re-enable empty-row propagation.
+- **No duplicate labels from ANY row-adding path** (Aug 16 2026): the same
+  `normalizeMeasurementRowLabel` guard also applies to template loads
+  (`mergeTemplateMeasurements` skips template rows whose label lives on
+  the sheet under another id) and to sheet creation
+  (`buildMeasurementsFromTemplate` dedupes dictionary points by label -
+  the legacy dictionary holds two "1/2 Hip" ids). Shifted-id sheets (hem
+  stored on `1-2-shoulder` named "1/2 Hem") are valid data; fix labels,
+  never bulk-rematch ids. Three legacy trouser sheets keep two filled
+  "1/2 Thigh" values on one id awaiting a human pick - do not auto-drop
+  filled duplicates.
 - **Copy never blanks filled values** (Aug 10 2026): overwrite copy merges
   per point; a source row with no value must never null a filled target
   value (it only adds missing points). A wholesale replace once wiped
