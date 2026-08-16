@@ -100,6 +100,61 @@ test("overwrite adds source-only points and keeps target-only points", () => {
   assert.equal(targetOf(out, "elbow"), 19);
 });
 
+test("empty source rows are never added to the target (dictionary clutter guard)", () => {
+  // Bloated 49-row sheets spread through copy because empty dictionary rows
+  // were added as "missing points". Copy moves sizes, not template clutter.
+  const source = pattern(
+    "src",
+    "Overshirt",
+    rows([
+      ["1-2-chest", "1/2 Chest", 63],
+      ["yoke-height", "Yoke Height", null],
+      ["hole-to-button", "Hole To Button", null],
+    ])
+  );
+  const target = pattern("tgt", "Overshirt", rows([["1-2-chest", "1/2 Chest", null]]));
+
+  const out = applyCopyMeasurementsToPattern(target, source, "overwrite", {});
+  assert.ok(out);
+  assert.equal(targetOf(out, "1-2-chest"), 63);
+  const pointIds = out!.versions[out!.versions.length - 1]!.measurements!.map(
+    (row: Row) => row.point_id
+  );
+  assert.ok(!pointIds.includes("yoke-height"));
+  assert.ok(!pointIds.includes("hole-to-button"));
+});
+
+test("a source row is not added when the target has the same label under another id", () => {
+  // Khaled sheets store the hem as "1/2 Hem" on a shifted id (1-2-shoulder).
+  // A source with the dictionary "1/2 Hem Width" row must not create a second
+  // hem row on such targets (the duplicated-hem / extra 63.2 regression).
+  const source = pattern(
+    "src",
+    "Overshirt",
+    rows([
+      ["1-2-chest", "1/2 Chest", 63.2],
+      ["1-2-hem-width", "1/2 Hem Width", 63.2],
+    ])
+  );
+  const target = pattern(
+    "tgt",
+    "Overshirt",
+    rows([
+      ["1-2-chest", "1/2 Chest", null],
+      ["1-2-shoulder", "1/2 Hem", 62.5],
+    ])
+  );
+
+  const out = applyCopyMeasurementsToPattern(target, source, "overwrite", {});
+  assert.ok(out);
+  assert.equal(targetOf(out, "1-2-chest"), 63.2);
+  assert.equal(targetOf(out, "1-2-shoulder"), 62.5);
+  const pointIds = out!.versions[out!.versions.length - 1]!.measurements!.map(
+    (row: Row) => row.point_id
+  );
+  assert.ok(!pointIds.includes("1-2-hem-width"));
+});
+
 test("overwrite copies the source unit", () => {
   const source = pattern("src", "Trouser", rows([["inseam-length", "Inseam", 29]]), "in");
   const target = pattern("tgt", "Trouser", rows([["inseam-length", "Inseam", 74]]), "cm");

@@ -166,6 +166,16 @@ function rowIsFilled(row: ClientPatternMeasurement): boolean {
   );
 }
 
+function normalizeRowLabel(name: string | null | undefined): string {
+  const label = (name ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+  // "1/2 Hem" and "1/2 Hem Width" are the same physical measurement; older
+  // sheets stored the hem under a shifted id with the short label. Treating
+  // them as one label stops copies from re-creating the duplicate hem row
+  // (the "extra red size" 63.2 leak, cleaned twice from Khaled sheets).
+  if (label === "1/2 hem width") return "1/2 hem";
+  return label;
+}
+
 function mergePieceMeasurements(
   targetRows: ClientPatternMeasurement[],
   sourcePieceRows: ClientPatternMeasurement[],
@@ -173,21 +183,26 @@ function mergePieceMeasurements(
 ): ClientPatternMeasurement[] {
   const next = cloneMeasurements(targetRows);
   const byId = new Map(next.map((row, index) => [row.point_id, index]));
+  const targetLabels = new Set(
+    next.map((row) => normalizeRowLabel(row.name)).filter((label) => label !== "")
+  );
 
   for (const sourceRow of sourcePieceRows) {
     // An empty source row must never blank a filled target value (lost
-    // Khaled OT 1/2 Waist this way). Empty rows only add missing points.
-    if (!rowIsFilled(sourceRow)) {
-      if (!byId.has(sourceRow.point_id)) {
-        next.push(cloneMeasurement(sourceRow));
-        byId.set(sourceRow.point_id, next.length - 1);
-      }
-      continue;
-    }
+    // Khaled OT 1/2 Waist this way). Since Aug 16 2026 empty rows are not
+    // copied at all: adding them spread dictionary clutter (49-row sheets)
+    // through every copy/paste and sibling heal.
+    if (!rowIsFilled(sourceRow)) continue;
     const index = byId.get(sourceRow.point_id);
     if (index == null) {
+      // New point for this target. Skip when the target already has a row
+      // with the same (normalized) label under a different id - shifted-id
+      // sheets otherwise end up with duplicate rows ("1/2 Hem" twice).
+      const label = normalizeRowLabel(sourceRow.name);
+      if (label !== "" && targetLabels.has(label)) continue;
       next.push(cloneMeasurement(sourceRow));
       byId.set(sourceRow.point_id, next.length - 1);
+      if (label !== "") targetLabels.add(label);
       continue;
     }
     const existing = next[index]!;

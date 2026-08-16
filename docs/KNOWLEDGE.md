@@ -260,6 +260,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   sheet **Copy sizes** tab, Pattern order board row **Copy sizes**, and job
   **Copy sizes**. Single-piece garments skip the piece picker. Do not
   require Pattern to open the sheet only to find copy.
+- **Copy never adds clutter rows** (Aug 16 2026): copy/paste moves SIZES,
+  not template rows - empty source rows are never copied (adding them
+  spread 49-row dictionary bloat through every copy and sibling heal), and
+  a filled source row is skipped when the target already has the same
+  normalized label under a different point id ("1/2 Hem Width" == "1/2
+  Hem", the twice-cleaned phantom 63.2 hem). Tests in
+  `test:copy-measurements`. Do not re-enable empty-row propagation.
 - **Copy never blanks filled values** (Aug 10 2026): overwrite copy merges
   per point; a source row with no value must never null a filled target
   value (it only adds missing points). A wholesale replace once wiped
