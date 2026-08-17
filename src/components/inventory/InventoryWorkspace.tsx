@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   inventoryItemIsLow,
   type GarmentRecipe,
+  type InventoryCarton,
   type InventoryItem,
   type InventoryLedgerEntry,
 } from "@/lib/types/inventory";
@@ -14,6 +15,7 @@ const REASON_LABELS: Record<string, string> = {
   manual_adjust: "Manual adjust",
   received: "Stock received",
   correction: "Correction",
+  carton_opened: "Box opened (scan)",
 };
 
 function formatWhen(iso: string): string {
@@ -40,11 +42,13 @@ export function InventoryWorkspace({
   initialItems,
   initialRecipes,
   initialLedger,
+  initialCartons,
   garmentTypes,
 }: {
   initialItems: InventoryItem[];
   initialRecipes: GarmentRecipe[];
   initialLedger: InventoryLedgerEntry[];
+  initialCartons: InventoryCarton[];
   garmentTypes: string[];
 }) {
   const router = useRouter();
@@ -87,6 +91,55 @@ export function InventoryWorkspace({
 
   // ---- adjust state per item
   const [adjust, setAdjust] = useState<Record<string, string>>({});
+
+  // ---- carton registration
+  const [cartonForm, setCartonForm] = useState({ item_id: "", cartons: "", qty: "" });
+  const sealedByItem = useMemo(() => {
+    const map = new Map<string, { count: number; total: number }>();
+    for (const carton of initialCartons) {
+      if (carton.status !== "sealed") continue;
+      const entry = map.get(carton.item_id) ?? { count: 0, total: 0 };
+      entry.count += 1;
+      entry.total += carton.quantity;
+      map.set(carton.item_id, entry);
+    }
+    return map;
+  }, [initialCartons]);
+
+  const submitCartons = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/inventory/cartons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          item_id: cartonForm.item_id,
+          carton_count: Number(cartonForm.cartons),
+          quantity_per_carton: Number(cartonForm.qty),
+        }),
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        cartons?: Array<{ id: string }>;
+        error?: string;
+      };
+      if (!response.ok || !data.cartons) {
+        throw new Error(data.error ?? "Failed to register cartons.");
+      }
+      setCartonForm({ item_id: "", cartons: "", qty: "" });
+      window.open(
+        `/inventory/cartons/print?ids=${encodeURIComponent(
+          data.cartons.map((carton) => carton.id).join(",")
+        )}`,
+        "_blank"
+      );
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to register cartons.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   // ---- recipe editor
   const [recipeGarment, setRecipeGarment] = useState("");
@@ -388,6 +441,116 @@ export function InventoryWorkspace({
           >
             Add item
           </button>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------ cartons */}
+      <section className="rounded-xl border border-slate-200 bg-white">
+        <div className="border-b border-slate-100 px-5 py-3">
+          <h2 className="text-sm font-semibold text-slate-800">
+            Boxes / carton stickers - scan to start using
+          </h2>
+        </div>
+        <div className="grid gap-4 px-5 py-4 lg:grid-cols-2">
+          <div>
+            <p className="text-xs text-slate-500">
+              Received a delivery? Register the boxes here and print one QR sticker per box.
+              Sealed boxes are NOT counted as stock - when the floor opens a box they scan its
+              sticker and the quantity is added automatically.
+            </p>
+            <div className="mt-3 space-y-2">
+              <div>
+                <label className="block text-xs text-slate-500">Item</label>
+                <select
+                  value={cartonForm.item_id}
+                  onChange={(event) =>
+                    setCartonForm({ ...cartonForm, item_id: event.target.value })
+                  }
+                  className="mt-0.5 w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+                >
+                  <option value="">Select item...</option>
+                  {items.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-end gap-2">
+                <div>
+                  <label className="block text-xs text-slate-500">Boxes</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={cartonForm.cartons}
+                    onChange={(event) =>
+                      setCartonForm({ ...cartonForm, cartons: event.target.value })
+                    }
+                    placeholder="e.g. 10"
+                    className="mt-0.5 w-24 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-500">Qty per box</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={cartonForm.qty}
+                    onChange={(event) => setCartonForm({ ...cartonForm, qty: event.target.value })}
+                    placeholder="e.g. 200"
+                    className="mt-0.5 w-24 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+                  />
+                </div>
+                <button
+                  type="button"
+                  disabled={
+                    busy || !cartonForm.item_id || !cartonForm.cartons || !cartonForm.qty
+                  }
+                  onClick={() => void submitCartons()}
+                  className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  Register + print stickers
+                </button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              Sealed boxes (not yet in stock)
+            </p>
+            {sealedByItem.size === 0 ? (
+              <p className="mt-2 text-sm text-slate-400">No sealed boxes.</p>
+            ) : (
+              <ul className="mt-2 space-y-1.5">
+                {[...sealedByItem.entries()].map(([itemId, info]) => {
+                  const item = items.find((row) => row.id === itemId);
+                  return (
+                    <li
+                      key={itemId}
+                      className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2 text-sm"
+                    >
+                      <span className="text-slate-700">
+                        <span className="font-medium">{item?.name ?? itemId}</span>{" "}
+                        <span className="text-slate-500">
+                          - {info.count} box{info.count === 1 ? "" : "es"}, {info.total}{" "}
+                          {item?.unit ?? "pcs"} total
+                        </span>
+                      </span>
+                      <a
+                        href={`/inventory/cartons/print?item=${encodeURIComponent(itemId)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+                      >
+                        Reprint stickers
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
         </div>
       </section>
 

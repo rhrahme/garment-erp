@@ -103,6 +103,8 @@ export type IntegrationEventType =
   | "inventory.recipe_updated"
   | "inventory.garment_deducted"
   | "inventory.low_stock"
+  | "inventory.cartons_created"
+  | "inventory.carton_opened"
   | "supabase.auth_unhealthy";
 
 export interface IntegrationEvent<T = Record<string, unknown>> {

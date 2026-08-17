@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  computeCartonOpen,
   computeGarmentInventoryDeduction,
   findGarmentRecipe,
 } from "@/lib/data/inventory-store";
@@ -59,6 +60,18 @@ function store(): InventoryStoreFile {
       },
     ],
     ledger: [],
+    cartons: [
+      {
+        id: "ctn-1",
+        item_id: "inv-suit-hanger",
+        quantity: 200,
+        status: "sealed",
+        created_at: "2026-08-17T00:00:00Z",
+        created_by: null,
+        opened_at: null,
+        opened_by: null,
+      },
+    ],
   };
 }
 
@@ -119,6 +132,27 @@ test("a set recipe deducts both hangers and reports low stock", () => {
   assert.equal(s.items[1]!.quantity_on_hand, 1); // laundry: 2 -> 1
   // Laundry hanger was already at/below threshold - must be flagged.
   assert.ok(result.low_stock_items.some((item) => item.id === "inv-laundry-hanger"));
+});
+
+test("opening a carton adds its quantity to stock once", () => {
+  const s = store();
+  const first = computeCartonOpen(s, "ctn-1", "floor@hagan.pro", "2026-08-17T10:00:00Z");
+  assert.equal(first.opened, true);
+  assert.equal(s.items[0]!.quantity_on_hand, 210); // 10 + 200
+  assert.equal(s.cartons[0]!.status, "opened");
+  assert.equal(s.ledger.at(-1)!.reason, "carton_opened");
+  assert.equal(s.ledger.at(-1)!.delta, 200);
+
+  // Rescan of the same sticker never double-adds.
+  const second = computeCartonOpen(s, "ctn-1", "floor@hagan.pro");
+  assert.equal(second.opened, false);
+  assert.equal(s.items[0]!.quantity_on_hand, 210);
+  assert.equal(s.ledger.filter((entry) => entry.reason === "carton_opened").length, 1);
+});
+
+test("opening an unknown carton fails loudly", () => {
+  const s = store();
+  assert.throws(() => computeCartonOpen(s, "ctn-nope", null), /Carton not found/);
 });
 
 test("stock can go negative (shelf/system mismatch stays visible)", () => {

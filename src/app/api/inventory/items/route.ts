@@ -9,7 +9,11 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
   await ensureDocumentsLoaded(["inventory_store"]);
   const store = await readInventoryStoreFresh();
-  return NextResponse.json({ items: store.items, recipes: store.recipes });
+  return NextResponse.json({
+    items: store.items,
+    recipes: store.recipes,
+    cartons: store.cartons,
+  });
 }
 
 export async function POST(request: Request) {

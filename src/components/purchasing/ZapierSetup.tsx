@@ -106,6 +106,8 @@ const OUTBOUND_EVENTS = [
   "inventory.recipe_updated",
   "inventory.garment_deducted",
   "inventory.low_stock",
+  "inventory.cartons_created",
+  "inventory.carton_opened",
 ];
 
 export function ZapierSetup() {

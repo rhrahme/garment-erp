@@ -43,7 +43,25 @@ export type InventoryLedgerReason =
   | "garment_packed"
   | "manual_adjust"
   | "received"
-  | "correction";
+  | "correction"
+  | "carton_opened";
+
+/**
+ * A received box with a printed QR sticker. Sealed cartons are NOT counted
+ * in quantity_on_hand - scanning the sticker when the box is opened adds
+ * its quantity to stock ("we are starting to use this box").
+ */
+export type InventoryCarton = {
+  id: string;
+  item_id: string;
+  /** Units inside the box (in the item's unit). */
+  quantity: number;
+  status: "sealed" | "opened";
+  created_at: string;
+  created_by: string | null;
+  opened_at: string | null;
+  opened_by: string | null;
+};
 
 export type InventoryLedgerEntry = {
   id: string;
@@ -67,6 +85,7 @@ export type InventoryStoreFile = {
   items: InventoryItem[];
   recipes: GarmentRecipe[];
   ledger: InventoryLedgerEntry[];
+  cartons: InventoryCarton[];
 };
 
 export const EMPTY_INVENTORY_STORE: InventoryStoreFile = {
@@ -74,6 +93,7 @@ export const EMPTY_INVENTORY_STORE: InventoryStoreFile = {
   items: [],
   recipes: [],
   ledger: [],
+  cartons: [],
 };
 
 export function normalizeGarmentTypeKey(garmentType: string | null | undefined): string {

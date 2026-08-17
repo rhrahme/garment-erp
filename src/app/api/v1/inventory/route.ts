@@ -19,5 +19,6 @@ export async function GET(request: Request) {
     items,
     recipes: store.recipes,
     ledger: store.ledger.slice(-100),
+    cartons: store.cartons,
   });
 }

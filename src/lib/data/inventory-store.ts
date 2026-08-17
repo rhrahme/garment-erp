@@ -9,6 +9,7 @@ import {
   normalizeGarmentTypeKey,
   type GarmentRecipe,
   type GarmentRecipeLine,
+  type InventoryCarton,
   type InventoryItem,
   type InventoryLedgerEntry,
   type InventoryLedgerReason,
@@ -26,6 +27,7 @@ function normalize(raw: InventoryStoreFile | null | undefined): InventoryStoreFi
     items: Array.isArray(raw?.items) ? raw!.items : [],
     recipes: Array.isArray(raw?.recipes) ? raw!.recipes : [],
     ledger: Array.isArray(raw?.ledger) ? raw!.ledger : [],
+    cartons: Array.isArray(raw?.cartons) ? raw!.cartons : [],
   };
 }
 
@@ -104,6 +106,107 @@ export async function upsertInventoryItem(
   store.items.push(item);
   await save(store);
   return item;
+}
+
+/**
+ * Register a received delivery as sealed cartons with printable QR stickers.
+ * Sealed boxes do NOT touch quantity_on_hand - stock is added when the box
+ * QR is scanned open (openInventoryCarton).
+ */
+export async function createInventoryCartons(
+  itemId: string,
+  cartonCount: number,
+  quantityPerCarton: number,
+  actedBy: string | null
+): Promise<{ item: InventoryItem; cartons: InventoryCarton[] }> {
+  const count = Math.floor(cartonCount);
+  if (!Number.isFinite(count) || count < 1 || count > 200) {
+    throw new Error("Carton count must be between 1 and 200.");
+  }
+  if (!Number.isFinite(quantityPerCarton) || quantityPerCarton <= 0) {
+    throw new Error("Quantity per carton must be a positive number.");
+  }
+  const store = await readInventoryStoreFresh();
+  const item = store.items.find((row) => row.id === itemId);
+  if (!item) throw new Error("Inventory item not found.");
+
+  const now = new Date().toISOString();
+  const cartons: InventoryCarton[] = [];
+  for (let index = 0; index < count; index += 1) {
+    cartons.push({
+      id: newId("ctn"),
+      item_id: item.id,
+      quantity: Math.round(quantityPerCarton * 100) / 100,
+      status: "sealed",
+      created_at: now,
+      created_by: actedBy?.trim() || null,
+      opened_at: null,
+      opened_by: null,
+    });
+  }
+  store.cartons.push(...cartons);
+  await save(store);
+  return { item, cartons };
+}
+
+export type OpenCartonResult = {
+  carton: InventoryCarton;
+  item: InventoryItem;
+  /** False when the carton was already opened (idempotent rescan). */
+  opened: boolean;
+};
+
+/**
+ * Pure part of scan-open (exported for tests): mark the carton opened and
+ * add its quantity to stock. A rescan of an opened box changes nothing.
+ */
+export function computeCartonOpen(
+  store: InventoryStoreFile,
+  cartonId: string,
+  actedBy: string | null,
+  nowIso?: string
+): OpenCartonResult {
+  const carton = store.cartons.find((row) => row.id === cartonId);
+  if (!carton) throw new Error("Carton not found.");
+  const item = store.items.find((row) => row.id === carton.item_id);
+  if (!item) throw new Error("Inventory item not found for this carton.");
+
+  if (carton.status === "opened") {
+    return { carton, item, opened: false };
+  }
+
+  const now = nowIso ?? new Date().toISOString();
+  carton.status = "opened";
+  carton.opened_at = now;
+  carton.opened_by = actedBy?.trim() || null;
+  item.quantity_on_hand = Math.round((item.quantity_on_hand + carton.quantity) * 100) / 100;
+  item.updated_at = now;
+  store.ledger.push({
+    id: newId("led"),
+    item_id: item.id,
+    delta: carton.quantity,
+    balance_after: item.quantity_on_hand,
+    reason: "carton_opened",
+    garment_type: null,
+    so_number: null,
+    production_code: null,
+    sales_order_line_id: null,
+    note: `Carton ${carton.id} opened`,
+    created_at: now,
+    created_by: actedBy?.trim() || null,
+  });
+  return { carton, item, opened: true };
+}
+
+/** IO wrapper for computeCartonOpen: read fresh, apply, persist on change. */
+export async function openInventoryCarton(
+  cartonId: string,
+  actedBy: string | null
+): Promise<OpenCartonResult> {
+  const store = await readInventoryStoreFresh();
+  const result = computeCartonOpen(store, cartonId, actedBy);
+  if (result.opened) await save(store);
+  return result;
 }
 
 export async function adjustInventoryQuantity(

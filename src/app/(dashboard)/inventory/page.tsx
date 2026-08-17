@@ -31,6 +31,7 @@ export default async function InventoryPage() {
         initialItems={store.items}
         initialRecipes={store.recipes}
         initialLedger={[...store.ledger].reverse().slice(0, 50)}
+        initialCartons={store.cartons}
         garmentTypes={garmentTypes}
       />
     </div>

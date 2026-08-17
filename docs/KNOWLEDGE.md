@@ -423,12 +423,21 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   sales-order line + item never deducts twice. Unknown garment types simply
   skip (no recipe = no deduction). Stock may go negative so the floor is
   never blocked; low stock fires `inventory.low_stock`.
+- **Carton QR stickers** (Aug 17 2026): deliveries are registered as sealed
+  cartons (N boxes x qty) which print an A4 QR sticker sheet. Sealed boxes
+  are NOT stock - scanning the sticker when a box is opened
+  (/inventory/cartons/[id] -> "Start using this box") adds its quantity
+  with ledger reason `carton_opened`. Idempotent: a rescan never
+  double-adds ("Already opened" + who/when). Do not add carton quantities
+  to stock at registration time - open-scan IS the receive event.
 - API parity per the Zapier rule: session routes under `/api/inventory/*`
-  (items, adjust, recipes; production operators allowed) and API-key routes
-  `/api/v1/inventory` + `/api/v1/inventory/adjust`. Events:
+  (items, adjust, recipes, cartons; production operators allowed) and
+  API-key routes `/api/v1/inventory` + `/api/v1/inventory/adjust` +
+  `/api/v1/inventory/cartons/open`. Events:
   `inventory.item_created/updated`, `inventory.stock_adjusted`,
   `inventory.recipe_updated`, `inventory.garment_deducted`,
-  `inventory.low_stock`. Tests: `npm run test:inventory`.
+  `inventory.low_stock`, `inventory.cartons_created`,
+  `inventory.carton_opened`. Tests: `npm run test:inventory`.
 
 ## Supplier emails
 
