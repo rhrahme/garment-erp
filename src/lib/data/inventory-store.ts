@@ -55,6 +55,7 @@ export type UpsertInventoryItemInput = {
   id?: string | null;
   name: string;
   category?: string | null;
+  brand?: string | null;
   unit?: string | null;
   low_stock_threshold?: number | null;
   location?: string | null;
@@ -74,6 +75,7 @@ export async function upsertInventoryItem(
   if (existing) {
     existing.name = name;
     existing.category = input.category?.trim() || null;
+    existing.brand = input.brand?.trim() || null;
     existing.unit = input.unit?.trim() || existing.unit || "pcs";
     existing.low_stock_threshold =
       input.low_stock_threshold == null ? null : Math.max(0, input.low_stock_threshold);
@@ -88,6 +90,7 @@ export async function upsertInventoryItem(
     id: newId("inv"),
     name,
     category: input.category?.trim() || null,
+    brand: input.brand?.trim() || null,
     unit: input.unit?.trim() || "pcs",
     quantity_on_hand: 0,
     low_stock_threshold:

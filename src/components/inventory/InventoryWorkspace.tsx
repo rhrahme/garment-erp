@@ -58,8 +58,32 @@ export function InventoryWorkspace({
   );
   const lowItems = items.filter(inventoryItemIsLow);
 
+  // ---- brand filter (stock table only)
+  const NO_BRAND = "__none__";
+  const [brandFilter, setBrandFilter] = useState<string>("");
+  const brands = useMemo(() => {
+    const set = new Set<string>();
+    for (const item of items) {
+      const brand = item.brand?.trim();
+      if (brand) set.add(brand);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b));
+  }, [items]);
+  const hasUnbranded = items.some((item) => !item.brand?.trim());
+  const visibleItems = useMemo(() => {
+    if (!brandFilter) return items;
+    if (brandFilter === NO_BRAND) return items.filter((item) => !item.brand?.trim());
+    return items.filter((item) => item.brand?.trim() === brandFilter);
+  }, [items, brandFilter]);
+
   // ---- add / edit item form
-  const [newItem, setNewItem] = useState({ name: "", category: "", unit: "pcs", threshold: "" });
+  const [newItem, setNewItem] = useState({
+    name: "",
+    category: "",
+    brand: "",
+    unit: "pcs",
+    threshold: "",
+  });
 
   // ---- adjust state per item
   const [adjust, setAdjust] = useState<Record<string, string>>({});
@@ -91,11 +115,12 @@ export function InventoryWorkspace({
       postJson("/api/inventory/items", {
         name: newItem.name,
         category: newItem.category || null,
+        brand: newItem.brand || null,
         unit: newItem.unit || "pcs",
         low_stock_threshold: newItem.threshold === "" ? null : Number(newItem.threshold),
       })
     ).then((ok) => {
-      if (ok) setNewItem({ name: "", category: "", unit: "pcs", threshold: "" });
+      if (ok) setNewItem({ name: "", category: "", brand: "", unit: "pcs", threshold: "" });
     });
 
   const submitAdjust = (itemId: string, sign: 1 | -1) => {
@@ -166,13 +191,57 @@ export function InventoryWorkspace({
 
       {/* ------------------------------------------------ stock table */}
       <section className="rounded-xl border border-slate-200 bg-white">
-        <div className="border-b border-slate-100 px-5 py-3">
+        <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-5 py-3">
           <h2 className="text-sm font-semibold text-slate-800">Stock on hand</h2>
+          {(brands.length > 0 || hasUnbranded) && (
+            <div className="ml-auto flex flex-wrap items-center gap-1.5">
+              <span className="text-xs text-slate-400">Brand:</span>
+              <button
+                type="button"
+                onClick={() => setBrandFilter("")}
+                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  brandFilter === ""
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                All
+              </button>
+              {brands.map((brand) => (
+                <button
+                  key={brand}
+                  type="button"
+                  onClick={() => setBrandFilter(brand)}
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    brandFilter === brand
+                      ? "bg-indigo-600 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {brand}
+                </button>
+              ))}
+              {hasUnbranded && (
+                <button
+                  type="button"
+                  onClick={() => setBrandFilter(NO_BRAND)}
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    brandFilter === NO_BRAND
+                      ? "bg-indigo-600 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  No brand
+                </button>
+              )}
+            </div>
+          )}
         </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wide text-slate-400">
               <th className="px-5 py-2">Item</th>
+              <th className="px-3 py-2">Brand</th>
               <th className="px-3 py-2">Category</th>
               <th className="px-3 py-2">On hand</th>
               <th className="px-3 py-2">Alert at</th>
@@ -181,19 +250,22 @@ export function InventoryWorkspace({
             </tr>
           </thead>
           <tbody>
-            {items.length === 0 && (
+            {visibleItems.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-5 py-8 text-center text-slate-400">
-                  No items yet - add the first one below.
+                <td colSpan={7} className="px-5 py-8 text-center text-slate-400">
+                  {items.length === 0
+                    ? "No items yet - add the first one below."
+                    : "No items for this brand."}
                 </td>
               </tr>
             )}
-            {items.map((item) => {
+            {visibleItems.map((item) => {
               const low = inventoryItemIsLow(item);
               const negative = item.quantity_on_hand < 0;
               return (
                 <tr key={item.id} className="border-t border-slate-100">
                   <td className="px-5 py-2 font-medium text-slate-800">{item.name}</td>
+                  <td className="px-3 py-2 text-slate-500">{item.brand?.trim() || "-"}</td>
                   <td className="px-3 py-2 text-slate-500">{item.category ?? "-"}</td>
                   <td
                     className={`px-3 py-2 font-semibold ${
@@ -264,6 +336,21 @@ export function InventoryWorkspace({
               placeholder="e.g. Suit hanger"
               className="mt-0.5 w-44 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
             />
+          </div>
+          <div>
+            <label className="block text-xs text-slate-500">Brand</label>
+            <input
+              list="inventory-brands"
+              value={newItem.brand}
+              onChange={(event) => setNewItem({ ...newItem, brand: event.target.value })}
+              placeholder="No brand"
+              className="mt-0.5 w-32 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+            />
+            <datalist id="inventory-brands">
+              {brands.map((brand) => (
+                <option key={brand} value={brand} />
+              ))}
+            </datalist>
           </div>
           <div>
             <label className="block text-xs text-slate-500">Category</label>

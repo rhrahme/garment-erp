@@ -10,6 +10,10 @@ export type InventoryItem = {
   name: string;
   /** Free text grouping, e.g. "Buttons", "Zippers", "Thread", "Lining". */
   category: string | null;
+  /** Garment brand the trim carries: "Fouad Rhame", "Gliani", "White label".
+   *  Null = brandless consumable (e.g. laundry hanger). Optional because
+   *  items created before Aug 17 2026 predate the field. */
+  brand?: string | null;
   /** Display unit, e.g. "pcs", "m", "cone", "roll". */
   unit: string;
   quantity_on_hand: number;

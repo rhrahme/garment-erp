@@ -21,6 +21,7 @@ export async function POST(request: Request) {
     id?: string | null;
     name?: string;
     category?: string | null;
+    brand?: string | null;
     unit?: string | null;
     low_stock_threshold?: number | null;
     location?: string | null;
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
         id: body.id ?? null,
         name,
         category: body.category ?? null,
+        brand: body.brand ?? null,
         unit: body.unit ?? null,
         low_stock_threshold:
           body.low_stock_threshold == null ? null : Number(body.low_stock_threshold),
