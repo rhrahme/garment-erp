@@ -7,6 +7,7 @@ import { Camera, LayoutGrid, List, Plus, Search, Table2, Trash2, UserCircle, X }
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { ClientFabricChangeAlerts } from "@/components/clients/ClientFabricChangeAlerts";
 import { ClientPhotosPanel } from "@/components/sales/ClientPhotosPanel";
+import { ClientReadyMadeSamplesPanel } from "@/components/clients/ClientReadyMadeSamplesPanel";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -999,6 +1000,10 @@ export function ClientProfilesEditor() {
             />
           </div>
         )}
+
+        <div className="md:col-span-2">
+          <ClientReadyMadeSamplesPanel clientId={client.id} clientReady={!isNew} />
+        </div>
 
         {canViewClientContact && (
           <>

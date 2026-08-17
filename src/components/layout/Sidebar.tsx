@@ -28,6 +28,7 @@ import {
   FolderArchive,
   Ruler,
   Scissors,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -55,6 +56,7 @@ const navItems = [
   { href: "/brands", label: "Production Brands", icon: Tags },
   { href: "/clients", label: "Clients", icon: UsersRound },
   { href: "/ready-made", label: "Ready-Made", icon: Store },
+  { href: "/marketing", label: "Marketing", icon: Megaphone },
   { href: "/fabric-specification", label: "Fabric Specification", icon: SwatchBook },
   { href: "/pattern", label: "Pattern", icon: Ruler },
   { href: "/inventory", label: "Inventory", icon: Package },

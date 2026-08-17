@@ -24,6 +24,7 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   /** ID badges only -- payroll register `/hr` stays blocked (allowlist, not prefix `/hr`). */
   "/hr/id-badges",
   "/api/clients",
+  "/api/client-samples",
   "/api/custom-fabrics",
   "/api/sales-orders",
   /** Server backup of in-progress order forms (QC/client managers create orders). */
@@ -56,6 +57,8 @@ const TASK_OPERATOR_ROUTE_PREFIXES = [
   "/fabric-specification",
   "/custom-fabrics",
   "/orders",
+  /** Every team can record client ready-made samples (badge-scan receive). */
+  "/clients",
   "/api/fabric-receiving",
   "/api/thread-button-matching",
   "/api/sales-orders",
@@ -65,6 +68,7 @@ const TASK_OPERATOR_ROUTE_PREFIXES = [
   "/api/fabric-search",
   "/api/custom-fabrics",
   "/api/clients",
+  "/api/client-samples",
   ...FABRIC_SWATCH_ROUTE_PREFIXES,
   "/api/auth/session",
   "/api/auth/dev-impersonate",
@@ -81,6 +85,10 @@ const TASK_OPERATOR_BLOCKED_ROUTE_PREFIXES = ["/orders/new", "/fabric-orders"] a
 const STITCH_OPERATOR_ROUTE_PREFIXES = [
   "/stitch",
   "/production/stitch",
+  /** Every team can record client ready-made samples (badge-scan receive). */
+  "/clients",
+  "/api/clients",
+  "/api/client-samples",
   "/api/production/sewing-session",
   "/api/production/work-orders",
   "/api/sales-orders",
@@ -126,6 +134,7 @@ const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   "/api/fabric-search",
   "/api/custom-fabrics",
   "/api/clients",
+  "/api/client-samples",
   "/api/pattern",
   "/api/inventory",
   "/api/shipments",
@@ -171,6 +180,7 @@ const PATTERN_OPERATOR_ROUTE_PREFIXES = [
   "/api/sales-orders",
   "/api/pattern",
   "/api/clients",
+  "/api/client-samples",
   "/api/custom-fabrics",
   "/api/fabric-search",
   "/api/fabric-brands",
@@ -214,6 +224,7 @@ const ACCOUNTING_OPERATOR_ROUTE_PREFIXES = [
   "/api/supplier-contacts",
   "/api/fabric-order-drafts",
   "/api/clients",
+  "/api/client-samples",
   "/api/sales-orders",
   "/api/reference-documents",
   "/api/transporter-invoices",
@@ -252,11 +263,14 @@ const ACCOUNTING_OPERATOR_BLOCKED_ROUTE_PREFIXES = [
 const SALES_OPERATOR_ROUTE_PREFIXES = [
   "/sales",
   "/clients",
+  /** Client-facing lookbooks - sales presents these. */
+  "/marketing",
   "/fabric-specification",
   "/custom-fabrics",
   "/orders",
   "/invoices",
   "/api/clients",
+  "/api/client-samples",
   "/api/custom-fabrics",
   "/api/sales-orders",
   "/api/fabric-search",
@@ -337,6 +351,7 @@ export const TASK_OPERATOR_NAV_HREFS = [
   "/thread-buttons",
   "/orders",
   "/fabric-specification",
+  "/clients",
 ] as const;
 
 /**
@@ -365,11 +380,12 @@ export const PRODUCTION_OPERATOR_NAV_HREFS = [
 ] as const;
 
 /** Sidebar for stitch floor - kiosk + orders board (not full QC `/orders`). */
-export const STITCH_OPERATOR_NAV_HREFS = ["/stitch", "/stitch/orders"] as const;
+export const STITCH_OPERATOR_NAV_HREFS = ["/stitch", "/stitch/orders", "/clients"] as const;
 
 export const SALES_OPERATOR_NAV_HREFS = [
   "/sales",
   "/clients",
+  "/marketing",
   "/fabric-specification",
   "/orders",
   "/invoices",

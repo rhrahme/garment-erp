@@ -35,6 +35,46 @@ export interface ClientProfile {
   name_change_first_name?: string | null;
   name_change_middle_name?: string | null;
   name_change_last_name?: string | null;
+  /**
+   * Ready-made samples the client handed us (his own garment as reference).
+   * Only mutated via /api/client-samples — the bulk PUT /api/clients always
+   * carries these over from the stored client.
+   */
+  ready_made_samples?: ClientReadyMadeSample[] | null;
+}
+
+export interface ClientReadyMadeSampleImage {
+  id: string;
+  filename: string;
+  stored_filename: string;
+  content_type: string;
+  size_bytes: number;
+  uploaded_at: string;
+  uploaded_by: string | null;
+}
+
+/**
+ * A garment the client gave us as a reference sample. The employee who
+ * physically receives it must scan their ID badge; the sample stays flagged
+ * as "give back to the client" until someone marks it returned.
+ */
+export interface ClientReadyMadeSample {
+  id: string;
+  product_type: string | null;
+  brand: string | null;
+  color: string | null;
+  size: string | null;
+  notes: string | null;
+  images: ClientReadyMadeSampleImage[];
+  /** Payroll employee who received the physical sample (badge scan). */
+  received_by_employee_id: string | null;
+  received_by_employee_name: string | null;
+  /** Account that recorded the sample. */
+  added_by: string | null;
+  added_at: string;
+  /** Set when the sample was handed back to the client. */
+  returned_at: string | null;
+  returned_by: string | null;
 }
 
 export interface ClientsFile {

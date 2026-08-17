@@ -151,6 +151,8 @@ function validateClients(
       name_change_first_name: previous?.name_change_first_name ?? null,
       name_change_middle_name: previous?.name_change_middle_name ?? null,
       name_change_last_name: previous?.name_change_last_name ?? null,
+      // Ready-made samples only mutate via /api/client-samples.
+      ready_made_samples: previous?.ready_made_samples ?? null,
     });
   }
 
