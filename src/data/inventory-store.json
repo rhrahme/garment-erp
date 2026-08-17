@@ -23,6 +23,78 @@
       "updated_at": "2026-08-16T10:56:44.744Z",
       "quantity_on_hand": 0,
       "low_stock_threshold": 10
+    },
+    {
+      "id": "inv-1786974668545-q7geh4",
+      "name": "Belt fabric - Fouad Rhame - White",
+      "unit": "cm",
+      "notes": "Waistband lining inside the trouser at belt level.",
+      "category": "Belt fabric",
+      "location": null,
+      "created_at": "2026-08-17T13:51:08.545Z",
+      "updated_at": "2026-08-17T13:51:08.545Z",
+      "quantity_on_hand": 0,
+      "low_stock_threshold": null
+    },
+    {
+      "id": "inv-1786974670414-i02j9t",
+      "name": "Belt fabric - Fouad Rhame - Black",
+      "unit": "cm",
+      "notes": "Waistband lining inside the trouser at belt level.",
+      "category": "Belt fabric",
+      "location": null,
+      "created_at": "2026-08-17T13:51:10.414Z",
+      "updated_at": "2026-08-17T13:51:10.414Z",
+      "quantity_on_hand": 0,
+      "low_stock_threshold": null
+    },
+    {
+      "id": "inv-1786974672111-5v5xhb",
+      "name": "Belt fabric - Gliani - White",
+      "unit": "cm",
+      "notes": "Waistband lining inside the trouser at belt level.",
+      "category": "Belt fabric",
+      "location": null,
+      "created_at": "2026-08-17T13:51:12.111Z",
+      "updated_at": "2026-08-17T13:51:12.111Z",
+      "quantity_on_hand": 0,
+      "low_stock_threshold": null
+    },
+    {
+      "id": "inv-1786974673646-xqirr6",
+      "name": "Belt fabric - Gliani - Black",
+      "unit": "cm",
+      "notes": "Waistband lining inside the trouser at belt level.",
+      "category": "Belt fabric",
+      "location": null,
+      "created_at": "2026-08-17T13:51:13.646Z",
+      "updated_at": "2026-08-17T13:51:13.646Z",
+      "quantity_on_hand": 0,
+      "low_stock_threshold": null
+    },
+    {
+      "id": "inv-1786974675288-g5lrot",
+      "name": "Belt fabric - Plain White (no label)",
+      "unit": "cm",
+      "notes": "Waistband lining inside the trouser at belt level.",
+      "category": "Belt fabric",
+      "location": null,
+      "created_at": "2026-08-17T13:51:15.288Z",
+      "updated_at": "2026-08-17T13:51:15.288Z",
+      "quantity_on_hand": 0,
+      "low_stock_threshold": null
+    },
+    {
+      "id": "inv-1786974676845-nahnot",
+      "name": "Belt fabric - Plain Black (no label)",
+      "unit": "cm",
+      "notes": "Waistband lining inside the trouser at belt level.",
+      "category": "Belt fabric",
+      "location": null,
+      "created_at": "2026-08-17T13:51:16.845Z",
+      "updated_at": "2026-08-17T13:51:16.845Z",
+      "quantity_on_hand": 0,
+      "low_stock_threshold": null
     }
   ],
   "ledger": [],
@@ -131,7 +203,6 @@
       "garment_type": "Shirt+Trouser"
     },
     {
-      "garment_type": "Overshirt",
       "lines": [
         {
           "item_id": "inv-suit-hanger",
@@ -139,10 +210,10 @@
         }
       ],
       "updated_at": "2026-08-17T13:44:48.261Z",
-      "updated_by": "seed:analogy-2026-08-17"
+      "updated_by": "seed:analogy-2026-08-17",
+      "garment_type": "Overshirt"
     },
     {
-      "garment_type": "Short",
       "lines": [
         {
           "item_id": "inv-suit-hanger",
@@ -150,10 +221,10 @@
         }
       ],
       "updated_at": "2026-08-17T13:44:48.261Z",
-      "updated_by": "seed:analogy-2026-08-17"
+      "updated_by": "seed:analogy-2026-08-17",
+      "garment_type": "Short"
     },
     {
-      "garment_type": "Vest",
       "lines": [
         {
           "item_id": "inv-suit-hanger",
@@ -161,10 +232,10 @@
         }
       ],
       "updated_at": "2026-08-17T13:44:48.261Z",
-      "updated_by": "seed:analogy-2026-08-17"
+      "updated_by": "seed:analogy-2026-08-17",
+      "garment_type": "Vest"
     },
     {
-      "garment_type": "Salwar",
       "lines": [
         {
           "item_id": "inv-suit-hanger",
@@ -172,10 +243,10 @@
         }
       ],
       "updated_at": "2026-08-17T13:44:48.261Z",
-      "updated_by": "seed:analogy-2026-08-17"
+      "updated_by": "seed:analogy-2026-08-17",
+      "garment_type": "Salwar"
     },
     {
-      "garment_type": "Dagla",
       "lines": [
         {
           "item_id": "inv-suit-hanger",
@@ -183,10 +254,10 @@
         }
       ],
       "updated_at": "2026-08-17T13:44:48.261Z",
-      "updated_by": "seed:analogy-2026-08-17"
+      "updated_by": "seed:analogy-2026-08-17",
+      "garment_type": "Dagla"
     },
     {
-      "garment_type": "T-shirt",
       "lines": [
         {
           "item_id": "inv-laundry-hanger",
@@ -194,10 +265,10 @@
         }
       ],
       "updated_at": "2026-08-17T13:44:48.261Z",
-      "updated_by": "seed:analogy-2026-08-17"
+      "updated_by": "seed:analogy-2026-08-17",
+      "garment_type": "T-shirt"
     },
     {
-      "garment_type": "House Thobe",
       "lines": [
         {
           "item_id": "inv-laundry-hanger",
@@ -205,10 +276,10 @@
         }
       ],
       "updated_at": "2026-08-17T13:44:48.261Z",
-      "updated_by": "seed:analogy-2026-08-17"
+      "updated_by": "seed:analogy-2026-08-17",
+      "garment_type": "House Thobe"
     },
     {
-      "garment_type": "Hoodie",
       "lines": [
         {
           "item_id": "inv-laundry-hanger",
@@ -216,10 +287,10 @@
         }
       ],
       "updated_at": "2026-08-17T13:44:48.261Z",
-      "updated_by": "seed:analogy-2026-08-17"
+      "updated_by": "seed:analogy-2026-08-17",
+      "garment_type": "Hoodie"
     },
     {
-      "garment_type": "Shirt+Short",
       "lines": [
         {
           "item_id": "inv-laundry-hanger",
@@ -231,10 +302,10 @@
         }
       ],
       "updated_at": "2026-08-17T13:44:48.261Z",
-      "updated_by": "seed:analogy-2026-08-17"
+      "updated_by": "seed:analogy-2026-08-17",
+      "garment_type": "Shirt+Short"
     },
     {
-      "garment_type": "Shirt+Trouser+Short",
       "lines": [
         {
           "item_id": "inv-laundry-hanger",
@@ -246,10 +317,10 @@
         }
       ],
       "updated_at": "2026-08-17T13:44:48.261Z",
-      "updated_by": "seed:analogy-2026-08-17"
+      "updated_by": "seed:analogy-2026-08-17",
+      "garment_type": "Shirt+Trouser+Short"
     },
     {
-      "garment_type": "Thobe+Jacket",
       "lines": [
         {
           "item_id": "inv-laundry-hanger",
@@ -261,8 +332,9 @@
         }
       ],
       "updated_at": "2026-08-17T13:44:48.261Z",
-      "updated_by": "seed:analogy-2026-08-17"
+      "updated_by": "seed:analogy-2026-08-17",
+      "garment_type": "Thobe+Jacket"
     }
   ],
-  "updated_at": "2026-08-17T13:44:48.261Z"
+  "updated_at": "2026-08-17T13:51:16.845Z"
 }
