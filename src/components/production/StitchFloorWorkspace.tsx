@@ -18,7 +18,12 @@ import {
   StitchScannerReadyBadge,
 } from "@/components/production/stitch-scan-capture";
 import { SortableTableHeader } from "@/components/ui/SortableTableHeader";
-import { garmentTypeColorClasses } from "@/lib/production/garment-type-colors";
+import {
+  garmentTypeColorClasses,
+  garmentTypeLegendEntry,
+  normalizeGarmentTypeColorKey,
+  type GarmentTypeColorKey,
+} from "@/lib/production/garment-type-colors";
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
 import {
   SEWING_LIVE_LONG_RUNNING_SEC,
@@ -153,6 +158,23 @@ function formatClock(iso: string | null | undefined): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+type GarmentFilterKey = GarmentTypeColorKey | "unknown";
+
+/** Normalized garment key for filtering (Overshirt piece of a set counts as overshirt). */
+function sessionGarmentKey(row: SewingSession): GarmentFilterKey {
+  return (
+    normalizeGarmentTypeColorKey(sewingSessionArticleLabel(row) || row.garment_type) ?? "unknown"
+  );
+}
+
+function garmentFilterLabel(key: GarmentFilterKey): string {
+  return key === "unknown" ? "Other" : garmentTypeLegendEntry(key).label;
+}
+
+function garmentFilterChip(key: GarmentFilterKey): string {
+  return key === "unknown" ? "bg-slate-100 text-slate-700" : garmentTypeLegendEntry(key).chip;
 }
 
 function sessionSearchBlob(row: SewingSession): string {
@@ -329,6 +351,7 @@ export function StitchFloorWorkspace({
   );
   const [period, setPeriod] = useState<SewingDashboardPeriod>("day");
   const [historyMode, setHistoryMode] = useState<HistoryMode>("sessions");
+  const [garmentFilter, setGarmentFilter] = useState<GarmentFilterKey | null>(null);
   const [data, setData] = useState<DashboardPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -443,6 +466,7 @@ export function StitchFloorWorkspace({
 
   useEffect(() => {
     setExpandedEmployeeId(null);
+    setGarmentFilter(null);
   }, [period]);
 
   useEffect(() => {
@@ -465,12 +489,23 @@ export function StitchFloorWorkspace({
     );
   }, [data?.open_sessions, liveSort, liveClockNow, pauseIntervals]);
 
+  const garmentOptions = useMemo(() => {
+    const counts = new Map<GarmentFilterKey, number>();
+    for (const row of data?.sessions ?? []) {
+      const key = sessionGarmentKey(row);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  }, [data?.sessions]);
+
   const historyRows = useMemo(() => {
-    const rows = data?.sessions ?? [];
+    const rows = (data?.sessions ?? []).filter(
+      (row) => !garmentFilter || sessionGarmentKey(row) === garmentFilter
+    );
     const q = search.trim().toLowerCase();
     const filtered = q ? rows.filter((row) => sessionSearchBlob(row).includes(q)) : rows;
     return applyTableSort(filtered, historySort, compareHistorySessions);
-  }, [data?.sessions, historySort, search]);
+  }, [data?.sessions, historySort, search, garmentFilter]);
 
   const failureRows = useMemo(() => {
     const rows = data?.failed_scans ?? [];
@@ -483,12 +518,77 @@ export function StitchFloorWorkspace({
     const map = new Map<string, SewingSession[]>();
     for (const row of data?.sessions ?? []) {
       if (row.status !== "closed") continue;
+      if (garmentFilter && sessionGarmentKey(row) !== garmentFilter) continue;
       const list = map.get(row.employee_id) ?? [];
       list.push(row);
       map.set(row.employee_id, list);
     }
     return map;
-  }, [data?.sessions]);
+  }, [data?.sessions, garmentFilter]);
+
+  /** Per-employee garment breakdown chips (Overshirt x3, Trouser x2, ...). */
+  const articleCountsByEmployee = useMemo(() => {
+    const map = new Map<string, [string, number][]>();
+    for (const [employeeId, list] of piecesByEmployee) {
+      const counts = new Map<string, number>();
+      for (const piece of list) {
+        const label = sewingSessionArticleLabel(piece) || "Other";
+        counts.set(label, (counts.get(label) ?? 0) + 1);
+      }
+      map.set(
+        employeeId,
+        [...counts.entries()].sort((a, b) => b[1] - a[1])
+      );
+    }
+    return map;
+  }, [piecesByEmployee]);
+
+  /** Server aggregate when unfiltered; recomputed from closed sessions per garment filter. */
+  const performanceRows = useMemo<SewingEmployeeAggregate[]>(() => {
+    if (!data) return [];
+    if (!garmentFilter) return data.completed_by_employee;
+    const byEmployee = new Map<
+      string,
+      SewingEmployeeAggregate & { article_set: Set<string> }
+    >();
+    for (const row of data.sessions) {
+      if (row.status !== "closed") continue;
+      if (sessionGarmentKey(row) !== garmentFilter) continue;
+      const entry = byEmployee.get(row.employee_id) ?? {
+        employee_id: row.employee_id,
+        employee_name: sewingSessionEmployeeDisplayName(row),
+        count: 0,
+        duration_sec: 0,
+        avg_duration_sec: 0,
+        articles: [],
+        article_set: new Set<string>(),
+      };
+      entry.count += 1;
+      entry.duration_sec += row.duration_sec ?? 0;
+      const article = sewingSessionArticleLabel(row);
+      if (article) entry.article_set.add(article);
+      byEmployee.set(row.employee_id, entry);
+    }
+    return [...byEmployee.values()]
+      .map(({ article_set, ...entry }) => ({
+        ...entry,
+        avg_duration_sec: entry.count ? Math.round(entry.duration_sec / entry.count) : 0,
+        articles: [...article_set].sort(),
+      }))
+      .sort(
+        (a, b) => b.count - a.count || a.employee_name.localeCompare(b.employee_name)
+      );
+  }, [data, garmentFilter]);
+
+  const performanceTotals = useMemo(() => {
+    let pieces = 0;
+    let durationSec = 0;
+    for (const row of performanceRows) {
+      pieces += row.count;
+      durationSec += row.duration_sec;
+    }
+    return { pieces, durationSec };
+  }, [performanceRows]);
 
   return (
     <StitchScanCaptureProvider rearmKey={tab}>
@@ -832,23 +932,72 @@ export function StitchFloorWorkspace({
         </div>
       )}
 
+      {(tab === "performance" || (tab === "history" && historyMode === "sessions")) &&
+        garmentOptions.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Garment
+            </span>
+            <button
+              type="button"
+              onClick={() => setGarmentFilter(null)}
+              className={cn(
+                "min-h-[40px] rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors",
+                garmentFilter === null
+                  ? "bg-slate-900 text-white"
+                  : "bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-100"
+              )}
+            >
+              All
+            </button>
+            {garmentOptions.map(([key, count]) => {
+              const active = garmentFilter === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setGarmentFilter(active ? null : key)}
+                  className={cn(
+                    "min-h-[40px] rounded-full px-3.5 py-1.5 text-sm font-semibold transition-shadow",
+                    garmentFilterChip(key),
+                    active
+                      ? "ring-2 ring-slate-900"
+                      : "ring-1 ring-slate-200 opacity-90 hover:opacity-100"
+                  )}
+                >
+                  {garmentFilterLabel(key)}
+                  <span className="ml-1.5 tabular-nums opacity-70">{count}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
       {tab === "performance" && (
         <section className="rounded-xl border border-slate-200 bg-white">
           <div className="border-b border-slate-100 px-5 py-4">
             <h2 className="text-xl font-semibold text-slate-900">Employee performance</h2>
             <p className="mt-1 text-sm text-slate-500">
               Closed sessions only. Pieces, total time, avg per piece.
-              {data ? ` ${data.closed_in_period} pieces in period.` : ""}
+              {garmentFilter
+                ? ` ${garmentFilterLabel(garmentFilter)} only: ${performanceTotals.pieces} pieces, ${formatDuration(performanceTotals.durationSec)} total.`
+                : data
+                  ? ` ${data.closed_in_period} pieces in period.`
+                  : ""}
             </p>
           </div>
           <div className="p-4 sm:p-5">
             {!data ? (
               <p className="text-base text-slate-500">Loading...</p>
-            ) : data.completed_by_employee.length === 0 ? (
-              <p className="text-base text-slate-500">No closed pieces in this period.</p>
+            ) : performanceRows.length === 0 ? (
+              <p className="text-base text-slate-500">
+                {garmentFilter
+                  ? `No closed ${garmentFilterLabel(garmentFilter)} pieces in this period.`
+                  : "No closed pieces in this period."}
+              </p>
             ) : (
               <ul className="space-y-3">
-                {data.completed_by_employee.map((row) => {
+                {performanceRows.map((row) => {
                   const expanded = expandedEmployeeId === row.employee_id;
                   const pieces = piecesByEmployee.get(row.employee_id) ?? [];
                   return (
@@ -865,7 +1014,29 @@ export function StitchFloorWorkspace({
                       >
                         <div className="min-w-0 space-y-1">
                           <p className="text-lg font-semibold text-slate-900">{row.employee_name}</p>
-                          {(row.articles?.length ?? 0) > 0 ? (
+                          {(articleCountsByEmployee.get(row.employee_id)?.length ?? 0) > 0 ? (
+                            <div className="flex flex-wrap gap-1.5">
+                              {articleCountsByEmployee
+                                .get(row.employee_id)!
+                                .map(([article, count]) => {
+                                  const color = garmentTypeColorClasses(article);
+                                  return (
+                                    <span
+                                      key={article}
+                                      className={cn(
+                                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-semibold",
+                                        color.chip
+                                      )}
+                                    >
+                                      {article}
+                                      <span className="ml-1 tabular-nums opacity-70">
+                                        x{count}
+                                      </span>
+                                    </span>
+                                  );
+                                })}
+                            </div>
+                          ) : (row.articles?.length ?? 0) > 0 ? (
                             <p className="text-base font-semibold text-slate-800">
                               {row.articles.join(" / ")}
                             </p>
@@ -979,6 +1150,16 @@ export function StitchFloorWorkspace({
               <div>
                 <h2 className="text-xl font-semibold text-slate-900">
                   {historyMode === "sessions" ? "Session history" : "Failed scans"}
+                  {historyMode === "sessions" && garmentFilter ? (
+                    <span
+                      className={cn(
+                        "ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 align-middle text-sm font-semibold",
+                        garmentFilterChip(garmentFilter)
+                      )}
+                    >
+                      {garmentFilterLabel(garmentFilter)} - {historyRows.length}
+                    </span>
+                  ) : null}
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
                   {historyMode === "sessions"
