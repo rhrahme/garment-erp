@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, Loader2, Plus, Search } from "lucide-react";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import {
   CLIENT_SORT_OPTIONS,
@@ -28,6 +28,10 @@ export interface ClientSearchSelectProps {
   className?: string;
   defaultSort?: ClientSortBy;
   showSort?: boolean;
+  /** Show an inline "add new client" option in the dropdown (requires brandId for the client code). */
+  allowCreate?: boolean;
+  /** Called after an inline create succeeds so the parent can add the client to its list. */
+  onClientCreated?: (client: ClientProfile) => void;
 }
 
 export function ClientSearchSelect({
@@ -40,12 +44,19 @@ export function ClientSearchSelect({
   className,
   defaultSort = "joined-desc",
   showSort = true,
+  allowCreate = false,
+  onClientCreated,
 }: ClientSearchSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 150);
   const [sortBy, setSortBy] = useState<ClientSortBy>(defaultSort);
   const [sortHydrated, setSortHydrated] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newFirstName, setNewFirstName] = useState("");
+  const [newLastName, setNewLastName] = useState("");
+  const [createBusy, setCreateBusy] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const selectedClient = clients.find((client) => client.id === value) ?? null;
@@ -96,6 +107,13 @@ export function ClientSearchSelect({
   }, [brandId]);
 
   useEffect(() => {
+    if (!open) {
+      setCreating(false);
+      setCreateError(null);
+    }
+  }, [open]);
+
+  useEffect(() => {
     if (selectedClient) {
       setQuery(`${selectedClient.code} — ${formatClientDisplayName(selectedClient)}`);
     } else if (!open) {
@@ -105,6 +123,72 @@ export function ClientSearchSelect({
 
   const brand = brandId ? getFactoryBrandById(brandId) : null;
   const blocked = disabled || !brandId;
+  const canCreate = allowCreate && Boolean(brandId);
+
+  function startCreate() {
+    const selectedLabel = selectedClient
+      ? `${selectedClient.code} — ${formatClientDisplayName(selectedClient)}`
+      : null;
+    const seed = selectedLabel && query === selectedLabel ? "" : query;
+    const words = seed.trim().split(/\s+/).filter(Boolean);
+    setNewFirstName(words[0] ?? "");
+    setNewLastName(words.slice(1).join(" "));
+    setCreateError(null);
+    setCreating(true);
+  }
+
+  function cancelCreate() {
+    setCreating(false);
+    setCreateError(null);
+  }
+
+  async function saveNewClient() {
+    const first = newFirstName.trim();
+    const last = newLastName.trim();
+    if (!first || !last) {
+      setCreateError("First and last name are both required.");
+      return;
+    }
+    if (!brandId) return;
+    setCreateBusy(true);
+    setCreateError(null);
+    try {
+      const listRes = await fetch("/api/clients", { cache: "no-store" });
+      if (!listRes.ok) throw new Error("Could not load current clients.");
+      const listData = (await listRes.json()) as { clients: ClientProfile[] };
+      const existingIds = new Set(listData.clients.map((client) => client.id));
+      const saveRes = await fetch("/api/clients", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clients: [
+            ...listData.clients,
+            { id: "", first_name: first, last_name: last, brand_ids: [brandId], is_active: true },
+          ],
+        }),
+      });
+      const saveData = (await saveRes.json()) as { clients?: ClientProfile[]; error?: string };
+      if (!saveRes.ok || !saveData.clients) {
+        throw new Error(saveData.error || "Could not save the new client.");
+      }
+      const created = saveData.clients.find(
+        (client) =>
+          !existingIds.has(client.id) &&
+          client.first_name.toLowerCase() === first.toLowerCase() &&
+          client.last_name.toLowerCase() === last.toLowerCase()
+      );
+      if (!created) throw new Error("Client saved but could not be selected — search for it by name.");
+      onClientCreated?.(created);
+      onChange(created.id);
+      setQuery(`${created.code} — ${formatClientDisplayName(created)}`);
+      setCreating(false);
+      setOpen(false);
+    } catch (error) {
+      setCreateError(error instanceof Error ? error.message : "Could not save the new client.");
+    } finally {
+      setCreateBusy(false);
+    }
+  }
 
   return (
     <div ref={containerRef} className={cn("relative", className)}>
@@ -164,6 +248,60 @@ export function ClientSearchSelect({
 
       {open && !blocked && (
         <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
+          {canCreate && creating && (
+            <div className="space-y-2 border-b border-slate-200 bg-indigo-50/60 p-3">
+              <p className="text-xs font-medium text-indigo-900">New client · {brand?.name}</p>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  value={newFirstName}
+                  onChange={(e) => setNewFirstName(e.target.value)}
+                  placeholder="First name"
+                  className="w-full min-h-[40px] rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  autoFocus
+                />
+                <input
+                  value={newLastName}
+                  onChange={(e) => setNewLastName(e.target.value)}
+                  placeholder="Last name"
+                  className="w-full min-h-[40px] rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                />
+              </div>
+              {createError && <p className="text-xs text-red-600">{createError}</p>}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void saveNewClient()}
+                  disabled={createBusy}
+                  className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+                >
+                  {createBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                  Save new client
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelCreate}
+                  disabled={createBusy}
+                  className="min-h-[40px] rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                A client code is assigned automatically. Phone and other details can be added later on the Clients
+                page.
+              </p>
+            </div>
+          )}
+          {canCreate && !creating && (
+            <button
+              type="button"
+              onClick={startCreate}
+              className="flex w-full min-h-[44px] items-center gap-2 border-b border-slate-200 px-4 py-3 text-left text-sm font-medium text-indigo-700 hover:bg-indigo-50"
+            >
+              <Plus className="h-4 w-4" />
+              {query.trim() ? `Add "${query.trim()}" as a new client` : "Add a new client"}
+            </button>
+          )}
           {filteredClients.length === 0 ? (
             <p className="px-4 py-3 text-sm text-slate-500">
               {query.trim() ? "No clients match your search." : "No clients for this brand."}

@@ -236,6 +236,16 @@ describe("client_manager QC ID badges (not payroll)", () => {
   });
 });
 
+describe("client_manager order draft backups", () => {
+  // Regressed once: QC could open /orders/new but the server draft backup
+  // 403'd ("Forbidden. Retry server backup") because the draft APIs were
+  // missing from the client-manager allowlist.
+  it("QC (client_manager) can back up order form drafts to the server", () => {
+    assert.equal(isClientManagerRouteAllowed("/api/sales-order-drafts"), true);
+    assert.equal(isClientManagerRouteAllowed("/api/fabric-order-drafts"), true);
+  });
+});
+
 describe("quality inspections access (QC + factory manager)", () => {
   it("QC (client_manager) can open the Quality page and its APIs", () => {
     assert.equal(isClientManagerRouteAllowed("/quality"), true);

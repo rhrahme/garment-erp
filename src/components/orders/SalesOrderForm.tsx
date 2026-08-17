@@ -1579,6 +1579,8 @@ export function SalesOrderForm({
               onChange={handleClientChange}
               brandId={productionBrandId}
               className="mt-1"
+              allowCreate
+              onClientCreated={(client) => setClients((prev) => [...prev, client])}
             />
             {selectedClient && (
               <span className="mt-1 block text-xs text-slate-500">
@@ -1769,6 +1771,8 @@ export function SalesOrderForm({
                               onChange={(value) => patchActiveFabricAdd({ clientId: value })}
                               brandId={productionBrandId}
                               className="mt-1"
+                              allowCreate
+                              onClientCreated={(client) => setClients((prev) => [...prev, client])}
                             />
                           </label>
 

@@ -26,6 +26,9 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/api/clients",
   "/api/custom-fabrics",
   "/api/sales-orders",
+  /** Server backup of in-progress order forms (QC/client managers create orders). */
+  "/api/sales-order-drafts",
+  "/api/fabric-order-drafts",
   "/api/fabric-search",
   "/api/fabric-brands",
   "/api/fabric-receiving",
