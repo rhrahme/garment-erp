@@ -106,6 +106,14 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `production.sewing_session_change_requested|approved|rejected`. Approved
   deletes use `allow_session_delete_ids` / `allow_failure_delete_ids` so
   protect-merge cannot resurrect rows. Scan tab stays scan-only.
+- **Stop requests close at request time** (Aug 17 2026): approved "stop"
+  requests set `ended_at` = `requested_at` (`stopRequestEndedAt`), never the
+  admin decision time - approval lag must not inflate elapsed. If the kiosk
+  closes a session while a stop request is still pending, the close honors
+  the requested stop time and auto-resolves the request
+  (`consumePendingStopRequestForSession`), so stale "Session is no longer
+  open" requests never linger on `/approvals`. Do not revert to closing at
+  scan/approval time.
 - **Pattern can open the stitch kiosk** (Aug 9 2026): `pattern_operator` has
   `/stitch` in nav and the same kiosk APIs as stitch@ (sewing-session scan,
   work-order / sales-order reads only). Pause control stays admin-only. Do not

@@ -8,6 +8,7 @@ import {
 } from "@/lib/hr/employee-qr";
 import { normalizeJobFunctions } from "@/lib/hr/job-functions";
 import { safeRecordPatternAlterationPendingFromSession } from "@/lib/production/record-pattern-alteration-pending";
+import { consumePendingStopRequestForSession } from "@/lib/production/sewing-session-change-requests";
 import {
   findPayrollEmployeeByBadgeValue,
   findPayrollEmployeeById,
@@ -441,11 +442,35 @@ async function closeSessionWithBadgeOrPiece(input: {
     source,
   } = input;
   let store = input.store;
-  const endedAt = nowIso(at);
+
+  // A pending admin "stop" request means the floor already asked to stop this
+  // session earlier - closing at the kiosk now must not inflate elapsed time,
+  // so honor the requested stop time and auto-resolve the stale request.
+  let closeAt = at;
+  try {
+    const pendingStop = await consumePendingStopRequestForSession(
+      closingForEmployee.id,
+      `${employee_name} (kiosk scan)`
+    );
+    const requestedMs = Date.parse(pendingStop?.requested_at ?? "");
+    const startedMs = Date.parse(closingForEmployee.started_at);
+    if (
+      Number.isFinite(requestedMs) &&
+      Number.isFinite(startedMs) &&
+      requestedMs >= startedMs &&
+      requestedMs <= at
+    ) {
+      closeAt = requestedMs;
+    }
+  } catch (error) {
+    console.error("Failed to check pending stop request:", closingForEmployee.id, error);
+  }
+
+  const endedAt = nowIso(closeAt);
   const kioskSettingsForDuration = await readStitchKioskSettingsFresh();
   const durationSec = sewingSessionElapsedSecExcludingPauses(
     closingForEmployee.started_at,
-    at,
+    closeAt,
     kioskSettingsForDuration.pause_intervals ?? []
   );
   let stageAdvanced = false;

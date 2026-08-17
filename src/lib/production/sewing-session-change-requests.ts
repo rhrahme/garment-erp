@@ -367,6 +367,54 @@ export function stopRequestEndedAt(
   return now().toISOString();
 }
 
+/**
+ * When a session is closed directly at the kiosk while a "stop" change
+ * request for it is still pending, the request must not linger for admins
+ * ("Session is no longer open; cannot stop"). This resolves the pending
+ * request and hands back its requested_at so the kiosk close can honor the
+ * originally requested stop time instead of inflating elapsed time.
+ */
+export async function consumePendingStopRequestForSession(
+  sessionId: string,
+  closedBy: string
+): Promise<{ requested_at: string | null } | null> {
+  await ensureDocumentsLoaded(["sewing_session_change_requests"]);
+  const store = await readSewingSessionChangeRequestsFresh();
+  const pending = store.requests
+    .filter(
+      (row) =>
+        row.status === "pending" && row.action === "stop" && row.session_id === sessionId
+    )
+    .sort((a, b) => Date.parse(a.requested_at ?? "") - Date.parse(b.requested_at ?? ""));
+  const request = pending[0];
+  if (!request) return null;
+
+  const resolved = await persistRequestDecision(request.id, {
+    status: "approved",
+    decided_by: closedBy,
+    decided_at: new Date().toISOString(),
+    decision_note:
+      "Auto-resolved: session was closed at the kiosk; end time honors the requested stop time.",
+  });
+  if (!resolved) return null;
+
+  try {
+    await notifyRequesterOfAdminDecision({
+      requester: request.requested_by,
+      subject: `Stop request auto-resolved: ${request.session_snapshot?.production_code ?? sessionId}`,
+      lines: [
+        "Your stop request was auto-resolved because the session was closed at the kiosk.",
+        `Piece: ${request.session_snapshot?.production_code ?? sessionId}`,
+        "The session end time honors the time your request was sent.",
+      ],
+    });
+  } catch {
+    /* non-fatal */
+  }
+
+  return { requested_at: request.requested_at ?? null };
+}
+
 async function applyApprovedMutation(
   request: SewingSessionChangeRequest,
   decidedBy: string
