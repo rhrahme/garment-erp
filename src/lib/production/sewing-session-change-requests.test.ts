@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { protectSewingSessionChangeRequestsWrite } from "@/lib/production/protect-sewing-session-change-requests-write";
+import { stopRequestEndedAt } from "@/lib/production/sewing-session-change-requests";
 import { summarizeSewingSessionChangeRequest } from "@/lib/production/sewing-session-change-request-summary";
 import type { SewingSessionChangeRequest } from "@/lib/types/sewing-session-change-requests";
 
@@ -44,6 +45,30 @@ function baseRequest(
     ...partial,
   };
 }
+
+describe("stopRequestEndedAt", () => {
+  const startedAt = "2026-08-16T10:00:00.000Z";
+  const now = () => new Date("2026-08-17T20:00:00.000Z");
+
+  it("closes at the request time, not the admin approval time", () => {
+    assert.equal(
+      stopRequestEndedAt("2026-08-16T14:00:00.000Z", startedAt, now),
+      "2026-08-16T14:00:00.000Z"
+    );
+  });
+
+  it("falls back to now when the request timestamp is missing or invalid", () => {
+    assert.equal(stopRequestEndedAt(null, startedAt, now), now().toISOString());
+    assert.equal(stopRequestEndedAt("not-a-date", startedAt, now), now().toISOString());
+  });
+
+  it("falls back to now when the request predates the session start", () => {
+    assert.equal(
+      stopRequestEndedAt("2026-08-16T09:00:00.000Z", startedAt, now),
+      now().toISOString()
+    );
+  });
+});
 
 describe("summarizeSewingSessionChangeRequest", () => {
   it("labels session deletes with production code", () => {

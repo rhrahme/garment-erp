@@ -348,6 +348,25 @@ export async function cancelSewingSessionChangeRequest(
   return { ok: true, request: next };
 }
 
+/**
+ * Approved "stop" requests close the session at the moment the floor ASKED
+ * to stop, not when the admin got around to approving - approval lag must
+ * never inflate the piece's elapsed time. Falls back to "now" only when the
+ * request timestamp is missing/invalid or earlier than the session start.
+ */
+export function stopRequestEndedAt(
+  requestedAt: string | null | undefined,
+  startedAt: string,
+  now: () => Date = () => new Date()
+): string {
+  const requestedMs = Date.parse(requestedAt ?? "");
+  const startedMs = Date.parse(startedAt);
+  if (Number.isFinite(requestedMs) && Number.isFinite(startedMs) && requestedMs >= startedMs) {
+    return new Date(requestedMs).toISOString();
+  }
+  return now().toISOString();
+}
+
 async function applyApprovedMutation(
   request: SewingSessionChangeRequest,
   decidedBy: string
@@ -426,7 +445,7 @@ async function applyApprovedMutation(
     if (current.status !== "open" && current.status !== "closing") {
       return { ok: false, status: 409, error: "Session is no longer open; cannot stop." };
     }
-    const endedAt = new Date().toISOString();
+    const endedAt = stopRequestEndedAt(request.requested_at, current.started_at);
     const closed: SewingSession = {
       ...current,
       status: "closed",
