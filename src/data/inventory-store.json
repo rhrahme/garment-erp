@@ -2,13 +2,13 @@
   "items": [
     {
       "id": "inv-suit-hanger",
-      "name": "Suit hanger",
+      "name": "Suit hanger - White label (no brand)",
       "unit": "pcs",
       "notes": null,
       "category": "Hangers",
       "location": null,
       "created_at": "2026-08-16T10:56:44.744Z",
-      "updated_at": "2026-08-16T10:56:44.744Z",
+      "updated_at": "2026-08-17T13:57:07.750Z",
       "quantity_on_hand": 0,
       "low_stock_threshold": 10
     },
@@ -95,6 +95,30 @@
       "updated_at": "2026-08-17T13:51:16.845Z",
       "quantity_on_hand": 0,
       "low_stock_threshold": null
+    },
+    {
+      "id": "inv-1786975044737-7yb63f",
+      "name": "Suit hanger - Fouad Rhame",
+      "unit": "pcs",
+      "notes": null,
+      "category": "Hangers",
+      "location": null,
+      "created_at": "2026-08-17T13:57:24.737Z",
+      "updated_at": "2026-08-17T13:57:24.737Z",
+      "quantity_on_hand": 0,
+      "low_stock_threshold": 10
+    },
+    {
+      "id": "inv-1786975046376-euwtoq",
+      "name": "Suit hanger - Gliani",
+      "unit": "pcs",
+      "notes": null,
+      "category": "Hangers",
+      "location": null,
+      "created_at": "2026-08-17T13:57:26.376Z",
+      "updated_at": "2026-08-17T13:57:26.376Z",
+      "quantity_on_hand": 0,
+      "low_stock_threshold": 10
     }
   ],
   "ledger": [],
@@ -336,5 +360,5 @@
       "garment_type": "Thobe+Jacket"
     }
   ],
-  "updated_at": "2026-08-17T13:51:16.845Z"
+  "updated_at": "2026-08-17T13:57:26.376Z"
 }
