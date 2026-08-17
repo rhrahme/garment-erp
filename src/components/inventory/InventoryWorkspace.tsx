@@ -317,7 +317,14 @@ export function InventoryWorkspace({
               const negative = item.quantity_on_hand < 0;
               return (
                 <tr key={item.id} className="border-t border-slate-100">
-                  <td className="px-5 py-2 font-medium text-slate-800">{item.name}</td>
+                  <td className="px-5 py-2 font-medium text-slate-800">
+                    {item.name}
+                    {item.notes?.trim() ? (
+                      <span className="mt-0.5 block text-xs font-normal text-slate-500">
+                        {item.notes}
+                      </span>
+                    ) : null}
+                  </td>
                   <td className="px-3 py-2 text-slate-500">{item.brand?.trim() || "-"}</td>
                   <td className="px-3 py-2 text-slate-500">{item.category ?? "-"}</td>
                   <td

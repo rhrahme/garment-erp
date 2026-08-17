@@ -31,11 +31,11 @@
       "name": "Belt fabric - Fouad Rhame - White",
       "unit": "cm",
       "brand": "Fouad Rhame",
-      "notes": "Waistband lining inside the trouser at belt level.",
+      "notes": "Avg consumption 44 in (~112 cm) per trouser waistband.",
       "category": "Belt fabric",
       "location": null,
       "created_at": "2026-08-17T13:51:08.545Z",
-      "updated_at": "2026-08-17T14:05:01.051Z",
+      "updated_at": "2026-08-17T15:46:37.182Z",
       "quantity_on_hand": 0,
       "low_stock_threshold": null
     },
@@ -44,11 +44,11 @@
       "name": "Belt fabric - Fouad Rhame - Black",
       "unit": "cm",
       "brand": "Fouad Rhame",
-      "notes": "Waistband lining inside the trouser at belt level.",
+      "notes": "Avg consumption 44 in (~112 cm) per trouser waistband.",
       "category": "Belt fabric",
       "location": null,
       "created_at": "2026-08-17T13:51:10.414Z",
-      "updated_at": "2026-08-17T14:05:01.051Z",
+      "updated_at": "2026-08-17T15:46:37.184Z",
       "quantity_on_hand": 0,
       "low_stock_threshold": null
     },
@@ -57,11 +57,11 @@
       "name": "Belt fabric - Gliani - White",
       "unit": "cm",
       "brand": "Gliani",
-      "notes": "Waistband lining inside the trouser at belt level.",
+      "notes": "Avg consumption 44 in (~112 cm) per trouser waistband.",
       "category": "Belt fabric",
       "location": null,
       "created_at": "2026-08-17T13:51:12.111Z",
-      "updated_at": "2026-08-17T14:05:01.051Z",
+      "updated_at": "2026-08-17T15:46:37.184Z",
       "quantity_on_hand": 0,
       "low_stock_threshold": null
     },
@@ -70,11 +70,11 @@
       "name": "Belt fabric - Gliani - Black",
       "unit": "cm",
       "brand": "Gliani",
-      "notes": "Waistband lining inside the trouser at belt level.",
+      "notes": "Avg consumption 44 in (~112 cm) per trouser waistband.",
       "category": "Belt fabric",
       "location": null,
       "created_at": "2026-08-17T13:51:13.646Z",
-      "updated_at": "2026-08-17T14:05:01.051Z",
+      "updated_at": "2026-08-17T15:46:37.184Z",
       "quantity_on_hand": 0,
       "low_stock_threshold": null
     },
@@ -83,11 +83,11 @@
       "name": "Belt fabric - Plain White (no label)",
       "unit": "cm",
       "brand": "White label",
-      "notes": "Waistband lining inside the trouser at belt level.",
+      "notes": "Avg consumption 44 in (~112 cm) per trouser waistband.",
       "category": "Belt fabric",
       "location": null,
       "created_at": "2026-08-17T13:51:15.288Z",
-      "updated_at": "2026-08-17T14:05:01.051Z",
+      "updated_at": "2026-08-17T15:46:37.184Z",
       "quantity_on_hand": 0,
       "low_stock_threshold": null
     },
@@ -96,11 +96,11 @@
       "name": "Belt fabric - Plain Black (no label)",
       "unit": "cm",
       "brand": "White label",
-      "notes": "Waistband lining inside the trouser at belt level.",
+      "notes": "Avg consumption 44 in (~112 cm) per trouser waistband.",
       "category": "Belt fabric",
       "location": null,
       "created_at": "2026-08-17T13:51:16.845Z",
-      "updated_at": "2026-08-17T14:05:01.051Z",
+      "updated_at": "2026-08-17T15:46:37.184Z",
       "quantity_on_hand": 0,
       "low_stock_threshold": null
     },
@@ -482,5 +482,5 @@
       "garment_type": "Thobe+Jacket"
     }
   ],
-  "updated_at": "2026-08-17T14:32:39.032Z"
+  "updated_at": "2026-08-17T15:46:37.184Z"
 }
