@@ -1,4 +1,5 @@
 import { parseAdminEmails } from "@/lib/auth/permissions";
+import { signAdminApprovalsToken } from "@/lib/auth/admin-approvals-token";
 import {
   NAME_CHANGE_EMAIL_TOKEN_TTL_MS,
   signNameChangeEmailToken,
@@ -53,6 +54,9 @@ export async function notifyAdminsOfClientNameChangeRequest(
       "",
       `REJECT - keep the current name:`,
       link("reject"),
+      "",
+      "ALL pending approvals on one page (approve each or all, no login):",
+      `${appUrl}/approvals?token=${signAdminApprovalsToken(recipient, exp)}`,
       "",
       `Or handle it on the dashboard: ${appUrl}/dashboard#client-name-change-requests`,
       "",

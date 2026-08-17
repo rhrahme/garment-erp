@@ -8,6 +8,7 @@ import {
 } from "@/lib/integrations/fabric-order-store";
 import { notifyIntegration } from "@/lib/integrations";
 import { notifyAdminsOfFabricLineDeleteRequest } from "@/lib/integrations/fabric-line-delete-request-alert";
+import { notifyRequesterOfAdminDecision } from "@/lib/integrations/admin-decision-alert";
 import {
   findFabricPoLineForSoFabricLine,
   getFabricPosForSalesOrder,
@@ -181,6 +182,17 @@ export async function clearFabricLineDeleteRequest(
       rejected_by: actor,
       requested_by: line.delete_requested_by ?? null,
     });
+    await notifyRequesterOfAdminDecision({
+      requester: line.delete_requested_by,
+      subject: `ERP: fabric line delete REJECTED (${updatedOrder.so_number} / ${savedLine.fabric_number})`,
+      lines: [
+        "Your fabric line delete request was rejected - the line stays on the order.",
+        "",
+        `- Order: ${updatedOrder.so_number}`,
+        `  Fabric: ${savedLine.fabric_number} (${savedLine.garment_type})`,
+        `  Rejected by: ${actor}`,
+      ],
+    });
   }
 
   return { ok: true, order: updatedOrder, line: savedLine };
@@ -348,6 +360,21 @@ export async function approveFabricLineDelete(
     line_id: removedLine.id,
     removed_by: actor,
     via: "delete_request_approved",
+  });
+
+  await notifyRequesterOfAdminDecision({
+    requester: removedLine.delete_requested_by,
+    subject: `ERP: fabric line delete APPROVED (${updatedOrder.so_number} / ${removedLine.fabric_number})`,
+    lines: [
+      "Your fabric line delete request was approved - the line was removed.",
+      "",
+      `- Order: ${updatedOrder.so_number}`,
+      `  Fabric: ${removedLine.fabric_number} (${removedLine.garment_type})`,
+      `  Approved by: ${actor}`,
+      poLineWasEmailed
+        ? "  NOTE: the supplier PO line was already emailed - follow up with the supplier."
+        : null,
+    ].filter((line): line is string => line !== null),
   });
 
   const articleIndex = current.fabric_lines.findIndex((entry) => entry.id === lineId);

@@ -7,6 +7,7 @@ import { readClients, writeClients } from "@/lib/data/clients";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { notifyIntegration } from "@/lib/integrations";
 import { notifyAdminsOfClientNameChangeRequest } from "@/lib/integrations/client-name-change-alert";
+import { notifyRequesterOfAdminDecision } from "@/lib/integrations/admin-decision-alert";
 import type { ClientProfile } from "@/lib/types/clients";
 
 export type ClientNameChangeRequestSummary = {
@@ -207,6 +208,18 @@ export async function approveClientNameChange(clientId: string, actor: string): 
     last_name: result.client.last_name,
     via: "name_change_approved",
   });
+  await notifyRequesterOfAdminDecision({
+    requester: pendingSummary?.requested_by,
+    subject: `ERP: name change APPROVED (${result.client.code})`,
+    lines: [
+      "Your client name change request was approved.",
+      "",
+      `- Client: ${result.client.code}`,
+      `  Old name: ${pendingSummary?.current_name ?? "-"}`,
+      `  New name: ${formatClientDisplayName(result.client)}`,
+      `  Approved by: ${actor}`,
+    ],
+  });
   return result;
 }
 
@@ -236,6 +249,18 @@ export async function rejectClientNameChange(
       proposed_name: pendingSummary?.proposed_name ?? null,
       requested_by: pendingSummary?.requested_by ?? null,
       rejected_by: actor,
+    });
+    await notifyRequesterOfAdminDecision({
+      requester: pendingSummary?.requested_by,
+      subject: `ERP: name change REJECTED (${result.client.code})`,
+      lines: [
+        "Your client name change request was rejected - the current name stays.",
+        "",
+        `- Client: ${result.client.code}`,
+        `  Name kept: ${formatClientDisplayName(result.client)}`,
+        `  Proposed (not applied): ${pendingSummary?.proposed_name ?? "-"}`,
+        `  Rejected by: ${actor}`,
+      ],
     });
   }
   return result;

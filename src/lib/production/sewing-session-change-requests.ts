@@ -12,6 +12,7 @@ import { setStitchKioskPaused } from "@/lib/data/stitch-kiosk-settings";
 import { findPayrollEmployeeById } from "@/lib/hr/payroll-lookup";
 import { notifyIntegration } from "@/lib/integrations";
 import { notifyAdminsOfSewingSessionChangeRequest } from "@/lib/integrations/sewing-session-change-request-alert";
+import { notifyRequesterOfAdminDecision } from "@/lib/integrations/admin-decision-alert";
 import { summarizeSewingSessionChangeRequest } from "@/lib/production/sewing-session-change-request-summary";
 import type {
   SewingScanFailureChangeSnapshot,
@@ -534,6 +535,17 @@ export async function decideSewingSessionChangeRequest(
     } catch {
       /* non-fatal */
     }
+    await notifyRequesterOfAdminDecision({
+      requester: rejected.requested_by,
+      subject: `ERP: kiosk request REJECTED (${summarizeSewingSessionChangeRequest(rejected).label})`,
+      lines: [
+        "Your stitch kiosk change request was rejected - nothing was changed.",
+        "",
+        `- Request: ${summarizeSewingSessionChangeRequest(rejected).label}`,
+        `  Rejected by: ${decidedBy}`,
+        decisionNote ? `  Note: ${decisionNote}` : null,
+      ].filter((line): line is string => line !== null),
+    });
     return { ok: true, request: rejected };
   }
 
@@ -567,6 +579,19 @@ export async function decideSewingSessionChangeRequest(
   } catch {
     /* non-fatal */
   }
+
+  await notifyRequesterOfAdminDecision({
+    requester: approved.requested_by,
+    subject: `ERP: kiosk request APPROVED (${summarizeSewingSessionChangeRequest(approved).label})`,
+    lines: [
+      "Your stitch kiosk change request was approved and applied.",
+      "",
+      `- Request: ${summarizeSewingSessionChangeRequest(approved).label}`,
+      `  Approved by: ${decidedBy}`,
+      applied.detail ? `  Result: ${applied.detail}` : null,
+      decisionNote ? `  Note: ${decisionNote}` : null,
+    ].filter((line): line is string => line !== null),
+  });
 
   return { ok: true, request: approved, detail: applied.detail };
 }

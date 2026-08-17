@@ -45,6 +45,9 @@ async function updateSessionInner(request: NextRequest) {
     // One-click approve/reject from the admin email - authorized by a signed
     // token in the link, not a session (admin may be on their phone inbox).
     pathname === "/api/clients/name-change-email-action" ||
+    // Token-authorized approvals page + batch API (linked from admin emails).
+    pathname === "/approvals" ||
+    pathname === "/api/admin-approvals" ||
     pathname === "/api/qr";
 
   const impersonatedEmail = resolveDevImpersonationEmail(
@@ -168,6 +171,9 @@ function failClosedOnMiddlewareTimeout(request: NextRequest): NextResponse {
     // One-click approve/reject from the admin email - authorized by a signed
     // token in the link, not a session (admin may be on their phone inbox).
     pathname === "/api/clients/name-change-email-action" ||
+    // Token-authorized approvals page + batch API (linked from admin emails).
+    pathname === "/approvals" ||
+    pathname === "/api/admin-approvals" ||
     pathname === "/api/qr";
 
   if (isAuthPage || isPublicApiRoute || isOpenAuthRoute) {
