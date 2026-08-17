@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  capSessionCloseAtWorkdayEnd,
   isStitchLunchPauseWindow,
   riyadhWallTimeToUtcMs,
   shouldAutoResumeStitchKioskLunch,
@@ -113,4 +114,28 @@ test("pause in lunch window gets auto_resume_at at 16:00", () => {
   );
   assert.equal(stitchLunchAutoResumeAtIsoForPause(morningMs), null);
   assert.equal(stitchLunchAutoResumeAtIsoForPause(afterResumeMs), null);
+});
+
+test("overnight close caps at 22:00 Riyadh of the start day", () => {
+  // Started Sat 16 Aug 11:13 Riyadh (08:13 UTC)
+  const startedMs = Date.parse("2026-08-16T08:13:59.296Z");
+  // 22:00 Riyadh Sat = 19:00 UTC
+  const workdayEndMs = Date.parse("2026-08-16T19:00:00.000Z");
+  // Closed Sun 17 Aug 12:16 Riyadh -> capped to Sat 22:00
+  assert.equal(
+    capSessionCloseAtWorkdayEnd(startedMs, Date.parse("2026-08-17T09:16:33.285Z")),
+    workdayEndMs
+  );
+  // Same-day close before 22:00 stays untouched
+  const sameDayMs = Date.parse("2026-08-16T13:59:49.163Z");
+  assert.equal(capSessionCloseAtWorkdayEnd(startedMs, sameDayMs), sameDayMs);
+  // Start after 22:00 belongs to the next workday - close next morning is
+  // untouched, but a multi-day close still caps at next day 22:00
+  const lateStartMs = Date.parse("2026-08-16T19:30:00.000Z");
+  const nextMorningMs = Date.parse("2026-08-17T05:00:00.000Z");
+  assert.equal(capSessionCloseAtWorkdayEnd(lateStartMs, nextMorningMs), nextMorningMs);
+  assert.equal(
+    capSessionCloseAtWorkdayEnd(lateStartMs, Date.parse("2026-08-19T05:00:00.000Z")),
+    Date.parse("2026-08-17T19:00:00.000Z")
+  );
 });

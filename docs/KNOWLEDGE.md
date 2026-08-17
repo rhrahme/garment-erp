@@ -114,6 +114,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   (`consumePendingStopRequestForSession`), so stale "Session is no longer
   open" requests never linger on `/approvals`. Do not revert to closing at
   scan/approval time.
+- **Workday cap 22:00 Riyadh** (Aug 18 2026): the floor finishes at 10 PM.
+  Kiosk closes cap `ended_at` at 22:00 Riyadh of the session's start day
+  (`capSessionCloseAtWorkdayEnd`; sessions started at/after 22:00 cap at the
+  next day's 22:00), so forgotten overnight sessions can never record 15-97h
+  elapsed again. Historical sessions were bulk-corrected on Aug 18.
 - **Pattern can open the stitch kiosk** (Aug 9 2026): `pattern_operator` has
   `/stitch` in nav and the same kiosk APIs as stitch@ (sewing-session scan,
   work-order / sales-order reads only). Pause control stays admin-only. Do not

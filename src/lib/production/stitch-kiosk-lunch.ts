@@ -111,6 +111,34 @@ export function shouldAutoResumeStitchKioskLunch(input: {
   return nowMs >= stitchLunchResumeAtMs(nowMs);
 }
 
+/** Local hour when the floor finishes for the day (owner: 10 PM Riyadh). */
+export const STITCH_WORKDAY_END_HOUR = 22;
+
+/**
+ * Sessions forgotten open overnight must not record elapsed time past the
+ * end of the workday they started in (floor finishes 22:00 Riyadh). Returns
+ * the capped close instant: closeAtMs itself when the close happens on the
+ * start day (or before 22:00), otherwise 22:00 Riyadh of the start day.
+ */
+export function capSessionCloseAtWorkdayEnd(
+  startedAtMs: number,
+  closeAtMs: number
+): number {
+  if (!Number.isFinite(startedAtMs) || !Number.isFinite(closeAtMs)) return closeAtMs;
+  const start = zonedParts(startedAtMs, STITCH_LUNCH_TIMEZONE);
+  let workdayEndMs = riyadhWallTimeToUtcMs(
+    start.year,
+    start.month,
+    start.day,
+    STITCH_WORKDAY_END_HOUR,
+    0
+  );
+  // A session that started at/after 22:00 belongs to the next workday - cap
+  // there instead of zeroing the session out.
+  if (startedAtMs >= workdayEndMs) workdayEndMs += 24 * 3600_000;
+  return Math.min(closeAtMs, workdayEndMs);
+}
+
 /** When starting a pause, set auto_resume_at for lunch-window pauses. */
 export function stitchLunchAutoResumeAtIsoForPause(
   nowMs: number = Date.now()

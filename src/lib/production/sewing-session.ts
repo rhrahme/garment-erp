@@ -9,6 +9,7 @@ import {
 import { normalizeJobFunctions } from "@/lib/hr/job-functions";
 import { safeRecordPatternAlterationPendingFromSession } from "@/lib/production/record-pattern-alteration-pending";
 import { consumePendingStopRequestForSession } from "@/lib/production/sewing-session-change-requests";
+import { capSessionCloseAtWorkdayEnd } from "@/lib/production/stitch-kiosk-lunch";
 import {
   findPayrollEmployeeByBadgeValue,
   findPayrollEmployeeById,
@@ -465,6 +466,10 @@ async function closeSessionWithBadgeOrPiece(input: {
   } catch (error) {
     console.error("Failed to check pending stop request:", closingForEmployee.id, error);
   }
+
+  // Forgotten overnight sessions: the floor finishes at 22:00 Riyadh, so a
+  // close on a later day caps at 22:00 of the day the session started.
+  closeAt = capSessionCloseAtWorkdayEnd(Date.parse(closingForEmployee.started_at), closeAt);
 
   const endedAt = nowIso(closeAt);
   const kioskSettingsForDuration = await readStitchKioskSettingsFresh();
