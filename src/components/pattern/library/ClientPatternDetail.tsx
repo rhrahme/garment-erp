@@ -48,7 +48,7 @@ import {
 } from "@/lib/pattern-library/cutting-completeness";
 import {
   defaultMeasurementTemplateMode,
-  filterTrialSheetPointsForPiece,
+  filterTrialSheetPointsForPieceView,
   garmentIsMeasurementSet,
   garmentOffersReducedMeasurementTemplate,
   measurementPieceTokensForGarment,
@@ -82,6 +82,7 @@ import {
   removePointFromAllVersions,
   renamePointOnAllVersions,
   sampleValueForPoint,
+  slugifyPointId,
   trialColumnValue,
   trialSheetPoints,
   trialSheetStatusLabel,
@@ -315,8 +316,8 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
     const all = trialSheetPoints(pattern);
     if (!isSetGarment) return all;
     if (!sheetPiece) return [];
-    return filterTrialSheetPointsForPiece(all, sheetPiece, dictionary);
-  }, [pattern, isSetGarment, sheetPiece, dictionary]);
+    return filterTrialSheetPointsForPieceView(all, sheetPiece, setGarmentPieces, dictionary);
+  }, [pattern, isSetGarment, sheetPiece, setGarmentPieces, dictionary]);
 
   const visibleTrialPointIds = useMemo(
     () => visibleTrialPoints.map((point) => point.point_id),
@@ -327,8 +328,13 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
     if (!version) return [];
     if (!isSetGarment) return version.measurements;
     if (!sheetPiece) return [];
-    return filterTrialSheetPointsForPiece(version.measurements, sheetPiece, dictionary);
-  }, [version, isSetGarment, sheetPiece, dictionary]);
+    return filterTrialSheetPointsForPieceView(
+      version.measurements,
+      sheetPiece,
+      setGarmentPieces,
+      dictionary
+    );
+  }, [version, isSetGarment, sheetPiece, setGarmentPieces, dictionary]);
 
   function mutatePattern(updater: (draft: ClientPattern) => ClientPattern, header = false) {
     setPattern((current) => (current ? updater(current) : current));
@@ -361,6 +367,23 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
     const next = addPointToAllVersions(pattern, newPointName);
     if (!next) return;
     mutatePattern(() => next);
+    // Custom points on set garments land on the FIRST piece view (same rule
+    // as the stitcher A4 print). Jump there so the new row is visible right
+    // away instead of looking like the add silently failed.
+    if (isSetGarment && setGarmentPieces.length > 0) {
+      const newPointId = slugifyPointId(newPointName.trim());
+      const currentView = sheetPiece
+        ? filterTrialSheetPointsForPieceView(
+            trialSheetPoints(next),
+            sheetPiece,
+            setGarmentPieces,
+            dictionary
+          )
+        : [];
+      if (!currentView.some((point) => point.point_id === newPointId)) {
+        setSheetPiece(setGarmentPieces[0]!);
+      }
+    }
     setNewPointName("");
   }
 

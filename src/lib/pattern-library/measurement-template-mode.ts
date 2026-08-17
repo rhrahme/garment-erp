@@ -249,6 +249,71 @@ export function filterTrialSheetPointsForPiece<
   return points.filter((point) => pointMatchesStitcherPiece(point, trimmed, allow));
 }
 
+/**
+ * Rows on a set-garment sheet that no piece owns and that are not dictionary
+ * points tagged to OTHER garments - i.e. Pattern-added custom points (and
+ * legacy untagged dictionary entries). These are shown/printed on the FIRST
+ * piece so they are never lost (same rule as expand-cutter-print-pages).
+ */
+export function trialSheetOrphanRows<
+  T extends { point_id: string; name?: string | null },
+>(
+  points: T[],
+  pieceNames: string[],
+  dictionary: DictionaryPointRef[]
+): T[] {
+  const ownedIds = new Set<string>();
+  const ownedNames = new Set<string>();
+  for (const piece of pieceNames) {
+    const allow = stitcherPieceAllowList(piece, dictionary);
+    for (const id of allow.ids) ownedIds.add(id);
+    for (const name of allow.names) ownedNames.add(name);
+    for (const point of points) {
+      if (pointMatchesStitcherPiece(point, piece, allow)) {
+        ownedIds.add(point.point_id);
+        const label = point.name?.trim().toLowerCase();
+        if (label) ownedNames.add(label);
+      }
+    }
+  }
+  const otherGarmentIds = new Set(
+    dictionary
+      .filter((point) => (point.garment_types ?? []).length > 0)
+      .map((point) => point.id)
+  );
+  return points.filter((row) => {
+    if (!row.point_id) return false;
+    if (measurementPointExclusivePiece(row)) return false;
+    const label = row.name?.trim().toLowerCase() ?? "";
+    if (ownedIds.has(row.point_id) || (label && ownedNames.has(label))) return false;
+    if (otherGarmentIds.has(row.point_id)) return false;
+    return true;
+  });
+}
+
+/**
+ * Screen piece view for set garments: the piece's own rows, plus - on the
+ * FIRST piece only - orphan custom rows, mirroring the stitcher A4 print.
+ * Without this, "Add point" on a set garment looked broken: the new custom
+ * row was saved but no piece view displayed it.
+ */
+export function filterTrialSheetPointsForPieceView<
+  T extends { point_id: string; name?: string | null },
+>(
+  points: T[],
+  pieceName: string,
+  pieceNames: string[],
+  dictionary: DictionaryPointRef[]
+): T[] {
+  const matched = filterTrialSheetPointsForPiece(points, pieceName, dictionary);
+  const first = pieceNames[0]?.trim().toLowerCase() ?? "";
+  if (!first || pieceName.trim().toLowerCase() !== first) return matched;
+  const orphans = trialSheetOrphanRows(points, pieceNames, dictionary);
+  if (orphans.length === 0) return matched;
+  const keep = new Set([...matched, ...orphans].map((row) => row.point_id));
+  return points.filter((row) => keep.has(row.point_id));
+}
+
 export type TrialSheetPieceSection<
   T extends { point_id: string; name?: string | null } = {
     point_id: string;

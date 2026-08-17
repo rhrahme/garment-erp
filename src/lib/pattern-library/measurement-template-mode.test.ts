@@ -7,7 +7,9 @@ import {
   defaultMeasurementTemplateMode,
   garmentOffersReducedMeasurementTemplate,
   filterTrialSheetPointsForPiece,
+  filterTrialSheetPointsForPieceView,
   garmentIsMeasurementSet,
+  trialSheetOrphanRows,
   groupTrialSheetPointsByPiece,
   mergeTemplateMeasurements,
   parseMeasurementTemplateMode,
@@ -205,6 +207,53 @@ test("set garments need piece select; filter shows one piece sheet", () => {
   assert.ok(!trouser.some((p) => p.point_id === "1-2-hem-width"));
   assert.ok(!overshirt.some((p) => p.point_id === "front-rise"));
   assert.deepEqual(filterTrialSheetPointsForPiece(points, "", dictionary), []);
+});
+
+test("custom Add point rows show on the FIRST piece view of a set garment", () => {
+  // Regression: Pattern clicked "+ Add point" (e.g. TOTAL SHOULDER) on an
+  // Overshirt+Trouser sheet and the row vanished - saved fine, but no piece
+  // view displayed it, so the add looked broken.
+  const pieces = ["Overshirt", "Trouser"];
+  const points = [
+    { point_id: "1-2-chest", name: "1/2 Chest" },
+    { point_id: "front-rise", name: "Front Rise" },
+    { point_id: "total-shoulder", name: "TOTAL SHOULDER" }, // custom, not in dictionary
+    { point_id: "chest", name: "Chest" }, // dictionary point tagged to Jacket only
+  ];
+
+  const orphans = trialSheetOrphanRows(points, pieces, dictionary);
+  assert.deepEqual(
+    orphans.map((p) => p.point_id),
+    ["total-shoulder"],
+    "only the custom point is an orphan - other-garment dictionary rows are not"
+  );
+
+  const overshirtView = filterTrialSheetPointsForPieceView(
+    points,
+    "Overshirt",
+    pieces,
+    dictionary
+  );
+  assert.ok(
+    overshirtView.some((p) => p.point_id === "total-shoulder"),
+    "custom point is visible on the first piece view"
+  );
+  assert.ok(
+    !overshirtView.some((p) => p.point_id === "chest"),
+    "Jacket-tagged dictionary point stays hidden"
+  );
+
+  const trouserView = filterTrialSheetPointsForPieceView(
+    points,
+    "Trouser",
+    pieces,
+    dictionary
+  );
+  assert.ok(
+    !trouserView.some((p) => p.point_id === "total-shoulder"),
+    "custom point does not duplicate onto later pieces (matches the A4 print)"
+  );
+  assert.ok(trouserView.some((p) => p.point_id === "front-rise"));
 });
 
 test("1/2 Hem Width (top hem) stays off Trouser; legacy Bottom Width rows stay on it", () => {

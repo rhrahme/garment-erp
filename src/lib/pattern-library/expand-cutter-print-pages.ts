@@ -1,8 +1,7 @@
 import { buildCutNestPreview } from "@/lib/pattern-library/cut-nest-preview";
 import {
   filterTrialSheetPointsForPiece,
-  measurementPointExclusivePiece,
-  stitcherPieceAllowList,
+  trialSheetOrphanRows,
 } from "@/lib/pattern-library/measurement-template-mode";
 import {
   getGarmentPieces,
@@ -146,42 +145,21 @@ export function splitArticleIntoStitcherPiecePages(
     sticker,
     rows: filterTrialSheetPointsForPiece(measurements, sticker.piece_name, dictionary),
   }));
-  const ownedIds = new Set<string>();
-  const ownedNames = new Set<string>();
-  for (const entry of matchedBySticker) {
-    for (const row of entry.rows) {
-      ownedIds.add(row.point_id);
-      const label = row.name?.trim().toLowerCase();
-      if (label) ownedNames.add(label);
-    }
-  }
-  // Also treat allow-list coverage as owned so true empty allow pieces still work.
-  for (const sticker of toSplit) {
-    const allow = stitcherPieceAllowList(sticker.piece_name, dictionary);
-    for (const id of allow.ids) ownedIds.add(id);
-    for (const name of allow.names) ownedNames.add(name);
-  }
   // Orphan rows print on the first piece A4 so a pattern-added CUSTOM point is
   // never lost. Dictionary points tagged to OTHER garments (e.g. Shirt SS
   // rows sitting on an OT sheet) are not orphans - the screen piece view
   // hides them and the print must match (regressed on FR-0626-0037: 8 shirt
-  // rows printed under the Overshirt A4). Untagged dictionary entries stay
-  // orphan-eligible like true custom points.
-  const otherGarmentIds = new Set(
+  // rows printed under the Overshirt A4). Shared logic with the screen piece
+  // view lives in trialSheetOrphanRows so the two can never diverge.
+  const orphanRows = trialSheetOrphanRows(
+    measurements,
+    toSplit.map((sticker) => sticker.piece_name),
     dictionary
-      .filter((point) => (point.garment_types ?? []).length > 0)
-      .map((point) => point.id)
   );
-  const orphanIds: string[] = [];
-  const orphanNames: string[] = [];
-  for (const row of measurements) {
-    const label = row.name?.trim().toLowerCase() ?? "";
-    if (measurementPointExclusivePiece(row)) continue;
-    if (ownedIds.has(row.point_id) || (label && ownedNames.has(label))) continue;
-    if (otherGarmentIds.has(row.point_id)) continue;
-    if (row.point_id) orphanIds.push(row.point_id);
-    if (label) orphanNames.push(label);
-  }
+  const orphanIds = orphanRows.map((row) => row.point_id);
+  const orphanNames = orphanRows
+    .map((row) => row.name?.trim().toLowerCase() ?? "")
+    .filter(Boolean);
 
   return matchedBySticker.map((entry, index) => {
     const ids = new Set(entry.rows.map((row) => row.point_id));
