@@ -1,4 +1,5 @@
 {
+  "updated_at": "2026-08-17T15:52:51.388Z",
   "clients": [
     {
       "id": "new-1785317592212",
@@ -1172,10 +1173,15 @@
       "middle_name": null,
       "payment_terms": null,
       "contact_person": null,
+      "name_change_last_name": null,
       "referred_by_last_name": null,
+      "name_change_first_name": null,
       "referred_by_first_name": null,
       "client_reference_prefix": null,
-      "referred_by_middle_name": null
+      "name_change_middle_name": null,
+      "referred_by_middle_name": null,
+      "name_change_requested_at": null,
+      "name_change_requested_by": null
     },
     {
       "id": "cu-mazen-al-zahrani-fouad-rahme",
@@ -1877,6 +1883,5 @@
       "client_reference_prefix": null,
       "referred_by_middle_name": null
     }
-  ],
-  "updated_at": "2026-07-29T11:35:37.252Z"
+  ]
 }

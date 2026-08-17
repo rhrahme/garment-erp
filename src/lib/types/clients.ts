@@ -25,6 +25,16 @@ export interface ClientProfile {
   is_active: boolean;
   /** Person client vs ready-made retail brand account (Massimo Dutti, Suit Supply, …) */
   client_kind?: "person" | "retail_brand";
+  /**
+   * Pending name-change request (QC/non-admins propose, admin approves on the
+   * dashboard). Only mutated via the name-change-request endpoints — the bulk
+   * PUT /api/clients always carries these over from the stored client.
+   */
+  name_change_requested_at?: string | null;
+  name_change_requested_by?: string | null;
+  name_change_first_name?: string | null;
+  name_change_middle_name?: string | null;
+  name_change_last_name?: string | null;
 }
 
 export interface ClientsFile {

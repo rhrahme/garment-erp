@@ -144,6 +144,13 @@ function validateClients(
       notes: normalizeText(row.notes),
       is_active: row.is_active !== false,
       client_kind: previous?.client_kind ?? (row.client_kind === "retail_brand" ? "retail_brand" : "person"),
+      // Pending name-change requests are only mutated via the dedicated
+      // endpoints - bulk saves always carry over the stored request.
+      name_change_requested_at: previous?.name_change_requested_at ?? null,
+      name_change_requested_by: previous?.name_change_requested_by ?? null,
+      name_change_first_name: previous?.name_change_first_name ?? null,
+      name_change_middle_name: previous?.name_change_middle_name ?? null,
+      name_change_last_name: previous?.name_change_last_name ?? null,
     });
   }
 

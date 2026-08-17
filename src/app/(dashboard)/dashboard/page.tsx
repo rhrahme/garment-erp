@@ -11,7 +11,9 @@ import {
   Camera,
   Trash2,
   Printer,
+  UserPen,
 } from "lucide-react";
+import { ClientNameChangeRequestsPanel } from "@/components/dashboard/ClientNameChangeRequestsPanel";
 import { FabricChangeAlertsPanel } from "@/components/dashboard/FabricChangeAlertsPanel";
 import { FabricLineDeleteRequestsPanel } from "@/components/dashboard/FabricLineDeleteRequestsPanel";
 import { SewingSessionChangeRequestsPanel } from "@/components/dashboard/SewingSessionChangeRequestsPanel";
@@ -36,6 +38,7 @@ import { countPendingAwbFabricOrders } from "@/lib/integrations/pending-awb";
 import { countUnacknowledgedGarmentTypeChanges } from "@/lib/data/garment-type-changes";
 import { countUnacknowledgedThreadButtonPhotos } from "@/lib/production/thread-button-matching";
 import { fabricChangeAlertRoleFromSession } from "@/lib/sales-orders/fabric-change-alert-role";
+import { listPendingClientNameChangeRequests } from "@/lib/clients/name-change-requests";
 import { countPendingFabricLineDeleteRequests } from "@/lib/sales-orders/fabric-line-delete-requests";
 import { getTodaysFabricSummary } from "@/lib/sales-orders/todays-fabric";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
@@ -53,6 +56,7 @@ export default async function DashboardPage() {
     "garment_type_changes",
     "fabric_change_alerts",
     "thread_button_matches",
+    "clients",
   ]);
 
   const [stats, workOrders, shipments, inventory] = await Promise.all([
@@ -74,6 +78,9 @@ export default async function DashboardPage() {
     : 0;
   const pendingFabricLineDeleteRequests = session.isAdmin
     ? countPendingFabricLineDeleteRequests()
+    : 0;
+  const pendingClientNameChanges = session.isAdmin
+    ? listPendingClientNameChangeRequests().length
     : 0;
   const fabricChangeRole = fabricChangeAlertRoleFromSession(session);
   const outstandingFabricChanges = fabricChangeRole
@@ -159,6 +166,20 @@ export default async function DashboardPage() {
             />
           </a>
         )}
+        {session.isAdmin && pendingClientNameChanges > 0 && (
+          <a
+            href="#client-name-change-requests"
+            className="block transition-opacity hover:opacity-90"
+          >
+            <StatCard
+              label="Client name changes"
+              value={pendingClientNameChanges}
+              subtext="Renames QC asked an admin to approve"
+              icon={<UserPen className="h-5 w-5" />}
+              accent="bg-amber-50 text-amber-700"
+            />
+          </a>
+        )}
         {outstandingFabricChanges > 0 && (
           <a href="#fabric-change-alerts" className="block transition-opacity hover:opacity-90">
             <StatCard
@@ -176,6 +197,7 @@ export default async function DashboardPage() {
         <TodaysFabricPanel initialSummary={todaysFabricSummary} />
       )}
 
+      {session.isAdmin ? <ClientNameChangeRequestsPanel /> : null}
       {session.isAdmin ? <FabricLineDeleteRequestsPanel /> : null}
       {session.isAdmin ? <SewingSessionChangeRequestsPanel /> : null}
       <FabricChangeAlertsPanel />
