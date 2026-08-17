@@ -1,34 +1,33 @@
 {
-  "updated_at": "2026-08-16T10:56:44.744Z",
   "items": [
     {
       "id": "inv-suit-hanger",
       "name": "Suit hanger",
-      "category": "Hangers",
       "unit": "pcs",
-      "quantity_on_hand": 0,
-      "low_stock_threshold": 10,
-      "location": null,
       "notes": null,
+      "category": "Hangers",
+      "location": null,
       "created_at": "2026-08-16T10:56:44.744Z",
-      "updated_at": "2026-08-16T10:56:44.744Z"
+      "updated_at": "2026-08-16T10:56:44.744Z",
+      "quantity_on_hand": 0,
+      "low_stock_threshold": 10
     },
     {
       "id": "inv-laundry-hanger",
       "name": "Laundry hanger",
-      "category": "Hangers",
       "unit": "pcs",
-      "quantity_on_hand": 0,
-      "low_stock_threshold": 10,
-      "location": null,
       "notes": null,
+      "category": "Hangers",
+      "location": null,
       "created_at": "2026-08-16T10:56:44.744Z",
-      "updated_at": "2026-08-16T10:56:44.744Z"
+      "updated_at": "2026-08-16T10:56:44.744Z",
+      "quantity_on_hand": 0,
+      "low_stock_threshold": 10
     }
   ],
+  "ledger": [],
   "recipes": [
     {
-      "garment_type": "Suit",
       "lines": [
         {
           "item_id": "inv-suit-hanger",
@@ -36,10 +35,10 @@
         }
       ],
       "updated_at": "2026-08-16T10:56:44.744Z",
-      "updated_by": "seed:owner-ask-2026-08-16"
+      "updated_by": "seed:owner-ask-2026-08-16",
+      "garment_type": "Suit"
     },
     {
-      "garment_type": "Suit+Vest",
       "lines": [
         {
           "item_id": "inv-suit-hanger",
@@ -47,10 +46,10 @@
         }
       ],
       "updated_at": "2026-08-16T10:56:44.744Z",
-      "updated_by": "seed:owner-ask-2026-08-16"
+      "updated_by": "seed:owner-ask-2026-08-16",
+      "garment_type": "Suit+Vest"
     },
     {
-      "garment_type": "Overcoat",
       "lines": [
         {
           "item_id": "inv-suit-hanger",
@@ -58,10 +57,10 @@
         }
       ],
       "updated_at": "2026-08-16T10:56:44.744Z",
-      "updated_by": "seed:owner-ask-2026-08-16"
+      "updated_by": "seed:owner-ask-2026-08-16",
+      "garment_type": "Overcoat"
     },
     {
-      "garment_type": "Trouser",
       "lines": [
         {
           "item_id": "inv-suit-hanger",
@@ -69,10 +68,10 @@
         }
       ],
       "updated_at": "2026-08-16T10:56:44.744Z",
-      "updated_by": "seed:owner-ask-2026-08-16"
+      "updated_by": "seed:owner-ask-2026-08-16",
+      "garment_type": "Trouser"
     },
     {
-      "garment_type": "Jacket",
       "lines": [
         {
           "item_id": "inv-suit-hanger",
@@ -80,10 +79,10 @@
         }
       ],
       "updated_at": "2026-08-16T10:56:44.744Z",
-      "updated_by": "seed:owner-ask-2026-08-16"
+      "updated_by": "seed:owner-ask-2026-08-16",
+      "garment_type": "Jacket"
     },
     {
-      "garment_type": "Overshirt+Trouser",
       "lines": [
         {
           "item_id": "inv-suit-hanger",
@@ -91,10 +90,10 @@
         }
       ],
       "updated_at": "2026-08-16T10:56:44.744Z",
-      "updated_by": "seed:owner-ask-2026-08-16"
+      "updated_by": "seed:owner-ask-2026-08-16",
+      "garment_type": "Overshirt+Trouser"
     },
     {
-      "garment_type": "Shirt LS",
       "lines": [
         {
           "item_id": "inv-laundry-hanger",
@@ -102,10 +101,10 @@
         }
       ],
       "updated_at": "2026-08-16T10:56:44.744Z",
-      "updated_by": "seed:owner-ask-2026-08-16"
+      "updated_by": "seed:owner-ask-2026-08-16",
+      "garment_type": "Shirt LS"
     },
     {
-      "garment_type": "Shirt SS",
       "lines": [
         {
           "item_id": "inv-laundry-hanger",
@@ -113,10 +112,10 @@
         }
       ],
       "updated_at": "2026-08-16T10:56:44.744Z",
-      "updated_by": "seed:owner-ask-2026-08-16"
+      "updated_by": "seed:owner-ask-2026-08-16",
+      "garment_type": "Shirt SS"
     },
     {
-      "garment_type": "Shirt+Trouser",
       "lines": [
         {
           "item_id": "inv-laundry-hanger",
@@ -128,8 +127,142 @@
         }
       ],
       "updated_at": "2026-08-16T10:56:44.744Z",
-      "updated_by": "seed:owner-ask-2026-08-16"
+      "updated_by": "seed:owner-ask-2026-08-16",
+      "garment_type": "Shirt+Trouser"
+    },
+    {
+      "garment_type": "Overshirt",
+      "lines": [
+        {
+          "item_id": "inv-suit-hanger",
+          "quantity_per_garment": 1
+        }
+      ],
+      "updated_at": "2026-08-17T13:44:48.261Z",
+      "updated_by": "seed:analogy-2026-08-17"
+    },
+    {
+      "garment_type": "Short",
+      "lines": [
+        {
+          "item_id": "inv-suit-hanger",
+          "quantity_per_garment": 1
+        }
+      ],
+      "updated_at": "2026-08-17T13:44:48.261Z",
+      "updated_by": "seed:analogy-2026-08-17"
+    },
+    {
+      "garment_type": "Vest",
+      "lines": [
+        {
+          "item_id": "inv-suit-hanger",
+          "quantity_per_garment": 1
+        }
+      ],
+      "updated_at": "2026-08-17T13:44:48.261Z",
+      "updated_by": "seed:analogy-2026-08-17"
+    },
+    {
+      "garment_type": "Salwar",
+      "lines": [
+        {
+          "item_id": "inv-suit-hanger",
+          "quantity_per_garment": 1
+        }
+      ],
+      "updated_at": "2026-08-17T13:44:48.261Z",
+      "updated_by": "seed:analogy-2026-08-17"
+    },
+    {
+      "garment_type": "Dagla",
+      "lines": [
+        {
+          "item_id": "inv-suit-hanger",
+          "quantity_per_garment": 1
+        }
+      ],
+      "updated_at": "2026-08-17T13:44:48.261Z",
+      "updated_by": "seed:analogy-2026-08-17"
+    },
+    {
+      "garment_type": "T-shirt",
+      "lines": [
+        {
+          "item_id": "inv-laundry-hanger",
+          "quantity_per_garment": 1
+        }
+      ],
+      "updated_at": "2026-08-17T13:44:48.261Z",
+      "updated_by": "seed:analogy-2026-08-17"
+    },
+    {
+      "garment_type": "House Thobe",
+      "lines": [
+        {
+          "item_id": "inv-laundry-hanger",
+          "quantity_per_garment": 1
+        }
+      ],
+      "updated_at": "2026-08-17T13:44:48.261Z",
+      "updated_by": "seed:analogy-2026-08-17"
+    },
+    {
+      "garment_type": "Hoodie",
+      "lines": [
+        {
+          "item_id": "inv-laundry-hanger",
+          "quantity_per_garment": 1
+        }
+      ],
+      "updated_at": "2026-08-17T13:44:48.261Z",
+      "updated_by": "seed:analogy-2026-08-17"
+    },
+    {
+      "garment_type": "Shirt+Short",
+      "lines": [
+        {
+          "item_id": "inv-laundry-hanger",
+          "quantity_per_garment": 1
+        },
+        {
+          "item_id": "inv-suit-hanger",
+          "quantity_per_garment": 1
+        }
+      ],
+      "updated_at": "2026-08-17T13:44:48.261Z",
+      "updated_by": "seed:analogy-2026-08-17"
+    },
+    {
+      "garment_type": "Shirt+Trouser+Short",
+      "lines": [
+        {
+          "item_id": "inv-laundry-hanger",
+          "quantity_per_garment": 1
+        },
+        {
+          "item_id": "inv-suit-hanger",
+          "quantity_per_garment": 2
+        }
+      ],
+      "updated_at": "2026-08-17T13:44:48.261Z",
+      "updated_by": "seed:analogy-2026-08-17"
+    },
+    {
+      "garment_type": "Thobe+Jacket",
+      "lines": [
+        {
+          "item_id": "inv-laundry-hanger",
+          "quantity_per_garment": 1
+        },
+        {
+          "item_id": "inv-suit-hanger",
+          "quantity_per_garment": 1
+        }
+      ],
+      "updated_at": "2026-08-17T13:44:48.261Z",
+      "updated_by": "seed:analogy-2026-08-17"
     }
   ],
-  "ledger": []
+  "updated_at": "2026-08-17T13:44:48.261Z"
 }
