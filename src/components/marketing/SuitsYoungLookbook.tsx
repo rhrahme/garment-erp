@@ -29,6 +29,7 @@ const PRINT_CSS = `
 .lookbook .lb-left { width: 58%; }
 .lookbook .lb-right { width: 42%; }
 .lookbook .lb-swatch { width: 100%; height: 96mm; object-fit: cover; border-radius: 3pt; border: 1pt solid #d8dde3; display: block; }
+.lookbook .lb-swatch-note { font-size: 8.5pt; color: #7a838e; margin-top: 1.5mm; font-style: italic; }
 .lookbook .lb-swatch-pending {
   width: 100%; height: 96mm; border-radius: 3pt; border: 1pt dashed #b6bec7;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -133,12 +134,17 @@ export function SuitsYoungLookbook({ showPrintButton }: { showPrintButton?: bool
           <div className="lb-cols">
             <div className="lb-left">
               {suit.fabric.image_url ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  className="lb-swatch"
-                  src={suit.fabric.image_url}
-                  alt={`${suit.fabric.supplier} ${suit.fabric.article} swatch`}
-                />
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    className="lb-swatch"
+                    src={suit.fabric.image_url}
+                    alt={`${suit.fabric.supplier} ${suit.fabric.article} swatch`}
+                  />
+                  {suit.fabric.image_note ? (
+                    <p className="lb-swatch-note">{suit.fabric.image_note}</p>
+                  ) : null}
+                </>
               ) : (
                 <div className="lb-swatch-pending">
                   <div className="chip" style={{ background: suit.suit.color }} />

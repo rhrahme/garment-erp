@@ -30,6 +30,8 @@ export type LookbookFabric = {
   width_cm: number | null;
   /** ERP route serving the high-res swatch; null = photo pending. */
   image_url: string | null;
+  /** Caption when the image is indicative (bunch drape) rather than the exact article swatch. */
+  image_note?: string;
 };
 
 export type LookbookSuit = {
@@ -63,7 +65,10 @@ export const SUITS_YOUNG: LookbookSuit[] = [
       composition: '100% Superfine Merino Wool "Zelander Natural Stretch"',
       weight_gsm: 250,
       width_cm: 150,
-      image_url: null,
+      // The Uniti 779 Instakit has no per-article photo of 779053; this is the
+      // blue drape from the official bunch shot as an indicative visual.
+      image_url: "/marketing/uniti-779-blue-drape.jpg",
+      image_note: "Bunch photo (Uniti 779) - exact swatch of N 779053 to follow",
     },
     similar: {
       supplier: "Oliani",
