@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { requirePatternAccess } from "@/lib/auth/session";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { ensurePatternDocumentsLoaded } from "@/lib/data/pattern-jobs";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
+import { fabricLineScanStagesForLines } from "@/lib/production/fabric-receiving";
 import { manufacturingStickersForJob } from "@/lib/pattern/manufacturing-stickers";
 import {
   ensurePatternJobTudCode,
@@ -27,7 +29,11 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     const order = getSalesOrderById(job.sales_order_id) ?? null;
     const manufacturing_stickers = manufacturingStickersForJob(job, order);
 
-    return NextResponse.json({ job, manufacturing_stickers });
+    // Read-only fabric status (arrived / washing / cutting ...) for the job's line.
+    await ensureDocumentsLoaded(["fabric_receipts", "production_work_orders"]);
+    const fabric_line_status = fabricLineScanStagesForLines([job.sales_order_line_id]);
+
+    return NextResponse.json({ job, manufacturing_stickers, fabric_line_status });
   } catch (error) {
     console.error("Failed to read pattern job:", error);
     return NextResponse.json({ error: "Failed to load pattern job." }, { status: 500 });

@@ -25,6 +25,7 @@ import { ConsolidateSelectedFabricsModal } from "@/components/pattern/Consolidat
 import { CopySizesModal } from "@/components/pattern/library/CopySizesModal";
 import { PasteSizesModal } from "@/components/pattern/library/PasteSizesModal";
 import { ChangeGarmentTypeControl } from "@/components/orders/ChangeGarmentTypeControl";
+import { FabricStatusPill } from "@/components/pattern/FabricStatusPill";
 import { GarmentPiecesNest } from "@/components/garment/GarmentPiecesNest";
 import { GarmentTypeChangeBadge } from "@/components/garment-type/GarmentTypeChangeBadge";
 import { PatternMismatchBanner } from "@/components/pattern/PatternMismatchBanner";
@@ -35,6 +36,7 @@ import type { GarmentTypeChangeFlag } from "@/lib/sales-orders/garment-type-chan
 import { piecesForPatternJob } from "@/lib/sales-orders/label-codes";
 import { productionBrandNameForOrder } from "@/lib/sales-orders/production-brand";
 import type { PatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mismatch";
+import type { ScanHighlightStage } from "@/lib/production/scan-stage-highlight";
 import type { PatternJob } from "@/lib/types/pattern";
 import type { ClientPatternListSummary } from "@/lib/pattern-library/client-pattern-list";
 import type { SalesOrder } from "@/lib/types/sales-orders";
@@ -95,6 +97,8 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
   const [garmentTypeChangeFlags, setGarmentTypeChangeFlags] = useState<
     Record<string, GarmentTypeChangeFlag>
   >({});
+  /** Read-only fabric status per sales-order line (arrived / washing / cutting ...). */
+  const [fabricLineStatus, setFabricLineStatus] = useState<Record<string, ScanHighlightStage>>({});
 
   const loadClientPatterns = useCallback(async (clientId: string) => {
     try {
@@ -122,6 +126,9 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
       setJobs(nextJobs);
       setMismatch(data.mismatch ?? null);
       setAwaitingLines(Boolean(data.awaiting_lines));
+      setFabricLineStatus(
+        (data.fabric_line_status ?? {}) as Record<string, ScanHighlightStage>
+      );
       if (nextOrder?.client_id) {
         await loadClientPatterns(nextOrder.client_id);
       } else {
@@ -622,6 +629,7 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
                         <p className="text-sm text-slate-600">
                           {job.fabric_number} · {job.supplier} · {job.meters}m
                         </p>
+                        <FabricStatusPill stage={fabricLineStatus[job.sales_order_line_id]} />
                         {supplierId ? (
                           <button
                             type="button"

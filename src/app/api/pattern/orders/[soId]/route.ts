@@ -6,6 +6,7 @@ import { detectPatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-m
 import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
 import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { fabricLineScanStagesForLines } from "@/lib/production/fabric-receiving";
 
 export async function GET(_request: Request, context: { params: Promise<{ soId: string }> }) {
   try {
@@ -15,7 +16,7 @@ export async function GET(_request: Request, context: { params: Promise<{ soId: 
     }
 
     await ensurePatternDocumentsLoaded();
-    await ensureDocumentsLoaded(["sales_orders"]);
+    await ensureDocumentsLoaded(["sales_orders", "fabric_receipts", "production_work_orders"]);
 
     const { soId } = await context.params;
     const order = getSalesOrderById(soId);
@@ -35,11 +36,18 @@ export async function GET(_request: Request, context: { params: Promise<{ soId: 
     const safeOrder = canViewFabricPrices ? order : redactSalesOrderFabricPrices(order);
     const mismatch = detectPatternSalesOrderMismatch(order, readPatternJobs().jobs);
 
+    // Read-only fabric status per line so Pattern can see arrived / washing /
+    // cutting without access to the Fabric Receiving floor.
+    const fabric_line_status = fabricLineScanStagesForLines(
+      order.fabric_lines.map((line) => line.id)
+    );
+
     return NextResponse.json({
       order: safeOrder,
       jobs: jobsWithSupplier,
       awaiting_lines: order.fabric_lines.length === 0,
       mismatch,
+      fabric_line_status,
     });
   } catch (error) {
     console.error("Failed to load pattern order board:", error);

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/PageHeader";
 import { ChangeGarmentTypeControl } from "@/components/orders/ChangeGarmentTypeControl";
 import { GarmentPiecesNest } from "@/components/garment/GarmentPiecesNest";
+import { FabricStatusPill } from "@/components/pattern/FabricStatusPill";
 import { GarmentTypeChangeBadge } from "@/components/garment-type/GarmentTypeChangeBadge";
 import { ClientPhotoAssignmentPanel } from "@/components/pattern/library/ClientPhotoAssignmentPanel";
 import { CopySizesModal } from "@/components/pattern/library/CopySizesModal";
@@ -34,6 +35,7 @@ import {
 } from "@/lib/pattern-library/measurement-template-mode";
 import type { ClientPatternListSummary } from "@/lib/pattern-library/client-pattern-list";
 import type { PatternFittingOutcome, PatternJob, PatternJobStatus } from "@/lib/types/pattern";
+import type { ScanHighlightStage } from "@/lib/production/scan-stage-highlight";
 import type { ClientPattern, PatternLibraryAttachment } from "@/lib/types/pattern-library";
 
 const STATUSES: PatternJobStatus[] = [
@@ -58,6 +60,10 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
   const router = useRouter();
   const { unit: measurementUnit } = useMeasurementUnitPreference();
   const [job, setJob] = useState<PatternJob | null>(null);
+  /** Read-only fabric status for this job's line (arrived / washing / cutting ...). */
+  const [fabricLineStatus, setFabricLineStatus] = useState<ScanHighlightStage | undefined>(
+    undefined
+  );
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -119,6 +125,8 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
       if (!res.ok) throw new Error(data.error ?? "Failed to load");
       const nextJob = data.job as PatternJob;
       setJob(nextJob);
+      const statusMap = (data.fabric_line_status ?? {}) as Record<string, ScanHighlightStage>;
+      setFabricLineStatus(statusMap[nextJob.sales_order_line_id]);
       setMeasurementTemplateMode(defaultMeasurementTemplateMode(nextJob.garment_type));
       setAssignedTo(nextJob.assigned_to ?? "");
       setSizeNotes(nextJob.pattern_size_notes ?? "");
@@ -443,10 +451,13 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
           {job.so_number} - L{String(job.article_number).padStart(2, "0")} - {job.garment_type}
         </p>
         <GarmentPiecesNest garmentType={job.garment_type} pieces={piecesForPatternJob(job)} />
-        <p className="mt-2 text-sm text-slate-600">
-          {job.fabric_number} - {job.supplier} - {job.meters}m
-          {job.color ? ` - ${job.color}` : ""}
-        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <p className="text-sm text-slate-600">
+            {job.fabric_number} - {job.supplier} - {job.meters}m
+            {job.color ? ` - ${job.color}` : ""}
+          </p>
+          <FabricStatusPill stage={fabricLineStatus} />
+        </div>
       </section>
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}

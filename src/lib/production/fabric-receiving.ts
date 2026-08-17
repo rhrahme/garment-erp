@@ -239,6 +239,32 @@ function listRecentFabricScans(
     }));
 }
 
+/**
+ * Read-only per-line fabric status for viewer roles (Pattern board / job
+ * pages): sales-order line id -> scan highlight stage ("pending",
+ * "received", "fabric_wash", "fabric_soak", "fabric_dry", "fabric_iron",
+ * "cutting", "sewing", ...). Callers must ensure fabric_receipts +
+ * production_work_orders documents are loaded.
+ */
+export function fabricLineScanStagesForLines(
+  lineIds: string[]
+): Record<string, ScanHighlightStage> {
+  const receiptsByLineId = new Map<string, FabricReceipt>();
+  for (const receipt of readFabricReceipts().receipts) {
+    receiptsByLineId.set(receipt.sales_order_line_id, receipt);
+  }
+  const workOrdersByLine = workOrdersByLineId();
+
+  const stages: Record<string, ScanHighlightStage> = {};
+  for (const lineId of lineIds) {
+    const receipt = receiptsByLineId.get(lineId);
+    const lineWorkOrders = workOrdersByLine.get(lineId) ?? [];
+    const status = resolveFabricLineReceiveStatus(receipt, lineWorkOrders);
+    stages[lineId] = resolveLineScanStage(status, receipt?.fabric_prep_step, lineWorkOrders);
+  }
+  return stages;
+}
+
 export async function listFabricReceivingOverview(
   filter: "actionable" | "all_open" = "actionable"
 ): Promise<FabricReceivingOverview> {
