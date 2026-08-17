@@ -357,9 +357,16 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   tagged to OTHER garments are NOT orphans and must never print (the screen
   piece view hides them). Regressed on FR-0626-0037: 8 Shirt SS rows (Collar
   Height, Side Length, Sleeve Opening, Chest Pocket...) printed under the
-  Overshirt A4 while the screen view was clean. Guard lives in
-  `expand-cutter-print-pages.ts` (otherGarmentIds skip) with a regression
-  test; untagged dictionary entries stay orphan-eligible like custom points.
+  Overshirt A4 while the screen view was clean. Untagged dictionary entries
+  stay orphan-eligible like custom points.
+- **Orphan rule is SHARED between screen and print** (Aug 17 2026): the
+  screen piece view once hid custom points entirely, so "+ Add point" on a
+  set garment looked broken (row saved but invisible). Both the screen
+  (`filterTrialSheetPointsForPieceView`) and the A4 print
+  (`expand-cutter-print-pages.ts`) now call `trialSheetOrphanRows()` in
+  `measurement-template-mode.ts` - custom rows show on the FIRST piece in
+  both places, and Add point auto-jumps the sheet to that piece view. Do
+  not re-implement orphan logic separately in either pipeline.
 - **Cutter sheet = one A4 per fabric** (Aug 9 2026): Print cutter keeps nest +
   all piece floor QRs (Overshirt and Trouser) on **one** page. Do not split
   cutter by piece (that wasted a blank QR-only page). Multi-article masters
@@ -438,6 +445,27 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `inventory.recipe_updated`, `inventory.garment_deducted`,
   `inventory.low_stock`, `inventory.cartons_created`,
   `inventory.carton_opened`. Tests: `npm run test:inventory`.
+- **Belt fabric basis** (Aug 17 2026): waistband consumption average is
+  44 in (~112 cm) per trouser - kept as item `notes` on the six Belt
+  fabric items and rendered under the name in the Stock on hand table.
+  No automatic recipe deduction for belt fabric yet (brand per order is
+  a manual choice).
+
+## Clients
+
+- **Name changes need admin approval** (Aug 17 2026): non-admins propose a
+  rename via "Request name edit" on the Clients page; the proposal is
+  stamped on the client (`name_change_*` fields) and applied only when an
+  admin approves (dashboard panel or one-click email links). Bulk
+  PUT /api/clients must always carry the stored `name_change_*` fields
+  over - only the dedicated name-change-request endpoints mutate them.
+- **One-click email actions**: the admin alert email carries per-recipient
+  HMAC-signed approve/reject links (`name-change-email-token.ts`, 7-day
+  expiry, bound to client + requested_at + recipient).
+  GET `/api/clients/name-change-email-action` is session-exempt in the
+  middleware (both isOpenAuthRoute lists) - the signed token IS the
+  authorization; do not remove the exemption or the links 401.
+  Tests: `npm run test:name-change`.
 
 ## Supplier emails
 
