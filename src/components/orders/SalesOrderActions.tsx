@@ -1023,6 +1023,24 @@ export function SalesOrderActions({
                               </Button>
                             </div>
                           ) : null}
+                          {canChangeGarmentType ? (
+                            <div className="mt-2 flex justify-end">
+                              <ChangeGarmentTypeControl
+                                compact
+                                salesOrderId={liveOrder.id}
+                                lineId={line.id}
+                                currentGarmentType={line.garment_type}
+                                onChanged={(next) =>
+                                  handleLineUpdated({
+                                    ...line,
+                                    garment_type: next.garment_type,
+                                    label_stickers: next.label_stickers ?? line.label_stickers,
+                                    label_count: next.label_count ?? line.label_count,
+                                  })
+                                }
+                              />
+                            </div>
+                          ) : null}
                         </td>
                       ) : null}
                     </tr>
@@ -1241,6 +1259,24 @@ export function SalesOrderActions({
                               >
                                 Transfer
                               </Button>
+                            </div>
+                          ) : null}
+                          {canChangeGarmentType ? (
+                            <div className="mt-2 flex justify-end">
+                              <ChangeGarmentTypeControl
+                                compact
+                                salesOrderId={liveOrder.id}
+                                lineId={line.id}
+                                currentGarmentType={line.garment_type}
+                                onChanged={(next) =>
+                                  handleLineUpdated({
+                                    ...line,
+                                    garment_type: next.garment_type,
+                                    label_stickers: next.label_stickers ?? line.label_stickers,
+                                    label_count: next.label_count ?? line.label_count,
+                                  })
+                                }
+                              />
                             </div>
                           ) : null}
                         </td>
