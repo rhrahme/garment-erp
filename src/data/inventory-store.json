@@ -207,6 +207,19 @@
       "updated_at": "2026-08-17T14:05:01.051Z",
       "quantity_on_hand": 0,
       "low_stock_threshold": 10
+    },
+    {
+      "id": "inv-1786977126867-5mfb51",
+      "name": "Chest piece (all brands)",
+      "unit": "pcs",
+      "brand": null,
+      "notes": "Canvas chest piece for formal jackets - suits, blazers, overcoats. One type for all brands for now; per-brand weights will be added as separate items later.",
+      "category": "Chest pieces",
+      "location": null,
+      "created_at": "2026-08-17T14:32:06.867Z",
+      "updated_at": "2026-08-17T14:32:06.867Z",
+      "quantity_on_hand": 0,
+      "low_stock_threshold": 10
     }
   ],
   "ledger": [],
@@ -217,10 +230,14 @@
         {
           "item_id": "inv-suit-hanger",
           "quantity_per_garment": 1
+        },
+        {
+          "item_id": "inv-1786977126867-5mfb51",
+          "quantity_per_garment": 1
         }
       ],
-      "updated_at": "2026-08-16T10:56:44.744Z",
-      "updated_by": "seed:owner-ask-2026-08-16",
+      "updated_at": "2026-08-17T14:32:33.902Z",
+      "updated_by": "production@hagan.pro",
       "garment_type": "Suit"
     },
     {
@@ -228,10 +245,14 @@
         {
           "item_id": "inv-suit-hanger",
           "quantity_per_garment": 1
+        },
+        {
+          "item_id": "inv-1786977126867-5mfb51",
+          "quantity_per_garment": 1
         }
       ],
-      "updated_at": "2026-08-16T10:56:44.744Z",
-      "updated_by": "seed:owner-ask-2026-08-16",
+      "updated_at": "2026-08-17T14:32:35.422Z",
+      "updated_by": "production@hagan.pro",
       "garment_type": "Suit+Vest"
     },
     {
@@ -239,10 +260,14 @@
         {
           "item_id": "inv-suit-hanger",
           "quantity_per_garment": 1
+        },
+        {
+          "item_id": "inv-1786977126867-5mfb51",
+          "quantity_per_garment": 1
         }
       ],
-      "updated_at": "2026-08-16T10:56:44.744Z",
-      "updated_by": "seed:owner-ask-2026-08-16",
+      "updated_at": "2026-08-17T14:32:37.784Z",
+      "updated_by": "production@hagan.pro",
       "garment_type": "Overcoat"
     },
     {
@@ -261,10 +286,14 @@
         {
           "item_id": "inv-suit-hanger",
           "quantity_per_garment": 1
+        },
+        {
+          "item_id": "inv-1786977126867-5mfb51",
+          "quantity_per_garment": 1
         }
       ],
-      "updated_at": "2026-08-16T10:56:44.744Z",
-      "updated_by": "seed:owner-ask-2026-08-16",
+      "updated_at": "2026-08-17T14:32:36.598Z",
+      "updated_by": "production@hagan.pro",
       "garment_type": "Jacket"
     },
     {
@@ -442,12 +471,16 @@
         {
           "item_id": "inv-suit-hanger",
           "quantity_per_garment": 1
+        },
+        {
+          "item_id": "inv-1786977126867-5mfb51",
+          "quantity_per_garment": 1
         }
       ],
-      "updated_at": "2026-08-17T13:44:48.261Z",
-      "updated_by": "seed:analogy-2026-08-17",
+      "updated_at": "2026-08-17T14:32:39.032Z",
+      "updated_by": "production@hagan.pro",
       "garment_type": "Thobe+Jacket"
     }
   ],
-  "updated_at": "2026-08-17T14:27:40.184Z"
+  "updated_at": "2026-08-17T14:32:39.032Z"
 }
