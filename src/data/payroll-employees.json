@@ -959,8 +959,33 @@
       "payment_description": "SALARY",
       "assigned_workstation_id": null,
       "created_at": "2026-08-11T00:00:00.000Z"
+    },
+    {
+      "id": "XX22",
+      "s_no": 39,
+      "employee_id_number": "XX22",
+      "full_name": "Pattern 2",
+      "short_name": "Pattern 2",
+      "bank_name": "Banque Saudi Fransi",
+      "account_number": "",
+      "salary_amount": 0,
+      "basic_salary": 0,
+      "housing_allowance": 0,
+      "other_earnings": 0,
+      "deduction": 0,
+      "payment_description": "SALARY",
+      "address_1": "",
+      "address_2": "",
+      "address_3": "",
+      "is_active": true,
+      "assigned_workstation_id": null,
+      "is_mobile_floater": false,
+      "job_functions": [
+        "pattern"
+      ],
+      "created_at": "2026-08-18T15:57:37.325Z"
     }
   ],
-  "updated_at": "2026-08-18T10:21:39.605Z",
+  "updated_at": "2026-08-18T15:57:37.328Z",
   "source_file": "src/data/hr/salary-details-revised.xlsx"
 }

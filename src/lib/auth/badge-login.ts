@@ -20,7 +20,7 @@ export const BADGE_LOGIN_JOB_FUNCTIONS = ["pattern"] as const;
  * part so email-list permission fallbacks work even if the profiles read is
  * degraded: badge-pattern-<employeeId>@badge.hagan.pro */
 export const BADGE_LOGIN_EMAIL_DOMAIN = "badge.hagan.pro";
-const BADGE_PATTERN_EMAIL_REGEX = /^badge-pattern-(\d+)@badge\.hagan\.pro$/;
+const BADGE_PATTERN_EMAIL_REGEX = /^badge-pattern-([a-z0-9]+)@badge\.hagan\.pro$/;
 
 export const MIN_BADGE_PASSWORD_LENGTH = 6;
 const MAX_FAILED_ATTEMPTS = 5;
@@ -80,7 +80,7 @@ export function verifyBadgePassword(password: string, stored: string): boolean {
 }
 
 export function badgeLoginEmail(employeeId: string): string {
-  return `badge-pattern-${employeeId}@${BADGE_LOGIN_EMAIL_DOMAIN}`;
+  return `badge-pattern-${employeeId.trim().toLowerCase()}@${BADGE_LOGIN_EMAIL_DOMAIN}`;
 }
 
 /** Employee id when the session email is a badge login, else null. */
@@ -131,7 +131,9 @@ export async function lookupBadgeForLogin(badgeValue: string): Promise<BadgeLook
   }
   const store = await readStoreFresh();
   const credential =
-    store.credentials.find((row) => row.employee_id === employee.id) ?? null;
+    store.credentials.find(
+      (row) => row.employee_id.toLowerCase() === employee.id.toLowerCase()
+    ) ?? null;
   return { ok: true, employee, credential };
 }
 
@@ -145,7 +147,9 @@ export async function checkBadgePassword(
   password: string
 ): Promise<BadgePasswordCheck> {
   const store = await readStoreFresh();
-  const credential = store.credentials.find((row) => row.employee_id === employeeId);
+  const credential = store.credentials.find(
+    (row) => row.employee_id.toLowerCase() === employeeId.toLowerCase()
+  );
   if (!credential) {
     return { ok: false, error: "No password set for this badge yet.", status: 404 };
   }
@@ -251,6 +255,11 @@ export const PATTERN_EMAIL_EMPLOYEES: Record<string, { id: string; name: string 
   "hagan.dp1@gmail.com": { id: "2625917972", name: "Mohtajul" },
 };
 
+/** Temporary second-operator login until their real badge number is issued. */
+export const PATTERN_TEMP_LOGIN_IDS: Record<string, string> = {
+  xx22: "Pattern 2",
+};
+
 /**
  * Human label for pattern writes: "Mohtajul (2625917972)" so admin can
  * tell which of the two shared-workspace operators changed a sheet.
@@ -266,8 +275,10 @@ export function patternActorLabel(email: string | null | undefined): string {
     employee?.short_name?.trim() ||
     employee?.full_name?.trim() ||
     mapped?.name ||
+    PATTERN_TEMP_LOGIN_IDS[employeeId] ||
     "Pattern";
-  return `${name} (${employeeId})`;
+  const displayId = employee?.employee_id_number?.trim() || (employeeId === "xx22" ? "XX22" : employeeId);
+  return `${name} (${displayId})`;
 }
 
 function supabaseAdmin() {

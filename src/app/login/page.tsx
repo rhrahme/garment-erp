@@ -245,7 +245,7 @@ export default function LoginPage() {
                 </label>
                 <input
                   type="text"
-                  inputMode="numeric"
+                  inputMode="text"
                   autoFocus
                   value={badge}
                   onChange={(e) => setBadge(e.target.value)}

@@ -582,7 +582,7 @@ export function isSalesOperatorEmail(email: string | null | undefined): boolean 
  * Role is encoded in the email so permission fallbacks work even when the
  * profiles read is degraded. Keep edge-safe: regex only, no node imports.
  */
-const BADGE_PATTERN_LOGIN_EMAIL = /^badge-pattern-\d+@badge\.hagan\.pro$/;
+const BADGE_PATTERN_LOGIN_EMAIL = /^badge-pattern-[a-z0-9]+@badge\.hagan\.pro$/;
 
 export function isPatternOperatorEmail(email: string | null | undefined): boolean {
   if (!email) return false;

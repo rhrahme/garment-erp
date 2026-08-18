@@ -29,9 +29,14 @@ export function findPayrollEmployeeByBadgeValue(badgeValue: string): PayrollEmpl
 
 export function findPayrollEmployeeById(employeeId: string): PayrollEmployee | null {
   const trimmed = employeeId.trim();
+  const upper = trimmed.toUpperCase();
   return (
     readPayrollEmployees().employees.find(
-      (employee) => employee.id === trimmed || employee.employee_id_number === trimmed
+      (employee) =>
+        employee.id === trimmed ||
+        employee.employee_id_number === trimmed ||
+        employee.id.toUpperCase() === upper ||
+        employee.employee_id_number.toUpperCase() === upper
     ) ?? null
   );
 }

@@ -30,7 +30,18 @@ const { upsertBadgeCredential, provisionBadgeSupabaseUser } = await import(
 const { findPayrollEmployeeByBadgeValue } = await import("../src/lib/hr/payroll-lookup.ts");
 
 await ensureDocumentsLoaded(["payroll_employees", "badge_login_credentials"]);
-const employee = findPayrollEmployeeByBadgeValue(badge);
+let employee = findPayrollEmployeeByBadgeValue(badge);
+if (!employee && badge.toUpperCase() === "XX22") {
+  const { createPayrollEmployee } = await import("../src/lib/data/payroll-employees.ts");
+  employee = await createPayrollEmployee({
+    full_name: "Pattern 2",
+    employee_id_number: "XX22",
+    short_name: "Pattern 2",
+    badge_group: "expat",
+    job_functions: ["pattern"],
+  });
+  console.log("created temporary pattern employee", employee.id);
+}
 if (!employee) {
   console.error("Employee not found for badge", badge);
   process.exit(1);

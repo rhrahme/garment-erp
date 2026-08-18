@@ -34,12 +34,14 @@ describe("badge login synthetic emails", () => {
 
   it("rejects non-badge emails", () => {
     assert.equal(badgeLoginEmployeeId("pattern@hagan.pro"), null);
-    assert.equal(badgeLoginEmployeeId("badge-pattern-abc@badge.hagan.pro"), null);
+    assert.equal(badgeLoginEmployeeId("badge-pattern-xx22@badge.hagan.pro"), "xx22");
+    assert.equal(badgeLoginEmployeeId("badge-pattern-abc@evil.example.com"), null);
     assert.equal(badgeLoginEmployeeId(null), null);
   });
 
   it("is treated as a pattern operator even without a profile row (degraded fallback)", () => {
     assert.equal(isPatternOperatorEmail(badgeLoginEmail("123")), true);
+    assert.equal(isPatternOperatorEmail(badgeLoginEmail("xx22")), true);
     assert.equal(isPatternOperatorEmail("badge-pattern-1@evil.example.com"), false);
   });
 
