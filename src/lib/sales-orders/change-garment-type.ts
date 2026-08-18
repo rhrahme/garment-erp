@@ -13,6 +13,7 @@ import {
   snapshotFabricLine,
 } from "@/lib/sales-orders/fabric-change-alerts";
 import {
+  accumulatePreviousLabelStickers,
   fabricLineArticleNumber,
   generateFabricLabelStickers,
   getGarmentPieces,
@@ -84,6 +85,11 @@ export async function changeFabricLineGarmentType(
     garment_type: nextGarmentType,
     label_stickers,
     label_count: label_stickers.length,
+    previous_label_stickers: accumulatePreviousLabelStickers(
+      existing.previous_label_stickers,
+      existing.label_stickers,
+      label_stickers
+    ),
   };
 
   const nextLines = order.fabric_lines.map((line, idx) => (idx === lineIndex ? updatedLine : line));

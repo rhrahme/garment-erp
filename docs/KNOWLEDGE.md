@@ -124,7 +124,17 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   work-order / sales-order reads only). Pause control stays admin-only. Do not
   strip this visibility without an explicit ask.
 - Rejects must explain themselves (e.g. washing/fabric-cut QR scanned instead
-  of production piece QR) and persist to `sewing_scan_failures`.
+  of production piece QR) and persist to `sewing_scan_failures`. A production
+  piece QR that is simply not on the live list must **not** mention wash /
+  prep stickers - that wording made the floor think a stitcher sheet was a
+  washing sheet.
+- **Old production A4 QRs stay valid after garment-type change** (Aug 18
+  2026): QC Shirt LS -> Overshirt (and similar) regenerates `label_stickers`
+  (SHT-LS -> OS). Already-printed stitcher sheets still encode the old piece
+  code. Lookup keeps `previous_label_stickers` and also rematches the same
+  article (`FR-0133-L06-SHT-LS` -> live Overshirt sticker). Do not require a
+  reprint before the floor can scan. Wash/fabric-cut QRs (no piece suffix)
+  stay rejected at stitch.
 - **Scan durability (do not regress)**: every kiosk scan stays in
   `sessionStorage` (`hagan-sewing-scan-queue`) until the server durably
   accepts it (`ok` write) or records the reject (`failure_recorded`). Network

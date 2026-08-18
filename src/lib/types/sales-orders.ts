@@ -18,6 +18,11 @@ export interface SalesOrderFabricLine {
   garment_type: string;
   label_count: number;
   label_stickers: FabricLabelSticker[];
+  /**
+   * Piece codes from earlier garment types on this line. Kept so already-printed
+   * production A4 QRs still scan after QC changes Shirt LS -> Overshirt, etc.
+   */
+  previous_label_stickers?: FabricLabelSticker[];
   supplier_id: string;
   supplier_name: string;
   fabric_number: string;

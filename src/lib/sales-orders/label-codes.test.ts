@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  accumulatePreviousLabelStickers,
   expandFabricLabelScanInput,
   formatGarmentWithPieceList,
   formatLabelGarmentDescription,
@@ -8,10 +9,12 @@ import {
   generateFabricLabelStickers,
   getGarmentPieces,
   looksLikeFabricLabelInput,
+  parseArticleFromLabelScan,
   pieceProductionCodeFromSticker,
   pieceScanAttribution,
   piecesForFabricLine,
   piecesForPatternJob,
+  resolveCurrentStickerFromRetiredOrArticleScan,
   stickerCodesMatch,
   stripPieceIndexMark,
 } from "./label-codes.ts";
@@ -156,5 +159,71 @@ describe("Suit / multi-piece garment helpers", () => {
       piecesForPatternJob({ garment_type: "Suit", piece_name: "Jacket" }),
       ["Jacket", "Trouser"]
     );
+  });
+});
+
+describe("retired piece QR after garment-type change", () => {
+  const clientCode = "FR-0626-0037";
+  const clientRef = "FR-0626-0037-SO-2026-0133";
+  const shirtStickers = generateFabricLabelStickers(clientRef, 6, "Shirt LS");
+  const overshirtStickers = generateFabricLabelStickers(clientRef, 6, "Overshirt");
+
+  it("parses short production piece codes including SHT-LS", () => {
+    assert.deepEqual(parseArticleFromLabelScan("FR-0133-L06-SHT-LS"), {
+      cutCode: "FR-0133-L06",
+      pieceMark: "SHT-LS",
+    });
+    assert.deepEqual(parseArticleFromLabelScan(`${clientRef}-L06-SHT-LS`), {
+      cutCode: "FR-0133-L06",
+      pieceMark: "SHT-LS",
+    });
+    assert.equal(parseArticleFromLabelScan("FR-0133-L06")?.pieceMark, null);
+  });
+
+  it("keeps retired Shirt LS codes off the new Overshirt sticker list", () => {
+    const previous = accumulatePreviousLabelStickers(undefined, shirtStickers, overshirtStickers);
+    assert.equal(previous[0]?.code, shirtStickers[0]!.code);
+    assert.equal(previous.some((sticker) => sticker.code === overshirtStickers[0]!.code), false);
+  });
+
+  it("maps printed Shirt LS A4 onto the live Overshirt sticker without stored aliases", () => {
+    const mapped = resolveCurrentStickerFromRetiredOrArticleScan(
+      "FR-0133-L06-SHT-LS",
+      { label_stickers: overshirtStickers },
+      clientCode
+    );
+    assert.equal(mapped?.piece_name, "Overshirt");
+    assert.equal(mapped?.code, overshirtStickers[0]!.code);
+  });
+
+  it("maps Shirt LS onto Overshirt when the old code is stored as previous", () => {
+    const mapped = resolveCurrentStickerFromRetiredOrArticleScan(
+      shirtStickers[0]!.code,
+      {
+        label_stickers: overshirtStickers,
+        previous_label_stickers: shirtStickers,
+      },
+      clientCode
+    );
+    assert.equal(mapped?.piece_name, "Overshirt");
+  });
+
+  it("maps Shirt family onto Overshirt in Overshirt+Trouser, not the trouser", () => {
+    const combo = generateFabricLabelStickers(clientRef, 6, "Overshirt+Trouser");
+    const mapped = resolveCurrentStickerFromRetiredOrArticleScan(
+      "FR-0133-L06-SHT-LS",
+      { label_stickers: combo },
+      clientCode
+    );
+    assert.equal(mapped?.piece_name, "Overshirt");
+  });
+
+  it("does not treat a fabric-cut / wash code as a retired piece", () => {
+    const mapped = resolveCurrentStickerFromRetiredOrArticleScan(
+      "FR-0133-L06",
+      { label_stickers: overshirtStickers },
+      clientCode
+    );
+    assert.equal(mapped, null);
   });
 });

@@ -110,6 +110,32 @@ export function stripPieceIndexMark(code: string): string {
   return code.replace(PIECE_INDEX_MARK_RE, "");
 }
 
+/**
+ * Family used when QC swaps a printed piece for a sibling type
+ * (Shirt LS -> Overshirt) so the old A4 still maps to the live sticker.
+ */
+const PIECE_FAMILY: Record<string, string> = {
+  Shirt: "shirt",
+  "Shirt LS": "shirt",
+  "Shirt SS": "shirt",
+  Overshirt: "shirt",
+  Polo: "shirt",
+  "T-shirt": "shirt",
+  Trouser: "trouser",
+  Short: "trouser",
+  Jacket: "jacket",
+  Overcoat: "jacket",
+  Vest: "vest",
+  Thobe: "thobe",
+  "Formal Thobe": "thobe",
+  "House Thobe": "thobe",
+};
+
+export function pieceFamily(pieceName: string): string {
+  const trimmed = pieceName.trim();
+  return PIECE_FAMILY[trimmed] ?? trimmed.toLowerCase();
+}
+
 /** Reverse piece mark / abbrev to a human piece name — OS-1/2 -> Overshirt, JKT -> Jacket. */
 export function pieceNameFromPieceMark(pieceMark: string | null | undefined): string | null {
   if (!pieceMark?.trim()) return null;
@@ -429,6 +455,98 @@ export function codesMatchAllowingPieceIndex(a: string, b: string): boolean {
   if (!left || !right) return false;
   if (left === right) return true;
   return stripPieceIndexMark(left) === stripPieceIndexMark(right);
+}
+
+/** Parse brand + SO + article + optional piece mark from a scanned label. */
+export function parseArticleFromLabelScan(raw: string): {
+  cutCode: string;
+  pieceMark: string | null;
+} | null {
+  for (const candidate of expandFabricLabelScanInput(raw)) {
+    const normalized = candidate.trim().toUpperCase();
+    if (!normalized) continue;
+
+    const full = normalized.match(
+      /^([A-Z]{2})-\d{4}-\d{4}-SO-\d{4}-(\d{4,})-(L\d{2})(?:-(.+))?$/
+    );
+    if (full) {
+      return {
+        cutCode: `${full[1]}-${full[2]}-${full[3]}`,
+        pieceMark: full[4] ? stripPieceIndexMark(full[4]) : null,
+      };
+    }
+
+    const short = normalized.match(/^([A-Z]{2})-(\d{4,})-(L\d{2})(?:-(.+))?$/);
+    if (short) {
+      return {
+        cutCode: `${short[1]}-${short[2]}-${short[3]}`,
+        pieceMark: short[4] ? stripPieceIndexMark(short[4]) : null,
+      };
+    }
+  }
+  return null;
+}
+
+/** Keep retired piece codes when QC regenerates stickers for a new garment type. */
+export function accumulatePreviousLabelStickers(
+  existingPrevious: FabricLabelSticker[] | null | undefined,
+  retiring: FabricLabelSticker[] | null | undefined,
+  nextCurrent: FabricLabelSticker[] = []
+): FabricLabelSticker[] {
+  const nextCodes = new Set(
+    nextCurrent.map((sticker) => sticker.code.trim().toUpperCase()).filter(Boolean)
+  );
+  const seen = new Set<string>();
+  const out: FabricLabelSticker[] = [];
+  for (const sticker of [...(existingPrevious ?? []), ...(retiring ?? [])]) {
+    const key = sticker.code.trim().toUpperCase();
+    if (!key || seen.has(key) || nextCodes.has(key)) continue;
+    seen.add(key);
+    out.push(sticker);
+  }
+  return out;
+}
+
+function mapScannedPieceToCurrentSticker(
+  scannedPieceName: string | null,
+  current: FabricLabelSticker[]
+): FabricLabelSticker | null {
+  if (current.length === 0) return null;
+  if (current.length === 1) return current[0] ?? null;
+  if (!scannedPieceName) return null;
+  const exact = current.find((sticker) => sticker.piece_name === scannedPieceName);
+  if (exact) return exact;
+  const family = pieceFamily(scannedPieceName);
+  return current.find((sticker) => pieceFamily(sticker.piece_name) === family) ?? null;
+}
+
+/**
+ * Map a scan of a retired / old-type piece QR (Shirt LS after the line became
+ * Overshirt) onto the live sticker for that same article.
+ */
+export function resolveCurrentStickerFromRetiredOrArticleScan(
+  scanInput: string,
+  line: {
+    label_stickers?: FabricLabelSticker[] | null;
+    previous_label_stickers?: FabricLabelSticker[] | null;
+  },
+  clientCode: string
+): FabricLabelSticker | null {
+  const current = line.label_stickers ?? [];
+  if (current.length === 0) return null;
+
+  for (const retired of line.previous_label_stickers ?? []) {
+    if (!stickerCodesMatch(scanInput, retired.code, clientCode)) continue;
+    return mapScannedPieceToCurrentSticker(retired.piece_name, current);
+  }
+
+  const parsed = parseArticleFromLabelScan(scanInput);
+  if (!parsed?.pieceMark) return null;
+
+  const lineCut = supplierFabricProductionCode(current[0]!.code, clientCode).toUpperCase();
+  if (lineCut !== parsed.cutCode) return null;
+
+  return mapScannedPieceToCurrentSticker(pieceNameFromPieceMark(parsed.pieceMark), current);
 }
 
 export function stickerCodesMatch(scanInput: string, stickerCode: string, clientCode: string): boolean {

@@ -4,6 +4,7 @@ import { getSupplierByIdFromContactsSync } from "@/lib/data/supplier-contacts";
 import { resolveFabricItemFromCatalog } from "@/lib/fabric-sourcing/resolve-fabric-from-catalog";
 import { fabricPoSupplierId, normalizeFabricSupplierFields } from "@/lib/fabric-sourcing/supplier-display";
 import {
+  accumulatePreviousLabelStickers,
   fabricLineArticleNumber,
   generateFabricLabelStickers,
   getGarmentPieces,
@@ -479,6 +480,13 @@ export async function updateSalesOrderFabricLine(
     garment_type: nextGarmentType,
     label_count,
     label_stickers,
+    previous_label_stickers: garmentChanged
+      ? accumulatePreviousLabelStickers(
+          existing.previous_label_stickers,
+          existing.label_stickers,
+          label_stickers
+        )
+      : existing.previous_label_stickers,
     supplier_id: supplierFields.supplier_id,
     supplier_name: supplierFields.supplier_name,
     fabric_number: nextFabricNumber,

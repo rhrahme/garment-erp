@@ -9,7 +9,11 @@ import {
   firstFabricPrepStep,
   isFabricPrepType,
 } from "@/lib/production/fabric-prep";
-import { formatLabelGarmentDescription, stickerCodesMatch } from "@/lib/sales-orders/label-codes";
+import {
+  formatLabelGarmentDescription,
+  resolveCurrentStickerFromRetiredOrArticleScan,
+  stickerCodesMatch,
+} from "@/lib/sales-orders/label-codes";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import type {
   FabricPrepStep,
@@ -32,11 +36,21 @@ function normalizeWorkOrder(order: ProductionWorkOrder): ProductionWorkOrder {
   return order;
 }
 
+function ordersPreferringLive(): SalesOrder[] {
+  const orders = readSalesOrders().orders;
+  return [
+    ...orders.filter((order) => order.status !== "superseded"),
+    ...orders.filter((order) => order.status === "superseded"),
+  ];
+}
+
 export function findStickerInSalesOrders(stickerCode: string): StickerLookupResult | null {
   const normalized = stickerCode.trim().toUpperCase();
   if (!normalized) return null;
 
-  for (const order of readSalesOrders().orders) {
+  const orders = ordersPreferringLive();
+
+  for (const order of orders) {
     for (const line of order.fabric_lines) {
       for (const sticker of line.label_stickers ?? []) {
         if (stickerCodesMatch(normalized, sticker.code, order.client_code)) {
@@ -45,6 +59,21 @@ export function findStickerInSalesOrders(stickerCode: string): StickerLookupResu
       }
     }
   }
+
+  const rematchHits: StickerLookupResult[] = [];
+  for (const order of orders) {
+    for (const line of order.fabric_lines) {
+      const mapped = resolveCurrentStickerFromRetiredOrArticleScan(
+        normalized,
+        line,
+        order.client_code
+      );
+      if (mapped) rematchHits.push({ order, line, sticker: mapped });
+    }
+  }
+  if (rematchHits.length === 1) return rematchHits[0] ?? null;
+  const liveHits = rematchHits.filter((hit) => hit.order.status !== "superseded");
+  if (liveHits.length === 1) return liveHits[0] ?? null;
 
   return null;
 }

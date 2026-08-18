@@ -112,10 +112,13 @@ describe("explainUnrecognizedStitchScan", () => {
     assert.match(msg, /production A4 piece QR/i);
   });
 
-  it("explains unknown piece-shaped codes", () => {
+  it("explains unknown piece-shaped codes without mentioning wash", () => {
     const msg = explainUnrecognizedStitchScan("FR-9999-L01-JKT-1/2");
     assert.match(msg, /Production piece code not found/i);
     assert.match(msg, /FR-9999-L01-JKT-1\/2/);
+    assert.match(msg, /production \/ stitcher A4/i);
+    assert.doesNotMatch(msg, /wash/i);
+    assert.doesNotMatch(msg, /prep/i);
   });
 
   it("gives a clear generic fallback with expected formats", () => {

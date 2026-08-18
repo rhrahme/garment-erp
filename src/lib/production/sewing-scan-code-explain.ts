@@ -158,7 +158,8 @@ export function explainUnrecognizedStitchScan(raw: string): string {
   if (looksLikeProductionPieceCode(trimmed)) {
     return (
       `Production piece code not found: ${display}. ` +
-      "Check the A4 piece QR on the production sheet (not the prep / wash sticker)."
+      "This is a production / stitcher A4 piece QR that is not on the live sticker list. " +
+      "If QC changed the garment type, reprint the production sheet."
     );
   }
 
