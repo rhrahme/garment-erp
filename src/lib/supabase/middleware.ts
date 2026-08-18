@@ -141,7 +141,7 @@ async function updateSessionInner(request: NextRequest) {
   let role: UserRole | null = null;
   let isSuperAdmin = false;
   if (impersonatedEmail) {
-    // Email-list priority (production before sales) — never probe with a forced sales role.
+    // Email-list priority (production before sales) - never probe with a forced sales role.
     role = resolveRestrictedAccess(null, impersonatedEmail, false);
     isSuperAdmin = isSuperAdminEmail(impersonatedEmail);
   } else if (user?.id && email) {
