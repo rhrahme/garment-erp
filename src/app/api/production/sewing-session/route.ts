@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSewingScanFailuresAsync } from "@/lib/data/sewing-scan-failures";
-import { readSewingSessionsAsync } from "@/lib/data/sewing-sessions";
 import {
   ensureStitchKioskLunchAutoResume,
   readStitchKioskSettings,
@@ -12,6 +11,7 @@ import {
   parseSewingDashboardPeriod,
   sewingSessionsDashboard,
 } from "@/lib/production/sewing-session";
+import { ensureForgottenSessionsClosedAtWorkdayEnd } from "@/lib/production/sewing-session-workday-end";
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,8 +23,9 @@ export async function GET(request: NextRequest) {
       "clients",
       "stitch_kiosk_settings",
     ]);
-    const store = await readSewingSessionsAsync();
     const failures = await readSewingScanFailuresAsync();
+    const workday = await ensureForgottenSessionsClosedAtWorkdayEnd();
+    const store = workday.store;
     const lunchResume = await ensureStitchKioskLunchAutoResume();
     if (lunchResume.resumed) {
       void notifyIntegration("production.stitch_kiosk_pause_updated", {

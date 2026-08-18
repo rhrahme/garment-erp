@@ -78,6 +78,13 @@ describe("summarizeSewingSessionChangeRequest", () => {
     assert.equal(summary.fabric_number, "771020");
   });
 
+  it("labels overtime confirm requests", () => {
+    const summary = summarizeSewingSessionChangeRequest(
+      baseRequest({ action: "overtime_confirm" })
+    );
+    assert.match(summary.label, /Overtime to confirm/);
+  });
+
   it("labels pause kiosk requests", () => {
     const summary = summarizeSewingSessionChangeRequest(
       baseRequest({

@@ -113,6 +113,31 @@ export function shouldAutoResumeStitchKioskLunch(input: {
 
 /** Local hour when the floor finishes for the day (owner: 10 PM Riyadh). */
 export const STITCH_WORKDAY_END_HOUR = 22;
+/** Next normal workday starts here; 22:00 through 08:00 is overtime. */
+export const STITCH_WORKDAY_START_HOUR = 8;
+
+/** True for scans at/after 22:00 Riyadh through 07:59 the next morning. */
+export function isStitchOvertimeWindow(nowMs: number = Date.now()): boolean {
+  const p = zonedParts(nowMs, STITCH_LUNCH_TIMEZONE);
+  const mins = p.hour * 60 + p.minute;
+  return mins >= STITCH_WORKDAY_END_HOUR * 60 || mins < STITCH_WORKDAY_START_HOUR * 60;
+}
+
+/** 22:00 Riyadh of the workday this session belongs to. */
+export function sessionWorkdayEndMs(startedAtMs: number): number {
+  const start = zonedParts(startedAtMs, STITCH_LUNCH_TIMEZONE);
+  let workdayEndMs = riyadhWallTimeToUtcMs(
+    start.year,
+    start.month,
+    start.day,
+    STITCH_WORKDAY_END_HOUR,
+    0
+  );
+  // A session that started at/after 22:00 belongs to the next workday - cap
+  // there instead of zeroing the session out.
+  if (startedAtMs >= workdayEndMs) workdayEndMs += 24 * 3600_000;
+  return workdayEndMs;
+}
 
 /**
  * Sessions forgotten open overnight must not record elapsed time past the
@@ -125,18 +150,17 @@ export function capSessionCloseAtWorkdayEnd(
   closeAtMs: number
 ): number {
   if (!Number.isFinite(startedAtMs) || !Number.isFinite(closeAtMs)) return closeAtMs;
-  const start = zonedParts(startedAtMs, STITCH_LUNCH_TIMEZONE);
-  let workdayEndMs = riyadhWallTimeToUtcMs(
-    start.year,
-    start.month,
-    start.day,
-    STITCH_WORKDAY_END_HOUR,
-    0
-  );
-  // A session that started at/after 22:00 belongs to the next workday - cap
-  // there instead of zeroing the session out.
-  if (startedAtMs >= workdayEndMs) workdayEndMs += 24 * 3600_000;
-  return Math.min(closeAtMs, workdayEndMs);
+  return Math.min(closeAtMs, sessionWorkdayEndMs(startedAtMs));
+}
+
+/** True once local time is at/after 22:00 of the session's workday. */
+export function shouldAutoCloseForgottenSession(
+  startedAt: string,
+  nowMs: number = Date.now()
+): boolean {
+  const startedMs = Date.parse(startedAt);
+  if (!Number.isFinite(startedMs) || !Number.isFinite(nowMs)) return false;
+  return nowMs >= sessionWorkdayEndMs(startedMs);
 }
 
 /** When starting a pause, set auto_resume_at for lunch-window pauses. */

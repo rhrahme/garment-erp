@@ -23,6 +23,7 @@ import {
   enrichSewingSessionsGarmentFields,
 } from "@/lib/production/sewing-session-garment";
 import {
+  applyWorkdayEndCloses,
   expireStaleSewingState,
   mostRecentArm,
   SEWING_ARM_TIMEOUT_MS,
@@ -265,6 +266,63 @@ describe("expireStaleSewingState", () => {
     const next = expireStaleSewingState(store, at);
     assert.equal(next.sessions[0]?.status, "open");
     assert.equal(next.sessions[0]?.closing_armed_at, null);
+  });
+});
+
+describe("applyWorkdayEndCloses", () => {
+  it("closes leftover Live sessions at 22:00 Riyadh of the start day", () => {
+    const nowMs = Date.parse("2026-08-19T00:00:00.000Z");
+    const store: SewingSessionsFile = {
+      updated_at: null,
+      kiosk_arms: [],
+      sessions: [
+        session({
+          id: "s-left",
+          employee_id: "e1",
+          employee_name: "Kashif",
+          production_code: "FR-0134-L05-SHT-1/2",
+          scan_code: "FR-0134-L05-SHT-1/2",
+          started_at: "2026-08-18T08:16:45.111Z",
+          status: "open",
+        }),
+        session({
+          id: "s-late",
+          employee_id: "e2",
+          employee_name: "Overtime",
+          production_code: "FR-0134-L01-SHT-1/2",
+          scan_code: "FR-0134-L01-SHT-1/2",
+          started_at: "2026-08-18T19:30:00.000Z",
+          status: "open",
+        }),
+      ],
+    };
+    const next = applyWorkdayEndCloses(store, nowMs);
+    assert.equal(next.closed.length, 1);
+    assert.equal(next.closed[0]?.id, "s-left");
+    assert.equal(next.closed[0]?.status, "closed");
+    assert.equal(next.closed[0]?.ended_at, "2026-08-18T19:00:00.000Z");
+    assert.equal(next.store.sessions.find((row) => row.id === "s-late")?.status, "open");
+  });
+
+  it("does not auto-close a session already marked overtime", () => {
+    const nowMs = Date.parse("2026-08-19T00:00:00.000Z");
+    const store: SewingSessionsFile = {
+      updated_at: null,
+      kiosk_arms: [],
+      sessions: [
+        session({
+          id: "s-ot",
+          employee_id: "e1",
+          employee_name: "Kashif",
+          started_at: "2026-08-18T08:16:45.111Z",
+          status: "open",
+          overtime_status: "pending",
+        }),
+      ],
+    };
+    const next = applyWorkdayEndCloses(store, nowMs);
+    assert.equal(next.closed.length, 0);
+    assert.equal(next.store.sessions[0]?.status, "open");
   });
 });
 

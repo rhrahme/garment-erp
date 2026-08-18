@@ -249,7 +249,10 @@ export async function createSewingSessionChangeRequest(
     if (row.status !== "pending") return false;
     if (action === "pause_kiosk") return row.action === "pause_kiosk";
     if (action === "delete_failure") return row.failure_id === failureId;
-    return row.session_id === sessionId;
+    if (action === "overtime_confirm") {
+      return row.action === "overtime_confirm" && row.session_id === sessionId;
+    }
+    return row.action !== "overtime_confirm" && row.session_id === sessionId;
   });
   if (duplicate) {
     return {
@@ -305,6 +308,45 @@ export async function createSewingSessionChangeRequest(
   }
 
   return { ok: true, request };
+}
+
+/**
+ * Overtime scans are logged first; this only opens/updates the admin confirm
+ * queue. A second scan on the same session (start then close) refreshes the
+ * snapshot instead of emailing again.
+ */
+export async function ensureOvertimeConfirmRequest(
+  session: SewingSession,
+  requestedBy: string
+): Promise<void> {
+  const existing = (await readSewingSessionChangeRequestsFresh()).requests.find(
+    (row) =>
+      row.status === "pending" &&
+      row.action === "overtime_confirm" &&
+      row.session_id === session.id
+  );
+  if (existing) {
+    const store = structuredClone(await readSewingSessionChangeRequestsFresh());
+    const index = store.requests.findIndex((row) => row.id === existing.id);
+    if (index >= 0) {
+      store.requests[index] = {
+        ...store.requests[index]!,
+        session_snapshot: snapshotSession(session),
+      };
+      await writeSewingSessionChangeRequests(store);
+    }
+    return;
+  }
+
+  await createSewingSessionChangeRequest(
+    {
+      action: "overtime_confirm",
+      session_id: session.id,
+      reason: "Logged after 22:00 Riyadh. Confirm so it counts; Reject keeps the log but drops Performance hours.",
+      requested_by: requestedBy,
+    },
+    "erp"
+  );
 }
 
 export async function cancelSewingSessionChangeRequest(
@@ -415,10 +457,46 @@ export async function consumePendingStopRequestForSession(
   return { requested_at: request.requested_at ?? null };
 }
 
+async function setSessionOvertimeDecision(
+  sessionId: string,
+  status: "confirmed" | "rejected",
+  decidedBy: string
+): Promise<Result<{ detail?: string }>> {
+  const store = await readSewingSessionsFresh();
+  const index = store.sessions.findIndex((row) => row.id === sessionId);
+  if (index < 0) {
+    return { ok: false, status: 409, error: "Overtime session no longer exists." };
+  }
+  const current = store.sessions[index]!;
+  const nextSessions = [...store.sessions];
+  nextSessions[index] = {
+    ...current,
+    overtime_status: status,
+    overtime_decided_by: decidedBy,
+    overtime_decided_at: new Date().toISOString(),
+  };
+  await writeSewingSessions({ ...store, sessions: nextSessions });
+  return {
+    ok: true,
+    detail:
+      status === "confirmed"
+        ? "Overtime confirmed. The scan stays in History and Performance."
+        : "Overtime rejected. The scan stays logged but is dropped from Performance.",
+  };
+}
+
 async function applyApprovedMutation(
   request: SewingSessionChangeRequest,
   decidedBy: string
 ): Promise<Result<{ detail?: string }>> {
+  if (request.action === "overtime_confirm") {
+    const sessionId = request.session_id;
+    if (!sessionId) {
+      return { ok: false, status: 400, error: "Request is missing session_id." };
+    }
+    return setSessionOvertimeDecision(sessionId, "confirmed", decidedBy);
+  }
+
   if (request.action === "pause_kiosk") {
     const settings = await setStitchKioskPaused(true, { actedBy: decidedBy });
     try {
@@ -470,7 +548,14 @@ async function applyApprovedMutation(
 
   if (request.action === "delete") {
     const productionCode = current.production_code;
-    const nextSessions = store.sessions.filter((row) => row.id !== sessionId);
+    const changeStore = await readSewingSessionChangeRequestsFresh();
+    const approvedDeleteIds = [
+      sessionId,
+      ...changeStore.requests
+        .filter((row) => row.action === "delete" && row.status === "approved" && row.session_id)
+        .map((row) => row.session_id as string),
+    ];
+    const nextSessions = store.sessions.filter((row) => !approvedDeleteIds.includes(row.id));
     const nextArms = (store.kiosk_arms ?? []).filter(
       (arm) => arm.employee_id !== current.employee_id
     );
@@ -483,8 +568,11 @@ async function applyApprovedMutation(
         sessions: nextSessions,
         kiosk_arms: nextArms,
         kiosk_piece_arms: nextPieceArms,
+        deleted_session_ids: [
+          ...new Set([...(store.deleted_session_ids ?? []), ...approvedDeleteIds]),
+        ],
       },
-      { allowSessionDeleteIds: [sessionId] }
+      { allowSessionDeleteIds: [...new Set(approvedDeleteIds)] }
     );
     return { ok: true, detail: "Session deleted." };
   }
@@ -579,6 +667,14 @@ export async function decideSewingSessionChangeRequest(
   const source = options.source ?? "erp";
 
   if (decision === "reject") {
+    if (current.action === "overtime_confirm" && current.session_id) {
+      const overtime = await setSessionOvertimeDecision(
+        current.session_id,
+        "rejected",
+        decidedBy
+      );
+      if (!overtime.ok) return overtime;
+    }
     const rejected = await persistRequestDecision(current.id, {
       status: "rejected",
       decided_by: decidedBy,

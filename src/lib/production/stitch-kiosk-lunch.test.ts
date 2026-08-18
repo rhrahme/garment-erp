@@ -4,6 +4,8 @@ import {
   capSessionCloseAtWorkdayEnd,
   isStitchLunchPauseWindow,
   riyadhWallTimeToUtcMs,
+  isStitchOvertimeWindow,
+  shouldAutoCloseForgottenSession,
   shouldAutoResumeStitchKioskLunch,
   stitchLunchAutoResumeAtIsoForPause,
   stitchLunchResumeAtMs,
@@ -138,4 +140,33 @@ test("overnight close caps at 22:00 Riyadh of the start day", () => {
     capSessionCloseAtWorkdayEnd(lateStartMs, Date.parse("2026-08-19T05:00:00.000Z")),
     Date.parse("2026-08-17T19:00:00.000Z")
   );
+});
+
+test("forgotten open session is due to auto-close at/after 22:00 Riyadh", () => {
+  const started = "2026-08-18T08:16:45.111Z";
+  assert.equal(
+    shouldAutoCloseForgottenSession(started, Date.parse("2026-08-18T18:59:00.000Z")),
+    false
+  );
+  assert.equal(
+    shouldAutoCloseForgottenSession(started, Date.parse("2026-08-18T19:00:00.000Z")),
+    true
+  );
+  assert.equal(
+    shouldAutoCloseForgottenSession(started, Date.parse("2026-08-18T22:00:00.000Z")),
+    true
+  );
+  const lateStart = "2026-08-18T19:30:00.000Z";
+  assert.equal(
+    shouldAutoCloseForgottenSession(lateStart, Date.parse("2026-08-18T22:00:00.000Z")),
+    false
+  );
+});
+
+test("overtime window is 22:00 through 07:59 Riyadh", () => {
+  assert.equal(isStitchOvertimeWindow(Date.parse("2026-08-18T18:59:00.000Z")), false);
+  assert.equal(isStitchOvertimeWindow(Date.parse("2026-08-18T19:00:00.000Z")), true);
+  assert.equal(isStitchOvertimeWindow(Date.parse("2026-08-18T22:30:00.000Z")), true);
+  assert.equal(isStitchOvertimeWindow(Date.parse("2026-08-19T04:59:00.000Z")), true);
+  assert.equal(isStitchOvertimeWindow(Date.parse("2026-08-19T05:00:00.000Z")), false);
 });

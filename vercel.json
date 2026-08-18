@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/supabase-auth-health",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/stitch-kiosk-workday-end",
+      "schedule": "0 19 * * *"
     }
   ],
   "functions": {

@@ -99,8 +99,9 @@ export function SewingSessionChangeRequestsPanelClient({
             {requests.length > 0 ? (
               <p className="flex items-start gap-2 text-sm font-medium text-amber-900">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                Stitch/Pattern asked to edit, stop, delete, or pause kiosk scan history. Confirm
-                applies the change; Reject keeps current data.
+                Stitch/Pattern asked to edit, stop, delete, or pause kiosk scan history.
+                Overtime scans after 10 PM are already logged - Confirm counts them,
+                Reject keeps the log but drops Performance hours.
               </p>
             ) : null}
           </div>

@@ -105,8 +105,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `POST /api/production/sewing-session/change-request` (request/cancel) +
   admin decide route + `/api/v1/...` parity. Events:
   `production.sewing_session_change_requested|approved|rejected`. Approved
-  deletes use `allow_session_delete_ids` / `allow_failure_delete_ids` so
-  protect-merge cannot resurrect rows. Scan tab stays scan-only.
+  deletes use `allow_session_delete_ids` / `allow_failure_delete_ids` plus
+  durable `deleted_session_ids` tombstones so protect-merge cannot
+  resurrect rows. Overtime after 22:00 is `overtime_confirm` (scan already
+  logged). Scan tab stays scan-only.
 - **Stop requests close at request time** (Aug 17 2026): approved "stop"
   requests set `ended_at` = `requested_at` (`stopRequestEndedAt`), never the
   admin decision time - approval lag must not inflate elapsed. If the kiosk
@@ -115,11 +117,16 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   (`consumePendingStopRequestForSession`), so stale "Session is no longer
   open" requests never linger on `/approvals`. Do not revert to closing at
   scan/approval time.
-- **Workday cap 22:00 Riyadh** (Aug 18 2026): the floor finishes at 10 PM.
-  Kiosk closes cap `ended_at` at 22:00 Riyadh of the session's start day
-  (`capSessionCloseAtWorkdayEnd`; sessions started at/after 22:00 cap at the
-  next day's 22:00), so forgotten overnight sessions can never record 15-97h
-  elapsed again. Historical sessions were bulk-corrected on Aug 18.
+- **Workday cap 22:00 Riyadh** (Aug 18 2026, auto-close + overtime Aug 19):
+  the floor finishes at 10 PM. Forgotten Live/open/closing sessions (no
+  overtime scan) are **closed** at 22:00 of the start day
+  (`applyWorkdayEndCloses`) via cron `/api/cron/stitch-kiosk-workday-end`
+  (19:00 UTC) and Live poll. If the team is still scanning after 22:00
+  (overtime, until 08:00), **keep the scan logged** and open an
+  `overtime_confirm` admin request - do not drop it. Confirm counts it in
+  Performance; Reject keeps the History row but drops Performance hours.
+  Do not auto-close a session already marked overtime pending/confirmed.
+  Do not treat a duration cap as "Live is empty at 10 PM".
 - **Pattern can open the stitch kiosk** (Aug 9 2026): `pattern_operator` has
   `/stitch` in nav and the same kiosk APIs as stitch@ (sewing-session scan,
   work-order / sales-order reads only). Pause control stays admin-only. Do not
@@ -604,9 +611,14 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   job linked or the fabric still looks grouped.
 - Zapier parity rule: every business write path needs `/api/v1/...` +
   `notifyIntegration` (see `.cursor/rules/zapier-integration.mdc`).
+- **Mem0 extra brain** (Aug 19 2026): Cursor MCP at mcp.mem0.ai. Store
+  `Owner:` (user words) and `Agent:` (what shipped). Owner wins if they
+  conflict. KNOWLEDGE.md remains the shipped source of truth. Do not
+  store passwords or badge PINs.
 
 ## Session notes index
 
+- [session-2026-08-19](session-2026-08-19.md) - 10 PM auto-close + overtime confirm, Kashif Live leftover, Mem0 brain, pattern login check
 - [session-2026-08-05](session-2026-08-05.md) - Load from base pattern fills the Sample column on client sheets; picker preload perf
 - [session-2026-08-04](session-2026-08-04.md) - Al Ajlan draft invoices prefilled with agreed proposal prices
 - [session-2026-08-03](session-2026-08-03.md) - orange highlight for recently added custom fabrics

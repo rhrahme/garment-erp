@@ -66,4 +66,16 @@ describe("sewingSessionElapsedBreakdown", () => {
       [60 * 60, 120 * 60, 30 * 60]
     );
   });
+
+  it("caps open elapsed at 22:00 Riyadh of the start day", () => {
+    const breakdown = sewingSessionElapsedBreakdown(
+      "2026-08-18T08:16:45.111Z",
+      Date.parse("2026-08-18T22:00:00.000Z")
+    );
+    const capped = sewingSessionElapsedBreakdown(
+      "2026-08-18T08:16:45.111Z",
+      Date.parse("2026-08-18T19:00:00.000Z")
+    );
+    assert.equal(breakdown.work_sec, capped.work_sec);
+  });
 });

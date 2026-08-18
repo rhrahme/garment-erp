@@ -8,8 +8,15 @@ import {
 } from "@/lib/hr/employee-qr";
 import { normalizeJobFunctions } from "@/lib/hr/job-functions";
 import { safeRecordPatternAlterationPendingFromSession } from "@/lib/production/record-pattern-alteration-pending";
-import { consumePendingStopRequestForSession } from "@/lib/production/sewing-session-change-requests";
-import { capSessionCloseAtWorkdayEnd } from "@/lib/production/stitch-kiosk-lunch";
+import {
+  consumePendingStopRequestForSession,
+  ensureOvertimeConfirmRequest,
+} from "@/lib/production/sewing-session-change-requests";
+import { stampOvertimeIfNeeded } from "@/lib/production/sewing-session-workday-end";
+import {
+  capSessionCloseAtWorkdayEnd,
+  isStitchOvertimeWindow,
+} from "@/lib/production/stitch-kiosk-lunch";
 import {
   findPayrollEmployeeByBadgeValue,
   findPayrollEmployeeById,
@@ -354,31 +361,34 @@ function buildSessionFromArmAndMeta(
   kioskId: string,
   at: number
 ): SewingSession {
-  return {
-    id: `sew-${at}-${Math.random().toString(36).slice(2, 8)}`,
-    kiosk_id: kioskId,
-    employee_id: arm.employee_id,
-    employee_name: arm.employee_name,
-    employee_id_number: arm.employee_id_number,
-    production_code: meta.production_code,
-    scan_code: raw.trim().toUpperCase(),
-    workstation_id: arm.workstation_id,
-    started_at: nowIso(at),
-    ended_at: null,
-    duration_sec: null,
-    status: "open",
-    closing_armed_at: null,
-    closing_confirm: null,
-    work_order_id: meta.work_order_id,
-    so_number: meta.so_number,
-    piece_mark: meta.piece_mark,
-    fabric_cut_code: meta.fabric_cut_code,
-    client_name: meta.client_name,
-    garment_type: meta.garment_type,
-    fabric_number: meta.fabric_number,
-    work_kind: arm.work_kind === "alteration" ? "alteration" : "first_make",
-    activity_job_function: arm.activity_job_function ?? null,
-  };
+  return stampOvertimeIfNeeded(
+    {
+      id: `sew-${at}-${Math.random().toString(36).slice(2, 8)}`,
+      kiosk_id: kioskId,
+      employee_id: arm.employee_id,
+      employee_name: arm.employee_name,
+      employee_id_number: arm.employee_id_number,
+      production_code: meta.production_code,
+      scan_code: raw.trim().toUpperCase(),
+      workstation_id: arm.workstation_id,
+      started_at: nowIso(at),
+      ended_at: null,
+      duration_sec: null,
+      status: "open",
+      closing_armed_at: null,
+      closing_confirm: null,
+      work_order_id: meta.work_order_id,
+      so_number: meta.so_number,
+      piece_mark: meta.piece_mark,
+      fabric_cut_code: meta.fabric_cut_code,
+      client_name: meta.client_name,
+      garment_type: meta.garment_type,
+      fabric_number: meta.fabric_number,
+      work_kind: arm.work_kind === "alteration" ? "alteration" : "first_make",
+      activity_job_function: arm.activity_job_function ?? null,
+    },
+    at
+  );
 }
 
 function buildSessionFromPieceArm(
@@ -394,31 +404,34 @@ function buildSessionFromPieceArm(
   workKind: SewingWorkKind = "first_make",
   activityJobFunction: EmployeeBadgeActivityJobFunction | null = null
 ): SewingSession {
-  return {
-    id: `sew-${at}-${Math.random().toString(36).slice(2, 8)}`,
-    kiosk_id: kioskId,
-    employee_id: employee.employee_id,
-    employee_name: employee.employee_name,
-    employee_id_number: employee.employee_id_number,
-    production_code: pieceArm.production_code,
-    scan_code: pieceArm.scan_code,
-    workstation_id: employee.workstation_id,
-    started_at: nowIso(at),
-    ended_at: null,
-    duration_sec: null,
-    status: "open",
-    closing_armed_at: null,
-    closing_confirm: null,
-    work_order_id: pieceArm.work_order_id,
-    so_number: pieceArm.so_number,
-    piece_mark: pieceArm.piece_mark,
-    fabric_cut_code: pieceArm.fabric_cut_code,
-    client_name: pieceArm.client_name,
-    garment_type: pieceArm.garment_type,
-    fabric_number: pieceArm.fabric_number,
-    work_kind: workKind,
-    activity_job_function: activityJobFunction,
-  };
+  return stampOvertimeIfNeeded(
+    {
+      id: `sew-${at}-${Math.random().toString(36).slice(2, 8)}`,
+      kiosk_id: kioskId,
+      employee_id: employee.employee_id,
+      employee_name: employee.employee_name,
+      employee_id_number: employee.employee_id_number,
+      production_code: pieceArm.production_code,
+      scan_code: pieceArm.scan_code,
+      workstation_id: employee.workstation_id,
+      started_at: nowIso(at),
+      ended_at: null,
+      duration_sec: null,
+      status: "open",
+      closing_armed_at: null,
+      closing_confirm: null,
+      work_order_id: pieceArm.work_order_id,
+      so_number: pieceArm.so_number,
+      piece_mark: pieceArm.piece_mark,
+      fabric_cut_code: pieceArm.fabric_cut_code,
+      client_name: pieceArm.client_name,
+      garment_type: pieceArm.garment_type,
+      fabric_number: pieceArm.fabric_number,
+      work_kind: workKind,
+      activity_job_function: activityJobFunction,
+    },
+    at
+  );
 }
 
 async function closeSessionWithBadgeOrPiece(input: {
@@ -467,9 +480,11 @@ async function closeSessionWithBadgeOrPiece(input: {
     console.error("Failed to check pending stop request:", closingForEmployee.id, error);
   }
 
-  // Forgotten overnight sessions: the floor finishes at 22:00 Riyadh, so a
-  // close on a later day caps at 22:00 of the day the session started.
-  closeAt = capSessionCloseAtWorkdayEnd(Date.parse(closingForEmployee.started_at), closeAt);
+  // Forgotten overnight sessions cap at 22:00. Overtime closes keep the real
+  // scan time so the logged hours match what the floor did.
+  if (!isStitchOvertimeWindow(closeAt) && closingForEmployee.overtime_status !== "pending") {
+    closeAt = capSessionCloseAtWorkdayEnd(Date.parse(closingForEmployee.started_at), closeAt);
+  }
 
   const endedAt = nowIso(closeAt);
   const kioskSettingsForDuration = await readStitchKioskSettingsFresh();
@@ -502,21 +517,31 @@ async function closeSessionWithBadgeOrPiece(input: {
     stageMessage = error instanceof Error ? error.message : "Sewing stage scan failed.";
   }
 
-  const closed: SewingSession = {
-    ...closingForEmployee,
-    status: "closed",
-    ended_at: endedAt,
-    duration_sec: durationSec,
-    closing_armed_at: null,
-    closing_confirm: null,
-    workstation_id: workstation_id ?? closingForEmployee.workstation_id,
-    employee_id,
-    employee_name,
-    employee_id_number,
-  };
+  const closed: SewingSession = stampOvertimeIfNeeded(
+    {
+      ...closingForEmployee,
+      status: "closed",
+      ended_at: endedAt,
+      duration_sec: durationSec,
+      closing_armed_at: null,
+      closing_confirm: null,
+      workstation_id: workstation_id ?? closingForEmployee.workstation_id,
+      employee_id,
+      employee_name,
+      employee_id_number,
+    },
+    closeAt
+  );
 
   store = applyCloseSession(store, closingForEmployee, closed);
   await writeSewingSessions(store);
+  if (closed.overtime_status === "pending") {
+    try {
+      await ensureOvertimeConfirmRequest(closed, `${closed.employee_name} (kiosk overtime)`);
+    } catch (error) {
+      console.error("Failed to queue overtime confirm:", closed.id, error);
+    }
+  }
 
   try {
     await notifyIntegration(
@@ -868,6 +893,13 @@ export async function processSewingKioskScan(
       } catch (error) {
         console.error("Failed to email admins sewing_session_started:", session.id, error);
       }
+      if (session.overtime_status === "pending") {
+        try {
+          await ensureOvertimeConfirmRequest(session, `${session.employee_name} (kiosk overtime)`);
+        } catch (error) {
+          console.error("Failed to queue overtime confirm:", session.id, error);
+        }
+      }
       await safeRecordPatternAlterationPendingFromSession(session, input.source ?? "erp");
 
       const started = enrichSessionsForFloorUi([session])[0]!;
@@ -1157,6 +1189,13 @@ export async function processSewingKioskScan(
       await notifyAdminsOfSewingSessionStarted(session);
     } catch (error) {
       console.error("Failed to email admins sewing_session_started:", session.id, error);
+    }
+    if (session.overtime_status === "pending") {
+      try {
+        await ensureOvertimeConfirmRequest(session, `${session.employee_name} (kiosk overtime)`);
+      } catch (error) {
+        console.error("Failed to queue overtime confirm:", session.id, error);
+      }
     }
     await safeRecordPatternAlterationPendingFromSession(session, input.source ?? "erp");
 

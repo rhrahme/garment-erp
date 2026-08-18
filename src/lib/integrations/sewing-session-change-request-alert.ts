@@ -18,7 +18,10 @@ export async function notifyAdminsOfSewingSessionChangeRequest(
 
   const summary = summarizeSewingSessionChangeRequest(request);
   const appUrl = erpPublicAppUrl();
-  const subject = `ERP: stitch kiosk request (${summary.action})`;
+  const overtime = request.action === "overtime_confirm";
+  const subject = overtime
+    ? `ERP: overtime scan to confirm (${summary.production_code ?? summary.session_id ?? "session"})`
+    : `ERP: stitch kiosk request (${summary.action})`;
   const exp = Date.now() + ADMIN_DECISION_EMAIL_TOKEN_TTL_MS;
 
   let sent = false;
@@ -34,9 +37,13 @@ export async function notifyAdminsOfSewingSessionChangeRequest(
       })}`;
 
     const text = [
-      "Garment ERP - stitch kiosk request",
+      overtime
+        ? "Garment ERP - overtime scan logged after 22:00 Riyadh"
+        : "Garment ERP - stitch kiosk request",
       "",
-      "The stitch kiosk asked an admin to change Live/History.",
+      overtime
+        ? "The scan is already logged. Confirm it so Performance counts it, or Reject to keep the log but drop the hours."
+        : "The stitch kiosk asked an admin to change Live/History.",
       "",
       `- Action: ${summary.action}`,
       `- Label: ${summary.label}`,
@@ -51,10 +58,10 @@ export async function notifyAdminsOfSewingSessionChangeRequest(
       "",
       "One click, no login needed (links work for 7 days):",
       "",
-      "APPROVE - apply the change:",
+      overtime ? "CONFIRM - overtime counts:" : "APPROVE - apply the change:",
       link("approve"),
       "",
-      "REJECT - keep current data:",
+      overtime ? "REJECT - keep the log, drop Performance hours:" : "REJECT - keep current data:",
       link("reject"),
       "",
       "ALL pending approvals on one page (approve each or all, no login):",

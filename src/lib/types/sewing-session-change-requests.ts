@@ -13,7 +13,8 @@ export type SewingSessionChangeAction =
   | "stop"
   | "edit"
   | "pause_kiosk"
-  | "delete_failure";
+  | "delete_failure"
+  | "overtime_confirm";
 
 /** Fields operators may propose when action is edit. */
 export type SewingSessionEditPatch = {

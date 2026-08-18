@@ -28,10 +28,11 @@ function formatClockShort(iso: string | null | undefined): string {
 export function buildSewingElapsedBreakdown(
   startedAt: string | null | undefined,
   endAt: number,
-  pauses: SewingPauseIntervalLike[] = []
+  pauses: SewingPauseIntervalLike[] = [],
+  options: { ignoreWorkdayCap?: boolean } = {}
 ): SewingElapsedBreakdown | null {
   if (!startedAt) return null;
-  return sewingSessionElapsedBreakdown(startedAt, endAt, pauses);
+  return sewingSessionElapsedBreakdown(startedAt, endAt, pauses, options);
 }
 
 type SewingElapsedBreakdownViewProps = {
@@ -43,6 +44,7 @@ type SewingElapsedBreakdownViewProps = {
   longRunning?: boolean;
   frozen?: boolean;
   compact?: boolean;
+  ignoreWorkdayCap?: boolean;
   className?: string;
 };
 
@@ -57,9 +59,12 @@ export function SewingElapsedBreakdownView({
   longRunning = false,
   frozen = false,
   compact = false,
+  ignoreWorkdayCap = false,
   className,
 }: SewingElapsedBreakdownViewProps) {
-  const breakdown = buildSewingElapsedBreakdown(startedAt, endAt, pauses);
+  const breakdown = buildSewingElapsedBreakdown(startedAt, endAt, pauses, {
+    ignoreWorkdayCap,
+  });
   const workSec = breakdown?.work_sec ?? fallbackSec ?? 0;
   const showSegments = Boolean(
     breakdown && breakdown.pause_sec > 0 && breakdown.segments.length > 1

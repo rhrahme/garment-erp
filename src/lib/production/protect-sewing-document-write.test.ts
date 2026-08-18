@@ -83,6 +83,47 @@ describe("protectSewingSessionsWrite", () => {
       ["s-new"]
     );
     assert.equal("allow_session_delete_ids" in next, false);
+    assert.deepEqual(next.deleted_session_ids, ["s-old"]);
+  });
+
+  it("strips a deleted session even when a stale write still includes it", () => {
+    const next = protectSewingSessionsWrite(
+      {
+        kiosk_arms: [],
+        kiosk_piece_arms: [],
+        sessions: [{ id: "s-keep", status: "closed" }],
+        deleted_session_ids: ["s-gone"],
+      },
+      {
+        kiosk_arms: [],
+        kiosk_piece_arms: [],
+        sessions: [
+          { id: "s-keep", status: "closed" },
+          { id: "s-gone", status: "open" },
+        ],
+      }
+    );
+    assert.deepEqual(
+      (next.sessions ?? []).map((session) => session.id),
+      ["s-keep"]
+    );
+    assert.deepEqual(next.deleted_session_ids, ["s-gone"]);
+  });
+
+  it("keeps a remote-closed session closed if a stale kiosk write still has it open", () => {
+    const next = protectSewingSessionsWrite(
+      {
+        kiosk_arms: [],
+        kiosk_piece_arms: [],
+        sessions: [{ id: "s-done", status: "closed" }],
+      },
+      {
+        kiosk_arms: [],
+        kiosk_piece_arms: [],
+        sessions: [{ id: "s-done", status: "open" }],
+      }
+    );
+    assert.equal(next.sessions?.[0]?.status, "closed");
   });
 });
 

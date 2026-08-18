@@ -97,11 +97,22 @@ export async function GET(request: Request) {
         "error"
       );
     }
+    const overtime = pending.action === "overtime_confirm";
     return page(
-      payload.action === "approve" ? "Request approved" : "Request rejected",
       payload.action === "approve"
-        ? "The stitch change is applied."
-        : "The stitch data was left as it was.",
+        ? overtime
+          ? "Overtime confirmed"
+          : "Request approved"
+        : overtime
+          ? "Overtime rejected"
+          : "Request rejected",
+      payload.action === "approve"
+        ? overtime
+          ? "The overtime scan stays logged and counts in Performance."
+          : "The stitch change is applied."
+        : overtime
+          ? "The scan stays logged but is dropped from Performance."
+          : "The stitch data was left as it was.",
       "ok"
     );
   }

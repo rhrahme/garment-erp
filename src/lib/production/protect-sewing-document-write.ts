@@ -13,6 +13,8 @@ export type ProtectableSewingSessions = {
   allow_testing_reset?: boolean;
   /** Admin-approved deletes: do not re-merge these ids from remote. */
   allow_session_delete_ids?: string[] | null;
+  /** Durable tombstones so a later kiosk flush cannot resurrect a deleted session. */
+  deleted_session_ids?: string[] | null;
   [key: string]: unknown;
 };
 
@@ -42,6 +44,12 @@ function openCount(store: ProtectableSewingSessions): number {
   ).length;
 }
 
+function idList(value: unknown): string[] {
+  return (Array.isArray(value) ? value : []).filter(
+    (id): id is string => typeof id === "string" && Boolean(id.trim())
+  );
+}
+
 export function isSewingSessionsEmpty(store: ProtectableSewingSessions): boolean {
   return sessionCount(store) === 0 && armCount(store) === 0;
 }
@@ -51,12 +59,11 @@ export function protectSewingSessionsWrite(
   incoming: ProtectableSewingSessions
 ): ProtectableSewingSessions {
   const allowReset = incoming.allow_testing_reset === true;
-  const deleteIds = new Set(
-    (Array.isArray(incoming.allow_session_delete_ids)
-      ? incoming.allow_session_delete_ids
-      : []
-    ).filter((id): id is string => typeof id === "string" && Boolean(id.trim()))
-  );
+  const tombstones = new Set([
+    ...idList(remote.deleted_session_ids),
+    ...idList(incoming.deleted_session_ids),
+    ...idList(incoming.allow_session_delete_ids),
+  ]);
   const {
     allow_testing_reset: _flag,
     allow_session_delete_ids: _deleteIds,
@@ -77,19 +84,39 @@ export function protectSewingSessionsWrite(
         ? cleanIncoming.kiosk_piece_arms
         : [],
       sessions: Array.isArray(cleanIncoming.sessions) ? cleanIncoming.sessions : [],
+      deleted_session_ids: [],
     };
   }
 
   // Stale write with fewer sessions than remote: keep remote sessions missing
   // from incoming (by id) so concurrent kiosks cannot erase each other.
   const remoteSessions = Array.isArray(remote.sessions) ? remote.sessions : [];
-  const incomingSessions = Array.isArray(cleanIncoming.sessions) ? cleanIncoming.sessions : [];
+  const remoteById = new Map(
+    remoteSessions
+      .filter((session) => typeof session.id === "string" && session.id)
+      .map((session) => [session.id as string, session])
+  );
+  const incomingSessions = (Array.isArray(cleanIncoming.sessions) ? cleanIncoming.sessions : [])
+    .filter((session) => !session.id || !tombstones.has(session.id))
+    .map((session) => {
+      if (!session.id) return session;
+      const remoteSession = remoteById.get(session.id);
+      if (
+        remoteSession &&
+        (remoteSession.status === "closed" || remoteSession.status === "abandoned") &&
+        session.status !== "closed" &&
+        session.status !== "abandoned"
+      ) {
+        return remoteSession;
+      }
+      return session;
+    });
   const incomingIds = new Set(
     incomingSessions.map((session) => session.id).filter((id): id is string => Boolean(id))
   );
   const mergedSessions = [...incomingSessions];
   for (const session of remoteSessions) {
-    if (!session.id || incomingIds.has(session.id) || deleteIds.has(session.id)) continue;
+    if (!session.id || incomingIds.has(session.id) || tombstones.has(session.id)) continue;
     mergedSessions.push(session);
   }
 
@@ -97,6 +124,7 @@ export function protectSewingSessionsWrite(
     ...remote,
     ...cleanIncoming,
     sessions: mergedSessions,
+    deleted_session_ids: [...tombstones].slice(-500),
     kiosk_arms: Array.isArray(cleanIncoming.kiosk_arms)
       ? cleanIncoming.kiosk_arms
       : remote.kiosk_arms ?? [],

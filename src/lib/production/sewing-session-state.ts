@@ -1,4 +1,9 @@
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
+import {
+  capSessionCloseAtWorkdayEnd,
+  sessionWorkdayEndMs,
+  shouldAutoCloseForgottenSession,
+} from "@/lib/production/stitch-kiosk-lunch";
 import type { SewingScanFailure } from "@/lib/types/sewing-scan-failures";
 import type {
   SewingKioskArm,
@@ -149,6 +154,58 @@ export function expireStaleSewingState(
     return session;
   });
   return { ...base, kiosk_arms: arms, kiosk_piece_arms: pieceArms, sessions };
+}
+
+/**
+ * Floor finishes at 22:00 Riyadh: leftover open/closing sessions become
+ * History at that instant. Pure helper — persist via ensureForgottenSessionsClosedAtWorkdayEnd.
+ */
+export function applyWorkdayEndCloses(
+  store: SewingSessionsFile,
+  nowMs: number = Date.now(),
+  pauses: SewingPauseIntervalLike[] = []
+): { store: SewingSessionsFile; closed: SewingSession[] } {
+  const base = normalizeSewingSessionsFile(store);
+  const closed: SewingSession[] = [];
+  const closedEmployeeIds = new Set<string>();
+  const closedCodes = new Set<string>();
+  const sessions = base.sessions.map((session) => {
+    if (session.status !== "open" && session.status !== "closing") return session;
+    if (session.overtime_status === "pending" || session.overtime_status === "confirmed") {
+      return session;
+    }
+    if (!shouldAutoCloseForgottenSession(session.started_at, nowMs)) return session;
+    const startedMs = Date.parse(session.started_at);
+    const endedMs = sessionWorkdayEndMs(startedMs);
+    const next: SewingSession = {
+      ...session,
+      status: "closed",
+      ended_at: new Date(endedMs).toISOString(),
+      duration_sec: sewingSessionElapsedSecExcludingPauses(
+        session.started_at,
+        endedMs,
+        pauses
+      ),
+      closing_armed_at: null,
+      closing_confirm: null,
+    };
+    closed.push(next);
+    if (session.employee_id) closedEmployeeIds.add(session.employee_id);
+    if (session.production_code) closedCodes.add(session.production_code);
+    return next;
+  });
+  if (closed.length === 0) return { store: base, closed };
+  return {
+    store: {
+      ...base,
+      sessions,
+      kiosk_arms: base.kiosk_arms.filter((arm) => !closedEmployeeIds.has(arm.employee_id)),
+      kiosk_piece_arms: (base.kiosk_piece_arms ?? []).filter(
+        (arm) => !closedCodes.has(arm.production_code)
+      ),
+    },
+    closed,
+  };
 }
 
 /**
@@ -304,9 +361,13 @@ export function sewingSessionsDashboard(
     /** Backward-compatible: always today's closed count (local day). */
     closed_today: closedToday.length,
     closed_in_period: closedInPeriod.length,
-    completed_by_employee: aggregateClosedByEmployee(closedInPeriod),
+    completed_by_employee: aggregateClosedByEmployee(
+      closedInPeriod.filter((row) => row.overtime_status !== "rejected")
+    ),
     /** Always today (local day) - for Live "today so far" per stitcher. */
-    today_by_employee: aggregateClosedByEmployee(closedToday),
+    today_by_employee: aggregateClosedByEmployee(
+      closedToday.filter((row) => row.overtime_status !== "rejected")
+    ),
     sessions: historyCandidates.slice(0, historyCap),
     kiosk_arms: fresh.kiosk_arms,
     kiosk_piece_arms: fresh.kiosk_piece_arms ?? [],
@@ -334,9 +395,10 @@ export type SewingPauseIntervalLike = {
 export function sewingSessionElapsedSecExcludingPauses(
   startedAt: string,
   at = Date.now(),
-  pauses: SewingPauseIntervalLike[] = []
+  pauses: SewingPauseIntervalLike[] = [],
+  options: { ignoreWorkdayCap?: boolean } = {}
 ): number {
-  return sewingSessionElapsedBreakdown(startedAt, at, pauses).work_sec;
+  return sewingSessionElapsedBreakdown(startedAt, at, pauses, options).work_sec;
 }
 
 export type SewingElapsedSegmentKind = "work" | "pause";
@@ -377,7 +439,8 @@ function isLunchishPause(startedAtMs: number, endedAtMs: number): boolean {
 export function sewingSessionElapsedBreakdown(
   startedAt: string,
   at = Date.now(),
-  pauses: SewingPauseIntervalLike[] = []
+  pauses: SewingPauseIntervalLike[] = [],
+  options: { ignoreWorkdayCap?: boolean } = {}
 ): SewingElapsedBreakdown {
   const start = new Date(startedAt).getTime();
   const empty: SewingElapsedBreakdown = {
@@ -387,7 +450,8 @@ export function sewingSessionElapsedBreakdown(
     segments: [],
   };
   if (!Number.isFinite(start)) return empty;
-  const end = Number.isFinite(at) ? at : Date.now();
+  const endRaw = Number.isFinite(at) ? at : Date.now();
+  const end = options.ignoreWorkdayCap ? endRaw : capSessionCloseAtWorkdayEnd(start, endRaw);
   if (end <= start) return empty;
 
   const overlaps = pauses

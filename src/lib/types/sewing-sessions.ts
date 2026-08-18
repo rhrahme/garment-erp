@@ -94,6 +94,14 @@ export type SewingSession = {
    * Live / History show Ironing or Buttons for that session.
    */
   activity_job_function?: Extract<EmployeeJobFunction, "wash_iron" | "buttons"> | null;
+  /**
+   * Scan at/after 22:00 Riyadh (overtime). Logged immediately; admin confirms later.
+   * rejected keeps the row but drops it from Performance totals.
+   */
+  overtime_status?: "pending" | "confirmed" | "rejected" | null;
+  overtime_logged_at?: string | null;
+  overtime_decided_by?: string | null;
+  overtime_decided_at?: string | null;
 };
 
 export type SewingSessionsFile = {
@@ -102,6 +110,8 @@ export type SewingSessionsFile = {
   /** Piece-first pending starts (A4 before badge). */
   kiosk_piece_arms?: SewingKioskPieceArm[];
   sessions: SewingSession[];
+  /** Admin-approved deletes. Protect-merge drops these ids if a stale kiosk write tries to resurrect them. */
+  deleted_session_ids?: string[];
 };
 
 export type SewingKioskUiPhase =

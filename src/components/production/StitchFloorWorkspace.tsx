@@ -781,10 +781,14 @@ export function StitchFloorWorkspace({
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {liveRows.map((session) => {
+                    const overtimeOpen =
+                      session.overtime_status === "pending" ||
+                      session.overtime_status === "confirmed";
                     const elapsedSec = sewingSessionElapsedSecExcludingPauses(
                       session.started_at,
                       liveClockNow,
-                      pauseIntervals
+                      pauseIntervals,
+                      { ignoreWorkdayCap: overtimeOpen }
                     );
                     const longRunning = elapsedSec >= SEWING_LIVE_LONG_RUNNING_SEC;
                     const today =
@@ -854,6 +858,7 @@ export function StitchFloorWorkspace({
                             pauses={pauseIntervals}
                             longRunning={longRunning}
                             frozen={Boolean(data.kiosk_paused)}
+                            ignoreWorkdayCap={overtimeOpen}
                           />
                         </td>
                         <td className="px-3 py-3">
@@ -870,6 +875,11 @@ export function StitchFloorWorkspace({
                               session.activity_job_function
                             )}
                           </span>
+                          {session.overtime_status === "pending" ? (
+                            <div className="mt-1 text-xs font-semibold text-amber-800">
+                              Overtime - confirm
+                            </div>
+                          ) : null}
                         </td>
                         <td className="px-3 py-3">
                           {pending ? (

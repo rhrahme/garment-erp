@@ -27,7 +27,9 @@ export function summarizeSewingSessionChangeRequest(
       ? "Pause stitch kiosk"
       : request.action === "delete_failure"
         ? `Delete failed scan ${fail?.raw_code ?? request.failure_id ?? ""}`
-        : `${request.action} ${snap?.production_code ?? request.session_id ?? "session"}`;
+        : request.action === "overtime_confirm"
+          ? `Overtime to confirm ${snap?.production_code ?? request.session_id ?? "session"}`
+          : `${request.action} ${snap?.production_code ?? request.session_id ?? "session"}`;
   return {
     id: request.id,
     action: request.action,
