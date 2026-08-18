@@ -563,8 +563,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   add those emails to PATTERN_EMAILS; isPatternOperatorEmail matches the
   badge pattern by regex. Both operators share one workspace; writes are
   stamped with sessionActor() as "Mohtajul (2625917972)" so admin can
-  tell who changed a sheet. hagan.dp1@gmail.com maps to Mohtajul
-  (PATTERN_EMAIL_EMPLOYEES). /api/auth/badge-login stays in BOTH
+  tell who changed a sheet. hagan.dp1@gmail.com email login is disabled
+  (isEmailLoginDisabled); the mailbox still maps to Mohtajul for old
+  history (PATTERN_EMAIL_EMPLOYEES). Second operator temp ID: XX22.
+  /api/auth/badge-login stays in BOTH
   middleware open-route lists. Revoke: remove the credential or deactivate
   the employee.
 - **Remove a fabric from a consolidation**: Grouped fabrics -> Remove
