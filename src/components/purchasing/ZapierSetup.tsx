@@ -115,6 +115,8 @@ const OUTBOUND_EVENTS = [
   "inventory.low_stock",
   "inventory.cartons_created",
   "inventory.carton_opened",
+  "auth.login",
+  "auth.login_failed",
 ];
 
 export function ZapierSetup() {
@@ -295,6 +297,7 @@ export function ZapierSetup() {
               fabric line / article
             </li>
             <li>GET {baseUrl}/api/v1/events</li>
+            <li>GET {baseUrl}/api/v1/auth/logins</li>
           </ul>
         </div>
         <div className="text-sm text-slate-700">

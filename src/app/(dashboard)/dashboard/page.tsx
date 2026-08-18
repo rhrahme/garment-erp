@@ -17,6 +17,7 @@ import {
 import { ClientNameChangeRequestsPanel } from "@/components/dashboard/ClientNameChangeRequestsPanel";
 import { FabricChangeAlertsPanel } from "@/components/dashboard/FabricChangeAlertsPanel";
 import { FabricLineDeleteRequestsPanel } from "@/components/dashboard/FabricLineDeleteRequestsPanel";
+import { LoginEventsPanel } from "@/components/dashboard/LoginEventsPanel";
 import { SewingSessionChangeRequestsPanel } from "@/components/dashboard/SewingSessionChangeRequestsPanel";
 import { GarmentTypeChangesPanel } from "@/components/dashboard/GarmentTypeChangesPanel";
 import { ThreadButtonPhotosReviewPanel } from "@/components/dashboard/ThreadButtonPhotosReviewPanel";
@@ -230,6 +231,7 @@ export default async function DashboardPage() {
       {session.isAdmin ? <ClientNameChangeRequestsPanel /> : null}
       {session.isAdmin ? <FabricLineDeleteRequestsPanel /> : null}
       {session.isAdmin ? <SewingSessionChangeRequestsPanel /> : null}
+      {session.isAdmin ? <LoginEventsPanel /> : null}
       <FabricChangeAlertsPanel />
       {session.isAdmin ? <GarmentTypeChangesPanel /> : null}
       {session.isAdmin ? <ThreadButtonPhotosReviewPanel /> : null}

@@ -29,6 +29,7 @@ import {
   Ruler,
   Scissors,
   Megaphone,
+  KeyRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -78,6 +79,7 @@ const navItems = [
   { href: "/hr/id-badges", label: "Employees", icon: Users },
   { href: "/costing", label: "Costing", icon: Calculator },
   { href: "/documents", label: "Documents & Data", icon: FolderArchive },
+  { href: "/logins", label: "Login log", icon: KeyRound },
 ];
 
 const qcNavHrefs = new Set<string>(CLIENT_MANAGER_NAV_HREFS);
@@ -158,6 +160,7 @@ export function Sidebar({
                   : navItems
   ).filter((item) => {
     if (item.href === "/documents" && !isAdmin && !accountingOperatorOnly) return false;
+    if (item.href === "/logins" && !isAdmin) return false;
     // Sales Home is sales-tablet (and admin) only - never for floor/QC/unscoped users.
     if (item.href === "/sales" && !salesOperatorOnly && !isAdmin) return false;
     // Stitch Orders left-nav is for stitch floor accounts (not full QC `/orders`).

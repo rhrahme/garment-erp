@@ -27,6 +27,7 @@ import {
   isEmailLoginDisabled,
 } from "@/lib/auth/email-login-disabled";
 import { PATTERN_LANDING, signInBadgeUser } from "@/lib/auth/sign-in-badge-session";
+import { recordLoginFromRequest } from "@/lib/data/login-events";
 import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 export async function POST(request: Request) {
@@ -43,16 +44,44 @@ export async function POST(request: Request) {
     if (mappedBadgeId) {
       const lookup = await lookupBadgeForLogin(mappedBadgeId);
       if (!lookup.ok) {
+        recordLoginFromRequest(request, {
+          outcome: "failure",
+          method: "email",
+          actor: email,
+          identifier: email,
+          error: lookup.error,
+        });
         return NextResponse.json({ error: lookup.error }, { status: lookup.status });
       }
+      const actor = `${lookup.employee.short_name || lookup.employee.full_name} (${lookup.employee.employee_id_number})`;
       const checked = await checkBadgePassword(lookup.employee.id, password);
       if (!checked.ok) {
+        recordLoginFromRequest(request, {
+          outcome: "failure",
+          method: "email",
+          actor,
+          identifier: email,
+          error: checked.error,
+        });
         return NextResponse.json({ error: checked.error }, { status: checked.status });
       }
       const signedIn = await signInBadgeUser(lookup.employee);
       if (!signedIn.ok) {
+        recordLoginFromRequest(request, {
+          outcome: "failure",
+          method: "email",
+          actor,
+          identifier: email,
+          error: signedIn.error,
+        });
         return NextResponse.json({ error: signedIn.error }, { status: signedIn.status });
       }
+      recordLoginFromRequest(request, {
+        outcome: "success",
+        method: "email",
+        actor,
+        identifier: email,
+      });
       return NextResponse.json({ ok: true, redirect: PATTERN_LANDING });
     }
 
@@ -81,6 +110,12 @@ export async function POST(request: Request) {
     }
 
     if (!authError) {
+      recordLoginFromRequest(request, {
+        outcome: "success",
+        method: "email",
+        actor: email,
+        identifier: email,
+      });
       return NextResponse.json({
         ok: true,
         redirect: defaultPathForEmail(email),
@@ -111,7 +146,15 @@ export async function POST(request: Request) {
       return response;
     }
 
-    return NextResponse.json({ error: formatAuthError(authError) }, { status: 401 });
+    const failMessage = formatAuthError(authError);
+    recordLoginFromRequest(request, {
+      outcome: "failure",
+      method: "email",
+      actor: email,
+      identifier: email,
+      error: failMessage,
+    });
+    return NextResponse.json({ error: failMessage }, { status: 401 });
   } catch (error) {
     console.error("Login failed:", error);
     return NextResponse.json({ error: "Sign in failed." }, { status: 500 });

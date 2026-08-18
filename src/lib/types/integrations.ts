@@ -112,7 +112,9 @@ export type IntegrationEventType =
   | "inventory.low_stock"
   | "inventory.cartons_created"
   | "inventory.carton_opened"
-  | "supabase.auth_unhealthy";
+  | "supabase.auth_unhealthy"
+  | "auth.login"
+  | "auth.login_failed";
 
 export interface IntegrationEvent<T = Record<string, unknown>> {
   event: IntegrationEventType;

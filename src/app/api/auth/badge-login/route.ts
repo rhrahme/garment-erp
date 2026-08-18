@@ -6,6 +6,7 @@ import {
   provisionBadgeSupabaseUser,
 } from "@/lib/auth/badge-login";
 import { PATTERN_LANDING, signInBadgeUser } from "@/lib/auth/sign-in-badge-session";
+import { recordLoginFromRequest } from "@/lib/data/login-events";
 import { sendEmail } from "@/lib/email/smtp";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 
@@ -51,9 +52,19 @@ export async function POST(request: Request) {
 
     const lookup = await lookupBadgeForLogin(badge);
     if (!lookup.ok) {
+      if (action !== "lookup") {
+        recordLoginFromRequest(request, {
+          outcome: "failure",
+          method: "badge",
+          actor: badge,
+          identifier: badge,
+          error: lookup.error,
+        });
+      }
       return NextResponse.json({ error: lookup.error }, { status: lookup.status });
     }
     const { employee, credential } = lookup;
+    const actor = `${employee.short_name || employee.full_name} (${employee.employee_id_number})`;
 
     if (action === "lookup") {
       return NextResponse.json({
@@ -75,8 +86,21 @@ export async function POST(request: Request) {
       await provisionBadgeSupabaseUser(employee);
       const signedIn = await signInBadgeUser(employee);
       if (!signedIn.ok) {
+        recordLoginFromRequest(request, {
+          outcome: "failure",
+          method: "badge",
+          actor,
+          identifier: badge,
+          error: signedIn.error,
+        });
         return NextResponse.json({ error: signedIn.error }, { status: signedIn.status });
       }
+      recordLoginFromRequest(request, {
+        outcome: "success",
+        method: "badge",
+        actor,
+        identifier: badge,
+      });
       void notifyAdminOfActivation(employee);
       return NextResponse.json({ ok: true, redirect: PATTERN_LANDING });
     }
@@ -84,12 +108,32 @@ export async function POST(request: Request) {
     // action === "login"
     const checked = await checkBadgePassword(employee.id, body.password ?? "");
     if (!checked.ok) {
+      recordLoginFromRequest(request, {
+        outcome: "failure",
+        method: "badge",
+        actor,
+        identifier: badge,
+        error: checked.error,
+      });
       return NextResponse.json({ error: checked.error }, { status: checked.status });
     }
     const signedIn = await signInBadgeUser(employee);
     if (!signedIn.ok) {
+      recordLoginFromRequest(request, {
+        outcome: "failure",
+        method: "badge",
+        actor,
+        identifier: badge,
+        error: signedIn.error,
+      });
       return NextResponse.json({ error: signedIn.error }, { status: signedIn.status });
     }
+    recordLoginFromRequest(request, {
+      outcome: "success",
+      method: "badge",
+      actor,
+      identifier: badge,
+    });
     return NextResponse.json({ ok: true, redirect: PATTERN_LANDING });
   } catch (error) {
     console.error("Badge login failed:", error);

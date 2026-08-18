@@ -111,6 +111,14 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/badge-login-credentials.json",
   },
   {
+    key: "login_events",
+    label: "Login log",
+    description: "Who signed in or failed, with time, device, and IP",
+    category: "inbox",
+    appHref: "/logins",
+    sourcePath: "src/data/login-events.json",
+  },
+  {
     key: "pattern_jobs",
     label: "Pattern jobs",
     description: "Pattern drafting queue, fittings, and revisions per fabric line",

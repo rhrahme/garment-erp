@@ -590,6 +590,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   password and signs him in as the badge user. Old leftover gmail
   sessions are still cleared (isEmailLoginDisabled). Second operator
   temp ID: XX22.
+- **Login log** (Aug 19 2026): admin sees who signed in or failed, time
+  (Riyadh), device, and IP at `/logins` and on the dashboard. Email and
+  badge attempts are recorded (no passwords). Store: `login_events`.
+  GET `/api/auth/logins` (admin session) + `/api/v1/auth/logins` (API
+  key). Events: `auth.login` / `auth.login_failed`. Historical attempts
+  before this date are not available.
   /api/auth/badge-login stays in BOTH
   middleware open-route lists. Revoke: remove the credential or deactivate
   the employee.
