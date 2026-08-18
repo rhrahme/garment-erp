@@ -1,6 +1,6 @@
 import path from "path";
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
-import { createClient as createSupabaseAdminClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import {
   ensureDocumentsLoaded,
   readJsonFileAsync,
@@ -9,7 +9,7 @@ import {
 } from "@/lib/data/document-persistence";
 import { findPayrollEmployeeByBadgeValue, findPayrollEmployeeById } from "@/lib/hr/payroll-lookup";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
-import { getSupabaseUrl } from "@/lib/supabase/env";
+import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 const STORE_PATH = path.join(process.cwd(), "src/data/badge-login-credentials.json");
 
@@ -141,19 +141,17 @@ export type BadgePasswordCheck =
   | { ok: true }
   | { ok: false; error: string; status: number };
 
-/** Verify password with lockout accounting. Persists attempt counters. */
-export async function checkBadgePassword(
-  employeeId: string,
-  password: string
-): Promise<BadgePasswordCheck> {
+async function findCredential(
+  employeeId: string
+): Promise<{ store: BadgeLoginStoreFile; credential: BadgeLoginCredential | null }> {
   const store = await readStoreFresh();
-  const credential = store.credentials.find(
-    (row) => row.employee_id.toLowerCase() === employeeId.toLowerCase()
-  );
-  if (!credential) {
-    return { ok: false, error: "No password set for this badge yet.", status: 404 };
-  }
+  const credential =
+    store.credentials.find((row) => row.employee_id.toLowerCase() === employeeId.toLowerCase()) ??
+    null;
+  return { store, credential };
+}
 
+function lockoutError(credential: BadgeLoginCredential): BadgePasswordCheck | null {
   if (credential.locked_until && Date.parse(credential.locked_until) > Date.now()) {
     const minutes = Math.ceil((Date.parse(credential.locked_until) - Date.now()) / 60000);
     return {
@@ -162,22 +160,67 @@ export async function checkBadgePassword(
       status: 429,
     };
   }
+  return null;
+}
 
-  if (!verifyBadgePassword(password, credential.password_hash)) {
+async function noteBadgeLoginResult(employeeId: string, success: boolean): Promise<void> {
+  const { store, credential } = await findCredential(employeeId);
+  if (!credential) return;
+  if (success) {
+    credential.failed_attempts = 0;
+    credential.locked_until = null;
+    credential.last_login_at = new Date().toISOString();
+  } else {
     credential.failed_attempts = (credential.failed_attempts ?? 0) + 1;
     if (credential.failed_attempts >= MAX_FAILED_ATTEMPTS) {
       credential.locked_until = new Date(Date.now() + LOCKOUT_MINUTES * 60000).toISOString();
       credential.failed_attempts = 0;
     }
-    await save(store);
-    return { ok: false, error: "Wrong password.", status: 401 };
+  }
+  await save(store);
+}
+
+/** Verify password with lockout accounting. Persists attempt counters. */
+export async function checkBadgePassword(
+  employeeId: string,
+  password: string
+): Promise<BadgePasswordCheck> {
+  return authenticatePatternPassword(employeeId, password);
+}
+
+/**
+ * Accept the badge password, or the old mailbox password he used for months.
+ * Records lockout only after both fail.
+ */
+export async function authenticatePatternPassword(
+  employeeId: string,
+  password: string
+): Promise<BadgePasswordCheck> {
+  const { credential } = await findCredential(employeeId);
+  if (!credential) {
+    return { ok: false, error: "No password set for this badge yet.", status: 404 };
+  }
+  const locked = lockoutError(credential);
+  if (locked) return locked;
+
+  if (verifyBadgePassword(password, credential.password_hash)) {
+    await noteBadgeLoginResult(employeeId, true);
+    return { ok: true };
   }
 
-  credential.failed_attempts = 0;
-  credential.locked_until = null;
-  credential.last_login_at = new Date().toISOString();
-  await save(store);
-  return { ok: true };
+  const mailbox = patternEmailForBadgeId(employeeId);
+  if (mailbox && (await verifyMailboxPassword(mailbox, password))) {
+    await noteBadgeLoginResult(employeeId, true);
+    return { ok: true };
+  }
+
+  await noteBadgeLoginResult(employeeId, false);
+  const after = await findCredential(employeeId);
+  if (after.credential) {
+    const nowLocked = lockoutError(after.credential);
+    if (nowLocked) return nowLocked;
+  }
+  return { ok: false, error: "Wrong password.", status: 401 };
 }
 
 /** Create the credential on first login. Fails if one already exists. */
@@ -261,6 +304,28 @@ export function patternBadgeIdForEmail(email: string | null | undefined): string
   return PATTERN_EMAIL_EMPLOYEES[email.trim().toLowerCase()]?.id ?? null;
 }
 
+/** Old shared mailbox for a pattern badge employee, if one exists. */
+export function patternEmailForBadgeId(employeeId: string | null | undefined): string | null {
+  if (!employeeId) return null;
+  const id = employeeId.trim().toLowerCase();
+  for (const [email, row] of Object.entries(PATTERN_EMAIL_EMPLOYEES)) {
+    if (row.id.toLowerCase() === id) return email;
+  }
+  return null;
+}
+
+/** Check the password he used for months on the old mailbox, without setting cookies. */
+export async function verifyMailboxPassword(email: string, password: string): Promise<boolean> {
+  const url = getSupabaseUrl();
+  const key = getSupabasePublishableKey();
+  if (!url || !key || !email || !password) return false;
+  const client = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { error } = await client.auth.signInWithPassword({ email, password });
+  return !error;
+}
+
 /** Temporary second-operator login until their real badge number is issued. */
 export const PATTERN_TEMP_LOGIN_IDS: Record<string, string> = {
   xx22: "Pattern 2",
@@ -290,7 +355,7 @@ export function patternActorLabel(email: string | null | undefined): string {
 function supabaseAdmin() {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured.");
-  return createSupabaseAdminClient(getSupabaseUrl(), serviceKey, {
+  return createClient(getSupabaseUrl(), serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }

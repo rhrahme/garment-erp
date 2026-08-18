@@ -8,6 +8,7 @@ import {
   isBadgePatternLoginEmail,
   patternActorLabel,
   patternBadgeIdForEmail,
+  patternEmailForBadgeId,
   verifyBadgePassword,
 } from "./badge-login";
 import { isPatternOperatorEmail } from "./permissions";
@@ -57,6 +58,8 @@ describe("badge login synthetic emails", () => {
     assert.equal(patternBadgeIdForEmail("  Hagan.DP1@gmail.com  "), "2625917972");
     assert.equal(patternBadgeIdForEmail("badge-pattern-2625917972@badge.hagan.pro"), null);
     assert.equal(patternBadgeIdForEmail(null), null);
+    assert.equal(patternEmailForBadgeId("2625917972"), "hagan.dp1@gmail.com");
+    assert.equal(patternEmailForBadgeId("xx22"), null);
   });
 });
 

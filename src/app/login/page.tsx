@@ -26,7 +26,7 @@ type BadgeStep = "enter_badge" | "login" | "set_password";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<LoginMode>("badge");
+  const [mode, setMode] = useState<LoginMode>("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -205,8 +205,7 @@ export default function LoginPage() {
           {mode === "email" ? (
             <form onSubmit={handleSubmit}>
               <p className="mb-4 text-xs text-slate-500">
-                Pattern staff: use the Badge tab, or this Email tab with your
-                old address and badge password.
+                Pattern staff: use the same email and password as always.
               </p>
               {DEMO_MODE && (
                 <div className="mb-6 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
