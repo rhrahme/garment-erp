@@ -25,6 +25,8 @@ export type PayrollEmployee = {
   is_mobile_floater?: boolean;
   /** Factory roles (tailor specialties, cutter, QC, etc.) — multi-select. */
   job_functions?: EmployeeJobFunction[];
+  /** When the employee was added to the ERP. Missing = pre-dates tracking (imported with the original payroll sheet). */
+  created_at?: string | null;
 };
 
 export type PayrollEmployeesFile = {

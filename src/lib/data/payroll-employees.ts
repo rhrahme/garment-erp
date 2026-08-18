@@ -66,6 +66,7 @@ export type PublicEmployeeIdentity = {
   assigned_workstation_id: string | null;
   is_mobile_floater: boolean;
   is_active: boolean;
+  created_at: string | null;
 };
 
 /** Trim short_name; empty / missing becomes null. */
@@ -85,6 +86,7 @@ export function toPublicEmployeeIdentity(employee: PayrollEmployee): PublicEmplo
     assigned_workstation_id: employee.assigned_workstation_id ?? null,
     is_mobile_floater: Boolean(employee.is_mobile_floater),
     is_active: employee.is_active,
+    created_at: employee.created_at ?? null,
   };
 }
 
@@ -115,6 +117,7 @@ export function toBadgeSafeEmployee(employee: PayrollEmployee): PayrollEmployee 
     assigned_workstation_id: employee.assigned_workstation_id ?? null,
     is_mobile_floater: Boolean(employee.is_mobile_floater),
     job_functions: employee.job_functions,
+    created_at: employee.created_at ?? null,
   };
 }
 
@@ -171,6 +174,7 @@ export async function createPayrollEmployee(input: CreatePayrollEmployeeInput): 
     assigned_workstation_id: input.assigned_workstation_id ?? null,
     is_mobile_floater: Boolean(input.is_mobile_floater),
     job_functions: normalizeJobFunctions(input.job_functions),
+    created_at: new Date().toISOString(),
   };
 
   store.employees.push(employee);

@@ -17,7 +17,8 @@
       "other_earnings": 0,
       "housing_allowance": 0,
       "employee_id_number": "1109370153",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2635574664",
@@ -45,7 +46,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2635574664",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2635574938",
@@ -78,7 +80,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2635574938",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "1104448749",
@@ -96,7 +99,8 @@
       "other_earnings": 0,
       "housing_allowance": 0,
       "employee_id_number": "1104448749",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "1150632022",
@@ -114,7 +118,8 @@
       "other_earnings": 0,
       "housing_allowance": 0,
       "employee_id_number": "1150632022",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "1011710298",
@@ -132,7 +137,8 @@
       "other_earnings": 0,
       "housing_allowance": 0,
       "employee_id_number": "1011710298",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2543429209",
@@ -162,7 +168,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2543429209",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "1094962212",
@@ -180,7 +187,8 @@
       "other_earnings": 0,
       "housing_allowance": 0,
       "employee_id_number": "1094962212",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "1109844744",
@@ -198,7 +206,8 @@
       "other_earnings": 0,
       "housing_allowance": 0,
       "employee_id_number": "1109844744",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "1126158136",
@@ -216,7 +225,8 @@
       "other_earnings": 0,
       "housing_allowance": 0,
       "employee_id_number": "1126158136",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2615408917",
@@ -237,7 +247,8 @@
       "employee_id_number": "2615408917",
       "termination_reason": "fired",
       "payment_description": "SALARY",
-      "assigned_workstation_id": null
+      "assigned_workstation_id": null,
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "1131324913",
@@ -255,7 +266,8 @@
       "other_earnings": 0,
       "housing_allowance": 0,
       "employee_id_number": "1131324913",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2613429014",
@@ -283,7 +295,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2613429014",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2609926264",
@@ -309,7 +322,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2609926264",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "1045299573",
@@ -327,7 +341,8 @@
       "other_earnings": 0,
       "housing_allowance": 0,
       "employee_id_number": "1045299573",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "1090113828",
@@ -345,7 +360,8 @@
       "other_earnings": 0,
       "housing_allowance": 0,
       "employee_id_number": "1090113828",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2625917261",
@@ -375,7 +391,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2625917261",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2625917733",
@@ -400,7 +417,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2625917733",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2625917485",
@@ -433,7 +451,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2625917485",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2625918129",
@@ -455,7 +474,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2625918129",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2625918491",
@@ -479,7 +499,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2625918491",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2625917816",
@@ -501,7 +522,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2625917816",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2625917592",
@@ -523,7 +545,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2625917592",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2625917972",
@@ -538,7 +561,6 @@
       "short_name": "Mohtajul",
       "basic_salary": 2200,
       "job_functions": [
-        "cutter",
         "qc",
         "pattern"
       ],
@@ -547,7 +569,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2625917972",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2631625072",
@@ -571,7 +594,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2631625072",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2631624752",
@@ -595,7 +619,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2631624752",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2631624596",
@@ -623,7 +648,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2631624596",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2631625189",
@@ -645,7 +671,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2631625189",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2631624935",
@@ -667,7 +694,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2631624935",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2627130756",
@@ -689,7 +717,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2627130756",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2543411918",
@@ -712,7 +741,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2543411918",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2635574383",
@@ -749,7 +779,8 @@
       "other_earnings": 500,
       "housing_allowance": 0,
       "employee_id_number": "2635574383",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2634814905",
@@ -771,7 +802,8 @@
       "other_earnings": 300,
       "housing_allowance": 0,
       "employee_id_number": "2634814905",
-      "payment_description": "SALARY"
+      "payment_description": "SALARY",
+      "created_at": "2026-06-06T00:00:00.000Z"
     },
     {
       "id": "2587734852",
@@ -796,7 +828,8 @@
       "is_mobile_floater": false,
       "employee_id_number": "2587734852",
       "payment_description": "SALARY",
-      "assigned_workstation_id": null
+      "assigned_workstation_id": null,
+      "created_at": "2026-08-04T00:00:00.000Z"
     },
     {
       "id": "0024",
@@ -820,7 +853,8 @@
       "is_mobile_floater": false,
       "employee_id_number": "0024",
       "payment_description": "SALARY",
-      "assigned_workstation_id": null
+      "assigned_workstation_id": null,
+      "created_at": "2026-08-04T00:00:00.000Z"
     },
     {
       "id": "0025",
@@ -848,9 +882,85 @@
       "is_mobile_floater": false,
       "employee_id_number": "0025",
       "payment_description": "SALARY",
-      "assigned_workstation_id": null
+      "assigned_workstation_id": null,
+      "created_at": "2026-08-04T00:00:00.000Z"
+    },
+    {
+      "id": "0026",
+      "s_no": 37,
+      "address_1": "",
+      "address_2": "",
+      "address_3": "",
+      "bank_name": "Banque Saudi Fransi",
+      "deduction": 0,
+      "full_name": "Razzak Hawulader",
+      "is_active": true,
+      "short_name": "Razzak",
+      "basic_salary": 0,
+      "job_functions": [
+        "jacket_tailor",
+        "trouser_tailor",
+        "vest_tailor",
+        "shorts_tailor",
+        "shirt_tailor",
+        "polo_tailor",
+        "tshirt_tailor",
+        "overshirt_tailor",
+        "overcoat_tailor",
+        "thobe_tailor",
+        "boxer_tailor"
+      ],
+      "salary_amount": 0,
+      "account_number": "",
+      "other_earnings": 0,
+      "housing_allowance": 0,
+      "is_mobile_floater": false,
+      "employee_id_number": "0026",
+      "payment_description": "SALARY",
+      "assigned_workstation_id": null,
+      "created_at": "2026-08-11T00:00:00.000Z"
+    },
+    {
+      "id": "0027",
+      "s_no": 38,
+      "address_1": "",
+      "address_2": "",
+      "address_3": "",
+      "bank_name": "Banque Saudi Fransi",
+      "deduction": 0,
+      "full_name": "Md. Forid Hossain",
+      "is_active": true,
+      "short_name": "Forid",
+      "basic_salary": 0,
+      "job_functions": [
+        "jacket_tailor",
+        "trouser_tailor",
+        "vest_tailor",
+        "shorts_tailor",
+        "shirt_tailor",
+        "polo_tailor",
+        "tshirt_tailor",
+        "overshirt_tailor",
+        "overcoat_tailor",
+        "thobe_tailor",
+        "boxer_tailor",
+        "cutter",
+        "wash_iron",
+        "buttons",
+        "qc",
+        "pattern"
+      ],
+      "salary_amount": 0,
+      "account_number": "",
+      "other_earnings": 0,
+      "housing_allowance": 0,
+      "is_mobile_floater": false,
+      "employee_id_number": "0027",
+      "payment_description": "SALARY",
+      "assigned_workstation_id": null,
+      "created_at": "2026-08-11T00:00:00.000Z"
     }
   ],
-  "updated_at": "2026-08-02T10:36:19.942Z",
+  "updated_at": "2026-08-18T10:21:39.605Z",
   "source_file": "src/data/hr/salary-details-revised.xlsx"
 }

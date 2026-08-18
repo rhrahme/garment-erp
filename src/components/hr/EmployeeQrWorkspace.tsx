@@ -27,6 +27,24 @@ import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 
 const QR_SIZE = 96;
 
+/** Highlight employees added within the last 30 days as "New". */
+const NEW_EMPLOYEE_WINDOW_MS = 30 * 24 * 3600_000;
+
+function addedDateLabel(createdAt: string | null | undefined): string | null {
+  const ms = Date.parse(createdAt ?? "");
+  if (!Number.isFinite(ms)) return null;
+  return new Date(ms).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function isNewEmployee(createdAt: string | null | undefined): boolean {
+  const ms = Date.parse(createdAt ?? "");
+  return Number.isFinite(ms) && Date.now() - ms <= NEW_EMPLOYEE_WINDOW_MS;
+}
+
 const GROUP_COPY: Record<
   IdBadgeGroup,
   { title: string; description: string; emptyHint: string }
@@ -174,6 +192,16 @@ export function EmployeeQrWorkspace({
                   </p>
                 ) : null}
                 <p className="mt-1 font-mono text-xs text-slate-600">{employee.employee_id_number}</p>
+                {addedDateLabel(employee.created_at) ? (
+                  <p className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-500">
+                    Added {addedDateLabel(employee.created_at)}
+                    {isNewEmployee(employee.created_at) ? (
+                      <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-emerald-700">
+                        New
+                      </span>
+                    ) : null}
+                  </p>
+                ) : null}
                 {canEditShortName ? (
                   <div className="mt-3 w-full">
                     <ShortNameEditor
