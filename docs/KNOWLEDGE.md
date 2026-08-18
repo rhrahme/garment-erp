@@ -380,6 +380,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   (production CSS matches sewing - do not force `page-break-after: auto` on
   multi-page production packs). Do not collapse back to first-linked-line-only
   or put Overshirt+Trouser QRs on one shared page.
+- **Sewing A4s includes job-linked fabrics** (Aug 18 2026): the tick list is
+  `linked_fabric_line_ids` PLUS any pattern job already opened onto that
+  sheet (`client_pattern_id`). Transferred-in lines (e.g. Zegna 66046 on
+  SO-2026-0129) can have sizes on the sheet while still missing from the
+  old grouped 600xx list - they must still appear so Pattern can print.
+  Opening the sheet also heals the missing line onto the pattern. Do not
+  go back to grouped-ids-only.
 - **Stitcher A4 rows must match the screen piece view** (Aug 16 2026): the
   piece A4 appends "orphan" rows (not owned by any piece) to the FIRST piece
   page so a Pattern-added custom point is never lost - but dictionary points

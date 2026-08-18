@@ -110,6 +110,19 @@ export async function updatePatternJob(
   store.jobs[index] = nextJob;
   await writePatternJobs(store);
 
+  if (
+    nextJob.client_pattern_id &&
+    nextJob.sales_order_line_id &&
+    nextJob.client_pattern_id !== existing.client_pattern_id
+  ) {
+    const { assignFabricLinesToClientPattern } = await import("@/lib/pattern-library/mutations");
+    await assignFabricLinesToClientPattern(
+      nextJob.client_pattern_id,
+      [nextJob.sales_order_line_id],
+      { assignedBy: options.updatedBy ?? null, notify: options.notify !== false }
+    );
+  }
+
   if (options.notify !== false) {
     await notifyIntegration("pattern_job.updated", {
       id: nextJob.id,
@@ -177,6 +190,21 @@ export async function linkPatternJobsToClientPattern(
   }
 
   await writePatternJobs(store);
+
+  const lineIds = [
+    ...new Set(
+      updated
+        .map((job) => job.sales_order_line_id?.trim())
+        .filter((id): id is string => Boolean(id))
+    ),
+  ];
+  if (lineIds.length > 0) {
+    const { assignFabricLinesToClientPattern } = await import("@/lib/pattern-library/mutations");
+    await assignFabricLinesToClientPattern(patternId, lineIds, {
+      assignedBy: options.updatedBy ?? null,
+      notify: options.notify !== false,
+    });
+  }
 
   if (options.notify !== false) {
     for (const job of updated) {

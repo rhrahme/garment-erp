@@ -16,6 +16,7 @@ import { hydrateMultiPieceGeometry } from "@/lib/pattern-library/multi-piece-geo
 import { healEmptyClientPatternMeasurements } from "@/lib/pattern-library/heal-empty-measurements";
 import { healMislabeledInchClientPatternUnit } from "@/lib/pattern-library/heal-measurement-unit";
 import {
+  assignFabricLinesToClientPattern,
   seedMarkerLayoutIfMissing,
   updateClientPattern,
   updateClientPatternTrialSheet,
@@ -48,6 +49,15 @@ export async function GET(_request: Request, context: { params: Promise<{ patter
         await seedMarkerLayoutIfMissing(patternId, { notify: false });
         await healEmptyClientPatternMeasurements(patternId);
         await healMislabeledInchClientPatternUnit(patternId);
+        const jobLineIds = readPatternJobs()
+          .jobs.filter((job) => job.client_pattern_id === patternId)
+          .map((job) => job.sales_order_line_id?.trim())
+          .filter((id): id is string => Boolean(id));
+        const linked = new Set(pattern.linked_fabric_line_ids ?? []);
+        const missing = jobLineIds.filter((id) => !linked.has(id));
+        if (missing.length > 0) {
+          await assignFabricLinesToClientPattern(patternId, missing, { notify: false });
+        }
       } catch (error) {
         console.error("Background client-pattern heal failed:", patternId, error);
       }
@@ -65,6 +75,7 @@ export async function GET(_request: Request, context: { params: Promise<{ patter
         so_number: job.so_number,
         garment_type: job.garment_type,
         status: job.status,
+        client_pattern_id: job.client_pattern_id ?? null,
         client_pattern_version_id: job.client_pattern_version_id ?? null,
         width_cm: job.width_cm ?? null,
         fabric_number: job.fabric_number ?? null,
@@ -87,6 +98,7 @@ export async function GET(_request: Request, context: { params: Promise<{ patter
       clientName,
       orders: readSalesOrders().orders,
       receipts: readFabricReceipts().receipts,
+      jobs: linkedJobs,
     });
 
     return NextResponse.json({
