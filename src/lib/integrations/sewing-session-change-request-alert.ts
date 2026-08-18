@@ -18,7 +18,7 @@ export async function notifyAdminsOfSewingSessionChangeRequest(
 
   const summary = summarizeSewingSessionChangeRequest(request);
   const appUrl = erpPublicAppUrl();
-  const subject = `ERP: stitch change request (${summary.action})`;
+  const subject = `ERP: stitch kiosk request (${summary.action})`;
   const exp = Date.now() + ADMIN_DECISION_EMAIL_TOKEN_TTL_MS;
 
   let sent = false;
@@ -34,9 +34,9 @@ export async function notifyAdminsOfSewingSessionChangeRequest(
       })}`;
 
     const text = [
-      "Garment ERP - stitch kiosk change request",
+      "Garment ERP - stitch kiosk request",
       "",
-      "Stitch or Pattern asked an admin to change Live/History on the stitch kiosk.",
+      "The stitch kiosk asked an admin to change Live/History.",
       "",
       `- Action: ${summary.action}`,
       `- Label: ${summary.label}`,

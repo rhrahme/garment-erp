@@ -12,6 +12,7 @@ import {
   Trash2,
   Printer,
   UserPen,
+  Scissors,
 } from "lucide-react";
 import { ClientNameChangeRequestsPanel } from "@/components/dashboard/ClientNameChangeRequestsPanel";
 import { FabricChangeAlertsPanel } from "@/components/dashboard/FabricChangeAlertsPanel";
@@ -39,6 +40,10 @@ import { countUnacknowledgedGarmentTypeChanges } from "@/lib/data/garment-type-c
 import { countUnacknowledgedThreadButtonPhotos } from "@/lib/production/thread-button-matching";
 import { fabricChangeAlertRoleFromSession } from "@/lib/sales-orders/fabric-change-alert-role";
 import { listPendingClientNameChangeRequests } from "@/lib/clients/name-change-requests";
+import {
+  listPendingSewingSessionChangeRequests,
+  readSewingSessionChangeRequestsFresh,
+} from "@/lib/data/sewing-session-change-requests";
 import { countPendingFabricLineDeleteRequests } from "@/lib/sales-orders/fabric-line-delete-requests";
 import { getTodaysFabricSummary } from "@/lib/sales-orders/todays-fabric";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
@@ -58,6 +63,7 @@ export default async function DashboardPage() {
     "fabric_change_alerts",
     "thread_button_matches",
     "clients",
+    "sewing_session_change_requests",
   ]);
 
   const [stats, workOrders, shipments, inventory] = await Promise.all([
@@ -82,6 +88,11 @@ export default async function DashboardPage() {
     : 0;
   const pendingClientNameChanges = session.isAdmin
     ? listPendingClientNameChangeRequests().length
+    : 0;
+  const pendingStitchKioskRequests = session.isAdmin
+    ? listPendingSewingSessionChangeRequests(
+        await readSewingSessionChangeRequestsFresh()
+      ).length
     : 0;
   const fabricChangeRole = fabricChangeAlertRoleFromSession(session);
   const outstandingFabricChanges = fabricChangeRole
@@ -153,6 +164,20 @@ export default async function DashboardPage() {
               value={unacknowledgedThreadButtonPhotos}
               subtext="New matching photos need admin review"
               icon={<Camera className="h-5 w-5" />}
+              accent="bg-amber-50 text-amber-700"
+            />
+          </a>
+        )}
+        {session.isAdmin && pendingStitchKioskRequests > 0 && (
+          <a
+            href="#sewing-session-change-requests"
+            className="block transition-opacity hover:opacity-90"
+          >
+            <StatCard
+              label="Stitch kiosk requests"
+              value={pendingStitchKioskRequests}
+              subtext="Stop / edit / delete asked from the kiosk"
+              icon={<Scissors className="h-5 w-5" />}
               accent="bg-amber-50 text-amber-700"
             />
           </a>
