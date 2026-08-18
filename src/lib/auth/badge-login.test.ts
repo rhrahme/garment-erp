@@ -7,6 +7,7 @@ import {
   hashBadgePassword,
   isBadgePatternLoginEmail,
   patternActorLabel,
+  patternBadgeIdForEmail,
   verifyBadgePassword,
 } from "./badge-login";
 import { isPatternOperatorEmail } from "./permissions";
@@ -49,6 +50,13 @@ describe("badge login synthetic emails", () => {
     assert.equal(patternActorLabel("hagan.dp1@gmail.com"), "Mohtajul (2625917972)");
     assert.match(patternActorLabel(badgeLoginEmail("2625917972")), /\(2625917972\)$/);
     assert.equal(patternActorLabel("someone@hagan.pro"), "someone@hagan.pro");
+  });
+
+  it("maps Mohtajul's old email to his badge so the Email tab still signs him in", () => {
+    assert.equal(patternBadgeIdForEmail("hagan.dp1@gmail.com"), "2625917972");
+    assert.equal(patternBadgeIdForEmail("  Hagan.DP1@gmail.com  "), "2625917972");
+    assert.equal(patternBadgeIdForEmail("badge-pattern-2625917972@badge.hagan.pro"), null);
+    assert.equal(patternBadgeIdForEmail(null), null);
   });
 });
 

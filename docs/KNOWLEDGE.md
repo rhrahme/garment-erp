@@ -147,12 +147,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Pattern library
 
-- **Pattern badge login** (Aug 18 2026): Pattern signs in on `/login` ->
-  Badge tab. Mohtajul: `2625917972` + his password only — `hagan.dp1@gmail.com`
-  email login is disabled (historical writes still label as Mohtajul).
-  Temporary second operator until a real badge is issued: `XX22` + the
-  password admin set. Do not require a numeric-only badge; alphanumeric
-  temp IDs are valid.
+- **Pattern badge login** (Aug 18 2026): `/login` opens on the Badge tab.
+  Mohtajul: `2625917972` + his badge password. The Email tab still works
+  for `hagan.dp1@gmail.com` when he types that same badge password — it
+  creates the badge session (not the old shared mailbox). Historical
+  writes still label as Mohtajul. Temporary second operator until a real
+  badge is issued: `XX22` + the password admin set. Do not require a
+  numeric-only badge; alphanumeric temp IDs are valid.
 - **Two ways to use a base for a client** (do not collapse into one):
   (1) on the base pattern page - client fit column (Use as base under a size);
   (2) on the client job measurement sheet - Load from base pattern into Sample.
@@ -578,9 +579,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   add those emails to PATTERN_EMAILS; isPatternOperatorEmail matches the
   badge pattern by regex. Both operators share one workspace; writes are
   stamped with sessionActor() as "Mohtajul (2625917972)" so admin can
-  tell who changed a sheet. hagan.dp1@gmail.com email login is disabled
-  (isEmailLoginDisabled); the mailbox still maps to Mohtajul for old
-  history (PATTERN_EMAIL_EMPLOYEES). Second operator temp ID: XX22.
+  tell who changed a sheet. Typing hagan.dp1@gmail.com on the Email tab
+  with the badge password signs him in as the badge user
+  (patternBadgeIdForEmail). Old leftover gmail sessions are still cleared
+  (isEmailLoginDisabled). Second operator temp ID: XX22.
   /api/auth/badge-login stays in BOTH
   middleware open-route lists. Revoke: remove the credential or deactivate
   the employee.

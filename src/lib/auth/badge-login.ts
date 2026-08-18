@@ -255,6 +255,12 @@ export const PATTERN_EMAIL_EMPLOYEES: Record<string, { id: string; name: string 
   "hagan.dp1@gmail.com": { id: "2625917972", name: "Mohtajul" },
 };
 
+/** Badge employee id when the Email tab should become a badge session. */
+export function patternBadgeIdForEmail(email: string | null | undefined): string | null {
+  if (!email) return null;
+  return PATTERN_EMAIL_EMPLOYEES[email.trim().toLowerCase()]?.id ?? null;
+}
+
 /** Temporary second-operator login until their real badge number is issued. */
 export const PATTERN_TEMP_LOGIN_IDS: Record<string, string> = {
   xx22: "Pattern 2",

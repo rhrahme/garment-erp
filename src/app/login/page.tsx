@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, IdCard, Mail, Shirt } from "lucide-react";
@@ -26,7 +26,7 @@ type BadgeStep = "enter_badge" | "login" | "set_password";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<LoginMode>("email");
+  const [mode, setMode] = useState<LoginMode>("badge");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -38,6 +38,18 @@ export default function LoginPage() {
   const [badgeName, setBadgeName] = useState("");
   const [badgePassword, setBadgePassword] = useState("");
   const [badgeConfirm, setBadgeConfirm] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requestedMode = params.get("mode");
+    const requestedBadge = params.get("badge")?.trim() ?? "";
+    if (requestedMode === "email") setMode("email");
+    if (requestedMode === "badge") setMode("badge");
+    if (requestedBadge) {
+      setBadge(requestedBadge);
+      setMode("badge");
+    }
+  }, []);
 
   function switchMode(next: LoginMode) {
     setMode(next);
@@ -192,6 +204,10 @@ export default function LoginPage() {
 
           {mode === "email" ? (
             <form onSubmit={handleSubmit}>
+              <p className="mb-4 text-xs text-slate-500">
+                Pattern staff: use the Badge tab, or this Email tab with your
+                old address and badge password.
+              </p>
               {DEMO_MODE && (
                 <div className="mb-6 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
                   Demo mode - click Sign In to explore without Supabase configured.
@@ -250,7 +266,7 @@ export default function LoginPage() {
                   value={badge}
                   onChange={(e) => setBadge(e.target.value)}
                   className={inputClass}
-                  placeholder="Scan your badge or type your ID number"
+                  placeholder="2625917972"
                 />
                 <p className="mt-2 text-xs text-slate-500">
                   Scan the QR on your employee badge, or type the ID number printed on it.

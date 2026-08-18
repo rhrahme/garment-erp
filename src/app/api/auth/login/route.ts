@@ -18,9 +18,15 @@ import {
   isTaskOperatorEmail,
 } from "@/lib/auth/permissions";
 import {
+  checkBadgePassword,
+  lookupBadgeForLogin,
+  patternBadgeIdForEmail,
+} from "@/lib/auth/badge-login";
+import {
   EMAIL_LOGIN_DISABLED_MESSAGE,
   isEmailLoginDisabled,
 } from "@/lib/auth/email-login-disabled";
+import { PATTERN_LANDING, signInBadgeUser } from "@/lib/auth/sign-in-badge-session";
 import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 export async function POST(request: Request) {
@@ -31,6 +37,23 @@ export async function POST(request: Request) {
 
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
+    }
+
+    const mappedBadgeId = patternBadgeIdForEmail(email);
+    if (mappedBadgeId) {
+      const lookup = await lookupBadgeForLogin(mappedBadgeId);
+      if (!lookup.ok) {
+        return NextResponse.json({ error: lookup.error }, { status: lookup.status });
+      }
+      const checked = await checkBadgePassword(lookup.employee.id, password);
+      if (!checked.ok) {
+        return NextResponse.json({ error: checked.error }, { status: checked.status });
+      }
+      const signedIn = await signInBadgeUser(lookup.employee);
+      if (!signedIn.ok) {
+        return NextResponse.json({ error: signedIn.error }, { status: signedIn.status });
+      }
+      return NextResponse.json({ ok: true, redirect: PATTERN_LANDING });
     }
 
     if (isEmailLoginDisabled(email)) {
