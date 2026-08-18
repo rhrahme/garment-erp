@@ -1,5 +1,11 @@
+import { signAdminApprovalsToken } from "@/lib/auth/admin-approvals-token";
+import {
+  ADMIN_DECISION_EMAIL_TOKEN_TTL_MS,
+  signAdminDecisionEmailToken,
+} from "@/lib/auth/admin-decision-email-token";
 import { parseAdminEmails } from "@/lib/auth/permissions";
 import { sendEmail } from "@/lib/email/smtp";
+import { erpPublicAppUrl } from "@/lib/integrations/erp-app-url";
 import type { FabricLineDeleteRequestSummary } from "@/lib/sales-orders/fabric-line-delete-request-list";
 
 function formatRequestBlock(request: FabricLineDeleteRequestSummary): string {
@@ -30,32 +36,56 @@ export async function notifyAdminsOfFabricLineDeleteRequest(
   const recipients = [...parseAdminEmails()];
   if (recipients.length === 0) return false;
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
+  const appUrl = erpPublicAppUrl();
   const subject = `ERP: fabric delete request on ${request.so_number} (${request.fabric_number})`;
+  const exp = Date.now() + ADMIN_DECISION_EMAIL_TOKEN_TTL_MS;
 
-  const text = [
-    "Garment ERP - fabric line delete request",
-    "",
-    "QC/sales asked an admin to remove a fabric line that is locked because it was included in a supplier fabric order.",
-    "Approve (OK) to remove the SO line and cancel the PO linkage, or reject (Not) to keep it.",
-    "",
-    formatRequestBlock(request),
-    "",
-    `Open order (approve/reject): ${appUrl}/orders/${request.sales_order_id}`,
-    `Dashboard queue: ${appUrl}/dashboard#fabric-line-delete-requests`,
-    "",
-    request.po_line_emailed
-      ? "Note: this line was already emailed to the supplier. Approving cancels it in ERP only - contact the supplier if they should not ship."
-      : "Note: this line has not been emailed yet; approving cancels it in ERP before send.",
-    "",
-    "This is an automated message from Garment ERP.",
-  ].join("\n");
+  let sent = false;
+  for (const recipient of recipients) {
+    const link = (action: "approve" | "reject") =>
+      `${appUrl}/api/admin-approvals/email-action?token=${signAdminDecisionEmailToken({
+        kind: "fabric_line_delete",
+        order_id: request.sales_order_id,
+        line_id: request.line_id,
+        requested_at: request.delete_requested_at,
+        action,
+        admin_email: recipient,
+        exp,
+      })}`;
 
-  try {
-    await sendEmail({ to: recipients, subject, text });
-    return true;
-  } catch (error) {
-    console.error("Failed to send fabric line delete request alert email:", error);
-    return false;
+    const text = [
+      "Garment ERP - fabric line delete request",
+      "",
+      "QC/sales asked an admin to remove a fabric line that is locked because it was included in a supplier fabric order.",
+      "",
+      formatRequestBlock(request),
+      "",
+      "One click, no login needed (links work for 7 days):",
+      "",
+      "APPROVE - remove the SO line:",
+      link("approve"),
+      "",
+      "REJECT - keep the line:",
+      link("reject"),
+      "",
+      "ALL pending approvals on one page (approve each or all, no login):",
+      `${appUrl}/approvals?token=${signAdminApprovalsToken(recipient, exp)}`,
+      "",
+      `Open order: ${appUrl}/orders/${request.sales_order_id}`,
+      "",
+      request.po_line_emailed
+        ? "Note: this line was already emailed to the supplier. Approving cancels it in ERP only - contact the supplier if they should not ship."
+        : "Note: this line has not been emailed yet; approving cancels it in ERP before send.",
+      "",
+      "This is an automated message from Garment ERP.",
+    ].join("\n");
+
+    try {
+      await sendEmail({ to: [recipient], subject, text });
+      sent = true;
+    } catch (error) {
+      console.error(`Failed to send fabric line delete request alert email to ${recipient}:`, error);
+    }
   }
+  return sent;
 }

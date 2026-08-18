@@ -100,7 +100,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   request admin approval to **stop**, **edit**, **delete** a Live/History
   session, **delete** a failed-scan row, or **pause the whole kiosk**. Nothing
   mutates until admin Confirm on `/dashboard#sewing-session-change-requests`
-  (Reject keeps data). Store: `sewing_session_change_requests`. APIs:
+  (Reject keeps data) or one-click Approve/Reject in the admin email /
+  `/approvals` page. Store: `sewing_session_change_requests`. APIs:
   `POST /api/production/sewing-session/change-request` (request/cancel) +
   admin decide route + `/api/v1/...` parity. Events:
   `production.sewing_session_change_requested|approved|rejected`. Approved
@@ -512,6 +513,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   GET `/api/clients/name-change-email-action` is session-exempt in the
   middleware (both isOpenAuthRoute lists) - the signed token IS the
   authorization; do not remove the exemption or the links 401.
+  Stitch change requests and fabric-line delete requests use the same
+  pattern via GET `/api/admin-approvals/email-action`
+  (`admin-decision-email-token.ts`) plus the `/approvals` page. Email
+  links must use erp.hagan.pro, never localhost.
   Tests: `npm run test:name-change`.
 
 ## Supplier emails
