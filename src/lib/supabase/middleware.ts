@@ -80,6 +80,8 @@ async function updateSessionInner(request: NextRequest) {
     pathname === "/api/health/auth";
   const isOpenAuthRoute =
     pathname.startsWith("/api/auth/login") ||
+    // Badge number + password login (pattern team) - no session yet by definition.
+    pathname.startsWith("/api/auth/badge-login") ||
     pathname.startsWith("/api/auth/dev-impersonate") ||
     pathname.startsWith("/api/auth/confirm-client-manager") ||
     // One-click approve/reject from the admin email - authorized by a signed
@@ -211,6 +213,8 @@ function failClosedOnMiddlewareTimeout(request: NextRequest): NextResponse {
     pathname === "/api/health/auth";
   const isOpenAuthRoute =
     pathname.startsWith("/api/auth/login") ||
+    // Badge number + password login (pattern team) - no session yet by definition.
+    pathname.startsWith("/api/auth/badge-login") ||
     pathname.startsWith("/api/auth/dev-impersonate") ||
     pathname.startsWith("/api/auth/confirm-client-manager") ||
     // One-click approve/reject from the admin email - authorized by a signed

@@ -535,6 +535,17 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   GoTrue rejection (401/403) or a missing cookie may redirect to /login.
   resolveAuthUserDetailed reports the degraded flag - keep its tests green
   (resolve-auth-user.test.ts).
+- **Badge login (pattern team)**: employees whose payroll job_functions
+  include "pattern" sign in with badge/ID number + personal password
+  (lib/auth/badge-login.ts). Password is set by the employee on first
+  login (scrypt-hashed in the badge_login_credentials doc; 5 wrong tries
+  -> 10 min lockout; admin gets an activation email). Each login is a real
+  Supabase session on a synthetic badge-pattern-<employeeId>@badge.hagan.pro
+  user with a profiles role of pattern_operator - do NOT add these emails
+  to PATTERN_EMAILS; isPatternOperatorEmail matches the badge pattern by
+  regex so degraded profile reads still resolve the role.
+  /api/auth/badge-login must stay in BOTH middleware open-route lists.
+  To revoke: remove the credential row or deactivate the employee.
 - Zapier parity rule: every business write path needs `/api/v1/...` +
   `notifyIntegration` (see `.cursor/rules/zapier-integration.mdc`).
 

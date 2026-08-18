@@ -103,6 +103,14 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/inventory-store.json",
   },
   {
+    key: "badge_login_credentials",
+    label: "Badge login credentials",
+    description: "Hashed passwords for employee badge-number logins (pattern team)",
+    category: "production",
+    appHref: "/login",
+    sourcePath: "src/data/badge-login-credentials.json",
+  },
+  {
     key: "pattern_jobs",
     label: "Pattern jobs",
     description: "Pattern drafting queue, fittings, and revisions per fabric line",

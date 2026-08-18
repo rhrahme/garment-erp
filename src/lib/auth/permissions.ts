@@ -577,9 +577,18 @@ export function isSalesOperatorEmail(email: string | null | undefined): boolean 
   return parseSalesEmails().has(email.trim().toLowerCase());
 }
 
+/**
+ * Synthetic accounts from badge-number login (see lib/auth/badge-login.ts).
+ * Role is encoded in the email so permission fallbacks work even when the
+ * profiles read is degraded. Keep edge-safe: regex only, no node imports.
+ */
+const BADGE_PATTERN_LOGIN_EMAIL = /^badge-pattern-\d+@badge\.hagan\.pro$/;
+
 export function isPatternOperatorEmail(email: string | null | undefined): boolean {
   if (!email) return false;
-  return parsePatternEmails().has(email.trim().toLowerCase());
+  const normalized = email.trim().toLowerCase();
+  if (BADGE_PATTERN_LOGIN_EMAIL.test(normalized)) return true;
+  return parsePatternEmails().has(normalized);
 }
 
 export function isAccountingOperatorEmail(email: string | null | undefined): boolean {
