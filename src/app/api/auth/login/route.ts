@@ -17,6 +17,10 @@ import {
   isAccountingOperatorEmail,
   isTaskOperatorEmail,
 } from "@/lib/auth/permissions";
+import {
+  EMAIL_LOGIN_DISABLED_MESSAGE,
+  isEmailLoginDisabled,
+} from "@/lib/auth/email-login-disabled";
 import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 export async function POST(request: Request) {
@@ -27,6 +31,10 @@ export async function POST(request: Request) {
 
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
+    }
+
+    if (isEmailLoginDisabled(email)) {
+      return NextResponse.json({ error: EMAIL_LOGIN_DISABLED_MESSAGE }, { status: 403 });
     }
 
     const cookieStore = await cookies();

@@ -148,10 +148,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 ## Pattern library
 
 - **Pattern badge login** (Aug 18 2026): Pattern signs in on `/login` ->
-  Badge tab. Mohtajul: `2625917972` + his password. Temporary second
-  operator until a real badge is issued: `XX22` + the password admin set.
-  Old `hagan.dp1@gmail.com` still works and is labeled Mohtajul. Do not
-  require a numeric-only badge; alphanumeric temp IDs are valid.
+  Badge tab. Mohtajul: `2625917972` + his password only — `hagan.dp1@gmail.com`
+  email login is disabled (historical writes still label as Mohtajul).
+  Temporary second operator until a real badge is issued: `XX22` + the
+  password admin set. Do not require a numeric-only badge; alphanumeric
+  temp IDs are valid.
 - **Two ways to use a base for a client** (do not collapse into one):
   (1) on the base pattern page - client fit column (Use as base under a size);
   (2) on the client job measurement sheet - Load from base pattern into Sample.

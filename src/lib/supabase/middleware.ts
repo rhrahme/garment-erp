@@ -16,7 +16,16 @@ import {
 import type { UserRole } from "@/lib/types/database";
 import { withSupabaseTimeout } from "@/lib/auth/supabase-timeout";
 import { getRemovedSalesOrderRedirect } from "@/lib/sales-orders/removed-order-redirects";
+import { isEmailLoginDisabled } from "@/lib/auth/email-login-disabled";
 import { getSupabasePublishableKey, getSupabaseUrl, isSupabaseConfigured } from "@/lib/supabase/env";
+
+function clearAuthCookies(response: NextResponse, request: NextRequest): void {
+  for (const cookie of request.cookies.getAll()) {
+    if (cookie.name.includes("-auth-token") || cookie.name === DEV_IMPERSONATION_COOKIE) {
+      response.cookies.set(cookie.name, "", { path: "/", maxAge: 0 });
+    }
+  }
+}
 
 function hasSupabaseAuthCookie(request: NextRequest): boolean {
   return request.cookies.getAll().some((cookie) => cookie.name.includes("-auth-token"));
@@ -140,6 +149,17 @@ async function updateSessionInner(request: NextRequest) {
   }
 
   const email = impersonatedEmail ?? user?.email?.trim().toLowerCase() ?? null;
+  if (isAuthenticated && isEmailLoginDisabled(email)) {
+    if (isAuthPage) {
+      clearAuthCookies(supabaseResponse, request);
+      return supabaseResponse;
+    }
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    const redirect = NextResponse.redirect(url);
+    clearAuthCookies(redirect, request);
+    return redirect;
+  }
   let role: UserRole | null = null;
   let isSuperAdmin = false;
   if (impersonatedEmail) {
