@@ -526,7 +526,15 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 - **ASCII-only source files** - Vercel builds fail on invalid UTF-8.
 - Supabase compute upgraded Nano -> Micro after Auth 522 outage; middleware has
-  a 10s wall-clock timeout.
+  a 15s wall-clock timeout (must stay above the 3x4s inner auth-call caps).
+- **Degraded auth must NEVER bounce a signed-in user to /login** (2026-08-18:
+  pattern "cannot login" incident). When GoTrue times out / returns 0/5xx/429
+  and the request carries a Supabase auth cookie, middleware serves a
+  self-retrying 503 hold page ("Reconnecting to the server", meta-refresh 4s;
+  APIs get 503 + Retry-After) via degradedAuthHoldResponse. Only a definitive
+  GoTrue rejection (401/403) or a missing cookie may redirect to /login.
+  resolveAuthUserDetailed reports the degraded flag - keep its tests green
+  (resolve-auth-user.test.ts).
 - Zapier parity rule: every business write path needs `/api/v1/...` +
   `notifyIntegration` (see `.cursor/rules/zapier-integration.mdc`).
 

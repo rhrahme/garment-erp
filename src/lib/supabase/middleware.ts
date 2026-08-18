@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { resolveAuthUser } from "@/lib/auth/resolve-auth-user";
+import { resolveAuthUserDetailed } from "@/lib/auth/resolve-auth-user";
 import {
   DEV_IMPERSONATION_COOKIE,
   resolveDevImpersonationEmail,
@@ -22,8 +22,48 @@ function hasSupabaseAuthCookie(request: NextRequest): boolean {
   return request.cookies.getAll().some((cookie) => cookie.name.includes("-auth-token"));
 }
 
-/** Hard ceiling under Vercel's ~25s middleware limit when GoTrue hangs. */
-const MIDDLEWARE_WALL_CLOCK_MS = 10_000;
+/**
+ * Hard ceiling under Vercel's ~25s middleware limit when GoTrue hangs.
+ * Must exceed the sum of the inner SUPABASE_AUTH_TIMEOUT_MS caps (getUser +
+ * getSession + profile = 12s) so the deliberate degraded handling below runs
+ * instead of this blunt fallback.
+ */
+const MIDDLEWARE_WALL_CLOCK_MS = 15_000;
+
+/**
+ * Signed-in user but GoTrue is degraded (timeout/5xx): hold and auto-retry
+ * instead of bouncing to /login. Kicking valid sessions to the login page is
+ * what made the floor report "cannot login" during a Supabase slowdown.
+ */
+function degradedAuthHoldResponse(request: NextRequest): NextResponse {
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    return NextResponse.json(
+      { error: "Auth service is busy. Please retry." },
+      { status: 503, headers: { "Retry-After": "4" } }
+    );
+  }
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"><meta http-equiv="refresh" content="4">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reconnecting...</title>
+<style>body{font-family:Helvetica,Arial,sans-serif;background:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:32px 40px;text-align:center;max-width:360px}
+.spin{width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:#0f172a;border-radius:50%;margin:0 auto 16px;animation:s 1s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+h1{font-size:16px;color:#0f172a;margin:0 0 6px}p{font-size:13px;color:#64748b;margin:0}</style>
+</head><body><div class="card"><div class="spin"></div>
+<h1>Reconnecting to the server</h1>
+<p>You are still signed in. This page retries automatically every few seconds.</p>
+</div></body></html>`;
+  return new NextResponse(html, {
+    status: 503,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Retry-After": "4",
+      "Cache-Control": "no-store",
+    },
+  });
+}
 
 async function updateSessionInner(request: NextRequest) {
   if (!isSupabaseConfigured()) {
@@ -80,10 +120,15 @@ async function updateSessionInner(request: NextRequest) {
     },
   });
 
-  const user = await resolveAuthUser(supabase);
+  const { user, degraded } = await resolveAuthUserDetailed(supabase);
   const isAuthenticated = Boolean(impersonatedEmail || user);
 
   if (!isAuthenticated && !isAuthPage && !isPublicApiRoute && !isOpenAuthRoute) {
+    // A session cookie exists but GoTrue could not validate it (timeout/5xx).
+    // Hold and retry - never dump a signed-in user back onto /login.
+    if (degraded && hasSupabaseAuthCookie(request)) {
+      return degradedAuthHoldResponse(request);
+    }
     if (isApiRoute) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
@@ -178,6 +223,11 @@ function failClosedOnMiddlewareTimeout(request: NextRequest): NextResponse {
 
   if (isAuthPage || isPublicApiRoute || isOpenAuthRoute) {
     return NextResponse.next({ request });
+  }
+  // Wall-clock timeout with a session cookie present = degraded auth backend,
+  // not a logged-out user. Hold and retry instead of failing closed to /login.
+  if (hasSupabaseAuthCookie(request)) {
+    return degradedAuthHoldResponse(request);
   }
   if (isApiRoute) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
