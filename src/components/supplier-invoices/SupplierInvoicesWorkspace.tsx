@@ -33,7 +33,7 @@ function customsBadgeClass(status: CustomsSummary["status"]): string {
   }
 }
 
-export function SupplierInvoicesWorkspace() {
+export function SupplierInvoicesWorkspace({ canViewAmounts = false }: { canViewAmounts?: boolean }) {
   const [invoices, setInvoices] = useState<SupplierInvoiceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -114,7 +114,7 @@ export function SupplierInvoicesWorkspace() {
           )}
         </div>
       ),
-      amount: formatAmount(invoice.amount, invoice.currency),
+      amount: canViewAmounts ? formatAmount(invoice.amount, invoice.currency) : "—",
       awb: awb ? (
         <Link href={`/shipments?awb=${encodeURIComponent(awb)}`} className="font-mono text-sm text-indigo-600 hover:underline">
           {awb}
@@ -127,10 +127,10 @@ export function SupplierInvoicesWorkspace() {
           <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${customsBadgeClass(customs.status)}`}>
             {customs.status_label}
           </span>
-          {customs.amount_due && (
+          {canViewAmounts && customs.amount_due && (
             <p className="text-xs text-amber-800">Due {formatAmount(customs.amount_due, customs.currency)}</p>
           )}
-          {customs.amount_paid && (
+          {canViewAmounts && customs.amount_paid && (
             <p className="text-xs text-emerald-700">Paid {formatAmount(customs.amount_paid, customs.currency)}</p>
           )}
           {customs.payment_url && (
@@ -146,7 +146,7 @@ export function SupplierInvoicesWorkspace() {
           )}
         </div>
       ),
-      documents: (
+      documents: canViewAmounts ? (
         <div className="flex flex-wrap items-center gap-2">
           <a
             href={`/api/supplier-invoices/${invoice.id}/file`}
@@ -170,6 +170,8 @@ export function SupplierInvoicesWorkspace() {
             ZIP
           </a>
         </div>
+      ) : (
+        <span className="text-xs text-slate-400">Admin only</span>
       ),
     };
   });
@@ -181,17 +183,21 @@ export function SupplierInvoicesWorkspace() {
         description="Fabric supplier invoices and linked DHL/customs documents saved from inbox scan."
         action={
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="secondary" onClick={() => void refreshAmounts()} disabled={refreshing || loading}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-              Refresh amounts
-            </Button>
-            <a
-              href="/api/supplier-invoices/export"
-              className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Export all
-            </a>
+            {canViewAmounts ? (
+              <>
+                <Button variant="secondary" onClick={() => void refreshAmounts()} disabled={refreshing || loading}>
+                  <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+                  Refresh amounts
+                </Button>
+                <a
+                  href="/api/supplier-invoices/export"
+                  className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Export all
+                </a>
+              </>
+            ) : null}
             <Link
               href="/supplier-inbox"
               className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
@@ -248,7 +254,7 @@ export function SupplierInvoicesWorkspace() {
             { key: "received_at", label: "Received" },
             { key: "supplier", label: "Supplier" },
             { key: "invoice", label: "Invoice" },
-            { key: "amount", label: "Amount" },
+            ...(canViewAmounts ? [{ key: "amount", label: "Amount" }] : []),
             { key: "awb", label: "AWB" },
             { key: "customs", label: "Customs" },
             { key: "documents", label: "Documents" },

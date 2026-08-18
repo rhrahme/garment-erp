@@ -435,6 +435,14 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Sales orders / invoicing
 
+- **Money lock is admin-only** (Aug 18 2026): `canViewMoney` = `isAdmin`.
+  Sales, accounting, QC, factory, and pattern may run invoice / costing /
+  purchasing / supplier-invoice workflow, but they must never see selling
+  prices, costs, payments, PO totals, outstanding SAR, or invoice PDFs.
+  Server payloads redact amounts (view-source cannot leak). Non-admin PATCH
+  cannot change unit price / qty / VAT / consolidate / payments. Zapier
+  `/api/v1` API-key routes keep amounts for machine callers. Do not re-open
+  the old sales/accounting eye-toggle for selling amounts.
 - **Superseded sales orders** (Aug 11 2026): when a client order is
   re-entered (corrected lines/meterage), the old SO gets status
   `"superseded"` instead of being deleted - it keeps all lines and its

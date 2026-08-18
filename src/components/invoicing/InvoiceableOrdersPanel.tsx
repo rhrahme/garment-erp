@@ -9,7 +9,13 @@ import type { InvoiceableSalesOrder } from "@/lib/types/invoiceable-orders";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
 import { formatDate } from "@/lib/utils";
 
-export function InvoiceableOrdersPanel({ orders }: { orders: InvoiceableSalesOrder[] }) {
+export function InvoiceableOrdersPanel({
+  orders,
+  canViewAmounts = false,
+}: {
+  orders: InvoiceableSalesOrder[];
+  canViewAmounts?: boolean;
+}) {
   const router = useRouter();
   const [creatingId, setCreatingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +83,7 @@ export function InvoiceableOrdersPanel({ orders }: { orders: InvoiceableSalesOrd
               <th className="px-4 py-3">Client</th>
               <th className="px-4 py-3">Order date</th>
               <th className="px-4 py-3">Pieces</th>
-              <th className="px-4 py-3">Est. cost</th>
+              {canViewAmounts ? <th className="px-4 py-3">Est. cost</th> : null}
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3" />
             </tr>
@@ -95,9 +101,11 @@ export function InvoiceableOrdersPanel({ orders }: { orders: InvoiceableSalesOrd
                   {order.piece_count} pc · {order.fabric_line_count} fabric
                   {order.fabric_line_count !== 1 ? "s" : ""}
                 </td>
-                <td className="px-4 py-3 text-slate-700">
-                  {order.estimated_cost_sar != null ? formatInvoiceSar(order.estimated_cost_sar) : "—"}
-                </td>
+                {canViewAmounts ? (
+                  <td className="px-4 py-3 text-slate-700">
+                    {order.estimated_cost_sar != null ? formatInvoiceSar(order.estimated_cost_sar) : "—"}
+                  </td>
+                ) : null}
                 <td className="px-4 py-3">
                   <StatusBadge status={order.status} />
                 </td>

@@ -1,13 +1,16 @@
 import { PageHeader } from "@/components/ui/PageHeader";
 import { CostingWorkspace } from "@/components/costing/CostingWorkspace";
-import { getCostingOverview } from "@/lib/costing/compute";
+import { getCostingOverview, redactCostingOverview } from "@/lib/costing/compute";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSessionContext } from "@/lib/auth/session";
+import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
 
 export default async function CostingPage() {
   await ensureDocumentsLoaded(["sales_orders", "costing_rates"]);
-  const overview = getCostingOverview({ includeArchived: true });
   const session = await getSessionContext();
+  const overview = canViewMoney(session)
+    ? getCostingOverview({ includeArchived: true })
+    : redactCostingOverview(getCostingOverview({ includeArchived: true }));
 
   return (
     <div>
@@ -17,9 +20,7 @@ export default async function CostingPage() {
       />
       <CostingWorkspace
         overview={overview}
-        canToggleAmounts={
-          session.canToggleInvoiceAmounts && (session.isAdmin || session.isAccountingOperator)
-        }
+        canToggleAmounts={session.canToggleInvoiceAmounts}
         amountsVisibleByDefault={session.invoiceAmountsVisibleByDefault}
         revealWithoutPassword={session.canRevealInvoiceAmountsWithoutPassword}
       />

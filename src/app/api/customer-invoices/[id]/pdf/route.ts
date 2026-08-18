@@ -7,12 +7,16 @@ import { canAccessSalesOrder } from "@/lib/sales/access";
 import { getCustomerInvoiceByIdFresh } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { contentDisposition } from "@/lib/pdf/download-filename";
+import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireAuthenticated();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+    if (!canViewMoney(session)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
 
     const { id } = await context.params;

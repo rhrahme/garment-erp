@@ -5,7 +5,7 @@ import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import { applyCustomerInvoiceLineSync } from "@/lib/invoicing/customer-invoice-mutations";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { canAccessSalesOrder } from "@/lib/sales/access";
-import { redactCustomerInvoiceCosts } from "@/lib/auth/invoice-cost-access";
+import { customerInvoiceForSession } from "@/lib/auth/invoice-cost-access";
 import { notifyIntegration } from "@/lib/integrations";
 
 export const dynamic = "force-dynamic";
@@ -41,7 +41,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
       updated_by: session.email,
       action: "sync_lines",
     });
-    return NextResponse.json(session.isSalesOperator ? redactCustomerInvoiceCosts(saved) : saved);
+    return NextResponse.json(customerInvoiceForSession(session, saved));
   } catch (error) {
     console.error("Failed to sync customer invoice lines:", error);
     return NextResponse.json({ error: "Failed to sync invoice lines." }, { status: 500 });

@@ -74,7 +74,7 @@ function label(value: string): string {
   return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-export function SalesWorkspaceDashboard() {
+export function SalesWorkspaceDashboard({ canViewAmounts = false }: { canViewAmounts?: boolean }) {
   const [tab, setTab] = useState<Tab>("clients");
   const [data, setData] = useState<Workspace | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -384,10 +384,10 @@ export function SalesWorkspaceDashboard() {
                   {invoice ? (
                     <p className="mt-1 text-sm text-slate-600">
                       {invoice.invoice_number} · {label(invoice.status)}
-                      {amountPaid != null && amountPaid > 0
+                      {canViewAmounts && amountPaid != null && amountPaid > 0
                         ? ` · Paid ${formatInvoiceSar(amountPaid)}`
                         : null}
-                      {balanceDue != null
+                      {canViewAmounts && balanceDue != null
                         ? ` · Balance ${formatInvoiceSar(balanceDue)}`
                         : null}
                     </p>
@@ -398,22 +398,26 @@ export function SalesWorkspaceDashboard() {
                 <div className="flex flex-wrap items-center gap-2">
                   {invoice ? (
                     <>
-                      <DownloadInvoicePdfButton
-                        invoiceId={invoice.id}
-                        invoiceNumber={invoice.invoice_number}
-                        kind={pdfKind}
-                        label={pdfKind === "quote" ? "Download quote PDF" : "Download invoice PDF"}
-                        size="sm"
-                      />
-                      <DownloadInvoicePdfButton
-                        invoiceId={invoice.id}
-                        invoiceNumber={invoice.invoice_number}
-                        kind={pdfKind}
-                        mode="open"
-                        label="Open PDF"
-                        size="sm"
-                        variant="ghost"
-                      />
+                      {canViewAmounts ? (
+                        <>
+                          <DownloadInvoicePdfButton
+                            invoiceId={invoice.id}
+                            invoiceNumber={invoice.invoice_number}
+                            kind={pdfKind}
+                            label={pdfKind === "quote" ? "Download quote PDF" : "Download invoice PDF"}
+                            size="sm"
+                          />
+                          <DownloadInvoicePdfButton
+                            invoiceId={invoice.id}
+                            invoiceNumber={invoice.invoice_number}
+                            kind={pdfKind}
+                            mode="open"
+                            label="Open PDF"
+                            size="sm"
+                            variant="ghost"
+                          />
+                        </>
+                      ) : null}
                       <Link href={`/invoices/${invoice.id}`}>
                         <Button variant="secondary" size="sm">Edit invoice</Button>
                       </Link>

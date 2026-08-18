@@ -20,7 +20,7 @@ export function InvoiceSummaryCards({
   revealWithoutPassword = false,
 }: {
   summary: CustomerInvoiceSummary;
-  /** Show eye toggle (admin + sales + accounting). */
+  /** Show eye toggle (admin only). */
   canToggleAmounts?: boolean;
   /** Whether monetary values are currently revealed. */
   showAmounts?: boolean;
@@ -29,7 +29,7 @@ export function InvoiceSummaryCards({
   amountsHydrated?: boolean;
   onUnlock?: () => void;
   onLock?: () => void;
-  /** Admin / accounting — no password to reveal. */
+  /** Admin — no password to reveal. */
   revealWithoutPassword?: boolean;
 }) {
   const outstandingValue = showAmounts ? formatInvoiceSar(summary.outstanding_sar) : MASKED_INVOICE_AMOUNT;
@@ -55,19 +55,23 @@ export function InvoiceSummaryCards({
           icon={<FileText className="h-5 w-5" />}
           accent="bg-indigo-50 text-indigo-600"
         />
-        <StatCard
-          label="Outstanding"
-          value={outstandingValue}
-          subtext={`${summary.sent_count} sent · ${summary.draft_count} draft`}
-          icon={<Wallet className="h-5 w-5" />}
-          accent="bg-amber-50 text-amber-600"
-        />
-        <StatCard
-          label="Paid"
-          value={paidValue}
-          subtext={`${summary.paid_count} invoice${summary.paid_count !== 1 ? "s" : ""}`}
-          accent="bg-emerald-50 text-emerald-600"
-        />
+        {canToggleAmounts ? (
+          <>
+            <StatCard
+              label="Outstanding"
+              value={outstandingValue}
+              subtext={`${summary.sent_count} sent · ${summary.draft_count} draft`}
+              icon={<Wallet className="h-5 w-5" />}
+              accent="bg-amber-50 text-amber-600"
+            />
+            <StatCard
+              label="Paid"
+              value={paidValue}
+              subtext={`${summary.paid_count} invoice${summary.paid_count !== 1 ? "s" : ""}`}
+              accent="bg-emerald-50 text-emerald-600"
+            />
+          </>
+        ) : null}
         <StatCard label="Currency" value="SAR" subtext="Client billing" accent="bg-sky-50 text-sky-600" />
       </div>
     </div>

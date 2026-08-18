@@ -185,7 +185,7 @@ export function CustomerInvoicesWorkspace({
                 <th className="px-4 py-3">Date</th>
                 <th className="px-4 py-3">Due</th>
                 <th className="px-4 py-3">Sent</th>
-                <th className="px-4 py-3">Amount</th>
+                {canToggleAmounts ? <th className="px-4 py-3">Amount</th> : null}
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -204,9 +204,11 @@ export function CustomerInvoicesWorkspace({
                   <td className="px-4 py-3">
                     {invoice.sent_at ? formatDate(invoice.sent_at.slice(0, 10)) : "—"}
                   </td>
-                  <td className="px-4 py-3 font-semibold">
-                    {showAmounts ? formatInvoiceSar(invoice.total) : MASKED_INVOICE_AMOUNT}
-                  </td>
+                  {canToggleAmounts ? (
+                    <td className="px-4 py-3 font-semibold">
+                      {showAmounts ? formatInvoiceSar(invoice.total) : MASKED_INVOICE_AMOUNT}
+                    </td>
+                  ) : null}
                   <td className="px-4 py-3">
                     <StatusBadge status={invoice.status} />
                   </td>
@@ -222,7 +224,7 @@ export function CustomerInvoicesWorkspace({
         </div>
       )}
 
-      <InvoiceableOrdersPanel orders={invoiceableOrders} />
+      <InvoiceableOrdersPanel orders={invoiceableOrders} canViewAmounts={canToggleAmounts} />
     </div>
   );
 }

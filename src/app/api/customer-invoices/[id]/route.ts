@@ -18,7 +18,8 @@ import path from "path";
 import { requireAuthenticated } from "@/lib/auth/session";
 import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import { canAccessSalesOrder } from "@/lib/sales/access";
-import { redactCustomerInvoiceCosts } from "@/lib/auth/invoice-cost-access";
+import { customerInvoiceForSession } from "@/lib/auth/invoice-cost-access";
+import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
 import { notifyIntegration } from "@/lib/integrations";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 
@@ -46,7 +47,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
     const resolved = { ...invoice, lines: resolveInvoiceLines(invoice.lines) };
-    return NextResponse.json(session.isSalesOperator ? redactCustomerInvoiceCosts(resolved) : resolved);
+    return NextResponse.json(customerInvoiceForSession(session, resolved));
   } catch (error) {
     console.error("Failed to read customer invoice:", error);
     return NextResponse.json({ error: "Failed to load invoice." }, { status: 500 });
@@ -84,6 +85,28 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       consolidate?: { group_keys?: string[] } | "all";
       reduce_lines?: { group_keys?: string[] } | "all";
     };
+
+    if (!canViewMoney(session)) {
+      delete body.vat_rate;
+      delete body.reduce_lines;
+      delete body.consolidate;
+      if (Array.isArray(body.lines)) {
+        body.lines = body.lines.flatMap((row) => {
+          const current = invoice.lines.find((line) => line.id === row.id);
+          if (!current) return [];
+          return [
+            {
+              id: row.id,
+              description: row.description,
+              quantity: current.quantity,
+              unit_price: current.unit_price,
+              garment_type: current.garment_type,
+              line_total: current.line_total,
+            },
+          ];
+        });
+      }
+    }
 
     let next: CustomerInvoice = { ...invoice };
 
@@ -200,7 +223,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
           status: saved.status,
           updated_by: session.email,
         });
-        return NextResponse.json(session.isSalesOperator ? redactCustomerInvoiceCosts(saved) : saved);
+        return NextResponse.json(customerInvoiceForSession(session, saved));
       }
 
       next.status = body.status;
@@ -219,7 +242,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       updated_by: session.email,
     });
     invalidateDocumentCache(path.join(process.cwd(), "src/data/customer-invoices.json"));
-    return NextResponse.json(session.isSalesOperator ? redactCustomerInvoiceCosts(saved) : saved);
+    return NextResponse.json(customerInvoiceForSession(session, saved));
   } catch (error) {
     console.error("Failed to update customer invoice:", error);
     return NextResponse.json({ error: "Failed to update invoice." }, { status: 500 });

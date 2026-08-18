@@ -42,6 +42,7 @@ import { listPendingClientNameChangeRequests } from "@/lib/clients/name-change-r
 import { countPendingFabricLineDeleteRequests } from "@/lib/sales-orders/fabric-line-delete-requests";
 import { getTodaysFabricSummary } from "@/lib/sales-orders/todays-fabric";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
+import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
 import { formatNumber } from "@/lib/utils";
 
 export default async function DashboardPage() {
@@ -114,7 +115,11 @@ export default async function DashboardPage() {
           <StatCard
             label="Ready to invoice"
             value={readyToInvoice}
-            subtext={`${invoiceSummary.draft_count} draft · ${formatInvoiceSar(invoiceSummary.outstanding_sar)} outstanding`}
+            subtext={
+              canViewMoney(session)
+                ? `${invoiceSummary.draft_count} draft · ${formatInvoiceSar(invoiceSummary.outstanding_sar)} outstanding`
+                : `${invoiceSummary.draft_count} draft`
+            }
             icon={<Receipt className="h-5 w-5" />}
             accent="bg-indigo-50 text-indigo-600"
           />

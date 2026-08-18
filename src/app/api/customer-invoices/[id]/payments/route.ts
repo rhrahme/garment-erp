@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import path from "path";
 import { requireAuthenticated } from "@/lib/auth/session";
-import { redactCustomerInvoiceCosts } from "@/lib/auth/invoice-cost-access";
+import { customerInvoiceForSession } from "@/lib/auth/invoice-cost-access";
+import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
 import { getCustomerInvoiceByIdFresh } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded, invalidateDocumentCache } from "@/lib/data/document-persistence";
 import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
@@ -31,6 +32,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     if (!order || !canAccessSalesOrder(session, order)) {
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
+    if (!canViewMoney(session)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
 
     const body = (await request.json()) as {
       amount?: number;
@@ -52,9 +56,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     );
 
     invalidateDocumentCache(path.join(process.cwd(), "src/data/customer-invoices.json"));
-    const payload = session.isSalesOperator
-      ? redactCustomerInvoiceCosts(result.invoice)
-      : result.invoice;
+    const payload = customerInvoiceForSession(session, result.invoice);
 
     return NextResponse.json({
       invoice: payload,

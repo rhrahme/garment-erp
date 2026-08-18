@@ -8,6 +8,7 @@ import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
 import { canAccessSalesOrder } from "@/lib/sales/access";
 import { getCustomerInvoiceByIdFresh } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -20,7 +21,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
   const session = await getSessionContext();
   const rawInvoice = await getCustomerInvoiceByIdFresh(id);
   const order = rawInvoice ? await getSalesOrderByIdFresh(rawInvoice.sales_order_id) : null;
-  if (!order || !canAccessSalesOrder(session, order)) notFound();
+  if (!order || !canAccessSalesOrder(session, order) || !canViewMoney(session)) notFound();
 
   return (
     <div className="invoice-print-page min-h-screen bg-white p-8 text-slate-900 print:min-h-0 print:bg-white print:p-0">

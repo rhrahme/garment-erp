@@ -1,7 +1,10 @@
 import { Suspense } from "react";
 import { SupplierInvoicesWorkspace } from "@/components/supplier-invoices/SupplierInvoicesWorkspace";
+import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
+import { getSessionContext } from "@/lib/auth/session";
 
-export default function SupplierInvoicesPage() {
+export default async function SupplierInvoicesPage() {
+  const session = await getSessionContext();
   return (
     <Suspense
       fallback={
@@ -10,7 +13,7 @@ export default function SupplierInvoicesPage() {
         </div>
       }
     >
-      <SupplierInvoicesWorkspace />
+      <SupplierInvoicesWorkspace canViewAmounts={canViewMoney(session)} />
     </Suspense>
   );
 }

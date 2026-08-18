@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
+import { requireAuthenticated } from "@/lib/auth/session";
 import {
   getTransporterInvoice,
   readTransporterInvoiceFile,
@@ -9,6 +11,12 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await requireAuthenticated();
+    if (!session) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    if (!canViewMoney(session)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
+
     const { id } = await context.params;
     const invoice = getTransporterInvoice(id);
     if (!invoice) {

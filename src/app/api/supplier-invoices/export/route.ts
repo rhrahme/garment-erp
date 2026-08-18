@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
+import { requireAuthenticated } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import {
   buildSingleSupplierInvoiceExportZip,
@@ -8,6 +10,12 @@ import {
 
 export async function GET(request: Request) {
   try {
+    const session = await requireAuthenticated();
+    if (!session) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    if (!canViewMoney(session)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
+
     await ensureDocumentsLoaded(["supplier_invoices", "transporter_invoices"]);
 
     const { searchParams } = new URL(request.url);

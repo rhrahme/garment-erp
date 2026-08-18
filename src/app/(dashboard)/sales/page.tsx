@@ -3,6 +3,7 @@ import { FabricChangeAlertsPanel } from "@/components/dashboard/FabricChangeAler
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SalesWorkspaceDashboard } from "@/components/sales/SalesWorkspaceDashboard";
 import { getSessionContext } from "@/lib/auth/session";
+import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export default async function SalesPage() {
         description="Clients, fabrics, selling invoices, fittings, and high-level production status"
       />
       <FabricChangeAlertsPanel />
-      <SalesWorkspaceDashboard />
+      <SalesWorkspaceDashboard canViewAmounts={canViewMoney(session)} />
     </div>
   );
 }

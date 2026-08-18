@@ -199,7 +199,7 @@ const PATTERN_OPERATOR_ROUTE_PREFIXES = [
 
 /**
  * Accounting - invoicing, costing, supplier invoices, purchasing; no factory floor or sales CRM.
- * Invoice amounts use eye toggle; supplier fabric catalog/list prices stay admin-only (canViewPrices).
+ * Money is admin-only (canViewMoney) - accounting sees invoice/PO workflow, never amounts.
  * Supplier emails: view-only - sending is admin-only (canSendSupplierEmails).
  * AWB tracking: view-only - add/sync is admin + factory manager (canManageShipments).
  */

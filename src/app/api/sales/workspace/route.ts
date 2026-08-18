@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { redactCustomerInvoiceCosts } from "@/lib/auth/invoice-cost-access";
+import { customerInvoiceForSession } from "@/lib/auth/invoice-cost-access";
 import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
 import { requireAuthenticated } from "@/lib/auth/session";
 import { readClients } from "@/lib/data/clients";
@@ -65,7 +65,7 @@ export async function GET() {
     orders: orders.map(redactSalesOrderFabricPrices),
     invoices: invoiceStore.invoices
       .filter((invoice) => orderIds.has(invoice.sales_order_id))
-      .map(redactCustomerInvoiceCosts),
+      .map((invoice) => customerInvoiceForSession(session, invoice)),
     client_details: workspace.client_details.filter((details) => clientIds.has(details.client_id)),
     fittings: workspace.fittings.filter((fitting) => orderIds.has(fitting.sales_order_id)),
     milestones: milestoneRows,

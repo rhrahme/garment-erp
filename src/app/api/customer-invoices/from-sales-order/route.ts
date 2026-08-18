@@ -11,7 +11,7 @@ import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { requireAuthenticated } from "@/lib/auth/session";
 import { canAccessSalesOrder } from "@/lib/sales/access";
 import { notifyIntegration } from "@/lib/integrations";
-import { redactCustomerInvoiceCosts } from "@/lib/auth/invoice-cost-access";
+import { customerInvoiceForSession } from "@/lib/auth/invoice-cost-access";
 
 export async function POST(request: Request) {
   try {
@@ -37,7 +37,10 @@ export async function POST(request: Request) {
     const existing = store.invoices.find((invoice) => invoice.sales_order_id === salesOrderId);
     if (existing) {
       return NextResponse.json(
-        { error: "An invoice already exists for this sales order.", invoice: existing },
+        {
+          error: "An invoice already exists for this sales order.",
+          invoice: customerInvoiceForSession(session, existing),
+        },
         { status: 409 }
       );
     }
@@ -54,10 +57,7 @@ export async function POST(request: Request) {
       total: saved.total,
     });
 
-    return NextResponse.json(
-      session.isSalesOperator ? redactCustomerInvoiceCosts(saved) : saved,
-      { status: 201 }
-    );
+    return NextResponse.json(customerInvoiceForSession(session, saved), { status: 201 });
   } catch (error) {
     console.error("Failed to create customer invoice:", error);
     const message = error instanceof Error ? error.message : "Failed to create invoice.";

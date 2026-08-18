@@ -86,6 +86,59 @@ export type CostingOverview = {
   orders: SalesOrderCost[];
 };
 
+function redactFabricLineCost(line: FabricLineCost): FabricLineCost {
+  return {
+    ...line,
+    unit_price: null,
+    supplier_line_total: null,
+    fabric_base_sar: null,
+    customs_duty_sar: 0,
+    import_vat_sar: 0,
+    vat_recoverable_sar: 0,
+    fabric_cash_outlay_sar: null,
+    fabric_cost_sar: null,
+    labor_cost_sar: 0,
+    washing_cost_sar: 0,
+    overhead_cost_sar: 0,
+    total_cost_sar: null,
+    has_fabric_price: false,
+  };
+}
+
+function redactSalesOrderCost(order: SalesOrderCost): SalesOrderCost {
+  return {
+    ...order,
+    fabric_base_sar: 0,
+    customs_duty_sar: 0,
+    import_vat_sar: 0,
+    vat_recoverable_sar: 0,
+    fabric_cash_outlay_sar: 0,
+    fabric_cost_sar: 0,
+    labor_cost_sar: 0,
+    washing_cost_sar: 0,
+    overhead_cost_sar: 0,
+    total_cost_sar: null,
+    lines: order.lines.map(redactFabricLineCost),
+  };
+}
+
+export function redactCostingOverview(overview: CostingOverview): CostingOverview {
+  return {
+    ...overview,
+    fabric_base_sar: 0,
+    customs_duty_sar: 0,
+    import_vat_sar: 0,
+    vat_recoverable_sar: 0,
+    fabric_cash_outlay_sar: 0,
+    fabric_cost_sar: 0,
+    labor_cost_sar: 0,
+    washing_cost_sar: 0,
+    overhead_cost_sar: 0,
+    total_cost_sar: null,
+    orders: overview.orders.map(redactSalesOrderCost),
+  };
+}
+
 function effectiveFabricUnitPrice(line: SalesOrderFabricLine): number | null {
   if (line.unit_price != null && line.unit_price > 0) return line.unit_price;
   const catalog = resolveFabricItemFromCatalog(line.supplier_id, line.fabric_number);

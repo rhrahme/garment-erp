@@ -15,7 +15,8 @@ import { formatInvoiceClientName, resolveInvoiceLines, sortInvoiceLinesByArticle
 import { buildInvoiceLineCrossRefs, buildInvoiceLineSwatchKeys } from "@/lib/sales-orders/line-cross-reference";
 import { getSessionContext } from "@/lib/auth/session";
 import { canAccessSalesOrder } from "@/lib/sales/access";
-import { redactCustomerInvoiceCosts } from "@/lib/auth/invoice-cost-access";
+import { customerInvoiceForSession } from "@/lib/auth/invoice-cost-access";
+import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 
 export const dynamic = "force-dynamic";
@@ -30,8 +31,9 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   const order = await getSalesOrderByIdFresh(raw.sales_order_id);
   const session = await getSessionContext();
   if (!order || !canAccessSalesOrder(session, order)) notFound();
-  if (!session.isSalesOperator) await ensureFabricOrdersLoaded();
-  const fabricPos = order && !session.isSalesOperator
+  const showMoney = canViewMoney(session);
+  if (showMoney) await ensureFabricOrdersLoaded();
+  const fabricPos = order && showMoney
     ? listStoredFabricOrders().filter(
         (po) =>
           po.sales_order_id === order.id ||
@@ -41,9 +43,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     : [];
   const fabricLines = enrichInvoiceLinesWithFabricDetails(raw.lines, order);
   const resolvedLines = sortInvoiceLinesByArticle(
-    resolveInvoiceLines(
-      session.isSalesOperator ? fabricLines : enrichInvoiceLinesWithCostHints(fabricLines, order)
-    )
+    resolveInvoiceLines(showMoney ? enrichInvoiceLinesWithCostHints(fabricLines, order) : fabricLines)
   );
   const lineCrossRefs = buildInvoiceLineCrossRefs(resolvedLines, order, fabricPos);
   const lineSwatchKeys = buildInvoiceLineSwatchKeys(resolvedLines, order);
@@ -57,9 +57,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       order
     )
   );
-  const invoice = session.isSalesOperator
-    ? redactCustomerInvoiceCosts(invoiceWithVat)
-    : invoiceWithVat;
+  const invoice = customerInvoiceForSession(session, invoiceWithVat);
 
   return (
     <div>
@@ -77,7 +75,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         invoice={invoice}
         lineCrossRefs={lineCrossRefs}
         lineSwatchKeys={lineSwatchKeys}
-        showCostColumns={!session.isSalesOperator}
+        showCostColumns={showMoney}
+        canViewAmounts={showMoney}
       />
     </div>
   );

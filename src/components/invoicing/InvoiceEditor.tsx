@@ -32,13 +32,16 @@ export function InvoiceEditor({
   invoice: initial,
   lineCrossRefs,
   lineSwatchKeys,
-  showCostColumns = true,
+  showCostColumns = false,
+  canViewAmounts = false,
 }: {
   invoice: CustomerInvoice;
   lineCrossRefs: Map<string, InvoiceLineCrossRef>;
   lineSwatchKeys: Map<string, FabricSwatchKey>;
-  /** Admin sees fabric/cost hints; sales never. */
+  /** Admin sees fabric/cost hints; everyone else never. */
   showCostColumns?: boolean;
+  /** Admin sees selling prices, totals, payments, and PDF. */
+  canViewAmounts?: boolean;
 }) {
   const router = useRouter();
   const [invoice, setInvoice] = useState(initial);
@@ -77,11 +80,19 @@ export function InvoiceEditor({
   }
 
   async function saveLines() {
+    if (!canViewAmounts) {
+      await savePatch({
+        lines: lines.map((line) => ({ id: line.id, description: line.description })),
+      });
+      return;
+    }
     await savePatch({ lines: resolveInvoiceLines(lines) });
   }
 
   async function updateStatus(status: CustomerInvoiceStatus) {
-    await savePatch({ status, lines: resolveInvoiceLines(lines) });
+    await savePatch(
+      canViewAmounts ? { status, lines: resolveInvoiceLines(lines) } : { status }
+    );
   }
 
   async function recordPayment() {
@@ -187,23 +198,27 @@ export function InvoiceEditor({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <DownloadInvoicePdfButton
-            invoiceId={invoice.id}
-            invoiceNumber={invoice.invoice_number}
-            kind={pdfKind}
-            label={pdfKind === "quote" ? "Download quote PDF" : "Download PDF"}
-          />
-          <DownloadInvoicePdfButton
-            invoiceId={invoice.id}
-            invoiceNumber={invoice.invoice_number}
-            kind={pdfKind}
-            mode="open"
-            label="Open PDF"
-            variant="ghost"
-          />
-          <Link href={`/invoices/${invoice.id}/print`} target="_blank">
-            <Button variant="secondary">Open print page</Button>
-          </Link>
+          {canViewAmounts ? (
+            <>
+              <DownloadInvoicePdfButton
+                invoiceId={invoice.id}
+                invoiceNumber={invoice.invoice_number}
+                kind={pdfKind}
+                label={pdfKind === "quote" ? "Download quote PDF" : "Download PDF"}
+              />
+              <DownloadInvoicePdfButton
+                invoiceId={invoice.id}
+                invoiceNumber={invoice.invoice_number}
+                kind={pdfKind}
+                mode="open"
+                label="Open PDF"
+                variant="ghost"
+              />
+              <Link href={`/invoices/${invoice.id}/print`} target="_blank">
+                <Button variant="secondary">Open print page</Button>
+              </Link>
+            </>
+          ) : null}
           {invoice.status === "draft" && (
             <Button onClick={() => void updateStatus("sent")} disabled={saving}>
               Mark as sent
@@ -228,7 +243,14 @@ export function InvoiceEditor({
           <input
             type="date"
             value={invoice.invoice_date}
-            onChange={(e) => void savePatch({ invoice_date: e.target.value, lines }, { refresh: false })}
+            onChange={(e) =>
+              void savePatch(
+                canViewAmounts
+                  ? { invoice_date: e.target.value, lines }
+                  : { invoice_date: e.target.value },
+                { refresh: false }
+              )
+            }
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
           />
         </label>
@@ -238,7 +260,12 @@ export function InvoiceEditor({
             type="date"
             value={invoice.due_date ?? ""}
             onChange={(e) =>
-              void savePatch({ due_date: e.target.value || null, lines }, { refresh: false })
+              void savePatch(
+                canViewAmounts
+                  ? { due_date: e.target.value || null, lines }
+                  : { due_date: e.target.value || null },
+                { refresh: false }
+              )
             }
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
           />
@@ -249,7 +276,12 @@ export function InvoiceEditor({
             type="text"
             value={invoice.payment_terms ?? ""}
             onChange={(e) =>
-              void savePatch({ payment_terms: e.target.value, lines }, { refresh: false })
+              void savePatch(
+                canViewAmounts
+                  ? { payment_terms: e.target.value, lines }
+                  : { payment_terms: e.target.value },
+                { refresh: false }
+              )
             }
             placeholder="e.g. Net 30"
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
@@ -258,6 +290,7 @@ export function InvoiceEditor({
       </div>
 
       <FabricSwatchProvider fabrics={swatchFabrics}>
+      {canViewAmounts ? (
       <LineReductionSuggestionsPanel
         lines={lines}
         saving={saving}
@@ -270,6 +303,7 @@ export function InvoiceEditor({
           await savePatch({ lines: resolveInvoiceLines(nextLines) });
         }}
       />
+      ) : null}
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="min-w-full text-sm">
@@ -282,9 +316,13 @@ export function InvoiceEditor({
               <th className="px-4 py-3">Fabric #</th>
               <th className="px-4 py-3">Composition</th>
               <th className="px-4 py-3">Qty</th>
-              <th className="px-4 py-3">Unit price (SAR)</th>
-              <th className="px-4 py-3">Line total</th>
-              {showCostColumns ? (
+              {canViewAmounts ? (
+                <>
+                  <th className="px-4 py-3">Unit price (SAR)</th>
+                  <th className="px-4 py-3">Line total</th>
+                </>
+              ) : null}
+              {showCostColumns && canViewAmounts ? (
                 <>
                   <th
                     className="px-4 py-3"
@@ -343,18 +381,22 @@ export function InvoiceEditor({
                 </td>
                 <td className="px-4 py-3 text-sm text-slate-700">{display.composition_label}</td>
                 <td className="px-4 py-3">{line.quantity}</td>
-                <td className="px-4 py-3">
-                  <input
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={line.unit_price}
-                    onChange={(e) => updateLine(line.id, "unit_price", e.target.value)}
-                    className="w-28 rounded border border-slate-200 px-2 py-1.5"
-                  />
-                </td>
-                <td className="px-4 py-3 font-medium">{formatInvoiceSar(line.quantity * line.unit_price)}</td>
-                {showCostColumns ? (
+                {canViewAmounts ? (
+                  <>
+                    <td className="px-4 py-3">
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        value={line.unit_price}
+                        onChange={(e) => updateLine(line.id, "unit_price", e.target.value)}
+                        className="w-28 rounded border border-slate-200 px-2 py-1.5"
+                      />
+                    </td>
+                    <td className="px-4 py-3 font-medium">{formatInvoiceSar(line.quantity * line.unit_price)}</td>
+                  </>
+                ) : null}
+                {showCostColumns && canViewAmounts ? (
                   <>
                     <td className="px-4 py-3 text-xs text-slate-500">
                       {line.fabric_cost_hint_sar != null ? formatInvoiceSar(line.fabric_cost_hint_sar) : "—"}
@@ -368,6 +410,7 @@ export function InvoiceEditor({
             );
             })}
           </tbody>
+          {canViewAmounts ? (
           <tfoot>
             <InvoiceTotalsFooter
               currency="SAR"
@@ -380,19 +423,21 @@ export function InvoiceEditor({
               totalGarmentItems={lineTotals.totalGarmentItems}
             />
           </tfoot>
+          ) : null}
         </table>
       </div>
       </FabricSwatchProvider>
 
       <div className="flex flex-wrap gap-3">
         <Button onClick={() => void saveLines()} disabled={saving}>
-          {saving ? "Saving…" : "Save line prices"}
+          {saving ? "Saving…" : canViewAmounts ? "Save line prices" : "Save line descriptions"}
         </Button>
         <Link href="/invoices">
           <Button variant="secondary">All invoices</Button>
         </Link>
       </div>
 
+      {canViewAmounts ? (
       <div className="rounded-xl border border-slate-200 bg-white p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -484,10 +529,11 @@ export function InvoiceEditor({
           </div>
         ) : null}
       </div>
+      ) : null}
 
-      <InvoicePreview invoice={previewInvoice} invoiceId={invoice.id} />
+      {canViewAmounts ? <InvoicePreview invoice={previewInvoice} invoiceId={invoice.id} /> : null}
 
-      {showRiyadhBankPdf ? (
+      {canViewAmounts && showRiyadhBankPdf ? (
         <p className="text-sm text-slate-600">
           Payment details are shown in the preview above. Need a standalone file for clients?{" "}
           <RiyadhBankDetailsPdfLink />

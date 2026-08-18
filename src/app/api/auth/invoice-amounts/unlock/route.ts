@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
-import { isInvoiceAmountsPasswordValid } from "@/lib/auth/invoice-amounts-access";
+import { canViewMoney, isInvoiceAmountsPasswordValid } from "@/lib/auth/invoice-amounts-access";
+import { requireAuthenticated } from "@/lib/auth/session";
 
 export async function POST(request: Request) {
   try {
+    const session = await requireAuthenticated();
+    if (!session || !canViewMoney(session)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
+
     const body = (await request.json()) as { password?: string };
     const password = body.password?.trim() ?? "";
 

@@ -8,8 +8,12 @@ import { buildFabricOrderEmail } from "@/lib/fabric-sourcing/email";
 import { getFactoryOrdersEmail } from "@/lib/data/supplier-catalogs";
 import { getFabricSuppliers } from "@/lib/data/queries";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { getSessionContext } from "@/lib/auth/session";
+import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
 
 export default async function PurchasingPage() {
+  const session = await getSessionContext();
+  const showAmounts = canViewMoney(session);
   const orders = await getPurchaseOrders();
   const fabricOrders = orders.filter((o) => o.supplier?.is_fabric_supplier);
   const suppliers = await getFabricSuppliers();
@@ -106,7 +110,7 @@ export default async function PurchasingPage() {
           { key: "orderDate", label: "Order Date" },
           { key: "carrier", label: "Carrier" },
           { key: "emailed", label: "Emailed" },
-          { key: "amount", label: "Amount" },
+          ...(showAmounts ? [{ key: "amount", label: "Amount" }] : []),
           { key: "status", label: "Status" },
         ]}
         rows={fabricOrders.map((o) => ({
@@ -125,7 +129,7 @@ export default async function PurchasingPage() {
           emailed: o.emailed_at ? formatDate(o.emailed_at) : (
             <span className="text-amber-600 text-xs font-medium">Not sent</span>
           ),
-          amount: formatCurrency(o.total_amount),
+          ...(showAmounts ? { amount: formatCurrency(o.total_amount) } : {}),
           status: <StatusBadge status={o.status} />,
         }))}
       />

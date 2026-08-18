@@ -155,10 +155,9 @@ function resolveSessionFlags(
     canViewClientContact: canViewClientContact(role, email, isSuperAdmin),
     canViewFabricListPrices: isAdmin,
     canViewInvoiceAmounts: canViewInvoiceAmountsAlways({ isAdmin }),
-    canToggleInvoiceAmounts: canToggleInvoiceAmounts({ isAdmin, isAccountingOperator, isSalesOperator }),
+    canToggleInvoiceAmounts: canToggleInvoiceAmounts({ isAdmin }),
     canRevealInvoiceAmountsWithoutPassword: canRevealInvoiceAmountsWithoutPassword({
       isAdmin,
-      isAccountingOperator,
     }),
     invoiceAmountsVisibleByDefault: invoiceAmountsVisibleByDefault({ isAdmin, isAccountingOperator }),
     canSendSupplierEmails: canSendSupplierEmails({ isAdmin }),

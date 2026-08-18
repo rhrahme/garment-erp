@@ -4,23 +4,26 @@ import type { SessionContext } from "@/lib/auth/session";
 /** @deprecated Unlock is in-memory; key kept so old sessionStorage entries are ignored. */
 export const INVOICE_AMOUNTS_UNLOCK_SESSION_KEY = "invoice_amounts_unlocked";
 
+/** Single gate: prices, invoices, costing, salaries, and any other money. */
+export function canViewMoney(session: Pick<SessionContext, "isAdmin">): boolean {
+  return Boolean(session.isAdmin);
+}
+
 /** Admin — may view invoice amounts (UI still starts hidden until eye reveal). */
 export function canViewInvoiceAmountsAlways(session: Pick<SessionContext, "isAdmin">): boolean {
-  return session.isAdmin;
+  return canViewMoney(session);
 }
 
-/** Admin + sales + accounting — eye toggle on invoice/costing monetary fields. */
-export function canToggleInvoiceAmounts(
-  session: Pick<SessionContext, "isAdmin" | "isAccountingOperator" | "isSalesOperator">
-): boolean {
-  return session.isAdmin || session.isAccountingOperator || session.isSalesOperator;
+/** Eye toggle on invoice/costing monetary fields — admin only. */
+export function canToggleInvoiceAmounts(session: Pick<SessionContext, "isAdmin">): boolean {
+  return canViewMoney(session);
 }
 
-/** Admin + accounting reveal hidden amounts without a password. */
+/** Reveal hidden amounts without a password — admin only. */
 export function canRevealInvoiceAmountsWithoutPassword(
-  session: Pick<SessionContext, "isAdmin" | "isAccountingOperator">
+  session: Pick<SessionContext, "isAdmin">
 ): boolean {
-  return session.isAdmin || session.isAccountingOperator;
+  return canViewMoney(session);
 }
 
 /** Always start hidden; explicit Show click unlocks in-memory until refresh or Hide. */

@@ -9,7 +9,11 @@ import { requireAuthenticated } from "@/lib/auth/session";
 import { readClients } from "@/lib/data/clients";
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import { filterSalesOrdersForSession } from "@/lib/sales/access";
-import { redactCustomerInvoiceCosts } from "@/lib/auth/invoice-cost-access";
+import {
+  customerInvoiceForSession,
+  redactCustomerInvoiceSummary,
+} from "@/lib/auth/invoice-cost-access";
+import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
 
 export async function GET() {
   try {
@@ -22,18 +26,20 @@ export async function GET() {
         (order) => order.id
       )
     );
-    const visibleFile = session.isSalesOperator
+    const scopedFile = session.isSalesOperator
       ? {
           ...file,
-          invoices: file.invoices
-            .filter((invoice) => orderIds.has(invoice.sales_order_id))
-            .map(redactCustomerInvoiceCosts),
+          invoices: file.invoices.filter((invoice) => orderIds.has(invoice.sales_order_id)),
         }
       : file;
+    const invoices = listCustomerInvoicesSortedFromFile(scopedFile).map((invoice) =>
+      customerInvoiceForSession(session, invoice)
+    );
+    const summary = getCustomerInvoiceSummary(scopedFile);
     return NextResponse.json({
-      ...visibleFile,
-      invoices: listCustomerInvoicesSortedFromFile(visibleFile),
-      summary: getCustomerInvoiceSummary(visibleFile),
+      ...scopedFile,
+      invoices,
+      summary: canViewMoney(session) ? summary : redactCustomerInvoiceSummary(summary),
     });
   } catch (error) {
     console.error("Failed to read customer invoices:", error);
