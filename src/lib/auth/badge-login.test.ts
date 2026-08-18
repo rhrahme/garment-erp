@@ -6,6 +6,7 @@ import {
   badgeSupabasePassword,
   hashBadgePassword,
   isBadgePatternLoginEmail,
+  patternActorLabel,
   verifyBadgePassword,
 } from "./badge-login";
 import { isPatternOperatorEmail } from "./permissions";
@@ -40,6 +41,12 @@ describe("badge login synthetic emails", () => {
   it("is treated as a pattern operator even without a profile row (degraded fallback)", () => {
     assert.equal(isPatternOperatorEmail(badgeLoginEmail("123")), true);
     assert.equal(isPatternOperatorEmail("badge-pattern-1@evil.example.com"), false);
+  });
+
+  it("labels badge and shared-email logins with the employee so admin can trace", () => {
+    assert.equal(patternActorLabel("hagan.dp1@gmail.com"), "Mohtajul (2625917972)");
+    assert.match(patternActorLabel(badgeLoginEmail("2625917972")), /\(2625917972\)$/);
+    assert.equal(patternActorLabel("someone@hagan.pro"), "someone@hagan.pro");
   });
 });
 

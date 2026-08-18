@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePatternAccess } from "@/lib/auth/session";
+import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
 import { ensurePatternLibraryLoaded } from "@/lib/data/pattern-library";
 import {
   assignFabricLinesToClientPattern,
@@ -25,7 +25,7 @@ export async function POST(
     const { patternId } = await params;
     const body = await request.json().catch(() => null);
     const result = await assignFabricLinesToClientPattern(patternId, parseLineIds(body), {
-      assignedBy: session.email,
+      assignedBy: sessionActor(session),
     });
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });
@@ -51,7 +51,7 @@ export async function DELETE(
     const { patternId } = await params;
     const body = await request.json().catch(() => null);
     const result = await unassignFabricLinesFromClientPattern(patternId, parseLineIds(body), {
-      unassignedBy: session.email,
+      unassignedBy: sessionActor(session),
     });
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });

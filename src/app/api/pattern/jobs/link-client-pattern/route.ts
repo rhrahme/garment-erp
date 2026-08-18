@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePatternAccess } from "@/lib/auth/session";
+import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
 import { ensurePatternDocumentsLoaded } from "@/lib/data/pattern-jobs";
 import { linkPatternJobsToClientPattern } from "@/lib/pattern/mutations";
 
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const result = await linkPatternJobsToClientPattern(
       Array.isArray(body.job_ids) ? body.job_ids : [],
       body.client_pattern_id ?? "",
-      { updatedBy: session.email }
+      { updatedBy: sessionActor(session) }
     );
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });

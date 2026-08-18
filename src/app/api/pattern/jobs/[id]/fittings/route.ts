@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePatternAccess } from "@/lib/auth/session";
+import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
 import { ensurePatternDocumentsLoaded } from "@/lib/data/pattern-jobs";
 import { addPatternFitting, completePatternFitting } from "@/lib/pattern/mutations";
 import { isValidFittingOutcome } from "@/lib/pattern/mutations";
@@ -38,7 +38,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         notes: body.notes,
         attendees: body.attendees,
         completed_at: body.completed_at,
-      }, { completedBy: session.email });
+      }, { completedBy: sessionActor(session) });
 
       if (!result.ok) {
         return NextResponse.json({ error: result.error }, { status: result.status });
@@ -51,7 +51,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       scheduled_at: body.scheduled_at,
       notes: body.notes,
       attendees: body.attendees,
-    }, { createdBy: session.email });
+    }, { createdBy: sessionActor(session) });
 
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });

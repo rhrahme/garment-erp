@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePatternAccess } from "@/lib/auth/session";
+import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
 import {
   ensurePatternLibraryLoaded,
   getClientPatternByIdFresh,
@@ -44,7 +44,7 @@ export async function POST(request: Request, context: { params: Promise<{ patter
         ? "marker"
         : null;
 
-    const stored = await storeLibraryUpload(file, patternId, session.email, {
+    const stored = await storeLibraryUpload(file, patternId, sessionActor(session), {
       forceKind: slot === "marker" ? "marker" : null,
     });
     if (!stored.ok) {
@@ -72,7 +72,7 @@ export async function POST(request: Request, context: { params: Promise<{ patter
       filename: uploaded.filename,
       kind: uploaded.kind,
       piece_name: uploaded.piece_name ?? pieceName,
-      uploaded_by: session.email,
+      uploaded_by: sessionActor(session),
       ...tudNotificationFields(uploaded),
       ...tumNotificationFields(uploaded),
       ...dxfNotificationFields(uploaded),

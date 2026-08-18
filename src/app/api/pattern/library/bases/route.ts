@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePatternAccess } from "@/lib/auth/session";
+import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
 import {
   ensurePatternLibraryDocLoaded,
   ensurePatternLibraryLoaded,
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     }
     await ensurePatternLibraryLoaded();
     const body = await request.json();
-    const result = await createBasePattern(body, { createdBy: session.email });
+    const result = await createBasePattern(body, { createdBy: sessionActor(session) });
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }

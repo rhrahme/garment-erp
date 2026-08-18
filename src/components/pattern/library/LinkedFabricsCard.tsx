@@ -21,7 +21,7 @@ const STATUS_STYLES: Record<ClientFabricStatus, string> = {
   ready: "bg-emerald-100 text-emerald-800",
 };
 
-/** Fabrics grouped into this garment — SO board lines + catalog refs. */
+/** Fabrics grouped into this garment - SO board lines + catalog refs. */
 export function LinkedFabricsCard({
   clientId,
   patternId,
@@ -133,11 +133,17 @@ export function LinkedFabricsCard({
             </Link>
           </div>
         </div>
+        {totalCount > 1 ? (
+          <p className="mb-2 text-xs text-slate-500">
+            Need to take one fabric out later? Press Remove on that row - it leaves this
+            group and goes back to unassigned. The other fabrics stay together.
+          </p>
+        ) : null}
         {rows === null ? (
-          <p className="text-xs text-slate-400">Loading fabrics…</p>
+          <p className="text-xs text-slate-400">Loading fabrics...</p>
         ) : totalCount === 0 ? (
           <p className="text-xs text-slate-400">
-            No fabrics grouped into this garment yet — use Add fabrics from order, or tick them
+            No fabrics grouped into this garment yet - use Add fabrics from order, or tick them
             on the client fabric board.
           </p>
         ) : (
@@ -222,11 +228,17 @@ export function LinkedFabricsCard({
                 </button>
                 <button
                   type="button"
-                  onClick={() => void remove(row)}
-                  className="shrink-0 rounded p-1 text-slate-300 hover:bg-rose-50 hover:text-rose-600"
-                  aria-label={`Remove ${row.article_code} from this pattern`}
+                  onClick={() => {
+                    const ok = window.confirm(
+                      `Remove ${row.article_code} (${row.fabric_number}) from this grouped pattern?\n\nThe fabric stays on the order. It just leaves this consolidation so you can treat it separately.`
+                    );
+                    if (ok) void remove(row);
+                  }}
+                  className="shrink-0 rounded px-1.5 py-1 text-[11px] font-medium text-slate-400 hover:bg-rose-50 hover:text-rose-700"
+                  aria-label={`Remove ${row.article_code} from this grouped pattern`}
+                  title="Remove this fabric from the consolidation"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  Remove
                 </button>
               </li>
             ))}
@@ -319,23 +331,23 @@ function CatalogFabricPreviewDialog({
         <dl className="mt-4 space-y-1.5 text-sm">
           <div className="flex justify-between gap-3">
             <dt className="text-slate-500">Composition</dt>
-            <dd className="text-right text-slate-800">{refRow.composition ?? "—"}</dd>
+            <dd className="text-right text-slate-800">{refRow.composition ?? "-"}</dd>
           </div>
           <div className="flex justify-between gap-3">
             <dt className="text-slate-500">Weight</dt>
             <dd className="text-right text-slate-800">
-              {refRow.weight_gsm != null ? `${refRow.weight_gsm} gsm` : "—"}
+              {refRow.weight_gsm != null ? `${refRow.weight_gsm} gsm` : "-"}
             </dd>
           </div>
           <div className="flex justify-between gap-3">
             <dt className="text-slate-500">Width</dt>
             <dd className="text-right text-slate-800">
-              {refRow.width_cm != null ? `${refRow.width_cm} cm` : "—"}
+              {refRow.width_cm != null ? `${refRow.width_cm} cm` : "-"}
             </dd>
           </div>
           <div className="flex justify-between gap-3">
             <dt className="text-slate-500">Color</dt>
-            <dd className="text-right text-slate-800">{refRow.color ?? "—"}</dd>
+            <dd className="text-right text-slate-800">{refRow.color ?? "-"}</dd>
           </div>
         </dl>
       </div>
@@ -418,11 +430,11 @@ function LinkedFabricPreviewDialog({
         <dl className="mt-4 space-y-1.5 text-sm">
           <div className="flex justify-between gap-3">
             <dt className="text-slate-500">Composition</dt>
-            <dd className="text-right text-slate-800">{row.composition ?? "—"}</dd>
+            <dd className="text-right text-slate-800">{row.composition ?? "-"}</dd>
           </div>
           <div className="flex justify-between gap-3">
             <dt className="text-slate-500">Color</dt>
-            <dd className="text-right text-slate-800">{row.color ?? "—"}</dd>
+            <dd className="text-right text-slate-800">{row.color ?? "-"}</dd>
           </div>
           <div className="flex justify-between gap-3">
             <dt className="text-slate-500">Status</dt>

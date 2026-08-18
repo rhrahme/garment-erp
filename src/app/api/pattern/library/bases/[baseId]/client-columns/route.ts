@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePatternAccess } from "@/lib/auth/session";
+import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
 import { ensurePatternLibraryLoaded } from "@/lib/data/pattern-library";
 import {
   deleteBasePatternClientColumn,
@@ -25,7 +25,7 @@ export async function PUT(request: Request, context: { params: Promise<{ baseId:
         base_size: body.base_size,
         values: body.values ?? null,
       },
-      { savedBy: session.email }
+      { savedBy: sessionActor(session) }
     );
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });
@@ -53,7 +53,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ base
       clientId = typeof body?.client_id === "string" ? body.client_id : "";
     }
     const result = await deleteBasePatternClientColumn(baseId, clientId, {
-      removedBy: session.email,
+      removedBy: sessionActor(session),
     });
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });

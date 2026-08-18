@@ -7,7 +7,7 @@ import {
   readJsonFileFreshAsync,
   saveDocument,
 } from "@/lib/data/document-persistence";
-import { findPayrollEmployeeByBadgeValue } from "@/lib/hr/payroll-lookup";
+import { findPayrollEmployeeByBadgeValue, findPayrollEmployeeById } from "@/lib/hr/payroll-lookup";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 import { getSupabaseUrl } from "@/lib/supabase/env";
 
@@ -196,7 +196,14 @@ export async function createBadgeCredential(
       status: 409,
     };
   }
-  const credential: BadgeLoginCredential = {
+  const credential = buildCredential(employee, password);
+  store.credentials.push(credential);
+  await save(store);
+  return { ok: true, credential };
+}
+
+function buildCredential(employee: PayrollEmployee, password: string): BadgeLoginCredential {
+  return {
     employee_id: employee.id,
     employee_name: employee.full_name,
     password_hash: hashBadgePassword(password),
@@ -206,9 +213,61 @@ export async function createBadgeCredential(
     supabase_email: badgeLoginEmail(employee.id),
     last_login_at: null,
   };
-  store.credentials.push(credential);
+}
+
+/** Admin/ops: set or reset a badge password (upsert). */
+export async function upsertBadgeCredential(
+  employee: PayrollEmployee,
+  password: string
+): Promise<{ ok: true; credential: BadgeLoginCredential } | { ok: false; error: string; status: number }> {
+  if (password.length < MIN_BADGE_PASSWORD_LENGTH) {
+    return {
+      ok: false,
+      error: `Password must be at least ${MIN_BADGE_PASSWORD_LENGTH} characters.`,
+      status: 400,
+    };
+  }
+  const store = await readStoreFresh();
+  const next = buildCredential(employee, password);
+  const index = store.credentials.findIndex((row) => row.employee_id === employee.id);
+  if (index >= 0) {
+    const previous = store.credentials[index]!;
+    store.credentials[index] = {
+      ...next,
+      last_login_at: previous.last_login_at,
+    };
+  } else {
+    store.credentials.push(next);
+  }
   await save(store);
-  return { ok: true, credential };
+  return { ok: true, credential: store.credentials[index >= 0 ? index : store.credentials.length - 1]! };
+}
+
+/**
+ * Shared-email logins that belong to a specific pattern employee.
+ * Used so actions taken on hagan.dp1@ still attribute to Mohtajul.
+ */
+export const PATTERN_EMAIL_EMPLOYEES: Record<string, { id: string; name: string }> = {
+  "hagan.dp1@gmail.com": { id: "2625917972", name: "Mohtajul" },
+};
+
+/**
+ * Human label for pattern writes: "Mohtajul (2625917972)" so admin can
+ * tell which of the two shared-workspace operators changed a sheet.
+ */
+export function patternActorLabel(email: string | null | undefined): string {
+  const normalized = email?.trim().toLowerCase() ?? "";
+  if (!normalized) return "unknown";
+  const mapped = PATTERN_EMAIL_EMPLOYEES[normalized];
+  const employeeId = badgeLoginEmployeeId(normalized) ?? mapped?.id ?? null;
+  if (!employeeId) return email!.trim();
+  const employee = findPayrollEmployeeById(employeeId);
+  const name =
+    employee?.short_name?.trim() ||
+    employee?.full_name?.trim() ||
+    mapped?.name ||
+    "Pattern";
+  return `${name} (${employeeId})`;
 }
 
 function supabaseAdmin() {

@@ -393,7 +393,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   bare master URL to print one fabric. Never guess "most recently updated
   job" when multiple lines are linked. Master **Print cutter** without `job=`
   expands one page per linked article; stitcher packs use the tick picker
-  (`?lines=`) or job scope.
+  (`?lines=`) or job scope. Pattern may later Remove one fabric from
+  Grouped fabrics - that unassigns the line and unlinks the job; the
+  remaining fabrics stay on the master.
 - **Add fabrics from order on the sheet** (Aug 9 2026): on a client pattern
   Measurements toolbar, **Add fabrics from order** (and Grouped fabrics →
   Add from order) opens the client's SO fabric list to tick more lines onto
@@ -538,14 +540,20 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Badge login (pattern team)**: employees whose payroll job_functions
   include "pattern" sign in with badge/ID number + personal password
   (lib/auth/badge-login.ts). Password is set by the employee on first
-  login (scrypt-hashed in the badge_login_credentials doc; 5 wrong tries
-  -> 10 min lockout; admin gets an activation email). Each login is a real
-  Supabase session on a synthetic badge-pattern-<employeeId>@badge.hagan.pro
-  user with a profiles role of pattern_operator - do NOT add these emails
-  to PATTERN_EMAILS; isPatternOperatorEmail matches the badge pattern by
-  regex so degraded profile reads still resolve the role.
-  /api/auth/badge-login must stay in BOTH middleware open-route lists.
-  To revoke: remove the credential row or deactivate the employee.
+  login, or by admin via upsertBadgeCredential /
+  scripts/set-pattern-badge-password.mjs. Hashed in badge_login_credentials
+  (5 wrong tries -> 10 min lockout). Each login is a real Supabase session
+  on badge-pattern-<employeeId>@badge.hagan.pro (pattern_operator). Do NOT
+  add those emails to PATTERN_EMAILS; isPatternOperatorEmail matches the
+  badge pattern by regex. Both operators share one workspace; writes are
+  stamped with sessionActor() as "Mohtajul (2625917972)" so admin can
+  tell who changed a sheet. hagan.dp1@gmail.com maps to Mohtajul
+  (PATTERN_EMAIL_EMPLOYEES). /api/auth/badge-login stays in BOTH
+  middleware open-route lists. Revoke: remove the credential or deactivate
+  the employee.
+- **Remove a fabric from a consolidation**: Grouped fabrics -> Remove
+  unassigns that line and clears job.client_pattern_id. Do not leave the
+  job linked or the fabric still looks grouped.
 - Zapier parity rule: every business write path needs `/api/v1/...` +
   `notifyIntegration` (see `.cursor/rules/zapier-integration.mdc`).
 

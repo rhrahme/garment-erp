@@ -38,6 +38,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     session = {
       userId: null,
       email: null,
+      actorLabel: null,
       role: null,
       isSuperAdmin: false,
       isAdmin: false,

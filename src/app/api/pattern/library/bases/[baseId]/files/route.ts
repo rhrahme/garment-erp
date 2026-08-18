@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePatternAccess } from "@/lib/auth/session";
+import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
 import { ensurePatternLibraryLoaded, getBasePatternByIdFresh } from "@/lib/data/pattern-library";
 import { readPatternLibraryFile } from "@/lib/pattern-library/file-storage";
 import { attachBasePatternFile } from "@/lib/pattern-library/mutations";
@@ -28,7 +28,7 @@ export async function POST(request: Request, context: { params: Promise<{ baseId
       return NextResponse.json({ error: "file is required." }, { status: 400 });
     }
 
-    const stored = await storeLibraryUpload(file, baseId, session.email);
+    const stored = await storeLibraryUpload(file, baseId, sessionActor(session));
     if (!stored.ok) {
       return NextResponse.json({ error: stored.error }, { status: 400 });
     }
@@ -43,7 +43,7 @@ export async function POST(request: Request, context: { params: Promise<{ baseId
       file_id: stored.attachment.id,
       filename: stored.attachment.filename,
       kind: stored.attachment.kind,
-      uploaded_by: session.email,
+      uploaded_by: sessionActor(session),
       ...tudNotificationFields(stored.attachment),
       ...tumNotificationFields(stored.attachment),
       ...dxfNotificationFields(stored.attachment),

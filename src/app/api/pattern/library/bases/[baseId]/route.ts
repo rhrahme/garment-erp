@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePatternAccess } from "@/lib/auth/session";
+import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
 import { ensurePatternLibraryLoaded, getBasePatternByIdFresh } from "@/lib/data/pattern-library";
 import { updateBasePattern } from "@/lib/pattern-library/mutations";
 
@@ -31,7 +31,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ baseI
     await ensurePatternLibraryLoaded();
     const { baseId } = await context.params;
     const body = await request.json();
-    const result = await updateBasePattern(baseId, body, { updatedBy: session.email });
+    const result = await updateBasePattern(baseId, body, { updatedBy: sessionActor(session) });
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }

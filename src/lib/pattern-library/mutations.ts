@@ -5,7 +5,7 @@ import {
   normalizePatternSheetGarment,
 } from "@/lib/pattern-library/base-pattern-picker";
 import { readPatternLibraryFresh, writePatternLibrary } from "@/lib/data/pattern-library";
-import { readPatternJobsFresh } from "@/lib/data/pattern-jobs";
+import { readPatternJobsFresh, writePatternJobs } from "@/lib/data/pattern-jobs";
 import {
   removeClientFitColumn,
   upsertClientFitColumn,
@@ -786,6 +786,19 @@ export async function unassignFabricLinesFromClientPattern(
   };
   store.client_patterns[index] = next;
   await writePatternLibrary(store);
+
+  const unassignedIds = requested.filter((id) => linked.includes(id));
+  const jobsStore = await readPatternJobsFresh();
+  let jobsChanged = false;
+  const nowIso = now();
+  for (let i = 0; i < jobsStore.jobs.length; i += 1) {
+    const job = jobsStore.jobs[i]!;
+    if (job.client_pattern_id !== patternId) continue;
+    if (!unassignedIds.includes(job.sales_order_line_id)) continue;
+    jobsStore.jobs[i] = { ...job, client_pattern_id: null, updated_at: nowIso };
+    jobsChanged = true;
+  }
+  if (jobsChanged) await writePatternJobs(jobsStore);
 
   if (options.notify !== false) {
     await notifyIntegration("client_pattern.fabric_lines_unassigned", {

@@ -18,6 +18,7 @@ export async function GET() {
     const canViewFabricPrices = await resolveFabricPriceAccess(session);
     return NextResponse.json({
       email: session.email,
+      actor_label: session.actorLabel,
       role: session.role,
       is_super_admin: session.isSuperAdmin,
       is_admin: session.isAdmin,

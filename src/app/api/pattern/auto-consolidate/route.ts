@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePatternAccess } from "@/lib/auth/session";
+import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
 import { ensurePatternDocumentsLoaded } from "@/lib/data/pattern-jobs";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { ensurePatternLibraryLoaded } from "@/lib/data/pattern-library";
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       sales_order_id: typeof body.sales_order_id === "string" ? body.sales_order_id : null,
       client_id: typeof body.client_id === "string" ? body.client_id : null,
       dry_run: Boolean(body.dry_run),
-      actedBy: session.email,
+      actedBy: sessionActor(session),
       notify: !body.dry_run,
       unit,
     });

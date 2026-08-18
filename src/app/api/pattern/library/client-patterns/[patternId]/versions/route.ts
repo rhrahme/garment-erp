@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePatternAccess } from "@/lib/auth/session";
+import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
 import { ensurePatternLibraryLoaded } from "@/lib/data/pattern-library";
 import { addClientPatternVersion } from "@/lib/pattern-library/mutations";
 
@@ -12,7 +12,7 @@ export async function POST(request: Request, context: { params: Promise<{ patter
     await ensurePatternLibraryLoaded();
     const { patternId } = await context.params;
     const body = await request.json().catch(() => ({}));
-    const result = await addClientPatternVersion(patternId, body, { createdBy: session.email });
+    const result = await addClientPatternVersion(patternId, body, { createdBy: sessionActor(session) });
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }

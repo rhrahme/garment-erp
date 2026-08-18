@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePatternAccess } from "@/lib/auth/session";
+import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { ensurePatternDocumentsLoaded } from "@/lib/data/pattern-jobs";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
@@ -77,7 +77,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     if ("blocked_reason" in body) patch.blocked_reason = body.blocked_reason;
     if ("notes" in body) patch.notes = body.notes;
 
-    const result = await updatePatternJob(id, patch, { updatedBy: session.email });
+    const result = await updatePatternJob(id, patch, { updatedBy: sessionActor(session) });
 
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });

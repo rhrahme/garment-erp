@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePatternAccess } from "@/lib/auth/session";
+import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
 import { ensurePatternDocumentsLoaded } from "@/lib/data/pattern-jobs";
 import { addPatternRevision } from "@/lib/pattern/mutations";
 
@@ -20,7 +20,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const result = await addPatternRevision(id, {
       changes_summary: body.changes_summary,
       triggered_by_fitting_id: body.triggered_by_fitting_id,
-      revised_by: session.email,
+      revised_by: sessionActor(session),
     });
 
     if (!result.ok) {

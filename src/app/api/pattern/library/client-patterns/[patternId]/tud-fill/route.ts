@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePatternAccess } from "@/lib/auth/session";
+import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
 import { ensurePatternLibraryLoaded } from "@/lib/data/pattern-library";
 import { applyTudSizeFill } from "@/lib/pattern-library/mutations";
 
@@ -25,7 +25,7 @@ export async function POST(request: Request, context: { params: Promise<{ patter
         base_pattern_id: typeof body.base_pattern_id === "string" ? body.base_pattern_id : null,
         version_id: typeof body.version_id === "string" ? body.version_id : null,
       },
-      { appliedBy: session.email }
+      { appliedBy: sessionActor(session) }
     );
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });

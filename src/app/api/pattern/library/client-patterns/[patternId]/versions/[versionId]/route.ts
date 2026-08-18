@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePatternAccess } from "@/lib/auth/session";
+import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
 import { ensurePatternLibraryLoaded } from "@/lib/data/pattern-library";
 import {
   finalizeClientPatternVersion,
@@ -21,7 +21,7 @@ export async function PATCH(
 
     if (body.action === "finalize" || body.action === "unfinalize") {
       const result = await finalizeClientPatternVersion(patternId, versionId, {
-        finalizedBy: session.email,
+        finalizedBy: sessionActor(session),
         final: body.action === "finalize",
       });
       if (!result.ok) {
@@ -31,7 +31,7 @@ export async function PATCH(
     }
 
     const result = await updateClientPatternVersion(patternId, versionId, body, {
-      updatedBy: session.email,
+      updatedBy: sessionActor(session),
     });
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });

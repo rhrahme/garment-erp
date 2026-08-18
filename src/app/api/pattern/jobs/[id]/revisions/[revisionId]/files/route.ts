@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePatternAccess } from "@/lib/auth/session";
+import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
 import { ensurePatternDocumentsLoaded } from "@/lib/data/pattern-jobs";
 import { writePatternFile } from "@/lib/data/pattern-file-storage";
 import { attachPatternRevisionFile } from "@/lib/pattern/mutations";
@@ -44,7 +44,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       filename: file.name,
       stored_filename: storedFilename,
       uploaded_at: new Date().toISOString(),
-      uploaded_by: session.email,
+      uploaded_by: sessionActor(session),
       size_bytes: buffer.length,
     });
 

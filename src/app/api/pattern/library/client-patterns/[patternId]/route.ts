@@ -1,5 +1,5 @@
 import { after, NextResponse } from "next/server";
-import { requirePatternAccess } from "@/lib/auth/session";
+import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
 import { getClientById } from "@/lib/data/clients";
 import { readFabricReceipts } from "@/lib/data/fabric-receipts";
 import {
@@ -131,7 +131,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ patte
       const result = await updateClientPatternTrialSheet(
         patternId,
         body.trial_sheet_versions,
-        { updatedBy: session.email }
+        { updatedBy: sessionActor(session) }
       );
       if (!result.ok) {
         return NextResponse.json({ error: result.error }, { status: result.status });
@@ -139,7 +139,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ patte
       return NextResponse.json({ pattern: result.pattern });
     }
 
-    const result = await updateClientPattern(patternId, body, { updatedBy: session.email });
+    const result = await updateClientPattern(patternId, body, { updatedBy: sessionActor(session) });
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }

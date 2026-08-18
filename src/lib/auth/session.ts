@@ -29,10 +29,13 @@ import {
 } from "@/lib/auth/invoice-amounts-access";
 import { canSendSupplierEmails } from "@/lib/auth/supplier-email-access";
 import { canManageShipments, canViewShipments } from "@/lib/auth/shipment-access";
+import { patternActorLabel } from "@/lib/auth/badge-login";
 
 export interface SessionContext {
   userId: string | null;
   email: string | null;
+  /** Display name for writes: "Mohtajul (2625917972)" on badge logins. */
+  actorLabel: string | null;
   role: UserRole | null;
   isSuperAdmin: boolean;
   isAdmin: boolean;
@@ -45,24 +48,31 @@ export interface SessionContext {
   isAccountingOperator: boolean;
   canViewClientContact: boolean;
   canViewFabricListPrices: boolean;
-  /** Admin-only — always visible, no eye toggle. */
+  /** Admin-only - always visible, no eye toggle. */
   canViewInvoiceAmounts: boolean;
-  /** Sales + accounting — show/hide monetary amounts on invoices & costing. */
+  /** Sales + accounting - show/hide monetary amounts on invoices & costing. */
   canToggleInvoiceAmounts: boolean;
-  /** Accounting — reveal hidden amounts without password. */
+  /** Accounting - reveal hidden amounts without password. */
   canRevealInvoiceAmountsWithoutPassword: boolean;
   /** Default visibility when toggle is present (accounting starts visible). */
   invoiceAmountsVisibleByDefault: boolean;
-  /** Admin-only — send supplier / fabric-order emails. */
+  /** Admin-only - send supplier / fabric-order emails. */
   canSendSupplierEmails: boolean;
-  /** Admin, factory manager, or accounting — view AWB tracking. */
+  /** Admin, factory manager, or accounting - view AWB tracking. */
   canViewShipments: boolean;
-  /** Admin or factory manager — add AWBs and sync carrier status. */
+  /** Admin or factory manager - add AWBs and sync carrier status. */
   canManageShipments: boolean;
   canAccessPattern: boolean;
 }
 
-function resolveSessionFlags(role: UserRole | null, email: string | null): Omit<SessionContext, "userId" | "email"> {
+export function sessionActor(session: Pick<SessionContext, "actorLabel" | "email">): string {
+  return session.actorLabel || session.email || "unknown";
+}
+
+function resolveSessionFlags(
+  role: UserRole | null,
+  email: string | null
+): Omit<SessionContext, "userId" | "email" | "actorLabel"> {
   const isSuperAdmin = isSuperAdminRole(role) || isSuperAdminEmail(email);
   const isClientManager = !isSuperAdmin && isClientManagerAccess(role, email);
   const isTaskOperator = !isSuperAdmin && isTaskOperatorAccess(role, email);
@@ -175,6 +185,7 @@ export async function getSessionContext(): Promise<SessionContext> {
     return {
       userId: email,
       email,
+      actorLabel: patternActorLabel(email),
       ...resolveSessionFlags(null, email),
     };
   }
@@ -184,11 +195,12 @@ export async function getSessionContext(): Promise<SessionContext> {
     cookieStore.get(DEV_IMPERSONATION_COOKIE)?.value
   );
   if (impersonatedEmail) {
-    // Email-list priority (production before sales) — never probe with a forced sales role.
+    // Email-list priority (production before sales) - never probe with a forced sales role.
     const role = resolveRestrictedAccess(null, impersonatedEmail, false);
     return {
       userId: `dev:${impersonatedEmail}`,
       email: impersonatedEmail,
+      actorLabel: patternActorLabel(impersonatedEmail),
       ...resolveSessionFlags(role, impersonatedEmail),
     };
   }
@@ -200,6 +212,7 @@ export async function getSessionContext(): Promise<SessionContext> {
     return {
       userId: null,
       email: null,
+      actorLabel: null,
       role: null,
       isSuperAdmin: false,
       isAdmin: false,
@@ -235,6 +248,7 @@ export async function getSessionContext(): Promise<SessionContext> {
   return {
     userId: user.id,
     email,
+    actorLabel: patternActorLabel(email),
     ...resolveSessionFlags(role, email),
   };
 }
@@ -264,7 +278,7 @@ export async function requireFactoryOpsAccess(): Promise<SessionContext | null> 
   return null;
 }
 
-/** Admin, factory manager, or accounting — read AWB tracking data. */
+/** Admin, factory manager, or accounting - read AWB tracking data. */
 export async function requireShipmentViewAccess(): Promise<SessionContext | null> {
   const session = await getSessionContext();
   if (!session.userId && !session.email) return null;
@@ -272,7 +286,7 @@ export async function requireShipmentViewAccess(): Promise<SessionContext | null
   return null;
 }
 
-/** Admin or factory manager — add AWBs and sync carrier tracking. */
+/** Admin or factory manager - add AWBs and sync carrier tracking. */
 export async function requireShipmentManageAccess(): Promise<SessionContext | null> {
   const session = await getSessionContext();
   if (!session.userId && !session.email) return null;
