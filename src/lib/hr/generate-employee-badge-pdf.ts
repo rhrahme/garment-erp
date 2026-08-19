@@ -4,15 +4,15 @@ import {
   BADGE_CARD_WIDTH_MM,
   BADGE_CARDS_PER_PAGE,
   BADGE_CARDS_PER_ROW,
-  BADGE_QR_DISPLAY_MM,
   BADGE_QR_FETCH_PX,
   BADGE_QR_GAP_MM,
-  BADGE_QR_PAIR_WIDTH_MM,
   BADGE_ROWS_PER_PAGE,
   badgeDisplayName,
   badgeJobFunctionsLine,
   badgePrintDateLabel,
-  badgeQrPairSides,
+  badgeQrRowLayout,
+  badgeQrSides,
+  type BadgeQrSide,
   chunkBadgePages,
 } from "@/lib/hr/badge-print";
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
@@ -61,13 +61,10 @@ function drawBadgeCard(
   doc: jsPDF,
   employee: PayrollEmployee,
   group: IdBadgeGroup,
-  qrDataUrl: string,
-  altQrDataUrl: string,
+  sides: Array<BadgeQrSide & { dataUrl: string }>,
   x: number,
   y: number,
-  printedLabel: string,
-  leftLabel: string,
-  rightLabel: string
+  printedLabel: string
 ) {
   const w = BADGE_CARD_WIDTH_MM;
   const h = BADGE_CARD_HEIGHT_MM;
@@ -141,53 +138,40 @@ function drawBadgeCard(
     maxWidth: textMaxW,
   });
 
-  // QR pair centered between name block and footer - fixed 3cm clear gap.
+  const layout = badgeQrRowLayout(sides.length);
+  if (layout.count === 2 && Math.abs(layout.gapMm - BADGE_QR_GAP_MM) > 0.01) {
+    throw new Error(
+      `Badge QR gap ${layout.gapMm.toFixed(1)}mm must equal ${BADGE_QR_GAP_MM}mm (3cm).`
+    );
+  }
+
   const footerTop = idY - 4.5;
-  const qrBlockH = BADGE_QR_DISPLAY_MM + 3.5;
+  const qrBlockH = layout.sizeMm + 3.5;
   const qrY = bodyY + Math.max(
     textY + 1.5,
     (footerTop + textY) / 2 - qrBlockH / 2
   );
-  const pairX = x + (w - BADGE_QR_PAIR_WIDTH_MM) / 2;
-  const sewX = pairX;
-  const altX = pairX + BADGE_QR_DISPLAY_MM + BADGE_QR_GAP_MM;
-  const clearGap = altX - (sewX + BADGE_QR_DISPLAY_MM);
-  if (Math.abs(clearGap - BADGE_QR_GAP_MM) > 0.01) {
-    throw new Error(
-      `Badge QR gap ${clearGap.toFixed(1)}mm must equal ${BADGE_QR_GAP_MM}mm (3cm).`
-    );
-  }
-
-  // Keep QRs above the ID footer when the name/jobs block runs long.
+  const rowX = x + (w - layout.rowWidthMm) / 2;
   const qrDrawY = Math.min(qrY, footerTop - qrBlockH);
 
-  doc.addImage(qrDataUrl, "PNG", sewX, qrDrawY, BADGE_QR_DISPLAY_MM, BADGE_QR_DISPLAY_MM);
-  doc.setDrawColor(226, 232, 240);
-  doc.setLineWidth(0.2);
-  doc.rect(sewX, qrDrawY, BADGE_QR_DISPLAY_MM, BADGE_QR_DISPLAY_MM);
-  doc.setTextColor(51, 65, 85);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(6.5);
-  doc.text(
-    leftLabel,
-    sewX + BADGE_QR_DISPLAY_MM / 2,
-    qrDrawY + BADGE_QR_DISPLAY_MM + 2.4,
-    { align: "center" }
-  );
-
-  doc.addImage(altQrDataUrl, "PNG", altX, qrDrawY, BADGE_QR_DISPLAY_MM, BADGE_QR_DISPLAY_MM);
-  doc.setDrawColor(180, 83, 9);
-  doc.setLineWidth(0.45);
-  doc.rect(altX, qrDrawY, BADGE_QR_DISPLAY_MM, BADGE_QR_DISPLAY_MM);
-  doc.setTextColor(146, 64, 14);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(6.5);
-  doc.text(
-    rightLabel,
-    altX + BADGE_QR_DISPLAY_MM / 2,
-    qrDrawY + BADGE_QR_DISPLAY_MM + 2.4,
-    { align: "center" }
-  );
+  sides.forEach((side, index) => {
+    const drawX = rowX + index * (layout.sizeMm + layout.gapMm);
+    doc.addImage(side.dataUrl, "PNG", drawX, qrDrawY, layout.sizeMm, layout.sizeMm);
+    if (side.kind === "alteration") {
+      doc.setDrawColor(180, 83, 9);
+      doc.setLineWidth(0.45);
+    } else {
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.2);
+    }
+    doc.rect(drawX, qrDrawY, layout.sizeMm, layout.sizeMm);
+    doc.setTextColor(side.kind === "alteration" ? 146 : 51, side.kind === "alteration" ? 64 : 65, side.kind === "alteration" ? 14 : 85);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(6);
+    doc.text(side.label, drawX + layout.sizeMm / 2, qrDrawY + layout.sizeMm + 2.2, {
+      align: "center",
+    });
+  });
   doc.setLineWidth(0.2);
 }
 
@@ -222,31 +206,18 @@ export async function generateEmployeeBadgePdf(
       const x = PAGE_MARGIN_MM + col * (BADGE_CARD_WIDTH_MM + GAP_X_MM);
       const y = PAGE_MARGIN_MM + row * (BADGE_CARD_HEIGHT_MM + GAP_Y_MM);
 
-      const { leftPayload: payload, rightPayload: altPayload, leftLabel, rightLabel } =
-        badgeQrPairSides(employee);
-      let qrDataUrl = qrCache.get(payload);
-      if (!qrDataUrl) {
-        qrDataUrl = await fetchQrDataUrl(payload);
-        qrCache.set(payload, qrDataUrl);
-      }
-      let altQrDataUrl = qrCache.get(altPayload);
-      if (!altQrDataUrl) {
-        altQrDataUrl = await fetchQrDataUrl(altPayload);
-        qrCache.set(altPayload, altQrDataUrl);
+      const sides = badgeQrSides(employee);
+      const drawn = [];
+      for (const side of sides) {
+        let dataUrl = qrCache.get(side.payload);
+        if (!dataUrl) {
+          dataUrl = await fetchQrDataUrl(side.payload);
+          qrCache.set(side.payload, dataUrl);
+        }
+        drawn.push({ ...side, dataUrl });
       }
 
-      drawBadgeCard(
-        doc,
-        employee,
-        group,
-        qrDataUrl,
-        altQrDataUrl,
-        x,
-        y,
-        printedLabel,
-        leftLabel,
-        rightLabel
-      );
+      drawBadgeCard(doc, employee, group, drawn, x, y, printedLabel);
     }
   }
 

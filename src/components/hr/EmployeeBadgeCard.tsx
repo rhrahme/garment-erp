@@ -1,12 +1,10 @@
 import {
-  BADGE_QR_DISPLAY_MM,
   BADGE_QR_FETCH_PX,
-  BADGE_QR_GAP_MM,
-  BADGE_QR_PAIR_WIDTH_MM,
   badgeDisplayName,
   badgeJobFunctionsLine,
   badgePrintDateLabel,
-  badgeQrPairSides,
+  badgeQrRowLayout,
+  badgeQrSides,
 } from "@/lib/hr/badge-print";
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageUrl } from "@/lib/production/qr-labels";
@@ -47,9 +45,8 @@ export function EmployeeBadgeCard({
   employee: PayrollEmployee;
   group: IdBadgeGroup;
 }) {
-  const { leftPayload, rightPayload, leftLabel, rightLabel } = badgeQrPairSides(employee);
-  const qrSrc = qrImageUrl(leftPayload, BADGE_QR_FETCH_PX);
-  const altQrSrc = qrImageUrl(rightPayload, BADGE_QR_FETCH_PX);
+  const sides = badgeQrSides(employee);
+  const layout = badgeQrRowLayout(sides.length);
   const label = groupLabel(group);
   const displayName = badgeDisplayName(employee);
   const jobsLine = badgeJobFunctionsLine(employee);
@@ -89,57 +86,52 @@ export function EmployeeBadgeCard({
             ) : null}
           </div>
 
-          {/* Fixed 3cm clear gap between QR edges; pair centered. Labels are full words. */}
           <div className="flex min-h-0 flex-1 items-center justify-center">
             <div
               className="badge-qr-pair flex shrink-0 items-start"
-              style={{ width: `${BADGE_QR_PAIR_WIDTH_MM}mm` }}
+              style={{ width: `${layout.rowWidthMm}mm` }}
             >
-              <div
-                className="flex shrink-0 flex-col items-center"
-                style={{ width: `${BADGE_QR_DISPLAY_MM}mm` }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={qrSrc}
-                  alt=""
-                  width={BADGE_QR_FETCH_PX}
-                  height={BADGE_QR_FETCH_PX}
-                  className="badge-qr-img shrink-0 rounded-sm border border-slate-200 bg-white"
-                  style={{
-                    width: `${BADGE_QR_DISPLAY_MM}mm`,
-                    height: `${BADGE_QR_DISPLAY_MM}mm`,
-                  }}
-                />
-                <p className="badge-qr-label mt-0.5 whitespace-nowrap text-center text-[6.5px] font-bold uppercase leading-none tracking-wide text-slate-700">
-                  {leftLabel}
-                </p>
-              </div>
-              <div
-                className="badge-qr-gap shrink-0"
-                style={{ width: `${BADGE_QR_GAP_MM}mm` }}
-                aria-hidden
-              />
-              <div
-                className="flex shrink-0 flex-col items-center"
-                style={{ width: `${BADGE_QR_DISPLAY_MM}mm` }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={altQrSrc}
-                  alt=""
-                  width={BADGE_QR_FETCH_PX}
-                  height={BADGE_QR_FETCH_PX}
-                  className="badge-qr-img shrink-0 rounded-sm border-2 border-amber-600 bg-white"
-                  style={{
-                    width: `${BADGE_QR_DISPLAY_MM}mm`,
-                    height: `${BADGE_QR_DISPLAY_MM}mm`,
-                  }}
-                />
-                <p className="badge-qr-label badge-qr-label-alt mt-0.5 whitespace-nowrap text-center text-[6.5px] font-bold uppercase leading-none tracking-wide text-amber-800">
-                  {rightLabel}
-                </p>
-              </div>
+              {sides.map((side, index) => (
+                <div key={`${side.payload}-${side.label}`} className="flex shrink-0 items-start">
+                  {index > 0 ? (
+                    <div
+                      className="badge-qr-gap shrink-0"
+                      style={{ width: `${layout.gapMm}mm` }}
+                      aria-hidden
+                    />
+                  ) : null}
+                  <div
+                    className="flex shrink-0 flex-col items-center"
+                    style={{ width: `${layout.sizeMm}mm` }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={qrImageUrl(side.payload, BADGE_QR_FETCH_PX)}
+                      alt=""
+                      width={BADGE_QR_FETCH_PX}
+                      height={BADGE_QR_FETCH_PX}
+                      className={`badge-qr-img shrink-0 rounded-sm bg-white ${
+                        side.kind === "alteration"
+                          ? "border-2 border-amber-600"
+                          : "border border-slate-200"
+                      }`}
+                      style={{
+                        width: `${layout.sizeMm}mm`,
+                        height: `${layout.sizeMm}mm`,
+                      }}
+                    />
+                    <p
+                      className={`badge-qr-label mt-0.5 whitespace-nowrap text-center text-[6.5px] font-bold uppercase leading-none tracking-wide ${
+                        side.kind === "alteration"
+                          ? "badge-qr-label-alt text-amber-800"
+                          : "text-slate-700"
+                      }`}
+                    >
+                      {side.label}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 

@@ -1,6 +1,5 @@
 import {
-  EMPLOYEE_ALTERATION_QR_PREFIX,
-  EMPLOYEE_QR_PREFIX,
+  EMPLOYEE_BADGE_QR_PREFIXES,
   isAnyEmployeeBadgeQrPayload,
   isEmployeeQrPayload,
 } from "@/lib/hr/employee-qr";
@@ -47,15 +46,13 @@ function looksLikeMalformedEmployeeBadge(raw: string): boolean {
     return false;
   }
   const upper = trimmed.toUpperCase();
-  if (upper === EMPLOYEE_QR_PREFIX || upper === `${EMPLOYEE_QR_PREFIX}:`) return true;
   if (
-    upper === EMPLOYEE_ALTERATION_QR_PREFIX ||
-    upper === `${EMPLOYEE_ALTERATION_QR_PREFIX}:`
+    EMPLOYEE_BADGE_QR_PREFIXES.some(
+      (prefix) => upper === prefix || upper === `${prefix}:` || upper.startsWith(`${prefix}:`)
+    )
   ) {
     return true;
   }
-  if (upper.startsWith(`${EMPLOYEE_ALTERATION_QR_PREFIX}:`)) return true;
-  if (upper.startsWith(`${EMPLOYEE_QR_PREFIX}:`)) return true; // EMP: with empty value already handled
   // EMP123 / EMP-001 / EMP_... without the required colon payload.
   return /^EMP[\s_-]?\d/i.test(trimmed) || /^EMP[^A-Z0-9:]/i.test(trimmed);
 }
@@ -136,8 +133,8 @@ export function explainUnrecognizedStitchScan(raw: string): string {
 
   if (looksLikeMalformedEmployeeBadge(trimmed)) {
     return (
-      `Malformed employee badge (${display}) - expected EMP:{id}, EMPALT:{id}, EMPIRON:{id}, EMPBTN:{id}, or EMPWASH:{id}. ` +
-      "Scan your badge (Sew / Alteration / Ironing / Buttons / Washing) or a production A4 piece QR."
+      `Malformed employee badge (${display}) - expected EMP:{id} or EMPALT / EMPIRON / EMPBTN / EMPWASH / EMPHOLE / EMPBST / EMPCHMP / EMPBART:{id}. ` +
+      "Scan your badge or a production A4 piece QR."
     );
   }
 
@@ -165,7 +162,7 @@ export function explainUnrecognizedStitchScan(raw: string): string {
 
   return (
     `Code not recognized: ${display}. ` +
-    "Stitch accepts EMP / EMPALT / EMPIRON / EMPBTN / EMPWASH badge QRs, or production A4 piece QR " +
+    "Stitch accepts EMP / EMPALT / EMPIRON / EMPBTN / EMPWASH / EMPHOLE / EMPBST / EMPCHMP / EMPBART badge QRs, or production A4 piece QR " +
     "(e.g. FR-0132-L07-JKT-1/2)."
   );
 }

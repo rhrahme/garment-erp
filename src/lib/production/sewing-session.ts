@@ -73,6 +73,7 @@ import {
   attachSewingSessionClientShortNames,
   attachSewingSessionJobFunctions,
   employeeAllowsStackedOpenPieces,
+  floorActivityLabelFromActivityJobFunction,
   floorActivitySessionStartedMessage,
   sewingSessionEmployeeDisplayName,
   stackedOpenFollowupMessage,
@@ -788,11 +789,7 @@ export async function processSewingKioskScan(
     }
     if (activityJobFunction && !employeeAllowsBadgeActivity(employee.job_functions, activityJobFunction)) {
       const needed =
-        activityJobFunction === "washing"
-          ? "Washing"
-          : activityJobFunction === "wash_iron"
-            ? "Ironing"
-            : "Buttons";
+        floorActivityLabelFromActivityJobFunction(activityJobFunction) ?? "this role";
       return failResult(
         `Badge role ${needed} is not assigned on this employee - contact HR.`,
         "invalid_badge",
@@ -1022,15 +1019,12 @@ export async function processSewingKioskScan(
     const openAlready = openSessionsOnKiosk(store, kioskId).filter(
       (row) => row.employee_id === arm.employee_id && row.status === "open"
     ).length;
+    const armedActivity = floorActivityLabelFromActivityJobFunction(activityJobFunction);
     const readyHint =
       workKind === "alteration"
         ? `${arm.employee_name} ready for ALTERATION - scan A4 piece QR within 30 seconds.`
-        : activityJobFunction === "washing"
-          ? `${arm.employee_name} ready for WASHING - scan A4 piece QR within 30 seconds.`
-          : activityJobFunction === "wash_iron"
-          ? `${arm.employee_name} ready for IRONING - scan A4 piece QR within 30 seconds.`
-          : activityJobFunction === "buttons"
-            ? `${arm.employee_name} ready for BUTTONS - scan A4 piece QR within 30 seconds.`
+        : armedActivity
+          ? `${arm.employee_name} ready for ${armedActivity.toUpperCase()} - scan A4 piece QR within 30 seconds.`
             : allowStackedOpen && openAlready > 0
               ? `${arm.employee_name} ready - scan next A4 to open (${openAlready} already open), or scan an open A4 to finish.`
               : `${arm.employee_name} ready - scan A4 piece QR within 30 seconds.`;

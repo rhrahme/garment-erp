@@ -21,7 +21,14 @@ export type SewingKioskArm = {
    */
   activity_job_function?: Extract<
     EmployeeJobFunction,
-    "wash_iron" | "buttons" | "washing"
+    | "wash_iron"
+    | "washing"
+    | "ironing"
+    | "buttons"
+    | "button_stitch"
+    | "buttonhole"
+    | "champa"
+    | "bartek"
   > | null;
 };
 
@@ -101,7 +108,14 @@ export type SewingSession = {
    */
   activity_job_function?: Extract<
     EmployeeJobFunction,
-    "wash_iron" | "buttons" | "washing"
+    | "wash_iron"
+    | "washing"
+    | "ironing"
+    | "buttons"
+    | "button_stitch"
+    | "buttonhole"
+    | "champa"
+    | "bartek"
   > | null;
   /**
    * Scan at/after 22:00 Riyadh (overtime). Logged immediately; admin confirms later.

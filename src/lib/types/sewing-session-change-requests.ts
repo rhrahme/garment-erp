@@ -30,7 +30,14 @@ export type SewingSessionEditPatch = {
   work_kind?: SewingWorkKind | null;
   activity_job_function?: Extract<
     EmployeeJobFunction,
-    "wash_iron" | "buttons" | "washing"
+    | "wash_iron"
+    | "washing"
+    | "ironing"
+    | "buttons"
+    | "button_stitch"
+    | "buttonhole"
+    | "champa"
+    | "bartek"
   > | null;
 };
 

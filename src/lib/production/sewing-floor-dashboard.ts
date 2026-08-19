@@ -84,8 +84,12 @@ export function employeeExpectedOnStitchFloor(
       job === "cutter" ||
       job === "wash_iron" ||
       job === "washing" ||
+      job === "ironing" ||
       job === "buttons" ||
-      job === "champa"
+      job === "button_stitch" ||
+      job === "buttonhole" ||
+      job === "champa" ||
+      job === "bartek"
   );
 }
 

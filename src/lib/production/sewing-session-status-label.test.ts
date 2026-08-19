@@ -56,6 +56,10 @@ describe("floorActivityLabelFromJobFunctions", () => {
     assert.equal(employeeAllowsStackedOpenPieces(["buttons"]), false);
     assert.equal(employeeAllowsStackedOpenPieces(["washing"]), false);
     assert.equal(employeeAllowsStackedOpenPieces(["champa"]), false);
+    assert.equal(employeeAllowsStackedOpenPieces(["ironing"]), false);
+    assert.equal(employeeAllowsStackedOpenPieces(["buttonhole"]), false);
+    assert.equal(employeeAllowsStackedOpenPieces(["button_stitch"]), false);
+    assert.equal(employeeAllowsStackedOpenPieces(["bartek"]), false);
   });
 
   it("stacked open follow-up message matches the floor activity", () => {
@@ -73,10 +77,11 @@ describe("floorActivityLabelFromJobFunctions", () => {
     assert.equal(floorActivityLabelFromJobFunctions(["wash_iron"]), "Wash / iron");
     assert.equal(floorActivityLabelFromJobFunctions(["washing"]), "Washing");
     assert.equal(floorActivityLabelFromJobFunctions(["buttons"]), "Buttons");
-    assert.equal(
-      floorActivityLabelFromJobFunctions(["champa"]),
-      "Champa / Button hole and button fixing"
-    );
+    assert.equal(floorActivityLabelFromJobFunctions(["champa"]), "Champa");
+    assert.equal(floorActivityLabelFromJobFunctions(["ironing"]), "Ironing");
+    assert.equal(floorActivityLabelFromJobFunctions(["buttonhole"]), "Buttonhole");
+    assert.equal(floorActivityLabelFromJobFunctions(["button_stitch"]), "Button stitch");
+    assert.equal(floorActivityLabelFromJobFunctions(["bartek"]), "Bartek");
     assert.equal(floorActivityLabelFromJobFunctions(["pattern"]), "Pattern");
     assert.equal(floorActivityLabelFromJobFunctions(["qc"]), "QC");
     assert.equal(floorActivityLabelFromJobFunctions(["cleaner"]), "Cleaning");

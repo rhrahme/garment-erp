@@ -1,15 +1,14 @@
 import {
+  employeeActivityQrSides,
   employeeAlterationQrPayload,
-  employeeButtonsQrPayload,
-  employeeIroningQrPayload,
   employeeQrPayload,
   employeeUsesButtonsBadgePair,
   employeeUsesIronButtonsBadgePair,
   employeeUsesWashIronBadgePair,
-  employeeWashingQrPayload,
 } from "@/lib/hr/employee-qr";
 import {
   EMPLOYEE_JOB_FUNCTION_LABELS,
+  isTailorJobFunction,
   normalizeJobFunctions,
 } from "@/lib/hr/job-functions";
 import {
@@ -67,15 +66,14 @@ export const BADGE_CARD_WIDTH_MM = 85.6;
 export const BADGE_CARD_HEIGHT_MM = 54;
 
 /**
- * Dual badge QRs: Sew (EMP) + Alteration (EMPALT), Ironing (EMPIRON) +
- * Buttons (EMPBTN) for wash_iron + buttons, Washing (EMPWASH) + Ironing
- * (EMPIRON) for wash / iron workers (Rohan), or Buttons (EMPBTN) + Buttons
- * (EMPBTN) for buttons-only (Niraj). Cards always have two codes.
- * Gap is a fixed 3cm clear distance between code edges - not "opposite card edges".
+ * Badge QRs: one code per selected floor job (washing, ironing, buttons,
+ * button stitch, buttonhole, champa, bartek). Tailors also get Sew (EMP) +
+ * Alteration (EMPALT). Two-code cards keep a 3cm gap; more codes shrink to fit.
  */
 export const BADGE_QR_DISPLAY_MM = 20;
 export const BADGE_QR_GAP_MM = 30;
 export const BADGE_QR_FETCH_PX = 240;
+export const BADGE_QR_USABLE_WIDTH_MM = 78;
 export const BADGE_QR_SEW_LABEL = "SEWING";
 export const BADGE_QR_ALT_LABEL = "ALTERATION";
 export const BADGE_QR_IRON_LABEL = "IRONING";
@@ -85,7 +83,15 @@ export const BADGE_QR_WASH_LABEL = "WASHING";
 export const BADGE_QR_PAIR_WIDTH_MM =
   BADGE_QR_DISPLAY_MM + BADGE_QR_GAP_MM + BADGE_QR_DISPLAY_MM;
 
-export type BadgeQrPairKind = "sew_alt" | "iron_buttons" | "wash_iron" | "buttons";
+export type BadgeQrPairKind = "sew_alt" | "iron_buttons" | "wash_iron" | "buttons" | "activity";
+
+export type BadgeQrSideKind = "sew" | "alteration" | "activity";
+
+export type BadgeQrSide = {
+  kind: BadgeQrSideKind;
+  label: string;
+  payload: string;
+};
 
 export type BadgeQrPairSides = {
   kind: BadgeQrPairKind;
@@ -95,54 +101,92 @@ export type BadgeQrPairSides = {
   rightPayload: string;
 };
 
+export type BadgeQrRowLayout = {
+  count: number;
+  sizeMm: number;
+  gapMm: number;
+  rowWidthMm: number;
+};
+
+/** Size and gap for a one-row QR strip on a CR80 card. */
+export function badgeQrRowLayout(count: number): BadgeQrRowLayout {
+  const n = Math.max(1, count);
+  if (n === 1) {
+    return { count: n, sizeMm: BADGE_QR_DISPLAY_MM, gapMm: 0, rowWidthMm: BADGE_QR_DISPLAY_MM };
+  }
+  if (n === 2) {
+    return {
+      count: n,
+      sizeMm: BADGE_QR_DISPLAY_MM,
+      gapMm: BADGE_QR_GAP_MM,
+      rowWidthMm: BADGE_QR_PAIR_WIDTH_MM,
+    };
+  }
+  const minGap = 3;
+  const size = Math.min(
+    BADGE_QR_DISPLAY_MM,
+    Math.floor((BADGE_QR_USABLE_WIDTH_MM - (n - 1) * minGap) / n)
+  );
+  const gap = (BADGE_QR_USABLE_WIDTH_MM - size * n) / (n - 1);
+  return { count: n, sizeMm: size, gapMm: gap, rowWidthMm: BADGE_QR_USABLE_WIDTH_MM };
+}
+
 /** Which dual-QR pair to print for this employee. */
 export function badgeQrPairKind(
   employee: Pick<PayrollEmployee, "job_functions">
 ): BadgeQrPairKind {
+  const sides = badgeQrSides(employee);
+  if (sides.length > 2) return "activity";
   if (employeeUsesIronButtonsBadgePair(employee)) return "iron_buttons";
   if (employeeUsesWashIronBadgePair(employee)) return "wash_iron";
   if (employeeUsesButtonsBadgePair(employee)) return "buttons";
   return "sew_alt";
 }
 
-/** Labels + payloads for the physical/PDF/screen badge pair. */
+/** One QR per selected floor job; tailors also get Sew + Alteration. */
+export function badgeQrSides(
+  employee: Pick<PayrollEmployee, "id" | "employee_id_number" | "job_functions">
+): BadgeQrSide[] {
+  const jobs = normalizeJobFunctions(employee.job_functions);
+  const isTailor = jobs.some(isTailorJobFunction);
+  const activity = employeeActivityQrSides(employee);
+  const sides: BadgeQrSide[] = [];
+  if (isTailor || activity.length === 0) {
+    sides.push({
+      kind: "sew",
+      label: BADGE_QR_SEW_LABEL,
+      payload: employeeQrPayload(employee),
+    });
+    sides.push({
+      kind: "alteration",
+      label: BADGE_QR_ALT_LABEL,
+      payload: employeeAlterationQrPayload(employee),
+    });
+  }
+  for (const row of activity) {
+    sides.push({
+      kind: "activity",
+      label: row.label,
+      payload: row.payload,
+    });
+  }
+  return sides;
+}
+
+/** Labels + payloads for the physical/PDF/screen badge pair (first two sides). */
 export function badgeQrPairSides(
   employee: Pick<PayrollEmployee, "id" | "employee_id_number" | "job_functions">
 ): BadgeQrPairSides {
   const kind = badgeQrPairKind(employee);
-  if (kind === "iron_buttons") {
-    return {
-      kind,
-      leftLabel: BADGE_QR_IRON_LABEL,
-      rightLabel: BADGE_QR_BUTTONS_LABEL,
-      leftPayload: employeeIroningQrPayload(employee),
-      rightPayload: employeeButtonsQrPayload(employee),
-    };
-  }
-  if (kind === "wash_iron") {
-    return {
-      kind,
-      leftLabel: BADGE_QR_WASH_LABEL,
-      rightLabel: BADGE_QR_IRON_LABEL,
-      leftPayload: employeeWashingQrPayload(employee),
-      rightPayload: employeeIroningQrPayload(employee),
-    };
-  }
-  if (kind === "buttons") {
-    return {
-      kind,
-      leftLabel: BADGE_QR_BUTTONS_LABEL,
-      rightLabel: BADGE_QR_BUTTONS_LABEL,
-      leftPayload: employeeButtonsQrPayload(employee),
-      rightPayload: employeeButtonsQrPayload(employee),
-    };
-  }
+  const sides = badgeQrSides(employee);
+  const left = sides[0]!;
+  const right = sides[1] ?? left;
   return {
     kind,
-    leftLabel: BADGE_QR_SEW_LABEL,
-    rightLabel: BADGE_QR_ALT_LABEL,
-    leftPayload: employeeQrPayload(employee),
-    rightPayload: employeeAlterationQrPayload(employee),
+    leftLabel: left.label,
+    rightLabel: right.label,
+    leftPayload: left.payload,
+    rightPayload: right.payload,
   };
 }
 

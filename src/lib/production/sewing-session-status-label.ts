@@ -41,8 +41,12 @@ export function floorActivityLabelFromJobFunctions(values: unknown): string {
   if (jobs.includes("cutter")) return "Cutting";
   if (jobs.includes("wash_iron")) return EMPLOYEE_JOB_FUNCTION_LABELS.wash_iron;
   if (jobs.includes("washing")) return EMPLOYEE_JOB_FUNCTION_LABELS.washing;
+  if (jobs.includes("ironing")) return EMPLOYEE_JOB_FUNCTION_LABELS.ironing;
   if (jobs.includes("buttons")) return EMPLOYEE_JOB_FUNCTION_LABELS.buttons;
+  if (jobs.includes("button_stitch")) return EMPLOYEE_JOB_FUNCTION_LABELS.button_stitch;
+  if (jobs.includes("buttonhole")) return EMPLOYEE_JOB_FUNCTION_LABELS.buttonhole;
   if (jobs.includes("champa")) return EMPLOYEE_JOB_FUNCTION_LABELS.champa;
+  if (jobs.includes("bartek")) return EMPLOYEE_JOB_FUNCTION_LABELS.bartek;
   if (jobs.includes("pattern")) return "Pattern";
   if (jobs.includes("qc")) return "QC";
   if (jobs.includes("cleaner")) return "Cleaning";
@@ -53,8 +57,9 @@ export function floorActivityLabelFromJobFunctions(values: unknown): string {
  * Cutters open many A4s (stacked consolidated nest) before cutting once.
  * Stitchers chain-stitch several articles at once (e.g. a run of white
  * shirts), so Sewing also stacks (Aug 11 2026). Close stays A4-first per
- * piece: rescan that piece's A4, then badge. Wash/iron, washing, buttons,
- * and champa stay one-open-at-a-time.
+ * piece: rescan that piece's A4, then badge. Wash/iron, washing, ironing,
+ * buttons, button stitch, buttonhole, champa, and bartek stay
+ * one-open-at-a-time.
  */
 export function employeeAllowsStackedOpenPieces(jobFunctions: unknown): boolean {
   const activity = floorActivityLabelFromJobFunctions(jobFunctions);
@@ -81,8 +86,12 @@ export function floorActivityLabelFromActivityJobFunction(
   activity: EmployeeJobFunction | null | undefined
 ): string | null {
   if (activity === "washing") return "Washing";
-  if (activity === "wash_iron") return "Ironing";
+  if (activity === "ironing" || activity === "wash_iron") return "Ironing";
   if (activity === "buttons") return "Buttons";
+  if (activity === "button_stitch") return "Button stitch";
+  if (activity === "buttonhole") return "Buttonhole";
+  if (activity === "champa") return "Champa";
+  if (activity === "bartek") return "Bartek";
   return null;
 }
 

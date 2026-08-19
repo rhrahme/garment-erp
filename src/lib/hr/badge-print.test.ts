@@ -18,6 +18,7 @@ import {
   badgePrintDateLabel,
   badgePrintHref,
   badgeQrPairKind,
+  badgeQrSides,
   chunkBadgePages,
   isBadgePrintableEmployee,
   listActiveBadgeEmployees,
@@ -98,20 +99,32 @@ describe("badge-print helpers", () => {
     assert.equal(rohan.rightLabel, "IRONING");
     assert.equal(rohan.leftPayload, "EMPWASH:2625918129");
     assert.equal(rohan.rightPayload, "EMPIRON:2625918129");
-    const niraj = badgeQrPairSides(
+    const niraj = badgeQrSides(
       emp({ id: "2625917592", full_name: "Niraj", job_functions: ["buttons"] })
     );
-    assert.equal(niraj.leftLabel, "BUTTONS");
-    assert.equal(niraj.rightLabel, "BUTTONS");
-    assert.equal(niraj.leftPayload, "EMPBTN:2625917592");
-    assert.equal(niraj.rightPayload, "EMPBTN:2625917592");
-    const junaid = badgeQrPairSides(
+    assert.deepEqual(
+      niraj.map((side) => side.label),
+      ["BUTTONS"]
+    );
+    assert.equal(niraj[0]?.payload, "EMPBTN:2625917592");
+    const junaid = badgeQrSides(
       emp({ id: "0024", full_name: "Junaid Noel", short_name: "Junaid", job_functions: ["buttons"] })
     );
-    assert.equal(junaid.leftLabel, "BUTTONS");
-    assert.equal(junaid.rightLabel, "BUTTONS");
-    assert.equal(junaid.leftPayload, "EMPBTN:0024");
-    assert.equal(junaid.rightPayload, "EMPBTN:0024");
+    assert.deepEqual(
+      junaid.map((side) => side.label),
+      ["BUTTONS"]
+    );
+    const multi = badgeQrSides(
+      emp({
+        id: "m1",
+        full_name: "Multi",
+        job_functions: ["washing", "ironing", "buttonhole", "button_stitch", "champa", "bartek"],
+      })
+    );
+    assert.deepEqual(
+      multi.map((side) => side.label),
+      ["WASHING", "IRONING", "BTN STITCH", "BUTTONHOLE", "CHAMPA", "BARTEK"]
+    );
     const shahryar = badgeQrPairSides(
       emp({
         id: "2543411918",

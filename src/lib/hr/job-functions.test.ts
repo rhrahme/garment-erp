@@ -60,17 +60,21 @@ describe("normalizeJobFunctions", () => {
     assert.deepEqual(normalizeJobFunctions(["cleaner", "qc", "cleaner"]), ["qc", "cleaner"]);
   });
 
-  it("includes Champa / button hole and Washing as ID badge jobs", () => {
+  it("includes washing, ironing, buttonhole, button stitch, champa, and bartek", () => {
     assert.ok(EMPLOYEE_JOB_FUNCTIONS.includes("champa"));
     assert.ok(EMPLOYEE_JOB_FUNCTIONS.includes("washing"));
-    assert.equal(
-      EMPLOYEE_JOB_FUNCTION_LABELS.champa,
-      "Champa / Button hole and button fixing"
-    );
-    assert.equal(EMPLOYEE_JOB_FUNCTION_LABELS.washing, "Washing");
+    assert.ok(EMPLOYEE_JOB_FUNCTIONS.includes("ironing"));
+    assert.ok(EMPLOYEE_JOB_FUNCTIONS.includes("buttonhole"));
+    assert.ok(EMPLOYEE_JOB_FUNCTIONS.includes("button_stitch"));
+    assert.ok(EMPLOYEE_JOB_FUNCTIONS.includes("bartek"));
+    assert.equal(EMPLOYEE_JOB_FUNCTION_LABELS.champa, "Champa");
+    assert.equal(EMPLOYEE_JOB_FUNCTION_LABELS.buttonhole, "Buttonhole");
+    assert.equal(EMPLOYEE_JOB_FUNCTION_LABELS.button_stitch, "Button stitch");
+    assert.equal(EMPLOYEE_JOB_FUNCTION_LABELS.bartek, "Bartek");
+    assert.equal(EMPLOYEE_JOB_FUNCTION_LABELS.ironing, "Ironing");
     assert.deepEqual(
-      normalizeJobFunctions(["button_whole", "washing", "champa", "buttonhole"]),
-      ["washing", "champa"]
+      normalizeJobFunctions(["button_whole", "washing", "champa", "buttonhole", "bartek"]),
+      ["washing", "buttonhole", "champa", "bartek"]
     );
     assert.deepEqual(normalizeJobFunctions(["wash"]), []);
   });
@@ -86,9 +90,8 @@ describe("formatJobFunctionsSummary", () => {
     assert.equal(formatJobFunctionsSummary(["tshirt_tailor"]), "T-shirt tailor");
     assert.equal(formatJobFunctionsSummary(["cleaner"]), "Cleaner");
     assert.equal(formatJobFunctionsSummary(["washing"]), "Washing");
-    assert.equal(
-      formatJobFunctionsSummary(["champa"]),
-      "Champa / Button hole and button fixing"
-    );
+    assert.equal(formatJobFunctionsSummary(["champa"]), "Champa");
+    assert.equal(formatJobFunctionsSummary(["bartek"]), "Bartek");
+    assert.equal(formatJobFunctionsSummary(["buttonhole"]), "Buttonhole");
   });
 });

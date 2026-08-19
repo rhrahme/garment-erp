@@ -15,10 +15,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `stitch@` may call fabric swatch image APIs (`FABRIC_SWATCH_ROUTE_PREFIXES`)
   so thumbs are not 403. Do not put upload controls on the kiosk print path.
 - **Badge `job_functions` is the source of truth for activity labels** (Cutting /
-  Sewing / Wash / Iron / Washing / Buttons / Champa) site-wide - Scan, Live,
-  Performance, History, Orders. Never hardcode "Sewing". ID badge jobs also
-  include `washing` (Washing, separate from `wash_iron`) and `champa`
-  (Champa / Button hole and button fixing, separate from `buttons`).
+  Sewing / Wash / Iron / Washing / Ironing / Buttons / Button stitch /
+  Buttonhole / Champa / Bartek) site-wide - Scan, Live, Performance, History,
+  Orders. Never hardcode "Sewing". ID badge jobs include `washing`,
+  `ironing`, `buttons`, `button_stitch`, `buttonhole`, `champa`, and
+  `bartek` as separate selectable roles. `wash_iron` remains the legacy
+  combined Wash / iron job.
 - **ID badges carry two QRs**. Tailors (and most roles): `EMP:{id}` (normal
   sew) and `EMPALT:{id}` (alteration). Alteration QR arms the next piece as
   `work_kind=alteration`; Live/History/Orders highlight **Alteration** (amber)
@@ -27,19 +29,18 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Later, when headcount allows a dedicated alterations team, we may add
   Alteration as a job_function; until then do not require a special role and
   do not strip EMPALT.
-- **Wash/iron + Buttons dual-role badges** (Aug 10 2026): when an employee has
-  both `wash_iron` and `buttons` and no tailor role (e.g. Cherry), the card
-  prints **IRONING** (`EMPIRON:{id}`) + **BUTTONS** (`EMPBTN:{id}`) instead of
-  SEWING/ALTERATION. Scanning arms `activity_job_function` so Live shows
-  Ironing or Buttons for that session (not always Wash / iron from role
-  priority).
-- **Wash / iron badges** (Aug 19 2026): `wash_iron` and/or `washing` with no
-  tailor and not Cherry's pair (e.g. Rohan `2625918129`) print **WASHING**
-  (`EMPWASH:{id}`) + **IRONING** (`EMPIRON:{id}`). Do not print
-  SEWING/ALTERATION for a wash/iron worker. `wash_iron` payroll covers both
-  scans. USB wedge
-  reassembly must treat `EMPALT` / `EMPIRON` / `EMPBTN` / `EMPWASH` (and `:`
-  variants) as
+- **One QR per selected floor job** (Aug 19 2026): if Washing, Ironing,
+  Buttons, Button stitch, Buttonhole, Champa, or Bartek is selected on the
+  badge, print that job's QR. A person who does several tasks gets every
+  selected code on the same card. Prefixes: `EMPWASH`, `EMPIRON`, `EMPBTN`,
+  `EMPBST`, `EMPHOLE`, `EMPCHMP`, `EMPBART`. Tailors still also get
+  `EMP` + `EMPALT`. Do not print Sewing/Alteration for a non-tailor who
+  only has these floor jobs. Legacy `wash_iron` still expands to WASHING +
+  IRONING (Rohan) unless the card also has `buttons` (Cherry stays
+  IRONING + BUTTONS, no extra WASHING). Two-code cards keep 20mm QRs and a
+  **3cm** gap; three or more shrink to fit the CR80 row. USB wedge
+  reassembly must treat `EMPALT` / `EMPIRON` / `EMPBTN` / `EMPWASH` /
+  `EMPHOLE` / `EMPBST` / `EMPCHMP` / `EMPBART` (and `:` variants) as
   partial fragments (never collapse to `EMP:`). Starting an alteration session
   writes `pattern_alteration_pending` (idempotent per session) and notifies
   Pattern (`production.alteration_started` / `pattern.alteration_chart_pending`)
@@ -49,24 +50,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   clears via Acknowledge / Chart updated. Pattern is not required before the
   tailor starts. Pattern enters stitcher comments on the client measurement
   sheet (per-line Remark + bottom Stitcher comments) and/or from the
-  alteration queue; those print on the Production / stitcher A4. **Badge
-  layout**: QRs are 20mm with full labels (**SEWING** / **ALTERATION**,
-  **WASHING** / **IRONING**, **IRONING** / **BUTTONS**, or **BUTTONS** /
-  **BUTTONS**), centered as a pair with a fixed **3cm** clear
-  gap between code edges (not opposite card edges, not abbreviated). Reprint
-  Expats badges after dual-QR / layout changes. Reprint Rohan after the
-  wash/iron pair change. Reprint Niraj and Junaid after the buttons-only
-  pair change. Reprint Shahryar (Cherry) if the plastic is still
-  SEWING/ALTERATION.
-- **Buttons-only badges** (Aug 19 2026): `buttons` with no tailor and not
-  Cherry's iron+buttons pair (e.g. Niraj `2625917592`, Junaid `0024`) print
-  **BUTTONS** (`EMPBTN:{id}`) on both squares. Cards always have two QRs;
-  do not invent a sewing or alteration code, and do not print Champa unless
-  payroll has `champa`. Either scan arms Buttons. Shahryar / Cherry
-  (`2543411918`, wash_iron + buttons) stays **IRONING** + **BUTTONS**.
+  alteration queue; those print on the Production / stitcher A4. Reprint
+  a card after its selected jobs change.
 - **All employees on the Expats ID badge list may use the kiosk** - cutters,
-  wash/iron, washing, buttons, champa, not only tailors. Do not re-add a
-  tailor-only gate.
+  wash/iron, washing, ironing, buttons, button stitch, buttonhole, champa,
+  bartek, not only tailors. Do not re-add a tailor-only gate.
 - **Multi-arm queue is intentional**: several employees may be badge-ready at
   once; the next A4 scan assigns to the most recent badge (`mostRecentArm`).
   This was removed once (`09033b3`) and restored (`c158f4b`) - do not remove again.
@@ -83,7 +71,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   after each open the stitcher stays armed for the next A4. Close is
   A4-first per piece (rescan that article's A4, then badge).
   `employeeAllowsStackedOpenPieces` = Cutting or Sewing; wash/iron,
-  washing, buttons, and champa stay one-open-at-a-time. Do not re-add
+  washing, ironing, buttons, button stitch, buttonhole, champa, and
+  bartek stay one-open-at-a-time. Do not re-add
   the tailor one-open gate.
 - **Multi-stitcher same article QR** (Aug 10 2026): garment work (especially
   jackets/overshirts) can be **divided across several stitchers** on the
@@ -140,7 +129,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Admin floor dashboard** (Aug 19 2026): same Performance admin panel lists
   who **did not scan yet** vs who scanned (Today / Week / Month). Roster =
   active Expats who can use the kiosk and have a floor job (tailor / cutter /
-  wash-iron / washing / buttons / champa). Pattern/QC/cleaner-only are not
+  wash-iron / washing / ironing / buttons / button stitch / buttonhole /
+  champa / bartek). Pattern/QC/cleaner-only are not
   in Missing. A scan
   counts as present even if overtime was later rejected. Tap a name for
   day/week/month detail.

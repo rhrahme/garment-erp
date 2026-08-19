@@ -8,7 +8,7 @@ import { JobFunctionsEditor } from "@/components/hr/JobFunctionsEditor";
 import { ShortNameEditor } from "@/components/hr/ShortNameEditor";
 import {
   badgeDisplayName,
-  badgeQrPairSides,
+  badgeQrSides,
   listActiveBadgeEmployees,
 } from "@/lib/hr/badge-print";
 import { type IdBadgeGroup } from "@/lib/hr/payroll-utils";
@@ -48,7 +48,7 @@ const GROUP_COPY: Record<
   expat: {
     title: "Expat employee ID badges",
     description:
-      "Expat badge group. Tailors: Sew (EMP) + Alteration (EMPALT). Wash / iron (Rohan): Washing (EMPWASH) + Ironing (EMPIRON). Wash/iron + Buttons (Shahryar / Cherry): Ironing (EMPIRON) + Buttons (EMPBTN). Buttons only (Niraj, Junaid): Buttons (EMPBTN) + Buttons (EMPBTN).",
+      "Expat badge group. Tailors: Sew (EMP) + Alteration (EMPALT). Selected floor jobs each get their own QR: Washing, Ironing, Buttons, Button stitch, Buttonhole, Champa, Bartek. One person can carry several.",
     emptyHint: "No active Expat employees yet. Add one below.",
   },
 };
@@ -154,10 +154,7 @@ export function EmployeeQrWorkspace({
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((employee) => {
-            const { leftPayload: payload, rightPayload: altPayload, leftLabel, rightLabel } =
-              badgeQrPairSides(employee);
-            const qrSrc = qrImageUrl(payload, QR_SIZE);
-            const altQrSrc = qrImageUrl(altPayload, QR_SIZE);
+            const sides = badgeQrSides(employee);
 
             return (
               <div
@@ -200,35 +197,33 @@ export function EmployeeQrWorkspace({
                     />
                   </div>
                 ) : null}
-                <div className="mt-3 flex w-full justify-center gap-3">
-                  <div className="flex flex-col items-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={qrSrc}
-                      alt={`${leftLabel} QR for ${employee.full_name}`}
-                      width={QR_SIZE}
-                      height={QR_SIZE}
-                      className="rounded-lg border border-slate-200"
-                    />
-                    <p className="mt-1 text-[10px] font-semibold uppercase text-slate-600">
-                      {leftLabel}
-                    </p>
-                    <p className="font-mono text-[9px] text-slate-400">{payload}</p>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={altQrSrc}
-                      alt={`${rightLabel} QR for ${employee.full_name}`}
-                      width={QR_SIZE}
-                      height={QR_SIZE}
-                      className="rounded-lg border-2 border-amber-600"
-                    />
-                    <p className="mt-1 text-[10px] font-bold uppercase text-amber-800">
-                      {rightLabel}
-                    </p>
-                    <p className="font-mono text-[9px] text-slate-400">{altPayload}</p>
-                  </div>
+                <div className="mt-3 flex w-full flex-wrap justify-center gap-3">
+                  {sides.map((side) => (
+                    <div key={`${side.payload}-${side.label}`} className="flex flex-col items-center">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={qrImageUrl(side.payload, QR_SIZE)}
+                        alt={`${side.label} QR for ${employee.full_name}`}
+                        width={QR_SIZE}
+                        height={QR_SIZE}
+                        className={
+                          side.kind === "alteration"
+                            ? "rounded-lg border-2 border-amber-600"
+                            : "rounded-lg border border-slate-200"
+                        }
+                      />
+                      <p
+                        className={
+                          side.kind === "alteration"
+                            ? "mt-1 text-[10px] font-bold uppercase text-amber-800"
+                            : "mt-1 text-[10px] font-semibold uppercase text-slate-600"
+                        }
+                      >
+                        {side.label}
+                      </p>
+                      <p className="font-mono text-[9px] text-slate-400">{side.payload}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             );

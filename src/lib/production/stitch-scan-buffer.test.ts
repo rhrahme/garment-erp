@@ -24,6 +24,10 @@ describe("looksLikePartialScanFragment", () => {
     assert.equal(looksLikePartialScanFragment("EMPWASH"), true);
     assert.equal(looksLikePartialScanFragment("EMPWASH:"), true);
     assert.equal(looksLikePartialScanFragment("EMPW"), true);
+    assert.equal(looksLikePartialScanFragment("EMPHOLE"), true);
+    assert.equal(looksLikePartialScanFragment("EMPBST"), true);
+    assert.equal(looksLikePartialScanFragment("EMPCHMP"), true);
+    assert.equal(looksLikePartialScanFragment("EMPBART"), true);
     assert.equal(looksLikePartialScanFragment(":2613429014"), true);
     assert.equal(looksLikePartialScanFragment("s"), true);
   });
@@ -34,6 +38,8 @@ describe("looksLikePartialScanFragment", () => {
     assert.equal(looksLikePartialScanFragment("EMPIRON:2543411918"), false);
     assert.equal(looksLikePartialScanFragment("EMPBTN:2543411918"), false);
     assert.equal(looksLikePartialScanFragment("EMPWASH:2625918129"), false);
+    assert.equal(looksLikePartialScanFragment("EMPHOLE:2625917592"), false);
+    assert.equal(looksLikePartialScanFragment("EMPBART:1234567890"), false);
     assert.equal(looksLikePartialScanFragment("FR-0129-L08-TR-2/2"), false);
     assert.equal(looksLikePartialScanFragment("FR-0132-L07-JKT-1/2"), false);
   });
@@ -101,6 +107,11 @@ describe("tryMergeScanFragments", () => {
       tryMergeScanFragments("EMP", "WASH:2625918129"),
       "EMPWASH:2625918129"
     );
+    assert.equal(tryMergeScanFragments("EMPHOLE", ":2625917592"), "EMPHOLE:2625917592");
+    assert.equal(tryMergeScanFragments("EMP", "HOLE:2625917592"), "EMPHOLE:2625917592");
+    assert.equal(tryMergeScanFragments("EMPBST", ":0024"), "EMPBST:0024");
+    assert.equal(tryMergeScanFragments("EMPCHMP", ":1234"), "EMPCHMP:1234");
+    assert.equal(tryMergeScanFragments("EMPBART", ":2543411918"), "EMPBART:2543411918");
   });
 
   it("does not merge two complete codes", () => {
