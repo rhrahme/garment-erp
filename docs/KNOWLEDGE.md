@@ -503,6 +503,16 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   INV-2026-0009. Do not delete superseded orders or re-open them to
   "fix" the invoiceable list.
 
+## Ready-made catalog photos
+
+- **Garment + size photos** (Aug 19 2026): on `/ready-made`, each article
+  can open Photos. Upload style shots on the garment, and a photo on each
+  size (XS-XXL by default; extra sizes can be added). Stored in
+  `ready_made_catalog` (`erp_documents`) with files in the client-photos
+  bucket under `ready-made-catalog/`. Zapier: GET/POST
+  `/api/v1/ready-made/catalog` and POST `/api/v1/ready-made/catalog/images`.
+  Do not strip the per-size upload.
+
 ## Inventory (trims / hangers)
 
 - **Inventory tab** (Aug 16 2026, owner ask): `/inventory` tracks trims and

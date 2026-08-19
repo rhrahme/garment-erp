@@ -115,6 +115,7 @@ const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   "/clients",
   "/brands",
   "/ready-made",
+  "/api/ready-made",
   "/pattern",
   "/inventory",
   "/shipments",

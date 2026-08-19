@@ -2,40 +2,15 @@ import { READY_MADE_BRANDS } from "@/lib/integrations/clickup/ready-made-brands"
 import { readProductionWorkOrders } from "@/lib/data/production-work-orders";
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import type { ProductionStage } from "@/lib/types/production";
+import {
+  formatStageSummary,
+  type ReadyMadeArticleRow,
+  type ReadyMadeBrandSummary,
+  type ReadyMadeOverview,
+} from "@/lib/ready-made/summary-types";
 
-export interface ReadyMadeArticleRow {
-  productArticle: string;
-  orderId: string;
-  soNumber: string;
-  garmentTypes: string[];
-  fabricLineCount: number;
-  pieceCount: number;
-  activePieces: number;
-  completedPieces: number;
-  stageCounts: Partial<Record<ProductionStage, number>>;
-}
-
-export interface ReadyMadeBrandSummary {
-  id: string;
-  label: string;
-  code: string;
-  articleCount: number;
-  orderCount: number;
-  pieceCount: number;
-  activePieces: number;
-  completedPieces: number;
-  articles: ReadyMadeArticleRow[];
-}
-
-export interface ReadyMadeOverview {
-  brandCount: number;
-  articleCount: number;
-  orderCount: number;
-  pieceCount: number;
-  activePieces: number;
-  completedPieces: number;
-  brands: ReadyMadeBrandSummary[];
-}
+export type { ReadyMadeArticleRow, ReadyMadeBrandSummary, ReadyMadeOverview };
+export { formatStageSummary };
 
 function uniqueSorted(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b));
@@ -115,21 +90,3 @@ export function getReadyMadeOverview(): ReadyMadeOverview {
   };
 }
 
-export function formatStageSummary(stageCounts: Partial<Record<ProductionStage, number>>): string {
-  const labels: Record<ProductionStage, string> = {
-    received: "Received",
-    fabric_prep: "Fabric prep",
-    cutting: "Cutting",
-    sewing: "Sewing",
-    washing: "Wash",
-    finishing: "Finishing",
-    packed: "Packed",
-    completed: "Done",
-  };
-
-  return Object.entries(stageCounts)
-    .filter(([, count]) => count > 0)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([stage, count]) => `${labels[stage as ProductionStage] ?? stage}: ${count}`)
-    .join(" · ");
-}
