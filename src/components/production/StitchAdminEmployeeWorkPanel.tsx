@@ -306,8 +306,8 @@ export function StitchAdminEmployeeWorkPanel({
                       <p className="text-base font-semibold text-slate-900">{row.employee_name}</p>
                       <p className="text-sm text-slate-500">
                         {row.employee_id_number}
-                        {row.activity ? ` · ${row.activity}` : ""}
-                        {row.workstation_id ? ` · ${row.workstation_id}` : ""}
+                        {row.activity ? ` - ${row.activity}` : ""}
+                        {row.workstation_id ? ` - ${row.workstation_id}` : ""}
                       </p>
                     </div>
                     <div className="text-right">
@@ -315,7 +315,7 @@ export function StitchAdminEmployeeWorkPanel({
                         <p className="text-sm font-semibold text-emerald-700">Live</p>
                       ) : row.scanned ? (
                         <p className="text-sm font-semibold text-slate-800">
-                          {row.count} pcs · {formatDuration(row.duration_sec)}
+                          {row.count} pcs - {formatDuration(row.duration_sec)}
                         </p>
                       ) : (
                         <p className="text-sm font-semibold text-amber-800">No scan yet</p>
@@ -333,7 +333,7 @@ export function StitchAdminEmployeeWorkPanel({
             <div>
               <p className="text-lg font-semibold text-slate-900">{work.employee_name}</p>
               <p className="text-sm text-slate-500">
-                {work.employee_id_number} · tap a period for the piece list
+                {work.employee_id_number} - tap a period for the piece list
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
