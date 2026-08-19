@@ -15,6 +15,7 @@ import {
   type ReceivingCutTableRow,
 } from "@/components/orders/SalesOrderReceivingCutTable";
 import { ScanStageLegend } from "@/components/production/ScanStageLegend";
+import { EntityPhotos } from "@/components/entity-images/EntityPhotos";
 import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
 import { orderMatchesBrandClientPrefix } from "@/lib/clients/orphan-reconciliation";
@@ -473,6 +474,13 @@ function FabricCutCard({
             </span>
             <code className="text-xl font-bold tracking-tight text-indigo-900">{line.fabric_cut_code}</code>
           </div>
+          <EntityPhotos
+            className="mt-2"
+            supplierId={line.supplier_id}
+            fabricNumber={line.fabric_number}
+            garmentType={line.garment_type}
+            salesOrderLineId={line.sales_order_line_id}
+          />
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-medium", styles.chip)}>
               {line.scan_stage_label}

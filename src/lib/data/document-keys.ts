@@ -163,6 +163,10 @@ export const ERP_DOCUMENT_SPECS = {
     path: path.join(ROOT, "src/data/ready-made-catalog.json"),
     fallback: { updated_at: null, garments: [] },
   },
+  entity_images: {
+    path: path.join(ROOT, "src/data/entity-images.json"),
+    fallback: { updated_at: null, albums: [] },
+  },
   thread_button_matches: {
     path: path.join(ROOT, "src/data/thread-button-matches.json"),
     fallback: { updated_at: null, matches: [] },
@@ -231,6 +235,7 @@ export const LAZY_ERP_DOCUMENT_KEYS = [
   "custom_fabrics",
   "sales_workspace",
   "ready_made_catalog",
+  "entity_images",
   "thread_button_matches",
   "quality_inspections",
   "inventory_store",

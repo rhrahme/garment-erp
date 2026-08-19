@@ -10,6 +10,7 @@ import {
   FabricStockBadge,
   lineNeedsAvailabilityAttention,
 } from "@/components/fabric/FabricStockBadge";
+import { EntityPhotos } from "@/components/entity-images/EntityPhotos";
 import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
 import { isFabricUnavailable } from "@/lib/fabric-sourcing/fabric-stock";
 import {
@@ -246,6 +247,13 @@ export function SalesOrderFabricLineCards({
                   </span>
                 ) : null}
                 <p className="mt-1 text-sm text-slate-600">{line.garment_type}</p>
+                <EntityPhotos
+                  className="mt-2"
+                  supplierId={line.supplier_id}
+                  fabricNumber={line.fabric_number}
+                  garmentType={line.garment_type}
+                  salesOrderLineId={line.lineId}
+                />
               </div>
               <div className="flex shrink-0 items-center gap-1">
                 <Button variant="ghost" size="sm" onClick={() => onStartEdit(line)} title="Edit line">

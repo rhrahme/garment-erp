@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Eye, ImageOff, X } from "lucide-react";
+import { EntityPhotos } from "@/components/entity-images/EntityPhotos";
 import { DrapersFabricSwatch } from "@/components/fabric-specification/DrapersFabricSwatch";
 import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
 import { formatFabricPatternLabel, formatFabricTextLabel } from "@/lib/fabric-sourcing/fabric-display";
@@ -137,6 +138,12 @@ function FabricSpecDetailModal({
 
         <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">{brand}</p>
         <h3 className="mt-1 font-mono text-2xl font-semibold text-slate-900">{fabric.fabric_number}</h3>
+        <EntityPhotos
+          className="mt-3"
+          compact={false}
+          supplierId={fabric.supplier_id}
+          fabricNumber={fabric.fabric_number}
+        />
         {pattern ? <p className="mt-1 text-sm font-medium text-slate-700">{pattern}</p> : null}
 
         <dl className="mt-4">

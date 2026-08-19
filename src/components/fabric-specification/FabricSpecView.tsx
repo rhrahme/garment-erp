@@ -5,6 +5,7 @@ import { Eye, EyeOff, Printer, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { CreateCustomFabricForm } from "@/components/fabric-specification/CreateCustomFabricForm";
 import { DownloadLoroPianaMissingSwatchesPdfButton } from "@/components/fabric-specification/DownloadLoroPianaMissingSwatchesPdfButton";
+import { EntityPhotos } from "@/components/entity-images/EntityPhotos";
 import { FabricSpecPreview } from "@/components/fabric-specification/FabricSpecPreview";
 import { DataTable } from "@/components/ui/PageHeader";
 import { DualCurrencyPrice } from "@/components/currency/DualCurrencyPrice";
@@ -452,6 +453,11 @@ export function FabricSpecView({
                 </span>
                 . Print the A4 filing card and attach a 5x5 cm fabric swatch.
               </p>
+              <EntityPhotos
+                className="mt-2 w-full"
+                supplierId={CUSTOM_SUPPLIER_ID}
+                fabricNumber={lastCreatedFabric.fabric_number}
+              />
               <div className="flex flex-wrap items-center gap-2">
                 <Link
                   href={`/custom-fabrics/${lastCreatedFabric.id}/print`}
@@ -518,8 +524,12 @@ export function FabricSpecView({
                 />
               ),
               fabricNo: (
-                <span className="flex flex-col gap-1">
+                  <span className="flex flex-col gap-1">
                   <span className="font-mono font-medium">{f.fabric_number}</span>
+                  <EntityPhotos
+                    supplierId={f.supplier_id}
+                    fabricNumber={f.fabric_number}
+                  />
                   {isNewCustom ? (
                     <span className="inline-flex w-fit items-center gap-1 rounded border border-orange-300 bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-800">
                       <span className="uppercase tracking-wide">New</span>

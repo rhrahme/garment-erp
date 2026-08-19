@@ -47,6 +47,7 @@ import {
   lineNeedsAvailabilityAttention,
 } from "@/components/fabric/FabricStockBadge";
 import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
+import { EntityPhotos } from "@/components/entity-images/EntityPhotos";
 import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
 import {
   applyFabricOrderContinuePick,
@@ -1703,6 +1704,11 @@ export function SalesOrderForm({
                           </FabricNumberWithSwatch>
                         </p>
                         <p className="mt-0.5 text-xs text-slate-500">{selectedFabricBrand.name}</p>
+                        <EntityPhotos
+                          className="mt-2"
+                          supplierId={pendingFabric.supplier_id}
+                          fabricNumber={pendingFabric.fabric_number}
+                        />
                       </div>
 
                       {canViewFabricStock && isFabricUnavailable(pendingFabric.stock_status) && (
@@ -2083,6 +2089,13 @@ export function SalesOrderForm({
                               </span>
                             ) : null}
                           </FabricNumberWithSwatch>
+                          <EntityPhotos
+                            className="mt-2"
+                            supplierId={line.supplier_id}
+                            fabricNumber={line.fabric_number}
+                            garmentType={line.garment_type}
+                            salesOrderLineId={line.lineId}
+                          />
                         </td>
                         <td className="px-3 py-2 text-slate-600">{line.garment_type}</td>
                         <td className="px-3 py-2 text-slate-600">{resolveFabricLineLabelCount(line)}</td>

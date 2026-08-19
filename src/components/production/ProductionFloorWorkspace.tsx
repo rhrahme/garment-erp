@@ -6,6 +6,7 @@ import { CompletedProductionHistory } from "@/components/production/CompletedPro
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/PageHeader";
 import { formatLabelGarmentDescription } from "@/lib/sales-orders/label-codes";
+import { EntityPhotos } from "@/components/entity-images/EntityPhotos";
 import { FabricSupplierName } from "@/components/fabric/FabricSupplierName";
 import { PRODUCTION_STAGES, type ProductionWorkOrder } from "@/lib/types/production";
 import { cn, formatDate } from "@/lib/utils";
@@ -287,6 +288,13 @@ export function ProductionFloorWorkspace() {
                                       {order.fabric_number} · {order.fabric_meters} m · received{" "}
                                       {formatDate(order.received_at.slice(0, 10))}
                                     </p>
+                                    <EntityPhotos
+                                      className="mt-2"
+                                      supplierId={order.supplier_id}
+                                      fabricNumber={order.fabric_number}
+                                      garmentType={order.garment_type}
+                                      salesOrderLineId={order.sales_order_line_id}
+                                    />
                                   </div>
                                   <div className="mt-3 flex flex-col items-end gap-1 md:mt-0 md:shrink-0">
                                     <StatusBadge

@@ -5,6 +5,8 @@ import { resolveInvoiceGarmentDescription } from "@/lib/sales-orders/label-codes
 import {
   computeInvoiceLineTotals,
   countGarmentPiecesForLine,
+  formatInvoiceCompositionLine,
+  formatInvoiceFabricBrandAbbreviation,
   normalizeInvoiceLine,
   resolveInvoiceLines,
   toInvoiceLineDisplay,
@@ -59,10 +61,57 @@ describe("resolveInvoiceGarmentDescription", () => {
   });
 });
 
+describe("invoice fabric brand prefix", () => {
+  it("uses the mill codes on the composition line", () => {
+    assert.equal(formatInvoiceFabricBrandAbbreviation("Loro Piana"), "LP");
+    assert.equal(formatInvoiceFabricBrandAbbreviation("loro-piana"), "LP");
+    assert.equal(formatInvoiceFabricBrandAbbreviation("Solbiati"), "SOLB");
+    assert.equal(formatInvoiceFabricBrandAbbreviation("Drapers"), "DP");
+    assert.equal(formatInvoiceFabricBrandAbbreviation("Zegna"), "ZE");
+    assert.equal(formatInvoiceFabricBrandAbbreviation("Caccioppoli"), "Cacci");
+  });
+
+  it("puts the mill code at the start of composition", () => {
+    assert.equal(
+      formatInvoiceCompositionLine("Solbiati", "PEGASO DELAVE' 100%LINEN", 340),
+      "SOLB 100% Linen 340g"
+    );
+    assert.equal(
+      formatInvoiceCompositionLine("Caccioppoli", "tela 100% linen (70/U)", 180),
+      "Cacci 100% Linen 180g"
+    );
+    assert.equal(
+      formatInvoiceCompositionLine("Loro Piana", '100% COTONE "KNIT SHIRT" PIQUET', 140),
+      "LP 100% Cotton Knit 140g"
+    );
+    assert.equal(
+      formatInvoiceCompositionLine(
+        "Loro Piana",
+        '100% COTONE "KNIT SHIRT" HONEY COMB STITCH',
+        160
+      ),
+      "LP 100% Cotton Knit 160g"
+    );
+    assert.equal(formatInvoiceCompositionLine("Zegna", null, null), "ZE");
+  });
+});
+
 describe("toInvoiceLineDisplay", () => {
   it("shows Suit (Jacket + Trouser) when stored line has Trouser garment_type", () => {
     const display = toInvoiceLineDisplay(line({ id: "suit-cross-fabric" }));
     assert.equal(display.description, "Suit (Jacket + Trouser)");
+  });
+
+  it("prefixes composition with the mill code", () => {
+    const display = toInvoiceLineDisplay(
+      line({
+        id: "solb-comp",
+        fabric_brand: "Solbiati",
+        composition: "PEGASO DELAVE' 100%LINEN",
+        weight_gsm: 340,
+      })
+    );
+    assert.equal(display.composition_label, "SOLB 100% Linen 340g");
   });
 });
 

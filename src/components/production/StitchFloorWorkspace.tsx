@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { EntityPhotos } from "@/components/entity-images/EntityPhotos";
 import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
 import { GarmentTypeColorLegend } from "@/components/production/GarmentTypeColorLegend";
 import { StitchFabricColorPreview } from "@/components/production/StitchFabricColorPreview";
@@ -872,6 +873,13 @@ export function StitchFloorWorkspace({
                                 size="md"
                               />
                             </div>
+                          ) : null}
+                          {session.garment_type || session.fabric_number ? (
+                            <EntityPhotos
+                              className="mt-2"
+                              fabricNumber={session.fabric_number}
+                              garmentType={session.garment_type}
+                            />
                           ) : null}
                         </td>
                         <td className="px-3 py-3 whitespace-nowrap">

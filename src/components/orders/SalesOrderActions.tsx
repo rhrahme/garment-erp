@@ -12,6 +12,7 @@ import { CreateInvoiceButton } from "@/components/invoicing/CreateInvoiceButton"
 import { DeliveryDestinationTabs } from "@/components/shipping/DeliveryDestinationTabs";
 import { FabricReplacementBadge, FabricStockBadge } from "@/components/fabric/FabricStockBadge";
 import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
+import { EntityPhotos } from "@/components/entity-images/EntityPhotos";
 import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
 import { isFabricUnavailable, formatFabricStockLabel } from "@/lib/fabric-sourcing/fabric-stock";
 import { FabricSupplierName } from "@/components/fabric/FabricSupplierName";
@@ -713,6 +714,13 @@ export function SalesOrderActions({
                         fabricNumber={line.fabric_number}
                         numberClassName="text-sm"
                       />
+                      <EntityPhotos
+                        className="mt-2"
+                        supplierId={line.supplier_id}
+                        fabricNumber={line.fabric_number}
+                        garmentType={line.garment_type}
+                        salesOrderLineId={line.id}
+                      />
                     </td>
                     <td className="px-3 py-2">
                       <FabricLineGarmentCell
@@ -921,6 +929,13 @@ export function SalesOrderActions({
                             <FabricReplacementBadge needsReplacement={line.needs_replacement} />
                           ) : null}
                         </FabricNumberWithSwatch>
+                        <EntityPhotos
+                          className="mt-2"
+                          supplierId={line.supplier_id}
+                          fabricNumber={line.fabric_number}
+                          garmentType={line.garment_type}
+                          salesOrderLineId={line.id}
+                        />
                         {showFabricStock && line.needs_replacement && (
                           <p className="mt-1 text-xs text-violet-800">
                             Replacement still needed — update fabric before supplier emails.
@@ -1159,6 +1174,13 @@ export function SalesOrderActions({
                             <FabricReplacementBadge needsReplacement={line.needs_replacement} />
                           ) : null}
                         </FabricNumberWithSwatch>
+                        <EntityPhotos
+                          className="mt-2"
+                          supplierId={line.supplier_id}
+                          fabricNumber={line.fabric_number}
+                          garmentType={line.garment_type}
+                          salesOrderLineId={line.id}
+                        />
                         {showFabricStock && line.needs_replacement && (
                           <p className="mt-1 text-xs text-violet-800">
                             Replacement still needed — update fabric before supplier emails.

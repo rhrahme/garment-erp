@@ -7,6 +7,7 @@ import { FabricPicker } from "@/components/fabric/FabricPicker";
 import { MetersInput } from "@/components/orders/MetersInput";
 import { PreviousMetersHint } from "@/components/orders/PreviousMetersHint";
 import { FabricStockBadge } from "@/components/fabric/FabricStockBadge";
+import { EntityPhotos } from "@/components/entity-images/EntityPhotos";
 import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
 import { isFabricUnavailable } from "@/lib/fabric-sourcing/fabric-stock";
 import { fabricBrandAllowsManualEntry } from "@/lib/fabric-sourcing/supplier-display";
@@ -307,6 +308,14 @@ export function OrderFabricLineEditor({
           </p>
         </div>
       )}
+
+      <EntityPhotos
+        className="mt-3"
+        supplierId={pendingFabric?.supplier_id ?? line.supplier_id}
+        fabricNumber={pendingFabric?.fabric_number ?? line.fabric_number}
+        garmentType={garmentType || line.garment_type}
+        salesOrderLineId={line.id}
+      />
 
       <div className="mt-3 flex flex-wrap gap-2">
         <Button type="button" size="sm" onClick={() => void handleSave()} disabled={submitting || !formValid}>

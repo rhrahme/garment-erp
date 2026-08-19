@@ -22,6 +22,8 @@ export type IntegrationEventType =
   | "client.ready_made_sample_deleted"
   | "ready_made.catalog_image_uploaded"
   | "ready_made.catalog_image_deleted"
+  | "entity.image_uploaded"
+  | "entity.image_deleted"
   | "sales_order.created"
   | "sales_order.deleted"
   | "sales_order.fabric_lines_added"

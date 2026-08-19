@@ -36,15 +36,23 @@ export function formatInvoiceWeight(weightGsm: number | null | undefined): strin
 const FABRIC_BRAND_ABBREVIATIONS: Record<string, string> = {
   drapers: "DP",
   "loro piana": "LP",
+  solbiati: "SOLB",
+  zegna: "ZE",
+  "ermenegildo zegna": "ZE",
+  caccioppoli: "Cacci",
   canclini: "CC",
   stylbiella: "SB",
 };
+
+function invoiceBrandLookupKey(brand: string): string {
+  return brand.trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
+}
 
 /** Client invoice fabric prefix — known mills only; unknown brands omit the prefix. */
 export function formatInvoiceFabricBrandAbbreviation(
   brand: string | null | undefined
 ): string | null {
-  const key = brand?.trim().toLowerCase();
+  const key = brand ? invoiceBrandLookupKey(brand) : "";
   if (!key) return null;
   return FABRIC_BRAND_ABBREVIATIONS[key] ?? null;
 }
@@ -66,6 +74,48 @@ const INVOICE_FACTORY_FIBER_CODES: Record<string, string> = {
   WS: "Cashmere",
 };
 
+/** Words that belong on the invoice fibre line. Collection names (PEGASO, SUMMERTIME) do not. */
+const INVOICE_FIBER_WORDS: Record<string, string> = {
+  wool: "Wool",
+  merino: "Merino",
+  superfine: "Superfine",
+  cashmere: "Cashmere",
+  cotton: "Cotton",
+  cotone: "Cotton",
+  linen: "Linen",
+  lino: "Linen",
+  silk: "Silk",
+  seta: "Silk",
+  viscose: "Viscose",
+  polyester: "Polyester",
+  polyamide: "Polyamide",
+  elastane: "Elastane",
+  lycra: "Lycra",
+  mohair: "Mohair",
+  alpaca: "Alpaca",
+  nylon: "Nylon",
+  hemp: "Hemp",
+  ramie: "Ramie",
+  modal: "Modal",
+  tencel: "Tencel",
+  acetate: "Acetate",
+  cupro: "Cupro",
+  flax: "Flax",
+  knit: "Knit",
+  wv: "Wool",
+  ws: "Cashmere",
+  co: "Cotton",
+  c: "Cotton",
+  li: "Linen",
+  se: "Silk",
+  ea: "EA",
+  el: "Elastane",
+  pa: "Polyamide",
+  pl: "Polyester",
+  pes: "Polyester",
+  cv: "Viscose",
+};
+
 /** Expand factory abbreviations (WV, WS, C) to readable fibre names. */
 function expandInvoiceFactoryFiberCodes(text: string): string {
   let result = text.replace(/\b(WV|WS)\b/gi, (match) => {
@@ -79,15 +129,19 @@ function expandInvoiceFactoryFiberCodes(text: string): string {
   return result;
 }
 
-/** Client-facing composition — strip yarn notation and space out mashed fibre percentages. */
-export function formatClientInvoiceComposition(composition: string): string {
+function stripInvoiceCompositionNoise(composition: string): string {
   let text = composition.trim();
   const yarnPrefix = text.match(INVOICE_YARN_PREFIX_RE);
   if (yarnPrefix) text = text.slice(yarnPrefix[0].length);
 
   text = text
+    .replace(/"([^"]*)"/g, (_match, inner: string) =>
+      /\bknit\b/i.test(inner) ? " Knit " : " "
+    )
+    .replace(/\([^)]*\)/g, " ")
     .replace(/(\d+%)([A-Za-z])/g, "$1 $2")
     .replace(/([A-Za-z])(\d+%)/g, "$1 $2")
+    .replace(/[._]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -98,7 +152,33 @@ export function formatClientInvoiceComposition(composition: string): string {
   return expandInvoiceFactoryFiberCodes(text);
 }
 
-/** Client-facing composition cell: "{brand_abbr} {composition} {weight}" e.g. "DP 100% Wool 260g". */
+/** Fibre-only client line: drop mill collection names such as PEGASO DELAVE. */
+export function formatInvoiceFibreContent(composition: string): string {
+  const tokens = stripInvoiceCompositionNoise(composition).split(" ").filter(Boolean);
+  const kept: string[] = [];
+  let started = false;
+  for (const token of tokens) {
+    if (/^\d+%$/.test(token)) {
+      started = true;
+      kept.push(token);
+      continue;
+    }
+    if (!started) continue;
+    const fiber = INVOICE_FIBER_WORDS[token.toLowerCase().replace(/[^a-z]/g, "")];
+    if (fiber) kept.push(fiber);
+  }
+  if (/\bknit\b/i.test(stripInvoiceCompositionNoise(composition)) && !kept.includes("Knit")) {
+    kept.push("Knit");
+  }
+  return kept.join(" ");
+}
+
+/** Full cleaned composition (yarn stripped). Used for merge keys, not the printed cell. */
+export function formatClientInvoiceComposition(composition: string): string {
+  return stripInvoiceCompositionNoise(composition);
+}
+
+/** Client-facing composition cell: "{brand_abbr} {fibre} {weight}" e.g. "SOLB 100% Linen 340g". */
 export function formatInvoiceCompositionLine(
   brand: string | null | undefined,
   composition: string | null | undefined,
@@ -107,8 +187,8 @@ export function formatInvoiceCompositionLine(
   const parts: string[] = [];
   const abbr = formatInvoiceFabricBrandAbbreviation(brand);
   if (abbr) parts.push(abbr);
-  const comp = composition?.trim();
-  if (comp) parts.push(formatClientInvoiceComposition(comp));
+  const fibre = composition?.trim() ? formatInvoiceFibreContent(composition) : "";
+  if (fibre) parts.push(fibre);
   const weight = formatInvoiceWeightGrams(weightGsm);
   if (weight) parts.push(weight);
   return parts.length > 0 ? parts.join(" ") : "—";
@@ -117,7 +197,7 @@ export function formatInvoiceCompositionLine(
 export function formatInvoiceComposition(composition: string | null | undefined): string {
   const raw = composition?.trim();
   if (!raw) return "—";
-  return formatClientInvoiceComposition(raw);
+  return formatInvoiceFibreContent(raw) || "—";
 }
 
 /** Prefer stored invoice line composition; fall back to linked sales-order fabric line. */

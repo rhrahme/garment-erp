@@ -95,6 +95,13 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/ready-made-catalog.json",
   },
   {
+    key: "entity_images",
+    label: "Fabric and garment photos",
+    description: "User uploads on fabrics, garment types, and sales-order articles",
+    category: "production",
+    sourcePath: "src/data/entity-images.json",
+  },
+  {
     key: "thread_button_matches",
     label: "Thread & button matches",
     description: "Task team thread/button match status per fabric article",
@@ -339,6 +346,8 @@ export function recordSummaryForKey(key: ErpDocumentKey, data: unknown): string 
       return `${Array.isArray(record.receipts) ? record.receipts.length : 0} receipts`;
     case "ready_made_catalog":
       return `${Array.isArray(record.garments) ? record.garments.length : 0} garments`;
+    case "entity_images":
+      return `${Array.isArray(record.albums) ? record.albums.length : 0} albums`;
     case "thread_button_matches":
       return `${Array.isArray(record.matches) ? record.matches.length : 0} matches`;
     case "production_work_orders":

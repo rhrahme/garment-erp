@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/PageHeader";
 import { InvoicePreview } from "@/components/invoicing/InvoicePreview";
 import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
+import { EntityPhotos } from "@/components/entity-images/EntityPhotos";
 import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
 import type { FabricSwatchKey } from "@/lib/fabric-sourcing/fabric-swatch-keys";
 import type { CustomerInvoice, CustomerInvoiceLine, CustomerInvoicePaymentMethod, CustomerInvoiceStatus } from "@/lib/types/customer-invoices";
@@ -378,6 +379,12 @@ export function InvoiceEditor({
                   ) : (
                     <span className="font-mono">{line.fabric_number?.trim() || "—"}</span>
                   )}
+                  <EntityPhotos
+                    className="mt-2"
+                    supplierId={swatchKey?.supplier_id}
+                    fabricNumber={swatchKey?.fabric_number ?? line.fabric_number}
+                    salesOrderLineId={crossRef?.so_fabric_line_id}
+                  />
                 </td>
                 <td className="px-4 py-3 text-sm text-slate-700">{display.composition_label}</td>
                 <td className="px-4 py-3">{line.quantity}</td>

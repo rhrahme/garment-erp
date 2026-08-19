@@ -11,6 +11,9 @@ const FABRIC_SWATCH_ROUTE_PREFIXES = [
   "/api/integrations/caccioppoli/images",
 ] as const;
 
+/** Sitewide fabric / garment / article photo uploads. */
+const ENTITY_IMAGE_ROUTE_PREFIXES = ["/api/entity-images"] as const;
+
 const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/clients",
   "/fabric-specification",
@@ -38,6 +41,7 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/api/garment-type-changes",
   "/api/fabric-change-alerts",
   ...FABRIC_SWATCH_ROUTE_PREFIXES,
+  ...ENTITY_IMAGE_ROUTE_PREFIXES,
   "/api/qr",
   "/api/factory/floor-stations",
   "/api/production",
@@ -70,6 +74,7 @@ const TASK_OPERATOR_ROUTE_PREFIXES = [
   "/api/clients",
   "/api/client-samples",
   ...FABRIC_SWATCH_ROUTE_PREFIXES,
+  ...ENTITY_IMAGE_ROUTE_PREFIXES,
   "/api/auth/session",
   "/api/auth/dev-impersonate",
   "/login",
@@ -95,6 +100,7 @@ const STITCH_OPERATOR_ROUTE_PREFIXES = [
   "/api/qr",
   "/api/hr/employee-lookup",
   ...FABRIC_SWATCH_ROUTE_PREFIXES,
+  ...ENTITY_IMAGE_ROUTE_PREFIXES,
   "/api/auth/session",
   "/api/auth/dev-impersonate",
   "/login",
@@ -145,6 +151,7 @@ const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   "/api/hr/id-badges",
   "/api/sales",
   ...FABRIC_SWATCH_ROUTE_PREFIXES,
+  ...ENTITY_IMAGE_ROUTE_PREFIXES,
   "/api/auth/session",
   "/api/auth/dev-impersonate",
   "/login",
@@ -194,6 +201,7 @@ const PATTERN_OPERATOR_ROUTE_PREFIXES = [
   // Pattern assigns sales-uploaded wearing photos to fabric lines / articles.
   "/api/sales/client-photos",
   ...FABRIC_SWATCH_ROUTE_PREFIXES,
+  ...ENTITY_IMAGE_ROUTE_PREFIXES,
   "/api/auth/session",
   "/api/auth/dev-impersonate",
   "/login",
@@ -284,6 +292,7 @@ const SALES_OPERATOR_ROUTE_PREFIXES = [
   "/api/garment-type-changes",
   "/api/fabric-change-alerts",
   ...FABRIC_SWATCH_ROUTE_PREFIXES,
+  ...ENTITY_IMAGE_ROUTE_PREFIXES,
   "/api/auth/session",
   "/api/auth/dev-impersonate",
   "/login",

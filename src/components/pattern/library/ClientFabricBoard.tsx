@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Eye, ImageOff, Layers, Scissors, X } from "lucide-react";
+import { EntityPhotos } from "@/components/entity-images/EntityPhotos";
 import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
 import { FabricSwatchProvider, useFabricSwatch } from "@/components/fabric/FabricSwatchProvider";
 import { BasePatternCascadePicker } from "@/components/pattern/library/BasePatternCascadePicker";
@@ -412,6 +413,14 @@ function FabricCard({
             <Eye className="h-4 w-4" />
           </button>
         </div>
+        <div className="mt-2" onClick={(event) => event.stopPropagation()}>
+          <EntityPhotos
+            supplierId={row.supplier_id}
+            fabricNumber={row.fabric_number}
+            garmentType={row.garment_type}
+            salesOrderLineId={row.line_id}
+          />
+        </div>
         <button type="button" onClick={onOpen} className="mt-2 block w-full text-left">
           {row.assigned_pattern ? (
             <span className="inline-flex max-w-full items-center gap-1 truncate rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-800">
@@ -469,6 +478,12 @@ function CatalogFabricCard({ row }: { row: ClientFabricCatalogRow }) {
             </Link>
           </div>
         </div>
+        <EntityPhotos
+          className="mt-2"
+          supplierId={row.supplier_id}
+          fabricNumber={row.fabric_number}
+          garmentType={row.assigned_pattern.garment_type}
+        />
       </div>
     </div>
   );
@@ -805,6 +820,14 @@ function FabricDetailDialog({
         </div>
 
         <FabricDetailPhoto supplierId={row.supplier_id} fabricNumber={row.fabric_number} />
+        <EntityPhotos
+          className="mt-3"
+          compact={false}
+          supplierId={row.supplier_id}
+          fabricNumber={row.fabric_number}
+          garmentType={row.garment_type}
+          salesOrderLineId={row.line_id}
+        />
 
         <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
           {specs.map((spec) => (

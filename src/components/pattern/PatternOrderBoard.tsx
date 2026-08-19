@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { EntityPhotos } from "@/components/entity-images/EntityPhotos";
 import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
 import { FabricSwatchProvider, useFabricSwatch } from "@/components/fabric/FabricSwatchProvider";
 import { ConsolidateSelectedFabricsModal } from "@/components/pattern/ConsolidateSelectedFabricsModal";
@@ -647,6 +648,13 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
                         {job.width_cm ? ` · ${job.width_cm} cm` : ""}
                         {job.color ? ` · ${job.color}` : ""}
                       </p>
+                      <EntityPhotos
+                        className="mt-2"
+                        supplierId={job.supplier_id}
+                        fabricNumber={job.fabric_number}
+                        garmentType={job.garment_type}
+                        salesOrderLineId={job.sales_order_line_id}
+                      />
                       <p className="mt-2 text-xs uppercase tracking-wide text-slate-500">
                         {STATUS_LABELS[job.status] ?? job.status}
                         {job.assigned_to ? ` · ${job.assigned_to}` : ""}

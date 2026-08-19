@@ -528,6 +528,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   SO-2026-0118 -> SO-2026-0125 (Abdelaziz Ajlan), invoiced once via
   INV-2026-0009. Do not delete superseded orders or re-open them to
   "fix" the invoiceable list.
+- **Invoice composition mill codes** (Aug 19 2026): client invoice
+  composition is `{mill} {fibre} {weight}` via
+  `formatInvoiceCompositionLine`. Mills: LP, SOLB, DP, ZE, Cacci, CC, SB
+  (hyphenated ids like `loro-piana` count). Unknown brands omit the
+  prefix. Drop mill collection / style names (PEGASO, SUMMERTIME, tela
+  notes). Keep Knit (KNIT SHIRT / KNIT); still drop Piquet and Honey Comb.
+  Display-only - do not rewrite stored invoice JSON for this.
 
 ## Ready-made catalog photos
 
@@ -538,6 +545,16 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   bucket under `ready-made-catalog/`. Zapier: GET/POST
   `/api/v1/ready-made/catalog` and POST `/api/v1/ready-made/catalog/images`.
   Do not strip the per-size upload.
+- **Sitewide fabric / garment / article photos** (Aug 19 2026): reusable
+  Add strip (`EntityPhotos`) on orders, receiving, pattern, invoices,
+  fabric spec, production, and stitch. Albums in `entity_images`
+  (`erp_documents`); files in the client-photos bucket under
+  `entity-images/`. Fabric photos follow the cloth, garment photos follow
+  the type, article photos stay on that SO line. Zapier GET
+  `/api/v1/entity-images` and POST `/api/v1/entity-images/images`. Events
+  `entity.image_uploaded` / `entity.image_deleted`. Floor roles including
+  `stitch@` may call `/api/entity-images`. No upload buttons on print
+  sheets.
 
 ## Inventory (trims / hangers)
 

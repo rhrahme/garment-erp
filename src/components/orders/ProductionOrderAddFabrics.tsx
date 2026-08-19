@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { FabricPicker } from "@/components/fabric/FabricPicker";
 import { FabricStockBadge } from "@/components/fabric/FabricStockBadge";
+import { EntityPhotos } from "@/components/entity-images/EntityPhotos";
 import { FabricNumberWithSwatch } from "@/components/fabric/FabricSwatchPreview";
 import { formatFabricStockLabel, isFabricUnavailable } from "@/lib/fabric-sourcing/fabric-stock";
 import { fabricBrandAllowsManualEntry } from "@/lib/fabric-sourcing/supplier-display";
@@ -255,6 +256,12 @@ export function ProductionOrderAddFabrics({
                       <FabricStockBadge fabric={pendingFabric} />
                     </FabricNumberWithSwatch>
                   </p>
+                  <EntityPhotos
+                    className="mt-2"
+                    supplierId={pendingFabric.supplier_id}
+                    fabricNumber={pendingFabric.fabric_number}
+                    garmentType={garmentType}
+                  />
                   <p className="mt-1 text-xs text-slate-500">
                     {[pendingFabric.composition, pendingFabric.weight_gsm != null ? `${pendingFabric.weight_gsm} gsm` : null]
                       .filter(Boolean)
