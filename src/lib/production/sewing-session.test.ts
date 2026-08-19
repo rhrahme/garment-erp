@@ -19,10 +19,10 @@ import {
 } from "@/lib/production/sewing-session-recovery";
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
 import {
-  collectSewingSessionSwatchKeys,
   enrichSewingSessionGarmentFields,
   enrichSewingSessionsGarmentFields,
 } from "@/lib/production/sewing-session-garment";
+import { collectSewingSessionSwatchKeys } from "@/lib/production/sewing-session-swatch-keys";
 import {
   applyWorkdayEndCloses,
   expireStaleSewingState,

@@ -70,7 +70,7 @@ export type SewingSession = {
   /** Optional enrichments from sticker lookup (may be null on older sessions). */
   garment_type?: string | null;
   fabric_number?: string | null;
-  /** Mill id from the SO line — used for stitch kiosk color / swatch preview. */
+  /** Mill id from the SO line -- used for stitch kiosk color / swatch preview. */
   supplier_id?: string | null;
   /**
    * HR job roles for status display (Cutting vs Sewing, etc.).

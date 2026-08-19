@@ -28,7 +28,7 @@ import {
   type GarmentTypeColorKey,
 } from "@/lib/production/garment-type-colors";
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
-import { collectSewingSessionSwatchKeys } from "@/lib/production/sewing-session-garment";
+import { collectSewingSessionSwatchKeys } from "@/lib/production/sewing-session-swatch-keys";
 import {
   SEWING_LIVE_LONG_RUNNING_SEC,
   isStitchLiveClockFrozen,
