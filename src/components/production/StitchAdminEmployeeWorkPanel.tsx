@@ -7,6 +7,7 @@ import { garmentTypeColorClasses } from "@/lib/production/garment-type-colors";
 import type { SewingFloorAttendance, SewingFloorAttendanceRow } from "@/lib/production/sewing-floor-dashboard";
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
 import {
+  isStitchLiveClockFrozen,
   sewingLiveClockNowMs,
   type SewingDashboardPeriod,
   type SewingEmployeeWorkPeriod,
@@ -61,10 +62,12 @@ export function StitchAdminEmployeeWorkPanel({
   pauseIntervals = [],
   kioskPaused = false,
   kioskPausedAt = null,
+  kioskLunchActive = false,
 }: {
   pauseIntervals?: SewingPauseIntervalLike[];
   kioskPaused?: boolean;
   kioskPausedAt?: string | null;
+  kioskLunchActive?: boolean;
 }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [rosterPeriod, setRosterPeriod] = useState<SewingDashboardPeriod>("day");
@@ -154,6 +157,12 @@ export function StitchAdminEmployeeWorkPanel({
     kioskPaused,
     kioskPausedAt,
   });
+  const liveClockFrozen = isStitchLiveClockFrozen({
+    wallNow: now,
+    kioskPaused,
+    kioskLunchActive,
+  });
+  const liveClockFrozenLabel = kioskLunchActive ? "Frozen for lunch" : "Frozen";
 
   function selectEmployee(id: string) {
     setEmployeeId(id);
@@ -506,6 +515,8 @@ function PieceList({
                       startedAt={piece.started_at}
                       endAt={liveClockNow}
                       pauses={pauseIntervals}
+                      frozen={liveClockFrozen}
+                      frozenLabel={liveClockFrozenLabel}
                       compact
                       className="items-end text-right"
                     />

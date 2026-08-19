@@ -89,8 +89,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Lunch is 14:00-16:00 Asia/Riyadh every day** (owner). Elapsed must freeze
   in that window even if nobody taps Pause. Scheduled lunch is subtracted
   inside `sewingSessionElapsedBreakdown` (Live, Scan, close `duration_sec`).
-  An admin pause is extra, not the lunch clock. Do not treat "forgot to
-  pause" as paid work time.
+  Live clocks keep wall `now` during lunch so the Lunch-off segment is
+  visible; do not rewind `now` to 14:00 (that hid lunch and looked like a
+  still-running work clock). An admin pause is extra, not the lunch clock.
+  Do not treat "forgot to pause" as paid work time.
 - **Lunch auto-pause 14:00 + auto-resume 16:00 Asia/Riyadh**: scan gate
   closes at 14:00 (`auto-pause-14:00-riyadh`) and reopens at 16:00
   (`auto-resume-16:00-riyadh`) without restarting articles. Live poll +

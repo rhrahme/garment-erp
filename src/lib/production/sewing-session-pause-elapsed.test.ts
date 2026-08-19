@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  isStitchLiveClockFrozen,
   sewingLiveClockNowMs,
   sewingSessionElapsedBreakdown,
   sewingSessionElapsedSecExcludingPauses,
@@ -58,17 +59,59 @@ describe("sewingLiveClockNowMs", () => {
     assert.equal(frozen, Date.parse("2026-08-10T10:30:00.000Z"));
   });
 
-  it("freezes at 14:00 Riyadh during lunch even without an admin pause", () => {
-    const frozen = sewingLiveClockNowMs({
-      wallNow: Date.parse("2026-08-10T12:30:00.000Z"),
+  it("keeps wall now during lunch so the Lunch segment is visible", () => {
+    const wallNow = Date.parse("2026-08-10T12:30:00.000Z");
+    const clock = sewingLiveClockNowMs({
+      wallNow,
       kioskPaused: false,
       kioskPausedAt: null,
     });
-    assert.equal(frozen, Date.parse("2026-08-10T11:00:00.000Z"));
+    assert.equal(clock, wallNow);
+  });
+
+  it("does not rewind to 14:00 when the lunch auto-pause is already stored", () => {
+    const wallNow = Date.parse("2026-08-10T12:30:00.000Z");
+    const clock = sewingLiveClockNowMs({
+      wallNow,
+      kioskPaused: true,
+      kioskPausedAt: "2026-08-10T11:00:00.000Z",
+    });
+    assert.equal(clock, wallNow);
+  });
+
+  it("marks Live clocks frozen during lunch without an admin pause", () => {
+    assert.equal(
+      isStitchLiveClockFrozen({
+        wallNow: Date.parse("2026-08-10T12:30:00.000Z"),
+        kioskPaused: false,
+      }),
+      true
+    );
+    assert.equal(
+      isStitchLiveClockFrozen({
+        wallNow: Date.parse("2026-08-10T07:00:00.000Z"),
+        kioskPaused: false,
+      }),
+      false
+    );
   });
 });
 
 describe("sewingSessionElapsedBreakdown", () => {
+  it("shows an open Lunch segment when now is inside 14:00-16:00", () => {
+    const breakdown = sewingSessionElapsedBreakdown(
+      "2026-08-10T07:00:00.000Z",
+      Date.parse("2026-08-10T12:30:00.000Z"),
+      []
+    );
+    assert.equal(breakdown.work_sec, 4 * 60 * 60);
+    assert.equal(breakdown.pause_sec, 90 * 60);
+    assert.deepEqual(
+      breakdown.segments.map((s) => s.label),
+      ["Before lunch", "Lunch"]
+    );
+  });
+
   it("splits before lunch / lunch / after lunch", () => {
     const breakdown = sewingSessionElapsedBreakdown(
       "2026-08-10T10:00:00.000Z",

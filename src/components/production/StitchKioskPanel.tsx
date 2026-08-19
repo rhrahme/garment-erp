@@ -12,7 +12,11 @@ import type {
   SewingSession,
 } from "@/lib/types/sewing-sessions";
 import { SewingElapsedBreakdownView } from "@/components/production/SewingElapsedBreakdown";
-import { sewingLiveClockNowMs } from "@/lib/production/sewing-session-state";
+import {
+  isStitchLiveClockFrozen,
+  sewingLiveClockNowMs,
+} from "@/lib/production/sewing-session-state";
+import { isStitchLunchClockWindow } from "@/lib/production/stitch-kiosk-lunch";
 import { cn } from "@/lib/utils";
 
 function formatLogTime(at: number): string {
@@ -116,10 +120,25 @@ export function StitchKioskPanel() {
     kioskPaused,
     kioskPausedAt,
   });
+  const lunchActive = isStitchLunchClockWindow(now);
+  const liveClockFrozen = isStitchLiveClockFrozen({
+    wallNow: now,
+    kioskPaused,
+    kioskLunchActive: lunchActive,
+  });
+  const liveClockFrozenLabel = lunchActive ? "Frozen for lunch" : "Frozen";
 
   return (
     <div className="space-y-4">
-      {kioskPaused ? (
+      {lunchActive ? (
+        <div className="rounded-2xl border-2 border-amber-500 bg-amber-50 px-6 py-8 text-center text-amber-950">
+          <p className="text-sm font-semibold uppercase tracking-wide opacity-70">Stitch kiosk</p>
+          <h2 className="mt-2 text-3xl font-bold sm:text-4xl">Lunch 14:00-16:00</h2>
+          <p className="mt-3 text-lg font-medium opacity-90">
+            Elapsed clocks are frozen. Lunch is not work time. Scans stay blocked until 16:00.
+          </p>
+        </div>
+      ) : kioskPaused ? (
         <div className="rounded-2xl border-2 border-amber-500 bg-amber-50 px-6 py-8 text-center text-amber-950">
           <p className="text-sm font-semibold uppercase tracking-wide opacity-70">Stitch kiosk</p>
           <h2 className="mt-2 text-3xl font-bold sm:text-4xl">Paused by admin</h2>
@@ -131,15 +150,21 @@ export function StitchKioskPanel() {
       <div
         className={cn(
           "rounded-2xl border-2 px-6 py-8 text-center",
-          kioskPaused ? "border-slate-200 bg-slate-50 text-slate-500 opacity-60" : copy.tone
+          kioskPaused || lunchActive
+            ? "border-slate-200 bg-slate-50 text-slate-500 opacity-60"
+            : copy.tone
         )}
       >
         <p className="text-sm font-semibold uppercase tracking-wide opacity-70">Stitch kiosk</p>
         <h2 className="mt-2 text-3xl font-bold sm:text-4xl">
-          {kioskPaused ? "Waiting for resume" : copy.title}
+          {lunchActive ? "Lunch break" : kioskPaused ? "Waiting for resume" : copy.title}
         </h2>
         <p className="mt-3 text-lg font-medium opacity-90">
-          {kioskPaused ? "Do not scan until the kiosk is resumed" : copy.hint}
+          {lunchActive
+            ? "Do not scan until 16:00"
+            : kioskPaused
+              ? "Do not scan until the kiosk is resumed"
+              : copy.hint}
         </p>
 
         <div className="mt-5 flex flex-wrap justify-center gap-3 text-sm">
@@ -177,7 +202,8 @@ export function StitchKioskPanel() {
                 startedAt={highlight.started_at}
                 endAt={liveClockNow}
                 pauses={kioskPauseIntervals}
-                frozen={kioskPaused}
+                frozen={liveClockFrozen}
+                frozenLabel={liveClockFrozenLabel}
                 className="mt-1"
               />
             </div>
@@ -253,7 +279,8 @@ export function StitchKioskPanel() {
                   startedAt={session.started_at}
                   endAt={liveClockNow}
                   pauses={kioskPauseIntervals}
-                  frozen={kioskPaused}
+                  frozen={liveClockFrozen}
+                  frozenLabel={liveClockFrozenLabel}
                   compact
                   className="min-w-[9rem] text-right"
                 />

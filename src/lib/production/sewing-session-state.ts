@@ -678,22 +678,43 @@ export function sewingSessionElapsedBreakdown(
   };
 }
 
-/** Effective "now" for Live clocks: freeze at lunch 14:00 and/or admin pause start. */
+/**
+ * Effective "now" for Live clocks.
+ * During 14:00-16:00 Riyadh, keep wall time so scheduled lunch shows as a
+ * Lunch-off segment. Rewinding to 14:00 hid that segment and made elapsed
+ * look like a still-running work clock. Admin pauses before lunch still
+ * freeze at paused_at.
+ */
 export function sewingLiveClockNowMs(input: {
   wallNow?: number;
   kioskPaused?: boolean;
   kioskPausedAt?: string | null;
 }): number {
   const wall = input.wallNow ?? Date.now();
-  let frozen = wall;
   if (input.kioskPaused && input.kioskPausedAt) {
     const pausedAt = new Date(input.kioskPausedAt).getTime();
-    if (Number.isFinite(pausedAt)) frozen = Math.min(frozen, pausedAt);
+    if (Number.isFinite(pausedAt)) {
+      if (isStitchLunchClockWindow(wall) && pausedAt >= stitchLunchStartAtMs(wall)) {
+        return wall;
+      }
+      return Math.min(wall, pausedAt);
+    }
   }
-  if (isStitchLunchClockWindow(wall)) {
-    frozen = Math.min(frozen, stitchLunchStartAtMs(wall));
-  }
-  return frozen;
+  return wall;
+}
+
+/** Live / Scan clocks must not tick during lunch or an admin pause. */
+export function isStitchLiveClockFrozen(input: {
+  wallNow?: number;
+  kioskPaused?: boolean;
+  kioskLunchActive?: boolean;
+}): boolean {
+  const wall = input.wallNow ?? Date.now();
+  return (
+    Boolean(input.kioskPaused) ||
+    Boolean(input.kioskLunchActive) ||
+    isStitchLunchClockWindow(wall)
+  );
 }
 
 /** Warn when a piece has been open longer than this (45 minutes). */

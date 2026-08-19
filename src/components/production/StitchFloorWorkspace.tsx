@@ -28,12 +28,14 @@ import {
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
 import {
   SEWING_LIVE_LONG_RUNNING_SEC,
+  isStitchLiveClockFrozen,
   sewingLiveClockNowMs,
   sewingSessionElapsedSecExcludingPauses,
   type SewingDashboardPeriod,
   type SewingEmployeeAggregate,
   type SewingPauseIntervalLike,
 } from "@/lib/production/sewing-session-state";
+import { isStitchLunchClockWindow } from "@/lib/production/stitch-kiosk-lunch";
 import {
   sewingSessionClientDisplayName,
   sewingSessionEmployeeDisplayName,
@@ -114,6 +116,7 @@ type DashboardPayload = {
   kiosk_paused?: boolean;
   kiosk_paused_at?: string | null;
   kiosk_paused_by?: string | null;
+  kiosk_lunch_active?: boolean;
   kiosk_pause_intervals?: SewingPauseIntervalLike[];
 };
 
@@ -482,6 +485,14 @@ export function StitchFloorWorkspace({
     kioskPaused: Boolean(data?.kiosk_paused),
     kioskPausedAt: data?.kiosk_paused_at,
   });
+  const lunchActive =
+    Boolean(data?.kiosk_lunch_active) || isStitchLunchClockWindow(now);
+  const liveClockFrozen = isStitchLiveClockFrozen({
+    wallNow: now,
+    kioskPaused: Boolean(data?.kiosk_paused),
+    kioskLunchActive: lunchActive,
+  });
+  const liveClockFrozenLabel = lunchActive ? "Frozen for lunch" : "Frozen";
 
   const liveRows = useMemo(() => {
     const rows = data?.open_sessions ?? [];
@@ -675,11 +686,11 @@ export function StitchFloorWorkspace({
                   work total plus before/lunch/after when a pause overlapped. Request admin
                   approval to stop, edit, or delete a row.
                 </p>
-                {data?.kiosk_paused ? (
+                {liveClockFrozen ? (
                   <p className="mt-2 text-sm font-semibold text-amber-800">
-                    Kiosk paused
-                    {data.kiosk_paused_by ? ` by ${data.kiosk_paused_by}` : ""}
-                    {" - Live clocks frozen."}
+                    {lunchActive
+                      ? "Lunch 14:00-16:00 Riyadh - Live clocks frozen. Lunch time is not work time."
+                      : `Kiosk paused${data?.kiosk_paused_by ? ` by ${data.kiosk_paused_by}` : ""} - Live clocks frozen.`}
                   </p>
                 ) : null}
               </div>
@@ -858,7 +869,8 @@ export function StitchFloorWorkspace({
                             endAt={liveClockNow}
                             pauses={pauseIntervals}
                             longRunning={longRunning}
-                            frozen={Boolean(data.kiosk_paused)}
+                            frozen={liveClockFrozen}
+                            frozenLabel={liveClockFrozenLabel}
                             ignoreWorkdayCap={overtimeOpen}
                           />
                         </td>
@@ -989,6 +1001,7 @@ export function StitchFloorWorkspace({
           pauseIntervals={pauseIntervals}
           kioskPaused={Boolean(data?.kiosk_paused)}
           kioskPausedAt={data?.kiosk_paused_at ?? null}
+          kioskLunchActive={lunchActive}
         />
       )}
 

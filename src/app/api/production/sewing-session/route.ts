@@ -7,6 +7,7 @@ import {
   STITCH_KIOSK_LUNCH_AUTO_RESUME_ACTOR,
 } from "@/lib/data/stitch-kiosk-settings";
 import { notifyIntegration } from "@/lib/integrations";
+import { isStitchLunchClockWindow } from "@/lib/production/stitch-kiosk-lunch";
 import {
   parseSewingDashboardPeriod,
   sewingSessionsDashboard,
@@ -69,6 +70,7 @@ export async function GET(request: NextRequest) {
       kiosk_paused: kioskSettings.paused,
       kiosk_paused_at: kioskSettings.paused_at,
       kiosk_paused_by: kioskSettings.paused_by,
+      kiosk_lunch_active: isStitchLunchClockWindow(),
       kiosk_pause_intervals: kioskSettings.pause_intervals ?? [],
     });
   } catch (error) {

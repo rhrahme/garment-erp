@@ -43,6 +43,8 @@ type SewingElapsedBreakdownViewProps = {
   fallbackSec?: number | null;
   longRunning?: boolean;
   frozen?: boolean;
+  /** Shown under the work total while the clock is frozen. */
+  frozenLabel?: string;
   compact?: boolean;
   ignoreWorkdayCap?: boolean;
   className?: string;
@@ -58,6 +60,7 @@ export function SewingElapsedBreakdownView({
   fallbackSec = null,
   longRunning = false,
   frozen = false,
+  frozenLabel = "Frozen",
   compact = false,
   ignoreWorkdayCap = false,
   className,
@@ -81,7 +84,7 @@ export function SewingElapsedBreakdownView({
       >
         {formatDuration(workSec)}
         {frozen ? (
-          <div className="mt-1 text-xs font-semibold text-amber-800">Frozen</div>
+          <div className="mt-1 text-xs font-semibold text-amber-800">{frozenLabel}</div>
         ) : null}
       </div>
       {showSegments && breakdown ? (
