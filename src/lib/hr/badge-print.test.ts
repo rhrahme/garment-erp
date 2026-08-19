@@ -8,7 +8,9 @@ import {
   BADGE_QR_IRON_LABEL,
   BADGE_QR_PAIR_WIDTH_MM,
   BADGE_QR_SEW_LABEL,
+  BADGE_QR_WASH_LABEL,
   badgeDisplayName,
+  badgeQrPairSides,
   badgeGroupFromSlug,
   badgeJobFunctionLabels,
   badgeJobFunctionsLine,
@@ -55,9 +57,10 @@ describe("badge-print helpers", () => {
     assert.equal(BADGE_QR_ALT_LABEL, "ALTERATION");
     assert.equal(BADGE_QR_IRON_LABEL, "IRONING");
     assert.equal(BADGE_QR_BUTTONS_LABEL, "BUTTONS");
+    assert.equal(BADGE_QR_WASH_LABEL, "WASHING");
   });
 
-  it("prints IRONING/BUTTONS for wash_iron+buttons (Cherry), SEWING/ALTERATION otherwise", () => {
+  it("prints WASHING/IRONING for Rohan, IRONING/BUTTONS for Cherry, BUTTONS/BUTTONS for Niraj, SEWING/ALTERATION for tailors", () => {
     assert.equal(
       badgeQrPairKind(
         emp({ id: "2543411918", full_name: "Cherry", job_functions: ["wash_iron", "buttons"] })
@@ -68,7 +71,19 @@ describe("badge-print helpers", () => {
       badgeQrPairKind(
         emp({ id: "2625918129", full_name: "Rohan", job_functions: ["wash_iron"] })
       ),
-      "sew_alt"
+      "wash_iron"
+    );
+    assert.equal(
+      badgeQrPairKind(
+        emp({ id: "2625917592", full_name: "Niraj", job_functions: ["buttons"] })
+      ),
+      "buttons"
+    );
+    assert.equal(
+      badgeQrPairKind(
+        emp({ id: "0024", full_name: "Junaid Noel", short_name: "Junaid", job_functions: ["buttons"] })
+      ),
+      "buttons"
     );
     assert.equal(
       badgeQrPairKind(
@@ -76,6 +91,40 @@ describe("badge-print helpers", () => {
       ),
       "sew_alt"
     );
+    const rohan = badgeQrPairSides(
+      emp({ id: "2625918129", full_name: "Rohan", job_functions: ["wash_iron"] })
+    );
+    assert.equal(rohan.leftLabel, "WASHING");
+    assert.equal(rohan.rightLabel, "IRONING");
+    assert.equal(rohan.leftPayload, "EMPWASH:2625918129");
+    assert.equal(rohan.rightPayload, "EMPIRON:2625918129");
+    const niraj = badgeQrPairSides(
+      emp({ id: "2625917592", full_name: "Niraj", job_functions: ["buttons"] })
+    );
+    assert.equal(niraj.leftLabel, "BUTTONS");
+    assert.equal(niraj.rightLabel, "BUTTONS");
+    assert.equal(niraj.leftPayload, "EMPBTN:2625917592");
+    assert.equal(niraj.rightPayload, "EMPBTN:2625917592");
+    const junaid = badgeQrPairSides(
+      emp({ id: "0024", full_name: "Junaid Noel", short_name: "Junaid", job_functions: ["buttons"] })
+    );
+    assert.equal(junaid.leftLabel, "BUTTONS");
+    assert.equal(junaid.rightLabel, "BUTTONS");
+    assert.equal(junaid.leftPayload, "EMPBTN:0024");
+    assert.equal(junaid.rightPayload, "EMPBTN:0024");
+    const shahryar = badgeQrPairSides(
+      emp({
+        id: "2543411918",
+        full_name: "Shahryar Frinces Sadiq",
+        short_name: "Cherry",
+        job_functions: ["wash_iron", "buttons"],
+      })
+    );
+    assert.equal(shahryar.kind, "iron_buttons");
+    assert.equal(shahryar.leftLabel, "IRONING");
+    assert.equal(shahryar.rightLabel, "BUTTONS");
+    assert.equal(shahryar.leftPayload, "EMPIRON:2543411918");
+    assert.equal(shahryar.rightPayload, "EMPBTN:2543411918");
   });
 
   it("prefers short_name on badge label when set", () => {

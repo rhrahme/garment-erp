@@ -17,12 +17,15 @@ export const EMPLOYEE_IRONING_QR_PREFIX = "EMPIRON";
 /** Buttons activity arm for wash_iron + buttons dual-role badges. */
 export const EMPLOYEE_BUTTONS_QR_PREFIX = "EMPBTN";
 
+/** Washing activity arm for wash / iron badges (Rohan). */
+export const EMPLOYEE_WASHING_QR_PREFIX = "EMPWASH";
+
 export type EmployeeBadgeWorkKind = "first_make" | "alteration";
 
-/** Role chosen by EMPIRON / EMPBTN (null for EMP / EMPALT). */
+/** Role chosen by EMPIRON / EMPBTN / EMPWASH (null for EMP / EMPALT). */
 export type EmployeeBadgeActivityJobFunction = Extract<
   EmployeeJobFunction,
-  "wash_iron" | "buttons"
+  "wash_iron" | "buttons" | "washing"
 >;
 
 export type ParsedEmployeeBadgeScan = {
@@ -64,6 +67,13 @@ export function employeeButtonsQrPayload(
   return `${EMPLOYEE_BUTTONS_QR_PREFIX}:${employeeIdValue(employee)}`;
 }
 
+/** Washing QR for wash / iron badges. */
+export function employeeWashingQrPayload(
+  employee: Pick<PayrollEmployee, "id" | "employee_id_number">
+): string {
+  return `${EMPLOYEE_WASHING_QR_PREFIX}:${employeeIdValue(employee)}`;
+}
+
 /**
  * True when the badge should print IRONING + BUTTONS instead of SEWING + ALTERATION:
  * has wash_iron and buttons, and no tailor role.
@@ -74,6 +84,50 @@ export function employeeUsesIronButtonsBadgePair(
   const jobs = normalizeJobFunctions(employee.job_functions);
   if (jobs.some(isTailorJobFunction)) return false;
   return jobs.includes("wash_iron") && jobs.includes("buttons");
+}
+
+/**
+ * True when the badge should print WASHING + IRONING:
+ * wash_iron and/or washing, no tailor, and not the Cherry iron+buttons pair.
+ */
+export function employeeUsesWashIronBadgePair(
+  employee: Pick<PayrollEmployee, "job_functions">
+): boolean {
+  if (employeeUsesIronButtonsBadgePair(employee)) return false;
+  const jobs = normalizeJobFunctions(employee.job_functions);
+  if (jobs.some(isTailorJobFunction)) return false;
+  return jobs.includes("wash_iron") || jobs.includes("washing");
+}
+
+/**
+ * True when the badge should print BUTTONS + BUTTONS (Niraj / Junaid):
+ * has buttons, no tailor, and not Cherry's iron+buttons or Rohan's wash/iron pair.
+ */
+export function employeeUsesButtonsBadgePair(
+  employee: Pick<PayrollEmployee, "job_functions">
+): boolean {
+  if (employeeUsesIronButtonsBadgePair(employee)) return false;
+  if (employeeUsesWashIronBadgePair(employee)) return false;
+  const jobs = normalizeJobFunctions(employee.job_functions);
+  if (jobs.some(isTailorJobFunction)) return false;
+  return jobs.includes("buttons");
+}
+
+/** EMPWASH / EMPIRON are valid when payroll has washing or wash_iron. */
+export function employeeAllowsBadgeActivity(
+  jobFunctions: unknown,
+  activity: EmployeeBadgeActivityJobFunction | null | undefined
+): boolean {
+  if (!activity) return true;
+  const jobs = normalizeJobFunctions(jobFunctions);
+  if (jobs.includes(activity)) return true;
+  if (
+    (activity === "washing" || activity === "wash_iron") &&
+    (jobs.includes("wash_iron") || jobs.includes("washing"))
+  ) {
+    return true;
+  }
+  return false;
 }
 
 function parsePrefixedBadgeValue(raw: string, prefix: string): string | null {
@@ -93,6 +147,7 @@ export function parseEmployeeQrPayload(raw: string): string | null {
   if (trimmed.startsWith(`${EMPLOYEE_ALTERATION_QR_PREFIX}:`)) return null;
   if (trimmed.startsWith(`${EMPLOYEE_IRONING_QR_PREFIX}:`)) return null;
   if (trimmed.startsWith(`${EMPLOYEE_BUTTONS_QR_PREFIX}:`)) return null;
+  if (trimmed.startsWith(`${EMPLOYEE_WASHING_QR_PREFIX}:`)) return null;
   const value = trimmed.slice(prefix.length).trim();
   return value || null;
 }
@@ -112,9 +167,22 @@ export function parseEmployeeButtonsQrPayload(raw: string): string | null {
   return parsePrefixedBadgeValue(raw, EMPLOYEE_BUTTONS_QR_PREFIX);
 }
 
+/** Parse EMPWASH:{value} washing activity badge. */
+export function parseEmployeeWashingQrPayload(raw: string): string | null {
+  return parsePrefixedBadgeValue(raw, EMPLOYEE_WASHING_QR_PREFIX);
+}
+
 /** Parse any employee badge QR; returns null when not an employee badge. */
 export function parseEmployeeBadgeScan(raw: string): ParsedEmployeeBadgeScan | null {
-  // Longer prefixes before EMPALT / EMP (EMP is a prefix of EMPIRON / EMPBTN / EMPALT).
+  // Longer prefixes before EMPALT / EMP (EMP is a prefix of EMPIRON / EMPBTN / EMPALT / EMPWASH).
+  const washing = parseEmployeeWashingQrPayload(raw);
+  if (washing) {
+    return {
+      value: washing,
+      work_kind: "first_make",
+      activity_job_function: "washing",
+    };
+  }
   const ironing = parseEmployeeIroningQrPayload(raw);
   if (ironing) {
     return {
@@ -158,7 +226,11 @@ export function isEmployeeButtonsQrPayload(raw: string): boolean {
   return parseEmployeeButtonsQrPayload(raw) !== null;
 }
 
-/** True for EMP: / EMPALT: / EMPIRON: / EMPBTN: badge scans. */
+export function isEmployeeWashingQrPayload(raw: string): boolean {
+  return parseEmployeeWashingQrPayload(raw) !== null;
+}
+
+/** True for EMP: / EMPALT: / EMPIRON: / EMPBTN: / EMPWASH: badge scans. */
 export function isAnyEmployeeBadgeQrPayload(raw: string): boolean {
   return parseEmployeeBadgeScan(raw) !== null;
 }

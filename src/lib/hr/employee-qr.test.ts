@@ -5,7 +5,11 @@ import {
   employeeButtonsQrPayload,
   employeeIroningQrPayload,
   employeeQrPayload,
+  employeeAllowsBadgeActivity,
+  employeeUsesButtonsBadgePair,
   employeeUsesIronButtonsBadgePair,
+  employeeUsesWashIronBadgePair,
+  employeeWashingQrPayload,
   isAnyEmployeeBadgeQrPayload,
   isEmployeeAlterationQrPayload,
   isEmployeeButtonsQrPayload,
@@ -16,16 +20,18 @@ import {
   parseEmployeeButtonsQrPayload,
   parseEmployeeIroningQrPayload,
   parseEmployeeQrPayload,
+  parseEmployeeWashingQrPayload,
 } from "@/lib/hr/employee-qr";
 
 const employee = { id: "emp-1", employee_id_number: "12345" };
 
 describe("employee QR payloads", () => {
-  it("builds EMP / EMPALT / EMPIRON / EMPBTN from the same id number", () => {
+  it("builds EMP / EMPALT / EMPIRON / EMPBTN / EMPWASH from the same id number", () => {
     assert.equal(employeeQrPayload(employee), "EMP:12345");
     assert.equal(employeeAlterationQrPayload(employee), "EMPALT:12345");
     assert.equal(employeeIroningQrPayload(employee), "EMPIRON:12345");
     assert.equal(employeeButtonsQrPayload(employee), "EMPBTN:12345");
+    assert.equal(employeeWashingQrPayload(employee), "EMPWASH:12345");
   });
 
   it("falls back to internal id when id number is blank", () => {
@@ -44,6 +50,7 @@ describe("parseEmployeeQrPayload", () => {
     assert.equal(parseEmployeeQrPayload("EMPALT:12345"), null);
     assert.equal(parseEmployeeQrPayload("EMPIRON:12345"), null);
     assert.equal(parseEmployeeQrPayload("EMPBTN:12345"), null);
+    assert.equal(parseEmployeeQrPayload("EMPWASH:12345"), null);
     assert.equal(parseEmployeeQrPayload("EMP:"), null);
   });
 });
@@ -60,6 +67,7 @@ describe("parseEmployeeIroningQrPayload / parseEmployeeButtonsQrPayload", () => 
   it("parses EMPIRON and EMPBTN", () => {
     assert.equal(parseEmployeeIroningQrPayload("EMPIRON:2543411918"), "2543411918");
     assert.equal(parseEmployeeButtonsQrPayload("EMPBTN:2543411918"), "2543411918");
+    assert.equal(parseEmployeeWashingQrPayload("EMPWASH:2625918129"), "2625918129");
     assert.equal(parseEmployeeIroningQrPayload("EMP:2543411918"), null);
     assert.equal(parseEmployeeButtonsQrPayload("EMPALT:2543411918"), null);
   });
@@ -87,6 +95,11 @@ describe("parseEmployeeBadgeScan", () => {
       work_kind: "first_make",
       activity_job_function: "buttons",
     });
+    assert.deepEqual(parseEmployeeBadgeScan("EMPWASH:12345"), {
+      value: "12345",
+      work_kind: "first_make",
+      activity_job_function: "washing",
+    });
     assert.equal(parseEmployeeBadgeScan("FR-0129-L01-OS-1/2"), null);
   });
 
@@ -105,10 +118,28 @@ describe("employeeUsesIronButtonsBadgePair", () => {
       true
     );
     assert.equal(employeeUsesIronButtonsBadgePair({ job_functions: ["wash_iron"] }), false);
+    assert.equal(employeeUsesWashIronBadgePair({ job_functions: ["wash_iron"] }), true);
+    assert.equal(employeeUsesWashIronBadgePair({ job_functions: ["washing"] }), true);
+    assert.equal(
+      employeeUsesWashIronBadgePair({ job_functions: ["wash_iron", "buttons"] }),
+      false
+    );
+    assert.equal(employeeAllowsBadgeActivity(["wash_iron"], "washing"), true);
+    assert.equal(employeeAllowsBadgeActivity(["washing"], "wash_iron"), true);
     assert.equal(
       employeeUsesIronButtonsBadgePair({
         job_functions: ["wash_iron", "buttons", "shirt_tailor"],
       }),
+      false
+    );
+    assert.equal(employeeUsesButtonsBadgePair({ job_functions: ["buttons"] }), true);
+    assert.equal(
+      employeeUsesButtonsBadgePair({ job_functions: ["wash_iron", "buttons"] }),
+      false
+    );
+    assert.equal(employeeUsesButtonsBadgePair({ job_functions: ["wash_iron"] }), false);
+    assert.equal(
+      employeeUsesButtonsBadgePair({ job_functions: ["buttons", "shirt_tailor"] }),
       false
     );
   });
@@ -122,6 +153,7 @@ describe("badge QR detectors", () => {
     assert.equal(isAnyEmployeeBadgeQrPayload("EMPALT:1"), true);
     assert.equal(isAnyEmployeeBadgeQrPayload("EMPIRON:1"), true);
     assert.equal(isAnyEmployeeBadgeQrPayload("EMPBTN:1"), true);
+    assert.equal(isAnyEmployeeBadgeQrPayload("EMPWASH:1"), true);
     assert.equal(isAnyEmployeeBadgeQrPayload("EMP:1"), true);
   });
 });

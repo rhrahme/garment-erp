@@ -28,7 +28,10 @@ export type SewingSessionEditPatch = {
   started_at?: string | null;
   ended_at?: string | null;
   work_kind?: SewingWorkKind | null;
-  activity_job_function?: Extract<EmployeeJobFunction, "wash_iron" | "buttons"> | null;
+  activity_job_function?: Extract<
+    EmployeeJobFunction,
+    "wash_iron" | "buttons" | "washing"
+  > | null;
 };
 
 export type SewingSessionChangeSnapshot = Pick<

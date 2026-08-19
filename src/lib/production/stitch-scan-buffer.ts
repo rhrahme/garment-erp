@@ -1,17 +1,18 @@
 /**
  * USB wedge scanners sometimes pause mid-code long enough that an aggressive
  * idle flush splits one QR into fragments (FR-0129 + -L02-OS-1/2, EMP + :id,
- * EMPALT / EMPIRON / EMPBTN + :id). These helpers detect and reassemble those
+ * EMPALT / EMPIRON / EMPBTN / EMPWASH + :id). These helpers detect and reassemble those
  * fragments.
  */
 
 /** Incomplete EMP* badge prefixes the wedge may flush alone. */
 function looksLikePartialEmployeeBadgePrefix(code: string): boolean {
   const c = code.trim();
-  // EMP / EMP: / EMPA..EMPALT: / EMPI..EMPIRON: / EMPB..EMPBTN:
+  // EMP / EMP: / EMPA..EMPALT: / EMPI..EMPIRON: / EMPB..EMPBTN: / EMPW..EMPWASH:
   if (/^EMP(?:A(?:L(?:T)?)?)?:?$/i.test(c)) return true;
   if (/^EMP(?:I(?:R(?:O(?:N)?)?)?)?:?$/i.test(c)) return true;
   if (/^EMP(?:B(?:T(?:N)?)?)?:?$/i.test(c)) return true;
+  if (/^EMP(?:W(?:A(?:S(?:H)?)?)?)?:?$/i.test(c)) return true;
   return false;
 }
 
@@ -39,7 +40,24 @@ export function tryMergeScanFragments(prev: string, next: string): string | null
   const b = next.trim();
   if (!a || !b) return null;
 
-  // Longest EMP* prefixes before EMP — EMP is a prefix of EMPIRON / EMPBTN / EMPALT.
+  // Longest EMP* prefixes before EMP -- EMP is a prefix of EMPIRON / EMPBTN / EMPALT / EMPWASH.
+
+  // EMPWASH + :id / EMPWASH: + id / EMPWASH + id
+  if (/^EMPWASH:?$/i.test(a) && /^:?\d{4,}$/.test(b)) {
+    return `EMPWASH:${b.replace(/^:/, "")}`;
+  }
+  if (/^EMPWAS$/i.test(a) && /^H:?\d{4,}$/i.test(b)) {
+    return `EMPWASH:${b.replace(/^H:?/i, "")}`;
+  }
+  if (/^EMPWA$/i.test(a) && /^SH:?\d{4,}$/i.test(b)) {
+    return `EMPWASH:${b.replace(/^SH:?/i, "")}`;
+  }
+  if (/^EMPW$/i.test(a) && /^ASH:?\d{4,}$/i.test(b)) {
+    return `EMPWASH:${b.replace(/^ASH:?/i, "")}`;
+  }
+  if (/^EMP$/i.test(a) && /^WASH:?\d{4,}$/i.test(b)) {
+    return `EMPWASH:${b.replace(/^WASH:?/i, "")}`;
+  }
 
   // EMPIRON + :id / EMPIRON: + id / EMPIRON + id
   if (/^EMPIRON:?$/i.test(a) && /^:?\d{4,}$/.test(b)) {

@@ -104,6 +104,10 @@ describe("sewingSessionStatusLabel", () => {
       "Buttons"
     );
     assert.equal(
+      sewingSessionStatusLabel("open", ["wash_iron"], "first_make", "washing"),
+      "Washing"
+    );
+    assert.equal(
       sewingSessionStatusLabel("open", ["shirt_tailor"], "alteration"),
       "Alteration"
     );

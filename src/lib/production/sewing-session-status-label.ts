@@ -80,6 +80,7 @@ export function stackedOpenFollowupMessage(
 export function floorActivityLabelFromActivityJobFunction(
   activity: EmployeeJobFunction | null | undefined
 ): string | null {
+  if (activity === "washing") return "Washing";
   if (activity === "wash_iron") return "Ironing";
   if (activity === "buttons") return "Buttons";
   return null;

@@ -124,7 +124,7 @@ describe("explainUnrecognizedStitchScan", () => {
   it("gives a clear generic fallback with expected formats", () => {
     const msg = explainUnrecognizedStitchScan("ZZZ-NOT-A-PIECE");
     assert.match(msg, /Code not recognized: ZZZ-NOT-A-PIECE/);
-    assert.match(msg, /EMP \/ EMPALT \/ EMPIRON \/ EMPBTN/);
+    assert.match(msg, /EMP \/ EMPALT \/ EMPIRON \/ EMPBTN \/ EMPWASH/);
     assert.match(msg, /production A4 piece QR/i);
   });
 });

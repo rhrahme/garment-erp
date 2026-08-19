@@ -32,8 +32,14 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   prints **IRONING** (`EMPIRON:{id}`) + **BUTTONS** (`EMPBTN:{id}`) instead of
   SEWING/ALTERATION. Scanning arms `activity_job_function` so Live shows
   Ironing or Buttons for that session (not always Wash / iron from role
-  priority). Rohan (wash_iron only) keeps SEWING/ALTERATION. USB wedge
-  reassembly must treat `EMPALT` / `EMPIRON` / `EMPBTN` (and `:` variants) as
+  priority).
+- **Wash / iron badges** (Aug 19 2026): `wash_iron` and/or `washing` with no
+  tailor and not Cherry's pair (e.g. Rohan `2625918129`) print **WASHING**
+  (`EMPWASH:{id}`) + **IRONING** (`EMPIRON:{id}`). Do not print
+  SEWING/ALTERATION for a wash/iron worker. `wash_iron` payroll covers both
+  scans. USB wedge
+  reassembly must treat `EMPALT` / `EMPIRON` / `EMPBTN` / `EMPWASH` (and `:`
+  variants) as
   partial fragments (never collapse to `EMP:`). Starting an alteration session
   writes `pattern_alteration_pending` (idempotent per session) and notifies
   Pattern (`production.alteration_started` / `pattern.alteration_chart_pending`)
@@ -44,10 +50,20 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   tailor starts. Pattern enters stitcher comments on the client measurement
   sheet (per-line Remark + bottom Stitcher comments) and/or from the
   alteration queue; those print on the Production / stitcher A4. **Badge
-  layout**: QRs are 20mm with full labels (**SEWING** / **ALTERATION**, or
-  **IRONING** / **BUTTONS**), centered as a pair with a fixed **3cm** clear
+  layout**: QRs are 20mm with full labels (**SEWING** / **ALTERATION**,
+  **WASHING** / **IRONING**, **IRONING** / **BUTTONS**, or **BUTTONS** /
+  **BUTTONS**), centered as a pair with a fixed **3cm** clear
   gap between code edges (not opposite card edges, not abbreviated). Reprint
-  Expats badges after dual-QR / layout changes.
+  Expats badges after dual-QR / layout changes. Reprint Rohan after the
+  wash/iron pair change. Reprint Niraj and Junaid after the buttons-only
+  pair change. Reprint Shahryar (Cherry) if the plastic is still
+  SEWING/ALTERATION.
+- **Buttons-only badges** (Aug 19 2026): `buttons` with no tailor and not
+  Cherry's iron+buttons pair (e.g. Niraj `2625917592`, Junaid `0024`) print
+  **BUTTONS** (`EMPBTN:{id}`) on both squares. Cards always have two QRs;
+  do not invent a sewing or alteration code, and do not print Champa unless
+  payroll has `champa`. Either scan arms Buttons. Shahryar / Cherry
+  (`2543411918`, wash_iron + buttons) stays **IRONING** + **BUTTONS**.
 - **All employees on the Expats ID badge list may use the kiosk** - cutters,
   wash/iron, washing, buttons, champa, not only tailors. Do not re-add a
   tailor-only gate.

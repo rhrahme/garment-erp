@@ -1,23 +1,13 @@
 import {
-  BADGE_QR_ALT_LABEL,
-  BADGE_QR_BUTTONS_LABEL,
   BADGE_QR_DISPLAY_MM,
   BADGE_QR_FETCH_PX,
   BADGE_QR_GAP_MM,
-  BADGE_QR_IRON_LABEL,
   BADGE_QR_PAIR_WIDTH_MM,
-  BADGE_QR_SEW_LABEL,
   badgeDisplayName,
   badgeJobFunctionsLine,
   badgePrintDateLabel,
-  badgeQrPairKind,
+  badgeQrPairSides,
 } from "@/lib/hr/badge-print";
-import {
-  employeeAlterationQrPayload,
-  employeeButtonsQrPayload,
-  employeeIroningQrPayload,
-  employeeQrPayload,
-} from "@/lib/hr/employee-qr";
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
@@ -57,17 +47,7 @@ export function EmployeeBadgeCard({
   employee: PayrollEmployee;
   group: IdBadgeGroup;
 }) {
-  const pairKind = badgeQrPairKind(employee);
-  const leftPayload =
-    pairKind === "iron_buttons"
-      ? employeeIroningQrPayload(employee)
-      : employeeQrPayload(employee);
-  const rightPayload =
-    pairKind === "iron_buttons"
-      ? employeeButtonsQrPayload(employee)
-      : employeeAlterationQrPayload(employee);
-  const leftLabel = pairKind === "iron_buttons" ? BADGE_QR_IRON_LABEL : BADGE_QR_SEW_LABEL;
-  const rightLabel = pairKind === "iron_buttons" ? BADGE_QR_BUTTONS_LABEL : BADGE_QR_ALT_LABEL;
+  const { leftPayload, rightPayload, leftLabel, rightLabel } = badgeQrPairSides(employee);
   const qrSrc = qrImageUrl(leftPayload, BADGE_QR_FETCH_PX);
   const altQrSrc = qrImageUrl(rightPayload, BADGE_QR_FETCH_PX);
   const label = groupLabel(group);

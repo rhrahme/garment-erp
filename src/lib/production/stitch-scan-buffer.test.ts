@@ -21,6 +21,9 @@ describe("looksLikePartialScanFragment", () => {
     assert.equal(looksLikePartialScanFragment("EMPBTN"), true);
     assert.equal(looksLikePartialScanFragment("EMPBTN:"), true);
     assert.equal(looksLikePartialScanFragment("EMPB"), true);
+    assert.equal(looksLikePartialScanFragment("EMPWASH"), true);
+    assert.equal(looksLikePartialScanFragment("EMPWASH:"), true);
+    assert.equal(looksLikePartialScanFragment("EMPW"), true);
     assert.equal(looksLikePartialScanFragment(":2613429014"), true);
     assert.equal(looksLikePartialScanFragment("s"), true);
   });
@@ -30,6 +33,7 @@ describe("looksLikePartialScanFragment", () => {
     assert.equal(looksLikePartialScanFragment("EMPALT:2631625072"), false);
     assert.equal(looksLikePartialScanFragment("EMPIRON:2543411918"), false);
     assert.equal(looksLikePartialScanFragment("EMPBTN:2543411918"), false);
+    assert.equal(looksLikePartialScanFragment("EMPWASH:2625918129"), false);
     assert.equal(looksLikePartialScanFragment("FR-0129-L08-TR-2/2"), false);
     assert.equal(looksLikePartialScanFragment("FR-0132-L07-JKT-1/2"), false);
   });
@@ -88,6 +92,14 @@ describe("tryMergeScanFragments", () => {
     assert.equal(
       tryMergeScanFragments("EMP", "BTN:2543411918"),
       "EMPBTN:2543411918"
+    );
+    assert.equal(
+      tryMergeScanFragments("EMPWASH", ":2625918129"),
+      "EMPWASH:2625918129"
+    );
+    assert.equal(
+      tryMergeScanFragments("EMP", "WASH:2625918129"),
+      "EMPWASH:2625918129"
     );
   });
 

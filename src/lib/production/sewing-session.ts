@@ -2,6 +2,7 @@ import { readClients } from "@/lib/data/clients";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSewingSessionsFresh, writeSewingSessions } from "@/lib/data/sewing-sessions";
 import {
+  employeeAllowsBadgeActivity,
   isAnyEmployeeBadgeQrPayload,
   parseEmployeeBadgeScan,
   type EmployeeBadgeActivityJobFunction,
@@ -785,11 +786,13 @@ export async function processSewingKioskScan(
         }
       );
     }
-    if (
-      activityJobFunction &&
-      !normalizeJobFunctions(employee.job_functions).includes(activityJobFunction)
-    ) {
-      const needed = activityJobFunction === "wash_iron" ? "Ironing" : "Buttons";
+    if (activityJobFunction && !employeeAllowsBadgeActivity(employee.job_functions, activityJobFunction)) {
+      const needed =
+        activityJobFunction === "washing"
+          ? "Washing"
+          : activityJobFunction === "wash_iron"
+            ? "Ironing"
+            : "Buttons";
       return failResult(
         `Badge role ${needed} is not assigned on this employee - contact HR.`,
         "invalid_badge",
@@ -1022,7 +1025,9 @@ export async function processSewingKioskScan(
     const readyHint =
       workKind === "alteration"
         ? `${arm.employee_name} ready for ALTERATION - scan A4 piece QR within 30 seconds.`
-        : activityJobFunction === "wash_iron"
+        : activityJobFunction === "washing"
+          ? `${arm.employee_name} ready for WASHING - scan A4 piece QR within 30 seconds.`
+          : activityJobFunction === "wash_iron"
           ? `${arm.employee_name} ready for IRONING - scan A4 piece QR within 30 seconds.`
           : activityJobFunction === "buttons"
             ? `${arm.employee_name} ready for BUTTONS - scan A4 piece QR within 30 seconds.`

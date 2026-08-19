@@ -4,27 +4,17 @@ import {
   BADGE_CARD_WIDTH_MM,
   BADGE_CARDS_PER_PAGE,
   BADGE_CARDS_PER_ROW,
-  BADGE_QR_ALT_LABEL,
-  BADGE_QR_BUTTONS_LABEL,
   BADGE_QR_DISPLAY_MM,
   BADGE_QR_FETCH_PX,
   BADGE_QR_GAP_MM,
-  BADGE_QR_IRON_LABEL,
   BADGE_QR_PAIR_WIDTH_MM,
-  BADGE_QR_SEW_LABEL,
   BADGE_ROWS_PER_PAGE,
   badgeDisplayName,
   badgeJobFunctionsLine,
   badgePrintDateLabel,
-  badgeQrPairKind,
+  badgeQrPairSides,
   chunkBadgePages,
 } from "@/lib/hr/badge-print";
-import {
-  employeeAlterationQrPayload,
-  employeeButtonsQrPayload,
-  employeeIroningQrPayload,
-  employeeQrPayload,
-} from "@/lib/hr/employee-qr";
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageFetchUrl } from "@/lib/production/qr-labels";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
@@ -232,18 +222,8 @@ export async function generateEmployeeBadgePdf(
       const x = PAGE_MARGIN_MM + col * (BADGE_CARD_WIDTH_MM + GAP_X_MM);
       const y = PAGE_MARGIN_MM + row * (BADGE_CARD_HEIGHT_MM + GAP_Y_MM);
 
-      const pairKind = badgeQrPairKind(employee);
-      const payload =
-        pairKind === "iron_buttons"
-          ? employeeIroningQrPayload(employee)
-          : employeeQrPayload(employee);
-      const altPayload =
-        pairKind === "iron_buttons"
-          ? employeeButtonsQrPayload(employee)
-          : employeeAlterationQrPayload(employee);
-      const leftLabel = pairKind === "iron_buttons" ? BADGE_QR_IRON_LABEL : BADGE_QR_SEW_LABEL;
-      const rightLabel =
-        pairKind === "iron_buttons" ? BADGE_QR_BUTTONS_LABEL : BADGE_QR_ALT_LABEL;
+      const { leftPayload: payload, rightPayload: altPayload, leftLabel, rightLabel } =
+        badgeQrPairSides(employee);
       let qrDataUrl = qrCache.get(payload);
       if (!qrDataUrl) {
         qrDataUrl = await fetchQrDataUrl(payload);

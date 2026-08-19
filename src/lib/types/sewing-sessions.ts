@@ -19,7 +19,10 @@ export type SewingKioskArm = {
    * Role chosen by EMPIRON / EMPBTN dual-role badges.
    * Live labels use this instead of the full job_functions priority list.
    */
-  activity_job_function?: Extract<EmployeeJobFunction, "wash_iron" | "buttons"> | null;
+  activity_job_function?: Extract<
+    EmployeeJobFunction,
+    "wash_iron" | "buttons" | "washing"
+  > | null;
 };
 
 /** Short-lived: A4 scanned first, waiting for idle employee badge to start. */
@@ -96,7 +99,10 @@ export type SewingSession = {
    * Role chosen by EMPIRON / EMPBTN when the session started.
    * Live / History show Ironing or Buttons for that session.
    */
-  activity_job_function?: Extract<EmployeeJobFunction, "wash_iron" | "buttons"> | null;
+  activity_job_function?: Extract<
+    EmployeeJobFunction,
+    "wash_iron" | "buttons" | "washing"
+  > | null;
   /**
    * Scan at/after 22:00 Riyadh (overtime). Logged immediately; admin confirms later.
    * rejected keeps the row but drops it from Performance totals.

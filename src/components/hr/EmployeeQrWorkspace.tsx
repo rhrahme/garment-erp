@@ -7,20 +7,10 @@ import { EmployeeBadgePrintControls } from "@/components/hr/EmployeeBadgePrintCo
 import { JobFunctionsEditor } from "@/components/hr/JobFunctionsEditor";
 import { ShortNameEditor } from "@/components/hr/ShortNameEditor";
 import {
-  BADGE_QR_ALT_LABEL,
-  BADGE_QR_BUTTONS_LABEL,
-  BADGE_QR_IRON_LABEL,
-  BADGE_QR_SEW_LABEL,
   badgeDisplayName,
-  badgeQrPairKind,
+  badgeQrPairSides,
   listActiveBadgeEmployees,
 } from "@/lib/hr/badge-print";
-import {
-  employeeAlterationQrPayload,
-  employeeButtonsQrPayload,
-  employeeIroningQrPayload,
-  employeeQrPayload,
-} from "@/lib/hr/employee-qr";
 import { type IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageUrl } from "@/lib/production/qr-labels";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
@@ -58,7 +48,7 @@ const GROUP_COPY: Record<
   expat: {
     title: "Expat employee ID badges",
     description:
-      "Expat badge group. Tailors: Sew (EMP) + Alteration (EMPALT). Wash/iron + Buttons workers (e.g. Cherry): Ironing (EMPIRON) + Buttons (EMPBTN) so Live shows the chosen job.",
+      "Expat badge group. Tailors: Sew (EMP) + Alteration (EMPALT). Wash / iron (Rohan): Washing (EMPWASH) + Ironing (EMPIRON). Wash/iron + Buttons (Shahryar / Cherry): Ironing (EMPIRON) + Buttons (EMPBTN). Buttons only (Niraj, Junaid): Buttons (EMPBTN) + Buttons (EMPBTN).",
     emptyHint: "No active Expat employees yet. Add one below.",
   },
 };
@@ -164,19 +154,8 @@ export function EmployeeQrWorkspace({
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((employee) => {
-            const pairKind = badgeQrPairKind(employee);
-            const payload =
-              pairKind === "iron_buttons"
-                ? employeeIroningQrPayload(employee)
-                : employeeQrPayload(employee);
-            const altPayload =
-              pairKind === "iron_buttons"
-                ? employeeButtonsQrPayload(employee)
-                : employeeAlterationQrPayload(employee);
-            const leftLabel =
-              pairKind === "iron_buttons" ? BADGE_QR_IRON_LABEL : BADGE_QR_SEW_LABEL;
-            const rightLabel =
-              pairKind === "iron_buttons" ? BADGE_QR_BUTTONS_LABEL : BADGE_QR_ALT_LABEL;
+            const { leftPayload: payload, rightPayload: altPayload, leftLabel, rightLabel } =
+              badgeQrPairSides(employee);
             const qrSrc = qrImageUrl(payload, QR_SIZE);
             const altQrSrc = qrImageUrl(altPayload, QR_SIZE);
 
