@@ -96,6 +96,19 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   session (Before lunch / Lunch off / After lunch). Closed `duration_sec`
   excludes pause windows. Do not collapse back to a single opaque total when
   pauses exist.
+- **Admin employee work lookup** (Aug 19 2026): on stitch kiosk Performance,
+  admin can pick one employee and see today / this week / this month (pieces,
+  hours, Live now, piece list). Same Performance rules: closed sessions
+  only; rejected overtime does not count. APIs
+  `/api/production/sewing-session/employee-work` (admin session) +
+  `/api/v1/production/sewing-session/employee-work`. Do not show this picker
+  to stitch@ / pattern.
+- **Admin floor dashboard** (Aug 19 2026): same Performance admin panel lists
+  who **did not scan yet** vs who scanned (Today / Week / Month). Roster =
+  active Expats who can use the kiosk and have a floor job (tailor / cutter /
+  wash-iron / buttons). Pattern/QC/cleaner-only are not in Missing. A scan
+  counts as present even if overtime was later rejected. Tap a name for
+  day/week/month detail.
 - **Stitch/Pattern change requests** (Aug 10 2026): stitch@ and pattern@ may
   request admin approval to **stop**, **edit**, **delete** a Live/History
   session, **delete** a failed-scan row, or **pause the whole kiosk**. Nothing
@@ -624,7 +637,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
-- [session-2026-08-19](session-2026-08-19.md) - Pattern How-to tab + email notices, 10 PM auto-close + overtime confirm, Kashif Live leftover, Mem0 brain, pattern login check
+- [session-2026-08-19](session-2026-08-19.md) - Admin stitch employee day/week/month lookup, Pattern How-to tab + email notices, 10 PM auto-close + overtime confirm, Kashif Live leftover, Mem0 brain, pattern login check
 - [session-2026-08-05](session-2026-08-05.md) - Load from base pattern fills the Sample column on client sheets; picker preload perf
 - [session-2026-08-04](session-2026-08-04.md) - Al Ajlan draft invoices prefilled with agreed proposal prices
 - [session-2026-08-03](session-2026-08-03.md) - orange highlight for recently added custom fabrics

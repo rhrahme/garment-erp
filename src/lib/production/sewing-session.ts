@@ -102,10 +102,15 @@ export {
   SEWING_CLOSING_TIMEOUT_MS,
   sewingFailedScansForPeriod,
   sewingPeriodWindow,
+  listSewingKioskEmployees as listSewingKioskEmployeesBase,
+  sewingEmployeeWorkLookup as sewingEmployeeWorkLookupBase,
 } from "@/lib/production/sewing-session-state";
 export type {
   SewingDashboardPeriod,
   SewingEmployeeAggregate,
+  SewingEmployeeWorkPeriod,
+  SewingEmployeeWorkSummary,
+  SewingKioskEmployeeOption,
   SewingPeriodWindow,
   SewingSessionsDashboardOptions,
 } from "@/lib/production/sewing-session-state";
@@ -172,6 +177,57 @@ export function sewingSessionsDashboard(
       dash.today_by_employee,
       payrollLookupForSessionUi
     ),
+  };
+}
+
+function enrichEmployeeWorkPeriod(period: {
+  sessions: SewingSession[];
+  open_sessions: SewingSession[];
+}) {
+  return {
+    ...period,
+    sessions: enrichSessionsForFloorUi(period.sessions),
+    open_sessions: enrichSessionsForFloorUi(period.open_sessions),
+  };
+}
+
+export function listSewingKioskEmployees(store: SewingSessionsFile) {
+  return listSewingKioskEmployeesBase({
+    ...store,
+    sessions: enrichSessionsForFloorUi(store.sessions ?? []),
+  });
+}
+
+export function sewingEmployeeWorkLookup(
+  store: SewingSessionsFile,
+  employeeKey: string,
+  at = Date.now()
+) {
+  const enrichedStore: SewingSessionsFile = {
+    ...store,
+    sessions: enrichSewingSessionsGarmentFields(store.sessions ?? []),
+  };
+  const raw = sewingEmployeeWorkLookupBase(enrichedStore, employeeKey, at);
+  if (!raw) return null;
+  const [named] = applyShortNamesToEmployeeAggregates(
+    [
+      {
+        employee_id: raw.employee_id,
+        employee_name: raw.employee_name,
+        count: 0,
+        duration_sec: 0,
+        avg_duration_sec: 0,
+        articles: [],
+      },
+    ],
+    payrollLookupForSessionUi
+  );
+  return {
+    ...raw,
+    employee_name: named?.employee_name ?? raw.employee_name,
+    day: enrichEmployeeWorkPeriod(raw.day),
+    week: enrichEmployeeWorkPeriod(raw.week),
+    month: enrichEmployeeWorkPeriod(raw.month),
   };
 }
 

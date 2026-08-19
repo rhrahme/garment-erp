@@ -212,6 +212,10 @@ export function ZapierSetup() {
             <li>
               PATCH {baseUrl}/api/v1/pattern/notices/[id] (action: acknowledge)
             </li>
+            <li>
+              GET {baseUrl}/api/v1/production/sewing-session/employee-work
+              (?period=day|week|month&employee_id) attendance + work
+            </li>
             <li>POST {baseUrl}/api/v1/production/sewing-session/scan</li>
             <li>GET/POST {baseUrl}/api/v1/production/sewing-session/change-request</li>
             <li className="pl-4 text-slate-500">

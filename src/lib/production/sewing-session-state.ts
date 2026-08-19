@@ -39,6 +39,33 @@ export type SewingEmployeeAggregate = {
   articles: string[];
 };
 
+export type SewingKioskEmployeeOption = {
+  employee_id: string;
+  employee_name: string;
+  employee_id_number: string;
+};
+
+export type SewingEmployeeWorkPeriod = {
+  period: SewingDashboardPeriod;
+  from_iso: string;
+  to_iso: string;
+  count: number;
+  duration_sec: number;
+  avg_duration_sec: number;
+  articles: string[];
+  sessions: SewingSession[];
+  open_sessions: SewingSession[];
+};
+
+export type SewingEmployeeWorkSummary = {
+  employee_id: string;
+  employee_name: string;
+  employee_id_number: string;
+  day: SewingEmployeeWorkPeriod;
+  week: SewingEmployeeWorkPeriod;
+  month: SewingEmployeeWorkPeriod;
+};
+
 function ageMs(iso: string, at: number): number {
   return at - new Date(iso).getTime();
 }
@@ -373,6 +400,113 @@ export function sewingSessionsDashboard(
     kiosk_piece_arms: fresh.kiosk_piece_arms ?? [],
     failed_scans: failedScans,
     failed_scans_in_period: failedInPeriod.length,
+  };
+}
+
+function sessionMatchesEmployee(row: SewingSession, employeeKey: string): boolean {
+  const key = employeeKey.trim();
+  if (!key) return false;
+  return row.employee_id === key || row.employee_id_number === key;
+}
+
+function countsTowardPerformance(row: SewingSession): boolean {
+  return row.status === "closed" && row.overtime_status !== "rejected";
+}
+
+function sortSessionsNewestFirst(rows: SewingSession[]): SewingSession[] {
+  return [...rows].sort((a, b) => {
+    const aKey = a.ended_at ?? a.started_at;
+    const bKey = b.ended_at ?? b.started_at;
+    return new Date(bKey).getTime() - new Date(aKey).getTime();
+  });
+}
+
+function employeeWorkPeriod(
+  rows: SewingSession[],
+  period: SewingDashboardPeriod,
+  window: SewingPeriodWindow
+): SewingEmployeeWorkPeriod {
+  const closed = sortSessionsNewestFirst(
+    rows.filter((row) => countsTowardPerformance(row) && inPeriod(row.ended_at, window))
+  );
+  const open = sortSessionsNewestFirst(
+    rows.filter(
+      (row) =>
+        (row.status === "open" || row.status === "closing") && inPeriod(row.started_at, window)
+    )
+  );
+  const duration_sec = closed.reduce((sum, row) => sum + (row.duration_sec ?? 0), 0);
+  const articles = [
+    ...new Set(
+      closed
+        .map((row) => sewingSessionArticleLabel(row))
+        .filter((label): label is string => Boolean(label))
+    ),
+  ].sort((a, b) => a.localeCompare(b));
+  return {
+    period,
+    from_iso: window.from_iso,
+    to_iso: window.to_iso,
+    count: closed.length,
+    duration_sec,
+    avg_duration_sec: closed.length ? Math.round(duration_sec / closed.length) : 0,
+    articles,
+    sessions: closed,
+    open_sessions: open,
+  };
+}
+
+/** Employees who have ever scanned on the stitch kiosk, newest activity first. */
+export function listSewingKioskEmployees(store: SewingSessionsFile): SewingKioskEmployeeOption[] {
+  const fresh = expireStaleSewingState(normalizeSewingSessionsFile(store), Date.now());
+  const byId = new Map<string, SewingKioskEmployeeOption & { last_ms: number }>();
+  for (const row of fresh.sessions) {
+    if (!row.employee_id) continue;
+    const last = Date.parse(row.ended_at ?? row.started_at);
+    const last_ms = Number.isFinite(last) ? last : 0;
+    const existing = byId.get(row.employee_id);
+    if (!existing) {
+      byId.set(row.employee_id, {
+        employee_id: row.employee_id,
+        employee_name: row.employee_name,
+        employee_id_number: row.employee_id_number,
+        last_ms,
+      });
+      continue;
+    }
+    if (last_ms > existing.last_ms) {
+      existing.last_ms = last_ms;
+      existing.employee_name = row.employee_name;
+      existing.employee_id_number = row.employee_id_number;
+    }
+  }
+  return [...byId.values()]
+    .sort(
+      (a, b) =>
+        b.last_ms - a.last_ms || a.employee_name.localeCompare(b.employee_name)
+    )
+    .map(({ last_ms: _last, ...row }) => row);
+}
+
+/** One employee's closed work for today / this week / this month (factory-local windows). */
+export function sewingEmployeeWorkLookup(
+  store: SewingSessionsFile,
+  employeeKey: string,
+  at = Date.now()
+): SewingEmployeeWorkSummary | null {
+  const key = employeeKey.trim();
+  if (!key) return null;
+  const fresh = expireStaleSewingState(normalizeSewingSessionsFile(store), at);
+  const rows = fresh.sessions.filter((row) => sessionMatchesEmployee(row, key));
+  if (rows.length === 0) return null;
+  const newest = sortSessionsNewestFirst(rows)[0]!;
+  return {
+    employee_id: newest.employee_id,
+    employee_name: newest.employee_name,
+    employee_id_number: newest.employee_id_number,
+    day: employeeWorkPeriod(rows, "day", sewingPeriodWindow("day", at)),
+    week: employeeWorkPeriod(rows, "week", sewingPeriodWindow("week", at)),
+    month: employeeWorkPeriod(rows, "month", sewingPeriodWindow("month", at)),
   };
 }
 

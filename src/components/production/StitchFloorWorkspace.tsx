@@ -11,6 +11,7 @@ import {
   type PendingChangeSummary,
 } from "@/components/production/SewingSessionChangeRequestModal";
 import { SewingElapsedBreakdownView } from "@/components/production/SewingElapsedBreakdown";
+import { StitchAdminEmployeeWorkPanel } from "@/components/production/StitchAdminEmployeeWorkPanel";
 import { StitchSoftAlertSoundPreview } from "@/components/production/StitchSoftAlertSoundPreview";
 import {
   StitchScanCaptureProvider,
@@ -982,6 +983,14 @@ export function StitchFloorWorkspace({
             })}
           </div>
         )}
+
+      {tab === "performance" && (
+        <StitchAdminEmployeeWorkPanel
+          pauseIntervals={pauseIntervals}
+          kioskPaused={Boolean(data?.kiosk_paused)}
+          kioskPausedAt={data?.kiosk_paused_at ?? null}
+        />
+      )}
 
       {tab === "performance" && (
         <section className="rounded-xl border border-slate-200 bg-white">
