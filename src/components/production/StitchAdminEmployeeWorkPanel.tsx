@@ -293,16 +293,14 @@ export function StitchAdminEmployeeWorkPanel({
               const selected = employeeId === row.employee_id;
               return (
                 <li key={row.employee_id}>
-                  <button
-                    type="button"
-                    onClick={() => selectEmployee(row.employee_id)}
+                  <div
                     className={cn(
-                      "flex w-full flex-wrap items-center justify-between gap-3 px-4 py-3 text-left",
-                      selected ? "bg-indigo-50" : "bg-white hover:bg-slate-50",
+                      "flex w-full flex-wrap items-center justify-between gap-3 px-4 py-3",
+                      selected ? "bg-indigo-50" : "bg-white",
                       !row.scanned ? "border-l-4 border-l-amber-400" : "border-l-4 border-l-transparent"
                     )}
                   >
-                    <div className="min-w-0">
+                    <div className="min-w-0 cursor-text select-text">
                       <p className="text-base font-semibold text-slate-900">{row.employee_name}</p>
                       <p className="text-sm text-slate-500">
                         {row.employee_id_number}
@@ -310,18 +308,27 @@ export function StitchAdminEmployeeWorkPanel({
                         {row.workstation_id ? ` - ${row.workstation_id}` : ""}
                       </p>
                     </div>
-                    <div className="text-right">
-                      {row.live ? (
-                        <p className="text-sm font-semibold text-emerald-700">Live</p>
-                      ) : row.scanned ? (
-                        <p className="text-sm font-semibold text-slate-800">
-                          {row.count} pcs - {formatDuration(row.duration_sec)}
-                        </p>
-                      ) : (
-                        <p className="text-sm font-semibold text-amber-800">No scan yet</p>
-                      )}
+                    <div className="flex items-center gap-3">
+                      <div className="cursor-text select-text text-right">
+                        {row.live ? (
+                          <p className="text-sm font-semibold text-emerald-700">Live</p>
+                        ) : row.scanned ? (
+                          <p className="text-sm font-semibold text-slate-800">
+                            {row.count} pcs - {formatDuration(row.duration_sec)}
+                          </p>
+                        ) : (
+                          <p className="text-sm font-semibold text-amber-800">No scan yet</p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => selectEmployee(row.employee_id)}
+                        className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50"
+                      >
+                        {selected ? "Selected" : "Open"}
+                      </button>
                     </div>
-                  </button>
+                  </div>
                 </li>
               );
             })

@@ -75,7 +75,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 - USB wedge capture must always steal rapid keystrokes (even over selection or
   focused fields) and show an optimistic "Last scan" strip on every tab.
-  Silence on scan is a bug, never acceptable.
+  Silence on scan is a bug, never acceptable. **Admin copy** (Aug 19 2026):
+  admin may select and copy ERP text. Scan capture must not reclaim focus or
+  clear selection for admin (`admin-copy-unlock`). Other roles stay scan-first.
+  Do not give stitch@ / pattern this copy unlock.
 - **Admin pause stitch kiosk**: on `/production` Floor now, admin can Pause /
   Resume. Persisted in `stitch_kiosk_settings` (`erp_documents`). While paused,
   `processSewingKioskScan` blocks all badge/A4 work (UI + `/api/v1/.../scan`)
@@ -637,7 +640,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
-- [session-2026-08-19](session-2026-08-19.md) - Admin stitch employee day/week/month lookup, Pattern How-to tab + email notices, 10 PM auto-close + overtime confirm, Kashif Live leftover, Mem0 brain, pattern login check
+- [session-2026-08-19](session-2026-08-19.md) - Admin copy unlock, floor dashboard, Pattern How-to tab, 10 PM auto-close + overtime confirm, Kashif leftover, Mem0, pattern login
 - [session-2026-08-05](session-2026-08-05.md) - Load from base pattern fills the Sample column on client sheets; picker preload perf
 - [session-2026-08-04](session-2026-08-04.md) - Al Ajlan draft invoices prefilled with agreed proposal prices
 - [session-2026-08-03](session-2026-08-03.md) - orange highlight for recently added custom fabrics

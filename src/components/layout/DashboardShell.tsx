@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AdminCopyUnlock } from "@/components/auth/AdminCopyUnlock";
 import { PriceRevealLockOnNavigate } from "@/components/auth/PriceRevealLockOnNavigate";
 import { MobileClientPhotosPrompt } from "@/components/layout/MobileClientPhotosPrompt";
 import { CopySizesGuidePrompt } from "@/components/pattern/CopySizesGuidePrompt";
@@ -29,6 +30,7 @@ export function DashboardShell({
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 print:h-auto print:max-w-none print:overflow-visible print:w-full">
+      <AdminCopyUnlock enabled={session.isAdmin} />
       <PriceRevealLockOnNavigate />
       <MobileClientPhotosPrompt session={session} />
       <CopySizesGuidePrompt session={session} />

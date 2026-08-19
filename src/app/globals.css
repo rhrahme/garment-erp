@@ -8,3 +8,15 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
+
+/* Admin only: select and copy any ERP text (floor scan capture otherwise steals it). */
+html.admin-copy-unlock,
+html.admin-copy-unlock body {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+html.admin-copy-unlock .select-none {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}

@@ -11,6 +11,7 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
+import { isAdminCopyUnlocked } from "@/lib/auth/admin-copy";
 import { normalizeScannerInput, splitScanInput } from "@/lib/production/scan-input";
 import {
   looksLikePartialScanFragment,
@@ -202,6 +203,7 @@ function isCopyOrEditShortcut(event: KeyboardEvent): boolean {
 
 function clearPageTextSelection() {
   if (typeof window === "undefined") return;
+  if (isAdminCopyUnlocked()) return;
   const sel = window.getSelection();
   if (sel && !sel.isCollapsed) sel.removeAllRanges();
 }
@@ -342,6 +344,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
    * Manual fields + text selection keep focus; rapid USB scans still capture.
    */
   const isFocusReclaimBlocked = useCallback(() => {
+    if (isAdminCopyUnlocked()) return true;
     const active = document.activeElement;
     if (active && active !== inputRef.current && isManualEntryTarget(active)) return true;
     if (active && active !== inputRef.current && isTextEntryElement(active)) return true;
