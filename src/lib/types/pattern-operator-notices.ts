@@ -1,4 +1,4 @@
-/** Instruction / how-to notices shown to Pattern on /pattern until acknowledged. */
+/** Instruction / how-to notices. Open ones show on /pattern; all stay on /pattern/how-to. */
 export type PatternOperatorNoticeStatus = "open" | "acknowledged";
 
 export interface PatternOperatorNotice {

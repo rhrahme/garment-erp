@@ -10,6 +10,7 @@ import {
   CONSOLIDATE_FABRICS_HOWTO_BODY,
   CONSOLIDATE_FABRICS_HOWTO_NOTICE_ID,
   CONSOLIDATE_FABRICS_HOWTO_TITLE,
+  PATTERN_HOWTO_NOTICES,
 } from "@/lib/pattern/pattern-operator-notice-copy";
 import type { PatternOperatorNotice } from "@/lib/types/pattern-operator-notices";
 
@@ -17,6 +18,10 @@ export {
   CONSOLIDATE_FABRICS_HOWTO_BODY,
   CONSOLIDATE_FABRICS_HOWTO_NOTICE_ID,
   CONSOLIDATE_FABRICS_HOWTO_TITLE,
+  PATTERN_HOWTO_NOTICES,
+  REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_BODY,
+  REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_NOTICE_ID,
+  REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_TITLE,
 } from "@/lib/pattern/pattern-operator-notice-copy";
 
 export async function createPatternOperatorNotice(input: {
@@ -124,6 +129,7 @@ export async function emailPatternOperatorNotice(
       : `Open Pattern: ${appUrl}/pattern`,
     "",
     "This notice also appears at the top of your Pattern page until you tap Got it.",
+    `All how-tos stay on Pattern -> How-to: ${appUrl}/pattern/how-to`,
     "",
     "This is an automated message from Garment ERP.",
   ].join("\n");
@@ -137,10 +143,35 @@ export async function emailPatternOperatorNotice(
   }
 }
 
+/** Idempotent: posts every catalog how-to once and emails Pattern if not yet emailed. */
+export async function ensureAllPatternHowToNotices(
+  createdBy = "system"
+): Promise<Array<{ notice: PatternOperatorNotice; created: boolean; emailed: boolean }>> {
+  const results = [];
+  for (const howto of PATTERN_HOWTO_NOTICES) {
+    results.push(
+      await createPatternOperatorNotice({
+        id: howto.id,
+        title: howto.title,
+        body: howto.body,
+        href: howto.href,
+        href_label: howto.href_label,
+        created_by: createdBy,
+        email: true,
+      })
+    );
+  }
+  return results;
+}
+
 /** Idempotent: posts the consolidate how-to once and emails Pattern if not yet emailed. */
 export async function ensureConsolidateFabricsHowToNotice(
   createdBy = "system"
 ): Promise<{ notice: PatternOperatorNotice; created: boolean; emailed: boolean }> {
+  const [consolidate] = (await ensureAllPatternHowToNotices(createdBy)).filter(
+    (row) => row.notice.id === CONSOLIDATE_FABRICS_HOWTO_NOTICE_ID
+  );
+  if (consolidate) return consolidate;
   return createPatternOperatorNotice({
     id: CONSOLIDATE_FABRICS_HOWTO_NOTICE_ID,
     title: CONSOLIDATE_FABRICS_HOWTO_TITLE,

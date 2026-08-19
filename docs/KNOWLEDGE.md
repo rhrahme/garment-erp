@@ -224,13 +224,18 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Pages hosting a picker preload on mount so the dialog opens with zero
   network wait; the cache is invalidated after base create / fit-column
   save. Keep picker search client-side.
-- **Pattern operator notices** (Aug 6 2026): instructional how-tos appear at
-  the top of `/pattern` until Pattern taps Got it, and are emailed to
-  `PATTERN_EMAILS`. Store `pattern_operator_notices`; APIs
-  `/api/pattern/notices` + `/api/v1/pattern/notices` (create/list/ack) with
-  events `pattern.operator_notice_created` /
-  `pattern.operator_notice_acknowledged`. First notice explains consolidate
-  fabrics then add/link pattern (`howto-consolidate-fabrics-v1`).
+- **Pattern operator notices** (Aug 6 2026, How-to tab Aug 19): instructional
+  how-tos appear at the top of `/pattern` until Pattern taps Got it, and are
+  emailed to `PATTERN_EMAILS`. They stay on **Pattern -> How-to**
+  (`/pattern/how-to`) after acknowledge. Catalog is `PATTERN_HOWTO_NOTICES`
+  (newest first); `ensureAllPatternHowToNotices` seeds + emails any missing
+  entry. Store `pattern_operator_notices`; APIs `/api/pattern/notices` +
+  `/api/v1/pattern/notices` (`?status=all` for the tab) with events
+  `pattern.operator_notice_created` / `pattern.operator_notice_acknowledged`.
+  When we explain a floor fix to Pattern, add a catalog entry so they get
+  the email and the tab - do not only tell the owner in chat. First notices:
+  consolidate fabrics (`howto-consolidate-fabrics-v1`), remove one fabric
+  from a group (`howto-remove-fabric-from-consolidation-v1`).
 - **Pattern measurement saves must never wipe filled cells** (Aug 6 2026):
   Root cause was whole-document `pattern_library` upserts from a stale Vercel
   cache after Save. Hardening (keep all three):
@@ -608,7 +613,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   the employee.
 - **Remove a fabric from a consolidation**: Grouped fabrics -> Remove
   unassigns that line and clears job.client_pattern_id. Do not leave the
-  job linked or the fabric still looks grouped.
+  job linked or the fabric still looks grouped. Pattern How-to + email:
+  `howto-remove-fabric-from-consolidation-v1`.
 - Zapier parity rule: every business write path needs `/api/v1/...` +
   `notifyIntegration` (see `.cursor/rules/zapier-integration.mdc`).
 - **Mem0 extra brain** (Aug 19 2026): Cursor MCP at mcp.mem0.ai. Store
@@ -618,7 +624,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
-- [session-2026-08-19](session-2026-08-19.md) - 10 PM auto-close + overtime confirm, Kashif Live leftover, Mem0 brain, pattern login check
+- [session-2026-08-19](session-2026-08-19.md) - Pattern How-to tab + email notices, 10 PM auto-close + overtime confirm, Kashif Live leftover, Mem0 brain, pattern login check
 - [session-2026-08-05](session-2026-08-05.md) - Load from base pattern fills the Sample column on client sheets; picker preload perf
 - [session-2026-08-04](session-2026-08-04.md) - Al Ajlan draft invoices prefilled with agreed proposal prices
 - [session-2026-08-03](session-2026-08-03.md) - orange highlight for recently added custom fabrics

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { PatternWorkspaceTabs } from "@/components/pattern/PatternWorkspaceTabs";
 import { defaultPathForSession } from "@/lib/auth/permissions";
 import { getSessionContext } from "@/lib/auth/session";
 
@@ -27,6 +28,7 @@ export default async function PatternLayout({ children }: { children: React.Reac
           with your name so admin can see who changed what.
         </div>
       ) : null}
+      <PatternWorkspaceTabs />
       {children}
     </div>
   );

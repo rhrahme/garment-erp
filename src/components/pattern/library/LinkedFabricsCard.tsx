@@ -136,7 +136,8 @@ export function LinkedFabricsCard({
         {totalCount > 1 ? (
           <p className="mb-2 text-xs text-slate-500">
             Need to take one fabric out later? Press Remove on that row - it leaves this
-            group and goes back to unassigned. The other fabrics stay together.
+            group and goes back to unassigned. The other fabrics stay together. Full steps
+            are on the How-to tab.
           </p>
         ) : null}
         {rows === null ? (

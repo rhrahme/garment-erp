@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { listOpenPatternOperatorNotices } from "@/lib/data/pattern-operator-notices";
+import {
+  listOpenPatternOperatorNotices,
+  listPatternOperatorNotices,
+} from "@/lib/data/pattern-operator-notices";
 import { verifyApiKey } from "@/lib/integrations/api-auth";
 import {
   createPatternOperatorNotice,
-  ensureConsolidateFabricsHowToNotice,
+  ensureAllPatternHowToNotices,
 } from "@/lib/pattern/pattern-operator-notice-actions";
 
 export async function GET(request: Request) {
@@ -13,11 +16,16 @@ export async function GET(request: Request) {
 
   await ensureDocumentsLoaded(["pattern_operator_notices"]);
   try {
-    await ensureConsolidateFabricsHowToNotice("api");
+    await ensureAllPatternHowToNotices("api");
   } catch (error) {
-    console.error("Failed to ensure Pattern consolidate how-to notice (API):", error);
+    console.error("Failed to ensure Pattern how-to notices (API):", error);
   }
-  return NextResponse.json({ notices: listOpenPatternOperatorNotices(50), source: "api" });
+  const status = new URL(request.url).searchParams.get("status")?.trim().toLowerCase();
+  const notices =
+    status === "all"
+      ? listPatternOperatorNotices(undefined, 100)
+      : listOpenPatternOperatorNotices(50);
+  return NextResponse.json({ notices, source: "api" });
 }
 
 export async function POST(request: Request) {

@@ -56,7 +56,12 @@ export function PatternOperatorNoticesPanel() {
           For Pattern - how-to
         </CardTitle>
         <p className="text-xs text-indigo-800/80">
-          Read these steps, then tap Got it when you understand. They also go to your Pattern email.
+          Read these steps, then tap Got it when you understand. They also go to your Pattern
+          email. After that they stay on the{" "}
+          <Link href="/pattern/how-to" className="font-medium text-indigo-800 underline">
+            How-to
+          </Link>{" "}
+          tab.
         </p>
       </CardHeader>
       <CardContent className="space-y-3">

@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticated } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { listOpenPatternOperatorNotices } from "@/lib/data/pattern-operator-notices";
+import {
+  listOpenPatternOperatorNotices,
+  listPatternOperatorNotices,
+} from "@/lib/data/pattern-operator-notices";
 import {
   createPatternOperatorNotice,
-  ensureConsolidateFabricsHowToNotice,
+  ensureAllPatternHowToNotices,
 } from "@/lib/pattern/pattern-operator-notice-actions";
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await requireAuthenticated();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
@@ -18,12 +21,17 @@ export async function GET() {
 
   await ensureDocumentsLoaded(["pattern_operator_notices"]);
   try {
-    await ensureConsolidateFabricsHowToNotice(session.email ?? "system");
+    await ensureAllPatternHowToNotices(session.email ?? "system");
   } catch (error) {
-    console.error("Failed to ensure Pattern consolidate how-to notice:", error);
+    console.error("Failed to ensure Pattern how-to notices:", error);
   }
 
-  return NextResponse.json({ notices: listOpenPatternOperatorNotices(50) });
+  const status = new URL(request.url).searchParams.get("status")?.trim().toLowerCase();
+  const notices =
+    status === "all"
+      ? listPatternOperatorNotices(undefined, 100)
+      : listOpenPatternOperatorNotices(50);
+  return NextResponse.json({ notices });
 }
 
 export async function POST(request: Request) {

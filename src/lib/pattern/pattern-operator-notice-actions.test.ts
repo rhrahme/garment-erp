@@ -4,6 +4,10 @@ import {
   CONSOLIDATE_FABRICS_HOWTO_BODY,
   CONSOLIDATE_FABRICS_HOWTO_NOTICE_ID,
   CONSOLIDATE_FABRICS_HOWTO_TITLE,
+  PATTERN_HOWTO_NOTICES,
+  REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_BODY,
+  REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_NOTICE_ID,
+  REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_TITLE,
 } from "@/lib/pattern/pattern-operator-notice-copy";
 
 describe("Pattern consolidate how-to notice", () => {
@@ -15,5 +19,26 @@ describe("Pattern consolidate how-to notice", () => {
     assert.match(CONSOLIDATE_FABRICS_HOWTO_BODY, /Link & open pattern/);
     assert.match(CONSOLIDATE_FABRICS_HOWTO_BODY, /Auto-consolidate/);
     assert.match(CONSOLIDATE_FABRICS_HOWTO_BODY, /\.TUD/);
+  });
+});
+
+describe("Pattern remove-from-consolidation how-to", () => {
+  it("teaches Grouped fabrics Remove and keeps the fabric on the order", () => {
+    assert.equal(
+      REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_NOTICE_ID,
+      "howto-remove-fabric-from-consolidation-v1"
+    );
+    assert.match(REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_TITLE, /remove/i);
+    assert.match(REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_BODY, /Grouped fabrics/);
+    assert.match(REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_BODY, /Remove/);
+    assert.match(REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_BODY, /stays on the sales order/);
+    assert.match(REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_BODY, /Client fabric board/);
+  });
+
+  it("keeps every catalog how-to on the How-to tab list", () => {
+    const ids = PATTERN_HOWTO_NOTICES.map((howto) => howto.id);
+    assert.ok(ids.includes(CONSOLIDATE_FABRICS_HOWTO_NOTICE_ID));
+    assert.ok(ids.includes(REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_NOTICE_ID));
+    assert.equal(PATTERN_HOWTO_NOTICES[0]?.id, REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_NOTICE_ID);
   });
 });
