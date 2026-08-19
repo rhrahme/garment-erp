@@ -181,6 +181,9 @@ describe("stitch_operator kiosk gating", () => {
     assert.equal(isStitchOperatorRouteAllowed("/api/qr"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/hr/employee-lookup"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/auth/session"), true);
+    assert.equal(isStitchOperatorRouteAllowed("/api/suppliers/loro-piana/images"), true);
+    assert.equal(isStitchOperatorRouteAllowed("/api/suppliers/drapers/images/26130"), true);
+    assert.equal(isStitchOperatorRouteAllowed("/api/suppliers/caccioppoli/images"), true);
 
     assert.equal(isStitchOperatorRouteAllowed("/production"), false);
     assert.equal(isStitchOperatorRouteAllowed("/orders"), false);

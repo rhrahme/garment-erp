@@ -371,6 +371,7 @@ function lookupPieceMeta(scanCode: string): {
   client_name: string | null;
   garment_type: string | null;
   fabric_number: string | null;
+  supplier_id: string | null;
   work_order_id: null;
 } {
   const lookup = resolveScanToLine(scanCode);
@@ -407,6 +408,7 @@ function lookupPieceMeta(scanCode: string): {
     // Persist SO line garment type; fall back to sticker piece name when line type is blank.
     garment_type: lineType || attribution.piece_name?.trim() || null,
     fabric_number: lookup.line.fabric_number?.trim() || null,
+    supplier_id: lookup.line.supplier_id?.trim() || null,
     work_order_id: null,
   };
 }
@@ -441,6 +443,7 @@ function buildSessionFromArmAndMeta(
       client_name: meta.client_name,
       garment_type: meta.garment_type,
       fabric_number: meta.fabric_number,
+      supplier_id: meta.supplier_id,
       work_kind: arm.work_kind === "alteration" ? "alteration" : "first_make",
       activity_job_function: arm.activity_job_function ?? null,
     },
@@ -484,6 +487,7 @@ function buildSessionFromPieceArm(
       client_name: pieceArm.client_name,
       garment_type: pieceArm.garment_type,
       fabric_number: pieceArm.fabric_number,
+      supplier_id: pieceArm.supplier_id,
       work_kind: workKind,
       activity_job_function: activityJobFunction,
     },
@@ -1304,6 +1308,7 @@ export async function processSewingKioskScan(
     client_name: meta.client_name,
     garment_type: meta.garment_type,
     fabric_number: meta.fabric_number,
+    supplier_id: meta.supplier_id,
     work_order_id: meta.work_order_id,
     armed_at: nowIso(at),
   };

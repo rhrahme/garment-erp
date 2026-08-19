@@ -12,6 +12,7 @@ import type {
   SewingSession,
 } from "@/lib/types/sewing-sessions";
 import { SewingElapsedBreakdownView } from "@/components/production/SewingElapsedBreakdown";
+import { StitchFabricColorPreview } from "@/components/production/StitchFabricColorPreview";
 import {
   isStitchLiveClockFrozen,
   sewingLiveClockNowMs,
@@ -115,6 +116,7 @@ export function StitchKioskPanel() {
 
   const lastArm = last?.arm ?? null;
   const copy = phaseCopy(phase, highlight, lastArm);
+  const fabricPreview = highlight ?? last?.session ?? last?.piece_arm ?? null;
   const liveClockNow = sewingLiveClockNowMs({
     wallNow: now,
     kioskPaused,
@@ -195,6 +197,15 @@ export function StitchKioskPanel() {
                 {highlight.production_code}
                 {highlight.piece_mark ? ` - ${highlight.piece_mark}` : ""}
               </p>
+              {fabricPreview?.fabric_number ? (
+                <div className="mt-2">
+                  <StitchFabricColorPreview
+                    supplierId={fabricPreview.supplier_id}
+                    fabricNumber={fabricPreview.fabric_number}
+                    size="lg"
+                  />
+                </div>
+              ) : null}
             </div>
             <div className="rounded-xl bg-white/70 px-4 py-3 text-left">
               <p className="text-xs uppercase text-slate-500">Elapsed</p>
@@ -209,6 +220,20 @@ export function StitchKioskPanel() {
             </div>
           </div>
         )}
+        {!highlight && fabricPreview?.fabric_number ? (
+          <div className="mt-6 flex justify-center">
+            <div className="rounded-xl bg-white/70 px-4 py-3">
+              <p className="text-xs uppercase text-slate-500">Fabric color</p>
+              <div className="mt-2">
+                <StitchFabricColorPreview
+                  supplierId={fabricPreview.supplier_id}
+                  fabricNumber={fabricPreview.fabric_number}
+                  size="lg"
+                />
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-4">
@@ -274,6 +299,15 @@ export function StitchKioskPanel() {
                     {session.production_code}
                     {session.status === "closing" ? " (closing)" : ""}
                   </span>
+                  {session.fabric_number ? (
+                    <div className="mt-1">
+                      <StitchFabricColorPreview
+                        supplierId={session.supplier_id}
+                        fabricNumber={session.fabric_number}
+                        size="sm"
+                      />
+                    </div>
+                  ) : null}
                 </div>
                 <SewingElapsedBreakdownView
                   startedAt={session.started_at}

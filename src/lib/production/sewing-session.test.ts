@@ -19,6 +19,7 @@ import {
 } from "@/lib/production/sewing-session-recovery";
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
 import {
+  collectSewingSessionSwatchKeys,
   enrichSewingSessionGarmentFields,
   enrichSewingSessionsGarmentFields,
 } from "@/lib/production/sewing-session-garment";
@@ -135,7 +136,23 @@ describe("enrichSewingSessionGarmentFields", () => {
     const enriched = enrichSewingSessionGarmentFields(open);
     assert.equal(enriched.garment_type, "Overshirt+Trouser");
     assert.equal(enriched.fabric_number, "66046");
+    assert.ok(enriched.supplier_id);
     assert.equal(sewingSessionArticleLabel(enriched), "Overshirt");
+  });
+
+  it("collects unique mill swatch keys for the kiosk preview", () => {
+    assert.deepEqual(
+      collectSewingSessionSwatchKeys([
+        { supplier_id: "loro-piana", fabric_number: "722042" },
+        { supplier_id: "loro-piana", fabric_number: "722042" },
+        { supplier_id: "drapers", fabric_number: "26130" },
+        { supplier_id: null, fabric_number: "S14040" },
+      ]),
+      [
+        { supplier_id: "loro-piana", fabric_number: "722042" },
+        { supplier_id: "drapers", fabric_number: "26130" },
+      ]
+    );
   });
 });
 
@@ -670,6 +687,7 @@ function pieceArm(
     client_name: null,
     garment_type: null,
     fabric_number: null,
+    supplier_id: null,
     work_order_id: null,
     armed_at: new Date().toISOString(),
     ...partial,

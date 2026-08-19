@@ -94,6 +94,7 @@ const STITCH_OPERATOR_ROUTE_PREFIXES = [
   "/api/sales-orders",
   "/api/qr",
   "/api/hr/employee-lookup",
+  ...FABRIC_SWATCH_ROUTE_PREFIXES,
   "/api/auth/session",
   "/api/auth/dev-impersonate",
   "/login",

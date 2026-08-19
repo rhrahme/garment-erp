@@ -9,6 +9,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 ## Stitch floor (kiosk)
 
 - Scan flow: EMP badge -> A4 piece QR -> work -> same A4 -> badge. Kiosk login: `stitch@hagan.pro`.
+- **Fabric color preview on the kiosk** (Aug 19 2026): Scan / Live / History /
+  Orders show the mill swatch for the piece fabric. Tap to enlarge. Sessions
+  store `supplier_id` from the SO line (older rows backfill on load).
+  `stitch@` may call fabric swatch image APIs (`FABRIC_SWATCH_ROUTE_PREFIXES`)
+  so thumbs are not 403. Do not put upload controls on the kiosk print path.
 - **Badge `job_functions` is the source of truth for activity labels** (Cutting /
   Sewing / Wash / Iron / Washing / Buttons / Champa) site-wide - Scan, Live,
   Performance, History, Orders. Never hardcode "Sewing". ID badge jobs also

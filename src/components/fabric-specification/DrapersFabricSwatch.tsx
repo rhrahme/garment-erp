@@ -12,20 +12,31 @@ interface DrapersFabricSwatchProps {
   loading?: "lazy" | "eager";
   /** When true, clicking does not open the enlarge lightbox (parent handles preview). */
   disableZoom?: boolean;
+  /** Default sm matches order/print thumbs. md/lg are for floor kiosks. */
+  size?: "sm" | "md" | "lg";
 }
+
+const SWATCH_THUMB = {
+  sm: { className: "h-7 w-7", px: 28 },
+  md: { className: "h-12 w-12", px: 48 },
+  lg: { className: "h-24 w-24", px: 96 },
+} as const;
 
 /** Neutral empty cell — no broken-image / ImageOff icon. */
 function NoPhotoPlaceholder({
   fabricNumber,
   className,
+  size = "sm",
 }: {
   fabricNumber: string;
   className?: string;
+  size?: "sm" | "md" | "lg";
 }) {
   return (
     <span
       className={cn(
-        "inline-block h-7 w-7 shrink-0 rounded border border-slate-200 bg-slate-100",
+        "inline-block shrink-0 rounded border border-slate-200 bg-slate-100",
+        SWATCH_THUMB[size].className,
         className
       )}
       title={`No photo for ${fabricNumber}`}
@@ -42,6 +53,7 @@ export function DrapersFabricSwatch({
   className,
   loading = "lazy",
   disableZoom = false,
+  size = "sm",
 }: DrapersFabricSwatchProps) {
   const [open, setOpen] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -70,20 +82,22 @@ export function DrapersFabricSwatch({
   }, [open, close]);
 
   if (!src || failed) {
-    return <NoPhotoPlaceholder fabricNumber={fabricNumber} className={className} />;
+    return <NoPhotoPlaceholder fabricNumber={fabricNumber} className={className} size={size} />;
   }
 
+  const thumb = SWATCH_THUMB[size];
   const image = (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
       alt=""
-      width={28}
-      height={28}
+      width={thumb.px}
+      height={thumb.px}
       loading={loading}
       // Keep eager/print thumbs visible even before onLoad (opacity-0 blanked SO prints).
       className={cn(
-        "h-7 w-7 rounded object-cover print:opacity-100",
+        thumb.className,
+        "rounded object-cover print:opacity-100",
         loading !== "eager" && !loaded && "opacity-0"
       )}
       onLoad={() => setLoaded(true)}

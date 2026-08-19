@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
 import { GarmentTypeColorLegend } from "@/components/production/GarmentTypeColorLegend";
+import { StitchFabricColorPreview } from "@/components/production/StitchFabricColorPreview";
 import ScanQrSvg from "@/components/production/ScanQrSvg";
 import { StitchKioskPanel } from "@/components/production/StitchKioskPanel";
 import { StitchOrdersPanel } from "@/components/production/StitchOrdersPanel";
@@ -26,6 +28,7 @@ import {
   type GarmentTypeColorKey,
 } from "@/lib/production/garment-type-colors";
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
+import { collectSewingSessionSwatchKeys } from "@/lib/production/sewing-session-garment";
 import {
   SEWING_LIVE_LONG_RUNNING_SEC,
   isStitchLiveClockFrozen,
@@ -602,8 +605,18 @@ export function StitchFloorWorkspace({
     return { pieces, durationSec };
   }, [performanceRows]);
 
+  const swatchKeys = useMemo(
+    () =>
+      collectSewingSessionSwatchKeys([
+        ...(data?.open_sessions ?? []),
+        ...(data?.sessions ?? []),
+      ]),
+    [data?.open_sessions, data?.sessions]
+  );
+
   return (
     <StitchScanCaptureProvider rearmKey={tab}>
+      <FabricSwatchProvider fabrics={swatchKeys}>
       <div className="flex min-h-[calc(100vh-5.5rem)] w-full flex-col gap-4">
         <div className="sticky top-0 z-10 -mx-1 border-b border-slate-200 bg-slate-50/95 px-1 pb-3 pt-1 backdrop-blur">
           <div className="flex flex-wrap items-center gap-2">
@@ -852,7 +865,13 @@ export function StitchFloorWorkspace({
                             {sewingSessionClientDisplayName(session)}
                           </div>
                           {session.fabric_number ? (
-                            <div className="text-xs text-slate-500">fabric {session.fabric_number}</div>
+                            <div className="mt-1">
+                              <StitchFabricColorPreview
+                                supplierId={session.supplier_id}
+                                fabricNumber={session.fabric_number}
+                                size="md"
+                              />
+                            </div>
                           ) : null}
                         </td>
                         <td className="px-3 py-3 whitespace-nowrap">
@@ -1371,6 +1390,15 @@ export function StitchFloorWorkspace({
                           <div className="text-slate-500">
                             {sewingSessionClientDisplayName(row, "-")}
                           </div>
+                          {row.fabric_number ? (
+                            <div className="mt-1">
+                              <StitchFabricColorPreview
+                                supplierId={row.supplier_id}
+                                fabricNumber={row.fabric_number}
+                                size="sm"
+                              />
+                            </div>
+                          ) : null}
                         </td>
                         <td className="px-3 py-3 whitespace-nowrap">
                           {formatClock(row.started_at)}
@@ -1593,6 +1621,7 @@ export function StitchFloorWorkspace({
         }}
       />
       </div>
+      </FabricSwatchProvider>
     </StitchScanCaptureProvider>
   );
 }

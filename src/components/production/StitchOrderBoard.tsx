@@ -6,7 +6,9 @@ import { GarmentTypeColorLegend } from "@/components/production/GarmentTypeColor
 import { ScanStageLegend } from "@/components/production/ScanStageLegend";
 import { StatusBadge } from "@/components/ui/PageHeader";
 import { SortableTableHeader } from "@/components/ui/SortableTableHeader";
+import { FabricSwatchProvider } from "@/components/fabric/FabricSwatchProvider";
 import { FabricSupplierName } from "@/components/fabric/FabricSupplierName";
+import { StitchFabricColorPreview } from "@/components/production/StitchFabricColorPreview";
 import { garmentTypeColorClasses } from "@/lib/production/garment-type-colors";
 import {
   productionStageToHighlight,
@@ -212,7 +214,19 @@ export function StitchOrderBoard({
     return next;
   }, [order, pieces, search]);
 
+  const swatchKeys = useMemo(
+    () =>
+      pieces
+        .map((row) => ({
+          supplier_id: row.wo.supplier_id?.trim() ?? "",
+          fabric_number: row.wo.fabric_number?.trim() ?? "",
+        }))
+        .filter((key) => key.supplier_id && key.fabric_number),
+    [pieces]
+  );
+
   return (
+    <FabricSwatchProvider fabrics={swatchKeys}>
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
@@ -393,12 +407,22 @@ export function StitchOrderBoard({
                       {wo.sticker_code}
                     </td>
                     <td className="px-3 py-3 text-xs text-slate-600 sm:text-sm">
-                      <FabricSupplierName
-                        supplierId={wo.supplier_id}
-                        supplierName={wo.supplier_name}
-                        fabricNumber={wo.fabric_number}
-                      />{" "}
-                      {wo.fabric_number}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StitchFabricColorPreview
+                          supplierId={wo.supplier_id}
+                          fabricNumber={wo.fabric_number}
+                          size="md"
+                          showNumber={false}
+                        />
+                        <span>
+                          <FabricSupplierName
+                            supplierId={wo.supplier_id}
+                            supplierName={wo.supplier_name}
+                            fabricNumber={wo.fabric_number}
+                          />{" "}
+                          {wo.fabric_number}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-3 py-3">
                       <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", styles.chip)}>
@@ -429,5 +453,6 @@ export function StitchOrderBoard({
         </div>
       )}
     </div>
+    </FabricSwatchProvider>
   );
 }
