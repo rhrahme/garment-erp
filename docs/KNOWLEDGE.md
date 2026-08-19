@@ -86,14 +86,18 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   / Scan elapsed clocks **freeze** for the pause window (`pause_intervals`) so
   lunch does not keep counting; after resume, paused time is excluded from
   elapsed. Do not remove this gate or hide the admin control.
-- **Lunch auto-resume 16:00 Asia/Riyadh** (Aug 10 2026): pause/resume is the
-  **floor scan gate only** (not per article). Pauses started in the lunch
-  window (14:00-16:00 Riyadh) get `auto_resume_at` = that day's 16:00. Scan
-  and Live polls call `ensureStitchKioskLunchAutoResume` so the gate reopens
-  at/after 16:00 without restarting articles (route
-  `/api/cron/stitch-kiosk-lunch-resume` also exists for manual/cron trigger).
-  Emergency pauses outside the lunch window stay paused until an admin
-  resumes. Do not strip auto-resume.
+- **Lunch is 14:00-16:00 Asia/Riyadh every day** (owner). Elapsed must freeze
+  in that window even if nobody taps Pause. Scheduled lunch is subtracted
+  inside `sewingSessionElapsedBreakdown` (Live, Scan, close `duration_sec`).
+  An admin pause is extra, not the lunch clock. Do not treat "forgot to
+  pause" as paid work time.
+- **Lunch auto-pause 14:00 + auto-resume 16:00 Asia/Riyadh**: scan gate
+  closes at 14:00 (`auto-pause-14:00-riyadh`) and reopens at 16:00
+  (`auto-resume-16:00-riyadh`) without restarting articles. Live poll +
+  scan + crons `/api/cron/stitch-kiosk-lunch-pause` (11:00 UTC) and
+  `/api/cron/stitch-kiosk-lunch-resume` (13:00 UTC). Lunch-window pauses
+  get `auto_resume_at` = that day's 16:00. Emergency pauses outside the
+  lunch window stay paused until an admin resumes. Do not strip this.
 - **Elapsed breakdown** (Aug 10 2026): Live / History / Scan / Performance
   show work total plus segment details when a kiosk pause overlapped the
   session (Before lunch / Lunch off / After lunch). Closed `duration_sec`

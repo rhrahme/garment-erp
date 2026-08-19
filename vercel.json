@@ -7,6 +7,14 @@
     {
       "path": "/api/cron/stitch-kiosk-workday-end",
       "schedule": "0 19 * * *"
+    },
+    {
+      "path": "/api/cron/stitch-kiosk-lunch-pause",
+      "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/api/cron/stitch-kiosk-lunch-resume",
+      "schedule": "0 13 * * *"
     }
   ],
   "functions": {

@@ -1,10 +1,11 @@
 /**
- * Factory lunch: Asia/Riyadh. Scans pause for lunch; auto-resume at 16:00
- * so the floor can scan again (kiosk gate only - not per article).
+ * Factory lunch: Asia/Riyadh 14:00-16:00 every day. Elapsed clocks must
+ * freeze in that window even if nobody taps Pause. Scan gate auto-pauses
+ * at 14:00 and auto-resumes at 16:00 (kiosk gate only - not per article).
  */
 
 export const STITCH_LUNCH_TIMEZONE = "Asia/Riyadh";
-/** Local hour when lunch pause may begin (admin or future auto-pause). */
+/** Local hour when lunch starts (owner: 2 PM Riyadh). */
 export const STITCH_LUNCH_PAUSE_HOUR = 14;
 /** Local time when the kiosk gate auto-opens again. */
 export const STITCH_LUNCH_RESUME_HOUR = 16;
@@ -63,6 +64,51 @@ export function stitchLunchResumeAtMs(nowMs: number = Date.now()): number {
     STITCH_LUNCH_RESUME_HOUR,
     STITCH_LUNCH_RESUME_MINUTE
   );
+}
+
+/** 14:00 Asia/Riyadh of the local day that contains nowMs. */
+export function stitchLunchStartAtMs(nowMs: number = Date.now()): number {
+  const p = zonedParts(nowMs, STITCH_LUNCH_TIMEZONE);
+  return riyadhWallTimeToUtcMs(p.year, p.month, p.day, STITCH_LUNCH_PAUSE_HOUR, 0);
+}
+
+/** True while local time is in [14:00, 16:00) Asia/Riyadh. */
+export function isStitchLunchClockWindow(nowMs: number = Date.now()): boolean {
+  return nowMs >= stitchLunchStartAtMs(nowMs) && nowMs < stitchLunchResumeAtMs(nowMs);
+}
+
+/**
+ * Every factory lunch window that overlaps [fromMs, toMs].
+ * Riyadh has no DST - each lunch is exactly two hours.
+ */
+export function scheduledStitchLunchIntervals(
+  fromMs: number,
+  toMs: number
+): Array<{ started_at: string; ended_at: string | null }> {
+  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || toMs <= fromMs) return [];
+  const out: Array<{ started_at: string; ended_at: string | null }> = [];
+  const firstLunch = stitchLunchStartAtMs(fromMs);
+  const lastLunch = stitchLunchStartAtMs(toMs);
+  for (let lunchStart = firstLunch; lunchStart <= lastLunch; lunchStart += 24 * 3600_000) {
+    const lunchEnd = lunchStart + 2 * 3600_000;
+    const overlapStart = Math.max(fromMs, lunchStart);
+    const overlapEnd = Math.min(toMs, lunchEnd);
+    if (overlapEnd <= overlapStart) continue;
+    out.push({
+      started_at: new Date(lunchStart).toISOString(),
+      ended_at: toMs < lunchEnd ? null : new Date(lunchEnd).toISOString(),
+    });
+  }
+  return out;
+}
+
+/** True when the kiosk is open and local time is inside today's lunch. */
+export function shouldAutoPauseStitchKioskLunch(input: {
+  paused: boolean;
+  nowMs?: number;
+}): boolean {
+  if (input.paused) return false;
+  return isStitchLunchClockWindow(input.nowMs ?? Date.now());
 }
 
 /** Pause started in today's lunch window [14:00, 16:00) Asia/Riyadh. */

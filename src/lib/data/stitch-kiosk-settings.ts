@@ -10,13 +10,16 @@ import {
   type StitchKioskSettingsFile,
 } from "@/lib/types/stitch-kiosk-settings";
 import {
+  shouldAutoPauseStitchKioskLunch,
   shouldAutoResumeStitchKioskLunch,
   stitchLunchAutoResumeAtIsoForPause,
   stitchLunchResumeAtMs,
+  stitchLunchStartAtMs,
 } from "@/lib/production/stitch-kiosk-lunch";
 
 const STORE_PATH = path.join(process.cwd(), "src/data/stitch-kiosk-settings.json");
 export const STITCH_KIOSK_LUNCH_AUTO_RESUME_ACTOR = "auto-resume-16:00-riyadh";
+export const STITCH_KIOSK_LUNCH_AUTO_PAUSE_ACTOR = "auto-pause-14:00-riyadh";
 
 function normalizeIntervals(
   raw: StitchKioskSettingsFile | null | undefined
@@ -82,6 +85,8 @@ export async function setStitchKioskPaused(
     actedBy?: string | null;
     /** Close the open pause interval at this instant (lunch = 16:00 Riyadh). */
     endedAt?: string | null;
+    /** Open the pause at this instant (lunch auto-pause = 14:00 Riyadh). */
+    startedAt?: string | null;
     nowMs?: number;
   } = {}
 ): Promise<StitchKioskSettingsFile> {
@@ -92,10 +97,11 @@ export async function setStitchKioskPaused(
   const intervals = [...(current.pause_intervals ?? [])];
 
   if (paused) {
-    const pauseStartedAt = current.paused ? current.paused_at ?? now : now;
+    const startIso = options.startedAt?.trim() || now;
+    const pauseStartedAt = current.paused ? current.paused_at ?? startIso : startIso;
     if (!current.paused) {
       intervals.push({
-        started_at: now,
+        started_at: startIso,
         ended_at: null,
         paused_by: actedBy,
         resumed_by: null,
@@ -145,6 +151,42 @@ export async function setStitchKioskPaused(
   };
   await saveDocument(STORE_PATH, next);
   return next;
+}
+
+/**
+ * If it is 14:00-16:00 Riyadh and the gate is still open, pause it.
+ * Safe to call from cron and from every scan / Live poll.
+ */
+export async function ensureStitchKioskLunchAutoPause(
+  options: { nowMs?: number } = {}
+): Promise<{ paused: boolean; settings: StitchKioskSettingsFile }> {
+  const nowMs = options.nowMs ?? Date.now();
+  const current = await readStitchKioskSettingsFresh();
+  if (!shouldAutoPauseStitchKioskLunch({ paused: current.paused, nowMs })) {
+    return { paused: false, settings: current };
+  }
+  const settings = await setStitchKioskPaused(true, {
+    actedBy: STITCH_KIOSK_LUNCH_AUTO_PAUSE_ACTOR,
+    startedAt: new Date(stitchLunchStartAtMs(nowMs)).toISOString(),
+    nowMs,
+  });
+  return { paused: true, settings };
+}
+
+/**
+ * Lunch gate: auto-pause at 14:00, then auto-resume at 16:00 if due.
+ */
+export async function ensureStitchKioskLunchGate(
+  options: { nowMs?: number } = {}
+): Promise<{ paused: boolean; resumed: boolean; settings: StitchKioskSettingsFile }> {
+  const nowMs = options.nowMs ?? Date.now();
+  const pauseResult = await ensureStitchKioskLunchAutoPause({ nowMs });
+  const resumeResult = await ensureStitchKioskLunchAutoResume({ nowMs });
+  return {
+    paused: pauseResult.paused,
+    resumed: resumeResult.resumed,
+    settings: resumeResult.settings,
+  };
 }
 
 /**

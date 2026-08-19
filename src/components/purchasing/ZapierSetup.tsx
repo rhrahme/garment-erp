@@ -225,8 +225,8 @@ export function ZapierSetup() {
             <li>GET/PATCH {baseUrl}/api/v1/production/stitch-kiosk-pause</li>
             <li className="pl-4 text-slate-500">
               admin pause for floor stitch kiosk; PATCH body paused + optional
-              reason / acted_by; lunch auto-resume at 16:00 Riyadh; event
-              production.stitch_kiosk_pause_updated
+              reason / acted_by; lunch auto-pause 14:00 and auto-resume 16:00
+              Riyadh; event production.stitch_kiosk_pause_updated
             </li>
             <li>POST {baseUrl}/api/v1/pattern/library/client-patterns/[patternId]/tud-fill</li>
             <li className="pl-4 text-slate-500">

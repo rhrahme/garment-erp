@@ -9,6 +9,10 @@ import {
   shouldAutoResumeStitchKioskLunch,
   stitchLunchAutoResumeAtIsoForPause,
   stitchLunchResumeAtMs,
+  stitchLunchStartAtMs,
+  isStitchLunchClockWindow,
+  scheduledStitchLunchIntervals,
+  shouldAutoPauseStitchKioskLunch,
 } from "./stitch-kiosk-lunch.ts";
 
 // 2026-08-10 14:00 Asia/Riyadh = 11:00 UTC
@@ -25,6 +29,30 @@ const morningMs = Date.parse("2026-08-10T07:00:00.000Z");
 test("riyadh wall time maps to expected UTC", () => {
   assert.equal(riyadhWallTimeToUtcMs(2026, 8, 10, 16, 0), resumeMs);
   assert.equal(stitchLunchResumeAtMs(lunchPauseMs), resumeMs);
+  assert.equal(stitchLunchStartAtMs(midLunchMs), lunchPauseMs);
+});
+
+test("lunch clock window is 14:00-16:00 Riyadh", () => {
+  assert.equal(isStitchLunchClockWindow(morningMs), false);
+  assert.equal(isStitchLunchClockWindow(lunchPauseMs), true);
+  assert.equal(isStitchLunchClockWindow(midLunchMs), true);
+  assert.equal(isStitchLunchClockWindow(resumeMs), false);
+});
+
+test("auto-pause only while the gate is open during lunch", () => {
+  assert.equal(shouldAutoPauseStitchKioskLunch({ paused: false, nowMs: midLunchMs }), true);
+  assert.equal(shouldAutoPauseStitchKioskLunch({ paused: true, nowMs: midLunchMs }), false);
+  assert.equal(shouldAutoPauseStitchKioskLunch({ paused: false, nowMs: morningMs }), false);
+});
+
+test("scheduled lunch intervals cover 14:00-16:00 without an admin pause", () => {
+  const rows = scheduledStitchLunchIntervals(
+    Date.parse("2026-08-10T07:00:00.000Z"),
+    Date.parse("2026-08-10T14:00:00.000Z")
+  );
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0]?.started_at, "2026-08-10T11:00:00.000Z");
+  assert.equal(rows[0]?.ended_at, "2026-08-10T13:00:00.000Z");
 });
 
 test("lunch pause window is 14:00-16:00 Riyadh same day", () => {

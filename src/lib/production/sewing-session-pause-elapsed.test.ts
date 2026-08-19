@@ -27,8 +27,24 @@ describe("sewingSessionElapsedSecExcludingPauses", () => {
         ended_at: "2026-08-10T11:00:00.000Z",
       },
     ]);
-    // 90 min wall - 30 min lunch = 60 min
-    assert.equal(sec, 60 * 60);
+    // 90 min wall - 30 min admin pause - 30 min scheduled lunch (14:00-14:30) = 30 min
+    assert.equal(sec, 30 * 60);
+  });
+
+  it("excludes 14:00-16:00 Riyadh lunch with no admin pause", () => {
+    // 10:00-17:00 Riyadh = 07:00-14:00 UTC; lunch 11:00-13:00 UTC
+    const started = "2026-08-10T07:00:00.000Z";
+    const wallNow = Date.parse("2026-08-10T14:00:00.000Z");
+    const sec = sewingSessionElapsedSecExcludingPauses(started, wallNow, []);
+    assert.equal(sec, 5 * 60 * 60);
+  });
+
+  it("freezes open elapsed at 14:00 Riyadh during lunch", () => {
+    const started = "2026-08-10T07:00:00.000Z";
+    const midLunch = Date.parse("2026-08-10T12:30:00.000Z");
+    const sec = sewingSessionElapsedSecExcludingPauses(started, midLunch, []);
+    // 10:00-14:00 Riyadh work only
+    assert.equal(sec, 4 * 60 * 60);
   });
 });
 
@@ -40,6 +56,15 @@ describe("sewingLiveClockNowMs", () => {
       kioskPausedAt: "2026-08-10T10:30:00.000Z",
     });
     assert.equal(frozen, Date.parse("2026-08-10T10:30:00.000Z"));
+  });
+
+  it("freezes at 14:00 Riyadh during lunch even without an admin pause", () => {
+    const frozen = sewingLiveClockNowMs({
+      wallNow: Date.parse("2026-08-10T12:30:00.000Z"),
+      kioskPaused: false,
+      kioskPausedAt: null,
+    });
+    assert.equal(frozen, Date.parse("2026-08-10T11:00:00.000Z"));
   });
 });
 

@@ -1,8 +1,11 @@
 import { sewingSessionArticleLabel } from "@/lib/production/sewing-session-article-label";
 import {
   capSessionCloseAtWorkdayEnd,
+  isStitchLunchClockWindow,
+  scheduledStitchLunchIntervals,
   sessionWorkdayEndMs,
   shouldAutoCloseForgottenSession,
+  stitchLunchStartAtMs,
 } from "@/lib/production/stitch-kiosk-lunch";
 import type { SewingScanFailure } from "@/lib/types/sewing-scan-failures";
 import type {
@@ -588,7 +591,8 @@ export function sewingSessionElapsedBreakdown(
   const end = options.ignoreWorkdayCap ? endRaw : capSessionCloseAtWorkdayEnd(start, endRaw);
   if (end <= start) return empty;
 
-  const overlaps = pauses
+  const allPauses = [...pauses, ...scheduledStitchLunchIntervals(start, end)];
+  const overlaps = allPauses
     .map((pause) => {
       const pStart = new Date(pause.started_at).getTime();
       if (!Number.isFinite(pStart)) return null;
@@ -674,17 +678,22 @@ export function sewingSessionElapsedBreakdown(
   };
 }
 
-/** Effective "now" for Live clocks: freeze at current pause start when kiosk is paused. */
+/** Effective "now" for Live clocks: freeze at lunch 14:00 and/or admin pause start. */
 export function sewingLiveClockNowMs(input: {
   wallNow?: number;
   kioskPaused?: boolean;
   kioskPausedAt?: string | null;
 }): number {
   const wall = input.wallNow ?? Date.now();
-  if (!input.kioskPaused || !input.kioskPausedAt) return wall;
-  const pausedAt = new Date(input.kioskPausedAt).getTime();
-  if (!Number.isFinite(pausedAt)) return wall;
-  return Math.min(wall, pausedAt);
+  let frozen = wall;
+  if (input.kioskPaused && input.kioskPausedAt) {
+    const pausedAt = new Date(input.kioskPausedAt).getTime();
+    if (Number.isFinite(pausedAt)) frozen = Math.min(frozen, pausedAt);
+  }
+  if (isStitchLunchClockWindow(wall)) {
+    frozen = Math.min(frozen, stitchLunchStartAtMs(wall));
+  }
+  return frozen;
 }
 
 /** Warn when a piece has been open longer than this (45 minutes). */

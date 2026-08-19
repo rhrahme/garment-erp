@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSewingScanFailuresAsync } from "@/lib/data/sewing-scan-failures";
 import {
-  ensureStitchKioskLunchAutoResume,
-  readStitchKioskSettings,
+  ensureStitchKioskLunchGate,
+  STITCH_KIOSK_LUNCH_AUTO_PAUSE_ACTOR,
   STITCH_KIOSK_LUNCH_AUTO_RESUME_ACTOR,
 } from "@/lib/data/stitch-kiosk-settings";
 import { notifyIntegration } from "@/lib/integrations";
@@ -26,21 +26,34 @@ export async function GET(request: NextRequest) {
     const failures = await readSewingScanFailuresAsync();
     const workday = await ensureForgottenSessionsClosedAtWorkdayEnd();
     const store = workday.store;
-    const lunchResume = await ensureStitchKioskLunchAutoResume();
-    if (lunchResume.resumed) {
+    const lunchGate = await ensureStitchKioskLunchGate();
+    if (lunchGate.paused) {
       void notifyIntegration("production.stitch_kiosk_pause_updated", {
-        paused: lunchResume.settings.paused,
-        paused_at: lunchResume.settings.paused_at,
-        paused_by: lunchResume.settings.paused_by,
-        resumed_at: lunchResume.settings.resumed_at,
-        resumed_by: lunchResume.settings.resumed_by,
-        auto_resume_at: lunchResume.settings.auto_resume_at ?? null,
-        updated_at: lunchResume.settings.updated_at,
+        paused: lunchGate.settings.paused,
+        paused_at: lunchGate.settings.paused_at,
+        paused_by: lunchGate.settings.paused_by,
+        resumed_at: lunchGate.settings.resumed_at,
+        resumed_by: lunchGate.settings.resumed_by,
+        auto_resume_at: lunchGate.settings.auto_resume_at ?? null,
+        updated_at: lunchGate.settings.updated_at,
+        updated_by: STITCH_KIOSK_LUNCH_AUTO_PAUSE_ACTOR,
+        reason: "lunch_auto_pause",
+      });
+    }
+    if (lunchGate.resumed) {
+      void notifyIntegration("production.stitch_kiosk_pause_updated", {
+        paused: lunchGate.settings.paused,
+        paused_at: lunchGate.settings.paused_at,
+        paused_by: lunchGate.settings.paused_by,
+        resumed_at: lunchGate.settings.resumed_at,
+        resumed_by: lunchGate.settings.resumed_by,
+        auto_resume_at: lunchGate.settings.auto_resume_at ?? null,
+        updated_at: lunchGate.settings.updated_at,
         updated_by: STITCH_KIOSK_LUNCH_AUTO_RESUME_ACTOR,
         reason: "lunch_auto_resume",
       });
     }
-    const kioskSettings = await readStitchKioskSettings();
+    const kioskSettings = lunchGate.settings;
     const { searchParams } = request.nextUrl;
     const period = parseSewingDashboardPeriod(searchParams.get("period"));
     const from = searchParams.get("from");
