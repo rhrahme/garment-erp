@@ -80,7 +80,12 @@ export function employeeExpectedOnStitchFloor(
   if (jobs.length === 0) return true;
   return jobs.some(
     (job) =>
-      isTailorJobFunction(job) || job === "cutter" || job === "wash_iron" || job === "buttons"
+      isTailorJobFunction(job) ||
+      job === "cutter" ||
+      job === "wash_iron" ||
+      job === "washing" ||
+      job === "buttons" ||
+      job === "champa"
   );
 }
 

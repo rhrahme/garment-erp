@@ -88,6 +88,18 @@ describe("employeeExpectedOnStitchFloor", () => {
       ),
       true
     );
+    assert.equal(
+      employeeExpectedOnStitchFloor(
+        employee({ id: "e6", full_name: "Champa", job_functions: ["champa"] })
+      ),
+      true
+    );
+    assert.equal(
+      employeeExpectedOnStitchFloor(
+        employee({ id: "e7", full_name: "Washer", job_functions: ["washing"] })
+      ),
+      true
+    );
   });
 });
 

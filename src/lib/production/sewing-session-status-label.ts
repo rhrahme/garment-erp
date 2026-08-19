@@ -1,6 +1,7 @@
 import { formatClientDisplayName, formatClientShortName } from "@/lib/clients/names";
 import { badgeDisplayName } from "@/lib/hr/badge-print";
 import {
+  EMPLOYEE_JOB_FUNCTION_LABELS,
   isTailorJobFunction,
   normalizeJobFunctions,
   type EmployeeJobFunction,
@@ -38,8 +39,10 @@ export function floorActivityLabelFromJobFunctions(values: unknown): string {
   const jobs = normalizeJobFunctions(values);
   if (jobs.some(isTailorJobFunction)) return "Sewing";
   if (jobs.includes("cutter")) return "Cutting";
-  if (jobs.includes("wash_iron")) return "Wash / iron";
-  if (jobs.includes("buttons")) return "Buttons";
+  if (jobs.includes("wash_iron")) return EMPLOYEE_JOB_FUNCTION_LABELS.wash_iron;
+  if (jobs.includes("washing")) return EMPLOYEE_JOB_FUNCTION_LABELS.washing;
+  if (jobs.includes("buttons")) return EMPLOYEE_JOB_FUNCTION_LABELS.buttons;
+  if (jobs.includes("champa")) return EMPLOYEE_JOB_FUNCTION_LABELS.champa;
   if (jobs.includes("pattern")) return "Pattern";
   if (jobs.includes("qc")) return "QC";
   if (jobs.includes("cleaner")) return "Cleaning";
@@ -50,8 +53,8 @@ export function floorActivityLabelFromJobFunctions(values: unknown): string {
  * Cutters open many A4s (stacked consolidated nest) before cutting once.
  * Stitchers chain-stitch several articles at once (e.g. a run of white
  * shirts), so Sewing also stacks (Aug 11 2026). Close stays A4-first per
- * piece: rescan that piece's A4, then badge. Wash/iron & buttons stay
- * one-open-at-a-time.
+ * piece: rescan that piece's A4, then badge. Wash/iron, washing, buttons,
+ * and champa stay one-open-at-a-time.
  */
 export function employeeAllowsStackedOpenPieces(jobFunctions: unknown): boolean {
   const activity = floorActivityLabelFromJobFunctions(jobFunctions);

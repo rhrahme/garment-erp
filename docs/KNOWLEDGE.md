@@ -10,8 +10,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 - Scan flow: EMP badge -> A4 piece QR -> work -> same A4 -> badge. Kiosk login: `stitch@hagan.pro`.
 - **Badge `job_functions` is the source of truth for activity labels** (Cutting /
-  Sewing / Wash / Iron / Buttons) site-wide - Scan, Live, Performance, History,
-  Orders. Never hardcode "Sewing".
+  Sewing / Wash / Iron / Washing / Buttons / Champa) site-wide - Scan, Live,
+  Performance, History, Orders. Never hardcode "Sewing". ID badge jobs also
+  include `washing` (Washing, separate from `wash_iron`) and `champa`
+  (Champa / Button hole and button fixing, separate from `buttons`).
 - **ID badges carry two QRs**. Tailors (and most roles): `EMP:{id}` (normal
   sew) and `EMPALT:{id}` (alteration). Alteration QR arms the next piece as
   `work_kind=alteration`; Live/History/Orders highlight **Alteration** (amber)
@@ -42,7 +44,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   gap between code edges (not opposite card edges, not abbreviated). Reprint
   Expats badges after dual-QR / layout changes.
 - **All employees on the Expats ID badge list may use the kiosk** - cutters,
-  wash/iron, buttons, not only tailors. Do not re-add a tailor-only gate.
+  wash/iron, washing, buttons, champa, not only tailors. Do not re-add a
+  tailor-only gate.
 - **Multi-arm queue is intentional**: several employees may be badge-ready at
   once; the next A4 scan assigns to the most recent badge (`mostRecentArm`).
   This was removed once (`09033b3`) and restored (`c158f4b`) - do not remove again.
@@ -58,8 +61,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   the machine). Badge -> A4 -> A4 -> ... opens one Live session per article;
   after each open the stitcher stays armed for the next A4. Close is
   A4-first per piece (rescan that article's A4, then badge).
-  `employeeAllowsStackedOpenPieces` = Cutting or Sewing; wash/iron and
-  buttons stay one-open-at-a-time. Do not re-add the tailor one-open gate.
+  `employeeAllowsStackedOpenPieces` = Cutting or Sewing; wash/iron,
+  washing, buttons, and champa stay one-open-at-a-time. Do not re-add
+  the tailor one-open gate.
 - **Multi-stitcher same article QR** (Aug 10 2026): garment work (especially
   jackets/overshirts) can be **divided across several stitchers** on the
   **same** A4/production QR at once. Each stitcher opens their own Live
@@ -115,7 +119,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Admin floor dashboard** (Aug 19 2026): same Performance admin panel lists
   who **did not scan yet** vs who scanned (Today / Week / Month). Roster =
   active Expats who can use the kiosk and have a floor job (tailor / cutter /
-  wash-iron / buttons). Pattern/QC/cleaner-only are not in Missing. A scan
+  wash-iron / washing / buttons / champa). Pattern/QC/cleaner-only are not
+  in Missing. A scan
   counts as present even if overtime was later rejected. Tap a name for
   day/week/month detail.
 - **Stitch/Pattern change requests** (Aug 10 2026): stitch@ and pattern@ may

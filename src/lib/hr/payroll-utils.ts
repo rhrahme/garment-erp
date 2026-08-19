@@ -24,7 +24,8 @@ export function isExpatEmployee(employee: Pick<PayrollEmployee, "bank_name">): b
 /**
  * Who may arm / start a sewing session on the stitch kiosk.
  * Any employee on the HR Expats ID-badge list (BSF/ANB bank group) may scan —
- * cutters, wash/iron, buttons, tailors, etc. Saudis / unknown badges stay out.
+ * cutters, wash/iron, washing, buttons, champa, tailors, etc. Saudis /
+ * unknown badges stay out.
  */
 export function employeeCanSewOnStitchKiosk(
   employee: Pick<PayrollEmployee, "bank_name"> | null | undefined

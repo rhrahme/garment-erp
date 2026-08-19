@@ -59,6 +59,21 @@ describe("normalizeJobFunctions", () => {
     assert.equal(EMPLOYEE_JOB_FUNCTION_LABELS.cleaner, "Cleaner");
     assert.deepEqual(normalizeJobFunctions(["cleaner", "qc", "cleaner"]), ["qc", "cleaner"]);
   });
+
+  it("includes Champa / button hole and Washing as ID badge jobs", () => {
+    assert.ok(EMPLOYEE_JOB_FUNCTIONS.includes("champa"));
+    assert.ok(EMPLOYEE_JOB_FUNCTIONS.includes("washing"));
+    assert.equal(
+      EMPLOYEE_JOB_FUNCTION_LABELS.champa,
+      "Champa / Button hole and button fixing"
+    );
+    assert.equal(EMPLOYEE_JOB_FUNCTION_LABELS.washing, "Washing");
+    assert.deepEqual(
+      normalizeJobFunctions(["button_whole", "washing", "champa", "buttonhole"]),
+      ["washing", "champa"]
+    );
+    assert.deepEqual(normalizeJobFunctions(["wash"]), []);
+  });
 });
 
 describe("formatJobFunctionsSummary", () => {
@@ -70,5 +85,10 @@ describe("formatJobFunctionsSummary", () => {
     assert.equal(formatJobFunctionsSummary(["shorts_tailor"]), "Shorts tailor");
     assert.equal(formatJobFunctionsSummary(["tshirt_tailor"]), "T-shirt tailor");
     assert.equal(formatJobFunctionsSummary(["cleaner"]), "Cleaner");
+    assert.equal(formatJobFunctionsSummary(["washing"]), "Washing");
+    assert.equal(
+      formatJobFunctionsSummary(["champa"]),
+      "Champa / Button hole and button fixing"
+    );
   });
 });

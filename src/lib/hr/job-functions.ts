@@ -13,7 +13,9 @@ export const EMPLOYEE_JOB_FUNCTIONS = [
   "boxer_tailor",
   "cutter",
   "wash_iron",
+  "washing",
   "buttons",
+  "champa",
   "qc",
   "pattern",
   "cleaner",
@@ -35,7 +37,9 @@ export const EMPLOYEE_JOB_FUNCTION_LABELS: Record<EmployeeJobFunction, string> =
   boxer_tailor: "Boxer tailor",
   cutter: "Cutter",
   wash_iron: "Wash / iron",
+  washing: "Washing",
   buttons: "Buttons",
+  champa: "Champa / Button hole and button fixing",
   qc: "QC",
   pattern: "Pattern",
   cleaner: "Cleaner",
@@ -62,6 +66,11 @@ const JOB_FUNCTION_ALIASES: Record<string, EmployeeJobFunction> = {
   jacket: "jacket_tailor",
   trouser: "trouser_tailor",
   thobe: "thobe_tailor",
+  buttonhole: "champa",
+  button_hole: "champa",
+  button_whole: "champa",
+  button_fixing: "champa",
+  champa_buttons: "champa",
 };
 
 const JOB_FUNCTION_SET = new Set<string>(EMPLOYEE_JOB_FUNCTIONS);
