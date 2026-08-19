@@ -322,7 +322,7 @@ export function ReadyMadeWorkspace({ overview }: { overview: ReadyMadeOverview }
     <div>
       <PageHeader
         title="Ready-Made"
-        description="Retail brand production ù tracked by garment article, not as person clients."
+        description="Retail brand production - tracked by garment article, not as person clients."
       />
 
       <div className="mb-6 rounded-xl border border-violet-200 bg-violet-50 px-5 py-4 text-sm text-violet-950">
@@ -344,7 +344,7 @@ export function ReadyMadeWorkspace({ overview }: { overview: ReadyMadeOverview }
         <StatCard
           label="Retail brands"
           value={overview.brandCount}
-          subtext="Massimo Dutti ù Suit Supply ù Boggi ù Cafe Cotton ù Zegna ù Blue Mint ù Lebanon Beirut ù Luca Faloni"
+          subtext="Massimo Dutti - Suit Supply - Boggi - Cafe Cotton - Zegna - Blue Mint - Lebanon Beirut - Luca Faloni"
           icon={<Store className="h-5 w-5" />}
           accent="bg-violet-50 text-violet-600"
         />
@@ -381,8 +381,8 @@ export function ReadyMadeWorkspace({ overview }: { overview: ReadyMadeOverview }
                   <Badge className="bg-violet-100 text-violet-800">{brand.code}</Badge>
                 </div>
                 <p className="mt-1 text-sm text-slate-500">
-                  {brand.articleCount} article{brand.articleCount !== 1 ? "s" : ""} ù {brand.pieceCount}{" "}
-                  pieces ù {brand.activePieces} active
+                  {brand.articleCount} article{brand.articleCount !== 1 ? "s" : ""} - {brand.pieceCount}{" "}
+                  pieces - {brand.activePieces} active
                 </p>
               </div>
             </div>
@@ -427,7 +427,7 @@ export function ReadyMadeWorkspace({ overview }: { overview: ReadyMadeOverview }
                             <td className="px-3 py-3">
                               <p className="font-medium text-slate-900">{article.pieceCount}</p>
                               <p className="text-xs text-slate-400">
-                                {article.activePieces} active ù {article.completedPieces} done
+                                {article.activePieces} active - {article.completedPieces} done
                               </p>
                             </td>
                             <td className="px-3 py-3 text-xs text-slate-600">

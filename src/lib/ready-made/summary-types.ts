@@ -50,5 +50,5 @@ export function formatStageSummary(stageCounts: Partial<Record<ProductionStage, 
     .filter(([, count]) => count > 0)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([stage, count]) => `${labels[stage as ProductionStage] ?? stage}: ${count}`)
-    .join(" · ");
+    .join(" / ");
 }
