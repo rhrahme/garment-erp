@@ -33,6 +33,16 @@ describe("client name permissions", () => {
     );
   });
 
+  it("treats a title stored in first_name as equal to title + given name", () => {
+    assert.equal(
+      clientNamesEqual(
+        { first_name: "Pr", middle_name: "Khaled Bin", last_name: "Salman" },
+        { title: "Pr", first_name: "Khaled", middle_name: "Bin", last_name: "Salman" }
+      ),
+      true
+    );
+  });
+
   it("treats empty middle as equal to null", () => {
     assert.equal(
       clientNamesEqual(

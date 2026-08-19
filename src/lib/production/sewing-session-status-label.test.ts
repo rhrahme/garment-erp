@@ -274,6 +274,27 @@ describe("attachSewingSessionClientShortNames", () => {
     assert.equal(rows[0]?.client_short_name, "Abdel Ajlan");
     assert.equal(sewingSessionClientDisplayName(rows[0]!), "Abdel Ajlan");
   });
+
+  it("joins title + given name for Pr Khaled Bin Salman", () => {
+    const rows = attachSewingSessionClientShortNames(
+      [
+        session({
+          id: "s1",
+          employee_id: "e1",
+          client_name: "Pr Khaled Bin Salman",
+        }),
+      ],
+      [
+        {
+          first_name: "Pr",
+          middle_name: "Khaled Bin",
+          last_name: "Salman",
+        },
+      ]
+    );
+    assert.equal(rows[0]?.client_short_name, "Pr Khaled");
+    assert.equal(sewingSessionClientDisplayName(rows[0]!), "Pr Khaled");
+  });
 });
 
 describe("attachSewingSessionJobFunctions", () => {

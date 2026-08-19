@@ -228,7 +228,7 @@ export function attachSewingSessionJobFunctions(
   });
 }
 
-/** Attach client first+last short names from client profiles (match full display name). */
+/** Attach client short names from client profiles (match full display name). */
 export function attachSewingSessionClientShortNames(
   sessions: SewingSession[],
   clients: ReadonlyArray<Pick<ClientProfile, "first_name" | "middle_name" | "last_name">>

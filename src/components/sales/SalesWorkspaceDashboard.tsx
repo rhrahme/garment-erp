@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { getFactoryBrands } from "@/lib/data/factory-brands";
 import { getInvoiceBalanceDue, getInvoiceAmountPaid } from "@/lib/invoicing/payments";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
+import { formatClientShortName } from "@/lib/clients/names";
 import { filterSalesClientsByBrand } from "@/lib/sales/brand-scope";
 import type { ClientProfile } from "@/lib/types/clients";
 import type { CustomerInvoice } from "@/lib/types/customer-invoices";
@@ -284,7 +285,7 @@ export function SalesWorkspaceDashboard({ canViewAmounts = false }: { canViewAmo
                 ) : (
                   filteredClients.map((client) => (
                     <option key={client.id} value={client.id}>
-                      {client.first_name} {client.last_name} · {client.code}
+                      {formatClientShortName(client)} · {client.code}
                     </option>
                   ))
                 )}

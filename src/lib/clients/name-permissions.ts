@@ -1,7 +1,12 @@
-import { formatClientDisplayName, hasRequiredClientName, normalizeNamePart } from "@/lib/clients/names";
+import {
+  formatClientDisplayName,
+  hasRequiredClientName,
+  liftClientTitleFromNameParts,
+  normalizeNamePart,
+} from "@/lib/clients/names";
 import type { ClientProfile } from "@/lib/types/clients";
 
-export type ClientNameParts = Pick<ClientProfile, "first_name" | "middle_name" | "last_name">;
+export type ClientNameParts = Pick<ClientProfile, "title" | "first_name" | "middle_name" | "last_name">;
 
 /** Non-admins may finish / correct a name for this long after join (create + auto-save race). */
 export const CLIENT_CREATE_NAME_GRACE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -11,12 +16,15 @@ function normalizeMiddle(value: string | null | undefined): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-/** True when first / middle / last match after trim (empty middle ≡ null). */
+/** True when title / first / middle / last match after lift + trim (empty middle ≡ null). */
 export function clientNamesEqual(a: ClientNameParts, b: ClientNameParts): boolean {
+  const left = liftClientTitleFromNameParts(a);
+  const right = liftClientTitleFromNameParts(b);
   return (
-    normalizeNamePart(a.first_name) === normalizeNamePart(b.first_name) &&
-    normalizeMiddle(a.middle_name) === normalizeMiddle(b.middle_name) &&
-    normalizeNamePart(a.last_name) === normalizeNamePart(b.last_name)
+    (left.title ?? null) === (right.title ?? null) &&
+    normalizeNamePart(left.first_name) === normalizeNamePart(right.first_name) &&
+    normalizeMiddle(left.middle_name) === normalizeMiddle(right.middle_name) &&
+    normalizeNamePart(left.last_name) === normalizeNamePart(right.last_name)
   );
 }
 

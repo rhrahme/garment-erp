@@ -1,5 +1,6 @@
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getClientById } from "@/lib/data/clients";
+import { formatClientDisplayName } from "@/lib/clients/names";
 import { readFabricReceipts, readFabricReceiptsArchive } from "@/lib/data/fabric-receipts";
 import { readPatternLibraryFresh } from "@/lib/data/pattern-library";
 import { readSalesOrders } from "@/lib/data/sales-orders";
@@ -20,9 +21,7 @@ export async function loadClientFabricBoard(clientId: string): Promise<ClientFab
   const [library, orders] = [await readPatternLibraryFresh(), readSalesOrders().orders];
   const receipts = [...readFabricReceipts().receipts, ...readFabricReceiptsArchive().receipts];
   const client = getClientById(clientId);
-  const clientName = client
-    ? [client.first_name, client.middle_name, client.last_name].filter(Boolean).join(" ")
-    : null;
+  const clientName = client ? formatClientDisplayName(client) : null;
 
   return buildClientFabricBoard({
     clientId,

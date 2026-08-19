@@ -2,7 +2,7 @@ import {
   clientNamesEqual,
   type ClientNameParts,
 } from "@/lib/clients/name-permissions";
-import { formatClientDisplayName, normalizeNamePart } from "@/lib/clients/names";
+import { formatClientDisplayName, normalizeClientTitle, normalizeNamePart } from "@/lib/clients/names";
 import { readClients, writeClients } from "@/lib/data/clients";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { notifyIntegration } from "@/lib/integrations";
@@ -15,6 +15,7 @@ export type ClientNameChangeRequestSummary = {
   client_code: string;
   current_name: string;
   proposed_name: string;
+  proposed_title: string | null;
   proposed_first_name: string;
   proposed_middle_name: string | null;
   proposed_last_name: string;
@@ -38,6 +39,7 @@ export function buildClientNameChangeRequestSummary(
 ): ClientNameChangeRequestSummary | null {
   if (!isClientNameChangePending(client)) return null;
   const proposed: ClientNameParts = {
+    title: client.name_change_title ?? null,
     first_name: client.name_change_first_name ?? "",
     middle_name: client.name_change_middle_name ?? null,
     last_name: client.name_change_last_name ?? "",
@@ -47,6 +49,7 @@ export function buildClientNameChangeRequestSummary(
     client_code: client.code,
     current_name: formatClientDisplayName(client),
     proposed_name: formatClientDisplayName(proposed),
+    proposed_title: proposed.title ?? null,
     proposed_first_name: proposed.first_name,
     proposed_middle_name: proposed.middle_name,
     proposed_last_name: proposed.last_name,
@@ -78,10 +81,14 @@ export function applyNameChangeRequest(
   const first = normalizeNamePart(proposed.first_name);
   const last = normalizeNamePart(proposed.last_name);
   const middle = normalizeMiddle(proposed.middle_name);
+  const title =
+    proposed.title === undefined
+      ? normalizeClientTitle(client.title)
+      : normalizeClientTitle(proposed.title);
   if (!first || !last) {
     return { ok: false, status: 400, error: "Proposed name needs a first and last name." };
   }
-  if (clientNamesEqual(client, { first_name: first, middle_name: middle, last_name: last })) {
+  if (clientNamesEqual(client, { title, first_name: first, middle_name: middle, last_name: last })) {
     return { ok: false, status: 400, error: "Proposed name is the same as the current name." };
   }
   return {
@@ -90,6 +97,7 @@ export function applyNameChangeRequest(
       ...client,
       name_change_requested_at: nowIso,
       name_change_requested_by: actor,
+      name_change_title: title,
       name_change_first_name: first,
       name_change_middle_name: middle,
       name_change_last_name: last,
@@ -113,6 +121,7 @@ export function applyNameChangeApproval(
     ok: true,
     client: {
       ...clearRequestFields(client),
+      title: normalizeClientTitle(client.name_change_title),
       first_name: first,
       middle_name: normalizeMiddle(client.name_change_middle_name),
       last_name: last,
@@ -130,6 +139,7 @@ function clearRequestFields(client: ClientProfile): ClientProfile {
     ...client,
     name_change_requested_at: null,
     name_change_requested_by: null,
+    name_change_title: null,
     name_change_first_name: null,
     name_change_middle_name: null,
     name_change_last_name: null,
@@ -203,6 +213,7 @@ export async function approveClientNameChange(clientId: string, actor: string): 
   await notifyIntegration("client.updated", {
     id: result.client.id,
     code: result.client.code,
+    title: result.client.title ?? null,
     first_name: result.client.first_name,
     middle_name: result.client.middle_name,
     last_name: result.client.last_name,

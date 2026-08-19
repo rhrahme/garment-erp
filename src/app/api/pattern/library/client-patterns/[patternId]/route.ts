@@ -1,6 +1,7 @@
 import { after, NextResponse } from "next/server";
 import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
 import { getClientById } from "@/lib/data/clients";
+import { formatClientDisplayName } from "@/lib/clients/names";
 import { readFabricReceipts } from "@/lib/data/fabric-receipts";
 import {
   ensurePatternLibraryLoaded,
@@ -89,9 +90,7 @@ export async function GET(_request: Request, context: { params: Promise<{ patter
     });
 
     const client = getClientById(viewPattern.client_id);
-    const clientName = client
-      ? [client.first_name, client.middle_name, client.last_name].filter(Boolean).join(" ")
-      : viewPattern.client_name;
+    const clientName = client ? formatClientDisplayName(client) : viewPattern.client_name;
     const linkedFabricRows = linkedFabricRowsForPattern({
       pattern: viewPattern,
       clientCode: client?.code ?? viewPattern.client_code,

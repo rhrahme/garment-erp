@@ -118,6 +118,7 @@ function validateClients(
       id,
       code,
       joined_at: previous?.joined_at ?? joined_at,
+      title: names.title,
       first_name: normalizeNamePart(names.first_name),
       middle_name: normalizeText(names.middle_name),
       last_name: normalizeNamePart(names.last_name),
@@ -148,6 +149,7 @@ function validateClients(
       // endpoints - bulk saves always carry over the stored request.
       name_change_requested_at: previous?.name_change_requested_at ?? null,
       name_change_requested_by: previous?.name_change_requested_by ?? null,
+      name_change_title: previous?.name_change_title ?? null,
       name_change_first_name: previous?.name_change_first_name ?? null,
       name_change_middle_name: previous?.name_change_middle_name ?? null,
       name_change_last_name: previous?.name_change_last_name ?? null,
@@ -172,7 +174,10 @@ export async function GET() {
     const allowedBrandIds = getAllowedSalesBrandIds(session);
     const scoped = {
       ...data,
-      clients: filterClientsForSalesBrandScope(data.clients, allowedBrandIds),
+      clients: filterClientsForSalesBrandScope(
+        data.clients.map((client) => ({ ...client, ...migrateClientName(client) })),
+        allowedBrandIds
+      ),
     };
     return NextResponse.json(session.canViewClientContact ? scoped : redactClientsFile(scoped));
   } catch (error) {
@@ -229,6 +234,7 @@ export async function PUT(request: Request) {
       await notifyIntegration("client.created", {
         id: client.id,
         code: client.code,
+        title: client.title ?? null,
         first_name: client.first_name,
         middle_name: client.middle_name,
         last_name: client.last_name,

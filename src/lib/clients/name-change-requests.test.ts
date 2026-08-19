@@ -99,6 +99,7 @@ describe("applyNameChangeApproval", () => {
     assert.ok(requested.ok);
     const approved = applyNameChangeApproval(requested.client);
     assert.ok(approved.ok);
+    assert.equal(approved.client.title ?? null, null);
     assert.equal(approved.client.first_name, "Khalid");
     assert.equal(approved.client.middle_name, "Bin Fahd");
     assert.equal(approved.client.last_name, "Al Omair");

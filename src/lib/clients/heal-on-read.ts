@@ -18,6 +18,7 @@ export async function healClientDataForRead(
       {
         id: client.id,
         code: client.code,
+        title: client.title ?? null,
         first_name: client.first_name,
         middle_name: client.middle_name,
         last_name: client.last_name,

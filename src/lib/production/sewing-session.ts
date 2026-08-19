@@ -151,7 +151,7 @@ function enrichSessionsForFloorUi(sessions: SewingSession[]): SewingSession[] {
 /**
  * Dashboard payload with null garment_type backfilled from live SO sticker lookup.
  * Enrich before aggregation so Performance employee rows include article labels.
- * Also joins payroll job_functions + short_name and client first+last for floor UI.
+ * Also joins payroll job_functions + short_name and client short names for floor UI.
  */
 export function sewingSessionsDashboard(
   store: SewingSessionsFile,

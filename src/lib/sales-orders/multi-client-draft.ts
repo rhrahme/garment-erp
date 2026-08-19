@@ -1,5 +1,14 @@
 import type { SalesOrderLineDraft } from "@/lib/autosave/sales-order-draft";
+import { formatClientShortName } from "@/lib/clients/names";
 import type { DeliveryDestination } from "@/lib/shipping/delivery-destinations";
+
+type ClientTabName = {
+  id: string;
+  first_name: string;
+  middle_name?: string | null;
+  last_name: string;
+  code: string;
+};
 
 export type SalesOrderClientDraft = {
   id: string;
@@ -32,11 +41,11 @@ export function cloneClientDraftLines(lines: SalesOrderLineDraft[]): SalesOrderL
 export function clientDraftTabLabel(
   draft: SalesOrderClientDraft,
   index: number,
-  clients: Array<{ id: string; first_name: string; last_name: string; code: string }>
+  clients: ClientTabName[]
 ): string {
   const client = clients.find((entry) => entry.id === draft.clientId);
   if (client) {
-    return `${client.first_name} ${client.last_name}`.trim() || client.code;
+    return formatClientShortName(client) || client.code;
   }
   return `Client ${index + 1}`;
 }
@@ -66,12 +75,12 @@ export function createFabricAddEntry(
 export function clientIdTabLabel(
   clientId: string,
   index: number,
-  clients: Array<{ id: string; first_name: string; last_name: string; code: string }>
+  clients: ClientTabName[]
 ): string {
   if (!clientId) return `Client ${index + 1}`;
   const client = clients.find((entry) => entry.id === clientId);
   if (client) {
-    return `${client.first_name} ${client.last_name}`.trim() || client.code;
+    return formatClientShortName(client) || client.code;
   }
   return `Client ${index + 1}`;
 }

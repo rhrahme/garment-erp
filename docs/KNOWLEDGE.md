@@ -167,7 +167,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `sewing_scan_failures` reads, retries failure persistence, and
   `protectSewing*Write` refuses accidental empty wipes (explicit testing reset
   via `allow_testing_reset` / `POST .../sewing-session/reset-testing` only).
-- Employee/client names display short form when available.
+- Employee/client names display short form when available. Client short
+  labels are first + last, or title + first when a title is set
+  ("Pr Khaled", not "Pr Salman"). Full legal name is title + first +
+  middle + last.
 
 ## Pattern library
 
@@ -530,6 +533,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Clients
 
+- **Title dropdown** before First (Mr, Mrs, Ms, Miss, Dr, Pr, Sheikh,
+  Eng, Prof). Stored as `title`, not inside first_name. Short label is
+  title + first ("Pr Khaled"); full name is title + first + middle +
+  last. Legacy rows with Pr in first_name are lifted on read/save.
+  Helper: `formatClientShortName`.
 - **Name changes need admin approval** (Aug 17 2026): non-admins propose a
   rename via "Request name edit" on the Clients page; the proposal is
   stamped on the client (`name_change_*` fields) and applied only when an

@@ -16,6 +16,7 @@ import { filterClientsByBrand, searchClients } from "@/lib/clients/filter";
 import { getFactoryBrands } from "@/lib/data/factory-brands";
 import { generateNextClientCode, getBrandClientCodePrefix, getJoinMonthYear } from "@/lib/clients/codes";
 import { isWithinClientCreateNameGrace } from "@/lib/clients/name-permissions";
+import { ClientTitleSelect } from "@/components/clients/ClientTitleSelect";
 import { formatClientDisplayName, formatReferredByName, isBlankClientPlaceholder, isClientSaveable } from "@/lib/clients/names";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import { useSalesBrandScope } from "@/hooks/useSalesBrandScope";
@@ -52,6 +53,7 @@ function emptyClient(): ClientProfile {
     id: `new-${Date.now()}`,
     code: "",
     joined_at: null,
+    title: null,
     first_name: "",
     middle_name: null,
     last_name: "",
@@ -200,6 +202,7 @@ export function ClientProfilesEditor() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   /** Client id with the "request name edit" form open (locked names, non-admin). */
   const [nameRequestId, setNameRequestId] = useState<string | null>(null);
+  const [nameRequestTitle, setNameRequestTitle] = useState<string | null>(null);
   const [nameRequestFirst, setNameRequestFirst] = useState("");
   const [nameRequestMiddle, setNameRequestMiddle] = useState("");
   const [nameRequestLast, setNameRequestLast] = useState("");
@@ -464,7 +467,7 @@ export function ClientProfilesEditor() {
     const nameLocked = Boolean(existing) && !isClientNameEditable(existing!);
     if (
       nameLocked &&
-      ("first_name" in patch || "middle_name" in patch || "last_name" in patch)
+      ("title" in patch || "first_name" in patch || "middle_name" in patch || "last_name" in patch)
     ) {
       return;
     }
@@ -562,6 +565,7 @@ export function ClientProfilesEditor() {
     const patch = {
       name_change_requested_at: client.name_change_requested_at ?? null,
       name_change_requested_by: client.name_change_requested_by ?? null,
+      name_change_title: client.name_change_title ?? null,
       name_change_first_name: client.name_change_first_name ?? null,
       name_change_middle_name: client.name_change_middle_name ?? null,
       name_change_last_name: client.name_change_last_name ?? null,
@@ -575,6 +579,7 @@ export function ClientProfilesEditor() {
   }
 
   function openNameRequest(client: ClientProfile) {
+    setNameRequestTitle(client.title ?? null);
     setNameRequestFirst(client.first_name);
     setNameRequestMiddle(client.middle_name ?? "");
     setNameRequestLast(client.last_name);
@@ -591,6 +596,7 @@ export function ClientProfilesEditor() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "request_change",
+          title: nameRequestTitle,
           first_name: nameRequestFirst,
           middle_name: nameRequestMiddle.trim() || null,
           last_name: nameRequestLast,
@@ -709,13 +715,12 @@ export function ClientProfilesEditor() {
       : "mt-1 w-full rounded-lg border border-slate-300 px-3 py-2";
 
     const nameChangePending = Boolean(client.name_change_requested_at);
-    const proposedName = [
-      client.name_change_first_name,
-      client.name_change_middle_name,
-      client.name_change_last_name,
-    ]
-      .filter(Boolean)
-      .join(" ");
+    const proposedName = formatClientDisplayName({
+      title: client.name_change_title ?? null,
+      first_name: client.name_change_first_name ?? "",
+      middle_name: client.name_change_middle_name ?? null,
+      last_name: client.name_change_last_name ?? "",
+    });
 
     const nameSection = (
       <div className="md:col-span-2">
@@ -754,7 +759,16 @@ export function ClientProfilesEditor() {
             You can finish or correct this name for a short time after creating the client.
           </p>
         )}
-        <div className="mt-2 grid gap-4 md:grid-cols-3">
+        <div className="mt-2 grid gap-4 md:grid-cols-[7rem_1fr_1fr_1fr]">
+          <label className="block text-sm">
+            <span className="font-medium text-slate-700">Title</span>
+            <ClientTitleSelect
+              value={client.title}
+              onChange={(title) => updateClient(client.id, { title })}
+              disabled={nameLocked}
+              className={nameFieldClass}
+            />
+          </label>
           <label className="block text-sm">
             <span className="font-medium text-slate-700">First</span>
             <input
@@ -798,7 +812,12 @@ export function ClientProfilesEditor() {
                 <p className="text-xs font-medium text-indigo-900">
                   Propose a new name — an admin gets notified and approves it before it applies.
                 </p>
-                <div className="mt-2 grid gap-2 md:grid-cols-3">
+                <div className="mt-2 grid gap-2 md:grid-cols-[7rem_1fr_1fr_1fr]">
+                  <ClientTitleSelect
+                    value={nameRequestTitle}
+                    onChange={setNameRequestTitle}
+                    className="w-full min-h-[40px] rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  />
                   <input
                     value={nameRequestFirst}
                     onChange={(e) => setNameRequestFirst(e.target.value)}

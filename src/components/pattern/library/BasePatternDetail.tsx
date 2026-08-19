@@ -8,6 +8,7 @@ import { MeasurementUnitToggle } from "@/components/pattern/library/MeasurementU
 import { LibraryFileList } from "@/components/pattern/library/LibraryFileList";
 import { PatternQrBadge } from "@/components/pattern/library/PatternQrBadge";
 import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
+import { formatClientDisplayName } from "@/lib/clients/names";
 import { invalidateBasePickerCache } from "@/lib/pattern-library/base-picker-cache";
 import {
   clientColumnDelta,
@@ -30,13 +31,14 @@ import { cn } from "@/lib/utils";
 interface FitClientOption {
   id: string;
   code: string;
+  title?: string | null;
   first_name: string;
   middle_name: string | null;
   last_name: string;
 }
 
 function fitClientName(client: FitClientOption): string {
-  return [client.first_name, client.middle_name, client.last_name].filter(Boolean).join(" ");
+  return formatClientDisplayName(client);
 }
 
 export function BasePatternDetail({ baseId }: { baseId: string }) {

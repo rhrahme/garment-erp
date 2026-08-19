@@ -284,7 +284,7 @@ export function importClickUpTasks(
       const parsedName = parseClickUpClientName(rootName);
       const displayName = parsedName.is_group
         ? rootName.trim()
-        : [parsedName.first_name, parsedName.middle_name, parsedName.last_name].filter(Boolean).join(" ");
+        : formatClientDisplayName(parsedName);
       const key = clientKey(displayName, brandId);
 
       client = clientByKey.get(key)!;
@@ -299,6 +299,7 @@ export function importClickUpTasks(
           id: `cu-${slugifyClientId(displayName)}-${brandId}`,
           code,
           joined_at: joinedAt.toISOString(),
+          title: parsedName.title,
           first_name: parsedName.first_name,
           middle_name: parsedName.middle_name,
           last_name: parsedName.last_name,

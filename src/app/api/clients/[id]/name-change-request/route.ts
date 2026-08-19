@@ -29,6 +29,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const { id } = await context.params;
     const body = (await request.json()) as {
       action?: string;
+      title?: string | null;
       first_name?: string;
       middle_name?: string | null;
       last_name?: string;
@@ -46,6 +47,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         );
       }
       const result = await requestClientNameChange(id, actor, {
+        title: body.title ?? null,
         first_name: String(body.first_name ?? ""),
         middle_name: body.middle_name ?? null,
         last_name: String(body.last_name ?? ""),

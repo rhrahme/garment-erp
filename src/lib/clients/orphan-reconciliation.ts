@@ -1,4 +1,4 @@
-import { formatClientDisplayName } from "@/lib/clients/names";
+import { formatClientDisplayName, migrateClientName } from "@/lib/clients/names";
 import type { ClientProfile } from "../types/clients";
 import type { SalesOrder } from "../types/sales-orders";
 
@@ -39,23 +39,19 @@ function normalizePart(value: unknown): string {
 }
 
 function migrateDisplayName(rawName: string): {
+  title: string | null;
   first_name: string;
   middle_name: string | null;
   last_name: string;
 } {
-  const legacyName = normalizePart(rawName);
-  if (!legacyName) {
-    return { first_name: "Unknown", middle_name: null, last_name: "Client" };
+  const names = migrateClientName({ name: rawName });
+  if (!names.first_name && !names.last_name) {
+    return { title: null, first_name: "Unknown", middle_name: null, last_name: "Client" };
   }
-  const parts = legacyName.split(/\s+/);
-  if (parts.length === 1) {
-    return { first_name: parts[0]!, middle_name: null, last_name: "Client" };
+  if (!names.last_name) {
+    return { ...names, last_name: "Client" };
   }
-  return {
-    first_name: parts[0]!,
-    middle_name: parts.length > 2 ? parts.slice(1, -1).join(" ") : null,
-    last_name: parts[parts.length - 1]!,
-  };
+  return names;
 }
 
 function brandIdFromClientCode(code: string): string {
@@ -125,6 +121,7 @@ export function buildClientProfileFromOrphan(orphan: OrphanClientGroup): ClientP
     id: orphan.client_id,
     code,
     joined_at,
+    title: names.title,
     first_name: names.first_name,
     middle_name: names.middle_name,
     last_name: names.last_name,

@@ -27,6 +27,7 @@ export async function POST(request: Request) {
       action?: string;
       client_id?: string;
       actor?: string;
+      title?: string | null;
       first_name?: string;
       middle_name?: string | null;
       last_name?: string;
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
 
     if (action === "request_change") {
       const result = await requestClientNameChange(clientId, actor, {
+        title: body.title ?? null,
         first_name: String(body.first_name ?? ""),
         middle_name: body.middle_name ?? null,
         last_name: String(body.last_name ?? ""),

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { generateNextClientCode, getBrandClientCodePrefix } from "@/lib/clients/codes";
 import { healClientDataForRead } from "@/lib/clients/heal-on-read";
-import { formatClientDisplayName, hasRequiredClientName, migrateReferredByName, normalizeNamePart } from "@/lib/clients/names";
+import { formatClientDisplayName, hasRequiredClientName, migrateClientName, migrateReferredByName } from "@/lib/clients/names";
 import {
   getActiveClients,
   getClientById,
@@ -32,10 +32,12 @@ export async function GET(request: Request) {
   if (id) {
     const client = getClientById(id);
     if (!client) return NextResponse.json({ error: "Client not found." }, { status: 404 });
-    return NextResponse.json({ client });
+    return NextResponse.json({ client: { ...client, ...migrateClientName(client) } });
   }
 
-  return NextResponse.json({ clients: getActiveClients() });
+  return NextResponse.json({
+    clients: getActiveClients().map((entry) => ({ ...entry, ...migrateClientName(entry) })),
+  });
 }
 
 export async function POST(request: Request) {
@@ -44,15 +46,20 @@ export async function POST(request: Request) {
 
   try {
     const body = (await request.json()) as Partial<ClientProfile> & { name?: string };
-    const first_name = normalizeNamePart(body.first_name ?? "");
-    const middle_name = normalizeText(body.middle_name);
-    const last_name = normalizeNamePart(body.last_name ?? body.name ?? "");
+    const names = migrateClientName({
+      title: body.title,
+      first_name: body.first_name,
+      middle_name: body.middle_name,
+      last_name: body.last_name ?? body.name,
+      name: body.name,
+    });
+    const { title, first_name, middle_name, last_name } = names;
 
-    if (!hasRequiredClientName({ first_name, last_name })) {
+    if (!hasRequiredClientName(names)) {
       return NextResponse.json({ error: "first_name and last_name are required." }, { status: 400 });
     }
 
-    const displayName = formatClientDisplayName({ first_name, middle_name, last_name });
+    const displayName = formatClientDisplayName(names);
 
     const brand_ids = Array.isArray(body.brand_ids) ? [...new Set(body.brand_ids.map(String))] : [];
     if (brand_ids.length === 0) {
@@ -88,6 +95,7 @@ export async function POST(request: Request) {
       id: slugifyClientId(displayName) || `client-${Date.now()}`,
       code,
       joined_at,
+      title,
       first_name,
       middle_name,
       last_name,
@@ -117,6 +125,7 @@ export async function POST(request: Request) {
         {
           id: restored.id,
           code: restored.code,
+          title: restored.title ?? null,
           first_name: restored.first_name,
           middle_name: restored.middle_name,
           last_name: restored.last_name,
@@ -130,6 +139,7 @@ export async function POST(request: Request) {
     await notifyIntegration("client.created", {
       id: client.id,
       code: client.code,
+      title: client.title ?? null,
       first_name: client.first_name,
       middle_name: client.middle_name,
       last_name: client.last_name,

@@ -5,6 +5,7 @@ import {
   readLocalDraft,
   writeLocalDraft,
 } from "@/lib/autosave/local-draft-storage";
+import { formatClientDisplayName } from "@/lib/clients/names";
 import type { SalesOrderClientDraft } from "@/lib/sales-orders/multi-client-draft";
 
 export const SALES_ORDER_DRAFT_VERSION = 3;
@@ -244,11 +245,17 @@ export function clientDraftHasContinueContent(entry: SalesOrderClientDraft): boo
 export function clientDraftLabel(
   entry: SalesOrderClientDraft,
   index: number,
-  clients: Array<{ id: string; first_name: string; last_name: string; middle_name?: string | null }>
+  clients: Array<{
+    id: string;
+    title?: string | null;
+    first_name: string;
+    last_name: string;
+    middle_name?: string | null;
+  }>
 ): string {
   const client = clients.find((row) => row.id === entry.clientId);
   if (client) {
-    return [client.first_name, client.middle_name, client.last_name].filter(Boolean).join(" ").trim();
+    return formatClientDisplayName(client);
   }
   return entry.clientId ? "Unnamed client" : `Client ${index + 1}`;
 }

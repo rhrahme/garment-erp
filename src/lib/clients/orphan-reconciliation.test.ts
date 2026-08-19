@@ -97,8 +97,9 @@ test("reconcileOrphanedClients restores Khaled-style orphan from order fields", 
   const restored = result.restored[0]!;
   assert.equal(restored.id, "new-1782858921783");
   assert.equal(restored.code, "FR-0626-0037");
-  assert.equal(restored.first_name, "Pr");
-  assert.equal(restored.middle_name, "Khaled Bin");
+  assert.equal(restored.title, "Pr");
+  assert.equal(restored.first_name, "Khaled");
+  assert.equal(restored.middle_name, "Bin");
   assert.equal(restored.last_name, "Salman");
   assert.deepEqual(restored.brand_ids, ["fouad-rahme"]);
   assert.equal(restored.is_active, true);

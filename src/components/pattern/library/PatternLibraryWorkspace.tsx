@@ -8,6 +8,7 @@ import { MeasurementUnitToggle } from "@/components/pattern/library/MeasurementU
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
+import { formatClientDisplayName } from "@/lib/clients/names";
 import { orderMatchesBrandClientPrefix } from "@/lib/clients/orphan-reconciliation";
 import { matchesNormalizedSearch } from "@/lib/search/normalize";
 import { BasePatternCascadePicker } from "@/components/pattern/library/BasePatternCascadePicker";
@@ -41,13 +42,14 @@ export interface BrandOption {
 interface ClientOption {
   id: string;
   code: string;
+  title?: string | null;
   first_name: string;
   middle_name: string | null;
   last_name: string;
 }
 
 function clientDisplayName(client: ClientOption): string {
-  return [client.first_name, client.middle_name, client.last_name].filter(Boolean).join(" ");
+  return formatClientDisplayName(client);
 }
 
 /** Short badge codes for cut families the team refers to by abbreviation. */

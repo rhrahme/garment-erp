@@ -76,6 +76,7 @@ export function searchClients(
     matchesNormalizedSearch(
       [
         formatClientDisplayName(client),
+        client.title,
         client.first_name,
         client.middle_name,
         client.last_name,

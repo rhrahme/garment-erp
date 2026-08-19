@@ -11,7 +11,8 @@ import {
   sortClients,
   type ClientSortBy,
 } from "@/lib/clients/filter";
-import { formatClientDisplayName } from "@/lib/clients/names";
+import { ClientTitleSelect } from "@/components/clients/ClientTitleSelect";
+import { formatClientDisplayName, isClientNameTitle, migrateClientName } from "@/lib/clients/names";
 import { getFactoryBrandById } from "@/lib/data/factory-brands";
 import { cn } from "@/lib/utils";
 import type { ClientProfile } from "@/lib/types/clients";
@@ -53,6 +54,7 @@ export function ClientSearchSelect({
   const [sortBy, setSortBy] = useState<ClientSortBy>(defaultSort);
   const [sortHydrated, setSortHydrated] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [newTitle, setNewTitle] = useState<string | null>(null);
   const [newFirstName, setNewFirstName] = useState("");
   const [newLastName, setNewLastName] = useState("");
   const [createBusy, setCreateBusy] = useState(false);
@@ -131,8 +133,16 @@ export function ClientSearchSelect({
       : null;
     const seed = selectedLabel && query === selectedLabel ? "" : query;
     const words = seed.trim().split(/\s+/).filter(Boolean);
-    setNewFirstName(words[0] ?? "");
-    setNewLastName(words.slice(1).join(" "));
+    if (words[0] && isClientNameTitle(words[0])) {
+      const parsed = migrateClientName({ name: seed.trim() });
+      setNewTitle(parsed.title);
+      setNewFirstName(parsed.first_name);
+      setNewLastName([parsed.middle_name, parsed.last_name].filter(Boolean).join(" "));
+    } else {
+      setNewTitle(null);
+      setNewFirstName(words[0] ?? "");
+      setNewLastName(words.slice(1).join(" "));
+    }
     setCreateError(null);
     setCreating(true);
   }
@@ -140,6 +150,7 @@ export function ClientSearchSelect({
   function cancelCreate() {
     setCreating(false);
     setCreateError(null);
+    setNewTitle(null);
   }
 
   async function saveNewClient() {
@@ -163,7 +174,7 @@ export function ClientSearchSelect({
         body: JSON.stringify({
           clients: [
             ...listData.clients,
-            { id: "", first_name: first, last_name: last, brand_ids: [brandId], is_active: true },
+            { id: "", title: newTitle, first_name: first, last_name: last, brand_ids: [brandId], is_active: true },
           ],
         }),
       });
@@ -174,6 +185,7 @@ export function ClientSearchSelect({
       const created = saveData.clients.find(
         (client) =>
           !existingIds.has(client.id) &&
+          (client.title ?? null) === (newTitle ?? null) &&
           client.first_name.toLowerCase() === first.toLowerCase() &&
           client.last_name.toLowerCase() === last.toLowerCase()
       );
@@ -251,7 +263,12 @@ export function ClientSearchSelect({
           {canCreate && creating && (
             <div className="space-y-2 border-b border-slate-200 bg-indigo-50/60 p-3">
               <p className="text-xs font-medium text-indigo-900">New client · {brand?.name}</p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-[6.5rem_1fr_1fr] gap-2">
+                <ClientTitleSelect
+                  value={newTitle}
+                  onChange={setNewTitle}
+                  className="w-full min-h-[40px] rounded-lg border border-slate-300 px-2 py-2 text-sm"
+                />
                 <input
                   value={newFirstName}
                   onChange={(e) => setNewFirstName(e.target.value)}

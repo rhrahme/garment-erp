@@ -4,6 +4,8 @@ export interface ClientProfile {
   code: string;
   /** Set when the client profile is first saved */
   joined_at: string | null;
+  /** Honorific before the given name: Mr, Mrs, Dr, Pr, Sheikh, ... */
+  title?: string | null;
   first_name: string;
   middle_name: string | null;
   last_name: string;
@@ -32,6 +34,7 @@ export interface ClientProfile {
    */
   name_change_requested_at?: string | null;
   name_change_requested_by?: string | null;
+  name_change_title?: string | null;
   name_change_first_name?: string | null;
   name_change_middle_name?: string | null;
   name_change_last_name?: string | null;
