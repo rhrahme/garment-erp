@@ -4,7 +4,6 @@ import { FabricChangeAlertsPanel } from "@/components/dashboard/FabricChangeAler
 import { PatternMeasurementUnitControl } from "@/components/pattern/library/PatternMeasurementUnitControl";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PatternAlterationPendingPanel } from "@/components/pattern/PatternAlterationPendingPanel";
-import { PatternOperatorNoticesPanel } from "@/components/pattern/PatternOperatorNoticesPanel";
 import { PatternQueueSection } from "@/components/pattern/PatternQueueSection";
 import { PatternStageScanPanel } from "@/components/pattern/PatternStageScanPanel";
 
@@ -16,7 +15,6 @@ export default function PatternPage() {
         description="Pattern drafting queue grouped by client + sales order. Open an order to work fabric lines and link shared master patterns."
         action={<PatternMeasurementUnitControl />}
       />
-      <PatternOperatorNoticesPanel />
       <PatternAlterationPendingPanel />
       <FabricChangeAlertsPanel />
       <div className="mb-4">

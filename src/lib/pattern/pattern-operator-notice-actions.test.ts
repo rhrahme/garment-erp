@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import {
   ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY,
@@ -95,5 +96,12 @@ describe("Pattern add-to-existing-consolidation how-to", () => {
     assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /ONLY the new fabrics/);
     assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /Do not press New pattern/);
     assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /Do not make a second pattern/);
+  });
+
+  it("shows open how-tos on every Pattern page, not only email or Queue home", () => {
+    const layout = readFileSync("src/app/(dashboard)/pattern/layout.tsx", "utf8");
+    const home = readFileSync("src/app/(dashboard)/pattern/page.tsx", "utf8");
+    assert.match(layout, /PatternOperatorNoticesPanel/);
+    assert.doesNotMatch(home, /PatternOperatorNoticesPanel/);
   });
 });

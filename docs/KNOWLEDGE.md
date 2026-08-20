@@ -284,9 +284,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Pages hosting a picker preload on mount so the dialog opens with zero
   network wait; the cache is invalidated after base create / fit-column
   save. Keep picker search client-side.
-- **Pattern operator notices** (Aug 6 2026, How-to tab Aug 19): instructional
-  how-tos appear at the top of `/pattern` until Pattern taps Got it, and are
-  emailed to `PATTERN_EMAILS`. They stay on **Pattern -> How-to**
+- **Pattern operator notices** (Aug 6 2026, How-to tab Aug 19, every-page
+  banner Aug 20): instructional how-tos appear at the top of every Pattern
+  ERP page (Queue, order board, jobs, library) until Pattern taps Got it,
+  and are emailed to `PATTERN_EMAILS`. They stay on **Pattern -> How-to**
   (`/pattern/how-to`) after acknowledge. Catalog is `PATTERN_HOWTO_NOTICES`
   (newest first); `ensureAllPatternHowToNotices` seeds + emails any missing
   entry. Store `pattern_operator_notices`; APIs `/api/pattern/notices` +
@@ -295,10 +296,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   / `pattern.operator_notice_seen`. How-to emails go to both Pattern
   mailboxes (`hagan.dp1@gmail.com` and `pattern@hagan.pro`) plus
   `PATTERN_EMAILS`. For the add-to-existing-group how-to, admin is emailed
-  when it is sent and again when a Pattern operator opens /pattern and
-  sees the banner. When we explain a floor fix to Pattern, add a catalog
-  entry so they get the email and the tab - do not only tell the owner
-  in chat. Notices: leftover SO lines
+  when it is sent and again when a Pattern operator opens any Pattern page
+  and sees the banner. When we explain a floor fix to Pattern, add a catalog
+  entry so they get the email and the in-app banner - do not only tell the
+  owner in chat. Notices: leftover SO lines
   (`howto-consolidate-removed-so-lines-v1`), leftover jobs cleared
   because ERP is source of truth
   (`howto-erp-source-of-truth-leftover-jobs-v1`), add later fabrics to
@@ -765,7 +766,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Add later fabrics to an existing consolidation** (Aug 20 2026): tick
   only the new fabrics on the Pattern order board -> Consolidate selected
   -> Existing pattern -> pick the first sheet -> Link & open pattern.
-  Do not click New pattern. Same garment only. How-to + email:
+  Do not click New pattern. Same garment only. How-to + email + banner
+  on every Pattern page:
   `howto-add-fabrics-to-existing-consolidation-v2`.
 - **Remove a fabric from a consolidation**: Grouped fabrics -> Remove
   unassigns that line and clears job.client_pattern_id. Do not leave the

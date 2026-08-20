@@ -1,6 +1,19 @@
 {
   "notices": [
     {
+      "id": "howto-add-fabrics-to-existing-consolidation-v2",
+      "body": "Do this yourself. Do not wait for the owner to explain it.\n\nWHAT THIS MEANS:\nA few days ago you consolidated many fabrics onto ONE pattern sheet.\nNow more fabrics are on the same sales order. Those new fabrics must join that SAME sheet.\nDo not make a second pattern. Do not upload a new .TUD.\n\nWRONG (do not do this):\n- Tick the old fabrics again\n- Press New pattern\n- Press Create pattern\n- Upload another .TUD for the same group\n\nRIGHT (do this):\n1. Open Pattern (left menu).\n2. Open the SAME sales order as before (the client you already consolidated).\n3. Tick ONLY the new fabrics. Leave the already-grouped fabrics UNCHECKED.\n4. Press Consolidate selected.\n5. Press Existing pattern. Do not press New pattern.\n6. In the list, pick the pattern you already made (same client, same garment).\n7. Press Link & open pattern.\n\nDONE. The new fabrics are now on the old sheet. The sizes you already typed stay.\nThe old .TUD stays. You do not upload the file again.\n\nSAME GARMENT ONLY. Shirt extras go on the Shirt sheet. Trouser extras go on the Trouser sheet.\nIf the list is empty, you ticked a different garment than the old sheet. Untick and tick only the matching garment.\n\nOther path if you use the client fabric board: tick the new fabrics -> Existing pattern -> Assign fabrics.",
+      "href": "/pattern",
+      "title": "READ THIS: add extra fabrics to the SAME pattern you already made",
+      "status": "open",
+      "created_at": "2026-08-20T15:02:00.000Z",
+      "created_by": "admin",
+      "emailed_at": "2026-08-20T14:54:00.000Z",
+      "href_label": "Open Pattern home",
+      "acknowledged_at": null,
+      "acknowledged_by": null
+    },
+    {
       "id": "howto-consolidate-removed-so-lines-v1",
       "body": "That error means some ticked rows are leftover pattern jobs. QC already removed or transferred those fabrics from the sales order, so Pattern cannot attach a sheet to them.\n\nWhat to do:\n1. Stay on the Pattern order board (the SO list of fabrics).\n2. Rows marked Removed from this sales order cannot be ticked. Leave them.\n3. Tick only the Overshirt+Trouser (or other garment) rows that are still on the order.\n4. Click Consolidate selected -> New pattern -> Create pattern -> upload .TUD.\n\nSelect all now skips the leftover rows automatically.\n\nIf you still need a removed fabric (example: Ibrahim SO-2026-0130 S21006 / S21007 / S21008 / S21009), ask QC to put it back on the sales order first. Pattern cannot consolidate a fabric that is no longer on the order.",
       "href": "/pattern",
@@ -53,5 +66,5 @@
       "acknowledged_by": "hagan.dp1@gmail.com"
     }
   ],
-  "updated_at": "2026-08-20T13:32:08.586Z"
+  "updated_at": "2026-08-20T15:02:00.000Z"
 }

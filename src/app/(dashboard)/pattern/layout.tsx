@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { PatternOperatorNoticesPanel } from "@/components/pattern/PatternOperatorNoticesPanel";
 import { PatternWorkspaceTabs } from "@/components/pattern/PatternWorkspaceTabs";
 import { defaultPathForSession } from "@/lib/auth/permissions";
 import { getSessionContext } from "@/lib/auth/session";
@@ -30,6 +31,7 @@ export default async function PatternLayout({ children }: { children: React.Reac
         </div>
       ) : null}
       <PatternWorkspaceTabs />
+      <PatternOperatorNoticesPanel />
       {children}
     </div>
   );

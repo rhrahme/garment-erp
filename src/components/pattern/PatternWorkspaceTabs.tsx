@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { BookOpen, LibraryBig, ListTodo } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,23 @@ function isTabActive(pathname: string, tab: (typeof TABS)[number]): boolean {
 
 export function PatternWorkspaceTabs() {
   const pathname = usePathname();
+  const [openHowToCount, setOpenHowToCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/pattern/notices", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { notices?: unknown[] } | null) => {
+        if (cancelled || !data || !Array.isArray(data.notices)) return;
+        setOpenHowToCount(data.notices.length);
+      })
+      .catch(() => {
+        // Badge is optional.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="mb-4 flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
@@ -38,6 +56,11 @@ export function PatternWorkspaceTabs() {
           >
             <Icon className="h-4 w-4" />
             {tab.label}
+            {tab.match === "prefix" && tab.href === "/pattern/how-to" && openHowToCount > 0 ? (
+              <span className="rounded-full bg-amber-200 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-amber-950">
+                {openHowToCount}
+              </span>
+            ) : null}
           </Link>
         );
       })}

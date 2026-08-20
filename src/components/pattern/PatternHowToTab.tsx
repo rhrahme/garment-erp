@@ -95,7 +95,7 @@ export function PatternHowToTab() {
         </CardTitle>
         <p className="text-xs text-indigo-800/80">
           Every floor fix we explain stays here. New ones also land on Pattern email and at the
-          top of Queue until you tap Got it.
+          top of every Pattern page (Queue, order board, library) until you tap Got it.
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
