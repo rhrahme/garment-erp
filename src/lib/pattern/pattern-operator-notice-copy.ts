@@ -77,6 +77,31 @@ export const CONSOLIDATE_REMOVED_SO_LINES_HOWTO_BODY = [
   "If you still need a removed fabric (example: Ibrahim SO-2026-0130 S21006 / S21007 / S21008 / S21009), ask QC to put it back on the sales order first. Pattern cannot consolidate a fabric that is no longer on the order.",
 ].join("\n");
 
+export const ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID =
+  "howto-add-fabrics-to-existing-consolidation-v1";
+
+export const ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_TITLE =
+  "How to add more fabrics to a group you already consolidated";
+
+export const ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY = [
+  "Use this when you already consolidated fabrics onto one pattern a few days ago, and now more fabrics on the same order should join that same sheet. Do not create a new pattern.",
+  "",
+  "Steps:",
+  "1. Open Pattern home (/pattern).",
+  "2. Open the same sales order (Pattern order board).",
+  "3. Tick only the NEW fabrics that are not in the group yet. Leave the already-grouped ones unticked.",
+  "4. Click Consolidate selected.",
+  "5. Click Existing pattern (not New pattern).",
+  "6. Pick the original consolidated sheet (same client, same garment).",
+  "7. Click Link & open pattern.",
+  "",
+  "The new fabrics join the first group. Sizes and .TUD already on that sheet stay. You do not need to upload the .TUD again unless the pattern itself changed.",
+  "",
+  "The Existing pattern list only shows sheets for that garment. If the new fabrics are a different garment, they need their own sheet.",
+  "",
+  "Other path: Client fabric board -> tick the new fabrics -> Existing pattern -> Assign fabrics.",
+].join("\n");
+
 export const ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_NOTICE_ID =
   "howto-erp-source-of-truth-leftover-jobs-v1";
 
@@ -98,6 +123,14 @@ export const ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_BODY = [
 
 /** Newest first. Each entry is emailed to Pattern and kept on the How-to tab. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID,
+    title: ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_TITLE,
+    body: ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY,
+    href: "/pattern",
+    href_label: "Open Pattern home",
+    audience: "pattern",
+  },
   {
     id: ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_NOTICE_ID,
     title: ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_TITLE,

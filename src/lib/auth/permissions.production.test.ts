@@ -518,6 +518,18 @@ describe("task_operator inventory (task 1)", () => {
     assert.equal(resolveRestrictedAccess(null, "hagan.task1@gmail.com", false), "task_operator");
   });
 
+  it("keeps Task 1 as task_operator even if listed in CLIENT_MANAGER_EMAILS", () => {
+    const previous = process.env.CLIENT_MANAGER_EMAILS;
+    process.env.CLIENT_MANAGER_EMAILS = "hagan.qc@gmail.com,hagan.task1@gmail.com";
+    try {
+      assert.equal(resolveRestrictedAccess(null, "hagan.task1@gmail.com", false), "task_operator");
+      assert.equal(resolveRestrictedAccess("client_manager", "hagan.task1@gmail.com", false), "task_operator");
+    } finally {
+      if (previous === undefined) delete process.env.CLIENT_MANAGER_EMAILS;
+      else process.env.CLIENT_MANAGER_EMAILS = previous;
+    }
+  });
+
   it("nav includes inventory", () => {
     const nav = TASK_OPERATOR_NAV_HREFS as readonly string[];
     assert.ok(nav.includes("/inventory"));

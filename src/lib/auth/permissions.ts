@@ -590,7 +590,11 @@ export function isInventoryClerkRole(role: UserRole | null | undefined): boolean
 
 export function isClientManagerEmail(email: string | null | undefined): boolean {
   if (!email) return false;
-  return parseClientManagerEmails().has(email.trim().toLowerCase());
+  const normalized = email.trim().toLowerCase();
+  // Task 1 is a floor login. If someone also put it in CLIENT_MANAGER_EMAILS,
+  // it must stay task_operator so Inventory stays visible.
+  if (parseTaskOperatorEmails().has(normalized)) return false;
+  return parseClientManagerEmails().has(normalized);
 }
 
 export function isTaskOperatorEmail(email: string | null | undefined): boolean {
@@ -642,6 +646,7 @@ export function isClientManagerAccess(
   role: UserRole | null | undefined,
   email: string | null | undefined
 ): boolean {
+  if (isTaskOperatorEmail(email)) return false;
   return isClientManagerRole(role) || isClientManagerEmail(email);
 }
 
@@ -649,8 +654,9 @@ export function isTaskOperatorAccess(
   role: UserRole | null | undefined,
   email: string | null | undefined
 ): boolean {
+  if (isTaskOperatorEmail(email)) return true;
   if (isClientManagerAccess(role, email)) return false;
-  return isTaskOperatorRole(role) || isTaskOperatorEmail(email);
+  return isTaskOperatorRole(role);
 }
 
 export function isStitchOperatorAccess(
@@ -768,8 +774,8 @@ export function resolveRestrictedAccess(
   isSuperAdmin = false
 ): RestrictedAccessKind | null {
   if (isSuperAdmin) return null;
-  if (isClientManagerAccess(role, email)) return "client_manager";
   if (isTaskOperatorAccess(role, email)) return "task_operator";
+  if (isClientManagerAccess(role, email)) return "client_manager";
   if (isStitchOperatorAccess(role, email)) return "stitch_operator";
   if (isProductionOperatorAccess(role, email)) return "production_operator";
   if (isPatternOperatorAccess(role, email)) return "pattern_operator";

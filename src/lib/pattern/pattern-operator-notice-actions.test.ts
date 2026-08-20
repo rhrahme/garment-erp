@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY,
+  ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID,
+  ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_TITLE,
   CONSOLIDATE_FABRICS_HOWTO_BODY,
   CONSOLIDATE_FABRICS_HOWTO_NOTICE_ID,
   CONSOLIDATE_FABRICS_HOWTO_TITLE,
@@ -71,6 +74,24 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(CONSOLIDATE_REMOVED_SO_LINES_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_NOTICE_ID));
-    assert.equal(PATTERN_HOWTO_NOTICES[0]?.id, ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_NOTICE_ID);
+    assert.ok(ids.includes(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID));
+    assert.equal(
+      PATTERN_HOWTO_NOTICES[0]?.id,
+      ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID
+    );
+  });
+});
+
+describe("Pattern add-to-existing-consolidation how-to", () => {
+  it("teaches linking new fabrics onto the first grouped sheet", () => {
+    assert.equal(
+      ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID,
+      "howto-add-fabrics-to-existing-consolidation-v1"
+    );
+    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_TITLE, /already consolidated/i);
+    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /Existing pattern/);
+    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /Link & open pattern/);
+    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /NEW fabrics/);
+    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /not New pattern/);
   });
 });

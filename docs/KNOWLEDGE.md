@@ -296,9 +296,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   the email and the tab - do not only tell the owner in chat. Notices:
   leftover SO lines (`howto-consolidate-removed-so-lines-v1`), leftover
   jobs cleared because ERP is source of truth
-  (`howto-erp-source-of-truth-leftover-jobs-v1`), consolidate
-  fabrics (`howto-consolidate-fabrics-v1`), remove one fabric from a group
-  (`howto-remove-fabric-from-consolidation-v1`).
+  (`howto-erp-source-of-truth-leftover-jobs-v1`), add later fabrics to
+  the first group (`howto-add-fabrics-to-existing-consolidation-v1`),
+  consolidate fabrics (`howto-consolidate-fabrics-v1`), remove one fabric
+  from a group (`howto-remove-fabric-from-consolidation-v1`).
 - **ERP is the source of truth for order fabrics** (Aug 20 2026): ClickUp
   was a one-time export. Do not block Pattern or QC on a ClickUp check.
   Leftover pattern jobs whose fabric line is no longer on the sales order
@@ -642,10 +643,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `/api/qr` so sticker QR codes and photos load.
 - **Inventory also on Accounting + Task 1** (Aug 20 2026):
   `accounting@hagan.pro` and `hagan.task1@gmail.com` see Inventory in
-  the sidebar and can use the same add/edit/photo/4x6 sticker tools.
-  Task 1 already had `/api/entity-images` + `/api/qr`. Accounting
-  gained `/inventory`, `/api/inventory`, those photo/QR routes, and
-  inventory was removed from the accounting block list.
+  the sidebar and can add/edit items, upload article photos, and print
+  4x6 stickers. Task 1 email always wins over `CLIENT_MANAGER_EMAILS`
+  so that login is never treated as QC (QC has no Inventory).
 
 ## Clients
 
@@ -757,6 +757,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   /api/auth/badge-login stays in BOTH
   middleware open-route lists. Revoke: remove the credential or deactivate
   the employee.
+- **Add later fabrics to an existing consolidation** (Aug 20 2026): tick
+  only the new fabrics on the Pattern order board -> Consolidate selected
+  -> Existing pattern -> pick the first sheet -> Link & open pattern.
+  Do not click New pattern. Same garment only. How-to + email:
+  `howto-add-fabrics-to-existing-consolidation-v1`.
 - **Remove a fabric from a consolidation**: Grouped fabrics -> Remove
   unassigns that line and clears job.client_pattern_id. Do not leave the
   job linked or the fabric still looks grouped. Pattern How-to + email:
