@@ -95,7 +95,7 @@ export function ClientNameChangeRequestForm({
         <p className="font-medium">Name change waiting for admin approval</p>
         <p className="mt-0.5 text-xs">
           Proposed: <span className="font-medium">{proposedName}</span>
-          {client.name_change_requested_by ? ` · requested by ${client.name_change_requested_by}` : ""}
+          {client.name_change_requested_by ? ` - requested by ${client.name_change_requested_by}` : ""}
         </p>
         <Button
           variant="ghost"
@@ -124,7 +124,7 @@ export function ClientNameChangeRequestForm({
   return (
     <div className="rounded-lg border border-indigo-200 bg-indigo-50/60 p-3">
       <p className="text-xs font-medium text-indigo-900">
-        Propose a new name — an admin gets notified and approves it before it applies.
+        Propose a new name - an admin gets notified and approves it before it applies.
       </p>
       <div className="mt-2 grid gap-2 md:grid-cols-[7rem_1fr_1fr_1fr]">
         <ClientTitleSelect
@@ -157,7 +157,7 @@ export function ClientNameChangeRequestForm({
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
       <div className="mt-2 flex items-center gap-2">
         <Button size="sm" disabled={busy} onClick={() => void submit()}>
-          {busy ? "Sending…" : "Send to admin for approval"}
+          {busy ? "Sending..." : "Send to admin for approval"}
         </Button>
         <Button variant="ghost" size="sm" disabled={busy} onClick={() => setOpen(false)}>
           Cancel
