@@ -20,6 +20,10 @@ import {
 import type { PatternJob } from "@/lib/types/pattern";
 import type { ClientPatternListSummary } from "@/lib/pattern-library/client-pattern-list";
 import type { BasePattern } from "@/lib/types/pattern-library";
+import {
+  ADD_TO_EXISTING_CONSOLIDATION_MODAL_HINT,
+  defaultConsolidateMode,
+} from "@/lib/pattern/add-to-existing-consolidation-ui";
 import { isActivePatternJobForOrders } from "@/lib/pattern/auto-consolidate-grouping";
 import type { SalesOrder } from "@/lib/types/sales-orders";
 import { cn } from "@/lib/utils";
@@ -58,7 +62,6 @@ export function ConsolidateSelectedFabricsModal({
   );
   const sharedGarment = selectedGarments.length === 1 ? selectedGarments[0]! : "";
 
-  const [mode, setMode] = useState<"new" | "existing">("new");
   const [bases, setBases] = useState<BasePattern[]>([]);
   const [cascade, setCascade] = useState<BasePatternCascadeValue>(() => ({
     ...emptyCascadeValue(preferredBrand),
@@ -88,6 +91,10 @@ export function ConsolidateSelectedFabricsModal({
       .filter((pattern) => !garment || pattern.garment_type === garment)
       .sort((a, b) => a.pattern_ref.localeCompare(b.pattern_ref));
   }, [cascade.garmentType, clientPatterns, order.client_id, sharedGarment]);
+  const alreadyHasSheet = existingForClient.length > 0;
+  const [mode, setMode] = useState<"new" | "existing">(() =>
+    defaultConsolidateMode(alreadyHasSheet)
+  );
 
   useEffect(() => {
     if (mode !== "existing") return;
@@ -195,11 +202,14 @@ export function ConsolidateSelectedFabricsModal({
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-base font-semibold text-slate-900">
-              Consolidate {liveJobs.length} fabric
-              {liveJobs.length === 1 ? "" : "s"} → one pattern
+              {alreadyHasSheet
+                ? `Add ${liveJobs.length} fabric${liveJobs.length === 1 ? "" : "s"} to the same pattern`
+                : `Consolidate ${liveJobs.length} fabric${liveJobs.length === 1 ? "" : "s"} → one pattern`}
             </h3>
             <p className="mt-1 text-sm text-slate-600">
-              Then upload the .TUD and fill sizes on the measurement sheet.
+              {alreadyHasSheet
+                ? "More fabrics on the pattern you already made. Not a new pattern."
+                : "Then upload the .TUD and fill sizes on the measurement sheet."}
             </p>
           </div>
           <button
@@ -242,19 +252,13 @@ export function ConsolidateSelectedFabricsModal({
           </p>
         ) : null}
 
+        {alreadyHasSheet ? (
+          <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+            {ADD_TO_EXISTING_CONSOLIDATION_MODAL_HINT}
+          </p>
+        ) : null}
+
         <div className="mt-4 flex gap-2">
-          <button
-            type="button"
-            onClick={() => setMode("new")}
-            className={cn(
-              "flex-1 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-              mode === "new"
-                ? "bg-indigo-600 text-white"
-                : "bg-white text-slate-700 ring-1 ring-slate-200"
-            )}
-          >
-            New pattern
-          </button>
           <button
             type="button"
             onClick={() => setMode("existing")}
@@ -266,7 +270,19 @@ export function ConsolidateSelectedFabricsModal({
                 : "bg-white text-slate-700 ring-1 ring-slate-200"
             )}
           >
-            Existing pattern
+            Same pattern
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("new")}
+            className={cn(
+              "flex-1 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+              mode === "new"
+                ? "bg-indigo-600 text-white"
+                : "bg-white text-slate-700 ring-1 ring-slate-200"
+            )}
+          >
+            New pattern
           </button>
         </div>
 
@@ -318,7 +334,7 @@ export function ConsolidateSelectedFabricsModal({
               ? "Working…"
               : mode === "new"
                 ? "Create pattern → upload .TUD"
-                : "Link & open pattern"}
+                : "Add to this pattern"}
           </Button>
           <button
             type="button"

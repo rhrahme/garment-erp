@@ -41,23 +41,39 @@ export async function createPatternOperatorNotice(input: {
 }): Promise<{ notice: PatternOperatorNotice; created: boolean; emailed: boolean }> {
   const existing = input.id ? getPatternOperatorNoticeById(input.id) : null;
   if (existing) {
-    let emailed = Boolean(existing.emailed_at);
-    if (input.email !== false && (input.forceEmail || !existing.emailed_at)) {
-      emailed = await emailPatternOperatorNotice(existing);
+    const nextTitle = input.title.trim();
+    const nextBody = input.body.trim();
+    const nextHref = input.href?.trim() || existing.href;
+    const nextHrefLabel = input.href_label?.trim() || existing.href_label;
+    const synced =
+      existing.title !== nextTitle ||
+      existing.body !== nextBody ||
+      existing.href !== nextHref ||
+      existing.href_label !== nextHrefLabel
+        ? (await updatePatternOperatorNotice(existing.id, {
+            title: nextTitle,
+            body: nextBody,
+            href: nextHref,
+            href_label: nextHrefLabel,
+          })) ?? existing
+        : existing;
+    let emailed = Boolean(synced.emailed_at);
+    if (input.email !== false && (input.forceEmail || !synced.emailed_at)) {
+      emailed = await emailPatternOperatorNotice(synced);
       if (emailed) {
-        const updated = await updatePatternOperatorNotice(existing.id, {
+        const updated = await updatePatternOperatorNotice(synced.id, {
           emailed_at: new Date().toISOString(),
         });
         if (
           input.forceEmail &&
-          existing.id === ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID
+          synced.id === ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID
         ) {
-          await emailOwnerPatternHowToSent(updated ?? existing).catch(() => false);
+          await emailOwnerPatternHowToSent(updated ?? synced).catch(() => false);
         }
-        return { notice: updated ?? existing, created: false, emailed: true };
+        return { notice: updated ?? synced, created: false, emailed: true };
       }
     }
-    return { notice: existing, created: false, emailed };
+    return { notice: synced, created: false, emailed };
   }
 
   const notice: PatternOperatorNotice = {

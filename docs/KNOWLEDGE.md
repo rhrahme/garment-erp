@@ -763,11 +763,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   /api/auth/badge-login stays in BOTH
   middleware open-route lists. Revoke: remove the credential or deactivate
   the employee.
-- **Add later fabrics to an existing consolidation** (Aug 20 2026): tick
-  only the new fabrics on the Pattern order board -> Consolidate selected
-  -> Existing pattern -> pick the first sheet -> Link & open pattern.
-  Do not click New pattern. Same garment only. How-to + email + banner
-  on every Pattern page:
+- **Add later fabrics to an existing consolidation** (Aug 20 2026): this
+  is more fabrics on the same pattern, not a new pattern. Tick only the
+  extra fabrics -> Consolidate selected -> Same pattern -> Add to this
+  pattern. The box opens on Same pattern when a sheet already exists.
+  Same garment only. How-to + email + banner on every Pattern page:
   `howto-add-fabrics-to-existing-consolidation-v2`.
 - **Remove a fabric from a consolidation**: Grouped fabrics -> Remove
   unassigns that line and clears job.client_pattern_id. Do not leave the

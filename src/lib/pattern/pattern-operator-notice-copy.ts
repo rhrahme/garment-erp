@@ -81,38 +81,19 @@ export const ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID =
   "howto-add-fabrics-to-existing-consolidation-v2";
 
 export const ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_TITLE =
-  "READ THIS: add extra fabrics to the SAME pattern you already made";
+  "More fabrics go on the same pattern. Not a new pattern.";
 
 export const ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY = [
-  "Do this yourself. Do not wait for the owner to explain it.",
+  "This is extra fabrics for a pattern you already made. Not a new pattern.",
   "",
-  "WHAT THIS MEANS:",
-  "A few days ago you consolidated many fabrics onto ONE pattern sheet.",
-  "Now more fabrics are on the same sales order. Those new fabrics must join that SAME sheet.",
-  "Do not make a second pattern. Do not upload a new .TUD.",
+  "1. Open the same sales order.",
+  "2. Tick only the extra fabrics. Leave the old grouped ones unchecked.",
+  "3. Press Consolidate selected.",
+  "4. Press Same pattern. Do not press New pattern.",
+  "5. Pick the pattern you already made.",
+  "6. Press Add to this pattern.",
   "",
-  "WRONG (do not do this):",
-  "- Tick the old fabrics again",
-  "- Press New pattern",
-  "- Press Create pattern",
-  "- Upload another .TUD for the same group",
-  "",
-  "RIGHT (do this):",
-  "1. Open Pattern (left menu).",
-  "2. Open the SAME sales order as before (the client you already consolidated).",
-  "3. Tick ONLY the new fabrics. Leave the already-grouped fabrics UNCHECKED.",
-  "4. Press Consolidate selected.",
-  "5. Press Existing pattern. Do not press New pattern.",
-  "6. In the list, pick the pattern you already made (same client, same garment).",
-  "7. Press Link & open pattern.",
-  "",
-  "DONE. The new fabrics are now on the old sheet. The sizes you already typed stay.",
-  "The old .TUD stays. You do not upload the file again.",
-  "",
-  "SAME GARMENT ONLY. Shirt extras go on the Shirt sheet. Trouser extras go on the Trouser sheet.",
-  "If the list is empty, you ticked a different garment than the old sheet. Untick and tick only the matching garment.",
-  "",
-  "Other path if you use the client fabric board: tick the new fabrics -> Existing pattern -> Assign fabrics.",
+  "Done. Same sheet, same sizes, same .TUD. Shirt extras on the Shirt sheet. Trouser extras on the Trouser sheet.",
 ].join("\n");
 
 export const ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_NOTICE_ID =

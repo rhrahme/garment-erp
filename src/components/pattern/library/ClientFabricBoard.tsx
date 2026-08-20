@@ -628,6 +628,13 @@ function AssignDialog({
           ))}
         </ul>
 
+        {board.patterns.length > 0 ? (
+          <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+            Extra fabrics go on the pattern you already made. Press Same pattern. This is not a
+            new pattern.
+          </p>
+        ) : null}
+
         <div className="mt-4 flex gap-2">
           <button
             type="button"
@@ -640,7 +647,7 @@ function AssignDialog({
                 : "bg-white text-slate-700 ring-1 ring-slate-200"
             )}
           >
-            Existing pattern
+            Same pattern
           </button>
           <button
             type="button"
@@ -701,7 +708,7 @@ function AssignDialog({
           disabled={busy}
           className="mt-4 w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
         >
-          {busy ? "Assigning…" : mode === "existing" ? "Assign fabrics" : "Create pattern + assign"}
+          {busy ? "Assigning..." : mode === "existing" ? "Add to this pattern" : "Create pattern + assign"}
         </button>
       </div>
     </div>

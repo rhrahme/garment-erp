@@ -23,6 +23,10 @@ import { EntityPhotos } from "@/components/entity-images/EntityPhotos";
 import { FabricSwatchPreview } from "@/components/fabric/FabricSwatchPreview";
 import { FabricSwatchProvider, useFabricSwatch } from "@/components/fabric/FabricSwatchProvider";
 import { ConsolidateSelectedFabricsModal } from "@/components/pattern/ConsolidateSelectedFabricsModal";
+import {
+  ADD_TO_EXISTING_CONSOLIDATION_BOARD_HINT_BODY,
+  ADD_TO_EXISTING_CONSOLIDATION_BOARD_HINT_TITLE,
+} from "@/lib/pattern/add-to-existing-consolidation-ui";
 import { CopySizesModal } from "@/components/pattern/library/CopySizesModal";
 import { PasteSizesModal } from "@/components/pattern/library/PasteSizesModal";
 import { ChangeGarmentTypeControl } from "@/components/orders/ChangeGarmentTypeControl";
@@ -470,6 +474,13 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
                 );
               })}
             </ul>
+          </div>
+        ) : null}
+
+        {jobs.some((job) => job.client_pattern_id) ? (
+          <div className="rounded-xl border-2 border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            <p className="font-semibold">{ADD_TO_EXISTING_CONSOLIDATION_BOARD_HINT_TITLE}</p>
+            <p className="mt-1">{ADD_TO_EXISTING_CONSOLIDATION_BOARD_HINT_BODY}</p>
           </div>
         ) : null}
 

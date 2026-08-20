@@ -89,13 +89,12 @@ describe("Pattern add-to-existing-consolidation how-to", () => {
       ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID,
       "howto-add-fabrics-to-existing-consolidation-v2"
     );
-    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_TITLE, /SAME pattern/i);
-    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /WRONG/);
-    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /Existing pattern/);
-    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /Link & open pattern/);
-    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /ONLY the new fabrics/);
+    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_TITLE, /same pattern/i);
+    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_TITLE, /Not a new pattern/);
+    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /extra fabrics/);
+    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /Same pattern/);
+    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /Add to this pattern/);
     assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /Do not press New pattern/);
-    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /Do not make a second pattern/);
   });
 
   it("shows open how-tos on every Pattern page, not only email or Queue home", () => {
