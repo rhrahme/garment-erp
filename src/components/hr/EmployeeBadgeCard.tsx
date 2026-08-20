@@ -1,10 +1,13 @@
 import {
   BADGE_QR_FETCH_PX,
+  badgeCardIndexLabel,
+  badgeCardJobsLine,
   badgeDisplayName,
   badgeJobFunctionsLine,
   badgePrintDateLabel,
   badgeQrRowLayout,
   badgeQrSides,
+  type BadgeQrSide,
 } from "@/lib/hr/badge-print";
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageUrl } from "@/lib/production/qr-labels";
@@ -41,16 +44,24 @@ function CropMarks() {
 export function EmployeeBadgeCard({
   employee,
   group,
+  sides: sidesProp,
+  cardIndex = 1,
+  cardCount = 1,
 }: {
   employee: PayrollEmployee;
   group: IdBadgeGroup;
+  sides?: BadgeQrSide[];
+  cardIndex?: number;
+  cardCount?: number;
 }) {
-  const sides = badgeQrSides(employee);
+  const sides = sidesProp ?? badgeQrSides(employee);
   const layout = badgeQrRowLayout(sides.length);
   const label = groupLabel(group);
   const displayName = badgeDisplayName(employee);
-  const jobsLine = badgeJobFunctionsLine(employee);
+  const jobsLine =
+    cardCount > 1 ? badgeCardJobsLine(sides) : badgeJobFunctionsLine(employee);
   const printedLabel = badgePrintDateLabel();
+  const cardLabel = badgeCardIndexLabel(cardIndex, cardCount);
 
   return (
     <div className="badge-print-slot relative">
@@ -142,6 +153,7 @@ export function EmployeeBadgeCard({
             </p>
             <p className="badge-print-date mt-0.5 truncate text-[7px] font-medium leading-tight text-slate-900">
               {printedLabel}
+              {cardLabel ? ` - ${cardLabel}` : ""}
             </p>
           </div>
         </div>

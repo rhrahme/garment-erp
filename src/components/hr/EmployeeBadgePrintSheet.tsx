@@ -13,6 +13,7 @@ import {
   BADGE_ROWS_PER_PAGE,
   badgeSlugFromGroup,
   chunkBadgePages,
+  expandBadgePrintCards,
 } from "@/lib/hr/badge-print";
 import { EMPLOYEE_BADGE_PRINT_CSS } from "@/lib/hr/badge-print-styles";
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
@@ -30,7 +31,8 @@ export function EmployeeBadgePrintSheet({
   employees: PayrollEmployee[];
   group: IdBadgeGroup;
 }) {
-  const pages = chunkBadgePages(employees);
+  const cards = expandBadgePrintCards(employees);
+  const pages = chunkBadgePages(cards);
   const backHref = `/hr/id-badges/${badgeSlugFromGroup(group)}`;
   const employeeIds = employees.map((employee) => employee.id);
 
@@ -46,7 +48,10 @@ export function EmployeeBadgePrintSheet({
           <p className="mt-1 text-xs text-slate-500">
             A4 · {BADGE_CARDS_PER_ROW}×{BADGE_ROWS_PER_PAGE} cards (
             {BADGE_CARD_WIDTH_MM}×{BADGE_CARD_HEIGHT_MM} mm CR80) · crop marks at corners ·{" "}
-            {employees.length} badge{employees.length === 1 ? "" : "s"}
+            {cards.length} card{cards.length === 1 ? "" : "s"}
+            {cards.length !== employees.length
+              ? ` · ${employees.length} ${employees.length === 1 ? "person" : "people"}`
+              : ""}
             {pages.length > 1 ? ` · ${pages.length} sheets` : ""}
           </p>
         </div>
@@ -74,7 +79,7 @@ export function EmployeeBadgePrintSheet({
           No active {GROUP_TITLE[group].toLowerCase()} employees to print.
         </div>
       ) : (
-        pages.map((pageEmployees, pageIndex) => (
+        pages.map((pageCards, pageIndex) => (
           <section
             key={`badge-page-${pageIndex}`}
             className="badge-print-page mb-8 print:mb-0"
@@ -87,8 +92,15 @@ export function EmployeeBadgePrintSheet({
                 gridAutoRows: `${BADGE_CARD_HEIGHT_MM}mm`,
               }}
             >
-              {pageEmployees.map((employee) => (
-                <EmployeeBadgeCard key={employee.id} employee={employee} group={group} />
+              {pageCards.map((card) => (
+                <EmployeeBadgeCard
+                  key={`${card.employee.id}-${card.cardIndex}`}
+                  employee={card.employee}
+                  group={group}
+                  sides={card.sides}
+                  cardIndex={card.cardIndex}
+                  cardCount={card.cardCount}
+                />
               ))}
             </div>
             {pageIndex < pages.length - 1 ? (

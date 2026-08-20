@@ -7,13 +7,15 @@ import {
   BADGE_QR_FETCH_PX,
   BADGE_QR_GAP_MM,
   BADGE_ROWS_PER_PAGE,
+  badgeCardIndexLabel,
+  badgeCardJobsLine,
   badgeDisplayName,
   badgeJobFunctionsLine,
   badgePrintDateLabel,
   badgeQrRowLayout,
-  badgeQrSides,
   type BadgeQrSide,
   chunkBadgePages,
+  expandBadgePrintCards,
 } from "@/lib/hr/badge-print";
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageFetchUrl } from "@/lib/production/qr-labels";
@@ -64,7 +66,9 @@ function drawBadgeCard(
   sides: Array<BadgeQrSide & { dataUrl: string }>,
   x: number,
   y: number,
-  printedLabel: string
+  printedLabel: string,
+  cardIndex = 1,
+  cardCount = 1
 ) {
   const w = BADGE_CARD_WIDTH_MM;
   const h = BADGE_CARD_HEIGHT_MM;
@@ -101,7 +105,8 @@ function drawBadgeCard(
     textY += 3.2;
   }
 
-  const jobsLine = badgeJobFunctionsLine(employee);
+  const jobsLine =
+    cardCount > 1 ? badgeCardJobsLine(sides) : badgeJobFunctionsLine(employee);
 
   doc.setTextColor(15, 23, 42);
   doc.setFont("helvetica", "bold");
@@ -134,7 +139,8 @@ function drawBadgeCard(
   doc.setTextColor(15, 23, 42);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
-  doc.text(printedLabel, textX, printY, {
+  const cardLabel = badgeCardIndexLabel(cardIndex, cardCount);
+  doc.text(cardLabel ? `${printedLabel} - ${cardLabel}` : printedLabel, textX, printY, {
     maxWidth: textMaxW,
   });
 
@@ -183,7 +189,8 @@ export async function generateEmployeeBadgePdf(
   group: IdBadgeGroup
 ): Promise<Uint8Array> {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-  const pages = chunkBadgePages(employees, BADGE_CARDS_PER_PAGE);
+  const cards = expandBadgePrintCards(employees);
+  const pages = chunkBadgePages(cards, BADGE_CARDS_PER_PAGE);
   const qrCache = new Map<string, string>();
   const printedLabel = badgePrintDateLabel();
 
@@ -195,10 +202,10 @@ export async function generateEmployeeBadgePdf(
 
   for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
     if (pageIndex > 0) doc.addPage();
-    const pageEmployees = pages[pageIndex]!;
+    const pageCards = pages[pageIndex]!;
 
-    for (let i = 0; i < pageEmployees.length; i++) {
-      const employee = pageEmployees[i]!;
+    for (let i = 0; i < pageCards.length; i++) {
+      const card = pageCards[i]!;
       const col = i % BADGE_CARDS_PER_ROW;
       const row = Math.floor(i / BADGE_CARDS_PER_ROW);
       if (row >= BADGE_ROWS_PER_PAGE) break;
@@ -206,9 +213,8 @@ export async function generateEmployeeBadgePdf(
       const x = PAGE_MARGIN_MM + col * (BADGE_CARD_WIDTH_MM + GAP_X_MM);
       const y = PAGE_MARGIN_MM + row * (BADGE_CARD_HEIGHT_MM + GAP_Y_MM);
 
-      const sides = badgeQrSides(employee);
       const drawn = [];
-      for (const side of sides) {
+      for (const side of card.sides) {
         let dataUrl = qrCache.get(side.payload);
         if (!dataUrl) {
           dataUrl = await fetchQrDataUrl(side.payload);
@@ -217,7 +223,17 @@ export async function generateEmployeeBadgePdf(
         drawn.push({ ...side, dataUrl });
       }
 
-      drawBadgeCard(doc, employee, group, drawn, x, y, printedLabel);
+      drawBadgeCard(
+        doc,
+        card.employee,
+        group,
+        drawn,
+        x,
+        y,
+        printedLabel,
+        card.cardIndex,
+        card.cardCount
+      );
     }
   }
 

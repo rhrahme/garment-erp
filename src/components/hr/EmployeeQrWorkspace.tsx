@@ -10,6 +10,7 @@ import {
   badgeDisplayName,
   badgeQrSides,
   listActiveBadgeEmployees,
+  splitBadgeQrSides,
 } from "@/lib/hr/badge-print";
 import { type IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { qrImageUrl } from "@/lib/production/qr-labels";
@@ -48,7 +49,7 @@ const GROUP_COPY: Record<
   expat: {
     title: "Expat employee ID badges",
     description:
-      "Expat badge group. Tailors: Sew (EMP) + Alteration (EMPALT). Selected floor jobs each get their own QR: Washing, Ironing, Buttons, Button stitch, Buttonhole, Champa, Bartek. One person can carry several.",
+      "Expat badge group. Tailors: Sew (EMP) + Alteration (EMPALT). Selected floor jobs each get their own QR: Washing, Ironing, Buttons, Button stitch, Buttonhole, Champa, Bartek. One person can carry several; extra cards print when they no longer fit one row.",
     emptyHint: "No active Expat employees yet. Add one below.",
   },
 };
@@ -155,6 +156,7 @@ export function EmployeeQrWorkspace({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((employee) => {
             const sides = badgeQrSides(employee);
+            const printCards = splitBadgeQrSides(sides);
 
             return (
               <div
@@ -225,6 +227,11 @@ export function EmployeeQrWorkspace({
                     </div>
                   ))}
                 </div>
+                {printCards.length > 1 ? (
+                  <p className="mt-2 text-[11px] font-medium text-indigo-700">
+                    Prints on {printCards.length} cards so the QRs stay large enough to scan.
+                  </p>
+                ) : null}
               </div>
             );
           })}

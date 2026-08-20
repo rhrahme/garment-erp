@@ -108,6 +108,97 @@ export type BadgeQrRowLayout = {
   rowWidthMm: number;
 };
 
+/**
+ * Max QRs on one CR80. 3 stay 20mm; 4 shrink to 17mm. Five or more
+ * overflow the scan row, so print another card.
+ */
+export const BADGE_QR_MAX_PER_CARD = 4;
+
+export type BadgePrintCard = {
+  employee: PayrollEmployee;
+  sides: BadgeQrSide[];
+  cardIndex: number;
+  cardCount: number;
+};
+
+function isIronOrButtonsSide(side: BadgeQrSide): boolean {
+  return side.label === BADGE_QR_IRON_LABEL || side.label === BADGE_QR_BUTTONS_LABEL;
+}
+
+function isWashingSide(side: BadgeQrSide): boolean {
+  return side.label === BADGE_QR_WASH_LABEL;
+}
+
+/**
+ * Split overflow QRs across cards so each row stays scannable.
+ * Iron + buttons stay on card 1 (Cherry's finishing pair); washing
+ * joins them when it still fits. Remaining floor jobs go on card 2.
+ */
+export function splitBadgeQrSides(sides: BadgeQrSide[]): BadgeQrSide[][] {
+  if (sides.length === 0) return [[]];
+  if (sides.length <= BADGE_QR_MAX_PER_CARD) return [sides];
+
+  const ironButtons = sides.filter(isIronOrButtonsSide);
+  const washing = sides.filter(isWashingSide);
+  if (ironButtons.length === 2) {
+    const card1 = [...ironButtons, ...washing].slice(0, BADGE_QR_MAX_PER_CARD);
+    const used = new Set(card1);
+    const card2 = sides.filter((side) => !used.has(side));
+    if (card2.length > 0 && card2.length <= BADGE_QR_MAX_PER_CARD) {
+      return [card1, card2];
+    }
+  }
+
+  const chunks: BadgeQrSide[][] = [];
+  for (let i = 0; i < sides.length; i += BADGE_QR_MAX_PER_CARD) {
+    chunks.push(sides.slice(i, i + BADGE_QR_MAX_PER_CARD));
+  }
+  const first = chunks[0];
+  const last = chunks[chunks.length - 1];
+  if (chunks.length >= 2 && first && last && last.length === 1 && first.length === 4) {
+    last.unshift(first.pop()!);
+  }
+  return chunks;
+}
+
+export function expandBadgePrintCards(employees: PayrollEmployee[]): BadgePrintCard[] {
+  const cards: BadgePrintCard[] = [];
+  for (const employee of employees) {
+    const groups = splitBadgeQrSides(badgeQrSides(employee));
+    const cardCount = Math.max(1, groups.length);
+    groups.forEach((groupSides, index) => {
+      cards.push({
+        employee,
+        sides: groupSides,
+        cardIndex: index + 1,
+        cardCount,
+      });
+    });
+  }
+  return cards;
+}
+
+/** Jobs line for one printed card (only the QRs on that card). */
+export function badgeCardJobsLine(sides: BadgeQrSide[]): string | null {
+  if (sides.length === 0) return null;
+  return sides
+    .map((side) => {
+      if (side.kind === "sew") return "Sewing";
+      if (side.kind === "alteration") return "Alteration";
+      return side.label
+        .toLowerCase()
+        .split(/\s+/)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
+    })
+    .join(", ");
+}
+
+export function badgeCardIndexLabel(cardIndex: number, cardCount: number): string | null {
+  if (cardCount <= 1) return null;
+  return `Card ${cardIndex} of ${cardCount}`;
+}
+
 /** Size and gap for a one-row QR strip on a CR80 card. */
 export function badgeQrRowLayout(count: number): BadgeQrRowLayout {
   const n = Math.max(1, count);

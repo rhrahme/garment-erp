@@ -45,6 +45,7 @@
     "test:a4-print-styles": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/sales-orders/receiving-print-styles.test.ts",
     "test:recent-fabric-highlight": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/fabric-sourcing/recent-fabric-highlight.test.ts",
     "test:permissions": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/auth/permissions.production.test.ts",
+    "test:badge-print": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/hr/badge-print.test.ts",
     "test:quality-inspections": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/quality/inspections.test.ts",
     "proof:a4-production-print": "node scripts/proof-a4-production-print.mjs",
     "smoke:production": "node scripts/smoke-production.mjs",

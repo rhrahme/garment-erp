@@ -18,8 +18,11 @@ import {
   badgePrintDateLabel,
   badgePrintHref,
   badgeQrPairKind,
+  badgeQrRowLayout,
   badgeQrSides,
   chunkBadgePages,
+  expandBadgePrintCards,
+  splitBadgeQrSides,
   isBadgePrintableEmployee,
   listActiveBadgeEmployees,
   listBadgePrintableEmployees,
@@ -138,6 +141,52 @@ describe("badge-print helpers", () => {
     assert.equal(shahryar.rightLabel, "BUTTONS");
     assert.equal(shahryar.leftPayload, "EMPIRON:2543411918");
     assert.equal(shahryar.rightPayload, "EMPBTN:2543411918");
+  });
+
+  it("prints Cherry's full floor-job set on two cards that still fit", () => {
+    const cherry = emp({
+      id: "2543411918",
+      full_name: "Shahryar Frinces Sadiq",
+      short_name: "Cherry",
+      job_functions: [
+        "wash_iron",
+        "washing",
+        "ironing",
+        "buttons",
+        "button_stitch",
+        "buttonhole",
+        "champa",
+        "bartek",
+      ],
+    });
+    const sides = badgeQrSides(cherry);
+    assert.deepEqual(
+      sides.map((side) => side.label),
+      ["WASHING", "IRONING", "BUTTONS", "BTN STITCH", "BUTTONHOLE", "CHAMPA", "BARTEK"]
+    );
+    const cards = splitBadgeQrSides(sides);
+    assert.equal(cards.length, 2);
+    assert.deepEqual(
+      cards[0]!.map((side) => side.label),
+      ["IRONING", "BUTTONS", "WASHING"]
+    );
+    assert.deepEqual(
+      cards[1]!.map((side) => side.label),
+      ["BTN STITCH", "BUTTONHOLE", "CHAMPA", "BARTEK"]
+    );
+    assert.equal(badgeQrRowLayout(cards[0]!.length).sizeMm, BADGE_QR_DISPLAY_MM);
+    assert.ok(badgeQrRowLayout(cards[1]!.length).sizeMm >= 16);
+    const printed = expandBadgePrintCards([cherry]);
+    assert.equal(printed.length, 2);
+    assert.equal(printed[0]!.cardCount, 2);
+    assert.equal(printed[1]!.employee.id, "2543411918");
+  });
+
+  it("keeps a two-QR pair on one card", () => {
+    const pair = badgeQrSides(
+      emp({ id: "2543411918", full_name: "Cherry", job_functions: ["wash_iron", "buttons"] })
+    );
+    assert.equal(splitBadgeQrSides(pair).length, 1);
   });
 
   it("prefers short_name on badge label when set", () => {

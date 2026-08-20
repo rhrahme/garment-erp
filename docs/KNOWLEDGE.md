@@ -32,13 +32,16 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **One QR per selected floor job** (Aug 19 2026): if Washing, Ironing,
   Buttons, Button stitch, Buttonhole, Champa, or Bartek is selected on the
   badge, print that job's QR. A person who does several tasks gets every
-  selected code on the same card. Prefixes: `EMPWASH`, `EMPIRON`, `EMPBTN`,
+  selected code (extra CR80 cards when they no longer fit one row). Prefixes: `EMPWASH`, `EMPIRON`, `EMPBTN`,
   `EMPBST`, `EMPHOLE`, `EMPCHMP`, `EMPBART`. Tailors still also get
   `EMP` + `EMPALT`. Do not print Sewing/Alteration for a non-tailor who
   only has these floor jobs. Legacy `wash_iron` still expands to WASHING +
   IRONING (Rohan) unless the card also has `buttons` (Cherry stays
   IRONING + BUTTONS, no extra WASHING). Two-code cards keep 20mm QRs and a
-  **3cm** gap; three or more shrink to fit the CR80 row. USB wedge
+  **3cm** gap; three stay 20mm, four shrink to 17mm. Five or more
+  print extra CR80 cards (max 4 QRs per card). Cherry / multi-task
+  finishing keeps Ironing + Buttons (+ Washing) on card 1; stitch /
+  hole / champa / bartek go on card 2. USB wedge
   reassembly must treat `EMPALT` / `EMPIRON` / `EMPBTN` / `EMPWASH` /
   `EMPHOLE` / `EMPBST` / `EMPCHMP` / `EMPBART` (and `:` variants) as
   partial fragments (never collapse to `EMP:`). Starting an alteration session
