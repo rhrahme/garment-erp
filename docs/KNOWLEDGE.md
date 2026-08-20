@@ -302,7 +302,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   (`howto-consolidate-removed-so-lines-v1`), leftover jobs cleared
   because ERP is source of truth
   (`howto-erp-source-of-truth-leftover-jobs-v1`), add later fabrics to
-  the first group (`howto-add-fabrics-to-existing-consolidation-v1`),
+  the first group (`howto-add-fabrics-to-existing-consolidation-v2`),
   consolidate fabrics (`howto-consolidate-fabrics-v1`), remove one fabric
   from a group (`howto-remove-fabric-from-consolidation-v1`).
 - **ERP is the source of truth for order fabrics** (Aug 20 2026): ClickUp
@@ -766,7 +766,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   only the new fabrics on the Pattern order board -> Consolidate selected
   -> Existing pattern -> pick the first sheet -> Link & open pattern.
   Do not click New pattern. Same garment only. How-to + email:
-  `howto-add-fabrics-to-existing-consolidation-v1`.
+  `howto-add-fabrics-to-existing-consolidation-v2`.
 - **Remove a fabric from a consolidation**: Grouped fabrics -> Remove
   unassigns that line and clears job.client_pattern_id. Do not leave the
   job linked or the fabric still looks grouped. Pattern How-to + email:

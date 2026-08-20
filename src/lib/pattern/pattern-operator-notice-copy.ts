@@ -78,28 +78,41 @@ export const CONSOLIDATE_REMOVED_SO_LINES_HOWTO_BODY = [
 ].join("\n");
 
 export const ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID =
-  "howto-add-fabrics-to-existing-consolidation-v1";
+  "howto-add-fabrics-to-existing-consolidation-v2";
 
 export const ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_TITLE =
-  "How to add more fabrics to a group you already consolidated";
+  "READ THIS: add extra fabrics to the SAME pattern you already made";
 
 export const ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY = [
-  "Use this when you already consolidated fabrics onto one pattern a few days ago, and now more fabrics on the same order should join that same sheet. Do not create a new pattern.",
+  "Do this yourself. Do not wait for the owner to explain it.",
   "",
-  "Steps:",
-  "1. Open Pattern home (/pattern).",
-  "2. Open the same sales order (Pattern order board).",
-  "3. Tick only the NEW fabrics that are not in the group yet. Leave the already-grouped ones unticked.",
-  "4. Click Consolidate selected.",
-  "5. Click Existing pattern (not New pattern).",
-  "6. Pick the original consolidated sheet (same client, same garment).",
-  "7. Click Link & open pattern.",
+  "WHAT THIS MEANS:",
+  "A few days ago you consolidated many fabrics onto ONE pattern sheet.",
+  "Now more fabrics are on the same sales order. Those new fabrics must join that SAME sheet.",
+  "Do not make a second pattern. Do not upload a new .TUD.",
   "",
-  "The new fabrics join the first group. Sizes and .TUD already on that sheet stay. You do not need to upload the .TUD again unless the pattern itself changed.",
+  "WRONG (do not do this):",
+  "- Tick the old fabrics again",
+  "- Press New pattern",
+  "- Press Create pattern",
+  "- Upload another .TUD for the same group",
   "",
-  "The Existing pattern list only shows sheets for that garment. If the new fabrics are a different garment, they need their own sheet.",
+  "RIGHT (do this):",
+  "1. Open Pattern (left menu).",
+  "2. Open the SAME sales order as before (the client you already consolidated).",
+  "3. Tick ONLY the new fabrics. Leave the already-grouped fabrics UNCHECKED.",
+  "4. Press Consolidate selected.",
+  "5. Press Existing pattern. Do not press New pattern.",
+  "6. In the list, pick the pattern you already made (same client, same garment).",
+  "7. Press Link & open pattern.",
   "",
-  "Other path: Client fabric board -> tick the new fabrics -> Existing pattern -> Assign fabrics.",
+  "DONE. The new fabrics are now on the old sheet. The sizes you already typed stay.",
+  "The old .TUD stays. You do not upload the file again.",
+  "",
+  "SAME GARMENT ONLY. Shirt extras go on the Shirt sheet. Trouser extras go on the Trouser sheet.",
+  "If the list is empty, you ticked a different garment than the old sheet. Untick and tick only the matching garment.",
+  "",
+  "Other path if you use the client fabric board: tick the new fabrics -> Existing pattern -> Assign fabrics.",
 ].join("\n");
 
 export const ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_NOTICE_ID =

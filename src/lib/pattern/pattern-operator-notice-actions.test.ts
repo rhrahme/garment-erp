@@ -86,12 +86,14 @@ describe("Pattern add-to-existing-consolidation how-to", () => {
   it("teaches linking new fabrics onto the first grouped sheet", () => {
     assert.equal(
       ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID,
-      "howto-add-fabrics-to-existing-consolidation-v1"
+      "howto-add-fabrics-to-existing-consolidation-v2"
     );
-    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_TITLE, /already consolidated/i);
+    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_TITLE, /SAME pattern/i);
+    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /WRONG/);
     assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /Existing pattern/);
     assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /Link & open pattern/);
-    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /NEW fabrics/);
-    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /not New pattern/);
+    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /ONLY the new fabrics/);
+    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /Do not press New pattern/);
+    assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /Do not make a second pattern/);
   });
 });
