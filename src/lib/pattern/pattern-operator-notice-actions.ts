@@ -1,4 +1,4 @@
-import { parsePatternEmails } from "@/lib/auth/permissions";
+import { parsePatternNoticeEmails } from "@/lib/auth/permissions";
 import {
   appendPatternOperatorNotice,
   getPatternOperatorNoticeById,
@@ -7,6 +7,11 @@ import {
 import { notifyIntegration } from "@/lib/integrations";
 import { sendEmail } from "@/lib/email/smtp";
 import {
+  emailOwnerPatternHowToSeen,
+  emailOwnerPatternHowToSent,
+} from "@/lib/integrations/pattern-howto-owner-alert";
+import {
+  ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID,
   CONSOLIDATE_FABRICS_HOWTO_BODY,
   CONSOLIDATE_FABRICS_HOWTO_NOTICE_ID,
   CONSOLIDATE_FABRICS_HOWTO_TITLE,
@@ -32,16 +37,23 @@ export async function createPatternOperatorNotice(input: {
   href_label?: string | null;
   created_by: string;
   email?: boolean;
+  forceEmail?: boolean;
 }): Promise<{ notice: PatternOperatorNotice; created: boolean; emailed: boolean }> {
   const existing = input.id ? getPatternOperatorNoticeById(input.id) : null;
   if (existing) {
     let emailed = Boolean(existing.emailed_at);
-    if (input.email !== false && !existing.emailed_at) {
+    if (input.email !== false && (input.forceEmail || !existing.emailed_at)) {
       emailed = await emailPatternOperatorNotice(existing);
       if (emailed) {
         const updated = await updatePatternOperatorNotice(existing.id, {
           emailed_at: new Date().toISOString(),
         });
+        if (
+          input.forceEmail &&
+          existing.id === ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID
+        ) {
+          await emailOwnerPatternHowToSent(updated ?? existing).catch(() => false);
+        }
         return { notice: updated ?? existing, created: false, emailed: true };
       }
     }
@@ -77,6 +89,9 @@ export async function createPatternOperatorNotice(input: {
       const updated = await updatePatternOperatorNotice(saved.id, {
         emailed_at: new Date().toISOString(),
       });
+      if (saved.id === ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID) {
+        await emailOwnerPatternHowToSent(updated ?? saved).catch(() => false);
+      }
       return { notice: updated ?? saved, created: true, emailed: true };
     }
   }
@@ -103,14 +118,42 @@ export async function acknowledgePatternOperatorNotice(
       title: updated.title,
       acknowledged_by: acknowledgedBy,
     });
+    await recordPatternNoticeSeen(updated.id, acknowledgedBy);
   }
   return updated;
+}
+
+export async function recordPatternNoticeSeen(
+  id: string,
+  seenBy: string
+): Promise<{ notice: PatternOperatorNotice | null; newlySeen: boolean }> {
+  const actor = seenBy.trim();
+  if (!actor) return { notice: getPatternOperatorNoticeById(id), newlySeen: false };
+  const existing = getPatternOperatorNoticeById(id);
+  if (!existing) return { notice: null, newlySeen: false };
+  const seenByMap = { ...(existing.seen_by ?? {}) };
+  if (seenByMap[actor]) return { notice: existing, newlySeen: false };
+
+  const now = new Date().toISOString();
+  seenByMap[actor] = now;
+  const updated = await updatePatternOperatorNotice(id, { seen_by: seenByMap });
+  if (updated) {
+    await notifyIntegration("pattern.operator_notice_seen", {
+      id: updated.id,
+      title: updated.title,
+      seen_by: actor,
+    }).catch(() => {});
+    if (updated.id === ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID) {
+      await emailOwnerPatternHowToSeen({ notice: updated, seenBy: actor }).catch(() => false);
+    }
+  }
+  return { notice: updated, newlySeen: true };
 }
 
 export async function emailPatternOperatorNotice(
   notice: PatternOperatorNotice
 ): Promise<boolean> {
-  const recipients = [...parsePatternEmails()];
+  const recipients = [...parsePatternNoticeEmails()];
   if (recipients.length === 0) return false;
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://erp.hagan.pro";

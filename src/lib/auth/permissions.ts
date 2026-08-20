@@ -537,6 +537,16 @@ export function parsePatternEmails(): Set<string> {
   );
 }
 
+/** Mailboxes that receive Pattern how-to emails (Mohtajul + shared Pattern 2). */
+const BUILTIN_PATTERN_NOTICE_EMAILS = [
+  "hagan.dp1@gmail.com",
+  "pattern@hagan.pro",
+] as const;
+
+export function parsePatternNoticeEmails(): Set<string> {
+  return new Set([...BUILTIN_PATTERN_NOTICE_EMAILS, ...parsePatternEmails()]);
+}
+
 export function parseSalesEmails(): Set<string> {
   const raw = process.env.SALES_EMAILS?.trim() ?? "";
   const fromEnv = raw

@@ -90,6 +90,7 @@ const OUTBOUND_EVENTS = [
   "pattern.alteration_stitcher_comment",
   "pattern.operator_notice_created",
   "pattern.operator_notice_acknowledged",
+  "pattern.operator_notice_seen",
   "invoice.sent",
   "invoice.created",
   "invoice.updated",

@@ -14,6 +14,8 @@ export interface PatternOperatorNotice {
   acknowledged_at: string | null;
   acknowledged_by: string | null;
   emailed_at: string | null;
+  /** Pattern operator actor -> first time they loaded the banner. */
+  seen_by?: Record<string, string>;
 }
 
 export interface PatternOperatorNoticesFile {

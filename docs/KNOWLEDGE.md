@@ -291,11 +291,16 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   (newest first); `ensureAllPatternHowToNotices` seeds + emails any missing
   entry. Store `pattern_operator_notices`; APIs `/api/pattern/notices` +
   `/api/v1/pattern/notices` (`?status=all` for the tab) with events
-  `pattern.operator_notice_created` / `pattern.operator_notice_acknowledged`.
-  When we explain a floor fix to Pattern, add a catalog entry so they get
-  the email and the tab - do not only tell the owner in chat. Notices:
-  leftover SO lines (`howto-consolidate-removed-so-lines-v1`), leftover
-  jobs cleared because ERP is source of truth
+  `pattern.operator_notice_created` / `pattern.operator_notice_acknowledged`
+  / `pattern.operator_notice_seen`. How-to emails go to both Pattern
+  mailboxes (`hagan.dp1@gmail.com` and `pattern@hagan.pro`) plus
+  `PATTERN_EMAILS`. For the add-to-existing-group how-to, admin is emailed
+  when it is sent and again when a Pattern operator opens /pattern and
+  sees the banner. When we explain a floor fix to Pattern, add a catalog
+  entry so they get the email and the tab - do not only tell the owner
+  in chat. Notices: leftover SO lines
+  (`howto-consolidate-removed-so-lines-v1`), leftover jobs cleared
+  because ERP is source of truth
   (`howto-erp-source-of-truth-leftover-jobs-v1`), add later fabrics to
   the first group (`howto-add-fabrics-to-existing-consolidation-v1`),
   consolidate fabrics (`howto-consolidate-fabrics-v1`), remove one fabric

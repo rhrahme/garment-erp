@@ -42,6 +42,7 @@ export async function POST(request: Request) {
       href_label?: string | null;
       created_by?: string;
       email?: boolean;
+      force_email?: boolean;
     };
     if (!body.title?.trim() || !body.body?.trim()) {
       return NextResponse.json({ error: "title and body are required." }, { status: 400 });
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
       href_label: body.href_label,
       created_by: body.created_by?.trim() || "api",
       email: body.email !== false,
+      forceEmail: body.force_email === true,
     });
     return NextResponse.json({ ...result, source: "api" });
   } catch (error) {

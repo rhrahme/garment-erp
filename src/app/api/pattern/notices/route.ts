@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
-import { requireAuthenticated } from "@/lib/auth/session";
+import { requireAuthenticated, sessionActor } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import {
   listOpenPatternOperatorNotices,
   listPatternOperatorNotices,
 } from "@/lib/data/pattern-operator-notices";
 import {
+  ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID,
+} from "@/lib/pattern/pattern-operator-notice-copy";
+import {
   createPatternOperatorNotice,
   ensureAllPatternHowToNotices,
+  recordPatternNoticeSeen,
 } from "@/lib/pattern/pattern-operator-notice-actions";
 
 export async function GET(request: Request) {
@@ -24,6 +28,17 @@ export async function GET(request: Request) {
     await ensureAllPatternHowToNotices(session.email ?? "system");
   } catch (error) {
     console.error("Failed to ensure Pattern how-to notices:", error);
+  }
+
+  if (session.isPatternOperator) {
+    try {
+      await recordPatternNoticeSeen(
+        ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID,
+        sessionActor(session)
+      );
+    } catch (error) {
+      console.error("Failed to record Pattern how-to seen:", error);
+    }
   }
 
   const status = new URL(request.url).searchParams.get("status")?.trim().toLowerCase();
@@ -52,6 +67,7 @@ export async function POST(request: Request) {
       href?: string | null;
       href_label?: string | null;
       email?: boolean;
+      force_email?: boolean;
     };
     if (!body.title?.trim() || !body.body?.trim()) {
       return NextResponse.json({ error: "title and body are required." }, { status: 400 });
@@ -64,6 +80,7 @@ export async function POST(request: Request) {
       href_label: body.href_label,
       created_by: session.email ?? "admin",
       email: body.email !== false,
+      forceEmail: body.force_email === true,
     });
     return NextResponse.json(result);
   } catch (error) {

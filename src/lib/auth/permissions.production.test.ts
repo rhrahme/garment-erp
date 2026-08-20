@@ -19,6 +19,7 @@ import {
   isClientManagerRouteAllowed,
   isInventoryClerkEmail,
   isInventoryClerkRouteAllowed,
+  parsePatternNoticeEmails,
   isPatternOperatorRouteAllowed,
   isProductionOperatorRouteAllowed,
   isSalesOperatorRouteAllowed,
@@ -316,6 +317,14 @@ describe("pattern_operator fabric swatch image routes", () => {
     assert.equal(isPatternOperatorRouteAllowed("/orders"), false);
     assert.equal(isPatternOperatorRouteAllowed("/invoices"), false);
     assert.equal(isPatternOperatorRouteAllowed("/costing"), false);
+  });
+});
+
+describe("pattern how-to email recipients", () => {
+  it("always emails both Pattern mailboxes", () => {
+    const recipients = parsePatternNoticeEmails();
+    assert.ok(recipients.has("hagan.dp1@gmail.com"));
+    assert.ok(recipients.has("pattern@hagan.pro"));
   });
 });
 
