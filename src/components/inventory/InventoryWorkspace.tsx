@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { EntityPhotos } from "@/components/entity-images/EntityPhotos";
 import {
   inventoryItemIsLow,
   type GarmentRecipe,
@@ -9,6 +10,16 @@ import {
   type InventoryItem,
   type InventoryLedgerEntry,
 } from "@/lib/types/inventory";
+
+const EMPTY_ITEM_FORM = {
+  name: "",
+  category: "",
+  brand: "",
+  unit: "pcs",
+  threshold: "",
+  location: "",
+  notes: "",
+};
 
 const REASON_LABELS: Record<string, string> = {
   garment_packed: "Garment packed",
@@ -81,13 +92,8 @@ export function InventoryWorkspace({
   }, [items, brandFilter]);
 
   // ---- add / edit item form
-  const [newItem, setNewItem] = useState({
-    name: "",
-    category: "",
-    brand: "",
-    unit: "pcs",
-    threshold: "",
-  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [itemForm, setItemForm] = useState(EMPTY_ITEM_FORM);
 
   // ---- adjust state per item
   const [adjust, setAdjust] = useState<Record<string, string>>({});
@@ -163,17 +169,38 @@ export function InventoryWorkspace({
     return true;
   };
 
-  const submitNewItem = () =>
+  const beginEdit = (item: InventoryItem) => {
+    setEditingId(item.id);
+    setItemForm({
+      name: item.name,
+      category: item.category ?? "",
+      brand: item.brand ?? "",
+      unit: item.unit || "pcs",
+      threshold: item.low_stock_threshold == null ? "" : String(item.low_stock_threshold),
+      location: item.location ?? "",
+      notes: item.notes ?? "",
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setItemForm(EMPTY_ITEM_FORM);
+  };
+
+  const submitItem = () =>
     run(() =>
       postJson("/api/inventory/items", {
-        name: newItem.name,
-        category: newItem.category || null,
-        brand: newItem.brand || null,
-        unit: newItem.unit || "pcs",
-        low_stock_threshold: newItem.threshold === "" ? null : Number(newItem.threshold),
+        ...(editingId ? { id: editingId } : {}),
+        name: itemForm.name,
+        category: itemForm.category || null,
+        brand: itemForm.brand || null,
+        unit: itemForm.unit || "pcs",
+        low_stock_threshold: itemForm.threshold === "" ? null : Number(itemForm.threshold),
+        location: itemForm.location || null,
+        notes: itemForm.notes || null,
       })
     ).then((ok) => {
-      if (ok) setNewItem({ name: "", category: "", brand: "", unit: "pcs", threshold: "" });
+      if (ok) cancelEdit();
     });
 
   const submitAdjust = (itemId: string, sign: 1 | -1) => {
@@ -324,6 +351,16 @@ export function InventoryWorkspace({
                         {item.notes}
                       </span>
                     ) : null}
+                    {item.location?.trim() ? (
+                      <span className="mt-0.5 block text-xs font-normal text-slate-500">
+                        {item.location}
+                      </span>
+                    ) : null}
+                    <EntityPhotos
+                      inventoryItemId={item.id}
+                      compact
+                      className="mt-1.5"
+                    />
                   </td>
                   <td className="px-3 py-2 text-slate-500">{item.brand?.trim() || "-"}</td>
                   <td className="px-3 py-2 text-slate-500">{item.category ?? "-"}</td>
@@ -380,6 +417,14 @@ export function InventoryWorkspace({
                       >
                         - Out
                       </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => beginEdit(item)}
+                        className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        Edit
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -389,10 +434,12 @@ export function InventoryWorkspace({
         </table>
         <div className="flex flex-wrap items-end gap-2 border-t border-slate-100 px-5 py-3">
           <div>
-            <label className="block text-xs text-slate-500">New item</label>
+            <label className="block text-xs text-slate-500">
+              {editingId ? "Edit item" : "New item"}
+            </label>
             <input
-              value={newItem.name}
-              onChange={(event) => setNewItem({ ...newItem, name: event.target.value })}
+              value={itemForm.name}
+              onChange={(event) => setItemForm({ ...itemForm, name: event.target.value })}
               placeholder="e.g. Suit hanger"
               className="mt-0.5 w-44 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
             />
@@ -401,8 +448,8 @@ export function InventoryWorkspace({
             <label className="block text-xs text-slate-500">Brand</label>
             <input
               list="inventory-brands"
-              value={newItem.brand}
-              onChange={(event) => setNewItem({ ...newItem, brand: event.target.value })}
+              value={itemForm.brand}
+              onChange={(event) => setItemForm({ ...itemForm, brand: event.target.value })}
               placeholder="No brand"
               className="mt-0.5 w-32 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
             />
@@ -415,8 +462,8 @@ export function InventoryWorkspace({
           <div>
             <label className="block text-xs text-slate-500">Category</label>
             <input
-              value={newItem.category}
-              onChange={(event) => setNewItem({ ...newItem, category: event.target.value })}
+              value={itemForm.category}
+              onChange={(event) => setItemForm({ ...itemForm, category: event.target.value })}
               placeholder="Hangers"
               className="mt-0.5 w-32 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
             />
@@ -424,8 +471,8 @@ export function InventoryWorkspace({
           <div>
             <label className="block text-xs text-slate-500">Unit</label>
             <input
-              value={newItem.unit}
-              onChange={(event) => setNewItem({ ...newItem, unit: event.target.value })}
+              value={itemForm.unit}
+              onChange={(event) => setItemForm({ ...itemForm, unit: event.target.value })}
               className="mt-0.5 w-20 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
             />
           </div>
@@ -434,20 +481,48 @@ export function InventoryWorkspace({
             <input
               type="number"
               min="0"
-              value={newItem.threshold}
-              onChange={(event) => setNewItem({ ...newItem, threshold: event.target.value })}
+              value={itemForm.threshold}
+              onChange={(event) => setItemForm({ ...itemForm, threshold: event.target.value })}
               placeholder="10"
               className="mt-0.5 w-20 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
             />
           </div>
+          <div>
+            <label className="block text-xs text-slate-500">Location</label>
+            <input
+              value={itemForm.location}
+              onChange={(event) => setItemForm({ ...itemForm, location: event.target.value })}
+              placeholder="Store room"
+              className="mt-0.5 w-32 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-slate-500">Notes</label>
+            <input
+              value={itemForm.notes}
+              onChange={(event) => setItemForm({ ...itemForm, notes: event.target.value })}
+              placeholder="Optional"
+              className="mt-0.5 w-40 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+            />
+          </div>
           <button
             type="button"
-            disabled={busy || !newItem.name.trim()}
-            onClick={() => void submitNewItem()}
+            disabled={busy || !itemForm.name.trim()}
+            onClick={() => void submitItem()}
             className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
           >
-            Add item
+            {editingId ? "Save item" : "Add item"}
           </button>
+          {editingId ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={cancelEdit}
+              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          ) : null}
         </div>
       </section>
 

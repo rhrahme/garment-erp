@@ -33,6 +33,7 @@ export async function POST(request: Request) {
     fabric_number: String(form.get("fabric_number") ?? ""),
     garment_type: String(form.get("garment_type") ?? ""),
     sales_order_line_id: String(form.get("sales_order_line_id") ?? ""),
+    inventory_item_id: String(form.get("inventory_item_id") ?? ""),
   });
   const file = form.get("file");
   if (!ref) {

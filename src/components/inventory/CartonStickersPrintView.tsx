@@ -38,10 +38,19 @@ export function CartonStickersPrintView({ stickers }: { stickers: CartonStickerD
         <div key={sticker.carton_id} className="carton-sticker">
           <p className="kicker">Inventory box</p>
           <p className="item">{sticker.item_name}</p>
-          <div className="qr-wrap">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="qr" src={qrImageUrl(sticker.open_url, 400)} alt="Open-box QR" />
-          </div>
+          {sticker.photo_url ? (
+            <div className="media">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="photo" src={sticker.photo_url} alt="" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="qr" src={qrImageUrl(sticker.open_url, 400)} alt="Open-box QR" />
+            </div>
+          ) : (
+            <div className="qr-wrap">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="qr" src={qrImageUrl(sticker.open_url, 400)} alt="Open-box QR" />
+            </div>
+          )}
           <p className="qty">
             {sticker.quantity} {sticker.unit} in this box
           </p>

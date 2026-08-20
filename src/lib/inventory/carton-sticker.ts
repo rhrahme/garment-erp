@@ -16,6 +16,8 @@ export type CartonStickerData = {
   notes: string | null;
   registered_on: string;
   open_url: string;
+  /** Latest article photo, if Cherry / inventory uploaded one. */
+  photo_url: string | null;
 };
 
 export function formatCartonStickerDate(iso: string | null | undefined): string {
@@ -27,6 +29,7 @@ export function buildCartonSticker(input: {
   carton: InventoryCarton;
   item: InventoryItem | undefined;
   appUrl: string;
+  photoUrl?: string | null;
 }): CartonStickerData {
   const base = input.appUrl.replace(/\/$/, "");
   return {
@@ -41,6 +44,7 @@ export function buildCartonSticker(input: {
     notes: input.item?.notes?.trim() || null,
     registered_on: formatCartonStickerDate(input.carton.created_at),
     open_url: `${base}/inventory/cartons/${encodeURIComponent(input.carton.id)}`,
+    photo_url: input.photoUrl?.trim() || null,
   };
 }
 
@@ -79,7 +83,21 @@ export const CARTON_STICKER_PRINT_CSS = `
   margin-top: 3mm;
 }
 .carton-sticker .qr-wrap { text-align: center; margin-top: 4mm; }
+.carton-sticker .media {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.12in;
+  margin-top: 4mm;
+}
+.carton-sticker .photo {
+  width: 1.4in;
+  height: 1.4in;
+  object-fit: cover;
+  border: 0.75pt solid #000;
+}
 .carton-sticker .qr { width: 1.7in; height: 1.7in; }
+.carton-sticker .media .qr { width: 1.5in; height: 1.5in; }
 .carton-sticker .qty {
   font-size: 16pt;
   font-weight: 700;

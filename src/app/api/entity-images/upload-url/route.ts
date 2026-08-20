@@ -27,6 +27,7 @@ export async function POST(request: Request) {
     fabric_number?: string;
     garment_type?: string;
     sales_order_line_id?: string;
+    inventory_item_id?: string;
     filename?: string;
     content_type?: string;
     size_bytes?: number;

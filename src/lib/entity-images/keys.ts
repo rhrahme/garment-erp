@@ -23,6 +23,12 @@ export function soLineEntityKey(salesOrderLineId: string): string | null {
   return `so_line:${lineId}`;
 }
 
+export function inventoryItemEntityKey(itemId: string): string | null {
+  const id = itemId.trim();
+  if (!id || !/^[a-zA-Z0-9._-]+$/.test(id)) return null;
+  return `inventory_item:${id}`;
+}
+
 export function parseEntityKey(key: string): { kind: EntityImageKind; key: string } | null {
   const trimmed = key.trim();
   if (trimmed.startsWith("fabric:")) {
@@ -42,6 +48,10 @@ export function parseEntityKey(key: string): { kind: EntityImageKind; key: strin
     const built = soLineEntityKey(trimmed.slice("so_line:".length));
     return built ? { kind: "so_line", key: built } : null;
   }
+  if (trimmed.startsWith("inventory_item:")) {
+    const built = inventoryItemEntityKey(trimmed.slice("inventory_item:".length));
+    return built ? { kind: "inventory_item", key: built } : null;
+  }
   return null;
 }
 
@@ -58,6 +68,7 @@ export function entityRefsFromContext(input: {
   fabricNumber?: string | null;
   garmentType?: string | null;
   salesOrderLineId?: string | null;
+  inventoryItemId?: string | null;
 }): EntityImageRef[] {
   const refs: EntityImageRef[] = [];
   const fabricKey = fabricEntityKey(input.supplierId ?? "", input.fabricNumber ?? "");
@@ -84,7 +95,33 @@ export function entityRefsFromContext(input: {
       label: "This article",
     });
   }
+  const itemKey = inventoryItemEntityKey(input.inventoryItemId ?? "");
+  if (itemKey) {
+    refs.push({
+      key: itemKey,
+      kind: "inventory_item",
+      label: "Photo",
+    });
+  }
   return refs;
+}
+
+function entityKeyLabel(
+  kind: EntityImageKind,
+  input: {
+    fabric_number?: string | null;
+    garment_type?: string | null;
+    key: string;
+  }
+): string {
+  if (kind === "fabric") {
+    return `Fabric ${String(input.fabric_number ?? "").trim() || input.key}`;
+  }
+  if (kind === "garment") {
+    return String(input.garment_type ?? "").trim() || "Garment";
+  }
+  if (kind === "inventory_item") return "Photo";
+  return "This article";
 }
 
 export function resolveEntityKeyFromParts(input: {
@@ -94,6 +131,7 @@ export function resolveEntityKeyFromParts(input: {
   fabric_number?: string | null;
   garment_type?: string | null;
   sales_order_line_id?: string | null;
+  inventory_item_id?: string | null;
 }): EntityImageRef | null {
   if (input.key) {
     const parsed = parseEntityKey(input.key);
@@ -101,29 +139,32 @@ export function resolveEntityKeyFromParts(input: {
     return {
       key: parsed.key,
       kind: parsed.kind,
-      label:
-        parsed.kind === "fabric"
-          ? `Fabric ${String(input.fabric_number ?? "").trim() || parsed.key}`
-          : parsed.kind === "garment"
-            ? String(input.garment_type ?? "").trim() || "Garment"
-            : "This article",
+      label: entityKeyLabel(parsed.kind, {
+        fabric_number: input.fabric_number,
+        garment_type: input.garment_type,
+        key: parsed.key,
+      }),
     };
   }
 
   const kind = String(input.kind ?? "").trim();
-  if (kind === "fabric" || (!kind && input.supplier_id && input.fabric_number && !input.garment_type && !input.sales_order_line_id)) {
+  if (kind === "fabric" || (!kind && input.supplier_id && input.fabric_number && !input.garment_type && !input.sales_order_line_id && !input.inventory_item_id)) {
     const refs = entityRefsFromContext({
       supplierId: input.supplier_id,
       fabricNumber: input.fabric_number,
     });
     return refs[0] ?? null;
   }
-  if (kind === "garment" || (!kind && input.garment_type && !input.supplier_id && !input.sales_order_line_id)) {
+  if (kind === "garment" || (!kind && input.garment_type && !input.supplier_id && !input.sales_order_line_id && !input.inventory_item_id)) {
     const refs = entityRefsFromContext({ garmentType: input.garment_type });
     return refs[0] ?? null;
   }
   if (kind === "so_line") {
     const refs = entityRefsFromContext({ salesOrderLineId: input.sales_order_line_id });
+    return refs[0] ?? null;
+  }
+  if (kind === "inventory_item" || (!kind && input.inventory_item_id)) {
+    const refs = entityRefsFromContext({ inventoryItemId: input.inventory_item_id });
     return refs[0] ?? null;
   }
 
@@ -132,6 +173,7 @@ export function resolveEntityKeyFromParts(input: {
     fabricNumber: input.fabric_number,
     garmentType: input.garment_type,
     salesOrderLineId: input.sales_order_line_id,
+    inventoryItemId: input.inventory_item_id,
   });
   return refs[0] ?? null;
 }

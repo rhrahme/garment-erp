@@ -75,6 +75,20 @@ describe("carton 4x6 box sticker", () => {
     assert.equal(sticker.carton_id, "ctn-1");
     assert.equal(sticker.registered_on, "2026-08-17");
     assert.equal(sticker.open_url, "https://erp.hagan.pro/inventory/cartons/ctn-1");
+    assert.equal(sticker.photo_url, null);
+  });
+
+  it("prints the latest article photo when one was uploaded", () => {
+    const sticker = buildCartonSticker({
+      carton,
+      item,
+      appUrl: "https://erp.hagan.pro/",
+      photoUrl: "/api/entity-images/inventory_item%3Ainv-suit-hanger/images/ei-1?v=1",
+    });
+    assert.equal(
+      sticker.photo_url,
+      "/api/entity-images/inventory_item%3Ainv-suit-hanger/images/ei-1?v=1"
+    );
   });
 
   it("formats ISO dates as YYYY-MM-DD and drops empty ones", () => {

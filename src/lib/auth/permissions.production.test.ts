@@ -9,6 +9,7 @@ import {
   PRODUCTION_OPERATOR_NAV_HREFS,
   SALES_OPERATOR_NAV_HREFS,
   STITCH_OPERATOR_NAV_HREFS,
+  TASK_OPERATOR_NAV_HREFS,
   canAccessClientMedia,
   canAccessPatternModule,
   canAssignClientPhotoToFabric,
@@ -22,6 +23,7 @@ import {
   isProductionOperatorRouteAllowed,
   isSalesOperatorRouteAllowed,
   isStitchOperatorRouteAllowed,
+  isTaskOperatorRouteAllowed,
   resolveRestrictedAccess,
 } from "./permissions.ts";
 
@@ -478,6 +480,7 @@ describe("accounting_operator access", () => {
       "/purchasing",
       "/shipments",
       "/documents",
+      "/inventory",
     ]) {
       assert.ok(nav.includes(href), `expected nav to include ${href}`);
     }
@@ -487,6 +490,11 @@ describe("accounting_operator access", () => {
   });
 
   it("allows finance routes, AWB tracking view, and blocks factory floor", () => {
+    assert.equal(isAccountingOperatorRouteAllowed("/inventory"), true);
+    assert.equal(isAccountingOperatorRouteAllowed("/api/inventory/items"), true);
+    assert.equal(isAccountingOperatorRouteAllowed("/inventory/cartons/print"), true);
+    assert.equal(isAccountingOperatorRouteAllowed("/api/entity-images"), true);
+    assert.equal(isAccountingOperatorRouteAllowed("/api/qr"), true);
     assert.equal(isAccountingOperatorRouteAllowed("/invoices"), true);
     assert.equal(isAccountingOperatorRouteAllowed("/costing"), true);
     assert.equal(isAccountingOperatorRouteAllowed("/supplier-invoices"), true);
@@ -502,6 +510,27 @@ describe("accounting_operator access", () => {
     assert.equal(isAccountingOperatorRouteAllowed("/sales"), false);
     assert.equal(isAccountingOperatorRouteAllowed("/orders/new"), false);
     assert.equal(isAccountingOperatorRouteAllowed("/fabric-specification"), false);
+  });
+});
+
+describe("task_operator inventory (task 1)", () => {
+  it("classifies hagan.task1@gmail.com as task_operator", () => {
+    assert.equal(resolveRestrictedAccess(null, "hagan.task1@gmail.com", false), "task_operator");
+  });
+
+  it("nav includes inventory", () => {
+    const nav = TASK_OPERATOR_NAV_HREFS as readonly string[];
+    assert.ok(nav.includes("/inventory"));
+  });
+
+  it("allows inventory pages, APIs, photos, and 4x6 QR print", () => {
+    assert.equal(isTaskOperatorRouteAllowed("/inventory"), true);
+    assert.equal(isTaskOperatorRouteAllowed("/inventory/cartons/print"), true);
+    assert.equal(isTaskOperatorRouteAllowed("/api/inventory/items"), true);
+    assert.equal(isTaskOperatorRouteAllowed("/api/entity-images"), true);
+    assert.equal(isTaskOperatorRouteAllowed("/api/qr"), true);
+    assert.equal(isTaskOperatorRouteAllowed("/invoices"), false);
+    assert.equal(isTaskOperatorRouteAllowed("/orders/new"), false);
   });
 });
 
@@ -538,6 +567,12 @@ describe("inventory_clerk access", () => {
     assert.equal(isInventoryClerkRouteAllowed("/inventory/cartons/box-1"), true);
     assert.equal(isInventoryClerkRouteAllowed("/api/inventory/items"), true);
     assert.equal(isInventoryClerkRouteAllowed("/api/inventory/cartons/box-1/open"), true);
+    assert.equal(isInventoryClerkRouteAllowed("/api/entity-images"), true);
+    assert.equal(
+      isInventoryClerkRouteAllowed("/api/entity-images/upload-url"),
+      true
+    );
+    assert.equal(isInventoryClerkRouteAllowed("/api/qr"), true);
     assert.equal(isInventoryClerkRouteAllowed("/api/auth/session"), true);
     assert.equal(isInventoryClerkRouteAllowed("/pattern"), false);
     assert.equal(isInventoryClerkRouteAllowed("/production"), false);

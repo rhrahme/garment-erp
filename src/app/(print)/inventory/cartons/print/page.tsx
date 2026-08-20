@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { CartonStickersPrintView } from "@/components/inventory/CartonStickersPrintView";
 import { getSessionContext } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { findEntityAlbum, readEntityImagesFresh } from "@/lib/data/entity-images";
+import { inventoryItemEntityKey } from "@/lib/entity-images/keys";
 import { readInventoryStoreFresh } from "@/lib/data/inventory-store";
 import { buildCartonSticker } from "@/lib/inventory/carton-sticker";
 
@@ -22,8 +24,9 @@ function appUrl(): string {
 export default async function CartonStickersPrintPage({ searchParams }: PageProps) {
   await getSessionContext();
   const { ids, item } = await searchParams;
-  await ensureDocumentsLoaded(["inventory_store"]);
+  await ensureDocumentsLoaded(["inventory_store", "entity_images"]);
   const store = await readInventoryStoreFresh();
+  const imageStore = await readEntityImagesFresh();
 
   const wantedIds = new Set(
     (ids ?? "")
@@ -42,13 +45,20 @@ export default async function CartonStickersPrintPage({ searchParams }: PageProp
   if (cartons.length === 0) notFound();
 
   const itemById = new Map(store.items.map((row) => [row.id, row]));
-  const stickers = cartons.map((carton) =>
-    buildCartonSticker({
+  const stickers = cartons.map((carton) => {
+    const albumKey = inventoryItemEntityKey(carton.item_id);
+    const album = albumKey ? findEntityAlbum(imageStore, albumKey) : null;
+    const photo = album?.images.at(-1);
+    return buildCartonSticker({
       carton,
       item: itemById.get(carton.item_id),
       appUrl: appUrl(),
-    })
-  );
+      photoUrl:
+        album && photo
+          ? `/api/entity-images/${encodeURIComponent(album.key)}/images/${encodeURIComponent(photo.id)}?v=${encodeURIComponent(photo.uploaded_at)}`
+          : null,
+    });
+  });
 
   return <CartonStickersPrintView stickers={stickers} />;
 }

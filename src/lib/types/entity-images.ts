@@ -1,4 +1,4 @@
-export type EntityImageKind = "fabric" | "garment" | "so_line";
+export type EntityImageKind = "fabric" | "garment" | "so_line" | "inventory_item";
 
 export interface EntityImage {
   id: string;

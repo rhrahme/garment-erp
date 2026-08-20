@@ -600,14 +600,20 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Carton QR stickers** (Aug 17 2026, 4x6 Aug 20 2026): deliveries are
   registered as sealed cartons (N boxes x qty). Each box gets one **4x6
   inch** sticker (`/inventory/cartons/print`) - item name, brand, category,
-  qty + unit, location, notes, status, registered date, box id, and a
-  large QR. One label per page (`@page 4in 6in`), not an A4 multi-up
-  sheet. Print 4x6, scale 100% / Actual size, do not fit to paper. Sealed
-  boxes are NOT stock - scanning the sticker when a box is opened
-  (/inventory/cartons/[id] -> "Start using this box") adds its quantity
-  with ledger reason `carton_opened`. Idempotent: a rescan never
-  double-adds ("Already opened" + who/when). Do not add carton quantities
-  to stock at registration time - open-scan IS the receive event.
+  qty + unit, location, notes, status, registered date, box id, article
+  photo when one was uploaded, and a large QR. One label per page
+  (`@page 4in 6in`), not an A4 multi-up sheet. Print 4x6, scale 100% /
+  Actual size, do not fit to paper. Sealed boxes are NOT stock - scanning
+  the sticker when a box is opened (/inventory/cartons/[id] -> "Start
+  using this box") adds its quantity with ledger reason `carton_opened`.
+  Idempotent: a rescan never double-adds ("Already opened" + who/when).
+  Do not add carton quantities to stock at registration time - open-scan
+  IS the receive event.
+- **Inventory article photos** (Aug 20 2026): each stock item has an
+  album key `inventory_item:<itemId>`. Add / delete on the Inventory
+  stock row. Same `/api/entity-images` + `/api/v1/entity-images` path as
+  fabric / garment / SO-line photos (`entity.image_uploaded` /
+  `entity.image_deleted`).
 - API parity per the Zapier rule: session routes under `/api/inventory/*`
   (items, adjust, recipes, cartons; production operators allowed) and
   API-key routes `/api/v1/inventory` + `/api/v1/inventory/adjust` +
@@ -629,7 +635,17 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Inventory clerk badge login** (Aug 20 2026): badge `2543411918`
   (Cherry / Shahryar) signs in on the Badge tab and sees **Inventory
   only**. Session email is `badge-inventory-<id>@badge.hagan.pro` so he
-  never gets Pattern. Landing `/inventory`.
+  never gets Pattern. Landing `/inventory`. He can add and edit items
+  (name, brand, category, unit, alert, location, notes), upload a photo
+  per article, receive/use stock, register boxes, and print 4x6 stickers.
+  Clerk routes include `/api/inventory`, `/api/entity-images`, and
+  `/api/qr` so sticker QR codes and photos load.
+- **Inventory also on Accounting + Task 1** (Aug 20 2026):
+  `accounting@hagan.pro` and `hagan.task1@gmail.com` see Inventory in
+  the sidebar and can use the same add/edit/photo/4x6 sticker tools.
+  Task 1 already had `/api/entity-images` + `/api/qr`. Accounting
+  gained `/inventory`, `/api/inventory`, those photo/QR routes, and
+  inventory was removed from the accounting block list.
 
 ## Clients
 

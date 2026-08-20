@@ -63,6 +63,8 @@ const TASK_OPERATOR_ROUTE_PREFIXES = [
   "/orders",
   /** Every team can record client ready-made samples (badge-scan receive). */
   "/clients",
+  "/inventory",
+  "/api/inventory",
   "/api/fabric-receiving",
   "/api/thread-button-matching",
   "/api/sales-orders",
@@ -244,6 +246,10 @@ const ACCOUNTING_OPERATOR_ROUTE_PREFIXES = [
   "/api/fabric-brands",
   "/api/v1/suppliers",
   "/api/shipments",
+  "/inventory",
+  "/api/inventory",
+  ...ENTITY_IMAGE_ROUTE_PREFIXES,
+  "/api/qr",
   "/api/auth/session",
   "/api/auth/invoice-amounts",
   "/api/auth/dev-impersonate",
@@ -262,7 +268,6 @@ const ACCOUNTING_OPERATOR_BLOCKED_ROUTE_PREFIXES = [
   "/thread-buttons",
   "/brands",
   "/ready-made",
-  "/inventory",
   "/fabric-specification",
   "/dashboard",
   "/api/fabric-orders/send-email",
@@ -363,6 +368,7 @@ export const TASK_OPERATOR_NAV_HREFS = [
   "/orders",
   "/fabric-specification",
   "/clients",
+  "/inventory",
 ] as const;
 
 /**
@@ -416,6 +422,8 @@ export const INVENTORY_CLERK_NAV_HREFS = ["/inventory"] as const;
 const INVENTORY_CLERK_ROUTE_PREFIXES = [
   "/inventory",
   "/api/inventory",
+  ...ENTITY_IMAGE_ROUTE_PREFIXES,
+  "/api/qr",
   "/api/auth/session",
   "/api/auth/dev-impersonate",
   "/login",
@@ -433,6 +441,7 @@ export const ACCOUNTING_OPERATOR_NAV_HREFS = [
   "/shipments",
   "/clients",
   "/documents",
+  "/inventory",
 ] as const;
 
 export type RestrictedAccessKind =

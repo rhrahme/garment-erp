@@ -4,6 +4,7 @@ import {
   entityRefsFromContext,
   fabricEntityKey,
   garmentEntityKey,
+  inventoryItemEntityKey,
   isValidEntityKey,
   parseEntityKey,
   soLineEntityKey,
@@ -28,6 +29,12 @@ describe("entity image keys", () => {
     assert.equal(soLineEntityKey("not a key"), null);
   });
 
+  it("accepts inventory item ids for article photos", () => {
+    assert.equal(inventoryItemEntityKey("inv-suit-hanger"), "inventory_item:inv-suit-hanger");
+    assert.equal(inventoryItemEntityKey("not a key"), null);
+    assert.equal(parseEntityKey("inventory_item:inv-suit-hanger")?.kind, "inventory_item");
+  });
+
   it("rejects unknown keys", () => {
     assert.equal(isValidEntityKey("client:abc"), false);
     assert.equal(parseEntityKey("fabric:loro-piana::771011")?.kind, "fabric");
@@ -44,5 +51,12 @@ describe("entity image keys", () => {
       refs.map((row) => row.kind),
       ["fabric", "garment", "so_line"]
     );
+  });
+
+  it("builds an inventory item photo ref", () => {
+    const refs = entityRefsFromContext({ inventoryItemId: "inv-suit-hanger" });
+    assert.deepEqual(refs, [
+      { key: "inventory_item:inv-suit-hanger", kind: "inventory_item", label: "Photo" },
+    ]);
   });
 });

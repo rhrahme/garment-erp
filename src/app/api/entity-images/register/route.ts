@@ -38,6 +38,7 @@ export async function POST(request: Request) {
     fabric_number?: string;
     garment_type?: string;
     sales_order_line_id?: string;
+    inventory_item_id?: string;
     image_id?: string;
     stored_filename?: string;
     filename?: string;

@@ -22,6 +22,7 @@ export async function GET(request: Request) {
     fabricNumber: url.searchParams.get("fabric_number"),
     garmentType: url.searchParams.get("garment_type"),
     salesOrderLineId: url.searchParams.get("sales_order_line_id"),
+    inventoryItemId: url.searchParams.get("inventory_item_id"),
   }).map((ref) => ref.key);
   const keys = [...rawKeys, ...fromParts]
     .map((key) => parseEntityKey(key)?.key)
