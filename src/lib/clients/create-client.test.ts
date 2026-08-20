@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import {
-  buildNewClientId,
-  buildNewClientProfile,
-  resolveBrandIdsForNewClient,
-} from "@/lib/clients/create-client";
+import { buildNewClientId, buildNewClientProfile } from "@/lib/clients/create-client";
+import { resolveBrandIdsForNewClient } from "@/lib/clients/new-client-brand";
 import { isBlankClientPlaceholder } from "@/lib/clients/names";
 import type { ClientProfile } from "@/lib/types/clients";
 

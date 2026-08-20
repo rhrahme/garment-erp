@@ -16,7 +16,7 @@ import { AutoSaveStatusBar } from "@/components/ui/AutoSaveStatus";
 import { filterClientsByBrand, searchClients } from "@/lib/clients/filter";
 import { getFactoryBrands } from "@/lib/data/factory-brands";
 import { generateNextClientCode, getBrandClientCodePrefix, getJoinMonthYear } from "@/lib/clients/codes";
-import { resolveBrandIdsForNewClient } from "@/lib/clients/create-client";
+import { resolveBrandIdsForNewClient } from "@/lib/clients/new-client-brand";
 import { isWithinClientCreateNameGrace } from "@/lib/clients/name-permissions";
 import { ClientTitleSelect } from "@/components/clients/ClientTitleSelect";
 import { formatClientDisplayName, formatReferredByName, isBlankClientPlaceholder, isClientSaveable } from "@/lib/clients/names";
