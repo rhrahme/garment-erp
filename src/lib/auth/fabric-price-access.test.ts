@@ -40,6 +40,7 @@ function session(
     isStitchOperator: role === "stitch_operator",
     isProductionOperator: role === "production_operator",
     isPatternOperator: role === "pattern_operator",
+    isInventoryClerk: false,
     isSalesOperator: role === "sales_operator",
     isAccountingOperator: role === "accounting",
     canViewClientContact: isAdmin || role === "sales_operator" || role === "accounting",

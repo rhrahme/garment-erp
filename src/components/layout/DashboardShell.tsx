@@ -24,6 +24,7 @@ export function DashboardShell({
   const stitchOperatorOnly = session.isStitchOperator;
   const productionOperatorOnly = session.isProductionOperator;
   const patternOperatorOnly = session.isPatternOperator;
+  const inventoryClerkOnly = session.isInventoryClerk;
   const salesOperatorOnly = session.isSalesOperator;
   const accountingOperatorOnly = session.isAccountingOperator;
   const kioskMain = stitchOperatorOnly;
@@ -49,6 +50,7 @@ export function DashboardShell({
         stitchOperatorOnly={stitchOperatorOnly}
         productionOperatorOnly={productionOperatorOnly}
         patternOperatorOnly={patternOperatorOnly}
+        inventoryClerkOnly={inventoryClerkOnly}
         salesOperatorOnly={salesOperatorOnly}
         accountingOperatorOnly={accountingOperatorOnly}
         isAdmin={session.isAdmin}

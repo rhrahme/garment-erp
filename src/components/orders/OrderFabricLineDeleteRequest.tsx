@@ -198,8 +198,8 @@ export function OrderFabricLineDeleteRequest({
       </label>
       {patternMismatch?.has_mismatch ? (
         <p className="mt-2 text-xs text-amber-900">
-          This order has a pattern/SO line count mismatch - verify against ClickUp before
-          requesting delete.
+          This order has leftover pattern jobs for fabrics already removed from the sales
+          order. Those leftover jobs will be cancelled if you delete the fabric.
         </p>
       ) : null}
       {error ? <p className="mt-2 text-xs text-red-800">{error}</p> : null}

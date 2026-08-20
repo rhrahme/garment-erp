@@ -65,7 +65,6 @@ export function OrderFabricLineRemove({
   }
 
   const wouldCancelJobs = patternJobsForLine > 0;
-  const fabricLineCount = patternMismatch?.fabric_line_count ?? 0;
 
   return (
     <div className="mt-2 rounded-lg border border-red-200 bg-red-50/60 p-3 text-sm">
@@ -75,13 +74,12 @@ export function OrderFabricLineRemove({
       {wouldCancelJobs ? (
         <p className="mt-2 font-medium text-red-900">
           This will cancel {patternJobsForLine} pattern job
-          {patternJobsForLine !== 1 ? "s" : ""}. SO has {fabricLineCount} fabric line
-          {fabricLineCount !== 1 ? "s" : ""}; ClickUp may have more. Continue?
+          {patternJobsForLine !== 1 ? "s" : ""} for this fabric. Continue?
         </p>
       ) : patternMismatch?.has_mismatch ? (
         <p className="mt-2 text-amber-900">
-          This order has a pattern/SO line count mismatch — verify against ClickUp before making
-          changes.
+          This order has leftover pattern jobs for fabrics already removed from the sales
+          order. Those leftover jobs will be cancelled.
         </p>
       ) : null}
       {error && <p className="mt-2 text-red-800">{error}</p>}

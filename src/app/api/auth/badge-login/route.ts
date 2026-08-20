@@ -5,7 +5,7 @@ import {
   lookupBadgeForLogin,
   provisionBadgeSupabaseUser,
 } from "@/lib/auth/badge-login";
-import { PATTERN_LANDING, signInBadgeUser } from "@/lib/auth/sign-in-badge-session";
+import { landingForBadgeEmployee, signInBadgeUser } from "@/lib/auth/sign-in-badge-session";
 import { recordLoginFromRequest } from "@/lib/data/login-events";
 import { sendEmail } from "@/lib/email/smtp";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
@@ -26,8 +26,7 @@ async function notifyAdminOfActivation(employee: PayrollEmployee): Promise<void>
       subject: `Badge login activated: ${employee.full_name}`,
       text: [
         `${employee.full_name} (badge ${employee.employee_id_number}) set their badge`,
-        `login password and can now sign in to the pattern workspace with`,
-        `badge number + password.`,
+        `login password and can now sign in with badge number + password.`,
         "",
         `If this was not expected, remove the credential (badge_login_credentials)`,
         `or deactivate the employee in payroll.`,
@@ -102,7 +101,7 @@ export async function POST(request: Request) {
         identifier: badge,
       });
       void notifyAdminOfActivation(employee);
-      return NextResponse.json({ ok: true, redirect: PATTERN_LANDING });
+      return NextResponse.json({ ok: true, redirect: landingForBadgeEmployee(employee) });
     }
 
     // action === "login"
@@ -134,7 +133,7 @@ export async function POST(request: Request) {
       actor,
       identifier: badge,
     });
-    return NextResponse.json({ ok: true, redirect: PATTERN_LANDING });
+    return NextResponse.json({ ok: true, redirect: landingForBadgeEmployee(employee) });
   } catch (error) {
     console.error("Badge login failed:", error);
     return NextResponse.json({ error: "Badge login failed." }, { status: 500 });

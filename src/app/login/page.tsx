@@ -156,7 +156,7 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
-      router.push((data.redirect ?? "/pattern") as Route);
+      router.push((data.redirect ?? "/") as Route);
       router.refresh();
     } catch {
       setError("Badge sign in failed.");

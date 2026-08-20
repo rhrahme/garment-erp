@@ -294,17 +294,24 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `pattern.operator_notice_created` / `pattern.operator_notice_acknowledged`.
   When we explain a floor fix to Pattern, add a catalog entry so they get
   the email and the tab - do not only tell the owner in chat. Notices:
-  leftover SO lines (`howto-consolidate-removed-so-lines-v1`), consolidate
+  leftover SO lines (`howto-consolidate-removed-so-lines-v1`), leftover
+  jobs cleared because ERP is source of truth
+  (`howto-erp-source-of-truth-leftover-jobs-v1`), consolidate
   fabrics (`howto-consolidate-fabrics-v1`), remove one fabric from a group
   (`howto-remove-fabric-from-consolidation-v1`).
+- **ERP is the source of truth for order fabrics** (Aug 20 2026): ClickUp
+  was a one-time export. Do not block Pattern or QC on a ClickUp check.
+  Leftover pattern jobs whose fabric line is no longer on the sales order
+  are cancelled automatically (order-board load, fabric-line delete, SO
+  sync). Pattern ticks only fabrics still on the SO and consolidates.
 - **Consolidate skips leftover jobs after SO line removal** (Aug 20 2026):
   Pattern jobs can outlive a fabric line QC deleted or transferred. Those
   stale `sales_order_line_id`s used to 400 create/assign ("Fabric line(s)
   not found on this client's sales orders") and block consolidating the
   remaining live Overshirt+Trouser (Ibrahim SO-2026-0130). Order-board
   leftover rows are not tickable; create/assign drops known orphan line ids
-  and keeps live ones. Do not auto-cancel orphans (ClickUp sync guard). If
-  Pattern still needs the fabric, QC restores the SO line first.
+  and keeps live ones. If Pattern still needs the fabric, QC restores the
+  SO line first.
 - **Pattern measurement saves must never wipe filled cells** (Aug 6 2026):
   Root cause was whole-document `pattern_library` upserts from a stale Vercel
   cache after Save. Hardening (keep all three):
@@ -430,6 +437,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   embeds font-mono as Courier/Type3 and overlaps glyphs). **Never** use
   transform/zoom scale, `max-w-*` wrappers, or `break-inside: avoid-page` on
   tall blocks - they trigger shrink-to-fit tiny strips.
+- **Inventory box stickers** are **4x6 inch**, one label per page
+  (`@page { size: 4in 6in; margin: 0; }`), not A4. Same no-scale / no
+  max-w / Helvetica rules. Print 4x6, Actual size.
 - Print dialog: A4 portrait, scale 100% / Actual size, default margins.
 - Fabric swatch images on print sheets require the swatch manifest to ship
   into the Vercel image lambda (Caccioppoli fix `b5ac64f`); new fabric codes
@@ -587,9 +597,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   sales-order line + item never deducts twice. Unknown garment types simply
   skip (no recipe = no deduction). Stock may go negative so the floor is
   never blocked; low stock fires `inventory.low_stock`.
-- **Carton QR stickers** (Aug 17 2026): deliveries are registered as sealed
-  cartons (N boxes x qty) which print an A4 QR sticker sheet. Sealed boxes
-  are NOT stock - scanning the sticker when a box is opened
+- **Carton QR stickers** (Aug 17 2026, 4x6 Aug 20 2026): deliveries are
+  registered as sealed cartons (N boxes x qty). Each box gets one **4x6
+  inch** sticker (`/inventory/cartons/print`) - item name, brand, category,
+  qty + unit, location, notes, status, registered date, box id, and a
+  large QR. One label per page (`@page 4in 6in`), not an A4 multi-up
+  sheet. Print 4x6, scale 100% / Actual size, do not fit to paper. Sealed
+  boxes are NOT stock - scanning the sticker when a box is opened
   (/inventory/cartons/[id] -> "Start using this box") adds its quantity
   with ledger reason `carton_opened`. Idempotent: a rescan never
   double-adds ("Already opened" + who/when). Do not add carton quantities
@@ -607,6 +621,15 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   fabric items and rendered under the name in the Stock on hand table.
   No automatic recipe deduction for belt fabric yet (brand per order is
   a manual choice).
+- **Shirt / laundry hangers by brand** (Aug 20 2026): besides the
+  generic Laundry hanger, stock **Laundry hanger - Gliani (green)** and
+  **Laundry hanger - Fouad Rahme (grey)**. Color lives in the name so
+  the 4x6 box sticker shows it. Shirt pack recipes still deduct the
+  generic laundry hanger (brand is a manual pick, same as belt fabric).
+- **Inventory clerk badge login** (Aug 20 2026): badge `2543411918`
+  (Cherry / Shahryar) signs in on the Badge tab and sees **Inventory
+  only**. Session email is `badge-inventory-<id>@badge.hagan.pro` so he
+  never gets Pattern. Landing `/inventory`.
 
 ## Clients
 

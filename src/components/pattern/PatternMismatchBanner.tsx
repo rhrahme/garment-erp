@@ -9,13 +9,7 @@ type PatternMismatchBannerProps = {
 export function PatternMismatchBanner({ mismatch, className = "" }: PatternMismatchBannerProps) {
   if (!mismatch.has_mismatch) return null;
 
-  const severity =
-    mismatch.stale_line_ids.length > 0 ||
-    (mismatch.clickup_line_count != null &&
-      mismatch.clickup_line_count !== mismatch.fabric_line_count)
-      ? "red"
-      : "amber";
-
+  const severity = mismatch.stale_line_ids.length > 0 ? "red" : "amber";
   const borderClass =
     severity === "red" ? "border-red-300 bg-red-50" : "border-amber-300 bg-amber-50";
   const iconClass = severity === "red" ? "text-red-700" : "text-amber-700";
@@ -32,35 +26,17 @@ export function PatternMismatchBanner({ mismatch, className = "" }: PatternMisma
         <p className="font-semibold">
           SO has {mismatch.fabric_line_count} fabric line
           {mismatch.fabric_line_count !== 1 ? "s" : ""} but {mismatch.active_pattern_job_count}{" "}
-          active pattern job{mismatch.active_pattern_job_count !== 1 ? "s" : ""} — possible data
-          mismatch.
+          active pattern job{mismatch.active_pattern_job_count !== 1 ? "s" : ""}.
         </p>
         <p className={`mt-1 ${detailClass}`}>
-          Do not cancel pattern jobs until verified against ClickUp.
-          {mismatch.imported_from_clickup
-            ? " This order was imported from ClickUp — compare garment lines there before syncing or removing lines."
-            : null}
+          The ERP sales order is the source of truth. Leftover pattern jobs for fabrics that
+          are no longer on this order are cancelled automatically.
         </p>
         {mismatch.stale_line_ids.length > 0 ? (
           <p className={`mt-1 ${detailClass}`}>
-            {mismatch.stale_line_ids.length} pattern job
-            {mismatch.stale_line_ids.length !== 1 ? "s" : ""} reference fabric line IDs no longer
-            on this order. Those leftover rows cannot be consolidated - tick only fabrics still
-            on the sales order.
-          </p>
-        ) : null}
-        {mismatch.clickup_line_count != null ? (
-          <p className={`mt-1 ${detailClass}`}>
-            ClickUp shows {mismatch.clickup_line_count} garment line
-            {mismatch.clickup_line_count !== 1 ? "s" : ""}
-            {mismatch.clickup_task_ids.length > 0
-              ? ` (task${mismatch.clickup_task_ids.length !== 1 ? "s" : ""}: ${mismatch.clickup_task_ids.join(", ")})`
-              : ""}
-            .
-          </p>
-        ) : mismatch.imported_from_clickup ? (
-          <p className={`mt-1 ${detailClass}`}>
-            ClickUp cache not available locally — check ClickUp directly for the true line count.
+            {mismatch.stale_line_ids.length} leftover job
+            {mismatch.stale_line_ids.length !== 1 ? "s" : ""} still point at removed fabrics.
+            Refresh this page, then tick only fabrics still on the sales order.
           </p>
         ) : null}
       </div>

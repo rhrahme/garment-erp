@@ -19,6 +19,7 @@ export default async function Home() {
     isStitchOperator: session.isStitchOperator,
     isProductionOperator: session.isProductionOperator,
     isPatternOperator: session.isPatternOperator,
+    isInventoryClerk: session.isInventoryClerk,
     isSalesOperator: session.isSalesOperator,
     isAccountingOperator: session.isAccountingOperator,
   }));

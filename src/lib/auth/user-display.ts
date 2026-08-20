@@ -25,9 +25,12 @@ export function resolveUserDisplay(session: SessionContext): {
 
   const name =
     mappedName ??
+    session.actorLabel ??
     (session.isSuperAdmin ? "Super Admin" : session.isAdmin ? "Admin User" : email || "User");
 
-  const title = session.isStitchOperator
+  const title = session.isInventoryClerk
+    ? "Inventory"
+    : session.isStitchOperator
     ? "Stitch Floor"
     : session.isProductionOperator
       ? "Factory Manager"

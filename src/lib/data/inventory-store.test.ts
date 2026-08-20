@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   computeCartonOpen,
   computeGarmentInventoryDeduction,
+  ensureBrandedLaundryHangers,
   findGarmentRecipe,
 } from "@/lib/data/inventory-store";
 import type { InventoryStoreFile } from "@/lib/types/inventory";
@@ -148,6 +149,20 @@ test("opening a carton adds its quantity to stock once", () => {
   assert.equal(second.opened, false);
   assert.equal(s.items[0]!.quantity_on_hand, 210);
   assert.equal(s.ledger.filter((entry) => entry.reason === "carton_opened").length, 1);
+});
+
+test("branded shirt hangers are Gliani green and Fouad Rahme grey", () => {
+  const s = store();
+  const added = ensureBrandedLaundryHangers(s);
+  assert.equal(added.length, 2);
+  const gliani = s.items.find((item) => item.id === "inv-laundry-hanger-gliani");
+  const fouad = s.items.find((item) => item.id === "inv-laundry-hanger-fouad-rahme");
+  assert.equal(gliani?.name, "Laundry hanger - Gliani (green)");
+  assert.equal(gliani?.brand, "Gliani");
+  assert.equal(fouad?.name, "Laundry hanger - Fouad Rahme (grey)");
+  assert.equal(fouad?.brand, "Fouad Rahme");
+  assert.equal(s.items.some((item) => item.id === "inv-laundry-hanger"), true);
+  assert.equal(ensureBrandedLaundryHangers(s).length, 0);
 });
 
 test("opening an unknown carton fails loudly", () => {

@@ -26,7 +26,7 @@ import {
   EMAIL_LOGIN_DISABLED_MESSAGE,
   isEmailLoginDisabled,
 } from "@/lib/auth/email-login-disabled";
-import { PATTERN_LANDING, signInBadgeUser } from "@/lib/auth/sign-in-badge-session";
+import { landingForBadgeEmployee, signInBadgeUser } from "@/lib/auth/sign-in-badge-session";
 import { recordLoginFromRequest } from "@/lib/data/login-events";
 import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/supabase/env";
 
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
         actor,
         identifier: email,
       });
-      return NextResponse.json({ ok: true, redirect: PATTERN_LANDING });
+      return NextResponse.json({ ok: true, redirect: landingForBadgeEmployee(lookup.employee) });
     }
 
     if (isEmailLoginDisabled(email)) {

@@ -27,6 +27,7 @@ export async function GET() {
       is_stitch_operator: session.isStitchOperator,
       is_production_operator: session.isProductionOperator,
       is_pattern_operator: session.isPatternOperator,
+      is_inventory_clerk: session.isInventoryClerk,
       is_sales_operator: session.isSalesOperator,
       is_accounting_operator: session.isAccountingOperator,
       can_view_client_contact: session.canViewClientContact,

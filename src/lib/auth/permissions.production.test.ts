@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   ACCOUNTING_OPERATOR_NAV_HREFS,
   CLIENT_MANAGER_NAV_HREFS,
+  INVENTORY_CLERK_NAV_HREFS,
   PATTERN_OPERATOR_NAV_HREFS,
   PRODUCTION_OPERATOR_BLOCKED_ROUTE_PREFIXES,
   PRODUCTION_OPERATOR_NAV_HREFS,
@@ -15,6 +16,8 @@ import {
   defaultPathForSession,
   isAccountingOperatorRouteAllowed,
   isClientManagerRouteAllowed,
+  isInventoryClerkEmail,
+  isInventoryClerkRouteAllowed,
   isPatternOperatorRouteAllowed,
   isProductionOperatorRouteAllowed,
   isSalesOperatorRouteAllowed,
@@ -499,5 +502,49 @@ describe("accounting_operator access", () => {
     assert.equal(isAccountingOperatorRouteAllowed("/sales"), false);
     assert.equal(isAccountingOperatorRouteAllowed("/orders/new"), false);
     assert.equal(isAccountingOperatorRouteAllowed("/fabric-specification"), false);
+  });
+});
+
+describe("inventory_clerk access", () => {
+  it("classifies badge-inventory emails as inventory_clerk", () => {
+    assert.equal(isInventoryClerkEmail("badge-inventory-2543411918@badge.hagan.pro"), true);
+    assert.equal(isInventoryClerkEmail("badge-pattern-2543411918@badge.hagan.pro"), false);
+    assert.equal(
+      resolveRestrictedAccess(null, "badge-inventory-2543411918@badge.hagan.pro", false),
+      "inventory_clerk"
+    );
+    assert.equal(
+      resolveRestrictedAccess("inventory_clerk", "someone@hagan.pro", false),
+      "inventory_clerk"
+    );
+  });
+
+  it("lands inventory clerk on /inventory", () => {
+    assert.equal(
+      defaultPathForEmail("badge-inventory-2543411918@badge.hagan.pro"),
+      "/inventory"
+    );
+    assert.equal(defaultPathForSession({ isInventoryClerk: true }), "/inventory");
+  });
+
+  it("nav is inventory only", () => {
+    const nav = INVENTORY_CLERK_NAV_HREFS as readonly string[];
+    assert.deepEqual([...nav], ["/inventory"]);
+  });
+
+  it("allows inventory pages and APIs, nothing else", () => {
+    assert.equal(isInventoryClerkRouteAllowed("/inventory"), true);
+    assert.equal(isInventoryClerkRouteAllowed("/inventory/cartons/print"), true);
+    assert.equal(isInventoryClerkRouteAllowed("/inventory/cartons/box-1"), true);
+    assert.equal(isInventoryClerkRouteAllowed("/api/inventory/items"), true);
+    assert.equal(isInventoryClerkRouteAllowed("/api/inventory/cartons/box-1/open"), true);
+    assert.equal(isInventoryClerkRouteAllowed("/api/auth/session"), true);
+    assert.equal(isInventoryClerkRouteAllowed("/pattern"), false);
+    assert.equal(isInventoryClerkRouteAllowed("/production"), false);
+    assert.equal(isInventoryClerkRouteAllowed("/orders"), false);
+    assert.equal(isInventoryClerkRouteAllowed("/stitch"), false);
+    assert.equal(isInventoryClerkRouteAllowed("/hr"), false);
+    assert.equal(isInventoryClerkRouteAllowed("/dashboard"), false);
+    assert.equal(isInventoryClerkRouteAllowed("/clients"), false);
   });
 });

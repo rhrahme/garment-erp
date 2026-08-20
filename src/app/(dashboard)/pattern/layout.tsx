@@ -13,6 +13,7 @@ export default async function PatternLayout({ children }: { children: React.Reac
         isStitchOperator: session.isStitchOperator,
         isProductionOperator: session.isProductionOperator,
         isPatternOperator: session.isPatternOperator,
+        isInventoryClerk: session.isInventoryClerk,
         isSalesOperator: session.isSalesOperator,
         isAccountingOperator: session.isAccountingOperator,
       })

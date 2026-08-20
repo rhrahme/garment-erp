@@ -77,8 +77,35 @@ export const CONSOLIDATE_REMOVED_SO_LINES_HOWTO_BODY = [
   "If you still need a removed fabric (example: Ibrahim SO-2026-0130 S21006 / S21007 / S21008 / S21009), ask QC to put it back on the sales order first. Pattern cannot consolidate a fabric that is no longer on the order.",
 ].join("\n");
 
+export const ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_NOTICE_ID =
+  "howto-erp-source-of-truth-leftover-jobs-v1";
+
+export const ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_TITLE =
+  "Leftover pattern jobs are cleared - tick what is still on the order";
+
+export const ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_BODY = [
+  "The ERP sales order is the source of truth. We are not using ClickUp anymore.",
+  "",
+  "If QC already removed a fabric from the sales order, that leftover pattern job is cancelled automatically. You will not keep seeing it on the order board.",
+  "",
+  "To consolidate Ibrahim Overshirt+Trouser (SO-2026-0130) or any remaining fabrics:",
+  "1. Open the Pattern order board.",
+  "2. Tick the Overshirt+Trouser (and other) rows that are still on the order.",
+  "3. Click Consolidate selected -> New pattern -> Create pattern -> upload .TUD.",
+  "",
+  "Do not wait on leftover / removed rows. Tick only what is still on the sales order.",
+].join("\n");
+
 /** Newest first. Each entry is emailed to Pattern and kept on the How-to tab. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_NOTICE_ID,
+    title: ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_TITLE,
+    body: ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_BODY,
+    href: "/pattern",
+    href_label: "Open Pattern home",
+    audience: "pattern",
+  },
   {
     id: CONSOLIDATE_REMOVED_SO_LINES_HOWTO_NOTICE_ID,
     title: CONSOLIDATE_REMOVED_SO_LINES_HOWTO_TITLE,

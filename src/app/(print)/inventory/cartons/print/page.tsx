@@ -3,6 +3,7 @@ import { CartonStickersPrintView } from "@/components/inventory/CartonStickersPr
 import { getSessionContext } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readInventoryStoreFresh } from "@/lib/data/inventory-store";
+import { buildCartonSticker } from "@/lib/inventory/carton-sticker";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ function appUrl(): string {
 }
 
 /**
- * A4 sheet of carton QR stickers - one per box. Open with ?ids=a,b,c
+ * 4x6 inch carton QR stickers - one label per box. Open with ?ids=a,b,c
  * (freshly registered batch) or ?item=<itemId> (every sealed box of an item).
  */
 export default async function CartonStickersPrintPage({ searchParams }: PageProps) {
@@ -41,18 +42,13 @@ export default async function CartonStickersPrintPage({ searchParams }: PageProp
   if (cartons.length === 0) notFound();
 
   const itemById = new Map(store.items.map((row) => [row.id, row]));
-  const stickers = cartons.map((carton) => {
-    const cartonItem = itemById.get(carton.item_id);
-    return {
-      carton_id: carton.id,
-      status: carton.status,
-      quantity: carton.quantity,
-      unit: cartonItem?.unit ?? "pcs",
-      item_name: cartonItem?.name ?? carton.item_id,
-      brand: cartonItem?.brand ?? null,
-      open_url: `${appUrl()}/inventory/cartons/${encodeURIComponent(carton.id)}`,
-    };
-  });
+  const stickers = cartons.map((carton) =>
+    buildCartonSticker({
+      carton,
+      item: itemById.get(carton.item_id),
+      appUrl: appUrl(),
+    })
+  );
 
   return <CartonStickersPrintView stickers={stickers} />;
 }

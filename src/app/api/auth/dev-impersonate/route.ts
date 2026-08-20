@@ -7,6 +7,7 @@ import {
 import {
   defaultPathForEmail,
   isClientManagerEmail,
+  isInventoryClerkEmail,
   isPatternOperatorEmail,
   isProductionOperatorEmail,
   isStitchOperatorEmail,
@@ -33,6 +34,7 @@ function isDevImpersonationEmail(email: string): boolean {
     isStitchOperatorEmail(email) ||
     isProductionOperatorEmail(email) ||
     isPatternOperatorEmail(email) ||
+    isInventoryClerkEmail(email) ||
     isSalesOperatorEmail(email) ||
     isAccountingOperatorEmail(email)
   );

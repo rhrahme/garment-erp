@@ -27,10 +27,62 @@
       "low_stock_threshold": 10
     },
     {
+      "id": "inv-laundry-hanger-gliani",
+      "name": "Laundry hanger - Gliani (green)",
+      "unit": "pcs",
+      "brand": "Gliani",
+      "notes": "Green hanger for Gliani shirts.",
+      "category": "Hangers",
+      "location": null,
+      "created_at": "2026-08-20T12:50:00.000Z",
+      "updated_at": "2026-08-20T12:50:00.000Z",
+      "quantity_on_hand": 0,
+      "low_stock_threshold": 10
+    },
+    {
+      "id": "inv-laundry-hanger-fouad-rahme",
+      "name": "Laundry hanger - Fouad Rahme (grey)",
+      "unit": "pcs",
+      "brand": "Fouad Rahme",
+      "notes": "Grey hanger for Fouad Rahme shirts.",
+      "category": "Hangers",
+      "location": null,
+      "created_at": "2026-08-20T12:50:00.000Z",
+      "updated_at": "2026-08-20T12:50:00.000Z",
+      "quantity_on_hand": 0,
+      "low_stock_threshold": 10
+    },
+    {
+      "id": "inv-laundry-bag-roll-long",
+      "name": "Laundry bag roll - Long",
+      "unit": "rolls",
+      "brand": null,
+      "notes": null,
+      "category": "Laundry bags",
+      "location": null,
+      "created_at": "2026-08-19T21:12:00.000Z",
+      "updated_at": "2026-08-19T21:12:00.000Z",
+      "quantity_on_hand": 0,
+      "low_stock_threshold": 10
+    },
+    {
+      "id": "inv-laundry-bag-roll-short",
+      "name": "Laundry bag roll - Short",
+      "unit": "rolls",
+      "brand": null,
+      "notes": null,
+      "category": "Laundry bags",
+      "location": null,
+      "created_at": "2026-08-19T21:12:00.000Z",
+      "updated_at": "2026-08-19T21:12:00.000Z",
+      "quantity_on_hand": 0,
+      "low_stock_threshold": 10
+    },
+    {
       "id": "inv-1786974668545-q7geh4",
-      "name": "Belt fabric - Fouad Rhame - White",
+      "name": "Belt fabric - Fouad Rahme - White",
       "unit": "cm",
-      "brand": "Fouad Rhame",
+      "brand": "Fouad Rahme",
       "notes": "Avg consumption 44 in (~112 cm) per trouser waistband.",
       "category": "Belt fabric",
       "location": null,
@@ -41,9 +93,9 @@
     },
     {
       "id": "inv-1786974670414-i02j9t",
-      "name": "Belt fabric - Fouad Rhame - Black",
+      "name": "Belt fabric - Fouad Rahme - Black",
       "unit": "cm",
-      "brand": "Fouad Rhame",
+      "brand": "Fouad Rahme",
       "notes": "Avg consumption 44 in (~112 cm) per trouser waistband.",
       "category": "Belt fabric",
       "location": null,
@@ -106,9 +158,9 @@
     },
     {
       "id": "inv-1786975044737-7yb63f",
-      "name": "Suit hanger - Fouad Rhame",
+      "name": "Suit hanger - Fouad Rahme",
       "unit": "pcs",
-      "brand": "Fouad Rhame",
+      "brand": "Fouad Rahme",
       "notes": null,
       "category": "Hangers",
       "location": null,
@@ -132,9 +184,9 @@
     },
     {
       "id": "inv-1786975131593-y0vaya",
-      "name": "Suit bag - Fouad Rhame",
+      "name": "Suit bag - Fouad Rahme",
       "unit": "pcs",
-      "brand": "Fouad Rhame",
+      "brand": "Fouad Rahme",
       "notes": null,
       "category": "Suit bags",
       "location": null,
@@ -171,9 +223,9 @@
     },
     {
       "id": "inv-1786975135530-qmj0op",
-      "name": "Waist belt - Fouad Rhame",
+      "name": "Waist belt - Fouad Rahme",
       "unit": "pcs",
-      "brand": "Fouad Rhame",
+      "brand": "Fouad Rahme",
       "notes": null,
       "category": "Waist belts",
       "location": null,
@@ -482,5 +534,5 @@
       "garment_type": "Thobe+Jacket"
     }
   ],
-  "updated_at": "2026-08-17T15:46:37.184Z"
+  "updated_at": "2026-08-20T12:50:00.000Z"
 }

@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { requirePatternAccess } from "@/lib/auth/session";
 import { ensurePatternDocumentsLoaded, listPatternJobsForOrder, readPatternJobs } from "@/lib/data/pattern-jobs";
 import { getSalesOrderById } from "@/lib/data/sales-orders";
-import { detectPatternSalesOrderMismatch } from "@/lib/sales-orders/pattern-so-mismatch";
+import { detectPatternSalesOrderMismatch, orphanPatternJobsToCancel } from "@/lib/sales-orders/pattern-so-mismatch";
+import { syncPatternJobsFromSalesOrder } from "@/lib/pattern/sync-from-sales-order";
 import { redactSalesOrderFabricPrices } from "@/lib/auth/fabric-price-access";
 import { resolveFabricPriceAccess } from "@/lib/auth/fabric-price-access.server";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
@@ -22,6 +23,11 @@ export async function GET(_request: Request, context: { params: Promise<{ soId: 
     const order = getSalesOrderById(soId);
     if (!order) {
       return NextResponse.json({ error: "Sales order not found." }, { status: 404 });
+    }
+
+    const leftover = orphanPatternJobsToCancel(order, readPatternJobs().jobs);
+    if (leftover.length > 0) {
+      await syncPatternJobsFromSalesOrder(order, { forceCancelOrphans: true });
     }
 
     const jobs = listPatternJobsForOrder(soId).filter((job) => job.status !== "cancelled");

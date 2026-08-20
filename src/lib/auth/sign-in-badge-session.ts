@@ -1,7 +1,9 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import {
+  badgeLandingPath,
   badgeLoginEmail,
+  badgeLoginKindForEmployee,
   badgeSupabasePassword,
   provisionBadgeSupabaseUser,
 } from "@/lib/auth/badge-login";
@@ -14,6 +16,11 @@ import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/supabase/env";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 
 export const PATTERN_LANDING = "/pattern";
+export const INVENTORY_LANDING = "/inventory";
+
+export function landingForBadgeEmployee(employee: PayrollEmployee): string {
+  return badgeLandingPath(badgeLoginKindForEmployee(employee) ?? "pattern");
+}
 
 export async function signInBadgeUser(employee: PayrollEmployee) {
   const cookieStore = await cookies();
@@ -28,7 +35,8 @@ export async function signInBadgeUser(employee: PayrollEmployee) {
     },
   });
 
-  const email = badgeLoginEmail(employee.id);
+  const kind = badgeLoginKindForEmployee(employee) ?? "pattern";
+  const email = badgeLoginEmail(employee.id, kind);
   const password = badgeSupabasePassword(employee.id);
 
   let { error, timedOut } = await signInWithPasswordWithRetry(() =>

@@ -10,7 +10,7 @@ export type InventoryItem = {
   name: string;
   /** Free text grouping, e.g. "Buttons", "Zippers", "Thread", "Lining". */
   category: string | null;
-  /** Garment brand the trim carries: "Fouad Rhame", "Gliani", "White label".
+  /** Garment brand the trim carries: "Fouad Rahme", "Gliani", "White label".
    *  Null = brandless consumable (e.g. laundry hanger). Optional because
    *  items created before Aug 17 2026 predate the field. */
   brand?: string | null;
@@ -98,6 +98,12 @@ export const EMPTY_INVENTORY_STORE: InventoryStoreFile = {
 
 export function normalizeGarmentTypeKey(garmentType: string | null | undefined): string {
   return (garmentType ?? "").trim().toLowerCase();
+}
+
+/** Factory brand is Fouad Rahme (same as the family name). Never "Rhame". */
+export function correctFouadRahmeSpelling(text: string | null | undefined): string | null {
+  if (text == null) return null;
+  return text.replace(/Fouad Rhame/g, "Fouad Rahme");
 }
 
 export function inventoryItemIsLow(item: InventoryItem): boolean {

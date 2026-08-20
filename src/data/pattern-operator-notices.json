@@ -1,4 +1,57 @@
 {
-  "updated_at": null,
-  "notices": []
+  "notices": [
+    {
+      "id": "howto-consolidate-removed-so-lines-v1",
+      "body": "That error means some ticked rows are leftover pattern jobs. QC already removed or transferred those fabrics from the sales order, so Pattern cannot attach a sheet to them.\n\nWhat to do:\n1. Stay on the Pattern order board (the SO list of fabrics).\n2. Rows marked Removed from this sales order cannot be ticked. Leave them.\n3. Tick only the Overshirt+Trouser (or other garment) rows that are still on the order.\n4. Click Consolidate selected -> New pattern -> Create pattern -> upload .TUD.\n\nSelect all now skips the leftover rows automatically.\n\nIf you still need a removed fabric (example: Ibrahim SO-2026-0130 S21006 / S21007 / S21008 / S21009), ask QC to put it back on the sales order first. Pattern cannot consolidate a fabric that is no longer on the order.",
+      "href": "/pattern",
+      "title": "If consolidate says fabrics not found on the sales order",
+      "status": "open",
+      "created_at": "2026-08-20T13:32:04.863Z",
+      "created_by": "admin",
+      "emailed_at": "2026-08-20T13:32:08.105Z",
+      "href_label": "Open Pattern home",
+      "acknowledged_at": null,
+      "acknowledged_by": null
+    },
+    {
+      "id": "howto-erp-source-of-truth-leftover-jobs-v1",
+      "body": "The ERP sales order is the source of truth. We are not using ClickUp anymore.\n\nIf QC already removed a fabric from the sales order, that leftover pattern job is cancelled automatically. You will not keep seeing it on the order board.\n\nTo consolidate Ibrahim Overshirt+Trouser (SO-2026-0130) or any remaining fabrics:\n1. Open the Pattern order board.\n2. Tick the Overshirt+Trouser (and other) rows that are still on the order.\n3. Click Consolidate selected -> New pattern -> Create pattern -> upload .TUD.\n\nDo not wait on leftover / removed rows. Tick only what is still on the sales order.",
+      "href": "/pattern",
+      "title": "Leftover pattern jobs are cleared - tick what is still on the order",
+      "status": "open",
+      "created_at": "2026-08-20T13:31:58.855Z",
+      "created_by": "admin",
+      "emailed_at": "2026-08-20T13:32:03.939Z",
+      "href_label": "Open Pattern home",
+      "acknowledged_at": null,
+      "acknowledged_by": null
+    },
+    {
+      "id": "howto-remove-fabric-from-consolidation-v1",
+      "body": "Use this when fabrics are already grouped on one measurement sheet and one fabric should be treated separately.\n\nSteps:\n1. Open the grouped measurement sheet (the consolidated pattern).\n2. Find the Grouped fabrics box.\n3. Press Remove on the fabric row that should leave the group.\n4. Confirm.\n\nThe fabric stays on the sales order. It only leaves this group so you can treat it on its own.\nThe other fabrics stay together.\n\nOther path: Client fabric board -> open that fabric -> Remove from this pattern.\n\nAfter it leaves the group you can keep it on its own sheet, or consolidate it into a different group later.",
+      "href": "/pattern/how-to",
+      "title": "How to remove one fabric from a consolidated / grouped pattern",
+      "status": "acknowledged",
+      "created_at": "2026-08-19T09:56:16.644Z",
+      "created_by": "badge-pattern-2625917972@badge.hagan.pro",
+      "emailed_at": "2026-08-19T09:56:22.393Z",
+      "href_label": "Open Pattern How-to",
+      "acknowledged_at": "2026-08-20T07:52:16.674Z",
+      "acknowledged_by": "badge-pattern-2625917972@badge.hagan.pro"
+    },
+    {
+      "id": "howto-consolidate-fabrics-v1",
+      "body": "Use this when several fabric lines on one order share the same pattern (.TUD / measurement sheet).\n\nSteps:\n1. Open Pattern home (/pattern).\n2. Open the sales order (Pattern order board).\n3. Tick every fabric that should share ONE pattern.\n4. Click Consolidate selected.\n5. Choose one:\n   - New pattern -> Create pattern -> upload .TUD\n   - Existing pattern -> Link & open pattern\n6. On the pattern page: upload the .TUD and fill Sample / Trial / Final sizes.\n\nShortcut: on Pattern home or the order board, you can also use\nAuto-consolidate by composition/weight - it groups matching fabrics for you,\nthen open each linked pattern to upload .TUD and fill sizes.\n\nTip: fabrics that already show Not linked - select & consolidate still need this step.",
+      "href": "/pattern",
+      "title": "How to merge / consolidate fabrics, then add the pattern",
+      "status": "acknowledged",
+      "created_at": "2026-08-06T12:06:50.484Z",
+      "created_by": "hagan.dp1@gmail.com",
+      "emailed_at": "2026-08-06T12:06:57.300Z",
+      "href_label": "Open Pattern home",
+      "acknowledged_at": "2026-08-06T12:58:56.469Z",
+      "acknowledged_by": "hagan.dp1@gmail.com"
+    }
+  ],
+  "updated_at": "2026-08-20T13:32:08.586Z"
 }

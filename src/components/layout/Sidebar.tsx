@@ -37,6 +37,7 @@ import { useRouter } from "next/navigation";
 import {
   CLIENT_MANAGER_NAV_HREFS,
   CLIENT_MANAGER_ORDERS_NAV_LABEL,
+  INVENTORY_CLERK_NAV_HREFS,
   PATTERN_OPERATOR_NAV_HREFS,
   PRODUCTION_OPERATOR_NAV_HREFS,
   PRODUCTION_OPERATOR_ORDERS_NAV_LABEL,
@@ -96,6 +97,8 @@ const salesOperatorNavHrefs = new Set<string>(SALES_OPERATOR_NAV_HREFS);
 const salesOperatorNavItems = navItems.filter((item) => salesOperatorNavHrefs.has(item.href));
 const patternOperatorNavHrefs = new Set<string>(PATTERN_OPERATOR_NAV_HREFS);
 const patternOperatorNavItems = navItems.filter((item) => patternOperatorNavHrefs.has(item.href));
+const inventoryClerkNavHrefs = new Set<string>(INVENTORY_CLERK_NAV_HREFS);
+const inventoryClerkNavItems = navItems.filter((item) => inventoryClerkNavHrefs.has(item.href));
 const accountingOperatorNavHrefs = new Set<string>(ACCOUNTING_OPERATOR_NAV_HREFS);
 const accountingOperatorNavItems = navItems.filter((item) => accountingOperatorNavHrefs.has(item.href));
 
@@ -121,6 +124,7 @@ export function Sidebar({
   stitchOperatorOnly = false,
   productionOperatorOnly = false,
   patternOperatorOnly = false,
+  inventoryClerkOnly = false,
   salesOperatorOnly = false,
   accountingOperatorOnly = false,
   isAdmin = true,
@@ -132,6 +136,7 @@ export function Sidebar({
   stitchOperatorOnly?: boolean;
   productionOperatorOnly?: boolean;
   patternOperatorOnly?: boolean;
+  inventoryClerkOnly?: boolean;
   salesOperatorOnly?: boolean;
   accountingOperatorOnly?: boolean;
   isAdmin?: boolean;
@@ -149,6 +154,8 @@ export function Sidebar({
         ? productionOperatorNavItems
         : patternOperatorOnly
           ? patternOperatorNavItems
+          : inventoryClerkOnly
+            ? inventoryClerkNavItems
           : accountingOperatorOnly
             ? accountingOperatorNavItems
             : salesOperatorOnly

@@ -1,5 +1,6 @@
 import {
   isClientManagerEmail,
+  isInventoryClerkEmail,
   isPatternOperatorEmail,
   isProductionOperatorEmail,
   isStitchOperatorEmail,
@@ -24,6 +25,7 @@ export function resolveDevImpersonationEmail(cookieValue: string | undefined | n
       !isStitchOperatorEmail(email) &&
       !isProductionOperatorEmail(email) &&
       !isPatternOperatorEmail(email) &&
+      !isInventoryClerkEmail(email) &&
       !isSalesOperatorEmail(email) &&
       !isAccountingOperatorEmail(email))
   ) {

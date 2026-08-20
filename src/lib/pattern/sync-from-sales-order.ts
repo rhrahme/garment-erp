@@ -48,6 +48,11 @@ export type PatternSyncResult = {
   skipped_cancellations: string[];
 };
 
+/**
+ * Keep pattern jobs in line with the sales order. ERP is the source of
+ * truth: leftover jobs for fabrics no longer on the SO are cancelled
+ * unless the caller passes forceCancelOrphans: false (partial transfer).
+ */
 export async function syncPatternJobsFromSalesOrder(
   order: SalesOrder,
   options: { notify?: boolean; forceCancelOrphans?: boolean } = {}
@@ -130,7 +135,8 @@ export async function syncPatternJobsFromSalesOrder(
     }
   }
 
-  if (orphansToCancel.length > 0 && !options.forceCancelOrphans) {
+  const cancelOrphans = options.forceCancelOrphans !== false;
+  if (orphansToCancel.length > 0 && !cancelOrphans) {
     skipped_cancellations.push(...orphansToCancel.map((job) => job.id));
   } else {
     for (const job of orphansToCancel) {

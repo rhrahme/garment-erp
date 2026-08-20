@@ -47,6 +47,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       isStitchOperator: false,
       isProductionOperator: false,
       isPatternOperator: false,
+      isInventoryClerk: false,
       isSalesOperator: false,
       isAccountingOperator: false,
       canViewClientContact: false,
@@ -67,6 +68,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         !session.isTaskOperator &&
         !session.isStitchOperator &&
         !session.isProductionOperator &&
+        !session.isInventoryClerk &&
         !session.isSalesOperator &&
         !session.isAccountingOperator &&
         rateStatus.aboveThreshold &&
@@ -81,6 +83,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         !session.isTaskOperator &&
         !session.isStitchOperator &&
         !session.isProductionOperator &&
+        !session.isInventoryClerk &&
         !session.isSalesOperator &&
         !session.isAccountingOperator && <SupplierAvailabilityBanner />}
       <AuthHealthBanner />

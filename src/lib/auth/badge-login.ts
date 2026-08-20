@@ -16,11 +16,18 @@ const STORE_PATH = path.join(process.cwd(), "src/data/badge-login-credentials.js
 /** Job functions whose holders may sign in with badge number + password. */
 export const BADGE_LOGIN_JOB_FUNCTIONS = ["pattern"] as const;
 
+/** Badge IDs allowed to sign in as inventory clerk (not a payroll job). */
+export const INVENTORY_BADGE_LOGIN_IDS = ["2543411918"] as const;
+
+export type BadgeLoginKind = "pattern" | "inventory";
+
 /** Synthetic Supabase account for a badge login. Role is encoded in the local
  * part so email-list permission fallbacks work even if the profiles read is
- * degraded: badge-pattern-<employeeId>@badge.hagan.pro */
+ * degraded: badge-pattern-<employeeId>@badge.hagan.pro
+ * or badge-inventory-<employeeId>@badge.hagan.pro */
 export const BADGE_LOGIN_EMAIL_DOMAIN = "badge.hagan.pro";
-const BADGE_PATTERN_EMAIL_REGEX = /^badge-pattern-([a-z0-9]+)@badge\.hagan\.pro$/;
+const BADGE_LOGIN_EMAIL_REGEX =
+  /^badge-(pattern|inventory)-([a-z0-9]+)@badge\.hagan\.pro$/;
 
 export const MIN_BADGE_PASSWORD_LENGTH = 6;
 const MAX_FAILED_ATTEMPTS = 5;
@@ -36,6 +43,8 @@ export type BadgeLoginCredential = {
   locked_until: string | null;
   supabase_email: string;
   last_login_at: string | null;
+  /** Missing on older pattern credentials - treat as pattern. */
+  kind?: BadgeLoginKind;
 };
 
 type BadgeLoginStoreFile = {
@@ -79,19 +88,38 @@ export function verifyBadgePassword(password: string, stored: string): boolean {
   return candidate.length === expected.length && timingSafeEqual(candidate, expected);
 }
 
-export function badgeLoginEmail(employeeId: string): string {
-  return `badge-pattern-${employeeId.trim().toLowerCase()}@${BADGE_LOGIN_EMAIL_DOMAIN}`;
+export function badgeLoginEmail(
+  employeeId: string,
+  kind: BadgeLoginKind = "pattern"
+): string {
+  return `badge-${kind}-${employeeId.trim().toLowerCase()}@${BADGE_LOGIN_EMAIL_DOMAIN}`;
+}
+
+export function badgeLoginKindFromEmail(
+  email: string | null | undefined
+): BadgeLoginKind | null {
+  if (!email) return null;
+  const match = BADGE_LOGIN_EMAIL_REGEX.exec(email.trim().toLowerCase());
+  return (match?.[1] as BadgeLoginKind | undefined) ?? null;
 }
 
 /** Employee id when the session email is a badge login, else null. */
 export function badgeLoginEmployeeId(email: string | null | undefined): string | null {
   if (!email) return null;
-  const match = BADGE_PATTERN_EMAIL_REGEX.exec(email.trim().toLowerCase());
-  return match?.[1] ?? null;
+  const match = BADGE_LOGIN_EMAIL_REGEX.exec(email.trim().toLowerCase());
+  return match?.[2] ?? null;
 }
 
 export function isBadgePatternLoginEmail(email: string | null | undefined): boolean {
-  return badgeLoginEmployeeId(email) !== null;
+  return badgeLoginKindFromEmail(email) === "pattern";
+}
+
+export function credentialKind(credential: Pick<BadgeLoginCredential, "kind" | "supabase_email">): BadgeLoginKind {
+  return credential.kind ?? badgeLoginKindFromEmail(credential.supabase_email) ?? "pattern";
+}
+
+export function badgeLandingPath(kind: BadgeLoginKind): string {
+  return kind === "inventory" ? "/inventory" : "/pattern";
 }
 
 /**
@@ -105,10 +133,25 @@ export function badgeSupabasePassword(employeeId: string): string {
   return createHmac("sha256", secret).update(`badge-login-v1:${employeeId}`).digest("hex");
 }
 
-export function employeeMayBadgeLogin(employee: PayrollEmployee): boolean {
-  if (!employee.is_active) return false;
+export function badgeLoginKindForEmployee(employee: PayrollEmployee): BadgeLoginKind | null {
+  if (!employee.is_active) return null;
+  const id = employee.id.trim();
+  const idNumber = employee.employee_id_number?.trim() ?? "";
+  if (
+    (INVENTORY_BADGE_LOGIN_IDS as readonly string[]).includes(id) ||
+    (INVENTORY_BADGE_LOGIN_IDS as readonly string[]).includes(idNumber)
+  ) {
+    return "inventory";
+  }
   const functions = (employee.job_functions ?? []).map((fn) => fn.toLowerCase());
-  return BADGE_LOGIN_JOB_FUNCTIONS.some((allowed) => functions.includes(allowed));
+  if (BADGE_LOGIN_JOB_FUNCTIONS.some((allowed) => functions.includes(allowed))) {
+    return "pattern";
+  }
+  return null;
+}
+
+export function employeeMayBadgeLogin(employee: PayrollEmployee): boolean {
+  return badgeLoginKindForEmployee(employee) !== null;
 }
 
 export type BadgeLookupResult =
@@ -250,6 +293,7 @@ export async function createBadgeCredential(
 }
 
 function buildCredential(employee: PayrollEmployee, password: string): BadgeLoginCredential {
+  const kind = badgeLoginKindForEmployee(employee) ?? "pattern";
   return {
     employee_id: employee.id,
     employee_name: employee.full_name,
@@ -257,8 +301,9 @@ function buildCredential(employee: PayrollEmployee, password: string): BadgeLogi
     set_at: new Date().toISOString(),
     failed_attempts: 0,
     locked_until: null,
-    supabase_email: badgeLoginEmail(employee.id),
+    supabase_email: badgeLoginEmail(employee.id, kind),
     last_login_at: null,
+    kind,
   };
 }
 
@@ -361,7 +406,7 @@ function supabaseAdmin() {
 }
 
 /**
- * Ensure the synthetic Supabase user + pattern_operator profile exist so
+ * Ensure the synthetic Supabase user + role profile exist so
  * middleware / session role resolution work with no env changes. Idempotent;
  * also heals the derived password after a service-key rotation.
  */
@@ -369,8 +414,10 @@ export async function provisionBadgeSupabaseUser(
   employee: PayrollEmployee
 ): Promise<{ userId: string }> {
   const admin = supabaseAdmin();
-  const email = badgeLoginEmail(employee.id);
+  const kind = badgeLoginKindForEmployee(employee) ?? "pattern";
+  const email = badgeLoginEmail(employee.id, kind);
   const password = badgeSupabasePassword(employee.id);
+  const role = kind === "inventory" ? "inventory_clerk" : "pattern_operator";
 
   let userId: string | null = null;
   const { data: created, error: createError } = await admin.auth.admin.createUser({
@@ -407,7 +454,7 @@ export async function provisionBadgeSupabaseUser(
     {
       id: userId,
       full_name: employee.full_name,
-      role: "pattern_operator",
+      role,
       is_active: true,
     },
     { onConflict: "id" }

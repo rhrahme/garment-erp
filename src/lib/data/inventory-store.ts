@@ -14,6 +14,7 @@ import {
   type InventoryLedgerEntry,
   type InventoryLedgerReason,
   type InventoryStoreFile,
+  correctFouadRahmeSpelling,
 } from "@/lib/types/inventory";
 
 const STORE_PATH = path.join(process.cwd(), "src/data/inventory-store.json");
@@ -21,14 +22,64 @@ const STORE_PATH = path.join(process.cwd(), "src/data/inventory-store.json");
 /** Keep the ledger bounded - old entries roll off, stock stays correct. */
 const LEDGER_MAX_ENTRIES = 2000;
 
-function normalize(raw: InventoryStoreFile | null | undefined): InventoryStoreFile {
+function normalizeItem(item: InventoryItem): InventoryItem {
   return {
+    ...item,
+    name: correctFouadRahmeSpelling(item.name) ?? item.name,
+    brand: item.brand == null ? item.brand : correctFouadRahmeSpelling(item.brand),
+  };
+}
+
+/** Branded shirt hangers. Color is in the name for the 4x6 box sticker. */
+export const SEEDED_BRANDED_LAUNDRY_HANGERS: InventoryItem[] = [
+  {
+    id: "inv-laundry-hanger-gliani",
+    name: "Laundry hanger - Gliani (green)",
+    category: "Hangers",
+    brand: "Gliani",
+    unit: "pcs",
+    quantity_on_hand: 0,
+    low_stock_threshold: 10,
+    location: null,
+    notes: "Green hanger for Gliani shirts.",
+    created_at: "2026-08-20T12:50:00.000Z",
+    updated_at: "2026-08-20T12:50:00.000Z",
+  },
+  {
+    id: "inv-laundry-hanger-fouad-rahme",
+    name: "Laundry hanger - Fouad Rahme (grey)",
+    category: "Hangers",
+    brand: "Fouad Rahme",
+    unit: "pcs",
+    quantity_on_hand: 0,
+    low_stock_threshold: 10,
+    location: null,
+    notes: "Grey hanger for Fouad Rahme shirts.",
+    created_at: "2026-08-20T12:50:00.000Z",
+    updated_at: "2026-08-20T12:50:00.000Z",
+  },
+];
+
+export function ensureBrandedLaundryHangers(store: InventoryStoreFile): InventoryItem[] {
+  const added: InventoryItem[] = [];
+  for (const seed of SEEDED_BRANDED_LAUNDRY_HANGERS) {
+    if (store.items.some((row) => row.id === seed.id || row.name === seed.name)) continue;
+    store.items.push({ ...seed });
+    added.push(seed);
+  }
+  return added;
+}
+
+function normalize(raw: InventoryStoreFile | null | undefined): InventoryStoreFile {
+  const store: InventoryStoreFile = {
     updated_at: raw?.updated_at ?? null,
-    items: Array.isArray(raw?.items) ? raw!.items : [],
+    items: Array.isArray(raw?.items) ? raw!.items.map(normalizeItem) : [],
     recipes: Array.isArray(raw?.recipes) ? raw!.recipes : [],
     ledger: Array.isArray(raw?.ledger) ? raw!.ledger : [],
     cartons: Array.isArray(raw?.cartons) ? raw!.cartons : [],
   };
+  ensureBrandedLaundryHangers(store);
+  return store;
 }
 
 export async function readInventoryStore(): Promise<InventoryStoreFile> {
@@ -70,14 +121,17 @@ export async function upsertInventoryItem(
 ): Promise<InventoryItem> {
   const store = await readInventoryStoreFresh();
   const now = new Date().toISOString();
-  const name = input.name.trim();
+  const name = correctFouadRahmeSpelling(input.name.trim()) ?? input.name.trim();
   if (!name) throw new Error("Item name is required.");
+  const brand = input.brand?.trim()
+    ? correctFouadRahmeSpelling(input.brand.trim())
+    : null;
 
   const existing = input.id ? store.items.find((item) => item.id === input.id) : undefined;
   if (existing) {
     existing.name = name;
     existing.category = input.category?.trim() || null;
-    existing.brand = input.brand?.trim() || null;
+    existing.brand = brand;
     existing.unit = input.unit?.trim() || existing.unit || "pcs";
     existing.low_stock_threshold =
       input.low_stock_threshold == null ? null : Math.max(0, input.low_stock_threshold);
@@ -92,7 +146,7 @@ export async function upsertInventoryItem(
     id: newId("inv"),
     name,
     category: input.category?.trim() || null,
-    brand: input.brand?.trim() || null,
+    brand,
     unit: input.unit?.trim() || "pcs",
     quantity_on_hand: 0,
     low_stock_threshold:

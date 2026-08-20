@@ -410,6 +410,17 @@ export const PATTERN_OPERATOR_NAV_HREFS = [
   "/stitch",
 ] as const;
 
+/** Inventory clerk - trims / hangers / cartons only. Nothing else. */
+export const INVENTORY_CLERK_NAV_HREFS = ["/inventory"] as const;
+
+const INVENTORY_CLERK_ROUTE_PREFIXES = [
+  "/inventory",
+  "/api/inventory",
+  "/api/auth/session",
+  "/api/auth/dev-impersonate",
+  "/login",
+] as const;
+
 /** Sidebar for accounting - finance & supplier billing, no factory floor or sales CRM. */
 export const ACCOUNTING_OPERATOR_NAV_HREFS = [
   "/invoices",
@@ -430,6 +441,7 @@ export type RestrictedAccessKind =
   | "stitch_operator"
   | "production_operator"
   | "pattern_operator"
+  | "inventory_clerk"
   | "sales_operator"
   | "accounting";
 
@@ -563,6 +575,10 @@ export function isPatternOperatorRole(role: UserRole | null | undefined): boolea
   return role === "pattern_operator" || role === "pattern_maker";
 }
 
+export function isInventoryClerkRole(role: UserRole | null | undefined): boolean {
+  return role === "inventory_clerk";
+}
+
 export function isClientManagerEmail(email: string | null | undefined): boolean {
   if (!email) return false;
   return parseClientManagerEmails().has(email.trim().toLowerCase());
@@ -594,12 +610,18 @@ export function isSalesOperatorEmail(email: string | null | undefined): boolean 
  * profiles read is degraded. Keep edge-safe: regex only, no node imports.
  */
 const BADGE_PATTERN_LOGIN_EMAIL = /^badge-pattern-[a-z0-9]+@badge\.hagan\.pro$/;
+const BADGE_INVENTORY_LOGIN_EMAIL = /^badge-inventory-[a-z0-9]+@badge\.hagan\.pro$/;
 
 export function isPatternOperatorEmail(email: string | null | undefined): boolean {
   if (!email) return false;
   const normalized = email.trim().toLowerCase();
   if (BADGE_PATTERN_LOGIN_EMAIL.test(normalized)) return true;
   return parsePatternEmails().has(normalized);
+}
+
+export function isInventoryClerkEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return BADGE_INVENTORY_LOGIN_EMAIL.test(email.trim().toLowerCase());
 }
 
 export function isAccountingOperatorEmail(email: string | null | undefined): boolean {
@@ -654,11 +676,27 @@ export function isPatternOperatorAccess(
     isClientManagerAccess(role, email) ||
     isTaskOperatorAccess(role, email) ||
     isStitchOperatorAccess(role, email) ||
-    isProductionOperatorAccess(role, email)
+    isProductionOperatorAccess(role, email) ||
+    isInventoryClerkAccess(role, email)
   ) {
     return false;
   }
   return isPatternOperatorRole(role) || isPatternOperatorEmail(email);
+}
+
+export function isInventoryClerkAccess(
+  role: UserRole | null | undefined,
+  email: string | null | undefined
+): boolean {
+  if (
+    isClientManagerAccess(role, email) ||
+    isTaskOperatorAccess(role, email) ||
+    isStitchOperatorAccess(role, email) ||
+    isProductionOperatorAccess(role, email)
+  ) {
+    return false;
+  }
+  return isInventoryClerkRole(role) || isInventoryClerkEmail(email);
 }
 
 export function isSalesOperatorAccess(
@@ -671,6 +709,7 @@ export function isSalesOperatorAccess(
     isStitchOperatorAccess(role, email) ||
     isProductionOperatorAccess(role, email) ||
     isPatternOperatorAccess(role, email) ||
+    isInventoryClerkAccess(role, email) ||
     isAccountingOperatorRole(role) ||
     isAccountingOperatorEmail(email)
   ) {
@@ -689,6 +728,7 @@ export function isAccountingOperatorAccess(
     isStitchOperatorAccess(role, email) ||
     isProductionOperatorAccess(role, email) ||
     isPatternOperatorAccess(role, email) ||
+    isInventoryClerkAccess(role, email) ||
     isSalesOperatorRole(role) ||
     isSalesOperatorEmail(email)
   ) {
@@ -708,6 +748,7 @@ export function isPriceRestrictedAccess(
     isStitchOperatorAccess(role, email) ||
     isProductionOperatorAccess(role, email) ||
     isPatternOperatorAccess(role, email) ||
+    isInventoryClerkAccess(role, email) ||
     isSalesOperatorAccess(role, email)
   );
 }
@@ -723,6 +764,7 @@ export function resolveRestrictedAccess(
   if (isStitchOperatorAccess(role, email)) return "stitch_operator";
   if (isProductionOperatorAccess(role, email)) return "production_operator";
   if (isPatternOperatorAccess(role, email)) return "pattern_operator";
+  if (isInventoryClerkAccess(role, email)) return "inventory_clerk";
   if (isSalesOperatorAccess(role, email)) return "sales_operator";
   if (isAccountingOperatorAccess(role, email)) return "accounting";
   return null;
@@ -833,6 +875,12 @@ export function isProductionOperatorRouteAllowed(pathname: string): boolean {
   );
 }
 
+export function isInventoryClerkRouteAllowed(pathname: string): boolean {
+  return INVENTORY_CLERK_ROUTE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
+
 export function isPatternOperatorRouteAllowed(pathname: string): boolean {
   // Never open full QC /orders pages (print, edit, fabric PO).
   if (pathname === "/orders" || pathname.startsWith("/orders/")) {
@@ -919,6 +967,7 @@ export function isRestrictedRouteAllowed(
   if (access === "stitch_operator") return isStitchOperatorRouteAllowed(pathname);
   if (access === "production_operator") return isProductionOperatorRouteAllowed(pathname);
   if (access === "pattern_operator") return isPatternOperatorRouteAllowed(pathname);
+  if (access === "inventory_clerk") return isInventoryClerkRouteAllowed(pathname);
   if (access === "accounting") return isAccountingOperatorRouteAllowed(pathname);
   return isSalesOperatorRouteAllowed(pathname);
 }
@@ -929,6 +978,7 @@ export type SessionLandingAccess = {
   isStitchOperator?: boolean;
   isProductionOperator?: boolean;
   isPatternOperator?: boolean;
+  isInventoryClerk?: boolean;
   isSalesOperator?: boolean;
   isAccountingOperator?: boolean;
 };
@@ -942,6 +992,7 @@ export function landingAccessFromRestricted(
     isStitchOperator: restrictedAccess === "stitch_operator",
     isProductionOperator: restrictedAccess === "production_operator",
     isPatternOperator: restrictedAccess === "pattern_operator",
+    isInventoryClerk: restrictedAccess === "inventory_clerk",
     isSalesOperator: restrictedAccess === "sales_operator",
     isAccountingOperator: restrictedAccess === "accounting",
   };
@@ -965,6 +1016,8 @@ export function defaultPathForSession(access: boolean | SessionLandingAccess): s
     typeof access === "boolean" ? false : Boolean(access.isProductionOperator);
   const isPatternOperator =
     typeof access === "boolean" ? false : Boolean(access.isPatternOperator);
+  const isInventoryClerk =
+    typeof access === "boolean" ? false : Boolean(access.isInventoryClerk);
   const isSalesOperator =
     typeof access === "boolean" ? false : Boolean(access.isSalesOperator);
   const isAccountingOperator =
@@ -973,6 +1026,7 @@ export function defaultPathForSession(access: boolean | SessionLandingAccess): s
   if (isStitchOperator) return "/stitch";
   if (isProductionOperator) return "/production";
   if (isPatternOperator) return "/pattern";
+  if (isInventoryClerk) return "/inventory";
   if (isSalesOperator) return "/sales";
   if (isAccountingOperator) return "/invoices";
   if (isTaskOperator) return "/fabric-receiving";

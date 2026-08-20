@@ -11,6 +11,7 @@ import {
   isAdminEmail,
   isAdminRole,
   isClientManagerAccess,
+  isInventoryClerkAccess,
   isPatternOperatorAccess,
   isProductionOperatorAccess,
   isSalesOperatorAccess,
@@ -44,6 +45,7 @@ export interface SessionContext {
   isStitchOperator: boolean;
   isProductionOperator: boolean;
   isPatternOperator: boolean;
+  isInventoryClerk: boolean;
   isSalesOperator: boolean;
   isAccountingOperator: boolean;
   canViewClientContact: boolean;
@@ -87,12 +89,20 @@ function resolveSessionFlags(
     !isTaskOperator &&
     !isStitchOperator &&
     isProductionOperatorAccess(role, email);
+  const isInventoryClerk =
+    !isSuperAdmin &&
+    !isClientManager &&
+    !isTaskOperator &&
+    !isStitchOperator &&
+    !isProductionOperator &&
+    isInventoryClerkAccess(role, email);
   const isPatternOperator =
     !isSuperAdmin &&
     !isClientManager &&
     !isTaskOperator &&
     !isStitchOperator &&
     !isProductionOperator &&
+    !isInventoryClerk &&
     isPatternOperatorAccess(role, email);
   const isSalesOperator =
     !isSuperAdmin &&
@@ -100,6 +110,7 @@ function resolveSessionFlags(
     !isTaskOperator &&
     !isStitchOperator &&
     !isProductionOperator &&
+    !isInventoryClerk &&
     !isPatternOperator &&
     isSalesOperatorAccess(role, email);
   const isAccountingOperator =
@@ -108,6 +119,7 @@ function resolveSessionFlags(
     !isTaskOperator &&
     !isStitchOperator &&
     !isProductionOperator &&
+    !isInventoryClerk &&
     !isPatternOperator &&
     !isSalesOperator &&
     isAccountingOperatorAccess(role, email);
@@ -117,6 +129,7 @@ function resolveSessionFlags(
       !isTaskOperator &&
       !isStitchOperator &&
       !isProductionOperator &&
+      !isInventoryClerk &&
       !isPatternOperator &&
       !isSalesOperator &&
       !isAccountingOperator &&
@@ -133,7 +146,9 @@ function resolveSessionFlags(
             ? "stitch_operator"
             : isProductionOperator
               ? "production_operator"
-              : isPatternOperator
+              : isInventoryClerk
+                ? "inventory_clerk"
+                : isPatternOperator
                 ? "pattern_operator"
                 : isSalesOperator
                   ? "sales_operator"
@@ -150,6 +165,7 @@ function resolveSessionFlags(
     isStitchOperator,
     isProductionOperator,
     isPatternOperator,
+    isInventoryClerk,
     isSalesOperator,
     isAccountingOperator,
     canViewClientContact: canViewClientContact(role, email, isSuperAdmin),
@@ -167,6 +183,7 @@ function resolveSessionFlags(
       !isSalesOperator &&
       !isAccountingOperator &&
       !isStitchOperator &&
+      !isInventoryClerk &&
       canAccessPatternModule(
         isClientManager,
         isAdmin,
@@ -220,6 +237,7 @@ export async function getSessionContext(): Promise<SessionContext> {
       isStitchOperator: false,
       isProductionOperator: false,
       isPatternOperator: false,
+      isInventoryClerk: false,
       isSalesOperator: false,
       isAccountingOperator: false,
       canViewClientContact: false,

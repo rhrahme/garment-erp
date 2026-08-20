@@ -8,12 +8,26 @@ import {
   CONSOLIDATE_REMOVED_SO_LINES_HOWTO_BODY,
   CONSOLIDATE_REMOVED_SO_LINES_HOWTO_NOTICE_ID,
   CONSOLIDATE_REMOVED_SO_LINES_HOWTO_TITLE,
+  ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_BODY,
+  ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_NOTICE_ID,
+  ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_TITLE,
   REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_BODY,
   REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_NOTICE_ID,
   REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_TITLE,
 } from "@/lib/pattern/pattern-operator-notice-copy";
 
 describe("Pattern leftover-SO-line consolidate how-to", () => {
+  it("tells Pattern leftover jobs are cleared because ERP is the source of truth", () => {
+    assert.equal(
+      ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_NOTICE_ID,
+      "howto-erp-source-of-truth-leftover-jobs-v1"
+    );
+    assert.match(ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_TITLE, /leftover/i);
+    assert.match(ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_BODY, /not using ClickUp/i);
+    assert.match(ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_BODY, /source of truth/i);
+    assert.match(ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_BODY, /Consolidate selected/);
+  });
+
   it("tells Pattern to skip fabrics QC removed from the order", () => {
     assert.equal(
       CONSOLIDATE_REMOVED_SO_LINES_HOWTO_NOTICE_ID,
@@ -56,6 +70,7 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(CONSOLIDATE_FABRICS_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(CONSOLIDATE_REMOVED_SO_LINES_HOWTO_NOTICE_ID));
-    assert.equal(PATTERN_HOWTO_NOTICES[0]?.id, CONSOLIDATE_REMOVED_SO_LINES_HOWTO_NOTICE_ID);
+    assert.ok(ids.includes(ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_NOTICE_ID));
+    assert.equal(PATTERN_HOWTO_NOTICES[0]?.id, ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_NOTICE_ID);
   });
 });

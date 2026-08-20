@@ -1,8 +1,11 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  INVENTORY_BADGE_LOGIN_IDS,
+  badgeLandingPath,
   badgeLoginEmail,
   badgeLoginEmployeeId,
+  badgeLoginKindFromEmail,
   badgeSupabasePassword,
   hashBadgePassword,
   isBadgePatternLoginEmail,
@@ -11,7 +14,7 @@ import {
   patternEmailForBadgeId,
   verifyBadgePassword,
 } from "./badge-login";
-import { isPatternOperatorEmail } from "./permissions";
+import { isInventoryClerkEmail, isPatternOperatorEmail } from "./permissions";
 
 describe("badge login password hashing", () => {
   it("verifies the correct password and rejects wrong ones", () => {
@@ -45,6 +48,18 @@ describe("badge login synthetic emails", () => {
     assert.equal(isPatternOperatorEmail(badgeLoginEmail("123")), true);
     assert.equal(isPatternOperatorEmail(badgeLoginEmail("xx22")), true);
     assert.equal(isPatternOperatorEmail("badge-pattern-1@evil.example.com"), false);
+  });
+
+  it("encodes inventory clerk in a separate email so they never get pattern access", () => {
+    const email = badgeLoginEmail("2543411918", "inventory");
+    assert.equal(email, "badge-inventory-2543411918@badge.hagan.pro");
+    assert.equal(badgeLoginEmployeeId(email), "2543411918");
+    assert.equal(badgeLoginKindFromEmail(email), "inventory");
+    assert.equal(isBadgePatternLoginEmail(email), false);
+    assert.equal(isPatternOperatorEmail(email), false);
+    assert.equal(isInventoryClerkEmail(email), true);
+    assert.equal(badgeLandingPath("inventory"), "/inventory");
+    assert.ok((INVENTORY_BADGE_LOGIN_IDS as readonly string[]).includes("2543411918"));
   });
 
   it("labels badge and shared-email logins with the employee so admin can trace", () => {

@@ -461,9 +461,9 @@ export function InventoryWorkspace({
         <div className="grid gap-4 px-5 py-4 lg:grid-cols-2">
           <div>
             <p className="text-xs text-slate-500">
-              Received a delivery? Register the boxes here and print one QR sticker per box.
-              Sealed boxes are NOT counted as stock - when the floor opens a box they scan its
-              sticker and the quantity is added automatically.
+              Received a delivery? Register the boxes here and print one 4x6 inch sticker per
+              box (all details + QR). Sealed boxes are NOT counted as stock - when the floor
+              opens a box they scan its sticker and the quantity is added automatically.
             </p>
             <div className="mt-3 space-y-2">
               <div>
