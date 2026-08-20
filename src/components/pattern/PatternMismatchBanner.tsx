@@ -45,7 +45,8 @@ export function PatternMismatchBanner({ mismatch, className = "" }: PatternMisma
           <p className={`mt-1 ${detailClass}`}>
             {mismatch.stale_line_ids.length} pattern job
             {mismatch.stale_line_ids.length !== 1 ? "s" : ""} reference fabric line IDs no longer
-            on this order.
+            on this order. Those leftover rows cannot be consolidated - tick only fabrics still
+            on the sales order.
           </p>
         ) : null}
         {mismatch.clickup_line_count != null ? (

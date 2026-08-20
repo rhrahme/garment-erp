@@ -25,6 +25,40 @@ export function openSessionsOnKiosk(
   );
 }
 
+/**
+ * Once a piece is already Closing, a matching A4 finishes it.
+ * The kiosk banner already says "Scan badge or matching A4 to confirm finish".
+ * A4-first close used to ignore the second A4 (badge only), so the 30s wait
+ * expired back to Sewing while the paper was in the gun (Asif FR-0133-L42-OS).
+ */
+export function matchingA4FinishesClosingSession(
+  session: Pick<SewingSession, "status">
+): boolean {
+  return session.status === "closing";
+}
+
+/**
+ * Badge then A4 of a piece this stitcher already has open finishes it.
+ * Stacked Sewing/Cutting keeps badge-alone as "arm for the next NEW A4".
+ * The leftover arm from a just-opened piece must not instant-close a
+ * double-scan of that same A4 (armed_at is refreshed at start).
+ */
+export const ARMED_OPEN_A4_CLOSE_GRACE_MS = 2_000;
+
+export function armedBadgeThenA4FinishesOpenSession(input: {
+  session: Pick<SewingSession, "status" | "employee_id" | "started_at">;
+  armedEmployeeId?: string | null;
+  armedAt?: string | null;
+}): boolean {
+  if (input.session.status !== "open") return false;
+  const armedId = input.armedEmployeeId?.trim() || "";
+  if (!armedId || armedId !== input.session.employee_id) return false;
+  const started = Date.parse(input.session.started_at);
+  const armed = Date.parse(input.armedAt ?? "");
+  if (!Number.isFinite(started) || !Number.isFinite(armed)) return false;
+  return armed - started > ARMED_OPEN_A4_CLOSE_GRACE_MS;
+}
+
 function sessionsMatchingPiece(
   store: SewingSessionsFile,
   kioskId: string,
@@ -40,7 +74,8 @@ function sessionsMatchingPiece(
 
 /**
  * Same jacket/overshirt A4 may be open for several stitchers at once.
- * - Armed stitcher who already has this QR open -> close their session.
+ * - Armed stitcher who already has this QR open -> close their session
+ *   (badge-then-A4 of own open piece finishes; see armedBadgeThenA4FinishesOpenSession).
  * - Armed different stitcher -> start another open session on the same QR.
  * - No arm + one open -> A4-first close.
  * - No arm + several open on same QR -> ask for the finishing stitcher's badge.

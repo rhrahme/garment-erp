@@ -8,7 +8,15 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Stitch floor (kiosk)
 
-- Scan flow: EMP badge -> A4 piece QR -> work -> same A4 -> badge. Kiosk login: `stitch@hagan.pro`.
+- Scan flow: EMP badge -> A4 piece QR -> work -> finish with **badge then
+  that already-open A4**, or **A4 then badge / same A4 again**. Kiosk
+  login: `stitch@hagan.pro`. Do not assume a floor video is A4-only;
+  the first seconds are usually the badge card, then the paper.
+- **Floor video diagnosis** (Aug 20 2026): extract the opening frames
+  before writing a fix. Live log `ready, N already open` after a card
+  scan is stacked arm, not "they never scanned a badge". Badge then the
+  same already-open A4 must finish (`armedBadgeThenA4FinishesOpenSession`).
+  Do not regress that to another 30s Closing wait.
 - **Fabric color preview on the kiosk** (Aug 19 2026): Scan / Live / History /
   Orders show the mill swatch for the piece fabric. Tap to enlarge. Sessions
   store `supplier_id` from the SO line (older rows backfill on load).
@@ -64,19 +72,27 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Cutter stacked / consolidated nest** (Aug 10 2026): when badge activity is
   **Cutting** (cutter job_functions, not tailor), the cutter may open **many**
   piece sessions before closing - pile fabrics, scan each Trouser (or piece)
-  A4 to open, cut once, then rescan each A4 + badge to finish. Close is
-  A4-first (never badge-first close while stacked). After each open the
+  A4 to open, cut once, then rescan each A4 to enter Closing, then badge
+  or that A4 again to finish. Badge then an already-open A4 also finishes
+  (same as stitchers). Badge alone does not close. After each open the
   cutter stays armed for the next A4. Do not re-block cutters with
   `employee_has_open_piece` without an explicit ask.
 - **Stitchers chain-stitch several articles at once** (Aug 11 2026): Sewing
   activity also stacks open pieces (e.g. a run of white shirts chained on
   the machine). Badge -> A4 -> A4 -> ... opens one Live session per article;
   after each open the stitcher stays armed for the next A4. Close is
-  A4-first per piece (rescan that article's A4, then badge).
+  A4-first per piece: rescan that article's A4 (enters Closing), then
+  **badge or the same A4 again** finishes it. **Also:** badge card then that
+  same already-open A4 finishes immediately (Asif video: card on the desk,
+  then paper). Badge alone while stacked still arms for the next NEW A4
+  (does not close). A leftover arm from a piece just opened must not
+  instant-close a double-scan of that A4. The kiosk banner already said
+  "Scan badge or matching A4"; A4-first used to ignore the second A4 and
+  expire back to Sewing after 30s (FR-0133-L42-OS, Aug 20 2026).
+  Multi-stitcher same QR stays ambiguous until a finisher is chosen.
   `employeeAllowsStackedOpenPieces` = Cutting or Sewing; wash/iron,
   washing, ironing, buttons, button stitch, buttonhole, champa, and
-  bartek stay one-open-at-a-time. Do not re-add
-  the tailor one-open gate.
+  bartek stay one-open-at-a-time. Do not re-add the tailor one-open gate.
 - **Multi-stitcher same article QR** (Aug 10 2026): garment work (especially
   jackets/overshirts) can be **divided across several stitchers** on the
   **same** A4/production QR at once. Each stitcher opens their own Live
@@ -277,9 +293,18 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `/api/v1/pattern/notices` (`?status=all` for the tab) with events
   `pattern.operator_notice_created` / `pattern.operator_notice_acknowledged`.
   When we explain a floor fix to Pattern, add a catalog entry so they get
-  the email and the tab - do not only tell the owner in chat. First notices:
-  consolidate fabrics (`howto-consolidate-fabrics-v1`), remove one fabric
-  from a group (`howto-remove-fabric-from-consolidation-v1`).
+  the email and the tab - do not only tell the owner in chat. Notices:
+  leftover SO lines (`howto-consolidate-removed-so-lines-v1`), consolidate
+  fabrics (`howto-consolidate-fabrics-v1`), remove one fabric from a group
+  (`howto-remove-fabric-from-consolidation-v1`).
+- **Consolidate skips leftover jobs after SO line removal** (Aug 20 2026):
+  Pattern jobs can outlive a fabric line QC deleted or transferred. Those
+  stale `sales_order_line_id`s used to 400 create/assign ("Fabric line(s)
+  not found on this client's sales orders") and block consolidating the
+  remaining live Overshirt+Trouser (Ibrahim SO-2026-0130). Order-board
+  leftover rows are not tickable; create/assign drops known orphan line ids
+  and keeps live ones. Do not auto-cancel orphans (ClickUp sync guard). If
+  Pattern still needs the fabric, QC restores the SO line first.
 - **Pattern measurement saves must never wipe filled cells** (Aug 6 2026):
   Root cause was whole-document `pattern_library` upserts from a stale Vercel
   cache after Save. Hardening (keep all three):

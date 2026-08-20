@@ -48,9 +48,11 @@ import {
   applyPieceArm,
   applyStartFromEmployeeArm,
   applyStartFromPieceArm,
+  armedBadgeThenA4FinishesOpenSession,
   badgeDecisionRequiresSewCapability,
   decideBadgeScan,
   decidePieceStart,
+  matchingA4FinishesClosingSession,
   openSessionsOnKiosk,
   resolveSharedPieceScan,
 } from "@/lib/production/sewing-session-recovery";
@@ -1075,29 +1077,37 @@ export async function processSewingKioskScan(
   }
   if (sharedPiece.type === "close_session") {
     const pieceSession = sharedPiece.session;
-    if (pieceSession.status === "closing") {
-      const confirm = pieceSession.closing_confirm ?? "badge";
-      if (confirm === "piece") {
-        return closeSessionWithBadgeOrPiece({
-          store,
-          session: pieceSession,
-          kioskId,
-          at,
-          employee_id: pieceSession.employee_id,
-          employee_name: pieceSession.employee_name,
-          employee_id_number: pieceSession.employee_id_number,
-          workstation_id: pieceSession.workstation_id,
-          source: input.source,
-        });
-      }
-      return result(
-        true,
-        `Closing ${pieceSession.production_code} - ${pieceSession.employee_name}, scan badge.`,
+    if (matchingA4FinishesClosingSession(pieceSession)) {
+      return closeSessionWithBadgeOrPiece({
         store,
+        session: pieceSession,
         kioskId,
-        { session: pieceSession },
-        { beep: "progress" }
-      );
+        at,
+        employee_id: pieceSession.employee_id,
+        employee_name: pieceSession.employee_name,
+        employee_id_number: pieceSession.employee_id_number,
+        workstation_id: pieceSession.workstation_id,
+        source: input.source,
+      });
+    }
+    if (
+      armedBadgeThenA4FinishesOpenSession({
+        session: pieceSession,
+        armedEmployeeId: armedForShared?.employee_id ?? null,
+        armedAt: armedForShared?.armed_at ?? null,
+      })
+    ) {
+      return closeSessionWithBadgeOrPiece({
+        store,
+        session: pieceSession,
+        kioskId,
+        at,
+        employee_id: pieceSession.employee_id,
+        employee_name: pieceSession.employee_name,
+        employee_id_number: pieceSession.employee_id_number,
+        workstation_id: pieceSession.workstation_id,
+        source: input.source,
+      });
     }
     const closing: SewingSession = {
       ...pieceSession,
@@ -1112,7 +1122,7 @@ export async function processSewingKioskScan(
     await writeSewingSessions(store);
     return result(
       true,
-      `Closing ${closing.production_code} - ${closing.employee_name}, scan badge within 30 seconds.`,
+      `Closing ${closing.production_code} - ${closing.employee_name}, scan badge or this A4 again to finish (30 seconds).`,
       store,
       kioskId,
       { session: closing },

@@ -20,6 +20,7 @@ import {
 import type { PatternJob } from "@/lib/types/pattern";
 import type { ClientPatternListSummary } from "@/lib/pattern-library/client-pattern-list";
 import type { BasePattern } from "@/lib/types/pattern-library";
+import { isActivePatternJobForOrders } from "@/lib/pattern/auto-consolidate-grouping";
 import type { SalesOrder } from "@/lib/types/sales-orders";
 import { cn } from "@/lib/utils";
 
@@ -45,9 +46,15 @@ export function ConsolidateSelectedFabricsModal({
   const router = useRouter();
   const { unit: measurementUnit } = useMeasurementUnitPreference();
   const preferredBrand = preferredBrandCodeFromClientCode(order.client_code);
+  const liveJobs = useMemo(() => {
+    const ordersById = new Map([[order.id, order]]);
+    return selectedJobs.filter((job) => isActivePatternJobForOrders(job, ordersById));
+  }, [order, selectedJobs]);
+  const droppedOrphanCount = selectedJobs.length - liveJobs.length;
+
   const selectedGarments = useMemo(
-    () => [...new Set(selectedJobs.map((job) => job.garment_type))],
-    [selectedJobs]
+    () => [...new Set(liveJobs.map((job) => job.garment_type))],
+    [liveJobs]
   );
   const sharedGarment = selectedGarments.length === 1 ? selectedGarments[0]! : "";
 
@@ -93,7 +100,7 @@ export function ConsolidateSelectedFabricsModal({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        job_ids: selectedJobs.map((job) => job.id),
+        job_ids: liveJobs.map((job) => job.id),
         client_pattern_id: patternId,
       }),
     });
@@ -109,7 +116,12 @@ export function ConsolidateSelectedFabricsModal({
 
       if (mode === "existing") {
         if (!existingPatternId) throw new Error("Choose an existing pattern for this client.");
-        const lineIds = selectedJobs.map((job) => job.sales_order_line_id);
+        if (liveJobs.length === 0) {
+          throw new Error(
+            "None of the selected fabrics are still on this sales order. Tick only fabrics that are still on the order."
+          );
+        }
+        const lineIds = liveJobs.map((job) => job.sales_order_line_id);
         const res = await fetch(
           `/api/pattern/library/client-patterns/${existingPatternId}/fabric-lines`,
           {
@@ -123,6 +135,11 @@ export function ConsolidateSelectedFabricsModal({
         patternId = existingPatternId;
         await linkJobsToPattern(patternId);
       } else {
+        if (liveJobs.length === 0) {
+          throw new Error(
+            "None of the selected fabrics are still on this sales order. Tick only fabrics that are still on the order."
+          );
+        }
         if (!cascadeSelectionReady(cascade)) {
           throw new Error(
             cascade.origin === "library"
@@ -141,7 +158,7 @@ export function ConsolidateSelectedFabricsModal({
             base_pattern_id:
               cascade.origin === "library" ? cascade.basePatternId || null : null,
             base_size: cascade.origin === "library" ? cascade.baseSize || null : null,
-            linked_fabric_line_ids: selectedJobs.map((job) => job.sales_order_line_id),
+            linked_fabric_line_ids: liveJobs.map((job) => job.sales_order_line_id),
             // Match Pattern's Units toggle so CM typing is not stamped as inches.
             unit: measurementUnit,
           }),
@@ -178,8 +195,8 @@ export function ConsolidateSelectedFabricsModal({
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-base font-semibold text-slate-900">
-              Consolidate {selectedJobs.length} fabric
-              {selectedJobs.length === 1 ? "" : "s"} → one pattern
+              Consolidate {liveJobs.length} fabric
+              {liveJobs.length === 1 ? "" : "s"} → one pattern
             </h3>
             <p className="mt-1 text-sm text-slate-600">
               Then upload the .TUD and fill sizes on the measurement sheet.
@@ -195,8 +212,15 @@ export function ConsolidateSelectedFabricsModal({
           </button>
         </div>
 
+        {droppedOrphanCount > 0 ? (
+          <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            Skipping {droppedOrphanCount} fabric
+            {droppedOrphanCount === 1 ? "" : "s"} QC already removed from this sales order.
+          </p>
+        ) : null}
+
         <ul className="mt-3 flex flex-wrap gap-1.5">
-          {selectedJobs.map((job) => (
+          {liveJobs.map((job) => (
             <li
               key={job.id}
               className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700"
@@ -285,7 +309,11 @@ export function ConsolidateSelectedFabricsModal({
         {error ? <p className="mt-3 text-sm text-rose-600">{error}</p> : null}
 
         <div className="mt-4 flex flex-wrap gap-2">
-          <Button onClick={() => void submit()} disabled={busy} className="flex-1 sm:flex-none">
+          <Button
+            onClick={() => void submit()}
+            disabled={busy || liveJobs.length === 0}
+            className="flex-1 sm:flex-none"
+          >
             {busy
               ? "Working…"
               : mode === "new"

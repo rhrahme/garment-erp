@@ -5,10 +5,26 @@ import {
   CONSOLIDATE_FABRICS_HOWTO_NOTICE_ID,
   CONSOLIDATE_FABRICS_HOWTO_TITLE,
   PATTERN_HOWTO_NOTICES,
+  CONSOLIDATE_REMOVED_SO_LINES_HOWTO_BODY,
+  CONSOLIDATE_REMOVED_SO_LINES_HOWTO_NOTICE_ID,
+  CONSOLIDATE_REMOVED_SO_LINES_HOWTO_TITLE,
   REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_BODY,
   REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_NOTICE_ID,
   REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_TITLE,
 } from "@/lib/pattern/pattern-operator-notice-copy";
+
+describe("Pattern leftover-SO-line consolidate how-to", () => {
+  it("tells Pattern to skip fabrics QC removed from the order", () => {
+    assert.equal(
+      CONSOLIDATE_REMOVED_SO_LINES_HOWTO_NOTICE_ID,
+      "howto-consolidate-removed-so-lines-v1"
+    );
+    assert.match(CONSOLIDATE_REMOVED_SO_LINES_HOWTO_TITLE, /not found/i);
+    assert.match(CONSOLIDATE_REMOVED_SO_LINES_HOWTO_BODY, /Removed from this sales order/);
+    assert.match(CONSOLIDATE_REMOVED_SO_LINES_HOWTO_BODY, /Select all/);
+    assert.match(CONSOLIDATE_REMOVED_SO_LINES_HOWTO_BODY, /QC/);
+  });
+});
 
 describe("Pattern consolidate how-to notice", () => {
   it("teaches consolidate selected then create or link pattern", () => {
@@ -39,6 +55,7 @@ describe("Pattern remove-from-consolidation how-to", () => {
     const ids = PATTERN_HOWTO_NOTICES.map((howto) => howto.id);
     assert.ok(ids.includes(CONSOLIDATE_FABRICS_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_NOTICE_ID));
-    assert.equal(PATTERN_HOWTO_NOTICES[0]?.id, REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_NOTICE_ID);
+    assert.ok(ids.includes(CONSOLIDATE_REMOVED_SO_LINES_HOWTO_NOTICE_ID));
+    assert.equal(PATTERN_HOWTO_NOTICES[0]?.id, CONSOLIDATE_REMOVED_SO_LINES_HOWTO_NOTICE_ID);
   });
 });

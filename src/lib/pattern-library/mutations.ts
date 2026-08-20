@@ -5,7 +5,13 @@ import {
   normalizePatternSheetGarment,
 } from "@/lib/pattern-library/base-pattern-picker";
 import { readPatternLibraryFresh, writePatternLibrary } from "@/lib/data/pattern-library";
-import { readPatternJobsFresh, writePatternJobs } from "@/lib/data/pattern-jobs";
+import { readPatternJobs, readPatternJobsFresh, writePatternJobs } from "@/lib/data/pattern-jobs";
+import {
+  allRequestedLinesRemovedFromOrdersError,
+  missingClientFabricLinesError,
+  orphanLineIdsForClient,
+  partitionLinkedFabricLineIds,
+} from "@/lib/pattern-library/partition-linked-fabric-line-ids";
 import {
   removeClientFitColumn,
   upsertClientFitColumn,
@@ -518,6 +524,41 @@ function clientFabricLineIdSet(clientId: string): Set<string> {
   return ids;
 }
 
+/** Live SO lines, skipping leftover pattern-job ids after a line was removed. */
+function resolveRequestedFabricLineIds(
+  clientId: string,
+  requested: string[]
+):
+  | { ok: true; lineIds: string[] }
+  | { ok: false; status: 400; error: string } {
+  const validLineIds = clientFabricLineIdSet(clientId);
+  const orphanLineIds = orphanLineIdsForClient(
+    clientId,
+    readPatternJobs().jobs,
+    validLineIds
+  );
+  const partitioned = partitionLinkedFabricLineIds({
+    requested,
+    validLineIds,
+    orphanLineIds,
+  });
+  if (partitioned.unknown.length > 0) {
+    return {
+      ok: false,
+      status: 400,
+      error: missingClientFabricLinesError(partitioned.unknown),
+    };
+  }
+  if (partitioned.linked.length === 0) {
+    return {
+      ok: false,
+      status: 400,
+      error: allRequestedLinesRemovedFromOrdersError(),
+    };
+  }
+  return { ok: true, lineIds: partitioned.linked };
+}
+
 export async function createClientPattern(
   input: ClientPatternInput,
   options: { createdBy?: string | null; notify?: boolean } = {}
@@ -619,18 +660,11 @@ export async function createClientPattern(
     ...new Set((input.linked_fabric_line_ids ?? []).map((id) => id.trim()).filter(Boolean)),
   ];
   if (requestedLineIds.length > 0) {
-    const validLineIds = clientFabricLineIdSet(pattern.client_id);
-    const unknown = requestedLineIds.filter((id) => !validLineIds.has(id));
-    if (unknown.length > 0) {
-      return {
-        ok: false,
-        status: 400,
-        error: `Fabric line(s) not found on this client's sales orders: ${unknown.join(", ")}.`,
-      };
-    }
-    pattern.linked_fabric_line_ids = requestedLineIds;
+    const resolved = resolveRequestedFabricLineIds(pattern.client_id, requestedLineIds);
+    if (!resolved.ok) return resolved;
+    pattern.linked_fabric_line_ids = resolved.lineIds;
     // A fabric belongs to one garment group - strip the lines from other patterns.
-    const requestedSet = new Set(requestedLineIds);
+    const requestedSet = new Set(resolved.lineIds);
     for (const other of store.client_patterns) {
       if (other.client_id !== pattern.client_id) continue;
       const existing = other.linked_fabric_line_ids ?? [];
@@ -693,21 +727,14 @@ export async function assignFabricLinesToClientPattern(
   if (index < 0) return { ok: false, status: 404, error: "Client pattern not found." };
   const existing = store.client_patterns[index]!;
 
-  const validLineIds = clientFabricLineIdSet(existing.client_id);
-  const unknown = requested.filter((id) => !validLineIds.has(id));
-  if (unknown.length > 0) {
-    return {
-      ok: false,
-      status: 400,
-      error: `Fabric line(s) not found on this client's sales orders: ${unknown.join(", ")}.`,
-    };
-  }
+  const resolved = resolveRequestedFabricLineIds(existing.client_id, requested);
+  if (!resolved.ok) return resolved;
 
   const timestamp = now();
   const { targetLinkedLineIds, strippedFromOthers } = applyFabricLineAssignment(
     store.client_patterns,
     patternId,
-    requested
+    resolved.lineIds
   );
   for (const { patternId: otherId, linkedLineIds } of strippedFromOthers) {
     const otherIndex = store.client_patterns.findIndex((pattern) => pattern.id === otherId);
@@ -746,7 +773,7 @@ export async function assignFabricLinesToClientPattern(
       client_id: next.client_id,
       client_code: next.client_code,
       garment_type: next.garment_type,
-      assigned_line_ids: requested,
+      assigned_line_ids: resolved.lineIds,
       linked_fabric_line_ids: targetLinkedLineIds,
       reassigned_from_pattern_ids: strippedFromOthers.map((item) => item.patternId),
       assigned_by: options.assignedBy ?? null,

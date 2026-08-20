@@ -12,8 +12,10 @@ import {
   applyPieceArm,
   applyStartFromEmployeeArm,
   applyStartFromPieceArm,
+  armedBadgeThenA4FinishesOpenSession,
   decideBadgeScan,
   decidePieceStart,
+  matchingA4FinishesClosingSession,
   openSessionsOnKiosk,
   resolveSharedPieceScan,
 } from "@/lib/production/sewing-session-recovery";
@@ -910,6 +912,100 @@ describe("blind-floor stitch scan recovery", () => {
       ).length,
       2
     );
+  });
+
+  it("A4-first closing: matching A4 finishes the same session (badge optional)", () => {
+    const pieceCode = "FR-0133-L42-OS";
+    const closing = session({
+      id: "asif-os",
+      employee_id: "2631624596",
+      employee_name: "ASIF ALI LIAQAT ALI",
+      production_code: pieceCode,
+      scan_code: pieceCode,
+      status: "closing",
+      closing_armed_at: "2026-08-20T09:32:00.000Z",
+      closing_confirm: "badge",
+    });
+    assert.equal(matchingA4FinishesClosingSession(closing), true);
+    assert.equal(matchingA4FinishesClosingSession({ status: "open" }), false);
+
+    const store: SewingSessionsFile = {
+      updated_at: null,
+      kiosk_arms: [],
+      kiosk_piece_arms: [],
+      sessions: [closing],
+    };
+    const decision = resolveSharedPieceScan(store, "k1", pieceCode, pieceCode);
+    assert.equal(decision.type, "close_session");
+    if (decision.type === "close_session") {
+      assert.equal(decision.session.id, "asif-os");
+      assert.equal(matchingA4FinishesClosingSession(decision.session), true);
+    }
+  });
+
+  it("badge then A4 of own open piece finishes (not another closing wait)", () => {
+    const pieceCode = "FR-0133-L42-OS";
+    const open = session({
+      id: "asif-os-open",
+      employee_id: "2631624596",
+      employee_name: "ASIF ALI LIAQAT ALI",
+      production_code: pieceCode,
+      scan_code: pieceCode,
+      status: "open",
+      started_at: "2026-08-20T09:17:00.000Z",
+    });
+    assert.equal(
+      armedBadgeThenA4FinishesOpenSession({
+        session: open,
+        armedEmployeeId: "2631624596",
+        armedAt: "2026-08-20T09:32:00.000Z",
+      }),
+      true
+    );
+    assert.equal(
+      armedBadgeThenA4FinishesOpenSession({
+        session: open,
+        armedEmployeeId: "2631624596",
+        armedAt: "2026-08-20T09:17:00.500Z",
+      }),
+      false
+    );
+    assert.equal(
+      armedBadgeThenA4FinishesOpenSession({
+        session: open,
+        armedEmployeeId: "other",
+        armedAt: "2026-08-20T09:32:00.000Z",
+      }),
+      false
+    );
+
+    const store: SewingSessionsFile = {
+      updated_at: null,
+      kiosk_arms: [
+        empArm({
+          employee_id: "2631624596",
+          employee_name: "ASIF ALI LIAQAT ALI",
+          employee_id_number: "2631624596",
+          armed_at: "2026-08-20T09:32:00.000Z",
+        }),
+      ],
+      kiosk_piece_arms: [],
+      sessions: [open],
+    };
+    const decision = resolveSharedPieceScan(store, "k1", pieceCode, pieceCode, {
+      armedEmployeeId: "2631624596",
+    });
+    assert.equal(decision.type, "close_session");
+    if (decision.type === "close_session") {
+      assert.equal(
+        armedBadgeThenA4FinishesOpenSession({
+          session: decision.session,
+          armedEmployeeId: "2631624596",
+          armedAt: "2026-08-20T09:32:00.000Z",
+        }),
+        true
+      );
+    }
   });
 
   it("resolveSharedPieceScan closes only the armed stitcher's shared QR session", () => {

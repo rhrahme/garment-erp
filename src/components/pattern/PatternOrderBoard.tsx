@@ -31,7 +31,10 @@ import { GarmentPiecesNest } from "@/components/garment/GarmentPiecesNest";
 import { GarmentTypeChangeBadge } from "@/components/garment-type/GarmentTypeChangeBadge";
 import { PatternMismatchBanner } from "@/components/pattern/PatternMismatchBanner";
 import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreference";
-import type { CrossClientFitFamily } from "@/lib/pattern/auto-consolidate-grouping";
+import {
+  isActivePatternJobForOrders,
+  type CrossClientFitFamily,
+} from "@/lib/pattern/auto-consolidate-grouping";
 import type { PatternSheetKind } from "@/lib/pattern-library/pattern-sheet-kind";
 import type { GarmentTypeChangeFlag } from "@/lib/sales-orders/garment-type-change-flags";
 import { piecesForPatternJob } from "@/lib/sales-orders/label-codes";
@@ -147,9 +150,11 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
         setGarmentTypeChangeFlags({});
       }
       setSelectedJobIds((prev) => {
+        const liveLineIds = new Set(nextOrder.fabric_lines.map((line) => line.id));
         const next = new Set<string>();
         for (const id of prev) {
-          if (nextJobs.some((job) => job.id === id)) next.add(id);
+          const job = nextJobs.find((item) => item.id === id);
+          if (job && liveLineIds.has(job.sales_order_line_id)) next.add(id);
         }
         return next;
       });
@@ -199,9 +204,19 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
     [jobs, previewJobId]
   );
 
+  const ordersById = useMemo(() => {
+    if (!order) return new Map<string, SalesOrder>();
+    return new Map([[order.id, order]]);
+  }, [order]);
+
+  const consolidatableJobs = useMemo(
+    () => jobs.filter((job) => isActivePatternJobForOrders(job, ordersById)),
+    [jobs, ordersById]
+  );
+
   const selectedJobs = useMemo(
-    () => jobs.filter((job) => selectedJobIds.has(job.id)),
-    [jobs, selectedJobIds]
+    () => consolidatableJobs.filter((job) => selectedJobIds.has(job.id)),
+    [consolidatableJobs, selectedJobIds]
   );
 
   const selectedLinkedCount = useMemo(
@@ -219,6 +234,8 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
   }, [selectedJobIds, printSheetKind, soId]);
 
   function toggleJob(jobId: string) {
+    const job = jobs.find((item) => item.id === jobId);
+    if (job && !isActivePatternJobForOrders(job, ordersById)) return;
     setSelectedJobIds((prev) => {
       const next = new Set(prev);
       if (next.has(jobId)) next.delete(jobId);
@@ -229,8 +246,11 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
 
   function toggleAll() {
     setSelectedJobIds((prev) => {
-      if (prev.size === jobs.length) return new Set();
-      return new Set(jobs.map((job) => job.id));
+      const consolidatableIds = consolidatableJobs.map((job) => job.id);
+      const allSelected =
+        consolidatableIds.length > 0 && consolidatableIds.every((id) => prev.has(id));
+      if (allSelected) return new Set();
+      return new Set(consolidatableIds);
     });
   }
 
@@ -471,7 +491,10 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
                 onClick={toggleAll}
                 className="text-sm font-medium text-indigo-700 hover:text-indigo-900"
               >
-                {selectedJobIds.size === jobs.length ? "Clear selection" : "Select all"}
+                {consolidatableJobs.length > 0 &&
+                consolidatableJobs.every((job) => selectedJobIds.has(job.id))
+                  ? "Clear selection"
+                  : "Select all"}
               </button>
               <label className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-900">
                 Sheet
@@ -569,13 +592,18 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
           {jobs.map((job) => {
             const linked = clientPatterns.find((pattern) => pattern.id === job.client_pattern_id);
             const supplierId = job.supplier_id ?? "";
-            const selected = selectedJobIds.has(job.id);
+            const onOrder = isActivePatternJobForOrders(job, ordersById);
+            const selected = onOrder && selectedJobIds.has(job.id);
             return (
               <div
                 key={job.id}
                 className={cn(
                   "rounded-xl border bg-white p-4",
-                  selected ? "border-indigo-300 ring-1 ring-indigo-100" : "border-slate-200"
+                  !onOrder
+                    ? "border-slate-200 bg-slate-50 opacity-80"
+                    : selected
+                      ? "border-indigo-300 ring-1 ring-indigo-100"
+                      : "border-slate-200"
                 )}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -583,9 +611,14 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
                     <input
                       type="checkbox"
                       checked={selected}
+                      disabled={!onOrder}
                       onChange={() => toggleJob(job.id)}
-                      className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600"
-                      aria-label={`Select ${formatArticle(job.article_number)}`}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 disabled:cursor-not-allowed"
+                      aria-label={
+                        onOrder
+                          ? `Select ${formatArticle(job.article_number)}`
+                          : `${formatArticle(job.article_number)} removed from this sales order`
+                      }
                     />
                     {supplierId ? (
                       <button
@@ -659,6 +692,12 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
                         {STATUS_LABELS[job.status] ?? job.status}
                         {job.assigned_to ? ` · ${job.assigned_to}` : ""}
                       </p>
+                      {!onOrder ? (
+                        <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900">
+                          Removed from this sales order - cannot consolidate. Ask QC if this fabric
+                          should still be on the order.
+                        </p>
+                      ) : null}
                       <p className="mt-1 text-xs text-slate-600">
                         Master pattern:{" "}
                         {linked ? (
@@ -675,7 +714,7 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
                           <span className="text-amber-700">Not linked — select &amp; consolidate</span>
                         )}
                       </p>
-                      {canChangeGarmentType ? (
+                      {canChangeGarmentType && onOrder ? (
                         <ChangeGarmentTypeControl
                           compact
                           salesOrderId={job.sales_order_id}

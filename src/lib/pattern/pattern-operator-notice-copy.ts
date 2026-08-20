@@ -57,8 +57,36 @@ export const REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_BODY = [
   "After it leaves the group you can keep it on its own sheet, or consolidate it into a different group later.",
 ].join("\n");
 
+export const CONSOLIDATE_REMOVED_SO_LINES_HOWTO_NOTICE_ID =
+  "howto-consolidate-removed-so-lines-v1";
+
+export const CONSOLIDATE_REMOVED_SO_LINES_HOWTO_TITLE =
+  "If consolidate says fabrics not found on the sales order";
+
+export const CONSOLIDATE_REMOVED_SO_LINES_HOWTO_BODY = [
+  "That error means some ticked rows are leftover pattern jobs. QC already removed or transferred those fabrics from the sales order, so Pattern cannot attach a sheet to them.",
+  "",
+  "What to do:",
+  "1. Stay on the Pattern order board (the SO list of fabrics).",
+  "2. Rows marked Removed from this sales order cannot be ticked. Leave them.",
+  "3. Tick only the Overshirt+Trouser (or other garment) rows that are still on the order.",
+  "4. Click Consolidate selected -> New pattern -> Create pattern -> upload .TUD.",
+  "",
+  "Select all now skips the leftover rows automatically.",
+  "",
+  "If you still need a removed fabric (example: Ibrahim SO-2026-0130 S21006 / S21007 / S21008 / S21009), ask QC to put it back on the sales order first. Pattern cannot consolidate a fabric that is no longer on the order.",
+].join("\n");
+
 /** Newest first. Each entry is emailed to Pattern and kept on the How-to tab. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: CONSOLIDATE_REMOVED_SO_LINES_HOWTO_NOTICE_ID,
+    title: CONSOLIDATE_REMOVED_SO_LINES_HOWTO_TITLE,
+    body: CONSOLIDATE_REMOVED_SO_LINES_HOWTO_BODY,
+    href: "/pattern",
+    href_label: "Open Pattern home",
+    audience: "pattern",
+  },
   {
     id: REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_NOTICE_ID,
     title: REMOVE_FABRIC_FROM_CONSOLIDATION_HOWTO_TITLE,
