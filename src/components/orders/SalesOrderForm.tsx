@@ -1581,7 +1581,13 @@ export function SalesOrderForm({
               brandId={productionBrandId}
               className="mt-1"
               allowCreate
+              allowNameRequest
               onClientCreated={(client) => setClients((prev) => [...prev, client])}
+              onClientUpdated={(client) =>
+                setClients((prev) =>
+                  prev.map((row) => (row.id === client.id ? { ...row, ...client } : row))
+                )
+              }
             />
             {selectedClient && (
               <span className="mt-1 block text-xs text-slate-500">
@@ -1778,7 +1784,13 @@ export function SalesOrderForm({
                               brandId={productionBrandId}
                               className="mt-1"
                               allowCreate
+                              allowNameRequest
                               onClientCreated={(client) => setClients((prev) => [...prev, client])}
+                              onClientUpdated={(client) =>
+                                setClients((prev) =>
+                                  prev.map((row) => (row.id === client.id ? { ...row, ...client } : row))
+                                )
+                              }
                             />
                           </label>
 

@@ -139,13 +139,7 @@ export function isClientSaveable(client: Pick<ClientProfile, "first_name" | "las
 export function isBlankClientPlaceholder(
   client: Pick<ClientProfile, "first_name" | "last_name" | "brand_ids" | "code" | "email" | "phone">
 ): boolean {
-  return (
-    !hasRequiredClientName(client) &&
-    client.brand_ids.length === 0 &&
-    !client.code &&
-    !client.email &&
-    !client.phone
-  );
+  return !hasRequiredClientName(client) && !client.email && !client.phone;
 }
 
 /** Map legacy single `name` field to title/first/last when loading old records */

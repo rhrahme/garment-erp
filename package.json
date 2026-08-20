@@ -39,7 +39,7 @@
     "test:load-from-base": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/pattern-library/load-from-base.test.ts",
   "test:copy-measurements": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/pattern-library/copy-measurements-to-siblings.test.ts",
   "test:inventory": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/data/inventory-store.test.ts",
-  "test:name-change": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/clients/name-change-requests.test.ts src/lib/clients/name-change-email-token.test.ts",
+  "test:name-change": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/clients/name-change-requests.test.ts src/lib/clients/name-change-email-token.test.ts src/lib/clients/create-client.test.ts",
     "test:base-pattern-picker": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/pattern-library/base-pattern-picker.test.ts",
     "test:client-fit-columns": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/pattern-library/client-fit-columns.test.ts",
     "test:a4-print-styles": "node --experimental-strip-types --experimental-loader ./scripts/tsconfig-paths-loader.mjs --test src/lib/sales-orders/receiving-print-styles.test.ts",

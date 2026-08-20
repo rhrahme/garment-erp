@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { redactClientsFile } from "@/lib/auth/client-contact-access";
+import { redactClientContact, redactClientsFile } from "@/lib/auth/client-contact-access";
 import { requireAuthenticated } from "@/lib/auth/session";
 import { generateNextClientCode, getBrandClientCodePrefix } from "@/lib/clients/codes";
+import { createAndPersistClient } from "@/lib/clients/create-client";
 import { healClientDataForRead } from "@/lib/clients/heal-on-read";
 import {
   assertClientDeleteAllowed,
@@ -183,6 +184,34 @@ export async function GET() {
   } catch (error) {
     console.error("Failed to read clients:", error);
     return NextResponse.json({ error: "Failed to load clients." }, { status: 500 });
+  }
+}
+
+/** Create one client without a bulk PUT (QC/order-form add). */
+export async function POST(request: Request) {
+  try {
+    const session = await requireAuthenticated();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    const body = (await request.json()) as Record<string, unknown>;
+    const result = await createAndPersistClient(body, {
+      allowContactFields: session.canViewClientContact,
+      allowedBrandIds: getAllowedSalesBrandIds(session),
+      source: "erp",
+    });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+
+    const client = session.canViewClientContact
+      ? result.client
+      : redactClientContact(result.client);
+    return NextResponse.json({ client, updated_at: result.updated_at }, { status: 201 });
+  } catch (error) {
+    console.error("Failed to create client:", error);
+    return NextResponse.json({ error: "Failed to create client." }, { status: 500 });
   }
 }
 

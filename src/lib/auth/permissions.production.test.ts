@@ -250,6 +250,17 @@ describe("client_manager order draft backups", () => {
   });
 });
 
+describe("client_manager add client + name-change request", () => {
+  it("QC can create a client and request a name edit (admin still approves)", () => {
+    assert.equal(isClientManagerRouteAllowed("/clients"), true);
+    assert.equal(isClientManagerRouteAllowed("/api/clients"), true);
+    assert.equal(
+      isClientManagerRouteAllowed("/api/clients/client-1/name-change-request"),
+      true
+    );
+  });
+});
+
 describe("quality inspections access (QC + factory manager)", () => {
   it("QC (client_manager) can open the Quality page and its APIs", () => {
     assert.equal(isClientManagerRouteAllowed("/quality"), true);

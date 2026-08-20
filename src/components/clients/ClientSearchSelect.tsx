@@ -11,6 +11,7 @@ import {
   sortClients,
   type ClientSortBy,
 } from "@/lib/clients/filter";
+import { ClientNameChangeRequestForm } from "@/components/clients/ClientNameChangeRequestForm";
 import { ClientTitleSelect } from "@/components/clients/ClientTitleSelect";
 import { formatClientDisplayName, isClientNameTitle, migrateClientName } from "@/lib/clients/names";
 import { getFactoryBrandById } from "@/lib/data/factory-brands";
@@ -31,8 +32,12 @@ export interface ClientSearchSelectProps {
   showSort?: boolean;
   /** Show an inline "add new client" option in the dropdown (requires brandId for the client code). */
   allowCreate?: boolean;
+  /** Non-admins can propose a rename for the selected client (admin approves). */
+  allowNameRequest?: boolean;
   /** Called after an inline create succeeds so the parent can add the client to its list. */
   onClientCreated?: (client: ClientProfile) => void;
+  /** Called after a name-change request is sent or cancelled. */
+  onClientUpdated?: (client: ClientProfile) => void;
 }
 
 export function ClientSearchSelect({
@@ -46,7 +51,9 @@ export function ClientSearchSelect({
   defaultSort = "joined-desc",
   showSort = true,
   allowCreate = false,
+  allowNameRequest = false,
   onClientCreated,
+  onClientUpdated,
 }: ClientSearchSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -59,9 +66,24 @@ export function ClientSearchSelect({
   const [newLastName, setNewLastName] = useState("");
   const [createBusy, setCreateBusy] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const selectedClient = clients.find((client) => client.id === value) ?? null;
+
+  useEffect(() => {
+    async function loadSession() {
+      try {
+        const res = await fetch("/api/auth/session");
+        if (!res.ok) return;
+        const data = (await res.json()) as { is_admin?: boolean };
+        setIsAdmin(Boolean(data.is_admin));
+      } catch {
+        /* ignore */
+      }
+    }
+    if (allowNameRequest) void loadSession();
+  }, [allowNameRequest]);
 
   useEffect(() => {
     const stored = localStorage.getItem(SORT_STORAGE_KEY) as ClientSortBy | null;
@@ -164,32 +186,22 @@ export function ClientSearchSelect({
     setCreateBusy(true);
     setCreateError(null);
     try {
-      const listRes = await fetch("/api/clients", { cache: "no-store" });
-      if (!listRes.ok) throw new Error("Could not load current clients.");
-      const listData = (await listRes.json()) as { clients: ClientProfile[] };
-      const existingIds = new Set(listData.clients.map((client) => client.id));
       const saveRes = await fetch("/api/clients", {
-        method: "PUT",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          clients: [
-            ...listData.clients,
-            { id: "", title: newTitle, first_name: first, last_name: last, brand_ids: [brandId], is_active: true },
-          ],
+          title: newTitle,
+          first_name: first,
+          last_name: last,
+          brand_ids: [brandId],
+          is_active: true,
         }),
       });
-      const saveData = (await saveRes.json()) as { clients?: ClientProfile[]; error?: string };
-      if (!saveRes.ok || !saveData.clients) {
+      const saveData = (await saveRes.json()) as { client?: ClientProfile; error?: string };
+      if (!saveRes.ok || !saveData.client) {
         throw new Error(saveData.error || "Could not save the new client.");
       }
-      const created = saveData.clients.find(
-        (client) =>
-          !existingIds.has(client.id) &&
-          (client.title ?? null) === (newTitle ?? null) &&
-          client.first_name.toLowerCase() === first.toLowerCase() &&
-          client.last_name.toLowerCase() === last.toLowerCase()
-      );
-      if (!created) throw new Error("Client saved but could not be selected — search for it by name.");
+      const created = saveData.client;
       onClientCreated?.(created);
       onChange(created.id);
       setQuery(`${created.code} — ${formatClientDisplayName(created)}`);
@@ -250,6 +262,36 @@ export function ClientSearchSelect({
           <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
         </button>
       </div>
+
+      {allowCreate && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            disabled={!canCreate}
+            onClick={() => {
+              setOpen(true);
+              startCreate();
+            }}
+            className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Plus className="h-4 w-4" />
+            Add new client
+          </button>
+          {!brandId && (
+            <p className="text-xs text-slate-500">Pick a production brand first to add a client.</p>
+          )}
+        </div>
+      )}
+
+      {allowNameRequest && !isAdmin && selectedClient && (
+        <div className="mt-2">
+          <ClientNameChangeRequestForm
+            key={`${selectedClient.id}-${selectedClient.name_change_requested_at ?? "none"}`}
+            client={selectedClient}
+            onUpdated={(next) => onClientUpdated?.(next)}
+          />
+        </div>
+      )}
 
       {brand && (
         <p className="mt-1 text-xs text-slate-500">

@@ -588,11 +588,17 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   last. Legacy rows with Pr in first_name are lifted on read/save.
   Helper: `formatClientShortName`.
 - **Name changes need admin approval** (Aug 17 2026): non-admins propose a
-  rename via "Request name edit" on the Clients page; the proposal is
-  stamped on the client (`name_change_*` fields) and applied only when an
-  admin approves (dashboard panel or one-click email links). Bulk
-  PUT /api/clients must always carry the stored `name_change_*` fields
-  over - only the dedicated name-change-request endpoints mutate them.
+  rename via "Request name edit" on the Clients page or the order-form
+  client picker; the proposal is stamped on the client (`name_change_*`
+  fields) and applied only when an admin approves (dashboard panel or
+  one-click email links). Bulk PUT /api/clients must always carry the
+  stored `name_change_*` fields over - only the dedicated
+  name-change-request endpoints mutate them.
+- **QC / non-admin can add a new client** (Aug 20 2026): Add client on
+  `/clients` (brand tab is prefilled) and **Add new client** on the
+  `/orders/new` picker. Create uses POST `/api/clients` (one row) so QC
+  is not blocked by a bulk PUT of the redacted list. Rename of an
+  existing client is still request-only.
 - **One-click email actions**: the admin alert email carries per-recipient
   HMAC-signed approve/reject links (`name-change-email-token.ts`, 7-day
   expiry, bound to client + requested_at + recipient).

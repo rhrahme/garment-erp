@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Camera, LayoutGrid, List, Plus, Search, Table2, Trash2, UserCircle, X } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { ClientFabricChangeAlerts } from "@/components/clients/ClientFabricChangeAlerts";
+import { ClientNameChangeRequestForm } from "@/components/clients/ClientNameChangeRequestForm";
 import { ClientPhotosPanel } from "@/components/sales/ClientPhotosPanel";
 import { ClientReadyMadeSamplesPanel } from "@/components/clients/ClientReadyMadeSamplesPanel";
 import { PhoneInput } from "@/components/ui/PhoneInput";
@@ -15,6 +16,7 @@ import { AutoSaveStatusBar } from "@/components/ui/AutoSaveStatus";
 import { filterClientsByBrand, searchClients } from "@/lib/clients/filter";
 import { getFactoryBrands } from "@/lib/data/factory-brands";
 import { generateNextClientCode, getBrandClientCodePrefix, getJoinMonthYear } from "@/lib/clients/codes";
+import { resolveBrandIdsForNewClient } from "@/lib/clients/create-client";
 import { isWithinClientCreateNameGrace } from "@/lib/clients/name-permissions";
 import { ClientTitleSelect } from "@/components/clients/ClientTitleSelect";
 import { formatClientDisplayName, formatReferredByName, isBlankClientPlaceholder, isClientSaveable } from "@/lib/clients/names";
@@ -200,14 +202,8 @@ export function ClientProfilesEditor() {
   const [canManageClientPhotos, setCanManageClientPhotos] = useState(false);
   const [canViewClientContact, setCanViewClientContact] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  /** Client id with the "request name edit" form open (locked names, non-admin). */
+  /** Client id with the "request name edit" form forced open (locked names, non-admin). */
   const [nameRequestId, setNameRequestId] = useState<string | null>(null);
-  const [nameRequestTitle, setNameRequestTitle] = useState<string | null>(null);
-  const [nameRequestFirst, setNameRequestFirst] = useState("");
-  const [nameRequestMiddle, setNameRequestMiddle] = useState("");
-  const [nameRequestLast, setNameRequestLast] = useState("");
-  const [nameRequestBusy, setNameRequestBusy] = useState(false);
-  const [nameRequestError, setNameRequestError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 200);
   const [isDirty, setIsDirty] = useState(false);
@@ -494,8 +490,12 @@ export function ClientProfilesEditor() {
 
   function addClient() {
     const client = emptyClient();
-    if (allowedBrandIds?.length === 1) {
-      client.brand_ids = [allowedBrandIds[0]!];
+    const brandIds = resolveBrandIdsForNewClient({
+      scopedBrandIds: allowedBrandIds,
+      selectedBrandId: brandFilter,
+    });
+    if (brandIds.length > 0) {
+      client.brand_ids = brandIds;
       client.code = assignCodeForNewClient(client, client.brand_ids) ?? "";
     }
     setSearchQuery("");
@@ -579,63 +579,8 @@ export function ClientProfilesEditor() {
   }
 
   function openNameRequest(client: ClientProfile) {
-    setNameRequestTitle(client.title ?? null);
-    setNameRequestFirst(client.first_name);
-    setNameRequestMiddle(client.middle_name ?? "");
-    setNameRequestLast(client.last_name);
-    setNameRequestError(null);
     setNameRequestId(client.id);
-  }
-
-  async function submitNameRequest(client: ClientProfile) {
-    setNameRequestBusy(true);
-    setNameRequestError(null);
-    try {
-      const res = await fetch(`/api/clients/${client.id}/name-change-request`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "request_change",
-          title: nameRequestTitle,
-          first_name: nameRequestFirst,
-          middle_name: nameRequestMiddle.trim() || null,
-          last_name: nameRequestLast,
-        }),
-      });
-      const data = (await res.json()) as { client?: ClientProfile; error?: string };
-      if (!res.ok || !data.client) {
-        throw new Error(data.error ?? "Failed to send the name change request.");
-      }
-      mergeNameRequestFields(data.client);
-      setNameRequestId(null);
-    } catch (err) {
-      setNameRequestError(
-        err instanceof Error ? err.message : "Failed to send the name change request."
-      );
-    } finally {
-      setNameRequestBusy(false);
-    }
-  }
-
-  async function cancelPendingNameRequest(client: ClientProfile) {
-    setNameRequestBusy(true);
-    setNameRequestError(null);
-    try {
-      const res = await fetch(`/api/clients/${client.id}/name-change-request`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "cancel_request" }),
-      });
-      const data = (await res.json()) as { client?: ClientProfile; error?: string };
-      if (!res.ok || !data.client) {
-        throw new Error(data.error ?? "Failed to cancel the request.");
-      }
-      mergeNameRequestFields(data.client);
-    } catch (err) {
-      setNameRequestError(err instanceof Error ? err.message : "Failed to cancel the request.");
-    } finally {
-      setNameRequestBusy(false);
-    }
+    setEditingId(client.id);
   }
 
   function renderBrandBadges(client: ClientProfile) {
@@ -676,6 +621,19 @@ export function ClientProfilesEditor() {
             {deletingId === client.id ? "Deleting…" : "Delete"}
           </Button>
         )}
+        {!isAdmin &&
+          !isNewClient(client) &&
+          !isClientNameEditable(client) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800"
+              disabled={isSaving}
+              onClick={() => openNameRequest(client)}
+            >
+              {client.name_change_requested_at ? "Name request pending" : "Request name edit"}
+            </Button>
+          )}
         {canManageClientPhotos && (
           <Button
             variant="ghost"
@@ -728,30 +686,17 @@ export function ClientProfilesEditor() {
         {nameLocked && !nameChangePending && (
           <p className="mt-1 text-xs text-slate-500">
             Only admins can rename an existing client.
-            {!isAdmin && " Use Request name edit below — an admin approves the change."}
+            {!isAdmin && " Use Request name edit — an admin approves the change."}
           </p>
         )}
-        {nameChangePending && (
+        {nameChangePending && isAdmin && (
           <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
             <p className="font-medium">Name change waiting for admin approval</p>
             <p className="mt-0.5 text-xs">
               Proposed: <span className="font-medium">{proposedName}</span> · requested by{" "}
               {client.name_change_requested_by ?? "unknown"}
             </p>
-            {isAdmin ? (
-              <p className="mt-0.5 text-xs">Approve or reject it on the Dashboard.</p>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-1 text-amber-800 hover:bg-amber-100"
-                disabled={nameRequestBusy}
-                onClick={() => void cancelPendingNameRequest(client)}
-              >
-                Cancel request
-              </Button>
-            )}
-            {nameRequestError && <p className="mt-1 text-xs text-red-600">{nameRequestError}</p>}
+            <p className="mt-0.5 text-xs">Approve or reject it on the Dashboard.</p>
           </div>
         )}
         {!nameLocked && !isNew && !isAdmin && isWithinClientCreateNameGrace(client.joined_at) && (
@@ -805,67 +750,17 @@ export function ClientProfilesEditor() {
             />
           </label>
         </div>
-        {nameLocked && !isAdmin && !nameChangePending && (
+        {nameLocked && !isAdmin && (
           <div className="mt-2">
-            {nameRequestId === client.id ? (
-              <div className="rounded-lg border border-indigo-200 bg-indigo-50/60 p-3">
-                <p className="text-xs font-medium text-indigo-900">
-                  Propose a new name — an admin gets notified and approves it before it applies.
-                </p>
-                <div className="mt-2 grid gap-2 md:grid-cols-[7rem_1fr_1fr_1fr]">
-                  <ClientTitleSelect
-                    value={nameRequestTitle}
-                    onChange={setNameRequestTitle}
-                    className="w-full min-h-[40px] rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                  />
-                  <input
-                    value={nameRequestFirst}
-                    onChange={(e) => setNameRequestFirst(e.target.value)}
-                    placeholder="First name"
-                    className="w-full min-h-[40px] rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                    autoComplete="off"
-                  />
-                  <input
-                    value={nameRequestMiddle}
-                    onChange={(e) => setNameRequestMiddle(e.target.value)}
-                    placeholder="Middle (optional)"
-                    className="w-full min-h-[40px] rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                    autoComplete="off"
-                  />
-                  <input
-                    value={nameRequestLast}
-                    onChange={(e) => setNameRequestLast(e.target.value)}
-                    placeholder="Last name"
-                    className="w-full min-h-[40px] rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                    autoComplete="off"
-                  />
-                </div>
-                {nameRequestError && (
-                  <p className="mt-1 text-xs text-red-600">{nameRequestError}</p>
-                )}
-                <div className="mt-2 flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    disabled={nameRequestBusy}
-                    onClick={() => void submitNameRequest(client)}
-                  >
-                    {nameRequestBusy ? "Sending…" : "Send to admin for approval"}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={nameRequestBusy}
-                    onClick={() => setNameRequestId(null)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <Button variant="secondary" size="sm" onClick={() => openNameRequest(client)}>
-                Request name edit
-              </Button>
-            )}
+            <ClientNameChangeRequestForm
+              key={`${client.id}-${client.name_change_requested_at ?? "none"}`}
+              client={client}
+              defaultOpen={nameRequestId === client.id}
+              onUpdated={(next) => {
+                mergeNameRequestFields(next);
+                setNameRequestId(null);
+              }}
+            />
           </div>
         )}
       </div>
@@ -1125,6 +1020,12 @@ export function ClientProfilesEditor() {
               : `${personClients.length} bespoke client${personClients.length !== 1 ? "s" : ""}`}{" "}
             · ready-made brands live under Ready-Made
           </p>
+          {!isAdmin && (
+            <p className="text-xs text-slate-500">
+              Add a new client anytime. To change an existing name, use Request name edit — an admin
+              approves it.
+            </p>
+          )}
           <AutoSaveStatusBar
             status={autoSaveStatus}
             error={autoSaveError}
