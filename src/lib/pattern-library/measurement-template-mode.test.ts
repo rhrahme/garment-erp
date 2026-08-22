@@ -58,6 +58,18 @@ const dictionary: MeasurementPointDef[] = [
     garment_types: ["overshirt", "trouser"],
   },
   {
+    id: "1-2-waist",
+    name: "1/2 Waist",
+    aliases: [],
+    garment_types: ["overshirt", "trouser"],
+  },
+  {
+    id: "1-2-waist-relux",
+    name: "1/2 Waist Relax",
+    aliases: [],
+    garment_types: ["trouser"],
+  },
+  {
     id: "bottom-width",
     name: "Bottom width",
     aliases: [],
@@ -171,10 +183,11 @@ test("Shirt+Short has no trouser piece so reduced template is not offered", () =
 
 test("buildMeasurementsFromTemplate respects entire vs reduced", () => {
   // Every trouser-tagged dictionary point above: hip, front rise, loops,
-  // shared hem, bottom width.
+  // shared hem, bottom width, shared 1/2 Waist, Waist Relax.
   const entire = buildMeasurementsFromTemplate(dictionary, "trouser", "entire");
-  assert.equal(entire.length, 5);
+  assert.equal(entire.length, 7);
   assert.ok(entire.some((point) => point.point_id === "loops-width-6-pcs"));
+  assert.ok(entire.some((point) => point.point_id === "1-2-waist-relux"));
 
   const reduced = buildMeasurementsFromTemplate(dictionary, "trouser", "reduced");
   assert.equal(reduced.length, 17);
@@ -254,6 +267,45 @@ test("custom Add point rows show on the FIRST piece view of a set garment", () =
     "custom point does not duplicate onto later pieces (matches the A4 print)"
   );
   assert.ok(trouserView.some((p) => p.point_id === "front-rise"));
+});
+
+test("Overshirt 1/2 Waist 60.5 never reappears on Trouser", () => {
+  // Pattern (22 Aug 2026): put 60.5 on Overshirt, it came back on Trouser
+  // after he deleted it 2-3 times. Same shared 1-2-waist cell. Once and for all.
+  const points = [
+    { point_id: "1-2-waist", name: "1/2 Waist" },
+    { point_id: "1-2-waist-relux", name: "Waist Relax" },
+    { point_id: "1-2-chest", name: "1/2 Chest" },
+    { point_id: "front-rise", name: "Front Rise" },
+  ];
+  const overshirt = filterTrialSheetPointsForPiece(points, "Overshirt", dictionary);
+  const trouser = filterTrialSheetPointsForPiece(points, "Trouser", dictionary);
+  assert.ok(overshirt.some((p) => p.point_id === "1-2-waist"));
+  assert.ok(overshirt.some((p) => p.point_id === "1-2-chest"));
+  assert.ok(!overshirt.some((p) => p.point_id === "1-2-waist-relux"));
+  assert.ok(!overshirt.some((p) => p.point_id === "front-rise"));
+  assert.ok(
+    !trouser.some((p) => p.point_id === "1-2-waist"),
+    "top 1/2 Waist must not show on Trouser"
+  );
+  assert.ok(trouser.some((p) => p.point_id === "1-2-waist-relux"));
+  assert.ok(trouser.some((p) => p.point_id === "front-rise"));
+
+  const sections = groupTrialSheetPointsByPiece(
+    points,
+    "Overshirt+Trouser",
+    dictionary
+  );
+  assert.ok(
+    !sections
+      .find((s) => s.label === "Trouser")
+      ?.points.some((p) => p.point_id === "1-2-waist")
+  );
+  assert.ok(
+    sections
+      .find((s) => s.label === "Overshirt")
+      ?.points.some((p) => p.point_id === "1-2-waist")
+  );
 });
 
 test("1/2 Hem Width (top hem) stays off Trouser; legacy Bottom Width rows stay on it", () => {

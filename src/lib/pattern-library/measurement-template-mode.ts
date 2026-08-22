@@ -154,7 +154,24 @@ function pointMatchesStitcherPiece(
   if (point.point_id === "1-2-hem-width" && pieceIsTrouser(pieceName)) {
     return false;
   }
+  // Same rule as hem: Overshirt 1/2 Waist (1-2-waist) is the top piece only.
+  // Pattern typed 60.5 on Overshirt and it reappeared on Trouser because the
+  // row was treated as shared. Trouser waist is Waist Relax, not this cell.
+  if (isTopPieceHalfWaist(point) && pieceIsTrouser(pieceName)) {
+    return false;
+  }
   return allow.ids.has(point.point_id) || (label !== "" && allow.names.has(label));
+}
+
+/** Overshirt / shirt 1/2 Waist - never the Trouser piece on a set garment. */
+export function isTopPieceHalfWaist(point: {
+  point_id: string;
+  name?: string | null;
+}): boolean {
+  if (measurementPointExclusivePiece(point) === "trouser") return false;
+  if (point.point_id === "1-2-waist") return true;
+  const name = normalizePointLabel(point.name);
+  return name === "1/2 waist" || name === "half waist" || name === "1/2 waist width";
 }
 
 export function garmentOffersReducedMeasurementTemplate(garmentType: string): boolean {

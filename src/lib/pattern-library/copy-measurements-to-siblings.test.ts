@@ -503,6 +503,48 @@ test("OT -> Shirt+Trouser paste must not drag the overshirt 1/2 Hem Width onto t
   assert.equal(targetOf(out, "1-2-chest"), undefined);
 });
 
+test("OT Trouser copy must not drag Overshirt 1/2 Waist 60.5 onto Trouser", () => {
+  const dictionary = [
+    ...OT_DICTIONARY,
+    {
+      id: "1-2-waist",
+      name: "1/2 Waist",
+      garment_types: ["overshirt", "trouser"],
+    },
+    {
+      id: "1-2-waist-relux",
+      name: "1/2 Waist Relax",
+      garment_types: ["trouser"],
+    },
+  ];
+  const source = pattern(
+    "src-ot",
+    "Overshirt+Trouser",
+    rows([
+      ["1-2-waist", "1/2 Waist", 60.5],
+      ["1-2-waist-relux", "Waist Relax", 48],
+      ["front-rise", "Front Rise", 28.3],
+    ])
+  );
+  const target = pattern(
+    "tgt-tr",
+    "Trouser",
+    rows([
+      ["1-2-waist-relux", "Waist Relax", null],
+      ["front-rise", "Front Rise", null],
+    ])
+  );
+
+  const out = applyCopyMeasurementsToPattern(target, source, "overwrite", {
+    pieceScope: "Trouser",
+    dictionary,
+  });
+  assert.ok(out);
+  assert.equal(targetOf(out, "1-2-waist-relux"), 48);
+  assert.equal(targetOf(out, "front-rise"), 28.3);
+  assert.equal(targetOf(out, "1-2-waist"), undefined);
+});
+
 test("listCopyMeasurementSiblings includes cross-garment piece matches after same-garment ones", () => {
   const source = pattern("src-ot", "Overshirt+Trouser", rows([["1-2-chest", "1/2 Chest", 63]]));
   const sameGarment = pattern("sib-ot", "Overshirt+Trouser", rows([]));

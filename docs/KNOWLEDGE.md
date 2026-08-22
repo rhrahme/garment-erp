@@ -301,8 +301,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   how-to, admin is emailed when it is sent and again when a Pattern
   operator opens any Pattern page and sees the banner. When we explain a
   floor fix to Pattern, add a catalog entry so they get the email and the
-  in-app banner - do not only tell the owner in chat. Notices: print How-to
-  and keep the paper (`howto-print-howto-keep-paper-v1`), leftover SO
+  in-app banner - do not only tell the owner in chat. Notices: Overshirt
+  1/2 Waist is not Trouser waist (`howto-overshirt-waist-not-trouser-v1`),
+  print How-to and keep the paper (`howto-print-howto-keep-paper-v1`), leftover SO
   lines (`howto-consolidate-removed-so-lines-v1`), leftover jobs cleared
   because ERP is source of truth
   (`howto-erp-source-of-truth-leftover-jobs-v1`), add later fabrics to
@@ -390,6 +391,15 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   overshirt/shirt hem and stays off Trouser views, prints, and piece-scoped
   copy/paste (`pointMatchesStitcherPiece`). Regressed once: an OT paste with
   Trouser scope appended the overshirt hem 63.2 onto a Shirt+Trouser sheet.
+- **Top 1/2 Waist never lands on Trouser** (Aug 22 2026): same ownership
+  rule as hem. Dictionary tags `1-2-waist` (named 1/2 Waist) with both
+  overshirt and trouser, so the Piece filter treated one cell as shared.
+  Pattern typed 60.5 on Khaled OT Overshirt (`cp-1785530548420-7205`);
+  switching to Trouser showed the same number; deleting it 2-3 times did
+  not stick because Overshirt still held it. Trouser waist is Waist Relax
+  (`1-2-waist-relux`). `isTopPieceHalfWaist` keeps `1-2-waist` / "1/2
+  Waist" / "half waist" off Trouser views, stitcher A4s, and Trouser-scoped
+  copy. Do not rematch stored point ids. Trial/Final columns stay editable.
 - **Copy sizes to consolidations** (Aug 9 2026): on a filled client sheet,
   tab **Copy sizes** lists other same-client + same-garment consolidated
   sheets and can overwrite (or fill-empty) their measurements + unit from
@@ -800,7 +810,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
-- [session-2026-08-22](session-2026-08-22.md) - Pattern Files tab; print How-to A4; empty Remark cells stay blank
+- [session-2026-08-22](session-2026-08-22.md) - Pattern Files tab; print How-to A4; empty Remark cells; Overshirt 1/2 Waist stays off Trouser
 - [session-2026-08-21](session-2026-08-21.md) - Confirm extra fabrics stay on the same pattern (live `44e567b`)
 - [session-2026-08-20](session-2026-08-20.md) - Same-pattern consolidate UI, Pattern how-to on every page, Task 1 inventory, leftover jobs
 - [session-2026-08-19](session-2026-08-19.md) - Admin copy unlock, floor dashboard, Pattern How-to tab, 10 PM auto-close + overtime confirm, Kashif leftover, Mem0, pattern login

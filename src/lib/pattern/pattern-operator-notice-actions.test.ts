@@ -12,6 +12,9 @@ import {
   PATTERN_FILES_BY_BRAND_HOWTO_BODY,
   PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID,
   PATTERN_FILES_BY_BRAND_HOWTO_TITLE,
+  OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_BODY,
+  OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_NOTICE_ID,
+  OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_TITLE,
   PRINT_HOWTO_KEEP_PAPER_BODY,
   PRINT_HOWTO_KEEP_PAPER_NOTICE_ID,
   PRINT_HOWTO_KEEP_PAPER_TITLE,
@@ -84,7 +87,24 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(PRINT_HOWTO_KEEP_PAPER_NOTICE_ID));
-    assert.equal(PATTERN_HOWTO_NOTICES[0]?.id, PRINT_HOWTO_KEEP_PAPER_NOTICE_ID);
+    assert.ok(ids.includes(OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_NOTICE_ID));
+    assert.equal(
+      PATTERN_HOWTO_NOTICES[0]?.id,
+      OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_NOTICE_ID
+    );
+  });
+});
+
+describe("Pattern overshirt 1/2 Waist is not Trouser waist", () => {
+  it("tells Pattern Overshirt 1/2 Waist stays off Trouser", () => {
+    assert.equal(
+      OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_NOTICE_ID,
+      "howto-overshirt-waist-not-trouser-v1"
+    );
+    assert.match(OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_TITLE, /1\/2 Waist/);
+    assert.match(OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_BODY, /Overshirt/);
+    assert.match(OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_BODY, /Waist Relax/);
+    assert.match(OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_BODY, /does not go to Trouser/);
   });
 });
 
