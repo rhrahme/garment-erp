@@ -397,9 +397,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Pattern typed 60.5 on Khaled OT Overshirt (`cp-1785530548420-7205`);
   switching to Trouser showed the same number; deleting it 2-3 times did
   not stick because Overshirt still held it. Trouser waist is Waist Relax
-  (`1-2-waist-relux`). `isTopPieceHalfWaist` keeps `1-2-waist` / "1/2
-  Waist" / "half waist" off Trouser views, stitcher A4s, and Trouser-scoped
-  copy. Do not rematch stored point ids. Trial/Final columns stay editable.
+  (`1-2-waist-relux`). This is site-wide piece ownership, not a Khaled
+  sheet patch: every set garment (Overshirt+Trouser, Shirt+Trouser, Suit,
+  Suit+Vest, ...) and every Trouser / Trousers / Pants piece view, stitcher
+  A4, and Trouser-scoped copy uses `isTopPieceHalfWaist` on `1-2-waist` /
+  "1/2 Waist" / "half waist". Do not rematch stored point ids. Trial/Final
+  columns stay editable.
 - **Copy sizes to consolidations** (Aug 9 2026): on a filled client sheet,
   tab **Copy sizes** lists other same-client + same-garment consolidated
   sheets and can overwrite (or fill-empty) their measurements + unit from

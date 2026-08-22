@@ -308,6 +308,37 @@ test("Overshirt 1/2 Waist 60.5 never reappears on Trouser", () => {
   );
 });
 
+test("1/2 Waist stays off Trouser on every set garment, not one client sheet", () => {
+  const points = [
+    { point_id: "1-2-waist", name: "1/2 Waist" },
+    { point_id: "1-2-waist-relux", name: "Waist Relax" },
+  ];
+  for (const piece of ["Trouser", "Trousers", "Pants"]) {
+    const rows = filterTrialSheetPointsForPiece(points, piece, dictionary);
+    assert.ok(
+      !rows.some((p) => p.point_id === "1-2-waist"),
+      `${piece} must hide top 1/2 Waist`
+    );
+    assert.ok(rows.some((p) => p.point_id === "1-2-waist-relux"));
+  }
+  for (const garment of [
+    "Overshirt+Trouser",
+    "Shirt+Trouser",
+    "Shirt+Trouser+Short",
+    "Suit",
+    "Suit+Vest",
+  ]) {
+    const trouser = groupTrialSheetPointsByPiece(points, garment, dictionary).find(
+      (section) => section.label === "Trouser"
+    );
+    assert.ok(trouser, `${garment} must have a Trouser section`);
+    assert.ok(
+      !trouser.points.some((p) => p.point_id === "1-2-waist"),
+      `${garment} Trouser must hide top 1/2 Waist`
+    );
+  }
+});
+
 test("1/2 Hem Width (top hem) stays off Trouser; legacy Bottom Width rows stay on it", () => {
   const points = [
     { point_id: "1-2-hem-width", name: "1/2 Hem Width" },
