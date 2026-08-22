@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BookOpen, CheckCircle2, ExternalLink } from "lucide-react";
+import { BookOpen, CheckCircle2, ExternalLink, Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import {
@@ -75,13 +75,24 @@ export function PatternOperatorNoticesPanel() {
           Read this on the page - do not wait for the owner
         </CardTitle>
         <p className="text-xs text-amber-900/80">
-          This is the same explanation as your Pattern email. Follow the steps here, then tap Got
-          it. After that it stays on the{" "}
+          Follow the steps here, then tap Got it. Print A4 and keep the paper at the desk. After
+          that it stays on the{" "}
           <Link href="/pattern/how-to" className="font-medium text-amber-950 underline">
             How-to
           </Link>{" "}
           tab.
         </p>
+        <div className="pt-2">
+          <Link
+            href="/pattern/how-to/print"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-amber-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-900"
+          >
+            <Printer className="h-4 w-4" />
+            Print all how-tos
+          </Link>
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         {error ? <p className="text-sm text-rose-600">{error}</p> : null}
@@ -101,9 +112,22 @@ export function PatternOperatorNoticesPanel() {
                 {notice.body}
               </pre>
               <div className="mt-3 flex flex-wrap items-center gap-2">
+                {PATTERN_HOWTO_NOTICES.some((howto) => howto.id === notice.id) ? (
+                  <Link
+                    href={`/pattern/how-to/print?id=${encodeURIComponent(notice.id)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-amber-900 hover:underline"
+                  >
+                    <Printer className="h-3.5 w-3.5" />
+                    Print this
+                  </Link>
+                ) : null}
                 {notice.href ? (
                   <Link
                     href={notice.href}
+                    target={notice.href.includes("/print") ? "_blank" : undefined}
+                    rel={notice.href.includes("/print") ? "noopener noreferrer" : undefined}
                     className="inline-flex items-center gap-1 text-sm font-medium text-amber-900 hover:underline"
                   >
                     {notice.href_label ?? "Open"}

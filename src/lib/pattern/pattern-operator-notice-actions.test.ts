@@ -12,6 +12,9 @@ import {
   PATTERN_FILES_BY_BRAND_HOWTO_BODY,
   PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID,
   PATTERN_FILES_BY_BRAND_HOWTO_TITLE,
+  PRINT_HOWTO_KEEP_PAPER_BODY,
+  PRINT_HOWTO_KEEP_PAPER_NOTICE_ID,
+  PRINT_HOWTO_KEEP_PAPER_TITLE,
   CONSOLIDATE_REMOVED_SO_LINES_HOWTO_BODY,
   CONSOLIDATE_REMOVED_SO_LINES_HOWTO_NOTICE_ID,
   CONSOLIDATE_REMOVED_SO_LINES_HOWTO_TITLE,
@@ -80,7 +83,30 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID));
-    assert.equal(PATTERN_HOWTO_NOTICES[0]?.id, PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID);
+    assert.ok(ids.includes(PRINT_HOWTO_KEEP_PAPER_NOTICE_ID));
+    assert.equal(PATTERN_HOWTO_NOTICES[0]?.id, PRINT_HOWTO_KEEP_PAPER_NOTICE_ID);
+  });
+});
+
+describe("Pattern print how-to keep paper", () => {
+  it("tells Pattern to print How-to and keep the paper at the desk", () => {
+    assert.equal(PRINT_HOWTO_KEEP_PAPER_NOTICE_ID, "howto-print-howto-keep-paper-v1");
+    assert.match(PRINT_HOWTO_KEEP_PAPER_TITLE, /Print How-to/);
+    assert.match(PRINT_HOWTO_KEEP_PAPER_BODY, /Print all how-tos/);
+    assert.match(PRINT_HOWTO_KEEP_PAPER_BODY, /A4 portrait/);
+    assert.match(PRINT_HOWTO_KEEP_PAPER_BODY, /Pattern desk/);
+    assert.match(PRINT_HOWTO_KEEP_PAPER_BODY, /got lost/);
+  });
+
+  it("puts Print on the How-to tab and the Pattern banner", () => {
+    const tab = readFileSync("src/components/pattern/PatternHowToTab.tsx", "utf8");
+    const banner = readFileSync("src/components/pattern/PatternOperatorNoticesPanel.tsx", "utf8");
+    assert.match(tab, /\/pattern\/how-to\/print/);
+    assert.match(tab, /Print all how-tos/);
+    assert.match(tab, /Print this/);
+    assert.match(banner, /\/pattern\/how-to\/print/);
+    assert.match(banner, /Print all how-tos/);
+    assert.match(banner, /Print this/);
   });
 });
 

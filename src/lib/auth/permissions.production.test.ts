@@ -308,6 +308,7 @@ describe("pattern_operator fabric swatch image routes", () => {
   });
 
   it("still blocks order/accounting routes for pattern_operator", () => {
+    assert.equal(isPatternOperatorRouteAllowed("/pattern/how-to/print"), true);
     assert.equal(isPatternOperatorRouteAllowed("/pattern/library/fabrics/client-1"), true);
     assert.equal(isPatternOperatorRouteAllowed("/api/pattern/library/client-fabrics/x"), true);
     assert.equal(isPatternOperatorRouteAllowed("/api/sales/client-photos"), true);

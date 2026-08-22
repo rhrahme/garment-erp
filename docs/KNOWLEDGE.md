@@ -288,19 +288,22 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   banner Aug 20): instructional how-tos appear at the top of every Pattern
   ERP page (Queue, order board, jobs, library) until Pattern taps Got it,
   and are emailed to `PATTERN_EMAILS`. They stay on **Pattern -> How-to**
-  (`/pattern/how-to`) after acknowledge. Catalog is `PATTERN_HOWTO_NOTICES`
-  (newest first); `ensureAllPatternHowToNotices` seeds + emails any missing
-  entry. Store `pattern_operator_notices`; APIs `/api/pattern/notices` +
-  `/api/v1/pattern/notices` (`?status=all` for the tab) with events
-  `pattern.operator_notice_created` / `pattern.operator_notice_acknowledged`
-  / `pattern.operator_notice_seen`. How-to emails go to both Pattern
-  mailboxes (`hagan.dp1@gmail.com` and `pattern@hagan.pro`) plus
-  `PATTERN_EMAILS`. For the add-to-existing-group how-to, admin is emailed
-  when it is sent and again when a Pattern operator opens any Pattern page
-  and sees the banner. When we explain a floor fix to Pattern, add a catalog
-  entry so they get the email and the in-app banner - do not only tell the
-  owner in chat. Notices: leftover SO lines
-  (`howto-consolidate-removed-so-lines-v1`), leftover jobs cleared
+  (`/pattern/how-to`) after acknowledge. Pattern can print the catalog at
+  `/pattern/how-to/print` (A4, print layout, optional `?id=` for one card)
+  from How-to and from the banner - keep the paper at the desk. Catalog is
+  `PATTERN_HOWTO_NOTICES` (newest first); `ensureAllPatternHowToNotices`
+  seeds + emails any missing entry. Store `pattern_operator_notices`; APIs
+  `/api/pattern/notices` + `/api/v1/pattern/notices` (`?status=all` for the
+  tab) with events `pattern.operator_notice_created` /
+  `pattern.operator_notice_acknowledged` / `pattern.operator_notice_seen`.
+  How-to emails go to both Pattern mailboxes (`hagan.dp1@gmail.com` and
+  `pattern@hagan.pro`) plus `PATTERN_EMAILS`. For the add-to-existing-group
+  how-to, admin is emailed when it is sent and again when a Pattern
+  operator opens any Pattern page and sees the banner. When we explain a
+  floor fix to Pattern, add a catalog entry so they get the email and the
+  in-app banner - do not only tell the owner in chat. Notices: print How-to
+  and keep the paper (`howto-print-howto-keep-paper-v1`), leftover SO
+  lines (`howto-consolidate-removed-so-lines-v1`), leftover jobs cleared
   because ERP is source of truth
   (`howto-erp-source-of-truth-leftover-jobs-v1`), add later fabrics to
   the first group (`howto-add-fabrics-to-existing-consolidation-v2`),
@@ -455,6 +458,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   embeds font-mono as Courier/Type3 and overlaps glyphs). **Never** use
   transform/zoom scale, `max-w-*` wrappers, or `break-inside: avoid-page` on
   tall blocks - they trigger shrink-to-fit tiny strips.
+- **Pattern How-to A4** (Aug 22 2026): `/pattern/how-to/print` (optional
+  `?id=`). Same A4 recipe. Print all or one card from How-to / banner.
+  Keep the paper at the Pattern desk.
 - **Inventory box stickers** are **4x6 inch**, one label per page
   (`@page { size: 4in 6in; margin: 0; }`), not A4. Same no-scale / no
   max-w / Helvetica rules. Print 4x6, Actual size.
@@ -793,7 +799,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
-- [session-2026-08-22](session-2026-08-22.md) - Pattern Files tab: clients by brand, TUD/DXF/RUL uploaded or missing
+- [session-2026-08-22](session-2026-08-22.md) - Pattern Files tab; print How-to A4 and keep paper at the desk
 - [session-2026-08-21](session-2026-08-21.md) - Confirm extra fabrics stay on the same pattern (live `44e567b`)
 - [session-2026-08-20](session-2026-08-20.md) - Same-pattern consolidate UI, Pattern how-to on every page, Task 1 inventory, leftover jobs
 - [session-2026-08-19](session-2026-08-19.md) - Admin copy unlock, floor dashboard, Pattern How-to tab, 10 PM auto-close + overtime confirm, Kashif leftover, Mem0, pattern login

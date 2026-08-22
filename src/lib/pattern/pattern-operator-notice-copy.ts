@@ -77,6 +77,22 @@ export const CONSOLIDATE_REMOVED_SO_LINES_HOWTO_BODY = [
   "If you still need a removed fabric (example: Ibrahim SO-2026-0130 S21006 / S21007 / S21008 / S21009), ask QC to put it back on the sales order first. Pattern cannot consolidate a fabric that is no longer on the order.",
 ].join("\n");
 
+export const PRINT_HOWTO_KEEP_PAPER_NOTICE_ID = "howto-print-howto-keep-paper-v1";
+
+export const PRINT_HOWTO_KEEP_PAPER_TITLE =
+  "Print How-to and keep the paper at the desk";
+
+export const PRINT_HOWTO_KEEP_PAPER_BODY = [
+  "Print the How-to steps and keep the paper next to you. No excuse that you got lost.",
+  "",
+  "1. Open Pattern -> How-to.",
+  "2. Press Print all how-tos, or Print this on one card.",
+  "3. Print A4 portrait, Actual size.",
+  "4. Keep the paper at the Pattern desk.",
+  "",
+  "The same steps stay on the ERP How-to tab. Paper is so you can follow them without waiting for the owner.",
+].join("\n");
+
 export const PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID = "howto-pattern-files-by-brand-v1";
 
 export const PATTERN_FILES_BY_BRAND_HOWTO_TITLE =
@@ -134,6 +150,14 @@ export const ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_BODY = [
 
 /** Newest first. Each entry is emailed to Pattern and kept on the How-to tab. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: PRINT_HOWTO_KEEP_PAPER_NOTICE_ID,
+    title: PRINT_HOWTO_KEEP_PAPER_TITLE,
+    body: PRINT_HOWTO_KEEP_PAPER_BODY,
+    href: "/pattern/how-to/print",
+    href_label: "Print all how-tos",
+    audience: "pattern",
+  },
   {
     id: PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID,
     title: PATTERN_FILES_BY_BRAND_HOWTO_TITLE,

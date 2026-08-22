@@ -6,7 +6,7 @@ export default function PatternHowToPage() {
     <div>
       <PageHeader
         title="How-to"
-        description="Step-by-step explanations for Pattern. New ones show at the top of every Pattern page and are emailed. They stay here after you tap Got it."
+        description="Step-by-step explanations for Pattern. Print A4 and keep the paper at the desk. New ones show at the top of every Pattern page and are emailed. They stay here after you tap Got it."
       />
       <PatternHowToTab />
     </div>

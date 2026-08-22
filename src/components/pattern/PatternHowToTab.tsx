@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BookOpen, CheckCircle2, ExternalLink } from "lucide-react";
+import { BookOpen, CheckCircle2, ExternalLink, Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { PATTERN_HOWTO_NOTICES } from "@/lib/pattern/pattern-operator-notice-copy";
@@ -94,9 +94,21 @@ export function PatternHowToTab() {
           Pattern how-to
         </CardTitle>
         <p className="text-xs text-indigo-800/80">
-          Every floor fix we explain stays here. New ones also land on Pattern email and at the
-          top of every Pattern page (Queue, order board, library) until you tap Got it.
+          Every floor fix we explain stays here. Print A4 and keep the paper at the desk so you
+          cannot get lost. New ones also land on Pattern email and at the top of every Pattern
+          page (Queue, order board, library) until you tap Got it.
         </p>
+        <div className="pt-2">
+          <Link
+            href="/pattern/how-to/print"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+          >
+            <Printer className="h-4 w-4" />
+            Print all how-tos
+          </Link>
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         {error ? <p className="text-sm text-rose-600">{error}</p> : null}
@@ -121,9 +133,22 @@ export function PatternHowToTab() {
               {notice.body}
             </pre>
             <div className="mt-3 flex flex-wrap items-center gap-2">
+              {PATTERN_HOWTO_NOTICES.some((howto) => howto.id === notice.id) ? (
+                <Link
+                  href={`/pattern/how-to/print?id=${encodeURIComponent(notice.id)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-indigo-700 hover:underline"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  Print this
+                </Link>
+              ) : null}
               {notice.href ? (
                 <Link
                   href={notice.href}
+                  target={notice.href.includes("/print") ? "_blank" : undefined}
+                  rel={notice.href.includes("/print") ? "noopener noreferrer" : undefined}
                   className="inline-flex items-center gap-1 text-sm font-medium text-indigo-700 hover:underline"
                 >
                   {notice.href_label ?? "Open"}
