@@ -357,7 +357,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   upsert missing rows. "Load template points" works with or without a linked
   base and merges dictionary points onto all trials (keeps entered values).
   Do not re-lock row add/remove to a single trial or hide template load when
-  `base_pattern_id` is set.
+  `base_pattern_id` is set. Empty Remark cells stay blank - no
+  "Remark for stitcher" placeholder (looks like a saved note on every row).
 - **Trouser measurement template: Entire vs Reduced** (Aug 9 2026): when
   creating a trouser sheet (or Load reduced / Load entire on the sheet),
   Pattern chooses `measurement_template_mode`. **Reduced** (default) is the
@@ -799,7 +800,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
-- [session-2026-08-22](session-2026-08-22.md) - Pattern Files tab; print How-to A4 and keep paper at the desk
+- [session-2026-08-22](session-2026-08-22.md) - Pattern Files tab; print How-to A4; empty Remark cells stay blank
 - [session-2026-08-21](session-2026-08-21.md) - Confirm extra fabrics stay on the same pattern (live `44e567b`)
 - [session-2026-08-20](session-2026-08-20.md) - Same-pattern consolidate UI, Pattern how-to on every page, Task 1 inventory, leftover jobs
 - [session-2026-08-19](session-2026-08-19.md) - Admin copy unlock, floor dashboard, Pattern How-to tab, 10 PM auto-close + overtime confirm, Kashif leftover, Mem0, pattern login

@@ -1665,7 +1665,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                                 setPointRemarks(point.point_id, e.target.value || null)
                               }
                               className="w-full min-w-[9rem] rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-300 focus:outline-none"
-                              placeholder="Remark for stitcher"
+                              placeholder=""
                             />
                           </td>
                           <td className="px-1 py-1.5">
@@ -2011,7 +2011,7 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
                               setPointRemarks(row.point_id, e.target.value || null)
                             }
                             className="w-full min-w-[9rem] rounded-md border border-slate-200 px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-300 focus:outline-none"
-                            placeholder="Remark for stitcher"
+                            placeholder=""
                           />
                         </td>
                         <td className="px-1 py-1.5 text-center">

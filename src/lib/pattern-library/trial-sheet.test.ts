@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import {
   addPointToAllVersions,
@@ -150,5 +151,12 @@ describe("pattern sheet-wide measurement edits", () => {
       next.versions[1]!.measurements.find((m) => m.point_id === "chest")?.base_value,
       42
     );
+  });
+});
+
+describe("measurement sheet remark cells", () => {
+  it("does not fill empty remark cells with Remark for stitcher", () => {
+    const sheet = readFileSync("src/components/pattern/library/ClientPatternDetail.tsx", "utf8");
+    assert.doesNotMatch(sheet, /Remark for stitcher/);
   });
 });
