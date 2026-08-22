@@ -401,7 +401,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   sheet patch: every set garment (Overshirt+Trouser, Shirt+Trouser, Suit,
   Suit+Vest, ...) and every Trouser / Trousers / Pants piece view, stitcher
   A4, and Trouser-scoped copy uses `isTopPieceHalfWaist` on `1-2-waist` /
-  "1/2 Waist" / "half waist". Do not rematch stored point ids. Trial/Final
+  "1/2 Waist" / "half waist". Verified on Khaled OT
+  (`cp-1785530548420-7205`) plus every local set sheet with a Trouser
+  piece (80, zero leaks). Do not rematch stored point ids. Trial/Final
   columns stay editable.
 - **Copy sizes to consolidations** (Aug 9 2026): on a filled client sheet,
   tab **Copy sizes** lists other same-client + same-garment consolidated
