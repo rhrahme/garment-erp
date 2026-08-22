@@ -100,7 +100,7 @@ export function PatternMissingFilesList() {
 
       {report ? (
         <p className="text-sm text-slate-600">
-          {report.client_count} clients ù {report.missing_tud_count} missing TUD ù{" "}
+          {report.client_count} clients | {report.missing_tud_count} missing TUD |{" "}
           {report.missing_other_count} missing DXF/RUL
         </p>
       ) : null}
@@ -142,9 +142,9 @@ export function PatternMissingFilesList() {
                       </p>
                       <p className="text-xs text-slate-500">
                         {row.pattern_ref ?? "Not consolidated"}
-                        {row.so_numbers.length > 0 ? ` ù ${row.so_numbers.join(", ")}` : ""}
+                        {row.so_numbers.length > 0 ? ` | ${row.so_numbers.join(", ")}` : ""}
                         {row.missing_tud_labels.length > 0 && !row.has_tud
-                          ? ` ù ${row.missing_tud_labels.join(", ")}`
+                          ? ` | ${row.missing_tud_labels.join(", ")}`
                           : ""}
                       </p>
                     </div>
