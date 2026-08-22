@@ -9,6 +9,9 @@ import {
   CONSOLIDATE_FABRICS_HOWTO_NOTICE_ID,
   CONSOLIDATE_FABRICS_HOWTO_TITLE,
   PATTERN_HOWTO_NOTICES,
+  PATTERN_FILES_BY_BRAND_HOWTO_BODY,
+  PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID,
+  PATTERN_FILES_BY_BRAND_HOWTO_TITLE,
   CONSOLIDATE_REMOVED_SO_LINES_HOWTO_BODY,
   CONSOLIDATE_REMOVED_SO_LINES_HOWTO_NOTICE_ID,
   CONSOLIDATE_REMOVED_SO_LINES_HOWTO_TITLE,
@@ -76,10 +79,8 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(CONSOLIDATE_REMOVED_SO_LINES_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID));
-    assert.equal(
-      PATTERN_HOWTO_NOTICES[0]?.id,
-      ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID
-    );
+    assert.ok(ids.includes(PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID));
+    assert.equal(PATTERN_HOWTO_NOTICES[0]?.id, PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID);
   });
 });
 
@@ -95,6 +96,14 @@ describe("Pattern add-to-existing-consolidation how-to", () => {
     assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /Same pattern/);
     assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /Add to this pattern/);
     assert.match(ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_BODY, /Do not press New pattern/);
+  });
+
+  it("teaches Pattern -> Files to scan TUD DXF RUL by brand", () => {
+    assert.equal(PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID, "howto-pattern-files-by-brand-v1");
+    assert.match(PATTERN_FILES_BY_BRAND_HOWTO_TITLE, /Files/);
+    assert.match(PATTERN_FILES_BY_BRAND_HOWTO_BODY, /grouped by brand/);
+    assert.match(PATTERN_FILES_BY_BRAND_HOWTO_BODY, /TUD is required/);
+    assert.match(PATTERN_FILES_BY_BRAND_HOWTO_BODY, /Open Files|Press Open/);
   });
 
   it("shows open how-tos on every Pattern page, not only email or Queue home", () => {

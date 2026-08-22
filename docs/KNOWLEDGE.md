@@ -305,7 +305,14 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   (`howto-erp-source-of-truth-leftover-jobs-v1`), add later fabrics to
   the first group (`howto-add-fabrics-to-existing-consolidation-v2`),
   consolidate fabrics (`howto-consolidate-fabrics-v1`), remove one fabric
-  from a group (`howto-remove-fabric-from-consolidation-v1`).
+  from a group (`howto-remove-fabric-from-consolidation-v1`), Files tab
+  (`howto-pattern-files-by-brand-v1`).
+- **Pattern Files tab** (Aug 22 2026): `/pattern/missing-files` lists
+  clients by house brand and shows TUD / DXF / RUL yes or no on each
+  sheet. TUD is required. DXF and RUL are the other files. Unlinked jobs
+  show as No pattern. Filters: All, Missing TUD, Missing DXF / RUL.
+  APIs `GET /api/pattern/missing-files` and
+  `GET /api/v1/pattern/missing-files` (`?filter=`).
 - **ERP is the source of truth for order fabrics** (Aug 20 2026): ClickUp
   was a one-time export. Do not block Pattern or QC on a ClickUp check.
   Leftover pattern jobs whose fabric line is no longer on the sales order
@@ -782,6 +789,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
+- [session-2026-08-22](session-2026-08-22.md) - Pattern Files tab: clients by brand, TUD/DXF/RUL uploaded or missing
 - [session-2026-08-21](session-2026-08-21.md) - Confirm extra fabrics stay on the same pattern (live `44e567b`)
 - [session-2026-08-20](session-2026-08-20.md) - Same-pattern consolidate UI, Pattern how-to on every page, Task 1 inventory, leftover jobs
 - [session-2026-08-19](session-2026-08-19.md) - Admin copy unlock, floor dashboard, Pattern How-to tab, 10 PM auto-close + overtime confirm, Kashif leftover, Mem0, pattern login

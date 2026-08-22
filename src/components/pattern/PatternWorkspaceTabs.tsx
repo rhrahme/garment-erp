@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BookOpen, LibraryBig, ListTodo } from "lucide-react";
+import { BookOpen, FileUp, LibraryBig, ListTodo } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
   { href: "/pattern", label: "Queue", icon: ListTodo, match: "queue" as const },
+  { href: "/pattern/missing-files", label: "Files", icon: FileUp, match: "prefix" as const },
   { href: "/pattern/how-to", label: "How-to", icon: BookOpen, match: "prefix" as const },
   { href: "/pattern/library", label: "Library", icon: LibraryBig, match: "prefix" as const },
 ];

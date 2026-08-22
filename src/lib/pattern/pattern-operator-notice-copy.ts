@@ -77,6 +77,23 @@ export const CONSOLIDATE_REMOVED_SO_LINES_HOWTO_BODY = [
   "If you still need a removed fabric (example: Ibrahim SO-2026-0130 S21006 / S21007 / S21008 / S21009), ask QC to put it back on the sales order first. Pattern cannot consolidate a fabric that is no longer on the order.",
 ].join("\n");
 
+export const PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID = "howto-pattern-files-by-brand-v1";
+
+export const PATTERN_FILES_BY_BRAND_HOWTO_TITLE =
+  "Pattern -> Files: see who is missing TUD, DXF, or RUL";
+
+export const PATTERN_FILES_BY_BRAND_HOWTO_BODY = [
+  "Open Pattern -> Files. Clients are grouped by brand.",
+  "",
+  "Yes = uploaded. No = still missing.",
+  "TUD is required. DXF and RUL are the other files.",
+  "",
+  "Missing TUD filter = no measurement file yet.",
+  "Missing DXF / RUL filter = TUD is there, other files are not.",
+  "",
+  "Press Open to upload on that pattern. Press Open order if there is no pattern sheet yet.",
+].join("\n");
+
 export const ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID =
   "howto-add-fabrics-to-existing-consolidation-v2";
 
@@ -117,6 +134,14 @@ export const ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_BODY = [
 
 /** Newest first. Each entry is emailed to Pattern and kept on the How-to tab. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID,
+    title: PATTERN_FILES_BY_BRAND_HOWTO_TITLE,
+    body: PATTERN_FILES_BY_BRAND_HOWTO_BODY,
+    href: "/pattern/missing-files",
+    href_label: "Open Files",
+    audience: "pattern",
+  },
   {
     id: ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID,
     title: ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_TITLE,

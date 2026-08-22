@@ -213,6 +213,10 @@ export function ZapierSetup() {
               PATCH {baseUrl}/api/v1/pattern/alterations/pending/[id] (action:
               acknowledge | chart_updated | stitcher_comments)
             </li>
+            <li>
+              GET {baseUrl}/api/v1/pattern/missing-files (?filter=all|missing_tud|missing_other)
+              clients by brand with TUD / DXF / RUL uploaded or missing
+            </li>
             <li>GET/POST {baseUrl}/api/v1/pattern/notices (?status=all for How-to tab)</li>
             <li>
               PATCH {baseUrl}/api/v1/pattern/notices/[id] (action: acknowledge)
