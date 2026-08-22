@@ -311,8 +311,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   clients by house brand and shows TUD / DXF / RUL yes or no on each
   sheet. TUD is required. DXF and RUL are the other files. Unlinked jobs
   show as No pattern. Filters: All, Missing TUD, Missing DXF / RUL.
-  APIs `GET /api/pattern/missing-files` and
+  Queue has a Files card so Pattern opens the ERP page. Email is an extra
+  copy only. APIs `GET /api/pattern/missing-files` and
   `GET /api/v1/pattern/missing-files` (`?filter=`).
+- **Email is extra copy** (Aug 22 2026): when Pattern or admin must see
+  something, build it on the ERP page (tab, banner, list). Email is a
+  backup, not the product.
 - **ERP is the source of truth for order fabrics** (Aug 20 2026): ClickUp
   was a one-time export. Do not block Pattern or QC on a ClickUp check.
   Leftover pattern jobs whose fabric line is no longer on the sales order
