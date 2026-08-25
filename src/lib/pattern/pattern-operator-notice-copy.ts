@@ -77,6 +77,22 @@ export const CONSOLIDATE_REMOVED_SO_LINES_HOWTO_BODY = [
   "If you still need a removed fabric (example: Ibrahim SO-2026-0130 S21006 / S21007 / S21008 / S21009), ask QC to put it back on the sales order first. Pattern cannot consolidate a fabric that is no longer on the order.",
 ].join("\n");
 
+export const FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_NOTICE_ID =
+  "howto-fabric-spec-both-accounts-v1";
+
+export const FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_TITLE =
+  "Fabric Specification is on the left menu (prices stay hidden)";
+
+export const FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_BODY = [
+  "Both Pattern logins see the same Fabric Specification page. Composition, GSM, width, HS, color, and swatches are there. List prices stay hidden.",
+  "",
+  "1. Left menu: Fabric Specification.",
+  "2. Search the fabric number.",
+  "3. Open Preview for the swatch and the spec lines.",
+  "",
+  "If you do not see prices, that is correct. Pattern does not see list prices.",
+].join("\n");
+
 export const OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_NOTICE_ID =
   "howto-overshirt-waist-not-trouser-v1";
 
@@ -164,6 +180,14 @@ export const ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_BODY = [
 
 /** Newest first. Each entry is emailed to Pattern and kept on the How-to tab. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_NOTICE_ID,
+    title: FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_TITLE,
+    body: FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_BODY,
+    href: "/fabric-specification",
+    href_label: "Open Fabric Specification",
+    audience: "pattern",
+  },
   {
     id: OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_NOTICE_ID,
     title: OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_TITLE,

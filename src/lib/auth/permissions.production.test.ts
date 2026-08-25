@@ -20,6 +20,7 @@ import {
   isInventoryClerkEmail,
   isInventoryClerkRouteAllowed,
   parsePatternNoticeEmails,
+  isPatternOperatorEmail,
   isPatternOperatorRouteAllowed,
   isProductionOperatorRouteAllowed,
   isSalesOperatorRouteAllowed,
@@ -330,6 +331,23 @@ describe("pattern how-to email recipients", () => {
 });
 
 describe("pattern_operator price surface lockdown (hagan.dp1@gmail.com)", () => {
+  it("classifies pattern@hagan.pro as pattern_operator without PATTERN_EMAILS", () => {
+    const previous = process.env.PATTERN_EMAILS;
+    delete process.env.PATTERN_EMAILS;
+    try {
+      assert.equal(isPatternOperatorEmail("pattern@hagan.pro"), true);
+      assert.equal(
+        resolveRestrictedAccess(null, "pattern@hagan.pro", false),
+        "pattern_operator"
+      );
+      assert.equal(defaultPathForEmail("pattern@hagan.pro"), "/pattern");
+      assert.equal(isPatternOperatorRouteAllowed("/fabric-specification"), true);
+    } finally {
+      if (previous === undefined) delete process.env.PATTERN_EMAILS;
+      else process.env.PATTERN_EMAILS = previous;
+    }
+  });
+
   it("classifies the PATTERN_EMAILS login as pattern_operator and lands on /pattern", () => {
     const previous = process.env.PATTERN_EMAILS;
     process.env.PATTERN_EMAILS = "hagan.dp1@gmail.com";

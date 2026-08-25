@@ -527,21 +527,27 @@ export function parseStitchEmails(): Set<string> {
   return new Set([...BUILTIN_STITCH_OPERATOR_EMAILS, ...fromEnv]);
 }
 
-export function parsePatternEmails(): Set<string> {
-  const raw = process.env.PATTERN_EMAILS?.trim() ?? "";
-  return new Set(
-    raw
-      .split(",")
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean)
-  );
-}
-
 /** Mailboxes that receive Pattern how-to emails (Mohtajul + shared Pattern 2). */
 const BUILTIN_PATTERN_NOTICE_EMAILS = [
   "hagan.dp1@gmail.com",
   "pattern@hagan.pro",
 ] as const;
+
+/**
+ * Same floor-mailbox rule as production@ / stitch@: Pattern 2 Email
+ * `pattern@hagan.pro` is always a pattern_operator. Do not depend on
+ * Vercel PATTERN_EMAILS for that account.
+ */
+const BUILTIN_PATTERN_OPERATOR_EMAILS = BUILTIN_PATTERN_NOTICE_EMAILS;
+
+export function parsePatternEmails(): Set<string> {
+  const raw = process.env.PATTERN_EMAILS?.trim() ?? "";
+  const fromEnv = raw
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+  return new Set([...BUILTIN_PATTERN_OPERATOR_EMAILS, ...fromEnv]);
+}
 
 export function parsePatternNoticeEmails(): Set<string> {
   return new Set([...BUILTIN_PATTERN_NOTICE_EMAILS, ...parsePatternEmails()]);

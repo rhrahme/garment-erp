@@ -12,6 +12,9 @@ import {
   PATTERN_FILES_BY_BRAND_HOWTO_BODY,
   PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID,
   PATTERN_FILES_BY_BRAND_HOWTO_TITLE,
+  FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_BODY,
+  FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_NOTICE_ID,
+  FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_TITLE,
   OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_BODY,
   OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_NOTICE_ID,
   OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_TITLE,
@@ -88,10 +91,24 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(PRINT_HOWTO_KEEP_PAPER_NOTICE_ID));
     assert.ok(ids.includes(OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_NOTICE_ID));
+    assert.ok(ids.includes(FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_NOTICE_ID));
     assert.equal(
       PATTERN_HOWTO_NOTICES[0]?.id,
-      OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_NOTICE_ID
+      FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_NOTICE_ID
     );
+  });
+});
+
+describe("Pattern fabric spec both accounts", () => {
+  it("tells Pattern Fabric Specification is on the left menu and prices stay hidden", () => {
+    assert.equal(
+      FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_NOTICE_ID,
+      "howto-fabric-spec-both-accounts-v1"
+    );
+    assert.match(FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_TITLE, /Fabric Specification/);
+    assert.match(FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_BODY, /Left menu/);
+    assert.match(FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_BODY, /prices stay hidden/i);
+    assert.match(FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_BODY, /does not see list prices/);
   });
 });
 

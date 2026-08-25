@@ -221,8 +221,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `2625917972` + either password. Both create the badge session (not the
   old shared mailbox). Historical writes still label as Mohtajul.
   Temporary second operator until a real badge is issued: `XX22` + the
-  password admin set. Do not require a numeric-only badge; alphanumeric
-  temp IDs are valid.
+  password admin set, or Email `pattern@hagan.pro` (builtin
+  pattern_operator, same rule as production@ / stitch@). Do not require
+  a numeric-only badge; alphanumeric temp IDs are valid. Both logins
+  share one workspace. Fabric Specification is on the Pattern left nav;
+  list prices stay hidden.
 - **Two ways to use a base for a client** (do not collapse into one):
   (1) on the base pattern page - client fit column (Use as base under a size);
   (2) on the client job measurement sheet - Load from base pattern into Sample.
@@ -301,8 +304,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   how-to, admin is emailed when it is sent and again when a Pattern
   operator opens any Pattern page and sees the banner. When we explain a
   floor fix to Pattern, add a catalog entry so they get the email and the
-  in-app banner - do not only tell the owner in chat. Notices: Overshirt
-  1/2 Waist is not Trouser waist (`howto-overshirt-waist-not-trouser-v1`),
+  in-app banner - do not only tell the owner in chat. Notices: Fabric
+  Specification is on the left menu (`howto-fabric-spec-both-accounts-v1`),
+  Overshirt 1/2 Waist is not Trouser waist (`howto-overshirt-waist-not-trouser-v1`),
   print How-to and keep the paper (`howto-print-howto-keep-paper-v1`), leftover SO
   lines (`howto-consolidate-removed-so-lines-v1`), leftover jobs cleared
   because ERP is source of truth
@@ -786,7 +790,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   (or badge 2625917972) accepts the old mailbox password or the badge
   password and signs him in as the badge user. Old leftover gmail
   sessions are still cleared (isEmailLoginDisabled). Second operator
-  temp ID: XX22.
+  temp ID: XX22. Email `pattern@hagan.pro` is a builtin Pattern operator
+  (Aug 25 2026) so the second account does not depend on Vercel
+  PATTERN_EMAILS. Fabric Specification stays on the Pattern nav; prices
+  stay hidden.
 - **Login log** (Aug 19 2026): admin sees who signed in or failed, time
   (Riyadh), device, and IP at `/logins` and on the dashboard. Email and
   badge attempts are recorded (no passwords). Store: `login_events`.
@@ -815,6 +822,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
+- [session-2026-08-25](session-2026-08-25.md) - Pattern 2 Email pattern@hagan.pro is a Pattern login; Fabric Specification on the left nav
 - [session-2026-08-22](session-2026-08-22.md) - Pattern Files tab; print How-to A4; empty Remark cells; Overshirt 1/2 Waist stays off Trouser
 - [session-2026-08-21](session-2026-08-21.md) - Confirm extra fabrics stay on the same pattern (live `44e567b`)
 - [session-2026-08-20](session-2026-08-20.md) - Same-pattern consolidate UI, Pattern how-to on every page, Task 1 inventory, leftover jobs
