@@ -1,4 +1,5 @@
 import { formatClientDisplayName, formatReferredByName } from "@/lib/clients/names";
+import { matchesLooseName } from "@/lib/search/name-search";
 import { matchesNormalizedSearch } from "@/lib/search/normalize";
 import type { ClientProfile } from "@/lib/types/clients";
 
@@ -72,29 +73,35 @@ export function searchClients(
   const trimmed = query.trim();
   if (!trimmed) return clients;
 
-  return clients.filter((client) =>
-    matchesNormalizedSearch(
-      [
-        formatClientDisplayName(client),
-        client.title,
-        client.first_name,
-        client.middle_name,
-        client.last_name,
-        client.code,
-        ...(options.excludeContactFields
-          ? []
-          : [
-              client.email,
-              client.phone,
-              client.contact_person,
-              formatReferredByName(client),
-              client.country,
-            ]),
-        client.city,
-      ],
-      trimmed
-    )
-  );
+  return clients.filter((client) => {
+    const displayName = formatClientDisplayName(client);
+    return (
+      matchesNormalizedSearch(
+        [
+          displayName,
+          client.title,
+          client.first_name,
+          client.middle_name,
+          client.last_name,
+          client.code,
+          ...(options.excludeContactFields
+            ? []
+            : [
+                client.email,
+                client.phone,
+                client.contact_person,
+                formatReferredByName(client),
+                client.country,
+              ]),
+          client.city,
+        ],
+        trimmed
+      ) ||
+      matchesLooseName(displayName, trimmed) ||
+      matchesLooseName(client.first_name, trimmed) ||
+      matchesLooseName(client.last_name, trimmed)
+    );
+  });
 }
 
 export function filterPersonClients(clients: ClientProfile[]): ClientProfile[] {

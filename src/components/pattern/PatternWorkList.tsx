@@ -11,6 +11,7 @@ import { getBrandClientCodePrefix } from "@/lib/clients/codes";
 import { orderMatchesBrandClientPrefix } from "@/lib/clients/orphan-reconciliation";
 import { groupPatternJobsBySalesOrder } from "@/lib/pattern/queue-groups";
 import { jobMatchesTab } from "@/lib/pattern/work-tabs";
+import { matchesLooseName } from "@/lib/search/name-search";
 import { matchesNormalizedSearch } from "@/lib/search/normalize";
 import {
   itemsForBrandOrSearch,
@@ -123,18 +124,20 @@ export function PatternWorkList({
     return jobsForView.filter((row) => {
       if (!jobMatchesTab(row.job.status, tab)) return false;
       const { job } = row;
-      return matchesNormalizedSearch(
-        [
-          job.so_number,
-          job.client_name,
-          job.client_code,
-          job.garment_type,
-          job.fabric_number,
-          formatArticle(job.article_number),
-          row.retail_brand ?? "",
-          row.house_brand ?? "",
-        ],
-        search
+      return (
+        matchesNormalizedSearch(
+          [
+            job.so_number,
+            job.client_name,
+            job.client_code,
+            job.garment_type,
+            job.fabric_number,
+            formatArticle(job.article_number),
+            row.retail_brand ?? "",
+            row.house_brand ?? "",
+          ],
+          search
+        ) || matchesLooseName(job.client_name, search)
       );
     });
   }, [jobsForView, tab, search]);
@@ -144,7 +147,8 @@ export function PatternWorkList({
   const awaitingOrders = useMemo(() => {
     if (tab !== "new") return [];
     return awaitingForView.filter((order) =>
-      matchesNormalizedSearch([order.so_number, order.client_name, order.client_code], search)
+      matchesNormalizedSearch([order.so_number, order.client_name, order.client_code], search) ||
+        matchesLooseName(order.client_name, search)
     );
   }, [awaitingForView, tab, search]);
 

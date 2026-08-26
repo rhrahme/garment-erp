@@ -10,6 +10,7 @@ import { useMeasurementUnitPreference } from "@/hooks/useMeasurementUnitPreferen
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
 import { formatClientDisplayName } from "@/lib/clients/names";
 import { orderMatchesBrandClientPrefix } from "@/lib/clients/orphan-reconciliation";
+import { matchesLooseName } from "@/lib/search/name-search";
 import { matchesNormalizedSearch } from "@/lib/search/normalize";
 import { itemsForBrandOrSearch, searchLooksAcrossBrands } from "@/lib/search/search-across-brands";
 import { BasePatternCascadePicker } from "@/components/pattern/library/BasePatternCascadePicker";
@@ -171,7 +172,7 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
       matchesNormalizedSearch(
         [pattern.pattern_ref, pattern.client_name, pattern.client_code, pattern.garment_type, pattern.fabric],
         search
-      )
+      ) || matchesLooseName(pattern.client_name, search)
     );
   }, [library, brandScopedClientPatterns, search]);
 

@@ -86,7 +86,7 @@ export const SEARCH_ACROSS_BRANDS_HOWTO_TITLE =
 export const SEARCH_ACROSS_BRANDS_HOWTO_BODY = [
   "Type the client name in the search box. You do not need to tap All brands first.",
   "",
-  "1. Example: type ibi. Ibrahim appears even if Gilani was selected.",
+  "1. Example: type ibi or ibra. Ibrahim appears even if Gilani was selected.",
   "2. Gilani only has Gilani clients. Ibrahim is Fouad Rahme.",
   "3. Both Pattern logins share the same full list. Search looks in every brand.",
 ].join("\n");
