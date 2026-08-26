@@ -229,7 +229,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   restore a leftover Gilani/FR chip from that computer). New (8) vs New
   (51) is a brand filter, not two client lists. Typing a name in Queue,
   Library, or Clients search looks across every brand (Gilani selected +
-  "ibi" still finds Ibrahim / Fouad Rahme).
+  "ibi" still finds Ibrahim / Fouad Rahme). Name search allows a one-letter
+  slip on the first name so ibi matches Ibrahim.
 - **Two ways to use a base for a client** (do not collapse into one):
   (1) on the base pattern page - client fit column (Use as base under a size);
   (2) on the client job measurement sheet - Load from base pattern into Sample.
