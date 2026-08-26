@@ -77,6 +77,20 @@ export const CONSOLIDATE_REMOVED_SO_LINES_HOWTO_BODY = [
   "If you still need a removed fabric (example: Ibrahim SO-2026-0130 S21006 / S21007 / S21008 / S21009), ask QC to put it back on the sales order first. Pattern cannot consolidate a fabric that is no longer on the order.",
 ].join("\n");
 
+export const SAME_QUEUE_ALL_BRANDS_HOWTO_NOTICE_ID =
+  "howto-same-queue-all-brands-v1";
+
+export const SAME_QUEUE_ALL_BRANDS_HOWTO_TITLE =
+  "Both Pattern logins see the same clients - tap All brands";
+
+export const SAME_QUEUE_ALL_BRANDS_HOWTO_BODY = [
+  "There is one Pattern queue and one client list. Pattern 2 and the other Pattern login see the same data.",
+  "",
+  "1. At the top of Queue or Clients, tap All brands.",
+  "2. New (8) instead of New (51) means that screen is filtered to one house brand (Gilani, Fouad Rahme, ...).",
+  "3. That is a filter on that computer, not a second account.",
+].join("\n");
+
 export const FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_NOTICE_ID =
   "howto-fabric-spec-both-accounts-v1";
 
@@ -180,6 +194,14 @@ export const ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_BODY = [
 
 /** Newest first. Each entry is emailed to Pattern and kept on the How-to tab. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: SAME_QUEUE_ALL_BRANDS_HOWTO_NOTICE_ID,
+    title: SAME_QUEUE_ALL_BRANDS_HOWTO_TITLE,
+    body: SAME_QUEUE_ALL_BRANDS_HOWTO_BODY,
+    href: "/pattern",
+    href_label: "Open Pattern queue",
+    audience: "pattern",
+  },
   {
     id: FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_NOTICE_ID,
     title: FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_TITLE,

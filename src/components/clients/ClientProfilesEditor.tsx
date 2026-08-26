@@ -266,10 +266,14 @@ export function ClientProfilesEditor() {
           is_sales_operator?: boolean;
           is_client_manager?: boolean;
           is_production_operator?: boolean;
+          is_pattern_operator?: boolean;
           can_access_client_media?: boolean;
           can_view_client_contact?: boolean;
         };
         setIsAdmin(Boolean(data.is_admin));
+        if (data.is_pattern_operator) {
+          setBrandFilter(null);
+        }
         setCanManageClientPhotos(
           data.can_access_client_media !== undefined
             ? Boolean(data.can_access_client_media)

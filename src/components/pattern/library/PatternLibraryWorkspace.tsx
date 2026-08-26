@@ -117,7 +117,9 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
   const [showCreate, setShowCreate] = useState(false);
   /** null = all cut families. */
   const [selectedFamily, setSelectedFamily] = useState<string | null>(null);
-  const { brandId, setBrandId, hydrated } = useFactoryBrandFilter();
+  const { brandId, setBrandId, hydrated } = useFactoryBrandFilter(null, {
+    persist: false,
+  });
   const brandPrefix = brandId ? getBrandClientCodePrefix(brandId) : null;
 
   const load = useCallback(async () => {

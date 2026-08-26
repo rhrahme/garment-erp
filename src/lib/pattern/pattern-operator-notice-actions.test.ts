@@ -12,6 +12,9 @@ import {
   PATTERN_FILES_BY_BRAND_HOWTO_BODY,
   PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID,
   PATTERN_FILES_BY_BRAND_HOWTO_TITLE,
+  SAME_QUEUE_ALL_BRANDS_HOWTO_BODY,
+  SAME_QUEUE_ALL_BRANDS_HOWTO_NOTICE_ID,
+  SAME_QUEUE_ALL_BRANDS_HOWTO_TITLE,
   FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_BODY,
   FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_NOTICE_ID,
   FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_TITLE,
@@ -92,10 +95,24 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(PRINT_HOWTO_KEEP_PAPER_NOTICE_ID));
     assert.ok(ids.includes(OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_NOTICE_ID));
+    assert.ok(ids.includes(SAME_QUEUE_ALL_BRANDS_HOWTO_NOTICE_ID));
     assert.equal(
       PATTERN_HOWTO_NOTICES[0]?.id,
-      FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_NOTICE_ID
+      SAME_QUEUE_ALL_BRANDS_HOWTO_NOTICE_ID
     );
+  });
+});
+
+describe("Pattern same queue All brands", () => {
+  it("tells Pattern both logins share one list and to tap All brands", () => {
+    assert.equal(
+      SAME_QUEUE_ALL_BRANDS_HOWTO_NOTICE_ID,
+      "howto-same-queue-all-brands-v1"
+    );
+    assert.match(SAME_QUEUE_ALL_BRANDS_HOWTO_TITLE, /All brands/);
+    assert.match(SAME_QUEUE_ALL_BRANDS_HOWTO_BODY, /one client list/);
+    assert.match(SAME_QUEUE_ALL_BRANDS_HOWTO_BODY, /New \(8\)/);
+    assert.match(SAME_QUEUE_ALL_BRANDS_HOWTO_BODY, /filter/);
   });
 });
 
