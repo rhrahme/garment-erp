@@ -42,7 +42,7 @@ export function PatternQueueSection() {
         </div>
       ) : null}
       <WashedReadyPanel brandId={brandId} />
-      <PatternWorkList brandId={brandId} hideBrandTabs />
+      <PatternWorkList brandId={brandId} hideBrandTabs onBrandIdChange={setBrandId} />
     </div>
   );
 }

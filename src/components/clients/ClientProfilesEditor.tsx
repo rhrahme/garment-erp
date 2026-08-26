@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { AutoSaveStatusBar } from "@/components/ui/AutoSaveStatus";
 import { filterClientsByBrand, searchClients } from "@/lib/clients/filter";
+import { searchLooksAcrossBrands } from "@/lib/search/search-across-brands";
 import { getFactoryBrands } from "@/lib/data/factory-brands";
 import { generateNextClientCode, getBrandClientCodePrefix, getJoinMonthYear } from "@/lib/clients/codes";
 import { resolveBrandIdsForNewClient } from "@/lib/clients/new-client-brand";
@@ -337,7 +338,11 @@ export function ClientProfilesEditor() {
   );
 
   const displayClients = useMemo(() => {
-    const filtered = searchClients(filterClientsByBrand(personClients, brandFilter), debouncedSearchQuery, {
+    const brandPool =
+      !isBrandScoped && searchLooksAcrossBrands(debouncedSearchQuery)
+        ? personClients
+        : filterClientsByBrand(personClients, brandFilter);
+    const filtered = searchClients(brandPool, debouncedSearchQuery, {
       excludeContactFields: !canViewClientContact,
     });
     const sorted = sortClients(filtered, sortBy);
@@ -352,7 +357,7 @@ export function ClientProfilesEditor() {
     if (!editing) return sorted;
 
     return [editing, ...sorted.filter((client) => client.id !== editingId)];
-  }, [personClients, debouncedSearchQuery, brandFilter, sortBy, canViewClientContact, editingId]);
+  }, [personClients, debouncedSearchQuery, brandFilter, isBrandScoped, sortBy, canViewClientContact, editingId]);
 
   const hasActiveFilters = Boolean(searchQuery.trim() || brandFilter);
 
@@ -1089,7 +1094,13 @@ export function ClientProfilesEditor() {
                 <input
                   type="search"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setSearchQuery(next);
+                    if (!isBrandScoped && searchLooksAcrossBrands(next) && brandFilter) {
+                      setBrandFilter(null);
+                    }
+                  }}
                   disabled={Boolean(editingId)}
                   title={editingId ? "Finish editing the open client before searching the list" : undefined}
                   placeholder={

@@ -11,6 +11,7 @@ import { getBrandClientCodePrefix } from "@/lib/clients/codes";
 import { formatClientDisplayName } from "@/lib/clients/names";
 import { orderMatchesBrandClientPrefix } from "@/lib/clients/orphan-reconciliation";
 import { matchesNormalizedSearch } from "@/lib/search/normalize";
+import { itemsForBrandOrSearch, searchLooksAcrossBrands } from "@/lib/search/search-across-brands";
 import { BasePatternCascadePicker } from "@/components/pattern/library/BasePatternCascadePicker";
 import { TudViewerModal } from "@/components/pattern/library/TudViewerModal";
 import {
@@ -151,22 +152,28 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
   }, [library, brandId, brandPrefix]);
 
   const bases = useMemo(() => {
-    return brandScopedBases.filter((base) =>
+    const pool = itemsForBrandOrSearch(library?.base_patterns ?? [], brandScopedBases, search);
+    return pool.filter((base) =>
       matchesNormalizedSearch(
         [base.name, base.cut_family, base.garment_type, base.cut_variant, base.house_brand_code, base.style_code],
         search
       )
     );
-  }, [brandScopedBases, search]);
+  }, [library, brandScopedBases, search]);
 
   const clientPatterns = useMemo(() => {
-    return brandScopedClientPatterns.filter((pattern) =>
+    const pool = itemsForBrandOrSearch(
+      library?.client_patterns ?? [],
+      brandScopedClientPatterns,
+      search
+    );
+    return pool.filter((pattern) =>
       matchesNormalizedSearch(
         [pattern.pattern_ref, pattern.client_name, pattern.client_code, pattern.garment_type, pattern.fabric],
         search
       )
     );
-  }, [brandScopedClientPatterns, search]);
+  }, [library, brandScopedClientPatterns, search]);
 
   /** Stable cut-family tab list from the full library so tabs don't vanish while filtering. */
   const cutFamilies = useMemo(() => {
@@ -263,7 +270,11 @@ export function PatternLibraryWorkspace({ brands }: { brands: BrandOption[] }) {
         type="search"
         placeholder={tab === "bases" ? "Search cut family, garment, brand..." : "Search ref, client, garment..."}
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={(e) => {
+          const next = e.target.value;
+          setSearch(next);
+          if (searchLooksAcrossBrands(next) && brandId) setBrandId(null);
+        }}
         className="w-full max-w-md rounded-lg border border-slate-300 px-3 py-2 text-sm"
       />
 

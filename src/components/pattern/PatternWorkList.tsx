@@ -12,6 +12,11 @@ import { orderMatchesBrandClientPrefix } from "@/lib/clients/orphan-reconciliati
 import { groupPatternJobsBySalesOrder } from "@/lib/pattern/queue-groups";
 import { jobMatchesTab } from "@/lib/pattern/work-tabs";
 import { matchesNormalizedSearch } from "@/lib/search/normalize";
+import {
+  itemsForBrandOrSearch,
+  patternQueueEmptyCopy,
+  searchLooksAcrossBrands,
+} from "@/lib/search/search-across-brands";
 import type { PatternOverview, PatternWorkTab } from "@/lib/types/pattern";
 import { cn } from "@/lib/utils";
 
@@ -47,12 +52,15 @@ type PatternWorkListProps = {
   brandId?: string | null;
   /** Hide chips when parent already renders FactoryBrandTabs. */
   hideBrandTabs?: boolean;
+  /** Clear the parent brand chip when they type a name (search looks across brands). */
+  onBrandIdChange?: (brandId: string | null) => void;
 };
 
 export function PatternWorkList({
   reloadKey = 0,
   brandId: brandIdProp,
   hideBrandTabs = false,
+  onBrandIdChange,
 }: PatternWorkListProps) {
   const [tab, setTab] = useState<PatternWorkTab>("new");
   const [overview, setOverview] = useState<PatternOverview | null>(null);
@@ -100,8 +108,19 @@ export function PatternWorkList({
     );
   }, [brandPrefix, overview]);
 
+  const jobsForView = useMemo(
+    () => itemsForBrandOrSearch(overview?.jobs ?? [], brandScopedJobs, search),
+    [overview, brandScopedJobs, search]
+  );
+
+  const awaitingForView = useMemo(
+    () =>
+      itemsForBrandOrSearch(overview?.awaiting_lines_orders ?? [], brandScopedAwaiting, search),
+    [overview, brandScopedAwaiting, search]
+  );
+
   const filteredJobs = useMemo(() => {
-    return brandScopedJobs.filter((row) => {
+    return jobsForView.filter((row) => {
       if (!jobMatchesTab(row.job.status, tab)) return false;
       const { job } = row;
       return matchesNormalizedSearch(
@@ -118,29 +137,37 @@ export function PatternWorkList({
         search
       );
     });
-  }, [brandScopedJobs, tab, search]);
+  }, [jobsForView, tab, search]);
 
   const orderGroups = useMemo(() => groupPatternJobsBySalesOrder(filteredJobs), [filteredJobs]);
 
   const awaitingOrders = useMemo(() => {
     if (tab !== "new") return [];
-    return brandScopedAwaiting.filter((order) =>
+    return awaitingForView.filter((order) =>
       matchesNormalizedSearch([order.so_number, order.client_name, order.client_code], search)
     );
-  }, [brandScopedAwaiting, tab, search]);
+  }, [awaitingForView, tab, search]);
 
   const tabCounts = useMemo(() => {
     const counts = Object.fromEntries(TABS.map((t) => [t.id, 0])) as Record<PatternWorkTab, number>;
 
     for (const t of TABS) {
-      const matching = brandScopedJobs.filter((row) => jobMatchesTab(row.job.status, t.id));
+      const matching = jobsForView.filter((row) => jobMatchesTab(row.job.status, t.id));
       const soIds = new Set(matching.map((row) => row.job.sales_order_id));
       counts[t.id] = soIds.size;
     }
     // Awaiting-lines SOs only appear on New.
-    counts.new += brandScopedAwaiting.length;
+    counts.new += awaitingForView.length;
     return counts;
-  }, [brandScopedAwaiting, brandScopedJobs]);
+  }, [awaitingForView, jobsForView]);
+
+  const applySearch = (next: string) => {
+    setSearch(next);
+    if (searchLooksAcrossBrands(next) && brandId) {
+      if (onBrandIdChange) onBrandIdChange(null);
+      else setBrandId(null);
+    }
+  };
 
   async function autoConsolidateAll() {
     setAutoBusy(true);
@@ -221,9 +248,12 @@ export function PatternWorkList({
         type="search"
         placeholder="Search SO, client, fabric, garment..."
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={(e) => applySearch(e.target.value)}
         className="w-full max-w-md rounded-lg border border-slate-300 px-3 py-2 text-sm"
       />
+      <p className="text-xs text-slate-500">
+        Typing a name searches every brand.
+      </p>
 
       {loading && !overview ? (
         <p className="text-sm text-slate-500">Loading pattern queue...</p>
@@ -309,7 +339,7 @@ export function PatternWorkList({
 
           {awaitingOrders.length === 0 && orderGroups.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
-              No sales orders in this tab.
+              {patternQueueEmptyCopy({ search, brandSelected: Boolean(brandId) })}
             </p>
           ) : null}
         </div>

@@ -12,6 +12,9 @@ import {
   PATTERN_FILES_BY_BRAND_HOWTO_BODY,
   PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID,
   PATTERN_FILES_BY_BRAND_HOWTO_TITLE,
+  SEARCH_ACROSS_BRANDS_HOWTO_BODY,
+  SEARCH_ACROSS_BRANDS_HOWTO_NOTICE_ID,
+  SEARCH_ACROSS_BRANDS_HOWTO_TITLE,
   SAME_QUEUE_ALL_BRANDS_HOWTO_BODY,
   SAME_QUEUE_ALL_BRANDS_HOWTO_NOTICE_ID,
   SAME_QUEUE_ALL_BRANDS_HOWTO_TITLE,
@@ -96,10 +99,24 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(OVERSHIRT_WAIST_NOT_TROUSER_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(SAME_QUEUE_ALL_BRANDS_HOWTO_NOTICE_ID));
+    assert.ok(ids.includes(SEARCH_ACROSS_BRANDS_HOWTO_NOTICE_ID));
     assert.equal(
       PATTERN_HOWTO_NOTICES[0]?.id,
-      SAME_QUEUE_ALL_BRANDS_HOWTO_NOTICE_ID
+      SEARCH_ACROSS_BRANDS_HOWTO_NOTICE_ID
     );
+  });
+});
+
+describe("Pattern search across brands", () => {
+  it("tells Pattern to type the client name even if a brand chip is on", () => {
+    assert.equal(
+      SEARCH_ACROSS_BRANDS_HOWTO_NOTICE_ID,
+      "howto-search-across-brands-v1"
+    );
+    assert.match(SEARCH_ACROSS_BRANDS_HOWTO_TITLE, /every brand/);
+    assert.match(SEARCH_ACROSS_BRANDS_HOWTO_BODY, /ibi/);
+    assert.match(SEARCH_ACROSS_BRANDS_HOWTO_BODY, /Ibrahim/);
+    assert.match(SEARCH_ACROSS_BRANDS_HOWTO_BODY, /Gilani/);
   });
 });
 

@@ -227,7 +227,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   share one workspace. Fabric Specification is on the Pattern left nav;
   list prices stay hidden. Queue and Library start on All brands (do not
   restore a leftover Gilani/FR chip from that computer). New (8) vs New
-  (51) is a brand filter, not two client lists.
+  (51) is a brand filter, not two client lists. Typing a name in Queue,
+  Library, or Clients search looks across every brand (Gilani selected +
+  "ibi" still finds Ibrahim / Fouad Rahme).
 - **Two ways to use a base for a client** (do not collapse into one):
   (1) on the base pattern page - client fit column (Use as base under a size);
   (2) on the client job measurement sheet - Load from base pattern into Sample.
@@ -307,7 +309,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   operator opens any Pattern page and sees the banner. When we explain a
   floor fix to Pattern, add a catalog entry so they get the email and the
   in-app banner - do not only tell the owner in chat. Notices: both
-  Pattern logins tap All brands (`howto-same-queue-all-brands-v1`), Fabric
+  Pattern logins type a client name and search looks in every brand
+  (`howto-search-across-brands-v1`), tap All brands
+  (`howto-same-queue-all-brands-v1`), Fabric
   Specification is on the left menu (`howto-fabric-spec-both-accounts-v1`),
   Overshirt 1/2 Waist is not Trouser waist (`howto-overshirt-waist-not-trouser-v1`),
   print How-to and keep the paper (`howto-print-howto-keep-paper-v1`), leftover SO
@@ -825,7 +829,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
-- [session-2026-08-26](session-2026-08-26.md) - Pattern 2 New (8) vs Mohtajul New (51) was a brand filter; queue starts on All brands
+- [session-2026-08-26](session-2026-08-26.md) - Pattern search looks across brands (ibi / Ibrahim); queue starts on All brands
 - [session-2026-08-25](session-2026-08-25.md) - Pattern 2 Email pattern@hagan.pro is a Pattern login; Fabric Specification on the left nav
 - [session-2026-08-22](session-2026-08-22.md) - Pattern Files tab; print How-to A4; empty Remark cells; Overshirt 1/2 Waist stays off Trouser
 - [session-2026-08-21](session-2026-08-21.md) - Confirm extra fabrics stay on the same pattern (live `44e567b`)

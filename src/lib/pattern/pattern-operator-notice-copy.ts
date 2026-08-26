@@ -77,6 +77,20 @@ export const CONSOLIDATE_REMOVED_SO_LINES_HOWTO_BODY = [
   "If you still need a removed fabric (example: Ibrahim SO-2026-0130 S21006 / S21007 / S21008 / S21009), ask QC to put it back on the sales order first. Pattern cannot consolidate a fabric that is no longer on the order.",
 ].join("\n");
 
+export const SEARCH_ACROSS_BRANDS_HOWTO_NOTICE_ID =
+  "howto-search-across-brands-v1";
+
+export const SEARCH_ACROSS_BRANDS_HOWTO_TITLE =
+  "Type a client name - search looks in every brand";
+
+export const SEARCH_ACROSS_BRANDS_HOWTO_BODY = [
+  "Type the client name in the search box. You do not need to tap All brands first.",
+  "",
+  "1. Example: type ibi. Ibrahim appears even if Gilani was selected.",
+  "2. Gilani only has Gilani clients. Ibrahim is Fouad Rahme.",
+  "3. Both Pattern logins share the same full list. Search looks in every brand.",
+].join("\n");
+
 export const SAME_QUEUE_ALL_BRANDS_HOWTO_NOTICE_ID =
   "howto-same-queue-all-brands-v1";
 
@@ -194,6 +208,14 @@ export const ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_BODY = [
 
 /** Newest first. Each entry is emailed to Pattern and kept on the How-to tab. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: SEARCH_ACROSS_BRANDS_HOWTO_NOTICE_ID,
+    title: SEARCH_ACROSS_BRANDS_HOWTO_TITLE,
+    body: SEARCH_ACROSS_BRANDS_HOWTO_BODY,
+    href: "/pattern",
+    href_label: "Open Pattern queue",
+    audience: "pattern",
+  },
   {
     id: SAME_QUEUE_ALL_BRANDS_HOWTO_NOTICE_ID,
     title: SAME_QUEUE_ALL_BRANDS_HOWTO_TITLE,
