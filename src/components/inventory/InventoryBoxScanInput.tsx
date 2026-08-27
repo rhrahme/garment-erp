@@ -103,7 +103,7 @@ export function InventoryBoxScanInput() {
             : "border-indigo-300 bg-white/70 text-indigo-700"
         }`}
       >
-        <span>{processing ? "Opening..." : focused ? "Ready ù scan the box QR" : "Click here, then scan"}</span>
+        <span>{processing ? "Opening..." : focused ? "Ready - scan the box QR" : "Click here, then scan"}</span>
         <input
           ref={inputRef}
           type="text"

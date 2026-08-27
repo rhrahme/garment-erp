@@ -726,9 +726,9 @@ export function InventoryWorkspace({
                       >
                         <span className="text-slate-700">
                           <span className="font-medium">{item?.name ?? carton.item_id}</span>
-                          {" · "}
+                          {" - "}
                           {carton.quantity} {item?.unit ?? "pcs"}
-                          {" · "}
+                          {" - "}
                           {carton.status === "sealed" ? "Sealed" : "Opened"}
                         </span>
                         <a
