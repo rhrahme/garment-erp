@@ -649,6 +649,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   sales-order line + item never deducts twice. Unknown garment types simply
   skip (no recipe = no deduction). Stock may go negative so the floor is
   never blocked; low stock fires `inventory.low_stock`.
+- **Low-stock Alert button** (Aug 27 2026): each item has **Alert**. They
+  type the number to warn at (often one box, e.g. 200). Empty + Save turns
+  it off. Banner on Stock when on-hand is at/below. Fires
+  `inventory.low_stock` when already low after save, and on pack/adjust.
+  Session `POST /api/inventory/items/[id]/alert` and Zapier
+  `POST /api/v1/inventory/alert`. After the open box is used up they scan
+  the next sealed box.
 - **Carton QR stickers** (Aug 17 2026, 4x6 Aug 20 2026; Boxes tab Aug 27
   2026): Inventory opens on the **Boxes** tab. Write how many boxes and
   how many are inside each box (per-box amounts allowed), then print one
@@ -670,8 +677,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - API parity per the Zapier rule: session routes under `/api/inventory/*`
   (items, adjust, recipes, cartons; production operators allowed) and
   API-key routes `/api/v1/inventory` + `/api/v1/inventory/adjust` +
-  `/api/v1/inventory/cartons` + `/api/v1/inventory/cartons/open`
-  (`scan_input` or `carton_id`). Events:
+  `/api/v1/inventory/alert` + `/api/v1/inventory/cartons` +
+  `/api/v1/inventory/cartons/open` (`scan_input` or `carton_id`). Events:
   `inventory.item_created/updated`, `inventory.stock_adjusted`,
   `inventory.recipe_updated`, `inventory.garment_deducted`,
   `inventory.low_stock`, `inventory.cartons_created`,

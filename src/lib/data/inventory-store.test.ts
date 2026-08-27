@@ -5,6 +5,7 @@ import {
   computeGarmentInventoryDeduction,
   ensureBrandedLaundryHangers,
   findGarmentRecipe,
+  resolveLowStockAlert,
 } from "@/lib/data/inventory-store";
 import type { InventoryStoreFile } from "@/lib/types/inventory";
 
@@ -120,6 +121,14 @@ test("garment type matching is case-insensitive and a missing recipe is skipped"
   });
   assert.equal(result.deducted, false);
   assert.equal(result.skipped_reason, "no_recipe");
+});
+
+test("low-stock alert accepts a number and empty means off", () => {
+  assert.equal(resolveLowStockAlert(""), null);
+  assert.equal(resolveLowStockAlert(null), null);
+  assert.equal(resolveLowStockAlert(10), 10);
+  assert.equal(resolveLowStockAlert("200"), 200);
+  assert.throws(() => resolveLowStockAlert(-1), /Alert must be/);
 });
 
 test("a set recipe deducts both hangers and reports low stock", () => {

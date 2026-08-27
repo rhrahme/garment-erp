@@ -163,6 +163,31 @@ export async function upsertInventoryItem(
   return item;
 }
 
+/** Set or clear the low-stock alert. Empty / null turns the alert off. */
+export function resolveLowStockAlert(raw: unknown): number | null {
+  if (raw == null || raw === "") return null;
+  const threshold = Number(raw);
+  if (!Number.isFinite(threshold) || threshold < 0) {
+    throw new Error("Alert must be zero or a positive number.");
+  }
+  return Math.round(threshold * 100) / 100;
+}
+
+export async function setInventoryLowStockAlert(
+  itemId: string,
+  rawThreshold: unknown,
+  actedBy: string | null
+): Promise<InventoryItem> {
+  void actedBy;
+  const store = await readInventoryStoreFresh();
+  const item = store.items.find((row) => row.id === itemId);
+  if (!item) throw new Error("Inventory item not found.");
+  item.low_stock_threshold = resolveLowStockAlert(rawThreshold);
+  item.updated_at = new Date().toISOString();
+  await save(store);
+  return item;
+}
+
 /**
  * Register a received delivery as sealed cartons with printable QR stickers.
  * Sealed boxes do NOT touch quantity_on_hand - stock is added when the box

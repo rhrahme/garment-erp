@@ -99,6 +99,8 @@ export function InventoryWorkspace({
 
   // ---- adjust state per item
   const [adjust, setAdjust] = useState<Record<string, string>>({});
+  const [alertOpenId, setAlertOpenId] = useState<string | null>(null);
+  const [alertValue, setAlertValue] = useState("");
 
   // ---- carton registration
   const [cartonForm, setCartonForm] = useState({
@@ -228,6 +230,20 @@ export function InventoryWorkspace({
       if (ok) setAdjust((prev) => ({ ...prev, [itemId]: "" }));
     });
   };
+
+  const beginAlert = (item: InventoryItem) => {
+    setAlertOpenId(item.id);
+    setAlertValue(item.low_stock_threshold == null ? "" : String(item.low_stock_threshold));
+  };
+
+  const submitAlert = (itemId: string) =>
+    void run(() =>
+      postJson(`/api/inventory/items/${encodeURIComponent(itemId)}/alert`, {
+        low_stock_threshold: alertValue.trim() === "" ? null : Number(alertValue),
+      })
+    ).then((ok) => {
+      if (ok) setAlertOpenId(null);
+    });
 
   const loadRecipe = (garment: string) => {
     setRecipeGarment(garment);
@@ -407,7 +423,38 @@ export function InventoryWorkspace({
                     {item.quantity_on_hand} {item.unit}
                   </td>
                   <td className="px-3 py-2 text-slate-500">
-                    {item.low_stock_threshold ?? "-"}
+                    {alertOpenId === item.id ? (
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          min="0"
+                          value={alertValue}
+                          onChange={(event) => setAlertValue(event.target.value)}
+                          placeholder="e.g. 200"
+                          className="w-20 rounded-md border border-slate-200 px-2 py-1 text-sm"
+                        />
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => submitAlert(item.id)}
+                          className="rounded-md bg-amber-600 px-2 py-1 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        <span>{item.low_stock_threshold ?? "off"}</span>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => beginAlert(item)}
+                          className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+                        >
+                          Alert
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className="px-3 py-2">
                     {negative ? (
@@ -746,6 +793,63 @@ export function InventoryWorkspace({
             ) : null}
           </div>
         </div>
+      </section>
+      <section className="rounded-xl border border-slate-200 bg-white">
+        <div className="border-b border-slate-100 px-5 py-3">
+          <h2 className="text-sm font-semibold text-slate-800">Low stock alerts</h2>
+        </div>
+        <p className="px-5 pt-3 text-xs text-slate-500">
+          Warn when open stock is at or below this number. Leave empty and Save to turn the alert
+          off. After a box of 200 is used up, scan the next sealed box.
+        </p>
+        <ul className="max-h-80 space-y-1.5 overflow-auto px-5 py-3">
+          {items.map((item) => (
+            <li
+              key={item.id}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-100 px-3 py-2 text-sm"
+            >
+              <span className="text-slate-700">
+                <span className="font-medium">{item.name}</span>
+                <span className="text-slate-500">
+                  {" - "}
+                  {item.quantity_on_hand} {item.unit} open
+                  {item.low_stock_threshold != null
+                    ? ` - alert at ${item.low_stock_threshold}`
+                    : " - no alert"}
+                </span>
+              </span>
+              {alertOpenId === item.id ? (
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    min="0"
+                    value={alertValue}
+                    onChange={(event) => setAlertValue(event.target.value)}
+                    placeholder="e.g. 200"
+                    className="w-20 rounded-md border border-slate-200 px-2 py-1 text-sm"
+                  />
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => submitAlert(item.id)}
+                    className="rounded-md bg-amber-600 px-2 py-1 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50"
+                  >
+                    Save
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => beginAlert(item)}
+                  className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+                >
+                  Alert
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
       </section>
       </>
       ) : null}
