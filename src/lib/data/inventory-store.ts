@@ -4,6 +4,7 @@ import {
   readJsonFileFreshAsync,
   saveDocument,
 } from "@/lib/data/document-persistence";
+import { resolveBoxQuantities } from "@/lib/inventory/box-scan";
 import {
   EMPTY_INVENTORY_STORE,
   normalizeGarmentTypeKey,
@@ -171,33 +172,25 @@ export async function createInventoryCartons(
   itemId: string,
   cartonCount: number,
   quantityPerCarton: number,
-  actedBy: string | null
+  actedBy: string | null,
+  quantities?: number[]
 ): Promise<{ item: InventoryItem; cartons: InventoryCarton[] }> {
-  const count = Math.floor(cartonCount);
-  if (!Number.isFinite(count) || count < 1 || count > 200) {
-    throw new Error("Carton count must be between 1 and 200.");
-  }
-  if (!Number.isFinite(quantityPerCarton) || quantityPerCarton <= 0) {
-    throw new Error("Quantity per carton must be a positive number.");
-  }
+  const boxQuantities = resolveBoxQuantities(cartonCount, quantityPerCarton, quantities);
   const store = await readInventoryStoreFresh();
   const item = store.items.find((row) => row.id === itemId);
   if (!item) throw new Error("Inventory item not found.");
 
   const now = new Date().toISOString();
-  const cartons: InventoryCarton[] = [];
-  for (let index = 0; index < count; index += 1) {
-    cartons.push({
-      id: newId("ctn"),
-      item_id: item.id,
-      quantity: Math.round(quantityPerCarton * 100) / 100,
-      status: "sealed",
-      created_at: now,
-      created_by: actedBy?.trim() || null,
-      opened_at: null,
-      opened_by: null,
-    });
-  }
+  const cartons: InventoryCarton[] = boxQuantities.map((quantity) => ({
+    id: newId("ctn"),
+    item_id: item.id,
+    quantity,
+    status: "sealed",
+    created_at: now,
+    created_by: actedBy?.trim() || null,
+    opened_at: null,
+    opened_by: null,
+  }));
   store.cartons.push(...cartons);
   await save(store);
   return { item, cartons };

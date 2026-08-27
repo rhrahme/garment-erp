@@ -607,6 +607,7 @@ describe("inventory_clerk access", () => {
     assert.equal(isInventoryClerkRouteAllowed("/inventory/cartons/box-1"), true);
     assert.equal(isInventoryClerkRouteAllowed("/api/inventory/items"), true);
     assert.equal(isInventoryClerkRouteAllowed("/api/inventory/cartons/box-1/open"), true);
+    assert.equal(isInventoryClerkRouteAllowed("/api/inventory/cartons/scan"), true);
     assert.equal(isInventoryClerkRouteAllowed("/api/entity-images"), true);
     assert.equal(
       isInventoryClerkRouteAllowed("/api/entity-images/upload-url"),

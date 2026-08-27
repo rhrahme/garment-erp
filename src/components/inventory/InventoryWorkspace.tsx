@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { EntityPhotos } from "@/components/entity-images/EntityPhotos";
+import { InventoryBoxScanInput } from "@/components/inventory/InventoryBoxScanInput";
 import {
   inventoryItemIsLow,
   type GarmentRecipe,
@@ -63,6 +64,7 @@ export function InventoryWorkspace({
   garmentTypes: string[];
 }) {
   const router = useRouter();
+  const [tab, setTab] = useState<"boxes" | "stock" | "recipes">("boxes");
   const [items] = useState(initialItems);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -99,7 +101,12 @@ export function InventoryWorkspace({
   const [adjust, setAdjust] = useState<Record<string, string>>({});
 
   // ---- carton registration
-  const [cartonForm, setCartonForm] = useState({ item_id: "", cartons: "", qty: "" });
+  const [cartonForm, setCartonForm] = useState({
+    item_id: "",
+    cartons: "",
+    qty: "",
+    boxQtys: [] as string[],
+  });
   const sealedByItem = useMemo(() => {
     const map = new Map<string, { count: number; total: number }>();
     for (const carton of initialCartons) {
@@ -122,7 +129,10 @@ export function InventoryWorkspace({
         body: JSON.stringify({
           item_id: cartonForm.item_id,
           carton_count: Number(cartonForm.cartons),
-          quantity_per_carton: Number(cartonForm.qty),
+          quantity_per_carton: Number(cartonForm.qty || cartonForm.boxQtys[0] || 0),
+          quantities: cartonForm.boxQtys
+            .map((value) => Number(value))
+            .filter((value) => Number.isFinite(value) && value > 0),
         }),
       });
       const data = (await response.json().catch(() => ({}))) as {
@@ -132,7 +142,7 @@ export function InventoryWorkspace({
       if (!response.ok || !data.cartons) {
         throw new Error(data.error ?? "Failed to register cartons.");
       }
-      setCartonForm({ item_id: "", cartons: "", qty: "" });
+      setCartonForm({ item_id: "", cartons: "", qty: "", boxQtys: [] });
       window.open(
         `/inventory/cartons/print?ids=${encodeURIComponent(
           data.cartons.map((carton) => carton.id).join(",")
@@ -252,6 +262,31 @@ export function InventoryWorkspace({
         </div>
       )}
 
+      <div className="flex flex-wrap gap-2">
+        {(
+          [
+            { id: "boxes" as const, label: "Boxes" },
+            { id: "stock" as const, label: "Stock" },
+            { id: "recipes" as const, label: "Recipes" },
+          ]
+        ).map((entry) => (
+          <button
+            key={entry.id}
+            type="button"
+            onClick={() => setTab(entry.id)}
+            className={`rounded-lg px-3 py-2 text-sm font-medium ${
+              tab === entry.id
+                ? "bg-indigo-600 text-white"
+                : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            {entry.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "stock" ? (
+      <>
       <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-4 text-sm text-indigo-900">
         <p className="font-medium">Automatic deduction</p>
         <p className="mt-1 text-indigo-800">
@@ -525,20 +560,22 @@ export function InventoryWorkspace({
           ) : null}
         </div>
       </section>
+      </>
+      ) : null}
 
-      {/* ------------------------------------------------ cartons */}
+      {tab === "boxes" ? (
+      <>
+      <InventoryBoxScanInput />
       <section className="rounded-xl border border-slate-200 bg-white">
         <div className="border-b border-slate-100 px-5 py-3">
-          <h2 className="text-sm font-semibold text-slate-800">
-            Boxes / carton stickers - scan to start using
-          </h2>
+          <h2 className="text-sm font-semibold text-slate-800">Add boxes and print QR</h2>
         </div>
         <div className="grid gap-4 px-5 py-4 lg:grid-cols-2">
           <div>
             <p className="text-xs text-slate-500">
-              Received a delivery? Register the boxes here and print one 4x6 inch sticker per
-              box (all details + QR). Sealed boxes are NOT counted as stock - when the floor
-              opens a box they scan its sticker and the quantity is added automatically.
+              How many boxes arrived, then how many pieces are inside each box. Print one 4x6
+              sticker per box. Sealed boxes are not stock until someone scans a sticker to open
+              one.
             </p>
             <div className="mt-3 space-y-2">
               <div>
@@ -560,41 +597,84 @@ export function InventoryWorkspace({
               </div>
               <div className="flex items-end gap-2">
                 <div>
-                  <label className="block text-xs text-slate-500">Boxes</label>
+                  <label className="block text-xs text-slate-500">How many boxes</label>
                   <input
                     type="number"
                     min="1"
                     value={cartonForm.cartons}
-                    onChange={(event) =>
-                      setCartonForm({ ...cartonForm, cartons: event.target.value })
-                    }
+                    onChange={(event) => {
+                      const next = event.target.value;
+                      const count = Math.min(200, Math.max(0, Math.floor(Number(next) || 0));
+                      const fill = cartonForm.qty;
+                      setCartonForm({
+                        ...cartonForm,
+                        cartons: next,
+                        boxQtys: Array.from(
+                          { length: count },
+                          (_, index) => cartonForm.boxQtys[index] || fill
+                        ),
+                      });
+                    }}
                     placeholder="e.g. 10"
-                    className="mt-0.5 w-24 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+                    className="mt-0.5 w-28 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500">Qty per box</label>
+                  <label className="block text-xs text-slate-500">Inside each box</label>
                   <input
                     type="number"
                     min="0"
                     step="0.5"
                     value={cartonForm.qty}
-                    onChange={(event) => setCartonForm({ ...cartonForm, qty: event.target.value })}
+                    onChange={(event) => {
+                      const next = event.target.value;
+                      setCartonForm({
+                        ...cartonForm,
+                        qty: next,
+                        boxQtys: cartonForm.boxQtys.map((value) => value || next),
+                      });
+                    }}
                     placeholder="e.g. 200"
-                    className="mt-0.5 w-24 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+                    className="mt-0.5 w-28 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
                   />
                 </div>
                 <button
                   type="button"
                   disabled={
-                    busy || !cartonForm.item_id || !cartonForm.cartons || !cartonForm.qty
+                    busy ||
+                    !cartonForm.item_id ||
+                    cartonForm.boxQtys.every((value) => !Number(value))
                   }
                   onClick={() => void submitCartons()}
                   className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
                 >
-                  Register + print stickers
+                  Add boxes + print QR
                 </button>
               </div>
+              {cartonForm.boxQtys.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {cartonForm.boxQtys.map((value, index) => (
+                    <label key={index} className="block text-xs text-slate-500">
+                      Box {index + 1} inside
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        value={value}
+                        onChange={(event) =>
+                          setCartonForm({
+                            ...cartonForm,
+                            boxQtys: cartonForm.boxQtys.map((row, rowIndex) =>
+                              rowIndex === index ? event.target.value : row
+                            ),
+                          })
+                        }
+                        className="mt-0.5 w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm text-slate-800"
+                      />
+                    </label>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </div>
           <div>
@@ -625,18 +705,52 @@ export function InventoryWorkspace({
                         rel="noreferrer"
                         className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
                       >
-                        Reprint stickers
+                        Reprint QR
                       </a>
                     </li>
                   );
                 })}
               </ul>
             )}
+            {initialCartons.length > 0 ? (
+              <ul className="mt-4 max-h-72 space-y-1.5 overflow-auto">
+                {[...initialCartons]
+                  .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+                  .slice(0, 40)
+                  .map((carton) => {
+                    const item = items.find((row) => row.id === carton.item_id);
+                    return (
+                      <li
+                        key={carton.id}
+                        className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2 text-xs"
+                      >
+                        <span className="text-slate-700">
+                          <span className="font-medium">{item?.name ?? carton.item_id}</span>
+                          {" · "}
+                          {carton.quantity} {item?.unit ?? "pcs"}
+                          {" · "}
+                          {carton.status === "sealed" ? "Sealed" : "Opened"}
+                        </span>
+                        <a
+                          href={`/inventory/cartons/print?ids=${encodeURIComponent(carton.id)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-medium text-indigo-600 hover:text-indigo-700"
+                        >
+                          QR
+                        </a>
+                      </li>
+                    );
+                  })}
+              </ul>
+            ) : null}
           </div>
         </div>
       </section>
+      </>
+      ) : null}
 
-      {/* ------------------------------------------------ recipes */}
+      {tab === "recipes" ? (
       <section className="rounded-xl border border-slate-200 bg-white">
         <div className="border-b border-slate-100 px-5 py-3">
           <h2 className="text-sm font-semibold text-slate-800">
@@ -765,8 +879,9 @@ export function InventoryWorkspace({
           </div>
         </div>
       </section>
+      ) : null}
 
-      {/* ------------------------------------------------ ledger */}
+      {tab !== "recipes" ? (
       <section className="rounded-xl border border-slate-200 bg-white">
         <div className="border-b border-slate-100 px-5 py-3">
           <h2 className="text-sm font-semibold text-slate-800">Recent movements</h2>
@@ -817,6 +932,7 @@ export function InventoryWorkspace({
           </tbody>
         </table>
       </section>
+      ) : null}
     </div>
   );
 }

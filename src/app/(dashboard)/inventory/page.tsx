@@ -25,7 +25,7 @@ export default async function InventoryPage() {
     <div>
       <PageHeader
         title="Inventory"
-        description="Factory stock - hangers, trims and accessories. Subtracted automatically per garment when articles are packed."
+        description="Boxes first: write how many are inside each box, print QR, scan when you open one. Stock is what is already open."
       />
       <InventoryWorkspace
         initialItems={store.items}

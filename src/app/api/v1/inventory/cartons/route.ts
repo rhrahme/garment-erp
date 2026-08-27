@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { requireAuthenticated } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { createInventoryCartons } from "@/lib/data/inventory-store";
+import { verifyApiKey } from "@/lib/integrations/api-auth";
 import { notifyIntegration } from "@/lib/integrations";
 
-/** Register a received delivery as sealed cartons with printable QR stickers. */
+/** Zapier parity: register sealed boxes and print QR ids. */
 export async function POST(request: Request) {
-  const session = await requireAuthenticated();
-  if (!session) return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
+  const authError = verifyApiKey(request);
+  if (authError) return authError;
   await ensureDocumentsLoaded(["inventory_store"]);
 
   let body: {
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       String(body.item_id ?? "").trim(),
       Number(body.carton_count),
       Number(body.quantity_per_carton),
-      session.email,
+      "api",
       body.quantities
     );
     await notifyIntegration("inventory.cartons_created", {
@@ -36,12 +36,12 @@ export async function POST(request: Request) {
       carton_count: cartons.length,
       quantity_per_carton: cartons[0]?.quantity ?? 0,
       carton_ids: cartons.map((carton) => carton.id),
-      by: session.email,
+      by: "api",
     }).catch(() => {});
     return NextResponse.json({ item, cartons }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to register cartons." },
+      { error: error instanceof Error ? error.message : "Failed to register boxes." },
       { status: 400 }
     );
   }

@@ -649,18 +649,19 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   sales-order line + item never deducts twice. Unknown garment types simply
   skip (no recipe = no deduction). Stock may go negative so the floor is
   never blocked; low stock fires `inventory.low_stock`.
-- **Carton QR stickers** (Aug 17 2026, 4x6 Aug 20 2026): deliveries are
-  registered as sealed cartons (N boxes x qty). Each box gets one **4x6
-  inch** sticker (`/inventory/cartons/print`) - item name, brand, category,
-  qty + unit, location, notes, status, registered date, box id, article
-  photo when one was uploaded, and a large QR. One label per page
+- **Carton QR stickers** (Aug 17 2026, 4x6 Aug 20 2026; Boxes tab Aug 27
+  2026): Inventory opens on the **Boxes** tab. Write how many boxes and
+  how many are inside each box (per-box amounts allowed), then print one
+  **4x6 inch** sticker (`/inventory/cartons/print`) - item name, brand,
+  category, qty + unit, location, notes, status, registered date, box id,
+  article photo when one was uploaded, and a large QR. One label per page
   (`@page 4in 6in`), not an A4 multi-up sheet. Print 4x6, scale 100% /
-  Actual size, do not fit to paper. Sealed boxes are NOT stock - scanning
-  the sticker when a box is opened (/inventory/cartons/[id] -> "Start
-  using this box") adds its quantity with ledger reason `carton_opened`.
-  Idempotent: a rescan never double-adds ("Already opened" + who/when).
-  Do not add carton quantities to stock at registration time - open-scan
-  IS the receive event.
+  Actual size, do not fit to paper. Sealed boxes are NOT stock. Opening a
+  new box: scan the sticker on Inventory -> Boxes (or
+  /inventory/cartons/[id] -> "Start using this box"). That adds its
+  quantity with ledger reason `carton_opened`. Idempotent: a rescan never
+  double-adds ("Already opened" + who/when). Do not add carton quantities
+  to stock at registration time - open-scan IS the receive event.
 - **Inventory article photos** (Aug 20 2026): each stock item has an
   album key `inventory_item:<itemId>`. Add / delete on the Inventory
   stock row. Same `/api/entity-images` + `/api/v1/entity-images` path as
@@ -669,7 +670,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - API parity per the Zapier rule: session routes under `/api/inventory/*`
   (items, adjust, recipes, cartons; production operators allowed) and
   API-key routes `/api/v1/inventory` + `/api/v1/inventory/adjust` +
-  `/api/v1/inventory/cartons/open`. Events:
+  `/api/v1/inventory/cartons` + `/api/v1/inventory/cartons/open`
+  (`scan_input` or `carton_id`). Events:
   `inventory.item_created/updated`, `inventory.stock_adjusted`,
   `inventory.recipe_updated`, `inventory.garment_deducted`,
   `inventory.low_stock`, `inventory.cartons_created`,
@@ -830,6 +832,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
+- [session-2026-08-27](session-2026-08-27.md) - Inventory Boxes tab: qty inside each box, print QR, scan to open
 - [session-2026-08-26](session-2026-08-26.md) - Pattern search looks across brands (ibi / Ibrahim); queue starts on All brands
 - [session-2026-08-25](session-2026-08-25.md) - Pattern 2 Email pattern@hagan.pro is a Pattern login; Fabric Specification on the left nav
 - [session-2026-08-22](session-2026-08-22.md) - Pattern Files tab; print How-to A4; empty Remark cells; Overshirt 1/2 Waist stays off Trouser
