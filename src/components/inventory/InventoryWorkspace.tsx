@@ -604,7 +604,7 @@ export function InventoryWorkspace({
                     value={cartonForm.cartons}
                     onChange={(event) => {
                       const next = event.target.value;
-                      const count = Math.min(200, Math.max(0, Math.floor(Number(next) || 0));
+                      const count = Math.min(200, Math.max(0, Math.floor(Number(next) || 0)));
                       const fill = cartonForm.qty;
                       setCartonForm({
                         ...cartonForm,
