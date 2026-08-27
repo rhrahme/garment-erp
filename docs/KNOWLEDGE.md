@@ -183,6 +183,15 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `overtime_confirm` admin request - do not drop it. Confirm counts it in
   Performance; Reject keeps the History row but drops Performance hours.
   Do not auto-close a session already marked overtime pending/confirmed.
+- **Payroll overtime & mistake deductions** (Aug 27 2026): money lines live
+  on **HR & Payroll -> Overtime & deductions** (`/hr/overtime`), admin
+  only. Overtime is a SAR amount (optional hours + note). A mistake
+  deduction needs a note, amount, and optional photo
+  (`payroll_adjustment:<id>` album). This is not the stitch 22:00
+  `overtime_confirm` queue on the dashboard. Events:
+  `payroll.overtime_added`, `payroll.deduction_added`,
+  `payroll.adjustment_deleted`. Session `/api/hr/payroll-adjustments` and
+  `/api/v1/hr/payroll-adjustments`.
   Do not treat a duration cap as "Live is empty at 10 PM".
 - **Pattern can open the stitch kiosk** (Aug 9 2026): `pattern_operator` has
   `/stitch` in nav and the same kiosk APIs as stitch@ (sewing-session scan,
@@ -721,11 +730,14 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   one-click email links). Bulk PUT /api/clients must always carry the
   stored `name_change_*` fields over - only the dedicated
   name-change-request endpoints mutate them.
-- **QC / non-admin can add a new client** (Aug 20 2026): Add client on
-  `/clients` (brand tab is prefilled) and **Add new client** on the
-  `/orders/new` picker. Create uses POST `/api/clients` (one row) so QC
-  is not blocked by a bulk PUT of the redacted list. Rename of an
-  existing client is still request-only.
+- **QC / non-admin can add a new client** (Aug 20 2026, Done=POST Aug 27):
+  Add client on `/clients` and **Add new client** on the `/orders/new`
+  picker. Create uses POST `/api/clients` (one row) so QC is not blocked
+  by a bulk PUT of the redacted list. Done on a new Clients row POSTs
+  that row; it must not PUT the whole (redacted) register. Incomplete
+  Done (no first+last+brand) keeps the form open with an error - do not
+  silently drop the row. Rename of an existing client is still
+  request-only.
 - **One-click email actions**: the admin alert email carries per-recipient
   HMAC-signed approve/reject links (`name-change-email-token.ts`, 7-day
   expiry, bound to client + requested_at + recipient).
@@ -839,7 +851,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
-- [session-2026-08-27](session-2026-08-27.md) - Inventory Boxes tab: qty inside each box, print QR, scan to open
+- [session-2026-08-27](session-2026-08-27.md) - Inventory Boxes + Alert; HR overtime pay and mistake deductions
 - [session-2026-08-26](session-2026-08-26.md) - Pattern search looks across brands (ibi / Ibrahim); queue starts on All brands
 - [session-2026-08-25](session-2026-08-25.md) - Pattern 2 Email pattern@hagan.pro is a Pattern login; Fabric Specification on the left nav
 - [session-2026-08-22](session-2026-08-22.md) - Pattern Files tab; print How-to A4; empty Remark cells; Overshirt 1/2 Waist stays off Trouser

@@ -210,6 +210,7 @@ export function ClientProfilesEditor() {
   const [isDirty, setIsDirty] = useState(false);
   /** Clients added via "Add client" this session — pause auto-save until Done so a partial name cannot lock. */
   const [creatingClientIds, setCreatingClientIds] = useState<Set<string>>(() => new Set());
+  const [createBusy, setCreateBusy] = useState(false);
   const {
     allowedBrandIds,
     brands: assignableBrands,
@@ -414,21 +415,73 @@ export function ClientProfilesEditor() {
     });
   }
 
+  async function persistNewClient(client: ClientProfile) {
+    const res = await fetch("/api/clients", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: client.title,
+        first_name: client.first_name,
+        middle_name: client.middle_name,
+        last_name: client.last_name,
+        brand_ids: client.brand_ids,
+        contact_person: client.contact_person,
+        referred_by_first_name: client.referred_by_first_name,
+        referred_by_middle_name: client.referred_by_middle_name,
+        referred_by_last_name: client.referred_by_last_name,
+        email: client.email,
+        phone: client.phone,
+        country: client.country,
+        city: client.city,
+        address: client.address,
+        payment_terms: client.payment_terms,
+        notes: client.notes,
+        is_active: client.is_active,
+      }),
+    });
+    const data = (await res.json()) as { client?: ClientProfile; error?: string; updated_at?: string | null };
+    if (!res.ok || !data.client) {
+      throw new Error(data.error ?? "Could not save the new client.");
+    }
+    const created = data.client;
+    setSaved((prev) => ({
+      updated_at: data.updated_at ?? prev.updated_at,
+      clients: [created, ...prev.clients.filter((row) => row.id !== client.id && row.id !== created.id)],
+    }));
+    setDraft((prev) => ({
+      ...prev,
+      clients: prev.clients.map((row) => (row.id === client.id ? created : row)),
+    }));
+    setIsDirty(false);
+    setError(null);
+    return created;
+  }
+
   async function closeClientEditor(clientId: string) {
     const client = draft.clients.find((c) => c.id === clientId);
     const isNew = client ? !saved.clients.some((s) => s.id === clientId) : false;
     const wasCreating = creatingClientIds.has(clientId);
 
-    // Closing a brand-new row that was never completed abandons it: drop it
-    // from the draft rather than trying (and failing) to persist it.
-    if (client && (isNew || wasCreating) && !isClientSaveable(client)) {
-      setDraft((prev) => ({ ...prev, clients: prev.clients.filter((c) => c.id !== clientId) }));
+    if (client && (isNew || wasCreating)) {
+      if (!isClientSaveable(client)) {
+        setError("Add first name, last name, and a brand, then tap Done.");
+        return;
+      }
+      setCreateBusy(true);
+      try {
+        await persistNewClient(client);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not save the new client.");
+        return;
+      } finally {
+        setCreateBusy(false);
+      }
       releaseCreatingClient(clientId);
       setEditingId(null);
       return;
     }
 
-    if (editingId === clientId && (isDirty || wasCreating) && canAutoSave) {
+    if (editingId === clientId && isDirty && canAutoSave) {
       try {
         await persistDraft();
       } catch {
@@ -658,7 +711,7 @@ export function ClientProfilesEditor() {
         <Button
           variant="ghost"
           size="sm"
-          disabled={isSaving}
+          disabled={isSaving || createBusy}
           onClick={() => {
             if (isEditing) {
               void closeClientEditor(client.id);
@@ -667,7 +720,7 @@ export function ClientProfilesEditor() {
             setEditingId(client.id);
           }}
         >
-          {isEditing ? (isSaving ? "Saving…" : "Done") : "Edit"}
+          {isEditing ? (isSaving || createBusy ? "Saving..." : "Done") : "Edit"}
         </Button>
       </div>
     );
