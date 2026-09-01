@@ -10,6 +10,7 @@ describe("normalizeGarmentTypeColorKey", () => {
     assert.equal(normalizeGarmentTypeColorKey("Overshirt"), "overshirt");
     assert.equal(normalizeGarmentTypeColorKey("Trouser"), "trouser");
     assert.equal(normalizeGarmentTypeColorKey("Trousers"), "trouser");
+    assert.equal(normalizeGarmentTypeColorKey("Serwal"), "trouser");
     assert.equal(normalizeGarmentTypeColorKey("Jacket"), "jacket");
     assert.equal(normalizeGarmentTypeColorKey("Shirt LS"), "shirt");
     assert.equal(normalizeGarmentTypeColorKey("Shirt SS"), "shirt");

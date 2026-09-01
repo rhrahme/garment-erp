@@ -24,6 +24,7 @@ export const PICKER_GARMENT_ORDER = [
   "t-shirt",
   "vest",
   "trouser",
+  "serwal",
   "shorts",
   "short",
   "thobe",
@@ -123,8 +124,9 @@ function addLibraryKeysForToken(keys: Set<string>, token: string): void {
     keys.add("jacket");
     return;
   }
-  if (lower.includes("trouser")) {
+  if (lower.includes("trouser") || lower === "serwal" || lower === "sirwal" || lower === "salwar") {
     keys.add("trouser");
+    keys.add("serwal");
     return;
   }
   if (lower === "overshirt") {

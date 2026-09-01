@@ -86,6 +86,7 @@ describe("base-pattern-picker", () => {
     assert.ok(garments.includes("Shirt LS"));
     assert.ok(garments.includes("Polo"));
     assert.ok(garments.includes("Trouser"));
+    assert.ok(garments.includes("Serwal"));
     assert.ok(garments.includes("Short"));
     assert.ok(!garments.includes("Fabric only"));
     assert.equal(garments[0], PATTERN_SHEET_GARMENTS[0]);
@@ -95,6 +96,7 @@ describe("base-pattern-picker", () => {
   it("Shirt LS / Short map to library shirt / shorts bases", () => {
     assert.equal(garmentMatchesLibraryBase("Shirt LS", "shirt"), true);
     assert.equal(garmentMatchesLibraryBase("Short", "shorts"), true);
+    assert.equal(garmentMatchesLibraryBase("Serwal", "trouser"), true);
     assert.equal(garmentMatchesLibraryBase("Polo", "shirt"), true);
     assert.equal(filterBases(bases, { garmentType: "Shirt LS" }).length, 3);
     assert.equal(filterBases(bases, { garmentType: "Short" }).length, 1);

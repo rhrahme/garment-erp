@@ -70,7 +70,14 @@ export function measurementPieceTokensForGarment(garmentType: string): string[] 
 /** True only for the trouser piece - not Suit / Suit+Vest as a whole. */
 export function pieceIsTrouser(pieceName: string): boolean {
   const lower = pieceName.trim().toLowerCase();
-  return lower === "trouser" || lower === "trousers" || lower === "pants";
+  return (
+    lower === "trouser" ||
+    lower === "trousers" ||
+    lower === "pants" ||
+    lower === "serwal" ||
+    lower === "sirwal" ||
+    lower === "salwar"
+  );
 }
 
 function normalizePointLabel(name: string | null | undefined): string {

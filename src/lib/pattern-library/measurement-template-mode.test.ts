@@ -105,6 +105,7 @@ function row(
 
 test("trousers offer reduced template and default to reduced", () => {
   assert.equal(garmentOffersReducedMeasurementTemplate("Trouser"), true);
+  assert.equal(garmentOffersReducedMeasurementTemplate("Serwal"), true);
   assert.equal(garmentOffersReducedMeasurementTemplate("pants"), true);
   assert.equal(garmentOffersReducedMeasurementTemplate("Overshirt+Trouser"), true);
   assert.equal(garmentOffersReducedMeasurementTemplate("jacket"), false);
@@ -313,7 +314,7 @@ test("1/2 Waist stays off Trouser on every set garment, not one client sheet", (
     { point_id: "1-2-waist", name: "1/2 Waist" },
     { point_id: "1-2-waist-relux", name: "Waist Relax" },
   ];
-  for (const piece of ["Trouser", "Trousers", "Pants"]) {
+  for (const piece of ["Trouser", "Trousers", "Pants", "Serwal"]) {
     const rows = filterTrialSheetPointsForPiece(points, piece, dictionary);
     assert.ok(
       !rows.some((p) => p.point_id === "1-2-waist"),

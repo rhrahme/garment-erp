@@ -597,6 +597,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Sales orders / invoicing
 
+- **Serwal is a stitch garment type** (Sep 1 2026): `GARMENT_STITCH_TYPES`
+  includes **Serwal** (one factory label, same as Trouser). Sales /
+  production / Pattern sheet dropdowns all read that list. Floor color,
+  measurement reduced template, and library trouser bases treat Serwal
+  as the trouser family. ClickUp "serwal" / "sirwal" / "salwar" maps to
+  Serwal, not Trouser. Do not fold it back into Trouser in the dropdown.
 - **Money lock is admin-only** (Aug 18 2026): `canViewMoney` = `isAdmin`.
   Sales, accounting, QC, factory, and pattern may run invoice / costing /
   purchasing / supplier-invoice workflow, but they must never see selling

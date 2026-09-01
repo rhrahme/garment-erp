@@ -96,7 +96,10 @@ export function mapClickUpItemToGarmentType(item: string | null): string {
     if (normalized.includes("summer") || normalized.includes("house")) return "House Thobe";
     return "Formal Thobe";
   }
-  if (normalized.includes("serwal") || normalized.includes("balto")) return "Trouser";
+  if (normalized.includes("serwal") || normalized.includes("sirwal") || normalized.includes("salwar")) {
+    return "Serwal";
+  }
+  if (normalized.includes("balto")) return "Trouser";
 
   return item.replace(/\s*\([^)]*\)\s*$/, "").trim() || "Trouser";
 }

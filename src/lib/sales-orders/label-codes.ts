@@ -28,6 +28,7 @@ const GARMENT_PIECES: Partial<Record<GarmentStitchType, string[]>> = {
 const PIECE_ABBREV: Record<string, string> = {
   Jacket: "JKT",
   Trouser: "TR",
+  Serwal: "SRW",
   Shirt: "SHT",
   "Shirt LS": "SHT-LS",
   "Shirt SS": "SHT-SS",
@@ -122,6 +123,7 @@ const PIECE_FAMILY: Record<string, string> = {
   Polo: "shirt",
   "T-shirt": "shirt",
   Trouser: "trouser",
+  Serwal: "trouser",
   Short: "trouser",
   Jacket: "jacket",
   Overcoat: "jacket",

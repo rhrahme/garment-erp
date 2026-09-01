@@ -82,7 +82,9 @@ export function normalizeGarmentTypeColorKey(
   if (/\bt[\s-]?shirt\b/.test(s) || /\btshirt\b/.test(s)) return "tshirt";
   if (/\bpolo\b/.test(s)) return "polo";
   if (/\bshirt\b/.test(s)) return "shirt";
-  if (/\btrouser/.test(s)) return "trouser";
+  if (/\btrouser/.test(s) || /\bserwal\b/.test(s) || /\bsirwal\b/.test(s) || /\bsalwar\b/.test(s)) {
+    return "trouser";
+  }
   if (/\bshort/.test(s)) return "short";
   if (/\bjacket\b/.test(s)) return "jacket";
   if (/\bvest\b/.test(s)) return "vest";
