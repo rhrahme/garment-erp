@@ -24,6 +24,7 @@ export async function GET(request: Request) {
     garmentType: url.searchParams.get("garment_type"),
     salesOrderLineId: url.searchParams.get("sales_order_line_id"),
     inventoryItemId: url.searchParams.get("inventory_item_id"),
+    payrollAdjustmentId: url.searchParams.get("payroll_adjustment_id"),
   }).map((ref) => ref.key);
   const keys = [...rawKeys, ...fromParts]
     .map((key) => parseEntityKey(key)?.key)

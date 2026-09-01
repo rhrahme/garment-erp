@@ -74,6 +74,10 @@ export const ERP_DOCUMENT_SPECS = {
     path: path.join(ROOT, "src/data/payroll-employees.json"),
     fallback: { updated_at: null, employees: [] },
   },
+  payroll_adjustments: {
+    path: path.join(ROOT, "src/data/payroll-adjustments.json"),
+    fallback: { updated_at: null, adjustments: [] },
+  },
   costing_rates: {
     path: path.join(ROOT, "src/data/costing-rates.json"),
     fallback: { updated_at: null, rates: [] },
@@ -206,6 +210,7 @@ export const CORE_ERP_DOCUMENT_KEYS = [
 export const LAZY_ERP_DOCUMENT_KEYS = [
   "customer_invoices",
   "payroll_employees",
+  "payroll_adjustments",
   "fabric_orders",
   "shipments",
   "supplier_replies",

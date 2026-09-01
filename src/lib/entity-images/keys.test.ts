@@ -5,6 +5,7 @@ import {
   fabricEntityKey,
   garmentEntityKey,
   inventoryItemEntityKey,
+  payrollAdjustmentEntityKey,
   isValidEntityKey,
   parseEntityKey,
   soLineEntityKey,
@@ -27,6 +28,14 @@ describe("entity image keys", () => {
   it("accepts sales-order line ids", () => {
     assert.equal(soLineEntityKey("line-a"), "so_line:line-a");
     assert.equal(soLineEntityKey("not a key"), null);
+  });
+
+  it("accepts payroll adjustment ids for mistake photos", () => {
+    assert.equal(
+      payrollAdjustmentEntityKey("padj-1"),
+      "payroll_adjustment:padj-1"
+    );
+    assert.equal(parseEntityKey("payroll_adjustment:padj-1")?.kind, "payroll_adjustment");
   });
 
   it("accepts inventory item ids for article photos", () => {

@@ -829,6 +829,12 @@ export function isClientManagerRouteAllowed(pathname: string): boolean {
   if (pathname === "/api/hr/payroll-employees" || pathname.startsWith("/api/hr/payroll-employees/")) {
     return false;
   }
+  if (
+    pathname === "/api/hr/payroll-adjustments" ||
+    pathname.startsWith("/api/hr/payroll-adjustments/")
+  ) {
+    return false;
+  }
   if (isClientManagerSaudiIdBadgesPath(pathname)) return false;
   return CLIENT_MANAGER_ROUTE_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)

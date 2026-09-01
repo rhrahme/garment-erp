@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 const allTabs = [
   { href: "/hr", label: "Payroll Register", payrollOnly: true },
+  { href: "/hr/overtime", label: "Overtime & deductions", payrollOnly: true },
   { href: "/hr/id-badges", label: "ID Badges", payrollOnly: false },
 ] as const;
 

@@ -857,6 +857,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
+- [session-2026-09-01](session-2026-09-01.md) - Serwal garment type; HR overtime pay and mistake deductions shipped
 - [session-2026-08-27](session-2026-08-27.md) - Inventory Boxes + Alert; HR overtime pay and mistake deductions
 - [session-2026-08-26](session-2026-08-26.md) - Pattern search looks across brands (ibi / Ibrahim); queue starts on All brands
 - [session-2026-08-25](session-2026-08-25.md) - Pattern 2 Email pattern@hagan.pro is a Pattern login; Fabric Specification on the left nav

@@ -29,6 +29,12 @@ export function inventoryItemEntityKey(itemId: string): string | null {
   return `inventory_item:${id}`;
 }
 
+export function payrollAdjustmentEntityKey(adjustmentId: string): string | null {
+  const id = adjustmentId.trim();
+  if (!id || !/^[a-zA-Z0-9._-]+$/.test(id)) return null;
+  return `payroll_adjustment:${id}`;
+}
+
 export function parseEntityKey(key: string): { kind: EntityImageKind; key: string } | null {
   const trimmed = key.trim();
   if (trimmed.startsWith("fabric:")) {
@@ -52,6 +58,10 @@ export function parseEntityKey(key: string): { kind: EntityImageKind; key: strin
     const built = inventoryItemEntityKey(trimmed.slice("inventory_item:".length));
     return built ? { kind: "inventory_item", key: built } : null;
   }
+  if (trimmed.startsWith("payroll_adjustment:")) {
+    const built = payrollAdjustmentEntityKey(trimmed.slice("payroll_adjustment:".length));
+    return built ? { kind: "payroll_adjustment", key: built } : null;
+  }
   return null;
 }
 
@@ -69,6 +79,7 @@ export function entityRefsFromContext(input: {
   garmentType?: string | null;
   salesOrderLineId?: string | null;
   inventoryItemId?: string | null;
+  payrollAdjustmentId?: string | null;
 }): EntityImageRef[] {
   const refs: EntityImageRef[] = [];
   const fabricKey = fabricEntityKey(input.supplierId ?? "", input.fabricNumber ?? "");
@@ -103,6 +114,14 @@ export function entityRefsFromContext(input: {
       label: "Photo",
     });
   }
+  const adjustmentKey = payrollAdjustmentEntityKey(input.payrollAdjustmentId ?? "");
+  if (adjustmentKey) {
+    refs.push({
+      key: adjustmentKey,
+      kind: "payroll_adjustment",
+      label: "Photo",
+    });
+  }
   return refs;
 }
 
@@ -121,6 +140,7 @@ function entityKeyLabel(
     return String(input.garment_type ?? "").trim() || "Garment";
   }
   if (kind === "inventory_item") return "Photo";
+  if (kind === "payroll_adjustment") return "Photo";
   return "This article";
 }
 
@@ -132,6 +152,7 @@ export function resolveEntityKeyFromParts(input: {
   garment_type?: string | null;
   sales_order_line_id?: string | null;
   inventory_item_id?: string | null;
+  payroll_adjustment_id?: string | null;
 }): EntityImageRef | null {
   if (input.key) {
     const parsed = parseEntityKey(input.key);
@@ -167,6 +188,10 @@ export function resolveEntityKeyFromParts(input: {
     const refs = entityRefsFromContext({ inventoryItemId: input.inventory_item_id });
     return refs[0] ?? null;
   }
+  if (kind === "payroll_adjustment" || (!kind && input.payroll_adjustment_id)) {
+    const refs = entityRefsFromContext({ payrollAdjustmentId: input.payroll_adjustment_id });
+    return refs[0] ?? null;
+  }
 
   const refs = entityRefsFromContext({
     supplierId: input.supplier_id,
@@ -174,6 +199,7 @@ export function resolveEntityKeyFromParts(input: {
     garmentType: input.garment_type,
     salesOrderLineId: input.sales_order_line_id,
     inventoryItemId: input.inventory_item_id,
+    payrollAdjustmentId: input.payroll_adjustment_id,
   });
   return refs[0] ?? null;
 }

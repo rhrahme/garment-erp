@@ -91,6 +91,7 @@ function albumKindLabel(kind: EntityImageRef["kind"], label: string): string {
   if (kind === "fabric") return label || "Fabric";
   if (kind === "garment") return label || "Garment";
   if (kind === "inventory_item") return "Photo";
+  if (kind === "payroll_adjustment") return "Photo";
   return "This article";
 }
 
@@ -100,6 +101,7 @@ export function EntityPhotos({
   garmentType,
   salesOrderLineId,
   inventoryItemId,
+  payrollAdjustmentId,
   compact = true,
   className,
 }: {
@@ -108,6 +110,7 @@ export function EntityPhotos({
   garmentType?: string | null;
   salesOrderLineId?: string | null;
   inventoryItemId?: string | null;
+  payrollAdjustmentId?: string | null;
   compact?: boolean;
   className?: string;
 }) {
@@ -119,8 +122,9 @@ export function EntityPhotos({
         garmentType,
         salesOrderLineId,
         inventoryItemId,
+        payrollAdjustmentId,
       }),
-    [supplierId, fabricNumber, garmentType, salesOrderLineId, inventoryItemId]
+    [supplierId, fabricNumber, garmentType, salesOrderLineId, inventoryItemId, payrollAdjustmentId]
   );
   const [albums, setAlbums] = useState<EntityImageAlbum[]>([]);
   const [error, setError] = useState<string | null>(null);

@@ -319,6 +319,14 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/payroll-employees.json",
   },
   {
+    key: "payroll_adjustments",
+    label: "Payroll overtime and deductions",
+    description: "Overtime pay lines and mistake deductions with notes",
+    category: "finance",
+    appHref: "/hr/overtime",
+    sourcePath: "src/data/payroll-adjustments.json",
+  },
+  {
     key: "costing_rates",
     label: "Costing rates",
     description: "Factory costing assumptions and rate tables",
@@ -358,6 +366,8 @@ export function recordSummaryForKey(key: ErpDocumentKey, data: unknown): string 
       return `${Array.isArray(record.suppliers) ? record.suppliers.length : 0} suppliers`;
     case "payroll_employees":
       return `${Array.isArray(record.employees) ? record.employees.length : 0} employees`;
+    case "payroll_adjustments":
+      return `${Array.isArray(record.adjustments) ? record.adjustments.length : 0} lines`;
     case "costing_rates":
       return `${Array.isArray(record.rates) ? record.rates.length : 0} rate rows`;
     case "fabric_orders":

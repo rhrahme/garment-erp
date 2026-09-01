@@ -125,6 +125,8 @@ describe("production_operator home / nav gating", () => {
     assert.equal(isProductionOperatorRouteAllowed("/supplier-inbox"), false);
     assert.equal(isProductionOperatorRouteAllowed("/purchasing"), false);
     assert.equal(isProductionOperatorRouteAllowed("/hr"), false);
+    assert.equal(isProductionOperatorRouteAllowed("/hr/overtime"), false);
+    assert.equal(isProductionOperatorRouteAllowed("/api/hr/payroll-adjustments"), false);
     assert.equal(isProductionOperatorRouteAllowed("/api/hr/payroll-employees/x"), false);
     assert.equal(isProductionOperatorRouteAllowed("/documents"), false);
     assert.equal(isProductionOperatorRouteAllowed("/orders/new"), false);
@@ -242,6 +244,8 @@ describe("client_manager QC ID badges (not payroll)", () => {
     assert.equal(isClientManagerRouteAllowed("/api/hr/id-badges/saudis/pdf"), false);
     assert.equal(isClientManagerRouteAllowed("/hr"), false);
     assert.equal(isClientManagerRouteAllowed("/hr/"), false);
+    assert.equal(isClientManagerRouteAllowed("/hr/overtime"), false);
+    assert.equal(isClientManagerRouteAllowed("/api/hr/payroll-adjustments"), false);
     assert.equal(isClientManagerRouteAllowed("/api/hr/payroll-employees"), false);
     assert.equal(isClientManagerRouteAllowed("/api/hr/payroll-employees/x"), false);
   });
