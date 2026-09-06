@@ -206,8 +206,58 @@ export const ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_BODY = [
   "Do not wait on leftover / removed rows. Tick only what is still on the sales order.",
 ].join("\n");
 
+export const READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID = "howto-ready-made-size-run-v1";
+
+export const READY_MADE_SIZE_RUN_HOWTO_TITLE =
+  "Boggi / Massimo size runs are Ready-Made - not a new client";
+
+export const READY_MADE_SIZE_RUN_HOWTO_BODY = [
+  "ENGLISH",
+  "Boggi, Massimo Dutti, Suit Supply, Cafe Cotton, Zegna size runs are Ready-Made.",
+  "They are not a person client.",
+  "",
+  "Wrong: create a new client named Boggi Overcoat, then add Stock-44, Stock-46, Stock-48...",
+  "Right: those numbers are sizes of one Ready-Made article.",
+  "",
+  "Next time (QC):",
+  "1. Do not add a new person client for a retail brand.",
+  "2. Open the sales order.",
+  "3. Press Mark as ready-made and pick Boggi (or the brand).",
+  "4. Open Ready-Made in the left menu to follow the article.",
+  "",
+  "Next time (Pattern):",
+  "1. Do not draft a new pattern sheet for each size.",
+  "2. If you see Boggi Overcoat / Massimo as a person with Stock-44 lines, tell QC to mark it Ready-Made.",
+  "3. We already moved SO-2026-0142 and SO-2026-0150 to Ready-Made / Boggi. Those pattern jobs are cancelled.",
+  "",
+  "BANGLA",
+  "Boggi / Massimo / Suit Supply size wala kaj Ready-Made. Eita notun person client na.",
+  "",
+  "Vul: Boggi Overcoat name e notun client khola, then Stock-44, 46, 48 alada line.",
+  "Sothik: shob size ekta Ready-Made article.",
+  "",
+  "QC porer bar:",
+  "1. Retail brand er jonno notun person client banaben na.",
+  "2. Sales order khulen.",
+  "3. Mark as ready-made chapun, brand select korun (Boggi).",
+  "4. Left menu te Ready-Made theke follow korun.",
+  "",
+  "Pattern porer bar:",
+  "1. Prottek size er jonno notun pattern sheet banaben na.",
+  "2. Jodi person client hishebe Boggi Overcoat dekhun, QC ke Ready-Made mark korte bolun.",
+  "3. SO-2026-0142 ar SO-2026-0150 Ready-Made / Boggi te move hoise. Sei pattern job cancel.",
+].join("\n");
+
 /** Newest first. Each entry is emailed to Pattern and kept on the How-to tab. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID,
+    title: READY_MADE_SIZE_RUN_HOWTO_TITLE,
+    body: READY_MADE_SIZE_RUN_HOWTO_BODY,
+    href: "/ready-made",
+    href_label: "Open Ready-Made",
+    audience: "pattern",
+  },
   {
     id: SEARCH_ACROSS_BRANDS_HOWTO_NOTICE_ID,
     title: SEARCH_ACROSS_BRANDS_HOWTO_TITLE,

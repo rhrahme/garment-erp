@@ -19,10 +19,16 @@ type NameChangeRow = {
 
 type SewingRow = {
   id: string;
+  action: string;
   label: string;
   production_code: string | null;
   employee_name: string | null;
   so_number: string | null;
+  fabric_number: string | null;
+  garment_type: string | null;
+  client_name: string | null;
+  client_label: string | null;
+  started_at: string | null;
   requested_by: string;
   requested_at: string;
   reason: string | null;
@@ -36,6 +42,7 @@ type FabricDeleteRow = {
   fabric_number: string;
   garment_type: string;
   client_name: string;
+  client_label: string;
   requested_by: string;
   requested_at: string;
   reason: string | null;
@@ -100,8 +107,21 @@ export function AdminApprovalsClient({
       list.push({
         key: `sewing_session:${row.id}`,
         section: "Stitch kiosk requests",
-        title: row.label,
-        subtitle: [row.employee_name, row.so_number, row.reason].filter(Boolean).join(" - "),
+        title: row.client_label
+          ? `${row.client_label} - ${row.label}`
+          : row.label,
+        subtitle: [
+          row.employee_name,
+          row.so_number,
+          row.fabric_number,
+          row.garment_type,
+          row.action === "started_without_qr" && row.started_at
+            ? `Started ${formatWhen(row.started_at)}`
+            : null,
+          row.reason,
+        ]
+          .filter(Boolean)
+          .join(" - "),
         meta: `by ${row.requested_by} - ${formatWhen(row.requested_at)}`,
         decision: (action) => ({ kind: "sewing_session", request_id: row.id, action }),
       });
@@ -110,8 +130,8 @@ export function AdminApprovalsClient({
       list.push({
         key: `fabric_line_delete:${row.order_id}:${row.line_id}`,
         section: "Fabric line delete requests",
-        title: `${row.so_number} ${row.article_label} - ${row.fabric_number} (${row.garment_type})`,
-        subtitle: [row.client_name, row.reason].filter(Boolean).join(" - "),
+        title: `${row.client_label || row.client_name} - ${row.so_number} ${row.article_label} - ${row.fabric_number} (${row.garment_type})`,
+        subtitle: row.reason ?? "",
         meta: `by ${row.requested_by} - ${formatWhen(row.requested_at)}`,
         decision: (action) => ({
           kind: "fabric_line_delete",

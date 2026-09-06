@@ -14,7 +14,8 @@ export type SewingSessionChangeAction =
   | "edit"
   | "pause_kiosk"
   | "delete_failure"
-  | "overtime_confirm";
+  | "overtime_confirm"
+  | "started_without_qr";
 
 /** Fields operators may propose when action is edit. */
 export type SewingSessionEditPatch = {
@@ -62,6 +63,7 @@ export type SewingSessionChangeSnapshot = Pick<
   | "work_kind"
   | "activity_job_function"
   | "kiosk_id"
+  | "started_without_qr"
 >;
 
 export type SewingScanFailureChangeSnapshot = Pick<

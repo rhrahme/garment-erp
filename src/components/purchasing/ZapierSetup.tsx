@@ -197,6 +197,10 @@ export function ZapierSetup() {
             <li>POST/PATCH/DELETE {baseUrl}/api/v1/sales-orders/[id]/fabric-lines</li>
             <li>GET/POST {baseUrl}/api/v1/garment-type-changes</li>
             <li>POST {baseUrl}/api/v1/sales-orders/[id]/fabric-lines/transfer</li>
+            <li>
+              POST {baseUrl}/api/v1/sales-orders/[id]/mark-ready-made
+              (body brand + optional article; moves a size-run SO to Ready-Made)
+            </li>
             <li className="pl-4 text-slate-500">
               body: source_line_id, destination_sales_order_id, meters, reason;
               optional acknowledge_receiving_stage, admin_override
@@ -229,6 +233,10 @@ export function ZapierSetup() {
               (?period=day|week|month&employee_id) attendance + work
             </li>
             <li>POST {baseUrl}/api/v1/production/sewing-session/scan</li>
+            <li>
+              GET/POST {baseUrl}/api/v1/production/sewing-session/start-without-qr
+              (session starts immediately; admin request is after-the-fact)
+            </li>
             <li>GET/POST {baseUrl}/api/v1/production/sewing-session/change-request</li>
             <li className="pl-4 text-slate-500">
               approve/reject: request_id or request_ids (same decision for a selected batch)

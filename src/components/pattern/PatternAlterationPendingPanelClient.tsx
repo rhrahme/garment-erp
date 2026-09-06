@@ -188,7 +188,7 @@ export function PatternAlterationPendingPanelClient({
                     ) : null}
                   </p>
                   <p className="text-slate-700">
-                    {[item.client_code, item.so_number, item.fabric_number]
+                    {[item.client_name, item.client_code, item.so_number, item.fabric_number]
                       .filter(Boolean)
                       .join(" - ")}
                   </p>

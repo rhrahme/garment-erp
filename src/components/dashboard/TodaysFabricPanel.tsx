@@ -213,7 +213,12 @@ export function TodaysFabricPanel({ initialSummary }: TodaysFabricPanelProps) {
                   </td>
                   <td className="px-4 py-3 text-sm">
                     {order.needs_transfer_reorder_email ? (
-                      <span className="font-semibold text-amber-900">Needs supplier email</span>
+                      <span className="font-semibold text-amber-900">
+                        Needs supplier email
+                        {(order.transfer_destination_client_names ?? []).length > 0
+                          ? ` - fabric went to ${order.transfer_destination_client_names.join(", ")}`
+                          : ""}
+                      </span>
                     ) : order.needs_replacement ? (
                       <span className="text-amber-800">Pick replacement fabric</span>
                     ) : (

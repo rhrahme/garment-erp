@@ -88,6 +88,7 @@ type StitchScanCaptureValue = {
   kioskPauseIntervals: Array<{ started_at: string; ended_at?: string | null }>;
   flushInputNow: () => void;
   scheduleFlush: () => void;
+  ingestStartedSession: (session: SewingSession, note?: string) => void;
 };
 
 const StitchScanCaptureContext = createContext<StitchScanCaptureValue | null>(null);
@@ -323,6 +324,26 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
     const next = id.trim() || "laptop-1";
     window.localStorage.setItem(KIOSK_STORAGE_KEY, next);
     setKioskIdState(next);
+  }, []);
+
+  const ingestStartedSession = useCallback((session: SewingSession, note?: string) => {
+    setError(null);
+    setMessage(note ?? `Started ${session.production_code} without QR - admin notified.`);
+    setOpenSessions((current) => [
+      session,
+      ...current.filter((row) => row.id !== session.id),
+    ]);
+    setPhase("piece_open");
+    setLast({
+      ok: true,
+      message: note ?? `Started ${session.production_code} without QR.`,
+      phase: "piece_open",
+      beep: "ok",
+      arm: null,
+      piece_arm: null,
+      session,
+      open_sessions: [session],
+    });
   }, []);
 
   const setWorkstationId = useCallback((id: string) => {
@@ -846,6 +867,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       kioskPauseIntervals,
       flushInputNow,
       scheduleFlush,
+      ingestStartedSession,
     }),
     [
       focusInput,
@@ -868,6 +890,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       kioskPauseIntervals,
       flushInputNow,
       scheduleFlush,
+      ingestStartedSession,
     ]
   );
 

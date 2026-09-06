@@ -40,6 +40,7 @@ export type IntegrationEventType =
   | "sales_order.fabric_change_acknowledged"
   | "sales_order.fabric_order_requested"
   | "sales_order.client_fields_healed"
+  | "sales_order.marked_ready_made"
   | "fabric_receiving.testing_reset"
   | "fabric_receiving.settled"
   | "fabric_receiving.defect_reported"

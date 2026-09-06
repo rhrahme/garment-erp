@@ -222,6 +222,7 @@ export function FabricLineDeleteRequestsPanelClient({
               },
               { key: "when", label: "When" },
               { key: "order", label: "Order" },
+              { key: "client", label: "Client" },
               { key: "fabric", label: "Fabric" },
               { key: "po", label: "PO" },
               { key: "by", label: "By" },
@@ -252,6 +253,14 @@ export function FabricLineDeleteRequestsPanelClient({
                   >
                     {request.so_number}
                   </Link>
+                ),
+                client: (
+                  <span className="text-sm font-semibold text-slate-900">
+                    {request.client_label || request.client_name}
+                    <span className="mt-0.5 block text-xs font-normal text-slate-500">
+                      {request.client_code}
+                    </span>
+                  </span>
                 ),
                 fabric: (
                   <span className="text-sm">

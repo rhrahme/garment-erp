@@ -125,6 +125,8 @@ export type SewingSession = {
   overtime_logged_at?: string | null;
   overtime_decided_by?: string | null;
   overtime_decided_at?: string | null;
+  /** Opened from the kiosk without scanning a printed A4 QR. Already running. */
+  started_without_qr?: boolean;
 };
 
 export type SewingSessionsFile = {

@@ -1,3 +1,4 @@
+import { isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
 import { readPatternJobsFresh, writePatternJobs } from "@/lib/data/pattern-jobs";
 import { resolveFabricDisplayColor } from "@/lib/fabric-sourcing/resolve-fabric-display-color";
 import { orphanPatternJobsToCancel } from "@/lib/sales-orders/pattern-so-mismatch";
@@ -63,6 +64,29 @@ export async function syncPatternJobsFromSalesOrder(
   const updated: string[] = [];
   const cancelled: string[] = [];
   const skipped_cancellations: string[] = [];
+
+  if (isReadyMadeSalesOrder(order)) {
+    for (const job of store.jobs) {
+      if (job.sales_order_id !== order.id) continue;
+      if (job.status === "cancelled" || job.status === "completed") continue;
+      const jobIndex = store.jobs.findIndex((item) => item.id === job.id);
+      if (jobIndex < 0) continue;
+      store.jobs[jobIndex] = {
+        ...store.jobs[jobIndex]!,
+        status: "cancelled",
+        notes: [
+          store.jobs[jobIndex]!.notes?.trim(),
+          "Cancelled - ready-made size run, not a bespoke pattern job.",
+        ]
+          .filter(Boolean)
+          .join("\n"),
+        updated_at: now,
+      };
+      cancelled.push(job.id);
+    }
+    if (cancelled.length > 0) await writePatternJobs(store);
+    return { created, updated, cancelled, skipped_cancellations };
+  }
 
   const existingForOrder = store.jobs.filter((job) => job.sales_order_id === order.id);
   const lineIds = new Set(order.fabric_lines.map((line) => line.id));

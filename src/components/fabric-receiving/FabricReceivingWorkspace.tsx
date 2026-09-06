@@ -93,6 +93,8 @@ export function FabricReceivingWorkspace() {
     print_stickers_href: string;
     destination_order_id: string;
     destination_so_number: string;
+    source_client_name: string;
+    destination_client_name: string;
     admin_alert_message: string;
   } | null>(null);
 
@@ -239,6 +241,8 @@ export function FabricReceivingWorkspace() {
           printHref={transferSuccess.print_stickers_href}
           destinationSoNumber={transferSuccess.destination_so_number}
           destinationOrderId={transferSuccess.destination_order_id}
+          sourceClientName={transferSuccess.source_client_name}
+          destinationClientName={transferSuccess.destination_client_name}
           adminAlertMessage={transferSuccess.admin_alert_message}
           onDismiss={() => setTransferSuccess(null)}
         />

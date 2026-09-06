@@ -98,21 +98,30 @@ export async function GET(request: Request) {
       );
     }
     const overtime = pending.action === "overtime_confirm";
+    const startedWithoutQr = pending.action === "started_without_qr";
     return page(
       payload.action === "approve"
-        ? overtime
-          ? "Overtime confirmed"
-          : "Request approved"
-        : overtime
-          ? "Overtime rejected"
-          : "Request rejected",
+        ? startedWithoutQr
+          ? "Start time acknowledged"
+          : overtime
+            ? "Overtime confirmed"
+            : "Request approved"
+        : startedWithoutQr
+          ? "Start request noted"
+          : overtime
+            ? "Overtime rejected"
+            : "Request rejected",
       payload.action === "approve"
-        ? overtime
-          ? "The overtime scan stays logged and counts in Performance."
-          : "The stitch change is applied."
-        : overtime
-          ? "The scan stays logged but is dropped from Performance."
-          : "The stitch data was left as it was.",
+        ? startedWithoutQr
+          ? "The session was already running. The start time stays as they entered it."
+          : overtime
+            ? "The overtime scan stays logged and counts in Performance."
+            : "The stitch change is applied."
+        : startedWithoutQr
+          ? "The session stays running."
+          : overtime
+            ? "The scan stays logged but is dropped from Performance."
+            : "The stitch data was left as it was.",
       "ok"
     );
   }

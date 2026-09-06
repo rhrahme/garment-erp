@@ -18,6 +18,7 @@ import {
   sewingLiveClockNowMs,
 } from "@/lib/production/sewing-session-state";
 import { isStitchLunchClockWindow } from "@/lib/production/stitch-kiosk-lunch";
+import { StartWithoutQrModal } from "@/components/production/StartWithoutQrModal";
 import { cn } from "@/lib/utils";
 
 function formatLogTime(at: number): string {
@@ -100,9 +101,11 @@ export function StitchKioskPanel() {
     kioskPaused,
     kioskPausedAt,
     kioskPauseIntervals,
+    ingestStartedSession,
   } = useStitchScanCapture();
 
   const [now, setNow] = useState(() => Date.now());
+  const [startWithoutQrOpen, setStartWithoutQrOpen] = useState(false);
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
@@ -255,6 +258,13 @@ export function StitchKioskPanel() {
             : "Field focused - USB scans still capture; tap to focus scanner"}
         </button>
         <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+          <button
+            type="button"
+            onClick={() => setStartWithoutQrOpen(true)}
+            className="rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-semibold text-amber-950 hover:bg-amber-200"
+          >
+            QR not ready - start anyway
+          </button>
           <span>
             Kiosk id: <span className="font-mono text-slate-700">{kioskId}</span>
           </span>
@@ -334,6 +344,24 @@ export function StitchKioskPanel() {
           {message}
         </div>
       )}
+
+      <StartWithoutQrModal
+        open={startWithoutQrOpen}
+        kioskId={kioskId}
+        workstationId={workstationId}
+        defaultEmployeeId={lastArm?.employee_id ?? last?.session?.employee_id ?? null}
+        defaultEmployeeName={
+          lastArm?.employee_name ??
+          (last?.session ? sewingSessionEmployeeDisplayName(last.session) : null)
+        }
+        onClose={() => setStartWithoutQrOpen(false)}
+        onStarted={(session) => {
+          ingestStartedSession(
+            session,
+            `Started ${session.production_code} at the time they began. Admin notified - already running.`
+          );
+        }}
+      />
 
       {log.length > 0 && (
         <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">

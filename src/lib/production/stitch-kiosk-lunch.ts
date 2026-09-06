@@ -40,6 +40,43 @@ function zonedParts(ms: number, timeZone: string): ZonedParts {
   };
 }
 
+function pad2(value: number): string {
+  return String(value).padStart(2, "0");
+}
+
+/** datetime-local value (Asia/Riyadh wall clock) to UTC ms. */
+export function riyadhDateTimeLocalToUtcMs(value: string): number | null {
+  const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (!match) return null;
+  return riyadhWallTimeToUtcMs(
+    Number(match[1]),
+    Number(match[2]),
+    Number(match[3]),
+    Number(match[4]),
+    Number(match[5])
+  );
+}
+
+/** UTC ms to datetime-local value in Asia/Riyadh. */
+export function utcMsToRiyadhDateTimeLocal(ms: number): string {
+  const parts = zonedParts(ms, STITCH_LUNCH_TIMEZONE);
+  return `${parts.year}-${pad2(parts.month)}-${pad2(parts.day)}T${pad2(parts.hour)}:${pad2(parts.minute)}`;
+}
+
+/** 08:00 Riyadh of the workday that contains now (yesterday if still before 08:00). */
+export function currentStitchWorkdayStartMs(nowMs: number = Date.now()): number {
+  const parts = zonedParts(nowMs, STITCH_LUNCH_TIMEZONE);
+  let start = riyadhWallTimeToUtcMs(
+    parts.year,
+    parts.month,
+    parts.day,
+    STITCH_WORKDAY_START_HOUR,
+    0
+  );
+  if (nowMs < start) start -= 24 * 3600_000;
+  return start;
+}
+
 /** Instant for Y-M-D H:M in Asia/Riyadh (no DST). */
 export function riyadhWallTimeToUtcMs(
   year: number,

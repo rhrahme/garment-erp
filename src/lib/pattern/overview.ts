@@ -26,7 +26,9 @@ export async function listPatternOverview(): Promise<PatternOverview> {
   const [jobsFile, ordersFile] = await Promise.all([readPatternJobsAsync(), readSalesOrdersAsync()]);
 
   const openOrders = ordersFile.orders.filter(
-    (order) => order.status === "open" || order.status === "fabric_pos_created"
+    (order) =>
+      (order.status === "open" || order.status === "fabric_pos_created") &&
+      !order.retail_brand?.trim()
   );
 
   const orderById = new Map(openOrders.map((order) => [order.id, order]));

@@ -382,7 +382,9 @@ export function StitchFloorWorkspace({
   const pendingBySessionId = useMemo(() => {
     const map = new Map<string, PendingChangeSummary>();
     for (const row of pendingRequests) {
-      if (row.session_id) map.set(row.session_id, row);
+      if (!row.session_id) continue;
+      if (row.action === "started_without_qr") continue;
+      map.set(row.session_id, row);
     }
     return map;
   }, [pendingRequests]);
@@ -920,6 +922,11 @@ export function StitchFloorWorkspace({
                               Overtime - confirm
                             </div>
                           ) : null}
+                          {session.started_without_qr ? (
+                            <div className="mt-1 text-xs font-semibold text-amber-800">
+                              No QR - started anyway
+                            </div>
+                          ) : null}
                         </td>
                         <td className="px-3 py-3">
                           {pending ? (
@@ -1441,6 +1448,11 @@ export function StitchFloorWorkspace({
                               row.activity_job_function
                             )}
                           </span>
+                          {row.started_without_qr ? (
+                            <div className="mt-1 text-xs font-semibold text-amber-800">
+                              No QR - started anyway
+                            </div>
+                          ) : null}
                         </td>
                         <td className="px-3 py-3">
                           {pending ? (

@@ -13,7 +13,7 @@ function formatRequestBlock(request: FabricLineDeleteRequestSummary): string {
     `- ${request.so_number} | ${request.article_label} | ${request.fabric_number}`,
     `  Garment: ${request.garment_type}`,
     `  Supplier: ${request.supplier_name} | ${request.quantity} ${request.unit}`,
-    `  Client: ${request.client_name} (${request.client_code})`,
+    `  Client: ${request.client_label || `${request.client_name} (${request.client_code})`}`,
     `  Requested by: ${request.delete_requested_by}`,
   ];
   if (request.po_number) {

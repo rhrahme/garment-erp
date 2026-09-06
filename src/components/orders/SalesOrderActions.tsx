@@ -63,6 +63,7 @@ import {
   type FabricLineSortState,
 } from "@/lib/sales-orders/fabric-line-sort";
 import { canAppendFabricLines, canEditFabricLines, canMutateSalesOrderFabricLine, fabricLineEditBlockedReason } from "@/lib/sales-orders/fabric-lines-rules";
+import { MarkReadyMadeControl } from "@/components/orders/MarkReadyMadeControl";
 
 export type SalesOrderViewMode = "fabric_order" | "production" | "sales";
 
@@ -160,6 +161,8 @@ export function SalesOrderActions({
     print_stickers_href: string;
     destination_order_id: string;
     destination_so_number: string;
+    source_client_name: string;
+    destination_client_name: string;
     admin_alert_message: string;
   } | null>(null);
 
@@ -389,6 +392,8 @@ export function SalesOrderActions({
           printHref={transferSuccess.print_stickers_href}
           destinationSoNumber={transferSuccess.destination_so_number}
           destinationOrderId={transferSuccess.destination_order_id}
+          sourceClientName={transferSuccess.source_client_name}
+          destinationClientName={transferSuccess.destination_client_name}
           adminAlertMessage={transferSuccess.admin_alert_message}
           onDismiss={() => setTransferSuccess(null)}
         />
@@ -406,6 +411,10 @@ export function SalesOrderActions({
             router.refresh();
           }}
         />
+      ) : null}
+
+      {!liveOrder.retail_brand && (isAdmin || isClientManager) && !isTaskOperator && !isSalesOperator ? (
+        <MarkReadyMadeControl order={liveOrder} onUpdated={setLiveOrder} />
       ) : null}
 
       {showFabricInput && (
@@ -790,12 +799,14 @@ export function SalesOrderActions({
                           ) : null}
                           {line.transfer_inbound ? (
                             <p className="text-xs text-amber-800">
-                              From transfer ({line.transfer_inbound.source_so_number})
+                              From {line.transfer_inbound.source_client_name} (
+                              {line.transfer_inbound.source_so_number})
                             </p>
                           ) : null}
                           {line.transfer_replacement ? (
                             <p className="text-xs text-violet-800">
-                              Reorder after transfer → {line.transfer_replacement.destination_so_number}
+                              Reorder after transfer to {line.transfer_replacement.destination_client_name}{" "}
+                              ({line.transfer_replacement.destination_so_number})
                             </p>
                           ) : null}
                         </div>

@@ -130,6 +130,8 @@ describe("fabric line delete request list", () => {
     const pending = listPendingFabricLineDeleteRequests([so], fabricPos);
     assert.equal(pending.length, 1);
     assert.equal(pending[0]!.so_number, "SO-2026-0130");
+    assert.equal(pending[0]!.client_name, "Ajlan");
+    assert.equal(pending[0]!.client_label, "Ajlan");
     assert.equal(pending[0]!.delete_requested_by, "hagan.qc@gmail.com");
     assert.equal(pending[0]!.po_number, "PO-2026-0099");
     assert.equal(pending[0]!.po_line_emailed, true);

@@ -7,7 +7,7 @@ import {
 import { summarizeSewingSessionChangeRequest } from "@/lib/production/sewing-session-change-requests";
 
 export async function SewingSessionChangeRequestsPanel() {
-  await ensureDocumentsLoaded(["sewing_session_change_requests", "payroll_employees"]);
+  await ensureDocumentsLoaded(["sewing_session_change_requests", "payroll_employees", "sales_orders"]);
   const store = await readSewingSessionChangeRequestsFresh();
   const requests = listPendingSewingSessionChangeRequests(store).map(
     summarizeSewingSessionChangeRequest

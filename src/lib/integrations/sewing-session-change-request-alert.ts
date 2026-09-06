@@ -19,7 +19,10 @@ export async function notifyAdminsOfSewingSessionChangeRequest(
   const summary = summarizeSewingSessionChangeRequest(request);
   const appUrl = erpPublicAppUrl();
   const overtime = request.action === "overtime_confirm";
-  const subject = overtime
+  const startedWithoutQr = request.action === "started_without_qr";
+  const subject = startedWithoutQr
+    ? `ERP: started without QR (${summary.production_code ?? summary.session_id ?? "session"})`
+    : overtime
     ? `ERP: overtime scan to confirm (${summary.production_code ?? summary.session_id ?? "session"})`
     : `ERP: stitch kiosk request (${summary.action})`;
   const exp = Date.now() + ADMIN_DECISION_EMAIL_TOKEN_TTL_MS;
@@ -37,13 +40,17 @@ export async function notifyAdminsOfSewingSessionChangeRequest(
       })}`;
 
     const text = [
-      overtime
-        ? "Garment ERP - overtime scan logged after 22:00 Riyadh"
-        : "Garment ERP - stitch kiosk request",
+      startedWithoutQr
+        ? "Garment ERP - stitcher started without a printed QR"
+        : overtime
+          ? "Garment ERP - overtime scan logged after 22:00 Riyadh"
+          : "Garment ERP - stitch kiosk request",
       "",
-      overtime
-        ? "The scan is already logged. Confirm it so Performance counts it, or Reject to keep the log but drop the hours."
-        : "The stitch kiosk asked an admin to change Live/History.",
+      startedWithoutQr
+        ? "The session is already running with the start time they entered. Confirm acknowledges that time. Reject does not stop the work."
+        : overtime
+          ? "The scan is already logged. Confirm it so Performance counts it, or Reject to keep the log but drop the hours."
+          : "The stitch kiosk asked an admin to change Live/History.",
       "",
       `- Action: ${summary.action}`,
       `- Label: ${summary.label}`,
@@ -51,17 +58,28 @@ export async function notifyAdminsOfSewingSessionChangeRequest(
       `- Failure: ${summary.failure_id ?? "-"}`,
       `- Production code: ${summary.production_code ?? "-"}`,
       `- Fabric: ${summary.fabric_number ?? "-"}`,
+      `- Garment: ${summary.garment_type ?? "-"}`,
+      `- Client: ${summary.client_label ?? summary.client_name ?? "-"}`,
       `- Employee: ${summary.employee_name ?? "-"}`,
       `- SO: ${summary.so_number ?? "-"}`,
+      `- Started at: ${summary.started_at ?? "-"}`,
       `- Requested by: ${summary.requested_by}`,
       summary.reason ? `- Reason: ${summary.reason}` : null,
       "",
       "One click, no login needed (links work for 7 days):",
       "",
-      overtime ? "CONFIRM - overtime counts:" : "APPROVE - apply the change:",
+      startedWithoutQr
+        ? "CONFIRM - acknowledge the start time (session already running):"
+        : overtime
+          ? "CONFIRM - overtime counts:"
+          : "APPROVE - apply the change:",
       link("approve"),
       "",
-      overtime ? "REJECT - keep the log, drop Performance hours:" : "REJECT - keep current data:",
+      startedWithoutQr
+        ? "REJECT - keep the session running:"
+        : overtime
+          ? "REJECT - keep the log, drop Performance hours:"
+          : "REJECT - keep current data:",
       link("reject"),
       "",
       "ALL pending approvals on one page (approve each or all, no login):",

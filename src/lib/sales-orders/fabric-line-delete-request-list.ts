@@ -4,6 +4,10 @@ import {
   getFabricPosForSalesOrder,
 } from "@/lib/sales-orders/line-cross-reference";
 import {
+  formatFabricClientOwnership,
+  ownershipFromFabricLine,
+} from "@/lib/sales-orders/fabric-client-ownership";
+import {
   formatFabricLineArticle,
   soArticleFromFabricLine,
 } from "@/lib/sales-orders/label-codes";
@@ -16,6 +20,9 @@ export type FabricLineDeleteRequestSummary = {
   client_id: string;
   client_name: string;
   client_code: string;
+  source_client_name: string | null;
+  destination_client_name: string | null;
+  client_label: string;
   line_id: string;
   fabric_number: string;
   garment_type: string;
@@ -49,12 +56,20 @@ export function listPendingFabricLineDeleteRequests(
       if (!line.delete_requested_at) continue;
       const match = findFabricPoLineForSoFabricLine(line, fabricPos);
       const article = soArticleFromFabricLine(line);
+      const ownership = ownershipFromFabricLine(order, line);
       pending.push({
         sales_order_id: order.id,
         so_number: order.so_number,
         client_id: order.client_id,
         client_name: order.client_name,
         client_code: order.client_code,
+        source_client_name: ownership.source_client_name,
+        destination_client_name: ownership.destination_client_name,
+        client_label: formatFabricClientOwnership({
+          currentClientName: ownership.current_client_name,
+          sourceClientName: ownership.source_client_name,
+          destinationClientName: ownership.destination_client_name,
+        }),
         line_id: line.id,
         fabric_number: line.fabric_number,
         garment_type: line.garment_type,
@@ -84,12 +99,20 @@ export function buildFabricLineDeleteRequestSummary(
   fabricPos: PurchaseOrder[]
 ): FabricLineDeleteRequestSummary {
   const match = findFabricPoLineForSoFabricLine(line, fabricPos);
+  const ownership = ownershipFromFabricLine(order, line);
   return {
     sales_order_id: order.id,
     so_number: order.so_number,
     client_id: order.client_id,
     client_name: order.client_name,
     client_code: order.client_code,
+    source_client_name: ownership.source_client_name,
+    destination_client_name: ownership.destination_client_name,
+    client_label: formatFabricClientOwnership({
+      currentClientName: ownership.current_client_name,
+      sourceClientName: ownership.source_client_name,
+      destinationClientName: ownership.destination_client_name,
+    }),
     line_id: line.id,
     fabric_number: line.fabric_number,
     garment_type: line.garment_type,

@@ -144,6 +144,8 @@ function matchesSearch(entry: FabricReceivingCutEntry, query: string): boolean {
       order.so_number,
       order.client_name,
       order.client_code,
+      line.transfer_source_client_name,
+      line.transfer_destination_client_name,
       formatArticle(line.article_number),
       ...line.stickers.flatMap((sticker) => [sticker.sticker_code, sticker.production_code]),
     ],
@@ -474,6 +476,24 @@ function FabricCutCard({
             </span>
             <code className="text-xl font-bold tracking-tight text-indigo-900">{line.fabric_cut_code}</code>
           </div>
+          <p className="mt-1 text-sm font-semibold text-slate-900">{order.client_name}</p>
+          <p className="text-xs text-slate-600">
+            {line.garment_type} · {line.fabric_number}
+          </p>
+          {line.transfer_source_client_name ? (
+            <p className="mt-0.5 text-xs text-amber-800">
+              From {line.transfer_source_client_name}
+              {line.transfer_source_so_number ? ` (${line.transfer_source_so_number})` : ""}
+            </p>
+          ) : null}
+          {line.transfer_destination_client_name ? (
+            <p className="mt-0.5 text-xs text-violet-800">
+              Replacement after transfer to {line.transfer_destination_client_name}
+              {line.transfer_destination_so_number
+                ? ` (${line.transfer_destination_so_number})`
+                : ""}
+            </p>
+          ) : null}
           <EntityPhotos
             className="mt-2"
             supplierId={line.supplier_id}

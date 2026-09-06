@@ -1,4 +1,4 @@
-import { parsePatternNoticeEmails } from "@/lib/auth/permissions";
+import { parseClientManagerEmails, parsePatternNoticeEmails } from "@/lib/auth/permissions";
 import {
   appendPatternOperatorNotice,
   getPatternOperatorNoticeById,
@@ -16,6 +16,7 @@ import {
   CONSOLIDATE_FABRICS_HOWTO_NOTICE_ID,
   CONSOLIDATE_FABRICS_HOWTO_TITLE,
   PATTERN_HOWTO_NOTICES,
+  READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID,
 } from "@/lib/pattern/pattern-operator-notice-copy";
 import type { PatternOperatorNotice } from "@/lib/types/pattern-operator-notices";
 
@@ -170,12 +171,20 @@ export async function emailPatternOperatorNotice(
   notice: PatternOperatorNotice
 ): Promise<boolean> {
   const recipients = [...parsePatternNoticeEmails()];
+  if (notice.id === READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID) {
+    recipients.push(...parseClientManagerEmails());
+  }
   if (recipients.length === 0) return false;
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://erp.hagan.pro";
-  const subject = `ERP Pattern: ${notice.title}`;
+  const forQcToo = notice.id === READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID;
+  const subject = forQcToo
+    ? `ERP QC + Pattern: ${notice.title}`
+    : `ERP Pattern: ${notice.title}`;
   const text = [
-    "Garment ERP - message for Pattern",
+    forQcToo
+      ? "Garment ERP - message for QC and Pattern"
+      : "Garment ERP - message for Pattern",
     "",
     notice.title,
     "",
@@ -187,8 +196,10 @@ export async function emailPatternOperatorNotice(
         }`
       : `Open Pattern: ${appUrl}/pattern`,
     "",
-    "This notice also appears at the top of your Pattern page until you tap Got it.",
-    `All how-tos stay on Pattern -> How-to: ${appUrl}/pattern/how-to`,
+    forQcToo
+      ? "QC: on the sales order press Mark as ready-made. Pattern: this notice also appears on Pattern until you tap Got it."
+      : "This notice also appears at the top of your Pattern page until you tap Got it.",
+    `All Pattern how-tos stay on Pattern -> How-to: ${appUrl}/pattern/how-to`,
     "",
     "This is an automated message from Garment ERP.",
   ].join("\n");

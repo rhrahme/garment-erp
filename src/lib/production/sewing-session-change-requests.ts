@@ -55,6 +55,7 @@ function snapshotSession(session: SewingSession): SewingSessionChangeSnapshot {
     work_kind: session.work_kind ?? null,
     activity_job_function: session.activity_job_function ?? null,
     kiosk_id: session.kiosk_id,
+    started_without_qr: session.started_without_qr ?? false,
   };
 }
 
@@ -250,10 +251,14 @@ export async function createSewingSessionChangeRequest(
     if (row.status !== "pending") return false;
     if (action === "pause_kiosk") return row.action === "pause_kiosk";
     if (action === "delete_failure") return row.failure_id === failureId;
-    if (action === "overtime_confirm") {
-      return row.action === "overtime_confirm" && row.session_id === sessionId;
+    if (action === "overtime_confirm" || action === "started_without_qr") {
+      return row.action === action && row.session_id === sessionId;
     }
-    return row.action !== "overtime_confirm" && row.session_id === sessionId;
+    return (
+      row.action !== "overtime_confirm" &&
+      row.action !== "started_without_qr" &&
+      row.session_id === sessionId
+    );
   });
   if (duplicate) {
     return {
@@ -496,6 +501,13 @@ async function applyApprovedMutation(
       return { ok: false, status: 400, error: "Request is missing session_id." };
     }
     return setSessionOvertimeDecision(sessionId, "confirmed", decidedBy);
+  }
+
+  if (request.action === "started_without_qr") {
+    return {
+      ok: true,
+      detail: "Start time already applied. The session stays running.",
+    };
   }
 
   if (request.action === "pause_kiosk") {

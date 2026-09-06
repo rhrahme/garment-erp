@@ -24,6 +24,8 @@ export type TodaysFabricOrderRow = {
   replacement_fabrics: string[];
   /** True when a transfer created a reorder line that still needs supplier email. */
   needs_transfer_reorder_email: boolean;
+  /** Destination client names when this row is a transfer replacement reorder. */
+  transfer_destination_client_names: string[];
   order_date: string;
   can_create_pos: boolean;
   block_reason: string | null;
@@ -123,6 +125,13 @@ function toRow(
     .map((line) => line.fabric_number);
 
   const transferReorderLines = order.fabric_lines.filter((line) => line.transfer_replacement);
+  const transferDestinationNames = [
+    ...new Set(
+      transferReorderLines
+        .map((line) => line.transfer_replacement?.destination_client_name?.trim())
+        .filter((name): name is string => Boolean(name))
+    ),
+  ];
   const emailsPending = orderHasPendingSupplierEmails(order, fabricOrdersBySalesOrderId);
   const needsTransferReorderEmail =
     transferReorderLines.length > 0 &&
@@ -144,6 +153,7 @@ function toRow(
     needs_replacement: replacementFabrics.length > 0,
     replacement_fabrics: replacementFabrics,
     needs_transfer_reorder_email: needsTransferReorderEmail,
+    transfer_destination_client_names: transferDestinationNames,
     order_date: order.order_date,
     can_create_pos: blockReason === null,
     block_reason: blockReason,

@@ -166,6 +166,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `/approvals` page. Dashboard queues sit **above Today's fabric** with a
   full-width **Select all** bar plus Confirm all / Reject all (or OK/Not)
   so a long pending list can be decided without scrolling past other cards.
+  Stitch and fabric-delete queue rows show the **client name** on the fabric
+  (SO + fabric + garment is not enough). After a client-to-client fabric
+  transfer, the row also shows from/to names (`Client B (from Client A)`).
   Admin decide accepts `request_ids` (and `/api/v1/...` parity). Store:
   `sewing_session_change_requests`. APIs:
   `POST /api/production/sewing-session/change-request` (request/cancel) +
@@ -175,6 +178,16 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   durable `deleted_session_ids` tombstones so protect-merge cannot
   resurrect rows. Overtime after 22:00 is `overtime_confirm` (scan already
   logged). Scan tab stays scan-only.
+- **Started without QR** (Sep 6 2026): if the A4/piece QR is not printed yet
+  but the stitcher already began, Scan has **QR not ready - start anyway**.
+  They pick the employee + piece and the time they started. The Live
+  session opens immediately; admin gets a `started_without_qr` request
+  with that start time. Confirm acknowledges; Reject does **not** stop
+  the session. Employee picker is Expats ID list from the same route
+  (stitch@ cannot call `/api/hr/employees`).
+  `POST /api/production/sewing-session/start-without-qr` +
+  `/api/v1/...` parity. Event still `production.sewing_session_started`
+  plus `production.sewing_session_change_requested`.
 - **Stop requests close at request time** (Aug 17 2026): approved "stop"
   requests set `ended_at` = `requested_at` (`stopRequestEndedAt`), never the
   admin decision time - approval lag must not inflate elapsed. If the kiosk
@@ -323,13 +336,15 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   tab) with events `pattern.operator_notice_created` /
   `pattern.operator_notice_acknowledged` / `pattern.operator_notice_seen`.
   How-to emails go to both Pattern mailboxes (`hagan.dp1@gmail.com` and
-  `pattern@hagan.pro`) plus `PATTERN_EMAILS`. For the add-to-existing-group
+  `pattern@hagan.pro`) plus `PATTERN_EMAILS`. Ready-made size-run how-to
+  also emails QC (`hagan.qc@gmail.com`). For the add-to-existing-group
   how-to, admin is emailed when it is sent and again when a Pattern
   operator opens any Pattern page and sees the banner. When we explain a
   floor fix to Pattern, add a catalog entry so they get the email and the
   in-app banner - do not only tell the owner in chat. Notices: both
   Pattern logins type a client name and search looks in every brand
-  (`howto-search-across-brands-v1`), tap All brands
+  (`howto-search-across-brands-v1`), Boggi/Massimo size runs are
+  Ready-Made not a new client (`howto-ready-made-size-run-v1`), tap All brands
   (`howto-same-queue-all-brands-v1`), Fabric
   Specification is on the left menu (`howto-fabric-spec-both-accounts-v1`),
   Overshirt 1/2 Waist is not Trouser waist (`howto-overshirt-waist-not-trouser-v1`),
@@ -642,6 +657,14 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Ready-made catalog photos
 
+- **Size runs are Ready-Made** (Sep 6 2026): Boggi / Massimo / Suit Supply
+  / Cafe Cotton / Zegna stock size runs (Stock-44, Stock-46, ...) are not
+  a person client. QC must not create "Boggi Overcoat" as a new client.
+  Mark the SO Ready-Made (brand + article). Pattern does not draft one
+  sheet per size. `POST /api/sales-orders/[id]/mark-ready-made` +
+  `/api/v1/...` parity. Event `sales_order.marked_ready_made`. How-to
+  `howto-ready-made-size-run-v1` (English + Bangla) emails Pattern and QC.
+  SO-2026-0142 and SO-2026-0150 were moved to Ready-Made / Boggi.
 - **Garment + size photos** (Aug 19 2026): on `/ready-made`, each article
   can open Photos. Upload style shots on the garment, and a photo on each
   size (XS-XXL by default; extra sizes can be added). Stored in
@@ -866,7 +889,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
-- [session-2026-09-06](session-2026-09-06.md) - Floor nicknames; admin Select all on pending Confirm/Reject queues
+- [session-2026-09-06](session-2026-09-06.md) - Floor nicknames; admin Select all; client name on fabric rows; start without printed QR
 - [session-2026-09-01](session-2026-09-01.md) - Serwal garment type; HR overtime pay and mistake deductions shipped
 - [session-2026-08-27](session-2026-08-27.md) - Inventory Boxes + Alert; HR overtime pay and mistake deductions
 - [session-2026-08-26](session-2026-08-26.md) - Pattern search looks across brands (ibi / Ibrahim); queue starts on All brands

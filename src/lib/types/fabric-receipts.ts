@@ -154,6 +154,12 @@ export type FabricReceivingLineRow = {
   /** Any defect report on this receipt (open or closed). */
   has_defect_report: boolean;
   open_defect_count: number;
+  /** Present when this cut arrived via transfer from another client. */
+  transfer_source_client_name?: string | null;
+  transfer_source_so_number?: string | null;
+  /** Present when this line is a replacement reorder after fabric left. */
+  transfer_destination_client_name?: string | null;
+  transfer_destination_so_number?: string | null;
 };
 
 export type FabricReceivingOrderRow = {

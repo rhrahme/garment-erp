@@ -76,6 +76,9 @@ describe("summarizeSewingSessionChangeRequest", () => {
     assert.equal(summary.action, "delete");
     assert.match(summary.label, /FR-0133-L18-TR-2\/2/);
     assert.equal(summary.fabric_number, "771020");
+    assert.equal(summary.garment_type, "Overshirt+Trouser");
+    assert.ok(summary.client_name?.includes("Khaled"));
+    assert.ok(summary.client_label?.includes("Khaled"));
   });
 
   it("labels overtime confirm requests", () => {
@@ -96,6 +99,14 @@ describe("summarizeSewingSessionChangeRequest", () => {
       })
     );
     assert.equal(summary.employee_name, "Parvaiz");
+  });
+
+  it("labels started-without-QR requests", () => {
+    const summary = summarizeSewingSessionChangeRequest(
+      baseRequest({ action: "started_without_qr" })
+    );
+    assert.match(summary.label, /Started without QR/);
+    assert.equal(summary.started_at, "2026-08-10T07:55:42.955Z");
   });
 
   it("labels pause kiosk requests", () => {

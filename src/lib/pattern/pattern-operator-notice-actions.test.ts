@@ -12,6 +12,9 @@ import {
   PATTERN_FILES_BY_BRAND_HOWTO_BODY,
   PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID,
   PATTERN_FILES_BY_BRAND_HOWTO_TITLE,
+  READY_MADE_SIZE_RUN_HOWTO_BODY,
+  READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID,
+  READY_MADE_SIZE_RUN_HOWTO_TITLE,
   SEARCH_ACROSS_BRANDS_HOWTO_BODY,
   SEARCH_ACROSS_BRANDS_HOWTO_NOTICE_ID,
   SEARCH_ACROSS_BRANDS_HOWTO_TITLE,
@@ -100,10 +103,22 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(FABRIC_SPEC_BOTH_ACCOUNTS_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(SAME_QUEUE_ALL_BRANDS_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(SEARCH_ACROSS_BRANDS_HOWTO_NOTICE_ID));
+    assert.ok(ids.includes(READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID));
     assert.equal(
       PATTERN_HOWTO_NOTICES[0]?.id,
-      SEARCH_ACROSS_BRANDS_HOWTO_NOTICE_ID
+      READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID
     );
+  });
+});
+
+describe("Pattern ready-made size-run how-to", () => {
+  it("tells QC and Pattern size runs are Ready-Made, in English and Bangla", () => {
+    assert.equal(READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID, "howto-ready-made-size-run-v1");
+    assert.match(READY_MADE_SIZE_RUN_HOWTO_TITLE, /Ready-Made/i);
+    assert.match(READY_MADE_SIZE_RUN_HOWTO_BODY, /Mark as ready-made/);
+    assert.match(READY_MADE_SIZE_RUN_HOWTO_BODY, /SO-2026-0150/);
+    assert.match(READY_MADE_SIZE_RUN_HOWTO_BODY, /BANGLA/);
+    assert.match(READY_MADE_SIZE_RUN_HOWTO_BODY, /Ready-Made article/);
   });
 });
 

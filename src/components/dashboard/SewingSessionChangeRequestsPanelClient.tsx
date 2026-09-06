@@ -21,8 +21,14 @@ type RequestSummary = {
   label: string;
   production_code: string | null;
   fabric_number: string | null;
+  garment_type: string | null;
   employee_name: string | null;
   so_number: string | null;
+  client_name: string | null;
+  source_client_name: string | null;
+  destination_client_name: string | null;
+  client_label: string | null;
+  started_at: string | null;
   requested_by: string;
   requested_at: string;
   reason: string | null;
@@ -172,7 +178,9 @@ export function SewingSessionChangeRequestsPanelClient({
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 Stitch/Pattern asked to edit, stop, delete, or pause kiosk scan history.
                 Overtime scans after 10 PM are already logged - Confirm counts them,
-                Reject keeps the log but drops Performance hours.
+                Reject keeps the log but drops Performance hours. Started without QR
+                is already running - Confirm acknowledges the start time; Reject does
+                not stop the session.
               </p>
             ) : null}
           </div>
@@ -249,11 +257,26 @@ export function SewingSessionChangeRequestsPanelClient({
               target: (
                 <span className="text-sm">
                   {request.label}
+                  {request.client_label ? (
+                    <span className="mt-0.5 block font-semibold text-slate-900">
+                      {request.client_label}
+                    </span>
+                  ) : null}
                   <span className="mt-0.5 block text-xs text-slate-500">
-                    {[request.employee_name, request.so_number, request.fabric_number]
+                    {[
+                      request.employee_name,
+                      request.so_number,
+                      request.fabric_number,
+                      request.garment_type,
+                    ]
                       .filter(Boolean)
                       .join(" | ") || "-"}
                   </span>
+                  {request.action === "started_without_qr" && request.started_at ? (
+                    <span className="mt-0.5 block text-xs font-semibold text-amber-900">
+                      Started {formatDateTime(request.started_at)}
+                    </span>
+                  ) : null}
                   {request.reason ? (
                     <span className="mt-0.5 block text-xs text-slate-600">{request.reason}</span>
                   ) : null}

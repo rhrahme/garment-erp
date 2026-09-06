@@ -155,7 +155,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       /** Admin should email suppliers for A's replacement POs. */
       admin_alert: {
         type: "needs_supplier_email",
-        message: `Transfer replacement on ${result.result.source_order.so_number} needs supplier email.`,
+        message: `Transfer replacement on ${result.result.source_order.so_number} (${result.result.source_order.client_name}) needs supplier email - fabric moved to ${result.result.destination_order.client_name} (${result.result.destination_order.so_number}).`,
         sales_order_id: result.result.source_order.id,
         so_number: result.result.source_order.so_number,
       },

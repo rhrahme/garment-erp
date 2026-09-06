@@ -24,6 +24,8 @@ type FabricTransferModalProps = {
     print_stickers_href: string;
     destination_order_id: string;
     destination_so_number: string;
+    source_client_name: string;
+    destination_client_name: string;
     admin_alert_message: string;
   }) => void;
 };
@@ -190,6 +192,10 @@ export function FabricTransferModal({
         print_stickers_href: data.print_stickers_href as string,
         destination_order_id: data.destination_order?.id as string,
         destination_so_number: data.destination_order?.so_number as string,
+        source_client_name:
+          (data.source_order?.client_name as string | undefined) ?? sourceOrder.client_name,
+        destination_client_name:
+          (data.destination_order?.client_name as string | undefined) ?? selected?.client_name ?? "",
         admin_alert_message:
           (data.admin_alert?.message as string) ??
           "Replacement fabric needs supplier email on the source order.",
@@ -253,8 +259,10 @@ export function FabricTransferModal({
             </p>
             <p className="mt-2 text-xs text-slate-600">
               <span className="font-medium text-slate-800">Source stage:</span> {stageLabel}
-              {" · "}
-              {sourceOrder.client_name}
+            </p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              From {sourceOrder.client_name} ({sourceOrder.so_number})
+              {selected ? ` -> ${selected.client_name} (${selected.so_number})` : ""}
             </p>
           </div>
 
@@ -448,20 +456,30 @@ export function FabricTransferSuccessBanner({
   printHref,
   destinationSoNumber,
   destinationOrderId,
+  sourceClientName,
+  destinationClientName,
   adminAlertMessage,
   onDismiss,
 }: {
   printHref: string;
   destinationSoNumber: string;
   destinationOrderId: string;
+  sourceClientName?: string;
+  destinationClientName?: string;
   adminAlertMessage: string;
   onDismiss: () => void;
 }) {
+  const transferHeadline =
+    sourceClientName && destinationClientName
+      ? `Fabric transferred from ${sourceClientName} to ${destinationClientName} (${destinationSoNumber})`
+      : destinationClientName
+        ? `Fabric transferred to ${destinationClientName} (${destinationSoNumber})`
+        : `Fabric transferred to ${destinationSoNumber}`;
   return (
     <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-semibold">Fabric transferred to {destinationSoNumber}</p>
+          <p className="font-semibold">{transferHeadline}</p>
           <p className="mt-1">{adminAlertMessage}</p>
           <p className="mt-2 text-emerald-900">
             Print a new sticker for the destination client before floor scans.

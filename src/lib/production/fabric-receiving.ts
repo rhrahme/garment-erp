@@ -352,6 +352,10 @@ export async function listFabricReceivingOverview(
         has_defect_report: Boolean(receipt?.defect_reports?.length),
         open_defect_count: (receipt?.defect_reports ?? []).filter((item) => item.status === "open")
           .length,
+        transfer_source_client_name: line.transfer_inbound?.source_client_name ?? null,
+        transfer_source_so_number: line.transfer_inbound?.source_so_number ?? null,
+        transfer_destination_client_name: line.transfer_replacement?.destination_client_name ?? null,
+        transfer_destination_so_number: line.transfer_replacement?.destination_so_number ?? null,
       });
     });
 
