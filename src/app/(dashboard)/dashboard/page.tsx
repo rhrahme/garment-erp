@@ -224,13 +224,13 @@ export default async function DashboardPage() {
         )}
       </div>
 
+      {session.isAdmin ? <SewingSessionChangeRequestsPanel /> : null}
+      {session.isAdmin ? <FabricLineDeleteRequestsPanel /> : null}
+      {session.isAdmin ? <ClientNameChangeRequestsPanel /> : null}
+
       {todaysFabricSummary && todaysFabricSummary.order_count > 0 && (
         <TodaysFabricPanel initialSummary={todaysFabricSummary} />
       )}
-
-      {session.isAdmin ? <ClientNameChangeRequestsPanel /> : null}
-      {session.isAdmin ? <FabricLineDeleteRequestsPanel /> : null}
-      {session.isAdmin ? <SewingSessionChangeRequestsPanel /> : null}
       {session.isAdmin ? <LoginEventsPanel /> : null}
       <FabricChangeAlertsPanel />
       {session.isAdmin ? <GarmentTypeChangesPanel /> : null}

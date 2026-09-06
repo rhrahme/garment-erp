@@ -176,10 +176,12 @@ export function SewingSessionChangeRequestsPanelClient({
               </p>
             ) : null}
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <Link href="/stitch?tab=live" className="text-sm font-medium text-indigo-700 hover:underline">
-              Open stitch Live
-            </Link>
+          <Link href="/stitch?tab=live" className="text-sm font-medium text-indigo-700 hover:underline">
+            Open stitch Live
+          </Link>
+        </div>
+        {requests.length > 0 ? (
+          <div className="mt-3">
             <AdminPendingSelectBar
               total={requests.length}
               selectedCount={selectedRequests.length}
@@ -191,9 +193,11 @@ export function SewingSessionChangeRequestsPanelClient({
               onToggleAll={toggleAll}
               onConfirmSelected={() => void decide(selectedRequests, "approve")}
               onRejectSelected={() => void decide(selectedRequests, "reject")}
+              onConfirmAll={() => void decide(requests, "approve")}
+              onRejectAll={() => void decide(requests, "reject")}
             />
           </div>
-        </div>
+        ) : null}
         {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
         {Object.values(notes).map((note) => (
           <p key={note} className="mt-2 text-sm text-amber-800">

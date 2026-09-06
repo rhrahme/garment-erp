@@ -163,9 +163,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   session, **delete** a failed-scan row, or **pause the whole kiosk**. Nothing
   mutates until admin Confirm on `/dashboard#sewing-session-change-requests`
   (Reject keeps data) or one-click Approve/Reject in the admin email /
-  `/approvals` page. Dashboard queues (stitch change requests, client
-  name changes, fabric deletes) have **Select all** plus Confirm/Reject
-  (or OK/Not) selected so a long pending list can be decided in one pass.
+  `/approvals` page. Dashboard queues sit **above Today's fabric** with a
+  full-width **Select all** bar plus Confirm all / Reject all (or OK/Not)
+  so a long pending list can be decided without scrolling past other cards.
   Admin decide accepts `request_ids` (and `/api/v1/...` parity). Store:
   `sewing_session_change_requests`. APIs:
   `POST /api/production/sewing-session/change-request` (request/cancel) +

@@ -76,12 +76,15 @@ export function ClientNameChangeRequestsPanelClient({
     }
   }
 
-  async function actSelected(action: "approve" | "reject") {
-    if (selectedRequests.length === 0) return;
+  async function actSelected(
+    action: "approve" | "reject",
+    targets: ClientNameChangeRequestSummary[] = selectedRequests
+  ) {
+    if (targets.length === 0) return;
     setBatchBusy(true);
     setError(null);
     try {
-      for (const request of selectedRequests) {
+      for (const request of targets) {
         const ok = await act(request, action);
         if (!ok) break;
       }
@@ -125,6 +128,8 @@ export function ClientNameChangeRequestsPanelClient({
             onToggleAll={toggleAll}
             onConfirmSelected={() => void actSelected("approve")}
             onRejectSelected={() => void actSelected("reject")}
+            onConfirmAll={() => void actSelected("approve", requests)}
+            onRejectAll={() => void actSelected("reject", requests)}
           />
         </div>
       </CardHeader>

@@ -123,12 +123,15 @@ export function FabricLineDeleteRequestsPanelClient({
     }
   }
 
-  async function actSelected(action: "keep" | "confirm_delete") {
-    if (selectedRequests.length === 0) return;
+  async function actSelected(
+    action: "keep" | "confirm_delete",
+    targets: FabricLineDeleteRequestSummary[] = selectedRequests
+  ) {
+    if (targets.length === 0) return;
     setBatchBusy(true);
     setError(null);
     try {
-      for (const request of selectedRequests) {
+      for (const request of targets) {
         const ok = await act(request, action);
         if (!ok) break;
       }
@@ -173,19 +176,25 @@ export function FabricLineDeleteRequestsPanelClient({
               </p>
             ) : null}
           </div>
-          <AdminPendingSelectBar
-            total={requests.length}
-            selectedCount={selectedRequests.length}
-            allSelected={allSelected}
-            busy={busy}
-            confirmLabel="OK"
-            rejectLabel="Not"
-            confirmClassName="bg-red-700 hover:bg-red-800"
-            onToggleAll={toggleAll}
-            onConfirmSelected={() => void actSelected("confirm_delete")}
-            onRejectSelected={() => void actSelected("keep")}
-          />
         </div>
+        {requests.length > 0 ? (
+          <div className="mt-3">
+            <AdminPendingSelectBar
+              total={requests.length}
+              selectedCount={selectedRequests.length}
+              allSelected={allSelected}
+              busy={busy}
+              confirmLabel="OK"
+              rejectLabel="Not"
+              confirmClassName="bg-red-700 hover:bg-red-800"
+              onToggleAll={toggleAll}
+              onConfirmSelected={() => void actSelected("confirm_delete")}
+              onRejectSelected={() => void actSelected("keep")}
+              onConfirmAll={() => void actSelected("confirm_delete", requests)}
+              onRejectAll={() => void actSelected("keep", requests)}
+            />
+          </div>
+        ) : null}
         {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
         {Object.values(notes).map((note) => (
           <p key={note} className="mt-2 text-sm text-amber-800">
