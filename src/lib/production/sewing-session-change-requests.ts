@@ -40,6 +40,7 @@ function snapshotSession(session: SewingSession): SewingSessionChangeSnapshot {
     status: session.status,
     employee_id: session.employee_id,
     employee_name: session.employee_name,
+    employee_short_name: session.employee_short_name ?? null,
     employee_id_number: session.employee_id_number,
     production_code: session.production_code,
     scan_code: session.scan_code,
@@ -757,4 +758,41 @@ export async function decideSewingSessionChangeRequest(
   });
 
   return { ok: true, request: approved, detail: applied.detail };
+}
+
+export type SewingSessionChangeDecisionResult = {
+  request_id: string;
+  ok: boolean;
+  error?: string;
+  status?: number;
+  request?: ReturnType<typeof summarizeSewingSessionChangeRequest>;
+  detail?: string | null;
+};
+
+export async function decideSewingSessionChangeRequests(
+  requestIds: string[],
+  decision: "approve" | "reject",
+  actor: string,
+  options: { decision_note?: string | null; source?: "erp" | "api" } = {}
+): Promise<SewingSessionChangeDecisionResult[]> {
+  const results: SewingSessionChangeDecisionResult[] = [];
+  for (const requestId of requestIds) {
+    const result = await decideSewingSessionChangeRequest(requestId, decision, actor, options);
+    if (result.ok) {
+      results.push({
+        request_id: requestId,
+        ok: true,
+        request: summarizeSewingSessionChangeRequest(result.request),
+        detail: result.detail ?? null,
+      });
+    } else {
+      results.push({
+        request_id: requestId,
+        ok: false,
+        error: result.error,
+        status: result.status,
+      });
+    }
+  }
+  return results;
 }

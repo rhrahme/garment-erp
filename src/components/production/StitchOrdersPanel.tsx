@@ -10,6 +10,7 @@ import {
 } from "@/lib/sales-orders/to-list-row-client";
 import { dedupeIdenticalSalesOrders } from "@/lib/sales-orders/duplicate-order";
 import type { SalesOrder } from "@/lib/types/sales-orders";
+import { sewingSessionEmployeeDisplayName } from "@/lib/production/sewing-session-status-label";
 import type { SewingSession } from "@/lib/types/sewing-sessions";
 
 /** Live stitcher names keyed by sales order id for floor search. */
@@ -34,10 +35,10 @@ function liveEmployeeTextByOrderId(
   for (const session of openSessions) {
     if (session.status !== "open" && session.status !== "closing") continue;
     if (session.work_order_id) {
-      add(orderIdByWo.get(session.work_order_id), session.employee_name);
+      add(orderIdByWo.get(session.work_order_id), sewingSessionEmployeeDisplayName(session));
     }
     if (session.so_number) {
-      add(orderIdBySo.get(session.so_number.toLowerCase()), session.employee_name);
+      add(orderIdBySo.get(session.so_number.toLowerCase()), sewingSessionEmployeeDisplayName(session));
     }
   }
 

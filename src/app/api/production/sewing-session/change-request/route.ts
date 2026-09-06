@@ -30,7 +30,7 @@ export async function GET() {
     if (!session || !canRequest(session)) {
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
-    await ensureDocumentsLoaded(["sewing_session_change_requests"]);
+    await ensureDocumentsLoaded(["sewing_session_change_requests", "payroll_employees"]);
     const store = await readSewingSessionChangeRequestsFresh();
     const pending = listPendingSewingSessionChangeRequests(store).map(
       summarizeSewingSessionChangeRequest

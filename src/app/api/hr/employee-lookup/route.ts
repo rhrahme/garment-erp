@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionContext, requireFactoryOpsAccess } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { badgeDisplayName } from "@/lib/hr/badge-print";
 import { findPayrollEmployeeByBadgeValue, employeeNeedsWorkstationPick } from "@/lib/hr/payroll-lookup";
 
 export async function POST(request: Request) {
@@ -33,7 +34,8 @@ export async function POST(request: Request) {
       employee: {
         id: employee.id,
         employee_id_number: employee.employee_id_number,
-        full_name: employee.full_name,
+        full_name: badgeDisplayName(employee),
+        short_name: employee.short_name ?? null,
         assigned_workstation_id: employee.assigned_workstation_id ?? null,
         is_mobile_floater: Boolean(employee.is_mobile_floater),
         needs_workstation_pick: employeeNeedsWorkstationPick(employee),

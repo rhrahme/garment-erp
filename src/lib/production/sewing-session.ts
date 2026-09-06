@@ -30,6 +30,7 @@ import {
   STITCH_KIOSK_LUNCH_AUTO_RESUME_ACTOR,
 } from "@/lib/data/stitch-kiosk-settings";
 import { notifyIntegration } from "@/lib/integrations";
+import { badgeDisplayName } from "@/lib/hr/badge-print";
 import { employeeCanSewOnStitchKiosk } from "@/lib/hr/payroll-utils";
 import { notifyAdminsOfSewingSessionStarted } from "@/lib/integrations/sewing-session-started-alert";
 import { executeStageScan } from "@/lib/production/execute-stage-scan";
@@ -784,7 +785,7 @@ export async function processSewingKioskScan(
         {
           ...failMeta,
           employee_id: employee.id,
-          employee_name: employee.full_name,
+          employee_name: badgeDisplayName(employee),
           employee_id_number: employee.employee_id_number,
         }
       );
@@ -802,7 +803,7 @@ export async function processSewingKioskScan(
         {
           ...failMeta,
           employee_id: employee.id,
-          employee_name: employee.full_name,
+          employee_name: badgeDisplayName(employee),
           employee_id_number: employee.employee_id_number,
         }
       );

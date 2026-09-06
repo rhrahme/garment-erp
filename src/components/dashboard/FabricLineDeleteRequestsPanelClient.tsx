@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, Trash2 } from "lucide-react";
+import { AdminPendingSelectBar } from "@/components/dashboard/AdminPendingSelectBar";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -16,21 +17,48 @@ type FabricLineDeleteRequestsPanelClientProps = {
   initialRequests: FabricLineDeleteRequestSummary[];
 };
 
+function fabricDeleteRowKey(request: FabricLineDeleteRequestSummary) {
+  return `${request.sales_order_id}:${request.line_id}`;
+}
+
 export function FabricLineDeleteRequestsPanelClient({
   initialRequests,
 }: FabricLineDeleteRequestsPanelClientProps) {
   const router = useRouter();
   const [requests, setRequests] = useState(initialRequests);
   const [actingKey, setActingKey] = useState<string | null>(null);
+  const [batchBusy, setBatchBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const allSelected =
+    requests.length > 0 && requests.every((row) => selected.has(fabricDeleteRowKey(row)));
+  const selectedRequests = useMemo(
+    () => requests.filter((row) => selected.has(fabricDeleteRowKey(row))),
+    [requests, selected]
+  );
+  const busy = batchBusy || actingKey !== null;
+
+  function toggleOne(key: string) {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(requests.map(fabricDeleteRowKey)));
+  }
 
   async function act(
     request: FabricLineDeleteRequestSummary,
     action: "keep" | "confirm_delete",
     forceCancelOrphanJobs = false
   ) {
-    const key = `${request.sales_order_id}:${request.line_id}`;
+    const key = fabricDeleteRowKey(request);
     setActingKey(key);
     setError(null);
     try {
@@ -59,8 +87,7 @@ export function FabricLineDeleteRequestsPanelClient({
           );
           if (proceed) {
             setActingKey(null);
-            await act(request, action, true);
-            return;
+            return act(request, action, true);
           }
         }
         throw new Error(data.error ?? "Failed to process request");
@@ -75,6 +102,11 @@ export function FabricLineDeleteRequestsPanelClient({
             )
         )
       );
+      setSelected((current) => {
+        const next = new Set(current);
+        next.delete(key);
+        return next;
+      });
       if (action === "confirm_delete" && data.supplier_follow_up_needed) {
         setNotes((current) => ({
           ...current,
@@ -82,10 +114,26 @@ export function FabricLineDeleteRequestsPanelClient({
         }));
       }
       router.refresh();
+      return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to process request");
+      return false;
     } finally {
       setActingKey(null);
+    }
+  }
+
+  async function actSelected(action: "keep" | "confirm_delete") {
+    if (selectedRequests.length === 0) return;
+    setBatchBusy(true);
+    setError(null);
+    try {
+      for (const request of selectedRequests) {
+        const ok = await act(request, action);
+        if (!ok) break;
+      }
+    } finally {
+      setBatchBusy(false);
     }
   }
 
@@ -125,6 +173,18 @@ export function FabricLineDeleteRequestsPanelClient({
               </p>
             ) : null}
           </div>
+          <AdminPendingSelectBar
+            total={requests.length}
+            selectedCount={selectedRequests.length}
+            allSelected={allSelected}
+            busy={busy}
+            confirmLabel="OK"
+            rejectLabel="Not"
+            confirmClassName="bg-red-700 hover:bg-red-800"
+            onToggleAll={toggleAll}
+            onConfirmSelected={() => void actSelected("confirm_delete")}
+            onRejectSelected={() => void actSelected("keep")}
+          />
         </div>
         {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
         {Object.values(notes).map((note) => (
@@ -137,6 +197,20 @@ export function FabricLineDeleteRequestsPanelClient({
         <CardContent className="p-0">
           <DataTable
             columns={[
+              {
+                key: "select",
+                label: (
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleAll}
+                    disabled={busy}
+                    aria-label="Select all fabric delete requests"
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                ),
+                className: "w-10",
+              },
               { key: "when", label: "When" },
               { key: "order", label: "Order" },
               { key: "fabric", label: "Fabric" },
@@ -145,8 +219,18 @@ export function FabricLineDeleteRequestsPanelClient({
               { key: "actions", label: "Admin" },
             ]}
             rows={requests.map((request) => {
-              const key = `${request.sales_order_id}:${request.line_id}`;
+              const key = fabricDeleteRowKey(request);
               return {
+                select: (
+                  <input
+                    type="checkbox"
+                    checked={selected.has(key)}
+                    onChange={() => toggleOne(key)}
+                    disabled={busy}
+                    aria-label={`Select ${request.so_number} ${request.fabric_number}`}
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                ),
                 when: (
                   <span className="text-xs text-slate-600">
                     {formatDateTime(request.delete_requested_at)}
@@ -190,7 +274,7 @@ export function FabricLineDeleteRequestsPanelClient({
                     <Button
                       size="sm"
                       className="bg-red-700 hover:bg-red-800"
-                      disabled={actingKey === key}
+                      disabled={busy}
                       onClick={() => void act(request, "confirm_delete")}
                     >
                       OK
@@ -198,7 +282,7 @@ export function FabricLineDeleteRequestsPanelClient({
                     <Button
                       size="sm"
                       variant="secondary"
-                      disabled={actingKey === key}
+                      disabled={busy}
                       onClick={() => void act(request, "keep")}
                     >
                       Not

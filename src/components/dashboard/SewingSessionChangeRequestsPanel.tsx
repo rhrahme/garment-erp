@@ -1,4 +1,5 @@
 import { SewingSessionChangeRequestsPanelClient } from "@/components/dashboard/SewingSessionChangeRequestsPanelClient";
+import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import {
   listPendingSewingSessionChangeRequests,
   readSewingSessionChangeRequestsFresh,
@@ -6,6 +7,7 @@ import {
 import { summarizeSewingSessionChangeRequest } from "@/lib/production/sewing-session-change-requests";
 
 export async function SewingSessionChangeRequestsPanel() {
+  await ensureDocumentsLoaded(["sewing_session_change_requests", "payroll_employees"]);
   const store = await readSewingSessionChangeRequestsFresh();
   const requests = listPendingSewingSessionChangeRequests(store).map(
     summarizeSewingSessionChangeRequest

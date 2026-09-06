@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, UserPen } from "lucide-react";
+import { AdminPendingSelectBar } from "@/components/dashboard/AdminPendingSelectBar";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -22,7 +23,29 @@ export function ClientNameChangeRequestsPanelClient({
   const router = useRouter();
   const [requests, setRequests] = useState(initialRequests);
   const [actingId, setActingId] = useState<string | null>(null);
+  const [batchBusy, setBatchBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const allSelected = requests.length > 0 && requests.every((row) => selected.has(row.client_id));
+  const selectedRequests = useMemo(
+    () => requests.filter((row) => selected.has(row.client_id)),
+    [requests, selected]
+  );
+  const busy = batchBusy || actingId !== null;
+
+  function toggleOne(id: string) {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(requests.map((row) => row.client_id)));
+  }
 
   async function act(request: ClientNameChangeRequestSummary, action: "approve" | "reject") {
     setActingId(request.client_id);
@@ -38,11 +61,32 @@ export function ClientNameChangeRequestsPanelClient({
         throw new Error(data.error ?? "Failed to process request");
       }
       setRequests((current) => current.filter((entry) => entry.client_id !== request.client_id));
+      setSelected((current) => {
+        const next = new Set(current);
+        next.delete(request.client_id);
+        return next;
+      });
       router.refresh();
+      return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to process request");
+      return false;
     } finally {
       setActingId(null);
+    }
+  }
+
+  async function actSelected(action: "approve" | "reject") {
+    if (selectedRequests.length === 0) return;
+    setBatchBusy(true);
+    setError(null);
+    try {
+      for (const request of selectedRequests) {
+        const ok = await act(request, action);
+        if (!ok) break;
+      }
+    } finally {
+      setBatchBusy(false);
     }
   }
 
@@ -70,10 +114,37 @@ export function ClientNameChangeRequestsPanelClient({
           </p>
         </div>
         {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
+        <div className="mt-3">
+          <AdminPendingSelectBar
+            total={requests.length}
+            selectedCount={selectedRequests.length}
+            allSelected={allSelected}
+            busy={busy}
+            confirmLabel="OK"
+            rejectLabel="Not"
+            onToggleAll={toggleAll}
+            onConfirmSelected={() => void actSelected("approve")}
+            onRejectSelected={() => void actSelected("reject")}
+          />
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         <DataTable
           columns={[
+            {
+              key: "select",
+              label: (
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleAll}
+                  disabled={busy}
+                  aria-label="Select all client name change requests"
+                  className="h-4 w-4 rounded border-slate-300"
+                />
+              ),
+              className: "w-10",
+            },
             { key: "when", label: "When" },
             { key: "client", label: "Client" },
             { key: "proposed", label: "Proposed name" },
@@ -81,6 +152,16 @@ export function ClientNameChangeRequestsPanelClient({
             { key: "actions", label: "Admin" },
           ]}
           rows={requests.map((request) => ({
+            select: (
+              <input
+                type="checkbox"
+                checked={selected.has(request.client_id)}
+                onChange={() => toggleOne(request.client_id)}
+                disabled={busy}
+                aria-label={`Select ${request.current_name}`}
+                className="h-4 w-4 rounded border-slate-300"
+              />
+            ),
             when: (
               <span className="text-xs text-slate-600">{formatDateTime(request.requested_at)}</span>
             ),
@@ -98,7 +179,7 @@ export function ClientNameChangeRequestsPanelClient({
               <div className="flex flex-wrap gap-1.5">
                 <Button
                   size="sm"
-                  disabled={actingId === request.client_id}
+                  disabled={busy}
                   onClick={() => void act(request, "approve")}
                 >
                   OK
@@ -106,7 +187,7 @@ export function ClientNameChangeRequestsPanelClient({
                 <Button
                   size="sm"
                   variant="secondary"
-                  disabled={actingId === request.client_id}
+                  disabled={busy}
                   onClick={() => void act(request, "reject")}
                 >
                   Not

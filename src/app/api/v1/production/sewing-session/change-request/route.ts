@@ -5,10 +5,11 @@ import {
   readSewingSessionChangeRequestsFresh,
 } from "@/lib/data/sewing-session-change-requests";
 import { verifyApiKey } from "@/lib/integrations";
+import { collectSewingSessionChangeRequestIds } from "@/lib/production/sewing-session-change-request-ids";
 import {
   cancelSewingSessionChangeRequest,
   createSewingSessionChangeRequest,
-  decideSewingSessionChangeRequest,
+  decideSewingSessionChangeRequests,
   summarizeSewingSessionChangeRequest,
 } from "@/lib/production/sewing-session-change-requests";
 import type {
@@ -20,7 +21,7 @@ export async function GET(request: Request) {
   const authError = verifyApiKey(request);
   if (authError) return authError;
   try {
-    await ensureDocumentsLoaded(["sewing_session_change_requests"]);
+    await ensureDocumentsLoaded(["sewing_session_change_requests", "payroll_employees"]);
     const store = await readSewingSessionChangeRequestsFresh();
     const pending = listPendingSewingSessionChangeRequests(store).map(
       summarizeSewingSessionChangeRequest
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
       proposed_patch?: SewingSessionEditPatch | null;
       reason?: string | null;
       request_id?: string | null;
+      request_ids?: unknown;
       actor?: string | null;
       decision_note?: string | null;
     } | null;
@@ -67,20 +69,36 @@ export async function POST(request: Request) {
     }
 
     if (verb === "approve" || verb === "reject") {
-      const requestId = body?.request_id?.trim();
-      if (!requestId) {
+      const requestIds = collectSewingSessionChangeRequestIds({
+        request_id: body?.request_id,
+        request_ids: body?.request_ids,
+      });
+      if (requestIds.length === 0) {
         return NextResponse.json({ error: "request_id is required." }, { status: 400 });
       }
-      const result = await decideSewingSessionChangeRequest(requestId, verb, actor, {
+      if (requestIds.length > 100) {
+        return NextResponse.json({ error: "Too many requests in one call." }, { status: 400 });
+      }
+      const results = await decideSewingSessionChangeRequests(requestIds, verb, actor, {
         decision_note: body?.decision_note,
         source: "api",
       });
-      if (!result.ok) {
-        return NextResponse.json({ error: result.error }, { status: result.status });
+      const details = results
+        .map((row) => row.detail)
+        .filter((detail): detail is string => Boolean(detail));
+      const firstOk = results.find((row) => row.ok && row.request);
+      const firstFail = results.find((row) => !row.ok);
+      if (requestIds.length === 1 && firstFail) {
+        return NextResponse.json(
+          { error: firstFail.error ?? "Failed to decide change request." },
+          { status: firstFail.status ?? 400 }
+        );
       }
       return NextResponse.json({
-        request: summarizeSewingSessionChangeRequest(result.request),
-        detail: result.detail ?? null,
+        request: firstOk?.request ?? null,
+        detail: details[0] ?? null,
+        details,
+        results,
       });
     }
 

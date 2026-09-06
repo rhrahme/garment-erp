@@ -85,6 +85,19 @@ describe("summarizeSewingSessionChangeRequest", () => {
     assert.match(summary.label, /Overtime to confirm/);
   });
 
+  it("shows the badge nickname, not the legal name", () => {
+    const summary = summarizeSewingSessionChangeRequest(
+      baseRequest({
+        session_snapshot: {
+          ...baseRequest().session_snapshot!,
+          employee_id: "2631625072",
+          employee_name: "PARVAIZ AHMAD KARAM DIN BHATTI",
+        },
+      })
+    );
+    assert.equal(summary.employee_name, "Parvaiz");
+  });
+
   it("labels pause kiosk requests", () => {
     const summary = summarizeSewingSessionChangeRequest(
       baseRequest({

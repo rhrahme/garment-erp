@@ -5,7 +5,7 @@ import Link from "next/link";
 import { CheckSquare, Printer, Square } from "lucide-react";
 import { DownloadEmployeeBadgePdfButton } from "@/components/hr/DownloadEmployeeBadgePdfButton";
 import { Button } from "@/components/ui/Button";
-import { badgePrintHref } from "@/lib/hr/badge-print";
+import { badgeDisplayName, badgePrintHref } from "@/lib/hr/badge-print";
 import type { IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 
@@ -133,7 +133,7 @@ export function EmployeeBadgePrintControls({
                     className="h-4 w-4 rounded border-slate-300 text-[#0B2C5A] focus:ring-[#0B2C5A]"
                   />
                   <span className="min-w-0 flex-1 truncate font-medium text-slate-800">
-                    {employee.full_name}
+                    {badgeDisplayName(employee)}
                   </span>
                   <span className="shrink-0 font-mono text-xs text-slate-500">
                     {employee.employee_id_number}

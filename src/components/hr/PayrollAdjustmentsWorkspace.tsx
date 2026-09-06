@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { EntityPhotos } from "@/components/entity-images/EntityPhotos";
+import { badgeDisplayName } from "@/lib/hr/badge-print";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 import type { PayrollAdjustment } from "@/lib/types/payroll-adjustments";
 import { formatCurrency } from "@/lib/utils";
@@ -34,7 +35,7 @@ export function PayrollAdjustmentsWorkspace({
   const [error, setError] = useState<string | null>(null);
 
   const nameById = useMemo(
-    () => new Map(employees.map((row) => [row.id, row.full_name])),
+    () => new Map(employees.map((row) => [row.id, badgeDisplayName(row)])),
     [employees]
   );
 
@@ -45,6 +46,7 @@ export function PayrollAdjustmentsWorkspace({
     return active
       .filter(
         (row) =>
+          badgeDisplayName(row).toLowerCase().includes(q) ||
           row.full_name.toLowerCase().includes(q) ||
           row.employee_id_number.toLowerCase().includes(q)
       )
@@ -158,7 +160,7 @@ export function PayrollAdjustmentsWorkspace({
               <option value="">Select...</option>
               {filteredEmployees.map((row) => (
                 <option key={row.id} value={row.id}>
-                  {row.full_name} ({row.employee_id_number})
+                  {badgeDisplayName(row)} ({row.employee_id_number})
                 </option>
               ))}
             </select>

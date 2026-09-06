@@ -47,6 +47,7 @@ export type SewingSessionChangeSnapshot = Pick<
   | "status"
   | "employee_id"
   | "employee_name"
+  | "employee_short_name"
   | "employee_id_number"
   | "production_code"
   | "scan_code"

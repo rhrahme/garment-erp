@@ -5,6 +5,7 @@ import {
 } from "@/lib/data/pattern-alteration-pending";
 import { readSalesOrders } from "@/lib/data/sales-orders";
 import { readSewingSessionsFresh } from "@/lib/data/sewing-sessions";
+import { employeeDisplayNameById } from "@/lib/hr/payroll-lookup";
 import { notifyIntegration } from "@/lib/integrations";
 import { resolveClientPatternForAlteration } from "@/lib/pattern/resolve-client-pattern-for-alteration";
 import { resolveSoArticleForFabricLine } from "@/lib/sales-orders/label-codes";
@@ -77,7 +78,8 @@ export async function recordPatternAlterationPendingFromSession(
     status: "pending",
     session_id: session.id,
     employee_id: session.employee_id,
-    employee_name: session.employee_name,
+    employee_name:
+      employeeDisplayNameById(session.employee_id, session.employee_name) ?? session.employee_name,
     employee_id_number: session.employee_id_number,
     production_code: session.production_code,
     scan_code: session.scan_code,

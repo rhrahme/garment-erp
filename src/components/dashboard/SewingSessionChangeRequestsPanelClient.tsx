@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, Scissors } from "lucide-react";
+import { AdminPendingSelectBar } from "@/components/dashboard/AdminPendingSelectBar";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -31,40 +32,110 @@ type SewingSessionChangeRequestsPanelClientProps = {
   initialRequests: RequestSummary[];
 };
 
+type DecideResponse = {
+  error?: string;
+  detail?: string | null;
+  details?: string[];
+  results?: Array<{ request_id: string; ok: boolean; error?: string; detail?: string | null }>;
+};
+
 export function SewingSessionChangeRequestsPanelClient({
   initialRequests,
 }: SewingSessionChangeRequestsPanelClientProps) {
   const router = useRouter();
   const [requests, setRequests] = useState(initialRequests);
   const [actingId, setActingId] = useState<string | null>(null);
+  const [batchBusy, setBatchBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  async function act(request: RequestSummary, action: "approve" | "reject") {
-    setActingId(request.id);
+  const allSelected = requests.length > 0 && requests.every((row) => selected.has(row.id));
+  const selectedRequests = useMemo(
+    () => requests.filter((row) => selected.has(row.id)),
+    [requests, selected]
+  );
+  const busy = batchBusy || actingId !== null;
+
+  function toggleOne(id: string) {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(requests.map((row) => row.id)));
+  }
+
+  async function decide(targets: RequestSummary[], action: "approve" | "reject") {
+    if (targets.length === 0) return;
     setError(null);
+    if (targets.length === 1) setActingId(targets[0].id);
+    else setBatchBusy(true);
     try {
       const res = await fetch("/api/admin/sewing-session/change-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action,
-          request_id: request.id,
+          request_ids: targets.map((row) => row.id),
         }),
       });
-      const data = (await res.json()) as { error?: string; detail?: string | null };
-      if (!res.ok) {
+      const data = (await res.json()) as DecideResponse;
+      if (!res.ok && !data.results) {
         throw new Error(data.error ?? "Failed to process request");
       }
-      setRequests((current) => current.filter((row) => row.id !== request.id));
-      if (action === "approve" && data.detail) {
-        setNotes((current) => ({ ...current, [request.id]: data.detail! }));
+
+      const okIds = new Set<string>();
+      const failMessages: string[] = [];
+      if (data.results && data.results.length > 0) {
+        for (const row of data.results) {
+          if (row.ok) okIds.add(row.request_id);
+          else failMessages.push(row.error ?? "Failed to process request");
+        }
+      } else if (res.ok) {
+        for (const row of targets) okIds.add(row.id);
+      } else {
+        throw new Error(data.error ?? "Failed to process request");
+      }
+
+      setRequests((current) => current.filter((row) => !okIds.has(row.id)));
+      setSelected((current) => {
+        const next = new Set(current);
+        for (const id of okIds) next.delete(id);
+        return next;
+      });
+
+      const extraNotes = [
+        ...(data.details ?? []),
+        ...(data.detail && !(data.details ?? []).includes(data.detail) ? [data.detail] : []),
+      ].filter((note): note is string => Boolean(note));
+      if (action === "approve" && extraNotes.length > 0) {
+        setNotes((current) => {
+          const next = { ...current };
+          extraNotes.forEach((note, index) => {
+            next[`${targets[0]?.id ?? "batch"}-${index}`] = note;
+          });
+          return next;
+        });
+      }
+
+      if (failMessages.length > 0) {
+        setError(
+          failMessages.length === 1
+            ? failMessages[0]
+            : `${failMessages.length} of ${targets.length} failed. ${failMessages[0]}`
+        );
       }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to process request");
     } finally {
       setActingId(null);
+      setBatchBusy(false);
     }
   }
 
@@ -105,9 +176,23 @@ export function SewingSessionChangeRequestsPanelClient({
               </p>
             ) : null}
           </div>
-          <Link href="/stitch?tab=live" className="text-sm font-medium text-indigo-700 hover:underline">
-            Open stitch Live
-          </Link>
+          <div className="flex flex-col items-end gap-2">
+            <Link href="/stitch?tab=live" className="text-sm font-medium text-indigo-700 hover:underline">
+              Open stitch Live
+            </Link>
+            <AdminPendingSelectBar
+              total={requests.length}
+              selectedCount={selectedRequests.length}
+              allSelected={allSelected}
+              busy={busy}
+              confirmLabel="Confirm"
+              rejectLabel="Reject"
+              confirmClassName="bg-red-700 hover:bg-red-800"
+              onToggleAll={toggleAll}
+              onConfirmSelected={() => void decide(selectedRequests, "approve")}
+              onRejectSelected={() => void decide(selectedRequests, "reject")}
+            />
+          </div>
         </div>
         {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
         {Object.values(notes).map((note) => (
@@ -120,6 +205,20 @@ export function SewingSessionChangeRequestsPanelClient({
         <CardContent className="p-0">
           <DataTable
             columns={[
+              {
+                key: "select",
+                label: (
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleAll}
+                    disabled={busy}
+                    aria-label="Select all stitch change requests"
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                ),
+                className: "w-10",
+              },
               { key: "when", label: "When" },
               { key: "action", label: "Action" },
               { key: "target", label: "Target" },
@@ -127,6 +226,16 @@ export function SewingSessionChangeRequestsPanelClient({
               { key: "actions", label: "Admin" },
             ]}
             rows={requests.map((request) => ({
+              select: (
+                <input
+                  type="checkbox"
+                  checked={selected.has(request.id)}
+                  onChange={() => toggleOne(request.id)}
+                  disabled={busy}
+                  aria-label={`Select ${request.label}`}
+                  className="h-4 w-4 rounded border-slate-300"
+                />
+              ),
               when: (
                 <span className="text-xs text-slate-600">
                   {formatDateTime(request.requested_at)}
@@ -152,16 +261,16 @@ export function SewingSessionChangeRequestsPanelClient({
                   <Button
                     size="sm"
                     className="bg-red-700 hover:bg-red-800"
-                    disabled={actingId === request.id}
-                    onClick={() => void act(request, "approve")}
+                    disabled={busy}
+                    onClick={() => void decide([request], "approve")}
                   >
                     Confirm
                   </Button>
                   <Button
                     size="sm"
                     variant="secondary"
-                    disabled={actingId === request.id}
-                    onClick={() => void act(request, "reject")}
+                    disabled={busy}
+                    onClick={() => void decide([request], "reject")}
                   >
                     Reject
                   </Button>

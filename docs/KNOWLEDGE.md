@@ -153,12 +153,21 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   in Missing. A scan
   counts as present even if overtime was later rejected. Tap a name for
   day/week/month detail.
+- **Floor names are badge nicknames** (Sep 6 2026): `short_name` (Parvaiz,
+  Ijaz) is what Live, History, Performance, change requests, approvals,
+  scan lookup, badge cards, and Pattern alteration queue show. Legal
+  `full_name` stays on the payroll register only. Do not put
+  `PARVAIZ AHMAD KARAM DIN BHATTI` back on the kiosk or dashboard.
 - **Stitch/Pattern change requests** (Aug 10 2026): stitch@ and pattern@ may
   request admin approval to **stop**, **edit**, **delete** a Live/History
   session, **delete** a failed-scan row, or **pause the whole kiosk**. Nothing
   mutates until admin Confirm on `/dashboard#sewing-session-change-requests`
   (Reject keeps data) or one-click Approve/Reject in the admin email /
-  `/approvals` page. Store: `sewing_session_change_requests`. APIs:
+  `/approvals` page. Dashboard queues (stitch change requests, client
+  name changes, fabric deletes) have **Select all** plus Confirm/Reject
+  (or OK/Not) selected so a long pending list can be decided in one pass.
+  Admin decide accepts `request_ids` (and `/api/v1/...` parity). Store:
+  `sewing_session_change_requests`. APIs:
   `POST /api/production/sewing-session/change-request` (request/cancel) +
   admin decide route + `/api/v1/...` parity. Events:
   `production.sewing_session_change_requested|approved|rejected`. Approved
@@ -857,6 +866,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
+- [session-2026-09-06](session-2026-09-06.md) - Floor nicknames; admin Select all on pending Confirm/Reject queues
 - [session-2026-09-01](session-2026-09-01.md) - Serwal garment type; HR overtime pay and mistake deductions shipped
 - [session-2026-08-27](session-2026-08-27.md) - Inventory Boxes + Alert; HR overtime pay and mistake deductions
 - [session-2026-08-26](session-2026-08-26.md) - Pattern search looks across brands (ibi / Ibrahim); queue starts on All brands

@@ -6,6 +6,7 @@ import {
   readPayrollEmployees,
   toPublicEmployeeIdentity,
 } from "@/lib/data/payroll-employees";
+import { badgeDisplayName } from "@/lib/hr/badge-print";
 import { sortPayrollEmployees, type IdBadgeGroup } from "@/lib/hr/payroll-utils";
 import { notifyIntegration } from "@/lib/integrations";
 
@@ -22,7 +23,8 @@ export async function GET() {
     ).map((employee) => ({
       id: employee.id,
       employee_id_number: employee.employee_id_number,
-      full_name: employee.full_name,
+      full_name: badgeDisplayName(employee),
+      short_name: employee.short_name ?? null,
     }));
 
     return NextResponse.json({ employees });

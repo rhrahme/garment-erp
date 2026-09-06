@@ -51,7 +51,12 @@ export default async function AdminApprovalsPage({
     );
   }
 
-  await ensureDocumentsLoaded(["clients", "sales_orders", "sewing_session_change_requests"]);
+  await ensureDocumentsLoaded([
+    "clients",
+    "sales_orders",
+    "sewing_session_change_requests",
+    "payroll_employees",
+  ]);
   await ensureFabricOrdersLoaded();
 
   const nameChanges = listPendingClientNameChangeRequests();

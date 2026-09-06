@@ -47,7 +47,7 @@ export function StatCard({ label, value, subtext, icon, accent = "bg-indigo-50 t
 }
 
 interface DataTableProps {
-  columns: { key: string; label: string; className?: string }[];
+  columns: { key: string; label: React.ReactNode; className?: string }[];
   rows: Array<Record<string, React.ReactNode> & { rowClassName?: string }>;
   emptyMessage?: string;
 }

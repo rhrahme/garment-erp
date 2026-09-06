@@ -231,6 +231,9 @@ export function ZapierSetup() {
             <li>POST {baseUrl}/api/v1/production/sewing-session/scan</li>
             <li>GET/POST {baseUrl}/api/v1/production/sewing-session/change-request</li>
             <li className="pl-4 text-slate-500">
+              approve/reject: request_id or request_ids (same decision for a selected batch)
+            </li>
+            <li className="pl-4 text-slate-500">
               body optional: sales_order_id, client_id, dry_run, acted_by - groups jobs by
               garment + composition + gsm per client and links/creates ClientPatterns
             </li>

@@ -1,3 +1,4 @@
+import { badgeDisplayName } from "@/lib/hr/badge-print";
 import { parseEmployeeBadgeScan, parseEmployeeQrPayload } from "@/lib/hr/employee-qr";
 import { readPayrollEmployees } from "@/lib/data/payroll-employees";
 import { normalizeWorkstationId } from "@/lib/production/factory-workstations";
@@ -59,10 +60,24 @@ export function resolveScanEmployeeContext(input: {
 
   return {
     employee_id: employee.id,
-    employee_name: employee.full_name,
+    employee_name: badgeDisplayName(employee),
     employee_id_number: employee.employee_id_number,
     workstation_id,
   };
+}
+
+/** Floor / dashboard name: nickname when set, else legal full_name. */
+export function employeeDisplayNameById(
+  employeeId: string | null | undefined,
+  fallback: string | null | undefined = null
+): string | null {
+  const id = String(employeeId ?? "").trim();
+  if (id) {
+    const employee = findPayrollEmployeeById(id);
+    if (employee) return badgeDisplayName(employee);
+  }
+  const stored = String(fallback ?? "").trim();
+  return stored || null;
 }
 
 export function employeeNeedsWorkstationPick(employee: Pick<PayrollEmployee, "assigned_workstation_id" | "is_mobile_floater">): boolean {

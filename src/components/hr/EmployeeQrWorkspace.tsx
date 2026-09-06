@@ -163,11 +163,10 @@ export function EmployeeQrWorkspace({
                 key={employee.id}
                 className="flex flex-col items-center rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm"
               >
-                <p className="font-medium text-slate-900">{employee.full_name}</p>
-                {employee.short_name?.trim() ? (
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    Badge: {badgeDisplayName(employee)}
-                  </p>
+                <p className="font-medium text-slate-900">{badgeDisplayName(employee)}</p>
+                {employee.short_name?.trim() &&
+                employee.short_name.trim() !== employee.full_name.trim() ? (
+                  <p className="mt-0.5 text-xs text-slate-500">{employee.full_name}</p>
                 ) : null}
                 <p className="mt-1 font-mono text-xs text-slate-600">{employee.employee_id_number}</p>
                 {addedDateLabel(employee.created_at) ? (

@@ -7,6 +7,7 @@ import type {
   SewingSessionEditPatch,
 } from "@/lib/types/sewing-session-change-requests";
 import type { SewingScanFailure } from "@/lib/types/sewing-scan-failures";
+import { sewingSessionEmployeeDisplayName } from "@/lib/production/sewing-session-status-label";
 import type { SewingSession } from "@/lib/types/sewing-sessions";
 
 export type PendingChangeSummary = {
@@ -136,7 +137,7 @@ export function SewingSessionChangeRequestModal({
           <div className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">
             <div className="font-mono">{target.session.production_code}</div>
             <div>
-              {target.session.employee_name}
+              {sewingSessionEmployeeDisplayName(target.session)}
               {target.session.fabric_number ? ` | fabric ${target.session.fabric_number}` : ""}
             </div>
           </div>

@@ -1,3 +1,4 @@
+import { employeeDisplayNameById } from "@/lib/hr/payroll-lookup";
 import type {
   SewingSessionChangeAction,
   SewingSessionChangeRequest,
@@ -39,7 +40,10 @@ export function summarizeSewingSessionChangeRequest(
     label,
     production_code: snap?.production_code ?? fail?.related_production_code ?? null,
     fabric_number: snap?.fabric_number ?? null,
-    employee_name: snap?.employee_name ?? fail?.employee_name ?? null,
+    employee_name: employeeDisplayNameById(
+      snap?.employee_id,
+      snap?.employee_short_name ?? snap?.employee_name ?? fail?.employee_name ?? null
+    ),
     so_number: snap?.so_number ?? null,
     requested_by: request.requested_by,
     requested_at: request.requested_at,
