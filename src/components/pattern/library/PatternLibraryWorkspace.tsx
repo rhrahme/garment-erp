@@ -58,6 +58,7 @@ function clientDisplayName(client: ClientOption): string {
 const CUT_FAMILY_CODES: Record<string, string> = {
   "suit supply": "SS",
   "hugo boss": "HB",
+  boggi: "BO",
 };
 
 function cutFamilyCode(family: string): string {
@@ -69,7 +70,17 @@ function cutFamilyCode(family: string): string {
 }
 
 /** Owner's preferred browse order inside a family; unknown garments sort after, alphabetically. */
-const GARMENT_ORDER = ["suit", "jacket", "overshirt", "shirt", "vest", "trouser", "shorts", "thobe"];
+const GARMENT_ORDER = [
+  "suit",
+  "jacket",
+  "overshirt",
+  "overcoat",
+  "shirt",
+  "vest",
+  "trouser",
+  "shorts",
+  "thobe",
+];
 
 function garmentRank(garment: string): number {
   const index = GARMENT_ORDER.indexOf(garment.trim().toLowerCase());
