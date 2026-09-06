@@ -359,7 +359,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   how-to, admin is emailed when it is sent and again when a Pattern
   operator opens any Pattern page and sees the banner. When we explain a
   floor fix to Pattern, add a catalog entry so they get the email and the
-  in-app banner - do not only tell the owner in chat. Notices: both
+  in-app banner - do not only tell the owner in chat. Notices: copy a
+  house base to another brand then edit (`howto-copy-base-to-brand-v1`),
+  both
   Pattern logins type a client name and search looks in every brand
   (`howto-search-across-brands-v1`), QR late then QC corrects start time
   (`howto-correct-scan-start-time-v2`), client dropped off a garment to
@@ -692,6 +694,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `Boggi Measurement Spec for Overcoat.xlsx`. Later a real client
   loads this base and we change his sizes. Jacket and Trouser were
   already in that folder.
+  Pattern can copy a house base to another brand: open the base, pick
+  the brand, press Copy to brand, then edit numbers and Save. Event
+  `pattern_library.base_copied_to_brand`. APIs
+  `POST /api/pattern/library/bases/copy-to-brand` and
+  `/api/v1/pattern/library/bases/copy-to-brand`. If the target already
+  has the same cut, ERP opens the existing sheet.
 - **Garment + size photos** (Aug 19 2026): on `/ready-made`, each article
   can open Photos. Upload style shots on the garment, and a photo on each
   size (XS-XXL by default; extra sizes can be added). Stored in

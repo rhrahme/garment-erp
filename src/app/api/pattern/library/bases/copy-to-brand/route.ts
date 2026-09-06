@@ -1,0 +1,71 @@
+import { NextResponse } from "next/server";
+import { requirePatternAccess, sessionActor } from "@/lib/auth/session";
+import { ensurePatternLibraryLoaded } from "@/lib/data/pattern-library";
+import {
+  copyBasePatternToBrand,
+  copyBrandBasesToBrand,
+} from "@/lib/pattern-library/mutations";
+
+export async function POST(request: Request) {
+  try {
+    const session = await requirePatternAccess();
+    if (!session) {
+      return NextResponse.json({ error: "Pattern access required." }, { status: 403 });
+    }
+    await ensurePatternLibraryLoaded();
+    const body = (await request.json().catch(() => null)) as {
+      source_base_id?: string;
+      source_brand_id?: string;
+      house_brand_id?: string;
+      force?: boolean;
+    } | null;
+
+    const targetBrandId = body?.house_brand_id?.trim() ?? "";
+    if (!targetBrandId) {
+      return NextResponse.json({ error: "house_brand_id is required." }, { status: 400 });
+    }
+
+    const actor = sessionActor(session);
+    const sourceBaseId = body?.source_base_id?.trim() ?? "";
+    if (sourceBaseId) {
+      const result = await copyBasePatternToBrand(sourceBaseId, targetBrandId, {
+        createdBy: actor,
+        force: Boolean(body?.force),
+      });
+      if (!result.ok) {
+        return NextResponse.json({ error: result.error }, { status: result.status });
+      }
+      return NextResponse.json({
+        skipped: result.skipped,
+        base: result.base,
+        existing: result.skipped ? result.existing : null,
+        files_copied: result.skipped ? 0 : result.files_copied,
+      });
+    }
+
+    const sourceBrandId = body?.source_brand_id?.trim() ?? "";
+    if (!sourceBrandId) {
+      return NextResponse.json(
+        { error: "source_base_id or source_brand_id is required." },
+        { status: 400 }
+      );
+    }
+
+    const result = await copyBrandBasesToBrand(sourceBrandId, targetBrandId, {
+      createdBy: actor,
+      force: Boolean(body?.force),
+    });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+    return NextResponse.json({
+      created: result.created,
+      skipped: result.skipped,
+      created_count: result.created.length,
+      skipped_count: result.skipped.length,
+    });
+  } catch (error) {
+    console.error("Failed to copy base pattern to brand:", error);
+    return NextResponse.json({ error: "Failed to copy base pattern." }, { status: 500 });
+  }
+}

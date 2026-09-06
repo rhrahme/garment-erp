@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Printer, Trash2, UserPlus, X } from "lucide-react";
+import { ArrowLeft, Copy, Plus, Printer, Trash2, UserPlus, X } from "lucide-react";
 import { MeasurementInput } from "@/components/pattern/library/MeasurementInput";
 import { MeasurementUnitToggle } from "@/components/pattern/library/MeasurementUnitToggle";
 import { LibraryFileList } from "@/components/pattern/library/LibraryFileList";
@@ -41,7 +41,15 @@ function fitClientName(client: FitClientOption): string {
   return formatClientDisplayName(client);
 }
 
-export function BasePatternDetail({ baseId }: { baseId: string }) {
+type BrandOption = { id: string; code: string; name: string };
+
+export function BasePatternDetail({
+  baseId,
+  brands = [],
+}: {
+  baseId: string;
+  brands?: BrandOption[];
+}) {
   const { unit: displayUnit } = useMeasurementUnitPreference();
   const [base, setBase] = useState<BasePattern | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +65,9 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
   const [pendingFitClientIds, setPendingFitClientIds] = useState<Set<string>>(new Set());
   /** Client ids whose fit column was removed locally and needs a DELETE on save. */
   const [removedFitClientIds, setRemovedFitClientIds] = useState<Set<string>>(new Set());
+  const [copyBrandId, setCopyBrandId] = useState("");
+  const [copyBusy, setCopyBusy] = useState(false);
+  const [copyNote, setCopyNote] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -227,6 +238,59 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
     markFitColumnPending(clientId);
   }
 
+  const copyTargets = useMemo(
+    () => brands.filter((brand) => brand.id !== base?.house_brand_id),
+    [brands, base?.house_brand_id]
+  );
+
+  useEffect(() => {
+    if (!base || copyBrandId) return;
+    const preferred =
+      base.house_brand_id === "gliani"
+        ? copyTargets.find((brand) => brand.id === "fouad-rahme")
+        : copyTargets[0];
+    if (preferred) setCopyBrandId(preferred.id);
+  }, [base, copyBrandId, copyTargets]);
+
+  async function copyToBrand() {
+    if (!base || !copyBrandId) return;
+    setCopyBusy(true);
+    setCopyNote(null);
+    setError(null);
+    try {
+      const res = await fetch("/api/pattern/library/bases/copy-to-brand", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source_base_id: base.id,
+          house_brand_id: copyBrandId,
+        }),
+      });
+      const data = (await res.json()) as {
+        error?: string;
+        skipped?: boolean;
+        base?: BasePattern;
+      };
+      if (!res.ok) throw new Error(data.error ?? "Failed to copy base.");
+      invalidateBasePickerCache();
+      const target = brands.find((brand) => brand.id === copyBrandId);
+      if (data.skipped && data.base) {
+        setCopyNote(
+          `${target?.code ?? "That brand"} already has this cut. Opening the existing ${data.base.name}.`
+        );
+        window.location.href = `/pattern/library/bases/${data.base.id}`;
+        return;
+      }
+      if (data.base) {
+        window.location.href = `/pattern/library/bases/${data.base.id}`;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to copy base.");
+    } finally {
+      setCopyBusy(false);
+    }
+  }
+
   function removeFitColumn(clientId: string) {
     mutate((draft) => ({
       ...draft,
@@ -332,6 +396,31 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
         </Link>
         <div className="flex flex-wrap items-center gap-2">
           <MeasurementUnitToggle disabled={saving} storedUnit={base.unit} />
+          {copyTargets.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={copyBrandId}
+                onChange={(e) => setCopyBrandId(e.target.value)}
+                disabled={copyBusy}
+                className="rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm"
+              >
+                {copyTargets.map((brand) => (
+                  <option key={brand.id} value={brand.id}>
+                    {brand.code} - {brand.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => void copyToBrand()}
+                disabled={copyBusy || !copyBrandId}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-50"
+              >
+                <Copy className="h-4 w-4" />
+                {copyBusy ? "Copying..." : "Copy to brand"}
+              </button>
+            </div>
+          ) : null}
           <Link
             href={withMeasurementUnitParam(`/pattern/bases/${base.id}/print`, displayUnit)}
             target="_blank"
@@ -745,6 +834,7 @@ export function BasePatternDetail({ baseId }: { baseId: string }) {
       </div>
 
       {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+      {copyNote ? <p className="text-sm text-slate-600">{copyNote}</p> : null}
     </div>
   );
 }

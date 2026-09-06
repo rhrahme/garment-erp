@@ -242,6 +242,49 @@ export const CORRECT_START_TIME_HOWTO_BODY = [
   "Admin er jonno wait korben na.",
 ].join("\n");
 
+export const COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID = "howto-copy-base-to-brand-v1";
+
+export const COPY_BASE_TO_BRAND_HOWTO_TITLE =
+  "How to copy a pattern to another brand and edit the numbers";
+
+export const COPY_BASE_TO_BRAND_HOWTO_BODY = [
+  "ENGLISH",
+  "To put the same house pattern on another brand (FR to GL, or GL to FR):",
+  "1. Open Pattern -> Library -> Bases.",
+  "2. Open the pattern (example: Boggi Jacket on FR).",
+  "3. At the top, pick the other brand.",
+  "4. Press Copy to brand.",
+  "5. The copy opens. Change the numbers, add or remove sizes, then press Save changes.",
+  "",
+  "If that brand already has the same cut, ERP opens the existing sheet. Edit that one. Do not make a second sheet.",
+  "",
+  "For a real client (not a brand folder):",
+  "1. Open the client's pattern sheet.",
+  "2. Press Load from base pattern.",
+  "3. Pick the house base (example: Boggi Overcoat).",
+  "4. Change his sizes, then press Save sheet.",
+  "",
+  "Do not create a new person client named after a brand.",
+  "",
+  "BANGLA",
+  "Onno brand e same house pattern copy korte (FR theke GL, ba GL theke FR):",
+  "1. Pattern -> Library -> Bases khulen.",
+  "2. Pattern khulen (example: FR e Boggi Jacket).",
+  "3. Upore onno brand select korun.",
+  "4. Copy to brand chapun.",
+  "5. Copy khulbe. Number change korun, size add/remove, then Save changes.",
+  "",
+  "Sei brand e same cut already thakle existing sheet khulbe. Oita edit korun. Notun second sheet banaben na.",
+  "",
+  "Asol client er jonno (brand folder na):",
+  "1. Client er pattern sheet khulen.",
+  "2. Load from base pattern chapun.",
+  "3. House base pick korun (example: Boggi Overcoat).",
+  "4. Tar size change, then Save sheet.",
+  "",
+  "Brand name e notun person client khulben na.",
+].join("\n");
+
 export const CLIENT_SAMPLE_GARMENT_HOWTO_V1_NOTICE_ID = "howto-client-sample-garment-v1";
 
 export const CLIENT_SAMPLE_GARMENT_HOWTO_V2_NOTICE_ID = "howto-client-sample-garment-v2";
@@ -402,6 +445,14 @@ export function isPatternAudienceHowTo(id: string): boolean {
 
 /** Newest first. Pattern how-tos email Pattern. all_teams email every team, EN+BN. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID,
+    title: COPY_BASE_TO_BRAND_HOWTO_TITLE,
+    body: COPY_BASE_TO_BRAND_HOWTO_BODY,
+    href: "/pattern/library",
+    href_label: "Open Pattern Library",
+    audience: "pattern",
+  },
   {
     id: CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID,
     title: CLIENT_SAMPLE_GARMENT_HOWTO_TITLE,

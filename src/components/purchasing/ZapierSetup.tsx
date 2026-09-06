@@ -61,6 +61,7 @@ const OUTBOUND_EVENTS = [
   "pattern.auto_consolidated",
   "pattern.scan",
   "base_pattern.created",
+  "pattern_library.base_copied_to_brand",
   "base_pattern.updated",
   "base_pattern.client_column_saved",
   "base_pattern.client_column_removed",

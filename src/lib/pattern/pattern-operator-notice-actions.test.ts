@@ -16,6 +16,9 @@ import {
   SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID,
   SENT_STITCHED_GARMENT_HOWTO_TITLE,
   SENT_STITCHED_GARMENT_HOWTO_BODY,
+  COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID,
+  COPY_BASE_TO_BRAND_HOWTO_TITLE,
+  COPY_BASE_TO_BRAND_HOWTO_BODY,
   CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID,
   CLIENT_SAMPLE_GARMENT_HOWTO_TITLE,
   CLIENT_SAMPLE_GARMENT_HOWTO_BODY,
@@ -120,11 +123,12 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID));
+    assert.ok(ids.includes(COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID));
     assert.equal(
       PATTERN_HOWTO_NOTICES[0]?.id,
-      CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID
+      COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID
     );
-    assert.equal(PATTERN_HOWTO_NOTICES[1]?.id, CORRECT_START_TIME_HOWTO_NOTICE_ID);
+    assert.equal(PATTERN_HOWTO_NOTICES[1]?.id, CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID);
   });
 });
 
@@ -160,6 +164,21 @@ describe("Pattern/QC sent stitched garment how-to", () => {
     assert.match(tab, /audience === \"all_teams\"/);
     const page = readFileSync("src/app/(dashboard)/how-to/page.tsx", "utf8");
     assert.match(page, /TeamHowToTab/);
+  });
+});
+
+describe("Pattern copy base to brand how-to", () => {
+  it("tells Pattern how to copy a house base and edit it, in English and Bangla", () => {
+    assert.equal(COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID, "howto-copy-base-to-brand-v1");
+    assert.match(COPY_BASE_TO_BRAND_HOWTO_TITLE, /copy a pattern/i);
+    assert.match(COPY_BASE_TO_BRAND_HOWTO_BODY, /Copy to brand/);
+    assert.match(COPY_BASE_TO_BRAND_HOWTO_BODY, /Save changes/);
+    assert.match(COPY_BASE_TO_BRAND_HOWTO_BODY, /Load from base pattern/);
+    assert.match(COPY_BASE_TO_BRAND_HOWTO_BODY, /BANGLA/);
+    const howto = PATTERN_HOWTO_NOTICES.find(
+      (row) => row.id === COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID
+    );
+    assert.equal(howto?.audience, "pattern");
   });
 });
 

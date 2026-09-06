@@ -57,6 +57,16 @@ import {
   fillMeasurementsFromBase,
   findBaseSizeMatch,
 } from "@/lib/pattern-library/tud-size-fill";
+import {
+  brandCodeForId,
+  buildCopiedBaseInput,
+  findMatchingBaseOnBrand,
+  rewriteBrandLabel,
+} from "@/lib/pattern-library/copy-base-to-brand";
+import {
+  readPatternLibraryFile,
+  writePatternLibraryFile,
+} from "@/lib/pattern-library/file-storage";
 import type {
   BasePattern,
   BasePatternClientColumn,
@@ -198,6 +208,160 @@ export async function createBasePattern(
   }
 
   return { ok: true, base };
+}
+
+export type CopyBaseToBrandResult =
+  | { ok: true; skipped: false; base: BasePattern; files_copied: number }
+  | { ok: true; skipped: true; base: BasePattern; existing: BasePattern }
+  | Err;
+
+async function copyBaseFilesToBase(
+  source: BasePattern,
+  target: BasePattern,
+  fromCode: string,
+  toCode: string,
+  uploadedBy: string | null
+): Promise<number> {
+  if (source.files.length === 0) return 0;
+  let copied = 0;
+  const store = await readPatternLibraryFresh();
+  const index = store.base_patterns.findIndex((row) => row.id === target.id);
+  if (index < 0) return 0;
+  const nextFiles = [...store.base_patterns[index]!.files];
+
+  for (const file of source.files) {
+    const content = await readPatternLibraryFile(file.stored_filename);
+    if (!content) continue;
+    const filename = rewriteBrandLabel(file.filename, fromCode, toCode);
+    const storedFilename = `${target.id}-${Date.now()}-${copied}-${filename.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    await writePatternLibraryFile(storedFilename, content, file.content_type);
+    let thumbnailName = file.thumbnail_stored_filename ?? null;
+    if (file.thumbnail_stored_filename) {
+      const thumb = await readPatternLibraryFile(file.thumbnail_stored_filename);
+      if (thumb) {
+        thumbnailName = `${storedFilename}.thumb.jpg`;
+        await writePatternLibraryFile(thumbnailName, thumb, "image/jpeg");
+      } else {
+        thumbnailName = null;
+      }
+    }
+    nextFiles.push({
+      ...file,
+      id: `plf-${Date.now()}-${copied}`,
+      filename,
+      stored_filename: storedFilename,
+      uploaded_at: now(),
+      uploaded_by: uploadedBy,
+      thumbnail_stored_filename: thumbnailName,
+    });
+    copied += 1;
+  }
+
+  store.base_patterns[index] = {
+    ...store.base_patterns[index]!,
+    files: nextFiles,
+    updated_at: now(),
+  };
+  await writePatternLibrary(store);
+  return copied;
+}
+
+export async function copyBasePatternToBrand(
+  sourceId: string,
+  targetBrandId: string,
+  options: { createdBy?: string | null; force?: boolean; notify?: boolean } = {}
+): Promise<CopyBaseToBrandResult> {
+  const targetCode = brandCodeForId(targetBrandId.trim());
+  if (!targetCode) {
+    return { ok: false, status: 400, error: "Unknown house brand." };
+  }
+
+  const store = await readPatternLibraryFresh();
+  const source = store.base_patterns.find((row) => row.id === sourceId.trim());
+  if (!source) return { ok: false, status: 404, error: "Base pattern not found." };
+  if (source.house_brand_id === targetBrandId.trim()) {
+    return { ok: false, status: 400, error: "Base is already on that brand." };
+  }
+
+  const existing = findMatchingBaseOnBrand(store.base_patterns, source, targetBrandId.trim());
+  if (existing && !options.force) {
+    return { ok: true, skipped: true, base: existing, existing };
+  }
+
+  const created = await createBasePattern(
+    buildCopiedBaseInput(source, {
+      house_brand_id: targetBrandId.trim(),
+      house_brand_code: targetCode,
+    }),
+    { createdBy: options.createdBy, notify: options.notify }
+  );
+  if (!created.ok) return created;
+
+  const filesCopied = await copyBaseFilesToBase(
+    source,
+    created.base,
+    source.house_brand_code,
+    targetCode,
+    options.createdBy ?? null
+  );
+  const fresh = await readPatternLibraryFresh();
+  const next = fresh.base_patterns.find((row) => row.id === created.base.id) ?? created.base;
+  if (options.notify !== false) {
+    await notifyIntegration("pattern_library.base_copied_to_brand", {
+      id: next.id,
+      source_base_id: source.id,
+      source_house_brand_id: source.house_brand_id,
+      source_house_brand_code: source.house_brand_code,
+      house_brand_id: next.house_brand_id,
+      house_brand_code: next.house_brand_code,
+      cut_family: next.cut_family,
+      garment_type: next.garment_type,
+      files_copied: filesCopied,
+      created_by: options.createdBy ?? null,
+    });
+  }
+  return { ok: true, skipped: false, base: next, files_copied: filesCopied };
+}
+
+export async function copyBrandBasesToBrand(
+  sourceBrandId: string,
+  targetBrandId: string,
+  options: { createdBy?: string | null; force?: boolean; notify?: boolean } = {}
+): Promise<
+  | {
+      ok: true;
+      created: BasePattern[];
+      skipped: Array<{ source_id: string; existing_id: string; name: string }>;
+    }
+  | Err
+> {
+  if (!brandCodeForId(sourceBrandId.trim()) || !brandCodeForId(targetBrandId.trim())) {
+    return { ok: false, status: 400, error: "Unknown house brand." };
+  }
+  if (sourceBrandId.trim() === targetBrandId.trim()) {
+    return { ok: false, status: 400, error: "Pick a different brand to copy to." };
+  }
+
+  const store = await readPatternLibraryFresh();
+  const sources = store.base_patterns.filter((row) => row.house_brand_id === sourceBrandId.trim());
+  const created: BasePattern[] = [];
+  const skipped: Array<{ source_id: string; existing_id: string; name: string }> = [];
+
+  for (const source of sources) {
+    const result = await copyBasePatternToBrand(source.id, targetBrandId.trim(), options);
+    if (!result.ok) return result;
+    if (result.skipped) {
+      skipped.push({
+        source_id: source.id,
+        existing_id: result.existing.id,
+        name: source.name,
+      });
+    } else {
+      created.push(result.base);
+    }
+  }
+
+  return { ok: true, created, skipped };
 }
 
 export async function updateBasePattern(
