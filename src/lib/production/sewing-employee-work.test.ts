@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  listSewingKioskEmployees as listSewingKioskEmployeesWrapped,
+  sewingEmployeeWorkLookup as sewingEmployeeWorkLookupWrapped,
+} from "@/lib/production/sewing-session";
+import {
   listSewingKioskEmployees,
   sewingEmployeeWorkLookup,
 } from "@/lib/production/sewing-session-state";
@@ -138,5 +142,8 @@ describe("sewingEmployeeWorkLookup", () => {
     const list = listSewingKioskEmployees(store);
     assert.equal(list[0]?.employee_id, "e1");
     assert.equal(list[1]?.employee_id, "e2");
+    const wrapped = listSewingKioskEmployeesWrapped(store);
+    assert.equal(wrapped[0]?.employee_id, "e1");
+    assert.ok(sewingEmployeeWorkLookupWrapped(store, "e1", at));
   });
 });

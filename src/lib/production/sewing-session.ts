@@ -73,10 +73,12 @@ import {
 import {
   employeeArmsOnKiosk,
   expireStaleSewingState,
+  listSewingKioskEmployees as listSewingKioskEmployeesBase,
   mostRecentArm,
   pieceArmsOnKiosk,
   resolveUniqueEmployeeArm,
   sessionPhase,
+  sewingEmployeeWorkLookup as sewingEmployeeWorkLookupBase,
   sewingSessionElapsedSecExcludingPauses,
   sewingSessionsDashboard as sewingSessionsDashboardBase,
 } from "@/lib/production/sewing-session-state";
@@ -118,8 +120,6 @@ export {
   SEWING_CLOSING_TIMEOUT_MS,
   sewingFailedScansForPeriod,
   sewingPeriodWindow,
-  listSewingKioskEmployees as listSewingKioskEmployeesBase,
-  sewingEmployeeWorkLookup as sewingEmployeeWorkLookupBase,
 } from "@/lib/production/sewing-session-state";
 export type {
   SewingDashboardPeriod,
