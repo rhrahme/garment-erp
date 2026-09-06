@@ -188,6 +188,16 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `POST /api/production/sewing-session/start-without-qr` +
   `/api/v1/...` parity. Event still `production.sewing_session_started`
   plus `production.sewing_session_change_requested`.
+- **Correct start time after a late QR** (Sep 6 2026): when the QR is
+  printed later, the stitcher scans badge then garment. That stamp is
+  NOW. QC opens Stitch kiosk Live/History and presses **Correct start
+  time**. The clock changes immediately; admin gets
+  `correct_start_time`. Confirm acknowledges; Reject does **not** revert
+  the time or stop the session. Pending correct-start does not block
+  Request stop/edit. QC has Stitch kiosk on the left menu.
+  `POST /api/production/sewing-session/correct-start-time` +
+  `/api/v1/...` parity. How-to `howto-correct-scan-start-time-v1`
+  (English + Bangla) emails Pattern and QC.
 - **Stop requests close at request time** (Aug 17 2026): approved "stop"
   requests set `ended_at` = `requested_at` (`stopRequestEndedAt`), never the
   admin decision time - approval lag must not inflate elapsed. If the kiosk
@@ -336,14 +346,15 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   tab) with events `pattern.operator_notice_created` /
   `pattern.operator_notice_acknowledged` / `pattern.operator_notice_seen`.
   How-to emails go to both Pattern mailboxes (`hagan.dp1@gmail.com` and
-  `pattern@hagan.pro`) plus `PATTERN_EMAILS`. Ready-made size-run how-to
-  also emails QC (`hagan.qc@gmail.com`). For the add-to-existing-group
+  `pattern@hagan.pro`) plus `PATTERN_EMAILS`. Ready-made size-run and late-QR start-time how-tos
+  also email QC (`hagan.qc@gmail.com`). For the add-to-existing-group
   how-to, admin is emailed when it is sent and again when a Pattern
   operator opens any Pattern page and sees the banner. When we explain a
   floor fix to Pattern, add a catalog entry so they get the email and the
   in-app banner - do not only tell the owner in chat. Notices: both
   Pattern logins type a client name and search looks in every brand
-  (`howto-search-across-brands-v1`), Boggi/Massimo size runs are
+  (`howto-search-across-brands-v1`), QR late then QC corrects start time
+  (`howto-correct-scan-start-time-v1`), Boggi/Massimo size runs are
   Ready-Made not a new client (`howto-ready-made-size-run-v1`), tap All brands
   (`howto-same-queue-all-brands-v1`), Fabric
   Specification is on the left menu (`howto-fabric-spec-both-accounts-v1`),

@@ -179,8 +179,8 @@ export function SewingSessionChangeRequestsPanelClient({
                 Stitch/Pattern asked to edit, stop, delete, or pause kiosk scan history.
                 Overtime scans after 10 PM are already logged - Confirm counts them,
                 Reject keeps the log but drops Performance hours. Started without QR
-                is already running - Confirm acknowledges the start time; Reject does
-                not stop the session.
+                and corrected start times are already applied - Confirm acknowledges;
+                Reject does not change the session.
               </p>
             ) : null}
           </div>
@@ -272,7 +272,9 @@ export function SewingSessionChangeRequestsPanelClient({
                       .filter(Boolean)
                       .join(" | ") || "-"}
                   </span>
-                  {request.action === "started_without_qr" && request.started_at ? (
+                  {(request.action === "started_without_qr" ||
+                    request.action === "correct_start_time") &&
+                  request.started_at ? (
                     <span className="mt-0.5 block text-xs font-semibold text-amber-900">
                       Started {formatDateTime(request.started_at)}
                     </span>

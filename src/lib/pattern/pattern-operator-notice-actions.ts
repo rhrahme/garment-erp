@@ -16,6 +16,7 @@ import {
   CONSOLIDATE_FABRICS_HOWTO_NOTICE_ID,
   CONSOLIDATE_FABRICS_HOWTO_TITLE,
   PATTERN_HOWTO_NOTICES,
+  CORRECT_START_TIME_HOWTO_NOTICE_ID,
   READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID,
 } from "@/lib/pattern/pattern-operator-notice-copy";
 import type { PatternOperatorNotice } from "@/lib/types/pattern-operator-notices";
@@ -171,13 +172,15 @@ export async function emailPatternOperatorNotice(
   notice: PatternOperatorNotice
 ): Promise<boolean> {
   const recipients = [...parsePatternNoticeEmails()];
-  if (notice.id === READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID) {
+  const forQcToo =
+    notice.id === READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID ||
+    notice.id === CORRECT_START_TIME_HOWTO_NOTICE_ID;
+  if (forQcToo) {
     recipients.push(...parseClientManagerEmails());
   }
   if (recipients.length === 0) return false;
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://erp.hagan.pro";
-  const forQcToo = notice.id === READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID;
   const subject = forQcToo
     ? `ERP QC + Pattern: ${notice.title}`
     : `ERP Pattern: ${notice.title}`;
@@ -196,9 +199,11 @@ export async function emailPatternOperatorNotice(
         }`
       : `Open Pattern: ${appUrl}/pattern`,
     "",
-    forQcToo
-      ? "QC: on the sales order press Mark as ready-made. Pattern: this notice also appears on Pattern until you tap Got it."
-      : "This notice also appears at the top of your Pattern page until you tap Got it.",
+    notice.id === CORRECT_START_TIME_HOWTO_NOTICE_ID
+      ? "QC: Stitch kiosk -> Live or History -> Correct start time. The time applies now. Admin Confirm/Reject does not stop the stitcher."
+      : forQcToo
+        ? "QC: on the sales order press Mark as ready-made. Pattern: this notice also appears on Pattern until you tap Got it."
+        : "This notice also appears at the top of your Pattern page until you tap Got it.",
     `All Pattern how-tos stay on Pattern -> How-to: ${appUrl}/pattern/how-to`,
     "",
     "This is an automated message from Garment ERP.",

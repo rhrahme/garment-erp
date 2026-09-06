@@ -27,6 +27,7 @@ export function summarizeSewingSessionChangeRequest(
   destination_client_name: string | null;
   client_label: string | null;
   started_at: string | null;
+  original_started_at: string | null;
   requested_by: string;
   requested_at: string;
   reason: string | null;
@@ -42,7 +43,9 @@ export function summarizeSewingSessionChangeRequest(
           ? `Overtime to confirm ${snap?.production_code ?? request.session_id ?? "session"}`
           : request.action === "started_without_qr"
             ? `Started without QR ${snap?.production_code ?? request.session_id ?? "session"}`
-            : `${request.action} ${snap?.production_code ?? request.session_id ?? "session"}`;
+            : request.action === "correct_start_time"
+              ? `Corrected start time ${snap?.production_code ?? request.session_id ?? "session"}`
+              : `${request.action} ${snap?.production_code ?? request.session_id ?? "session"}`;
   const ownership = findFabricClientOwnership({
     soNumber: snap?.so_number,
     fabricNumber: snap?.fabric_number,
@@ -73,7 +76,12 @@ export function summarizeSewingSessionChangeRequest(
     source_client_name: ownership.source_client_name,
     destination_client_name: ownership.destination_client_name,
     client_label: clientLabel || null,
-    started_at: snap?.started_at ?? null,
+    started_at:
+      request.action === "correct_start_time"
+        ? request.proposed_patch?.started_at ?? snap?.started_at ?? null
+        : snap?.started_at ?? null,
+    original_started_at:
+      request.action === "correct_start_time" ? snap?.started_at ?? null : null,
     requested_by: request.requested_by,
     requested_at: request.requested_at,
     reason: request.reason,

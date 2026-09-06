@@ -206,6 +206,40 @@ export const ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_BODY = [
   "Do not wait on leftover / removed rows. Tick only what is still on the sales order.",
 ].join("\n");
 
+export const CORRECT_START_TIME_HOWTO_NOTICE_ID = "howto-correct-scan-start-time-v1";
+
+export const CORRECT_START_TIME_HOWTO_TITLE =
+  "QR late: scan now, then QC corrects the start time";
+
+export const CORRECT_START_TIME_HOWTO_BODY = [
+  "ENGLISH",
+  "If the garment QR was not ready, the stitcher still started sewing.",
+  "When the QR is printed: stitcher scans badge, then scans the garment.",
+  "That scan stores NOW as the start time.",
+  "",
+  "QC next:",
+  "1. Open Stitch kiosk (left menu).",
+  "2. Open Live (or History if they already closed).",
+  "3. Press Correct start time.",
+  "4. Enter the real start time (Riyadh) and save.",
+  "",
+  "The clock changes immediately. Admin gets a request. Confirm or Reject does not stop the stitcher.",
+  "Do not wait for admin. Do not use Request -> Edit and wait.",
+  "",
+  "BANGLA",
+  "QR ready na thakle stitcher already kaj shuru koreche.",
+  "QR print howar por: badge scan, then garment scan. Eita ekhonkar time save kore.",
+  "",
+  "QC porer kaj:",
+  "1. Left menu te Stitch kiosk khulen.",
+  "2. Live (ba History) khulen.",
+  "3. Correct start time chapun.",
+  "4. Asol start time (Riyadh) din, save korun.",
+  "",
+  "Time sathe sathe change hobe. Admin request pabe. Confirm ba Reject kaj bandh korbe na.",
+  "Admin er jonno wait korben na.",
+].join("\n");
+
 export const READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID = "howto-ready-made-size-run-v1";
 
 export const READY_MADE_SIZE_RUN_HOWTO_TITLE =
@@ -250,6 +284,14 @@ export const READY_MADE_SIZE_RUN_HOWTO_BODY = [
 
 /** Newest first. Each entry is emailed to Pattern and kept on the How-to tab. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: CORRECT_START_TIME_HOWTO_NOTICE_ID,
+    title: CORRECT_START_TIME_HOWTO_TITLE,
+    body: CORRECT_START_TIME_HOWTO_BODY,
+    href: "/stitch?tab=live",
+    href_label: "Open Stitch Live",
+    audience: "pattern",
+  },
   {
     id: READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID,
     title: READY_MADE_SIZE_RUN_HOWTO_TITLE,

@@ -237,6 +237,10 @@ export function ZapierSetup() {
               GET/POST {baseUrl}/api/v1/production/sewing-session/start-without-qr
               (session starts immediately; admin request is after-the-fact)
             </li>
+            <li>
+              POST {baseUrl}/api/v1/production/sewing-session/correct-start-time
+              (body session_id + started_at; time applies now, admin request is after-the-fact)
+            </li>
             <li>GET/POST {baseUrl}/api/v1/production/sewing-session/change-request</li>
             <li className="pl-4 text-slate-500">
               approve/reject: request_id or request_ids (same decision for a selected batch)

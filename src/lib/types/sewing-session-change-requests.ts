@@ -15,7 +15,15 @@ export type SewingSessionChangeAction =
   | "pause_kiosk"
   | "delete_failure"
   | "overtime_confirm"
-  | "started_without_qr";
+  | "started_without_qr"
+  | "correct_start_time";
+
+/** Already applied on the floor. Admin Confirm/Reject does not change the session. */
+export function isAcknowledgeOnlySewingSessionAction(
+  action: SewingSessionChangeAction
+): boolean {
+  return action === "started_without_qr" || action === "correct_start_time";
+}
 
 /** Fields operators may propose when action is edit. */
 export type SewingSessionEditPatch = {

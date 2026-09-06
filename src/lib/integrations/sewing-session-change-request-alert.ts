@@ -8,6 +8,7 @@ import { sendEmail } from "@/lib/email/smtp";
 import { erpPublicAppUrl } from "@/lib/integrations/erp-app-url";
 import { summarizeSewingSessionChangeRequest } from "@/lib/production/sewing-session-change-request-summary";
 import type { SewingSessionChangeRequest } from "@/lib/types/sewing-session-change-requests";
+import { isAcknowledgeOnlySewingSessionAction } from "@/lib/types/sewing-session-change-requests";
 
 /** Email ADMIN_EMAILS + SUPER_ADMIN_EMAILS when stitch/pattern request a kiosk change. */
 export async function notifyAdminsOfSewingSessionChangeRequest(
@@ -19,8 +20,12 @@ export async function notifyAdminsOfSewingSessionChangeRequest(
   const summary = summarizeSewingSessionChangeRequest(request);
   const appUrl = erpPublicAppUrl();
   const overtime = request.action === "overtime_confirm";
+  const acknowledgeOnly = isAcknowledgeOnlySewingSessionAction(request.action);
+  const correctedStart = request.action === "correct_start_time";
   const startedWithoutQr = request.action === "started_without_qr";
-  const subject = startedWithoutQr
+  const subject = correctedStart
+    ? `ERP: start time corrected (${summary.production_code ?? summary.session_id ?? "session"})`
+    : startedWithoutQr
     ? `ERP: started without QR (${summary.production_code ?? summary.session_id ?? "session"})`
     : overtime
     ? `ERP: overtime scan to confirm (${summary.production_code ?? summary.session_id ?? "session"})`
@@ -40,14 +45,16 @@ export async function notifyAdminsOfSewingSessionChangeRequest(
       })}`;
 
     const text = [
-      startedWithoutQr
+      correctedStart
+        ? "Garment ERP - QC corrected a stitch start time"
+        : startedWithoutQr
         ? "Garment ERP - stitcher started without a printed QR"
         : overtime
           ? "Garment ERP - overtime scan logged after 22:00 Riyadh"
           : "Garment ERP - stitch kiosk request",
       "",
-      startedWithoutQr
-        ? "The session is already running with the start time they entered. Confirm acknowledges that time. Reject does not stop the work."
+      acknowledgeOnly
+        ? "The start time is already applied. Confirm acknowledges it. Reject does not change the session or stop the work."
         : overtime
           ? "The scan is already logged. Confirm it so Performance counts it, or Reject to keep the log but drop the hours."
           : "The stitch kiosk asked an admin to change Live/History.",
@@ -63,20 +70,23 @@ export async function notifyAdminsOfSewingSessionChangeRequest(
       `- Employee: ${summary.employee_name ?? "-"}`,
       `- SO: ${summary.so_number ?? "-"}`,
       `- Started at: ${summary.started_at ?? "-"}`,
+      summary.original_started_at
+        ? `- Scan time before correction: ${summary.original_started_at}`
+        : null,
       `- Requested by: ${summary.requested_by}`,
       summary.reason ? `- Reason: ${summary.reason}` : null,
       "",
       "One click, no login needed (links work for 7 days):",
       "",
-      startedWithoutQr
-        ? "CONFIRM - acknowledge the start time (session already running):"
+      acknowledgeOnly
+        ? "CONFIRM - acknowledge the start time (already applied):"
         : overtime
           ? "CONFIRM - overtime counts:"
           : "APPROVE - apply the change:",
       link("approve"),
       "",
-      startedWithoutQr
-        ? "REJECT - keep the session running:"
+      acknowledgeOnly
+        ? "REJECT - keep the session as already applied:"
         : overtime
           ? "REJECT - keep the log, drop Performance hours:"
           : "REJECT - keep current data:",

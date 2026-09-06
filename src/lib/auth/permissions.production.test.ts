@@ -187,6 +187,10 @@ describe("stitch_operator kiosk gating", () => {
       isStitchOperatorRouteAllowed("/api/production/sewing-session/start-without-qr"),
       true
     );
+    assert.equal(
+      isStitchOperatorRouteAllowed("/api/production/sewing-session/correct-start-time"),
+      true
+    );
     assert.equal(isStitchOperatorRouteAllowed("/api/hr/employees"), false);
     assert.equal(isStitchOperatorRouteAllowed("/api/production/work-orders"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/production/work-orders/wo-1"), true);
@@ -228,10 +232,12 @@ describe("client_manager QC ID badges (not payroll)", () => {
   it("QC nav includes ID Badges but not payroll register", () => {
     const nav = CLIENT_MANAGER_NAV_HREFS as readonly string[];
     assert.ok(nav.includes("/hr/id-badges"));
+    assert.ok(nav.includes("/stitch"));
     assert.ok(!nav.includes("/hr"));
   });
 
   it("allows Expat badge pages and APIs; blocks Saudis, payroll register, and salary APIs", () => {
+    assert.equal(isClientManagerRouteAllowed("/stitch"), true);
     assert.equal(isClientManagerRouteAllowed("/hr/id-badges"), true);
     assert.equal(isClientManagerRouteAllowed("/hr/id-badges/expats"), true);
     assert.equal(isClientManagerRouteAllowed("/hr/id-badges/expats/print"), true);

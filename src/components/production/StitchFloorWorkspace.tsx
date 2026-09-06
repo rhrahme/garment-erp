@@ -9,10 +9,12 @@ import { StitchFabricColorPreview } from "@/components/production/StitchFabricCo
 import ScanQrSvg from "@/components/production/ScanQrSvg";
 import { StitchKioskPanel } from "@/components/production/StitchKioskPanel";
 import { StitchOrdersPanel } from "@/components/production/StitchOrdersPanel";
+import { CorrectStartTimeModal } from "@/components/production/CorrectStartTimeModal";
 import {
   SewingSessionChangeRequestModal,
   type PendingChangeSummary,
 } from "@/components/production/SewingSessionChangeRequestModal";
+import { isAcknowledgeOnlySewingSessionAction } from "@/lib/types/sewing-session-change-requests";
 import { SewingElapsedBreakdownView } from "@/components/production/SewingElapsedBreakdown";
 import { StitchAdminEmployeeWorkPanel } from "@/components/production/StitchAdminEmployeeWorkPanel";
 import { StitchSoftAlertSoundPreview } from "@/components/production/StitchSoftAlertSoundPreview";
@@ -378,13 +380,24 @@ export function StitchFloorWorkspace({
     | { kind: "kiosk" }
     | null
   >(null);
+  const [correctSession, setCorrectSession] = useState<SewingSession | null>(null);
 
   const pendingBySessionId = useMemo(() => {
     const map = new Map<string, PendingChangeSummary>();
     for (const row of pendingRequests) {
       if (!row.session_id) continue;
-      if (row.action === "started_without_qr") continue;
+      if (isAcknowledgeOnlySewingSessionAction(row.action)) continue;
       map.set(row.session_id, row);
+    }
+    return map;
+  }, [pendingRequests]);
+
+  const pendingCorrectBySessionId = useMemo(() => {
+    const map = new Map<string, PendingChangeSummary>();
+    for (const row of pendingRequests) {
+      if (row.action === "correct_start_time" && row.session_id) {
+        map.set(row.session_id, row);
+      }
     }
     return map;
   }, [pendingRequests]);
@@ -929,30 +942,45 @@ export function StitchFloorWorkspace({
                           ) : null}
                         </td>
                         <td className="px-3 py-3">
-                          {pending ? (
-                            <div className="space-y-1">
-                              <span className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">
-                                Pending {pending.action}
+                          <div className="space-y-1">
+                            {pendingCorrectBySessionId.get(session.id) ? (
+                              <span className="block text-xs font-semibold text-amber-800">
+                                Start time sent to admin
                               </span>
+                            ) : (
                               <button
                                 type="button"
-                                onClick={() => void cancelPendingRequest(pending.id)}
-                                className="block text-xs font-semibold text-slate-600 underline"
+                                onClick={() => setCorrectSession(session)}
+                                className="rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-950"
                               >
-                                Cancel
+                                Correct start time
                               </button>
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setChangeTarget({ kind: "session", session, live: true })
-                              }
-                              className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-800"
-                            >
-                              Request
-                            </button>
-                          )}
+                            )}
+                            {pending ? (
+                              <div className="space-y-1">
+                                <span className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">
+                                  Pending {pending.action}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => void cancelPendingRequest(pending.id)}
+                                  className="block text-xs font-semibold text-slate-600 underline"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setChangeTarget({ kind: "session", session, live: true })
+                                }
+                                className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-800"
+                              >
+                                Request
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -1455,30 +1483,45 @@ export function StitchFloorWorkspace({
                           ) : null}
                         </td>
                         <td className="px-3 py-3">
-                          {pending ? (
-                            <div className="space-y-1">
-                              <span className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">
-                                Pending {pending.action}
+                          <div className="space-y-1">
+                            {pendingCorrectBySessionId.get(row.id) ? (
+                              <span className="block text-xs font-semibold text-amber-800">
+                                Start time sent to admin
                               </span>
+                            ) : (
                               <button
                                 type="button"
-                                onClick={() => void cancelPendingRequest(pending.id)}
-                                className="block text-xs font-semibold text-slate-600 underline"
+                                onClick={() => setCorrectSession(row)}
+                                className="rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-950"
                               >
-                                Cancel
+                                Correct start time
                               </button>
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setChangeTarget({ kind: "session", session: row, live: false })
-                              }
-                              className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-800"
-                            >
-                              Request
-                            </button>
-                          )}
+                            )}
+                            {pending ? (
+                              <div className="space-y-1">
+                                <span className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">
+                                  Pending {pending.action}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => void cancelPendingRequest(pending.id)}
+                                  className="block text-xs font-semibold text-slate-600 underline"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setChangeTarget({ kind: "session", session: row, live: false })
+                                }
+                                className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-800"
+                              >
+                                Request
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                       );
@@ -1638,6 +1681,15 @@ export function StitchFloorWorkspace({
         onClose={() => setChangeTarget(null)}
         onSubmitted={(request) => {
           setPendingRequests((current) => [request, ...current.filter((row) => row.id !== request.id)]);
+        }}
+      />
+      <CorrectStartTimeModal
+        open={correctSession != null}
+        session={correctSession}
+        onClose={() => setCorrectSession(null)}
+        onCorrected={() => {
+          void load();
+          void loadPendingRequests();
         }}
       />
       </div>

@@ -23,6 +23,7 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/fabric-receiving",
   "/thread-buttons",
   "/production",
+  "/stitch",
   "/quality",
   /** ID badges only -- payroll register `/hr` stays blocked (allowlist, not prefix `/hr`). */
   "/hr/id-badges",
@@ -354,6 +355,7 @@ export const CLIENT_MANAGER_NAV_HREFS = [
   "/fabric-receiving",
   "/thread-buttons",
   "/production",
+  "/stitch",
   "/quality",
   "/clients",
   "/fabric-specification",

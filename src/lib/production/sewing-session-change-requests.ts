@@ -14,6 +14,7 @@ import { notifyIntegration } from "@/lib/integrations";
 import { notifyAdminsOfSewingSessionChangeRequest } from "@/lib/integrations/sewing-session-change-request-alert";
 import { notifyRequesterOfAdminDecision } from "@/lib/integrations/admin-decision-alert";
 import { summarizeSewingSessionChangeRequest } from "@/lib/production/sewing-session-change-request-summary";
+import { validateCorrectedStartAt } from "@/lib/production/manual-start-time";
 import type {
   SewingScanFailureChangeSnapshot,
   SewingSessionChangeAction,
@@ -21,6 +22,7 @@ import type {
   SewingSessionChangeSnapshot,
   SewingSessionEditPatch,
 } from "@/lib/types/sewing-session-change-requests";
+import { isAcknowledgeOnlySewingSessionAction } from "@/lib/types/sewing-session-change-requests";
 import type { SewingScanFailure } from "@/lib/types/sewing-scan-failures";
 import type { SewingSession } from "@/lib/types/sewing-sessions";
 
@@ -243,6 +245,35 @@ export async function createSewingSessionChangeRequest(
       const preview = applyEditPatch(session, proposedPatch);
       if (!preview.ok) return preview;
     }
+    if (action === "correct_start_time") {
+      proposedPatch = cleanPatch(input.proposed_patch);
+      const startedAt = proposedPatch?.started_at?.trim() || "";
+      if (!startedAt) {
+        return { ok: false, status: 400, error: "started_at is required to correct the scan time." };
+      }
+      const checked = validateCorrectedStartAt({
+        startedAt,
+        currentStartedAt: session.started_at,
+        endedAt: session.ended_at,
+      });
+      if (!checked.ok) {
+        return { ok: false, status: 400, error: checked.error };
+      }
+      proposedPatch = { started_at: checked.iso };
+      const preview = applyEditPatch(session, proposedPatch);
+      if (!preview.ok) return preview;
+      const sessionsStore = await readSewingSessionsFresh();
+      const sessionIndex = sessionsStore.sessions.findIndex((row) => row.id === session.id);
+      if (sessionIndex < 0) {
+        return { ok: false, status: 404, error: "Sewing session not found." };
+      }
+      const nextSessions = [...sessionsStore.sessions];
+      nextSessions[sessionIndex] = preview.session;
+      await writeSewingSessions({
+        ...sessionsStore,
+        sessions: nextSessions,
+      });
+    }
     sessionSnapshot = snapshotSession(session);
   }
 
@@ -251,12 +282,12 @@ export async function createSewingSessionChangeRequest(
     if (row.status !== "pending") return false;
     if (action === "pause_kiosk") return row.action === "pause_kiosk";
     if (action === "delete_failure") return row.failure_id === failureId;
-    if (action === "overtime_confirm" || action === "started_without_qr") {
+    if (action === "overtime_confirm" || isAcknowledgeOnlySewingSessionAction(action)) {
       return row.action === action && row.session_id === sessionId;
     }
     return (
       row.action !== "overtime_confirm" &&
-      row.action !== "started_without_qr" &&
+      !isAcknowledgeOnlySewingSessionAction(row.action) &&
       row.session_id === sessionId
     );
   });
@@ -503,10 +534,13 @@ async function applyApprovedMutation(
     return setSessionOvertimeDecision(sessionId, "confirmed", decidedBy);
   }
 
-  if (request.action === "started_without_qr") {
+  if (isAcknowledgeOnlySewingSessionAction(request.action)) {
     return {
       ok: true,
-      detail: "Start time already applied. The session stays running.",
+      detail:
+        request.action === "correct_start_time"
+          ? "Corrected start time already applied. The session stays as it is."
+          : "Start time already applied. The session stays running.",
     };
   }
 
@@ -715,7 +749,9 @@ export async function decideSewingSessionChangeRequest(
       requester: rejected.requested_by,
       subject: `ERP: kiosk request REJECTED (${summarizeSewingSessionChangeRequest(rejected).label})`,
       lines: [
-        "Your stitch kiosk change request was rejected - nothing was changed.",
+        isAcknowledgeOnlySewingSessionAction(rejected.action)
+          ? "Admin noted the start-time request. The session stays as already applied."
+          : "Your stitch kiosk change request was rejected - nothing was changed.",
         "",
         `- Request: ${summarizeSewingSessionChangeRequest(rejected).label}`,
         `  Rejected by: ${decidedBy}`,

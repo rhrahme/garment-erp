@@ -26,10 +26,7 @@ import { readStitchKioskSettingsFresh } from "@/lib/data/stitch-kiosk-settings";
 import { expireStaleSewingState, mostRecentArm } from "@/lib/production/sewing-session-state";
 import { stampOvertimeIfNeeded } from "@/lib/production/sewing-session-workday-end";
 import { resolveScanToLine } from "@/lib/production/stage-scan";
-import {
-  currentStitchWorkdayStartMs,
-  riyadhDateTimeLocalToUtcMs,
-} from "@/lib/production/stitch-kiosk-lunch";
+import { validateManualStartAt } from "@/lib/production/manual-start-time";
 import {
   pieceProductionCodeFromSticker,
   pieceScanAttribution,
@@ -38,6 +35,8 @@ import {
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 import type { SalesOrder } from "@/lib/types/sales-orders";
 import type { SewingSession, SewingWorkKind } from "@/lib/types/sewing-sessions";
+
+export { validateCorrectedStartAt, validateManualStartAt } from "@/lib/production/manual-start-time";
 
 const INACTIVE_SO_STATUSES = new Set(["complete", "cancelled", "delivered"]);
 
@@ -86,26 +85,6 @@ export type StartSewingSessionWithoutQrInput = {
 
 type ResultOk<T> = { ok: true } & T;
 type ResultErr = { ok: false; status: number; error: string };
-
-export function validateManualStartAt(
-  startedAt: string,
-  nowMs: number = Date.now()
-): { ok: true; atMs: number } | { ok: false; error: string } {
-  const fromLocal = riyadhDateTimeLocalToUtcMs(startedAt);
-  const fromIso = Date.parse(startedAt);
-  const atMs = fromLocal ?? (Number.isFinite(fromIso) ? fromIso : NaN);
-  if (!Number.isFinite(atMs)) {
-    return { ok: false, error: "Enter a valid start time." };
-  }
-  if (atMs > nowMs + 2 * 60_000) {
-    return { ok: false, error: "Start time cannot be in the future." };
-  }
-  const workdayStart = currentStitchWorkdayStartMs(nowMs);
-  if (atMs < workdayStart) {
-    return { ok: false, error: "Start time must be during today's workday (from 08:00 Riyadh)." };
-  }
-  return { ok: true, atMs };
-}
 
 export function listPiecesForManualStart(
   query: string,

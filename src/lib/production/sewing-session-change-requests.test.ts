@@ -109,6 +109,18 @@ describe("summarizeSewingSessionChangeRequest", () => {
     assert.equal(summary.started_at, "2026-08-10T07:55:42.955Z");
   });
 
+  it("labels corrected start-time requests with the new time", () => {
+    const summary = summarizeSewingSessionChangeRequest(
+      baseRequest({
+        action: "correct_start_time",
+        proposed_patch: { started_at: "2026-08-10T06:30:00.000Z" },
+      })
+    );
+    assert.match(summary.label, /Corrected start time/);
+    assert.equal(summary.started_at, "2026-08-10T06:30:00.000Z");
+    assert.equal(summary.original_started_at, "2026-08-10T07:55:42.955Z");
+  });
+
   it("labels pause kiosk requests", () => {
     const summary = summarizeSewingSessionChangeRequest(
       baseRequest({

@@ -24,10 +24,16 @@ function canRequest(session: NonNullable<Awaited<ReturnType<typeof requireAuthen
   );
 }
 
+function canReadRequests(
+  session: NonNullable<Awaited<ReturnType<typeof requireAuthenticated>>>
+): boolean {
+  return canRequest(session) || session.isClientManager;
+}
+
 export async function GET() {
   try {
     const session = await requireAuthenticated();
-    if (!session || !canRequest(session)) {
+    if (!session || !canReadRequests(session)) {
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
     await ensureDocumentsLoaded(["sewing_session_change_requests", "payroll_employees"]);

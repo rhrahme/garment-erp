@@ -115,7 +115,8 @@ export function AdminApprovalsClient({
           row.so_number,
           row.fabric_number,
           row.garment_type,
-          row.action === "started_without_qr" && row.started_at
+          (row.action === "started_without_qr" || row.action === "correct_start_time") &&
+          row.started_at
             ? `Started ${formatWhen(row.started_at)}`
             : null,
           row.reason,

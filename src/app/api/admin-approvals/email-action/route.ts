@@ -7,6 +7,7 @@ import {
 } from "@/lib/data/sewing-session-change-requests";
 import { ensureFabricOrdersLoaded } from "@/lib/integrations/fabric-order-store";
 import { decideSewingSessionChangeRequest } from "@/lib/production/sewing-session-change-requests";
+import { isAcknowledgeOnlySewingSessionAction } from "@/lib/types/sewing-session-change-requests";
 import {
   approveFabricLineDelete,
   clearFabricLineDeleteRequest,
@@ -98,27 +99,27 @@ export async function GET(request: Request) {
       );
     }
     const overtime = pending.action === "overtime_confirm";
-    const startedWithoutQr = pending.action === "started_without_qr";
+    const acknowledgeOnly = isAcknowledgeOnlySewingSessionAction(pending.action);
     return page(
       payload.action === "approve"
-        ? startedWithoutQr
+        ? acknowledgeOnly
           ? "Start time acknowledged"
           : overtime
             ? "Overtime confirmed"
             : "Request approved"
-        : startedWithoutQr
+        : acknowledgeOnly
           ? "Start request noted"
           : overtime
             ? "Overtime rejected"
             : "Request rejected",
       payload.action === "approve"
-        ? startedWithoutQr
-          ? "The session was already running. The start time stays as they entered it."
+        ? acknowledgeOnly
+          ? "The start time was already applied. The session stays as it is."
           : overtime
             ? "The overtime scan stays logged and counts in Performance."
             : "The stitch change is applied."
-        : startedWithoutQr
-          ? "The session stays running."
+        : acknowledgeOnly
+          ? "The session stays as already applied."
           : overtime
             ? "The scan stays logged but is dropped from Performance."
             : "The stitch data was left as it was.",

@@ -13,6 +13,9 @@ import {
   PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID,
   PATTERN_FILES_BY_BRAND_HOWTO_TITLE,
   READY_MADE_SIZE_RUN_HOWTO_BODY,
+  CORRECT_START_TIME_HOWTO_NOTICE_ID,
+  CORRECT_START_TIME_HOWTO_TITLE,
+  CORRECT_START_TIME_HOWTO_BODY,
   READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID,
   READY_MADE_SIZE_RUN_HOWTO_TITLE,
   SEARCH_ACROSS_BRANDS_HOWTO_BODY,
@@ -104,10 +107,22 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(SAME_QUEUE_ALL_BRANDS_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(SEARCH_ACROSS_BRANDS_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID));
+    assert.ok(ids.includes(CORRECT_START_TIME_HOWTO_NOTICE_ID));
     assert.equal(
       PATTERN_HOWTO_NOTICES[0]?.id,
-      READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID
+      CORRECT_START_TIME_HOWTO_NOTICE_ID
     );
+  });
+});
+
+describe("Pattern/QC correct scan start time how-to", () => {
+  it("tells QC to correct the scan time after a late QR, in English and Bangla", () => {
+    assert.equal(CORRECT_START_TIME_HOWTO_NOTICE_ID, "howto-correct-scan-start-time-v1");
+    assert.match(CORRECT_START_TIME_HOWTO_TITLE, /Correct start time|QR late/i);
+    assert.match(CORRECT_START_TIME_HOWTO_BODY, /Correct start time/);
+    assert.match(CORRECT_START_TIME_HOWTO_BODY, /Do not wait for admin/);
+    assert.match(CORRECT_START_TIME_HOWTO_BODY, /BANGLA/);
+    assert.match(CORRECT_START_TIME_HOWTO_BODY, /Stitch kiosk/);
   });
 });
 
