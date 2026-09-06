@@ -3,12 +3,13 @@
 import type { FocusEvent as ReactFocusEvent, PointerEvent as ReactPointerEvent } from "react";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Camera, LayoutGrid, List, Plus, Search, Table2, Trash2, UserCircle, X } from "lucide-react";
+import { Camera, LayoutGrid, List, Package, Plus, Search, Table2, Trash2, UserCircle, X } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { ClientFabricChangeAlerts } from "@/components/clients/ClientFabricChangeAlerts";
 import { ClientNameChangeRequestForm } from "@/components/clients/ClientNameChangeRequestForm";
 import { ClientPhotosPanel } from "@/components/sales/ClientPhotosPanel";
 import { ClientReadyMadeSamplesPanel } from "@/components/clients/ClientReadyMadeSamplesPanel";
+import { ClientSamplesBoard } from "@/components/clients/ClientSamplesBoard";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -30,13 +31,14 @@ import type { ClientProfile, ClientsFile } from "@/lib/types/clients";
 
 const allFactoryBrands = getFactoryBrands();
 
-type ClientViewMode = "list" | "table" | "cards";
+type ClientViewMode = "list" | "table" | "cards" | "samples";
 type ClientSortBy = "name-asc" | "name-desc" | "code-asc" | "code-desc" | "joined-desc" | "joined-asc";
 
 const VIEW_MODE_OPTIONS: { id: ClientViewMode; label: string; icon: typeof List }[] = [
   { id: "list", label: "List", icon: List },
   { id: "table", label: "Table", icon: Table2 },
   { id: "cards", label: "Cards", icon: LayoutGrid },
+  { id: "samples", label: "Samples", icon: Package },
 ];
 
 const SORT_OPTIONS: { id: ClientSortBy; label: string }[] = [
@@ -228,16 +230,21 @@ export function ClientProfilesEditor() {
   const stableScrollHandlers = useStableScrollOnFocus();
 
   useEffect(() => {
-    const storedView = localStorage.getItem(VIEW_STORAGE_KEY);
-    const normalizedView = storedView === "compact" ? "list" : storedView;
-    const storedSort = localStorage.getItem(SORT_STORAGE_KEY) as ClientSortBy | null;
-    if (normalizedView && VIEW_MODE_OPTIONS.some((option) => option.id === normalizedView)) {
-      setViewMode(normalizedView as ClientViewMode);
+    const queryView = searchParams.get("view");
+    if (queryView && VIEW_MODE_OPTIONS.some((option) => option.id === queryView)) {
+      setViewMode(queryView as ClientViewMode);
+    } else {
+      const storedView = localStorage.getItem(VIEW_STORAGE_KEY);
+      const normalizedView = storedView === "compact" ? "list" : storedView;
+      if (normalizedView && VIEW_MODE_OPTIONS.some((option) => option.id === normalizedView)) {
+        setViewMode(normalizedView as ClientViewMode);
+      }
     }
+    const storedSort = localStorage.getItem(SORT_STORAGE_KEY) as ClientSortBy | null;
     if (storedSort && SORT_OPTIONS.some((option) => option.id === storedSort)) {
       setSortBy(storedSort);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     localStorage.setItem(VIEW_STORAGE_KEY, viewMode);
@@ -1223,7 +1230,18 @@ export function ClientProfilesEditor() {
             </div>
           </div>
 
-          {displayClients.length === 0 ? (
+          {viewMode === "samples" ? (
+            <ClientSamplesBoard
+              searchQuery={debouncedSearchQuery}
+              brandFilter={brandFilter}
+              onOpenClient={(clientId) => {
+                setBrandFilter(null);
+                setSearchQuery("");
+                setViewMode("list");
+                setEditingId(clientId);
+              }}
+            />
+          ) : displayClients.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-500">
               No clients match your search.
               {hasActiveFilters && (

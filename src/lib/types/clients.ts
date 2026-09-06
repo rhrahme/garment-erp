@@ -64,6 +64,8 @@ export interface ClientReadyMadeSampleImage {
 export interface ClientReadyMadeSample {
   id: string;
   product_type: string | null;
+  /** Copy the garment, or fix the one the client dropped off. */
+  purpose?: "copy" | "fix" | null;
   brand: string | null;
   color: string | null;
   size: string | null;

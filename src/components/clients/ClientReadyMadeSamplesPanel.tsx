@@ -2,6 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Package, Plus, Trash2, Undo2 } from "lucide-react";
+import {
+  CLIENT_SAMPLE_PURPOSE_LABELS,
+  samplePurposeLabel,
+  type ClientSamplePurpose,
+} from "@/lib/clients/ready-made-sample-fields";
+import { GARMENT_STITCH_TYPES } from "@/lib/sales-orders/garment-types";
 import type { ClientReadyMadeSample } from "@/lib/types/clients";
 
 async function uploadSampleImage(
@@ -59,7 +65,6 @@ async function uploadSampleImage(
       return { ok: true, sample: registered.sample };
     }
 
-    // Local dev fallback (no signed uploads): multipart straight to the API.
     const form = new FormData();
     form.set("sample_id", sampleId);
     form.set("file", file);
@@ -77,10 +82,31 @@ async function uploadSampleImage(
   }
 }
 
+function resetAddForm(
+  setProductType: (value: string) => void,
+  setPurpose: (value: ClientSamplePurpose | "") => void,
+  setBrand: (value: string) => void,
+  setColor: (value: string) => void,
+  setSize: (value: string) => void,
+  setNotes: (value: string) => void,
+  setBadge: (value: string) => void,
+  setPendingPhotos: (value: File[]) => void,
+  addPhotoInput: { current: HTMLInputElement | null }
+) {
+  setProductType("");
+  setPurpose("");
+  setBrand("");
+  setColor("");
+  setSize("");
+  setNotes("");
+  setBadge("");
+  setPendingPhotos([]);
+  if (addPhotoInput.current) addPhotoInput.current.value = "";
+}
+
 /**
- * Ready-made samples the client handed us. Any team can record one; the
- * employee receiving the garment scans their ID badge, and the card keeps a
- * "give it back to the client" reminder until marked returned.
+ * Ready-made samples the client handed us. Photos confirm we received the
+ * garment. The receiver scans their ID badge. Later mark that we gave it back.
  */
 export function ClientReadyMadeSamplesPanel({
   clientId,
@@ -95,17 +121,20 @@ export function ClientReadyMadeSamplesPanel({
 
   const [formOpen, setFormOpen] = useState(false);
   const [productType, setProductType] = useState("");
+  const [purpose, setPurpose] = useState<ClientSamplePurpose | "">("");
   const [brand, setBrand] = useState("");
   const [color, setColor] = useState("");
   const [size, setSize] = useState("");
   const [notes, setNotes] = useState("");
   const [badge, setBadge] = useState("");
+  const [pendingPhotos, setPendingPhotos] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const [busySampleId, setBusySampleId] = useState<string | null>(null);
   const [uploadingSampleId, setUploadingSampleId] = useState<string | null>(null);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
+  const addPhotoInput = useRef<HTMLInputElement | null>(null);
   const loadSeq = useRef(0);
 
   const load = useCallback(async () => {
@@ -141,6 +170,18 @@ export function ClientReadyMadeSamplesPanel({
 
   async function submitSample() {
     if (saving) return;
+    if (!productType) {
+      setFormError("Pick the garment type from the list.");
+      return;
+    }
+    if (!purpose) {
+      setFormError("Say if we are copying the garment or fixing it.");
+      return;
+    }
+    if (pendingPhotos.length < 1) {
+      setFormError("Add at least one photo. Photos confirm we received the garment.");
+      return;
+    }
     setSaving(true);
     setFormError(null);
     try {
@@ -150,11 +191,13 @@ export function ClientReadyMadeSamplesPanel({
         body: JSON.stringify({
           client_id: clientId,
           product_type: productType,
+          purpose,
           brand,
           color,
           size,
           notes,
           received_by_badge: badge,
+          photo_count: pendingPhotos.length,
         }),
       });
       const payload = (await response.json().catch(() => ({}))) as {
@@ -165,14 +208,35 @@ export function ClientReadyMadeSamplesPanel({
         setFormError(payload.error ?? "Could not save the sample.");
         return;
       }
-      setSamples((previous) => [payload.sample!, ...previous]);
-      setProductType("");
-      setBrand("");
-      setColor("");
-      setSize("");
-      setNotes("");
-      setBadge("");
+
+      let latest = payload.sample;
+      const uploadErrors: string[] = [];
+      for (const file of pendingPhotos) {
+        const uploaded = await uploadSampleImage(latest.id, file);
+        if (!uploaded.ok) {
+          uploadErrors.push(uploaded.error);
+          continue;
+        }
+        latest = uploaded.sample;
+      }
+      setSamples((previous) => [latest, ...previous.filter((row) => row.id !== latest.id)]);
+      resetAddForm(
+        setProductType,
+        setPurpose,
+        setBrand,
+        setColor,
+        setSize,
+        setNotes,
+        setBadge,
+        setPendingPhotos,
+        addPhotoInput
+      );
       setFormOpen(false);
+      if (uploadErrors.length > 0) {
+        setError(
+          `Sample saved, but a photo did not upload: ${uploadErrors[0]}. Add the photo on the card.`
+        );
+      }
     } catch {
       setFormError("Network error. Try again.");
     } finally {
@@ -280,7 +344,7 @@ export function ClientReadyMadeSamplesPanel({
     "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none";
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
+    <div id={`client-samples-${clientId}`} className="rounded-xl border border-slate-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="flex items-center gap-2 text-sm font-semibold text-slate-800">
@@ -288,8 +352,9 @@ export function ClientReadyMadeSamplesPanel({
             Client ready-made samples
           </p>
           <p className="mt-0.5 text-xs text-slate-500">
-            Garments the client gave us as reference. The person receiving must scan
-            their ID badge - and remember to give the sample back to the client.
+            Client dropped off a garment to copy or fix. Photos confirm we received
+            it. Scan your badge when you take it in. Later mark that we gave it
+            back to the client.
           </p>
         </div>
         {clientReady ? (
@@ -299,7 +364,7 @@ export function ClientReadyMadeSamplesPanel({
             className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
           >
             <Plus className="h-3.5 w-3.5" />
-            {formOpen ? "Close" : "Add sample"}
+            {formOpen ? "Close" : "Add garment"}
           </button>
         ) : (
           <p className="text-xs text-slate-400">Save the client first.</p>
@@ -311,12 +376,40 @@ export function ClientReadyMadeSamplesPanel({
       {formOpen && clientReady ? (
         <div className="mt-3 rounded-lg border border-indigo-200 bg-indigo-50/50 p-3">
           <div className="grid gap-2 sm:grid-cols-2">
-            <input
-              className={inputClass}
-              placeholder="Product type (e.g. Shirt, Trouser)"
-              value={productType}
-              onChange={(event) => setProductType(event.target.value)}
-            />
+            <label className="block text-sm sm:col-span-2">
+              <span className="text-xs font-medium text-slate-600">Garment type</span>
+              <select
+                className={`${inputClass} mt-1 bg-white`}
+                value={productType}
+                onChange={(event) => setProductType(event.target.value)}
+              >
+                <option value="">Select garment type...</option>
+                {GARMENT_STITCH_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="sm:col-span-2">
+              <p className="text-xs font-medium text-slate-600">Why we have it</p>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {(["copy", "fix"] as const).map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setPurpose(value)}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
+                      purpose === value
+                        ? "bg-indigo-600 text-white"
+                        : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    {CLIENT_SAMPLE_PURPOSE_LABELS[value]}
+                  </button>
+                ))}
+              </div>
+            </div>
             <input
               className={inputClass}
               placeholder="Brand"
@@ -339,10 +432,34 @@ export function ClientReadyMadeSamplesPanel({
           <textarea
             className={`${inputClass} mt-2`}
             rows={2}
-            placeholder="Notes (condition, what the client wants copied...)"
+            placeholder="Notes (condition, what to copy or fix...)"
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
           />
+          <div className="mt-2 rounded-lg border border-indigo-300 bg-white p-2">
+            <p className="text-xs font-medium text-indigo-900">
+              Photos confirm we received the garment
+            </p>
+            <p className="mt-0.5 text-xs text-slate-500">
+              At least one photo is required before you can save.
+            </p>
+            <input
+              ref={addPhotoInput}
+              type="file"
+              accept="image/*"
+              multiple
+              className="mt-2 block w-full text-xs text-slate-600"
+              onChange={(event) => {
+                const files = event.target.files;
+                setPendingPhotos(files ? Array.from(files) : []);
+              }}
+            />
+            {pendingPhotos.length > 0 ? (
+              <p className="mt-1 text-xs text-slate-600">
+                {pendingPhotos.length} photo{pendingPhotos.length === 1 ? "" : "s"} selected
+              </p>
+            ) : null}
+          </div>
           <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2">
             <p className="text-xs font-medium text-amber-800">
               Receiver: scan your employee ID badge here
@@ -384,14 +501,22 @@ export function ClientReadyMadeSamplesPanel({
         {samples.map((sample) => {
           const busy = busySampleId === sample.id;
           const uploading = uploadingSampleId === sample.id;
+          const purposeLabel = samplePurposeLabel(sample.purpose);
+          const garmentLabel =
+            [sample.product_type, sample.brand, sample.color, sample.size]
+              .filter(Boolean)
+              .join(" - ") || "Sample";
           return (
             <div key={sample.id} className="rounded-lg border border-slate-200 p-3">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="text-sm font-medium text-slate-800">
-                    {[sample.product_type, sample.brand, sample.color, sample.size]
-                      .filter(Boolean)
-                      .join(" - ") || "Sample"}
+                    {garmentLabel}
+                    {purposeLabel ? (
+                      <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                        {purposeLabel}
+                      </span>
+                    ) : null}
                   </p>
                   <p className="mt-0.5 text-xs text-slate-500">
                     Received by {sample.received_by_employee_name ?? "?"} -{" "}
@@ -405,11 +530,11 @@ export function ClientReadyMadeSamplesPanel({
                 <div className="flex items-center gap-2">
                   {sample.returned_at ? (
                     <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
-                      Returned {new Date(sample.returned_at).toLocaleDateString()}
+                      Given back to the client {new Date(sample.returned_at).toLocaleDateString()}
                     </span>
                   ) : (
                     <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
-                      Give it back to the client
+                      Still with us - give it back to the client
                     </span>
                   )}
                   <button
@@ -445,7 +570,9 @@ export function ClientReadyMadeSamplesPanel({
                     </div>
                   ))}
                 </div>
-              ) : null}
+              ) : (
+                <p className="mt-2 text-xs text-amber-700">No receipt photo yet.</p>
+              )}
 
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <input
@@ -475,7 +602,7 @@ export function ClientReadyMadeSamplesPanel({
                     className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
                   >
                     <Undo2 className="h-3 w-3" />
-                    Undo returned
+                    Undo - still with us
                   </button>
                 ) : (
                   <button
@@ -484,7 +611,7 @@ export function ClientReadyMadeSamplesPanel({
                     onClick={() => void patchSample(sample.id, { returned: true })}
                     className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                   >
-                    Mark returned to client
+                    We gave it back to the client
                   </button>
                 )}
               </div>

@@ -16,6 +16,8 @@ import {
   CONSOLIDATE_FABRICS_HOWTO_NOTICE_ID,
   CONSOLIDATE_FABRICS_HOWTO_TITLE,
   PATTERN_HOWTO_NOTICES,
+  BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID,
+  CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID,
   CORRECT_START_TIME_HOWTO_NOTICE_ID,
   READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID,
 } from "@/lib/pattern/pattern-operator-notice-copy";
@@ -174,7 +176,9 @@ export async function emailPatternOperatorNotice(
   const recipients = [...parsePatternNoticeEmails()];
   const forQcToo =
     notice.id === READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID ||
-    notice.id === CORRECT_START_TIME_HOWTO_NOTICE_ID;
+    notice.id === CORRECT_START_TIME_HOWTO_NOTICE_ID ||
+    notice.id === BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID ||
+    notice.id === CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID;
   if (forQcToo) {
     recipients.push(...parseClientManagerEmails());
   }
@@ -201,9 +205,13 @@ export async function emailPatternOperatorNotice(
     "",
     notice.id === CORRECT_START_TIME_HOWTO_NOTICE_ID
       ? "QC: Stitch kiosk -> Live or History -> Correct start time. The time applies now. Admin Confirm/Reject does not stop the stitcher."
-      : forQcToo
-        ? "QC: on the sales order press Mark as ready-made. Pattern: this notice also appears on Pattern until you tap Got it."
-        : "This notice also appears at the top of your Pattern page until you tap Got it.",
+      : notice.id === BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID
+        ? "QC: Boggi is a brand. Mark the SO Ready-Made. Pattern: Library -> Bases -> Boggi folder -> Overcoat (one sheet, all sizes)."
+        : notice.id === CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID
+          ? "QC / Task / Pattern: Clients -> Samples. Add garment type, Copy or Fix, photos (that confirms we received it), badge scan. Later press We gave it back to the client."
+        : forQcToo
+          ? "QC: on the sales order press Mark as ready-made. Pattern: this notice also appears on Pattern until you tap Got it."
+          : "This notice also appears at the top of your Pattern page until you tap Got it.",
     `All Pattern how-tos stay on Pattern -> How-to: ${appUrl}/pattern/how-to`,
     "",
     "This is an automated message from Garment ERP.",

@@ -13,6 +13,12 @@ import {
   PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID,
   PATTERN_FILES_BY_BRAND_HOWTO_TITLE,
   READY_MADE_SIZE_RUN_HOWTO_BODY,
+  CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID,
+  CLIENT_SAMPLE_GARMENT_HOWTO_TITLE,
+  CLIENT_SAMPLE_GARMENT_HOWTO_BODY,
+  BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID,
+  BOGGI_BRAND_FOLDER_HOWTO_TITLE,
+  BOGGI_BRAND_FOLDER_HOWTO_BODY,
   CORRECT_START_TIME_HOWTO_NOTICE_ID,
   CORRECT_START_TIME_HOWTO_TITLE,
   CORRECT_START_TIME_HOWTO_BODY,
@@ -108,10 +114,34 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(SEARCH_ACROSS_BRANDS_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(CORRECT_START_TIME_HOWTO_NOTICE_ID));
+    assert.ok(ids.includes(BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID));
+    assert.ok(ids.includes(CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID));
     assert.equal(
       PATTERN_HOWTO_NOTICES[0]?.id,
-      CORRECT_START_TIME_HOWTO_NOTICE_ID
+      CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID
     );
+  });
+});
+
+describe("Pattern/QC client sample garment how-to", () => {
+  it("tells QC and Pattern to record a dropped-off garment with photos, in English and Bangla", () => {
+    assert.equal(CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID, "howto-client-sample-garment-v1");
+    assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_TITLE, /give it back/i);
+    assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /Add garment/);
+    assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /Copy or Fix/);
+    assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /photos confirm we received/i);
+    assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /We gave it back to the client/);
+    assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /BANGLA/);
+  });
+});
+
+describe("Pattern/QC Boggi brand folder how-to", () => {
+  it("tells Pattern Boggi is a brand folder with one Overcoat sheet, in English and Bangla", () => {
+    assert.equal(BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID, "howto-boggi-brand-folder-v1");
+    assert.match(BOGGI_BRAND_FOLDER_HOWTO_TITLE, /Boggi is a brand folder/i);
+    assert.match(BOGGI_BRAND_FOLDER_HOWTO_BODY, /Boggi folder/);
+    assert.match(BOGGI_BRAND_FOLDER_HOWTO_BODY, /44 to 68/);
+    assert.match(BOGGI_BRAND_FOLDER_HOWTO_BODY, /BANGLA/);
   });
 });
 

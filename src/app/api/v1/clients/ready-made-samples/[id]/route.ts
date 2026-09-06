@@ -1,19 +1,18 @@
 import { NextResponse } from "next/server";
-import { requireAuthenticated } from "@/lib/auth/session";
+import { verifyApiKey } from "@/lib/integrations/api-auth";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import {
   deleteReadyMadeSample,
   updateReadyMadeSample,
 } from "@/lib/clients/ready-made-samples";
 
+/** Zapier parity for updating / returning / deleting a client sample. */
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireAuthenticated();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const authError = verifyApiKey(request);
+  if (authError) return authError;
   await ensureDocumentsLoaded(["clients"]);
   const { id } = await params;
 
@@ -25,6 +24,7 @@ export async function PATCH(
     size?: string;
     notes?: string;
     returned?: boolean;
+    actor?: string;
   } = {};
   try {
     body = (await request.json()) as typeof body;
@@ -32,7 +32,12 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const result = await updateReadyMadeSample(id, body, session.email);
+  const result = await updateReadyMadeSample(
+    id,
+    body,
+    String(body.actor ?? "").trim() || "api",
+    "api"
+  );
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status });
   }
@@ -40,17 +45,15 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireAuthenticated();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const authError = verifyApiKey(request);
+  if (authError) return authError;
   await ensureDocumentsLoaded(["clients"]);
   const { id } = await params;
-
-  const result = await deleteReadyMadeSample(id, session.email);
+  const actor = new URL(request.url).searchParams.get("actor")?.trim() || "api";
+  const result = await deleteReadyMadeSample(id, actor, "api");
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status });
   }

@@ -3,6 +3,12 @@ import { getClientById, readClients, writeClients } from "@/lib/data/clients";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { findPayrollEmployeeByBadgeValue } from "@/lib/hr/payroll-lookup";
 import { notifyIntegration } from "@/lib/integrations";
+import { formatClientDisplayName } from "@/lib/clients/names";
+import {
+  normalizeSampleProductType,
+  normalizeSamplePurpose,
+  validateSamplePhotoCount,
+} from "@/lib/clients/ready-made-sample-fields";
 import type {
   ClientProfile,
   ClientReadyMadeSample,
@@ -47,9 +53,39 @@ async function persistSamples(
   return { ok: true, client: next };
 }
 
+export type ReadyMadeSampleListRow = {
+  client_id: string;
+  client_code: string;
+  client_name: string;
+  brand_ids: string[];
+  sample: ClientReadyMadeSample;
+};
+
+export function listReadyMadeSamples(options?: {
+  outstandingOnly?: boolean;
+}): ReadyMadeSampleListRow[] {
+  const outstandingOnly = options?.outstandingOnly !== false;
+  const rows: ReadyMadeSampleListRow[] = [];
+  for (const client of readClients().clients) {
+    for (const sample of client.ready_made_samples ?? []) {
+      if (outstandingOnly && sample.returned_at) continue;
+      rows.push({
+        client_id: client.id,
+        client_code: client.code,
+        client_name: formatClientDisplayName(client),
+        brand_ids: client.brand_ids,
+        sample,
+      });
+    }
+  }
+  rows.sort((a, b) => b.sample.added_at.localeCompare(a.sample.added_at));
+  return rows;
+}
+
 export type AddReadyMadeSampleInput = {
   client_id: string;
   product_type?: unknown;
+  purpose?: unknown;
   brand?: unknown;
   color?: unknown;
   size?: unknown;
@@ -58,6 +94,13 @@ export type AddReadyMadeSampleInput = {
   received_by_badge?: unknown;
   /** API fallback when no badge scanner is available (Zapier). */
   received_by_name?: unknown;
+  /** Alias for purpose (Zapier). */
+  intent?: unknown;
+  /**
+   * How many receipt photos are selected on the add form.
+   * Required (>= 1) for ERP creates; optional for Zapier/API.
+   */
+  photo_count?: unknown;
   added_by: string | null;
 };
 
@@ -68,6 +111,15 @@ export async function addReadyMadeSample(
   await ensureDocumentsLoaded(["clients", "payroll_employees"]);
   const client = getClientById(String(input.client_id ?? "").trim());
   if (!client) return { ok: false, status: 404, error: "Client not found." };
+
+  const productType = normalizeSampleProductType(input.product_type);
+  if (!productType.ok) return { ok: false, status: 400, error: productType.error };
+  const purpose = normalizeSamplePurpose(input.purpose ?? input.intent);
+  if (!purpose.ok) return { ok: false, status: 400, error: purpose.error };
+  const photos = validateSamplePhotoCount(input.photo_count, {
+    required: source === "erp",
+  });
+  if (!photos.ok) return { ok: false, status: 400, error: photos.error };
 
   const badgeValue = String(input.received_by_badge ?? "").trim();
   const fallbackName = normalizeText(input.received_by_name);
@@ -96,7 +148,8 @@ export async function addReadyMadeSample(
 
   const sample: ClientReadyMadeSample = {
     id: `crs-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    product_type: normalizeText(input.product_type),
+    product_type: productType.value,
+    purpose: purpose.value,
     brand: normalizeText(input.brand),
     color: normalizeText(input.color),
     size: normalizeText(input.size),
@@ -121,6 +174,7 @@ export async function addReadyMadeSample(
         client_id: client.id,
         client_code: client.code,
         product_type: sample.product_type,
+        purpose: sample.purpose,
         brand: sample.brand,
         color: sample.color,
         size: sample.size,
@@ -138,6 +192,7 @@ export async function addReadyMadeSample(
 
 export type UpdateReadyMadeSamplePatch = {
   product_type?: unknown;
+  purpose?: unknown;
   brand?: unknown;
   color?: unknown;
   size?: unknown;
@@ -156,14 +211,29 @@ export async function updateReadyMadeSample(
   const found = findSampleAcrossClients(sampleId);
   if (!found) return { ok: false, status: 404, error: "Sample not found." };
 
+  let nextProductType = found.sample.product_type;
+  if (patch.product_type !== undefined) {
+    const productType = normalizeSampleProductType(patch.product_type, {
+      allowLegacy: true,
+    });
+    if (!productType.ok) return { ok: false, status: 400, error: productType.error };
+    nextProductType = productType.value;
+  }
+  let nextPurpose = found.sample.purpose ?? null;
+  if (patch.purpose !== undefined) {
+    const purpose = normalizeSamplePurpose(patch.purpose, { optional: true });
+    if (!purpose.ok) return { ok: false, status: 400, error: purpose.error };
+    nextPurpose = purpose.value;
+  }
+
   let updated: ClientReadyMadeSample = found.sample;
   const persisted = await persistSamples(found.client.id, (samples) =>
     samples.map((row) => {
       if (row.id !== sampleId) return row;
       updated = {
         ...row,
-        product_type:
-          patch.product_type === undefined ? row.product_type : normalizeText(patch.product_type),
+        product_type: nextProductType,
+        purpose: nextPurpose,
         brand: patch.brand === undefined ? row.brand : normalizeText(patch.brand),
         color: patch.color === undefined ? row.color : normalizeText(patch.color),
         size: patch.size === undefined ? row.size : normalizeText(patch.size),
@@ -189,6 +259,8 @@ export async function updateReadyMadeSample(
         sample_id: updated.id,
         client_id: found.client.id,
         client_code: found.client.code,
+        product_type: updated.product_type,
+        purpose: updated.purpose,
         returned_at: updated.returned_at,
         updated_by: actor,
       },

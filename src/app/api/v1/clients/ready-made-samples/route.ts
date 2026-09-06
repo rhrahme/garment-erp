@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/lib/integrations/api-auth";
 import { getClientById, readClients } from "@/lib/data/clients";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { addReadyMadeSample } from "@/lib/clients/ready-made-samples";
+import { addReadyMadeSample, listReadyMadeSamples } from "@/lib/clients/ready-made-samples";
 
 /** Zapier parity for client ready-made samples. */
 export async function GET(request: Request) {
@@ -10,7 +10,8 @@ export async function GET(request: Request) {
   if (authError) return authError;
   await ensureDocumentsLoaded(["clients"]);
 
-  const clientId = new URL(request.url).searchParams.get("client_id")?.trim() ?? "";
+  const params = new URL(request.url).searchParams;
+  const clientId = params.get("client_id")?.trim() ?? "";
   if (clientId) {
     const client = getClientById(clientId);
     if (!client) {
@@ -20,6 +21,12 @@ export async function GET(request: Request) {
       client_id: client.id,
       client_code: client.code,
       samples: client.ready_made_samples ?? [],
+    });
+  }
+
+  if (params.get("outstanding") === "1") {
+    return NextResponse.json({
+      samples: listReadyMadeSamples({ outstandingOnly: true }),
     });
   }
 
@@ -41,12 +48,15 @@ export async function POST(request: Request) {
   let body: {
     client_id?: string;
     product_type?: string;
+    purpose?: string;
+    intent?: string;
     brand?: string;
     color?: string;
     size?: string;
     notes?: string;
     received_by_badge?: string;
     received_by_name?: string;
+    photo_count?: number;
   } = {};
   try {
     body = (await request.json()) as typeof body;
@@ -58,12 +68,15 @@ export async function POST(request: Request) {
     {
       client_id: String(body.client_id ?? ""),
       product_type: body.product_type,
+      purpose: body.purpose,
+      intent: body.intent,
       brand: body.brand,
       color: body.color,
       size: body.size,
       notes: body.notes,
       received_by_badge: body.received_by_badge,
       received_by_name: body.received_by_name,
+      photo_count: body.photo_count,
       added_by: "api",
     },
     "api"

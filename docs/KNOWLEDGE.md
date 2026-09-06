@@ -346,15 +346,18 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   tab) with events `pattern.operator_notice_created` /
   `pattern.operator_notice_acknowledged` / `pattern.operator_notice_seen`.
   How-to emails go to both Pattern mailboxes (`hagan.dp1@gmail.com` and
-  `pattern@hagan.pro`) plus `PATTERN_EMAILS`. Ready-made size-run and late-QR start-time how-tos
-  also email QC (`hagan.qc@gmail.com`). For the add-to-existing-group
+  `pattern@hagan.pro`) plus `PATTERN_EMAILS`. Ready-made size-run, Boggi
+  brand-folder, client-sample garment, and late-QR start-time how-tos also
+  email QC (`hagan.qc@gmail.com`). For the add-to-existing-group
   how-to, admin is emailed when it is sent and again when a Pattern
   operator opens any Pattern page and sees the banner. When we explain a
   floor fix to Pattern, add a catalog entry so they get the email and the
   in-app banner - do not only tell the owner in chat. Notices: both
   Pattern logins type a client name and search looks in every brand
   (`howto-search-across-brands-v1`), QR late then QC corrects start time
-  (`howto-correct-scan-start-time-v1`), Boggi/Massimo size runs are
+  (`howto-correct-scan-start-time-v1`), client dropped off a garment to
+  copy or fix (`howto-client-sample-garment-v1`), Boggi is a brand folder with
+  Overcoat sizes on one sheet (`howto-boggi-brand-folder-v1`), Boggi/Massimo size runs are
   Ready-Made not a new client (`howto-ready-made-size-run-v1`), tap All brands
   (`howto-same-queue-all-brands-v1`), Fabric
   Specification is on the left menu (`howto-fabric-spec-both-accounts-v1`),
@@ -676,6 +679,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `/api/v1/...` parity. Event `sales_order.marked_ready_made`. How-to
   `howto-ready-made-size-run-v1` (English + Bangla) emails Pattern and QC.
   SO-2026-0142 and SO-2026-0150 were moved to Ready-Made / Boggi.
+  Pattern Library Bases has a Boggi (BO) folder on FR and GL. Overcoat
+  is one house base (sizes 44-68) with the measurements from the
+  mistaken person-client sheets. File:
+  `Boggi Measurement Spec for Overcoat.xlsx`. Later a real client
+  loads this base and we change his sizes. Jacket and Trouser were
+  already in that folder.
 - **Garment + size photos** (Aug 19 2026): on `/ready-made`, each article
   can open Photos. Upload style shots on the garment, and a photo on each
   size (XS-XXL by default; extra sizes can be added). Stored in
@@ -798,6 +807,16 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   (`admin-decision-email-token.ts`) plus the `/approvals` page. Email
   links must use erp.hagan.pro, never localhost.
   Tests: `npm run test:name-change`.
+- **Client dropped-off garments** (Sep 6 2026): QC / Task / Pattern /
+  Stitch record a ready garment the client left for us to copy or fix.
+  Clients page has a Samples view (outstanding pieces still in the
+  factory). Open the client -> Client garments -> Add garment. Garment
+  type is the full `GARMENT_STITCH_TYPES` list. Purpose is Copy or Fix.
+  Photos are required on receive (that confirms we have it). Badge scan
+  required. Later press We gave it back to the client (`returned_at`).
+  APIs: `/api/client-samples` + `/api/v1/clients/ready-made-samples`.
+  Events: `client.ready_made_sample_*`. How-to
+  `howto-client-sample-garment-v1` emails Pattern and QC.
 
 ## Supplier emails
 
@@ -900,7 +919,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
-- [session-2026-09-06](session-2026-09-06.md) - Floor nicknames; admin Select all; client name on fabric rows; start without printed QR
+- [session-2026-09-06](session-2026-09-06.md) - Floor nicknames; admin Select all; client name on fabric rows; start without printed QR; client garment drop-off Samples view; client dropped-off garments
 - [session-2026-09-01](session-2026-09-01.md) - Serwal garment type; HR overtime pay and mistake deductions shipped
 - [session-2026-08-27](session-2026-08-27.md) - Inventory Boxes + Alert; HR overtime pay and mistake deductions
 - [session-2026-08-26](session-2026-08-26.md) - Pattern search looks across brands (ibi / Ibrahim); queue starts on All brands

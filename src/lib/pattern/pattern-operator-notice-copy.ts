@@ -240,6 +240,63 @@ export const CORRECT_START_TIME_HOWTO_BODY = [
   "Admin er jonno wait korben na.",
 ].join("\n");
 
+export const CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID = "howto-client-sample-garment-v1";
+
+export const CLIENT_SAMPLE_GARMENT_HOWTO_TITLE =
+  "Client dropped off a garment: record it, then give it back";
+
+export const CLIENT_SAMPLE_GARMENT_HOWTO_BODY = [
+  "ENGLISH",
+  "When a client leaves a ready garment for us to copy or fix:",
+  "1. Open Clients (left menu).",
+  "2. Tap Samples to see garments still in the factory, or open the client.",
+  "3. Press Add garment.",
+  "4. Pick the garment type (Trouser, Jacket, Suit, Overcoat...).",
+  "5. Tap Copy or Fix.",
+  "6. Upload photos of the garment - photos confirm we received it.",
+  "7. Scan your employee ID badge and save.",
+  "8. When you hand it back, press We gave it back to the client.",
+  "",
+  "Do not leave a client garment in the factory without photos.",
+  "",
+  "BANGLA",
+  "Client garment copy ba fix er jonno rekhe gele:",
+  "1. Left menu te Clients khulen.",
+  "2. Samples tap korun, ba client khulen.",
+  "3. Add garment chapun.",
+  "4. Garment type select korun (Trouser, Jacket, Suit, Overcoat...).",
+  "5. Copy ba Fix tap korun.",
+  "6. Photo upload korun - photo mane amra garment peyechi.",
+  "7. Badge scan, then save.",
+  "8. Client ke fire dile: We gave it back to the client chapun.",
+].join("\n");
+
+export const BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID = "howto-boggi-brand-folder-v1";
+
+export const BOGGI_BRAND_FOLDER_HOWTO_TITLE =
+  "Boggi is a brand folder - put Overcoat sizes on one sheet";
+
+export const BOGGI_BRAND_FOLDER_HOWTO_BODY = [
+  "ENGLISH",
+  "Boggi is a brand, not a person client.",
+  "In Pattern Library -> Bases, open the Boggi folder (BO).",
+  "Inside it, Overcoat is one house base with all sizes (44 to 68).",
+  "The file is named Boggi Measurement Spec for Overcoat.xlsx.",
+  "Do not open a new client named Boggi Overcoat. Do not make one sheet per size.",
+  "",
+  "Later, when a real client wants this ready-made cut: Load from the Boggi Overcoat base, then change his sizes.",
+  "The folder is on both Fouad Rahme and Gliani. Jacket and Trouser were already in Boggi.",
+  "Ready-Made / Boggi still holds the production orders (SO-2026-0142 and SO-2026-0150).",
+  "",
+  "BANGLA",
+  "Boggi ekta brand folder. Person client na.",
+  "Pattern Library -> Bases -> Boggi (BO) khulen.",
+  "Vitor e Overcoat ekta house base, shob size (44 theke 68).",
+  "File name: Boggi Measurement Spec for Overcoat.xlsx.",
+  "Boggi Overcoat name e notun client khulben na. Prottek size er jonno alada sheet banaben na.",
+  "Pore asol client hole: Boggi Overcoat base theke load, then tar size change.",
+].join("\n");
+
 export const READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID = "howto-ready-made-size-run-v1";
 
 export const READY_MADE_SIZE_RUN_HOWTO_TITLE =
@@ -284,6 +341,22 @@ export const READY_MADE_SIZE_RUN_HOWTO_BODY = [
 
 /** Newest first. Each entry is emailed to Pattern and kept on the How-to tab. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID,
+    title: CLIENT_SAMPLE_GARMENT_HOWTO_TITLE,
+    body: CLIENT_SAMPLE_GARMENT_HOWTO_BODY,
+    href: "/clients?view=samples",
+    href_label: "Open Clients Samples",
+    audience: "pattern",
+  },
+  {
+    id: BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID,
+    title: BOGGI_BRAND_FOLDER_HOWTO_TITLE,
+    body: BOGGI_BRAND_FOLDER_HOWTO_BODY,
+    href: "/pattern/library",
+    href_label: "Open Pattern Library",
+    audience: "pattern",
+  },
   {
     id: CORRECT_START_TIME_HOWTO_NOTICE_ID,
     title: CORRECT_START_TIME_HOWTO_TITLE,
