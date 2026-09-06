@@ -19,15 +19,16 @@ export const BADGE_LOGIN_JOB_FUNCTIONS = ["pattern"] as const;
 /** Badge IDs allowed to sign in as inventory clerk (not a payroll job). */
 export const INVENTORY_BADGE_LOGIN_IDS = ["2543411918"] as const;
 
-export type BadgeLoginKind = "pattern" | "inventory";
+export type BadgeLoginKind = "pattern" | "inventory" | "qc";
 
 /** Synthetic Supabase account for a badge login. Role is encoded in the local
  * part so email-list permission fallbacks work even if the profiles read is
- * degraded: badge-pattern-<employeeId>@badge.hagan.pro
- * or badge-inventory-<employeeId>@badge.hagan.pro */
+ * degraded: badge-pattern-<employeeId>@badge.hagan.pro,
+ * badge-inventory-<employeeId>@badge.hagan.pro,
+ * or badge-qc-<employeeId>@badge.hagan.pro (QC / client_manager). */
 export const BADGE_LOGIN_EMAIL_DOMAIN = "badge.hagan.pro";
 const BADGE_LOGIN_EMAIL_REGEX =
-  /^badge-(pattern|inventory)-([a-z0-9]+)@badge\.hagan\.pro$/;
+  /^badge-(pattern|inventory|qc)-([a-z0-9]+)@badge\.hagan\.pro$/;
 
 export const MIN_BADGE_PASSWORD_LENGTH = 6;
 const MAX_FAILED_ATTEMPTS = 5;
@@ -114,12 +115,18 @@ export function isBadgePatternLoginEmail(email: string | null | undefined): bool
   return badgeLoginKindFromEmail(email) === "pattern";
 }
 
+export function isBadgeQcLoginEmail(email: string | null | undefined): boolean {
+  return badgeLoginKindFromEmail(email) === "qc";
+}
+
 export function credentialKind(credential: Pick<BadgeLoginCredential, "kind" | "supabase_email">): BadgeLoginKind {
   return credential.kind ?? badgeLoginKindFromEmail(credential.supabase_email) ?? "pattern";
 }
 
 export function badgeLandingPath(kind: BadgeLoginKind): string {
-  return kind === "inventory" ? "/inventory" : "/pattern";
+  if (kind === "inventory") return "/inventory";
+  if (kind === "qc") return "/orders";
+  return "/pattern";
 }
 
 /**
@@ -144,6 +151,8 @@ export function badgeLoginKindForEmployee(employee: PayrollEmployee): BadgeLogin
     return "inventory";
   }
   const functions = (employee.job_functions ?? []).map((fn) => fn.toLowerCase());
+  // QC wins over pattern when both job functions are set.
+  if (functions.includes("qc")) return "qc";
   if (BADGE_LOGIN_JOB_FUNCTIONS.some((allowed) => functions.includes(allowed))) {
     return "pattern";
   }
@@ -417,7 +426,8 @@ export async function provisionBadgeSupabaseUser(
   const kind = badgeLoginKindForEmployee(employee) ?? "pattern";
   const email = badgeLoginEmail(employee.id, kind);
   const password = badgeSupabasePassword(employee.id);
-  const role = kind === "inventory" ? "inventory_clerk" : "pattern_operator";
+  const role =
+    kind === "inventory" ? "inventory_clerk" : kind === "qc" ? "client_manager" : "pattern_operator";
 
   let userId: string | null = null;
   const { data: created, error: createError } = await admin.auth.admin.createUser({

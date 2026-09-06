@@ -5,16 +5,24 @@ import {
   badgeLandingPath,
   badgeLoginEmail,
   badgeLoginEmployeeId,
+  badgeLoginKindForEmployee,
   badgeLoginKindFromEmail,
   badgeSupabasePassword,
   hashBadgePassword,
   isBadgePatternLoginEmail,
+  isBadgeQcLoginEmail,
   patternActorLabel,
   patternBadgeIdForEmail,
   patternEmailForBadgeId,
   verifyBadgePassword,
 } from "./badge-login";
-import { isInventoryClerkEmail, isPatternOperatorEmail } from "./permissions";
+import type { PayrollEmployee } from "@/lib/types/hr-payroll";
+import {
+  isClientManagerEmail,
+  isInventoryClerkEmail,
+  isPatternOperatorEmail,
+  isPriceRestrictedAccess,
+} from "./permissions";
 
 describe("badge login password hashing", () => {
   it("verifies the correct password and rejects wrong ones", () => {
@@ -50,6 +58,20 @@ describe("badge login synthetic emails", () => {
     assert.equal(isPatternOperatorEmail("badge-pattern-1@evil.example.com"), false);
   });
 
+  it("encodes QC in a separate email so they get client_manager, not pattern", () => {
+    const email = badgeLoginEmail("2587734852", "qc");
+    assert.equal(email, "badge-qc-2587734852@badge.hagan.pro");
+    assert.equal(badgeLoginEmployeeId(email), "2587734852");
+    assert.equal(badgeLoginKindFromEmail(email), "qc");
+    assert.equal(isBadgeQcLoginEmail(email), true);
+    assert.equal(isBadgePatternLoginEmail(email), false);
+    assert.equal(isPatternOperatorEmail(email), false);
+    assert.equal(isInventoryClerkEmail(email), false);
+    assert.equal(isClientManagerEmail(email), true);
+    assert.equal(isPriceRestrictedAccess(null, email), true);
+    assert.equal(badgeLandingPath("qc"), "/orders");
+  });
+
   it("encodes inventory clerk in a separate email so they never get pattern access", () => {
     const email = badgeLoginEmail("2543411918", "inventory");
     assert.equal(email, "badge-inventory-2543411918@badge.hagan.pro");
@@ -75,6 +97,63 @@ describe("badge login synthetic emails", () => {
     assert.equal(patternBadgeIdForEmail(null), null);
     assert.equal(patternEmailForBadgeId("2625917972"), "hagan.dp1@gmail.com");
     assert.equal(patternEmailForBadgeId("xx22"), null);
+  });
+});
+
+function payrollFixture(overrides: Partial<PayrollEmployee> = {}): PayrollEmployee {
+  return {
+    id: "2587734852",
+    s_no: 34,
+    employee_id_number: "2587734852",
+    full_name: "Mahmudul Hassan",
+    bank_name: "",
+    account_number: "",
+    salary_amount: 0,
+    basic_salary: 0,
+    housing_allowance: 0,
+    other_earnings: 0,
+    deduction: 0,
+    payment_description: "",
+    address_1: "",
+    address_2: "",
+    address_3: "",
+    is_active: true,
+    job_functions: ["qc", "pattern"],
+    ...overrides,
+  };
+}
+
+describe("badge login kind from payroll job functions", () => {
+  it("gives QC when job_functions include qc, even if pattern is also set", () => {
+    assert.equal(badgeLoginKindForEmployee(payrollFixture()), "qc");
+    assert.equal(
+      badgeLoginKindForEmployee(payrollFixture({ job_functions: ["qc"] })),
+      "qc"
+    );
+  });
+
+  it("gives pattern only when qc is absent", () => {
+    assert.equal(
+      badgeLoginKindForEmployee(payrollFixture({ job_functions: ["pattern"] })),
+      "pattern"
+    );
+  });
+
+  it("refuses inactive employees", () => {
+    assert.equal(badgeLoginKindForEmployee(payrollFixture({ is_active: false })), null);
+  });
+
+  it("keeps the inventory allowlist ahead of qc/pattern", () => {
+    assert.equal(
+      badgeLoginKindForEmployee(
+        payrollFixture({
+          id: "2543411918",
+          employee_id_number: "2543411918",
+          job_functions: ["qc", "pattern"],
+        })
+      ),
+      "inventory"
+    );
   });
 });
 

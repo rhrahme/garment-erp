@@ -783,6 +783,16 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   per article, receive/use stock, register boxes, and print 4x6 stickers.
   Clerk routes include `/api/inventory`, `/api/entity-images`, and
   `/api/qr` so sticker QR codes and photos load.
+- **QC badge login** (Sep 7 2026): payroll `job_functions` that include
+  `qc` sign in on the Badge tab as **QC / client_manager**, same surface
+  as `hagan.qc@gmail.com`. `qc` wins over `pattern` when both are set.
+  Session email is `badge-qc-<id>@badge.hagan.pro` so a leftover Pattern
+  job function never opens Pattern Library. Landing `/orders`
+  (Production Orders). Prices stay locked (`isPriceRestrictedAccess` +
+  `canViewPrices` admin-only). Invoices, costing, purchasing, supplier
+  invoices, invoice-amount APIs, payroll register, Pattern, Inventory,
+  and admin Dashboard are blocked. Do not put badge passwords in how-to
+  copy or Mem0.
 - **Inventory also on Accounting + Task 1** (Aug 20 2026):
   `accounting@hagan.pro` and `hagan.task1@gmail.com` see Inventory in
   the sidebar and can add/edit items, upload article photos, and print
@@ -903,12 +913,14 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   resolveAuthUserDetailed reports the degraded flag - keep its tests green
   (resolve-auth-user.test.ts).
 - **Badge login (pattern team)**: employees whose payroll job_functions
-  include "pattern" sign in with badge/ID number + personal password
-  (lib/auth/badge-login.ts). Password is set by the employee on first
-  login, or by admin via upsertBadgeCredential /
-  scripts/set-pattern-badge-password.mjs. Hashed in badge_login_credentials
-  (5 wrong tries -> 10 min lockout). Each login is a real Supabase session
-  on badge-pattern-<employeeId>@badge.hagan.pro (pattern_operator). Do NOT
+  include "pattern" (and not `qc`) sign in with badge/ID number + personal
+  password (lib/auth/badge-login.ts). If `qc` is also set, QC wins and
+  they get `badge-qc-<id>@badge.hagan.pro` / client_manager instead.
+  Password is set by the employee on first login, or by admin via
+  upsertBadgeCredential / scripts/set-pattern-badge-password.mjs. Hashed
+  in badge_login_credentials (5 wrong tries -> 10 min lockout). Each
+  Pattern login is a real Supabase session on
+  badge-pattern-<employeeId>@badge.hagan.pro (pattern_operator). Do NOT
   add those emails to PATTERN_EMAILS; isPatternOperatorEmail matches the
   badge pattern by regex. Both operators share one workspace; writes are
   stamped with sessionActor() as "Mohtajul (2625917972)" so admin can

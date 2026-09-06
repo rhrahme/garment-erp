@@ -16,7 +16,9 @@ import {
   defaultPathForEmail,
   defaultPathForSession,
   isAccountingOperatorRouteAllowed,
+  isClientManagerEmail,
   isClientManagerRouteAllowed,
+  isPriceRestrictedAccess,
   isInventoryClerkEmail,
   isInventoryClerkRouteAllowed,
   parseAllTeamNoticeEmails,
@@ -240,6 +242,12 @@ describe("client_manager QC ID badges (not payroll)", () => {
     assert.ok(nav.includes("/stitch"));
     assert.ok(nav.includes("/how-to"));
     assert.ok(!nav.includes("/hr"));
+    assert.ok(!nav.includes("/invoices"));
+    assert.ok(!nav.includes("/costing"));
+    assert.ok(!nav.includes("/purchasing"));
+    assert.ok(!nav.includes("/supplier-invoices"));
+    assert.ok(!nav.includes("/pattern"));
+    assert.ok(!nav.includes("/inventory"));
   });
 
   it("allows Expat badge pages and APIs; blocks Saudis, payroll register, and salary APIs", () => {
@@ -265,6 +273,62 @@ describe("client_manager QC ID badges (not payroll)", () => {
     assert.equal(isClientManagerRouteAllowed("/api/hr/payroll-adjustments"), false);
     assert.equal(isClientManagerRouteAllowed("/api/hr/payroll-employees"), false);
     assert.equal(isClientManagerRouteAllowed("/api/hr/payroll-employees/x"), false);
+  });
+});
+
+describe("QC badge login (client_manager, prices and accounting sealed)", () => {
+  const qcEmail = "badge-qc-2587734852@badge.hagan.pro";
+
+  it("classifies badge-qc emails as client_manager without CLIENT_MANAGER_EMAILS", () => {
+    const previous = process.env.CLIENT_MANAGER_EMAILS;
+    delete process.env.CLIENT_MANAGER_EMAILS;
+    try {
+      assert.equal(isClientManagerEmail(qcEmail), true);
+      assert.equal(resolveRestrictedAccess(null, qcEmail, false), "client_manager");
+      assert.equal(
+        resolveRestrictedAccess("pattern_operator", qcEmail, false),
+        "client_manager"
+      );
+    } finally {
+      if (previous === undefined) delete process.env.CLIENT_MANAGER_EMAILS;
+      else process.env.CLIENT_MANAGER_EMAILS = previous;
+    }
+  });
+
+  it("lands QC badge login on Production Orders", () => {
+    assert.equal(defaultPathForEmail(qcEmail), "/orders");
+    assert.equal(defaultPathForSession({ isClientManager: true }), "/orders");
+  });
+
+  it("locks prices for QC badge and mailbox", () => {
+    assert.equal(isPriceRestrictedAccess(null, qcEmail), true);
+    assert.equal(isPriceRestrictedAccess("client_manager", qcEmail), true);
+    assert.equal(isPriceRestrictedAccess(null, "hagan.qc@gmail.com"), true);
+  });
+
+  it("blocks invoices, costing, purchasing, payroll, Pattern, and Inventory", () => {
+    for (const path of [
+      "/invoices",
+      "/invoices/inv-1",
+      "/costing",
+      "/purchasing",
+      "/supplier-invoices",
+      "/api/customer-invoices",
+      "/api/supplier-invoices",
+      "/api/transporter-invoices",
+      "/api/price-list-items",
+      "/api/auth/invoice-amounts",
+      "/hr",
+      "/hr/overtime",
+      "/api/hr/payroll-employees",
+      "/api/hr/payroll-adjustments",
+      "/pattern",
+      "/pattern/library",
+      "/inventory",
+      "/dashboard",
+    ]) {
+      assert.equal(isClientManagerRouteAllowed(path), false, path);
+    }
   });
 });
 

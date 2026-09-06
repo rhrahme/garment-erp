@@ -17,6 +17,7 @@ import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 
 export const PATTERN_LANDING = "/pattern";
 export const INVENTORY_LANDING = "/inventory";
+export const QC_LANDING = "/orders";
 
 export function landingForBadgeEmployee(employee: PayrollEmployee): string {
   return badgeLandingPath(badgeLoginKindForEmployee(employee) ?? "pattern");

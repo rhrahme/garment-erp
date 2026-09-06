@@ -59,6 +59,22 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/login",
 ] as const;
 
+/** Money, payroll, Pattern library, and admin home stay sealed for QC. */
+const CLIENT_MANAGER_BLOCKED_ROUTE_PREFIXES = [
+  "/invoices",
+  "/costing",
+  "/purchasing",
+  "/supplier-invoices",
+  "/api/customer-invoices",
+  "/api/supplier-invoices",
+  "/api/transporter-invoices",
+  "/api/price-list-items",
+  "/api/auth/invoice-amounts",
+  "/pattern",
+  "/inventory",
+  "/dashboard",
+] as const;
+
 const TASK_OPERATOR_ROUTE_PREFIXES = [
   "/fabric-receiving",
   "/thread-buttons",
@@ -659,6 +675,7 @@ export function isClientManagerEmail(email: string | null | undefined): boolean 
   // Task 1 is a floor login. If someone also put it in CLIENT_MANAGER_EMAILS,
   // it must stay task_operator so Inventory stays visible.
   if (parseTaskOperatorEmails().has(normalized)) return false;
+  if (BADGE_QC_LOGIN_EMAIL.test(normalized)) return true;
   return parseClientManagerEmails().has(normalized);
 }
 
@@ -689,6 +706,7 @@ export function isSalesOperatorEmail(email: string | null | undefined): boolean 
  */
 const BADGE_PATTERN_LOGIN_EMAIL = /^badge-pattern-[a-z0-9]+@badge\.hagan\.pro$/;
 const BADGE_INVENTORY_LOGIN_EMAIL = /^badge-inventory-[a-z0-9]+@badge\.hagan\.pro$/;
+const BADGE_QC_LOGIN_EMAIL = /^badge-qc-[a-z0-9]+@badge\.hagan\.pro$/;
 
 export function isPatternOperatorEmail(email: string | null | undefined): boolean {
   if (!email) return false;
@@ -870,6 +888,13 @@ export function isClientManagerSaudiIdBadgesPath(pathname: string): boolean {
 }
 
 export function isClientManagerRouteAllowed(pathname: string): boolean {
+  if (
+    CLIENT_MANAGER_BLOCKED_ROUTE_PREFIXES.some(
+      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+    )
+  ) {
+    return false;
+  }
   // Never treat badge allowlist as opening the payroll register or salary APIs.
   if (pathname === "/hr" || pathname.startsWith("/hr/")) {
     if (isClientManagerSaudiIdBadgesPath(pathname)) return false;
