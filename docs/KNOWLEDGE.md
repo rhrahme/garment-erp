@@ -362,8 +362,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   in-app banner - do not only tell the owner in chat. Notices: both
   Pattern logins type a client name and search looks in every brand
   (`howto-search-across-brands-v1`), QR late then QC corrects start time
-  (`howto-correct-scan-start-time-v1`), client dropped off a garment to
-  copy or fix (`howto-client-sample-garment-v1`), Boggi is a brand folder with
+  (`howto-correct-scan-start-time-v2`), client dropped off a garment to
+  copy or fix (`howto-client-sample-garment-v3`), Boggi is a brand folder with
   Overcoat sizes on one sheet (`howto-boggi-brand-folder-v1`), Boggi/Massimo size runs are
   Ready-Made not a new client (`howto-ready-made-size-run-v1`), tap All brands
   (`howto-same-queue-all-brands-v1`), Fabric
@@ -818,14 +818,16 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Stitch record a ready garment the client left for us to copy or fix.
   Clients page has a Samples view (outstanding pieces still in the
   factory). Open the client -> Client sample -> Add garment -> Add
-  photos. Garment type is the full `GARMENT_STITCH_TYPES` list. Purpose
+  photos. Do not look for Client ready-made samples or Client garments.
+  Garment type is the full `GARMENT_STITCH_TYPES` list. Purpose
   is Copy or Fix. Photos are required on receive (that confirms we have
   it). The add form uses an Add photos button (not a hidden file box).
   Badge scan required. Later press We gave it back to the client
   (`returned_at`).
   APIs: `/api/client-samples` + `/api/v1/clients/ready-made-samples`.
   Events: `client.ready_made_sample_*`. How-to
-  `howto-client-sample-garment-v1` emails Pattern and QC.
+  `howto-client-sample-garment-v3` emails every team (English + Bangla),
+  highlights on every ERP page, and stays on How-to after Got it.
   When we send the stitched garment, use the delivery dropdown: Handed
   to factory driver or Handed to client driver (`returned_via` on
   drop-offs, `handover_to` on packed production). Optional staff proof

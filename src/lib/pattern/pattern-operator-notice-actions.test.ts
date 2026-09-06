@@ -165,15 +165,20 @@ describe("Pattern/QC sent stitched garment how-to", () => {
 
 describe("Pattern/QC client sample garment how-to", () => {
   it("tells QC and Pattern to record a dropped-off garment with photos, in English and Bangla", () => {
-    assert.equal(CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID, "howto-client-sample-garment-v2");
-    assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_TITLE, /upload photos/i);
-    assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /Client sample/);
+    assert.equal(CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID, "howto-client-sample-garment-v3");
+    assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_TITLE, /Client sample/);
+    assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /now called Client sample/);
+    assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /Do not look for Client ready-made samples/);
     assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /Add garment/);
     assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /Add photos/);
     assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /Copy or Fix/);
     assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /photos confirm we received/i);
     assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /We gave it back to the client/);
     assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /BANGLA/);
+    const howto = PATTERN_HOWTO_NOTICES.find(
+      (row) => row.id === CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID
+    );
+    assert.equal(howto?.audience, "all_teams");
   });
 });
 

@@ -244,16 +244,20 @@ export const CORRECT_START_TIME_HOWTO_BODY = [
 
 export const CLIENT_SAMPLE_GARMENT_HOWTO_V1_NOTICE_ID = "howto-client-sample-garment-v1";
 
-export const CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID = "howto-client-sample-garment-v2";
+export const CLIENT_SAMPLE_GARMENT_HOWTO_V2_NOTICE_ID = "howto-client-sample-garment-v2";
+
+export const CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID = "howto-client-sample-garment-v3";
 
 export const CLIENT_SAMPLE_GARMENT_HOWTO_TITLE =
-  "Where to upload photos of the client's garment";
+  "Look for Client sample - upload the client's garment photos there";
 
 export const CLIENT_SAMPLE_GARMENT_HOWTO_BODY = [
   "ENGLISH",
+  "The place is now called Client sample. Do not look for Client ready-made samples or Client garments.",
+  "",
   "When a client leaves a ready garment for us to copy or fix:",
   "1. Open Clients (left menu).",
-  "2. Tap Client sample to see garments still in the factory, or open the client.",
+  "2. Tap Client sample at the top to see garments still in the factory, or open the client.",
   "3. Scroll to Client sample.",
   "4. Press Add garment.",
   "5. Pick the garment type (Trouser, Jacket, Suit, Overcoat...).",
@@ -265,9 +269,11 @@ export const CLIENT_SAMPLE_GARMENT_HOWTO_BODY = [
   "Do not leave a client garment in the factory without photos.",
   "",
   "BANGLA",
+  "Name ekhon Client sample. Client ready-made samples ba Client garments khujben na.",
+  "",
   "Client garment copy ba fix er jonno rekhe gele:",
   "1. Left menu te Clients khulen.",
-  "2. Client sample tap korun, ba client khulen.",
+  "2. Upore Client sample tap korun, ba client khulen.",
   "3. Client sample e scroll korun.",
   "4. Add garment chapun.",
   "5. Garment type select korun (Trouser, Jacket, Suit, Overcoat...).",
@@ -389,6 +395,7 @@ export function isAllTeamsHowTo(id: string): boolean {
 export function isPatternAudienceHowTo(id: string): boolean {
   if (id === SENT_STITCHED_GARMENT_HOWTO_V1_NOTICE_ID) return false;
   if (id === CLIENT_SAMPLE_GARMENT_HOWTO_V1_NOTICE_ID) return false;
+  if (id === CLIENT_SAMPLE_GARMENT_HOWTO_V2_NOTICE_ID) return false;
   if (id === CORRECT_START_TIME_HOWTO_V1_NOTICE_ID) return false;
   return howtoAudience(id) === "pattern";
 }
@@ -400,7 +407,7 @@ export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
     title: CLIENT_SAMPLE_GARMENT_HOWTO_TITLE,
     body: CLIENT_SAMPLE_GARMENT_HOWTO_BODY,
     href: "/clients?view=samples",
-    href_label: "Open Clients Samples",
+    href_label: "Open Client sample",
     audience: "all_teams",
   },
   {

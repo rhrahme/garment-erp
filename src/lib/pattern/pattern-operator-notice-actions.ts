@@ -266,7 +266,7 @@ export async function emailPatternOperatorNotice(
         : notice.id === BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID
           ? "QC: Boggi is a brand. Mark the SO Ready-Made. Pattern: Library -> Bases -> Boggi folder -> Overcoat (one sheet, all sizes)."
           : notice.id === CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID
-            ? "QC / Task / Pattern: Clients -> Samples. Add garment type, Copy or Fix, photos (that confirms we received it), badge scan. Later press We gave it back to the client."
+            ? "QC / Task / Pattern: Clients -> Client sample. Add garment, Copy or Fix, Add photos (that confirms we received it), badge scan. Later press We gave it back to the client."
             : forQcToo
               ? "QC: on the sales order press Mark as ready-made. Pattern: this notice also appears on Pattern until you tap Got it."
               : "This notice also appears at the top of your Pattern page until you tap Got it.",
