@@ -166,7 +166,9 @@ describe("Pattern/QC client sample garment how-to", () => {
   it("tells QC and Pattern to record a dropped-off garment with photos, in English and Bangla", () => {
     assert.equal(CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID, "howto-client-sample-garment-v1");
     assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_TITLE, /give it back/i);
+    assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /Client garments/);
     assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /Add garment/);
+    assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /Add photos/);
     assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /Copy or Fix/);
     assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /photos confirm we received/i);
     assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /We gave it back to the client/);

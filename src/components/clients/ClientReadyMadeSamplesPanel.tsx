@@ -390,7 +390,7 @@ export function ClientReadyMadeSamplesPanel({
         <div>
           <p className="flex items-center gap-2 text-sm font-semibold text-slate-800">
             <Package className="h-4 w-4 text-indigo-500" />
-            Client ready-made samples
+            Client garments
           </p>
           <p className="mt-0.5 text-xs text-slate-500">
             Client dropped off a garment to copy or fix. Photos confirm we received
@@ -489,17 +489,27 @@ export function ClientReadyMadeSamplesPanel({
               type="file"
               accept="image/*"
               multiple
-              className="mt-2 block w-full text-xs text-slate-600"
+              className="hidden"
               onChange={(event) => {
                 const files = event.target.files;
                 setPendingPhotos(files ? Array.from(files) : []);
               }}
             />
+            <button
+              type="button"
+              onClick={() => addPhotoInput.current?.click()}
+              className="mt-2 inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add photos
+            </button>
             {pendingPhotos.length > 0 ? (
               <p className="mt-1 text-xs text-slate-600">
                 {pendingPhotos.length} photo{pendingPhotos.length === 1 ? "" : "s"} selected
               </p>
-            ) : null}
+            ) : (
+              <p className="mt-1 text-xs text-slate-500">No photos selected yet.</p>
+            )}
           </div>
           <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2">
             <p className="text-xs font-medium text-amber-800">

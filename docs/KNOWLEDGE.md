@@ -817,10 +817,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Client dropped-off garments** (Sep 6 2026): QC / Task / Pattern /
   Stitch record a ready garment the client left for us to copy or fix.
   Clients page has a Samples view (outstanding pieces still in the
-  factory). Open the client -> Client garments -> Add garment. Garment
-  type is the full `GARMENT_STITCH_TYPES` list. Purpose is Copy or Fix.
-  Photos are required on receive (that confirms we have it). Badge scan
-  required. Later press We gave it back to the client (`returned_at`).
+  factory). Open the client -> Client garments -> Add garment -> Add
+  photos. Garment type is the full `GARMENT_STITCH_TYPES` list. Purpose
+  is Copy or Fix. Photos are required on receive (that confirms we have
+  it). The add form uses an Add photos button (not a hidden file box).
+  Badge scan required. Later press We gave it back to the client
+  (`returned_at`).
   APIs: `/api/client-samples` + `/api/v1/clients/ready-made-samples`.
   Events: `client.ready_made_sample_*`. How-to
   `howto-client-sample-garment-v1` emails Pattern and QC.
