@@ -15,6 +15,7 @@ import {
   stickerCodesMatch,
 } from "@/lib/sales-orders/label-codes";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
+import { normalizeGarmentHandoverTo } from "@/lib/production/garment-handover";
 import type {
   FabricPrepStep,
   FabricPrepType,
@@ -177,7 +178,10 @@ function getNextProductionStage(current: ProductionStage): ProductionStage | nul
   return stages[index + 1];
 }
 
-export async function advanceProductionWorkOrder(id: string): Promise<ProductionWorkOrder> {
+export async function advanceProductionWorkOrder(
+  id: string,
+  options?: { handover_to?: unknown; actor?: string | null }
+): Promise<ProductionWorkOrder> {
   const store = readProductionWorkOrders();
   const workOrder = store.work_orders.find((order) => order.id === id);
   if (!workOrder) {
@@ -196,11 +200,19 @@ export async function advanceProductionWorkOrder(id: string): Promise<Production
     throw new Error("This work order is already completed.");
   }
 
-  workOrder.status = next;
-  workOrder.updated_at = now;
   if (next === "completed") {
+    const handover = normalizeGarmentHandoverTo(options?.handover_to);
+    if (!handover.ok) {
+      throw new Error(handover.error);
+    }
+    workOrder.handover_to = handover.value;
+    workOrder.handed_to_driver_at = now;
+    workOrder.handed_to_driver_by = options?.actor ?? null;
     workOrder.completed_at = now;
   }
+
+  workOrder.status = next;
+  workOrder.updated_at = now;
 
   await writeProductionWorkOrders(store);
   return workOrder;

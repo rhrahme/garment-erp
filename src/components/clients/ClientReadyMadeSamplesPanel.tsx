@@ -5,10 +5,14 @@ import { Loader2, Package, Plus, Trash2, Undo2 } from "lucide-react";
 import {
   CLIENT_SAMPLE_PURPOSE_LABELS,
   samplePurposeLabel,
+  sampleReturnViaLabel,
   type ClientSamplePurpose,
 } from "@/lib/clients/ready-made-sample-fields";
 import { GARMENT_STITCH_TYPES } from "@/lib/sales-orders/garment-types";
 import type { ClientReadyMadeSample } from "@/lib/types/clients";
+import { GarmentDeliveryForm, type DeliveryChoice } from "@/components/production/GarmentDeliveryForm";
+import { uploadHandoverProofFile } from "@/components/production/upload-handover-proof";
+import { handoverProofSrc } from "@/lib/production/garment-handover";
 
 async function uploadSampleImage(
   sampleId: string,
@@ -241,6 +245,43 @@ export function ClientReadyMadeSamplesPanel({
       setFormError("Network error. Try again.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function sendSample(sampleId: string, via: DeliveryChoice, proof: File | null) {
+    setBusySampleId(sampleId);
+    try {
+      if (proof) {
+        const uploaded = await uploadHandoverProofFile("sample", sampleId, proof);
+        if (!uploaded.ok) {
+          setError(uploaded.error);
+          throw new Error(uploaded.error);
+        }
+      }
+      const response = await fetch(`/api/client-samples/${encodeURIComponent(sampleId)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ returned: true, returned_via: via }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        sample?: ClientReadyMadeSample;
+        error?: string;
+      };
+      if (!response.ok || !payload.sample) {
+        const message = payload.error ?? "Could not update the sample.";
+        setError(message);
+        throw new Error(message);
+      }
+      setSamples((previous) =>
+        previous.map((row) => (row.id === sampleId ? payload.sample! : row))
+      );
+      setError(null);
+    } catch (error) {
+      if (error instanceof Error) throw error;
+      setError("Network error. Try again.");
+      throw new Error("Network error. Try again.");
+    } finally {
+      setBusySampleId(null);
     }
   }
 
@@ -530,7 +571,8 @@ export function ClientReadyMadeSamplesPanel({
                 <div className="flex items-center gap-2">
                   {sample.returned_at ? (
                     <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
-                      Given back to the client {new Date(sample.returned_at).toLocaleDateString()}
+                      {sampleReturnViaLabel(sample.returned_via) ?? "Gave it back"}{" "}
+                      {new Date(sample.returned_at).toLocaleDateString()}
                     </span>
                   ) : (
                     <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
@@ -548,6 +590,18 @@ export function ClientReadyMadeSamplesPanel({
                   </button>
                 </div>
               </div>
+
+              {sample.handover_proof ? (
+                <div className="mt-2">
+                  <p className="mb-1 text-[11px] font-medium text-slate-500">Handover proof</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={handoverProofSrc("sample", sample.id, sample.handover_proof)}
+                    alt={sample.handover_proof.filename}
+                    className="h-24 w-24 rounded-lg border border-indigo-200 object-cover"
+                  />
+                </div>
+              ) : null}
 
               {sample.images.length > 0 ? (
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -605,14 +659,13 @@ export function ClientReadyMadeSamplesPanel({
                     Undo - still with us
                   </button>
                 ) : (
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void patchSample(sample.id, { returned: true })}
-                    className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                  >
-                    We gave it back to the client
-                  </button>
+                  <div className="w-full max-w-sm">
+                    <GarmentDeliveryForm
+                      includeInPerson
+                      disabled={busy}
+                      onSubmit={(via, proof) => sendSample(sample.id, via, proof)}
+                    />
+                  </div>
                 )}
               </div>
             </div>

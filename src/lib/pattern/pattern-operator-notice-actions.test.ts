@@ -13,6 +13,9 @@ import {
   PATTERN_FILES_BY_BRAND_HOWTO_NOTICE_ID,
   PATTERN_FILES_BY_BRAND_HOWTO_TITLE,
   READY_MADE_SIZE_RUN_HOWTO_BODY,
+  SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID,
+  SENT_STITCHED_GARMENT_HOWTO_TITLE,
+  SENT_STITCHED_GARMENT_HOWTO_BODY,
   CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID,
   CLIENT_SAMPLE_GARMENT_HOWTO_TITLE,
   CLIENT_SAMPLE_GARMENT_HOWTO_BODY,
@@ -116,10 +119,23 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(CORRECT_START_TIME_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID));
+    assert.ok(ids.includes(SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID));
     assert.equal(
       PATTERN_HOWTO_NOTICES[0]?.id,
-      CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID
+      SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID
     );
+  });
+});
+
+describe("Pattern/QC sent stitched garment how-to", () => {
+  it("tells QC to mark Sent with factory or client driver, in English and Bangla", () => {
+    assert.equal(SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID, "howto-sent-stitched-garment-v1");
+    assert.match(SENT_STITCHED_GARMENT_HOWTO_TITLE, /factory driver|client driver/i);
+    assert.match(SENT_STITCHED_GARMENT_HOWTO_BODY, /Handed to factory driver/);
+    assert.match(SENT_STITCHED_GARMENT_HOWTO_BODY, /proof photo/i);
+    assert.match(SENT_STITCHED_GARMENT_HOWTO_BODY, /dropdown/i);
+    assert.match(SENT_STITCHED_GARMENT_HOWTO_BODY, /Packed|packed/);
+    assert.match(SENT_STITCHED_GARMENT_HOWTO_BODY, /BANGLA/);
   });
 });
 

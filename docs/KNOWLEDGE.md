@@ -817,6 +817,15 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   APIs: `/api/client-samples` + `/api/v1/clients/ready-made-samples`.
   Events: `client.ready_made_sample_*`. How-to
   `howto-client-sample-garment-v1` emails Pattern and QC.
+  When we send the stitched garment, use the delivery dropdown: Handed
+  to factory driver or Handed to client driver (`returned_via` on
+  drop-offs, `handover_to` on packed production). Optional staff proof
+  photo (`handover_proof`). Factory driver will later have an account
+  and upload delivery-to-client proof (`delivery_proof` reserved; do
+  not build the driver login yet). Completing packed -> completed
+  requires `handover_to`. Event `production.handed_to_driver` includes
+  handover and proof. How-to `howto-sent-stitched-garment-v1` emails
+  Pattern and QC.
 
 ## Supplier emails
 

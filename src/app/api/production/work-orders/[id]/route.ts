@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { requireAuthenticated } from "@/lib/auth/session";
+import { requireAuthenticated, sessionActor } from "@/lib/auth/session";
 import { notifyIntegration } from "@/lib/integrations";
+import { handoverProofNotifyPayload } from "@/lib/production/garment-handover";
 import { advanceProductionWorkOrder, startFabricPrep } from "@/lib/production/sticker-scan";
 import { isFabricPrepType } from "@/lib/production/fabric-prep";
 import type { ProductionWorkOrder } from "@/lib/types/production";
@@ -22,6 +23,8 @@ async function notifyStageAdvance(
       previous_status,
       new_status: work_order.status,
       handed_to_driver: handedToDriver,
+      handover_to: work_order.handover_to ?? null,
+      handover_proof: handoverProofNotifyPayload(work_order.handover_proof),
     },
     source
   );
@@ -42,6 +45,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const body = (await request.json().catch(() => ({}))) as {
       action?: string;
       fabric_prep_type?: string;
+      handover_to?: string;
     };
 
     if (body.action === "start_fabric_prep") {
@@ -56,7 +60,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { getProductionWorkOrderById } = await import("@/lib/data/production-work-orders");
     const before = getProductionWorkOrderById(id);
     const previous_status = before?.status ?? "unknown";
-    const work_order = await advanceProductionWorkOrder(id);
+    const work_order = await advanceProductionWorkOrder(id, {
+      handover_to: body.handover_to,
+      actor: sessionActor(session),
+    });
     await notifyStageAdvance(work_order, previous_status, "erp");
     return NextResponse.json({ work_order });
   } catch (error) {

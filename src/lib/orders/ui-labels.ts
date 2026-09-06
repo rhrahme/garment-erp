@@ -21,7 +21,7 @@ export function ordersUiLabels(
       workflowSteps: [
         "Watch wash & iron progress on Fabric Receiving (Task scans; you can advance)",
         "Open Factory floor to see pieces by client and stage",
-        "Scan or advance: cut → finish → hand to delivery driver",
+        "Scan or advance: cut → finish → Sent (factory or client driver)",
         "Print stickers from Factory orders when labels are needed",
         "Use Pattern / Inventory / AWB Tracking for floor support (prices stay hidden)",
         "Flag fabric defects for QC when found on the floor",

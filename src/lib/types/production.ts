@@ -1,3 +1,5 @@
+import type { GarmentHandoverTo, HandoverProofImage } from "@/lib/production/garment-handover";
+
 export const PRODUCTION_STAGES = [
   "received",
   "fabric_prep",
@@ -35,6 +37,14 @@ export interface ProductionWorkOrder {
   received_at: string;
   updated_at: string;
   completed_at: string | null;
+  /** Who took the packed garment when we marked it Sent. */
+  handover_to?: GarmentHandoverTo | null;
+  handed_to_driver_at?: string | null;
+  handed_to_driver_by?: string | null;
+  /** Staff photo when we handed it over. */
+  handover_proof?: HandoverProofImage | null;
+  /** Later: factory driver account uploads photo when he delivers to the client. */
+  delivery_proof?: HandoverProofImage | null;
 }
 
 export interface ProductionWorkOrdersFile {

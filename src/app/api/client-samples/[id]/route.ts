@@ -25,6 +25,7 @@ export async function PATCH(
     size?: string;
     notes?: string;
     returned?: boolean;
+    returned_via?: string;
   } = {};
   try {
     body = (await request.json()) as typeof body;

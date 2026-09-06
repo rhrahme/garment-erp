@@ -3,7 +3,9 @@ import { describe, it } from "node:test";
 import {
   normalizeSampleProductType,
   normalizeSamplePurpose,
+  normalizeSampleReturnVia,
   samplePurposeLabel,
+  sampleReturnViaLabel,
   validateSamplePhotoCount,
 } from "@/lib/clients/ready-made-sample-fields";
 
@@ -34,6 +36,18 @@ describe("client sample garment fields", () => {
     assert.equal(samplePurposeLabel("copy"), "Copy");
     assert.equal(samplePurposeLabel("fix"), "Fix");
     assert.equal(samplePurposeLabel(null), null);
+  });
+
+  it("records how the garment left: in person or a driver", () => {
+    assert.deepEqual(normalizeSampleReturnVia("factory_driver"), {
+      ok: true,
+      value: "factory_driver",
+    });
+    assert.deepEqual(normalizeSampleReturnVia(""), { ok: true, value: "in_person" });
+    assert.equal(sampleReturnViaLabel("factory_driver"), "Handed to factory driver");
+    assert.equal(sampleReturnViaLabel("client_driver"), "Handed to client driver");
+    assert.equal(sampleReturnViaLabel("in_person"), "Gave it back in person");
+    assert.ok(!sampleReturnViaLabel("factory_driver")?.includes("\uFFFD"));
   });
 
   it("requires a receipt photo count on ERP create", () => {

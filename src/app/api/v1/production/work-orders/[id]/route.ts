@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getProductionWorkOrderById } from "@/lib/data/production-work-orders";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { notifyIntegration, verifyApiKey } from "@/lib/integrations";
+import { handoverProofNotifyPayload } from "@/lib/production/garment-handover";
 import { advanceProductionWorkOrder } from "@/lib/production/sticker-scan";
 
 export async function PATCH(
@@ -14,7 +15,11 @@ export async function PATCH(
   try {
     await ensureDocumentsLoaded(["production_work_orders"]);
     const { id } = await params;
-    const body = (await request.json().catch(() => ({}))) as { action?: string };
+    const body = (await request.json().catch(() => ({}))) as {
+      action?: string;
+      handover_to?: string;
+      actor?: string;
+    };
 
     if (body.action && body.action !== "advance") {
       return NextResponse.json({ error: 'Only action "advance" is supported.' }, { status: 400 });
@@ -26,7 +31,10 @@ export async function PATCH(
     }
 
     const previous_status = before.status;
-    const work_order = await advanceProductionWorkOrder(id);
+    const work_order = await advanceProductionWorkOrder(id, {
+      handover_to: body.handover_to,
+      actor: String(body.actor ?? "").trim() || "api",
+    });
     const handedToDriver = work_order.status === "completed" && previous_status === "packed";
 
     await notifyIntegration(
@@ -40,6 +48,8 @@ export async function PATCH(
         previous_status,
         new_status: work_order.status,
         handed_to_driver: handedToDriver,
+        handover_to: work_order.handover_to ?? null,
+        handover_proof: handoverProofNotifyPayload(work_order.handover_proof),
       },
       "api"
     );

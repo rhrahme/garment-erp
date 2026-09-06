@@ -39,6 +39,53 @@ export function normalizeSamplePurpose(
   return { ok: false, error: "Purpose must be Copy or Fix." };
 }
 
+export const SAMPLE_RETURN_VIA = ["in_person", "factory_driver", "client_driver"] as const;
+
+export type SampleReturnVia = (typeof SAMPLE_RETURN_VIA)[number];
+
+export const SAMPLE_RETURN_VIA_LABELS: Record<SampleReturnVia, string> = {
+  in_person: "Gave it back in person",
+  factory_driver: "Handed to factory driver",
+  client_driver: "Handed to client driver",
+};
+
+export const SAMPLE_RETURN_VIA_HINTS: Record<SampleReturnVia, string> = {
+  in_person: "They picked it up themselves. Add a proof photo if you have one.",
+  factory_driver:
+    "He will later have an account and send a photo when he delivers to the client. You can also add a photo now.",
+  client_driver:
+    "Handed to the client's driver at the factory. Add a proof photo if you have one.",
+};
+
+export function isSampleReturnVia(value: string): value is SampleReturnVia {
+  return (SAMPLE_RETURN_VIA as readonly string[]).includes(value);
+}
+
+export function normalizeSampleReturnVia(
+  value: unknown,
+  options?: { optional?: boolean }
+): { ok: true; value: SampleReturnVia | null } | { ok: false; error: string } {
+  const text = String(value ?? "").trim();
+  if (!text) {
+    if (options?.optional) return { ok: true, value: null };
+    return { ok: true, value: "in_person" };
+  }
+  if (isSampleReturnVia(text)) return { ok: true, value: text };
+  return { ok: false, error: "Say if we gave it back, or sent it with a factory or client driver." };
+}
+
+export function sampleReturnViaLabel(value: string | null | undefined): string | null {
+  if (!value) return null;
+  if (isSampleReturnVia(value)) return SAMPLE_RETURN_VIA_LABELS[value];
+  return null;
+}
+
+export function sampleReturnViaHint(value: string | null | undefined): string | null {
+  if (!value) return null;
+  if (isSampleReturnVia(value)) return SAMPLE_RETURN_VIA_HINTS[value];
+  return null;
+}
+
 export function samplePurposeLabel(value: string | null | undefined): string | null {
   if (!value) return null;
   const key = value.trim().toLowerCase();

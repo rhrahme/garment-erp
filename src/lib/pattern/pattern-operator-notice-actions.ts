@@ -18,6 +18,7 @@ import {
   PATTERN_HOWTO_NOTICES,
   BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID,
   CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID,
+  SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID,
   CORRECT_START_TIME_HOWTO_NOTICE_ID,
   READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID,
 } from "@/lib/pattern/pattern-operator-notice-copy";
@@ -178,7 +179,8 @@ export async function emailPatternOperatorNotice(
     notice.id === READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID ||
     notice.id === CORRECT_START_TIME_HOWTO_NOTICE_ID ||
     notice.id === BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID ||
-    notice.id === CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID;
+    notice.id === CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID ||
+    notice.id === SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID;
   if (forQcToo) {
     recipients.push(...parseClientManagerEmails());
   }
@@ -209,6 +211,8 @@ export async function emailPatternOperatorNotice(
         ? "QC: Boggi is a brand. Mark the SO Ready-Made. Pattern: Library -> Bases -> Boggi folder -> Overcoat (one sheet, all sizes)."
         : notice.id === CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID
           ? "QC / Task / Pattern: Clients -> Samples. Add garment type, Copy or Fix, photos (that confirms we received it), badge scan. Later press We gave it back to the client."
+        : notice.id === SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID
+          ? "QC: Production packed piece -> delivery dropdown (Handed to factory driver or Handed to client driver), optional proof photo, then Sent. Client drop-off: same dropdown on Clients -> Samples."
         : forQcToo
           ? "QC: on the sales order press Mark as ready-made. Pattern: this notice also appears on Pattern until you tap Got it."
           : "This notice also appears at the top of your Pattern page until you tap Got it.",

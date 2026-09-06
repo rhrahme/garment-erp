@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Package } from "lucide-react";
+import { Package } from "lucide-react";
 import { samplePurposeLabel } from "@/lib/clients/ready-made-sample-fields";
 import type { ClientReadyMadeSample } from "@/lib/types/clients";
+import { GarmentDeliveryForm, type DeliveryChoice } from "@/components/production/GarmentDeliveryForm";
+import { uploadHandoverProofFile } from "@/components/production/upload-handover-proof";
 
 type SampleRow = {
   client_id: string;
@@ -76,23 +78,33 @@ export function ClientSamplesBoard({
     });
   }, [brandFilter, rows, searchQuery]);
 
-  async function markReturned(sampleId: string) {
+  async function markReturned(sampleId: string, returnedVia: DeliveryChoice, proof: File | null) {
     setBusyId(sampleId);
     try {
+      if (proof) {
+        const uploaded = await uploadHandoverProofFile("sample", sampleId, proof);
+        if (!uploaded.ok) {
+          setError(uploaded.error);
+          throw new Error(uploaded.error);
+        }
+      }
       const response = await fetch(`/api/client-samples/${encodeURIComponent(sampleId)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ returned: true }),
+        body: JSON.stringify({ returned: true, returned_via: returnedVia }),
       });
       const payload = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) {
-        setError(payload.error ?? "Could not mark the garment as given back.");
-        return;
+        const message = payload.error ?? "Could not mark the garment as given back.";
+        setError(message);
+        throw new Error(message);
       }
       setRows((previous) => previous.filter((row) => row.sample.id !== sampleId));
       setError(null);
-    } catch {
+    } catch (error) {
+      if (error instanceof Error) throw error;
       setError("Network error. Try again.");
+      throw new Error("Network error. Try again.");
     } finally {
       setBusyId(null);
     }
@@ -106,15 +118,7 @@ export function ClientSamplesBoard({
     );
   }
 
-  if (error) {
-    return (
-      <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-        {error}
-      </div>
-    );
-  }
-
-  if (visible.length === 0) {
+  if (visible.length === 0 && !error) {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-10 text-center text-sm text-slate-500">
         No client garments waiting to be given back.
@@ -126,6 +130,12 @@ export function ClientSamplesBoard({
   }
 
   return (
+    <div className="space-y-3">
+      {error ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {error}
+        </div>
+      ) : null}
     <ul className="space-y-3">
       {visible.map((row) => {
         const purpose = samplePurposeLabel(row.sample.purpose);
@@ -153,7 +163,7 @@ export function ClientSamplesBoard({
                   <p className="mt-1 text-xs text-slate-600">{row.sample.notes}</p>
                 ) : null}
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex w-full max-w-sm flex-col items-stretch gap-2 sm:w-auto">
                 <button
                   type="button"
                   onClick={() => onOpenClient(row.client_id)}
@@ -161,15 +171,11 @@ export function ClientSamplesBoard({
                 >
                   Open client
                 </button>
-                <button
-                  type="button"
+                <GarmentDeliveryForm
+                  includeInPerson
                   disabled={busy}
-                  onClick={() => void markReturned(row.sample.id)}
-                  className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                >
-                  {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
-                  We gave it back to the client
-                </button>
+                  onSubmit={(via, proof) => markReturned(row.sample.id, via, proof)}
+                />
               </div>
             </div>
             {row.sample.images.length > 0 ? (
@@ -193,5 +199,6 @@ export function ClientSamplesBoard({
         );
       })}
     </ul>
+    </div>
   );
 }

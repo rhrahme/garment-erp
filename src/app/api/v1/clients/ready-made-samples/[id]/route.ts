@@ -24,6 +24,7 @@ export async function PATCH(
     size?: string;
     notes?: string;
     returned?: boolean;
+    returned_via?: string;
     actor?: string;
   } = {};
   try {

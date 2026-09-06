@@ -32,6 +32,7 @@ import {
   matchesCompletedSearch,
   type CompletedProductionView,
 } from "@/lib/production/completed-history";
+import { garmentHandoverLabel, handoverProofSrc } from "@/lib/production/garment-handover";
 import type { ProductionWorkOrder } from "@/lib/types/production";
 import { cn } from "@/lib/utils";
 
@@ -376,6 +377,25 @@ export function CompletedProductionHistory({ orders, loading, totalCount }: Comp
                                 />{" "}
                                 {order.fabric_number}
                               </span>
+                              {garmentHandoverLabel(order.handover_to) ? (
+                                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">
+                                  {garmentHandoverLabel(order.handover_to)}
+                                </span>
+                              ) : null}
+                              {order.handover_proof ? (
+                                <a
+                                  href={handoverProofSrc(
+                                    "work_order",
+                                    order.id,
+                                    order.handover_proof
+                                  )}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-[11px] font-medium text-indigo-700 underline"
+                                >
+                                  Proof photo
+                                </a>
+                              ) : null}
                             </li>
                           ))}
                         </ul>

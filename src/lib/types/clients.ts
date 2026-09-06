@@ -1,3 +1,5 @@
+import type { HandoverProofImage } from "@/lib/production/garment-handover";
+
 export interface ClientProfile {
   id: string;
   /** Auto-assigned: GL-0526-0001 (brand · month/year joined · sequence) */
@@ -80,6 +82,12 @@ export interface ClientReadyMadeSample {
   /** Set when the sample was handed back to the client. */
   returned_at: string | null;
   returned_by: string | null;
+  /** How it left the factory. Driver send also sets returned_at. */
+  returned_via?: "in_person" | "factory_driver" | "client_driver" | null;
+  /** Staff photo when we handed it over. */
+  handover_proof?: HandoverProofImage | null;
+  /** Later: factory driver account uploads photo when he delivers to the client. */
+  delivery_proof?: HandoverProofImage | null;
 }
 
 export interface ClientsFile {

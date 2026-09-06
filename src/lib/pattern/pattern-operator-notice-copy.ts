@@ -339,8 +339,47 @@ export const READY_MADE_SIZE_RUN_HOWTO_BODY = [
   "3. SO-2026-0142 ar SO-2026-0150 Ready-Made / Boggi te move hoise. Sei pattern job cancel.",
 ].join("\n");
 
+export const SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID = "howto-sent-stitched-garment-v1";
+
+export const SENT_STITCHED_GARMENT_HOWTO_TITLE =
+  "Sent: dropdown - handed to factory driver or client driver (proof photo)";
+
+export const SENT_STITCHED_GARMENT_HOWTO_BODY = [
+  "ENGLISH",
+  "When we send a client the garment we stitched, use the delivery dropdown and say who took it. You can also upload a proof photo.",
+  "",
+  "Finished sales-order piece:",
+  "1. Open Production (Factory floor).",
+  "2. Find the packed piece (Ready to send).",
+  "3. Open the dropdown: Handed to factory driver, or Handed to client driver.",
+  "4. Optional: add a proof photo.",
+  "5. Press Sent.",
+  "",
+  "Factory driver: he will later have an account and send a photo when he delivers to the client. You can still add a photo now.",
+  "Client driver: we handed it to the client's driver at the factory. Add a proof photo if you have one.",
+  "",
+  "Client drop-off garment (copy or fix):",
+  "1. Open Clients -> Samples, or open the client.",
+  "2. Same dropdown. You can also pick Gave it back in person if they collected it themselves.",
+  "3. Optional proof photo, then Sent.",
+  "",
+  "BANGLA",
+  "Stitched garment client ke pathaile delivery dropdown theke ke nilo select korun. Proof photo upload kora jabe.",
+  "Production -> packed piece -> Handed to factory driver ba Handed to client driver -> Sent.",
+  "Factory driver pore account pabe, client er kache deliver korle photo pathabe.",
+  "Client drop-off: Clients -> Samples -> same dropdown. Client nije nile Gave it back in person.",
+].join("\n");
+
 /** Newest first. Each entry is emailed to Pattern and kept on the How-to tab. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID,
+    title: SENT_STITCHED_GARMENT_HOWTO_TITLE,
+    body: SENT_STITCHED_GARMENT_HOWTO_BODY,
+    href: "/production",
+    href_label: "Open Factory floor",
+    audience: "pattern",
+  },
   {
     id: CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID,
     title: CLIENT_SAMPLE_GARMENT_HOWTO_TITLE,

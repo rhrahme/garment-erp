@@ -7,7 +7,7 @@ export default function ProductionPage() {
     <div>
       <PageHeader
         title="Factory floor"
-        description="Wash → iron (Fabric Receiving) · cut → finish → hand to delivery driver. Scan or advance stages by client."
+        description="Wash -> iron (Fabric Receiving) - cut -> finish -> Sent (factory driver or client driver). Scan or advance stages by client."
       />
       <FabricChangeAlertsPanel />
       <ProductionFloorWorkspace />

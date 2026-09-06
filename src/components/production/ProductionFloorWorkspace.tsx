@@ -15,9 +15,12 @@ import { ScanStageLegend } from "@/components/production/ScanStageLegend";
 import { SewingSessionsDashboard } from "@/components/production/SewingSessionsDashboard";
 import { StageScanPanel } from "@/components/production/StageScanPanel";
 import { completedAccountLabel, isReadyMadeWorkOrder } from "@/lib/production/completed-history";
+import { garmentHandoverLabel, type GarmentHandoverTo } from "@/lib/production/garment-handover";
+import { GarmentDeliveryForm } from "@/components/production/GarmentDeliveryForm";
+import { uploadHandoverProofFile } from "@/components/production/upload-handover-proof";
 import { productionStageToHighlight, scanStageStyles } from "@/lib/production/scan-stage-highlight";
 
-/** Manager-facing pipeline: wash → iron → cut → finish → hand to delivery driver. */
+/** Manager-facing pipeline: wash -> iron -> cut -> finish -> Sent (factory or client driver). */
 const PIPELINE_STAGES = ["cutting", "sewing", "washing", "finishing", "packed"] as const;
 const FLOOR_STAGES = [...PIPELINE_STAGES, "completed"] as const;
 
@@ -39,7 +42,7 @@ function stageActionLabel(order: ProductionWorkOrder): string | null {
     case "finishing":
       return "Move to packed";
     case "packed":
-      return "Hand to delivery driver";
+      return "Sent";
     default:
       return null;
   }
@@ -47,7 +50,7 @@ function stageActionLabel(order: ProductionWorkOrder): string | null {
 
 function pipelineStageLabel(stage: (typeof PRODUCTION_STAGES)[number]) {
   if (stage === "washing") return "Garment wash";
-  if (stage === "packed") return "Ready for driver";
+  if (stage === "packed") return "Ready to send";
   if (stage === "cutting") return "Cut";
   if (stage === "finishing") return "Finish";
   return stage.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -123,14 +126,45 @@ export function ProductionFloorWorkspace() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to advance stage");
       const next = String(data.work_order?.status ?? "").replace(/_/g, " ");
-      setMessage(
-        data.work_order?.status === "completed"
-          ? "Handed to delivery driver."
-          : `Updated to ${next}.`
-      );
+      setMessage(`Updated to ${next}.`);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to advance stage");
+    } finally {
+      setActingId(null);
+    }
+  }
+
+  async function sendPacked(
+    id: string,
+    handoverTo: GarmentHandoverTo,
+    proof: File | null
+  ) {
+    setError(null);
+    setMessage(null);
+    setActingId(id);
+    try {
+      if (proof) {
+        const uploaded = await uploadHandoverProofFile("work_order", id, proof);
+        if (!uploaded.ok) throw new Error(uploaded.error);
+      }
+      const res = await fetch(`/api/production/work-orders/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "advance",
+          handover_to: handoverTo,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to mark Sent");
+      const label = garmentHandoverLabel(handoverTo) ?? "Sent";
+      setMessage(`${label}.`);
+      await load();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to mark Sent";
+      setError(message);
+      throw err instanceof Error ? err : new Error(message);
     } finally {
       setActingId(null);
     }
@@ -154,7 +188,7 @@ export function ProductionFloorWorkspace() {
           <h2 className="text-lg font-semibold text-slate-900">Factory floor</h2>
           <p className="mt-1 text-sm text-slate-500">
             {tab === "pipeline"
-              ? "By client + stage — scan at the station or advance cut → finish → hand to delivery driver. Wash/iron stays on Fabric Receiving (Task scans; you can manage)."
+              ? "By client + stage - scan at the station or advance cut -> finish -> Sent (handed to factory driver or client driver). Wash/iron stays on Fabric Receiving (Task scans; you can manage)."
               : "Finished pieces for lookup and tracking — search by client, order, or sticker code."}
           </p>
 
@@ -308,7 +342,16 @@ export function ProductionFloorWorkspace() {
                                   </div>
                                 </div>
 
-                                {action && (
+                                {order.status === "packed" ? (
+                                  <div className="border-t border-slate-100 pt-3">
+                                    <GarmentDeliveryForm
+                                      disabled={actingId === order.id}
+                                      onSubmit={async (via, proof) => {
+                                        await sendPacked(order.id, via as GarmentHandoverTo, proof);
+                                      }}
+                                    />
+                                  </div>
+                                ) : action ? (
                                   <div className="border-t border-slate-100 pt-3">
                                     <Button
                                       size="sm"
@@ -317,10 +360,10 @@ export function ProductionFloorWorkspace() {
                                       disabled={actingId === order.id}
                                     >
                                       <ArrowRight className="mr-1 h-4 w-4" />
-                                      {actingId === order.id ? "Updating…" : action}
+                                      {actingId === order.id ? "Updating..." : action}
                                     </Button>
                                   </div>
-                                )}
+                                ) : null}
                               </div>
                             );
                           })}

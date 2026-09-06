@@ -1,4 +1,5 @@
 import { deleteClientSampleImage } from "@/lib/data/client-sample-storage";
+import { deleteHandoverProofImage } from "@/lib/data/handover-proof-storage";
 import { getClientById, readClients, writeClients } from "@/lib/data/clients";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { findPayrollEmployeeByBadgeValue } from "@/lib/hr/payroll-lookup";
@@ -7,8 +8,13 @@ import { formatClientDisplayName } from "@/lib/clients/names";
 import {
   normalizeSampleProductType,
   normalizeSamplePurpose,
+  normalizeSampleReturnVia,
   validateSamplePhotoCount,
 } from "@/lib/clients/ready-made-sample-fields";
+import {
+  handoverProofNotifyPayload,
+  type HandoverProofImage,
+} from "@/lib/production/garment-handover";
 import type {
   ClientProfile,
   ClientReadyMadeSample,
@@ -199,6 +205,7 @@ export type UpdateReadyMadeSamplePatch = {
   notes?: unknown;
   /** true marks the sample as handed back to the client. */
   returned?: unknown;
+  returned_via?: unknown;
 };
 
 export async function updateReadyMadeSample(
@@ -225,6 +232,18 @@ export async function updateReadyMadeSample(
     if (!purpose.ok) return { ok: false, status: 400, error: purpose.error };
     nextPurpose = purpose.value;
   }
+  const unmarkReturned = patch.returned === false;
+  const markReturned =
+    patch.returned === true ||
+    (patch.returned !== false && Boolean(String(patch.returned_via ?? "").trim()));
+  let nextReturnedVia = found.sample.returned_via ?? null;
+  if (unmarkReturned) {
+    nextReturnedVia = null;
+  } else if (markReturned) {
+    const via = normalizeSampleReturnVia(patch.returned_via);
+    if (!via.ok) return { ok: false, status: 400, error: via.error };
+    nextReturnedVia = via.value ?? "in_person";
+  }
 
   let updated: ClientReadyMadeSample = found.sample;
   const persisted = await persistSamples(found.client.id, (samples) =>
@@ -238,14 +257,13 @@ export async function updateReadyMadeSample(
         color: patch.color === undefined ? row.color : normalizeText(patch.color),
         size: patch.size === undefined ? row.size : normalizeText(patch.size),
         notes: patch.notes === undefined ? row.notes : normalizeText(patch.notes),
-        returned_at:
-          patch.returned === undefined
-            ? row.returned_at
-            : patch.returned
-              ? (row.returned_at ?? new Date().toISOString())
-              : null,
-        returned_by:
-          patch.returned === undefined ? row.returned_by : patch.returned ? actor : null,
+        returned_at: unmarkReturned
+          ? null
+          : markReturned
+            ? (row.returned_at ?? new Date().toISOString())
+            : row.returned_at,
+        returned_by: unmarkReturned ? null : markReturned ? actor : row.returned_by,
+        returned_via: nextReturnedVia,
       };
       return updated;
     })
@@ -254,7 +272,7 @@ export async function updateReadyMadeSample(
 
   try {
     await notifyIntegration(
-      patch.returned ? "client.ready_made_sample_returned" : "client.ready_made_sample_updated",
+      markReturned ? "client.ready_made_sample_returned" : "client.ready_made_sample_updated",
       {
         sample_id: updated.id,
         client_id: found.client.id,
@@ -262,6 +280,8 @@ export async function updateReadyMadeSample(
         product_type: updated.product_type,
         purpose: updated.purpose,
         returned_at: updated.returned_at,
+        returned_via: updated.returned_via ?? null,
+        handover_proof: handoverProofNotifyPayload(updated.handover_proof),
         updated_by: actor,
       },
       source
@@ -293,6 +313,14 @@ export async function deleteReadyMadeSample(
       /* best-effort storage cleanup */
     }
   }
+  for (const proof of [found.sample.handover_proof, found.sample.delivery_proof]) {
+    if (!proof) continue;
+    try {
+      await deleteHandoverProofImage(proof.stored_filename);
+    } catch {
+      /* best-effort storage cleanup */
+    }
+  }
 
   try {
     await notifyIntegration(
@@ -309,6 +337,35 @@ export async function deleteReadyMadeSample(
     /* non-fatal */
   }
   return { ok: true, deleted: true };
+}
+
+export async function attachReadyMadeSampleHandoverProof(
+  sampleId: string,
+  image: HandoverProofImage
+): Promise<Result<{ sample: ClientReadyMadeSample }>> {
+  await ensureDocumentsLoaded(["clients"]);
+  const found = findSampleAcrossClients(sampleId);
+  if (!found) return { ok: false, status: 404, error: "Sample not found." };
+
+  const previousProof = found.sample.handover_proof ?? null;
+  let updated: ClientReadyMadeSample = found.sample;
+  const persisted = await persistSamples(found.client.id, (samples) =>
+    samples.map((row) => {
+      if (row.id !== sampleId) return row;
+      updated = { ...row, handover_proof: image };
+      return updated;
+    })
+  );
+  if (!persisted.ok) return persisted;
+
+  if (previousProof && previousProof.stored_filename !== image.stored_filename) {
+    try {
+      await deleteHandoverProofImage(previousProof.stored_filename);
+    } catch {
+      /* best-effort */
+    }
+  }
+  return { ok: true, sample: updated };
 }
 
 export async function attachReadyMadeSampleImage(
