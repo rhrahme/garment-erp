@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import {
   ADD_FABRICS_TO_EXISTING_CONSOLIDATION_HOWTO_NOTICE_ID,
   PATTERN_HOWTO_NOTICES,
+  isPatternAudienceHowTo,
 } from "@/lib/pattern/pattern-operator-notice-copy";
 import type { PatternOperatorNotice } from "@/lib/types/pattern-operator-notices";
 
@@ -43,7 +44,10 @@ export function PatternOperatorNoticesPanel() {
     void load();
   }, [load]);
 
-  const rows = useMemo(() => sortOpenNotices(notices), [notices]);
+  const rows = useMemo(
+    () => sortOpenNotices(notices.filter((notice) => isPatternAudienceHowTo(notice.id))),
+    [notices]
+  );
 
   async function acknowledge(id: string) {
     setActingId(id);

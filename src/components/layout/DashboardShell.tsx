@@ -5,6 +5,7 @@ import { AdminCopyUnlock } from "@/components/auth/AdminCopyUnlock";
 import { PriceRevealLockOnNavigate } from "@/components/auth/PriceRevealLockOnNavigate";
 import { MobileClientPhotosPrompt } from "@/components/layout/MobileClientPhotosPrompt";
 import { CopySizesGuidePrompt } from "@/components/pattern/CopySizesGuidePrompt";
+import { TeamHowToBanner } from "@/components/layout/TeamHowToBanner";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import type { SessionContext } from "@/lib/auth/session";
@@ -69,6 +70,7 @@ export function DashboardShell({
               : "flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 print:max-w-none print:overflow-visible print:p-0 print:w-full"
           }
         >
+          <TeamHowToBanner />
           {children}
         </main>
       </div>

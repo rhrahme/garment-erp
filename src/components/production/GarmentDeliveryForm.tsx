@@ -57,6 +57,10 @@ export function GarmentDeliveryForm({
 
   return (
     <div className="space-y-2">
+      <p className="rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-950">
+        New: pick who took it, optional proof photo, then Sent. Notun: ke nilo select korun, photo
+        dile valo, then Sent.
+      </p>
       <label className="block">
         <span className="mb-1 block text-xs font-medium text-slate-600">
           Who took the garment?

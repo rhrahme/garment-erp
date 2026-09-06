@@ -30,6 +30,7 @@ import {
   Scissors,
   Megaphone,
   KeyRound,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -81,6 +82,7 @@ const navItems = [
   { href: "/costing", label: "Costing", icon: Calculator },
   { href: "/documents", label: "Documents & Data", icon: FolderArchive },
   { href: "/logins", label: "Login log", icon: KeyRound },
+  { href: "/how-to", label: "How-to", icon: BookOpen },
 ];
 
 const qcNavHrefs = new Set<string>(CLIENT_MANAGER_NAV_HREFS);

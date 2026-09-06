@@ -228,6 +228,10 @@ export function ZapierSetup() {
             <li>
               PATCH {baseUrl}/api/v1/pattern/notices/[id] (action: acknowledge)
             </li>
+            <li>GET {baseUrl}/api/v1/team-notices (?actor=) all-teams how-to highlights</li>
+            <li>
+              PATCH {baseUrl}/api/v1/team-notices/[id] (action: acknowledge, actor)
+            </li>
             <li>
               GET {baseUrl}/api/v1/production/sewing-session/employee-work
               (?period=day|week|month&employee_id) attendance + work

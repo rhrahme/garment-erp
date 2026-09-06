@@ -19,6 +19,7 @@ import {
   isClientManagerRouteAllowed,
   isInventoryClerkEmail,
   isInventoryClerkRouteAllowed,
+  parseAllTeamNoticeEmails,
   parsePatternNoticeEmails,
   isPatternOperatorEmail,
   isPatternOperatorRouteAllowed,
@@ -67,6 +68,7 @@ describe("production_operator home / nav gating", () => {
     assert.ok(nav.includes("/hr/id-badges"));
     assert.ok(!nav.includes("/documents"));
     assert.ok((SALES_OPERATOR_NAV_HREFS as readonly string[]).includes("/sales"));
+    assert.ok((SALES_OPERATOR_NAV_HREFS as readonly string[]).includes("/how-to"));
   });
 
   it("production nav restores factory ops tabs (not a 5-tab strip)", () => {
@@ -88,6 +90,7 @@ describe("production_operator home / nav gating", () => {
       "/washing",
       "/quality",
       "/hr/id-badges",
+      "/how-to",
     ]) {
       assert.ok(nav.includes(href), `expected nav to include ${href}`);
     }
@@ -172,9 +175,9 @@ describe("stitch_operator kiosk gating", () => {
     assert.equal(defaultPathForSession({ isStitchOperator: true }), "/stitch");
   });
 
-  it("stitch nav includes kiosk, orders board, and clients (ready-made samples)", () => {
+  it("stitch nav includes kiosk, orders board, clients, and How-to", () => {
     const nav = STITCH_OPERATOR_NAV_HREFS as readonly string[];
-    assert.deepEqual(nav, ["/stitch", "/stitch/orders", "/clients"]);
+    assert.deepEqual(nav, ["/stitch", "/stitch/orders", "/clients", "/how-to"]);
   });
 
   it("allows sewing kiosk routes and read-only order APIs; blocks the rest of the ERP", () => {
@@ -199,6 +202,8 @@ describe("stitch_operator kiosk gating", () => {
     assert.equal(isStitchOperatorRouteAllowed("/api/qr"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/hr/employee-lookup"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/auth/session"), true);
+    assert.equal(isStitchOperatorRouteAllowed("/how-to"), true);
+    assert.equal(isStitchOperatorRouteAllowed("/api/team-notices"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/suppliers/loro-piana/images"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/suppliers/drapers/images/26130"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/suppliers/caccioppoli/images"), true);
@@ -233,6 +238,7 @@ describe("client_manager QC ID badges (not payroll)", () => {
     const nav = CLIENT_MANAGER_NAV_HREFS as readonly string[];
     assert.ok(nav.includes("/hr/id-badges"));
     assert.ok(nav.includes("/stitch"));
+    assert.ok(nav.includes("/how-to"));
     assert.ok(!nav.includes("/hr"));
   });
 
@@ -274,6 +280,8 @@ describe("client_manager order draft backups", () => {
 
 describe("client_manager add client + name-change request", () => {
   it("QC can create a client and request a name edit (admin still approves)", () => {
+    assert.equal(isClientManagerRouteAllowed("/how-to"), true);
+    assert.equal(isClientManagerRouteAllowed("/api/team-notices"), true);
     assert.equal(isClientManagerRouteAllowed("/clients"), true);
     assert.equal(isClientManagerRouteAllowed("/api/clients"), true);
     assert.equal(
@@ -343,6 +351,18 @@ describe("pattern how-to email recipients", () => {
     assert.ok(recipients.has("hagan.dp1@gmail.com"));
     assert.ok(recipients.has("pattern@hagan.pro"));
   });
+
+  it("all-teams how-tos email every team mailbox", () => {
+    const recipients = parseAllTeamNoticeEmails();
+    assert.ok(recipients.has("hagan.dp1@gmail.com"));
+    assert.ok(recipients.has("pattern@hagan.pro"));
+    assert.ok(recipients.has("hagan.qc@gmail.com"));
+    assert.ok(recipients.has("hagan.task1@gmail.com"));
+    assert.ok(recipients.has("production@hagan.pro"));
+    assert.ok(recipients.has("stitch@hagan.pro"));
+    assert.ok(recipients.has("sales1@hagan.pro"));
+    assert.ok(recipients.has("accounting@hagan.pro"));
+  });
 });
 
 describe("pattern_operator price surface lockdown (hagan.dp1@gmail.com)", () => {
@@ -385,6 +405,7 @@ describe("pattern_operator price surface lockdown (hagan.dp1@gmail.com)", () => 
       "/clients",
       "/fabric-specification",
       "/stitch",
+      "/how-to",
     ]);
     for (const href of [
       "/orders",
@@ -411,6 +432,8 @@ describe("pattern_operator price surface lockdown (hagan.dp1@gmail.com)", () => 
       "/custom-fabrics/cf-1/print",
       "/stitch",
       "/stitch/orders",
+      "/how-to",
+      "/api/team-notices",
       "/production/stitch",
       "/api/production/sewing-session",
       "/api/production/sewing-session/scan",
@@ -527,6 +550,7 @@ describe("accounting_operator access", () => {
     ]) {
       assert.ok(nav.includes(href), `expected nav to include ${href}`);
     }
+    assert.ok(nav.includes("/how-to"));
     assert.ok(!nav.includes("/sales"));
     assert.ok(!nav.includes("/production"));
     assert.ok(!nav.includes("/dashboard"));
@@ -576,6 +600,7 @@ describe("task_operator inventory (task 1)", () => {
   it("nav includes inventory", () => {
     const nav = TASK_OPERATOR_NAV_HREFS as readonly string[];
     assert.ok(nav.includes("/inventory"));
+    assert.ok(nav.includes("/how-to"));
   });
 
   it("allows inventory pages, APIs, photos, and 4x6 QR print", () => {
@@ -613,7 +638,7 @@ describe("inventory_clerk access", () => {
 
   it("nav is inventory only", () => {
     const nav = INVENTORY_CLERK_NAV_HREFS as readonly string[];
-    assert.deepEqual([...nav], ["/inventory"]);
+    assert.deepEqual([...nav], ["/inventory", "/how-to"]);
   });
 
   it("allows inventory pages and APIs, nothing else", () => {
@@ -631,6 +656,8 @@ describe("inventory_clerk access", () => {
     );
     assert.equal(isInventoryClerkRouteAllowed("/api/qr"), true);
     assert.equal(isInventoryClerkRouteAllowed("/api/auth/session"), true);
+    assert.equal(isInventoryClerkRouteAllowed("/how-to"), true);
+    assert.equal(isInventoryClerkRouteAllowed("/api/team-notices"), true);
     assert.equal(isInventoryClerkRouteAllowed("/pattern"), false);
     assert.equal(isInventoryClerkRouteAllowed("/production"), false);
     assert.equal(isInventoryClerkRouteAllowed("/orders"), false);

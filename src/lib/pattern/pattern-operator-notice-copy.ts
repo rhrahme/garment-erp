@@ -1,4 +1,4 @@
-export type PatternHowToAudience = "pattern";
+export type PatternHowToAudience = "pattern" | "all_teams";
 
 export interface PatternHowToDefinition {
   id: string;
@@ -339,7 +339,9 @@ export const READY_MADE_SIZE_RUN_HOWTO_BODY = [
   "3. SO-2026-0142 ar SO-2026-0150 Ready-Made / Boggi te move hoise. Sei pattern job cancel.",
 ].join("\n");
 
-export const SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID = "howto-sent-stitched-garment-v1";
+export const SENT_STITCHED_GARMENT_HOWTO_V1_NOTICE_ID = "howto-sent-stitched-garment-v1";
+
+export const SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID = "howto-sent-stitched-garment-v2";
 
 export const SENT_STITCHED_GARMENT_HOWTO_TITLE =
   "Sent: dropdown - handed to factory driver or client driver (proof photo)";
@@ -370,7 +372,20 @@ export const SENT_STITCHED_GARMENT_HOWTO_BODY = [
   "Client drop-off: Clients -> Samples -> same dropdown. Client nije nile Gave it back in person.",
 ].join("\n");
 
-/** Newest first. Each entry is emailed to Pattern and kept on the How-to tab. */
+export function howtoAudience(id: string): PatternHowToAudience {
+  return PATTERN_HOWTO_NOTICES.find((row) => row.id === id)?.audience ?? "pattern";
+}
+
+export function isAllTeamsHowTo(id: string): boolean {
+  return howtoAudience(id) === "all_teams";
+}
+
+export function isPatternAudienceHowTo(id: string): boolean {
+  if (id === SENT_STITCHED_GARMENT_HOWTO_V1_NOTICE_ID) return false;
+  return howtoAudience(id) === "pattern";
+}
+
+/** Newest first. Pattern how-tos email Pattern. all_teams email every team, EN+BN. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
   {
     id: SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID,
@@ -378,7 +393,7 @@ export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
     body: SENT_STITCHED_GARMENT_HOWTO_BODY,
     href: "/production",
     href_label: "Open Factory floor",
-    audience: "pattern",
+    audience: "all_teams",
   },
   {
     id: CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID,

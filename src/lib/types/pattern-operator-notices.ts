@@ -16,6 +16,8 @@ export interface PatternOperatorNotice {
   emailed_at: string | null;
   /** Pattern operator actor -> first time they loaded the banner. */
   seen_by?: Record<string, string>;
+  /** All-teams how-tos: each login taps Got it for themselves. */
+  acknowledged_by_actors?: Record<string, string>;
 }
 
 export interface PatternOperatorNoticesFile {

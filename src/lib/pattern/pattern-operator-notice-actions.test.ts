@@ -129,13 +129,36 @@ describe("Pattern remove-from-consolidation how-to", () => {
 
 describe("Pattern/QC sent stitched garment how-to", () => {
   it("tells QC to mark Sent with factory or client driver, in English and Bangla", () => {
-    assert.equal(SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID, "howto-sent-stitched-garment-v1");
+    assert.equal(SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID, "howto-sent-stitched-garment-v2");
     assert.match(SENT_STITCHED_GARMENT_HOWTO_TITLE, /factory driver|client driver/i);
     assert.match(SENT_STITCHED_GARMENT_HOWTO_BODY, /Handed to factory driver/);
     assert.match(SENT_STITCHED_GARMENT_HOWTO_BODY, /proof photo/i);
     assert.match(SENT_STITCHED_GARMENT_HOWTO_BODY, /dropdown/i);
     assert.match(SENT_STITCHED_GARMENT_HOWTO_BODY, /Packed|packed/);
+    assert.match(SENT_STITCHED_GARMENT_HOWTO_BODY, /ENGLISH/);
     assert.match(SENT_STITCHED_GARMENT_HOWTO_BODY, /BANGLA/);
+  });
+
+  it("emails every team and stays on How-to in each ERP account after Got it", () => {
+    const howto = PATTERN_HOWTO_NOTICES.find(
+      (row) => row.id === SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID
+    );
+    assert.equal(howto?.audience, "all_teams");
+    const actions = readFileSync("src/lib/pattern/pattern-operator-notice-actions.ts", "utf8");
+    assert.match(actions, /parseAllTeamNoticeEmails/);
+    assert.match(actions, /ERP all teams/);
+    assert.match(actions, /how-tos stay on How-to in your ERP account/);
+    const shell = readFileSync("src/components/layout/DashboardShell.tsx", "utf8");
+    assert.match(shell, /TeamHowToBanner/);
+    const sidebar = readFileSync("src/components/layout/Sidebar.tsx", "utf8");
+    assert.match(sidebar, /href: \"\/how-to\"/);
+    const banner = readFileSync("src/components/layout/TeamHowToBanner.tsx", "utf8");
+    assert.match(banner, /href=\"\/how-to\"/);
+    assert.match(banner, /pathname.startsWith\(\"\/how-to\"\)/);
+    const tab = readFileSync("src/components/layout/TeamHowToTab.tsx", "utf8");
+    assert.match(tab, /audience === \"all_teams\"/);
+    const page = readFileSync("src/app/(dashboard)/how-to/page.tsx", "utf8");
+    assert.match(page, /TeamHowToTab/);
   });
 });
 

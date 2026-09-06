@@ -1,4 +1,8 @@
-import { parseClientManagerEmails, parsePatternNoticeEmails } from "@/lib/auth/permissions";
+import {
+  parseAllTeamNoticeEmails,
+  parseClientManagerEmails,
+  parsePatternNoticeEmails,
+} from "@/lib/auth/permissions";
 import {
   appendPatternOperatorNotice,
   getPatternOperatorNoticeById,
@@ -21,6 +25,7 @@ import {
   SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID,
   CORRECT_START_TIME_HOWTO_NOTICE_ID,
   READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID,
+  isAllTeamsHowTo,
 } from "@/lib/pattern/pattern-operator-notice-copy";
 import type { PatternOperatorNotice } from "@/lib/types/pattern-operator-notices";
 
@@ -171,29 +176,78 @@ export async function recordPatternNoticeSeen(
   return { notice: updated, newlySeen: true };
 }
 
+export function listOpenTeamHowToNotices(
+  actor: string,
+  limit = 20
+): PatternOperatorNotice[] {
+  const key = actor.trim();
+  return PATTERN_HOWTO_NOTICES.filter((howto) => howto.audience === "all_teams")
+    .map((howto) => getPatternOperatorNoticeById(howto.id))
+    .filter((notice): notice is PatternOperatorNotice => Boolean(notice))
+    .filter((notice) => {
+      if (!key) return true;
+      return !notice.acknowledged_by_actors?.[key];
+    })
+    .slice(0, limit);
+}
+
+export async function acknowledgeTeamHowToNotice(
+  id: string,
+  actor: string
+): Promise<PatternOperatorNotice | null> {
+  const key = actor.trim();
+  if (!key || !isAllTeamsHowTo(id)) return getPatternOperatorNoticeById(id);
+  const existing = getPatternOperatorNoticeById(id);
+  if (!existing) return null;
+  if (existing.acknowledged_by_actors?.[key]) return existing;
+  const updated = await updatePatternOperatorNotice(id, {
+    acknowledged_by_actors: {
+      ...(existing.acknowledged_by_actors ?? {}),
+      [key]: new Date().toISOString(),
+    },
+  });
+  if (updated) {
+    await notifyIntegration("pattern.operator_notice_acknowledged", {
+      id: updated.id,
+      title: updated.title,
+      acknowledged_by: key,
+      audience: "all_teams",
+    });
+  }
+  return updated;
+}
+
 export async function emailPatternOperatorNotice(
   notice: PatternOperatorNotice
 ): Promise<boolean> {
-  const recipients = [...parsePatternNoticeEmails()];
+  const allTeams = isAllTeamsHowTo(notice.id);
+  const recipients = allTeams
+    ? [...parseAllTeamNoticeEmails()]
+    : [...parsePatternNoticeEmails()];
   const forQcToo =
-    notice.id === READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID ||
-    notice.id === CORRECT_START_TIME_HOWTO_NOTICE_ID ||
-    notice.id === BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID ||
-    notice.id === CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID ||
-    notice.id === SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID;
+    !allTeams &&
+    (notice.id === READY_MADE_SIZE_RUN_HOWTO_NOTICE_ID ||
+      notice.id === CORRECT_START_TIME_HOWTO_NOTICE_ID ||
+      notice.id === BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID ||
+      notice.id === CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID ||
+      notice.id === SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID);
   if (forQcToo) {
     recipients.push(...parseClientManagerEmails());
   }
   if (recipients.length === 0) return false;
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://erp.hagan.pro";
-  const subject = forQcToo
-    ? `ERP QC + Pattern: ${notice.title}`
-    : `ERP Pattern: ${notice.title}`;
+  const subject = allTeams
+    ? `ERP all teams: ${notice.title}`
+    : forQcToo
+      ? `ERP QC + Pattern: ${notice.title}`
+      : `ERP Pattern: ${notice.title}`;
   const text = [
-    forQcToo
-      ? "Garment ERP - message for QC and Pattern"
-      : "Garment ERP - message for Pattern",
+    allTeams
+      ? "Garment ERP - message for every team (English + Bangla)"
+      : forQcToo
+        ? "Garment ERP - message for QC and Pattern"
+        : "Garment ERP - message for Pattern",
     "",
     notice.title,
     "",
@@ -205,18 +259,20 @@ export async function emailPatternOperatorNotice(
         }`
       : `Open Pattern: ${appUrl}/pattern`,
     "",
-    notice.id === CORRECT_START_TIME_HOWTO_NOTICE_ID
-      ? "QC: Stitch kiosk -> Live or History -> Correct start time. The time applies now. Admin Confirm/Reject does not stop the stitcher."
-      : notice.id === BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID
-        ? "QC: Boggi is a brand. Mark the SO Ready-Made. Pattern: Library -> Bases -> Boggi folder -> Overcoat (one sheet, all sizes)."
-        : notice.id === CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID
-          ? "QC / Task / Pattern: Clients -> Samples. Add garment type, Copy or Fix, photos (that confirms we received it), badge scan. Later press We gave it back to the client."
-        : notice.id === SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID
-          ? "QC: Production packed piece -> delivery dropdown (Handed to factory driver or Handed to client driver), optional proof photo, then Sent. Client drop-off: same dropdown on Clients -> Samples."
-        : forQcToo
-          ? "QC: on the sales order press Mark as ready-made. Pattern: this notice also appears on Pattern until you tap Got it."
-          : "This notice also appears at the top of your Pattern page until you tap Got it.",
-    `All Pattern how-tos stay on Pattern -> How-to: ${appUrl}/pattern/how-to`,
+    allTeams
+      ? "This highlight also appears at the top of every ERP page until you tap Got it. After that it stays on How-to in the left menu. Production packed piece or Clients -> Samples: delivery dropdown, optional proof photo, then Sent."
+      : notice.id === CORRECT_START_TIME_HOWTO_NOTICE_ID
+        ? "QC: Stitch kiosk -> Live or History -> Correct start time. The time applies now. Admin Confirm/Reject does not stop the stitcher."
+        : notice.id === BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID
+          ? "QC: Boggi is a brand. Mark the SO Ready-Made. Pattern: Library -> Bases -> Boggi folder -> Overcoat (one sheet, all sizes)."
+          : notice.id === CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID
+            ? "QC / Task / Pattern: Clients -> Samples. Add garment type, Copy or Fix, photos (that confirms we received it), badge scan. Later press We gave it back to the client."
+            : forQcToo
+              ? "QC: on the sales order press Mark as ready-made. Pattern: this notice also appears on Pattern until you tap Got it."
+              : "This notice also appears at the top of your Pattern page until you tap Got it.",
+    allTeams
+      ? `All-teams how-tos stay on How-to in your ERP account: ${appUrl}/how-to`
+      : `All Pattern how-tos stay on Pattern -> How-to: ${appUrl}/pattern/how-to`,
     "",
     "This is an automated message from Garment ERP.",
   ].join("\n");

@@ -348,7 +348,14 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   How-to emails go to both Pattern mailboxes (`hagan.dp1@gmail.com` and
   `pattern@hagan.pro`) plus `PATTERN_EMAILS`. Ready-made size-run, Boggi
   brand-folder, client-sample garment, and late-QR start-time how-tos also
-  email QC (`hagan.qc@gmail.com`). For the add-to-existing-group
+  email QC (`hagan.qc@gmail.com`).   All-teams how-tos (`audience:
+  all_teams`) email every team mailbox (QC, Pattern, Task, Production,
+  Stitch, Sales, Accounting), always English + Bangla, show an amber
+  highlight on every ERP page until that login taps Got it, and stay on
+  **How-to** in that account's left menu (`/how-to`) after Got it
+  (`/api/team-notices`). Pattern still has Pattern -> How-to for
+  Pattern-only cards. Delivery Sent dropdown is
+  `howto-sent-stitched-garment-v2`. For the add-to-existing-group
   how-to, admin is emailed when it is sent and again when a Pattern
   operator opens any Pattern page and sees the banner. When we explain a
   floor fix to Pattern, add a catalog entry so they get the email and the
@@ -824,8 +831,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   and upload delivery-to-client proof (`delivery_proof` reserved; do
   not build the driver login yet). Completing packed -> completed
   requires `handover_to`. Event `production.handed_to_driver` includes
-  handover and proof. How-to `howto-sent-stitched-garment-v1` emails
-  Pattern and QC.
+  handover and proof. How-to `howto-sent-stitched-garment-v2` emails
+  every team (English + Bangla), highlights on every ERP page, and stays
+  on How-to in each team's ERP account after Got it.
 
 ## Supplier emails
 
@@ -928,6 +936,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
+- [session-2026-09-07](session-2026-09-07.md) - All-teams how-to on every ERP account (email + banner + How-to tab)
 - [session-2026-09-06](session-2026-09-06.md) - Floor nicknames; admin Select all; client name on fabric rows; start without printed QR; client garment drop-off Samples view; client dropped-off garments
 - [session-2026-09-01](session-2026-09-01.md) - Serwal garment type; HR overtime pay and mistake deductions shipped
 - [session-2026-08-27](session-2026-08-27.md) - Inventory Boxes + Alert; HR overtime pay and mistake deductions

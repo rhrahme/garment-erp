@@ -30,6 +30,8 @@ const CLIENT_MANAGER_ROUTE_PREFIXES = [
   "/api/clients",
   "/api/client-samples",
   "/api/handover-proof",
+  "/how-to",
+  "/api/team-notices",
   "/api/custom-fabrics",
   "/api/sales-orders",
   /** Server backup of in-progress order forms (QC/client managers create orders). */
@@ -78,6 +80,8 @@ const TASK_OPERATOR_ROUTE_PREFIXES = [
   "/api/clients",
   "/api/client-samples",
   "/api/handover-proof",
+  "/how-to",
+  "/api/team-notices",
   ...FABRIC_SWATCH_ROUTE_PREFIXES,
   ...ENTITY_IMAGE_ROUTE_PREFIXES,
   "/api/auth/session",
@@ -100,6 +104,8 @@ const STITCH_OPERATOR_ROUTE_PREFIXES = [
   "/api/clients",
   "/api/client-samples",
   "/api/handover-proof",
+  "/how-to",
+  "/api/team-notices",
   "/api/production/sewing-session",
   "/api/production/work-orders",
   "/api/sales-orders",
@@ -150,6 +156,8 @@ const PRODUCTION_OPERATOR_ROUTE_PREFIXES = [
   "/api/clients",
   "/api/client-samples",
   "/api/handover-proof",
+  "/how-to",
+  "/api/team-notices",
   "/api/pattern",
   "/api/inventory",
   "/api/shipments",
@@ -198,6 +206,8 @@ const PATTERN_OPERATOR_ROUTE_PREFIXES = [
   "/api/clients",
   "/api/client-samples",
   "/api/handover-proof",
+  "/how-to",
+  "/api/team-notices",
   "/api/custom-fabrics",
   "/api/fabric-search",
   "/api/fabric-brands",
@@ -244,6 +254,8 @@ const ACCOUNTING_OPERATOR_ROUTE_PREFIXES = [
   "/api/clients",
   "/api/client-samples",
   "/api/handover-proof",
+  "/how-to",
+  "/api/team-notices",
   "/api/sales-orders",
   "/api/reference-documents",
   "/api/transporter-invoices",
@@ -294,6 +306,8 @@ const SALES_OPERATOR_ROUTE_PREFIXES = [
   "/api/clients",
   "/api/client-samples",
   "/api/handover-proof",
+  "/how-to",
+  "/api/team-notices",
   "/api/custom-fabrics",
   "/api/sales-orders",
   "/api/fabric-search",
@@ -368,6 +382,7 @@ export const CLIENT_MANAGER_NAV_HREFS = [
   "/fabric-specification",
   /** ID badges only -- not `/hr` payroll register. */
   "/hr/id-badges",
+  "/how-to",
 ] as const;
 
 /** Sidebar pages for production-floor task operators. */
@@ -378,6 +393,7 @@ export const TASK_OPERATOR_NAV_HREFS = [
   "/fabric-specification",
   "/clients",
   "/inventory",
+  "/how-to",
 ] as const;
 
 /**
@@ -403,10 +419,16 @@ export const PRODUCTION_OPERATOR_NAV_HREFS = [
   "/washing",
   "/quality",
   "/hr/id-badges",
+  "/how-to",
 ] as const;
 
 /** Sidebar for stitch floor - kiosk + orders board (not full QC `/orders`). */
-export const STITCH_OPERATOR_NAV_HREFS = ["/stitch", "/stitch/orders", "/clients"] as const;
+export const STITCH_OPERATOR_NAV_HREFS = [
+  "/stitch",
+  "/stitch/orders",
+  "/clients",
+  "/how-to",
+] as const;
 
 export const SALES_OPERATOR_NAV_HREFS = [
   "/sales",
@@ -415,6 +437,7 @@ export const SALES_OPERATOR_NAV_HREFS = [
   "/fabric-specification",
   "/orders",
   "/invoices",
+  "/how-to",
 ] as const;
 
 /** Sidebar for the pattern team - library + queue, clients, fabric spec, stitch kiosk. */
@@ -423,10 +446,11 @@ export const PATTERN_OPERATOR_NAV_HREFS = [
   "/clients",
   "/fabric-specification",
   "/stitch",
+  "/how-to",
 ] as const;
 
 /** Inventory clerk - trims / hangers / cartons only. Nothing else. */
-export const INVENTORY_CLERK_NAV_HREFS = ["/inventory"] as const;
+export const INVENTORY_CLERK_NAV_HREFS = ["/inventory", "/how-to"] as const;
 
 const INVENTORY_CLERK_ROUTE_PREFIXES = [
   "/inventory",
@@ -434,6 +458,8 @@ const INVENTORY_CLERK_ROUTE_PREFIXES = [
   ...ENTITY_IMAGE_ROUTE_PREFIXES,
   "/api/qr",
   "/api/auth/session",
+  "/how-to",
+  "/api/team-notices",
   "/api/auth/dev-impersonate",
   "/login",
 ] as const;
@@ -451,6 +477,7 @@ export const ACCOUNTING_OPERATOR_NAV_HREFS = [
   "/clients",
   "/documents",
   "/inventory",
+  "/how-to",
 ] as const;
 
 export type RestrictedAccessKind =
@@ -560,6 +587,19 @@ export function parsePatternEmails(): Set<string> {
 
 export function parsePatternNoticeEmails(): Set<string> {
   return new Set([...BUILTIN_PATTERN_NOTICE_EMAILS, ...parsePatternEmails()]);
+}
+
+/** QC, Pattern, Task, Production, Stitch, Sales, Accounting floor mailboxes. */
+export function parseAllTeamNoticeEmails(): Set<string> {
+  return new Set([
+    ...parsePatternNoticeEmails(),
+    ...parseClientManagerEmails(),
+    ...parseTaskOperatorEmails(),
+    ...parseProductionEmails(),
+    ...parseStitchEmails(),
+    ...parseSalesEmails(),
+    ...parseAccountingEmails(),
+  ]);
 }
 
 export function parseSalesEmails(): Set<string> {
