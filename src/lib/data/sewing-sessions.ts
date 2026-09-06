@@ -12,6 +12,7 @@ const EMPTY: SewingSessionsFile = {
   updated_at: null,
   kiosk_arms: [],
   kiosk_piece_arms: [],
+  kiosk_here_arms: [],
   sessions: [],
 };
 

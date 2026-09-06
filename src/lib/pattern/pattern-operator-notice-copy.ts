@@ -427,6 +427,29 @@ export const SENT_STITCHED_GARMENT_HOWTO_BODY = [
   "Client drop-off: Clients -> Samples -> same dropdown. Client nije nile Gave it back in person.",
 ].join("\n");
 
+export const HERE_WALL_ATTENDANCE_HOWTO_NOTICE_ID = "howto-here-wall-attendance-v1";
+
+export const HERE_WALL_ATTENDANCE_HOWTO_TITLE =
+  "Morning attendance: scan the HERE poster, then your badge";
+
+export const HERE_WALL_ATTENDANCE_HOWTO_BODY = [
+  "ENGLISH",
+  "In the morning, clock in on the stitch kiosk before you start a piece.",
+  "",
+  "1. Scan the HERE poster on the wall (same QR on every poster).",
+  "2. Scan your ID badge.",
+  "3. The kiosk says you are here.",
+  "4. When you start a garment, scan the A4 piece QR as usual.",
+  "",
+  "Either order works: badge then HERE poster, or HERE poster then badge.",
+  "This does not start or finish a piece. Leftover open work stays open.",
+  "",
+  "BANGLA",
+  "Shokale stitch kiosk e age HERE poster scan, tarpor nijer badge.",
+  "Kiosk bole you are here. Piece start korte pore A4 scan korun.",
+  "Eta piece start ba finish kore na.",
+].join("\n");
+
 export function howtoAudience(id: string): PatternHowToAudience {
   return PATTERN_HOWTO_NOTICES.find((row) => row.id === id)?.audience ?? "pattern";
 }
@@ -445,6 +468,14 @@ export function isPatternAudienceHowTo(id: string): boolean {
 
 /** Newest first. Pattern how-tos email Pattern. all_teams email every team, EN+BN. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: HERE_WALL_ATTENDANCE_HOWTO_NOTICE_ID,
+    title: HERE_WALL_ATTENDANCE_HOWTO_TITLE,
+    body: HERE_WALL_ATTENDANCE_HOWTO_BODY,
+    href: "/stitch",
+    href_label: "Open Stitch kiosk",
+    audience: "all_teams",
+  },
   {
     id: COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID,
     title: COPY_BASE_TO_BRAND_HOWTO_TITLE,

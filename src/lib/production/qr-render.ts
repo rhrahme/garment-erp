@@ -23,6 +23,22 @@ export type QrPlan = {
   dim: number;
 };
 
+export function qrSvgModel(
+  payload: string,
+  ecl: "L" | "M" | "Q" | "H" = "M"
+): { path: string; edge: number } {
+  const qr = qrModel(payload, ecl);
+  const count = qr.getModuleCount();
+  let path = "";
+  for (let r = 0; r < count; r += 1) {
+    for (let c = 0; c < count; c += 1) {
+      if (!qr.isDark(r, c)) continue;
+      path += `M${c + QR_QUIET_MODULES} ${r + QR_QUIET_MODULES}h1v1h-1z`;
+    }
+  }
+  return { path, edge: count + QR_QUIET_MODULES * 2 };
+}
+
 function qrModel(payload: string, ecl: "L" | "M" | "Q" | "H" = "M") {
   const qr = qrcode(0, ecl);
   qr.addData(payload);

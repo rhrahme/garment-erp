@@ -79,6 +79,7 @@ export function normalizeSewingSessionsFile(store: SewingSessionsFile): SewingSe
     ...store,
     kiosk_arms: store.kiosk_arms ?? [],
     kiosk_piece_arms: store.kiosk_piece_arms ?? [],
+    kiosk_here_arms: store.kiosk_here_arms ?? [],
     sessions: store.sessions ?? [],
   };
 }
@@ -170,6 +171,9 @@ export function expireStaleSewingState(
   const pieceArms = (base.kiosk_piece_arms ?? []).filter(
     (arm) => ageMs(arm.armed_at, at) <= SEWING_ARM_TIMEOUT_MS
   );
+  const hereArms = (base.kiosk_here_arms ?? []).filter(
+    (arm) => ageMs(arm.armed_at, at) <= SEWING_ARM_TIMEOUT_MS
+  );
   const sessions = base.sessions.map((session) => {
     if (session.status === "closing" && session.closing_armed_at) {
       if (ageMs(session.closing_armed_at, at) > SEWING_CLOSING_TIMEOUT_MS) {
@@ -183,7 +187,13 @@ export function expireStaleSewingState(
     }
     return session;
   });
-  return { ...base, kiosk_arms: arms, kiosk_piece_arms: pieceArms, sessions };
+  return {
+    ...base,
+    kiosk_arms: arms,
+    kiosk_piece_arms: pieceArms,
+    kiosk_here_arms: hereArms,
+    sessions,
+  };
 }
 
 /**

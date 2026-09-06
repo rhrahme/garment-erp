@@ -125,6 +125,7 @@ describe("explainUnrecognizedStitchScan", () => {
     const msg = explainUnrecognizedStitchScan("ZZZ-NOT-A-PIECE");
     assert.match(msg, /Code not recognized: ZZZ-NOT-A-PIECE/);
     assert.match(msg, /EMP \/ EMPALT \/ EMPIRON \/ EMPBTN \/ EMPWASH \/ EMPHOLE \/ EMPBST \/ EMPCHMP \/ EMPBART/);
+    assert.match(msg, /HERE wall poster/);
     assert.match(msg, /production A4 piece QR/i);
   });
 });

@@ -75,6 +75,7 @@ const OUTBOUND_EVENTS = [
   "pattern_library.file_uploaded",
   "production.scan",
   "production.sewing_session_started",
+  "production.attendance_checked_in",
   "production.sewing_session_ended",
   "production.sewing_scan_failed",
   "production.sewing_testing_reset",

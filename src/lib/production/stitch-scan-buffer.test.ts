@@ -112,6 +112,8 @@ describe("tryMergeScanFragments", () => {
     assert.equal(tryMergeScanFragments("EMPBST", ":0024"), "EMPBST:0024");
     assert.equal(tryMergeScanFragments("EMPCHMP", ":1234"), "EMPCHMP:1234");
     assert.equal(tryMergeScanFragments("EMPBART", ":2543411918"), "EMPBART:2543411918");
+    assert.equal(tryMergeScanFragments("HAGAN", "-HERE"), "HAGAN-HERE");
+    assert.equal(tryMergeScanFragments("HAGAN-", "HERE"), "HAGAN-HERE");
   });
 
   it("does not merge two complete codes", () => {

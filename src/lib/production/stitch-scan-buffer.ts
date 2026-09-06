@@ -61,6 +61,10 @@ export function tryMergeScanFragments(prev: string, next: string): string | null
     }
   }
 
+  if (/^HAGAN-?$/i.test(a) && /^-?HERE$/i.test(b)) {
+    return "HAGAN-HERE";
+  }
+
   // FR-0129 + -L02-OS-1/2
   if (/^[A-Z]{2,}-\d{4}$/i.test(a) && /^-/i.test(b)) {
     return `${a}${b}`;

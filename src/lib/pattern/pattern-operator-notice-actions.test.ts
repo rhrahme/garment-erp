@@ -16,6 +16,9 @@ import {
   SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID,
   SENT_STITCHED_GARMENT_HOWTO_TITLE,
   SENT_STITCHED_GARMENT_HOWTO_BODY,
+  HERE_WALL_ATTENDANCE_HOWTO_NOTICE_ID,
+  HERE_WALL_ATTENDANCE_HOWTO_TITLE,
+  HERE_WALL_ATTENDANCE_HOWTO_BODY,
   COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID,
   COPY_BASE_TO_BRAND_HOWTO_TITLE,
   COPY_BASE_TO_BRAND_HOWTO_BODY,
@@ -124,11 +127,12 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID));
+    assert.ok(ids.includes(HERE_WALL_ATTENDANCE_HOWTO_NOTICE_ID));
     assert.equal(
       PATTERN_HOWTO_NOTICES[0]?.id,
-      COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID
+      HERE_WALL_ATTENDANCE_HOWTO_NOTICE_ID
     );
-    assert.equal(PATTERN_HOWTO_NOTICES[1]?.id, CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID);
+    assert.equal(PATTERN_HOWTO_NOTICES[1]?.id, COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID);
   });
 });
 
@@ -164,6 +168,21 @@ describe("Pattern/QC sent stitched garment how-to", () => {
     assert.match(tab, /audience === \"all_teams\"/);
     const page = readFileSync("src/app/(dashboard)/how-to/page.tsx", "utf8");
     assert.match(page, /TeamHowToTab/);
+  });
+});
+
+describe("HERE wall attendance how-to", () => {
+  it("tells the floor to scan the poster then badge, in English and Bangla", () => {
+    assert.equal(HERE_WALL_ATTENDANCE_HOWTO_NOTICE_ID, "howto-here-wall-attendance-v1");
+    assert.match(HERE_WALL_ATTENDANCE_HOWTO_TITLE, /HERE poster/i);
+    assert.match(HERE_WALL_ATTENDANCE_HOWTO_BODY, /ENGLISH/);
+    assert.match(HERE_WALL_ATTENDANCE_HOWTO_BODY, /BANGLA/);
+    assert.match(HERE_WALL_ATTENDANCE_HOWTO_BODY, /Scan the HERE poster/);
+    assert.match(HERE_WALL_ATTENDANCE_HOWTO_BODY, /does not start or finish a piece/i);
+    const howto = PATTERN_HOWTO_NOTICES.find(
+      (row) => row.id === HERE_WALL_ATTENDANCE_HOWTO_NOTICE_ID
+    );
+    assert.equal(howto?.audience, "all_teams");
   });
 });
 

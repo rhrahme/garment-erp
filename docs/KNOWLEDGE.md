@@ -12,6 +12,14 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   that already-open A4**, or **A4 then badge / same A4 again**. Kiosk
   login: `stitch@hagan.pro`. Do not assume a floor video is A4-only;
   the first seconds are usually the badge card, then the paper.
+- **Morning HERE attendance** (Sep 7 2026): print several wall posters
+  (`/stitch/attendance/print`, payload `HAGAN-HERE`). Scan the poster
+  and the personal badge (either order). Marks them present on the
+  admin Floor dashboard. Does **not** open or close a sewing session.
+  Leftover Live pieces stay open. Same person same Riyadh day is one
+  check-in. Store: `stitch_attendance`. Event:
+  `production.attendance_checked_in`. How-to
+  `howto-here-wall-attendance-v1` (EN+BN, all teams).
 - **Floor video diagnosis** (Aug 20 2026): extract the opening frames
   before writing a fix. Live log `ready, N already open` after a card
   scan is stacked arm, not "they never scanned a badge". Badge then the
@@ -149,10 +157,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   who **did not scan yet** vs who scanned (Today / Week / Month). Roster =
   active Expats who can use the kiosk and have a floor job (tailor / cutter /
   wash-iron / washing / ironing / buttons / button stitch / buttonhole /
-  champa / bartek). Pattern/QC/cleaner-only are not
+  champa / bartek).   Pattern/QC/cleaner-only are not
   in Missing. A scan
-  counts as present even if overtime was later rejected. Tap a name for
-  day/week/month detail.
+  counts as present even if overtime was later rejected. A HERE + badge
+  clock-in also counts as present with 0 pieces. Tap a name for
+  day/week/month detail. Print posters from Performance.
 - **Floor names are badge nicknames** (Sep 6 2026): `short_name` (Parvaiz,
   Ijaz) is what Live, History, Performance, change requests, approvals,
   scan lookup, badge cards, and Pattern alteration queue show. Legal
@@ -359,7 +368,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   how-to, admin is emailed when it is sent and again when a Pattern
   operator opens any Pattern page and sees the banner. When we explain a
   floor fix to Pattern, add a catalog entry so they get the email and the
-  in-app banner - do not only tell the owner in chat. Notices: copy a
+  in-app banner - do not only tell the owner in chat.   Notices: morning HERE poster then badge
+  (`howto-here-wall-attendance-v1`), copy a
   house base to another brand then edit (`howto-copy-base-to-brand-v1`),
   both
   Pattern logins type a client name and search looks in every brand

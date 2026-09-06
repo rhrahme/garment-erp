@@ -32,6 +32,12 @@ export type SewingKioskArm = {
   > | null;
 };
 
+/** Short-lived: wall HERE QR scanned, waiting for badge to clock in. */
+export type SewingKioskHereArm = {
+  kiosk_id: string;
+  armed_at: string;
+};
+
 /** Short-lived: A4 scanned first, waiting for idle employee badge to start. */
 export type SewingKioskPieceArm = {
   kiosk_id: string;
@@ -134,6 +140,8 @@ export type SewingSessionsFile = {
   kiosk_arms: SewingKioskArm[];
   /** Piece-first pending starts (A4 before badge). */
   kiosk_piece_arms?: SewingKioskPieceArm[];
+  /** Wall HERE QR waiting for a badge (morning clock-in). */
+  kiosk_here_arms?: SewingKioskHereArm[];
   sessions: SewingSession[];
   /** Admin-approved deletes. Protect-merge drops these ids if a stale kiosk write tries to resurrect them. */
   deleted_session_ids?: string[];

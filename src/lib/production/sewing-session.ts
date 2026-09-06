@@ -1,6 +1,7 @@
 import { readClients } from "@/lib/data/clients";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readSewingSessionsFresh, writeSewingSessions } from "@/lib/data/sewing-sessions";
+import { readStitchAttendanceFresh, writeStitchAttendance } from "@/lib/data/stitch-attendance";
 import {
   employeeAllowsBadgeActivity,
   isAnyEmployeeBadgeQrPayload,
@@ -30,6 +31,15 @@ import {
   STITCH_KIOSK_LUNCH_AUTO_RESUME_ACTOR,
 } from "@/lib/data/stitch-kiosk-settings";
 import { notifyIntegration } from "@/lib/integrations";
+import {
+  applyHereArm,
+  clearHereArm,
+  hereArmOnKiosk,
+  hereClockInMessage,
+  isHereWallQr,
+  riyadhWorkdayKey,
+  upsertHereCheckIn,
+} from "@/lib/production/stitch-attendance";
 import { badgeDisplayName } from "@/lib/hr/badge-print";
 import { employeeCanSewOnStitchKiosk } from "@/lib/hr/payroll-utils";
 import { notifyAdminsOfSewingSessionStarted } from "@/lib/integrations/sewing-session-started-alert";
@@ -239,6 +249,45 @@ export function sewingEmployeeWorkLookup(
 
 function nowIso(at = Date.now()): string {
   return new Date(at).toISOString();
+}
+
+async function persistHereClockIn(input: {
+  employee_id: string;
+  employee_name: string;
+  employee_id_number: string;
+  kiosk_id: string;
+  at: number;
+  source?: "erp" | "zapier" | "api";
+}) {
+  const attendance = await readStitchAttendanceFresh();
+  const next = {
+    employee_id: input.employee_id,
+    employee_name: input.employee_name,
+    employee_id_number: input.employee_id_number,
+    kiosk_id: input.kiosk_id,
+    scanned_at: nowIso(input.at),
+    workday: riyadhWorkdayKey(input.at),
+  };
+  const saved = upsertHereCheckIn(attendance, next);
+  await writeStitchAttendance(saved.store);
+  try {
+    await notifyIntegration(
+      "production.attendance_checked_in",
+      {
+        employee_id: saved.check_in.employee_id,
+        employee_name: saved.check_in.employee_name,
+        employee_id_number: saved.check_in.employee_id_number,
+        kiosk_id: saved.check_in.kiosk_id,
+        scanned_at: saved.check_in.scanned_at,
+        workday: saved.check_in.workday,
+        created: saved.created,
+      },
+      input.source ?? "erp"
+    );
+  } catch (error) {
+    console.error("Failed to notify attendance_checked_in:", saved.check_in.employee_id, error);
+  }
+  return saved;
 }
 
 function openOnKiosk(store: SewingSessionsFile, kioskId: string): SewingSession[] {
@@ -676,6 +725,7 @@ export async function processSewingKioskScan(
     "sales_orders",
     "production_work_orders",
     "stitch_kiosk_settings",
+    "stitch_attendance",
   ]);
 
   const at = input.now ?? Date.now();
@@ -747,6 +797,35 @@ export async function processSewingKioskScan(
   let store = expireStaleSewingState(await readSewingSessionsFresh(), at);
   failMeta.raw = raw;
 
+  if (isHereWallQr(raw)) {
+    const armed = mostRecentArm(store, kioskId);
+    if (armed) {
+      await persistHereClockIn({
+        employee_id: armed.employee_id,
+        employee_name: armed.employee_name,
+        employee_id_number: armed.employee_id_number,
+        kiosk_id: kioskId,
+        at,
+        source: input.source,
+      });
+      store = clearHereArm(store, kioskId);
+      await writeSewingSessions(store);
+      return result(true, hereClockInMessage(armed.employee_name, at), store, kioskId, { arm: armed }, {
+        beep: "ok",
+      });
+    }
+    store = applyHereArm(store, { kiosk_id: kioskId, armed_at: nowIso(at) });
+    await writeSewingSessions(store);
+    return result(
+      true,
+      "HERE poster ready - scan your badge to clock in.",
+      store,
+      kioskId,
+      {},
+      { beep: "progress" }
+    );
+  }
+
   if (isAnyEmployeeBadgeQrPayload(raw)) {
     const badgeScan = parseEmployeeBadgeScan(raw);
     if (!badgeScan) {
@@ -813,6 +892,49 @@ export async function processSewingKioskScan(
       employee_id: employee.id,
       workstation_id: input.workstation_id ?? employee.assigned_workstation_id,
     });
+
+    const pendingHere = hereArmOnKiosk(store, kioskId);
+    if (pendingHere) {
+      if (!employeeCanSewOnStitchKiosk(employee)) {
+        return failResult(
+          "Not on the Expats ID list - only expat badge holders can use this kiosk.",
+          "not_expat_badge",
+          "badge",
+          store,
+          kioskId,
+          {},
+          {
+            ...failMeta,
+            employee_id: ctx.employee_id,
+            employee_name: ctx.employee_name,
+            employee_id_number: ctx.employee_id_number,
+          }
+        );
+      }
+      await persistHereClockIn({
+        employee_id: ctx.employee_id,
+        employee_name: ctx.employee_name,
+        employee_id_number: ctx.employee_id_number,
+        kiosk_id: kioskId,
+        at,
+        source: input.source,
+      });
+      const arm: SewingKioskArm = {
+        kiosk_id: kioskId,
+        employee_id: ctx.employee_id,
+        employee_name: ctx.employee_name,
+        employee_id_number: ctx.employee_id_number,
+        workstation_id: ctx.workstation_id,
+        armed_at: nowIso(at),
+        work_kind: workKind,
+        activity_job_function: activityJobFunction,
+      };
+      store = applyEmployeeArm(clearHereArm(store, kioskId), arm);
+      await writeSewingSessions(store);
+      return result(true, hereClockInMessage(ctx.employee_name, at), store, kioskId, { arm }, {
+        beep: "ok",
+      });
+    }
 
     const allowStackedOpen = employeeAllowsStackedOpenPieces(employee.job_functions);
     const badgeDecision = decideBadgeScan(store, kioskId, ctx.employee_id, {

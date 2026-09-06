@@ -153,6 +153,28 @@ describe("sewingFloorAttendance", () => {
     assert.equal(dash.scanned_rows.find((row) => row.employee_id === "e1")?.count, 1);
   });
 
+  it("counts a HERE clock-in as present with 0 pieces", () => {
+    const at = new Date(2026, 7, 19, 12, 0, 0, 0).getTime();
+    const roster = [
+      employee({ id: "e3", full_name: "Ashraf", employee_id_number: "333", job_functions: ["cutter"] }),
+    ];
+    const store: SewingSessionsFile = { updated_at: null, kiosk_arms: [], sessions: [] };
+    const dash = sewingFloorAttendance(store, roster, "day", at, [
+      {
+        employee_id: "e3",
+        employee_name: "Ashraf",
+        employee_id_number: "333",
+        kiosk_id: "k1",
+        scanned_at: new Date(at - 60_000).toISOString(),
+        workday: "2026-08-19",
+      },
+    ]);
+    assert.equal(dash.scanned, 1);
+    assert.equal(dash.missing, 0);
+    assert.equal(dash.scanned_rows[0]?.count, 0);
+    assert.ok(dash.scanned_rows[0]?.checked_in_at);
+  });
+
   it("still counts a rejected overtime scan as present", () => {
     const at = new Date(2026, 7, 19, 23, 0, 0, 0).getTime();
     const roster = [

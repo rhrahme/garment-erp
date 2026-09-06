@@ -15,6 +15,10 @@ import {
 import { floorActivityLabelFromJobFunctions } from "@/lib/production/sewing-session-status-label";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 import type { SewingSession, SewingSessionsFile } from "@/lib/types/sewing-sessions";
+import {
+  checkInTouchesPeriod,
+} from "@/lib/production/stitch-attendance";
+import type { StitchAttendanceCheckIn } from "@/lib/types/stitch-attendance";
 
 export type SewingFloorAttendanceRow = {
   employee_id: string;
@@ -26,6 +30,8 @@ export type SewingFloorAttendanceRow = {
   live: boolean;
   count: number;
   duration_sec: number;
+  /** First HERE + badge clock-in in this period, if any. */
+  checked_in_at: string | null;
 };
 
 export type SewingFloorAttendance = {
@@ -122,11 +128,16 @@ export function emptySewingEmployeeWork(
   };
 }
 
+function checkInMatchesKeys(row: StitchAttendanceCheckIn, keys: Set<string>): boolean {
+  return keys.has(row.employee_id) || keys.has(row.employee_id_number);
+}
+
 export function sewingFloorAttendance(
   store: SewingSessionsFile,
   employees: readonly PayrollEmployee[],
   period: SewingDashboardPeriod = "day",
-  at = Date.now()
+  at = Date.now(),
+  checkIns: readonly StitchAttendanceCheckIn[] = []
 ): SewingFloorAttendance {
   const window = sewingPeriodWindow(period, at);
   const sessions = store.sessions ?? [];
@@ -143,16 +154,20 @@ export function sewingFloorAttendance(
     const live = inPeriod.some((row) => row.status === "open" || row.status === "closing");
     const scored = inPeriod.filter((row) => countsTowardPerformance(row, window));
     const duration_sec = scored.reduce((sum, row) => sum + (row.duration_sec ?? 0), 0);
+    const here = checkIns.find(
+      (row) => checkInMatchesKeys(row, keys) && checkInTouchesPeriod(row, window)
+    );
     const row: SewingFloorAttendanceRow = {
       employee_id: employee.id,
       employee_name: badgeDisplayName(employee),
       employee_id_number: employee.employee_id_number,
       activity: floorActivityLabelFromJobFunctions(employee.job_functions),
       workstation_id: employee.assigned_workstation_id?.trim() || null,
-      scanned: inPeriod.length > 0,
+      scanned: inPeriod.length > 0 || Boolean(here),
       live,
       count: scored.length,
       duration_sec,
+      checked_in_at: here?.scanned_at ?? null,
     };
     seenIds.add(employee.id);
     if (row.scanned) scanned_rows.push(row);
@@ -180,6 +195,7 @@ export function sewingFloorAttendance(
       live,
       count: scored.length,
       duration_sec: scored.reduce((sum, row) => sum + (row.duration_sec ?? 0), 0),
+      checked_in_at: null,
     });
   }
 

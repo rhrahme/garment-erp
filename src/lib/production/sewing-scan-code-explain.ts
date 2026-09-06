@@ -162,7 +162,7 @@ export function explainUnrecognizedStitchScan(raw: string): string {
 
   return (
     `Code not recognized: ${display}. ` +
-    "Stitch accepts EMP / EMPALT / EMPIRON / EMPBTN / EMPWASH / EMPHOLE / EMPBST / EMPCHMP / EMPBART badge QRs, or production A4 piece QR " +
+    "Stitch accepts EMP / EMPALT / EMPIRON / EMPBTN / EMPWASH / EMPHOLE / EMPBST / EMPCHMP / EMPBART badge QRs, the HERE wall poster (HAGAN-HERE), or production A4 piece QR " +
     "(e.g. FR-0132-L07-JKT-1/2)."
   );
 }

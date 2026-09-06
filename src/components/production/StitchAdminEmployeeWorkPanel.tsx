@@ -175,8 +175,17 @@ export function StitchAdminEmployeeWorkPanel({
         <h2 className="text-xl font-semibold text-slate-900">Floor dashboard</h2>
         <p className="mt-1 text-sm text-slate-500">
           Admin only. Who scanned, who is still missing, and one employee&apos;s day / week /
-          month. Missing = active Expats badge list with a floor job and no stitch scan yet.
+          month. Missing = active Expats badge list with a floor job and no HERE clock-in
+          or stitch scan yet.
         </p>
+        <a
+          href="/stitch/attendance/print?copies=6"
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 inline-flex min-h-[44px] items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+        >
+          Print HERE wall posters
+        </a>
       </div>
 
       <div className="space-y-4 px-5 py-4">
@@ -323,7 +332,11 @@ export function StitchAdminEmployeeWorkPanel({
                           <p className="text-sm font-semibold text-emerald-700">Live</p>
                         ) : row.scanned ? (
                           <p className="text-sm font-semibold text-slate-800">
-                            {row.count} pcs - {formatDuration(row.duration_sec)}
+                            {row.count > 0
+                              ? `${row.count} pcs - ${formatDuration(row.duration_sec)}`
+                              : row.checked_in_at
+                                ? "Here"
+                                : "Scanned"}
                           </p>
                         ) : (
                           <p className="text-sm font-semibold text-amber-800">No scan yet</p>

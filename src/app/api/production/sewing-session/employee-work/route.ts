@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readPayrollEmployees } from "@/lib/data/payroll-employees";
 import { readSewingSessionsFresh } from "@/lib/data/sewing-sessions";
+import { readStitchAttendanceFresh } from "@/lib/data/stitch-attendance";
 import { findPayrollEmployeeById } from "@/lib/hr/payroll-lookup";
 import {
   emptySewingEmployeeWork,
@@ -21,12 +22,24 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    await ensureDocumentsLoaded(["sewing_sessions", "payroll_employees", "clients", "sales_orders"]);
-    const store = readSewingSessionsFresh();
+    await ensureDocumentsLoaded([
+      "sewing_sessions",
+      "stitch_attendance",
+      "payroll_employees",
+      "clients",
+      "sales_orders",
+    ]);
+    const store = await readSewingSessionsFresh();
     const payroll = readPayrollEmployees().employees;
     const employeeKey = request.nextUrl.searchParams.get("employee_id")?.trim() ?? "";
     const period = parseFloorAttendancePeriod(request.nextUrl.searchParams.get("period"));
-    const attendance = sewingFloorAttendance(store, payroll, period);
+    const attendance = sewingFloorAttendance(
+      store,
+      payroll,
+      period,
+      Date.now(),
+      (await readStitchAttendanceFresh()).check_ins
+    );
     const employees = listSewingKioskEmployees(store);
     if (!employeeKey) {
       return NextResponse.json({ employees, attendance });

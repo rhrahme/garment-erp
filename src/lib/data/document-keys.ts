@@ -29,7 +29,11 @@ export const ERP_DOCUMENT_SPECS = {
   },
   sewing_sessions: {
     path: path.join(ROOT, "src/data/sewing-sessions.json"),
-    fallback: { updated_at: null, kiosk_arms: [], kiosk_piece_arms: [], sessions: [] },
+    fallback: { updated_at: null, kiosk_arms: [], kiosk_piece_arms: [], kiosk_here_arms: [], sessions: [] },
+  },
+  stitch_attendance: {
+    path: path.join(ROOT, "src/data/stitch-attendance.json"),
+    fallback: { updated_at: null, check_ins: [] },
   },
   sewing_scan_failures: {
     path: path.join(ROOT, "src/data/sewing-scan-failures.json"),
@@ -223,6 +227,7 @@ export const LAZY_ERP_DOCUMENT_KEYS = [
   "production_work_orders_archive",
   "production_scan_events",
   "sewing_sessions",
+  "stitch_attendance",
   "sewing_scan_failures",
   "sewing_session_change_requests",
   "stitch_kiosk_settings",
