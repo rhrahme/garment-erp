@@ -38,7 +38,7 @@ const VIEW_MODE_OPTIONS: { id: ClientViewMode; label: string; icon: typeof List 
   { id: "list", label: "List", icon: List },
   { id: "table", label: "Table", icon: Table2 },
   { id: "cards", label: "Cards", icon: LayoutGrid },
-  { id: "samples", label: "Samples", icon: Package },
+  { id: "samples", label: "Client sample", icon: Package },
 ];
 
 const SORT_OPTIONS: { id: ClientSortBy; label: string }[] = [

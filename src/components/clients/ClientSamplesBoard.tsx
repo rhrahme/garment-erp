@@ -123,7 +123,7 @@ export function ClientSamplesBoard({
       <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-10 text-center text-sm text-slate-500">
         No client garments waiting to be given back.
         <p className="mt-1 text-xs text-slate-400">
-          Open a client, scroll to Client garments, press Add garment, then Add photos.
+          Open a client, scroll to Client sample, press Add garment, then Add photos.
         </p>
       </div>
     );

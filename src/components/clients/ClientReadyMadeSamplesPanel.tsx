@@ -390,7 +390,7 @@ export function ClientReadyMadeSamplesPanel({
         <div>
           <p className="flex items-center gap-2 text-sm font-semibold text-slate-800">
             <Package className="h-4 w-4 text-indigo-500" />
-            Client garments
+            Client sample
           </p>
           <p className="mt-0.5 text-xs text-slate-500">
             Client dropped off a garment to copy or fix. Photos confirm we received

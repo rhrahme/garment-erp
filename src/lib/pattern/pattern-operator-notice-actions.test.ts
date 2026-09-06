@@ -122,8 +122,9 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID));
     assert.equal(
       PATTERN_HOWTO_NOTICES[0]?.id,
-      SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID
+      CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID
     );
+    assert.equal(PATTERN_HOWTO_NOTICES[1]?.id, CORRECT_START_TIME_HOWTO_NOTICE_ID);
   });
 });
 
@@ -164,9 +165,9 @@ describe("Pattern/QC sent stitched garment how-to", () => {
 
 describe("Pattern/QC client sample garment how-to", () => {
   it("tells QC and Pattern to record a dropped-off garment with photos, in English and Bangla", () => {
-    assert.equal(CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID, "howto-client-sample-garment-v1");
-    assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_TITLE, /give it back/i);
-    assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /Client garments/);
+    assert.equal(CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID, "howto-client-sample-garment-v2");
+    assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_TITLE, /upload photos/i);
+    assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /Client sample/);
     assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /Add garment/);
     assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /Add photos/);
     assert.match(CLIENT_SAMPLE_GARMENT_HOWTO_BODY, /Copy or Fix/);
@@ -188,8 +189,8 @@ describe("Pattern/QC Boggi brand folder how-to", () => {
 
 describe("Pattern/QC correct scan start time how-to", () => {
   it("tells QC to correct the scan time after a late QR, in English and Bangla", () => {
-    assert.equal(CORRECT_START_TIME_HOWTO_NOTICE_ID, "howto-correct-scan-start-time-v1");
-    assert.match(CORRECT_START_TIME_HOWTO_TITLE, /Correct start time|QR late/i);
+    assert.equal(CORRECT_START_TIME_HOWTO_NOTICE_ID, "howto-correct-scan-start-time-v2");
+    assert.match(CORRECT_START_TIME_HOWTO_TITLE, /Stitch kiosk Live|not Production/i);
     assert.match(CORRECT_START_TIME_HOWTO_BODY, /Correct start time/);
     assert.match(CORRECT_START_TIME_HOWTO_BODY, /Do not wait for admin/);
     assert.match(CORRECT_START_TIME_HOWTO_BODY, /BANGLA/);

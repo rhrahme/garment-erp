@@ -260,7 +260,7 @@ export async function emailPatternOperatorNotice(
       : `Open Pattern: ${appUrl}/pattern`,
     "",
     allTeams
-      ? "This highlight also appears at the top of every ERP page until you tap Got it. After that it stays on How-to in the left menu. Production packed piece or Clients -> Samples: delivery dropdown, optional proof photo, then Sent."
+      ? "This highlight also appears at the top of every ERP page until you tap Got it. After that it stays on How-to in the left menu."
       : notice.id === CORRECT_START_TIME_HOWTO_NOTICE_ID
         ? "QC: Stitch kiosk -> Live or History -> Correct start time. The time applies now. Admin Confirm/Reject does not stop the stitcher."
         : notice.id === BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID

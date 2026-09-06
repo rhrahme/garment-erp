@@ -206,10 +206,12 @@ export const ERP_SOURCE_OF_TRUTH_LEFTOVER_JOBS_HOWTO_BODY = [
   "Do not wait on leftover / removed rows. Tick only what is still on the sales order.",
 ].join("\n");
 
-export const CORRECT_START_TIME_HOWTO_NOTICE_ID = "howto-correct-scan-start-time-v1";
+export const CORRECT_START_TIME_HOWTO_V1_NOTICE_ID = "howto-correct-scan-start-time-v1";
+
+export const CORRECT_START_TIME_HOWTO_NOTICE_ID = "howto-correct-scan-start-time-v2";
 
 export const CORRECT_START_TIME_HOWTO_TITLE =
-  "QR late: scan now, then QC corrects the start time";
+  "Correct start time is on Stitch kiosk Live - not Production";
 
 export const CORRECT_START_TIME_HOWTO_BODY = [
   "ENGLISH",
@@ -217,10 +219,10 @@ export const CORRECT_START_TIME_HOWTO_BODY = [
   "When the QR is printed: stitcher scans badge, then scans the garment.",
   "That scan stores NOW as the start time.",
   "",
-  "QC next:",
-  "1. Open Stitch kiosk (left menu).",
+  "QC next - do not look on Production:",
+  "1. Open Stitch kiosk (left menu). Not Factory floor / Production.",
   "2. Open Live (or History if they already closed).",
-  "3. Press Correct start time.",
+  "3. Press Correct start time on that Live row.",
   "4. Enter the real start time (Riyadh) and save.",
   "",
   "The clock changes immediately. Admin gets a request. Confirm or Reject does not stop the stitcher.",
@@ -230,27 +232,29 @@ export const CORRECT_START_TIME_HOWTO_BODY = [
   "QR ready na thakle stitcher already kaj shuru koreche.",
   "QR print howar por: badge scan, then garment scan. Eita ekhonkar time save kore.",
   "",
-  "QC porer kaj:",
-  "1. Left menu te Stitch kiosk khulen.",
+  "QC porer kaj - Production e khujben na:",
+  "1. Left menu te Stitch kiosk khulen. Factory floor / Production na.",
   "2. Live (ba History) khulen.",
-  "3. Correct start time chapun.",
+  "3. Sei row te Correct start time chapun.",
   "4. Asol start time (Riyadh) din, save korun.",
   "",
   "Time sathe sathe change hobe. Admin request pabe. Confirm ba Reject kaj bandh korbe na.",
   "Admin er jonno wait korben na.",
 ].join("\n");
 
-export const CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID = "howto-client-sample-garment-v1";
+export const CLIENT_SAMPLE_GARMENT_HOWTO_V1_NOTICE_ID = "howto-client-sample-garment-v1";
+
+export const CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID = "howto-client-sample-garment-v2";
 
 export const CLIENT_SAMPLE_GARMENT_HOWTO_TITLE =
-  "Client dropped off a garment: record it, then give it back";
+  "Where to upload photos of the client's garment";
 
 export const CLIENT_SAMPLE_GARMENT_HOWTO_BODY = [
   "ENGLISH",
   "When a client leaves a ready garment for us to copy or fix:",
   "1. Open Clients (left menu).",
-  "2. Tap Samples to see garments still in the factory, or open the client.",
-  "3. Scroll to Client garments.",
+  "2. Tap Client sample to see garments still in the factory, or open the client.",
+  "3. Scroll to Client sample.",
   "4. Press Add garment.",
   "5. Pick the garment type (Trouser, Jacket, Suit, Overcoat...).",
   "6. Tap Copy or Fix.",
@@ -263,8 +267,8 @@ export const CLIENT_SAMPLE_GARMENT_HOWTO_BODY = [
   "BANGLA",
   "Client garment copy ba fix er jonno rekhe gele:",
   "1. Left menu te Clients khulen.",
-  "2. Samples tap korun, ba client khulen.",
-  "3. Client garments e scroll korun.",
+  "2. Client sample tap korun, ba client khulen.",
+  "3. Client sample e scroll korun.",
   "4. Add garment chapun.",
   "5. Garment type select korun (Trouser, Jacket, Suit, Overcoat...).",
   "6. Copy ba Fix tap korun.",
@@ -384,11 +388,29 @@ export function isAllTeamsHowTo(id: string): boolean {
 
 export function isPatternAudienceHowTo(id: string): boolean {
   if (id === SENT_STITCHED_GARMENT_HOWTO_V1_NOTICE_ID) return false;
+  if (id === CLIENT_SAMPLE_GARMENT_HOWTO_V1_NOTICE_ID) return false;
+  if (id === CORRECT_START_TIME_HOWTO_V1_NOTICE_ID) return false;
   return howtoAudience(id) === "pattern";
 }
 
 /** Newest first. Pattern how-tos email Pattern. all_teams email every team, EN+BN. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID,
+    title: CLIENT_SAMPLE_GARMENT_HOWTO_TITLE,
+    body: CLIENT_SAMPLE_GARMENT_HOWTO_BODY,
+    href: "/clients?view=samples",
+    href_label: "Open Clients Samples",
+    audience: "all_teams",
+  },
+  {
+    id: CORRECT_START_TIME_HOWTO_NOTICE_ID,
+    title: CORRECT_START_TIME_HOWTO_TITLE,
+    body: CORRECT_START_TIME_HOWTO_BODY,
+    href: "/stitch?tab=live",
+    href_label: "Open Stitch Live",
+    audience: "all_teams",
+  },
   {
     id: SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID,
     title: SENT_STITCHED_GARMENT_HOWTO_TITLE,
@@ -398,27 +420,11 @@ export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
     audience: "all_teams",
   },
   {
-    id: CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID,
-    title: CLIENT_SAMPLE_GARMENT_HOWTO_TITLE,
-    body: CLIENT_SAMPLE_GARMENT_HOWTO_BODY,
-    href: "/clients?view=samples",
-    href_label: "Open Clients Samples",
-    audience: "pattern",
-  },
-  {
     id: BOGGI_BRAND_FOLDER_HOWTO_NOTICE_ID,
     title: BOGGI_BRAND_FOLDER_HOWTO_TITLE,
     body: BOGGI_BRAND_FOLDER_HOWTO_BODY,
     href: "/pattern/library",
     href_label: "Open Pattern Library",
-    audience: "pattern",
-  },
-  {
-    id: CORRECT_START_TIME_HOWTO_NOTICE_ID,
-    title: CORRECT_START_TIME_HOWTO_TITLE,
-    body: CORRECT_START_TIME_HOWTO_BODY,
-    href: "/stitch?tab=live",
-    href_label: "Open Stitch Live",
     audience: "pattern",
   },
   {
