@@ -88,6 +88,8 @@ type StitchScanCaptureValue = {
   kioskPauseIntervals: Array<{ started_at: string; ended_at?: string | null }>;
   flushInputNow: () => void;
   scheduleFlush: () => void;
+  /** Tablet camera (or any decoded string) — same queue as the USB gun. */
+  submitScan: (raw: string) => void;
   ingestStartedSession: (session: SewingSession, note?: string) => void;
 };
 
@@ -625,6 +627,13 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
     [enqueueCodes, flushPendingPartial]
   );
 
+  const submitScan = useCallback(
+    (raw: string) => {
+      captureCodes(splitScanInput(raw));
+    },
+    [captureCodes]
+  );
+
   const flushInputNow = useCallback(() => {
     const el = inputRef.current;
     if (!el) return;
@@ -867,6 +876,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       kioskPauseIntervals,
       flushInputNow,
       scheduleFlush,
+      submitScan,
       ingestStartedSession,
     }),
     [
@@ -890,6 +900,7 @@ export function StitchScanCaptureProvider({ children, rearmKey }: ProviderProps)
       kioskPauseIntervals,
       flushInputNow,
       scheduleFlush,
+      submitScan,
       ingestStartedSession,
     ]
   );

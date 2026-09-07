@@ -29,6 +29,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `production.attendance_clocked_in` (no prices).
   `GET /api/production/attendance-qr` + `/api/v1/...` parity. How-to
   `howto-wall-attendance-qr-v1` (English + Bangla) on every ERP account.
+  Tablet camera on **Stitch kiosk** (Use tablet camera) feeds the same
+  scan queue as the USB gun (badge, wall QR, A4). Chrome on the tablet.
+  Gun scanner still works. Production floor badge scan is still gun-only
+  (pipeline, not attendance).
 - **Floor video diagnosis** (Aug 20 2026): extract the opening frames
   before writing a fix. Live log `ready, N already open` after a card
   scan is stacked arm, not "they never scanned a badge". Badge then the

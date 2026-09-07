@@ -19,6 +19,7 @@ import {
 } from "@/lib/production/sewing-session-state";
 import { isStitchLunchClockWindow } from "@/lib/production/stitch-kiosk-lunch";
 import { StartWithoutQrModal } from "@/components/production/StartWithoutQrModal";
+import { StitchCameraScanner } from "@/components/production/StitchCameraScanner";
 import { cn } from "@/lib/utils";
 
 function formatLogTime(at: number): string {
@@ -152,6 +153,7 @@ export function StitchKioskPanel() {
           </p>
         </div>
       ) : null}
+      {kioskPaused || lunchActive ? null : <StitchCameraScanner />}
       <div
         className={cn(
           "rounded-2xl border-2 px-6 py-8 text-center",

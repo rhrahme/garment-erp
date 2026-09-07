@@ -468,6 +468,7 @@ export const WALL_ATTENDANCE_QR_HOWTO_BODY = [
   "",
   "Do not double-scan a garment A4 for attendance. That starts or stops a piece.",
   "The wall QR never opens or closes garment work.",
+  "Tablet camera: Stitch kiosk -> Use tablet camera. Gun scanner still works.",
   "",
   "BANGLA",
   "Ajke: Attendance wall QR print kore stitch kiosk e hang korun.",
@@ -481,6 +482,7 @@ export const WALL_ATTENDANCE_QR_HOWTO_BODY = [
   "",
   "Attendance er jonno garment A4 duibar scan korben na. Oita piece start/stop.",
   "Wall QR kono garment kaj khulbe ba bondho korbe na.",
+  "Tablet camera: Stitch kiosk -> Use tablet camera. Gun scanner o kaj kore.",
 ].join("\n");
 
 export function howtoAudience(id: string): PatternHowToAudience {

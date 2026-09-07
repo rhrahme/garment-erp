@@ -191,6 +191,7 @@ describe("wall attendance QR how-to", () => {
     assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /scan today to test/);
     assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /personal ID badge/);
     assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /Do not double-scan a garment A4/);
+    assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /Use tablet camera/);
     assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /BANGLA/);
     assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /Nijer ID badge/);
     const howto = PATTERN_HOWTO_NOTICES.find(

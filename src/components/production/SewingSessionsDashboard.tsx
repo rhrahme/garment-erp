@@ -81,16 +81,25 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
           <p className="text-sm font-semibold text-amber-950">Print the wall Attendance QR today</p>
           <p className="mt-0.5 text-sm text-amber-900">
             Hang it at the stitch kiosk. You may test-scan today. Clock-in time counts from 8 Sep.
+            Tablet camera is on Stitch kiosk.
           </p>
         </div>
-        <a
-          href="/stitch/attendance/print?copies=6"
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex min-h-[44px] items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-        >
-          Print attendance QR
-        </a>
+        <div className="flex flex-wrap gap-2">
+          <a
+            href="/stitch/attendance/print?copies=6"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex min-h-[44px] items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+          >
+            Print attendance QR
+          </a>
+          <a
+            href="/stitch"
+            className="inline-flex min-h-[44px] items-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-slate-300 hover:bg-slate-50"
+          >
+            Scan with tablet camera
+          </a>
+        </div>
       </div>
 
       <div className="space-y-4 px-5 py-4">
