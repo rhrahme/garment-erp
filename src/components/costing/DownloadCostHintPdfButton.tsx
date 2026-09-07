@@ -10,13 +10,11 @@ export function DownloadCostHintPdfButton({
   label = "Print cost hint PDF",
   variant = "secondary",
   size = "md",
-  compact = false,
 }: {
   href: string;
   label?: string;
   variant?: "primary" | "secondary" | "ghost";
   size?: "sm" | "md";
-  compact?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,20 +43,12 @@ export function DownloadCostHintPdfButton({
   }
 
   return (
-    <div className={compact ? "inline-flex items-center" : "inline-flex flex-col items-start gap-1"}>
-      <Button
-        variant={variant}
-        size={size}
-        className="gap-2"
-        onClick={() => void handleClick()}
-        disabled={busy}
-        title={error ?? "Download internal cost hint PDF"}
-        aria-label={label}
-      >
+    <div className="inline-flex flex-col items-start gap-1">
+      <Button variant={variant} size={size} className="gap-2" onClick={() => void handleClick()} disabled={busy}>
         <FileDown className="h-4 w-4 shrink-0" />
-        <span className={compact ? "hidden sm:inline" : undefined}>{busy ? "Loading..." : label}</span>
+        {busy ? "Loading..." : label}
       </Button>
-      {!compact && error ? <span className="text-xs text-red-600">{error}</span> : null}
+      {error ? <span className="text-xs text-red-600">{error}</span> : null}
     </div>
   );
 }

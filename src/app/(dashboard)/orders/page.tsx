@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { FabricChangeAlertsPanel } from "@/components/dashboard/FabricChangeAlertsPanel";
-import { CostHintPdfControls } from "@/components/costing/CostHintPdfControls";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
-import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
 import { OrdersList } from "@/components/orders/OrdersList";
 import { getSessionContext } from "@/lib/auth/session";
 import { healClientDataForRead } from "@/lib/clients/heal-on-read";
@@ -43,20 +41,15 @@ export default async function OrdersPage() {
         title={labels.listTitle}
         description={labels.listDescription}
         action={
-          canViewMoney(session) || !(taskOperatorMode || productionOperatorMode) ? (
-            <div className="flex flex-wrap items-center gap-2">
-              {canViewMoney(session) ? <CostHintPdfControls downloadLabel="Cost hint PDF" /> : null}
-              {taskOperatorMode || productionOperatorMode ? null : productionMode ? (
-                <Link href="/fabric-orders/new?fresh=1">
-                  <Button>+ New fabric order</Button>
-                </Link>
-              ) : (
-                <Link href="/orders/new">
-                  <Button>{labels.newButton}</Button>
-                </Link>
-              )}
-            </div>
-          ) : undefined
+          taskOperatorMode || productionOperatorMode ? undefined : productionMode ? (
+            <Link href="/fabric-orders/new?fresh=1">
+              <Button>+ New fabric order</Button>
+            </Link>
+          ) : (
+            <Link href="/orders/new">
+              <Button>{labels.newButton}</Button>
+            </Link>
+          )
         }
       />
 
