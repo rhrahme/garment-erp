@@ -1,6 +1,8 @@
 import { Menu } from "lucide-react";
+import { CostHintPdfControls } from "@/components/costing/CostHintPdfControls";
 import { PageBackBar } from "@/components/layout/PageBackBar";
 import { DEMO_MODE } from "@/lib/auth/demo-mode";
+import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
 import type { SessionContext } from "@/lib/auth/session";
 import { resolveUserDisplay } from "@/lib/auth/user-display";
 
@@ -29,6 +31,9 @@ export function Header({
         <PageBackBar />
       </div>
       <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+        {canViewMoney(session) ? (
+          <CostHintPdfControls compact downloadLabel="Cost hints" printLabel="Print" />
+        ) : null}
         {DEMO_MODE && (
           <span className="hidden rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 sm:inline">
             Demo Mode — connect Supabase to go live

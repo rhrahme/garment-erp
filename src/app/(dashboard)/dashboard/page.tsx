@@ -22,6 +22,7 @@ import { SewingSessionChangeRequestsPanel } from "@/components/dashboard/SewingS
 import { GarmentTypeChangesPanel } from "@/components/dashboard/GarmentTypeChangesPanel";
 import { ThreadButtonPhotosReviewPanel } from "@/components/dashboard/ThreadButtonPhotosReviewPanel";
 import { TodaysFabricPanel } from "@/components/dashboard/TodaysFabricPanel";
+import { CostHintPdfControls } from "@/components/costing/CostHintPdfControls";
 import { PageHeader, StatCard } from "@/components/ui/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { StatusBadge, DataTable } from "@/components/ui/PageHeader";
@@ -111,6 +112,11 @@ export default async function DashboardPage() {
       <PageHeader
         title="Dashboard"
         description="Overview of your garment factory operations"
+        action={
+          canViewMoney(session) ? (
+            <CostHintPdfControls downloadLabel="Print cost hint PDF" />
+          ) : undefined
+        }
       />
 
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">

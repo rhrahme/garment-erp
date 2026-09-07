@@ -1,3 +1,4 @@
+import { CostHintPdfControls } from "@/components/costing/CostHintPdfControls";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { CustomerInvoicesWorkspace } from "@/components/invoicing/CustomerInvoicesWorkspace";
 import {
@@ -52,6 +53,9 @@ export default async function InvoicesPage() {
       <PageHeader
         title="Invoicing"
         description="Bill bespoke clients in SAR — create drafts from ready orders, send, and track payment"
+        action={
+          canViewMoney(session) ? <CostHintPdfControls downloadLabel="Print cost hint PDF" /> : undefined
+        }
       />
       <CustomerInvoicesWorkspace
         invoices={invoices}

@@ -3,8 +3,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { orderStickerSheetHref } from "@/lib/orders/sticker-print-links";
 import { notFound, redirect } from "next/navigation";
+import { CostHintPdfControls } from "@/components/costing/CostHintPdfControls";
 import { FabricCostSummaryBlock } from "@/components/orders/FabricCostSummaryBlock";
 import { DownloadSalesOrderPdfButton } from "@/components/orders/DownloadSalesOrderPdfButton";
+import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
 import { PageHeader, StatusBadge } from "@/components/ui/PageHeader";
 import { SalesOrderActions } from "@/components/orders/SalesOrderActions";
 import { SupplierEmailStatusBadge } from "@/components/orders/SupplierEmailStatusBadge";
@@ -145,6 +147,9 @@ export default async function SalesOrderDetailPage({
                   </Button>
                 </Link>
               </>
+            ) : null}
+            {canViewMoney(session) ? (
+              <CostHintPdfControls soNumber={order.so_number} downloadLabel="Cost hint PDF" />
             ) : null}
             <DownloadSalesOrderPdfButton
               orderId={order.id}
