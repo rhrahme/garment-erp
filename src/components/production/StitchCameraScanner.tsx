@@ -162,11 +162,13 @@ export function StitchCameraScanner() {
     <div className="rounded-xl border border-slate-200 bg-white p-4">
       <p className="text-sm font-medium text-slate-800">Tablet camera</p>
       <p className="mt-1 text-sm text-slate-600">
-        Point the tablet at the ID badge, then the wall Attendance QR. Attendance does
-        not start a piece. When you stitch, scan badge and A4 again. Gun still works.
+        Point the tablet at the ID badge and the wall Attendance QR, either order.
+        Both register. Attendance does not start a piece. When you stitch, scan badge
+        and A4 again. Gun still works.
       </p>
       <p className="mt-1 text-sm text-slate-600">
-        BANGLA: Tablet camera diye age badge, tarpor wall QR. Gun scanner o kaj kore.
+        BANGLA: Tablet camera diye badge ar wall QR, jei order e hok. Dui order e
+        register. Gun scanner o kaj kore.
       </p>
       {error ? (
         <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">

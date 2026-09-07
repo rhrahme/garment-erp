@@ -521,6 +521,37 @@ export const WALL_ATTENDANCE_QR_HOWTO_V2_BODY = [
   "Tablet camera: Stitch kiosk -> Use tablet camera. Gun scanner o kaj kore.",
 ].join("\n");
 
+export const WALL_ATTENDANCE_QR_HOWTO_V3_NOTICE_ID = "howto-wall-attendance-qr-v3";
+
+export const WALL_ATTENDANCE_QR_HOWTO_V3_TITLE =
+  "Attendance: badge and wall QR, either order";
+
+export const WALL_ATTENDANCE_QR_HOWTO_V3_BODY = [
+  "ENGLISH",
+  "Attendance is at the entrance. It does not start a piece.",
+  "",
+  "Either order is accepted and registered:",
+  "- Scan your ID badge, then the wall Attendance QR.",
+  "- Or scan the wall QR, then your ID badge.",
+  "That marks you present. You can do other work first.",
+  "",
+  "When you start stitching (later):",
+  "1. Scan your ID badge again.",
+  "2. Scan the garment A4.",
+  "",
+  "Do not double-scan a garment A4 for attendance.",
+  "Print: Floor now or Stitch Performance -> Print attendance QR.",
+  "Tablet camera: Stitch kiosk -> Use tablet camera. Gun scanner still works.",
+  "",
+  "BANGLA",
+  "Attendance entrance e. Eita piece start kore na.",
+  "Dui order e register hoy: badge then wall QR, ba wall QR then badge.",
+  "Eita present mark. Age onno kaj kora jabe.",
+  "",
+  "Stitching shuru korte (pore): abar badge, then garment A4.",
+  "Attendance er jonno garment A4 duibar scan korben na.",
+].join("\n");
+
 export function howtoAudience(id: string): PatternHowToAudience {
   return PATTERN_HOWTO_NOTICES.find((row) => row.id === id)?.audience ?? "pattern";
 }
@@ -540,9 +571,9 @@ export function isPatternAudienceHowTo(id: string): boolean {
 /** Newest first. Pattern how-tos email Pattern. all_teams email every team, EN+BN. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
   {
-    id: WALL_ATTENDANCE_QR_HOWTO_V2_NOTICE_ID,
-    title: WALL_ATTENDANCE_QR_HOWTO_V2_TITLE,
-    body: WALL_ATTENDANCE_QR_HOWTO_V2_BODY,
+    id: WALL_ATTENDANCE_QR_HOWTO_V3_NOTICE_ID,
+    title: WALL_ATTENDANCE_QR_HOWTO_V3_TITLE,
+    body: WALL_ATTENDANCE_QR_HOWTO_V3_BODY,
     href: "/stitch/attendance/print",
     href_label: "Print attendance QR",
     audience: "all_teams",

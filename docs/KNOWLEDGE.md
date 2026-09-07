@@ -16,10 +16,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   (already-printed `HAGAN-HERE` posters still work). Print today
   (`/stitch/attendance/print` or Floor now / Stitch Performance ->
   **Print attendance QR**). Clock-in counts from **8 Sep 2026** Riyadh.
-  **Badge, then the wall QR.** No badge: "Scan your ID badge first."
-  Today they may scan to test; that does not count present. From
-  8 Sep the scan time is the official clock-in. Writes
-  `stitch_attendance` (not a `SewingSession`). No admin start email. No
+  **Badge and wall QR, either order.** Wall first waits for the badge;
+  badge first completes on the wall QR. Today they may scan to test;
+  that does not count present. From 8 Sep the scan time is the official
+  clock-in. Writes `stitch_attendance` (not a `SewingSession`). No
+  admin start email. No
   piece / performance hours. Attendance does **not** arm a piece. To
   start stitching later they scan badge again, then the garment A4.
   One present mark per person per Riyadh day. The wall QR must not
@@ -30,7 +31,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `production.attendance_checked_in` and
   `production.attendance_clocked_in` (no prices).
   `GET /api/production/attendance-qr` + `/api/v1/...` parity. How-to
-  `howto-wall-attendance-qr-v2` (English + Bangla) on every ERP account.
+  `howto-wall-attendance-qr-v3` (English + Bangla) on every ERP account.
   Tablet camera on **Stitch kiosk** (Use tablet camera) feeds the same
   scan queue as the USB gun (badge, wall QR, A4). Chrome on the tablet.
   Gun scanner still works. Production floor badge scan is still gun-only
@@ -387,7 +388,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   operator opens any Pattern page and sees the banner. When we explain a
   floor fix to Pattern, add a catalog entry so they get the email and the
   in-app banner - do not only tell the owner in chat.   Notices: morning
-  attendance badge then wall QR (`howto-wall-attendance-qr-v1`), copy a
+  attendance badge and wall QR, either order (`howto-wall-attendance-qr-v3`), copy a
   house base to another brand then edit (`howto-copy-base-to-brand-v1`),
   both
   Pattern logins type a client name and search looks in every brand

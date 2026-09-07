@@ -33,9 +33,12 @@ import {
 import { notifyIntegration } from "@/lib/integrations";
 import {
   alreadySignedInMessage,
-  ATTENDANCE_BADGE_FIRST_MESSAGE,
   ATTENDANCE_BEFORE_GO_LIVE_MESSAGE,
+  ATTENDANCE_WALL_WAITING_MESSAGE,
+  applyHereArm,
   clearHereArm,
+  decideAttendanceBadgeScan,
+  decideAttendanceWallScan,
   hereArmOnKiosk,
   hereClockInMessage,
   isAttendanceClockInLive,
@@ -809,23 +812,19 @@ export async function processSewingKioskScan(
   failMeta.raw = raw;
 
   if (isHereWallQr(raw)) {
-    const armed = mostRecentArm(store, kioskId);
-    if (!armed) {
-      return failResult(
-        ATTENDANCE_BADGE_FIRST_MESSAGE,
-        "attendance_badge_required",
-        "attendance",
-        store,
-        kioskId,
-        {},
-        failMeta
-      );
+    const wallDecision = decideAttendanceWallScan(mostRecentArm(store, kioskId));
+    if (wallDecision.type === "wait_for_other") {
+      store = applyHereArm(store, { kiosk_id: kioskId, armed_at: nowIso(at) });
+      await writeSewingSessions(store);
+      return result(true, ATTENDANCE_WALL_WAITING_MESSAGE, store, kioskId, { arm: null }, {
+        beep: "progress",
+      });
     }
-    store = clearEmployeeArm(clearHereArm(store, kioskId), kioskId, armed.employee_id);
+    store = clearEmployeeArm(clearHereArm(store, kioskId), kioskId, wallDecision.employee_id);
     const saved = await persistHereClockIn({
-      employee_id: armed.employee_id,
-      employee_name: armed.employee_name,
-      employee_id_number: armed.employee_id_number,
+      employee_id: wallDecision.employee_id,
+      employee_name: wallDecision.employee_name,
+      employee_id_number: wallDecision.employee_id_number,
       kiosk_id: kioskId,
       at,
       source: input.source,
@@ -840,8 +839,8 @@ export async function processSewingKioskScan(
     return result(
       true,
       saved.created
-        ? hereClockInMessage(armed.employee_name, at)
-        : alreadySignedInMessage(armed.employee_name),
+        ? hereClockInMessage(wallDecision.employee_name, at)
+        : alreadySignedInMessage(wallDecision.employee_name),
       store,
       kioskId,
       { arm: null },
@@ -916,8 +915,15 @@ export async function processSewingKioskScan(
       workstation_id: input.workstation_id ?? employee.assigned_workstation_id,
     });
 
-    const pendingHere = hereArmOnKiosk(store, kioskId);
-    if (pendingHere) {
+    const attendanceDecision = decideAttendanceBadgeScan(
+      Boolean(hereArmOnKiosk(store, kioskId)),
+      {
+        employee_id: ctx.employee_id,
+        employee_name: ctx.employee_name,
+        employee_id_number: ctx.employee_id_number,
+      }
+    );
+    if (attendanceDecision.type === "register") {
       if (!employeeCanSewOnStitchKiosk(employee)) {
         return failResult(
           "Not on the Expats ID list - only expat badge holders can use this kiosk.",

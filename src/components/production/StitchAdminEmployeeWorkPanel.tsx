@@ -174,9 +174,9 @@ export function StitchAdminEmployeeWorkPanel({
       <div className="border-b border-slate-100 px-5 py-4">
         <h2 className="text-xl font-semibold text-slate-900">Floor dashboard</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Admin only. Who signed in at the entrance (badge then wall QR from 8 Sep) or
-          later started stitch work, who is still missing, and one employee&apos;s day /
-          week / month.
+          Admin only. Who signed in at the entrance (badge and wall QR, either order,
+          from 8 Sep) or later started stitch work, who is still missing, and one
+          employee&apos;s day / week / month.
         </p>
         <a
           href="/stitch/attendance/print?copies=6"

@@ -61,7 +61,41 @@ export function checkInCountsForAttendance(
 }
 
 export const ATTENDANCE_BADGE_FIRST_MESSAGE =
-  "Scan your ID badge first, then the wall QR.";
+  "Scan your ID badge, then the wall QR. Either order is accepted.";
+
+export const ATTENDANCE_WALL_WAITING_MESSAGE =
+  "Wall QR read. Scan your ID badge to sign in.";
+
+export type AttendancePairEmployee = {
+  employee_id: string;
+  employee_name: string;
+  employee_id_number: string;
+};
+
+export type AttendancePairDecision =
+  | { type: "wait_for_other"; next: "badge" | "wall" }
+  | ({ type: "register" } & AttendancePairEmployee);
+
+/** Wall QR: register if a badge is already armed; otherwise wait for the badge. */
+export function decideAttendanceWallScan(
+  armed: AttendancePairEmployee | null
+): AttendancePairDecision {
+  if (armed) {
+    return { type: "register", ...armed };
+  }
+  return { type: "wait_for_other", next: "badge" };
+}
+
+/** Badge: register if the wall QR is already waiting; otherwise this is not attendance yet. */
+export function decideAttendanceBadgeScan(
+  pendingHere: boolean,
+  employee: AttendancePairEmployee
+): AttendancePairDecision {
+  if (pendingHere) {
+    return { type: "register", ...employee };
+  }
+  return { type: "wait_for_other", next: "wall" };
+}
 
 export const ATTENDANCE_BEFORE_GO_LIVE_MESSAGE =
   "Test scan received. Attendance is counted from tomorrow (8 Sep). This does not start a piece. Tomorrow the time you scan is the official clock-in.";

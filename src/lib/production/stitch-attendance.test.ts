@@ -1,12 +1,17 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import {
   applyHereArm,
+  ATTENDANCE_BADGE_FIRST_MESSAGE,
   ATTENDANCE_BEFORE_GO_LIVE_MESSAGE,
+  ATTENDANCE_WALL_WAITING_MESSAGE,
   ATTENDANCE_CLOCK_IN_GO_LIVE_RIYADH_DAY,
   ATTENDANCE_WALL_QR_PAYLOAD,
   checkInCountsForAttendance,
   clearHereArm,
+  decideAttendanceBadgeScan,
+  decideAttendanceWallScan,
   hereArmOnKiosk,
   hereClockInMessage,
   isAttendanceClockInLive,
@@ -15,7 +20,15 @@ import {
   STITCH_HERE_QR_PAYLOAD,
   upsertHereCheckIn,
 } from "@/lib/production/stitch-attendance";
-import { expireStaleSewingState, SEWING_ARM_TIMEOUT_MS } from "@/lib/production/sewing-session-state";
+import {
+  applyEmployeeArm,
+  clearEmployeeArm,
+} from "@/lib/production/sewing-session-recovery";
+import {
+  expireStaleSewingState,
+  mostRecentArm,
+  SEWING_ARM_TIMEOUT_MS,
+} from "@/lib/production/sewing-session-state";
 import type { SewingSessionsFile } from "@/lib/types/sewing-sessions";
 import type { StitchAttendanceFile } from "@/lib/types/stitch-attendance";
 
@@ -51,6 +64,73 @@ describe("HERE wall QR", () => {
     assert.match(ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, /Test scan received/);
     assert.match(ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, /tomorrow/i);
     assert.match(ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, /does not start a piece/);
+  });
+
+  it("accepts wall QR first by holding a wait for the badge", () => {
+    assert.match(ATTENDANCE_WALL_WAITING_MESSAGE, /Scan your ID badge to sign in/);
+    assert.match(ATTENDANCE_BADGE_FIRST_MESSAGE, /Either order is accepted/);
+    let store = applyHereArm(emptyStore(), {
+      kiosk_id: "k1",
+      armed_at: "2026-09-07T04:00:00.000Z",
+    });
+    assert.equal(hereArmOnKiosk(store, "k1")?.kiosk_id, "k1");
+    store = clearHereArm(store, "k1");
+    assert.equal(hereArmOnKiosk(store, "k1"), null);
+  });
+
+  it("registers attendance for badge-then-wall and wall-then-badge", () => {
+    const haider = {
+      employee_id: "e1",
+      employee_name: "Haider",
+      employee_id_number: "111",
+    };
+    const at = "2026-09-08T05:00:00.000Z";
+    const workday = riyadhWorkdayKey(Date.parse(at));
+
+    const wallFirst = decideAttendanceWallScan(null);
+    assert.deepEqual(wallFirst, { type: "wait_for_other", next: "badge" });
+    let sewing = applyHereArm(emptyStore(), { kiosk_id: "k1", armed_at: at });
+    const wallThenBadge = decideAttendanceBadgeScan(Boolean(hereArmOnKiosk(sewing, "k1")), haider);
+    assert.equal(wallThenBadge.type, "register");
+    const wallThenBadgeSaved = upsertHereCheckIn(
+      { updated_at: null, check_ins: [] } satisfies StitchAttendanceFile,
+      { ...haider, kiosk_id: "k1", scanned_at: at, workday }
+    );
+    sewing = clearEmployeeArm(clearHereArm(sewing, "k1"), "k1", haider.employee_id);
+    assert.equal(wallThenBadgeSaved.created, true);
+    assert.equal(wallThenBadgeSaved.store.check_ins.length, 1);
+    assert.equal(hereArmOnKiosk(sewing, "k1"), null);
+    assert.equal(mostRecentArm(sewing, "k1"), null);
+
+    sewing = applyEmployeeArm(emptyStore(), {
+      kiosk_id: "k1",
+      employee_id: haider.employee_id,
+      employee_name: haider.employee_name,
+      employee_id_number: haider.employee_id_number,
+      workstation_id: "w1",
+      armed_at: at,
+    });
+    const badgeThenWall = decideAttendanceWallScan(mostRecentArm(sewing, "k1"));
+    assert.equal(badgeThenWall.type, "register");
+    if (badgeThenWall.type !== "register") throw new Error("expected register");
+    const badgeThenWallSaved = upsertHereCheckIn(
+      { updated_at: null, check_ins: [] } satisfies StitchAttendanceFile,
+      { ...haider, kiosk_id: "k1", scanned_at: at, workday }
+    );
+    sewing = clearEmployeeArm(clearHereArm(sewing, "k1"), "k1", badgeThenWall.employee_id);
+    assert.equal(badgeThenWallSaved.created, true);
+    assert.equal(badgeThenWallSaved.store.check_ins.length, 1);
+    assert.equal(hereArmOnKiosk(sewing, "k1"), null);
+    assert.equal(mostRecentArm(sewing, "k1"), null);
+  });
+
+  it("does not reject a wall-first scan in the live kiosk path", () => {
+    const source = readFileSync("src/lib/production/sewing-session.ts", "utf8");
+    assert.match(source, /decideAttendanceWallScan/);
+    assert.match(source, /decideAttendanceBadgeScan/);
+    assert.match(source, /ATTENDANCE_WALL_WAITING_MESSAGE/);
+    assert.match(source, /persistHereClockIn/);
+    assert.equal(source.includes("attendance_badge_required"), false);
   });
 
   it("arms one HERE wait per kiosk and clears it after clock-in", () => {

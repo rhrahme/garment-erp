@@ -71,9 +71,10 @@ export function HereAttendancePrintView({ copies = 6 }: { copies?: number }) {
       <style>{PRINT_CSS}</style>
       <div className="no-print" style={{ padding: "12px 16px" }}>
         <p style={{ fontFamily: "Helvetica, Arial, sans-serif", fontSize: "12pt", margin: 0 }}>
-          Print {sheets} Attendance posters. Hang them at the entrance. You may scan today
-          to test. Clock-in time counts from 8 Sep 2026 (Riyadh). Attendance does not
-          start a piece. When they stitch: badge again, then garment A4.
+          Print {sheets} Attendance posters. Hang them at the entrance. Badge and wall QR,
+          either order - both register. You may scan today to test. Clock-in time counts
+          from 8 Sep 2026 (Riyadh). Attendance does not start a piece. When they stitch:
+          badge again, then garment A4.
         </p>
       </div>
       {Array.from({ length: sheets }, (_, index) => (
@@ -94,17 +95,16 @@ export function HereAttendancePrintView({ copies = 6 }: { copies?: number }) {
             </svg>
           </div>
           <p className="here-print-steps">
-            1. Scan your personal ID badge.
-            <br />
-            2. Scan this wall QR ({ATTENDANCE_WALL_QR_PAYLOAD}).
+            Scan your ID badge and this wall QR ({ATTENDANCE_WALL_QR_PAYLOAD}), either
+            order.
             <br />
             Attendance only. Does not start a piece.
             <br />
             When you start stitching: scan your badge again, then the garment A4.
           </p>
           <p className="here-print-bn">
-            BANGLA: Age badge, tarpor ei wall QR. Eita attendance only. Stitching
-            shuru korte pore abar badge + A4.
+            BANGLA: Badge ar ei wall QR, jei order e hok. Dui order e register. Eita
+            attendance only. Stitching shuru korte pore abar badge + A4.
           </p>
         </section>
       ))}

@@ -80,8 +80,8 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
         <div>
           <p className="text-sm font-semibold text-amber-950">Print the wall Attendance QR today</p>
           <p className="mt-0.5 text-sm text-amber-900">
-            Hang it at the entrance. Attendance only - it does not start a piece.
-            When they stitch: badge again, then A4. Tablet camera is on Stitch kiosk.
+            Hang it at the entrance. Badge and wall QR, either order - both register.
+            Attendance only. When they stitch: badge again, then A4.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
