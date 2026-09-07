@@ -24,7 +24,7 @@ export async function generateAttendanceWallQrPdf(): Promise<Uint8Array> {
   doc.text("ATTENDANCE", pageW / 2, 16, { align: "center" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(12);
-  doc.text("Hajira  ·  sign in at the stitch kiosk", pageW / 2, 23, { align: "center" });
+  doc.text("Hajira - sign in at the stitch kiosk", pageW / 2, 23, { align: "center" });
 
   doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
 
