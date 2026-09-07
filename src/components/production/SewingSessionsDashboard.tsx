@@ -68,14 +68,6 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
           <div className="flex flex-wrap items-center gap-2">
             <StitchKioskPauseControl />
             <a
-              href="/stitch/attendance/print?copies=6"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-800 ring-1 ring-slate-300 hover:bg-slate-50"
-            >
-              Print attendance QR
-            </a>
-            <a
               href="/stitch"
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
             >
@@ -83,6 +75,22 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
             </a>
           </div>
         </div>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-5 py-3">
+        <div>
+          <p className="text-sm font-semibold text-amber-950">Print the wall Attendance QR today</p>
+          <p className="mt-0.5 text-sm text-amber-900">
+            Hang it at the stitch kiosk. You may test-scan today. Clock-in time counts from 8 Sep.
+          </p>
+        </div>
+        <a
+          href="/stitch/attendance/print?copies=6"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex min-h-[44px] items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+        >
+          Print attendance QR
+        </a>
       </div>
 
       <div className="space-y-4 px-5 py-4">
