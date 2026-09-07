@@ -71,8 +71,9 @@ export function HereAttendancePrintView({ copies = 6 }: { copies?: number }) {
       <style>{PRINT_CSS}</style>
       <div className="no-print" style={{ padding: "12px 16px" }}>
         <p style={{ fontFamily: "Helvetica, Arial, sans-serif", fontSize: "12pt", margin: 0 }}>
-          Print {sheets} Attendance posters. Hang them today. Clock-in starts 8 Sep 2026
-          (Riyadh). Same QR on every sheet. Do not scan a garment A4 for attendance.
+          Print {sheets} Attendance posters. Hang them today. You may scan today to test.
+          Clock-in time counts from 8 Sep 2026 (Riyadh). Same QR on every sheet. Do not
+          scan a garment A4 for attendance.
         </p>
       </div>
       {Array.from({ length: sheets }, (_, index) => (

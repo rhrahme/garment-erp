@@ -64,7 +64,7 @@ export const ATTENDANCE_BADGE_FIRST_MESSAGE =
   "Scan your ID badge first, then the wall QR.";
 
 export const ATTENDANCE_BEFORE_GO_LIVE_MESSAGE =
-  "Attendance starts tomorrow. Hang this QR today. From tomorrow: scan your badge, then this wall QR.";
+  "Test scan received. Attendance is counted from tomorrow (8 Sep). Tomorrow the time you scan is the official clock-in.";
 
 export function alreadySignedInMessage(employeeName: string): string {
   return `${employeeName} already signed in today.`;

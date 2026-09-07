@@ -188,6 +188,7 @@ describe("wall attendance QR how-to", () => {
     assert.equal(WALL_ATTENDANCE_QR_HOWTO_NOTICE_ID, "howto-wall-attendance-qr-v1");
     assert.match(WALL_ATTENDANCE_QR_HOWTO_TITLE, /wall QR/i);
     assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /Print attendance QR/);
+    assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /scan today to test/);
     assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /personal ID badge/);
     assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /Do not double-scan a garment A4/);
     assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /BANGLA/);

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   applyHereArm,
+  ATTENDANCE_BEFORE_GO_LIVE_MESSAGE,
   ATTENDANCE_CLOCK_IN_GO_LIVE_RIYADH_DAY,
   ATTENDANCE_WALL_QR_PAYLOAD,
   checkInCountsForAttendance,
@@ -47,6 +48,8 @@ describe("HERE wall QR", () => {
       ATTENDANCE_CLOCK_IN_GO_LIVE_RIYADH_DAY
     );
     assert.equal(isAttendanceClockInLive(Date.parse("2026-09-07T21:00:00.000Z")), true);
+    assert.match(ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, /Test scan received/);
+    assert.match(ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, /tomorrow/i);
   });
 
   it("arms one HERE wait per kiosk and clears it after clock-in", () => {

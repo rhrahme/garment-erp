@@ -17,7 +17,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   (`/stitch/attendance/print` or Floor now / Stitch Performance ->
   **Print attendance QR**). Clock-in counts from **8 Sep 2026** Riyadh.
   **Badge, then the wall QR.** No badge: "Scan your ID badge first."
-  Before go-live the QR is recognized and does not count. Writes
+  Today they may scan to test; that does not count present. From
+  8 Sep the scan time is the official clock-in. Writes
   `stitch_attendance` (not a `SewingSession`). No admin start email. No
   piece / performance hours. Badge stays armed for the first A4. One
   present mark per person per Riyadh day. The wall QR must not open or

@@ -261,6 +261,8 @@ async function persistHereClockIn(input: {
   kiosk_id: string;
   at: number;
   source?: "erp" | "zapier" | "api";
+  /** Official Zapier events only after go-live. Today is a floor test. */
+  notify?: boolean;
 }) {
   const attendance = await readStitchAttendanceFresh();
   const next = {
@@ -273,7 +275,7 @@ async function persistHereClockIn(input: {
   };
   const saved = upsertHereCheckIn(attendance, next);
   await writeStitchAttendance(saved.store);
-  if (saved.created) {
+  if (saved.created && input.notify !== false) {
     const payload = {
       employee_id: saved.check_in.employee_id,
       employee_name: saved.check_in.employee_name,
@@ -819,12 +821,6 @@ export async function processSewingKioskScan(
       );
     }
     store = clearHereArm(store, kioskId);
-    if (!isAttendanceClockInLive(at)) {
-      await writeSewingSessions(store);
-      return result(true, ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, store, kioskId, { arm: armed }, {
-        beep: "progress",
-      });
-    }
     const saved = await persistHereClockIn({
       employee_id: armed.employee_id,
       employee_name: armed.employee_name,
@@ -832,8 +828,14 @@ export async function processSewingKioskScan(
       kiosk_id: kioskId,
       at,
       source: input.source,
+      notify: isAttendanceClockInLive(at),
     });
     await writeSewingSessions(store);
+    if (!isAttendanceClockInLive(at)) {
+      return result(true, ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, store, kioskId, { arm: armed }, {
+        beep: "ok",
+      });
+    }
     return result(
       true,
       saved.created
@@ -942,12 +944,6 @@ export async function processSewingKioskScan(
         activity_job_function: activityJobFunction,
       };
       store = applyEmployeeArm(clearHereArm(store, kioskId), arm);
-      if (!isAttendanceClockInLive(at)) {
-        await writeSewingSessions(store);
-        return result(true, ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, store, kioskId, { arm }, {
-          beep: "progress",
-        });
-      }
       const saved = await persistHereClockIn({
         employee_id: ctx.employee_id,
         employee_name: ctx.employee_name,
@@ -955,8 +951,14 @@ export async function processSewingKioskScan(
         kiosk_id: kioskId,
         at,
         source: input.source,
+        notify: isAttendanceClockInLive(at),
       });
       await writeSewingSessions(store);
+      if (!isAttendanceClockInLive(at)) {
+        return result(true, ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, store, kioskId, { arm }, {
+          beep: "ok",
+        });
+      }
       return result(
         true,
         saved.created
