@@ -22,6 +22,9 @@ import {
   WALL_ATTENDANCE_QR_HOWTO_NOTICE_ID,
   WALL_ATTENDANCE_QR_HOWTO_TITLE,
   WALL_ATTENDANCE_QR_HOWTO_BODY,
+  WALL_ATTENDANCE_QR_HOWTO_V2_NOTICE_ID,
+  WALL_ATTENDANCE_QR_HOWTO_V2_TITLE,
+  WALL_ATTENDANCE_QR_HOWTO_V2_BODY,
   COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID,
   COPY_BASE_TO_BRAND_HOWTO_TITLE,
   COPY_BASE_TO_BRAND_HOWTO_BODY,
@@ -130,10 +133,11 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(CLIENT_SAMPLE_GARMENT_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID));
-    assert.ok(ids.includes(WALL_ATTENDANCE_QR_HOWTO_NOTICE_ID));
+    assert.ok(ids.includes(WALL_ATTENDANCE_QR_HOWTO_V2_NOTICE_ID));
+    assert.equal(!ids.includes(WALL_ATTENDANCE_QR_HOWTO_NOTICE_ID), true);
     assert.equal(
       PATTERN_HOWTO_NOTICES[0]?.id,
-      WALL_ATTENDANCE_QR_HOWTO_NOTICE_ID
+      WALL_ATTENDANCE_QR_HOWTO_V2_NOTICE_ID
     );
     assert.equal(PATTERN_HOWTO_NOTICES[1]?.id, COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID);
   });
@@ -184,18 +188,24 @@ describe("HERE wall attendance how-to", () => {
 });
 
 describe("wall attendance QR how-to", () => {
-  it("tells the floor to hang the QR today and sign in tomorrow, in English and Bangla", () => {
+  it("keeps the first wall-QR copy for already-emailed notices", () => {
     assert.equal(WALL_ATTENDANCE_QR_HOWTO_NOTICE_ID, "howto-wall-attendance-qr-v1");
     assert.match(WALL_ATTENDANCE_QR_HOWTO_TITLE, /wall QR/i);
-    assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /Print attendance QR/);
-    assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /scan today to test/);
-    assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /personal ID badge/);
-    assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /Do not double-scan a garment A4/);
-    assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /Use tablet camera/);
-    assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /BANGLA/);
-    assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /Nijer ID badge/);
+    assert.match(WALL_ATTENDANCE_QR_HOWTO_BODY, /Then scan the garment A4 to start work/);
+  });
+
+  it("tells the floor attendance is separate from stitching, in English and Bangla", () => {
+    assert.equal(WALL_ATTENDANCE_QR_HOWTO_V2_NOTICE_ID, "howto-wall-attendance-qr-v2");
+    assert.match(WALL_ATTENDANCE_QR_HOWTO_V2_TITLE, /separate from stitching/i);
+    assert.match(WALL_ATTENDANCE_QR_HOWTO_V2_BODY, /does not start a piece/);
+    assert.match(WALL_ATTENDANCE_QR_HOWTO_V2_BODY, /Scan your ID badge again/);
+    assert.match(WALL_ATTENDANCE_QR_HOWTO_V2_BODY, /Scan the garment A4/);
+    assert.match(WALL_ATTENDANCE_QR_HOWTO_V2_BODY, /Do not double-scan a garment A4/);
+    assert.match(WALL_ATTENDANCE_QR_HOWTO_V2_BODY, /Use tablet camera/);
+    assert.match(WALL_ATTENDANCE_QR_HOWTO_V2_BODY, /BANGLA/);
+    assert.match(WALL_ATTENDANCE_QR_HOWTO_V2_BODY, /Abar ID badge/);
     const howto = PATTERN_HOWTO_NOTICES.find(
-      (row) => row.id === WALL_ATTENDANCE_QR_HOWTO_NOTICE_ID
+      (row) => row.id === WALL_ATTENDANCE_QR_HOWTO_V2_NOTICE_ID
     );
     assert.equal(howto?.audience, "all_teams");
   });

@@ -11,6 +11,7 @@ import {
   applyCloseSession,
   applyPieceArm,
   applyStartFromEmployeeArm,
+  clearEmployeeArm,
   applyStartFromPieceArm,
   armedBadgeThenA4FinishesOpenSession,
   decideBadgeScan,
@@ -695,6 +696,24 @@ function pieceArm(
     ...partial,
   };
 }
+
+describe("attendance does not leave a stitch arm", () => {
+  it("clears only that employee's badge arm after clock-in", () => {
+    const store: SewingSessionsFile = {
+      updated_at: null,
+      kiosk_arms: [
+        empArm({ employee_id: "e-haider", employee_name: "Haider" }),
+        empArm({ employee_id: "e-other", employee_name: "Other" }),
+      ],
+      kiosk_piece_arms: [],
+      sessions: [],
+    };
+    const next = clearEmployeeArm(store, "k1", "e-haider");
+    assert.equal(next.kiosk_arms.length, 1);
+    assert.equal(next.kiosk_arms[0]?.employee_id, "e-other");
+    assert.equal(mostRecentArm(next, "k1")?.employee_id, "e-other");
+  });
+});
 
 describe("blind-floor stitch scan recovery", () => {
   it("A4 then badge -> session starts (piece-first)", () => {

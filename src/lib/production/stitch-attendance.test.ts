@@ -50,6 +50,7 @@ describe("HERE wall QR", () => {
     assert.equal(isAttendanceClockInLive(Date.parse("2026-09-07T21:00:00.000Z")), true);
     assert.match(ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, /Test scan received/);
     assert.match(ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, /tomorrow/i);
+    assert.match(ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, /does not start a piece/);
   });
 
   it("arms one HERE wait per kiosk and clears it after clock-in", () => {
@@ -100,6 +101,14 @@ describe("HERE wall QR", () => {
     assert.equal(again.store.check_ins.length, 1);
     assert.equal(again.check_in.scanned_at, "2026-09-07T05:00:00.000Z");
     assert.match(hereClockInMessage("Haider", Date.parse("2026-09-08T04:12:00.000Z")), /Haider signed in/);
+    assert.match(
+      hereClockInMessage("Haider", Date.parse("2026-09-08T04:12:00.000Z")),
+      /Attendance only/
+    );
+    assert.match(
+      hereClockInMessage("Haider", Date.parse("2026-09-08T04:12:00.000Z")),
+      /Scan badge and A4 later/
+    );
     assert.equal(
       checkInCountsForAttendance({ scanned_at: "2026-09-07T08:00:00.000Z" }),
       false

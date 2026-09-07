@@ -20,15 +20,17 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Today they may scan to test; that does not count present. From
   8 Sep the scan time is the official clock-in. Writes
   `stitch_attendance` (not a `SewingSession`). No admin start email. No
-  piece / performance hours. Badge stays armed for the first A4. One
-  present mark per person per Riyadh day. The wall QR must not open or
-  close a piece. Do **not** double-scan a garment A4 for attendance.
+  piece / performance hours. Attendance does **not** arm a piece. To
+  start stitching later they scan badge again, then the garment A4.
+  One present mark per person per Riyadh day. The wall QR must not
+  open or close a piece. Do **not** double-scan a garment A4 for
+  attendance.
   Floor **scanned** = a go-live clock-in on that day **or** a session
   that touches the day. Clock-ins before 8 Sep are ignored. Events:
   `production.attendance_checked_in` and
   `production.attendance_clocked_in` (no prices).
   `GET /api/production/attendance-qr` + `/api/v1/...` parity. How-to
-  `howto-wall-attendance-qr-v1` (English + Bangla) on every ERP account.
+  `howto-wall-attendance-qr-v2` (English + Bangla) on every ERP account.
   Tablet camera on **Stitch kiosk** (Use tablet camera) feeds the same
   scan queue as the USB gun (badge, wall QR, A4). Chrome on the tablet.
   Gun scanner still works. Production floor badge scan is still gun-only

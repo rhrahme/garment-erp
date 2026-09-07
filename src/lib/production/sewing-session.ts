@@ -59,6 +59,7 @@ import {
   applyBadgeFirstClosing,
   applyCloseSession,
   applyEmployeeArm,
+  clearEmployeeArm,
   applyPieceArm,
   applyStartFromEmployeeArm,
   applyStartFromPieceArm,
@@ -820,7 +821,7 @@ export async function processSewingKioskScan(
         failMeta
       );
     }
-    store = clearHereArm(store, kioskId);
+    store = clearEmployeeArm(clearHereArm(store, kioskId), kioskId, armed.employee_id);
     const saved = await persistHereClockIn({
       employee_id: armed.employee_id,
       employee_name: armed.employee_name,
@@ -832,7 +833,7 @@ export async function processSewingKioskScan(
     });
     await writeSewingSessions(store);
     if (!isAttendanceClockInLive(at)) {
-      return result(true, ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, store, kioskId, { arm: armed }, {
+      return result(true, ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, store, kioskId, { arm: null }, {
         beep: "ok",
       });
     }
@@ -843,7 +844,7 @@ export async function processSewingKioskScan(
         : alreadySignedInMessage(armed.employee_name),
       store,
       kioskId,
-      { arm: armed },
+      { arm: null },
       { beep: saved.created ? "ok" : "progress" }
     );
   }
@@ -933,17 +934,7 @@ export async function processSewingKioskScan(
           }
         );
       }
-      const arm: SewingKioskArm = {
-        kiosk_id: kioskId,
-        employee_id: ctx.employee_id,
-        employee_name: ctx.employee_name,
-        employee_id_number: ctx.employee_id_number,
-        workstation_id: ctx.workstation_id,
-        armed_at: nowIso(at),
-        work_kind: workKind,
-        activity_job_function: activityJobFunction,
-      };
-      store = applyEmployeeArm(clearHereArm(store, kioskId), arm);
+      store = clearEmployeeArm(clearHereArm(store, kioskId), kioskId, ctx.employee_id);
       const saved = await persistHereClockIn({
         employee_id: ctx.employee_id,
         employee_name: ctx.employee_name,
@@ -955,7 +946,7 @@ export async function processSewingKioskScan(
       });
       await writeSewingSessions(store);
       if (!isAttendanceClockInLive(at)) {
-        return result(true, ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, store, kioskId, { arm }, {
+        return result(true, ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, store, kioskId, { arm: null }, {
           beep: "ok",
         });
       }
@@ -966,7 +957,7 @@ export async function processSewingKioskScan(
           : alreadySignedInMessage(ctx.employee_name),
         store,
         kioskId,
-        { arm },
+        { arm: null },
         { beep: saved.created ? "ok" : "progress" }
       );
     }

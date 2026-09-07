@@ -38,16 +38,18 @@ export async function generateAttendanceWallQrPdf(): Promise<Uint8Array> {
   doc.text("ENGLISH", 16, stepsY);
   doc.text("1. Scan your personal ID badge.", 16, stepsY + 7);
   doc.text("2. Scan this wall QR.", 16, stepsY + 13);
-  doc.text("Do not scan a garment A4 for attendance.", 16, stepsY + 19);
+  doc.text("Attendance only. Does not start a piece.", 16, stepsY + 19);
+  doc.text("When you stitch: badge again, then A4.", 16, stepsY + 25);
 
   doc.text("BANGLA", pageW / 2 + 8, stepsY);
   doc.text("1. Nijer ID badge scan korun.", pageW / 2 + 8, stepsY + 7);
   doc.text("2. Ei wall QR scan korun.", pageW / 2 + 8, stepsY + 13);
-  doc.text("Garment A4 attendance er jonno na.", pageW / 2 + 8, stepsY + 19);
+  doc.text("Eita attendance only. Piece start na.", pageW / 2 + 8, stepsY + 19);
+  doc.text("Stitching: pore abar badge + A4.", pageW / 2 + 8, stepsY + 25);
 
   doc.setFontSize(10);
   doc.text(
-    "Clock-in starts 8 Sep 2026 (Riyadh). Today: print and hang. This QR never starts or stops garment work.",
+    "Clock-in starts 8 Sep 2026 (Riyadh). Hang at the entrance. This QR never starts or stops garment work.",
     pageW / 2,
     pageH - 8,
     { align: "center" }

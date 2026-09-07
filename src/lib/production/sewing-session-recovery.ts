@@ -292,6 +292,20 @@ export function applyEmployeeArm(
   };
 }
 
+/** Drop one employee's stitch arm on a kiosk. Attendance must not leave them armed. */
+export function clearEmployeeArm(
+  store: SewingSessionsFile,
+  kioskId: string,
+  employeeId: string
+): SewingSessionsFile {
+  return {
+    ...store,
+    kiosk_arms: store.kiosk_arms.filter(
+      (row) => !(row.kiosk_id === kioskId && row.employee_id === employeeId)
+    ),
+  };
+}
+
 /** Apply piece-first arm (one pending piece per kiosk). */
 export function applyPieceArm(
   store: SewingSessionsFile,

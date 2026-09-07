@@ -64,14 +64,14 @@ export const ATTENDANCE_BADGE_FIRST_MESSAGE =
   "Scan your ID badge first, then the wall QR.";
 
 export const ATTENDANCE_BEFORE_GO_LIVE_MESSAGE =
-  "Test scan received. Attendance is counted from tomorrow (8 Sep). Tomorrow the time you scan is the official clock-in.";
+  "Test scan received. Attendance is counted from tomorrow (8 Sep). This does not start a piece. Tomorrow the time you scan is the official clock-in.";
 
 export function alreadySignedInMessage(employeeName: string): string {
   return `${employeeName} already signed in today.`;
 }
 
 export function hereClockInMessage(employeeName: string, atMs: number): string {
-  return `${employeeName} signed in - ${formatRiyadhClock(atMs)}. Now scan the first A4 to start work.`;
+  return `${employeeName} signed in - ${formatRiyadhClock(atMs)}. Attendance only. Scan badge and A4 later to start a piece.`;
 }
 
 export function hereArmsOnKiosk(
