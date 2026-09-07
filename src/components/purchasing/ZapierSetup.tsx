@@ -76,6 +76,7 @@ const OUTBOUND_EVENTS = [
   "production.scan",
   "production.sewing_session_started",
   "production.attendance_checked_in",
+  "production.attendance_clocked_in",
   "production.sewing_session_ended",
   "production.sewing_scan_failed",
   "production.sewing_testing_reset",
@@ -238,6 +239,7 @@ export function ZapierSetup() {
               GET {baseUrl}/api/v1/production/sewing-session/employee-work
               (?period=day|week|month&employee_id) attendance + work
             </li>
+            <li>GET {baseUrl}/api/v1/production/attendance-qr (wall Attendance PDF)</li>
             <li>POST {baseUrl}/api/v1/production/sewing-session/scan</li>
             <li>
               GET/POST {baseUrl}/api/v1/production/sewing-session/start-without-qr

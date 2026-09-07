@@ -1,6 +1,6 @@
 import type { SewingKioskUiPhase } from "@/lib/types/sewing-sessions";
 
-export type SewingScanKind = "badge" | "piece" | "unknown";
+export type SewingScanKind = "badge" | "piece" | "attendance" | "unknown";
 
 export type SewingScanFailureReasonCode =
   | "empty_scan"
@@ -17,6 +17,7 @@ export type SewingScanFailureReasonCode =
   | "ambiguous_shared_piece"
   | "not_expat_badge"
   | "kiosk_paused"
+  | "attendance_badge_required"
   // Legacy rows may still store job_not_stitcher from the old tailor-only gate.
   | "job_not_stitcher";
 

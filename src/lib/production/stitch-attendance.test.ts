@@ -2,9 +2,13 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   applyHereArm,
+  ATTENDANCE_CLOCK_IN_GO_LIVE_RIYADH_DAY,
+  ATTENDANCE_WALL_QR_PAYLOAD,
+  checkInCountsForAttendance,
   clearHereArm,
   hereArmOnKiosk,
   hereClockInMessage,
+  isAttendanceClockInLive,
   isHereWallQr,
   riyadhWorkdayKey,
   STITCH_HERE_QR_PAYLOAD,
@@ -25,11 +29,24 @@ function emptyStore(): SewingSessionsFile {
 }
 
 describe("HERE wall QR", () => {
-  it("accepts the printed poster payload and rejects badges and A4 codes", () => {
+  it("accepts ATTEND and hung HAGAN-HERE posters, never a badge or A4", () => {
+    assert.equal(ATTENDANCE_WALL_QR_PAYLOAD, "ATTEND");
+    assert.equal(isHereWallQr(ATTENDANCE_WALL_QR_PAYLOAD), true);
+    assert.equal(isHereWallQr("  attend  "), true);
     assert.equal(isHereWallQr(STITCH_HERE_QR_PAYLOAD), true);
     assert.equal(isHereWallQr("  hagan-here  "), true);
     assert.equal(isHereWallQr("EMP:2587734852"), false);
     assert.equal(isHereWallQr("FR-0132-L07-JKT-1/2"), false);
+  });
+
+  it("does not count 7 Sep Riyadh and does count 8 Sep Riyadh", () => {
+    assert.equal(riyadhWorkdayKey(Date.parse("2026-09-07T20:30:00.000Z")), "2026-09-07");
+    assert.equal(isAttendanceClockInLive(Date.parse("2026-09-07T20:30:00.000Z")), false);
+    assert.equal(
+      riyadhWorkdayKey(Date.parse("2026-09-07T21:00:00.000Z")),
+      ATTENDANCE_CLOCK_IN_GO_LIVE_RIYADH_DAY
+    );
+    assert.equal(isAttendanceClockInLive(Date.parse("2026-09-07T21:00:00.000Z")), true);
   });
 
   it("arms one HERE wait per kiosk and clears it after clock-in", () => {
@@ -79,6 +96,14 @@ describe("HERE wall QR", () => {
     assert.equal(again.created, false);
     assert.equal(again.store.check_ins.length, 1);
     assert.equal(again.check_in.scanned_at, "2026-09-07T05:00:00.000Z");
-    assert.match(hereClockInMessage("Haider", Date.parse("2026-09-07T04:12:00.000Z")), /Haider here/);
+    assert.match(hereClockInMessage("Haider", Date.parse("2026-09-08T04:12:00.000Z")), /Haider signed in/);
+    assert.equal(
+      checkInCountsForAttendance({ scanned_at: "2026-09-07T08:00:00.000Z" }),
+      false
+    );
+    assert.equal(
+      checkInCountsForAttendance({ scanned_at: "2026-09-08T05:00:00.000Z" }),
+      true
+    );
   });
 });

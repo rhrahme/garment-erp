@@ -5,11 +5,20 @@ import type {
   StitchAttendanceFile,
 } from "@/lib/types/stitch-attendance";
 
-/** Printed on every wall poster. Distinct from EMP* badges and FR-* A4 pieces. */
+/** Official wall placard. Distinct from EMP* badges and FR-* A4 pieces. */
+export const ATTENDANCE_WALL_QR_PAYLOAD = "ATTEND";
+
+/** Already-printed Sep 7 posters. Still accepted so hung sheets keep working. */
 export const STITCH_HERE_QR_PAYLOAD = "HAGAN-HERE";
 
+/** First Riyadh calendar day that counts as present. Print the QR the day before. */
+export const ATTENDANCE_CLOCK_IN_GO_LIVE_RIYADH_DAY = "2026-09-08";
+
 export function isHereWallQr(raw: string | null | undefined): boolean {
-  return normalizeHereQr(raw) === STITCH_HERE_QR_PAYLOAD;
+  const normalized = normalizeHereQr(raw);
+  return (
+    normalized === ATTENDANCE_WALL_QR_PAYLOAD || normalized === STITCH_HERE_QR_PAYLOAD
+  );
 }
 
 export function normalizeHereQr(raw: string | null | undefined): string {
@@ -38,6 +47,31 @@ export function formatRiyadhClock(atMs: number): string {
     minute: "2-digit",
     hourCycle: "h23",
   }).format(new Date(atMs));
+}
+
+export function isAttendanceClockInLive(atMs: number): boolean {
+  return riyadhWorkdayKey(atMs) >= ATTENDANCE_CLOCK_IN_GO_LIVE_RIYADH_DAY;
+}
+
+export function checkInCountsForAttendance(
+  row: Pick<StitchAttendanceCheckIn, "scanned_at">
+): boolean {
+  const stamped = Date.parse(row.scanned_at);
+  return Number.isFinite(stamped) && isAttendanceClockInLive(stamped);
+}
+
+export const ATTENDANCE_BADGE_FIRST_MESSAGE =
+  "Scan your ID badge first, then the wall QR.";
+
+export const ATTENDANCE_BEFORE_GO_LIVE_MESSAGE =
+  "Attendance starts tomorrow. Hang this QR today. From tomorrow: scan your badge, then this wall QR.";
+
+export function alreadySignedInMessage(employeeName: string): string {
+  return `${employeeName} already signed in today.`;
+}
+
+export function hereClockInMessage(employeeName: string, atMs: number): string {
+  return `${employeeName} signed in - ${formatRiyadhClock(atMs)}. Now scan the first A4 to start work.`;
 }
 
 export function hereArmsOnKiosk(
@@ -105,8 +139,4 @@ export function checkInTouchesPeriod(
 ): boolean {
   const t = Date.parse(row.scanned_at);
   return Number.isFinite(t) && t >= window.from_ms && t <= window.to_ms;
-}
-
-export function hereClockInMessage(employeeName: string, atMs: number): string {
-  return `${employeeName} here - ${formatRiyadhClock(atMs)}. Scan A4 when you start a piece.`;
 }

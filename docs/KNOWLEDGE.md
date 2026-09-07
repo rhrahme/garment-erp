@@ -12,14 +12,22 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   that already-open A4**, or **A4 then badge / same A4 again**. Kiosk
   login: `stitch@hagan.pro`. Do not assume a floor video is A4-only;
   the first seconds are usually the badge card, then the paper.
-- **Morning HERE attendance** (Sep 7 2026): print several wall posters
-  (`/stitch/attendance/print`, payload `HAGAN-HERE`). Scan the poster
-  and the personal badge (either order). Marks them present on the
-  admin Floor dashboard. Does **not** open or close a sewing session.
-  Leftover Live pieces stay open. Same person same Riyadh day is one
-  check-in. Store: `stitch_attendance`. Event:
-  `production.attendance_checked_in`. How-to
-  `howto-here-wall-attendance-v1` (EN+BN, all teams).
+- **Morning attendance wall QR** (Sep 7 2026): official payload `ATTEND`
+  (already-printed `HAGAN-HERE` posters still work). Print today
+  (`/stitch/attendance/print` or Floor now / Stitch Performance ->
+  **Print attendance QR**). Clock-in counts from **8 Sep 2026** Riyadh.
+  **Badge, then the wall QR.** No badge: "Scan your ID badge first."
+  Before go-live the QR is recognized and does not count. Writes
+  `stitch_attendance` (not a `SewingSession`). No admin start email. No
+  piece / performance hours. Badge stays armed for the first A4. One
+  present mark per person per Riyadh day. The wall QR must not open or
+  close a piece. Do **not** double-scan a garment A4 for attendance.
+  Floor **scanned** = a go-live clock-in on that day **or** a session
+  that touches the day. Clock-ins before 8 Sep are ignored. Events:
+  `production.attendance_checked_in` and
+  `production.attendance_clocked_in` (no prices).
+  `GET /api/production/attendance-qr` + `/api/v1/...` parity. How-to
+  `howto-wall-attendance-qr-v1` (English + Bangla) on every ERP account.
 - **Floor video diagnosis** (Aug 20 2026): extract the opening frames
   before writing a fix. Live log `ready, N already open` after a card
   scan is stacked arm, not "they never scanned a badge". Badge then the
@@ -213,7 +221,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   closes a session while a stop request is still pending, the close honors
   the requested stop time and auto-resolves the request
   (`consumePendingStopRequestForSession`), so stale "Session is no longer
-  open" requests never linger on `/approvals`. Do not revert to closing at
+  open" requests never linger on `/approvals`. Confirm Stop on an
+  already-closed session must acknowledge (not 409). If `requested_at`
+  sits between `started_at` and the current `ended_at`, clamp the end
+  (`applyStopRequestToSession`). Do not revert to closing at
   scan/approval time.
 - **Workday cap 22:00 Riyadh** (Aug 18 2026, auto-close + overtime Aug 19):
   the floor finishes at 10 PM. Forgotten Live/open/closing sessions (no
@@ -368,8 +379,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   how-to, admin is emailed when it is sent and again when a Pattern
   operator opens any Pattern page and sees the banner. When we explain a
   floor fix to Pattern, add a catalog entry so they get the email and the
-  in-app banner - do not only tell the owner in chat.   Notices: morning HERE poster then badge
-  (`howto-here-wall-attendance-v1`), copy a
+  in-app banner - do not only tell the owner in chat.   Notices: morning
+  attendance badge then wall QR (`howto-wall-attendance-qr-v1`), copy a
   house base to another brand then edit (`howto-copy-base-to-brand-v1`),
   both
   Pattern logins type a client name and search looks in every brand
@@ -970,7 +981,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
-- [session-2026-09-07](session-2026-09-07.md) - All-teams how-to on every ERP account (email + banner + How-to tab)
+- [session-2026-09-07](session-2026-09-07.md) - Wall Attendance QR; clock-in from 8 Sep Riyadh; Confirm Stop on closed sessions; HERE posters; all-teams how-to
 - [session-2026-09-06](session-2026-09-06.md) - Floor nicknames; admin Select all; client name on fabric rows; start without printed QR; client garment drop-off Samples view; client dropped-off garments
 - [session-2026-09-01](session-2026-09-01.md) - Serwal garment type; HR overtime pay and mistake deductions shipped
 - [session-2026-08-27](session-2026-08-27.md) - Inventory Boxes + Alert; HR overtime pay and mistake deductions

@@ -1,5 +1,5 @@
 import { qrSvgModel } from "@/lib/production/qr-render";
-import { STITCH_HERE_QR_PAYLOAD } from "@/lib/production/stitch-attendance";
+import { ATTENDANCE_WALL_QR_PAYLOAD } from "@/lib/production/stitch-attendance";
 
 const PRINT_CSS = `
 @page {
@@ -65,26 +65,27 @@ html, body {
 
 export function HereAttendancePrintView({ copies = 6 }: { copies?: number }) {
   const sheets = Math.max(1, Math.min(copies, 24));
-  const qr = qrSvgModel(STITCH_HERE_QR_PAYLOAD);
+  const qr = qrSvgModel(ATTENDANCE_WALL_QR_PAYLOAD);
   return (
     <>
       <style>{PRINT_CSS}</style>
       <div className="no-print" style={{ padding: "12px 16px" }}>
         <p style={{ fontFamily: "Helvetica, Arial, sans-serif", fontSize: "12pt", margin: 0 }}>
-          Print {sheets} wall posters. Tape them by the stitch kiosk. Same QR on every sheet.
+          Print {sheets} Attendance posters. Hang them today. Clock-in starts 8 Sep 2026
+          (Riyadh). Same QR on every sheet. Do not scan a garment A4 for attendance.
         </p>
       </div>
       {Array.from({ length: sheets }, (_, index) => (
         <section key={index} className="here-print-sheet">
-          <p className="here-print-kicker">STITCH ATTENDANCE</p>
-          <h1 className="here-print-title">I am here</h1>
+          <p className="here-print-kicker">ATTENDANCE</p>
+          <h1 className="here-print-title">Hajira</h1>
           <div className="here-print-qr">
             <svg
               viewBox={`0 0 ${qr.edge} ${qr.edge}`}
               width="360"
               height="360"
               role="img"
-              aria-label={`QR ${STITCH_HERE_QR_PAYLOAD}`}
+              aria-label={`QR ${ATTENDANCE_WALL_QR_PAYLOAD}`}
               shapeRendering="crispEdges"
             >
               <rect width={qr.edge} height={qr.edge} fill="#ffffff" />
@@ -92,14 +93,15 @@ export function HereAttendancePrintView({ copies = 6 }: { copies?: number }) {
             </svg>
           </div>
           <p className="here-print-steps">
-            1. Scan this poster on the stitch kiosk.
+            1. Scan your personal ID badge.
             <br />
-            2. Scan your ID badge.
+            2. Scan this wall QR ({ATTENDANCE_WALL_QR_PAYLOAD}).
             <br />
             Then scan the garment A4 when you start a piece.
           </p>
           <p className="here-print-bn">
-            BANGLA: Age ei poster scan korun, tarpor nijer badge. Piece start korte A4 scan.
+            BANGLA: Age nijer ID badge scan, tarpor ei wall QR. Piece start korte A4 scan.
+            Garment A4 attendance er jonno na.
           </p>
         </section>
       ))}

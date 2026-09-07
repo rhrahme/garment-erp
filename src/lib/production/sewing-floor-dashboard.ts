@@ -16,6 +16,7 @@ import { floorActivityLabelFromJobFunctions } from "@/lib/production/sewing-sess
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 import type { SewingSession, SewingSessionsFile } from "@/lib/types/sewing-sessions";
 import {
+  checkInCountsForAttendance,
   checkInTouchesPeriod,
 } from "@/lib/production/stitch-attendance";
 import type { StitchAttendanceCheckIn } from "@/lib/types/stitch-attendance";
@@ -141,6 +142,7 @@ export function sewingFloorAttendance(
 ): SewingFloorAttendance {
   const window = sewingPeriodWindow(period, at);
   const sessions = store.sessions ?? [];
+  const liveCheckIns = checkIns.filter(checkInCountsForAttendance);
   const expectedEmployees = employees.filter(employeeExpectedOnStitchFloor);
 
   const missing_rows: SewingFloorAttendanceRow[] = [];
@@ -154,7 +156,7 @@ export function sewingFloorAttendance(
     const live = inPeriod.some((row) => row.status === "open" || row.status === "closing");
     const scored = inPeriod.filter((row) => countsTowardPerformance(row, window));
     const duration_sec = scored.reduce((sum, row) => sum + (row.duration_sec ?? 0), 0);
-    const here = checkIns.find(
+    const here = liveCheckIns.find(
       (row) => checkInMatchesKeys(row, keys) && checkInTouchesPeriod(row, window)
     );
     const row: SewingFloorAttendanceRow = {

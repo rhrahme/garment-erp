@@ -153,8 +153,8 @@ describe("sewingFloorAttendance", () => {
     assert.equal(dash.scanned_rows.find((row) => row.employee_id === "e1")?.count, 1);
   });
 
-  it("counts a HERE clock-in as present with 0 pieces", () => {
-    const at = new Date(2026, 7, 19, 12, 0, 0, 0).getTime();
+  it("counts a wall QR clock-in as present with 0 pieces", () => {
+    const at = Date.parse("2026-09-08T08:00:00.000Z");
     const roster = [
       employee({ id: "e3", full_name: "Ashraf", employee_id_number: "333", job_functions: ["cutter"] }),
     ];
@@ -165,14 +165,34 @@ describe("sewingFloorAttendance", () => {
         employee_name: "Ashraf",
         employee_id_number: "333",
         kiosk_id: "k1",
-        scanned_at: new Date(at - 60_000).toISOString(),
-        workday: "2026-08-19",
+        scanned_at: "2026-09-08T05:10:00.000Z",
+        workday: "2026-09-08",
       },
     ]);
     assert.equal(dash.scanned, 1);
     assert.equal(dash.missing, 0);
     assert.equal(dash.scanned_rows[0]?.count, 0);
     assert.ok(dash.scanned_rows[0]?.checked_in_at);
+  });
+
+  it("ignores clock-ins from before the Riyadh go-live day", () => {
+    const at = Date.parse("2026-09-07T18:00:00.000Z");
+    const roster = [
+      employee({ id: "e3", full_name: "Ashraf", employee_id_number: "333", job_functions: ["cutter"] }),
+    ];
+    const store: SewingSessionsFile = { updated_at: null, kiosk_arms: [], sessions: [] };
+    const dash = sewingFloorAttendance(store, roster, "day", at, [
+      {
+        employee_id: "e3",
+        employee_name: "Ashraf",
+        employee_id_number: "333",
+        kiosk_id: "k1",
+        scanned_at: "2026-09-07T08:00:00.000Z",
+        workday: "2026-09-07",
+      },
+    ]);
+    assert.equal(dash.scanned, 0);
+    assert.equal(dash.missing, 1);
   });
 
   it("still counts a rejected overtime scan as present", () => {

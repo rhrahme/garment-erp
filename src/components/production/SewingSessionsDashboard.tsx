@@ -68,6 +68,14 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
           <div className="flex flex-wrap items-center gap-2">
             <StitchKioskPauseControl />
             <a
+              href="/stitch/attendance/print?copies=6"
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-800 ring-1 ring-slate-300 hover:bg-slate-50"
+            >
+              Print attendance QR
+            </a>
+            <a
               href="/stitch"
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
             >

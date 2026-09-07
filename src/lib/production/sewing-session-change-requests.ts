@@ -104,6 +104,62 @@ function durationBetween(startedAt: string, endedAt: string | null): number | nu
   return Math.round((end - start) / 1000);
 }
 
+/**
+ * Confirm Stop on an already-closed session must acknowledge, not 409.
+ * If the requested stop sits between start and the current end, clamp the end
+ * (kiosk close may have inflated elapsed time).
+ */
+export function applyStopRequestToSession(
+  session: SewingSession,
+  requestedAt: string | null | undefined
+): { session: SewingSession; alreadyClosed: boolean; changed: boolean } {
+  if (session.status === "closed") {
+    const currentEnded = session.ended_at;
+    const requestedMs = Date.parse(requestedAt ?? "");
+    const startedMs = Date.parse(session.started_at);
+    const endedMs = Date.parse(currentEnded ?? "");
+    if (
+      Number.isFinite(requestedMs) &&
+      Number.isFinite(startedMs) &&
+      Number.isFinite(endedMs) &&
+      requestedMs >= startedMs &&
+      requestedMs <= endedMs
+    ) {
+      const endedAt = new Date(requestedMs).toISOString();
+      return {
+        session: {
+          ...session,
+          ended_at: endedAt,
+          duration_sec: durationBetween(session.started_at, endedAt),
+          closing_armed_at: null,
+          closing_confirm: null,
+        },
+        alreadyClosed: true,
+        changed: endedAt !== currentEnded,
+      };
+    }
+    return { session, alreadyClosed: true, changed: false };
+  }
+
+  if (session.status !== "open" && session.status !== "closing") {
+    return { session, alreadyClosed: true, changed: false };
+  }
+
+  const endedAt = stopRequestEndedAt(requestedAt, session.started_at);
+  return {
+    session: {
+      ...session,
+      status: "closed",
+      ended_at: endedAt,
+      duration_sec: durationBetween(session.started_at, endedAt),
+      closing_armed_at: null,
+      closing_confirm: null,
+    },
+    alreadyClosed: false,
+    changed: true,
+  };
+}
+
 function applyEditPatch(session: SewingSession, patch: SewingSessionEditPatch): Result<{ session: SewingSession }> {
   const next: SewingSession = { ...session };
   if (patch.employee_id_number !== undefined && patch.employee_id_number !== null) {
@@ -625,45 +681,47 @@ async function applyApprovedMutation(
   }
 
   if (request.action === "stop") {
-    if (current.status !== "open" && current.status !== "closing") {
-      return { ok: false, status: 409, error: "Session is no longer open; cannot stop." };
-    }
-    const endedAt = stopRequestEndedAt(request.requested_at, current.started_at);
-    const closed: SewingSession = {
-      ...current,
-      status: "closed",
-      ended_at: endedAt,
-      duration_sec: durationBetween(current.started_at, endedAt),
-      closing_armed_at: null,
-      closing_confirm: null,
-    };
-    const nextSessions = [...store.sessions];
-    nextSessions[index] = closed;
-    await writeSewingSessions({
-      ...store,
-      sessions: nextSessions,
-      kiosk_arms: (store.kiosk_arms ?? []).filter(
-        (arm) => arm.employee_id !== current.employee_id
-      ),
-      kiosk_piece_arms: (store.kiosk_piece_arms ?? []).filter(
-        (arm) => arm.production_code !== current.production_code
-      ),
-    });
-    try {
-      await notifyIntegration("production.sewing_session_ended", {
-        session_id: closed.id,
-        kiosk_id: closed.kiosk_id,
-        employee_id: closed.employee_id,
-        employee_name: closed.employee_name,
-        production_code: closed.production_code,
-        scan_code: closed.scan_code,
-        started_at: closed.started_at,
-        ended_at: closed.ended_at,
-        duration_sec: closed.duration_sec,
-        via_change_request: request.id,
+    const applied = applyStopRequestToSession(current, request.requested_at);
+    if (applied.changed) {
+      const closed = applied.session;
+      const nextSessions = [...store.sessions];
+      nextSessions[index] = closed;
+      await writeSewingSessions({
+        ...store,
+        sessions: nextSessions,
+        kiosk_arms: (store.kiosk_arms ?? []).filter(
+          (arm) => arm.employee_id !== current.employee_id
+        ),
+        kiosk_piece_arms: (store.kiosk_piece_arms ?? []).filter(
+          (arm) => arm.production_code !== current.production_code
+        ),
       });
-    } catch {
-      /* non-fatal */
+      if (!applied.alreadyClosed) {
+        try {
+          await notifyIntegration("production.sewing_session_ended", {
+            session_id: closed.id,
+            kiosk_id: closed.kiosk_id,
+            employee_id: closed.employee_id,
+            employee_name: closed.employee_name,
+            production_code: closed.production_code,
+            scan_code: closed.scan_code,
+            started_at: closed.started_at,
+            ended_at: closed.ended_at,
+            duration_sec: closed.duration_sec,
+            via_change_request: request.id,
+          });
+        } catch {
+          /* non-fatal */
+        }
+      }
+    }
+    if (applied.alreadyClosed) {
+      return {
+        ok: true,
+        detail: applied.changed
+          ? "Session was already closed. End time set to the requested stop."
+          : "Session was already closed. Request acknowledged.",
+      };
     }
     return { ok: true, detail: "Session stopped." };
   }

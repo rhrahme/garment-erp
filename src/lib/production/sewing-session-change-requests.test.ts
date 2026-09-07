@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { protectSewingSessionChangeRequestsWrite } from "@/lib/production/protect-sewing-session-change-requests-write";
-import { stopRequestEndedAt } from "@/lib/production/sewing-session-change-requests";
+import {
+  applyStopRequestToSession,
+  stopRequestEndedAt,
+} from "@/lib/production/sewing-session-change-requests";
+import type { SewingSession } from "@/lib/types/sewing-sessions";
 import { summarizeSewingSessionChangeRequest } from "@/lib/production/sewing-session-change-request-summary";
 import type { SewingSessionChangeRequest } from "@/lib/types/sewing-session-change-requests";
 
@@ -67,6 +71,47 @@ describe("stopRequestEndedAt", () => {
       stopRequestEndedAt("2026-08-16T09:00:00.000Z", startedAt, now),
       now().toISOString()
     );
+  });
+});
+
+describe("applyStopRequestToSession", () => {
+  const closed: SewingSession = {
+    id: "sew-closed",
+    kiosk_id: "k1",
+    employee_id: "e1",
+    employee_name: "Ibrahim",
+    employee_id_number: "1",
+    production_code: "FR-0141-L04-TR",
+    scan_code: "FR-0141-L04-TR",
+    workstation_id: null,
+    started_at: "2026-08-20T05:00:00.000Z",
+    ended_at: "2026-08-21T08:00:00.000Z",
+    duration_sec: 97200,
+    status: "closed",
+    closing_armed_at: null,
+    work_order_id: null,
+    so_number: "SO-2026-0141",
+    piece_mark: "TR",
+    fabric_cut_code: null,
+    client_name: "Pr Khaled",
+  };
+
+  it("acknowledges Confirm Stop on an already-closed session and clamps inflated end time", () => {
+    const applied = applyStopRequestToSession(closed, "2026-08-20T14:00:00.000Z");
+    assert.equal(applied.alreadyClosed, true);
+    assert.equal(applied.changed, true);
+    assert.equal(applied.session.status, "closed");
+    assert.equal(applied.session.ended_at, "2026-08-20T14:00:00.000Z");
+  });
+
+  it("acknowledges an already-closed session without changing a tighter end time", () => {
+    const applied = applyStopRequestToSession(
+      { ...closed, ended_at: "2026-08-20T12:00:00.000Z", duration_sec: 25200 },
+      "2026-08-20T16:00:00.000Z"
+    );
+    assert.equal(applied.alreadyClosed, true);
+    assert.equal(applied.changed, false);
+    assert.equal(applied.session.ended_at, "2026-08-20T12:00:00.000Z");
   });
 });
 
