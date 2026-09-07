@@ -14,9 +14,13 @@ import {
   redactPurchaseOrderPrices,
   redactSalesOrderFabricPrices,
 } from "@/lib/auth/fabric-price-access";
+import { activityFromSalesOrderHistory } from "@/lib/activity/order-trace";
+import { activityActorName, activityTeamFromEmail, ACTIVITY_TEAM_LABEL } from "@/lib/activity/team";
 import { getSessionContext } from "@/lib/auth/session";
+import { listActivityForSalesOrder } from "@/lib/data/activity-events";
 import { getCustomerInvoiceBySalesOrderIdFresh } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { listGarmentTypeChangesForSalesOrder } from "@/lib/data/garment-type-changes";
 import { getSalesOrderByIdFresh, isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
 import { ensureFabricOrdersLoaded, listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 import {
@@ -41,7 +45,7 @@ export default async function FabricOrderDetailPage({
   const { id } = await params;
   const removedRedirect = getRemovedSalesOrderRedirectForKey(id);
   if (removedRedirect) redirect(removedRedirect);
-  await ensureDocumentsLoaded(["sales_orders", "customer_invoices"]);
+  await ensureDocumentsLoaded(["sales_orders", "customer_invoices", "activity_events", "garment_type_changes"]);
   await ensureFabricOrdersLoaded();
   const rawOrder = await getSalesOrderByIdFresh(id);
   if (!rawOrder) notFound();
@@ -67,15 +71,32 @@ export default async function FabricOrderDetailPage({
     showFabricCostToAdmin ? resolveFabricCostForOrderLines(rawOrder.fabric_lines) : null;
   const fabricCost = fabricCostResult?.summary ?? null;
   const supplierEmailSummary = summarizeSalesOrderSupplierEmail(order, fabricPos);
+  const activity = activityFromSalesOrderHistory({
+    order: rawOrder,
+    garmentChanges: listGarmentTypeChangesForSalesOrder(order.id),
+    storedEvents: await listActivityForSalesOrder({
+      soNumber: rawOrder.so_number,
+      orderId: rawOrder.id,
+    }),
+  });
+  const createdByName = rawOrder.created_by ? activityActorName(rawOrder.created_by) : null;
+  const createdByTeam = rawOrder.created_by
+    ? ACTIVITY_TEAM_LABEL[activityTeamFromEmail(rawOrder.created_by)]
+    : null;
 
   return (
     <div>
       <PageHeader
         title={order.so_number}
         description={
-          order.product_article
-            ? `${order.client_name} · ${order.product_article} · ${order.client_code}`
-            : `${order.client_name} · ${order.client_code}`
+          [
+            order.product_article
+              ? `${order.client_name} · ${order.product_article} · ${order.client_code}`
+              : `${order.client_name} · ${order.client_code}`,
+            createdByName ? `Created by ${createdByName}${createdByTeam ? ` (${createdByTeam})` : ""}` : null,
+          ]
+            .filter(Boolean)
+            .join(" · ")
         }
         action={
           <div className="flex flex-wrap items-center gap-3">
@@ -185,6 +206,7 @@ export default async function FabricOrderDetailPage({
         isClientManager={session.isClientManager}
         productionMode={session.isClientManager}
         viewMode="fabric_order"
+        activity={activity}
       />
     </div>
   );

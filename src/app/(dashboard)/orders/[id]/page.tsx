@@ -16,7 +16,10 @@ import {
   redactPurchaseOrderPrices,
   redactSalesOrderFabricPrices,
 } from "@/lib/auth/fabric-price-access";
+import { activityFromSalesOrderHistory } from "@/lib/activity/order-trace";
+import { activityActorName, activityTeamFromEmail, ACTIVITY_TEAM_LABEL } from "@/lib/activity/team";
 import { getSessionContext } from "@/lib/auth/session";
+import { listActivityForSalesOrder } from "@/lib/data/activity-events";
 import { getCustomerInvoiceBySalesOrderIdFresh } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { listGarmentTypeChangesForSalesOrder } from "@/lib/data/garment-type-changes";
@@ -54,14 +57,14 @@ export default async function SalesOrderDetailPage({
   const { id } = await params;
   const removedRedirect = getRemovedSalesOrderRedirectForKey(id);
   if (removedRedirect) redirect(removedRedirect);
-  await ensureDocumentsLoaded(["clients", "sales_orders", "customer_invoices"]);
+  await ensureDocumentsLoaded(["clients", "sales_orders", "customer_invoices", "activity_events"]);
   const rawOrder = await getSalesOrderByIdFresh(id);
   if (!rawOrder) notFound();
   const session = await getSessionContext();
   if (!canAccessSalesOrder(session, rawOrder)) notFound();
   await ensureFabricOrdersLoaded();
   if (!session.isSalesOperator) {
-    await ensureDocumentsLoaded(["pattern_jobs", "garment_type_changes"]);
+    await ensureDocumentsLoaded(["pattern_jobs", "garment_type_changes", "activity_events"]);
   }
   // Sales operators need PO emailed_at for Email sent/pending visibility (prices stay redacted).
   const rawFabricPos = getFabricPosForSalesOrder(rawOrder, listStoredFabricOrders());
@@ -107,6 +110,18 @@ export default async function SalesOrderDetailPage({
         order.id
       );
   const supplierEmailSummary = summarizeSalesOrderSupplierEmail(order, fabricPos);
+  const activity = activityFromSalesOrderHistory({
+    order: rawOrder,
+    garmentChanges: session.isSalesOperator ? [] : listGarmentTypeChangesForSalesOrder(order.id),
+    storedEvents: await listActivityForSalesOrder({
+      soNumber: rawOrder.so_number,
+      orderId: rawOrder.id,
+    }),
+  });
+  const createdByName = rawOrder.created_by ? activityActorName(rawOrder.created_by) : null;
+  const createdByTeam = rawOrder.created_by
+    ? ACTIVITY_TEAM_LABEL[activityTeamFromEmail(rawOrder.created_by)]
+    : null;
 
   // Superseded orders keep their lines/dates for reference; link the replacement
   // order (first other SO number mentioned in the notes) so nobody works this one.
@@ -123,9 +138,14 @@ export default async function SalesOrderDetailPage({
       <PageHeader
         title={order.so_number}
         description={
-          order.product_article
-            ? `${order.client_name} · ${order.product_article} · ${order.client_code}`
-            : `${order.client_name} · ${order.client_code}`
+          [
+            order.product_article
+              ? `${order.client_name} · ${order.product_article} · ${order.client_code}`
+              : `${order.client_name} · ${order.client_code}`,
+            createdByName ? `Created by ${createdByName}${createdByTeam ? ` (${createdByTeam})` : ""}` : null,
+          ]
+            .filter(Boolean)
+            .join(" · ")
         }
         action={
           <div className="flex flex-wrap items-center gap-3">
@@ -287,6 +307,7 @@ export default async function SalesOrderDetailPage({
         viewMode={
           session.isSalesOperator ? "fabric_order" : productionMode ? "production" : "sales"
         }
+        activity={activity}
       />
     </div>
   );

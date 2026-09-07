@@ -134,6 +134,14 @@ export const ERP_DOCUMENT_DEFINITIONS: ErpDocumentDefinition[] = [
     sourcePath: "src/data/login-events.json",
   },
   {
+    key: "activity_events",
+    label: "Activity trace",
+    description: "Who edited or uploaded, with team (QC, Pattern, Task)",
+    category: "clients_orders",
+    appHref: "/orders",
+    sourcePath: "src/data/activity-events.json",
+  },
+  {
     key: "pattern_jobs",
     label: "Pattern jobs",
     description: "Pattern drafting queue, fittings, and revisions per fabric line",
@@ -386,6 +394,8 @@ export function recordSummaryForKey(key: ErpDocumentKey, data: unknown): string 
       return `${Array.isArray(record.invoices) ? record.invoices.length : 0} documents`;
     case "integration_events":
       return `${Array.isArray(record.events) ? record.events.length : 0} events`;
+    case "activity_events":
+      return `${Array.isArray(record.events) ? record.events.length : 0} activity rows`;
     case "exchange_rate_state":
       return record.last_rate != null ? "Rate alert configured" : "No alert sent yet";
     case "stitch_kiosk_settings":

@@ -227,9 +227,12 @@ export async function POST(request: Request) {
 
     await notifyIntegration("sales_order.created", {
       id: order.id,
+      order_id: order.id,
       so_number: order.so_number,
       client_id: order.client_id,
       client_code: order.client_code,
+      client_name: order.client_name,
+      created_by: session.email,
       line_count: order.fabric_lines.length,
     });
 

@@ -64,6 +64,8 @@ import {
 } from "@/lib/sales-orders/fabric-line-sort";
 import { canAppendFabricLines, canEditFabricLines, canMutateSalesOrderFabricLine, fabricLineEditBlockedReason } from "@/lib/sales-orders/fabric-lines-rules";
 import { MarkReadyMadeControl } from "@/components/orders/MarkReadyMadeControl";
+import { OrderActivityTrace } from "@/components/orders/OrderActivityTrace";
+import type { ActivityEvent } from "@/lib/types/activity-events";
 
 export type SalesOrderViewMode = "fabric_order" | "production" | "sales";
 
@@ -114,6 +116,7 @@ export function SalesOrderActions({
   isSalesOperator = false,
   productionMode = false,
   viewMode = "sales",
+  activity = [],
 }: {
   order: SalesOrder;
   fabricPos?: PurchaseOrder[];
@@ -130,6 +133,7 @@ export function SalesOrderActions({
   isSalesOperator?: boolean;
   productionMode?: boolean;
   viewMode?: SalesOrderViewMode;
+  activity?: ActivityEvent[];
 }) {
   const effectiveViewMode: SalesOrderViewMode =
     viewMode !== "sales" ? viewMode : productionMode ? "production" : "sales";
@@ -412,6 +416,8 @@ export function SalesOrderActions({
           }}
         />
       ) : null}
+
+      <OrderActivityTrace events={activity} />
 
       {!liveOrder.retail_brand && (isAdmin || isClientManager) && !isTaskOperator && !isSalesOperator ? (
         <MarkReadyMadeControl order={liveOrder} onUpdated={setLiveOrder} />

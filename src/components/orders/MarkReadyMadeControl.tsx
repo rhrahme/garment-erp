@@ -14,12 +14,17 @@ export function MarkReadyMadeControl({
   onUpdated: (order: SalesOrder) => void;
 }) {
   const router = useRouter();
-  const [brand, setBrand] = useState("boggi");
-  const [article, setArticle] = useState(order.product_article ?? order.fabric_lines[0]?.garment_type ?? "");
+  const [open, setOpen] = useState(false);
+  const [brand, setBrand] = useState("");
+  const [article, setArticle] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
+    if (!brand) {
+      setError("Pick the Ready-Made brand. This is not the client on the order.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -40,41 +45,59 @@ export function MarkReadyMadeControl({
   }
 
   return (
-    <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
-      <p className="text-sm font-semibold text-amber-950">This is Ready-Made, not a person client</p>
-      <p className="mt-1 text-sm text-amber-900">
-        Size runs (Stock-44, Stock-46, ...) for Boggi / Massimo / Suit Supply go
-        under Ready-Made. Stickers stay the same.
+    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+      <p className="text-sm font-medium text-slate-800">
+        {order.client_name} is a person client. Brand on this order is not Ready-Made.
       </p>
-      <div className="mt-3 flex flex-wrap items-end gap-2">
-        <label className="text-sm font-medium text-slate-700">
-          Brand
-          <select
-            className="mt-1 block rounded-lg border border-slate-300 px-3 py-2"
-            value={brand}
-            onChange={(event) => setBrand(event.target.value)}
-          >
-            {READY_MADE_BRANDS.map((row) => (
-              <option key={row.id} value={row.id}>
-                {row.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-sm font-medium text-slate-700">
-          Article
-          <input
-            className="mt-1 block rounded-lg border border-slate-300 px-3 py-2"
-            value={article}
-            onChange={(event) => setArticle(event.target.value)}
-            placeholder="Overcoat"
-          />
-        </label>
-        <Button type="button" disabled={busy} onClick={() => void submit()}>
-          {busy ? "Moving..." : "Mark as ready-made"}
-        </Button>
-      </div>
-      {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
+      <p className="mt-1 text-sm text-slate-600">
+        Use Ready-Made only for Stock-44 / Stock-46 size runs (Boggi, Massimo, Suit Supply).
+        Do not move a named client here.
+      </p>
+      {open ? (
+        <div className="mt-3 space-y-3">
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="text-sm font-medium text-slate-700">
+              Ready-Made brand
+              <select
+                className="mt-1 block rounded-lg border border-slate-300 px-3 py-2"
+                value={brand}
+                onChange={(event) => setBrand(event.target.value)}
+              >
+                <option value="">Select brand</option>
+                {READY_MADE_BRANDS.map((row) => (
+                  <option key={row.id} value={row.id}>
+                    {row.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm font-medium text-slate-700">
+              Size-run article
+              <input
+                className="mt-1 block rounded-lg border border-slate-300 px-3 py-2"
+                value={article}
+                onChange={(event) => setArticle(event.target.value)}
+                placeholder="Overcoat"
+              />
+            </label>
+            <Button type="button" disabled={busy || !brand} onClick={() => void submit()}>
+              {busy ? "Moving..." : "Move to Ready-Made"}
+            </Button>
+            <Button type="button" variant="ghost" disabled={busy} onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+          </div>
+          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="mt-2 text-sm font-medium text-slate-600 underline hover:text-slate-900"
+          onClick={() => setOpen(true)}
+        >
+          This is a size run - open Ready-Made
+        </button>
+      )}
     </div>
   );
 }
