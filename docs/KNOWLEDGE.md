@@ -722,9 +722,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 ## Ready-made catalog photos
 
 - **Activity trace** (Sep 7 2026): sales order shows **Who did what** —
-  person name + team chip (QC / Pattern / Task / Sales / Admin). Do not
-  color whole CLIENT/GARMENT rows by department; one person did the
-  edit. Store `activity_events`. Also uses `created_by`, line
+  person name + team chip (QC / Pattern / Task / Sales / Admin), plus
+  Riyadh date and time. Full log: several updates on the same article
+  all stay (never overwrite). Do not color whole CLIENT/GARMENT rows by
+  department. Store `activity_events`. Also uses `created_by`, line
   `added_by`, and garment-type change rows for older orders. Ready-Made
   box must not default to Boggi or prefill the person garment type —
   that is not saved data.

@@ -11,6 +11,7 @@ export type ActivityEvent = {
   so_number: string | null;
   order_id: string | null;
   client_name: string | null;
+  article_label: string | null;
 };
 
 export type ActivityEventsFile = {

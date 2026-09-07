@@ -1,11 +1,12 @@
 import path from "path";
 import { formatActivityActor } from "@/lib/activity/team";
+import { articleLabelFromNumber } from "@/lib/activity/when";
 import { readJsonFileFreshAsync, saveDocument } from "@/lib/data/document-persistence";
 import type { ActivityEvent, ActivityEventsFile } from "@/lib/types/activity-events";
 
 const STORE_PATH = path.join(process.cwd(), "src/data/activity-events.json");
 const EMPTY: ActivityEventsFile = { updated_at: null, events: [] };
-const MAX_EVENTS = 4000;
+const MAX_EVENTS = 20000;
 
 export async function readActivityEventsFresh(): Promise<ActivityEventsFile> {
   return readJsonFileFreshAsync(STORE_PATH, EMPTY, { force: true });
@@ -19,19 +20,34 @@ export async function listActivityEvents(limit = 200): Promise<ActivityEvent[]> 
 export async function listActivityForSalesOrder(input: {
   soNumber?: string | null;
   orderId?: string | null;
-  limit?: number;
 }): Promise<ActivityEvent[]> {
   const soNumber = input.soNumber?.trim().toUpperCase() ?? "";
   const orderId = input.orderId?.trim() ?? "";
   if (!soNumber && !orderId) return [];
   const store = await readActivityEventsFresh();
-  return (store.events ?? [])
-    .filter((event) => {
-      if (soNumber && event.so_number?.toUpperCase() === soNumber) return true;
-      if (orderId && event.order_id === orderId) return true;
-      return false;
-    })
-    .slice(0, input.limit ?? 80);
+  return (store.events ?? []).filter((event) => {
+    if (soNumber && event.so_number?.toUpperCase() === soNumber) return true;
+    if (orderId && event.order_id === orderId) return true;
+    return false;
+  });
+}
+
+/** Never drop an order's own rows when the house-wide cap is hit. */
+export function trimActivityStore(
+  events: ActivityEvent[],
+  incoming: Pick<ActivityEvent, "so_number" | "order_id">,
+  max = MAX_EVENTS
+): ActivityEvent[] {
+  if (events.length <= max) return events;
+  const keep = (event: ActivityEvent) =>
+    Boolean(
+      (incoming.so_number && event.so_number === incoming.so_number) ||
+        (incoming.order_id && event.order_id === incoming.order_id)
+    );
+  const sameOrder = events.filter(keep);
+  const others = events.filter((event) => !keep(event));
+  const room = Math.max(max - sameOrder.length, 0);
+  return [...sameOrder, ...others.slice(0, room)];
 }
 
 function pickString(data: Record<string, unknown>, keys: string[]): string | null {
@@ -46,7 +62,9 @@ export function activitySummaryForEvent(event: string, data: Record<string, unkn
   const so = pickString(data, ["so_number"]);
   const client = pickString(data, ["client_name"]);
   const fabric = pickString(data, ["fabric_number"]);
-  const article = pickString(data, ["product_article", "article"]);
+  const article =
+    pickString(data, ["article_label", "product_article", "article"]) ??
+    articleLabelFromNumber(typeof data.article_number === "number" ? data.article_number : null);
   const brand = pickString(data, ["retail_brand", "brand"]);
   switch (event) {
     case "sales_order.created":
@@ -58,7 +76,7 @@ export function activitySummaryForEvent(event: string, data: Record<string, unkn
     case "sales_order.fabric_lines_removed":
       return fabric ? `Removed fabric ${fabric}` : "Removed fabric line";
     case "sales_order.garment_type_changed":
-      return "Changed garment type";
+      return article ? `Changed garment type on ${article}` : "Changed garment type";
     case "sales_order.fabric_changed":
       return fabric ? `Changed fabric ${fabric}` : "Changed fabric";
     case "sales_order.fabric_order_requested":
@@ -131,6 +149,9 @@ export async function recordActivityEvent(input: {
       input.actorEmail?.trim() ||
       pickString(data, ["acted_by", "actor", "created_by", "added_by", "changed_by", "requested_by"]);
     const actor = formatActivityActor(actorEmail);
+    const articleLabel =
+      pickString(data, ["article_label"]) ??
+      articleLabelFromNumber(typeof data.article_number === "number" ? data.article_number : null);
     const event: ActivityEvent = {
       id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       at: input.at ?? new Date().toISOString(),
@@ -142,9 +163,10 @@ export async function recordActivityEvent(input: {
       so_number: pickString(data, ["so_number"]),
       order_id: pickString(data, ["order_id", "id", "sales_order_id"]),
       client_name: pickString(data, ["client_name"]),
+      article_label: articleLabel,
     };
     const store = structuredClone(await readActivityEventsFresh());
-    store.events = [event, ...(store.events ?? [])].slice(0, MAX_EVENTS);
+    store.events = trimActivityStore([event, ...(store.events ?? [])], event);
     store.updated_at = event.at;
     await saveDocument(STORE_PATH, store);
     return event;

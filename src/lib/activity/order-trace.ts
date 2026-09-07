@@ -1,4 +1,5 @@
 import { formatActivityActor } from "@/lib/activity/team";
+import { articleLabelFromNumber } from "@/lib/activity/when";
 import type { ActivityEvent } from "@/lib/types/activity-events";
 import type { GarmentTypeChange } from "@/lib/types/garment-type-changes";
 import type { SalesOrder } from "@/lib/types/sales-orders";
@@ -12,6 +13,7 @@ function row(input: {
   soNumber?: string | null;
   orderId?: string | null;
   clientName?: string | null;
+  articleLabel?: string | null;
 }): ActivityEvent {
   const actor = formatActivityActor(input.email);
   return {
@@ -25,6 +27,7 @@ function row(input: {
     so_number: input.soNumber ?? null,
     order_id: input.orderId ?? null,
     client_name: input.clientName ?? null,
+    article_label: input.articleLabel ?? null,
   };
 }
 
@@ -35,7 +38,10 @@ export function activityFromSalesOrderHistory(input: {
   storedEvents?: ActivityEvent[];
 }): ActivityEvent[] {
   const { order } = input;
-  const rows: ActivityEvent[] = [...(input.storedEvents ?? [])];
+  const rows: ActivityEvent[] = (input.storedEvents ?? []).map((event) => ({
+    ...event,
+    article_label: event.article_label ?? null,
+  }));
 
   if (order.created_by || order.order_date) {
     rows.push(
@@ -86,6 +92,7 @@ export function activityFromSalesOrderHistory(input: {
   }
 
   for (const change of input.garmentChanges ?? []) {
+    const articleLabel = articleLabelFromNumber(change.article_number);
     rows.push(
       row({
         id: change.id,
@@ -96,15 +103,18 @@ export function activityFromSalesOrderHistory(input: {
         soNumber: change.so_number,
         orderId: change.sales_order_id,
         clientName: change.client_name,
+        articleLabel,
       })
     );
   }
 
+  // Drop only exact twins (history row + stored copy of the same moment).
+  // Several updates on the same article stay - each has its own time.
   const seen = new Set<string>();
   return rows
-    .sort((a, b) => b.at.localeCompare(a.at))
+    .sort((a, b) => b.at.localeCompare(a.at) || a.id.localeCompare(b.id))
     .filter((event) => {
-      const key = `${event.action}|${event.at}|${event.actor_email ?? ""}|${event.summary}`;
+      const key = `${event.id}|${event.action}|${event.at}|${event.actor_email ?? ""}|${event.summary}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
