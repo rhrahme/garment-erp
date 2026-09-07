@@ -1,0 +1,45 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { describe, it } from "node:test";
+import { generateCostHintWorksheetPdf } from "@/lib/costing/generate-cost-hint-worksheet-pdf";
+import type { CostHintWorksheet } from "@/lib/costing/cost-hint-worksheet";
+
+describe("cost hint worksheet PDF", () => {
+  it("stays valid UTF-8 ASCII in the helper source", () => {
+    const source = readFileSync("src/lib/costing/generate-cost-hint-worksheet-pdf.ts");
+    assert.equal(source.includes(Buffer.from([0xb7])), false);
+    source.toString("utf8");
+    assert.equal([...source].every((byte) => byte < 128), true);
+  });
+
+  it("builds a PDF that names cost hint and stays internal", async () => {
+    const worksheet: CostHintWorksheet = {
+      title: "Cost hint worksheet",
+      subtitle: "Internal. Do not send to the client. all orders.",
+      generated_at: "2026-09-07T12:00:00.000Z",
+      missing_price_count: 0,
+      rows: [
+        {
+          so_number: "SO-2026-0117",
+          invoice_number: "INV-2026-0015",
+          client_name: "Ibrahim",
+          client_code: "FR-0726-0037",
+          article_label: "L03",
+          garment: "Jacket",
+          fabric_number: "360103",
+          composition: "Cacci",
+          quantity: 2,
+          fabric_cost_sar: 790.02,
+          cost_hint_sar: 1190.02,
+          unit_price_sar: 1190.02,
+          missing_price: false,
+        },
+      ],
+    };
+    const bytes = await generateCostHintWorksheetPdf(worksheet);
+    assert.ok(bytes.byteLength > 200);
+    const text = Buffer.from(bytes).toString("latin1");
+    assert.match(text, /INTERNAL/);
+    assert.match(text, /Cost hint/);
+  });
+});

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
+import { DownloadCostHintPdfButton } from "@/components/costing/DownloadCostHintPdfButton";
 import { DownloadInvoicePdfButton } from "@/components/invoicing/DownloadInvoicePdfButton";
 import { ClientPhotosPanel } from "@/components/sales/ClientPhotosPanel";
 import { SalesFittingsPanel } from "@/components/sales/SalesFittingsPanel";
@@ -416,6 +417,11 @@ export function SalesWorkspaceDashboard({ canViewAmounts = false }: { canViewAmo
                             label="Open PDF"
                             size="sm"
                             variant="ghost"
+                          />
+                          <DownloadCostHintPdfButton
+                            href={`/api/costing/hint-pdf?invoice=${encodeURIComponent(invoice.id)}`}
+                            label="Cost hint PDF"
+                            size="sm"
                           />
                         </>
                       ) : null}

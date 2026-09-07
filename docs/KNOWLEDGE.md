@@ -577,6 +577,14 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 - **Inventory box stickers** are **4x6 inch**, one label per page
   (`@page { size: 4in 6in; margin: 0; }`), not A4. Same no-scale / no
   max-w / Helvetica rules. Print 4x6, Actual size.
+- **Cost hint worksheet** (Sep 7 2026): admin-only internal PDF to work
+  offline on selling prices. Costing / Invoicing / each invoice:
+  **Print cost hint PDF**. Print page `/costing/print` (optional
+  `?invoice=` `?so=` `?brand=` `?archived=1`). API
+  `GET /api/costing/hint-pdf` + `/api/v1/costing/hint-pdf`. Columns:
+  SO, invoice, client, article, garment, fabric, qty, fabric cost,
+  cost hint, unit price, blank write-price. Never on the client
+  invoice PDF. `canViewMoney` only.
 - Print dialog: A4 portrait, scale 100% / Actual size, default margins.
 - Fabric swatch images on print sheets require the swatch manifest to ship
   into the Vercel image lambda (Caccioppoli fix `b5ac64f`); new fabric codes
@@ -706,6 +714,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   prefix. Drop mill collection / style names (PEGASO, SUMMERTIME, tela
   notes). Keep Knit (KNIT SHIRT / KNIT); still drop Piquet and Honey Comb.
   Display-only - do not rewrite stored invoice JSON for this.
+- **Cost hint worksheet PDF** (Sep 7 2026): admin prints fabric cost +
+  cost hint + current unit price for offline markup. Sitewide from
+  Costing and Invoicing; one invoice from the invoice editor. Internal
+  only. Client quote/invoice PDFs stay without hints.
 
 ## Ready-made catalog photos
 

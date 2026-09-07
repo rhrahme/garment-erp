@@ -3,7 +3,9 @@
 import { useMemo, useState } from "react";
 import { Calculator, ChevronDown, ChevronRight } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
+import { DownloadCostHintPdfButton } from "@/components/costing/DownloadCostHintPdfButton";
 import { OrderCostDetailPanel } from "@/components/costing/OrderCostDetailPanel";
+import { costHintWorksheetQuery } from "@/lib/costing/cost-hint-worksheet-query";
 import {
   InvoiceAmountsRevealToggle,
   MASKED_INVOICE_AMOUNT,
@@ -105,11 +107,13 @@ export function CostingWorkspace({
   canToggleAmounts = false,
   amountsVisibleByDefault = false,
   revealWithoutPassword = false,
+  canPrintHints = false,
 }: {
   overview: CostingOverview;
   canToggleAmounts?: boolean;
   amountsVisibleByDefault?: boolean;
   revealWithoutPassword?: boolean;
+  canPrintHints?: boolean;
 }) {
   const { brandId, setBrandId, hydrated } = useFactoryBrandFilter();
   const [showArchived, setShowArchived] = useState(false);
@@ -225,6 +229,37 @@ export function CostingWorkspace({
           accent="bg-emerald-50 text-emerald-600"
         />
       </div>
+
+      {canPrintHints ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
+          <div>
+            <p className="text-sm font-semibold text-amber-950">Print cost hints for offline work</p>
+            <p className="mt-0.5 text-sm text-amber-900">
+              Internal PDF. Fabric cost, cost hint, and current unit price. Blank column to write your
+              selling price. Do not send to the client.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <DownloadCostHintPdfButton
+              href={`/api/costing/hint-pdf${costHintWorksheetQuery({
+                brandId,
+                includeArchived: showArchived,
+              })}`}
+            />
+            <a
+              href={`/costing/print${costHintWorksheetQuery({
+                brandId,
+                includeArchived: showArchived,
+              })}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-[44px] items-center rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-100"
+            >
+              Open print page
+            </a>
+          </div>
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-3">
         {hydrated && (

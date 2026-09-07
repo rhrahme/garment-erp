@@ -240,6 +240,10 @@ export function ZapierSetup() {
               (?period=day|week|month&employee_id) attendance + work
             </li>
             <li>GET {baseUrl}/api/v1/production/attendance-qr (wall Attendance PDF)</li>
+            <li>
+              GET {baseUrl}/api/v1/costing/hint-pdf (internal cost hint worksheet; ?invoice= ?so=
+              ?brand=)
+            </li>
             <li>POST {baseUrl}/api/v1/production/sewing-session/scan</li>
             <li>
               GET/POST {baseUrl}/api/v1/production/sewing-session/start-without-qr

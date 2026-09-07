@@ -16,13 +16,14 @@ export default async function CostingPage() {
     <div>
       <PageHeader
         title="Costing"
-        description="Full cost view per order — click a row to expand fabrics, prices, and make costs. All on this page."
+        description="Full cost view per order — click a row to expand fabrics, prices, and make costs. Print the cost hint PDF to work offline."
       />
       <CostingWorkspace
         overview={overview}
         canToggleAmounts={session.canToggleInvoiceAmounts}
         amountsVisibleByDefault={session.invoiceAmountsVisibleByDefault}
         revealWithoutPassword={session.canRevealInvoiceAmountsWithoutPassword}
+        canPrintHints={canViewMoney(session)}
       />
     </div>
   );

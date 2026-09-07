@@ -18,6 +18,7 @@ import {
   sortInvoiceLinesByArticle,
   toInvoiceLineDisplay,
 } from "@/lib/invoicing/display";
+import { DownloadCostHintPdfButton } from "@/components/costing/DownloadCostHintPdfButton";
 import { DownloadInvoicePdfButton } from "@/components/invoicing/DownloadInvoicePdfButton";
 import { InvoiceLineFabricPoLink, InvoiceLineSoLink } from "@/components/invoicing/InvoiceLineCrossRefLinks";
 import { LineReductionSuggestionsPanel } from "@/components/invoicing/LineReductionSuggestionsPanel";
@@ -218,6 +219,17 @@ export function InvoiceEditor({
               <Link href={`/invoices/${invoice.id}/print`} target="_blank">
                 <Button variant="secondary">Open print page</Button>
               </Link>
+              {showCostColumns ? (
+                <>
+                  <DownloadCostHintPdfButton
+                    href={`/api/costing/hint-pdf?invoice=${encodeURIComponent(invoice.id)}`}
+                    label="Download cost hint PDF"
+                  />
+                  <Link href={`/invoices/${invoice.id}/cost-hint/print`} target="_blank">
+                    <Button variant="ghost">Open cost hint print</Button>
+                  </Link>
+                </>
+              ) : null}
             </>
           ) : null}
           {invoice.status === "draft" && (

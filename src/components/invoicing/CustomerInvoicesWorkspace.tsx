@@ -18,6 +18,8 @@ import { formatDate, cn } from "@/lib/utils";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import { getFactoryBrands } from "@/lib/data/factory-brands";
 import { InvoiceableOrdersPanel } from "@/components/invoicing/InvoiceableOrdersPanel";
+import { DownloadCostHintPdfButton } from "@/components/costing/DownloadCostHintPdfButton";
+import { costHintWorksheetQuery } from "@/lib/costing/cost-hint-worksheet-query";
 import { RiyadhBankDetailsPdfLink } from "@/components/invoicing/RiyadhBankDetailsPdfLink";
 
 const STATUS_TABS = [
@@ -99,7 +101,25 @@ export function CustomerInvoicesWorkspace({
               <span className="font-medium">Mark paid</span> when collected.
             </p>
           </div>
-          <RiyadhBankDetailsPdfLink variant="button" className="shrink-0 border-violet-200 text-violet-900 hover:border-violet-300 hover:text-violet-950" />
+          <div className="flex flex-wrap gap-2">
+            {canToggleAmounts ? (
+              <>
+                <DownloadCostHintPdfButton
+                  href={`/api/costing/hint-pdf${costHintWorksheetQuery({ brandId })}`}
+                  label="Download cost hint PDF"
+                />
+                <a
+                  href={`/costing/print${costHintWorksheetQuery({ brandId })}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-[40px] items-center rounded-lg border border-violet-200 px-3 py-2 text-sm font-semibold text-violet-900 hover:border-violet-300 hover:text-violet-950"
+                >
+                  Open cost hint print
+                </a>
+              </>
+            ) : null}
+            <RiyadhBankDetailsPdfLink variant="button" className="shrink-0 border-violet-200 text-violet-900 hover:border-violet-300 hover:text-violet-950" />
+          </div>
         </div>
       </div>
 
