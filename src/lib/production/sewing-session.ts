@@ -32,19 +32,18 @@ import {
 } from "@/lib/data/stitch-kiosk-settings";
 import { notifyIntegration } from "@/lib/integrations";
 import {
-  alreadySignedInMessage,
   ATTENDANCE_BEFORE_GO_LIVE_MESSAGE,
   ATTENDANCE_WALL_WAITING_MESSAGE,
+  applyAttendanceDoorScan,
   applyHereArm,
+  attendanceDoorScanMessage,
   clearHereArm,
   decideAttendanceBadgeScan,
   decideAttendanceWallScan,
   hereArmOnKiosk,
-  hereClockInMessage,
   isAttendanceClockInLive,
   isHereWallQr,
   riyadhWorkdayKey,
-  upsertHereCheckIn,
 } from "@/lib/production/stitch-attendance";
 import { badgeDisplayName } from "@/lib/hr/badge-print";
 import { employeeCanSewOnStitchKiosk } from "@/lib/hr/payroll-utils";
@@ -277,9 +276,9 @@ async function persistHereClockIn(input: {
     scanned_at: nowIso(input.at),
     workday: riyadhWorkdayKey(input.at),
   };
-  const saved = upsertHereCheckIn(attendance, next);
+  const saved = applyAttendanceDoorScan(attendance, next);
   await writeStitchAttendance(saved.store);
-  if (saved.created && input.notify !== false) {
+  if (input.notify !== false && (saved.action === "entered" || saved.action === "left")) {
     const payload = {
       employee_id: saved.check_in.employee_id,
       employee_name: saved.check_in.employee_name,
@@ -287,18 +286,34 @@ async function persistHereClockIn(input: {
       kiosk_id: saved.check_in.kiosk_id,
       scanned_at: saved.check_in.scanned_at,
       clocked_in_at: saved.check_in.scanned_at,
+      checked_out_at: saved.check_in.checked_out_at ?? null,
+      clocked_out_at: saved.check_in.checked_out_at ?? null,
       workday: saved.check_in.workday,
       created: saved.created,
+      action: saved.action,
     };
-    try {
-      await notifyIntegration("production.attendance_checked_in", payload, input.source ?? "erp");
-    } catch (error) {
-      console.error("Failed to notify attendance_checked_in:", saved.check_in.employee_id, error);
-    }
-    try {
-      await notifyIntegration("production.attendance_clocked_in", payload, input.source ?? "erp");
-    } catch (error) {
-      console.error("Failed to notify attendance_clocked_in:", saved.check_in.employee_id, error);
+    if (saved.action === "entered") {
+      try {
+        await notifyIntegration("production.attendance_checked_in", payload, input.source ?? "erp");
+      } catch (error) {
+        console.error("Failed to notify attendance_checked_in:", saved.check_in.employee_id, error);
+      }
+      try {
+        await notifyIntegration("production.attendance_clocked_in", payload, input.source ?? "erp");
+      } catch (error) {
+        console.error("Failed to notify attendance_clocked_in:", saved.check_in.employee_id, error);
+      }
+    } else {
+      try {
+        await notifyIntegration("production.attendance_checked_out", payload, input.source ?? "erp");
+      } catch (error) {
+        console.error("Failed to notify attendance_checked_out:", saved.check_in.employee_id, error);
+      }
+      try {
+        await notifyIntegration("production.attendance_clocked_out", payload, input.source ?? "erp");
+      } catch (error) {
+        console.error("Failed to notify attendance_clocked_out:", saved.check_in.employee_id, error);
+      }
     }
   }
   return saved;
@@ -838,13 +853,11 @@ export async function processSewingKioskScan(
     }
     return result(
       true,
-      saved.created
-        ? hereClockInMessage(wallDecision.employee_name, at)
-        : alreadySignedInMessage(wallDecision.employee_name),
+      attendanceDoorScanMessage(saved.action, wallDecision.employee_name, at),
       store,
       kioskId,
       { arm: null },
-      { beep: saved.created ? "ok" : "progress" }
+      { beep: saved.action === "entered" || saved.action === "left" ? "ok" : "progress" }
     );
   }
 
@@ -958,13 +971,11 @@ export async function processSewingKioskScan(
       }
       return result(
         true,
-        saved.created
-          ? hereClockInMessage(ctx.employee_name, at)
-          : alreadySignedInMessage(ctx.employee_name),
+        attendanceDoorScanMessage(saved.action, ctx.employee_name, at),
         store,
         kioskId,
         { arm: null },
-        { beep: saved.created ? "ok" : "progress" }
+        { beep: saved.action === "entered" || saved.action === "left" ? "ok" : "progress" }
       );
     }
 

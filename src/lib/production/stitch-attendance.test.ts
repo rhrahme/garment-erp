@@ -12,10 +12,14 @@ import {
   clearHereArm,
   decideAttendanceBadgeScan,
   decideAttendanceWallScan,
+  applyAttendanceDoorScan,
+  ATTENDANCE_CHECKOUT_MIN_MS,
   formatAttendanceCheckInLabel,
   formatMorningEntryLabel,
+  formatMorningLeaveLabel,
   hereArmOnKiosk,
   hereClockInMessage,
+  hereClockOutMessage,
   isAttendanceClockInLive,
   isHereWallQr,
   riyadhWorkdayKey,
@@ -76,12 +80,19 @@ describe("HERE wall QR", () => {
       formatMorningEntryLabel("2026-09-08T04:42:00.000Z", { includeDate: false }),
       "Entered 07:42"
     );
+    assert.equal(formatMorningLeaveLabel("2026-09-08T14:05:00.000Z"), "Left 08 Sep 17:05");
+    assert.equal(
+      formatMorningLeaveLabel("2026-09-08T14:05:00.000Z", { includeDate: false }),
+      "Left 17:05"
+    );
     assert.equal(formatAttendanceCheckInLabel(null), null);
     assert.equal(formatMorningEntryLabel(null), null);
+    assert.equal(formatMorningLeaveLabel(null), null);
   });
 
   it("accepts wall QR first by holding a wait for the badge", () => {
-    assert.match(ATTENDANCE_WALL_WAITING_MESSAGE, /Scan your ID badge to sign in/);
+    assert.match(ATTENDANCE_WALL_WAITING_MESSAGE, /Scan your ID badge to sign in or out/);
+    assert.match(ATTENDANCE_BADGE_FIRST_MESSAGE, /End of day signs out/);
     assert.match(ATTENDANCE_BADGE_FIRST_MESSAGE, /Either order is accepted/);
     let store = applyHereArm(emptyStore(), {
       kiosk_id: "k1",
@@ -153,6 +164,8 @@ describe("HERE wall QR", () => {
     assert.match(source, /decideAttendanceBadgeScan/);
     assert.match(source, /ATTENDANCE_WALL_WAITING_MESSAGE/);
     assert.match(source, /persistHereClockIn/);
+    assert.match(source, /applyAttendanceDoorScan/);
+    assert.match(source, /attendance_checked_out/);
     assert.equal(source.includes("attendance_badge_required"), false);
   });
 
@@ -220,5 +233,55 @@ describe("HERE wall QR", () => {
       checkInCountsForAttendance({ scanned_at: "2026-09-08T05:00:00.000Z" }),
       true
     );
+  });
+
+  it("treats a later door pair as checkout and keeps the morning time", () => {
+    const workday = "2026-09-08";
+    const entered = applyAttendanceDoorScan(
+      { updated_at: null, check_ins: [] } satisfies StitchAttendanceFile,
+      {
+        employee_id: "e1",
+        employee_name: "Haider",
+        employee_id_number: "111",
+        kiosk_id: "k1",
+        scanned_at: "2026-09-08T04:12:00.000Z",
+        workday,
+      }
+    );
+    assert.equal(entered.action, "entered");
+    const tooSoon = applyAttendanceDoorScan(entered.store, {
+      employee_id: "e1",
+      employee_name: "Haider",
+      employee_id_number: "111",
+      kiosk_id: "k1",
+      scanned_at: new Date(Date.parse("2026-09-08T04:12:00.000Z") + 30_000).toISOString(),
+      workday,
+    });
+    assert.equal(tooSoon.action, "already_entered");
+    assert.equal(tooSoon.check_in.checked_out_at, null);
+    const leftAt = new Date(
+      Date.parse("2026-09-08T04:12:00.000Z") + ATTENDANCE_CHECKOUT_MIN_MS + 1
+    ).toISOString();
+    const left = applyAttendanceDoorScan(entered.store, {
+      employee_id: "e1",
+      employee_name: "Haider",
+      employee_id_number: "111",
+      kiosk_id: "k1",
+      scanned_at: leftAt,
+      workday,
+    });
+    assert.equal(left.action, "left");
+    assert.equal(left.check_in.scanned_at, "2026-09-08T04:12:00.000Z");
+    assert.equal(left.check_in.checked_out_at, leftAt);
+    const again = applyAttendanceDoorScan(left.store, {
+      employee_id: "e1",
+      employee_name: "Haider",
+      employee_id_number: "111",
+      kiosk_id: "k1",
+      scanned_at: "2026-09-08T16:00:00.000Z",
+      workday,
+    });
+    assert.equal(again.action, "already_left");
+    assert.match(hereClockOutMessage("Haider", Date.parse(leftAt)), /Haider signed out/);
   });
 });

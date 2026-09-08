@@ -79,6 +79,15 @@ export function formatMorningEntryLabel(
   return clock ? `Entered ${clock}` : null;
 }
 
+/** End-of-day door time: same badge + wall QR, not a garment A4. */
+export function formatMorningLeaveLabel(
+  iso: string | null | undefined,
+  options?: { includeDate?: boolean }
+): string | null {
+  const clock = formatAttendanceCheckInLabel(iso, options);
+  return clock ? `Left ${clock}` : null;
+}
+
 export function isAttendanceClockInLive(atMs: number): boolean {
   return riyadhWorkdayKey(atMs) >= ATTENDANCE_CLOCK_IN_GO_LIVE_RIYADH_DAY;
 }
@@ -91,10 +100,13 @@ export function checkInCountsForAttendance(
 }
 
 export const ATTENDANCE_BADGE_FIRST_MESSAGE =
-  "Scan your ID badge, then the wall QR. Either order is accepted.";
+  "Scan your ID badge, then the wall QR. Morning signs in. End of day signs out. Either order is accepted.";
 
 export const ATTENDANCE_WALL_WAITING_MESSAGE =
-  "Wall QR read. Scan your ID badge to sign in.";
+  "Wall QR read. Scan your ID badge to sign in or out.";
+
+/** Ignore a second door pair that is only a double-scan, not leaving. */
+export const ATTENDANCE_CHECKOUT_MIN_MS = 2 * 60 * 1000;
 
 export type AttendancePairEmployee = {
   employee_id: string;
@@ -134,8 +146,29 @@ export function alreadySignedInMessage(employeeName: string): string {
   return `${employeeName} already signed in today.`;
 }
 
+export function alreadySignedOutMessage(employeeName: string): string {
+  return `${employeeName} already signed out today.`;
+}
+
 export function hereClockInMessage(employeeName: string, atMs: number): string {
   return `${employeeName} signed in - ${formatRiyadhClock(atMs)}. Attendance only. Scan badge and A4 later to start a piece.`;
+}
+
+export function hereClockOutMessage(employeeName: string, atMs: number): string {
+  return `${employeeName} signed out - ${formatRiyadhClock(atMs)}. Attendance only.`;
+}
+
+export type AttendanceDoorAction = "entered" | "left" | "already_entered" | "already_left";
+
+export function attendanceDoorScanMessage(
+  action: AttendanceDoorAction,
+  employeeName: string,
+  atMs: number
+): string {
+  if (action === "entered") return hereClockInMessage(employeeName, atMs);
+  if (action === "left") return hereClockOutMessage(employeeName, atMs);
+  if (action === "already_left") return alreadySignedOutMessage(employeeName);
+  return alreadySignedInMessage(employeeName);
 }
 
 export function hereArmsOnKiosk(
@@ -172,29 +205,80 @@ export function clearHereArm(store: SewingSessionsFile, kioskId: string): Sewing
   };
 }
 
+function sameWorkdayEmployee(
+  row: StitchAttendanceCheckIn,
+  next: Pick<StitchAttendanceCheckIn, "employee_id" | "employee_id_number" | "workday">
+): boolean {
+  return (
+    row.workday === next.workday &&
+    (row.employee_id === next.employee_id ||
+      Boolean(next.employee_id_number && row.employee_id_number === next.employee_id_number))
+  );
+}
+
 export function upsertHereCheckIn(
   store: StitchAttendanceFile,
   next: StitchAttendanceCheckIn
 ): { store: StitchAttendanceFile; created: boolean; check_in: StitchAttendanceCheckIn } {
   const checkIns = [...(store.check_ins ?? [])];
-  const index = checkIns.findIndex(
-    (row) =>
-      row.workday === next.workday &&
-      (row.employee_id === next.employee_id ||
-        (next.employee_id_number &&
-          row.employee_id_number === next.employee_id_number))
-  );
+  const index = checkIns.findIndex((row) => sameWorkdayEmployee(row, next));
   if (index >= 0) {
     const merged = {
       ...checkIns[index]!,
       ...next,
       scanned_at: checkIns[index]!.scanned_at,
+      checked_out_at: checkIns[index]!.checked_out_at ?? next.checked_out_at ?? null,
     };
     checkIns[index] = merged;
     return { store: { ...store, check_ins: checkIns }, created: false, check_in: merged };
   }
   checkIns.push(next);
   return { store: { ...store, check_ins: checkIns }, created: true, check_in: next };
+}
+
+/** First pair of the Riyadh day is enter. Later pair is leave. Same wall QR. */
+export function applyAttendanceDoorScan(
+  store: StitchAttendanceFile,
+  next: StitchAttendanceCheckIn,
+  atMs = Date.parse(next.scanned_at)
+): {
+  store: StitchAttendanceFile;
+  created: boolean;
+  action: AttendanceDoorAction;
+  check_in: StitchAttendanceCheckIn;
+} {
+  const checkIns = [...(store.check_ins ?? [])];
+  const index = checkIns.findIndex((row) => sameWorkdayEmployee(row, next));
+  if (index < 0) {
+    const saved = upsertHereCheckIn(store, { ...next, checked_out_at: null });
+    return { ...saved, action: "entered" };
+  }
+  const existing = checkIns[index]!;
+  if (existing.checked_out_at) {
+    return { store, created: false, action: "already_left", check_in: existing };
+  }
+  const enteredAt = Date.parse(existing.scanned_at);
+  if (
+    !Number.isFinite(atMs) ||
+    !Number.isFinite(enteredAt) ||
+    atMs - enteredAt < ATTENDANCE_CHECKOUT_MIN_MS
+  ) {
+    return { store, created: false, action: "already_entered", check_in: existing };
+  }
+  const updated: StitchAttendanceCheckIn = {
+    ...existing,
+    employee_name: next.employee_name || existing.employee_name,
+    employee_id_number: next.employee_id_number || existing.employee_id_number,
+    kiosk_id: next.kiosk_id || existing.kiosk_id,
+    checked_out_at: next.scanned_at,
+  };
+  checkIns[index] = updated;
+  return {
+    store: { ...store, check_ins: checkIns },
+    created: false,
+    action: "left",
+    check_in: updated,
+  };
 }
 
 export function checkInTouchesPeriod(

@@ -9,11 +9,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 ## Stitch floor (kiosk)
 
 - **Attendance means the wall QR** (Sep 8 2026): when the owner says
-  attendance, clock-in, entered, or who came in the morning, they mean
-  badge + wall QR (`ATTEND` / hung `HAGAN-HERE`) written to
-  `stitch_attendance`. Never a garment A4, piece start, Live / History
+  attendance, clock-in, entered, left, or who came in / went home,
+  they mean badge + wall QR (`ATTEND` / hung `HAGAN-HERE`) written to
+  `stitch_attendance`. Morning pair = enter. Same poster at end of
+  day = leave. Never a garment A4, piece start, Live / History
   time, or Production Floor now. Open Stitch kiosk -> **Attendance**
-  (next to History). Admin sees that Riyadh time as **Entered 07:42**.
+  (next to History). Admin sees **Entered 07:42** and **Left 17:05**.
 - Scan flow: EMP badge -> A4 piece QR -> work -> finish with **badge then
   that already-open A4**, or **A4 then badge / same A4 again**. Kiosk
   login: `stitch@hagan.pro`. Do not assume a floor video is A4-only;
@@ -33,16 +34,21 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   pattern paper QR (`/pattern/library/bases/...`). How-to
   `howto-stitch-piece-a4-not-pattern-v1` (English + Bangla) on every
   ERP account and on the stitch kiosk Scan tab.
-  One present mark per person per Riyadh day. The wall QR must not
+  One enter and one leave per person per Riyadh day. A second door
+  pair within 2 minutes stays enter (double-scan). After that it is
+  leave. The wall QR must not
   open or close a piece. Do **not** double-scan a garment A4 for
   attendance.
   Floor **scanned** = a go-live clock-in on that day **or** a session
-  that touches the day. Attendance time = morning factory door
+  that touches the day. Attendance time = factory door
   (badge + wall QR), not a garment A4. Those times (Riyadh) show on
   Stitch **Attendance** tab (`/stitch?tab=attendance`), **Entered**
-  (admin only), e.g. `Entered 07:42`. Clock-ins before 8 Sep are ignored. Events:
-  `production.attendance_checked_in` and
-  `production.attendance_clocked_in` (no prices).
+  and **Left** (admin only), e.g. `Entered 07:42` / `Left 17:05`.
+  Clock-ins before 8 Sep are ignored. Events:
+  `production.attendance_checked_in`,
+  `production.attendance_clocked_in`,
+  `production.attendance_checked_out`, and
+  `production.attendance_clocked_out` (no prices).
   `GET /api/production/attendance-qr` + `/api/v1/...` parity. How-to
   `howto-wall-attendance-qr-v3` (English + Bangla) on every ERP account.
   Tablet camera on **Stitch kiosk** (Use tablet camera) feeds the same
@@ -183,7 +189,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `/api/v1/production/sewing-session/employee-work`. Do not show this picker
   to stitch@ / pattern.
 - **Admin floor dashboard** (Aug 19 2026): Stitch **Attendance** tab lists
-  morning **Entered** times (badge + wall QR) vs **No entry**, plus Live
+  morning **Entered** and end-of-day **Left** times (same badge + wall
+  QR) vs **No entry**, plus Live
   (Today / Week / Month). Roster =
   active Expats who can use the kiosk and have a floor job (tailor / cutter /
   wash-iron / washing / ironing / buttons / button stitch / buttonhole /
@@ -191,7 +198,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   in No entry. A piece scan
   counts as present even if overtime was later rejected. A HERE + badge
   clock-in also counts as present with 0 pieces and is the attendance
-  time. Tap a name for
+  enter time. The later door pair is leave. Tap a name for
   day/week/month detail. Print posters from Attendance.
 - **Floor names are badge nicknames** (Sep 6 2026): `short_name` (Parvaiz,
   Ijaz) is what Live, History, Performance, change requests, approvals,

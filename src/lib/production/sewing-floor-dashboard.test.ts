@@ -172,9 +172,33 @@ describe("sewingFloorAttendance", () => {
     ]);
     assert.equal(dash.scanned, 1);
     assert.equal(dash.entered, 1);
+    assert.equal(dash.left, 0);
     assert.equal(dash.missing, 0);
     assert.equal(dash.scanned_rows[0]?.count, 0);
     assert.ok(dash.scanned_rows[0]?.checked_in_at);
+    assert.equal(dash.scanned_rows[0]?.checked_out_at, null);
+  });
+
+  it("shows an end-of-day wall QR checkout time", () => {
+    const at = Date.parse("2026-09-08T16:00:00.000Z");
+    const roster = [
+      employee({ id: "e3", full_name: "Ashraf", employee_id_number: "333", job_functions: ["cutter"] }),
+    ];
+    const store: SewingSessionsFile = { updated_at: null, kiosk_arms: [], sessions: [] };
+    const dash = sewingFloorAttendance(store, roster, "day", at, [
+      {
+        employee_id: "e3",
+        employee_name: "Ashraf",
+        employee_id_number: "333",
+        kiosk_id: "k1",
+        scanned_at: "2026-09-08T05:10:00.000Z",
+        checked_out_at: "2026-09-08T14:05:00.000Z",
+        workday: "2026-09-08",
+      },
+    ]);
+    assert.equal(dash.entered, 1);
+    assert.equal(dash.left, 1);
+    assert.equal(dash.scanned_rows[0]?.checked_out_at, "2026-09-08T14:05:00.000Z");
   });
 
   it("ignores clock-ins from before the Riyadh go-live day", () => {
