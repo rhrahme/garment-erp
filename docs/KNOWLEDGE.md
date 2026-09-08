@@ -8,6 +8,12 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Stitch floor (kiosk)
 
+- **Attendance means the wall QR** (Sep 8 2026): when the owner says
+  attendance, clock-in, entered, or who came in the morning, they mean
+  badge + wall QR (`ATTEND` / hung `HAGAN-HERE`) written to
+  `stitch_attendance`. Never a garment A4, piece start, Live / History
+  time, or Production Floor now. Admin Floor dashboard shows that
+  Riyadh time as **Entered 07:42**.
 - Scan flow: EMP badge -> A4 piece QR -> work -> finish with **badge then
   that already-open A4**, or **A4 then badge / same A4 again**. Kiosk
   login: `stitch@hagan.pro`. Do not assume a floor video is A4-only;
@@ -1060,7 +1066,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
-- [session-2026-09-08](session-2026-09-08.md) - Cost hint PDF mill brand, composition, weight, mini swatch
+- [session-2026-09-08](session-2026-09-08.md) - Cost hint PDFs; attendance means wall QR (Entered time)
 - [session-2026-09-07](session-2026-09-07.md) - Wall Attendance QR; clock-in from 8 Sep Riyadh; Confirm Stop on closed sessions; HERE posters; tablet camera on Stitch kiosk; all-teams how-to
 - [session-2026-09-06](session-2026-09-06.md) - Floor nicknames; admin Select all; client name on fabric rows; start without printed QR; client garment drop-off Samples view; client dropped-off garments
 - [session-2026-09-01](session-2026-09-01.md) - Serwal garment type; HR overtime pay and mistake deductions shipped
