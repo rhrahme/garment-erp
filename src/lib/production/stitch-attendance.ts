@@ -49,6 +49,22 @@ export function formatRiyadhClock(atMs: number): string {
   }).format(new Date(atMs));
 }
 
+/** Wall-QR sign-in time on the admin roster. Riyadh clock, ASCII. */
+export function formatAttendanceCheckInLabel(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const at = Date.parse(iso);
+  if (!Number.isFinite(at)) return null;
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: STITCH_LUNCH_TIMEZONE,
+    day: "2-digit",
+    month: "short",
+  }).formatToParts(new Date(at));
+  const day = parts.find((part) => part.type === "day")?.value ?? "";
+  const monthRaw = parts.find((part) => part.type === "month")?.value ?? "";
+  const month = monthRaw.slice(0, 3);
+  return `${day} ${month} ${formatRiyadhClock(at)}`;
+}
+
 export function isAttendanceClockInLive(atMs: number): boolean {
   return riyadhWorkdayKey(atMs) >= ATTENDANCE_CLOCK_IN_GO_LIVE_RIYADH_DAY;
 }

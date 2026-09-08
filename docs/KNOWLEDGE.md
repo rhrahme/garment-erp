@@ -31,7 +31,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   open or close a piece. Do **not** double-scan a garment A4 for
   attendance.
   Floor **scanned** = a go-live clock-in on that day **or** a session
-  that touches the day. Clock-ins before 8 Sep are ignored. Events:
+  that touches the day. Clock-in times (Riyadh) show on Stitch
+  Performance -> Floor dashboard, **Scanned** (admin only). Clock-ins
+  before 8 Sep are ignored. Events:
   `production.attendance_checked_in` and
   `production.attendance_clocked_in` (no prices).
   `GET /api/production/attendance-qr` + `/api/v1/...` parity. How-to

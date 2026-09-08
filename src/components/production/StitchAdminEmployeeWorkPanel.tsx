@@ -18,6 +18,7 @@ import {
   sewingSessionClientDisplayName,
   sewingSessionScanQrLabel,
 } from "@/lib/production/sewing-session-status-label";
+import { formatAttendanceCheckInLabel } from "@/lib/production/stitch-attendance";
 import { cn } from "@/lib/utils";
 
 const PERIODS: { id: SewingDashboardPeriod; label: string }[] = [
@@ -151,6 +152,12 @@ export function StitchAdminEmployeeWorkPanel({
 
   if (!isAdmin) return null;
 
+  const selectedCheckIn = formatAttendanceCheckInLabel(
+    (attendance
+      ? [...attendance.missing_rows, ...attendance.scanned_rows]
+      : []
+    ).find((row) => row.employee_id === employeeId)?.checked_in_at
+  );
   const selectedPeriod: SewingEmployeeWorkPeriod | null = work ? work[detailPeriod] : null;
   const liveClockNow = sewingLiveClockNowMs({
     wallNow: now,
@@ -176,7 +183,8 @@ export function StitchAdminEmployeeWorkPanel({
         <p className="mt-1 text-sm text-slate-500">
           Admin only. Who signed in at the entrance (badge and wall QR, either order,
           from 8 Sep) or later started stitch work, who is still missing, and one
-          employee&apos;s day / week / month.
+          employee&apos;s day / week / month. Clock-in time is Riyadh. Tap{" "}
+          <span className="font-medium">Scanned</span> to see the times.
         </p>
         <a
           href="/stitch/attendance/print?copies=6"
@@ -341,6 +349,13 @@ export function StitchAdminEmployeeWorkPanel({
                         ) : (
                           <p className="text-sm font-semibold text-amber-800">No scan yet</p>
                         )}
+                        {row.checked_in_at ? (
+                          <p className="text-sm font-semibold tabular-nums text-slate-900">
+                            In {formatAttendanceCheckInLabel(row.checked_in_at)}
+                          </p>
+                        ) : row.scanned ? (
+                          <p className="text-xs text-slate-500">No wall clock-in</p>
+                        ) : null}
                       </div>
                       <button
                         type="button"
@@ -364,6 +379,11 @@ export function StitchAdminEmployeeWorkPanel({
               <p className="text-sm text-slate-500">
                 {work.employee_id_number} - tap a period for the piece list
               </p>
+              {selectedCheckIn ? (
+                <p className="mt-1 text-sm font-semibold tabular-nums text-slate-900">
+                  Signed in {selectedCheckIn} Riyadh
+                </p>
+              ) : null}
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               {PERIODS.map((item) => {

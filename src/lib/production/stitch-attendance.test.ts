@@ -12,6 +12,7 @@ import {
   clearHereArm,
   decideAttendanceBadgeScan,
   decideAttendanceWallScan,
+  formatAttendanceCheckInLabel,
   hereArmOnKiosk,
   hereClockInMessage,
   isAttendanceClockInLive,
@@ -64,6 +65,8 @@ describe("HERE wall QR", () => {
     assert.match(ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, /Test scan received/);
     assert.match(ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, /tomorrow/i);
     assert.match(ATTENDANCE_BEFORE_GO_LIVE_MESSAGE, /does not start a piece/);
+    assert.equal(formatAttendanceCheckInLabel("2026-09-08T04:42:00.000Z"), "08 Sep 07:42");
+    assert.equal(formatAttendanceCheckInLabel(null), null);
   });
 
   it("accepts wall QR first by holding a wait for the badge", () => {
