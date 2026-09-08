@@ -5,8 +5,7 @@ import {
 } from "@/lib/costing/cost-hint-clients";
 import { generateCostHintWorksheetPdf } from "@/lib/costing/generate-cost-hint-worksheet-pdf";
 import {
-  formatCostHintArticleSummary,
-  summarizeCostHintArticles,
+  costHintNamedClientPackFiles,
   type CostHintWorksheet,
 } from "@/lib/costing/cost-hint-worksheet";
 import { loadCostHintWorksheet } from "@/lib/costing/load-cost-hint-worksheet";
@@ -19,6 +18,14 @@ export type CostHintPackQuery = {
   brandId?: string | null;
   includeArchived?: boolean;
   clientTokens?: string[];
+};
+
+export type CostHintClientPack = {
+  zip: Buffer;
+  filename: string;
+  labels: string[];
+  files: string[];
+  singlePdf: { bytes: Buffer; filename: string } | null;
 };
 
 function clientLabelForRows(rows: CostHintWorksheet["rows"], token: string): string {
@@ -43,10 +50,8 @@ function worksheetsByClient(
       label,
       worksheet: {
         ...combined,
-        subtitle: `Internal. Do not send to the client. ${label}. Cost hint = fabric + 5% duty + make, per piece. VAT excluded.`,
         rows,
         missing_price_count: rows.filter((row) => row.missing_price).length,
-        article_summary: formatCostHintArticleSummary(summarizeCostHintArticles(rows)),
       },
     });
   }
@@ -57,18 +62,13 @@ export function costHintPackZipFilename(labels: string[]): string {
   return buildDownloadFilename(["cost-hints", ...labels], "zip");
 }
 
-export async function loadCostHintClientPack(query: CostHintPackQuery): Promise<{
-  zip: Buffer;
-  filename: string;
-  labels: string[];
-} | null> {
+export async function loadCostHintClientPack(query: CostHintPackQuery): Promise<CostHintClientPack | null> {
   const tokens = query.clientTokens ?? [];
   if (tokens.length === 0) return null;
 
   const combined = loadCostHintWorksheet({
     soNumber: query.soNumber,
-    brandId: query.brandId,
-    includeArchived: query.includeArchived,
+    includeArchived: true,
     clientTokens: tokens,
   });
   if (!combined) return null;
@@ -76,20 +76,20 @@ export async function loadCostHintClientPack(query: CostHintPackQuery): Promise<
   const groups = worksheetsByClient(combined, tokens);
   if (groups.length === 0) return null;
 
+  const files = groups.flatMap((group) => costHintNamedClientPackFiles(group.worksheet, group.label));
   const entries = await Promise.all(
-    groups.map(async (group) => {
-      const pdf = await generateCostHintWorksheetPdf(group.worksheet);
-      return {
-        name: buildDownloadFilename(["cost-hints", group.label]),
-        data: Buffer.from(pdf),
-      };
-    })
+    files.map(async (file) => ({
+      name: file.name,
+      data: Buffer.from(await generateCostHintWorksheetPdf(file.worksheet)),
+    }))
   );
 
   return {
     zip: buildZipBuffer(entries),
     filename: costHintPackZipFilename(groups.map((group) => group.label)),
     labels: groups.map((group) => group.label),
+    files: entries.map((entry) => entry.name),
+    singlePdf: entries.length === 1 ? { bytes: entries[0].data, filename: entries[0].name } : null,
   };
 }
 

@@ -236,8 +236,10 @@ export function CostingWorkspace({
           <div>
             <p className="text-sm font-semibold text-amber-950">Print cost hints for offline work</p>
             <p className="mt-0.5 text-sm text-amber-900">
-              Internal PDF. Fabric cost, cost hint, and current unit price. Blank column to write your
-              selling price. Do not send to the client.
+              Internal. Fabric cost, cost hint, and current unit price. Blank column to write your
+              selling price. Do not send to the client. Named download is one zip: each client gets
+              every sales order in one PDF. Pr Khaled has 7 orders (0111, 0113, 0116, 0121, 0123,
+              0131, 0133) in that file, plus one PDF per order.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -249,7 +251,6 @@ export function CostingWorkspace({
             />
             <DownloadCostHintPdfButton
               href={`/api/costing/hint-pdf${costHintWorksheetQuery({
-                includeArchived: showArchived,
                 clientTokens: COST_HINT_NAMED_CLIENT_KEYS,
               })}`}
               variant="primary"

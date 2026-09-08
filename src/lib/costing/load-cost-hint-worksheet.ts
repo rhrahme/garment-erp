@@ -29,13 +29,14 @@ export function loadCostHintWorksheet(query: {
     });
   }
 
+  const namedClients = (query.clientTokens?.length ?? 0) > 0;
   return buildCostHintWorksheet({
-    overview: getCostingOverview({ includeArchived: true }),
+    overview: getCostingOverview({ includeArchived: true, skipDedupe: namedClients }),
     salesOrders: readSalesOrders().orders,
     invoices: readCustomerInvoices().invoices,
-    brandId: query.brandId,
+    brandId: namedClients ? null : query.brandId,
     soNumber: query.soNumber,
-    includeArchived: query.includeArchived === true,
+    includeArchived: namedClients || query.includeArchived === true,
     clientTokens: query.clientTokens,
   });
 }

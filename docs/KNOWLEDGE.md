@@ -594,9 +594,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   (optional `?invoice=` `?so=` `?brand=` `?archived=1`). API
   `GET /api/costing/hint-pdf` + `/api/v1/costing/hint-pdf`. Optional
   `?clients=ibrahim,mitwalli,hicham,mohammad-al-sheikh,khaled` returns a zip
-  with one PDF per named client (Ibrahim Al Shwemi, Mitwalli, Hicham
-  Al Saif, Mohammad Al Sheikh, Pr Khaled Bin Salman / FR-0626-0037).
-  `khaled` is Prince Khaled only - not Khaled Al Moussa. Landscape
+  with one combined PDF per named client (Ibrahim Al Shwemi, Mitwalli, Hicham
+  Al Saif, Mohammad Al Sheikh, Pr Khaled Bin Salman / FR-0626-0037) plus one
+  PDF per sales order when that client has more than one SO. Named-client
+  downloads always include archived orders and ignore the costing brand
+  chip. `khaled` is Prince Khaled only - not Khaled Al Moussa. His combined
+  file is titled with 7 sales orders (0111 / 0113 / 0116 / 0121 / 0123 /
+  0131 / 0133). Landscape
   A4. Header resume: garment counts plus total pcs. Shirt LS / Shirt
   SS count as Shirt. Every combo set expands to pieces on every
   cost-hint PDF (invoice, SO, sitewide): Shirt+Trouser+Short,

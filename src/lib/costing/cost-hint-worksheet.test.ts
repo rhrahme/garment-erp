@@ -6,16 +6,22 @@ import {
   buildCostHintWorksheet,
   buildCostHintWorksheetFromInvoice,
   costHintGarmentFamily,
+  costHintNamedClientPackFiles,
   costHintSwatchUrl,
+  costHintWorksheetFilename,
   formatCostHintArticleSummary,
   formatCostHintComposition,
+  formatCostHintSalesOrderScope,
   formatCostHintWeight,
   pieceCountForFabricLine,
   summarizeCostHintArticles,
+  uniqueCostHintSoNumbers,
   unitCostFromLineTotal,
   type CostHintWorksheetRow,
 } from "@/lib/costing/cost-hint-worksheet";
+import { matchesCostHintClientFilter } from "@/lib/costing/cost-hint-clients";
 import type { CostingOverview, SalesOrderCost } from "@/lib/costing/compute";
+import { readSalesOrders } from "@/lib/data/sales-orders";
 import type { CustomerInvoice } from "@/lib/types/customer-invoices";
 import type { SalesOrder } from "@/lib/types/sales-orders";
 
@@ -350,5 +356,138 @@ describe("cost hint worksheet", () => {
       invoiceWorksheet.article_summary,
       "5 Shirts, 5 Trousers, 5 Shorts. 5 of each. Total: 15 pcs"
     );
+  });
+
+  it("keeps all seven Pr Khaled sales orders on one named sheet, including archived", () => {
+    const khaledSos = [
+      "SO-2026-0111",
+      "SO-2026-0113",
+      "SO-2026-0116",
+      "SO-2026-0121",
+      "SO-2026-0123",
+      "SO-2026-0131",
+      "SO-2026-0133",
+    ];
+    const orders = khaledSos.map((soNumber, index) => {
+      const lineId = `line-${soNumber}`;
+      return {
+        order_id: soNumber,
+        so_number: soNumber,
+        client_name: "Pr Khaled Bin Salman",
+        client_code: "FR-0626-0037",
+        client_reference: null,
+        product_article: null,
+        order_date: "2026-06-30",
+        status: "fabric_pos_created",
+        is_archived: index < 6,
+        line_count: 1,
+        lines_missing_price: 0,
+        fabric_base_sar: 100,
+        customs_duty_sar: 5,
+        import_vat_sar: 0,
+        vat_recoverable_sar: 0,
+        fabric_cash_outlay_sar: 0,
+        fabric_cost_sar: 105,
+        labor_cost_sar: 80,
+        washing_cost_sar: 10,
+        overhead_cost_sar: 10,
+        total_cost_sar: 205,
+        lines: [
+          {
+            line_id: lineId,
+            article_number: 1,
+            fabric_number: "360103",
+            supplier_id: "caccioppoli",
+            supplier_name: "Caccioppoli",
+            garment_type: "Jacket",
+            composition: "100% wool",
+            weight_gsm: 240,
+            width_label: "150 cm",
+            color: "navy",
+            meters: 1.9,
+            unit: "meters",
+            unit_price: 88,
+            supplier_line_total: 167.2,
+            fabric_base_sar: 100,
+            customs_duty_sar: 5,
+            import_vat_sar: 0,
+            vat_recoverable_sar: 0,
+            fabric_cash_outlay_sar: 0,
+            fabric_cost_sar: 105,
+            labor_cost_sar: 80,
+            washing_cost_sar: 10,
+            overhead_cost_sar: 10,
+            total_cost_sar: 205,
+            has_fabric_price: true,
+          },
+        ],
+      } satisfies SalesOrderCost;
+    });
+
+    const worksheet = buildCostHintWorksheet({
+      overview: {
+        currency: "SAR",
+        order_count: orders.length,
+        line_count: orders.length,
+        lines_missing_price: 0,
+        fabric_base_sar: 700,
+        customs_duty_sar: 35,
+        import_vat_sar: 0,
+        vat_recoverable_sar: 0,
+        fabric_cash_outlay_sar: 0,
+        fabric_cost_sar: 735,
+        labor_cost_sar: 560,
+        washing_cost_sar: 70,
+        overhead_cost_sar: 70,
+        total_cost_sar: 1435,
+        orders,
+      },
+      salesOrders: [],
+      invoices: [],
+      includeArchived: false,
+      clientTokens: ["khaled"],
+      generatedAt: "2026-09-08T12:00:00.000Z",
+    });
+
+    assert.deepEqual(uniqueCostHintSoNumbers(worksheet.rows), khaledSos);
+    assert.equal(worksheet.rows.length, 7);
+    assert.match(worksheet.title, /7 sales orders/);
+    assert.match(worksheet.subtitle, /SO-2026-0111/);
+    assert.match(worksheet.subtitle, /SO-2026-0133/);
+    assert.equal(
+      formatCostHintSalesOrderScope(worksheet.rows),
+      "7 sales orders | SO-2026-0111 | SO-2026-0113 | SO-2026-0116 | SO-2026-0121 | SO-2026-0123 | SO-2026-0131 | SO-2026-0133"
+    );
+    assert.equal(costHintWorksheetFilename(worksheet), "cost-hints-Pr-Khaled-Bin-Salman-7-orders.pdf");
+
+    const packFiles = costHintNamedClientPackFiles(worksheet, "Pr Khaled Bin Salman");
+    assert.equal(packFiles.length, 8);
+    assert.equal(packFiles[0]?.name, "cost-hints-Pr-Khaled-Bin-Salman-7-orders.pdf");
+    assert.deepEqual(
+      packFiles.slice(1).map((file) => file.name),
+      khaledSos.map((so) => `cost-hints-Pr-Khaled-Bin-Salman-${so}.pdf`)
+    );
+    assert.equal(uniqueCostHintSoNumbers(packFiles[1]?.worksheet.rows ?? []).join(), "SO-2026-0111");
+  });
+
+  it("lists the seven Pr Khaled sales orders in the house dump", () => {
+    const sos = [
+      ...new Set(
+        readSalesOrders()
+          .orders.filter((order) =>
+            matchesCostHintClientFilter(order.client_name, order.client_code, ["khaled"])
+          )
+          .map((order) => order.so_number)
+      ),
+    ].sort((a, b) => a.localeCompare(b));
+    assert.deepEqual(sos, [
+      "SO-2026-0111",
+      "SO-2026-0113",
+      "SO-2026-0116",
+      "SO-2026-0121",
+      "SO-2026-0123",
+      "SO-2026-0131",
+      "SO-2026-0133",
+    ]);
   });
 });

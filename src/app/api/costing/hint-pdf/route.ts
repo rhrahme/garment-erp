@@ -30,10 +30,19 @@ export async function GET(request: Request) {
     });
     const disposition = url.searchParams.get("disposition") === "inline" ? "inline" : "attachment";
 
-    if (!parsed.invoiceId && parsed.clientTokens.length > 1) {
+    if (!parsed.invoiceId && parsed.clientTokens.length > 0) {
       const pack = await loadCostHintClientPack(parsed);
       if (!pack) {
         return NextResponse.json({ error: "No cost-hint lines for those clients." }, { status: 404 });
+      }
+      if (pack.singlePdf && parsed.clientTokens.length === 1) {
+        return new NextResponse(new Uint8Array(pack.singlePdf.bytes), {
+          headers: {
+            "Content-Type": "application/pdf",
+            "Content-Disposition": contentDisposition(pack.singlePdf.filename, disposition),
+            "Cache-Control": "no-store",
+          },
+        });
       }
       return new NextResponse(new Uint8Array(pack.zip), {
         headers: {

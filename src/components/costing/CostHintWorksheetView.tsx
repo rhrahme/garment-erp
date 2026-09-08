@@ -7,6 +7,7 @@ import {
   formatCostHintComposition,
   formatCostHintWeight,
   summarizeCostHintArticles,
+  uniqueCostHintSoNumbers,
   type CostHintWorksheet,
 } from "@/lib/costing/cost-hint-worksheet";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
@@ -22,6 +23,10 @@ export function CostHintWorksheetView({
   worksheet: CostHintWorksheet;
   pdfHref: string;
 }) {
+  const soCount = uniqueCostHintSoNumbers(worksheet.rows).length;
+  const heading = worksheet.title.toUpperCase().startsWith("INTERNAL")
+    ? worksheet.title
+    : `INTERNAL - ${worksheet.title}`;
   return (
     <div className="min-h-screen bg-white p-6 text-slate-900 print:p-0">
       <style>{COST_HINT_PRINT_CSS}</style>
@@ -47,10 +52,11 @@ export function CostHintWorksheetView({
         </div>
       </div>
 
-      <h1 className="text-xl font-bold">INTERNAL - cost hint worksheet</h1>
+      <h1 className="text-xl font-bold">{heading}</h1>
       <p className="mt-1 text-sm text-slate-600">{worksheet.subtitle}</p>
       <p className="mt-1 text-xs text-slate-500">
-        {worksheet.rows.length} lines. {worksheet.missing_price_count} missing fabric price.
+        {worksheet.rows.length} lines. {soCount} sales order{soCount === 1 ? "" : "s"}.{" "}
+        {worksheet.missing_price_count} missing fabric price.
       </p>
       <p className="mt-2 text-sm font-semibold text-slate-900">
         {worksheet.article_summary ||

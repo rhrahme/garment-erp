@@ -5,6 +5,7 @@ import {
   formatCostHintComposition,
   formatCostHintWeight,
   summarizeCostHintArticles,
+  uniqueCostHintSoNumbers,
   type CostHintWorksheet,
 } from "@/lib/costing/cost-hint-worksheet";
 import {
@@ -46,10 +47,14 @@ export async function generateCostHintWorksheetPdf(worksheet: CostHintWorksheet)
       .map((row) => ({ supplier_id: row.supplier_id as string, fabric_number: row.fabric_number }))
   );
 
+  const heading = worksheet.title?.trim() || "Cost hint worksheet";
+  const title = heading.toUpperCase().startsWith("INTERNAL") ? heading : `INTERNAL - ${heading}`;
+  const soCount = uniqueCostHintSoNumbers(worksheet.rows).length;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("INTERNAL - cost hint worksheet", margin, y);
-  y += 16;
+  const titleLines = doc.splitTextToSize(title, pageW - margin * 2);
+  doc.text(titleLines, margin, y);
+  y += titleLines.length * 16;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(80);
@@ -57,7 +62,7 @@ export async function generateCostHintWorksheetPdf(worksheet: CostHintWorksheet)
   doc.text(subtitle, margin, y);
   y += subtitle.length * 12 + 4;
   doc.text(
-    `Printed ${generatedLabel(worksheet.generated_at)} Riyadh. ${worksheet.rows.length} lines. ${worksheet.missing_price_count} missing fabric price.`,
+    `Printed ${generatedLabel(worksheet.generated_at)} Riyadh. ${worksheet.rows.length} lines. ${soCount} sales order${soCount === 1 ? "" : "s"}. ${worksheet.missing_price_count} missing fabric price.`,
     margin,
     y
   );

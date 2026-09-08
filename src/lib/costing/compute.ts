@@ -242,7 +242,10 @@ export function getSalesOrderCost(order: SalesOrder): SalesOrderCost {
   };
 }
 
-export function getCostingOverview(options?: { includeArchived?: boolean }): CostingOverview {
+export function getCostingOverview(options?: {
+  includeArchived?: boolean;
+  skipDedupe?: boolean;
+}): CostingOverview {
   const includeArchived = options?.includeArchived ?? false;
   let orders = listBespokeSalesOrders(readSalesOrders().orders);
   if (!includeArchived) {
@@ -251,8 +254,8 @@ export function getCostingOverview(options?: { includeArchived?: boolean }): Cos
 
   orders.sort((a, b) => b.order_date.localeCompare(a.order_date));
 
-  const dedupedOrders = dedupeIdenticalSalesOrders(orders);
-  const computed = dedupedOrders.map(getSalesOrderCost);
+  const scopedOrders = options?.skipDedupe ? orders : dedupeIdenticalSalesOrders(orders);
+  const computed = scopedOrders.map(getSalesOrderCost);
   const lineCount = computed.reduce((sum, order) => sum + order.line_count, 0);
   const linesMissingPrice = computed.reduce((sum, order) => sum + order.lines_missing_price, 0);
   const fabricBase = computed.reduce((sum, order) => sum + order.fabric_base_sar, 0);

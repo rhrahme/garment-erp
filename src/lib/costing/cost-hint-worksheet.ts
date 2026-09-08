@@ -1,5 +1,9 @@
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
-import { matchesCostHintClientFilter } from "@/lib/costing/cost-hint-clients";
+import {
+  COST_HINT_NAMED_CLIENTS,
+  matchesCostHintClientFilter,
+  resolveCostHintNamedClient,
+} from "@/lib/costing/cost-hint-clients";
 import type { CostingOverview, FabricLineCost, SalesOrderCost } from "@/lib/costing/compute";
 import { resolveFabricSwatchUrls } from "@/lib/fabric-sourcing/fabric-swatch-keys";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
@@ -287,6 +291,77 @@ function attachArticleSummary<T extends { rows: CostHintWorksheetRow[] }>(
   };
 }
 
+export function uniqueCostHintSoNumbers(rows: Array<{ so_number?: string | null }>): string[] {
+  const seen = new Set<string>();
+  for (const row of rows) {
+    const so = row.so_number?.trim();
+    if (so) seen.add(so);
+  }
+  return [...seen].sort((a, b) => a.localeCompare(b));
+}
+
+export function formatCostHintSalesOrderScope(rows: Array<{ so_number?: string | null }>): string {
+  const sos = uniqueCostHintSoNumbers(rows);
+  if (sos.length === 0) return "no sales orders";
+  if (sos.length === 1) return sos[0];
+  return `${sos.length} sales orders | ${sos.join(" | ")}`;
+}
+
+export function namedCostHintClientLabelForRows(
+  rows: Array<{ client_name: string; client_code: string }>
+): string | null {
+  if (rows.length === 0) return null;
+  const hits = COST_HINT_NAMED_CLIENTS.filter((client) =>
+    rows.every((row) => matchesCostHintClientFilter(row.client_name, row.client_code, [client.key]))
+  );
+  return hits.length === 1 ? hits[0].label : null;
+}
+
+function namedClientHeading(
+  label: string,
+  rows: Array<{ so_number?: string | null }>
+): { title: string; subtitle: string } {
+  const sos = uniqueCostHintSoNumbers(rows);
+  const scope = formatCostHintSalesOrderScope(rows);
+  const title =
+    sos.length > 1
+      ? `Cost hint worksheet - ${label} - ${sos.length} sales orders`
+      : `Cost hint worksheet - ${label} - ${sos[0] ?? "no sales orders"}`;
+  return {
+    title,
+    subtitle: `Internal. Do not send to the client. ${label}. ${scope}. Cost hint = fabric + 5% duty + make, per piece. VAT excluded.`,
+  };
+}
+
+export function applyCostHintNamedClientCopy(
+  worksheet: CostHintWorksheet,
+  label: string
+): CostHintWorksheet {
+  const copy = namedClientHeading(label, worksheet.rows);
+  return attachArticleSummary({
+    ...worksheet,
+    title: copy.title,
+    subtitle: copy.subtitle,
+    missing_price_count: worksheet.rows.filter((row) => row.missing_price).length,
+  });
+}
+
+export function costHintNamedClientPackFiles(
+  worksheet: CostHintWorksheet,
+  label: string
+): Array<{ name: string; worksheet: CostHintWorksheet }> {
+  const combined = applyCostHintNamedClientCopy(worksheet, label);
+  const files = [{ name: costHintWorksheetFilename(combined), worksheet: combined }];
+  const sos = uniqueCostHintSoNumbers(worksheet.rows);
+  if (sos.length < 2) return files;
+  for (const soNumber of sos) {
+    const rows = worksheet.rows.filter((row) => row.so_number === soNumber);
+    const slice = applyCostHintNamedClientCopy({ ...combined, rows }, label);
+    files.push({ name: costHintWorksheetFilename(slice), worksheet: slice });
+  }
+  return files;
+}
+
 function formatArticleFromInvoice(articleNumber: number | null | undefined, fallback: string): string {
   if (articleNumber == null || !Number.isFinite(articleNumber)) return fallback;
   return articleLabelFromNumber(articleNumber);
@@ -386,11 +461,12 @@ export function buildCostHintWorksheet(options: {
   const selling = sellingPriceByFabricLineId(options.invoices ?? []);
   const soFilter = options.soNumber?.trim().toUpperCase() ?? "";
   const clientTokens = options.clientTokens ?? [];
+  const namedClients = clientTokens.length > 0;
   const rows: CostHintWorksheetRow[] = [];
 
   for (const order of options.overview.orders) {
-    if (!options.includeArchived && order.is_archived) continue;
-    if (!matchesBrand(order.client_code, options.brandId)) continue;
+    if (!namedClients && !options.includeArchived && order.is_archived) continue;
+    if (!namedClients && !matchesBrand(order.client_code, options.brandId)) continue;
     if (soFilter && order.so_number.toUpperCase() !== soFilter) continue;
     if (!matchesCostHintClientFilter(order.client_name, order.client_code, clientTokens)) continue;
     const salesOrder = soById.get(order.order_id);
@@ -407,17 +483,25 @@ export function buildCostHintWorksheet(options: {
     }
   }
 
+  const namedLabel =
+    namedCostHintClientLabelForRows(rows) ??
+    (clientTokens.length === 1 ? resolveCostHintNamedClient(clientTokens[0])?.label ?? null : null);
   const scope = soFilter
     ? soFilter
-    : clientTokens.length > 0
-      ? clientTokens.join(", ")
-      : options.brandId
-        ? `${options.brandId} brand`
-        : "all orders";
+    : namedLabel
+      ? formatCostHintSalesOrderScope(rows)
+      : clientTokens.length > 0
+        ? clientTokens.join(", ")
+        : options.brandId
+          ? `${options.brandId} brand`
+          : "all orders";
+  const namedCopy = namedLabel ? namedClientHeading(namedLabel, rows) : null;
 
   return attachArticleSummary({
-    title: "Cost hint worksheet",
-    subtitle: `Internal. Do not send to the client. ${scope}. Cost hint = fabric + 5% duty + make, per piece. VAT excluded.`,
+    title: namedCopy?.title ?? "Cost hint worksheet",
+    subtitle:
+      namedCopy?.subtitle ??
+      `Internal. Do not send to the client. ${scope}. Cost hint = fabric + 5% duty + make, per piece. VAT excluded.`,
     generated_at: options.generatedAt ?? new Date().toISOString(),
     rows,
     missing_price_count: rows.filter((row) => row.missing_price).length,
@@ -478,11 +562,19 @@ export function buildCostHintWorksheetFromInvoice(options: {
 }
 
 export function costHintWorksheetFilename(worksheet: CostHintWorksheet): string {
+  const namedLabel = namedCostHintClientLabelForRows(worksheet.rows);
+  const sos = uniqueCostHintSoNumbers(worksheet.rows);
+  if (namedLabel) {
+    if (sos.length > 1) {
+      return buildDownloadFilename(["cost-hints", namedLabel, `${sos.length}-orders`]);
+    }
+    return buildDownloadFilename(["cost-hints", namedLabel, sos[0]]);
+  }
   const first = worksheet.rows[0];
   if (first?.invoice_number) {
     return buildDownloadFilename(["cost-hints", first.invoice_number]);
   }
-  if (first && worksheet.rows.every((row) => row.so_number === first.so_number)) {
+  if (first && sos.length === 1) {
     return buildDownloadFilename(["cost-hints", first.so_number]);
   }
   return buildDownloadFilename(["cost-hints"]);
