@@ -18,7 +18,11 @@ import {
   clientPatternLabelCode,
   clientPatternQrUrl,
 } from "@/lib/pattern-library/pattern-qr";
-import type { PatternSheetKind } from "@/lib/pattern-library/pattern-sheet-kind";
+import {
+  patternSheetKindLabel,
+  type PatternSheetKind,
+} from "@/lib/pattern-library/pattern-sheet-kind";
+import { cn } from "@/lib/utils";
 import {
   expandCutterPrintPages,
   expandProductionArticlePages,
@@ -913,15 +917,13 @@ export function PatternSheetPrintView({
     `/pattern/client-patterns/${pattern.id}/print?${sheetQuery(kind, data)}`,
     displayUnit
   ).split("?")[1]!;
-  const switchKind: PatternSheetKind = isSewing
-    ? "production"
-    : isProduction
-      ? "cutter"
-      : "sewing";
-  const otherQs = withMeasurementUnitParam(
-    `/pattern/client-patterns/${pattern.id}/print?${sheetQuery(switchKind, data)}`,
-    displayUnit
-  ).split("?")[1]!;
+  const SHEET_KINDS: PatternSheetKind[] = ["cutter", "production", "sewing"];
+  function printHrefFor(option: PatternSheetKind): string {
+    return withMeasurementUnitParam(
+      `/pattern/client-patterns/${pattern.id}/print?${sheetQuery(option, data)}`,
+      displayUnit
+    );
+  }
   const kindLabel = isSewing
     ? "Sewing A4s (one page per stitcher piece)"
     : isProduction
@@ -1015,12 +1017,20 @@ export function PatternSheetPrintView({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href={`/pattern/client-patterns/${pattern.id}/print?${otherQs}`}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"
-          >
-            Switch to {switchKind === "cutter" ? "cutter" : "production"}
-          </Link>
+          {SHEET_KINDS.map((option) => (
+            <Link
+              key={option}
+              href={printHrefFor(option)}
+              className={cn(
+                "inline-flex items-center rounded-lg px-3 py-2 text-sm font-medium ring-1",
+                option === kind
+                  ? "bg-indigo-600 text-white ring-indigo-600"
+                  : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-100"
+              )}
+            >
+              {patternSheetKindLabel(option)}
+            </Link>
+          ))}
           <a
             href={`/api/pattern/library/client-patterns/${pattern.id}/pdf?${qs}`}
             download

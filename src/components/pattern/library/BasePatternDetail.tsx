@@ -429,6 +429,10 @@ export function BasePatternDetail({
             <Printer className="h-4 w-4" />
             Print A4
           </Link>
+          <p className="w-full text-xs text-slate-500 sm:w-auto">
+            House base: measurements only. Stitcher / production A4s are on the
+            client pattern after consolidate (Print production).
+          </p>
           <button
             type="button"
             onClick={() => void save()}

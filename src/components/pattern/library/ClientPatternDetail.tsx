@@ -847,6 +847,10 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
     `/pattern/client-patterns/${pattern.id}/print?sheet=cutter${sheetQs ? `&${sheetQs}` : ""}`,
     displayUnit
   );
+  const printProductionHref = withMeasurementUnitParam(
+    `/pattern/client-patterns/${pattern.id}/print?sheet=production${sheetQs ? `&${sheetQs}` : ""}`,
+    displayUnit
+  );
   const photosPrintHref = `/pattern/client-patterns/${pattern.id}/photos/print`;
   const pdfCutterHref = withMeasurementUnitParam(
     `/api/pattern/library/client-patterns/${pattern.id}/pdf?sheet=cutter${sheetQs ? `&${sheetQs}` : ""}`,
@@ -899,6 +903,14 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
             Client fabrics
           </Link>
           <Link
+            href={printProductionHref}
+            target="_blank"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          >
+            <Printer className="h-4 w-4" />
+            Print production
+          </Link>
+          <Link
             href={printCutterHref}
             target="_blank"
             className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
@@ -906,16 +918,6 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
             <Printer className="h-4 w-4" />
             Print cutter
           </Link>
-          <SewingA4PrintControls
-            patternId={pattern.id}
-            clientId={pattern.client_id}
-            versionId={version?.id ?? null}
-            sheetKind="production"
-            label="Print production"
-            showNewBadge={false}
-            emphasize={false}
-            defaultLineIds={scopedLineId ? [scopedLineId] : null}
-          />
           <SewingA4PrintControls
             patternId={pattern.id}
             clientId={pattern.client_id}
@@ -947,6 +949,39 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
             <Download className="h-4 w-4" />
             Download production sheet
           </a>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3">
+        <p className="text-sm font-semibold text-indigo-950">Print from this pattern sheet</p>
+        <p className="mt-1 text-sm text-indigo-900/90">
+          Production is the stitcher A4 with the floor QR. Cutter is for cutting.
+          Sewing A4s lets you tick which fabrics to print.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Link
+            href={printProductionHref}
+            target="_blank"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
+          >
+            <Printer className="h-4 w-4" />
+            Print production
+          </Link>
+          <SewingA4PrintControls
+            patternId={pattern.id}
+            clientId={pattern.client_id}
+            versionId={version?.id ?? null}
+            sheetKind="sewing"
+            defaultLineIds={scopedLineId ? [scopedLineId] : null}
+          />
+          <Link
+            href={printCutterHref}
+            target="_blank"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+          >
+            <Printer className="h-4 w-4" />
+            Print cutter
+          </Link>
         </div>
       </div>
 

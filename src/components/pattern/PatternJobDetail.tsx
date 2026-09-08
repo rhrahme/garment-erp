@@ -788,7 +788,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
               className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
             >
               <Printer className="h-4 w-4" />
-              Print A4 · {job.fabric_number}
+              Print production · {job.fabric_number}
             </Link>
             {printCutterHref ? (
               <Link
@@ -805,7 +805,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
               clientId={job.client_id}
               versionId={job.client_pattern_version_id}
               sheetKind="production"
-              label="Print production"
+              label="Production (pick fabrics)"
               showNewBadge={false}
               emphasize={false}
               defaultLineIds={[job.sales_order_line_id]}

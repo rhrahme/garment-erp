@@ -633,10 +633,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Overshirt (or Jacket/Shirt) on page 1 and Trouser on page 2 - each with that
   piece's floor QR + filtered measurements - so different stitchers get their
   own sheet. Single-piece garments (Shorts, Shirt, Thobe, ...) stay one page.
-  **Print production** and **Sewing A4s** both open the fabric tick picker
-  (Select all or subset) on the client sheet and job page; each ticked fabric
-  gets its own QR pages via `?lines=`. Order board **Print selected** is the
-  same idea across jobs. Browser print must page-break between stitcher A4s
+  **Print production** on the client pattern sheet is a direct indigo
+  button to `?sheet=production` (stitcher A4 + floor QR). House bases
+  stay measurements-only. The print preview has **Cutter | Production |
+  Sewing** tabs; missing `?sheet=` is cutter. **Sewing A4s** (and the
+  job **Production (pick fabrics)** picker) still open the fabric tick
+  list; each ticked fabric gets its own QR pages via `?lines=`. Order
+  board **Print selected** is the same idea across jobs. Browser print must page-break between stitcher A4s
   (production CSS matches sewing - do not force `page-break-after: auto` on
   multi-page production packs). Do not collapse back to first-linked-line-only
   or put Overshirt+Trouser QRs on one shared page.

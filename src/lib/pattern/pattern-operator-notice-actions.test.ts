@@ -205,6 +205,8 @@ describe("print Sewing A4 from Pattern how-to", () => {
     assert.match(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_TITLE, /Sewing A4s/i);
     assert.match(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_BODY, /size 52/);
     assert.match(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_BODY, /Sewing A4s/);
+    assert.match(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_BODY, /Print production/);
+    assert.match(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_BODY, /Cutter \| Production \| Sewing/);
     assert.match(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_BODY, /Do not print Cutter for the stitcher/);
     assert.match(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_BODY, /pattern library QR/);
     assert.match(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_BODY, /ENGLISH/);
