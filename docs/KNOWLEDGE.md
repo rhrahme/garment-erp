@@ -717,11 +717,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   prefix. Drop mill collection / style names (PEGASO, SUMMERTIME, tela
   notes). Keep Knit (KNIT SHIRT / KNIT); still drop Piquet and Honey Comb.
   Display-only - do not rewrite stored invoice JSON for this.
-- **Cost hint worksheet PDF** (Sep 7 2026, details Sep 8): admin prints
-  mill brand, fibre, gsm, mini swatch, fabric cost, cost hint, and
-  current unit price for offline markup. Sitewide from Costing and
-  Invoicing; one invoice from the invoice editor. Internal only.
-  Client quote/invoice PDFs stay without hints.
+- **Cost hint worksheet PDF** (Sep 7 2026, details Sep 8 `ab46444c`):
+  admin prints mill brand, fibre, gsm, mini swatch, fabric cost, cost
+  hint, and current unit price for offline markup. Sitewide from
+  Costing and Invoicing; one invoice from the invoice editor. Internal
+  only. Client quote/invoice PDFs stay without hints.
 
 ## Ready-made catalog photos
 
