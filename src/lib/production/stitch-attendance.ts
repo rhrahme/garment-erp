@@ -49,11 +49,16 @@ export function formatRiyadhClock(atMs: number): string {
   }).format(new Date(atMs));
 }
 
-/** Wall-QR sign-in time on the admin roster. Riyadh clock, ASCII. */
-export function formatAttendanceCheckInLabel(iso: string | null | undefined): string | null {
+/** Wall-QR factory-entry time. Riyadh clock, ASCII. Today can omit the date. */
+export function formatAttendanceCheckInLabel(
+  iso: string | null | undefined,
+  options?: { includeDate?: boolean }
+): string | null {
   if (!iso) return null;
   const at = Date.parse(iso);
   if (!Number.isFinite(at)) return null;
+  const clock = formatRiyadhClock(at);
+  if (options?.includeDate === false) return clock;
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: STITCH_LUNCH_TIMEZONE,
     day: "2-digit",
@@ -62,7 +67,16 @@ export function formatAttendanceCheckInLabel(iso: string | null | undefined): st
   const day = parts.find((part) => part.type === "day")?.value ?? "";
   const monthRaw = parts.find((part) => part.type === "month")?.value ?? "";
   const month = monthRaw.slice(0, 3);
-  return `${day} ${month} ${formatRiyadhClock(at)}`;
+  return `${day} ${month} ${clock}`;
+}
+
+/** Morning door time: badge + wall QR, not a garment A4. */
+export function formatMorningEntryLabel(
+  iso: string | null | undefined,
+  options?: { includeDate?: boolean }
+): string | null {
+  const clock = formatAttendanceCheckInLabel(iso, options);
+  return clock ? `Entered ${clock}` : null;
 }
 
 export function isAttendanceClockInLive(atMs: number): boolean {

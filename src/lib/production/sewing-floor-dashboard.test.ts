@@ -145,6 +145,7 @@ describe("sewingFloorAttendance", () => {
     const dash = sewingFloorAttendance(store, roster, "day", at);
     assert.equal(dash.expected, 3);
     assert.equal(dash.scanned, 2);
+    assert.equal(dash.entered, 0);
     assert.equal(dash.missing, 1);
     assert.equal(dash.live, 1);
     assert.equal(dash.missing_rows[0]?.employee_name, "Ashraf");
@@ -170,6 +171,7 @@ describe("sewingFloorAttendance", () => {
       },
     ]);
     assert.equal(dash.scanned, 1);
+    assert.equal(dash.entered, 1);
     assert.equal(dash.missing, 0);
     assert.equal(dash.scanned_rows[0]?.count, 0);
     assert.ok(dash.scanned_rows[0]?.checked_in_at);
@@ -192,6 +194,7 @@ describe("sewingFloorAttendance", () => {
       },
     ]);
     assert.equal(dash.scanned, 0);
+    assert.equal(dash.entered, 0);
     assert.equal(dash.missing, 1);
   });
 

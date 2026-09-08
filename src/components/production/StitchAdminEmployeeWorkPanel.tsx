@@ -18,7 +18,7 @@ import {
   sewingSessionClientDisplayName,
   sewingSessionScanQrLabel,
 } from "@/lib/production/sewing-session-status-label";
-import { formatAttendanceCheckInLabel } from "@/lib/production/stitch-attendance";
+import { formatMorningEntryLabel } from "@/lib/production/stitch-attendance";
 import { cn } from "@/lib/utils";
 
 const PERIODS: { id: SewingDashboardPeriod; label: string }[] = [
@@ -27,7 +27,24 @@ const PERIODS: { id: SewingDashboardPeriod; label: string }[] = [
   { id: "month", label: "This month" },
 ];
 
-type RosterFilter = "missing" | "scanned" | "live" | "all";
+type RosterFilter = "entered" | "missing" | "live" | "all";
+
+function attendanceRows(attendance: SewingFloorAttendance): SewingFloorAttendanceRow[] {
+  return [...attendance.missing_rows, ...attendance.scanned_rows];
+}
+
+function hasMorningEntry(row: SewingFloorAttendanceRow): boolean {
+  return Boolean(row.checked_in_at);
+}
+
+function compareMorningEntry(a: SewingFloorAttendanceRow, b: SewingFloorAttendanceRow): number {
+  if (a.checked_in_at && b.checked_in_at) {
+    return Date.parse(a.checked_in_at) - Date.parse(b.checked_in_at);
+  }
+  if (a.checked_in_at) return -1;
+  if (b.checked_in_at) return 1;
+  return a.employee_name.localeCompare(b.employee_name);
+}
 
 function formatDuration(sec: number | null | undefined): string {
   if (sec == null || !Number.isFinite(sec)) return "-";
@@ -72,7 +89,7 @@ export function StitchAdminEmployeeWorkPanel({
 }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [rosterPeriod, setRosterPeriod] = useState<SewingDashboardPeriod>("day");
-  const [rosterFilter, setRosterFilter] = useState<RosterFilter>("missing");
+  const [rosterFilter, setRosterFilter] = useState<RosterFilter>("entered");
   const [attendance, setAttendance] = useState<SewingFloorAttendance | null>(null);
   const [employeeId, setEmployeeId] = useState("");
   const [query, setQuery] = useState("");
@@ -139,25 +156,29 @@ export function StitchAdminEmployeeWorkPanel({
 
   const rosterRows = useMemo(() => {
     if (!attendance) return [];
-    const all = [...attendance.missing_rows, ...attendance.scanned_rows];
+    const all = attendanceRows(attendance);
     const needle = query.trim().toLowerCase();
-    return all.filter((row) => {
-      if (!rowMatchesQuery(row, needle)) return false;
-      if (rosterFilter === "missing") return !row.scanned;
-      if (rosterFilter === "scanned") return row.scanned;
-      if (rosterFilter === "live") return row.live;
-      return true;
-    });
+    return all
+      .filter((row) => {
+        if (!rowMatchesQuery(row, needle)) return false;
+        if (rosterFilter === "entered") return hasMorningEntry(row);
+        if (rosterFilter === "missing") return !hasMorningEntry(row);
+        if (rosterFilter === "live") return row.live;
+        return true;
+      })
+      .sort(compareMorningEntry);
   }, [attendance, query, rosterFilter]);
 
   if (!isAdmin) return null;
 
-  const selectedCheckIn = formatAttendanceCheckInLabel(
-    (attendance
-      ? [...attendance.missing_rows, ...attendance.scanned_rows]
-      : []
-    ).find((row) => row.employee_id === employeeId)?.checked_in_at
+  const selectedCheckIn = formatMorningEntryLabel(
+    (attendance ? attendanceRows(attendance) : []).find((row) => row.employee_id === employeeId)
+      ?.checked_in_at,
+    { includeDate: rosterPeriod !== "day" }
   );
+  const noMorningEntry = attendance
+    ? attendanceRows(attendance).filter((row) => !hasMorningEntry(row)).length
+    : 0;
   const selectedPeriod: SewingEmployeeWorkPeriod | null = work ? work[detailPeriod] : null;
   const liveClockNow = sewingLiveClockNowMs({
     wallNow: now,
@@ -181,10 +202,10 @@ export function StitchAdminEmployeeWorkPanel({
       <div className="border-b border-slate-100 px-5 py-4">
         <h2 className="text-xl font-semibold text-slate-900">Floor dashboard</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Admin only. Who signed in at the entrance (badge and wall QR, either order,
-          from 8 Sep) or later started stitch work, who is still missing, and one
-          employee&apos;s day / week / month. Clock-in time is Riyadh. Tap{" "}
-          <span className="font-medium">Scanned</span> to see the times.
+          Admin only. Attendance is the morning factory door time: badge + wall QR
+          (either order, from 8 Sep). That is not the garment A4. Times are Riyadh.
+          Tap <span className="font-medium">Entered</span> to see who scanned in
+          and at what time.
         </p>
         <a
           href="/stitch/attendance/print?copies=6"
@@ -226,16 +247,18 @@ export function StitchAdminEmployeeWorkPanel({
               hint="Floor badge roster"
             />
             <KpiCard
-              label="Scanned"
-              value={attendance.scanned}
-              hint={`${attendance.pieces} pcs / ${formatDuration(attendance.duration_sec)}`}
-              tone="ok"
+              label="Entered"
+              value={attendance.entered}
+              hint="Morning wall QR time"
+              tone={attendance.entered > 0 ? "ok" : "plain"}
+              active={rosterFilter === "entered"}
+              onClick={() => setRosterFilter("entered")}
             />
             <KpiCard
-              label="Didn't scan"
-              value={attendance.missing}
-              hint="Investigate these"
-              tone={attendance.missing > 0 ? "warn" : "ok"}
+              label="No entry"
+              value={noMorningEntry}
+              hint="No door scan yet"
+              tone={noMorningEntry > 0 ? "warn" : "ok"}
               active={rosterFilter === "missing"}
               onClick={() => setRosterFilter("missing")}
             />
@@ -271,8 +294,8 @@ export function StitchAdminEmployeeWorkPanel({
           <div className="flex flex-wrap gap-2">
             {(
               [
-                ["missing", "Didn't scan"],
-                ["scanned", "Scanned"],
+                ["entered", "Entered"],
+                ["missing", "No entry"],
                 ["live", "Live"],
                 ["all", "All"],
               ] as const
@@ -291,10 +314,10 @@ export function StitchAdminEmployeeWorkPanel({
                 {label}
                 {attendance
                   ? ` ${
-                      id === "missing"
-                        ? attendance.missing
-                        : id === "scanned"
-                          ? attendance.scanned
+                      id === "entered"
+                        ? attendance.entered
+                        : id === "missing"
+                          ? noMorningEntry
                           : id === "live"
                             ? attendance.live
                             : attendance.expected
@@ -310,9 +333,11 @@ export function StitchAdminEmployeeWorkPanel({
         <ul className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
           {rosterRows.length === 0 ? (
             <li className="px-4 py-6 text-sm text-slate-500">
-              {rosterFilter === "missing"
-                ? "Everyone expected has scanned in this period."
-                : "No employees match this filter."}
+              {rosterFilter === "entered"
+                ? "Nobody has scanned the wall QR this period."
+                : rosterFilter === "missing"
+                  ? "Everyone on this list has a morning door scan."
+                  : "No employees match this filter."}
             </li>
           ) : (
             rosterRows.map((row) => {
@@ -323,7 +348,9 @@ export function StitchAdminEmployeeWorkPanel({
                     className={cn(
                       "flex w-full flex-wrap items-center justify-between gap-3 px-4 py-3",
                       selected ? "bg-indigo-50" : "bg-white",
-                      !row.scanned ? "border-l-4 border-l-amber-400" : "border-l-4 border-l-transparent"
+                      !hasMorningEntry(row)
+                        ? "border-l-4 border-l-amber-400"
+                        : "border-l-4 border-l-transparent"
                     )}
                   >
                     <div className="min-w-0 cursor-text select-text">
@@ -336,25 +363,25 @@ export function StitchAdminEmployeeWorkPanel({
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="cursor-text select-text text-right">
-                        {row.live ? (
-                          <p className="text-sm font-semibold text-emerald-700">Live</p>
-                        ) : row.scanned ? (
-                          <p className="text-sm font-semibold text-slate-800">
-                            {row.count > 0
-                              ? `${row.count} pcs - ${formatDuration(row.duration_sec)}`
-                              : row.checked_in_at
-                                ? "Here"
-                                : "Scanned"}
+                        {hasMorningEntry(row) ? (
+                          <p className="text-sm font-semibold tabular-nums text-slate-900">
+                            {formatMorningEntryLabel(row.checked_in_at, {
+                              includeDate: rosterPeriod !== "day",
+                            })}
                           </p>
                         ) : (
-                          <p className="text-sm font-semibold text-amber-800">No scan yet</p>
+                          <p className="text-sm font-semibold text-amber-800">No morning entry</p>
                         )}
-                        {row.checked_in_at ? (
-                          <p className="text-sm font-semibold tabular-nums text-slate-900">
-                            In {formatAttendanceCheckInLabel(row.checked_in_at)}
+                        {row.live ? (
+                          <p className="text-xs font-semibold text-emerald-700">Live on a piece</p>
+                        ) : row.count > 0 ? (
+                          <p className="text-xs text-slate-500">
+                            {row.count} pcs - {formatDuration(row.duration_sec)}
                           </p>
+                        ) : hasMorningEntry(row) ? (
+                          <p className="text-xs text-slate-500">Door only</p>
                         ) : row.scanned ? (
-                          <p className="text-xs text-slate-500">No wall clock-in</p>
+                          <p className="text-xs text-slate-500">Piece work, no door scan</p>
                         ) : null}
                       </div>
                       <button
@@ -381,8 +408,10 @@ export function StitchAdminEmployeeWorkPanel({
               </p>
               {selectedCheckIn ? (
                 <p className="mt-1 text-sm font-semibold tabular-nums text-slate-900">
-                  Signed in {selectedCheckIn} Riyadh
+                  {selectedCheckIn} Riyadh
                 </p>
+              ) : attendance ? (
+                <p className="mt-1 text-sm text-amber-800">No morning wall QR yet</p>
               ) : null}
             </div>
             <div className="grid gap-3 sm:grid-cols-3">

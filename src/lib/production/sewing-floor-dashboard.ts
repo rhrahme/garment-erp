@@ -31,7 +31,7 @@ export type SewingFloorAttendanceRow = {
   live: boolean;
   count: number;
   duration_sec: number;
-  /** First HERE + badge clock-in in this period, if any. */
+  /** First HERE + badge morning door scan in this period, if any. */
   checked_in_at: string | null;
 };
 
@@ -41,6 +41,8 @@ export type SewingFloorAttendance = {
   to_iso: string;
   expected: number;
   scanned: number;
+  /** Badge + wall QR clock-ins (morning factory entry). Not garment A4. */
+  entered: number;
   missing: number;
   live: number;
   pieces: number;
@@ -211,6 +213,7 @@ export function sewingFloorAttendance(
 
   const pieces = scanned_rows.reduce((sum, row) => sum + row.count, 0);
   const duration_sec = scanned_rows.reduce((sum, row) => sum + row.duration_sec, 0);
+  const entered = [...missing_rows, ...scanned_rows].filter((row) => row.checked_in_at).length;
 
   return {
     period,
@@ -218,6 +221,7 @@ export function sewingFloorAttendance(
     to_iso: window.to_iso,
     expected: expectedEmployees.length,
     scanned: scanned_rows.length,
+    entered,
     missing: missing_rows.length,
     live: scanned_rows.filter((row) => row.live).length,
     pieces,

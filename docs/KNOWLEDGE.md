@@ -31,9 +31,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   open or close a piece. Do **not** double-scan a garment A4 for
   attendance.
   Floor **scanned** = a go-live clock-in on that day **or** a session
-  that touches the day. Clock-in times (Riyadh) show on Stitch
-  Performance -> Floor dashboard, **Scanned** (admin only). Clock-ins
-  before 8 Sep are ignored. Events:
+  that touches the day. Attendance time = morning factory door
+  (badge + wall QR), not a garment A4. Those times (Riyadh) show on
+  Stitch Performance -> Floor dashboard, **Entered** (admin only),
+  e.g. `Entered 07:42`. Clock-ins before 8 Sep are ignored. Events:
   `production.attendance_checked_in` and
   `production.attendance_clocked_in` (no prices).
   `GET /api/production/attendance-qr` + `/api/v1/...` parity. How-to
@@ -176,13 +177,15 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `/api/v1/production/sewing-session/employee-work`. Do not show this picker
   to stitch@ / pattern.
 - **Admin floor dashboard** (Aug 19 2026): same Performance admin panel lists
-  who **did not scan yet** vs who scanned (Today / Week / Month). Roster =
+  morning **Entered** times (badge + wall QR) vs **No entry**, plus Live
+  (Today / Week / Month). Roster =
   active Expats who can use the kiosk and have a floor job (tailor / cutter /
   wash-iron / washing / ironing / buttons / button stitch / buttonhole /
   champa / bartek).   Pattern/QC/cleaner-only are not
-  in Missing. A scan
+  in No entry. A piece scan
   counts as present even if overtime was later rejected. A HERE + badge
-  clock-in also counts as present with 0 pieces. Tap a name for
+  clock-in also counts as present with 0 pieces and is the attendance
+  time. Tap a name for
   day/week/month detail. Print posters from Performance.
 - **Floor names are badge nicknames** (Sep 6 2026): `short_name` (Parvaiz,
   Ijaz) is what Live, History, Performance, change requests, approvals,
