@@ -392,9 +392,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   operator opens any Pattern page and sees the banner. When we explain a
   floor fix to Pattern, add a catalog entry so they get the email and the
   in-app banner - do not only tell the owner in chat.   Notices: morning
-  print the Cutting A4 so the cutter can scan
-  (`howto-print-cutter-a4-site-wide-v1`), print Sewing A4s from Pattern for
-  the stitcher (`howto-print-sewing-a4-from-pattern-v1`),
+  save the sheet then print Cutting A4 and Sewing A4
+  (`howto-save-print-cutter-sewing-v1`), print the Cutting A4 so the
+  cutter can scan (`howto-print-cutter-a4-site-wide-v1`), print Sewing
+  A4s from Pattern for the stitcher
+  (`howto-print-sewing-a4-from-pattern-v1`),
   stitch a piece with badge then the A4 on the garment, not the pattern
   paper QR (`howto-stitch-piece-a4-not-pattern-v1`), morning
   attendance badge and wall QR, either order (`howto-wall-attendance-qr-v3`), copy a

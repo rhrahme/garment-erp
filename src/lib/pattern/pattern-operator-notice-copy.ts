@@ -521,6 +521,81 @@ export const WALL_ATTENDANCE_QR_HOWTO_V2_BODY = [
   "Tablet camera: Stitch kiosk -> Use tablet camera. Gun scanner o kaj kore.",
 ].join("\n");
 
+export const SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_NOTICE_ID =
+  "howto-save-print-cutter-sewing-v1";
+
+export const SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_TITLE =
+  "Save the sheet, then print Cutting A4 and Sewing A4 (size 52 example)";
+
+export const SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_BODY = [
+  "ENGLISH",
+  "Goal: save the pattern sheet, then print TWO papers.",
+  "1. Cutting A4 for the cutter (they scan this at cut).",
+  "2. Sewing / Production A4 for the stitcher (they scan this when sewing).",
+  "Example: size 52. Same steps for every size.",
+  "Both papers use the floor QR (FR-...-L07-JKT-1/2). Not the pattern library QR.",
+  "",
+  "SAVE THE SHEET FIRST",
+  "1. Pattern -> open the sales order -> Open job (or the client pattern sheet).",
+  "2. Fill Sample / Trial / Final, including size 52.",
+  "3. Tap Save changes (or Save). Do not print a blank / unsaved sheet.",
+  "4. House base Print A4 is measurements only. Production and cutter papers",
+  "   are on the client pattern after consolidate.",
+  "",
+  "PRINT FOR THE CUTTER",
+  "1. On the client pattern sheet or job: tap Print cutter (or Cutter A4s to tick fabrics).",
+  "2. Or the sales / factory / print order: A4 cutting list.",
+  "3. Or Fabric Receiving: A4 cutting.",
+  "4. Or Pattern order board: tick fabrics, choose Cutter, Print selected.",
+  "5. Print: A4 portrait, Actual size / 100% (not Fit to page).",
+  "6. Give that paper to the cutter with the fabric. One page per fabric,",
+  "   all piece QRs on that page.",
+  "7. Cutter at the kiosk: badge (Cutting), then THIS QR. They may open many",
+  "   A4s (cut pile), then close each A4 + badge.",
+  "",
+  "PRINT FOR THE STITCHER",
+  "1. On the client pattern sheet: tap Print production (indigo).",
+  "2. On the print page: tap Production (tabs are Cutter | Production | Sewing).",
+  "3. Sewing A4s if you need to tick which fabrics, then open the preview.",
+  "4. Or Pattern order board: tick fabrics, choose Production, Print selected.",
+  "5. Print: A4 portrait, Actual size / 100%.",
+  "6. You get one A4 per stitcher piece. Overshirt+Trouser / Suit = two pages",
+  "   (jacket/overshirt, then trouser), each with its own floor QR.",
+  "7. Give that paper to the stitcher with the garment.",
+  "8. Stitcher at the kiosk: badge, then THIS QR on the garment. Finish is",
+  "   badge then the same A4, or A4 then badge.",
+  "",
+  "Do not give the cutter only the stitcher sheet.",
+  "Do not give the stitcher the Cutter paper as their sewing sheet.",
+  "Do not scan or hand over the pattern paper QR (/pattern/library/bases/...).",
+  "",
+  "BANGLA",
+  "Goal: age sheet save, tarpor DUITA paper print.",
+  "1. Cutting A4 cutter er jonno (cut e scan).",
+  "2. Sewing / Production A4 stitcher er jonno (sew e scan).",
+  "Example size 52. Floor QR (FR-...-JKT-1/2). Pattern library QR na.",
+  "",
+  "SAVE:",
+  "1. Pattern -> sales order -> Open job / client sheet.",
+  "2. Sample / Trial / Final fill, size 52 soho.",
+  "3. Save changes. Unsaved sheet print korben na.",
+  "",
+  "CUTTER PRINT:",
+  "1. Pattern sheet / job: Print cutter. Ba order: A4 cutting list.",
+  "2. Fabric Receiving: A4 cutting. Order board: tick -> Cutter -> Print selected.",
+  "3. Print A4 portrait, Actual size / 100%.",
+  "4. Paper fabric er sathe cutter ke dao. Kiosk: badge (Cutting), then ei QR.",
+  "",
+  "STITCHER PRINT:",
+  "1. Client sheet: Print production (indigo). Print page: Production tab.",
+  "2. Sewing A4s hole fabric tick. Order board: tick -> Production -> Print selected.",
+  "3. Print A4 portrait, Actual size. Combo hole 2 page (jacket/overshirt + trouser).",
+  "4. Paper garment er sathe stitcher ke dao. Kiosk: badge, then ei A4 QR.",
+  "",
+  "Cutter ke sudhu stitcher sheet diben na. Stitcher ke Cutter paper sewing sheet hishebe diben na.",
+  "Pattern paper QR diben na.",
+].join("\n");
+
 export const PRINT_CUTTER_A4_HOWTO_NOTICE_ID = "howto-print-cutter-a4-site-wide-v1";
 
 export const PRINT_CUTTER_A4_HOWTO_TITLE =
@@ -722,6 +797,14 @@ export function isPatternAudienceHowTo(id: string): boolean {
 
 /** Newest first. Pattern how-tos email Pattern. all_teams email every team, EN+BN. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_NOTICE_ID,
+    title: SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_TITLE,
+    body: SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_BODY,
+    href: "/pattern",
+    href_label: "Open Pattern to save and print",
+    audience: "all_teams",
+  },
   {
     id: PRINT_CUTTER_A4_HOWTO_NOTICE_ID,
     title: PRINT_CUTTER_A4_HOWTO_TITLE,

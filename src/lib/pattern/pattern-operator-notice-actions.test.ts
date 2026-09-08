@@ -31,6 +31,9 @@ import {
   STITCH_PIECE_A4_HOWTO_NOTICE_ID,
   STITCH_PIECE_A4_HOWTO_TITLE,
   STITCH_PIECE_A4_HOWTO_BODY,
+  SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_NOTICE_ID,
+  SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_TITLE,
+  SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_BODY,
   PRINT_CUTTER_A4_HOWTO_NOTICE_ID,
   PRINT_CUTTER_A4_HOWTO_TITLE,
   PRINT_CUTTER_A4_HOWTO_BODY,
@@ -151,10 +154,11 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(STITCH_PIECE_A4_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(PRINT_CUTTER_A4_HOWTO_NOTICE_ID));
+    assert.ok(ids.includes(SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_NOTICE_ID));
     assert.equal(!ids.includes(WALL_ATTENDANCE_QR_HOWTO_NOTICE_ID), true);
     assert.equal(!ids.includes(WALL_ATTENDANCE_QR_HOWTO_V2_NOTICE_ID), true);
-    assert.equal(PATTERN_HOWTO_NOTICES[0]?.id, PRINT_CUTTER_A4_HOWTO_NOTICE_ID);
-    assert.equal(PATTERN_HOWTO_NOTICES[1]?.id, PRINT_SEWING_A4_FROM_PATTERN_HOWTO_NOTICE_ID);
+    assert.equal(PATTERN_HOWTO_NOTICES[0]?.id, SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_NOTICE_ID);
+    assert.equal(PATTERN_HOWTO_NOTICES[1]?.id, PRINT_CUTTER_A4_HOWTO_NOTICE_ID);
   });
 });
 
@@ -199,6 +203,29 @@ describe("HERE wall attendance how-to", () => {
     assert.match(HERE_WALL_ATTENDANCE_HOWTO_TITLE, /HERE poster/i);
     assert.match(HERE_WALL_ATTENDANCE_HOWTO_BODY, /Scan the HERE poster/);
     assert.match(HERE_WALL_ATTENDANCE_HOWTO_BODY, /does not start or finish a piece/i);
+  });
+});
+
+describe("save and print cutter + sewing how-to", () => {
+  it("tells every team to save the sheet, then print cutter and stitcher A4s", () => {
+    assert.equal(
+      SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_NOTICE_ID,
+      "howto-save-print-cutter-sewing-v1"
+    );
+    assert.match(SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_TITLE, /Save the sheet/i);
+    assert.match(SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_BODY, /SAVE THE SHEET FIRST/);
+    assert.match(SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_BODY, /PRINT FOR THE CUTTER/);
+    assert.match(SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_BODY, /PRINT FOR THE STITCHER/);
+    assert.match(SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_BODY, /Print cutter/);
+    assert.match(SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_BODY, /Print production/);
+    assert.match(SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_BODY, /size 52/);
+    assert.match(SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_BODY, /ENGLISH/);
+    assert.match(SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_BODY, /BANGLA/);
+    const howto = PATTERN_HOWTO_NOTICES.find(
+      (row) => row.id === SAVE_AND_PRINT_CUTTER_SEWING_HOWTO_NOTICE_ID
+    );
+    assert.equal(howto?.audience, "all_teams");
+    assert.equal(howto?.href, "/pattern");
   });
 });
 
