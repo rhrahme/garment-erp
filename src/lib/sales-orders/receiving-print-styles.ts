@@ -1,6 +1,6 @@
 /**
  * Print CSS for A4 sheets (Chrome + Safari):
- * - /orders/[id]/print?team=receiving|production|full  (served from (print) layout)
+ * - /orders/[id]/print?team=receiving|cutting|production|full  (served from (print) layout)
  * - /orders/[id]/print-pack                            (still under dashboard; shell kills retained)
  *
  * CLASSIC REGRESSION (IMG_9922 / SO-2026-0129): "tiny table in the middle of A4"

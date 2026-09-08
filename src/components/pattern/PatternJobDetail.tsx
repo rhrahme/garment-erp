@@ -776,8 +776,8 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
           Print A4 size sheet
         </h3>
         <p className="text-sm text-slate-500">
-          Print A4 / cutter = this job&apos;s fabric ({job.fabric_number}) only.
-          Sewing A4s / Print production let you Select all consolidated fabrics
+          Print cutter / Print production = this job&apos;s fabric ({job.fabric_number}) only.
+          Cutter A4s / Sewing A4s let you Select all consolidated fabrics
           (each with its own QR) or tick a subset.
         </p>
         {printHref && job.client_pattern_id ? (
@@ -794,7 +794,7 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
               <Link
                 href={printCutterHref}
                 target="_blank"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
               >
                 <Printer className="h-4 w-4" />
                 Print cutter · {job.fabric_number}
@@ -808,6 +808,14 @@ export function PatternJobDetail({ jobId }: PatternJobDetailProps) {
               label="Production (pick fabrics)"
               showNewBadge={false}
               emphasize={false}
+              defaultLineIds={[job.sales_order_line_id]}
+            />
+            <SewingA4PrintControls
+              patternId={job.client_pattern_id}
+              clientId={job.client_id}
+              versionId={job.client_pattern_version_id}
+              sheetKind="cutter"
+              label="Cutter (pick fabrics)"
               defaultLineIds={[job.sales_order_line_id]}
             />
             <SewingA4PrintControls

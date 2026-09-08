@@ -5,6 +5,10 @@ import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { FabricLinePrintKind } from "@/lib/sales-orders/fabric-lines";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
+import {
+  SALES_ORDER_PRINT_TEAM_LINKS,
+  type SalesOrderPrintTeam,
+} from "@/lib/sales-orders/print-team";
 import { useMarkFabricLinesPrinted } from "@/components/orders/useMarkFabricLinesPrinted";
 
 
@@ -18,7 +22,7 @@ export function SalesOrderPrintToolbar({
 }: {
   orderId: string;
   soNumber: string;
-  team?: "full" | "receiving" | "production";
+  team?: SalesOrderPrintTeam;
   printKind?: FabricLinePrintKind;
   /** Unprinted line ids only - passed to mark-print API after print. */
   printLineIds?: string[];
@@ -30,9 +34,9 @@ export function SalesOrderPrintToolbar({
   const hasLines = lineCount > 0;
   const canPrintReceivingA4 =
     printKind === "a4" && (PRINTING_FREE ? (sheetLineCount ?? 0) > 0 : lineCount > 0);
-  const canPrintProduction = printKind === "prod_stickers" && hasLines;
+  const canPrintPieceQr = printKind === "prod_stickers" && hasLines;
   const canPrintSheet =
-    team === "full" || canPrintReceivingA4 || canPrintProduction || (PRINTING_FREE && Boolean(printKind) && hasLines);
+    team === "full" || canPrintReceivingA4 || canPrintPieceQr || (PRINTING_FREE && Boolean(printKind) && hasLines);
 
   const printHint =
     PRINTING_FREE && printKind && hasLines
@@ -41,17 +45,13 @@ export function SalesOrderPrintToolbar({
         ? PRINTING_FREE
           ? `Full order sheet (${sheetLineCount} lines)`
           : `${lineCount} new line${lineCount === 1 ? "" : "s"} to print`
-        : canPrintProduction
+        : canPrintPieceQr
           ? `Print dialog covers ${lineCount} line${lineCount === 1 ? "" : "s"}`
           : team === "full"
             ? "Print dialog -> Save as PDF (full order summary)"
             : "No fabric lines on this sheet";
 
-  const printLinks = [
-    { id: "receiving" as const, label: "Receiving / wash (A4)" },
-    { id: "production" as const, label: "Production pieces (A4)" },
-    { id: "full" as const, label: "Full order (A4)" },
-  ];
+  const printLinks = SALES_ORDER_PRINT_TEAM_LINKS;
 
   return (
     <div className="no-print mb-6 space-y-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">

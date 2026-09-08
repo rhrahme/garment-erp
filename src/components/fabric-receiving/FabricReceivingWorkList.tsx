@@ -422,6 +422,7 @@ function FabricCutCard({
   onRequestTransfer?: (order: FabricReceivingOrderRow, line: FabricReceivingLineRow) => void;
 }) {
   const printHref = `/orders/${order.sales_order_id}/print?team=receiving`;
+  const cuttingPrintHref = `/orders/${order.sales_order_id}/print?team=cutting`;
   const styles = scanStageStyles(line.scan_stage);
   const elapsedLabel =
     line.status === "fabric_prep"
@@ -523,6 +524,11 @@ function FabricCutCard({
           <Link href={printHref} target="_blank" rel="noreferrer">
             <Button size="sm" variant="secondary">
               A4 list
+            </Button>
+          </Link>
+          <Link href={cuttingPrintHref} target="_blank" rel="noreferrer">
+            <Button size="sm" variant="secondary">
+              A4 cutting
             </Button>
           </Link>
           <FabricLineStickerPrintLinks
@@ -1040,6 +1046,15 @@ export function FabricReceivingWorkList({
                               className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800"
                             >
                               A4 list
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </Link>
+                            <Link
+                              href={`/orders/${group.order.sales_order_id}/print?team=cutting`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                            >
+                              A4 cutting
                               <ExternalLink className="h-3.5 w-3.5" />
                             </Link>
                             <Link

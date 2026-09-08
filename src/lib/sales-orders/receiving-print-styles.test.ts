@@ -126,6 +126,8 @@ describe("RECEIVING_A4_PRINT_CSS - A4 shrink regression guards (Chrome + Safari)
     // Production must split QR list vs fabric reference (avoids wide horizontal tile).
     assert.match(printPage, /print-prod-fabric-section/);
     assert.match(printPage, /Fabric \/ composition reference/);
+    assert.match(printPage, /Cutting - piece QRs/);
+    assert.match(printPage, /parseSalesOrderPrintTeam/);
     // Fabric reference stays simple (no piece-code column / no 8-col overflow).
     assert.match(printPage, />Spec</);
     assert.doesNotMatch(printPage, /print-prod-fabric-section[\s\S]*Piece code/);

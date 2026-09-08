@@ -31,9 +31,14 @@ import {
   STITCH_PIECE_A4_HOWTO_NOTICE_ID,
   STITCH_PIECE_A4_HOWTO_TITLE,
   STITCH_PIECE_A4_HOWTO_BODY,
+  PRINT_CUTTER_A4_HOWTO_NOTICE_ID,
+  PRINT_CUTTER_A4_HOWTO_TITLE,
+  PRINT_CUTTER_A4_HOWTO_BODY,
   PRINT_SEWING_A4_FROM_PATTERN_HOWTO_NOTICE_ID,
   PRINT_SEWING_A4_FROM_PATTERN_HOWTO_TITLE,
   PRINT_SEWING_A4_FROM_PATTERN_HOWTO_BODY,
+  CUT_KIOSK_PROCESS_STEPS,
+  CUT_KIOSK_PROCESS_TITLE,
   COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID,
   COPY_BASE_TO_BRAND_HOWTO_TITLE,
   COPY_BASE_TO_BRAND_HOWTO_BODY,
@@ -145,10 +150,11 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(WALL_ATTENDANCE_QR_HOWTO_V3_NOTICE_ID));
     assert.ok(ids.includes(STITCH_PIECE_A4_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_NOTICE_ID));
+    assert.ok(ids.includes(PRINT_CUTTER_A4_HOWTO_NOTICE_ID));
     assert.equal(!ids.includes(WALL_ATTENDANCE_QR_HOWTO_NOTICE_ID), true);
     assert.equal(!ids.includes(WALL_ATTENDANCE_QR_HOWTO_V2_NOTICE_ID), true);
-    assert.equal(PATTERN_HOWTO_NOTICES[0]?.id, PRINT_SEWING_A4_FROM_PATTERN_HOWTO_NOTICE_ID);
-    assert.equal(PATTERN_HOWTO_NOTICES[1]?.id, STITCH_PIECE_A4_HOWTO_NOTICE_ID);
+    assert.equal(PATTERN_HOWTO_NOTICES[0]?.id, PRINT_CUTTER_A4_HOWTO_NOTICE_ID);
+    assert.equal(PATTERN_HOWTO_NOTICES[1]?.id, PRINT_SEWING_A4_FROM_PATTERN_HOWTO_NOTICE_ID);
   });
 });
 
@@ -193,6 +199,25 @@ describe("HERE wall attendance how-to", () => {
     assert.match(HERE_WALL_ATTENDANCE_HOWTO_TITLE, /HERE poster/i);
     assert.match(HERE_WALL_ATTENDANCE_HOWTO_BODY, /Scan the HERE poster/);
     assert.match(HERE_WALL_ATTENDANCE_HOWTO_BODY, /does not start or finish a piece/i);
+  });
+});
+
+describe("print Cutting A4 site-wide how-to", () => {
+  it("tells every team to print a Cutting A4 the cutter can scan", () => {
+    assert.equal(PRINT_CUTTER_A4_HOWTO_NOTICE_ID, "howto-print-cutter-a4-site-wide-v1");
+    assert.match(PRINT_CUTTER_A4_HOWTO_TITLE, /Cutting A4/i);
+    assert.match(PRINT_CUTTER_A4_HOWTO_BODY, /A4 cutting list/);
+    assert.match(PRINT_CUTTER_A4_HOWTO_BODY, /Print cutter/);
+    assert.match(PRINT_CUTTER_A4_HOWTO_BODY, /size 52/);
+    assert.match(PRINT_CUTTER_A4_HOWTO_BODY, /ENGLISH/);
+    assert.match(PRINT_CUTTER_A4_HOWTO_BODY, /BANGLA/);
+    assert.match(CUT_KIOSK_PROCESS_TITLE, /cut a piece/i);
+    assert.ok(CUT_KIOSK_PROCESS_STEPS.some((step) => /Cutting A4 QR/i.test(step)));
+    const howto = PATTERN_HOWTO_NOTICES.find((row) => row.id === PRINT_CUTTER_A4_HOWTO_NOTICE_ID);
+    assert.equal(howto?.audience, "all_teams");
+    assert.equal(howto?.href, "/orders");
+    const kiosk = readFileSync("src/components/production/StitchKioskPanel.tsx", "utf8");
+    assert.match(kiosk, /CUT_KIOSK_PROCESS_TITLE/);
   });
 });
 

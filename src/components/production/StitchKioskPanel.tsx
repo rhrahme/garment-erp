@@ -21,6 +21,8 @@ import { isStitchLunchClockWindow } from "@/lib/production/stitch-kiosk-lunch";
 import { StartWithoutQrModal } from "@/components/production/StartWithoutQrModal";
 import { StitchCameraScanner } from "@/components/production/StitchCameraScanner";
 import {
+  CUT_KIOSK_PROCESS_STEPS,
+  CUT_KIOSK_PROCESS_TITLE,
   STITCH_KIOSK_PROCESS_STEPS,
   STITCH_KIOSK_PROCESS_TITLE,
 } from "@/lib/pattern/pattern-operator-notice-copy";
@@ -158,14 +160,25 @@ export function StitchKioskPanel() {
         </div>
       ) : null}
       {kioskPaused || lunchActive ? null : <StitchCameraScanner />}
-      <div className="rounded-2xl border border-slate-300 bg-white px-5 py-4 text-left text-slate-900">
-        <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Process</p>
-        <h3 className="mt-1 text-xl font-bold sm:text-2xl">{STITCH_KIOSK_PROCESS_TITLE}</h3>
-        <ul className="mt-3 space-y-1 text-base font-medium sm:text-lg">
-          {STITCH_KIOSK_PROCESS_STEPS.map((step) => (
-            <li key={step}>{step}</li>
-          ))}
-        </ul>
+      <div className="grid gap-3 lg:grid-cols-2">
+        <div className="rounded-2xl border border-slate-300 bg-white px-5 py-4 text-left text-slate-900">
+          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Process</p>
+          <h3 className="mt-1 text-xl font-bold sm:text-2xl">{CUT_KIOSK_PROCESS_TITLE}</h3>
+          <ul className="mt-3 space-y-1 text-base font-medium sm:text-lg">
+            {CUT_KIOSK_PROCESS_STEPS.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ul>
+        </div>
+        <div className="rounded-2xl border border-slate-300 bg-white px-5 py-4 text-left text-slate-900">
+          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Process</p>
+          <h3 className="mt-1 text-xl font-bold sm:text-2xl">{STITCH_KIOSK_PROCESS_TITLE}</h3>
+          <ul className="mt-3 space-y-1 text-base font-medium sm:text-lg">
+            {STITCH_KIOSK_PROCESS_STEPS.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ul>
+        </div>
       </div>
       <div
         className={cn(

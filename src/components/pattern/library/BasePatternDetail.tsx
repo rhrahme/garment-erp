@@ -430,8 +430,8 @@ export function BasePatternDetail({
             Print A4
           </Link>
           <p className="w-full text-xs text-slate-500 sm:w-auto">
-            House base: measurements only. Stitcher / production A4s are on the
-            client pattern after consolidate (Print production).
+            House base: measurements only. Stitcher / cutter A4s are on the
+            client pattern after consolidate (Print production / Print cutter).
           </p>
           <button
             type="button"

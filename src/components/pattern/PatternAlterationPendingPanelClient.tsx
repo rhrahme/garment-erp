@@ -168,6 +168,11 @@ export function PatternAlterationPendingPanelClient({
                 scopedLineId ? `&line=${encodeURIComponent(scopedLineId)}` : ""
               }`
             : null;
+          const printCutterHref = item.client_pattern_id
+            ? `/pattern/client-patterns/${encodeURIComponent(item.client_pattern_id)}/print?sheet=cutter${
+                scopedLineId ? `&line=${encodeURIComponent(scopedLineId)}` : ""
+              }`
+            : null;
           const draft = drafts[item.id] ?? item.stitcher_comments ?? "";
           const dirty = draft.trim() !== (item.stitcher_comments ?? "").trim();
 
@@ -217,6 +222,16 @@ export function PatternAlterationPendingPanelClient({
                           className="inline-flex items-center gap-1 font-medium text-indigo-700 hover:underline"
                         >
                           Print Production sheet <ExternalLink className="h-3 w-3" />
+                        </Link>
+                      ) : null}
+                      {printCutterHref ? (
+                        <Link
+                          href={printCutterHref}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 font-medium text-indigo-700 hover:underline"
+                        >
+                          Print cutter sheet <ExternalLink className="h-3 w-3" />
                         </Link>
                       ) : null}
                     </p>

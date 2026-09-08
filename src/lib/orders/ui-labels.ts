@@ -51,7 +51,7 @@ export function ordersUiLabels(
       workflowSteps: [
         "Open an order that already has fabrics assigned",
         "Print fabric-cut stickers per line (receive / wash) — use Print orders or Fabric Receiving",
-        "After wash & iron, print cutting stickers for multi-piece garments (suit = jacket + trouser)",
+        "After wash & iron, print the A4 cutting list (and cutting stickers for multi-piece garments)",
         "Scan fabrics at Fabric Receiving — wash and iron stations",
       ],
       allOrdersLink: "← All print orders",
@@ -79,7 +79,7 @@ export function ordersUiLabels(
       workflowTitle: "Production workflow",
       workflowSteps: [
         "Open an order with fabrics (added on Fabric Orders) — suits show 2 production labels (jacket + trouser)",
-        "Print label packs and fabric-cut stickers from the order page",
+        "Print label packs, the A4 cutting list, and fabric-cut stickers from the order page",
         "Receive fabric and scan through wash, iron, cutting, and sewing",
       ],
       allOrdersLink: "← All production orders",

@@ -38,6 +38,12 @@ export function PrintPackToolbar({
         <Printer className="h-4 w-4" />
         Print receiving A4
       </Button>
+      <Link href={`/orders/${orderId}/print?team=cutting`} target="_blank" rel="noreferrer">
+        <Button variant="secondary">
+          <Printer className="h-4 w-4" />
+          A4 cutting list
+        </Button>
+      </Link>
     </div>
   );
 }

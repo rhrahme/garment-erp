@@ -39,6 +39,8 @@ describe("pattern sheet kind", () => {
     assert.match(detail, /Print from this pattern sheet/);
     assert.match(detail, /sheet=production/);
     assert.match(detail, /Print production/);
+    assert.match(detail, /Print cutter/);
+    assert.match(detail, /sheetKind="cutter"/);
     assert.equal(detail.includes('sheetKind="production"'), false);
 
     const printView = readFileSync(

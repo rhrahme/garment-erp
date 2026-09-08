@@ -521,6 +521,42 @@ export const WALL_ATTENDANCE_QR_HOWTO_V2_BODY = [
   "Tablet camera: Stitch kiosk -> Use tablet camera. Gun scanner o kaj kore.",
 ].join("\n");
 
+export const PRINT_CUTTER_A4_HOWTO_NOTICE_ID = "howto-print-cutter-a4-site-wide-v1";
+
+export const PRINT_CUTTER_A4_HOWTO_TITLE =
+  "Print the Cutting A4 so the cutter can scan (size 52 example)";
+
+export const PRINT_CUTTER_A4_HOWTO_BODY = [
+  "ENGLISH",
+  "Goal: give the cutting team their own Cutting A4 (example: size 52).",
+  "That paper has the floor QR (FR-...-L07-JKT-1/2). The cutter scans badge, then THIS QR.",
+  "Do not give them the pattern library QR. Do not give them only the stitcher sheet.",
+  "",
+  "Print site-wide (pick one):",
+  "1. Sales / factory / print order -> A4 cutting list.",
+  "2. Pattern client sheet or job -> Print cutter (or Cutter A4s to tick fabrics).",
+  "3. Pattern order board: tick fabrics, choose Cutter, Print selected.",
+  "4. Fabric Receiving: A4 cutting on the order row.",
+  "",
+  "Pattern Print cutter = one A4 per fabric, all piece QRs on that page (plus nest).",
+  "Order A4 cutting list = the same piece QRs on a cutting-titled sheet.",
+  "Print: A4 portrait, Actual size / 100%.",
+  "",
+  "At the kiosk: badge (Cutting), then the Cutting A4 QR. You may open many A4s (cut pile), then close each A4 + badge.",
+  "",
+  "BANGLA",
+  "Goal: cutting team ke nijer Cutting A4 dao (example size 52). Floor QR thake (FR-...-JKT-1/2).",
+  "Pattern library QR diben na. Sudhu stitcher sheet diben na.",
+  "",
+  "Print:",
+  "1. Order -> A4 cutting list.",
+  "2. Pattern sheet / job -> Print cutter.",
+  "3. Order board: tick -> Cutter -> Print selected.",
+  "4. Fabric Receiving: A4 cutting.",
+  "",
+  "Kiosk: badge (Cutting), then ei A4 QR. Onek A4 open kora jay (cut pile). Close: oi A4 + badge.",
+].join("\n");
+
 export const PRINT_SEWING_A4_FROM_PATTERN_HOWTO_NOTICE_ID =
   "howto-print-sewing-a4-from-pattern-v1";
 
@@ -627,6 +663,16 @@ export const STITCH_KIOSK_PROCESS_STEPS = [
   "Do not scan the pattern paper QR. That is not the garment.",
 ];
 
+export const CUT_KIOSK_PROCESS_TITLE = "How to cut a piece (size 52 or any size)";
+
+export const CUT_KIOSK_PROCESS_STEPS = [
+  "1. Badge (Cutting job).",
+  "2. Cutting A4 QR (FR-...-L07-JKT-1/2) within 30 seconds.",
+  "3. You may scan more A4s (cut pile) before closing.",
+  "4. Finish each: rescan that A4, then badge or the same A4.",
+  "Do not scan the pattern paper QR. That is not the garment.",
+];
+
 export const WALL_ATTENDANCE_QR_HOWTO_V3_NOTICE_ID = "howto-wall-attendance-qr-v3";
 
 export const WALL_ATTENDANCE_QR_HOWTO_V3_TITLE =
@@ -676,6 +722,14 @@ export function isPatternAudienceHowTo(id: string): boolean {
 
 /** Newest first. Pattern how-tos email Pattern. all_teams email every team, EN+BN. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: PRINT_CUTTER_A4_HOWTO_NOTICE_ID,
+    title: PRINT_CUTTER_A4_HOWTO_TITLE,
+    body: PRINT_CUTTER_A4_HOWTO_BODY,
+    href: "/orders",
+    href_label: "Open orders to print Cutting A4",
+    audience: "all_teams",
+  },
   {
     id: PRINT_SEWING_A4_FROM_PATTERN_HOWTO_NOTICE_ID,
     title: PRINT_SEWING_A4_FROM_PATTERN_HOWTO_TITLE,

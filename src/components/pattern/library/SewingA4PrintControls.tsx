@@ -15,8 +15,8 @@ type SewingA4PrintControlsProps = {
   /** @deprecated Unused - linked rows come from the sheet GET. Kept optional for callers. */
   clientId?: string;
   versionId?: string | null;
-  /** sewing (default) or production - same piece/QR expand; lines= selects papers. */
-  sheetKind?: Extract<PatternSheetKind, "sewing" | "production">;
+  /** sewing / production (stitcher pages) or cutter (one A4 per fabric). */
+  sheetKind?: PatternSheetKind;
   /** Button label. */
   label?: string;
   /** Pre-tick these SO line ids (e.g. current job fabric). */
@@ -27,12 +27,15 @@ type SewingA4PrintControlsProps = {
   emphasize?: boolean;
 };
 
-const HELP_TEXT =
+const STITCHER_HELP_TEXT =
   "Print one A4 per stitcher piece (Overshirt / Trouser / ...) with that piece's floor QR and measurements. Multi-piece garments split across pages for different stitchers. Tick which fabric articles to include (Select all = every linked fabric with its own QR), open preview, then print.";
 
-function stitcherPrintHref(
+const CUTTER_HELP_TEXT =
+  "Print one A4 per fabric for the cutting team. All piece QRs for that fabric sit on one page. The cutter scans badge, then these QRs at cut. Tick which fabric articles to include, open preview, then print.";
+
+function sheetPrintHref(
   patternId: string,
-  sheetKind: "sewing" | "production",
+  sheetKind: PatternSheetKind,
   versionId: string | null | undefined,
   lineIds: string[],
   unit: MeasurementUnit
@@ -48,7 +51,8 @@ function stitcherPrintHref(
 
 /**
  * Tick which fabric articles to print (Select all or subset), then open
- * stitcher A4 preview - one page per article QR, piece-split for OT/Suit.
+ * stitcher or cutter A4 preview. Sewing/production split combo pieces;
+ * cutter keeps one page per fabric with all piece QRs.
  */
 export function SewingA4PrintControls({
   patternId,
@@ -56,11 +60,17 @@ export function SewingA4PrintControls({
   sheetKind = "sewing",
   label,
   defaultLineIds = null,
-  showNewBadge = sheetKind === "sewing",
-  emphasize = sheetKind === "sewing",
+  showNewBadge = sheetKind === "sewing" || sheetKind === "cutter",
+  emphasize = sheetKind === "sewing" || sheetKind === "cutter",
 }: SewingA4PrintControlsProps) {
   const buttonLabel =
-    label ?? (sheetKind === "production" ? "Print production" : "Sewing A4s");
+    label ??
+    (sheetKind === "cutter"
+      ? "Cutter A4s"
+      : sheetKind === "production"
+        ? "Print production"
+        : "Sewing A4s");
+  const helpText = sheetKind === "cutter" ? CUTTER_HELP_TEXT : STITCHER_HELP_TEXT;
   const { unit: displayUnit } = useMeasurementUnitPreference();
   const [open, setOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -104,7 +114,7 @@ export function SewingA4PrintControls({
   const selectedCount = selected.size;
   const allSelected = allIds.length > 0 && selectedCount === allIds.length;
   const selectedList = useMemo(() => allIds.filter((id) => selected.has(id)), [allIds, selected]);
-  const previewHref = stitcherPrintHref(
+  const previewHref = sheetPrintHref(
     patternId,
     sheetKind,
     versionId,
@@ -187,7 +197,7 @@ export function SewingA4PrintControls({
               <X className="h-4 w-4" />
             </button>
           </div>
-          <p className="text-xs leading-relaxed text-amber-900">{HELP_TEXT}</p>
+          <p className="text-xs leading-relaxed text-amber-900">{helpText}</p>
           <button
             type="button"
             onClick={() => {

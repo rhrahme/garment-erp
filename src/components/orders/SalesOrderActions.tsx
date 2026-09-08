@@ -469,6 +469,9 @@ export function SalesOrderActions({
               <Link href={`/orders/${order.id}/stickers?sheet=fabric-cuts`}>
                 <Button variant="secondary">Print fabric cuts (receive)</Button>
               </Link>
+              <Link href={`/orders/${order.id}/print?team=cutting`} target="_blank" rel="noreferrer">
+                <Button variant="secondary">A4 cutting list</Button>
+              </Link>
               <Link href={`/orders/${order.id}/print?team=production`} target="_blank" rel="noreferrer">
                 <Button variant="secondary">A4 production list</Button>
               </Link>

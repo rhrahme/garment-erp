@@ -579,10 +579,11 @@ export function PatternOrderBoard({ soId }: PatternOrderBoardProps) {
                       </button>
                     </div>
                     <p className="text-xs leading-relaxed text-amber-900">
-                      Tick Select all or only the fabrics you need, choose Production /
-                      Sewing / Cutter, then open one preview. Each fabric prints with its
-                      own floor QR; multi-piece garments split Overshirt / Trouser onto
-                      separate A4s for different stitchers.
+                      Tick Select all or only the fabrics you need, choose Cutter /
+                      Production / Sewing, then open one preview. Cutter = one A4 per
+                      fabric for the cutting team (all piece QRs on that page).
+                      Production / Sewing split Overshirt / Trouser onto separate A4s
+                      for stitchers.
                     </p>
                   </div>
                 ) : null}

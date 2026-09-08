@@ -392,8 +392,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   operator opens any Pattern page and sees the banner. When we explain a
   floor fix to Pattern, add a catalog entry so they get the email and the
   in-app banner - do not only tell the owner in chat.   Notices: morning
-  print Sewing A4s from Pattern for the stitcher
-  (`howto-print-sewing-a4-from-pattern-v1`),
+  print the Cutting A4 so the cutter can scan
+  (`howto-print-cutter-a4-site-wide-v1`), print Sewing A4s from Pattern for
+  the stitcher (`howto-print-sewing-a4-from-pattern-v1`),
   stitch a piece with badge then the A4 on the garment, not the pattern
   paper QR (`howto-stitch-piece-a4-not-pattern-v1`), morning
   attendance badge and wall QR, either order (`howto-wall-attendance-qr-v3`), copy a
@@ -634,12 +635,23 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   piece's floor QR + filtered measurements - so different stitchers get their
   own sheet. Single-piece garments (Shorts, Shirt, Thobe, ...) stay one page.
   **Print production** on the client pattern sheet is a direct indigo
-  button to `?sheet=production` (stitcher A4 + floor QR). House bases
-  stay measurements-only. The print preview has **Cutter | Production |
-  Sewing** tabs; missing `?sheet=` is cutter. **Sewing A4s** (and the
-  job **Production (pick fabrics)** picker) still open the fabric tick
-  list; each ticked fabric gets its own QR pages via `?lines=`. Order
-  board **Print selected** is the same idea across jobs. Browser print must page-break between stitcher A4s
+  button to `?sheet=production` (stitcher A4 + floor QR). **Print cutter**
+  is the cutting-team A4 (`?sheet=cutter`, one page per fabric, all piece
+  QRs). House bases stay measurements-only. The print preview has
+  **Cutter | Production | Sewing** tabs; missing `?sheet=` is cutter.
+  **Sewing A4s** / **Cutter A4s** (and the job pick-fabrics pickers)
+  still open the fabric tick list; each ticked fabric gets its own QR
+  pages via `?lines=`. Order board **Print selected** is the same idea
+  across jobs.
+- **Cutting A4 is site-wide** (Sep 8 2026): the cutting team gets their
+  own paper, not the stitcher sheet. Sales / factory / print orders:
+  **A4 cutting list** (`/orders/[id]/print?team=cutting`) - same piece
+  QRs as the production list, titled for cutting. Fabric Receiving:
+  **A4 cutting** next to the receiving A4. Pattern: **Print cutter** /
+  **Cutter A4s**. Stitch kiosk Scan tab: **How to cut a piece**. How-to
+  `howto-print-cutter-a4-site-wide-v1` (all teams, English + Bangla).
+  Cutters still scan the piece QR (`FR-...-L07-JKT-1/2`), not the
+  pattern library QR and not the fabric-cut prep code. Browser print must page-break between stitcher A4s
   (production CSS matches sewing - do not force `page-break-after: auto` on
   multi-page production packs). Do not collapse back to first-linked-line-only
   or put Overshirt+Trouser QRs on one shared page.

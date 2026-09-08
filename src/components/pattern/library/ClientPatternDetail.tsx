@@ -879,8 +879,10 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           <p className="font-semibold">Shared sheet after consolidate</p>
           <p className="mt-1 text-amber-900/90">
             Several fabrics share these measurements. Use{" "}
-            <span className="font-semibold">Print production</span> or{" "}
-            <span className="font-semibold">Sewing A4s</span> and tick Select all
+            <span className="font-semibold">Print production</span> /{" "}
+            <span className="font-semibold">Print cutter</span> or{" "}
+            <span className="font-semibold">Sewing A4s</span> /{" "}
+            <span className="font-semibold">Cutter A4s</span> and tick Select all
             (or a subset) so each paper gets that fabric&apos;s QR - or open a
             fabric job to print one article only.
           </p>
@@ -913,11 +915,18 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
           <Link
             href={printCutterHref}
             target="_blank"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
           >
             <Printer className="h-4 w-4" />
             Print cutter
           </Link>
+          <SewingA4PrintControls
+            patternId={pattern.id}
+            clientId={pattern.client_id}
+            versionId={version?.id ?? null}
+            sheetKind="cutter"
+            defaultLineIds={scopedLineId ? [scopedLineId] : null}
+          />
           <SewingA4PrintControls
             patternId={pattern.id}
             clientId={pattern.client_id}
@@ -955,8 +964,9 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
       <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3">
         <p className="text-sm font-semibold text-indigo-950">Print from this pattern sheet</p>
         <p className="mt-1 text-sm text-indigo-900/90">
-          Production is the stitcher A4 with the floor QR. Cutter is for cutting.
-          Sewing A4s lets you tick which fabrics to print.
+          Production is the stitcher A4. Cutter is the cutting team A4 (floor
+          QRs they scan). Sewing A4s / Cutter A4s let you tick which fabrics
+          to print.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Link
@@ -967,6 +977,14 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
             <Printer className="h-4 w-4" />
             Print production
           </Link>
+          <Link
+            href={printCutterHref}
+            target="_blank"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            <Printer className="h-4 w-4" />
+            Print cutter
+          </Link>
           <SewingA4PrintControls
             patternId={pattern.id}
             clientId={pattern.client_id}
@@ -974,14 +992,13 @@ export function ClientPatternDetail({ patternId }: { patternId: string }) {
             sheetKind="sewing"
             defaultLineIds={scopedLineId ? [scopedLineId] : null}
           />
-          <Link
-            href={printCutterHref}
-            target="_blank"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
-          >
-            <Printer className="h-4 w-4" />
-            Print cutter
-          </Link>
+          <SewingA4PrintControls
+            patternId={pattern.id}
+            clientId={pattern.client_id}
+            versionId={version?.id ?? null}
+            sheetKind="cutter"
+            defaultLineIds={scopedLineId ? [scopedLineId] : null}
+          />
         </div>
       </div>
 

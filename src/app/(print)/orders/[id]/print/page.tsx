@@ -37,6 +37,10 @@ import {
   linesNeedingPrint,
 } from "@/lib/sales-orders/fabric-lines";
 import { PRINTING_FREE } from "@/lib/sales-orders/print-mode";
+import {
+  isPieceQrPrintTeam,
+  parseSalesOrderPrintTeam,
+} from "@/lib/sales-orders/print-team";
 import { RECEIVING_A4_PRINT_CSS } from "@/lib/sales-orders/receiving-print-styles";
 import { formatDate } from "@/lib/utils";
 import type { SalesOrderFabricLine } from "@/lib/types/sales-orders";
@@ -96,8 +100,7 @@ export default async function SalesOrderPrintPage({
 }) {
   const { id } = await params;
   const { team: teamParam } = await searchParams;
-  const team =
-    teamParam === "receiving" || teamParam === "production" ? teamParam : ("full" as const);
+  const team = parseSalesOrderPrintTeam(teamParam);
   await ensureDocumentsLoaded(["sales_orders"]);
   // Same heal as the list read paths - the printed sheet resolves client names for every role.
   await healClientDataForRead();
@@ -123,13 +126,18 @@ export default async function SalesOrderPrintPage({
   const a4PrintLines = getFabricLinesForA4Print(order.fabric_lines);
   const prodPrintLines = linesNeedingPrint(order.fabric_lines, "prod_stickers");
   const printKind =
-    team === "receiving" ? ("a4" as const) : team === "production" ? ("prod_stickers" as const) : undefined;
+    team === "receiving"
+      ? ("a4" as const)
+      : isPieceQrPrintTeam(team)
+        ? ("prod_stickers" as const)
+        : undefined;
   const printLineIds =
     team === "receiving"
       ? getFabricLineIdsForPrint(order, "a4")
-      : team === "production"
+      : isPieceQrPrintTeam(team)
         ? getFabricLineIdsForPrint(order, "prod_stickers")
         : [];
+  const pieceLines = isPieceQrPrintTeam(team) ? prodPrintLines : order.fabric_lines;
 
   return (
     <div className="sales-order-print min-h-screen bg-white p-8 text-slate-900 print:min-h-0 print:p-0">
@@ -151,16 +159,20 @@ export default async function SalesOrderPrintPage({
             <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
               {team === "receiving"
                 ? "Fabric receiving & wash"
-                : team === "production"
-                  ? "Production - piece stickers"
-                  : "Sales order"}
+                : team === "cutting"
+                  ? "Cutting - piece QRs"
+                  : team === "production"
+                    ? "Production - piece stickers"
+                    : "Sales order"}
             </p>
             <h1 className="mt-1 text-3xl font-bold print:text-2xl">{order.so_number}</h1>
             <p className="mt-3 text-xl font-bold uppercase tracking-wide text-slate-900 print:mt-1 print:text-lg">
               {productionBrand}
             </p>
             <p className="mt-1 text-xs text-slate-500 print:text-[10pt]">
-              Production brand - follow this brand&apos;s stitching specification
+              {team === "cutting"
+                ? "Cutting team - scan these piece QRs at cut"
+                : "Production brand - follow this brand's stitching specification"}
             </p>
             <p className="mt-3 text-sm text-slate-600 print:mt-1">Order date: {formatDate(order.order_date)}</p>
             {order.delivery_date && (
@@ -205,6 +217,12 @@ export default async function SalesOrderPrintPage({
           <p className="mb-6 text-sm text-slate-600 print:mb-2">
             One fabric cut QR per line - receiving and washing scan these when fabric arrives (before jacket / trouser
             split).
+          </p>
+        )}
+        {team === "cutting" && (
+          <p className="mb-6 text-sm text-slate-600 print:mb-2">
+            Cutting team A4. Scan these piece QRs at cut (badge, then this QR). Suit fabric = jacket +
+            trouser. This is not the stitcher measurement sheet.
           </p>
         )}
         {team === "production" && (
@@ -302,10 +320,8 @@ export default async function SalesOrderPrintPage({
           <p className="text-sm text-slate-500">No fabric lines on this order.</p>
         )}
 
-        {(team === "full" || team === "production") &&
-          (team === "production" ? prodPrintLines : order.fabric_lines).some(
-            (line) => (line.label_stickers ?? []).length > 0
-          ) && (
+        {(team === "full" || isPieceQrPrintTeam(team)) &&
+          pieceLines.some((line) => (line.label_stickers ?? []).length > 0) && (
           <>
             {/*
               Two intentional full-width tables (not one wide mega-table).
@@ -315,11 +331,15 @@ export default async function SalesOrderPrintPage({
             */}
             <div className="print-prod-section mt-8 border-t border-slate-200 pt-6 print:mt-2 print:border-0 print:pt-0">
               <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-700 print:mb-2">
-                {team === "production" ? "Piece sticker codes - cutting / sewing" : "Label sticker codes"}
+                {team === "cutting"
+                  ? "Piece QR codes - cutting team"
+                  : team === "production"
+                    ? "Piece sticker codes - sewing"
+                    : "Label sticker codes"}
               </h2>
               <p className="mb-6 text-xs text-slate-500 print:hidden">
                 Art. # matches fabric table - one row per piece (suit = jacket + trouser)
-                {team === "production"
+                {isPieceQrPrintTeam(team)
                   ? PRINTING_FREE
                     ? ` | ${prodPrintLines.length} line${prodPrintLines.length === 1 ? "" : "s"} - reprint anytime`
                     : ` | ${prodPrintLines.length} line${prodPrintLines.length === 1 ? "" : "s"} to print`
@@ -343,7 +363,7 @@ export default async function SalesOrderPrintPage({
                   </tr>
                 </thead>
                 <tbody>
-                  {(team === "production" ? prodPrintLines : order.fabric_lines).flatMap((line) =>
+                  {pieceLines.flatMap((line) =>
                     [...(line.label_stickers ?? [])]
                       .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
                       .map((sticker) => {
@@ -378,7 +398,7 @@ export default async function SalesOrderPrintPage({
               </table>
             </div>
 
-            {team === "production" ? (
+            {isPieceQrPrintTeam(team) ? (
               <div className="print-prod-fabric-section mt-8 border-t border-slate-200 pt-6 print:mt-0 print:border-0 print:pt-0">
                 <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-700 print:mb-2">
                   Fabric / composition reference
