@@ -194,6 +194,23 @@ describe("cost hint worksheet", () => {
       "2 Jackets, 1 Trouser. Total: 3 pcs"
     );
     assert.match(worksheet.subtitle, /Do not send to the client/);
+
+    const ibrahimOnly = buildCostHintWorksheet({
+      overview: overviewOf(orderCost),
+      salesOrders: [salesOrder],
+      invoices: [],
+      clientTokens: ["ibrahim"],
+      generatedAt: "2026-09-07T12:00:00.000Z",
+    });
+    assert.equal(ibrahimOnly.rows.length, 2);
+    const otherClient = buildCostHintWorksheet({
+      overview: overviewOf(orderCost),
+      salesOrders: [salesOrder],
+      invoices: [],
+      clientTokens: ["hicham"],
+      generatedAt: "2026-09-07T12:00:00.000Z",
+    });
+    assert.equal(otherClient.rows.length, 0);
   });
 
   it("builds an invoice worksheet from the editor cost-hint columns", () => {

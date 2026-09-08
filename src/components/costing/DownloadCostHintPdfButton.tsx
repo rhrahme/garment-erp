@@ -32,7 +32,8 @@ export function DownloadCostHintPdfButton({
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = filenameFromResponse(res, "cost-hints.pdf");
+      const fallback = href.includes("clients=") ? "cost-hints.zip" : "cost-hints.pdf";
+      anchor.download = filenameFromResponse(res, fallback);
       anchor.click();
       URL.revokeObjectURL(url);
     } catch (err) {

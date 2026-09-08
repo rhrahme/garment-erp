@@ -3,6 +3,7 @@ import { verifyApiKey } from "@/lib/integrations";
 import { costHintWorksheetFilename } from "@/lib/costing/cost-hint-worksheet";
 import { parseCostHintWorksheetSearch } from "@/lib/costing/cost-hint-worksheet-query";
 import { generateCostHintWorksheetPdf } from "@/lib/costing/generate-cost-hint-worksheet-pdf";
+import { loadCostHintClientPack } from "@/lib/costing/load-cost-hint-pack";
 import { loadCostHintWorksheet } from "@/lib/costing/load-cost-hint-worksheet";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { contentDisposition } from "@/lib/pdf/download-filename";
@@ -14,14 +15,29 @@ export async function GET(request: Request) {
   try {
     await ensureDocumentsLoaded(["sales_orders", "costing_rates", "customer_invoices", "clients"]);
     const url = new URL(request.url);
-    const worksheet = loadCostHintWorksheet(
-      parseCostHintWorksheetSearch({
-        invoice: url.searchParams.get("invoice") ?? undefined,
-        so: url.searchParams.get("so") ?? undefined,
-        brand: url.searchParams.get("brand") ?? undefined,
-        archived: url.searchParams.get("archived") ?? undefined,
-      })
-    );
+    const parsed = parseCostHintWorksheetSearch({
+      invoice: url.searchParams.get("invoice") ?? undefined,
+      so: url.searchParams.get("so") ?? undefined,
+      brand: url.searchParams.get("brand") ?? undefined,
+      archived: url.searchParams.get("archived") ?? undefined,
+      clients: url.searchParams.get("clients") ?? undefined,
+    });
+
+    if (!parsed.invoiceId && parsed.clientTokens.length > 1) {
+      const pack = await loadCostHintClientPack(parsed);
+      if (!pack) {
+        return NextResponse.json({ error: "No cost-hint lines for those clients.", source: "api" }, { status: 404 });
+      }
+      return new NextResponse(new Uint8Array(pack.zip), {
+        headers: {
+          "Content-Type": "application/zip",
+          "Content-Disposition": contentDisposition(pack.filename, "attachment"),
+          "Cache-Control": "no-store",
+        },
+      });
+    }
+
+    const worksheet = loadCostHintWorksheet(parsed);
     if (!worksheet) {
       return NextResponse.json({ error: "Invoice not found.", source: "api" }, { status: 404 });
     }

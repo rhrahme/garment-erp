@@ -14,6 +14,7 @@ export function loadCostHintWorksheet(query: {
   soNumber?: string | null;
   brandId?: string | null;
   includeArchived?: boolean;
+  clientTokens?: string[];
 }): CostHintWorksheet | null {
   if (query.invoiceId) {
     const invoice = getCustomerInvoiceById(query.invoiceId);
@@ -35,5 +36,6 @@ export function loadCostHintWorksheet(query: {
     brandId: query.brandId,
     soNumber: query.soNumber,
     includeArchived: query.includeArchived === true,
+    clientTokens: query.clientTokens,
   });
 }

@@ -5,6 +5,7 @@ import { Calculator, ChevronDown, ChevronRight } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { DownloadCostHintPdfButton } from "@/components/costing/DownloadCostHintPdfButton";
 import { OrderCostDetailPanel } from "@/components/costing/OrderCostDetailPanel";
+import { COST_HINT_NAMED_CLIENT_KEYS } from "@/lib/costing/cost-hint-clients";
 import { costHintWorksheetQuery } from "@/lib/costing/cost-hint-worksheet-query";
 import {
   InvoiceAmountsRevealToggle,
@@ -245,6 +246,13 @@ export function CostingWorkspace({
                 brandId,
                 includeArchived: showArchived,
               })}`}
+            />
+            <DownloadCostHintPdfButton
+              href={`/api/costing/hint-pdf${costHintWorksheetQuery({
+                includeArchived: showArchived,
+                clientTokens: COST_HINT_NAMED_CLIENT_KEYS,
+              })}`}
+              label="Download Ibrahim, Mitwalli, Hicham, Al Sheikh"
             />
             <a
               href={`/costing/print${costHintWorksheetQuery({

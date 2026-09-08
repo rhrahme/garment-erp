@@ -12,7 +12,13 @@ export const fetchCache = "force-no-store";
 export default async function CostHintPrintPage({
   searchParams,
 }: {
-  searchParams: Promise<{ invoice?: string; so?: string; brand?: string; archived?: string }>;
+  searchParams: Promise<{
+    invoice?: string;
+    so?: string;
+    brand?: string;
+    archived?: string;
+    clients?: string;
+  }>;
 }) {
   const session = await getSessionContext();
   if (!canViewMoney(session)) notFound();

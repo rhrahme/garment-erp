@@ -581,7 +581,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   internal PDF to work offline on selling prices. Costing / Invoicing /
   each invoice: **Print cost hint PDF**. Print page `/costing/print`
   (optional `?invoice=` `?so=` `?brand=` `?archived=1`). API
-  `GET /api/costing/hint-pdf` + `/api/v1/costing/hint-pdf`. Landscape
+  `GET /api/costing/hint-pdf` + `/api/v1/costing/hint-pdf`. Optional
+  `?clients=ibrahim,mitwalli,hicham,mohammad-al-sheikh` returns a zip
+  with one PDF per named client (Ibrahim Al Shwemi, Mitwalli, Hicham
+  Al Saif, Mohammad Al Sheikh). Landscape
   A4. Header resume: garment counts plus total pcs. Shirt LS / Shirt
   SS count as Shirt. Every combo set expands to pieces on every
   cost-hint PDF (invoice, SO, sitewide): Shirt+Trouser+Short,

@@ -1,4 +1,5 @@
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
+import { matchesCostHintClientFilter } from "@/lib/costing/cost-hint-clients";
 import type { CostingOverview, FabricLineCost, SalesOrderCost } from "@/lib/costing/compute";
 import { resolveFabricSwatchUrls } from "@/lib/fabric-sourcing/fabric-swatch-keys";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
@@ -378,17 +379,20 @@ export function buildCostHintWorksheet(options: {
   brandId?: string | null;
   soNumber?: string | null;
   includeArchived?: boolean;
+  clientTokens?: string[];
   generatedAt?: string;
 }): CostHintWorksheet {
   const soById = new Map(options.salesOrders.map((order) => [order.id, order]));
   const selling = sellingPriceByFabricLineId(options.invoices ?? []);
   const soFilter = options.soNumber?.trim().toUpperCase() ?? "";
+  const clientTokens = options.clientTokens ?? [];
   const rows: CostHintWorksheetRow[] = [];
 
   for (const order of options.overview.orders) {
     if (!options.includeArchived && order.is_archived) continue;
     if (!matchesBrand(order.client_code, options.brandId)) continue;
     if (soFilter && order.so_number.toUpperCase() !== soFilter) continue;
+    if (!matchesCostHintClientFilter(order.client_name, order.client_code, clientTokens)) continue;
     const salesOrder = soById.get(order.order_id);
     const fabricById = new Map((salesOrder?.fabric_lines ?? []).map((line) => [line.id, line]));
     for (const line of order.lines) {
@@ -405,9 +409,11 @@ export function buildCostHintWorksheet(options: {
 
   const scope = soFilter
     ? soFilter
-    : options.brandId
-      ? `${options.brandId} brand`
-      : "all orders";
+    : clientTokens.length > 0
+      ? clientTokens.join(", ")
+      : options.brandId
+        ? `${options.brandId} brand`
+        : "all orders";
 
   return attachArticleSummary({
     title: "Cost hint worksheet",
