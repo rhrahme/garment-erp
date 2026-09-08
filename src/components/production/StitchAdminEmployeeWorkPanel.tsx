@@ -169,7 +169,27 @@ export function StitchAdminEmployeeWorkPanel({
       .sort(compareMorningEntry);
   }, [attendance, query, rosterFilter]);
 
-  if (!isAdmin) return null;
+  if (!isAdmin) {
+    return (
+      <section className="rounded-xl border border-slate-200 bg-white">
+        <div className="px-5 py-4">
+          <h2 className="text-xl font-semibold text-slate-900">Attendance</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Morning factory entry is badge + wall QR. Admin sees the Entered
+            times on this tab.
+          </p>
+          <a
+            href="/stitch/attendance/print?copies=6"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 inline-flex min-h-[44px] items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+          >
+            Print attendance QR
+          </a>
+        </div>
+      </section>
+    );
+  }
 
   const selectedCheckIn = formatMorningEntryLabel(
     (attendance ? attendanceRows(attendance) : []).find((row) => row.employee_id === employeeId)
@@ -200,7 +220,7 @@ export function StitchAdminEmployeeWorkPanel({
   return (
     <section className="rounded-xl border border-slate-200 bg-white">
       <div className="border-b border-slate-100 px-5 py-4">
-        <h2 className="text-xl font-semibold text-slate-900">Floor dashboard</h2>
+        <h2 className="text-xl font-semibold text-slate-900">Attendance</h2>
         <p className="mt-1 text-sm text-slate-500">
           Admin only. Attendance is the morning factory door time: badge + wall QR
           (either order, from 8 Sep). That is not the garment A4. Times are Riyadh.

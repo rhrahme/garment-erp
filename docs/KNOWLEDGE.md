@@ -12,15 +12,15 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   attendance, clock-in, entered, or who came in the morning, they mean
   badge + wall QR (`ATTEND` / hung `HAGAN-HERE`) written to
   `stitch_attendance`. Never a garment A4, piece start, Live / History
-  time, or Production Floor now. Admin Floor dashboard shows that
-  Riyadh time as **Entered 07:42**.
+  time, or Production Floor now. Open Stitch kiosk -> **Attendance**
+  (next to History). Admin sees that Riyadh time as **Entered 07:42**.
 - Scan flow: EMP badge -> A4 piece QR -> work -> finish with **badge then
   that already-open A4**, or **A4 then badge / same A4 again**. Kiosk
   login: `stitch@hagan.pro`. Do not assume a floor video is A4-only;
   the first seconds are usually the badge card, then the paper.
 - **Morning attendance wall QR** (Sep 7 2026): official payload `ATTEND`
   (already-printed `HAGAN-HERE` posters still work). Print today
-  (`/stitch/attendance/print` or Floor now / Stitch Performance ->
+  (`/stitch/attendance/print` or Floor now / Stitch Attendance ->
   **Print attendance QR**). Clock-in counts from **8 Sep 2026** Riyadh.
   **Badge and wall QR, either order.** Wall first waits for the badge;
   badge first completes on the wall QR. Today they may scan to test;
@@ -39,8 +39,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Floor **scanned** = a go-live clock-in on that day **or** a session
   that touches the day. Attendance time = morning factory door
   (badge + wall QR), not a garment A4. Those times (Riyadh) show on
-  Stitch Performance -> Floor dashboard, **Entered** (admin only),
-  e.g. `Entered 07:42`. Clock-ins before 8 Sep are ignored. Events:
+  Stitch **Attendance** tab (`/stitch?tab=attendance`), **Entered**
+  (admin only), e.g. `Entered 07:42`. Clock-ins before 8 Sep are ignored. Events:
   `production.attendance_checked_in` and
   `production.attendance_clocked_in` (no prices).
   `GET /api/production/attendance-qr` + `/api/v1/...` parity. How-to
@@ -175,14 +175,14 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   session (Before lunch / Lunch off / After lunch). Closed `duration_sec`
   excludes pause windows. Do not collapse back to a single opaque total when
   pauses exist.
-- **Admin employee work lookup** (Aug 19 2026): on stitch kiosk Performance,
+- **Admin employee work lookup** (Aug 19 2026): on stitch kiosk Attendance,
   admin can pick one employee and see today / this week / this month (pieces,
   hours, Live now, piece list). Same Performance rules: closed sessions
   only; rejected overtime does not count. APIs
   `/api/production/sewing-session/employee-work` (admin session) +
   `/api/v1/production/sewing-session/employee-work`. Do not show this picker
   to stitch@ / pattern.
-- **Admin floor dashboard** (Aug 19 2026): same Performance admin panel lists
+- **Admin floor dashboard** (Aug 19 2026): Stitch **Attendance** tab lists
   morning **Entered** times (badge + wall QR) vs **No entry**, plus Live
   (Today / Week / Month). Roster =
   active Expats who can use the kiosk and have a floor job (tailor / cutter /
@@ -192,7 +192,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   counts as present even if overtime was later rejected. A HERE + badge
   clock-in also counts as present with 0 pieces and is the attendance
   time. Tap a name for
-  day/week/month detail. Print posters from Performance.
+  day/week/month detail. Print posters from Attendance.
 - **Floor names are badge nicknames** (Sep 6 2026): `short_name` (Parvaiz,
   Ijaz) is what Live, History, Performance, change requests, approvals,
   scan lookup, badge cards, and Pattern alteration queue show. Legal

@@ -138,6 +138,15 @@ describe("HERE wall QR", () => {
     assert.equal(mostRecentArm(sewing, "k1"), null);
   });
 
+  it("puts an Attendance tab next to History on the stitch kiosk", () => {
+    const source = readFileSync("src/components/production/StitchFloorWorkspace.tsx", "utf8");
+    assert.match(
+      source,
+      /id: "history", label: "History"[\s\S]*id: "attendance", label: "Attendance"/
+    );
+    assert.match(source, /tab === "attendance"/);
+  });
+
   it("does not reject a wall-first scan in the live kiosk path", () => {
     const source = readFileSync("src/lib/production/sewing-session.ts", "utf8");
     assert.match(source, /decideAttendanceWallScan/);

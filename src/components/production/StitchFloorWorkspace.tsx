@@ -60,7 +60,7 @@ import {
 } from "@/lib/ui/table-sort";
 import { cn } from "@/lib/utils";
 
-type FloorTab = "scan" | "orders" | "live" | "performance" | "history";
+type FloorTab = "scan" | "orders" | "live" | "performance" | "history" | "attendance";
 type HistoryMode = "sessions" | "failures";
 
 type LiveSortKey =
@@ -91,7 +91,14 @@ type FailureSortKey =
   | "kiosk"
   | "piece";
 
-const FLOOR_TABS = new Set<FloorTab>(["scan", "orders", "live", "performance", "history"]);
+const FLOOR_TABS = new Set<FloorTab>([
+  "scan",
+  "orders",
+  "live",
+  "performance",
+  "history",
+  "attendance",
+]);
 
 function tabFromLocation(
   pathname: string,
@@ -131,6 +138,7 @@ const TABS: { id: FloorTab; label: string }[] = [
   { id: "live", label: "Live" },
   { id: "performance", label: "Performance" },
   { id: "history", label: "History" },
+  { id: "attendance", label: "Attendance" },
 ];
 
 const PERIODS: { id: SewingDashboardPeriod; label: string; hint: string }[] = [
@@ -1058,7 +1066,7 @@ export function StitchFloorWorkspace({
           </div>
         )}
 
-      {tab === "performance" && (
+      {tab === "attendance" && (
         <StitchAdminEmployeeWorkPanel
           pauseIntervals={pauseIntervals}
           kioskPaused={Boolean(data?.kiosk_paused)}
