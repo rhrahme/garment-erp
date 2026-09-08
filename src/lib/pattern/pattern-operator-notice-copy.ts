@@ -521,6 +521,63 @@ export const WALL_ATTENDANCE_QR_HOWTO_V2_BODY = [
   "Tablet camera: Stitch kiosk -> Use tablet camera. Gun scanner o kaj kore.",
 ].join("\n");
 
+export const STITCH_PIECE_A4_HOWTO_NOTICE_ID = "howto-stitch-piece-a4-not-pattern-v1";
+
+export const STITCH_PIECE_A4_HOWTO_TITLE =
+  "Stitch a piece (size 52): badge, then the A4 on the garment";
+
+export const STITCH_PIECE_A4_HOWTO_BODY = [
+  "ENGLISH",
+  "Example: Soldier is stitching a size 52. Same steps for every size.",
+  "",
+  "Morning attendance (does not start the 52):",
+  "1. Scan your ID badge and the wall Attendance QR, either order.",
+  "2. You are marked present. Do other prep if needed.",
+  "",
+  "Start the size 52:",
+  "1. Take the size 52 garment that already has the A4 sticker on it.",
+  "2. At the stitch kiosk, scan your ID badge.",
+  "3. Within 30 seconds, scan the A4 QR on that same garment.",
+  "   The code looks like FR-0132-L07-JKT-1/2 (client + line + jacket/trouser).",
+  "4. The kiosk says you are working. Sew the 52.",
+  "",
+  "Do not scan the pattern paper QR (the one that opens /pattern/library/...).",
+  "That is for the Pattern desk. Stitch will say Code not recognized.",
+  "",
+  "Finish the size 52:",
+  "1. Scan your badge, then the same A4 on the garment.",
+  "   Or scan that A4, then your badge.",
+  "2. The kiosk closes the piece.",
+  "",
+  "Already have a piece open: badge then that open A4 finishes it.",
+  "Badge then a new A4 opens the next one.",
+  "",
+  "BANGLA",
+  "Example: size 52 stitch. Same process every size.",
+  "Attendance: badge + wall QR (je kono order). Eita 52 start kore na.",
+  "",
+  "Start:",
+  "1. Je 52 garment e A4 sticker ase, oita nao.",
+  "2. Kiosk e nijer badge scan.",
+  "3. 30 second er vitore oi garment er A4 scan (FR-...-L07-JKT-1/2).",
+  "4. Kiosk bole working. Tarpor sew.",
+  "",
+  "Pattern paper QR scan korben na. Oita Pattern desk er. Code not recognized asbe.",
+  "",
+  "Finish: badge then same A4, ba A4 then badge.",
+  "Open piece finish: badge then oi A4. Next piece: badge then notun A4.",
+].join("\n");
+
+export const STITCH_KIOSK_PROCESS_TITLE = "How to stitch a piece (size 52 or any size)";
+
+export const STITCH_KIOSK_PROCESS_STEPS = [
+  "1. Badge.",
+  "2. A4 sticker ON THE GARMENT (FR-...-L07-JKT-1/2) within 30 seconds.",
+  "3. Sew.",
+  "4. Finish: badge then the same A4. Or A4 then badge.",
+  "Do not scan the pattern paper QR. That is not the garment.",
+];
+
 export const WALL_ATTENDANCE_QR_HOWTO_V3_NOTICE_ID = "howto-wall-attendance-qr-v3";
 
 export const WALL_ATTENDANCE_QR_HOWTO_V3_TITLE =
@@ -570,6 +627,14 @@ export function isPatternAudienceHowTo(id: string): boolean {
 
 /** Newest first. Pattern how-tos email Pattern. all_teams email every team, EN+BN. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: STITCH_PIECE_A4_HOWTO_NOTICE_ID,
+    title: STITCH_PIECE_A4_HOWTO_TITLE,
+    body: STITCH_PIECE_A4_HOWTO_BODY,
+    href: "/stitch",
+    href_label: "Open stitch kiosk",
+    audience: "all_teams",
+  },
   {
     id: WALL_ATTENDANCE_QR_HOWTO_V3_NOTICE_ID,
     title: WALL_ATTENDANCE_QR_HOWTO_V3_TITLE,

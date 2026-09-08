@@ -28,6 +28,9 @@ import {
   WALL_ATTENDANCE_QR_HOWTO_V3_NOTICE_ID,
   WALL_ATTENDANCE_QR_HOWTO_V3_TITLE,
   WALL_ATTENDANCE_QR_HOWTO_V3_BODY,
+  STITCH_PIECE_A4_HOWTO_NOTICE_ID,
+  STITCH_PIECE_A4_HOWTO_TITLE,
+  STITCH_PIECE_A4_HOWTO_BODY,
   COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID,
   COPY_BASE_TO_BRAND_HOWTO_TITLE,
   COPY_BASE_TO_BRAND_HOWTO_BODY,
@@ -137,13 +140,11 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(SENT_STITCHED_GARMENT_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(WALL_ATTENDANCE_QR_HOWTO_V3_NOTICE_ID));
+    assert.ok(ids.includes(STITCH_PIECE_A4_HOWTO_NOTICE_ID));
     assert.equal(!ids.includes(WALL_ATTENDANCE_QR_HOWTO_NOTICE_ID), true);
     assert.equal(!ids.includes(WALL_ATTENDANCE_QR_HOWTO_V2_NOTICE_ID), true);
-    assert.equal(
-      PATTERN_HOWTO_NOTICES[0]?.id,
-      WALL_ATTENDANCE_QR_HOWTO_V3_NOTICE_ID
-    );
-    assert.equal(PATTERN_HOWTO_NOTICES[1]?.id, COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID);
+    assert.equal(PATTERN_HOWTO_NOTICES[0]?.id, STITCH_PIECE_A4_HOWTO_NOTICE_ID);
+    assert.equal(PATTERN_HOWTO_NOTICES[1]?.id, WALL_ATTENDANCE_QR_HOWTO_V3_NOTICE_ID);
   });
 });
 
@@ -188,6 +189,21 @@ describe("HERE wall attendance how-to", () => {
     assert.match(HERE_WALL_ATTENDANCE_HOWTO_TITLE, /HERE poster/i);
     assert.match(HERE_WALL_ATTENDANCE_HOWTO_BODY, /Scan the HERE poster/);
     assert.match(HERE_WALL_ATTENDANCE_HOWTO_BODY, /does not start or finish a piece/i);
+  });
+});
+
+describe("stitch piece A4 how-to", () => {
+  it("tells the floor badge then garment A4, not the pattern QR, in English and Bangla", () => {
+    assert.equal(STITCH_PIECE_A4_HOWTO_NOTICE_ID, "howto-stitch-piece-a4-not-pattern-v1");
+    assert.match(STITCH_PIECE_A4_HOWTO_TITLE, /A4 on the garment/i);
+    assert.match(STITCH_PIECE_A4_HOWTO_BODY, /size 52/);
+    assert.match(STITCH_PIECE_A4_HOWTO_BODY, /Do not scan the pattern paper QR/);
+    assert.match(STITCH_PIECE_A4_HOWTO_BODY, /FR-0132-L07-JKT-1\/2/);
+    assert.match(STITCH_PIECE_A4_HOWTO_BODY, /ENGLISH/);
+    assert.match(STITCH_PIECE_A4_HOWTO_BODY, /BANGLA/);
+    const howto = PATTERN_HOWTO_NOTICES.find((row) => row.id === STITCH_PIECE_A4_HOWTO_NOTICE_ID);
+    assert.equal(howto?.audience, "all_teams");
+    assert.equal(howto?.href, "/stitch");
   });
 });
 

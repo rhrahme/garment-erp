@@ -22,7 +22,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   clock-in. Writes `stitch_attendance` (not a `SewingSession`). No
   admin start email. No
   piece / performance hours. Attendance does **not** arm a piece. To
-  start stitching later they scan badge again, then the garment A4.
+  start stitching later they scan badge again, then the garment A4
+  (the sticker on that piece, e.g. a size 52). Do not scan the
+  pattern paper QR (`/pattern/library/bases/...`). How-to
+  `howto-stitch-piece-a4-not-pattern-v1` (English + Bangla) on every
+  ERP account and on the stitch kiosk Scan tab.
   One present mark per person per Riyadh day. The wall QR must not
   open or close a piece. Do **not** double-scan a garment A4 for
   attendance.
@@ -388,6 +392,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   operator opens any Pattern page and sees the banner. When we explain a
   floor fix to Pattern, add a catalog entry so they get the email and the
   in-app banner - do not only tell the owner in chat.   Notices: morning
+  stitch a piece with badge then the A4 on the garment, not the pattern
+  paper QR (`howto-stitch-piece-a4-not-pattern-v1`), morning
   attendance badge and wall QR, either order (`howto-wall-attendance-qr-v3`), copy a
   house base to another brand then edit (`howto-copy-base-to-brand-v1`),
   both
