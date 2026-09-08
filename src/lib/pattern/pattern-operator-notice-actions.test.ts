@@ -31,6 +31,9 @@ import {
   STITCH_PIECE_A4_HOWTO_NOTICE_ID,
   STITCH_PIECE_A4_HOWTO_TITLE,
   STITCH_PIECE_A4_HOWTO_BODY,
+  PRINT_SEWING_A4_FROM_PATTERN_HOWTO_NOTICE_ID,
+  PRINT_SEWING_A4_FROM_PATTERN_HOWTO_TITLE,
+  PRINT_SEWING_A4_FROM_PATTERN_HOWTO_BODY,
   COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID,
   COPY_BASE_TO_BRAND_HOWTO_TITLE,
   COPY_BASE_TO_BRAND_HOWTO_BODY,
@@ -141,10 +144,11 @@ describe("Pattern remove-from-consolidation how-to", () => {
     assert.ok(ids.includes(COPY_BASE_TO_BRAND_HOWTO_NOTICE_ID));
     assert.ok(ids.includes(WALL_ATTENDANCE_QR_HOWTO_V3_NOTICE_ID));
     assert.ok(ids.includes(STITCH_PIECE_A4_HOWTO_NOTICE_ID));
+    assert.ok(ids.includes(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_NOTICE_ID));
     assert.equal(!ids.includes(WALL_ATTENDANCE_QR_HOWTO_NOTICE_ID), true);
     assert.equal(!ids.includes(WALL_ATTENDANCE_QR_HOWTO_V2_NOTICE_ID), true);
-    assert.equal(PATTERN_HOWTO_NOTICES[0]?.id, STITCH_PIECE_A4_HOWTO_NOTICE_ID);
-    assert.equal(PATTERN_HOWTO_NOTICES[1]?.id, WALL_ATTENDANCE_QR_HOWTO_V3_NOTICE_ID);
+    assert.equal(PATTERN_HOWTO_NOTICES[0]?.id, PRINT_SEWING_A4_FROM_PATTERN_HOWTO_NOTICE_ID);
+    assert.equal(PATTERN_HOWTO_NOTICES[1]?.id, STITCH_PIECE_A4_HOWTO_NOTICE_ID);
   });
 });
 
@@ -189,6 +193,27 @@ describe("HERE wall attendance how-to", () => {
     assert.match(HERE_WALL_ATTENDANCE_HOWTO_TITLE, /HERE poster/i);
     assert.match(HERE_WALL_ATTENDANCE_HOWTO_BODY, /Scan the HERE poster/);
     assert.match(HERE_WALL_ATTENDANCE_HOWTO_BODY, /does not start or finish a piece/i);
+  });
+});
+
+describe("print Sewing A4 from Pattern how-to", () => {
+  it("tells Pattern to print Sewing A4s with the floor QR, not the pattern library QR", () => {
+    assert.equal(
+      PRINT_SEWING_A4_FROM_PATTERN_HOWTO_NOTICE_ID,
+      "howto-print-sewing-a4-from-pattern-v1"
+    );
+    assert.match(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_TITLE, /Sewing A4s/i);
+    assert.match(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_BODY, /size 52/);
+    assert.match(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_BODY, /Sewing A4s/);
+    assert.match(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_BODY, /Do not print Cutter for the stitcher/);
+    assert.match(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_BODY, /pattern library QR/);
+    assert.match(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_BODY, /ENGLISH/);
+    assert.match(PRINT_SEWING_A4_FROM_PATTERN_HOWTO_BODY, /BANGLA/);
+    const howto = PATTERN_HOWTO_NOTICES.find(
+      (row) => row.id === PRINT_SEWING_A4_FROM_PATTERN_HOWTO_NOTICE_ID
+    );
+    assert.equal(howto?.audience, "pattern");
+    assert.equal(howto?.href, "/pattern");
   });
 });
 

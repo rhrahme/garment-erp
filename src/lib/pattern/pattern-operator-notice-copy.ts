@@ -521,6 +521,54 @@ export const WALL_ATTENDANCE_QR_HOWTO_V2_BODY = [
   "Tablet camera: Stitch kiosk -> Use tablet camera. Gun scanner o kaj kore.",
 ].join("\n");
 
+export const PRINT_SEWING_A4_FROM_PATTERN_HOWTO_NOTICE_ID =
+  "howto-print-sewing-a4-from-pattern-v1";
+
+export const PRINT_SEWING_A4_FROM_PATTERN_HOWTO_TITLE =
+  "From Pattern: print Sewing A4s for the stitcher (size 52 example)";
+
+export const PRINT_SEWING_A4_FROM_PATTERN_HOWTO_BODY = [
+  "ENGLISH",
+  "Goal: give the stitcher the Sewing / Production A4 for that piece (example: size 52).",
+  "That paper has the floor QR (FR-...-L07-JKT-1/2). Do not give them the pattern library QR.",
+  "",
+  "1. Pattern -> open the sales order (Pattern order board).",
+  "2. Tick only the fabric rows still on the order (skip Removed leftover jobs).",
+  "3. If there is no sheet yet: Consolidate selected -> New pattern -> Create pattern -> upload .TUD.",
+  "   Fill Sample / Trial / Final, including size 52.",
+  "4. If the sheet already exists: Open job (or Master pattern for that fabric).",
+  "5. Check size 52 is filled on the sheet.",
+  "6. Print for stitching (pick one):",
+  "   - On the job or client sheet: Sewing A4s (or Print production).",
+  "   - Tick the size 52 fabric (or Select all), then open the preview.",
+  "   - Or on the order board: tick fabrics, choose Sewing or Production, Print selected.",
+  "7. You get one A4 per stitcher piece. Overshirt+Trouser / Suit = two pages",
+  "   (Overshirt or Jacket, then Trouser), each with its own floor QR.",
+  "8. Print: A4 portrait, Actual size / 100%.",
+  "9. Give that A4 to the stitcher with the garment. They scan badge, then THIS QR.",
+  "",
+  "Do not print Cutter for the stitcher (cutter is one page for cutting).",
+  "Do not scan or hand over the pattern paper QR (/pattern/library/bases/...).",
+  "Production can also print from the sales order -> Print production.",
+  "",
+  "BANGLA",
+  "Goal: stitcher ke Sewing A4 dao (example size 52). Oita te floor QR thake (FR-...-JKT-1/2).",
+  "Pattern library QR diben na.",
+  "",
+  "1. Pattern -> sales order khulun.",
+  "2. Je fabric ekhono order e ase, oita tick. Removed leftover skip.",
+  "3. Sheet na thakle: Consolidate selected -> New pattern -> .TUD upload. Size 52 fill.",
+  "4. Sheet thakle: Open job.",
+  "5. Size 52 check.",
+  "6. Sewing A4s ba Print production. Size 52 fabric tick. Preview open.",
+  "   Order board: tick -> Sewing/Production -> Print selected.",
+  "7. Piece moto alada A4. Combo hole Overshirt/Jacket page + Trouser page.",
+  "8. Print A4 portrait, Actual size.",
+  "9. Paper garment er sathe stitcher ke dao. Badge, then ei A4 QR.",
+  "",
+  "Cutter stitcher ke diben na. Pattern paper QR stitch e kaj korbe na.",
+].join("\n");
+
 export const STITCH_PIECE_A4_HOWTO_NOTICE_ID = "howto-stitch-piece-a4-not-pattern-v1";
 
 export const STITCH_PIECE_A4_HOWTO_TITLE =
@@ -627,6 +675,14 @@ export function isPatternAudienceHowTo(id: string): boolean {
 
 /** Newest first. Pattern how-tos email Pattern. all_teams email every team, EN+BN. */
 export const PATTERN_HOWTO_NOTICES: PatternHowToDefinition[] = [
+  {
+    id: PRINT_SEWING_A4_FROM_PATTERN_HOWTO_NOTICE_ID,
+    title: PRINT_SEWING_A4_FROM_PATTERN_HOWTO_TITLE,
+    body: PRINT_SEWING_A4_FROM_PATTERN_HOWTO_BODY,
+    href: "/pattern",
+    href_label: "Open Pattern home",
+    audience: "pattern",
+  },
   {
     id: STITCH_PIECE_A4_HOWTO_NOTICE_ID,
     title: STITCH_PIECE_A4_HOWTO_TITLE,
