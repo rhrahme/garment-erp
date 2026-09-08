@@ -1,14 +1,19 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  articleCountForCostLine,
   articleLabelFromNumber,
   buildCostHintWorksheet,
   buildCostHintWorksheetFromInvoice,
+  costHintGarmentFamily,
   costHintSwatchUrl,
+  formatCostHintArticleSummary,
   formatCostHintComposition,
   formatCostHintWeight,
   pieceCountForFabricLine,
+  summarizeCostHintArticles,
   unitCostFromLineTotal,
+  type CostHintWorksheetRow,
 } from "@/lib/costing/cost-hint-worksheet";
 import type { CostingOverview, SalesOrderCost } from "@/lib/costing/compute";
 import type { CustomerInvoice } from "@/lib/types/customer-invoices";
@@ -182,6 +187,12 @@ describe("cost hint worksheet", () => {
     assert.equal(worksheet.rows[0]?.composition, "65% wool");
     assert.equal(worksheet.rows[0]?.weight_gsm, 240);
     assert.equal(worksheet.rows[0]?.color, "light blu");
+    assert.equal(worksheet.rows[0]?.article_count, 2);
+    assert.equal(worksheet.rows[1]?.article_count, 1);
+    assert.equal(
+      formatCostHintArticleSummary(summarizeCostHintArticles(worksheet.rows)),
+      "2 Jackets, 1 Trouser. Total articles: 3"
+    );
     assert.match(worksheet.subtitle, /Do not send to the client/);
   });
 
@@ -233,6 +244,11 @@ describe("cost hint worksheet", () => {
     assert.equal(worksheet.rows[0]?.weight_gsm, 240);
     assert.equal(worksheet.rows[0]?.color, "light blu");
     assert.equal(formatCostHintComposition(worksheet.rows[0]?.composition), "65% Wool 35% Silk");
+    assert.equal(worksheet.rows[0]?.article_count, 2);
+    assert.equal(
+      formatCostHintArticleSummary(summarizeCostHintArticles(worksheet.rows)),
+      "2 Jackets. Total articles: 2"
+    );
     assert.equal(worksheet.missing_price_count, 0);
   });
 
@@ -244,5 +260,25 @@ describe("cost hint worksheet", () => {
     assert.equal(formatCostHintWeight(null), "-");
     assert.equal(costHintSwatchUrl("caccioppoli", "360103"), "/api/suppliers/caccioppoli/images/360103");
     assert.equal(costHintSwatchUrl(null, "360103"), null);
+  });
+
+  it("resumes shirts, overshirts, and suits as article counts", () => {
+    assert.equal(costHintGarmentFamily("Shirt LS"), "Shirt");
+    assert.equal(costHintGarmentFamily("Shirt SS"), "Shirt");
+    assert.equal(costHintGarmentFamily("Overshirt"), "Overshirt");
+    assert.equal(costHintGarmentFamily("Suit (Jacket + Trouser)"), "Suit");
+    assert.equal(articleCountForCostLine({ garmentType: "Suit", pieces: 2 }), 1);
+    assert.equal(articleCountForCostLine({ garmentType: "Shirt LS", pieces: 1 }), 1);
+    assert.equal(
+      formatCostHintArticleSummary(
+        summarizeCostHintArticles([
+          { garment: "Shirt LS", article_count: 10 },
+          { garment: "Shirt SS", article_count: 0 },
+          { garment: "Overshirt", article_count: 8 },
+          { garment: "Suit", article_count: 2 },
+        ] as CostHintWorksheetRow[])
+      ),
+      "10 Shirts, 8 Overshirts, 2 Suits. Total articles: 20"
+    );
   });
 });

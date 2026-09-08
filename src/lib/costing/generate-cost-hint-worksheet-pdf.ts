@@ -1,8 +1,10 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import {
+  formatCostHintArticleSummary,
   formatCostHintComposition,
   formatCostHintWeight,
+  summarizeCostHintArticles,
   type CostHintWorksheet,
 } from "@/lib/costing/cost-hint-worksheet";
 import {
@@ -59,8 +61,16 @@ export async function generateCostHintWorksheetPdf(worksheet: CostHintWorksheet)
     margin,
     y
   );
-  doc.setTextColor(0);
   y += 14;
+  const articleSummary = formatCostHintArticleSummary(summarizeCostHintArticles(worksheet.rows));
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(15, 23, 42);
+  const summaryLines = doc.splitTextToSize(articleSummary, pageW - margin * 2);
+  doc.text(summaryLines, margin, y);
+  y += summaryLines.length * 13 + 6;
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(0);
 
   autoTable(doc, {
     startY: y,

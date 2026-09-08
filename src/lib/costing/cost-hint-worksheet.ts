@@ -4,6 +4,7 @@ import { resolveFabricSwatchUrls } from "@/lib/fabric-sourcing/fabric-swatch-key
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import { formatInvoiceFibreContent } from "@/lib/invoicing/display";
 import { buildDownloadFilename } from "@/lib/pdf/download-filename";
+import { getLabelCountForGarment, GARMENT_STITCH_TYPES } from "@/lib/sales-orders/garment-types";
 import type { CustomerInvoice } from "@/lib/types/customer-invoices";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
@@ -100,6 +101,17 @@ export type CostHintWorksheetRow = {
   cost_hint_sar: number | null;
   unit_price_sar: number | null;
   missing_price: boolean;
+  article_count: number;
+};
+
+export type CostHintArticleSummaryItem = {
+  label: string;
+  count: number;
+};
+
+export type CostHintArticleSummary = {
+  items: CostHintArticleSummaryItem[];
+  total_articles: number;
 };
 
 export type CostHintWorksheet = {
@@ -147,6 +159,88 @@ export function costHintSwatchUrl(
   );
 }
 
+export function costHintGarmentFamily(garment: string | null | undefined): string {
+  const text = garment?.trim().replace(/\s+/g, " ") ?? "";
+  if (!text) return "Other";
+  const lower = text.toLowerCase();
+  if (lower.includes("suit+vest") || lower.startsWith("suit + vest")) return "Suit+Vest";
+  if (lower.startsWith("overshirt+trouser") || lower.startsWith("overshirt + trouser")) {
+    return "Overshirt+Trouser";
+  }
+  if (lower.startsWith("shirt+trouser+short") || lower.startsWith("shirt + trouser + short")) {
+    return "Shirt+Trouser+Short";
+  }
+  if (lower.startsWith("shirt+trouser") || lower.startsWith("shirt + trouser")) return "Shirt+Trouser";
+  if (lower.startsWith("shirt+short") || lower.startsWith("shirt + short")) return "Shirt+Short";
+  if (lower.startsWith("overshirt")) return "Overshirt";
+  if (
+    lower === "suit" ||
+    lower.startsWith("suit (") ||
+    (/\bjacket\b/.test(lower) && /\btrouser\b/.test(lower) && !/\bshirt\b/.test(lower))
+  ) {
+    return "Suit";
+  }
+  if (lower.startsWith("shirt")) return "Shirt";
+  if (lower.startsWith("t-shirt") || lower.startsWith("tshirt")) return "T-shirt";
+  return text.split(" (")[0]?.trim() || "Other";
+}
+
+export function articleCountForCostLine(input: {
+  garmentType: string;
+  pieces: number;
+  invoicedQuantity?: number | null;
+}): number {
+  if (input.invoicedQuantity != null && Number.isFinite(input.invoicedQuantity)) {
+    return Math.max(0, input.invoicedQuantity);
+  }
+  const labelsPerArticle = Math.max(getLabelCountForGarment(input.garmentType), 1);
+  return Math.max(1, Math.round(input.pieces / labelsPerArticle));
+}
+
+function pluralizeCostHintGarment(label: string, count: number): string {
+  if (count === 1) return label;
+  if (label.includes("+")) return label;
+  if (label === "Trouser") return "Trousers";
+  if (label.endsWith("s")) return label;
+  return `${label}s`;
+}
+
+function garmentFamilySortIndex(label: string): number {
+  const preferred = ["Shirt", "Overshirt", "Suit"];
+  const preferredIndex = preferred.indexOf(label);
+  if (preferredIndex >= 0) return preferredIndex;
+  const typeIndex = (GARMENT_STITCH_TYPES as readonly string[]).indexOf(label);
+  return typeIndex >= 0 ? 100 + typeIndex : 1000;
+}
+
+export function summarizeCostHintArticles(rows: CostHintWorksheetRow[]): CostHintArticleSummary {
+  const counts = new Map<string, number>();
+  let total = 0;
+  for (const row of rows) {
+    const count = Number.isFinite(row.article_count) ? Math.max(0, row.article_count) : 1;
+    if (count === 0) continue;
+    const label = costHintGarmentFamily(row.garment);
+    counts.set(label, (counts.get(label) ?? 0) + count);
+    total += count;
+  }
+  const items = [...counts.entries()]
+    .map(([label, count]) => ({ label, count }))
+    .sort(
+      (a, b) =>
+        garmentFamilySortIndex(a.label) - garmentFamilySortIndex(b.label) ||
+        a.label.localeCompare(b.label)
+    );
+  return { items, total_articles: total };
+}
+
+export function formatCostHintArticleSummary(summary: CostHintArticleSummary): string {
+  const parts = summary.items.map(
+    (item) => `${item.count} ${pluralizeCostHintGarment(item.label, item.count)}`
+  );
+  const total = `Total articles: ${summary.total_articles}`;
+  return parts.length > 0 ? `${parts.join(", ")}. ${total}` : total;
+}
+
 function formatArticleFromInvoice(articleNumber: number | null | undefined, fallback: string): string {
   if (articleNumber == null || !Number.isFinite(articleNumber)) return fallback;
   return articleLabelFromNumber(articleNumber);
@@ -189,6 +283,11 @@ function rowFromCostLine(input: {
   const pieces = input.fabricLine ? pieceCountForFabricLine(input.fabricLine) : 1;
   const fabricCost = unitCostFromLineTotal(input.line.fabric_cost_sar, pieces);
   const costHint = unitCostFromLineTotal(input.line.total_cost_sar, pieces);
+  const articleCount = articleCountForCostLine({
+    garmentType: input.line.garment_type,
+    pieces,
+    invoicedQuantity: input.selling?.quantity,
+  });
   const details = fillFabricDetails({
     supplier_id: input.line.supplier_id || input.fabricLine?.supplier_id || null,
     fabric_number: input.line.fabric_number,
@@ -220,6 +319,7 @@ function rowFromCostLine(input: {
     cost_hint_sar: costHint,
     unit_price_sar: input.selling?.unit_price_sar ?? null,
     missing_price: !input.line.has_fabric_price,
+    article_count: articleCount,
   };
 }
 
@@ -309,6 +409,7 @@ export function buildCostHintWorksheetFromInvoice(options: {
       cost_hint_sar: line.cost_hint_sar,
       unit_price_sar: line.unit_price,
       missing_price: line.cost_hint_sar == null,
+      article_count: Number.isFinite(line.quantity) ? Math.max(0, line.quantity) : 1,
     };
   });
 

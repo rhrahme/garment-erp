@@ -582,12 +582,15 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   each invoice: **Print cost hint PDF**. Print page `/costing/print`
   (optional `?invoice=` `?so=` `?brand=` `?archived=1`). API
   `GET /api/costing/hint-pdf` + `/api/v1/costing/hint-pdf`. Landscape
-  A4. Columns: SO, invoice, client, article, garment, mini mill swatch,
-  fabric, mill brand (Caccioppoli / Loro Piana / Solbiati - not the
-  factory brand), composition, weight gsm, qty, fabric cost, cost hint,
-  unit price, blank write-price. Swatch uses the same mill JPEG embed
-  as the sales-order PDF; blank if the mill image is missing. Never on
-  the client invoice PDF. `canViewMoney` only.
+  A4. Header resume: garment counts (10 Shirts, 8 Overshirts, 2 Suits)
+  plus total articles. Shirt LS / Shirt SS count as Shirt. A suit is
+  one article, not two stickers. Columns: SO, invoice, client, article,
+  garment, mini mill swatch, fabric, mill brand (Caccioppoli / Loro
+  Piana / Solbiati - not the factory brand), composition, weight gsm,
+  qty, fabric cost, cost hint, unit price, blank write-price. Swatch
+  uses the same mill JPEG embed as the sales-order PDF; blank if the
+  mill image is missing. Never on the client invoice PDF.
+  `canViewMoney` only.
 - Print dialog: A4 portrait, scale 100% / Actual size, default margins.
 - Fabric swatch images on print sheets require the swatch manifest to ship
   into the Vercel image lambda (Caccioppoli fix `b5ac64f`); new fabric codes
@@ -719,7 +722,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Display-only - do not rewrite stored invoice JSON for this.
 - **Cost hint worksheet PDF** (Sep 7 2026, details Sep 8 `ab46444c`):
   admin prints mill brand, fibre, gsm, mini swatch, fabric cost, cost
-  hint, and current unit price for offline markup. Sitewide from
+  hint, and current unit price for offline markup, plus a garment
+  resume (shirts / overshirts / suits / total articles). Sitewide from
   Costing and Invoicing; one invoice from the invoice editor. Internal
   only. Client quote/invoice PDFs stay without hints.
 

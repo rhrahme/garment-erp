@@ -3,8 +3,10 @@
 import { COST_HINT_PRINT_CSS } from "@/lib/costing/cost-hint-print-styles";
 import {
   costHintSwatchUrl,
+  formatCostHintArticleSummary,
   formatCostHintComposition,
   formatCostHintWeight,
+  summarizeCostHintArticles,
   type CostHintWorksheet,
 } from "@/lib/costing/cost-hint-worksheet";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
@@ -49,6 +51,9 @@ export function CostHintWorksheetView({
       <p className="mt-1 text-sm text-slate-600">{worksheet.subtitle}</p>
       <p className="mt-1 text-xs text-slate-500">
         {worksheet.rows.length} lines. {worksheet.missing_price_count} missing fabric price.
+      </p>
+      <p className="mt-2 text-sm font-semibold text-slate-900">
+        {formatCostHintArticleSummary(summarizeCostHintArticles(worksheet.rows))}
       </p>
 
       <table className="mt-4 w-full border-collapse text-xs">
