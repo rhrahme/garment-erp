@@ -62,7 +62,9 @@ export async function generateCostHintWorksheetPdf(worksheet: CostHintWorksheet)
     y
   );
   y += 14;
-  const articleSummary = formatCostHintArticleSummary(summarizeCostHintArticles(worksheet.rows));
+  const articleSummary =
+    worksheet.article_summary ||
+    formatCostHintArticleSummary(summarizeCostHintArticles(worksheet.rows));
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(15, 23, 42);

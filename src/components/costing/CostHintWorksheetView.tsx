@@ -53,7 +53,8 @@ export function CostHintWorksheetView({
         {worksheet.rows.length} lines. {worksheet.missing_price_count} missing fabric price.
       </p>
       <p className="mt-2 text-sm font-semibold text-slate-900">
-        {formatCostHintArticleSummary(summarizeCostHintArticles(worksheet.rows))}
+        {worksheet.article_summary ||
+          formatCostHintArticleSummary(summarizeCostHintArticles(worksheet.rows))}
       </p>
 
       <table className="mt-4 w-full border-collapse text-xs">

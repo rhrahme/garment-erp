@@ -5,7 +5,7 @@ import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display
 import { formatInvoiceFibreContent } from "@/lib/invoicing/display";
 import { buildDownloadFilename } from "@/lib/pdf/download-filename";
 import { getLabelCountForGarment, GARMENT_STITCH_TYPES } from "@/lib/sales-orders/garment-types";
-import { getGarmentPieces } from "@/lib/sales-orders/label-codes";
+import { getGarmentPieces, pieceNamesFromInvoicePieceField } from "@/lib/sales-orders/label-codes";
 import type { CustomerInvoice } from "@/lib/types/customer-invoices";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
@@ -103,6 +103,7 @@ export type CostHintWorksheetRow = {
   unit_price_sar: number | null;
   missing_price: boolean;
   article_count: number;
+  piece_names?: string[];
 };
 
 export type CostHintArticleSummaryItem = {
@@ -121,6 +122,7 @@ export type CostHintWorksheet = {
   generated_at: string;
   rows: CostHintWorksheetRow[];
   missing_price_count: number;
+  article_summary?: string;
 };
 
 export function articleLabelFromNumber(articleNumber: number): string {
@@ -214,22 +216,42 @@ function garmentFamilySortIndex(label: string): number {
   return typeIndex >= 0 ? 100 + typeIndex : 1000;
 }
 
-/** Suit stays a set. Shirt+Trouser+Short and similar combos expand to pieces. */
-export function costHintResumePieces(garment: string | null | undefined): string[] {
+/** Every combo set expands to pieces: Shirt+Trouser+Short, Suit, Overshirt+Trouser, ... */
+export function costHintResumePieces(
+  garment: string | null | undefined,
+  extraPieceNames?: string[] | null
+): string[] {
   const family = costHintGarmentFamily(garment);
-  if (family === "Suit" || family === "Suit+Vest") return [family];
-  const pieces = getGarmentPieces(family);
-  if (pieces.length > 1) return pieces.map((piece) => costHintGarmentFamily(piece));
+  const fromFamily = getGarmentPieces(family);
+  if (fromFamily.length > 1) return fromFamily.map((piece) => costHintGarmentFamily(piece));
+
+  const rawType = garment?.trim().split(" (")[0]?.trim() ?? "";
+  const fromRaw = rawType ? getGarmentPieces(rawType) : [];
+  if (fromRaw.length > 1) return fromRaw.map((piece) => costHintGarmentFamily(piece));
+
+  const extras = (extraPieceNames ?? []).map((name) => name.trim()).filter(Boolean);
+  if (extras.length > 1) return extras.map((piece) => costHintGarmentFamily(piece));
+
+  if (garment && / \+ /.test(garment)) {
+    const fromJoined = garment
+      .replace(/^[^(]*\(/, "")
+      .replace(/\)\s*$/, "")
+      .split(" + ")
+      .map((piece) => costHintGarmentFamily(piece))
+      .filter((piece) => piece && piece !== "Other");
+    if (fromJoined.length > 1) return fromJoined;
+  }
+
   return [family];
 }
 
-export function summarizeCostHintArticles(rows: CostHintWorksheetRow[]): CostHintArticleSummary {
+export function summarizeCostHintArticles(rows: Array<Pick<CostHintWorksheetRow, "garment" | "article_count" | "piece_names">>): CostHintArticleSummary {
   const counts = new Map<string, number>();
   let total = 0;
   for (const row of rows) {
     const count = Number.isFinite(row.article_count) ? Math.max(0, row.article_count) : 1;
     if (count === 0) continue;
-    for (const label of costHintResumePieces(row.garment)) {
+    for (const label of costHintResumePieces(row.garment, row.piece_names)) {
       counts.set(label, (counts.get(label) ?? 0) + count);
       total += count;
     }
@@ -253,6 +275,15 @@ export function formatCostHintArticleSummary(summary: CostHintArticleSummary): s
   const each = sameCount ? `${summary.items[0]!.count} of each. ` : "";
   const total = `Total: ${summary.total_pcs} pcs`;
   return parts.length > 0 ? `${parts.join(", ")}. ${each}${total}` : total;
+}
+
+function attachArticleSummary<T extends { rows: CostHintWorksheetRow[] }>(
+  worksheet: T
+): T & { article_summary: string } {
+  return {
+    ...worksheet,
+    article_summary: formatCostHintArticleSummary(summarizeCostHintArticles(worksheet.rows)),
+  };
 }
 
 function formatArticleFromInvoice(articleNumber: number | null | undefined, fallback: string): string {
@@ -334,6 +365,9 @@ function rowFromCostLine(input: {
     unit_price_sar: input.selling?.unit_price_sar ?? null,
     missing_price: !input.line.has_fabric_price,
     article_count: articleCount,
+    piece_names: input.fabricLine
+      ? (input.fabricLine.label_stickers ?? []).map((sticker) => sticker.piece_name).filter(Boolean)
+      : [],
   };
 }
 
@@ -375,13 +409,13 @@ export function buildCostHintWorksheet(options: {
       ? `${options.brandId} brand`
       : "all orders";
 
-  return {
+  return attachArticleSummary({
     title: "Cost hint worksheet",
     subtitle: `Internal. Do not send to the client. ${scope}. Cost hint = fabric + 5% duty + make, per piece. VAT excluded.`,
     generated_at: options.generatedAt ?? new Date().toISOString(),
     rows,
     missing_price_count: rows.filter((row) => row.missing_price).length,
-  };
+  });
 }
 
 export function buildCostHintWorksheetFromInvoice(options: {
@@ -424,16 +458,17 @@ export function buildCostHintWorksheetFromInvoice(options: {
       unit_price_sar: line.unit_price,
       missing_price: line.cost_hint_sar == null,
       article_count: Number.isFinite(line.quantity) ? Math.max(0, line.quantity) : 1,
+      piece_names: pieceNamesFromInvoicePieceField(line.piece_name),
     };
   });
 
-  return {
+  return attachArticleSummary({
     title: "Cost hint worksheet",
     subtitle: `Internal. Do not send to the client. ${options.invoice.invoice_number} / ${options.invoice.so_number}. Cost hint = fabric + 5% duty + make, per piece. VAT excluded.`,
     generated_at: options.generatedAt ?? new Date().toISOString(),
     rows,
     missing_price_count: rows.filter((row) => row.missing_price).length,
-  };
+  });
 }
 
 export function costHintWorksheetFilename(worksheet: CostHintWorksheet): string {

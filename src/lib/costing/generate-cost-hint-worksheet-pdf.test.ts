@@ -115,7 +115,7 @@ describe("cost hint worksheet PDF", () => {
     assert.match(text, /65% Wool/);
     assert.match(text, /10 Shirts/);
     assert.match(text, /8 Overshirts/);
-    assert.match(text, /2 Suits/);
-    assert.match(text, /Total: 22 pcs/);
+    assert.match(text, /2 Trousers/);
+    assert.match(text, /Total: 24 pcs/);
   });
 });

@@ -278,7 +278,7 @@ describe("cost hint worksheet", () => {
           { garment: "Suit", article_count: 2 },
         ] as CostHintWorksheetRow[])
       ),
-      "10 Shirts, 8 Overshirts, 2 Suits. Total: 20 pcs"
+      "10 Shirts, 8 Overshirts, 2 Jackets, 2 Trousers. Total: 22 pcs"
     );
   });
 
@@ -293,6 +293,44 @@ describe("cost hint worksheet", () => {
           { garment: "Shirt+Trouser+Short", article_count: 1 },
         ] as CostHintWorksheetRow[])
       ),
+      "5 Shirts, 5 Trousers, 5 Shorts. 5 of each. Total: 15 pcs"
+    );
+  });
+
+  it("expands every combo set on invoice and sitewide worksheets", () => {
+    assert.equal(
+      formatCostHintArticleSummary(
+        summarizeCostHintArticles([
+          { garment: "Shirt+Trouser", article_count: 3 },
+          { garment: "Shirt+Short", article_count: 2 },
+          { garment: "Overshirt+Trouser", article_count: 4 },
+          { garment: "Suit", article_count: 1 },
+          { garment: "Suit+Vest", article_count: 1 },
+        ] as CostHintWorksheetRow[])
+      ),
+      "5 Shirts, 4 Overshirts, 2 Jackets, 9 Trousers, 2 Shorts, 1 Vest. Total: 23 pcs"
+    );
+
+    const invoiceWorksheet = buildCostHintWorksheetFromInvoice({
+      invoice: {
+        invoice_number: "INV-2026-0017",
+        so_number: "SO-2026-0138",
+        client_name: "Hicham",
+        client_code: "FR-0726-0001",
+        lines: [1, 2, 3, 4, 5].map((article) => ({
+          article_number: article,
+          garment_type: "Shirt+Trouser+Short",
+          description: "Shirt + Trouser + Short",
+          piece_name: "Shirt + Trouser + Short",
+          quantity: 1,
+          unit_price: 0,
+          fabric_cost_hint_sar: null,
+          cost_hint_sar: null,
+        })),
+      } as CustomerInvoice,
+    });
+    assert.equal(
+      invoiceWorksheet.article_summary,
       "5 Shirts, 5 Trousers, 5 Shorts. 5 of each. Total: 15 pcs"
     );
   });
