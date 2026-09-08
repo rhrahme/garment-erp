@@ -3,9 +3,11 @@ import { describe, it } from "node:test";
 import {
   articleCountForCostLine,
   articleLabelFromNumber,
+  applyCostHintMissingPriceCopy,
   buildCostHintWorksheet,
   buildCostHintWorksheetFromInvoice,
   costHintGarmentFamily,
+  costHintMissingPriceFilename,
   costHintNamedClientPackFiles,
   costHintSwatchUrl,
   costHintWorksheetFilename,
@@ -468,6 +470,107 @@ describe("cost hint worksheet", () => {
       khaledSos.map((so) => `cost-hints-Pr-Khaled-Bin-Salman-${so}.pdf`)
     );
     assert.equal(uniqueCostHintSoNumbers(packFiles[1]?.worksheet.rows ?? []).join(), "SO-2026-0111");
+  });
+
+  it("builds a missing-fabric-price sheet and pack file from those lines only", () => {
+    const worksheet = buildCostHintWorksheet({
+      overview: overviewOf({
+        order_id: "so-1",
+        so_number: "SO-2026-0111",
+        client_name: "Pr Khaled Bin Salman",
+        client_code: "FR-0626-0037",
+        client_reference: null,
+        product_article: null,
+        order_date: "2026-06-30",
+        status: "fabric_pos_created",
+        is_archived: false,
+        line_count: 2,
+        lines_missing_price: 1,
+        fabric_base_sar: 100,
+        customs_duty_sar: 5,
+        import_vat_sar: 0,
+        vat_recoverable_sar: 0,
+        fabric_cash_outlay_sar: 0,
+        fabric_cost_sar: 105,
+        labor_cost_sar: 80,
+        washing_cost_sar: 10,
+        overhead_cost_sar: 10,
+        total_cost_sar: 205,
+        lines: [
+          {
+            line_id: "priced",
+            article_number: 1,
+            fabric_number: "771001",
+            supplier_id: "loro-piana",
+            supplier_name: "Loro Piana",
+            garment_type: "Jacket",
+            composition: "100% wool",
+            weight_gsm: 240,
+            width_label: null,
+            color: null,
+            meters: 1,
+            unit: "meters",
+            unit_price: 88,
+            supplier_line_total: 88,
+            fabric_base_sar: 100,
+            customs_duty_sar: 5,
+            import_vat_sar: 0,
+            vat_recoverable_sar: 0,
+            fabric_cash_outlay_sar: 0,
+            fabric_cost_sar: 105,
+            labor_cost_sar: 80,
+            washing_cost_sar: 10,
+            overhead_cost_sar: 10,
+            total_cost_sar: 205,
+            has_fabric_price: true,
+          },
+          {
+            line_id: "blank",
+            article_number: 2,
+            fabric_number: "50024",
+            supplier_id: "zegna",
+            supplier_name: "Zegna",
+            garment_type: "Trouser",
+            composition: null,
+            weight_gsm: null,
+            width_label: null,
+            color: null,
+            meters: 1,
+            unit: "meters",
+            unit_price: null,
+            supplier_line_total: null,
+            fabric_base_sar: null,
+            customs_duty_sar: 0,
+            import_vat_sar: 0,
+            vat_recoverable_sar: 0,
+            fabric_cash_outlay_sar: null,
+            fabric_cost_sar: null,
+            labor_cost_sar: 80,
+            washing_cost_sar: 10,
+            overhead_cost_sar: 10,
+            total_cost_sar: null,
+            has_fabric_price: false,
+          },
+        ],
+      }),
+      salesOrders: [],
+      invoices: [],
+      clientTokens: ["khaled"],
+      generatedAt: "2026-09-08T12:00:00.000Z",
+    });
+    const missing = applyCostHintMissingPriceCopy(worksheet, "Pr Khaled Bin Salman");
+    assert.equal(missing.rows.length, 1);
+    assert.equal(missing.rows[0]?.fabric_number, "50024");
+    assert.match(missing.title, /1 line missing fabric price/);
+    assert.match(missing.subtitle, /1 Zegna/);
+    assert.equal(
+      costHintMissingPriceFilename("Pr Khaled Bin Salman", 1),
+      "cost-hints-Pr-Khaled-Bin-Salman-1-missing-fabric-price.pdf"
+    );
+    const packNames = costHintNamedClientPackFiles(worksheet, "Pr Khaled Bin Salman").map(
+      (file) => file.name
+    );
+    assert.equal(packNames.includes("cost-hints-Pr-Khaled-Bin-Salman-1-missing-fabric-price.pdf"), true);
   });
 
   it("lists the seven Pr Khaled sales orders in the house dump", () => {

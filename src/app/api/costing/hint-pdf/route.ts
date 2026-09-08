@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticated } from "@/lib/auth/session";
 import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
-import { costHintWorksheetFilename } from "@/lib/costing/cost-hint-worksheet";
+import { costHintDownloadFilename, worksheetForCostHintDownload } from "@/lib/costing/cost-hint-worksheet";
 import { parseCostHintWorksheetSearch } from "@/lib/costing/cost-hint-worksheet-query";
 import { generateCostHintWorksheetPdf } from "@/lib/costing/generate-cost-hint-worksheet-pdf";
 import { loadCostHintClientPack } from "@/lib/costing/load-cost-hint-pack";
@@ -26,9 +26,26 @@ export async function GET(request: Request) {
       so: url.searchParams.get("so") ?? undefined,
       brand: url.searchParams.get("brand") ?? undefined,
       archived: url.searchParams.get("archived") ?? undefined,
+      missing: url.searchParams.get("missing") ?? undefined,
       clients: url.searchParams.get("clients") ?? undefined,
     });
     const disposition = url.searchParams.get("disposition") === "inline" ? "inline" : "attachment";
+
+    if (parsed.missingPrices && !parsed.invoiceId) {
+      const loaded = loadCostHintWorksheet(parsed);
+      const worksheet = loaded ? worksheetForCostHintDownload(loaded, { missingPrices: true }) : null;
+      if (!worksheet) {
+        return NextResponse.json({ error: "No lines missing fabric price." }, { status: 404 });
+      }
+      const pdfBytes = await generateCostHintWorksheetPdf(worksheet);
+      return new NextResponse(Buffer.from(pdfBytes), {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": contentDisposition(costHintDownloadFilename(worksheet), disposition),
+          "Cache-Control": "no-store",
+        },
+      });
+    }
 
     if (!parsed.invoiceId && parsed.clientTokens.length > 0) {
       const pack = await loadCostHintClientPack(parsed);
@@ -61,7 +78,7 @@ export async function GET(request: Request) {
     return new NextResponse(Buffer.from(pdfBytes), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": contentDisposition(costHintWorksheetFilename(worksheet), disposition),
+        "Content-Disposition": contentDisposition(costHintDownloadFilename(worksheet), disposition),
         "Cache-Control": "no-store",
       },
     });

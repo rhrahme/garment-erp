@@ -239,7 +239,8 @@ export function CostingWorkspace({
               Internal. Fabric cost, cost hint, and current unit price. Blank column to write your
               selling price. Do not send to the client. Named download is one zip: each client gets
               every sales order in one PDF. Pr Khaled has 7 orders (0111, 0113, 0116, 0121, 0123,
-              0131, 0133) in that file, plus one PDF per order.
+              0131, 0133) in that file, plus one PDF per order, plus a PDF of lines with no fabric
+              price.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -255,6 +256,13 @@ export function CostingWorkspace({
               })}`}
               variant="primary"
               label="Download Ibrahim, Mitwalli, Hicham, Al Sheikh, Pr Khaled"
+            />
+            <DownloadCostHintPdfButton
+              href={`/api/costing/hint-pdf${costHintWorksheetQuery({
+                clientTokens: ["khaled"],
+                missingPrices: true,
+              })}`}
+              label="Download Pr Khaled missing fabric prices"
             />
             <a
               href={`/costing/print${costHintWorksheetQuery({

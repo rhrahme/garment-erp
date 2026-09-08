@@ -346,12 +346,85 @@ export function applyCostHintNamedClientCopy(
   });
 }
 
+export function formatCostHintMissingMillSummary(
+  rows: Array<{ fabric_brand?: string | null }>
+): string {
+  const mills = new Map<string, number>();
+  for (const row of rows) {
+    const mill = row.fabric_brand?.trim() || "Unknown mill";
+    mills.set(mill, (mills.get(mill) ?? 0) + 1);
+  }
+  return [...mills.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([name, count]) => `${count} ${name}`)
+    .join(", ");
+}
+
+export function costHintMissingPriceFilename(label: string, count: number): string {
+  return buildDownloadFilename(["cost-hints", label, `${count}-missing-fabric-price`]);
+}
+
+export function applyCostHintMissingPriceCopy(
+  worksheet: CostHintWorksheet,
+  label: string
+): CostHintWorksheet {
+  const rows = worksheet.rows.filter((row) => row.missing_price);
+  const scope = formatCostHintSalesOrderScope(rows);
+  const mills = formatCostHintMissingMillSummary(rows);
+  const lineLabel =
+    rows.length === 1 ? "1 line missing fabric price" : `${rows.length} lines missing fabric price`;
+  const next = attachArticleSummary({
+    ...worksheet,
+    title: `Cost hint worksheet - ${label} - ${lineLabel}`,
+    subtitle: `Internal. Do not send to the client. ${label}. ${lineLabel} with no mill catalog price and no sales-order price. ${scope}. Mills: ${mills || "none"}.`,
+    rows,
+    missing_price_count: rows.length,
+  });
+  return {
+    ...next,
+    article_summary: mills
+      ? `${next.article_summary} Mills: ${mills}.`
+      : next.article_summary,
+  };
+}
+
+export function worksheetForCostHintDownload(
+  worksheet: CostHintWorksheet,
+  options?: { missingPrices?: boolean }
+): CostHintWorksheet | null {
+  if (!options?.missingPrices) return worksheet;
+  const label =
+    namedCostHintClientLabelForRows(worksheet.rows) ??
+    worksheet.rows[0]?.client_name ??
+    "cost hints";
+  const missing = applyCostHintMissingPriceCopy(worksheet, label);
+  return missing.rows.length > 0 ? missing : null;
+}
+
+export function costHintDownloadFilename(worksheet: CostHintWorksheet): string {
+  if (worksheet.title.includes("missing fabric price")) {
+    const label =
+      namedCostHintClientLabelForRows(worksheet.rows) ??
+      worksheet.rows[0]?.client_name ??
+      "cost-hints";
+    return costHintMissingPriceFilename(label, worksheet.rows.length);
+  }
+  return costHintWorksheetFilename(worksheet);
+}
+
 export function costHintNamedClientPackFiles(
   worksheet: CostHintWorksheet,
   label: string
 ): Array<{ name: string; worksheet: CostHintWorksheet }> {
   const combined = applyCostHintNamedClientCopy(worksheet, label);
   const files = [{ name: costHintWorksheetFilename(combined), worksheet: combined }];
+  const missingSheet = applyCostHintMissingPriceCopy(worksheet, label);
+  if (missingSheet.rows.length > 0) {
+    files.push({
+      name: costHintMissingPriceFilename(label, missingSheet.rows.length),
+      worksheet: missingSheet,
+    });
+  }
   const sos = uniqueCostHintSoNumbers(worksheet.rows);
   if (sos.length < 2) return files;
   for (const soNumber of sos) {

@@ -116,6 +116,13 @@ export function CustomerInvoicesWorkspace({
                   variant="primary"
                   label="Download Ibrahim, Mitwalli, Hicham, Al Sheikh, Pr Khaled"
                 />
+                <DownloadCostHintPdfButton
+                  href={`/api/costing/hint-pdf${costHintWorksheetQuery({
+                    clientTokens: ["khaled"],
+                    missingPrices: true,
+                  })}`}
+                  label="Download Pr Khaled missing fabric prices"
+                />
                 <a
                   href={`/costing/print${costHintWorksheetQuery({ brandId })}`}
                   target="_blank"

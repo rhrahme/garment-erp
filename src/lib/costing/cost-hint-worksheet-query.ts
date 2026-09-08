@@ -5,6 +5,7 @@ export function costHintWorksheetQuery(input: {
   soNumber?: string | null;
   brandId?: string | null;
   includeArchived?: boolean;
+  missingPrices?: boolean;
   clientTokens?: string[] | null;
 }): string {
   const params = new URLSearchParams();
@@ -12,6 +13,7 @@ export function costHintWorksheetQuery(input: {
   if (input.soNumber) params.set("so", input.soNumber);
   if (input.brandId) params.set("brand", input.brandId);
   if (input.includeArchived) params.set("archived", "1");
+  if (input.missingPrices) params.set("missing", "1");
   if (input.clientTokens && input.clientTokens.length > 0) {
     params.set("clients", input.clientTokens.join(","));
   }
@@ -24,12 +26,14 @@ export function parseCostHintWorksheetSearch(search: {
   so?: string;
   brand?: string;
   archived?: string;
+  missing?: string;
   clients?: string;
 }): {
   invoiceId: string | null;
   soNumber: string | null;
   brandId: string | null;
   includeArchived: boolean;
+  missingPrices: boolean;
   clientTokens: string[];
 } {
   return {
@@ -37,6 +41,7 @@ export function parseCostHintWorksheetSearch(search: {
     soNumber: search.so?.trim() || null,
     brandId: search.brand?.trim() || null,
     includeArchived: search.archived === "1" || search.archived === "true",
+    missingPrices: search.missing === "1" || search.missing === "true",
     clientTokens: parseCostHintClientTokens(search.clients),
   };
 }

@@ -600,7 +600,9 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   downloads always include archived orders and ignore the costing brand
   chip. `khaled` is Prince Khaled only - not Khaled Al Moussa. His combined
   file is titled with 7 sales orders (0111 / 0113 / 0116 / 0121 / 0123 /
-  0131 / 0133). Landscape
+  0131 / 0133). Named packs also include a PDF of lines with no mill
+  catalog price and no sales-order price
+  (`?clients=khaled&missing=1`). Landscape
   A4. Header resume: garment counts plus total pcs. Shirt LS / Shirt
   SS count as Shirt. Every combo set expands to pieces on every
   cost-hint PDF (invoice, SO, sitewide): Shirt+Trouser+Short,

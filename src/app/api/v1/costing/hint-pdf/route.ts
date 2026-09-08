@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/lib/integrations";
-import { costHintWorksheetFilename } from "@/lib/costing/cost-hint-worksheet";
+import { costHintDownloadFilename, worksheetForCostHintDownload } from "@/lib/costing/cost-hint-worksheet";
 import { parseCostHintWorksheetSearch } from "@/lib/costing/cost-hint-worksheet-query";
 import { generateCostHintWorksheetPdf } from "@/lib/costing/generate-cost-hint-worksheet-pdf";
 import { loadCostHintClientPack } from "@/lib/costing/load-cost-hint-pack";
@@ -20,8 +20,25 @@ export async function GET(request: Request) {
       so: url.searchParams.get("so") ?? undefined,
       brand: url.searchParams.get("brand") ?? undefined,
       archived: url.searchParams.get("archived") ?? undefined,
+      missing: url.searchParams.get("missing") ?? undefined,
       clients: url.searchParams.get("clients") ?? undefined,
     });
+
+    if (parsed.missingPrices && !parsed.invoiceId) {
+      const loaded = loadCostHintWorksheet(parsed);
+      const worksheet = loaded ? worksheetForCostHintDownload(loaded, { missingPrices: true }) : null;
+      if (!worksheet) {
+        return NextResponse.json({ error: "No lines missing fabric price.", source: "api" }, { status: 404 });
+      }
+      const pdfBytes = await generateCostHintWorksheetPdf(worksheet);
+      return new NextResponse(Buffer.from(pdfBytes), {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": contentDisposition(costHintDownloadFilename(worksheet), "attachment"),
+          "Cache-Control": "no-store",
+        },
+      });
+    }
 
     if (!parsed.invoiceId && parsed.clientTokens.length > 0) {
       const pack = await loadCostHintClientPack(parsed);
@@ -54,7 +71,7 @@ export async function GET(request: Request) {
     return new NextResponse(Buffer.from(pdfBytes), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": contentDisposition(costHintWorksheetFilename(worksheet), "attachment"),
+        "Content-Disposition": contentDisposition(costHintDownloadFilename(worksheet), "attachment"),
         "Cache-Control": "no-store",
       },
     });
