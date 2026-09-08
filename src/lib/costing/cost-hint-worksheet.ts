@@ -1,7 +1,6 @@
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
 import type { CostingOverview, FabricLineCost, SalesOrderCost } from "@/lib/costing/compute";
 import { resolveFabricSwatchUrls } from "@/lib/fabric-sourcing/fabric-swatch-keys";
-import { resolveFabricItemFromCatalog } from "@/lib/fabric-sourcing/resolve-fabric-from-catalog";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import { formatInvoiceFibreContent } from "@/lib/invoicing/display";
 import { buildDownloadFilename } from "@/lib/pdf/download-filename";
@@ -63,29 +62,16 @@ function fillFabricDetails(input: {
   weight_gsm: number | null;
   color: string | null;
 } {
-  let supplierId =
+  const supplierId =
     input.supplier_id ||
     supplierIdFromMillLabel(input.fabric_brand) ||
     supplierIdFromMillLabel(firstToken(input.composition));
-  let fabricBrand = input.fabric_brand?.trim() || null;
-  let composition = preferFibreComposition(input.composition);
-  let weightGsm = input.weight_gsm;
-  let color = input.color?.trim() || null;
-
-  if (supplierId && input.fabric_number.trim()) {
-    const item = resolveFabricItemFromCatalog(supplierId, input.fabric_number);
-    supplierId = item.supplier_id || supplierId;
-    fabricBrand = fabricBrand || item.supplier_name || null;
-    if (!item.manual) {
-      composition = preferFibreComposition(composition, item.composition);
-      if (weightGsm == null) weightGsm = item.weight_gsm;
-      color = color || item.color || null;
-    }
-  }
-
-  if (!fabricBrand && supplierId) {
-    fabricBrand = formatFabricSupplierName(supplierId, supplierId, input.fabric_number);
-  }
+  const fabricBrand =
+    input.fabric_brand?.trim() ||
+    (supplierId ? formatFabricSupplierName(supplierId, supplierId, input.fabric_number) : null);
+  const composition = preferFibreComposition(input.composition);
+  const weightGsm = input.weight_gsm;
+  const color = input.color?.trim() || null;
 
   return {
     supplier_id: supplierId,
