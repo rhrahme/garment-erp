@@ -582,9 +582,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   each invoice: **Print cost hint PDF**. Print page `/costing/print`
   (optional `?invoice=` `?so=` `?brand=` `?archived=1`). API
   `GET /api/costing/hint-pdf` + `/api/v1/costing/hint-pdf`. Landscape
-  A4. Header resume: garment counts (10 Shirts, 8 Overshirts, 2 Suits)
-  plus total articles. Shirt LS / Shirt SS count as Shirt. A suit is
-  one article, not two stickers. Columns: SO, invoice, client, article,
+  A4. Header resume: garment counts plus total pcs. Shirt LS / Shirt
+  SS count as Shirt. Suit stays a suit. Shirt+Trouser+Short expands
+  to shirts + trousers + shorts (5 sets = 15 pcs, 5 of each).
+  Columns: SO, invoice, client, article,
   garment, mini mill swatch, fabric, mill brand (Caccioppoli / Loro
   Piana / Solbiati - not the factory brand), composition, weight gsm,
   qty, fabric cost, cost hint, unit price, blank write-price. Swatch

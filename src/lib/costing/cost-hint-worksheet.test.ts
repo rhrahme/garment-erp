@@ -191,7 +191,7 @@ describe("cost hint worksheet", () => {
     assert.equal(worksheet.rows[1]?.article_count, 1);
     assert.equal(
       formatCostHintArticleSummary(summarizeCostHintArticles(worksheet.rows)),
-      "2 Jackets, 1 Trouser. Total articles: 3"
+      "2 Jackets, 1 Trouser. Total: 3 pcs"
     );
     assert.match(worksheet.subtitle, /Do not send to the client/);
   });
@@ -247,7 +247,7 @@ describe("cost hint worksheet", () => {
     assert.equal(worksheet.rows[0]?.article_count, 2);
     assert.equal(
       formatCostHintArticleSummary(summarizeCostHintArticles(worksheet.rows)),
-      "2 Jackets. Total articles: 2"
+      "2 Jackets. Total: 2 pcs"
     );
     assert.equal(worksheet.missing_price_count, 0);
   });
@@ -278,7 +278,22 @@ describe("cost hint worksheet", () => {
           { garment: "Suit", article_count: 2 },
         ] as CostHintWorksheetRow[])
       ),
-      "10 Shirts, 8 Overshirts, 2 Suits. Total articles: 20"
+      "10 Shirts, 8 Overshirts, 2 Suits. Total: 20 pcs"
+    );
+  });
+
+  it("expands Shirt+Trouser+Short into 15 pcs, 5 of each", () => {
+    assert.equal(
+      formatCostHintArticleSummary(
+        summarizeCostHintArticles([
+          { garment: "Shirt+Trouser+Short", article_count: 1 },
+          { garment: "Shirt+Trouser+Short", article_count: 1 },
+          { garment: "Shirt+Trouser+Short", article_count: 1 },
+          { garment: "Shirt+Trouser+Short", article_count: 1 },
+          { garment: "Shirt+Trouser+Short", article_count: 1 },
+        ] as CostHintWorksheetRow[])
+      ),
+      "5 Shirts, 5 Trousers, 5 Shorts. 5 of each. Total: 15 pcs"
     );
   });
 });

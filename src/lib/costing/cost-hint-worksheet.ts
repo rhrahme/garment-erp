@@ -5,6 +5,7 @@ import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display
 import { formatInvoiceFibreContent } from "@/lib/invoicing/display";
 import { buildDownloadFilename } from "@/lib/pdf/download-filename";
 import { getLabelCountForGarment, GARMENT_STITCH_TYPES } from "@/lib/sales-orders/garment-types";
+import { getGarmentPieces } from "@/lib/sales-orders/label-codes";
 import type { CustomerInvoice } from "@/lib/types/customer-invoices";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
@@ -111,7 +112,7 @@ export type CostHintArticleSummaryItem = {
 
 export type CostHintArticleSummary = {
   items: CostHintArticleSummaryItem[];
-  total_articles: number;
+  total_pcs: number;
 };
 
 export type CostHintWorksheet = {
@@ -206,11 +207,20 @@ function pluralizeCostHintGarment(label: string, count: number): string {
 }
 
 function garmentFamilySortIndex(label: string): number {
-  const preferred = ["Shirt", "Overshirt", "Suit"];
+  const preferred = ["Shirt", "Overshirt", "Suit", "Jacket", "Trouser", "Short", "Vest"];
   const preferredIndex = preferred.indexOf(label);
   if (preferredIndex >= 0) return preferredIndex;
   const typeIndex = (GARMENT_STITCH_TYPES as readonly string[]).indexOf(label);
   return typeIndex >= 0 ? 100 + typeIndex : 1000;
+}
+
+/** Suit stays a set. Shirt+Trouser+Short and similar combos expand to pieces. */
+export function costHintResumePieces(garment: string | null | undefined): string[] {
+  const family = costHintGarmentFamily(garment);
+  if (family === "Suit" || family === "Suit+Vest") return [family];
+  const pieces = getGarmentPieces(family);
+  if (pieces.length > 1) return pieces.map((piece) => costHintGarmentFamily(piece));
+  return [family];
 }
 
 export function summarizeCostHintArticles(rows: CostHintWorksheetRow[]): CostHintArticleSummary {
@@ -219,9 +229,10 @@ export function summarizeCostHintArticles(rows: CostHintWorksheetRow[]): CostHin
   for (const row of rows) {
     const count = Number.isFinite(row.article_count) ? Math.max(0, row.article_count) : 1;
     if (count === 0) continue;
-    const label = costHintGarmentFamily(row.garment);
-    counts.set(label, (counts.get(label) ?? 0) + count);
-    total += count;
+    for (const label of costHintResumePieces(row.garment)) {
+      counts.set(label, (counts.get(label) ?? 0) + count);
+      total += count;
+    }
   }
   const items = [...counts.entries()]
     .map(([label, count]) => ({ label, count }))
@@ -230,15 +241,18 @@ export function summarizeCostHintArticles(rows: CostHintWorksheetRow[]): CostHin
         garmentFamilySortIndex(a.label) - garmentFamilySortIndex(b.label) ||
         a.label.localeCompare(b.label)
     );
-  return { items, total_articles: total };
+  return { items, total_pcs: total };
 }
 
 export function formatCostHintArticleSummary(summary: CostHintArticleSummary): string {
   const parts = summary.items.map(
     (item) => `${item.count} ${pluralizeCostHintGarment(item.label, item.count)}`
   );
-  const total = `Total articles: ${summary.total_articles}`;
-  return parts.length > 0 ? `${parts.join(", ")}. ${total}` : total;
+  const sameCount =
+    summary.items.length > 1 && summary.items.every((item) => item.count === summary.items[0]?.count);
+  const each = sameCount ? `${summary.items[0]!.count} of each. ` : "";
+  const total = `Total: ${summary.total_pcs} pcs`;
+  return parts.length > 0 ? `${parts.join(", ")}. ${each}${total}` : total;
 }
 
 function formatArticleFromInvoice(articleNumber: number | null | undefined, fallback: string): string {
