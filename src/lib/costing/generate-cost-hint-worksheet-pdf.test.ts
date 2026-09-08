@@ -27,7 +27,11 @@ describe("cost hint worksheet PDF", () => {
           article_label: "L03",
           garment: "Jacket",
           fabric_number: "360103",
-          composition: "Cacci",
+          fabric_brand: "Caccioppoli",
+          supplier_id: "caccioppoli",
+          composition: "65% wool 35% silk",
+          weight_gsm: 240,
+          color: "light blu",
           quantity: 2,
           fabric_cost_sar: 790.02,
           cost_hint_sar: 1190.02,
@@ -41,5 +45,12 @@ describe("cost hint worksheet PDF", () => {
     const text = Buffer.from(bytes).toString("latin1");
     assert.match(text, /INTERNAL/);
     assert.match(text, /Cost hint/);
+    assert.match(text, /Swatch/);
+    assert.match(text, /Brand/);
+    assert.match(text, /Comp/);
+    assert.match(text, /Weight/);
+    assert.match(text, /Caccioppoli/);
+    assert.match(text, /240 gsm/);
+    assert.match(text, /65% Wool/);
   });
 });

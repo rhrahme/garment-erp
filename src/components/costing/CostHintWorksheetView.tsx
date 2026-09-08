@@ -1,7 +1,12 @@
 "use client";
 
 import { COST_HINT_PRINT_CSS } from "@/lib/costing/cost-hint-print-styles";
-import type { CostHintWorksheet } from "@/lib/costing/cost-hint-worksheet";
+import {
+  costHintSwatchUrl,
+  formatCostHintComposition,
+  formatCostHintWeight,
+  type CostHintWorksheet,
+} from "@/lib/costing/cost-hint-worksheet";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
 
 function money(amount: number | null): string {
@@ -54,7 +59,11 @@ export function CostHintWorksheetView({
             <th className="border border-slate-300 px-2 py-1.5">Client</th>
             <th className="border border-slate-300 px-2 py-1.5">Art.</th>
             <th className="border border-slate-300 px-2 py-1.5">Garment</th>
+            <th className="border border-slate-300 px-2 py-1.5">Swatch</th>
             <th className="border border-slate-300 px-2 py-1.5">Fabric</th>
+            <th className="border border-slate-300 px-2 py-1.5">Brand</th>
+            <th className="border border-slate-300 px-2 py-1.5">Comp.</th>
+            <th className="border border-slate-300 px-2 py-1.5 text-right">Weight</th>
             <th className="border border-slate-300 px-2 py-1.5 text-right">Qty</th>
             <th className="border border-slate-300 px-2 py-1.5 text-right">Fabric cost</th>
             <th className="border border-slate-300 px-2 py-1.5 text-right">Cost hint</th>
@@ -65,28 +74,48 @@ export function CostHintWorksheetView({
         <tbody>
           {worksheet.rows.length === 0 ? (
             <tr>
-              <td colSpan={11} className="border border-slate-200 px-2 py-4 text-center text-slate-500">
+              <td colSpan={15} className="border border-slate-200 px-2 py-4 text-center text-slate-500">
                 No costing lines for this filter.
               </td>
             </tr>
           ) : (
-            worksheet.rows.map((row, index) => (
-              <tr key={`${row.so_number}-${row.article_label}-${row.fabric_number}-${index}`}>
-                <td className="border border-slate-200 px-2 py-1 font-mono">{row.so_number}</td>
-                <td className="border border-slate-200 px-2 py-1 font-mono">{row.invoice_number ?? "-"}</td>
-                <td className="border border-slate-200 px-2 py-1">{row.client_name}</td>
-                <td className="border border-slate-200 px-2 py-1 text-center">{row.article_label}</td>
-                <td className="border border-slate-200 px-2 py-1">{row.garment}</td>
-                <td className="border border-slate-200 px-2 py-1 font-mono">{row.fabric_number || "-"}</td>
-                <td className="border border-slate-200 px-2 py-1 text-right">{row.quantity}</td>
-                <td className="border border-slate-200 px-2 py-1 text-right">{money(row.fabric_cost_sar)}</td>
-                <td className="border border-slate-200 px-2 py-1 text-right font-semibold">
-                  {money(row.cost_hint_sar)}
-                </td>
-                <td className="border border-slate-200 px-2 py-1 text-right">{money(row.unit_price_sar)}</td>
-                <td className="border border-slate-200 px-2 py-1">&nbsp;</td>
-              </tr>
-            ))
+            worksheet.rows.map((row, index) => {
+              const swatchUrl = costHintSwatchUrl(row.supplier_id, row.fabric_number);
+              return (
+                <tr key={`${row.so_number}-${row.article_label}-${row.fabric_number}-${index}`}>
+                  <td className="border border-slate-200 px-2 py-1 font-mono">{row.so_number}</td>
+                  <td className="border border-slate-200 px-2 py-1 font-mono">{row.invoice_number ?? "-"}</td>
+                  <td className="border border-slate-200 px-2 py-1">{row.client_name}</td>
+                  <td className="border border-slate-200 px-2 py-1 text-center">{row.article_label}</td>
+                  <td className="border border-slate-200 px-2 py-1">{row.garment}</td>
+                  <td className="border border-slate-200 px-1 py-1 text-center">
+                    {swatchUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={swatchUrl}
+                        alt=""
+                        width={28}
+                        height={28}
+                        className="mx-auto h-7 w-7 rounded-sm object-cover"
+                      />
+                    ) : (
+                      "-"
+                    )}
+                  </td>
+                  <td className="border border-slate-200 px-2 py-1 font-mono">{row.fabric_number || "-"}</td>
+                  <td className="border border-slate-200 px-2 py-1">{row.fabric_brand || "-"}</td>
+                  <td className="border border-slate-200 px-2 py-1">{formatCostHintComposition(row.composition)}</td>
+                  <td className="border border-slate-200 px-2 py-1 text-right">{formatCostHintWeight(row.weight_gsm)}</td>
+                  <td className="border border-slate-200 px-2 py-1 text-right">{row.quantity}</td>
+                  <td className="border border-slate-200 px-2 py-1 text-right">{money(row.fabric_cost_sar)}</td>
+                  <td className="border border-slate-200 px-2 py-1 text-right font-semibold">
+                    {money(row.cost_hint_sar)}
+                  </td>
+                  <td className="border border-slate-200 px-2 py-1 text-right">{money(row.unit_price_sar)}</td>
+                  <td className="border border-slate-200 px-2 py-1">&nbsp;</td>
+                </tr>
+              );
+            })
           )}
         </tbody>
       </table>

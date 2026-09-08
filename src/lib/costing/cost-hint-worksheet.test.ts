@@ -4,6 +4,9 @@ import {
   articleLabelFromNumber,
   buildCostHintWorksheet,
   buildCostHintWorksheetFromInvoice,
+  costHintSwatchUrl,
+  formatCostHintComposition,
+  formatCostHintWeight,
   pieceCountForFabricLine,
   unitCostFromLineTotal,
 } from "@/lib/costing/cost-hint-worksheet";
@@ -174,6 +177,11 @@ describe("cost hint worksheet", () => {
     assert.equal(worksheet.rows[0]?.quantity, 2);
     assert.equal(worksheet.rows[1]?.missing_price, true);
     assert.equal(worksheet.rows[1]?.cost_hint_sar, null);
+    assert.equal(worksheet.rows[0]?.fabric_brand, "Caccioppoli");
+    assert.equal(worksheet.rows[0]?.supplier_id, "caccioppoli");
+    assert.equal(worksheet.rows[0]?.composition, "65% wool");
+    assert.equal(worksheet.rows[0]?.weight_gsm, 240);
+    assert.equal(worksheet.rows[0]?.color, "light blu");
     assert.match(worksheet.subtitle, /Do not send to the client/);
   });
 
@@ -190,17 +198,51 @@ describe("cost hint worksheet", () => {
             garment_type: "Jacket",
             description: "Jacket",
             fabric_number: "360103",
+            fabric_brand: "Caccioppoli",
             composition: "Cacci",
+            weight_gsm: 240,
             quantity: 2,
             unit_price: 1190.02,
             fabric_cost_hint_sar: 790.02,
             cost_hint_sar: 1190.02,
+            sales_order_line_id: "line-jkt",
           },
         ],
       } as CustomerInvoice,
+      salesOrder: {
+        id: "so-1",
+        so_number: "SO-2026-0117",
+        fabric_lines: [
+          {
+            id: "line-jkt",
+            supplier_id: "caccioppoli",
+            supplier_name: "Caccioppoli",
+            fabric_number: "360103",
+            composition: "65% wool 35% silk",
+            weight_gsm: 240,
+            color: "light blu",
+          },
+        ],
+      } as SalesOrder,
     });
     assert.equal(worksheet.rows[0]?.article_label, "L03");
     assert.equal(worksheet.rows[0]?.cost_hint_sar, 1190.02);
+    assert.equal(worksheet.rows[0]?.fabric_brand, "Caccioppoli");
+    assert.equal(worksheet.rows[0]?.supplier_id, "caccioppoli");
+    assert.equal(worksheet.rows[0]?.composition, "65% wool 35% silk");
+    assert.equal(worksheet.rows[0]?.weight_gsm, 240);
+    assert.equal(worksheet.rows[0]?.color, "light blu");
+    assert.equal(formatCostHintComposition(worksheet.rows[0]?.composition), "65% Wool 35% Silk");
     assert.equal(worksheet.missing_price_count, 0);
+  });
+
+  it("prints fibre, gsm, and a mill swatch URL for the cost-hint worksheet", () => {
+    assert.equal(formatCostHintComposition("65% wool 35% silk"), "65% Wool 35% Silk");
+    assert.equal(formatCostHintComposition("Cacci"), "-");
+    assert.equal(formatCostHintComposition(null), "-");
+    assert.equal(formatCostHintWeight(240), "240 gsm");
+    assert.equal(formatCostHintWeight(null), "-");
+    assert.equal(costHintSwatchUrl("caccioppoli", "360103"), "/api/suppliers/caccioppoli/images/360103");
+    assert.equal(costHintSwatchUrl(null, "360103"), null);
   });
 });
