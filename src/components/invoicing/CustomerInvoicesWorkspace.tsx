@@ -113,7 +113,8 @@ export function CustomerInvoicesWorkspace({
                   href={`/api/costing/hint-pdf${costHintWorksheetQuery({
                     clientTokens: COST_HINT_NAMED_CLIENT_KEYS,
                   })}`}
-                  label="Download Ibrahim, Mitwalli, Hicham, Al Sheikh"
+                  variant="primary"
+                  label="Download Ibrahim, Mitwalli, Hicham, Al Sheikh, Pr Khaled"
                 />
                 <a
                   href={`/costing/print${costHintWorksheetQuery({ brandId })}`}

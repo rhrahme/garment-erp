@@ -252,7 +252,8 @@ export function CostingWorkspace({
                 includeArchived: showArchived,
                 clientTokens: COST_HINT_NAMED_CLIENT_KEYS,
               })}`}
-              label="Download Ibrahim, Mitwalli, Hicham, Al Sheikh"
+              variant="primary"
+              label="Download Ibrahim, Mitwalli, Hicham, Al Sheikh, Pr Khaled"
             />
             <a
               href={`/costing/print${costHintWorksheetQuery({

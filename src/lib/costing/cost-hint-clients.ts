@@ -31,6 +31,12 @@ export const COST_HINT_NAMED_CLIENTS: CostHintNamedClient[] = [
     codes: ["FR-0726-0047"],
     nameNeedles: ["mohammad al sheikh", "al sheikh mohamad", "al sheikh mohammad"],
   },
+  {
+    key: "khaled",
+    label: "Pr Khaled Bin Salman",
+    codes: ["FR-0626-0037"],
+    nameNeedles: ["pr khaled bin salman", "pr khaled", "khaled bin salman"],
+  },
 ];
 
 export const COST_HINT_NAMED_CLIENT_KEYS = COST_HINT_NAMED_CLIENTS.map((client) => client.key);
