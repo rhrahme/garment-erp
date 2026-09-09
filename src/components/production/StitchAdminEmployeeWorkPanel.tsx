@@ -121,10 +121,10 @@ export function StitchAdminEmployeeWorkPanel({
   }, []);
 
   const loadWork = useCallback(
-    async (nextEmployeeId: string, period: SewingDashboardPeriod) => {
+    async (nextEmployeeId: string, period: SewingDashboardPeriod, asAdmin: boolean) => {
       try {
         const params = new URLSearchParams({ period });
-        if (nextEmployeeId) params.set("employee_id", nextEmployeeId);
+        if (asAdmin && nextEmployeeId) params.set("employee_id", nextEmployeeId);
         const res = await fetch(`/api/production/sewing-session/employee-work?${params}`, {
           cache: "no-store",
         });
@@ -134,14 +134,13 @@ export function StitchAdminEmployeeWorkPanel({
           error?: string;
         };
         if (res.status === 403) {
-          setIsAdmin(false);
-          return;
+          throw new Error(json.error ?? "Forbidden.");
         }
         if (!res.ok && res.status !== 404) {
           throw new Error(json.error ?? "Failed to load floor dashboard.");
         }
         setAttendance(json.attendance ?? null);
-        setWork(json.work ?? null);
+        setWork(asAdmin ? json.work ?? null : null);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load floor dashboard.");
@@ -155,11 +154,14 @@ export function StitchAdminEmployeeWorkPanel({
   }, [loadAdmin]);
 
   useEffect(() => {
-    if (!isAdmin) return;
-    void loadWork(employeeId, rosterPeriod);
-    const id = window.setInterval(() => void loadWork(employeeId, rosterPeriod), 12_000);
+    void loadWork(employeeId, rosterPeriod, isAdmin);
+    const id = window.setInterval(() => void loadWork(employeeId, rosterPeriod, isAdmin), 12_000);
     return () => window.clearInterval(id);
-  }, [isAdmin, employeeId, rosterPeriod, loadWork]);
+  }, [employeeId, rosterPeriod, isAdmin, loadWork]);
+
+  useEffect(() => {
+    if (!isAdmin && rosterFilter === "live") setRosterFilter("entered");
+  }, [isAdmin, rosterFilter]);
 
   const rosterRows = useMemo(() => {
     if (!attendance) return [];
@@ -176,21 +178,6 @@ export function StitchAdminEmployeeWorkPanel({
       })
       .sort(compareMorningEntry);
   }, [attendance, query, rosterFilter]);
-
-  if (!isAdmin) {
-    return (
-      <section className="rounded-xl border border-slate-200 bg-white">
-        <div className="px-5 py-4">
-          <h2 className="text-xl font-semibold text-slate-900">Attendance</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Factory door is badge + wall QR. Morning signs in. End of day
-            signs out. The wall poster is already hung. Admin sees Entered
-            and Left times on this tab.
-          </p>
-        </div>
-      </section>
-    );
-  }
 
   const selectedRow = (attendance ? attendanceRows(attendance) : []).find(
     (row) => row.employee_id === employeeId
@@ -224,18 +211,21 @@ export function StitchAdminEmployeeWorkPanel({
       <div className="border-b border-slate-100 px-5 py-4">
         <h2 className="text-xl font-semibold text-slate-900">Attendance</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Admin only. Attendance is the factory door: badge + wall QR (either
+          View only. Attendance is the factory door: badge + wall QR (either
           order, from 8 Sep). Morning signs in. Same poster at the end of the
           day signs out. That is not the garment A4. Times are Riyadh.
+          Door times cannot be edited here.
         </p>
-        <a
-          href="/stitch/attendance/print?copies=6"
-          target="_blank"
-          rel="noreferrer"
-          className="mt-3 inline-flex min-h-[44px] items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-        >
-          Print attendance QR
-        </a>
+        {isAdmin ? (
+          <a
+            href="/stitch/attendance/print?copies=6"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 inline-flex min-h-[44px] items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+          >
+            Print attendance QR
+          </a>
+        ) : null}
       </div>
 
       <div className="space-y-4 px-5 py-4">
@@ -261,7 +251,12 @@ export function StitchAdminEmployeeWorkPanel({
         </div>
 
         {attendance ? (
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+          <div
+            className={cn(
+              "grid grid-cols-2 gap-3",
+              isAdmin ? "lg:grid-cols-6" : "lg:grid-cols-4"
+            )}
+          >
             <KpiCard
               label="Expected"
               value={attendance.expected}
@@ -291,19 +286,23 @@ export function StitchAdminEmployeeWorkPanel({
               active={rosterFilter === "missing"}
               onClick={() => setRosterFilter("missing")}
             />
-            <KpiCard
-              label="Live now"
-              value={attendance.live}
-              hint="Open on the floor"
-              tone={attendance.live > 0 ? "live" : "plain"}
-              active={rosterFilter === "live"}
-              onClick={() => setRosterFilter("live")}
-            />
-            <KpiCard
-              label="Pieces"
-              value={attendance.pieces}
-              hint="Closed, counted hours"
-            />
+            {isAdmin ? (
+              <>
+                <KpiCard
+                  label="Live now"
+                  value={attendance.live}
+                  hint="Open on the floor"
+                  tone={attendance.live > 0 ? "live" : "plain"}
+                  active={rosterFilter === "live"}
+                  onClick={() => setRosterFilter("live")}
+                />
+                <KpiCard
+                  label="Pieces"
+                  value={attendance.pieces}
+                  hint="Closed, counted hours"
+                />
+              </>
+            ) : null}
           </div>
         ) : (
           <p className="text-sm text-slate-500">Loading floor roster...</p>
@@ -322,13 +321,20 @@ export function StitchAdminEmployeeWorkPanel({
           </label>
           <div className="flex flex-wrap gap-2">
             {(
-              [
-                ["entered", "Entered"],
-                ["left", "Left"],
-                ["missing", "No entry"],
-                ["live", "Live"],
-                ["all", "All"],
-              ] as const
+              (isAdmin
+                ? ([
+                    ["entered", "Entered"],
+                    ["left", "Left"],
+                    ["missing", "No entry"],
+                    ["live", "Live"],
+                    ["all", "All"],
+                  ] as const)
+                : ([
+                    ["entered", "Entered"],
+                    ["left", "Left"],
+                    ["missing", "No entry"],
+                    ["all", "All"],
+                  ] as const))
             ).map(([id, label]) => (
               <button
                 key={id}
@@ -415,25 +421,23 @@ export function StitchAdminEmployeeWorkPanel({
                         ) : hasMorningEntry(row) ? (
                           <p className="text-xs text-slate-500">Still in</p>
                         ) : null}
-                        {row.live ? (
+                        {isAdmin && row.live ? (
                           <p className="text-xs font-semibold text-emerald-700">Live on a piece</p>
-                        ) : row.count > 0 ? (
+                        ) : isAdmin && row.count > 0 ? (
                           <p className="text-xs text-slate-500">
                             {row.count} pcs - {formatDuration(row.duration_sec)}
                           </p>
-                        ) : hasMorningEntry(row) && !hasLeft(row) ? (
-                          <p className="text-xs text-slate-500">Door only</p>
-                        ) : row.scanned && !hasMorningEntry(row) ? (
-                          <p className="text-xs text-slate-500">Piece work, no door scan</p>
                         ) : null}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => selectEmployee(row.employee_id)}
-                        className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50"
-                      >
-                        {selected ? "Selected" : "Open"}
-                      </button>
+                      {isAdmin ? (
+                        <button
+                          type="button"
+                          onClick={() => selectEmployee(row.employee_id)}
+                          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50"
+                        >
+                          {selected ? "Selected" : "Open"}
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                 </li>
@@ -442,7 +446,7 @@ export function StitchAdminEmployeeWorkPanel({
           )}
         </ul>
 
-        {employeeId && work ? (
+        {isAdmin && employeeId && work ? (
           <div className="space-y-3 rounded-xl border border-indigo-200 bg-indigo-50/40 p-4">
             <div>
               <p className="text-lg font-semibold text-slate-900">{work.employee_name}</p>

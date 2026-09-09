@@ -282,6 +282,23 @@ export async function requireAdmin(): Promise<SessionContext | null> {
   return session;
 }
 
+/** Stitch kiosk logins may view the door roster. They cannot reprint or edit it. */
+export function canViewStitchAttendance(session: SessionContext): boolean {
+  return (
+    session.isAdmin ||
+    session.isStitchOperator ||
+    session.isProductionOperator ||
+    session.isClientManager ||
+    session.isPatternOperator
+  );
+}
+
+export async function requireStitchAttendanceView(): Promise<SessionContext | null> {
+  const session = await requireAuthenticated();
+  if (!session || !canViewStitchAttendance(session)) return null;
+  return session;
+}
+
 /**
  * Admin, factory manager, or QC -- operational floors (e.g. HR ID badges)
  * without payroll register / salary APIs.

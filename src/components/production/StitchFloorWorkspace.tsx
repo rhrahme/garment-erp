@@ -389,7 +389,6 @@ export function StitchFloorWorkspace({
     | null
   >(null);
   const [correctSession, setCorrectSession] = useState<SewingSession | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
   const pendingBySessionId = useMemo(() => {
     const map = new Map<string, PendingChangeSummary>();
@@ -430,27 +429,14 @@ export function StitchFloorWorkspace({
 
   const selectTab = useCallback(
     (next: FloorTab) => {
-      if (next === "attendance" && isAdmin === false) {
-        next = "scan";
-      }
       setTab(next);
       // Orders lives only in left-nav at `/stitch/orders`; floor tabs stay on `/stitch`.
       if (pathname === "/stitch/orders" || pathname.startsWith("/stitch/orders/")) {
         router.replace("/stitch");
       }
     },
-    [isAdmin, pathname, router]
+    [pathname, router]
   );
-
-  const loadAdmin = useCallback(async () => {
-    try {
-      const res = await fetch("/api/auth/session", { cache: "no-store" });
-      const session = res.ok ? await res.json() : null;
-      setIsAdmin(Boolean(session?.is_admin));
-    } catch {
-      setIsAdmin(false);
-    }
-  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -478,21 +464,14 @@ export function StitchFloorWorkspace({
   }, []);
 
   useEffect(() => {
-    if (isAdmin === false && tab === "attendance") {
-      selectTab("scan");
-    }
-  }, [isAdmin, tab, selectTab]);
-
-  useEffect(() => {
     void load();
-    void loadAdmin();
     void loadPendingRequests();
     const id = window.setInterval(() => {
       void load();
       void loadPendingRequests();
     }, 12_000);
     return () => window.clearInterval(id);
-  }, [load, loadAdmin, loadPendingRequests]);
+  }, [load, loadPendingRequests]);
 
   async function cancelPendingRequest(requestId: string) {
     try {
@@ -665,7 +644,7 @@ export function StitchFloorWorkspace({
       <div className="flex min-h-[calc(100vh-5.5rem)] w-full flex-col gap-4">
         <div className="sticky top-0 z-10 -mx-1 border-b border-slate-200 bg-slate-50/95 px-1 pb-3 pt-1 backdrop-blur">
           <div className="flex flex-wrap items-center gap-2">
-            {TABS.filter((item) => item.id !== "attendance" || isAdmin === true).map((item) => {
+            {TABS.map((item) => {
               const active = tab === item.id;
               const badge =
                 item.id === "live"
@@ -1087,7 +1066,7 @@ export function StitchFloorWorkspace({
           </div>
         )}
 
-      {tab === "attendance" && isAdmin === true && (
+      {tab === "attendance" && (
         <StitchAdminEmployeeWorkPanel
           pauseIntervals={pauseIntervals}
           kioskPaused={Boolean(data?.kiosk_paused)}

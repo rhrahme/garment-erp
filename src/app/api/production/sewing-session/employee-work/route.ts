@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth/session";
+import { requireStitchAttendanceView } from "@/lib/auth/session";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { readPayrollEmployees } from "@/lib/data/payroll-employees";
 import { readSewingSessionsFresh } from "@/lib/data/sewing-sessions";
@@ -16,9 +16,9 @@ import {
 } from "@/lib/production/sewing-session";
 
 export async function GET(request: NextRequest) {
-  const session = await requireAdmin();
+  const session = await requireStitchAttendanceView();
   if (!session) {
-    return NextResponse.json({ error: "Admin only." }, { status: 403 });
+    return NextResponse.json({ error: "Stitch attendance view required." }, { status: 403 });
   }
 
   try {
@@ -40,6 +40,9 @@ export async function GET(request: NextRequest) {
       Date.now(),
       (await readStitchAttendanceFresh()).check_ins
     );
+    if (!session.isAdmin) {
+      return NextResponse.json({ attendance });
+    }
     const employees = listSewingKioskEmployees(store);
     if (!employeeKey) {
       return NextResponse.json({ employees, attendance });

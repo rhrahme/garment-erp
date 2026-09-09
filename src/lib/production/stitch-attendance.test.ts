@@ -149,14 +149,28 @@ describe("HERE wall QR", () => {
     assert.equal(mostRecentArm(sewing, "k1"), null);
   });
 
-  it("puts an admin-only Attendance tab next to History on the stitch kiosk", () => {
-    const source = readFileSync("src/components/production/StitchFloorWorkspace.tsx", "utf8");
+  it("puts a view-only Attendance tab next to History on the stitch kiosk", () => {
+    const workspace = readFileSync("src/components/production/StitchFloorWorkspace.tsx", "utf8");
     assert.match(
-      source,
+      workspace,
       /id: "history", label: "History"[\s\S]*id: "attendance", label: "Attendance"/
     );
-    assert.match(source, /item.id !== "attendance" \|\| isAdmin === true/);
-    assert.match(source, /tab === "attendance" && isAdmin === true/);
+    assert.match(workspace, /tab === "attendance"/);
+    assert.equal(workspace.includes("item.id !== \"attendance\""), false);
+
+    const panel = readFileSync("src/components/production/StitchAdminEmployeeWorkPanel.tsx", "utf8");
+    assert.match(panel, /View only/);
+    assert.match(panel, /Door times cannot be edited here/);
+    assert.match(panel, /\{isAdmin \? \(/);
+    assert.match(panel, /Print attendance QR/);
+
+    const api = readFileSync(
+      "src/app/api/production/sewing-session/employee-work/route.ts",
+      "utf8"
+    );
+    assert.match(api, /requireStitchAttendanceView/);
+    assert.match(api, /if \(!session.isAdmin\)/);
+    assert.match(api, /return NextResponse.json\(\{ attendance \}\)/);
   });
 
   it("does not reject a wall-first scan in the live kiosk path", () => {
