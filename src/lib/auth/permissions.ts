@@ -877,6 +877,16 @@ export function canViewClientContact(
   return isSalesOperatorAccess(role, email) || !isPriceRestrictedAccess(role, email);
 }
 
+/** Wall Attendance QR reprint -- hung already; admin only. */
+export function isAttendanceWallQrAdminOnlyPath(pathname: string): boolean {
+  return (
+    pathname === "/stitch/attendance/print" ||
+    pathname.startsWith("/stitch/attendance/print/") ||
+    pathname === "/api/production/attendance-qr" ||
+    pathname.startsWith("/api/production/attendance-qr/")
+  );
+}
+
 /** QC ID badges are Expats-only -- block Saudis pages/print/PDF. */
 export function isClientManagerSaudiIdBadgesPath(pathname: string): boolean {
   return (
@@ -888,6 +898,7 @@ export function isClientManagerSaudiIdBadgesPath(pathname: string): boolean {
 }
 
 export function isClientManagerRouteAllowed(pathname: string): boolean {
+  if (isAttendanceWallQrAdminOnlyPath(pathname)) return false;
   if (
     CLIENT_MANAGER_BLOCKED_ROUTE_PREFIXES.some(
       (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
@@ -916,6 +927,7 @@ export function isClientManagerRouteAllowed(pathname: string): boolean {
 }
 
 export function isTaskOperatorRouteAllowed(pathname: string): boolean {
+  if (isAttendanceWallQrAdminOnlyPath(pathname)) return false;
   if (
     TASK_OPERATOR_BLOCKED_ROUTE_PREFIXES.some(
       (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
@@ -940,6 +952,7 @@ export function isHrIdBadgesPath(pathname: string): boolean {
 }
 
 export function isStitchOperatorRouteAllowed(pathname: string): boolean {
+  if (isAttendanceWallQrAdminOnlyPath(pathname)) return false;
   // Never open full QC /orders pages (print, edit, fabric PO).
   if (pathname === "/orders" || pathname.startsWith("/orders/")) {
     return false;
@@ -967,6 +980,7 @@ export function isStitchOperatorRouteAllowed(pathname: string): boolean {
 }
 
 export function isProductionOperatorRouteAllowed(pathname: string): boolean {
+  if (isAttendanceWallQrAdminOnlyPath(pathname)) return false;
   if (
     !isHrIdBadgesPath(pathname) &&
     PRODUCTION_OPERATOR_BLOCKED_ROUTE_PREFIXES.some(
@@ -993,6 +1007,7 @@ export function isInventoryClerkRouteAllowed(pathname: string): boolean {
 }
 
 export function isPatternOperatorRouteAllowed(pathname: string): boolean {
+  if (isAttendanceWallQrAdminOnlyPath(pathname)) return false;
   // Never open full QC /orders pages (print, edit, fabric PO).
   if (pathname === "/orders" || pathname.startsWith("/orders/")) {
     return false;
@@ -1073,6 +1088,7 @@ export function isRestrictedRouteAllowed(
   pathname: string,
   access: RestrictedAccessKind
 ): boolean {
+  if (isAttendanceWallQrAdminOnlyPath(pathname)) return false;
   if (access === "client_manager") return isClientManagerRouteAllowed(pathname);
   if (access === "task_operator") return isTaskOperatorRouteAllowed(pathname);
   if (access === "stitch_operator") return isStitchOperatorRouteAllowed(pathname);

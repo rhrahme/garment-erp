@@ -184,16 +184,9 @@ export function StitchAdminEmployeeWorkPanel({
           <h2 className="text-xl font-semibold text-slate-900">Attendance</h2>
           <p className="mt-1 text-sm text-slate-500">
             Factory door is badge + wall QR. Morning signs in. End of day
-            signs out. Admin sees Entered and Left times on this tab.
+            signs out. The wall poster is already hung. Admin sees Entered
+            and Left times on this tab.
           </p>
-          <a
-            href="/stitch/attendance/print?copies=6"
-            target="_blank"
-            rel="noreferrer"
-            className="mt-3 inline-flex min-h-[44px] items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-          >
-            Print attendance QR
-          </a>
         </div>
       </section>
     );

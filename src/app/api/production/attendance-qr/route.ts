@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { requireFactoryOpsAccess } from "@/lib/auth/session";
+import { requireAdmin } from "@/lib/auth/session";
 import { generateAttendanceWallQrPdf } from "@/lib/production/generate-attendance-wall-qr-pdf";
 import { ATTENDANCE_WALL_QR_PAYLOAD } from "@/lib/production/stitch-attendance";
 import { contentDisposition } from "@/lib/pdf/download-filename";
 
 export async function GET() {
-  const session = await requireFactoryOpsAccess();
+  const session = await requireAdmin();
   if (!session) {
-    return NextResponse.json({ error: "Admin, factory, or QC access required." }, { status: 403 });
+    return NextResponse.json({ error: "Admin access required." }, { status: 403 });
   }
 
   try {

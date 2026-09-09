@@ -10,13 +10,7 @@ type PageProps = {
 
 export default async function StitchAttendancePrintPage({ searchParams }: PageProps) {
   const session = await getSessionContext();
-  if (
-    !session.isAdmin &&
-    !session.isProductionOperator &&
-    !session.isClientManager &&
-    !session.isStitchOperator &&
-    !session.isPatternOperator
-  ) {
+  if (!session.isAdmin) {
     notFound();
   }
 

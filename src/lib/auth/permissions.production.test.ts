@@ -29,6 +29,8 @@ import {
   isSalesOperatorRouteAllowed,
   isStitchOperatorRouteAllowed,
   isTaskOperatorRouteAllowed,
+  isAttendanceWallQrAdminOnlyPath,
+  isRestrictedRouteAllowed,
   resolveRestrictedAccess,
 } from "./permissions.ts";
 
@@ -206,6 +208,8 @@ describe("stitch_operator kiosk gating", () => {
     assert.equal(isStitchOperatorRouteAllowed("/api/auth/session"), true);
     assert.equal(isStitchOperatorRouteAllowed("/how-to"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/team-notices"), true);
+    assert.equal(isStitchOperatorRouteAllowed("/stitch/attendance/print"), false);
+    assert.equal(isStitchOperatorRouteAllowed("/api/production/attendance-qr"), false);
     assert.equal(isStitchOperatorRouteAllowed("/api/suppliers/loro-piana/images"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/suppliers/drapers/images/26130"), true);
     assert.equal(isStitchOperatorRouteAllowed("/api/suppliers/caccioppoli/images"), true);
@@ -228,6 +232,43 @@ describe("stitch_operator kiosk gating", () => {
       isStitchOperatorRouteAllowed("/api/sales-orders/so-1/fabric-lines/transfer"),
       false
     );
+  });
+});
+
+describe("attendance wall QR print is admin only", () => {
+  it("blocks reprint page and session PDF for every team login", () => {
+    assert.equal(isAttendanceWallQrAdminOnlyPath("/stitch/attendance/print"), true);
+    assert.equal(isAttendanceWallQrAdminOnlyPath("/api/production/attendance-qr"), true);
+    assert.equal(isAttendanceWallQrAdminOnlyPath("/stitch"), false);
+    assert.equal(isAttendanceWallQrAdminOnlyPath("/api/production/sewing-session"), false);
+
+    for (const access of [
+      "stitch_operator",
+      "production_operator",
+      "client_manager",
+      "pattern_operator",
+      "task_operator",
+      "sales_operator",
+      "inventory_clerk",
+      "accounting",
+    ] as const) {
+      assert.equal(
+        isRestrictedRouteAllowed("/stitch/attendance/print", access),
+        false,
+        access
+      );
+      assert.equal(
+        isRestrictedRouteAllowed("/api/production/attendance-qr", access),
+        false,
+        access
+      );
+    }
+
+    assert.equal(isProductionOperatorRouteAllowed("/stitch/attendance/print"), false);
+    assert.equal(isClientManagerRouteAllowed("/stitch/attendance/print"), false);
+    assert.equal(isPatternOperatorRouteAllowed("/stitch/attendance/print"), false);
+    assert.equal(isProductionOperatorRouteAllowed("/api/production/attendance-qr"), false);
+    assert.equal(isClientManagerRouteAllowed("/api/production/attendance-qr"), false);
   });
 });
 

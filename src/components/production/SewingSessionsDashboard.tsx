@@ -35,6 +35,7 @@ function formatDuration(sec: number): string {
 export function SewingSessionsDashboard({ className }: { className?: string }) {
   const [data, setData] = useState<DashboardPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const kioskPaused = Boolean(data?.kiosk_paused);
 
   const load = useCallback(async () => {
@@ -49,11 +50,22 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
     }
   }, []);
 
+  const loadAdmin = useCallback(async () => {
+    try {
+      const res = await fetch("/api/auth/session", { cache: "no-store" });
+      const session = res.ok ? await res.json() : null;
+      setIsAdmin(Boolean(session?.is_admin));
+    } catch {
+      setIsAdmin(false);
+    }
+  }, []);
+
   useEffect(() => {
     void load();
+    void loadAdmin();
     const id = window.setInterval(() => void load(), 15_000);
     return () => window.clearInterval(id);
-  }, [load]);
+  }, [load, loadAdmin]);
 
   return (
     <section className={cn("rounded-xl border border-slate-200 bg-white", className)}>
@@ -76,31 +88,33 @@ export function SewingSessionsDashboard({ className }: { className?: string }) {
           </div>
         </div>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-5 py-3">
-        <div>
-          <p className="text-sm font-semibold text-amber-950">Print the wall Attendance QR today</p>
-          <p className="mt-0.5 text-sm text-amber-900">
-            Hang it at the entrance. Badge and wall QR, either order - both register.
-            Attendance only. When they stitch: badge again, then A4.
-          </p>
+      {isAdmin ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-5 py-3">
+          <div>
+            <p className="text-sm font-semibold text-amber-950">Print another wall Attendance QR</p>
+            <p className="mt-0.5 text-sm text-amber-900">
+              Admin only. Posters are already hung. Reprint if one is missing.
+              Badge and wall QR, either order. Attendance only.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href="/stitch/attendance/print?copies=6"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-[44px] items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+            >
+              Print attendance QR
+            </a>
+            <a
+              href="/stitch"
+              className="inline-flex min-h-[44px] items-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-slate-300 hover:bg-slate-50"
+            >
+              Scan with tablet camera
+            </a>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <a
-            href="/stitch/attendance/print?copies=6"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex min-h-[44px] items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-          >
-            Print attendance QR
-          </a>
-          <a
-            href="/stitch"
-            className="inline-flex min-h-[44px] items-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-slate-300 hover:bg-slate-50"
-          >
-            Scan with tablet camera
-          </a>
-        </div>
-      </div>
+      ) : null}
 
       <div className="space-y-4 px-5 py-4">
         {kioskPaused ? (

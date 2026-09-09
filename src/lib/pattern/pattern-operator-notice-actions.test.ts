@@ -311,6 +311,10 @@ describe("wall attendance QR how-to", () => {
       (row) => row.id === WALL_ATTENDANCE_QR_HOWTO_V3_NOTICE_ID
     );
     assert.equal(howto?.audience, "all_teams");
+    assert.equal(howto?.href, "/stitch");
+    assert.equal(howto?.href_label, "Open stitch kiosk");
+    assert.equal(WALL_ATTENDANCE_QR_HOWTO_V3_BODY.includes("Print attendance QR"), false);
+    assert.match(WALL_ATTENDANCE_QR_HOWTO_V3_BODY, /already hung/i);
   });
 });
 

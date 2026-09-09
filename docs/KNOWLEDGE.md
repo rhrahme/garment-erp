@@ -20,9 +20,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   login: `stitch@hagan.pro`. Do not assume a floor video is A4-only;
   the first seconds are usually the badge card, then the paper.
 - **Morning attendance wall QR** (Sep 7 2026): official payload `ATTEND`
-  (already-printed `HAGAN-HERE` posters still work). Print today
-  (`/stitch/attendance/print` or Floor now / Stitch Attendance ->
-  **Print attendance QR**). Clock-in counts from **8 Sep 2026** Riyadh.
+  (already-printed `HAGAN-HERE` posters still work). Reprint is
+  **admin only** (`/stitch/attendance/print` or Floor now / Stitch
+  Attendance -> **Print attendance QR**). Other logins do not see
+  Print; posters are already hung. Clock-in counts from **8 Sep 2026**
+  Riyadh.
   **Badge and wall QR, either order.** Wall first waits for the badge;
   badge first completes on the wall QR. Today they may scan to test;
   that does not count present. From 8 Sep the scan time is the official
@@ -49,8 +51,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   `production.attendance_clocked_in`,
   `production.attendance_checked_out`, and
   `production.attendance_clocked_out` (no prices).
-  `GET /api/production/attendance-qr` + `/api/v1/...` parity. How-to
-  `howto-wall-attendance-qr-v3` (English + Bangla) on every ERP account.
+  Session `GET /api/production/attendance-qr` is admin only.
+  Zapier `GET /api/v1/production/attendance-qr` stays API-key. How-to
+  `howto-wall-attendance-qr-v3` (English + Bangla) on every ERP account
+  points at the stitch kiosk, not Print.
   Tablet camera on **Stitch kiosk** (Use tablet camera) feeds the same
   scan queue as the USB gun (badge, wall QR, A4). Chrome on the tablet.
   Gun scanner still works. Production floor badge scan is still gun-only

@@ -182,7 +182,17 @@ export function listOpenTeamHowToNotices(
 ): PatternOperatorNotice[] {
   const key = actor.trim();
   return PATTERN_HOWTO_NOTICES.filter((howto) => howto.audience === "all_teams")
-    .map((howto) => getPatternOperatorNoticeById(howto.id))
+    .map((howto) => {
+      const notice = getPatternOperatorNoticeById(howto.id);
+      if (!notice) return null;
+      return {
+        ...notice,
+        title: howto.title,
+        body: howto.body,
+        href: howto.href,
+        href_label: howto.href_label,
+      };
+    })
     .filter((notice): notice is PatternOperatorNotice => Boolean(notice))
     .filter((notice) => {
       if (!key) return true;
