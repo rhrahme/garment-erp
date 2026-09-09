@@ -13,8 +13,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   they mean badge + wall QR (`ATTEND` / hung `HAGAN-HERE`) written to
   `stitch_attendance`. Morning pair = enter. Same poster at end of
   day = leave. Never a garment A4, piece start, Live / History
-  time, or Production Floor now. Open Stitch kiosk -> **Attendance**
-  (next to History). Admin sees **Entered 07:42** and **Left 17:05**.
+  time, or Production Floor now. **Attendance tab is admin only**
+  (Stitch kiosk, next to History). Admin sees **Entered 07:42** and
+  **Left 17:05**. Other logins do not see the tab; they still scan
+  badge + wall QR on Scan.
 - Scan flow: EMP badge -> A4 piece QR -> work -> finish with **badge then
   that already-open A4**, or **A4 then badge / same A4 again**. Kiosk
   login: `stitch@hagan.pro`. Do not assume a floor video is A4-only;
@@ -44,8 +46,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Floor **scanned** = a go-live clock-in on that day **or** a session
   that touches the day. Attendance time = factory door
   (badge + wall QR), not a garment A4. Those times (Riyadh) show on
-  Stitch **Attendance** tab (`/stitch?tab=attendance`), **Entered**
-  and **Left** (admin only), e.g. `Entered 07:42` / `Left 17:05`.
+  Stitch **Attendance** tab (`/stitch?tab=attendance`, admin only),
+  **Entered** and **Left**, e.g. `Entered 07:42` / `Left 17:05`.
   Clock-ins before 8 Sep are ignored. Events:
   `production.attendance_checked_in`,
   `production.attendance_clocked_in`,
