@@ -201,10 +201,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   enter time. The later door pair is leave. Tap a name for
   day/week/month detail. Print posters from Attendance.
 - **Floor names are badge nicknames** (Sep 6 2026): `short_name` (Parvaiz,
-  Ijaz) is what Live, History, Performance, change requests, approvals,
+  Ijaz, Farid) is what Live, History, Performance, change requests, approvals,
   scan lookup, badge cards, and Pattern alteration queue show. Legal
   `full_name` stays on the payroll register only. Do not put
   `PARVAIZ AHMAD KARAM DIN BHATTI` back on the kiosk or dashboard.
+  Badge 0027 is **Farid**, never Forid.
 - **Stitch/Pattern change requests** (Aug 10 2026): stitch@ and pattern@ may
   request admin approval to **stop**, **edit**, **delete** a Live/History
   session, **delete** a failed-scan row, or **pause the whole kiosk**. Nothing
@@ -1073,6 +1074,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
+- [session-2026-09-09](session-2026-09-09.md) - Farid spelling (not Forid) site-wide
 - [session-2026-09-08](session-2026-09-08.md) - Cost hint PDFs; Stitch Attendance tab is wall QR door times
 - [session-2026-09-07](session-2026-09-07.md) - Wall Attendance QR; clock-in from 8 Sep Riyadh; Confirm Stop on closed sessions; HERE posters; tablet camera on Stitch kiosk; all-teams how-to
 - [session-2026-09-06](session-2026-09-06.md) - Floor nicknames; admin Select all; client name on fabric rows; start without printed QR; client garment drop-off Samples view; client dropped-off garments

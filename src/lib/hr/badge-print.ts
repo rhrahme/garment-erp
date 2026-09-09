@@ -17,13 +17,16 @@ import {
   type IdBadgeGroup,
 } from "@/lib/hr/payroll-utils";
 import type { PayrollEmployee } from "@/lib/types/hr-payroll";
+import { correctEmployeeDisplaySpelling } from "@/lib/hr/employee-display-name";
+
+export { correctEmployeeDisplaySpelling } from "@/lib/hr/employee-display-name";
 
 /** Name printed on ID badge cards - short_name when set, else legal full_name. */
 export function badgeDisplayName(
   employee: Pick<PayrollEmployee, "full_name" | "short_name">
 ): string {
   const short = String(employee.short_name ?? "").trim();
-  return short || employee.full_name;
+  return correctEmployeeDisplaySpelling(short || employee.full_name);
 }
 
 /**

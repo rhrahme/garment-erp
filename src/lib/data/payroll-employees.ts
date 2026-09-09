@@ -3,6 +3,7 @@ import { readJsonFile } from "@/lib/data/json-file-cache";
 import { saveDocument } from "@/lib/data/document-persistence";
 import { normalizeJobFunctions, type EmployeeJobFunction } from "@/lib/hr/job-functions";
 import { idBadgeGroup, type IdBadgeGroup } from "@/lib/hr/payroll-utils";
+import { correctEmployeeDisplaySpelling } from "@/lib/hr/employee-display-name";
 import type { PayrollEmployee, PayrollEmployeesFile, PayrollSummary } from "@/lib/types/hr-payroll";
 
 const PAYROLL_PATH = path.join(process.cwd(), "src/data/payroll-employees.json");
@@ -20,14 +21,29 @@ const BADGE_GROUP_BANK: Record<IdBadgeGroup, string> = {
   expat: "Banque Saudi Fransi",
 };
 
+function withCorrectedEmployeeNames(employee: PayrollEmployee): PayrollEmployee {
+  return {
+    ...employee,
+    full_name: correctEmployeeDisplaySpelling(employee.full_name),
+    short_name: employee.short_name
+      ? correctEmployeeDisplaySpelling(employee.short_name)
+      : employee.short_name,
+  };
+}
+
 export function readPayrollEmployees(): PayrollEmployeesFile {
-  return readJsonFile(PAYROLL_PATH, EMPTY);
+  const store = readJsonFile(PAYROLL_PATH, EMPTY);
+  return {
+    ...store,
+    employees: store.employees.map(withCorrectedEmployeeNames),
+  };
 }
 
 export async function writePayrollEmployees(data: PayrollEmployeesFile): Promise<PayrollEmployeesFile> {
   const payload: PayrollEmployeesFile = {
     ...data,
     updated_at: new Date().toISOString(),
+    employees: data.employees.map(withCorrectedEmployeeNames),
   };
   return saveDocument(PAYROLL_PATH, payload);
 }
@@ -190,7 +206,11 @@ export async function updatePayrollEmployee(
   patch: Partial<
     Pick<
       PayrollEmployee,
-      "assigned_workstation_id" | "is_mobile_floater" | "job_functions" | "short_name"
+      | "assigned_workstation_id"
+      | "is_mobile_floater"
+      | "job_functions"
+      | "short_name"
+      | "full_name"
     >
   >
 ): Promise<PayrollEmployee> {

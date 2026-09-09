@@ -189,6 +189,17 @@ describe("badge-print helpers", () => {
     assert.equal(splitBadgeQrSides(pair).length, 1);
   });
 
+  it("spells Farid, not Forid, on badge and floor names", () => {
+    assert.equal(
+      badgeDisplayName(emp({ id: "0027", full_name: "Md. Forid Hossain", short_name: "Forid" })),
+      "Farid"
+    );
+    assert.equal(
+      badgeDisplayName(emp({ id: "0027", full_name: "Md. Forid Hossain", short_name: null })),
+      "Md. Farid Hossain"
+    );
+  });
+
   it("prefers short_name on badge label when set", () => {
     assert.equal(
       badgeDisplayName(emp({ id: "1", full_name: "Rone Astar Dhar Sutradhar", short_name: "Rone" })),
