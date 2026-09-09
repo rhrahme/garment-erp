@@ -52,7 +52,7 @@ function session(
 }
 
 describe("employeeExpectedOnStitchFloor", () => {
-  it("includes active expats with floor jobs and skips saudi / inactive / pattern-only", () => {
+  it("includes active expats with floor, QC, Digital pattern, or cleaner jobs; skips saudi / inactive", () => {
     assert.equal(
       employeeExpectedOnStitchFloor(
         employee({ id: "e1", full_name: "Ali", job_functions: ["cutter"] })
@@ -80,7 +80,30 @@ describe("employeeExpectedOnStitchFloor", () => {
       employeeExpectedOnStitchFloor(
         employee({ id: "e4", full_name: "Mohtajul", job_functions: ["pattern"] })
       ),
-      false
+      true
+    );
+    assert.equal(
+      employeeExpectedOnStitchFloor(
+        employee({ id: "e4b", full_name: "Hossain", job_functions: ["qc"] })
+      ),
+      true
+    );
+    assert.equal(
+      employeeExpectedOnStitchFloor(
+        employee({ id: "e4c", full_name: "Mahmudul", job_functions: ["qc", "pattern"] })
+      ),
+      true
+    );
+    assert.equal(
+      employeeExpectedOnStitchFloor(
+        employee({
+          id: "0027",
+          full_name: "Md. Farid Hossain",
+          short_name: "Farid",
+          job_functions: ["jacket_tailor", "qc", "pattern"],
+        })
+      ),
+      true
     );
     assert.equal(
       employeeExpectedOnStitchFloor(
@@ -248,5 +271,51 @@ describe("sewingFloorAttendance", () => {
     assert.equal(dash.missing, 0);
     assert.equal(dash.scanned, 1);
     assert.equal(dash.scanned_rows[0]?.count, 0);
+  });
+
+  it("puts Mahmudul, Mohtajul, Farid, and Hossain on the attendance roster", () => {
+    const at = Date.parse("2026-09-09T08:00:00.000Z");
+    const roster = [
+      employee({
+        id: "2587734852",
+        full_name: "Mahmudul Hassan",
+        short_name: "Mahmudul",
+        employee_id_number: "2587734852",
+        job_functions: ["qc", "pattern"],
+      }),
+      employee({
+        id: "2625917972",
+        full_name: "MD MOHTAJUL ISLAM",
+        short_name: "Mohtajul",
+        employee_id_number: "2625917972",
+        job_functions: ["qc", "pattern"],
+      }),
+      employee({
+        id: "0027",
+        full_name: "Md. Farid Hossain",
+        short_name: "Farid",
+        employee_id_number: "0027",
+        job_functions: ["jacket_tailor", "qc", "pattern"],
+      }),
+      employee({
+        id: "2627130756",
+        full_name: "Mohammed Sumon Shimon Hussain",
+        short_name: "Hossain",
+        employee_id_number: "2627130756",
+        job_functions: ["qc"],
+      }),
+    ];
+    const dash = sewingFloorAttendance(
+      { updated_at: null, kiosk_arms: [], sessions: [] },
+      roster,
+      "day",
+      at
+    );
+    assert.equal(dash.expected, 4);
+    const names = [...dash.missing_rows, ...dash.scanned_rows].map((row) => row.employee_name);
+    assert.ok(names.includes("Mahmudul"));
+    assert.ok(names.includes("Mohtajul"));
+    assert.ok(names.includes("Farid"));
+    assert.ok(names.includes("Hossain"));
   });
 });

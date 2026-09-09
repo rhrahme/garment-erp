@@ -80,7 +80,11 @@ function sessionMatchesKeys(row: SewingSession, keys: Set<string>): boolean {
   return keys.has(row.employee_id) || keys.has(row.employee_id_number);
 }
 
-/** Active Expats who should appear on the stitch floor (not Pattern/QC/cleaner-only). */
+/**
+ * Active Expats who must appear on Attendance (factory door).
+ * Includes QC, Digital pattern, and Cleaner -- they clock in too.
+ * Saudis and inactive stay off.
+ */
 export function employeeExpectedOnStitchFloor(
   employee: Pick<
     PayrollEmployee,
@@ -102,7 +106,10 @@ export function employeeExpectedOnStitchFloor(
       job === "button_stitch" ||
       job === "buttonhole" ||
       job === "champa" ||
-      job === "bartek"
+      job === "bartek" ||
+      job === "qc" ||
+      job === "pattern" ||
+      job === "cleaner"
   );
 }
 
@@ -181,6 +188,29 @@ export function sewingFloorAttendance(
     seenIds.add(employee.id);
     if (row.scanned) scanned_rows.push(row);
     else missing_rows.push(row);
+  }
+
+  for (const here of liveCheckIns) {
+    if (!checkInTouchesPeriod(here, window)) continue;
+    if (seenIds.has(here.employee_id)) continue;
+    const onRoster = expectedEmployees.some((employee) =>
+      checkInMatchesKeys(here, new Set(employeeKeys(employee)))
+    );
+    if (onRoster) continue;
+    seenIds.add(here.employee_id);
+    scanned_rows.push({
+      employee_id: here.employee_id,
+      employee_name: here.employee_name,
+      employee_id_number: here.employee_id_number,
+      activity: "Attendance",
+      workstation_id: null,
+      scanned: true,
+      live: false,
+      count: 0,
+      duration_sec: 0,
+      checked_in_at: here.scanned_at,
+      checked_out_at: here.checked_out_at ?? null,
+    });
   }
 
   for (const session of sessions) {
