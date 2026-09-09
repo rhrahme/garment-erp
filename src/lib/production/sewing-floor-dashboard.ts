@@ -1,8 +1,4 @@
 import { badgeDisplayName } from "@/lib/hr/badge-print";
-import {
-  isTailorJobFunction,
-  normalizeJobFunctions,
-} from "@/lib/hr/job-functions";
 import { employeeCanSewOnStitchKiosk } from "@/lib/hr/payroll-utils";
 import {
   parseSewingDashboardPeriod,
@@ -82,35 +78,13 @@ function sessionMatchesKeys(row: SewingSession, keys: Set<string>): boolean {
 
 /**
  * Active Expats who must appear on Attendance (factory door).
- * Includes QC, Digital pattern, and Cleaner -- they clock in too.
- * Saudis and inactive stay off.
+ * Job title does not matter. Saudis and inactive stay off.
  */
 export function employeeExpectedOnStitchFloor(
-  employee: Pick<
-    PayrollEmployee,
-    "is_active" | "bank_name" | "job_functions"
-  >
+  employee: Pick<PayrollEmployee, "is_active" | "bank_name">
 ): boolean {
   if (!employee.is_active) return false;
-  if (!employeeCanSewOnStitchKiosk(employee)) return false;
-  const jobs = normalizeJobFunctions(employee.job_functions);
-  if (jobs.length === 0) return true;
-  return jobs.some(
-    (job) =>
-      isTailorJobFunction(job) ||
-      job === "cutter" ||
-      job === "wash_iron" ||
-      job === "washing" ||
-      job === "ironing" ||
-      job === "buttons" ||
-      job === "button_stitch" ||
-      job === "buttonhole" ||
-      job === "champa" ||
-      job === "bartek" ||
-      job === "qc" ||
-      job === "pattern" ||
-      job === "cleaner"
-  );
+  return employeeCanSewOnStitchKiosk(employee);
 }
 
 function emptyPeriod(period: SewingDashboardPeriod, at: number): SewingEmployeeWorkPeriod {

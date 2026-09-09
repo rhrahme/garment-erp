@@ -52,7 +52,7 @@ function session(
 }
 
 describe("employeeExpectedOnStitchFloor", () => {
-  it("includes active expats with floor, QC, Digital pattern, or cleaner jobs; skips saudi / inactive", () => {
+  it("includes every active expat regardless of job; skips saudi / inactive", () => {
     assert.equal(
       employeeExpectedOnStitchFloor(
         employee({ id: "e1", full_name: "Ali", job_functions: ["cutter"] })
@@ -108,18 +108,6 @@ describe("employeeExpectedOnStitchFloor", () => {
     assert.equal(
       employeeExpectedOnStitchFloor(
         employee({ id: "e5", full_name: "Empty jobs", job_functions: [] })
-      ),
-      true
-    );
-    assert.equal(
-      employeeExpectedOnStitchFloor(
-        employee({ id: "e6", full_name: "Champa", job_functions: ["champa"] })
-      ),
-      true
-    );
-    assert.equal(
-      employeeExpectedOnStitchFloor(
-        employee({ id: "e7", full_name: "Washer", job_functions: ["washing"] })
       ),
       true
     );
@@ -271,6 +259,37 @@ describe("sewingFloorAttendance", () => {
     assert.equal(dash.missing, 0);
     assert.equal(dash.scanned, 1);
     assert.equal(dash.scanned_rows[0]?.count, 0);
+  });
+
+  it("lists every active expat and keeps Saudis off", () => {
+    const at = Date.parse("2026-09-09T08:00:00.000Z");
+    const roster = [
+      employee({
+        id: "office1",
+        full_name: "Office Expat",
+        short_name: "Office",
+        employee_id_number: "9999",
+        job_functions: [],
+      }),
+      employee({
+        id: "s1",
+        full_name: "Saudi Staff",
+        short_name: "Saudi",
+        employee_id_number: "1001",
+        bank_name: "AL RAJHI BANK",
+        job_functions: ["qc"],
+      }),
+    ];
+    const dash = sewingFloorAttendance(
+      { updated_at: null, kiosk_arms: [], sessions: [] },
+      roster,
+      "day",
+      at
+    );
+    assert.equal(dash.expected, 1);
+    const names = [...dash.missing_rows, ...dash.scanned_rows].map((row) => row.employee_name);
+    assert.ok(names.includes("Office"));
+    assert.ok(!names.includes("Saudi"));
   });
 
   it("puts Mahmudul, Mohtajul, Farid, and Hossain on the attendance roster", () => {

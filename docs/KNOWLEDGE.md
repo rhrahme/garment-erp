@@ -50,9 +50,8 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Stitch **Attendance** tab (`/stitch?tab=attendance`), view only:
   **Entered** and **Left**, e.g. `Entered 07:42` / `Left 17:05`.
   Expected roster is every active Expat who clocks in at the door,
-  including **QC**, **Digital pattern**, and **Cleaner** (Mahmudul,
-  Mohtajul, Hossain, Farid). Not only stitch-floor tailors. Saudis
-  stay off. Reprint and piece Open stay admin only.
+  any job (Mahmudul, Mohtajul, Hossain, Farid, and the rest).
+  Saudis stay off. Reprint and piece Open stay admin only.
   Clock-ins before 8 Sep are ignored. Events:
   `production.attendance_checked_in`,
   `production.attendance_clocked_in`,
