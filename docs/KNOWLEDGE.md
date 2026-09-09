@@ -79,7 +79,10 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Orders. Never hardcode "Sewing". ID badge jobs include `washing`,
   `ironing`, `buttons`, `button_stitch`, `buttonhole`, `champa`, and
   `bartek` as separate selectable roles. `wash_iron` remains the legacy
-  combined Wash / iron job.
+  combined Wash / iron job. Job tasks also include **QC** (`qc`) and
+  **Digital pattern** (`pattern`) at the top of the assign list. Type
+  QC or digital in Job tasks to find them. Do not add a second Pattern
+  key; aliases `digital_pattern` / `quality_control` map to those.
 - **ID badges carry two QRs**. Tailors (and most roles): `EMP:{id}` (normal
   sew) and `EMPALT:{id}` (alteration). Alteration QR arms the next piece as
   `work_kind=alteration`; Live/History/Orders highlight **Alteration** (amber)

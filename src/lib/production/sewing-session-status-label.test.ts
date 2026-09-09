@@ -82,7 +82,7 @@ describe("floorActivityLabelFromJobFunctions", () => {
     assert.equal(floorActivityLabelFromJobFunctions(["buttonhole"]), "Buttonhole");
     assert.equal(floorActivityLabelFromJobFunctions(["button_stitch"]), "Button stitch");
     assert.equal(floorActivityLabelFromJobFunctions(["bartek"]), "Bartek");
-    assert.equal(floorActivityLabelFromJobFunctions(["pattern"]), "Pattern");
+    assert.equal(floorActivityLabelFromJobFunctions(["pattern"]), "Digital pattern");
     assert.equal(floorActivityLabelFromJobFunctions(["qc"]), "QC");
     assert.equal(floorActivityLabelFromJobFunctions(["cleaner"]), "Cleaning");
   });

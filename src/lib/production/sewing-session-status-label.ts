@@ -47,8 +47,8 @@ export function floorActivityLabelFromJobFunctions(values: unknown): string {
   if (jobs.includes("buttonhole")) return EMPLOYEE_JOB_FUNCTION_LABELS.buttonhole;
   if (jobs.includes("champa")) return EMPLOYEE_JOB_FUNCTION_LABELS.champa;
   if (jobs.includes("bartek")) return EMPLOYEE_JOB_FUNCTION_LABELS.bartek;
-  if (jobs.includes("pattern")) return "Pattern";
-  if (jobs.includes("qc")) return "QC";
+  if (jobs.includes("pattern")) return EMPLOYEE_JOB_FUNCTION_LABELS.pattern;
+  if (jobs.includes("qc")) return EMPLOYEE_JOB_FUNCTION_LABELS.qc;
   if (jobs.includes("cleaner")) return "Cleaning";
   return "Sewing";
 }

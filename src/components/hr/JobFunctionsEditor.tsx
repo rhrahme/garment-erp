@@ -6,6 +6,7 @@ import {
   EMPLOYEE_JOB_FUNCTION_LABELS,
   EMPLOYEE_JOB_FUNCTIONS,
   formatJobFunctionsSummary,
+  jobFunctionMatchesQuery,
   normalizeJobFunctions,
   type EmployeeJobFunction,
 } from "@/lib/hr/job-functions";
@@ -46,6 +47,7 @@ export function JobFunctionsEditor({
   const [step, setStep] = useState<Step>("assign");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
 
   const confirmed = useMemo(
@@ -55,6 +57,10 @@ export function JobFunctionsEditor({
   const [draft, setDraft] = useState<EmployeeJobFunction[]>(confirmed);
   const draftSet = useMemo(() => new Set(draft), [draft]);
   const dirty = !sameJobFunctions(draft, confirmed);
+  const visibleJobs = useMemo(
+    () => EMPLOYEE_JOB_FUNCTIONS.filter((fn) => jobFunctionMatchesQuery(fn, query)),
+    [query]
+  );
   const url =
     patchUrl ??
     `/api/hr/payroll-employees/${encodeURIComponent(employee.id)}`;
@@ -86,6 +92,7 @@ export function JobFunctionsEditor({
     setDraft(confirmed);
     setStep("assign");
     setError(null);
+    setQuery("");
     setOpen((current) => !current);
   }
 
@@ -184,8 +191,22 @@ export function JobFunctionsEditor({
           </div>
 
           {step === "assign" ? (
-            <div role="tabpanel" className="max-h-64 overflow-y-auto py-1">
-              {EMPLOYEE_JOB_FUNCTIONS.map((fn) => {
+            <div role="tabpanel" className="max-h-72 overflow-y-auto py-1">
+              <div className="sticky top-0 border-b border-slate-100 bg-white px-3 py-2">
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Find QC, Digital pattern..."
+                  className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs text-slate-800"
+                />
+              </div>
+              {visibleJobs.length === 0 ? (
+                <p className="px-3 py-3 text-xs text-slate-500">
+                  No job matches. QC and Digital pattern are at the top of the list.
+                </p>
+              ) : null}
+              {visibleJobs.map((fn) => {
                 const checked = draftSet.has(fn);
                 return (
                   <label

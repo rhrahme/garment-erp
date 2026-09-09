@@ -1,5 +1,8 @@
 /** Factory job roles that can be assigned to payroll employees (multi-select). */
 export const EMPLOYEE_JOB_FUNCTIONS = [
+  "qc",
+  "pattern",
+  "cleaner",
   "jacket_tailor",
   "trouser_tailor",
   "vest_tailor",
@@ -20,9 +23,6 @@ export const EMPLOYEE_JOB_FUNCTIONS = [
   "buttonhole",
   "champa",
   "bartek",
-  "qc",
-  "pattern",
-  "cleaner",
 ] as const;
 
 export type EmployeeJobFunction = (typeof EMPLOYEE_JOB_FUNCTIONS)[number];
@@ -49,7 +49,7 @@ export const EMPLOYEE_JOB_FUNCTION_LABELS: Record<EmployeeJobFunction, string> =
   champa: "Champa",
   bartek: "Bartek",
   qc: "QC",
-  pattern: "Pattern",
+  pattern: "Digital pattern",
   cleaner: "Cleaner",
 };
 
@@ -84,6 +84,12 @@ const JOB_FUNCTION_ALIASES: Record<string, EmployeeJobFunction> = {
   btn_stitch: "button_stitch",
   button_stich: "button_stitch",
   champa_buttons: "champa",
+  digital_pattern: "pattern",
+  digital: "pattern",
+  dp: "pattern",
+  digitalpattern: "pattern",
+  quality: "qc",
+  quality_control: "qc",
 };
 
 const JOB_FUNCTION_SET = new Set<string>(EMPLOYEE_JOB_FUNCTIONS);
@@ -107,6 +113,20 @@ export function normalizeJobFunctions(values: unknown): EmployeeJobFunction[] {
     if (resolved) selected.add(resolved);
   }
   return EMPLOYEE_JOB_FUNCTIONS.filter((fn) => selected.has(fn));
+}
+
+/** Filter the assign list when someone types QC, digital, or pattern. */
+export function jobFunctionMatchesQuery(
+  fn: EmployeeJobFunction,
+  query: string
+): boolean {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return true;
+  const label = EMPLOYEE_JOB_FUNCTION_LABELS[fn].toLowerCase();
+  if (fn.includes(needle) || label.includes(needle)) return true;
+  return Object.entries(JOB_FUNCTION_ALIASES).some(
+    ([alias, canonical]) => canonical === fn && alias.includes(needle)
+  );
 }
 
 export function formatJobFunctionsSummary(values: readonly string[]): string {

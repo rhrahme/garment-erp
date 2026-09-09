@@ -4,6 +4,7 @@ import {
   EMPLOYEE_JOB_FUNCTIONS,
   EMPLOYEE_JOB_FUNCTION_LABELS,
   formatJobFunctionsSummary,
+  jobFunctionMatchesQuery,
   normalizeJobFunctions,
 } from "@/lib/hr/job-functions";
 
@@ -17,9 +18,9 @@ describe("normalizeJobFunctions", () => {
 
   it("dedupes and keeps catalog order", () => {
     assert.deepEqual(normalizeJobFunctions(["qc", "jacket_tailor", "qc", "cutter"]), [
+      "qc",
       "jacket_tailor",
       "cutter",
-      "qc",
     ]);
   });
 
@@ -60,6 +61,19 @@ describe("normalizeJobFunctions", () => {
     assert.deepEqual(normalizeJobFunctions(["cleaner", "qc", "cleaner"]), ["qc", "cleaner"]);
   });
 
+  it("keeps QC and Digital pattern as assignable job tasks", () => {
+    assert.ok(EMPLOYEE_JOB_FUNCTIONS.includes("qc"));
+    assert.ok(EMPLOYEE_JOB_FUNCTIONS.includes("pattern"));
+    assert.equal(EMPLOYEE_JOB_FUNCTIONS.indexOf("qc"), 0);
+    assert.equal(EMPLOYEE_JOB_FUNCTIONS.indexOf("pattern"), 1);
+    assert.equal(EMPLOYEE_JOB_FUNCTION_LABELS.qc, "QC");
+    assert.equal(EMPLOYEE_JOB_FUNCTION_LABELS.pattern, "Digital pattern");
+    assert.deepEqual(normalizeJobFunctions(["digital_pattern", "quality_control", "digital"]), [
+      "qc",
+      "pattern",
+    ]);
+  });
+
   it("includes washing, ironing, buttonhole, button stitch, champa, and bartek", () => {
     assert.ok(EMPLOYEE_JOB_FUNCTIONS.includes("champa"));
     assert.ok(EMPLOYEE_JOB_FUNCTIONS.includes("washing"));
@@ -84,7 +98,8 @@ describe("formatJobFunctionsSummary", () => {
   it("summarizes selection for the dropdown trigger", () => {
     assert.equal(formatJobFunctionsSummary([]), "Select roles...");
     assert.equal(formatJobFunctionsSummary(["cutter"]), "Cutter");
-    assert.equal(formatJobFunctionsSummary(["jacket_tailor", "qc"]), "Jacket tailor, QC");
+    assert.equal(formatJobFunctionsSummary(["jacket_tailor", "qc"]), "QC, Jacket tailor");
+    assert.equal(formatJobFunctionsSummary(["pattern"]), "Digital pattern");
     assert.equal(formatJobFunctionsSummary(["jacket_tailor", "cutter", "qc"]), "3 roles");
     assert.equal(formatJobFunctionsSummary(["shorts_tailor"]), "Shorts tailor");
     assert.equal(formatJobFunctionsSummary(["tshirt_tailor"]), "T-shirt tailor");
@@ -93,5 +108,15 @@ describe("formatJobFunctionsSummary", () => {
     assert.equal(formatJobFunctionsSummary(["champa"]), "Champa");
     assert.equal(formatJobFunctionsSummary(["bartek"]), "Bartek");
     assert.equal(formatJobFunctionsSummary(["buttonhole"]), "Buttonhole");
+  });
+});
+
+describe("jobFunctionMatchesQuery", () => {
+  it("finds QC and Digital pattern by the names people type", () => {
+    assert.equal(jobFunctionMatchesQuery("qc", "qc"), true);
+    assert.equal(jobFunctionMatchesQuery("qc", "quality"), true);
+    assert.equal(jobFunctionMatchesQuery("pattern", "digital"), true);
+    assert.equal(jobFunctionMatchesQuery("pattern", "pattern"), true);
+    assert.equal(jobFunctionMatchesQuery("pattern", "jacket"), false);
   });
 });

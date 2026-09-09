@@ -217,7 +217,7 @@ describe("badge-print helpers", () => {
 
   it("stamps print date as a version label", () => {
     assert.equal(badgePrintDateLabel(new Date("2026-08-01T12:00:00+03:00")), "Printed 01 Aug 2026");
-    assert.match(badgePrintDateLabel(), /^Printed \d{2} [A-Z][a-z]{2} \d{4}$/);
+    assert.match(badgePrintDateLabel(), /^Printed \d{2} [A-Z][a-z]{2,4} \d{4}$/);
   });
 
   it("formats job functions for the badge card and hides when empty", () => {
@@ -230,13 +230,13 @@ describe("badge-print helpers", () => {
       badgeJobFunctionLabels(
         emp({ id: "3", full_name: "C", job_functions: ["qc", "shirt_tailor"] })
       ),
-      ["Shirt tailor", "QC"]
+      ["QC", "Shirt tailor"]
     );
     assert.equal(
       badgeJobFunctionsLine(
         emp({ id: "4", full_name: "D", job_functions: ["qc", "shirt_tailor"] })
       ),
-      "Shirt tailor, QC"
+      "QC, Shirt tailor"
     );
     // Badge-safe strip must keep job_functions for print/PDF paths.
     const safe = toBadgeSafeEmployee(
@@ -247,7 +247,7 @@ describe("badge-print helpers", () => {
         job_functions: ["cutter", "qc"],
       })
     );
-    assert.equal(badgeJobFunctionsLine(safe), "Cutter, QC");
+    assert.equal(badgeJobFunctionsLine(safe), "QC, Cutter");
   });
 
   it("keeps short_name on badge-safe employee shape", () => {
