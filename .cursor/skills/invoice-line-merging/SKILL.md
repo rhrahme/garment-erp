@@ -17,6 +17,10 @@ Two garments merge into one article ONLY when every one of these is the same:
 
 If any one of them differs, they are two separate articles. No exceptions.
 
+The worksheet key adds the cloth price per meter and the meters per piece, since
+a merged row prints one of each. Two rows reaching the same cost from different
+cloth (SAR 200 x 2m vs SAR 400 x 1m) are different fabrics and stay apart.
+
 ## Missing data never merges
 
 A line with no composition, or no weight, or no mill is NOT lumped in with the
@@ -57,6 +61,10 @@ preserves stored unit prices and quantities, matching by article number. Use
 
 ## Before claiming a merge is fixed
 
-Prove it against real data in `src/data/sales-orders.json`. Count the lines in and
-the articles out, and name a row that used to merge wrongly and no longer does.
-Do not report a fix from reading the code alone.
+Prove it against `src/data/sales-orders.json`. Count the lines in and the
+articles out, and name a row that used to merge wrongly and no longer does. Do
+not report a fix from reading the code alone.
+
+That file is a stale snapshot, not production. It is good enough to prove a
+grouping rule, and it is not evidence about what is on the user's screen. See the
+`hagan-erp-evidence` skill.
