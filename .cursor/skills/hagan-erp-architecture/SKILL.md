@@ -11,8 +11,15 @@ assuming the JSON files in `src/data` are the live system.
 
 ## The files in src/data are NOT production
 
-`src/data/*.json` is a **cold-start fallback**, committed to the repo and often
-days behind. Production reads from the Supabase table `erp_documents`.
+`src/data/*.json` is a **cold-start fallback**, committed to the repo. Production
+reads from the Supabase table `erp_documents`.
+
+**Read the `updated_at` field before you use one of these files, and quote that
+date in whatever you tell the user.** Do not assume it is roughly current. On
+11 September 2026 the checked-in `fabric-receipts.json`, `sales-orders.json` and
+`fabric-receipts-archive.json` were all stamped **4 August** - five weeks behind.
+An agent that assumed "a few days stale" reported "zero metres received" for a
+fabric when it simply had no visibility of five weeks of receiving.
 
 ```ts
 // src/lib/data/document-persistence.ts
