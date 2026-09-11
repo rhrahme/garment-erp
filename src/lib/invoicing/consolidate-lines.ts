@@ -7,8 +7,6 @@ function roundMoney(amount: number): number {
 }
 
 export type ConsolidationOptions = {
-  /** When true, lines must share fabric_brand to merge. Default false. */
-  includeFabricBrand?: boolean;
   /** When true, lines must share the fabric cost hint to merge. Default false. */
   includeFabricCost?: boolean;
   /** When true, garment + fibre + gsm can merge even if unit prices differ. */
@@ -83,13 +81,18 @@ function normalizeMergeKeyValue(field: MergeKeyField, line: CustomerInvoiceLine)
   return String(line.garment_type ?? "").trim().toLowerCase();
 }
 
+/**
+ * Two different mills are two different fabrics, whatever the cloth spec says.
+ * `fabric_brand` is not optional: a Zegna and a Loro Piana line that happen to
+ * share a garment, composition, weight and price are still two articles, and a
+ * merged row can only print one brand.
+ */
 export function buildConsolidationMergeKey(
   line: CustomerInvoiceLine,
   options?: ConsolidationOptions
 ): string {
-  const fields: MergeKeyField[] = ["garment_type", "composition", "weight_gsm"];
+  const fields: MergeKeyField[] = ["garment_type", "composition", "weight_gsm", "fabric_brand"];
   if (!options?.ignoreUnitPrice) fields.push("unit_price");
-  if (options?.includeFabricBrand) fields.push("fabric_brand");
   if (options?.includeFabricCost) fields.push("fabric_cost_hint_sar");
   return fields.map((field) => normalizeMergeKeyValue(field, line)).join("|");
 }

@@ -4,6 +4,7 @@ import type { CustomerInvoiceLine } from "@/lib/types/customer-invoices";
 import {
   applyAllConsolidations,
   applyConsolidation,
+  buildConsolidationMergeKey,
   renumberInvoiceArticles,
   suggestConsolidationGroups,
 } from "./consolidate-lines.ts";
@@ -218,13 +219,34 @@ describe("suggestConsolidationGroups", () => {
     assert.equal(groups[0]!.merged.quantity, 7);
   });
 
-  it("keeps different fabric brands separate when includeFabricBrand is on", () => {
+  it("never merges two different fabric brands", () => {
     const branded = [
       line({ id: "a", fabric_brand: "Stylbiella" }),
       line({ id: "b", fabric_brand: "Canclini", article_number: 2 }),
     ];
-    assert.equal(suggestConsolidationGroups(branded).length, 1);
-    assert.equal(suggestConsolidationGroups(branded, { includeFabricBrand: true }).length, 0);
+    assert.equal(suggestConsolidationGroups(branded).length, 0);
+  });
+
+  it("keeps brands apart even when garment, composition, weight and price match", () => {
+    const sameCloth = [
+      line({ id: "a", fabric_brand: "Zegna" }),
+      line({ id: "b", fabric_brand: "Loro Piana", article_number: 2 }),
+    ];
+    const [first, second] = sameCloth;
+    assert.notEqual(
+      buildConsolidationMergeKey(first!),
+      buildConsolidationMergeKey(second!),
+      "a merged row prints one brand - two mills are two articles"
+    );
+    assert.equal(suggestConsolidationGroups(sameCloth).length, 0);
+  });
+
+  it("still merges the same brand", () => {
+    const sameBrand = [
+      line({ id: "a", fabric_brand: "Zegna" }),
+      line({ id: "b", fabric_brand: "Zegna", article_number: 2 }),
+    ];
+    assert.equal(suggestConsolidationGroups(sameBrand).length, 1);
   });
 });
 

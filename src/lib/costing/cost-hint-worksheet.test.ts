@@ -1115,4 +1115,29 @@ describe("cost hint fabric basis", () => {
 
     assert.notEqual(cheapAndLong, dearAndShort);
   });
+
+  it("keeps two fabrics apart once their real fibre and gsm are known", () => {
+    // Zegna 50024 is 71/15/14 at 260 gsm; 66046 is 100% Linen at 360 gsm. They
+    // merged on INV-2026-0018 only because both lines carried the same wrong
+    // composition and weight, not because the merge key was too loose.
+    const base = {
+      so_number: "SO-2026-0123",
+      garment: "Overshirt+Trouser",
+      supplier_id: "zegna",
+      fabric_brand: "Zegna",
+      fabric_cost_sar: 1648.08,
+      cost_hint_sar: 2128.08,
+      unit_price_sar: 0,
+      meters_per_piece: 1.75,
+      price_per_meter_sar: null,
+    };
+
+    const wrong5 = costHintInvoiceGroupKey({ ...base, composition: "71% Wool 15% Silk 14% Linen", weight_gsm: 250 });
+    const wrong6 = costHintInvoiceGroupKey({ ...base, composition: "71% Wool 15% Silk 14% Linen", weight_gsm: 250 });
+    assert.equal(wrong5, wrong6, "identical wrong data merges - this is what shipped");
+
+    const real5 = costHintInvoiceGroupKey({ ...base, composition: "71% Wool - 15% Silk - 14% Linen", weight_gsm: 260 });
+    const real6 = costHintInvoiceGroupKey({ ...base, composition: "100% Linen", weight_gsm: 360 });
+    assert.notEqual(real5, real6, "the true catalog specs can never merge");
+  });
 });
