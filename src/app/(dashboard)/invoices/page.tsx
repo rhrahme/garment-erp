@@ -22,7 +22,12 @@ import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
 
 export const dynamic = "force-dynamic";
 
-export default async function InvoicesPage() {
+export default async function InvoicesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
   await ensureDocumentsLoaded(["customer_invoices", "sales_orders", "costing_rates", "clients"]);
 
   const session = await getSessionContext();
@@ -68,6 +73,7 @@ export default async function InvoicesPage() {
         invoices={invoices}
         summary={summary}
         invoiceableOrders={invoiceableOrders}
+        initialSearch={q ?? ""}
         allowedBrandIds={getAllowedSalesBrandIds(session)}
         canToggleAmounts={session.canToggleInvoiceAmounts}
         amountsVisibleByDefault={session.invoiceAmountsVisibleByDefault}

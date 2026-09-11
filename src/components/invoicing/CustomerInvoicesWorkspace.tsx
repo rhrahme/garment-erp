@@ -37,6 +37,7 @@ export function CustomerInvoicesWorkspace({
   invoices,
   summary,
   invoiceableOrders,
+  initialSearch = "",
   allowedBrandIds = null,
   canToggleAmounts = false,
   amountsVisibleByDefault = false,
@@ -45,6 +46,7 @@ export function CustomerInvoicesWorkspace({
   invoices: CustomerInvoice[];
   summary: CustomerInvoiceSummary;
   invoiceableOrders: InvoiceableSalesOrder[];
+  initialSearch?: string;
   allowedBrandIds?: string[] | null;
   canToggleAmounts?: boolean;
   amountsVisibleByDefault?: boolean;
@@ -62,7 +64,7 @@ export function CustomerInvoicesWorkspace({
   const defaultBrandId = allowedBrandIds?.length === 1 ? allowedBrandIds[0]! : null;
   const { brandId, setBrandId, hydrated: brandFilterHydrated } = useFactoryBrandFilter(defaultBrandId);
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_TABS)[number]["id"]>("all");
   const [combiningClient, setCombiningClient] = useState<string | null>(null);
   const [combineError, setCombineError] = useState<string | null>(null);
@@ -94,9 +96,33 @@ export function CustomerInvoicesWorkspace({
   }, [brandFilteredInvoices, searchQuery, statusFilter]);
 
   const hasActiveFilters = Boolean(searchQuery.trim() || brandId || statusFilter !== "all");
+  const searchScopedInvoices = useMemo(
+    () =>
+      searchQuery.trim()
+        ? brandFilteredInvoices.filter((invoice) => customerInvoiceMatchesSearch(invoice, searchQuery))
+        : brandFilteredInvoices,
+    [brandFilteredInvoices, searchQuery]
+  );
   const combinableGroups = useMemo(
-    () => groupCombinableDraftInvoices(brandFilteredInvoices),
-    [brandFilteredInvoices]
+    () => groupCombinableDraftInvoices(searchScopedInvoices),
+    [searchScopedInvoices]
+  );
+  const visibleInvoiceableOrders = useMemo(
+    () =>
+      searchQuery.trim()
+        ? invoiceableOrders.filter((order) =>
+            customerInvoiceMatchesSearch(
+              {
+                invoice_number: "",
+                so_number: order.so_number,
+                client_name: order.client_name,
+                client_code: order.client_code,
+              },
+              searchQuery
+            )
+          )
+        : invoiceableOrders,
+    [invoiceableOrders, searchQuery]
   );
 
   async function combineGroup(invoicesToCombine: CustomerInvoice[]) {
@@ -313,7 +339,7 @@ export function CustomerInvoicesWorkspace({
         </div>
       )}
 
-      <InvoiceableOrdersPanel orders={invoiceableOrders} canViewAmounts={canToggleAmounts} />
+      <InvoiceableOrdersPanel orders={visibleInvoiceableOrders} canViewAmounts={canToggleAmounts} />
     </div>
   );
 }
