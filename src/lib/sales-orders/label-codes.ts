@@ -568,6 +568,25 @@ export function fabricLineArticleNumber(zeroBasedLineIndex: number): number {
   return zeroBasedLineIndex + 1;
 }
 
+/**
+ * Article # to issue to the next line appended to an order.
+ *
+ * Counts from the highest article already printed on a sticker, never from how
+ * many lines the order currently holds: deleting a line shortens the array but
+ * does not un-print the sticker that left with it, so a length-based count hands
+ * the next line an L## another line is still wearing.
+ */
+export function nextFabricLineArticleNumber(
+  lines: Array<{ label_stickers?: Array<{ code: string }> | null }>
+): number {
+  let highest = lines.length;
+  for (const line of lines) {
+    const article = soArticleFromFabricLine(line);
+    if (article != null && article > highest) highest = article;
+  }
+  return highest + 1;
+}
+
 /** Sticker / invoice article label — e.g. L01, L02. */
 export function formatFabricLineArticle(articleNumber: number | null | undefined): string {
   if (articleNumber == null || !Number.isFinite(articleNumber)) return "—";

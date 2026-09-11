@@ -20,7 +20,10 @@ import {
   recordFabricChangeAlert,
   snapshotFabricLine,
 } from "@/lib/sales-orders/fabric-change-alerts";
-import { fabricLineArticleNumber } from "@/lib/sales-orders/label-codes";
+import {
+  fabricLineArticleNumber,
+  nextFabricLineArticleNumber,
+} from "@/lib/sales-orders/label-codes";
 import {
   assessFabricTransferEligibility,
   type TransferEligibility,
@@ -63,18 +66,6 @@ export function canTransferFabric(session: Pick<SessionContext, "isAdmin" | "isC
 
 function stickerCodes(line: SalesOrderFabricLine): string[] {
   return (line.label_stickers ?? []).map((sticker) => sticker.code);
-}
-
-/** Next L## index that will not collide with existing sticker codes on the order. */
-function nextFabricLineIndex(lines: SalesOrderFabricLine[]): number {
-  let max = 0;
-  for (const line of lines) {
-    for (const sticker of line.label_stickers ?? []) {
-      const match = sticker.code.match(/-L(\d+)/i);
-      if (match) max = Math.max(max, Number(match[1]));
-    }
-  }
-  return max + 1;
 }
 
 function toLineRef(order: SalesOrder, line: SalesOrderFabricLine): FabricTransferLineRef {
@@ -366,7 +357,7 @@ export async function transferFabricLine(
   const destBuilt = buildFabricLineFromInput(
     cloneLineAsInput(sourceLine, meters),
     resolveOrderClientReference(destOrder),
-    nextFabricLineIndex(destOrder.fabric_lines),
+    nextFabricLineArticleNumber(destOrder.fabric_lines),
     {
       lineId: `line-xfer-in-${Date.now()}`,
       addedAt: now,
@@ -380,7 +371,7 @@ export async function transferFabricLine(
   const replacementBuilt = buildFabricLineFromInput(
     cloneLineAsInput(sourceLine, meters),
     resolveOrderClientReference(sourceOrder),
-    nextFabricLineIndex(linesAfterSourceChange),
+    nextFabricLineArticleNumber(linesAfterSourceChange),
     {
       lineId: `line-xfer-repl-${Date.now()}`,
       addedAt: now,

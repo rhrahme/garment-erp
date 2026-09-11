@@ -9,6 +9,7 @@ import {
   generateFabricLabelStickers,
   getGarmentPieces,
   looksLikeFabricLabelInput,
+  nextFabricLineArticleNumber,
   parseArticleFromLabelScan,
   pieceProductionCodeFromSticker,
   pieceScanAttribution,
@@ -18,6 +19,42 @@ import {
   stickerCodesMatch,
   stripPieceIndexMark,
 } from "./label-codes.ts";
+
+describe("nextFabricLineArticleNumber", () => {
+  const lineAt = (article: number) => ({
+    label_stickers: [
+      { code: `FR-0626-0037-SO-2026-0130-L${String(article).padStart(2, "0")}-OS` },
+    ],
+  });
+
+  it("follows on from the last article on an untouched order", () => {
+    assert.equal(nextFabricLineArticleNumber([lineAt(1), lineAt(2), lineAt(3)]), 4);
+  });
+
+  it("starts at one for an empty order", () => {
+    assert.equal(nextFabricLineArticleNumber([]), 1);
+  });
+
+  it("does not reissue an article whose line was deleted from the middle", () => {
+    // L02 was deleted. Counting the two survivors would hand out L03 again.
+    const survivors = [lineAt(1), lineAt(3)];
+    assert.equal(nextFabricLineArticleNumber(survivors), 4);
+  });
+
+  it("clears the highest sticker even after many deletions", () => {
+    // SO-2026-0130: 27 articles issued, 5 deleted, so 22 lines remain.
+    const survivors = [
+      ...Array.from({ length: 12 }, (_, i) => lineAt(i + 1)),
+      ...Array.from({ length: 10 }, (_, i) => lineAt(i + 18)),
+    ];
+    assert.equal(survivors.length, 22);
+    assert.equal(nextFabricLineArticleNumber(survivors), 28);
+  });
+
+  it("falls back to the line count when no stickers carry an article", () => {
+    assert.equal(nextFabricLineArticleNumber([{ label_stickers: [] }, { label_stickers: null }]), 3);
+  });
+});
 
 describe("expandFabricLabelScanInput", () => {
   it("expands supplier sticker format to fabric cut code", () => {

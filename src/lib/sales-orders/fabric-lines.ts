@@ -8,6 +8,7 @@ import {
   fabricLineArticleNumber,
   generateFabricLabelStickers,
   getGarmentPieces,
+  nextFabricLineArticleNumber,
 } from "@/lib/sales-orders/label-codes";
 import { isGarmentStitchType } from "@/lib/sales-orders/garment-types";
 import {
@@ -275,7 +276,7 @@ function validateNoDuplicateFabricArticles(
 export function buildFabricLinesFromInputs(
   inputs: FabricLineInput[],
   order: Pick<SalesOrder, "client_code" | "so_number" | "client_reference" | "fabric_lines">,
-  startLineIndex = order.fabric_lines.length,
+  firstArticleNumber = nextFabricLineArticleNumber(order.fabric_lines),
   options: { addedAt?: string; addedBy?: string | null } = {}
 ): { lines: SalesOrderFabricLine[] } | { error: string } {
   const duplicateError = validateNoDuplicateFabricArticles(order.fabric_lines, inputs);
@@ -286,7 +287,7 @@ export function buildFabricLinesFromInputs(
   const addedAt = options.addedAt ?? new Date().toISOString();
 
   for (const [offset, input] of inputs.entries()) {
-    const built = buildFabricLineFromInput(input, clientReference, startLineIndex + offset + 1, {
+    const built = buildFabricLineFromInput(input, clientReference, firstArticleNumber + offset, {
       addedAt,
       addedBy: options.addedBy ?? null,
     });
@@ -331,7 +332,7 @@ export async function appendSalesOrderFabricLines(
     return { ok: false, status: 409, error: duplicateError };
   }
 
-  const built = buildFabricLinesFromInputs(inputs, order, order.fabric_lines.length, {
+  const built = buildFabricLinesFromInputs(inputs, order, nextFabricLineArticleNumber(order.fabric_lines), {
     addedBy: options.addedBy ?? null,
   });
   if ("error" in built) {
