@@ -5,6 +5,7 @@ import {
   costHintPrimaryFabricNumber,
   formatCostHintArticleSummary,
   formatCostHintComposition,
+  formatCostHintMeters,
   formatCostHintWeight,
   summarizeCostHintArticles,
   uniqueCostHintSoNumbers,
@@ -117,12 +118,23 @@ export async function generateCostHintWorksheetPdf(worksheet: CostHintWorksheet)
     { header: "Client", hidden: constant.client_name != null, value: (row) => row.client_name },
     { header: "Art.", style: { cellWidth: 26, halign: "center" }, value: (row) => row.article_label },
     { header: "Garment", value: (row) => row.garment },
-    { header: "Swatch", swatch: true, style: { cellWidth: 30, halign: "center" }, value: () => "" },
+    // 30pt fitted the image but split the header into "Swatc" and "h".
+    { header: "Swatch", swatch: true, style: { cellWidth: 34, halign: "center" }, value: () => "" },
     { header: "Fabric", value: (row) => row.fabric_number || "-" },
     { header: "Brand", value: (row) => row.fabric_brand || "-" },
     { header: "Comp.", value: (row) => formatCostHintComposition(row.composition) },
     { header: "Weight", style: { cellWidth: 36, halign: "right" }, value: (row) => formatCostHintWeight(row.weight_gsm) },
     { header: "Qty", style: { cellWidth: 24, halign: "right" }, value: (row) => String(row.quantity) },
+    {
+      header: "SAR/m",
+      style: { cellWidth: 44, halign: "right" },
+      value: (row) => money(row.price_per_meter_sar),
+    },
+    {
+      header: "Meters/pc",
+      style: { cellWidth: 42, halign: "right" },
+      value: (row) => formatCostHintMeters(row.meters_per_piece),
+    },
     {
       header: "Fabric cost",
       style: { cellWidth: 52, halign: "right" },

@@ -33,6 +33,8 @@ describe("cost hint worksheet PDF", () => {
           weight_gsm: 240,
           color: "light blu",
           quantity: 2,
+          price_per_meter_sar: 450,
+          meters_per_piece: 1.673,
           fabric_cost_sar: 790.02,
           cost_hint_sar: 1190.02,
           unit_price_sar: 1190.02,
@@ -53,6 +55,8 @@ describe("cost hint worksheet PDF", () => {
           weight_gsm: 120,
           color: "white",
           quantity: 10,
+          price_per_meter_sar: 180,
+          meters_per_piece: 1.058,
           fabric_cost_sar: 200,
           cost_hint_sar: 400,
           unit_price_sar: 400,
@@ -73,6 +77,8 @@ describe("cost hint worksheet PDF", () => {
           weight_gsm: 200,
           color: "navy",
           quantity: 8,
+          price_per_meter_sar: 160,
+          meters_per_piece: 1.071,
           fabric_cost_sar: 180,
           cost_hint_sar: 360,
           unit_price_sar: 360,
@@ -93,6 +99,8 @@ describe("cost hint worksheet PDF", () => {
           weight_gsm: 260,
           color: "grey",
           quantity: 2,
+          price_per_meter_sar: 500,
+          meters_per_piece: 1.714,
           fabric_cost_sar: 900,
           cost_hint_sar: 1400,
           unit_price_sar: 1400,
@@ -118,5 +126,43 @@ describe("cost hint worksheet PDF", () => {
     assert.match(text, /2 Trousers/);
     assert.match(text, /Total: 24 pcs/);
     assert.match(text, /1 sales order/);
+  });
+
+  it("prints the cloth price and the meters it was based on", async () => {
+    const worksheet: CostHintWorksheet = {
+      title: "Cost hint worksheet",
+      subtitle: "Internal. SAR/m x meters/pc + 5% duty = fabric cost.",
+      generated_at: "2026-09-11T12:00:00.000Z",
+      missing_price_count: 0,
+      rows: [
+        {
+          so_number: "SO-2026-0111",
+          invoice_number: "INV-2026-0018",
+          client_name: "Pr Khaled Bin Salman",
+          client_code: "FR-0626-0037",
+          article_label: "L03",
+          garment: "Short",
+          fabric_number: "771001",
+          fabric_brand: "Loro Piana",
+          supplier_id: "loro-piana",
+          composition: "100% cotton",
+          weight_gsm: 240,
+          color: "sand",
+          quantity: 12,
+          price_per_meter_sar: 180,
+          meters_per_piece: 1.6,
+          fabric_cost_sar: 302.4,
+          cost_hint_sar: 542.4,
+          unit_price_sar: 535.87,
+          missing_price: false,
+          article_count: 12,
+        },
+      ],
+    };
+    const text = Buffer.from(await generateCostHintWorksheetPdf(worksheet)).toString("latin1");
+
+    assert.match(text, /SAR\/m/, "the price per meter column is printed");
+    assert.match(text, /Meters\/pc/, "the meters column is printed");
+    assert.match(text, /1.6 m/, "the meters value reaches the page");
   });
 });

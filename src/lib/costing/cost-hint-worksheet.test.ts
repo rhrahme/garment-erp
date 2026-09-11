@@ -8,6 +8,7 @@ import {
   buildCostHintWorksheetFromInvoice,
   combineCostHintRowsByGarmentFibreWeight,
   costHintConstantColumns,
+  costHintFabricBasis,
   costHintInvoiceGroupKey,
   costHintPrimaryFabricNumber,
   costHintGarmentFamily,
@@ -405,6 +406,8 @@ describe("cost hint worksheet", () => {
       weight_gsm: 250,
       color: null,
       quantity: 1,
+      price_per_meter_sar: 450,
+      meters_per_piece: 1.745,
       fabric_cost_sar: 824.04,
       cost_hint_sar: 1049.04,
       unit_price_sar: 0,
@@ -437,6 +440,8 @@ describe("cost hint worksheet", () => {
       weight_gsm: null,
       color: null,
       quantity: 1,
+      price_per_meter_sar: null,
+      meters_per_piece: null,
       fabric_cost_sar: null,
       cost_hint_sar: null,
       unit_price_sar: 0,
@@ -1008,5 +1013,106 @@ describe("cost hint worksheet", () => {
       "SO-2026-0131",
       "SO-2026-0133",
     ]);
+  });
+});
+
+describe("cost hint fabric basis", () => {
+  it("divides meters by the piece count so it matches the per-piece fabric cost", () => {
+    const basis = costHintFabricBasis({
+      unit_price: 40,
+      supplier_id: "loro-piana",
+      meters: 3.2,
+      unit: "meters",
+      pieces: 2,
+    });
+
+    assert.equal(basis.price_per_meter_sar, 180);
+    assert.equal(basis.meters_per_piece, 1.6);
+  });
+
+  it("reconciles: SAR/m x meters/pc + 5% duty = fabric cost", () => {
+    const basis = costHintFabricBasis({
+      unit_price: 40,
+      supplier_id: "loro-piana",
+      meters: 3.2,
+      unit: "meters",
+      pieces: 2,
+    });
+    const perPieceFabricCost = basis.price_per_meter_sar! * basis.meters_per_piece! * 1.05;
+
+    assert.equal(Math.round(perPieceFabricCost * 100) / 100, 302.4);
+  });
+
+  it("converts each mill from its own currency", () => {
+    const zegna = costHintFabricBasis({
+      unit_price: 100,
+      supplier_id: "zegna",
+      meters: 1,
+      unit: "meters",
+      pieces: 1,
+    });
+    const loroPiana = costHintFabricBasis({
+      unit_price: 100,
+      supplier_id: "loro-piana",
+      meters: 1,
+      unit: "meters",
+      pieces: 1,
+    });
+
+    assert.equal(zegna.price_per_meter_sar, 375, "Zegna quotes USD");
+    assert.equal(loroPiana.price_per_meter_sar, 450, "Loro Piana quotes EUR");
+  });
+
+  it("shows nothing rather than zero when the mill price is missing", () => {
+    const basis = costHintFabricBasis({
+      unit_price: 0,
+      supplier_id: "canclini",
+      meters: 2,
+      unit: "meters",
+      pieces: 1,
+    });
+
+    assert.equal(basis.price_per_meter_sar, null, "a missing price is not a price of zero");
+    assert.equal(basis.meters_per_piece, 2);
+  });
+
+  it("has no price per meter when the cloth is not sold by length", () => {
+    const basis = costHintFabricBasis({
+      unit_price: 50,
+      supplier_id: "loro-piana",
+      meters: 4,
+      unit: "kg",
+      pieces: 1,
+    });
+
+    assert.equal(basis.price_per_meter_sar, null);
+    assert.equal(basis.meters_per_piece, null);
+  });
+
+  it("keeps two rows apart when the same cost comes from different cloth and meters", () => {
+    const base = {
+      so_number: "SO-2026-0111",
+      garment: "Trouser",
+      composition: "100% cotton",
+      weight_gsm: 240,
+      supplier_id: "loro-piana",
+      fabric_brand: "Loro Piana",
+      fabric_cost_sar: 420,
+      cost_hint_sar: 690,
+      unit_price_sar: 900,
+    };
+
+    const cheapAndLong = costHintInvoiceGroupKey({
+      ...base,
+      price_per_meter_sar: 200,
+      meters_per_piece: 2,
+    });
+    const dearAndShort = costHintInvoiceGroupKey({
+      ...base,
+      price_per_meter_sar: 400,
+      meters_per_piece: 1,
+    });
+
+    assert.notEqual(cheapAndLong, dearAndShort);
   });
 });

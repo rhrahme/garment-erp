@@ -6,6 +6,7 @@ import {
   costHintSwatchUrl,
   formatCostHintArticleSummary,
   formatCostHintComposition,
+  formatCostHintMeters,
   formatCostHintWeight,
   summarizeCostHintArticles,
   uniqueCostHintSoNumbers,
@@ -29,7 +30,7 @@ export function CostHintWorksheetView({
   const showSo = constant.so_numbers == null;
   const showInvoice = constant.invoice_number == null;
   const showClient = constant.client_name == null;
-  const columnCount = 12 + [showSo, showInvoice, showClient].filter(Boolean).length;
+  const columnCount = 14 + [showSo, showInvoice, showClient].filter(Boolean).length;
   const heading = worksheet.title.toUpperCase().startsWith("INTERNAL")
     ? worksheet.title
     : `INTERNAL - ${worksheet.title}`;
@@ -108,6 +109,8 @@ export function CostHintWorksheetView({
             <th className="border border-slate-300 px-2 py-1.5">Comp.</th>
             <th className="border border-slate-300 px-2 py-1.5 text-right">Weight</th>
             <th className="border border-slate-300 px-2 py-1.5 text-right">Qty</th>
+            <th className="border border-slate-300 px-2 py-1.5 text-right">SAR/m</th>
+            <th className="border border-slate-300 px-2 py-1.5 text-right">Meters/pc</th>
             <th className="border border-slate-300 px-2 py-1.5 text-right">Fabric cost</th>
             <th className="border border-slate-300 px-2 py-1.5 text-right">Cost hint</th>
             <th className="border border-slate-300 px-2 py-1.5 text-right">Unit price</th>
@@ -156,6 +159,12 @@ export function CostHintWorksheetView({
                   <td className="border border-slate-200 px-2 py-1">{formatCostHintComposition(row.composition)}</td>
                   <td className="border border-slate-200 px-2 py-1 text-right">{formatCostHintWeight(row.weight_gsm)}</td>
                   <td className="border border-slate-200 px-2 py-1 text-right">{row.quantity}</td>
+                  <td className="border border-slate-200 px-2 py-1 text-right">
+                    {money(row.price_per_meter_sar)}
+                  </td>
+                  <td className="border border-slate-200 px-2 py-1 text-right">
+                    {formatCostHintMeters(row.meters_per_piece)}
+                  </td>
                   <td className="border border-slate-200 px-2 py-1 text-right">{money(row.fabric_cost_sar)}</td>
                   <td className="border border-slate-200 px-2 py-1 text-right font-semibold">
                     {money(row.cost_hint_sar)}

@@ -5,6 +5,7 @@ import {
   resolveCostHintNamedClient,
 } from "@/lib/costing/cost-hint-clients";
 import type { CostingOverview, FabricLineCost, SalesOrderCost } from "@/lib/costing/compute";
+import { getSupplierPriceCurrency, toSar } from "@/lib/currency/config";
 import { resolveFabricSwatchUrls } from "@/lib/fabric-sourcing/fabric-swatch-keys";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import { formatInvoiceFibreContent } from "@/lib/invoicing/display";
@@ -103,6 +104,10 @@ export type CostHintWorksheetRow = {
   weight_gsm: number | null;
   color: string | null;
   quantity: number;
+  /** Mill price for one meter of cloth, converted to SAR. */
+  price_per_meter_sar: number | null;
+  /** Meters behind the fabric cost on this row - per garment, so the two reconcile. */
+  meters_per_piece: number | null;
   fabric_cost_sar: number | null;
   cost_hint_sar: number | null;
   unit_price_sar: number | null;
@@ -136,6 +141,52 @@ export function articleLabelFromNumber(articleNumber: number): string {
 
 export function pieceCountForFabricLine(line: Pick<SalesOrderFabricLine, "label_count" | "label_stickers">): number {
   return Math.max(line.label_stickers?.length ?? line.label_count ?? 1, 1);
+}
+
+export type CostHintFabricBasis = {
+  price_per_meter_sar: number | null;
+  meters_per_piece: number | null;
+};
+
+/** Units that measure cloth by length. Anything else has no meaningful price per meter. */
+const METER_UNITS = new Set(["meters", "meter", "m", "cutlength"]);
+
+/**
+ * The cloth price and the meters behind one garment's fabric cost.
+ *
+ * Meters are divided by the piece count because `fabric_cost_sar` on a row is
+ * per piece. Quoting the whole line's meters next to a per-piece cost would not
+ * multiply out.
+ */
+export function costHintFabricBasis(input: {
+  unit_price: number | null | undefined;
+  supplier_id: string | null | undefined;
+  meters: number | null | undefined;
+  unit?: string | null;
+  pieces: number;
+}): CostHintFabricBasis {
+  const pieces = Math.max(input.pieces, 1);
+  const unit = input.unit?.trim().toLowerCase();
+  if (unit && !METER_UNITS.has(unit)) {
+    return { price_per_meter_sar: null, meters_per_piece: null };
+  }
+
+  const meters =
+    input.meters != null && Number.isFinite(input.meters) && input.meters > 0
+      ? input.meters / pieces
+      : null;
+
+  const price =
+    input.unit_price != null && Number.isFinite(input.unit_price) && input.unit_price > 0
+      ? Math.round(toSar(input.unit_price, getSupplierPriceCurrency(input.supplier_id ?? "")) * 100) / 100
+      : null;
+
+  return { price_per_meter_sar: price, meters_per_piece: meters };
+}
+
+export function formatCostHintMeters(meters: number | null): string {
+  if (meters == null || !Number.isFinite(meters)) return "-";
+  return `${Math.round(meters * 100) / 100} m`;
 }
 
 export function unitCostFromLineTotal(total: number | null | undefined, pieces: number): number | null {
@@ -192,6 +243,11 @@ function costHintMoneyKey(value: number | null | undefined): string {
   return value == null || !Number.isFinite(value) ? "-" : String(Math.round(value * 100));
 }
 
+/** Meters to the millimetre - two different cut lengths are two different rows. */
+function costHintMetersKey(value: number | null | undefined): string {
+  return value == null || !Number.isFinite(value) ? "-" : String(Math.round(value * 1000));
+}
+
 /**
  * Same sales order + garment + fibre + gsm + mill + money. Missing fibre or
  * weight stays on its own row so unknown fabrics are not mashed together.
@@ -205,7 +261,13 @@ export function costHintInvoiceGroupKey(
     Partial<
       Pick<
         CostHintWorksheetRow,
-        "supplier_id" | "fabric_brand" | "fabric_cost_sar" | "cost_hint_sar" | "unit_price_sar"
+        | "supplier_id"
+        | "fabric_brand"
+        | "fabric_cost_sar"
+        | "cost_hint_sar"
+        | "unit_price_sar"
+        | "price_per_meter_sar"
+        | "meters_per_piece"
       >
     >
 ): string | null {
@@ -217,7 +279,8 @@ export function costHintInvoiceGroupKey(
   const money = [row.fabric_cost_sar, row.cost_hint_sar, row.unit_price_sar]
     .map(costHintMoneyKey)
     .join("/");
-  return `${so}|${garment}|${fibre}|${weight}|${costHintMillKey(row)}|${money}`;
+  const basis = [costHintMoneyKey(row.price_per_meter_sar), costHintMetersKey(row.meters_per_piece)].join("/");
+  return `${so}|${garment}|${fibre}|${weight}|${costHintMillKey(row)}|${money}|${basis}`;
 }
 
 function uniqueJoined(values: Array<string | null | undefined>): string | null {
@@ -275,6 +338,8 @@ function mergeCostHintGroup(group: CostHintWorksheetRow[]): CostHintWorksheetRow
     invoice_number: invoiceSet.length === 1 ? invoiceSet[0]! : first.invoice_number,
     quantity: group.reduce((sum, row) => sum + row.quantity, 0),
     article_count: group.reduce((sum, row) => sum + row.article_count, 0),
+    price_per_meter_sar: sameNumber(group.map((row) => row.price_per_meter_sar)),
+    meters_per_piece: sameNumber(group.map((row) => row.meters_per_piece)),
     fabric_cost_sar: sameNumber(group.map((row) => row.fabric_cost_sar)),
     cost_hint_sar: sameNumber(group.map((row) => row.cost_hint_sar)),
     unit_price_sar: sameNumber(group.map((row) => row.unit_price_sar)),
@@ -526,7 +591,7 @@ function namedClientHeading(
       : `Cost hint worksheet - ${label} - ${sos[0] ?? "no sales orders"}`;
   return {
     title,
-    subtitle: `Internal. Do not send to the client. ${label}. ${scope}. Cost hint = fabric + 5% duty + make, per piece. VAT excluded.`,
+    subtitle: `Internal. Do not send to the client. ${label}. ${scope}. SAR/m x meters/pc + 5% duty = fabric cost. Cost hint = fabric cost + make, per piece. VAT excluded.`,
   };
 }
 
@@ -675,6 +740,13 @@ function rowFromCostLine(input: {
   const pieces = input.fabricLine ? pieceCountForFabricLine(input.fabricLine) : 1;
   const fabricCost = unitCostFromLineTotal(input.line.fabric_cost_sar, pieces);
   const costHint = unitCostFromLineTotal(input.line.total_cost_sar, pieces);
+  const basis = costHintFabricBasis({
+    unit_price: input.line.unit_price,
+    supplier_id: input.line.supplier_id,
+    meters: input.line.meters,
+    unit: input.line.unit,
+    pieces,
+  });
   const articleCount = articleCountForCostLine({
     garmentType: input.line.garment_type,
     pieces,
@@ -707,6 +779,8 @@ function rowFromCostLine(input: {
     weight_gsm: details.weight_gsm,
     color: details.color,
     quantity: input.selling?.quantity ?? pieces,
+    price_per_meter_sar: basis.price_per_meter_sar,
+    meters_per_piece: basis.meters_per_piece,
     fabric_cost_sar: fabricCost,
     cost_hint_sar: costHint,
     unit_price_sar: input.selling?.unit_price_sar ?? null,
@@ -773,7 +847,7 @@ export function buildCostHintWorksheet(options: {
     title: namedCopy?.title ?? "Cost hint worksheet",
     subtitle:
       namedCopy?.subtitle ??
-      `Internal. Do not send to the client. ${scope}. Cost hint = fabric + 5% duty + make, per piece. VAT excluded.`,
+      `Internal. Do not send to the client. ${scope}. SAR/m x meters/pc + 5% duty = fabric cost. Cost hint = fabric cost + make, per piece. VAT excluded.`,
     generated_at: options.generatedAt ?? new Date().toISOString(),
     rows: combinedRows,
     missing_price_count: combinedRows.filter((row) => row.missing_price).length,
@@ -785,6 +859,12 @@ export function buildCostHintWorksheetFromInvoice(options: {
   /** Every order the invoice covers - a combined invoice spans several. */
   salesOrders?: SalesOrder[];
   salesOrder?: SalesOrder | null;
+  /**
+   * Cloth price and meters per fabric line id. Most fabric lines store
+   * `unit_price: 0` and carry the real price only in the supplier catalog, which
+   * this module cannot read, so the caller resolves it.
+   */
+  fabricBasisByLineId?: Map<string, CostHintFabricBasis>;
   generatedAt?: string;
 }): CostHintWorksheet {
   const coveredOrders = [
@@ -811,6 +891,19 @@ export function buildCostHintWorksheetFromInvoice(options: {
       weight_gsm: line.weight_gsm ?? fabricLine?.weight_gsm ?? null,
       color: fabricLine?.color ?? null,
     });
+    const basis =
+      (line.sales_order_line_id
+        ? options.fabricBasisByLineId?.get(line.sales_order_line_id)
+        : undefined) ??
+      (fabricLine
+        ? costHintFabricBasis({
+            unit_price: fabricLine.unit_price,
+            supplier_id: fabricLine.supplier_id,
+            meters: fabricLine.quantity,
+            unit: fabricLine.unit,
+            pieces: pieceCountForFabricLine(fabricLine),
+          })
+        : { price_per_meter_sar: null, meters_per_piece: null });
     return {
       so_number: options.invoice.so_number,
       invoice_number: options.invoice.invoice_number,
@@ -825,6 +918,8 @@ export function buildCostHintWorksheetFromInvoice(options: {
       weight_gsm: details.weight_gsm,
       color: details.color,
       quantity: line.quantity,
+      price_per_meter_sar: basis.price_per_meter_sar,
+      meters_per_piece: basis.meters_per_piece,
       fabric_cost_sar: line.fabric_cost_hint_sar,
       cost_hint_sar: line.cost_hint_sar,
       unit_price_sar: line.unit_price,
@@ -837,7 +932,7 @@ export function buildCostHintWorksheetFromInvoice(options: {
 
   return attachArticleSummary({
     title: "Cost hint worksheet",
-    subtitle: `Internal. Do not send to the client. ${options.invoice.invoice_number} / ${options.invoice.so_number}. Cost hint = fabric + 5% duty + make, per piece. VAT excluded.`,
+    subtitle: `Internal. Do not send to the client. ${options.invoice.invoice_number} / ${options.invoice.so_number}. SAR/m x meters/pc + 5% duty = fabric cost. Cost hint = fabric cost + make, per piece. VAT excluded.`,
     generated_at: options.generatedAt ?? new Date().toISOString(),
     rows: combinedRows,
     missing_price_count: combinedRows.filter((row) => row.missing_price).length,
