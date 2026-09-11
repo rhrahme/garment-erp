@@ -2,6 +2,7 @@
 
 import { COST_HINT_PRINT_CSS } from "@/lib/costing/cost-hint-print-styles";
 import {
+  costHintConstantColumns,
   costHintSwatchUrl,
   formatCostHintArticleSummary,
   formatCostHintComposition,
@@ -24,6 +25,11 @@ export function CostHintWorksheetView({
   pdfHref: string;
 }) {
   const soCount = uniqueCostHintSoNumbers(worksheet.rows).length;
+  const constant = costHintConstantColumns(worksheet.rows);
+  const showSo = constant.so_numbers == null;
+  const showInvoice = constant.invoice_number == null;
+  const showClient = constant.client_name == null;
+  const columnCount = 12 + [showSo, showInvoice, showClient].filter(Boolean).length;
   const heading = worksheet.title.toUpperCase().startsWith("INTERNAL")
     ? worksheet.title
     : `INTERNAL - ${worksheet.title}`;
@@ -63,12 +69,37 @@ export function CostHintWorksheetView({
           formatCostHintArticleSummary(summarizeCostHintArticles(worksheet.rows))}
       </p>
 
+      {showSo && showInvoice && showClient ? null : (
+        <dl className="mt-3 grid gap-x-6 gap-y-1 text-xs text-slate-700 sm:grid-cols-[auto_1fr]">
+          {constant.client_name ? (
+            <>
+              <dt className="font-semibold text-slate-900">Client</dt>
+              <dd>{constant.client_name}</dd>
+            </>
+          ) : null}
+          {constant.invoice_number ? (
+            <>
+              <dt className="font-semibold text-slate-900">Invoice</dt>
+              <dd className="font-mono">{constant.invoice_number}</dd>
+            </>
+          ) : null}
+          {constant.so_numbers ? (
+            <>
+              <dt className="font-semibold text-slate-900">
+                Sales order{constant.so_numbers.length === 1 ? "" : "s"}
+              </dt>
+              <dd className="font-mono">{constant.so_numbers.join(", ")}</dd>
+            </>
+          ) : null}
+        </dl>
+      )}
+
       <table className="mt-4 w-full border-collapse text-xs">
         <thead>
           <tr className="bg-slate-900 text-left text-white">
-            <th className="border border-slate-300 px-2 py-1.5">SO</th>
-            <th className="border border-slate-300 px-2 py-1.5">INV</th>
-            <th className="border border-slate-300 px-2 py-1.5">Client</th>
+            {showSo ? <th className="border border-slate-300 px-2 py-1.5">SO</th> : null}
+            {showInvoice ? <th className="border border-slate-300 px-2 py-1.5">INV</th> : null}
+            {showClient ? <th className="border border-slate-300 px-2 py-1.5">Client</th> : null}
             <th className="border border-slate-300 px-2 py-1.5">Art.</th>
             <th className="border border-slate-300 px-2 py-1.5">Garment</th>
             <th className="border border-slate-300 px-2 py-1.5">Swatch</th>
@@ -86,7 +117,7 @@ export function CostHintWorksheetView({
         <tbody>
           {worksheet.rows.length === 0 ? (
             <tr>
-              <td colSpan={15} className="border border-slate-200 px-2 py-4 text-center text-slate-500">
+              <td colSpan={columnCount} className="border border-slate-200 px-2 py-4 text-center text-slate-500">
                 No costing lines for this filter.
               </td>
             </tr>
@@ -95,9 +126,15 @@ export function CostHintWorksheetView({
               const swatchUrl = costHintSwatchUrl(row.supplier_id, row.fabric_number);
               return (
                 <tr key={`${row.so_number}-${row.article_label}-${row.fabric_number}-${index}`}>
-                  <td className="border border-slate-200 px-2 py-1 font-mono">{row.so_number}</td>
-                  <td className="border border-slate-200 px-2 py-1 font-mono">{row.invoice_number ?? "-"}</td>
-                  <td className="border border-slate-200 px-2 py-1">{row.client_name}</td>
+                  {showSo ? (
+                    <td className="border border-slate-200 px-2 py-1 font-mono">{row.so_number}</td>
+                  ) : null}
+                  {showInvoice ? (
+                    <td className="border border-slate-200 px-2 py-1 font-mono">{row.invoice_number ?? "-"}</td>
+                  ) : null}
+                  {showClient ? (
+                    <td className="border border-slate-200 px-2 py-1">{row.client_name}</td>
+                  ) : null}
                   <td className="border border-slate-200 px-2 py-1 text-center">{row.article_label}</td>
                   <td className="border border-slate-200 px-2 py-1">{row.garment}</td>
                   <td className="border border-slate-200 px-1 py-1 text-center">

@@ -1,6 +1,7 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import {
+  costHintConstantColumns,
   costHintPrimaryFabricNumber,
   formatCostHintArticleSummary,
   formatCostHintComposition,
@@ -8,6 +9,7 @@ import {
   summarizeCostHintArticles,
   uniqueCostHintSoNumbers,
   type CostHintWorksheet,
+  type CostHintWorksheetRow,
 } from "@/lib/costing/cost-hint-worksheet";
 import {
   loadFabricSwatchJpegsForPdf,
@@ -74,6 +76,20 @@ export async function generateCostHintWorksheetPdf(worksheet: CostHintWorksheet)
     y
   );
   y += 14;
+
+  const constant = costHintConstantColumns(worksheet.rows);
+  const constantParts = [
+    constant.client_name ? `Client: ${constant.client_name}` : null,
+    constant.invoice_number ? `Invoice: ${constant.invoice_number}` : null,
+    constant.so_numbers
+      ? `Sales order${constant.so_numbers.length === 1 ? "" : "s"}: ${constant.so_numbers.join(", ")}`
+      : null,
+  ].filter(Boolean);
+  if (constantParts.length > 0) {
+    const constantLines = doc.splitTextToSize(constantParts.join("   |   "), pageW - margin * 2);
+    doc.text(constantLines, margin, y);
+    y += constantLines.length * 12 + 2;
+  }
   const articleSummary =
     worksheet.article_summary ||
     formatCostHintArticleSummary(summarizeCostHintArticles(worksheet.rows));
@@ -86,69 +102,67 @@ export async function generateCostHintWorksheetPdf(worksheet: CostHintWorksheet)
   doc.setFont("helvetica", "normal");
   doc.setTextColor(0);
 
+  type WorksheetColumn = {
+    header: string;
+    hidden?: boolean;
+    swatch?: boolean;
+    style?: { cellWidth?: number; halign?: "left" | "center" | "right" };
+    value: (row: CostHintWorksheetRow) => string;
+  };
+
+  // Columns that never change are printed once above the table instead.
+  const columns: WorksheetColumn[] = [
+    { header: "SO", hidden: constant.so_numbers != null, value: (row) => row.so_number },
+    { header: "INV", hidden: constant.invoice_number != null, value: (row) => row.invoice_number ?? "-" },
+    { header: "Client", hidden: constant.client_name != null, value: (row) => row.client_name },
+    { header: "Art.", style: { cellWidth: 26, halign: "center" }, value: (row) => row.article_label },
+    { header: "Garment", value: (row) => row.garment },
+    { header: "Swatch", swatch: true, style: { cellWidth: 30, halign: "center" }, value: () => "" },
+    { header: "Fabric", value: (row) => row.fabric_number || "-" },
+    { header: "Brand", value: (row) => row.fabric_brand || "-" },
+    { header: "Comp.", value: (row) => formatCostHintComposition(row.composition) },
+    { header: "Weight", style: { cellWidth: 36, halign: "right" }, value: (row) => formatCostHintWeight(row.weight_gsm) },
+    { header: "Qty", style: { cellWidth: 24, halign: "right" }, value: (row) => String(row.quantity) },
+    {
+      header: "Fabric cost",
+      style: { cellWidth: 52, halign: "right" },
+      value: (row) => (row.missing_price && row.fabric_cost_sar == null ? "-" : money(row.fabric_cost_sar)),
+    },
+    {
+      header: "Cost hint",
+      style: { cellWidth: 52, halign: "right" },
+      value: (row) => (row.missing_price && row.cost_hint_sar == null ? "-" : money(row.cost_hint_sar)),
+    },
+    { header: "Unit price", style: { cellWidth: 52, halign: "right" }, value: (row) => money(row.unit_price_sar) },
+    { header: "Write price", style: { cellWidth: 46 }, value: () => "" },
+  ];
+  const visibleColumns = columns.filter((column) => !column.hidden);
+  const swatchColumnIndex = visibleColumns.findIndex((column) => column.swatch);
+  const columnStyles: Record<number, { cellWidth?: number; halign?: "left" | "center" | "right" }> = {};
+  visibleColumns.forEach((column, index) => {
+    if (column.style) columnStyles[index] = column.style;
+  });
+
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin, bottom: 36 },
-    head: [
-      [
-        "SO",
-        "INV",
-        "Client",
-        "Art.",
-        "Garment",
-        "Swatch",
-        "Fabric",
-        "Brand",
-        "Comp.",
-        "Weight",
-        "Qty",
-        "Fabric cost",
-        "Cost hint",
-        "Unit price",
-        "Write price",
-      ],
-    ],
-    body: worksheet.rows.map((row) => [
-      row.so_number,
-      row.invoice_number ?? "-",
-      row.client_name,
-      row.article_label,
-      row.garment,
-      "",
-      row.fabric_number || "-",
-      row.fabric_brand || "-",
-      formatCostHintComposition(row.composition),
-      formatCostHintWeight(row.weight_gsm),
-      String(row.quantity),
-      row.missing_price && row.fabric_cost_sar == null ? "-" : money(row.fabric_cost_sar),
-      row.missing_price && row.cost_hint_sar == null ? "-" : money(row.cost_hint_sar),
-      money(row.unit_price_sar),
-      "",
-    ]),
+    head: [visibleColumns.map((column) => column.header)],
+    body: worksheet.rows.map((row) => visibleColumns.map((column) => column.value(row))),
     styles: {
       font: "helvetica",
-      fontSize: 6.5,
-      cellPadding: 2,
+      fontSize: 7.5,
+      cellPadding: 3,
       valign: "middle",
       overflow: "linebreak",
       minCellHeight: 30,
     },
     headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: "bold" },
     tableWidth: pageW - margin * 2,
-    columnStyles: {
-      3: { cellWidth: 22, halign: "center" },
-      5: { cellWidth: 30, halign: "center" },
-      9: { cellWidth: 32, halign: "right" },
-      10: { cellWidth: 20, halign: "right" },
-      11: { cellWidth: 48, halign: "right" },
-      12: { cellWidth: 48, halign: "right" },
-      13: { cellWidth: 48, halign: "right" },
-      14: { cellWidth: 42 },
-    },
+    columnStyles,
     showHead: "everyPage",
     theme: "grid",
     didDrawCell: (data) => {
-      if (data.section !== "body" || data.column.index !== 5) return;
+      if (data.section !== "body" || data.column.index !== swatchColumnIndex) return;
       const row = worksheet.rows[data.row.index];
       const fabricNumber = costHintPrimaryFabricNumber(row?.fabric_number);
       if (!row?.supplier_id || !fabricNumber) return;

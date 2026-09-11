@@ -174,11 +174,17 @@ function costHintWeightKey(weightGsm: number | null | undefined): string | null 
   return String(Math.round(weightGsm));
 }
 
-/** Mill identity: canonical supplier id when known, else the printed brand. */
+/**
+ * Mill identity uses the supplier id *and* the printed brand. One supplier id
+ * can print under two names - a fabric number starting with "S" shows as
+ * Solbiati - and a merged row can only carry one brand.
+ */
 function costHintMillKey(
-  row: Pick<CostHintWorksheetRow, "supplier_id" | "fabric_brand">
+  row: Partial<Pick<CostHintWorksheetRow, "supplier_id" | "fabric_brand">>
 ): string {
-  return (row.supplier_id?.trim() || row.fabric_brand?.trim() || "").toLowerCase();
+  const supplier = row.supplier_id?.trim().toLowerCase() ?? "";
+  const brand = row.fabric_brand?.trim().toLowerCase() ?? "";
+  return `${supplier}/${brand}`;
 }
 
 /** Money must match exactly to merge - an absent figure is its own bucket. */
@@ -441,13 +447,54 @@ function attachArticleSummary<T extends { rows: CostHintWorksheetRow[] }>(
   };
 }
 
+/** A combined invoice puts every covered order in one cell, comma separated. */
+export function costHintSoNumbersInCell(value: string | null | undefined): string[] {
+  return (value ?? "")
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+export function costHintRowCoversSoNumber(
+  row: { so_number?: string | null },
+  soNumber: string
+): boolean {
+  return costHintSoNumbersInCell(row.so_number).includes(soNumber.trim());
+}
+
 export function uniqueCostHintSoNumbers(rows: Array<{ so_number?: string | null }>): string[] {
   const seen = new Set<string>();
   for (const row of rows) {
-    const so = row.so_number?.trim();
-    if (so) seen.add(so);
+    for (const so of costHintSoNumbersInCell(row.so_number)) seen.add(so);
   }
   return [...seen].sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * Columns that never change down the sheet. On a combined invoice the order
+ * list, invoice number and client repeat on every row and eat the width the
+ * fabric columns need, so the view prints them once in the header instead.
+ */
+export function costHintConstantColumns(rows: CostHintWorksheetRow[]): {
+  so_numbers: string[] | null;
+  invoice_number: string | null;
+  client_name: string | null;
+} {
+  if (rows.length === 0) {
+    return { so_numbers: null, invoice_number: null, client_name: null };
+  }
+  const constant = <T>(pick: (row: CostHintWorksheetRow) => T): T | null => {
+    const first = pick(rows[0]!);
+    return rows.every((row) => pick(row) === first) ? first : null;
+  };
+  const soCell = constant((row) => row.so_number?.trim() ?? "");
+  const invoice = constant((row) => row.invoice_number?.trim() ?? "");
+  const client = constant((row) => row.client_name?.trim() ?? "");
+  return {
+    so_numbers: soCell ? costHintSoNumbersInCell(soCell) : null,
+    invoice_number: invoice || null,
+    client_name: client || null,
+  };
 }
 
 export function formatCostHintSalesOrderScope(rows: Array<{ so_number?: string | null }>): string {
@@ -578,7 +625,8 @@ export function costHintNamedClientPackFiles(
   const sos = uniqueCostHintSoNumbers(worksheet.rows);
   if (sos.length < 2) return files;
   for (const soNumber of sos) {
-    const rows = worksheet.rows.filter((row) => row.so_number === soNumber);
+    const rows = worksheet.rows.filter((row) => costHintRowCoversSoNumber(row, soNumber));
+    if (rows.length === 0) continue;
     const slice = applyCostHintNamedClientCopy({ ...combined, rows }, label);
     files.push({ name: costHintWorksheetFilename(slice), worksheet: slice });
   }

@@ -7,6 +7,7 @@ import {
   buildCostHintWorksheet,
   buildCostHintWorksheetFromInvoice,
   combineCostHintRowsByGarmentFibreWeight,
+  costHintConstantColumns,
   costHintInvoiceGroupKey,
   costHintPrimaryFabricNumber,
   costHintGarmentFamily,
@@ -383,6 +384,80 @@ describe("cost hint worksheet", () => {
     const unknown = worksheet.rows.find((row) => row.fabric_number === "Stock");
     assert.ok(unknown, "no composition or weight means no merging");
     assert.equal(unknown.quantity, 1);
+  });
+
+  it("splits one supplier id that prints under two brand names", () => {
+    // "Stock" starts with S, so it prints as Solbiati while BEY rows print as
+    // Canclini - same supplier id, two brands, and a row shows only one.
+    const rows = [
+      { fabric_number: "BEY 008", fabric_brand: "Canclini" },
+      { fabric_number: "BEY 009", fabric_brand: "Canclini" },
+      { fabric_number: "Stock", fabric_brand: "Solbiati" },
+    ].map((over, index) => ({
+      so_number: "SO-2026-0131",
+      invoice_number: "INV-2026-0018",
+      client_name: "Pr Khaled Bin Salman",
+      client_code: "FR-0626-0037",
+      article_label: `L${60 + index}`,
+      garment: "Trouser",
+      supplier_id: "canclini",
+      composition: "71% wool 15% silk 14% linen",
+      weight_gsm: 250,
+      color: null,
+      quantity: 1,
+      fabric_cost_sar: 824.04,
+      cost_hint_sar: 1049.04,
+      unit_price_sar: 0,
+      missing_price: false,
+      article_count: 1,
+      piece_names: [],
+      ...over,
+    })) as CostHintWorksheetRow[];
+
+    const combined = combineCostHintRowsByGarmentFibreWeight(rows);
+    assert.equal(combined.length, 2);
+    for (const row of combined) {
+      assert.ok(!row.fabric_brand?.includes(","), `mills merged: ${row.fabric_brand}`);
+    }
+  });
+
+  it("reports the covered orders and the columns that never change", () => {
+    const rows = [
+      { article_label: "L01", fabric_number: "771018" },
+      { article_label: "L02", fabric_number: "771019" },
+    ].map((over) => ({
+      so_number: "SO-2026-0111, SO-2026-0131",
+      invoice_number: "INV-2026-0018",
+      client_name: "Pr Khaled Bin Salman",
+      client_code: "FR-0626-0037",
+      garment: "Trouser",
+      fabric_brand: "Loro Piana",
+      supplier_id: "loro-piana",
+      composition: null,
+      weight_gsm: null,
+      color: null,
+      quantity: 1,
+      fabric_cost_sar: null,
+      cost_hint_sar: null,
+      unit_price_sar: 0,
+      missing_price: false,
+      article_count: 1,
+      piece_names: [],
+      ...over,
+    })) as CostHintWorksheetRow[];
+
+    assert.deepEqual(uniqueCostHintSoNumbers(rows), ["SO-2026-0111", "SO-2026-0131"]);
+    const constant = costHintConstantColumns(rows);
+    assert.deepEqual(constant.so_numbers, ["SO-2026-0111", "SO-2026-0131"]);
+    assert.equal(constant.invoice_number, "INV-2026-0018");
+    assert.equal(constant.client_name, "Pr Khaled Bin Salman");
+
+    const mixed = costHintConstantColumns([
+      rows[0]!,
+      { ...rows[1]!, client_name: "Someone Else" },
+    ]);
+    assert.equal(mixed.client_name, null);
+    assert.equal(mixed.invoice_number, "INV-2026-0018");
   });
 
   it("reads fabric details from every order a combined invoice covers", () => {
