@@ -38,6 +38,19 @@ and RLS blocks it. So:
 - Fixtures built from `src/data` are fine for tests. They are not evidence about
   live records.
 
+### The exception: supplier price lists are production truth
+
+`src/data/suppliers/*.json` does **not** go through `erp_documents`.
+`src/lib/data/supplier-catalog-data.ts` imports each catalog as a static JSON
+import, so they are compiled into the deployed bundle. What you read in the repo
+is exactly what production serves.
+
+That means composition, weight, width and list price for a catalogued fabric can
+be quoted with confidence. A fabric line on a sales order cannot - that comes
+from `erp_documents` and is as stale as everything else.
+
+Know which of the two you are reading before you answer a question about fabric.
+
 ## Loading documents
 
 The registry of all 44 document keys is `src/lib/data/document-keys.ts`
