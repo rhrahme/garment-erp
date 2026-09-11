@@ -14,7 +14,12 @@ import type { InvoiceableSalesOrder } from "@/lib/types/invoiceable-orders";
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
 import { formatInvoiceClientName } from "@/lib/invoicing/display";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
-import { groupCombinableDraftInvoices } from "@/lib/invoicing/combine-invoice-groups";
+import {
+  clientInvoiceWorkButtonLabel,
+  describeClientInvoiceWork,
+  groupClientInvoiceWork,
+  type ClientInvoiceWork,
+} from "@/lib/invoicing/client-invoice-work";
 import { customerInvoiceMatchesSearch } from "@/lib/invoicing/list-search";
 import { Button } from "@/components/ui/Button";
 import { formatDate, cn } from "@/lib/utils";
@@ -103,10 +108,6 @@ export function CustomerInvoicesWorkspace({
         : brandFilteredInvoices,
     [brandFilteredInvoices, searchQuery]
   );
-  const combinableGroups = useMemo(
-    () => groupCombinableDraftInvoices(searchScopedInvoices),
-    [searchScopedInvoices]
-  );
   const visibleInvoiceableOrders = useMemo(
     () =>
       searchQuery.trim()
@@ -124,16 +125,22 @@ export function CustomerInvoicesWorkspace({
         : invoiceableOrders,
     [invoiceableOrders, searchQuery]
   );
+  const combinableGroups = useMemo(
+    () => groupClientInvoiceWork(searchScopedInvoices, visibleInvoiceableOrders),
+    [searchScopedInvoices, visibleInvoiceableOrders]
+  );
 
-  async function combineGroup(invoicesToCombine: CustomerInvoice[]) {
-    const key = invoicesToCombine[0]?.client_id || invoicesToCombine[0]?.client_code || "";
-    setCombiningClient(key);
+  async function combineGroup(group: ClientInvoiceWork) {
+    setCombiningClient(group.key);
     setCombineError(null);
     try {
       const res = await fetch("/api/customer-invoices/combine", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invoice_ids: invoicesToCombine.map((invoice) => invoice.id) }),
+        body: JSON.stringify({
+          invoice_ids: group.drafts.map((invoice) => invoice.id),
+          sales_order_ids: group.orders.map((order) => order.id),
+        }),
       });
       const data = (await res.json()) as { id?: string; error?: string };
       if (!res.ok) throw new Error(data.error ?? "Failed to combine invoices.");
@@ -211,19 +218,21 @@ export function CustomerInvoicesWorkspace({
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{combineError}</div>
       ) : null}
       {combinableGroups.map((group) => {
-        const key = group[0]!.client_id || group[0]!.client_code;
+        const references = [
+          ...group.drafts.map((invoice) => invoice.invoice_number),
+          ...group.orders.map((order) => order.so_number),
+        ].join(", ");
         return (
           <div
-            key={key}
+            key={group.key}
             className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-950"
           >
             <p>
-              <span className="font-medium">{formatInvoiceClientName(group[0]!.client_name)}</span> has{" "}
-              {group.length} draft invoices ({group.map((invoice) => invoice.invoice_number).join(", ")}).
-              Combine them into one invoice.
+              <span className="font-medium">{formatInvoiceClientName(group.client_name)}</span> has{" "}
+              {describeClientInvoiceWork(group)} ({references}). Put them all on one invoice.
             </p>
             <Button size="sm" onClick={() => void combineGroup(group)} disabled={combiningClient != null}>
-              {combiningClient === key ? "Combining…" : `Combine ${group.length} invoices into 1`}
+              {combiningClient === group.key ? "Combining…" : clientInvoiceWorkButtonLabel(group)}
             </Button>
           </div>
         );

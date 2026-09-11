@@ -805,8 +805,11 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   invoice lists every SO number. Matching garment + fibre + gsm lines
   still collapse. Paid invoices stay separate. The combined invoice uses
   the oldest covered sales-order date, not the draft invoice date.
-  First asked for Pr Khaled (three drafts into one). Also covers the old
-  Ajlan 0010+0011 case.
+  Combine also folds in the client's sales orders that were **never
+  invoiced** (`sales_order_ids` on the combine API) - drafts alone left
+  most of an order book off the invoice. First asked for Pr Khaled (three
+  drafts into one, then all seven SOs). Also covers the old Ajlan
+  0010+0011 case.
 
 ## Ready-made catalog photos
 

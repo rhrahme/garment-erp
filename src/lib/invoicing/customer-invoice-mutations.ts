@@ -244,16 +244,23 @@ export async function createCustomerInvoiceFromSalesOrders(
 export async function combineDraftCustomerInvoices(
   invoices: CustomerInvoice[],
   actor: string | null,
-  source: "erp" | "zapier" | "api" = "erp"
+  source: "erp" | "zapier" | "api" = "erp",
+  /** Sales orders with no invoice yet that land on the same combined invoice. */
+  extraOrders: SalesOrder[] = []
 ): Promise<CustomerInvoice> {
-  const orders = await getSalesOrdersByIdsFresh(
+  const coveredOrders = await getSalesOrdersByIdsFresh(
     invoices.flatMap((invoice) => invoiceSalesOrderIds(invoice))
   );
+  const allOrders = [
+    ...new Map([...coveredOrders, ...extraOrders].map((order) => [order.id, order])).values(),
+  ];
   const combined = combineCustomerInvoices(invoices, {
-    orderDates: orders.map((order) => order.order_date),
+    orderDates: allOrders.map((order) => order.order_date),
   });
+  const withOrders =
+    extraOrders.length > 0 ? syncInvoiceLinesFromSalesOrders(combined, allOrders) : combined;
   const absorbedIds = invoices.filter((invoice) => invoice.id !== combined.id).map((invoice) => invoice.id);
-  const saved = await saveCustomerInvoice(combined);
+  const saved = await saveCustomerInvoice(withOrders);
   if (absorbedIds.length > 0) await removeCustomerInvoicesByIds(absorbedIds);
   await notifyIntegration(
     "invoice.updated",
@@ -264,7 +271,39 @@ export async function combineDraftCustomerInvoices(
       sales_order_ids: invoiceSalesOrderIds(saved),
       so_number: saved.so_number,
       absorbed_invoice_ids: absorbedIds,
+      added_sales_order_ids: extraOrders.map((order) => order.id),
       action: "combined",
+      updated_by: actor,
+      total: saved.total,
+    },
+    source
+  );
+  return saved;
+}
+
+/** Fold sales orders that have no invoice yet onto an existing draft. */
+export async function addSalesOrdersToCustomerInvoice(
+  invoice: CustomerInvoice,
+  orders: SalesOrder[],
+  actor: string | null,
+  source: "erp" | "zapier" | "api" = "erp"
+): Promise<CustomerInvoice> {
+  if (orders.length === 0) return invoice;
+  const covered = await getSalesOrdersByIdsFresh(invoiceSalesOrderIds(invoice));
+  const allOrders = [
+    ...new Map([...covered, ...orders].map((order) => [order.id, order])).values(),
+  ];
+  const saved = await saveCustomerInvoice(syncInvoiceLinesFromSalesOrders(invoice, allOrders));
+  await notifyIntegration(
+    "invoice.updated",
+    {
+      id: saved.id,
+      invoice_number: saved.invoice_number,
+      sales_order_id: saved.sales_order_id,
+      sales_order_ids: invoiceSalesOrderIds(saved),
+      so_number: saved.so_number,
+      added_sales_order_ids: orders.map((order) => order.id),
+      action: "sales_orders_added",
       updated_by: actor,
       total: saved.total,
     },
