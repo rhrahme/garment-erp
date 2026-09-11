@@ -16,9 +16,11 @@ corroboration.
 
 | Step | Field | Where it comes from |
 | --- | --- | --- |
-| Sales order line | `quantity` | Typed in the ERP, or the ClickUp "Unit" garment count. **The only input.** |
+| Sales order line | `quantity` | Typed into the ERP fabric line editor. **The only input.** |
 | Supplier PO line | `quantity_ordered` | `quantity_ordered: line.quantity` (`create-fabric-pos.ts:80`) |
 | Email to the mill | `quantity` | `line.quantity_ordered` (`email-content.ts:169`) |
+| Printed sticker | `cut_quantity` | `cut_quantity: line.quantity` (`qr-labels.ts:160`) |
+| Receiving QR | *nothing* | `qrScanPayload` encodes the production code only |
 | Fabric receipt | `fabric_meters` | `fabric_meters: line.quantity` (`fabric-receiving.ts`, 4 sites) |
 | Cost worksheet | `Meters/pc` | `line.quantity / pieces` |
 
@@ -50,10 +52,35 @@ anyone for a number: `fabric-receiving-scan.ts` does not contain the string
 `meters` at all, and `createFabricReceipt` stamps `fabric_meters: line.quantity`
 onto the new receipt alongside the timestamps.
 
-The receive endpoint proves it. `POST /api/fabric-receiving/receive` accepts one
-field, `sales_order_line_id`, and nothing else. The task team's confirmation is a
-**yes/no that the cloth arrived**, and the system fills the ordered figure in
-behind it as though someone had counted.
+### The sticker prints meters, and the QR does not carry them
+
+This trips people up, because the physical receiving sticker the ERP prints
+really does show a length - `formatStickerCutLength` renders it as e.g. `3.5 m`
+on its own emphasised line, next to the label count
+(`render-sticker-raster.ts:129`). It is the fifth line down, under the fabric
+brand and number.
+
+But that printed number is `cut_quantity`, which is `line.quantity` - the
+**ordered** cut length. It is an instruction for the cloth, not a record of it.
+
+The QR carries no quantity at all:
+
+```ts
+/** Payload encoded in the QR - short production code, scannable at every station. */
+export function qrScanPayload(productionCode: string): string {
+  return productionCode.trim().toUpperCase();
+}
+```
+
+So scanning a receiving sticker transmits a code such as `FR-0096-L07` and
+nothing else. It means "the roll with this code is here". The system then looks
+the line up and writes the ordered meters onto the receipt.
+
+The receive endpoint confirms it from the other side. `POST
+/api/fabric-receiving/receive` accepts one field, `sales_order_line_id`, and
+nothing else. The task team's confirmation is a **yes/no that the cloth
+arrived**, and the system fills the ordered figure in behind it as though
+someone had counted.
 
 So a fabric receipt answers "how many meters did we **order**", echoed back with
 a received date on it. It cannot answer any of these:
@@ -79,7 +106,13 @@ there is no field for it and no screen that asks for it. Say that plainly rather
 than reading `fabric_meters` aloud, because reading it aloud sounds like an
 answer and is not one.
 
-## 2. Most of `quantity` is a garment count, not meters
+## 2. Legacy imported rows hold a garment count, not meters
+
+**Scope this before you raise it.** Orders placed in the ERP are fine - the
+fabric line editor labels the field meters, validates it, and stores real
+decimals. This section is about the older ClickUp-imported rows only. Check
+which kind you are looking at before mentioning it at all, because raising it
+on an ERP-entered order is noise.
 
 The ClickUp importer maps a field called "Unit" into `quantity` and then
 hardcodes the unit as meters:
@@ -117,12 +150,10 @@ history says exactly 1:
 | Solbiati | 142 | 14 | 71% |
 | Caccioppoli | 31 | 6 | 39% |
 
-Lines created or edited in the ERP itself are fine - `OrderFabricLineEditor`
-labels the input "meters", validates it, and writes real decimals like 1.8 and
-3.5. So `quantity` is a **mixed column**: ERP-entered rows hold true meters,
-ClickUp-imported rows hold a garment count. You cannot tell which is which from
-the value alone, though a whole number on a multi-piece garment is a strong
-tell.
+So `quantity` is a **mixed column**: ERP-entered rows hold true meters,
+ClickUp-imported rows hold a garment count. A decimal is a reliable sign the row
+was entered in the ERP and the meters are real. A whole number on a multi-piece
+garment is the opposite tell.
 
 ## 3. The worksheet column is per piece, not per garment
 
@@ -152,15 +183,20 @@ value and let the header carry the explanation.
 1. Find the sales order fabric lines for that fabric - `quantity` and `unit` are
    the only real inputs.
 2. Check whether the values look like meters (decimals, varying) or like a
-   garment count (all 1s and 2s on multi-piece garments).
+   garment count (all 1s and 2s on multi-piece garments). If they are decimals,
+   the order was placed in the ERP, the meters are real, and the ClickUp import
+   problem is irrelevant - do not bring it up.
 3. Check the PO too, and say which you are quoting. It is the same number copied
    at PO-creation time, but it is what the mill was actually asked for, and it
    survives later edits to the sales order line.
-4. If you quote a receipt, say it is the ordered figure echoed back, not a
+4. If someone cites the meters printed on a receiving sticker, that is the same
+   ordered figure. The sticker is an instruction for the cut, and the QR beside
+   it carries only the production code.
+5. If you quote a receipt, say it is the ordered figure echoed back, not a
    measurement.
-5. If you quote the worksheet, multiply back up by the piece count, or label it
+6. If you quote the worksheet, multiply back up by the piece count, or label it
    per piece.
-6. Quote the `updated_at` of whatever snapshot you read - see
+7. Quote the `updated_at` of whatever snapshot you read - see
    `hagan-erp-architecture` for why.
 
 **The POs are not in the repo.** `fabric-orders.local.json` lives at
