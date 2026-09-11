@@ -107,6 +107,11 @@ Labor, washing and overhead come per garment type from
 `src/data/costing-rates.json`. Warehouse stock suppliers (`canclini`,
 `wool-stock`) pay no duty or VAT.
 
+The `meters` in that first line is the fabric line's `quantity`, and on
+ClickUp-imported rows it is a garment count rather than a length - 62% of all
+fabric lines read exactly 1. Read `hagan-erp-fabric-quantities` before quoting
+or reconciling any meter figure.
+
 The **cost hint** is this total per **piece**: `unitCostHintForFabricLine`
 divides the line total by the sticker count. A combined multi-piece invoice line
 carries the whole set's figure instead. On the worksheet,
