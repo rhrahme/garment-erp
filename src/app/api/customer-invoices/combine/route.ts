@@ -7,6 +7,7 @@ import { getSalesOrdersByIdsFresh } from "@/lib/data/sales-orders";
 import { canCombineCustomerInvoices } from "@/lib/invoicing/combine-invoices";
 import { combineDraftCustomerInvoices } from "@/lib/invoicing/customer-invoice-mutations";
 import { invoiceCoversSalesOrder, invoiceSalesOrderIds } from "@/lib/invoicing/invoice-sales-orders";
+import { salesOrderMatchesInvoiceClient } from "@/lib/invoicing/invoice-client-match";
 import { canAccessSalesOrder } from "@/lib/sales/access";
 
 export async function POST(request: Request) {
@@ -64,8 +65,7 @@ export async function POST(request: Request) {
         { status: 409 }
       );
     }
-    const keeperClientId = found[0]!.client_id.trim();
-    if (extraOrders.some((order) => order.client_id.trim() !== keeperClientId)) {
+    if (extraOrders.some((order) => !salesOrderMatchesInvoiceClient(found[0]!, order))) {
       return NextResponse.json(
         { error: "Sales orders must belong to the same client." },
         { status: 400 }
