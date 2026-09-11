@@ -3,6 +3,8 @@ import { formatClientDisplayName } from "@/lib/clients/names";
 import { getClientById } from "@/lib/data/clients";
 import { getFactoryBrandById } from "@/lib/data/factory-brands";
 import { resolveFabricItemFromCatalog } from "@/lib/fabric-sourcing/resolve-fabric-from-catalog";
+import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
+import { CUSTOM_SUPPLIER_ID } from "@/lib/types/custom-fabrics";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import { isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
 import { oldestCalendarDate, withOldestCoveredInvoiceDate } from "@/lib/invoicing/invoice-dates";
@@ -184,19 +186,21 @@ function statesFibrePercentages(composition: string | null): boolean {
 /**
  * Fibre and weight for a fabric number, read from the mill's own price list.
  *
- * The price list is the authority. When the number resolves to a catalog row,
- * that row's fibre and weight win over whatever the line happens to be holding:
- * stored specs have been wrong before - a Loro Piana composition printed on
- * Caccioppoli shirtings, "90% Wool 5% Cashmere" against a price list reading
- * 95/5 - and a value that only ever fills a blank can never be corrected once a
- * wrong one is saved.
+ * The price list is the authority, and it is the only authority. Where the
+ * number resolves to a catalog row, that row's fibre and weight are used.
+ * Where it does not, both print blank.
  *
- * The one exception is a catalog row that names fibres without stating their
- * shares, as the Drapers list does. Replacing "97% CO 3% EA" with "Cotton and
- * Elastane" loses the composition, so the fuller stored value stays.
+ * A spec nobody can trace back to a price list is worth less than an empty
+ * cell, because an empty cell tells you to go and check. Stored specs have
+ * carried a Loro Piana composition on Caccioppoli shirtings and a
+ * "90% Wool 5% Cashmere" that does not add to 100, and printed them as
+ * confidently as the real ones. Blank is the honest output.
  *
- * Where the catalog has no entry for the number nothing can be verified, and
- * the stored value stands rather than a spec being invented for it.
+ * Two things are not guesswork and survive. A catalog row that names fibres
+ * without stating their shares, as the Drapers list does, never replaces a
+ * stored composition that does state them - "97% CO 3% EA" beats "Cotton and
+ * Elastane". And a custom fabric has no mill price list by definition: its
+ * specs were entered for that one cloth and are its own record.
  */
 function catalogFabricSpec(
   supplierId: string,
@@ -209,15 +213,17 @@ function catalogFabricSpec(
     weight_gsm: storedWeightGsm ?? null,
   };
 
+  if (resolveFabricSupplierId(supplierId) === CUSTOM_SUPPLIER_ID) return stored;
+
   const catalog = resolveFabricItemFromCatalog(supplierId, fabricNumber);
-  if (catalog.manual) return stored;
+  if (catalog.manual) return { composition: null, weight_gsm: null };
 
   const catalogIsVaguer =
     statesFibrePercentages(stored.composition) && !statesFibrePercentages(catalog.composition);
 
   return {
-    composition: catalogIsVaguer ? stored.composition : catalog.composition ?? stored.composition,
-    weight_gsm: catalog.weight_gsm ?? stored.weight_gsm,
+    composition: catalogIsVaguer ? stored.composition : catalog.composition,
+    weight_gsm: catalog.weight_gsm,
   };
 }
 

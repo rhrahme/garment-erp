@@ -40,11 +40,11 @@ function order(lines: SalesOrderFabricLine[]): SalesOrder {
     order_date: "2026-06-01",
     delivery_date: null,
     delivery_destination: "RUH",
-    status: "confirmed",
+    status: "open",
     notes: null,
     fabric_lines: lines,
     fabric_po_ids: [],
-  } as SalesOrder;
+  } as unknown as SalesOrder;
 }
 
 describe("fabric specs come from the mill price list", () => {
@@ -74,9 +74,9 @@ describe("fabric specs come from the mill price list", () => {
     assert.match(String(built[0]!.composition), /71% Wool/);
   });
 
-  it("leaves a number the catalog does not carry exactly as stored", () => {
-    // 206202 is in none of the uploaded price lists, so there is nothing to
-    // correct it with. Inventing a spec here would be the same mistake again.
+  it("blanks a spec that no price list can confirm", () => {
+    // 206202 is in none of the uploaded price lists. Whatever is stored against
+    // it cannot be checked, so it does not get printed as though it could.
     const built = buildInvoiceLinesFromSalesOrder(
       order([
         fabricLine({
@@ -84,14 +84,32 @@ describe("fabric specs come from the mill price list", () => {
           supplier_id: "caccioppoli",
           supplier_name: "Caccioppoli",
           fabric_number: "206202",
-          composition: "twill 100% cotton",
-          weight_gsm: 150,
+          composition: '71% WOOL 15% SILK 14% LINEN "SUMMERTIME"',
+          weight_gsm: 250,
         }),
       ])
     );
 
-    assert.equal(built[0]!.composition, "twill 100% cotton");
-    assert.equal(built[0]!.weight_gsm, 150);
+    assert.equal(built[0]!.composition, null);
+    assert.equal(built[0]!.weight_gsm, null);
+  });
+
+  it("keeps the specs of a custom fabric, which has no mill price list", () => {
+    const built = buildInvoiceLinesFromSalesOrder(
+      order([
+        fabricLine({
+          id: "f1",
+          supplier_id: "custom",
+          supplier_name: "Custom",
+          fabric_number: "CF-2026-0001",
+          composition: "100% Cotton",
+          weight_gsm: 185,
+        }),
+      ])
+    );
+
+    assert.equal(built[0]!.composition, "100% Cotton");
+    assert.equal(built[0]!.weight_gsm, 185);
   });
 
   it("does not trade a stated composition for a vaguer catalog label", () => {
@@ -141,5 +159,41 @@ describe("fabric specs come from the mill price list", () => {
 
     assert.equal(enriched[0]!.weight_gsm, 260);
     assert.doesNotMatch(String(enriched[0]!.composition), /SUMMERTIME/);
+  });
+
+  it("blanks an unconfirmable spec already sitting on a stored invoice line", () => {
+    const lines: CustomerInvoiceLine[] = [
+      {
+        id: "l1",
+        article_number: 1,
+        sales_order_line_id: "f1",
+        description: "Shirt SS",
+        garment_type: "Shirt SS",
+        piece_name: "Shirt SS",
+        sticker_code: null,
+        fabric_number: "206202",
+        fabric_brand: "Caccioppoli",
+        composition: '71% WOOL 15% SILK 14% LINEN "SUMMERTIME"',
+        weight_gsm: 250,
+        quantity: 1,
+        unit_price: 0,
+        line_total: 0,
+      } as CustomerInvoiceLine,
+    ];
+
+    const enriched = enrichInvoiceLinesWithFabricDetails(
+      lines,
+      order([
+        fabricLine({
+          id: "f1",
+          supplier_id: "caccioppoli",
+          supplier_name: "Caccioppoli",
+          fabric_number: "206202",
+        }),
+      ])
+    );
+
+    assert.equal(enriched[0]!.composition, null);
+    assert.equal(enriched[0]!.weight_gsm, null);
   });
 });
