@@ -1,5 +1,5 @@
 import { recalculateInvoiceTotals } from "@/lib/invoicing/build-invoice";
-import { canCombineCustomerInvoices } from "@/lib/invoicing/combine-invoice-groups";
+import { canCombineCustomerInvoices, canTakeOnSalesOrders } from "@/lib/invoicing/combine-invoice-groups";
 import { renumberInvoiceArticles } from "@/lib/invoicing/consolidate-lines";
 import { oldestCalendarDate } from "@/lib/invoicing/invoice-dates";
 import { applyAllInvoiceLineReductions } from "@/lib/invoicing/line-reduction-suggestions";
@@ -7,13 +7,21 @@ import { invoiceSalesOrderRefs, withInvoiceSalesOrders } from "@/lib/invoicing/i
 import { computeDueDate } from "@/lib/invoicing/pricing";
 import type { CustomerInvoice } from "@/lib/types/customer-invoices";
 
-export { canCombineCustomerInvoices, groupCombinableDraftInvoices } from "@/lib/invoicing/combine-invoice-groups";
+export {
+  canCombineCustomerInvoices,
+  canTakeOnSalesOrders,
+  groupCombinableDraftInvoices,
+} from "@/lib/invoicing/combine-invoice-groups";
 
 export function combineCustomerInvoices(
   invoices: CustomerInvoice[],
   options?: { orderDates?: Array<string | null | undefined> }
 ): CustomerInvoice {
-  const problem = canCombineCustomerInvoices(invoices);
+  // One draft is allowed: it is taking on sales orders that have no invoice yet.
+  const problem =
+    invoices.length === 1
+      ? canTakeOnSalesOrders(invoices[0]!)
+      : canCombineCustomerInvoices(invoices);
   if (problem) throw new Error(problem);
 
   const sorted = [...invoices].sort((a, b) => a.invoice_number.localeCompare(b.invoice_number));
@@ -30,7 +38,9 @@ export function combineCustomerInvoices(
   const mergedNotes = [
     keeper.notes?.trim(),
     ...absorbed.map((invoice) => invoice.notes?.trim()).filter(Boolean),
-    `Combined from ${sorted.map((invoice) => invoice.invoice_number).join(", ")}.`,
+    absorbed.length > 0
+      ? `Combined from ${sorted.map((invoice) => invoice.invoice_number).join(", ")}.`
+      : null,
   ]
     .filter(Boolean)
     .join("\n");

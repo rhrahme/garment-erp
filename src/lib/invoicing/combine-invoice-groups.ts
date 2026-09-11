@@ -1,6 +1,14 @@
 import { getInvoiceAmountPaid } from "@/lib/invoicing/payments";
 import type { CustomerInvoice } from "@/lib/types/customer-invoices";
 
+/** A single draft can still take on sales orders that have no invoice yet. */
+export function canTakeOnSalesOrders(invoice: CustomerInvoice): string | null {
+  if (invoice.status === "paid") return "Paid invoices cannot be combined.";
+  if (invoice.status !== "draft") return "Only draft invoices can be combined.";
+  if (getInvoiceAmountPaid(invoice) > 0) return "Invoices with payments cannot be combined.";
+  return null;
+}
+
 export function canCombineCustomerInvoices(invoices: CustomerInvoice[]): string | null {
   if (invoices.length < 2) return "Select at least two invoices.";
   const clientIds = new Set(invoices.map((invoice) => invoice.client_id.trim()).filter(Boolean));

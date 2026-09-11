@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { readCustomerInvoicesFresh } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
-import { canCombineCustomerInvoices } from "@/lib/invoicing/combine-invoices";
+import { canCombineCustomerInvoices, canTakeOnSalesOrders } from "@/lib/invoicing/combine-invoices";
 import { combineDraftCustomerInvoices } from "@/lib/invoicing/customer-invoice-mutations";
 import { getSalesOrdersByIdsFresh } from "@/lib/data/sales-orders";
 import { invoiceCoversSalesOrder } from "@/lib/invoicing/invoice-sales-orders";
@@ -31,12 +31,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
   }
   const found = invoices.filter((invoice): invoice is NonNullable<typeof invoice> => Boolean(invoice));
-  if (found.length > 1) {
-    const problem = canCombineCustomerInvoices(found);
-    if (problem) return NextResponse.json({ error: problem }, { status: 400 });
-  } else if (found[0]!.status !== "draft") {
-    return NextResponse.json({ error: "Only draft invoices can be combined." }, { status: 400 });
-  }
+  const problem =
+    found.length > 1 ? canCombineCustomerInvoices(found) : canTakeOnSalesOrders(found[0]!);
+  if (problem) return NextResponse.json({ error: problem }, { status: 400 });
 
   const extraOrders = await getSalesOrdersByIdsFresh(extraOrderIds);
   if (extraOrders.length !== extraOrderIds.length) {

@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { canCombineCustomerInvoices, groupCombinableDraftInvoices } from "./combine-invoice-groups.ts";
+import {
+  canCombineCustomerInvoices,
+  canTakeOnSalesOrders,
+  groupCombinableDraftInvoices,
+} from "./combine-invoice-groups.ts";
 import { combineCustomerInvoices } from "./combine-invoices.ts";
 import { invoiceSalesOrderIds } from "./invoice-sales-orders.ts";
 import type { CustomerInvoice, CustomerInvoiceLine } from "@/lib/types/customer-invoices";
@@ -148,6 +152,19 @@ describe("combineCustomerInvoices", () => {
     assert.equal(combined.created_at, "2026-09-11T12:00:00.000Z");
   });
 
+  it("does not note a combine when one draft only takes on sales orders", () => {
+    const only = invoice({
+      id: "inv-a",
+      invoice_number: "INV-2026-0018",
+      sales_order_id: "so-131",
+      so_number: "SO-2026-0131",
+      notes: "Deliver to Riyadh.",
+    });
+    const combined = combineCustomerInvoices([only], { orderDates: ["2026-06-30"] });
+    assert.equal(combined.notes, "Deliver to Riyadh.");
+    assert.equal(combined.invoice_date, "2026-06-30");
+  });
+
   it("refuses paid invoices and different clients", () => {
     const paid = invoice({
       id: "paid",
@@ -172,6 +189,8 @@ describe("combineCustomerInvoices", () => {
     });
     assert.match(canCombineCustomerInvoices([paid, draft]) ?? "", /Paid/);
     assert.match(canCombineCustomerInvoices([draft, other]) ?? "", /same client/);
+    assert.equal(canTakeOnSalesOrders(draft), null);
+    assert.match(canTakeOnSalesOrders(paid) ?? "", /Paid/);
   });
 
   it("groups combinable drafts by client", () => {

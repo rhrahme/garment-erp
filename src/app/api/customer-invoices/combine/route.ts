@@ -4,7 +4,7 @@ import { customerInvoiceForSession } from "@/lib/auth/invoice-cost-access";
 import { readCustomerInvoicesFresh } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { getSalesOrdersByIdsFresh } from "@/lib/data/sales-orders";
-import { canCombineCustomerInvoices } from "@/lib/invoicing/combine-invoices";
+import { canCombineCustomerInvoices, canTakeOnSalesOrders } from "@/lib/invoicing/combine-invoices";
 import { combineDraftCustomerInvoices } from "@/lib/invoicing/customer-invoice-mutations";
 import { invoiceCoversSalesOrder, invoiceSalesOrderIds } from "@/lib/invoicing/invoice-sales-orders";
 import { salesOrderMatchesInvoiceClient } from "@/lib/invoicing/invoice-client-match";
@@ -37,12 +37,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
     }
     const found = invoices.filter((invoice): invoice is NonNullable<typeof invoice> => Boolean(invoice));
-    if (found.length > 1) {
-      const problem = canCombineCustomerInvoices(found);
-      if (problem) return NextResponse.json({ error: problem }, { status: 400 });
-    } else if (found[0]!.status !== "draft") {
-      return NextResponse.json({ error: "Only draft invoices can be combined." }, { status: 400 });
-    }
+    const problem =
+      found.length > 1 ? canCombineCustomerInvoices(found) : canTakeOnSalesOrders(found[0]!);
+    if (problem) return NextResponse.json({ error: problem }, { status: 400 });
 
     const orders = await getSalesOrdersByIdsFresh(found.flatMap((invoice) => invoiceSalesOrderIds(invoice)));
     if (orders.length === 0 || orders.some((order) => !canAccessSalesOrder(session, order))) {
