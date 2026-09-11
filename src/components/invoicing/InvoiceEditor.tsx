@@ -98,6 +98,31 @@ export function InvoiceEditor({
     );
   }
 
+  /** Throw away the stored lines and rebuild them from every covered order. */
+  async function rebuildLines() {
+    if (
+      !window.confirm(
+        "Rebuild every line on this invoice from its sales orders? Line prices you typed here will be replaced."
+      )
+    ) {
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/customer-invoices/${invoice.id}/sync-lines`, {
+        method: "POST",
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Failed to rebuild lines.");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to rebuild lines.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function recordPayment() {
     setSaving(true);
     setError(null);
@@ -456,6 +481,9 @@ export function InvoiceEditor({
       <div className="flex flex-wrap gap-3">
         <Button onClick={() => void saveLines()} disabled={saving}>
           {saving ? "Saving…" : canViewAmounts ? "Save line prices" : "Save line descriptions"}
+        </Button>
+        <Button variant="secondary" onClick={() => void rebuildLines()} disabled={saving}>
+          Rebuild lines from sales orders
         </Button>
         <Link href="/invoices">
           <Button variant="secondary">All invoices</Button>
