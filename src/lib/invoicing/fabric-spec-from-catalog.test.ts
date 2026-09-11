@@ -161,6 +161,47 @@ describe("fabric specs come from the mill price list", () => {
     assert.doesNotMatch(String(enriched[0]!.composition), /SUMMERTIME/);
   });
 
+  it("takes no spec from a fabric line matched only on garment type", () => {
+    // The invoice line is a Caccioppoli shirting; the only fabric line that
+    // matches it is a Loro Piana one with the same garment. Reading a mill off
+    // that line is how one cloth's composition ends up on another's.
+    const lines: CustomerInvoiceLine[] = [
+      {
+        id: "l1",
+        article_number: 1,
+        sales_order_line_id: null,
+        description: "Shirt SS",
+        garment_type: "Trouser",
+        piece_name: null,
+        sticker_code: null,
+        fabric_number: "206202",
+        fabric_brand: "Caccioppoli",
+        composition: null,
+        weight_gsm: null,
+        quantity: 1,
+        unit_price: 0,
+        line_total: 0,
+      } as CustomerInvoiceLine,
+    ];
+
+    const enriched = enrichInvoiceLinesWithFabricDetails(
+      lines,
+      order([
+        fabricLine({
+          id: "f1",
+          supplier_id: "loro-piana",
+          supplier_name: "Loro Piana",
+          fabric_number: "771001",
+          garment_type: "Trouser",
+        }),
+      ])
+    );
+
+    assert.equal(enriched[0]!.fabric_number, "206202");
+    assert.equal(enriched[0]!.composition, null);
+    assert.equal(enriched[0]!.weight_gsm, null);
+  });
+
   it("blanks an unconfirmable spec already sitting on a stored invoice line", () => {
     const lines: CustomerInvoiceLine[] = [
       {

@@ -118,12 +118,21 @@ export function enrichInvoiceLinesWithFabricDetails(
     );
 
     const fabricNumber = line.fabric_number ?? fabricLine.fabric_number;
-    const spec = catalogFabricSpec(
-      fabricLine.supplier_id,
-      fabricNumber,
-      resolveInvoiceComposition(line, fabricLine),
-      line.weight_gsm ?? fabricLine.weight_gsm
-    );
+
+    // `findFabricLineForInvoiceLine` falls back to matching on garment type
+    // alone, so an unmatched line can come back holding a different article's
+    // cloth. Its mill is only usable when the two agree on the fabric number;
+    // otherwise a Caccioppoli shirting would be looked up in the Loro Piana
+    // list and printed with whatever that list happened to hold.
+    const sameCloth = fabricNumber === fabricLine.fabric_number;
+    const spec = sameCloth
+      ? catalogFabricSpec(
+          fabricLine.supplier_id,
+          fabricNumber,
+          resolveInvoiceComposition(line, fabricLine),
+          line.weight_gsm ?? fabricLine.weight_gsm
+        )
+      : { composition: null, weight_gsm: null };
 
     return {
       ...line,
