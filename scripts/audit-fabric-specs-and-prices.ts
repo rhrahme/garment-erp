@@ -170,8 +170,65 @@ function describe(finding: Finding): string {
 }
 
 const findings = audit();
-const target = process.argv[2] ?? null;
+const rawArg = process.argv[2] ?? null;
+const byClient = rawArg === "--by-client";
+const target = byClient ? null : rawArg;
 const scoped = target ? findings.filter((f) => f.client_code === target) : findings;
+
+if (byClient) {
+  const invoices = (
+    JSON.parse(readFileSync("src/data/customer-invoices.json", "utf8")).invoices ?? []
+  ) as Array<Record<string, any>>;
+  const invoiceByClient = new Map<string, string[]>();
+  for (const invoice of invoices) {
+    const key = invoice.client_code ?? "";
+    if (!invoiceByClient.has(key)) invoiceByClient.set(key, []);
+    invoiceByClient
+      .get(key)!
+      .push(`${invoice.invoice_number} (${invoice.status}, ${(invoice.lines ?? []).length} lines)`);
+  }
+
+  const clients = new Map<string, Finding[]>();
+  for (const finding of findings) {
+    const key = `${finding.client_code}\u0000${finding.client_name}`;
+    if (!clients.has(key)) clients.set(key, []);
+    clients.get(key)!.push(finding);
+  }
+
+  const ordered = [...clients.entries()].sort((a, b) => {
+    const bad = (rows: Finding[]) => rows.filter((r) => r.verdict.includes("mismatch")).length;
+    return bad(b[1]) - bad(a[1]);
+  });
+
+  for (const [key, rows] of ordered) {
+    const [code, name] = key.split("\u0000");
+    const counts: Record<string, number> = {};
+    for (const row of rows) counts[row.verdict] = (counts[row.verdict] ?? 0) + 1;
+    const sos = [...new Set(rows.map((r) => r.so_number))];
+    const inv = invoiceByClient.get(code ?? "") ?? [];
+
+    console.log(`\n${"=".repeat(78)}`);
+    console.log(`${name}  [${code}]`);
+    console.log(`  ${rows.length} fabric lines across ${sos.length} order(s): ${sos.join(", ")}`);
+    console.log(`  invoice(s) here: ${inv.length > 0 ? inv.join(", ") : "none in this snapshot"}`);
+    console.log(
+      `  agrees with price list: ${counts.ok ?? 0} | in no price list: ${counts.not_in_price_list ?? 0} | spec wrong: ${(counts.spec_mismatch ?? 0) + (counts.spec_and_price_mismatch ?? 0)} | price differs: ${(counts.price_mismatch ?? 0) + (counts.spec_and_price_mismatch ?? 0)}`
+    );
+
+    const problems = rows.filter((r) => r.verdict.includes("mismatch"));
+    for (const row of problems) {
+      console.log(`    ${row.so_number} | ${row.garment} | ${row.supplier_id} ${row.fabric_number}`);
+      console.log(`        ${describe(row)}`);
+    }
+    const unlisted = [
+      ...new Set(rows.filter((r) => r.verdict === "not_in_price_list").map((r) => `${r.supplier_id} ${r.fabric_number}`)),
+    ];
+    if (unlisted.length > 0) {
+      console.log(`    in no price list: ${unlisted.join(", ")}`);
+    }
+  }
+  process.exit(0);
+}
 
 const counts: Record<string, number> = {};
 for (const f of scoped) counts[f.verdict] = (counts[f.verdict] ?? 0) + 1;
