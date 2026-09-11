@@ -9,6 +9,8 @@ function roundMoney(amount: number): number {
 export type ConsolidationOptions = {
   /** When true, lines must share fabric_brand to merge. Default false. */
   includeFabricBrand?: boolean;
+  /** When true, lines must share the fabric cost hint to merge. Default false. */
+  includeFabricCost?: boolean;
   /** When true, garment + fibre + gsm can merge even if unit prices differ. */
   ignoreUnitPrice?: boolean;
 };
@@ -57,10 +59,15 @@ export function normalizeInvoiceCompositionKey(composition: string | null | unde
   return formatInvoiceFibreContent(raw).toLowerCase();
 }
 
-function normalizeMergeKeyValue(
-  field: "garment_type" | "composition" | "weight_gsm" | "unit_price" | "fabric_brand",
-  line: CustomerInvoiceLine
-): string {
+type MergeKeyField =
+  | "garment_type"
+  | "composition"
+  | "weight_gsm"
+  | "unit_price"
+  | "fabric_brand"
+  | "fabric_cost_hint_sar";
+
+function normalizeMergeKeyValue(field: MergeKeyField, line: CustomerInvoiceLine): string {
   if (field === "composition") return normalizeInvoiceCompositionKey(line.composition);
   if (field === "fabric_brand") return String(line.fabric_brand ?? "").trim().toLowerCase();
   if (field === "weight_gsm") {
@@ -69,6 +76,10 @@ function normalizeMergeKeyValue(
   if (field === "unit_price") {
     return Number.isFinite(line.unit_price) ? String(roundMoney(line.unit_price)) : "";
   }
+  if (field === "fabric_cost_hint_sar") {
+    const hint = line.fabric_cost_hint_sar;
+    return hint == null || !Number.isFinite(hint) ? "-" : String(roundMoney(hint));
+  }
   return String(line.garment_type ?? "").trim().toLowerCase();
 }
 
@@ -76,13 +87,10 @@ export function buildConsolidationMergeKey(
   line: CustomerInvoiceLine,
   options?: ConsolidationOptions
 ): string {
-  const fields: Array<"garment_type" | "composition" | "weight_gsm" | "unit_price" | "fabric_brand"> = [
-    "garment_type",
-    "composition",
-    "weight_gsm",
-  ];
+  const fields: MergeKeyField[] = ["garment_type", "composition", "weight_gsm"];
   if (!options?.ignoreUnitPrice) fields.push("unit_price");
   if (options?.includeFabricBrand) fields.push("fabric_brand");
+  if (options?.includeFabricCost) fields.push("fabric_cost_hint_sar");
   return fields.map((field) => normalizeMergeKeyValue(field, line)).join("|");
 }
 

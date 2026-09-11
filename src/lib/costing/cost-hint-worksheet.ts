@@ -174,19 +174,44 @@ function costHintWeightKey(weightGsm: number | null | undefined): string | null 
   return String(Math.round(weightGsm));
 }
 
+/** Mill identity: canonical supplier id when known, else the printed brand. */
+function costHintMillKey(
+  row: Pick<CostHintWorksheetRow, "supplier_id" | "fabric_brand">
+): string {
+  return (row.supplier_id?.trim() || row.fabric_brand?.trim() || "").toLowerCase();
+}
+
+/** Money must match exactly to merge - an absent figure is its own bucket. */
+function costHintMoneyKey(value: number | null | undefined): string {
+  return value == null || !Number.isFinite(value) ? "-" : String(Math.round(value * 100));
+}
+
 /**
- * Same sales order + garment + fibre + gsm. Missing fibre or weight stays
- * on its own row so unknown fabrics are not mashed together.
+ * Same sales order + garment + fibre + gsm + mill + money. Missing fibre or
+ * weight stays on its own row so unknown fabrics are not mashed together.
+ *
+ * Mill and money are part of the key because a merged row can only print one
+ * of each: without them a Zegna line and a Solbiati line collapse into one
+ * article, and differing costs are discarded rather than shown.
  */
 export function costHintInvoiceGroupKey(
-  row: Pick<CostHintWorksheetRow, "so_number" | "garment" | "composition" | "weight_gsm">
+  row: Pick<CostHintWorksheetRow, "so_number" | "garment" | "composition" | "weight_gsm"> &
+    Partial<
+      Pick<
+        CostHintWorksheetRow,
+        "supplier_id" | "fabric_brand" | "fabric_cost_sar" | "cost_hint_sar" | "unit_price_sar"
+      >
+    >
 ): string | null {
   const fibre = costHintFibreKey(row.composition);
   const weight = costHintWeightKey(row.weight_gsm);
   const garment = row.garment.trim().toLowerCase();
   const so = row.so_number.trim();
   if (!so || !garment || !fibre || !weight) return null;
-  return `${so}|${garment}|${fibre}|${weight}`;
+  const money = [row.fabric_cost_sar, row.cost_hint_sar, row.unit_price_sar]
+    .map(costHintMoneyKey)
+    .join("/");
+  return `${so}|${garment}|${fibre}|${weight}|${costHintMillKey(row)}|${money}`;
 }
 
 function uniqueJoined(values: Array<string | null | undefined>): string | null {
@@ -252,7 +277,7 @@ function mergeCostHintGroup(group: CostHintWorksheetRow[]): CostHintWorksheetRow
   };
 }
 
-/** Collapse same garment + fibre + gsm on one sales order into one worksheet row. */
+/** Collapse same garment + fibre + gsm + mill + money on one sales order into one row. */
 export function combineCostHintRowsByGarmentFibreWeight(
   rows: CostHintWorksheetRow[]
 ): CostHintWorksheetRow[] {
@@ -709,10 +734,20 @@ export function buildCostHintWorksheet(options: {
 
 export function buildCostHintWorksheetFromInvoice(options: {
   invoice: CustomerInvoice;
+  /** Every order the invoice covers - a combined invoice spans several. */
+  salesOrders?: SalesOrder[];
   salesOrder?: SalesOrder | null;
   generatedAt?: string;
 }): CostHintWorksheet {
-  const fabricById = new Map((options.salesOrder?.fabric_lines ?? []).map((line) => [line.id, line]));
+  const coveredOrders = [
+    ...(options.salesOrders ?? []),
+    ...(options.salesOrder ? [options.salesOrder] : []),
+  ];
+  const fabricById = new Map(
+    coveredOrders.flatMap((order) =>
+      (order.fabric_lines ?? []).map((line) => [line.id, line] as const)
+    )
+  );
   const rows: CostHintWorksheetRow[] = (options.invoice.lines ?? []).map((line, index) => {
     const fabricLine = line.sales_order_line_id ? fabricById.get(line.sales_order_line_id) : undefined;
     const fabricNumber = line.fabric_number ?? fabricLine?.fabric_number ?? "";

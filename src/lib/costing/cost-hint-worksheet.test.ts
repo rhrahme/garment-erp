@@ -337,6 +337,93 @@ describe("cost hint worksheet", () => {
     );
   });
 
+  it("keeps different mills, different fabric costs, and unknown fabrics apart", () => {
+    const line = (over: Record<string, unknown>) => ({
+      garment_type: "Trouser",
+      description: "Trouser",
+      composition: "71% wool 15% silk 14% linen",
+      weight_gsm: 250,
+      quantity: 1,
+      unit_price: 0,
+      cost_hint_sar: 200,
+      fabric_cost_hint_sar: 100,
+      ...over,
+    });
+    const worksheet = buildCostHintWorksheetFromInvoice({
+      invoice: {
+        invoice_number: "INV-2026-0018",
+        so_number: "SO-2026-0131, SO-2026-0123",
+        client_name: "Pr Khaled Bin Salman",
+        client_code: "FR-0626-0037",
+        lines: [
+          line({ article_number: 1, fabric_number: "771018", fabric_brand: "Loro Piana" }),
+          line({ article_number: 2, fabric_number: "771019", fabric_brand: "Loro Piana" }),
+          line({ article_number: 3, fabric_number: "64013", fabric_brand: "Zegna" }),
+          line({ article_number: 4, fabric_number: "BEY 008", fabric_brand: "Canclini" }),
+          line({ article_number: 5, fabric_number: "771020", fabric_brand: "Loro Piana", fabric_cost_hint_sar: 999 }),
+          line({ article_number: 6, fabric_number: "Stock", fabric_brand: "Canclini", composition: null, weight_gsm: null }),
+        ],
+      } as unknown as CustomerInvoice,
+    });
+
+    // Only the two Loro Piana rows that match on everything collapse.
+    assert.equal(worksheet.rows.length, 5);
+    const merged = worksheet.rows.find((row) => row.quantity === 2);
+    assert.ok(merged);
+    assert.equal(merged.fabric_brand, "Loro Piana");
+    assert.match(merged.fabric_number, /771018/);
+    assert.match(merged.fabric_number, /771019/);
+
+    for (const row of worksheet.rows) {
+      assert.ok(!row.fabric_brand?.includes(","), `mills merged: ${row.fabric_brand}`);
+    }
+    const dearer = worksheet.rows.find((row) => row.fabric_cost_sar === 999);
+    assert.ok(dearer, "a different fabric cost keeps its own row");
+    assert.equal(dearer.quantity, 1);
+    const unknown = worksheet.rows.find((row) => row.fabric_number === "Stock");
+    assert.ok(unknown, "no composition or weight means no merging");
+    assert.equal(unknown.quantity, 1);
+  });
+
+  it("reads fabric details from every order a combined invoice covers", () => {
+    const order = (id: string, so: string, fabricNumber: string, supplier: string) => ({
+      id,
+      so_number: so,
+      fabric_lines: [
+        {
+          id: `${id}-l1`,
+          fabric_number: fabricNumber,
+          supplier_id: supplier,
+          supplier_name: supplier === "zegna" ? "Zegna" : "Loro Piana",
+          composition: "71% wool 15% silk 14% linen",
+          weight_gsm: 250,
+          garment_type: "Trouser",
+        },
+      ],
+    });
+    const worksheet = buildCostHintWorksheetFromInvoice({
+      invoice: {
+        invoice_number: "INV-2026-0018",
+        so_number: "SO-2026-0131, SO-2026-0123",
+        client_name: "Pr Khaled Bin Salman",
+        client_code: "FR-0626-0037",
+        lines: [
+          { article_number: 1, garment_type: "Trouser", description: "Trouser", sales_order_line_id: "o1-l1", quantity: 1, unit_price: 0, cost_hint_sar: 200 },
+          { article_number: 2, garment_type: "Trouser", description: "Trouser", sales_order_line_id: "o2-l1", quantity: 1, unit_price: 0, cost_hint_sar: 200 },
+        ],
+      } as unknown as CustomerInvoice,
+      salesOrders: [
+        order("o1", "SO-2026-0131", "771018", "loro-piana"),
+        order("o2", "SO-2026-0123", "64013", "zegna"),
+      ] as never,
+    });
+
+    // The second order used to be invisible, leaving its mill blank.
+    assert.equal(worksheet.rows.length, 2);
+    const mills = worksheet.rows.map((row) => row.fabric_brand).sort();
+    assert.deepEqual(mills, ["Loro Piana", "Zegna"]);
+  });
+
   it("combines mill collection names that share fibre and gsm", () => {
     const worksheet = buildCostHintWorksheetFromInvoice({
       invoice: {

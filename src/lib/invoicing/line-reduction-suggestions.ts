@@ -43,8 +43,13 @@ export type LineReductionSuggestion = {
 
 export type LineReductionOptions = ConsolidationOptions;
 
+/**
+ * A merged line prints one mill and one price, so both belong in the key.
+ * Without them a Zegna row and a Solbiati row collapse into one article and
+ * the differing money is discarded rather than shown.
+ */
 function reductionOptions(options?: LineReductionOptions): LineReductionOptions {
-  return { ignoreUnitPrice: true, ...options };
+  return { includeFabricBrand: true, includeFabricCost: true, ...options };
 }
 
 const CROSS_SUIT_GROUP_PREFIX = "combine_cross_suit:";

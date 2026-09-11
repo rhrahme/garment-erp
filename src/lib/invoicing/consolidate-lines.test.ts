@@ -7,6 +7,7 @@ import {
   renumberInvoiceArticles,
   suggestConsolidationGroups,
 } from "./consolidate-lines.ts";
+import { applyAllInvoiceLineReductions } from "./line-reduction-suggestions.ts";
 
 function line(overrides: Partial<CustomerInvoiceLine> & Pick<CustomerInvoiceLine, "id">): CustomerInvoiceLine {
   return {
@@ -245,6 +246,52 @@ describe("applyConsolidation", () => {
     const all = applyAllConsolidations(so0005Jackets);
     assert.equal(all.length, 1);
     assert.equal(all[0]!.quantity, 2);
+  });
+});
+
+describe("mill and fabric cost in the merge key", () => {
+  const trouser = (over: Partial<CustomerInvoiceLine> & Pick<CustomerInvoiceLine, "id">) =>
+    line({
+      description: "Trouser",
+      garment_type: "Trouser",
+      piece_name: "Trouser",
+      composition: "71% Wool 15% Silk 14% Linen",
+      weight_gsm: 250,
+      unit_price: 0,
+      line_total: 0,
+      fabric_cost_hint_sar: 100,
+      ...over,
+    });
+
+  it("keeps separate mills on separate lines", () => {
+    const merged = applyAllInvoiceLineReductions([
+      trouser({ id: "a", fabric_number: "771018", fabric_brand: "Loro Piana" }),
+      trouser({ id: "b", fabric_number: "771019", fabric_brand: "Loro Piana" }),
+      trouser({ id: "c", fabric_number: "64013", fabric_brand: "Zegna" }),
+      trouser({ id: "d", fabric_number: "BEY 008", fabric_brand: "Canclini" }),
+    ]);
+    assert.equal(merged.length, 3);
+    const brands = merged.map((row) => row.fabric_brand).sort();
+    assert.deepEqual(brands, ["Canclini", "Loro Piana", "Zegna"]);
+    const loroPiana = merged.find((row) => row.fabric_brand === "Loro Piana");
+    assert.equal(loroPiana?.quantity, 2);
+  });
+
+  it("keeps a different fabric cost on its own line", () => {
+    const merged = applyAllInvoiceLineReductions([
+      trouser({ id: "a", fabric_number: "771018", fabric_brand: "Loro Piana" }),
+      trouser({ id: "b", fabric_number: "771020", fabric_brand: "Loro Piana", fabric_cost_hint_sar: 999 }),
+    ]);
+    assert.equal(merged.length, 2);
+  });
+
+  it("never zeroes a price by merging rows that disagree on it", () => {
+    const merged = applyAllInvoiceLineReductions([
+      trouser({ id: "a", fabric_brand: "Loro Piana", unit_price: 120, line_total: 120 }),
+      trouser({ id: "b", fabric_brand: "Loro Piana", unit_price: 0, line_total: 0 }),
+    ]);
+    assert.equal(merged.length, 2);
+    assert.ok(merged.some((row) => row.unit_price === 120));
   });
 });
 

@@ -27,7 +27,7 @@ export function loadCostHintWorksheet(query: {
     );
     return buildCostHintWorksheetFromInvoice({
       invoice: { ...invoice, lines },
-      salesOrder: order,
+      salesOrders: orders.length > 0 ? orders : order ? [order] : [],
     });
   }
 
