@@ -10,6 +10,8 @@ import {
   resolveLoroPianaFabricInput,
 } from "@/lib/fabric-sourcing/loro-piana-styles";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
+import { DRAPERS_SUPPLIER_ID } from "@/lib/integrations/drapers/config";
+import { normalizeDrapersFabricCode } from "@/lib/integrations/drapers/stock";
 import { formatFabricSupplierName, normalizeFabricSupplierFields } from "@/lib/fabric-sourcing/supplier-display";
 import type { SupplierFabric } from "@/lib/types/fabric-sourcing";
 
@@ -66,18 +68,32 @@ function buildManualFabricEntry(supplierId: string, fabricNumber: string): Fabri
 function findExactCatalogMatch(supplierId: string, fabricNumber: string): FabricSearchItem | null {
   const trimmed = fabricNumber.trim();
   const canonicalId = resolveFabricSupplierId(supplierId);
+  const usesLpStyleInput = isLoroPianaStyleSupplier(canonicalId);
+
+  // Drapers cloths get typed in with the mill's own "DP" prefix ("DP 12517",
+  // "DP70145") while the catalog stores the bare code. Search both spellings.
+  const usesDrapersCodes = canonicalId === DRAPERS_SUPPLIER_ID;
+  const drapersCode = usesDrapersCodes ? normalizeDrapersFabricCode(trimmed) : null;
+
   const catalogMatches = searchSupplierFabrics(canonicalId, trimmed, 20);
+  if (drapersCode && drapersCode !== trimmed) {
+    catalogMatches.push(...searchSupplierFabrics(canonicalId, drapersCode, 20));
+  }
   const items = catalogMatches.map((item) => toSearchItem(item, false));
 
-  const usesLpStyleInput = isLoroPianaStyleSupplier(canonicalId);
   const lookupNumber = usesLpStyleInput
     ? normalizeLoroPianaFabricNumber(trimmed).toLowerCase()
-    : trimmed.toLowerCase();
+    : (drapersCode ?? trimmed).toLowerCase();
 
   const exact =
     items.find((item) => !item.manual && item.fabric_number.toLowerCase() === lookupNumber) ??
     items.find((item) => item.fabric_number.toLowerCase() === trimmed.toLowerCase());
-  if (exact) return exact;
+  if (exact) {
+    // The prefix is how it was written down, not a different cloth. Take the
+    // specs and leave the number alone: rewriting it would orphan the stickers
+    // and the supplier PO that already carry it.
+    return usesDrapersCodes ? { ...exact, fabric_number: trimmed } : exact;
+  }
 
   // A range row ("50021-50034") carries the specs and price for every number in
   // it. Keep the number that was actually entered: the range is price-list

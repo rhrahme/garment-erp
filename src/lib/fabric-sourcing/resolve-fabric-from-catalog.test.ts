@@ -42,6 +42,22 @@ describe("resolveFabricItemFromCatalog - catalog range rows", () => {
     assert.equal(item.weight_gsm, 360);
   });
 
+  it("resolves a Drapers number typed with the mill's DP prefix", () => {
+    const spaced = resolveFabricItemFromCatalog("drapers", "DP 12517");
+    const tight = resolveFabricItemFromCatalog("drapers", "DP70145");
+    const bare = resolveFabricItemFromCatalog("drapers", "12517");
+
+    assert.equal(spaced.manual, false, "DP 12517 is 12517");
+    assert.equal(tight.manual, false, "DP70145 is 70145");
+    assert.equal(spaced.composition, bare.composition);
+    assert.equal(spaced.unit_price, bare.unit_price);
+  });
+
+  it("keeps the DP prefix on the number itself", () => {
+    // The stickers and the supplier PO already carry it as written.
+    assert.equal(resolveFabricItemFromCatalog("drapers", "DP 12517").fabric_number, "DP 12517");
+  });
+
   it("leaves an unknown number as a manual entry", () => {
     const item = resolveFabricItemFromCatalog("zegna", "99999999");
 
