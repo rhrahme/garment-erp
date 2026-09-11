@@ -7,6 +7,7 @@ import {
 } from "@/lib/fabric-sourcing/fabric-swatch-keys";
 import { readLoroPianaSwatchFileAsync } from "@/lib/fabric-sourcing/loro-piana-swatches";
 import { readDrapersSwatchFileAsync } from "@/lib/fabric-sourcing/drapers-swatches";
+import { readCaccioppoliSwatchFileAsync } from "@/lib/fabric-sourcing/caccioppoli-swatches";
 import { lookupCaccioppoliItemImages } from "@/lib/integrations/caccioppoli/client";
 import { isCaccioppoliApiConfigured } from "@/lib/integrations/caccioppoli/config";
 import { lookupDrapersFabricMedias } from "@/lib/integrations/drapers/client";
@@ -74,6 +75,12 @@ async function loadDrapersSwatchJpeg(fabricNumber: string): Promise<string | nul
 }
 
 async function loadCaccioppoliSwatchJpeg(fabricNumber: string): Promise<string | null> {
+  const stored = await readCaccioppoliSwatchFileAsync(fabricNumber);
+  if (stored) {
+    const jpeg = await toJpegDataUrl(stored.buffer);
+    if (jpeg) return jpeg;
+  }
+
   if (!isCaccioppoliApiConfigured()) return null;
   const result = await lookupCaccioppoliItemImages(fabricNumber);
   if (!result.ok || !result.square) return null;
@@ -98,7 +105,8 @@ async function loadSwatchJpeg(supplierId: string, fabricNumber: string): Promise
 
 /**
  * Server-side swatch resolution for PDF embedding.
- * Drapers / Loro Piana: local disk cache first; Drapers falls back to live medias API.
+ * All three mills read the stored swatch (local disk, then Supabase storage)
+ * first; Drapers and Caccioppoli then fall back to the live API.
  */
 export async function loadFabricSwatchJpegsForPdf(
   fabrics: FabricSwatchKey[]
