@@ -1,6 +1,7 @@
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
 import { searchSupplierFabrics } from "@/lib/data/supplier-catalogs";
 import { getSupplierByIdFromContactsSync } from "@/lib/data/supplier-contacts";
+import { fabricNumberMatchesCatalogEntry } from "@/lib/fabric-sourcing/fabric-catalog-number-match";
 import {
   expandLoroPianaStyleQuery,
   getLoroPianaMillLine,
@@ -72,11 +73,21 @@ function findExactCatalogMatch(supplierId: string, fabricNumber: string): Fabric
   const lookupNumber = usesLpStyleInput
     ? normalizeLoroPianaFabricNumber(trimmed).toLowerCase()
     : trimmed.toLowerCase();
-  return (
+
+  const exact =
     items.find((item) => !item.manual && item.fabric_number.toLowerCase() === lookupNumber) ??
-    items.find((item) => item.fabric_number.toLowerCase() === trimmed.toLowerCase()) ??
-    null
+    items.find((item) => item.fabric_number.toLowerCase() === trimmed.toLowerCase());
+  if (exact) return exact;
+
+  // A range row ("50021-50034") carries the specs and price for every number in
+  // it. Keep the number that was actually entered: the range is price-list
+  // shorthand and must never reach a sticker, a PO or an invoice.
+  const inRange = items.find((item) =>
+    fabricNumberMatchesCatalogEntry(lookupNumber, item.fabric_number)
   );
+  if (inRange) return { ...inRange, fabric_number: trimmed };
+
+  return null;
 }
 
 /** Server-side fabric lookup — mirrors /api/fabric-search for order line updates. */

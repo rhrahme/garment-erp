@@ -16,6 +16,7 @@ import {
   normalizeLoroPianaFabricNumber,
   resolveLoroPianaFabricInput,
 } from "@/lib/fabric-sourcing/loro-piana-styles";
+import { fabricNumberMatchesCatalogEntry } from "@/lib/fabric-sourcing/fabric-catalog-number-match";
 import { resolveLoroPianaDisplayColor } from "@/lib/fabric-sourcing/loro-piana-swatch-colors";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
 import {
@@ -354,6 +355,12 @@ export function searchSupplierFabrics(supplierId: string, query: string, limit: 
 
   const exact = byNumber.get(normalized);
   if (exact) return [exact];
+
+  // Price lists abbreviate consecutive numbers into one range row ("50021-50034").
+  // A number inside the range is that cloth, and the substring scan below can
+  // never find it - "50021-50034" neither starts with nor contains "50024".
+  const inRange = items.find((item) => fabricNumberMatchesCatalogEntry(normalized, item.fabric_number));
+  if (inRange) return [inRange];
 
   const matches: SupplierFabric[] = [];
   for (const item of items) {

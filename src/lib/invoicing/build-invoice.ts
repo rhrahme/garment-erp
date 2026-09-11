@@ -2,6 +2,7 @@ import { getSalesOrderCost } from "@/lib/costing/compute";
 import { formatClientDisplayName } from "@/lib/clients/names";
 import { getClientById } from "@/lib/data/clients";
 import { getFactoryBrandById } from "@/lib/data/factory-brands";
+import { resolveFabricItemFromCatalog } from "@/lib/fabric-sourcing/resolve-fabric-from-catalog";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import { isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
 import { oldestCalendarDate, withOldestCoveredInvoiceDate } from "@/lib/invoicing/invoice-dates";
@@ -114,6 +115,18 @@ export function enrichInvoiceLinesWithFabricDetails(
       pieceNames
     );
 
+    const composition = resolveInvoiceComposition(line, fabricLine);
+    const weightGsm = line.weight_gsm ?? fabricLine.weight_gsm;
+
+    // Lines whose fabric was never matched to the catalog stored no fibre and no
+    // weight. Left blank they all look alike, and articles that share nothing but
+    // their emptiness merge into one row. Fill the gaps from the mill's own price
+    // list; anything already on the line wins.
+    const catalog =
+      composition == null || weightGsm == null
+        ? resolveFabricItemFromCatalog(fabricLine.supplier_id, fabricLine.fabric_number)
+        : null;
+
     return {
       ...line,
       piece_name: pieceName,
@@ -121,8 +134,8 @@ export function enrichInvoiceLinesWithFabricDetails(
       description: lineDescription(fabricLine.garment_type, pieceName),
       fabric_number: line.fabric_number ?? fabricLine.fabric_number,
       fabric_brand: line.fabric_brand ?? fabricBrandLabel(fabricLine),
-      composition: resolveInvoiceComposition(line, fabricLine),
-      weight_gsm: line.weight_gsm ?? fabricLine.weight_gsm,
+      composition: composition ?? catalog?.composition ?? null,
+      weight_gsm: weightGsm ?? catalog?.weight_gsm ?? null,
     };
   });
 }
@@ -167,6 +180,30 @@ export function enrichInvoiceLinesWithCostHints(
   });
 }
 
+/**
+ * Fibre and weight for a fabric line, topped up from the mill's price list.
+ *
+ * Fabric numbers that never matched the catalog stored nothing at all. Blank
+ * lines are indistinguishable from each other, so articles sharing only their
+ * emptiness merged into a single row. Whatever the line already holds wins;
+ * this only fills the gaps, and leaves them blank when the catalog has no entry
+ * rather than inventing a spec.
+ */
+function fabricSpecForLine(fabricLine: SalesOrderFabricLine): {
+  composition: string | null;
+  weight_gsm: number | null;
+} {
+  const composition = fabricLine.composition;
+  const weight_gsm = fabricLine.weight_gsm;
+  if (composition != null && weight_gsm != null) return { composition, weight_gsm };
+
+  const catalog = resolveFabricItemFromCatalog(fabricLine.supplier_id, fabricLine.fabric_number);
+  return {
+    composition: composition ?? catalog.composition ?? null,
+    weight_gsm: weight_gsm ?? catalog.weight_gsm ?? null,
+  };
+}
+
 export function buildInvoiceLinesFromSalesOrder(order: SalesOrder): CustomerInvoiceLine[] {
   const orderCost = getSalesOrderCost(order);
   const costByLineId = new Map(orderCost.lines.map((line) => [line.line_id, line.total_cost_sar]));
@@ -194,6 +231,7 @@ export function buildInvoiceLinesFromSalesOrder(order: SalesOrder): CustomerInvo
             sequence: i + 1,
           }));
 
+    const fabricSpec = fabricSpecForLine(fabricLine);
     const garmentPieces = getGarmentPieces(fabricLine.garment_type);
     if (garmentPieces.length > 1 && stickers.length > 1) {
       index += 1;
@@ -219,8 +257,8 @@ export function buildInvoiceLinesFromSalesOrder(order: SalesOrder): CustomerInvo
         sticker_code: stickers[0]!.code,
         fabric_number: fabricLine.fabric_number,
         fabric_brand: fabricBrandLabel(fabricLine),
-        composition: fabricLine.composition,
-        weight_gsm: fabricLine.weight_gsm,
+        composition: fabricSpec.composition,
+        weight_gsm: fabricSpec.weight_gsm,
         quantity: 1,
         unit_price: setUnitPrice,
         line_total: setUnitPrice,
@@ -243,8 +281,8 @@ export function buildInvoiceLinesFromSalesOrder(order: SalesOrder): CustomerInvo
         sticker_code: sticker.code,
         fabric_number: fabricLine.fabric_number,
         fabric_brand: fabricBrandLabel(fabricLine),
-        composition: fabricLine.composition,
-        weight_gsm: fabricLine.weight_gsm,
+        composition: fabricSpec.composition,
+        weight_gsm: fabricSpec.weight_gsm,
         quantity: 1,
         unit_price: unitPrice,
         line_total: unitPrice,
