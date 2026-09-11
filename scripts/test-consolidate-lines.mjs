@@ -15,6 +15,7 @@ await import("../src/lib/invoicing/rebuild-invoice-lines.test.ts");
 await import("../src/lib/costing/cost-hint-worksheet.test.ts");
 await import("../src/lib/costing/generate-cost-hint-worksheet-pdf.test.ts");
 await import("../src/lib/fabric-sourcing/resolve-fabric-from-catalog.test.ts");
+await import("../src/lib/invoicing/fabric-spec-from-catalog.test.ts");
 await import("../src/lib/sales-orders/pattern-so-mismatch.test.ts");
 // Everything below imports a module that pulls in `server-only`, which throws
 // under the bare node test runner and silently skips the rest of this file.

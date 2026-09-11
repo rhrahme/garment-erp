@@ -115,27 +115,23 @@ export function enrichInvoiceLinesWithFabricDetails(
       pieceNames
     );
 
-    const composition = resolveInvoiceComposition(line, fabricLine);
-    const weightGsm = line.weight_gsm ?? fabricLine.weight_gsm;
-
-    // Lines whose fabric was never matched to the catalog stored no fibre and no
-    // weight. Left blank they all look alike, and articles that share nothing but
-    // their emptiness merge into one row. Fill the gaps from the mill's own price
-    // list; anything already on the line wins.
-    const catalog =
-      composition == null || weightGsm == null
-        ? resolveFabricItemFromCatalog(fabricLine.supplier_id, fabricLine.fabric_number)
-        : null;
+    const fabricNumber = line.fabric_number ?? fabricLine.fabric_number;
+    const spec = catalogFabricSpec(
+      fabricLine.supplier_id,
+      fabricNumber,
+      resolveInvoiceComposition(line, fabricLine),
+      line.weight_gsm ?? fabricLine.weight_gsm
+    );
 
     return {
       ...line,
       piece_name: pieceName,
       garment_type: garmentType,
       description: lineDescription(fabricLine.garment_type, pieceName),
-      fabric_number: line.fabric_number ?? fabricLine.fabric_number,
+      fabric_number: fabricNumber,
       fabric_brand: line.fabric_brand ?? fabricBrandLabel(fabricLine),
-      composition: composition ?? catalog?.composition ?? null,
-      weight_gsm: weightGsm ?? catalog?.weight_gsm ?? null,
+      composition: spec.composition,
+      weight_gsm: spec.weight_gsm,
     };
   });
 }
@@ -180,28 +176,61 @@ export function enrichInvoiceLinesWithCostHints(
   });
 }
 
+/** "97% CO 3% EA" states a composition; "Cotton and Elastane" only names the fibres. */
+function statesFibrePercentages(composition: string | null): boolean {
+  return composition != null && /\d\s*%/.test(composition);
+}
+
 /**
- * Fibre and weight for a fabric line, topped up from the mill's price list.
+ * Fibre and weight for a fabric number, read from the mill's own price list.
  *
- * Fabric numbers that never matched the catalog stored nothing at all. Blank
- * lines are indistinguishable from each other, so articles sharing only their
- * emptiness merged into a single row. Whatever the line already holds wins;
- * this only fills the gaps, and leaves them blank when the catalog has no entry
- * rather than inventing a spec.
+ * The price list is the authority. When the number resolves to a catalog row,
+ * that row's fibre and weight win over whatever the line happens to be holding:
+ * stored specs have been wrong before - a Loro Piana composition printed on
+ * Caccioppoli shirtings, "90% Wool 5% Cashmere" against a price list reading
+ * 95/5 - and a value that only ever fills a blank can never be corrected once a
+ * wrong one is saved.
+ *
+ * The one exception is a catalog row that names fibres without stating their
+ * shares, as the Drapers list does. Replacing "97% CO 3% EA" with "Cotton and
+ * Elastane" loses the composition, so the fuller stored value stays.
+ *
+ * Where the catalog has no entry for the number nothing can be verified, and
+ * the stored value stands rather than a spec being invented for it.
  */
+function catalogFabricSpec(
+  supplierId: string,
+  fabricNumber: string,
+  storedComposition: string | null | undefined,
+  storedWeightGsm: number | null | undefined
+): { composition: string | null; weight_gsm: number | null } {
+  const stored = {
+    composition: storedComposition ?? null,
+    weight_gsm: storedWeightGsm ?? null,
+  };
+
+  const catalog = resolveFabricItemFromCatalog(supplierId, fabricNumber);
+  if (catalog.manual) return stored;
+
+  const catalogIsVaguer =
+    statesFibrePercentages(stored.composition) && !statesFibrePercentages(catalog.composition);
+
+  return {
+    composition: catalogIsVaguer ? stored.composition : catalog.composition ?? stored.composition,
+    weight_gsm: catalog.weight_gsm ?? stored.weight_gsm,
+  };
+}
+
 function fabricSpecForLine(fabricLine: SalesOrderFabricLine): {
   composition: string | null;
   weight_gsm: number | null;
 } {
-  const composition = fabricLine.composition;
-  const weight_gsm = fabricLine.weight_gsm;
-  if (composition != null && weight_gsm != null) return { composition, weight_gsm };
-
-  const catalog = resolveFabricItemFromCatalog(fabricLine.supplier_id, fabricLine.fabric_number);
-  return {
-    composition: composition ?? catalog.composition ?? null,
-    weight_gsm: weight_gsm ?? catalog.weight_gsm ?? null,
-  };
+  return catalogFabricSpec(
+    fabricLine.supplier_id,
+    fabricLine.fabric_number,
+    fabricLine.composition,
+    fabricLine.weight_gsm
+  );
 }
 
 export function buildInvoiceLinesFromSalesOrder(order: SalesOrder): CustomerInvoiceLine[] {
