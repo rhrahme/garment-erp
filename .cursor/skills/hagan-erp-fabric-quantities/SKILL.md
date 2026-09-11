@@ -6,10 +6,31 @@ description: Where fabric meters in this ERP actually come from, why "received m
 # Fabric quantities: what the numbers actually mean
 
 Every meter figure in this ERP traces back to **one** field: `quantity` on the
-sales order fabric line. Nothing else measures cloth. Receiving does not, the
-floor does not, the worksheet does not. If `quantity` is wrong, every meter
-number downstream is wrong in exactly the same way, and they will all agree with
-each other, which makes the error look like corroboration.
+sales order fabric line. Nothing else measures cloth. The purchase order does
+not, receiving does not, the floor does not, the worksheet does not. If
+`quantity` is wrong, every meter number downstream is wrong in exactly the same
+way, and they will all agree with each other, which makes the error look like
+corroboration.
+
+## The whole chain, in one place
+
+| Step | Field | Where it comes from |
+| --- | --- | --- |
+| Sales order line | `quantity` | Typed in the ERP, or the ClickUp "Unit" garment count. **The only input.** |
+| Supplier PO line | `quantity_ordered` | `quantity_ordered: line.quantity` (`create-fabric-pos.ts:80`) |
+| Email to the mill | `quantity` | `line.quantity_ordered` (`email-content.ts:169`) |
+| Fabric receipt | `fabric_meters` | `fabric_meters: line.quantity` (`fabric-receiving.ts`, 4 sites) |
+| Cost worksheet | `Meters/pc` | `line.quantity / pieces` |
+
+The PO is a real record of what was ordered and it is what the mill was asked
+for, so it is worth quoting - but it is a **copy taken at PO-creation time**, not
+an independent measurement. It corroborates nothing. If the sales order line was
+edited afterwards the PO keeps the older figure, which makes it a useful audit
+trail for *what we asked for* and nothing more.
+
+There is **no received quantity anywhere in the codebase.** Searching all of
+`src/` for `quantity_received`, `received_quantity`, `meters_received`,
+`received_meters` or `actual_meters` returns zero matches.
 
 Before you quote a meter figure to anyone, know which of the three problems
 below applies to the rows you are looking at.
@@ -29,12 +50,28 @@ anyone for a number: `fabric-receiving-scan.ts` does not contain the string
 `meters` at all, and `createFabricReceipt` stamps `fabric_meters: line.quantity`
 onto the new receipt alongside the timestamps.
 
+The receive endpoint proves it. `POST /api/fabric-receiving/receive` accepts one
+field, `sales_order_line_id`, and nothing else. The task team's confirmation is a
+**yes/no that the cloth arrived**, and the system fills the ordered figure in
+behind it as though someone had counted.
+
 So a fabric receipt answers "how many meters did we **order**", echoed back with
 a received date on it. It cannot answer any of these:
 
 - how many meters the mill actually shipped
 - how many meters the store actually counted
 - whether the cut piece was short, or whether there is leftover
+
+Nor can anything else. The three places a real figure could plausibly live are
+all dead ends:
+
+- **Supplier invoices** would state the shipped meters, but
+  `SupplierInvoiceRecord` stores only invoice number, amount, currency, AWB and
+  the PDF filename. The line items are never parsed out of the attachment.
+- **Shipments** track AWB and parcel movement. There is no quantity on them.
+- **Defect reports** are note plus photos, and the defect types are shade, hole,
+  stain, crease, wrong fabric, other. There is no "short length", so even a roll
+  that arrives short has nowhere to be written down as a number.
 
 **Never tell anyone a receipt figure is what was received.** If someone asks how
 many meters arrived, the honest answer is that the ERP does not capture it -
@@ -116,12 +153,23 @@ value and let the header carry the explanation.
    the only real inputs.
 2. Check whether the values look like meters (decimals, varying) or like a
    garment count (all 1s and 2s on multi-piece garments).
-3. If you quote a receipt, say it is the ordered figure echoed back, not a
+3. Check the PO too, and say which you are quoting. It is the same number copied
+   at PO-creation time, but it is what the mill was actually asked for, and it
+   survives later edits to the sales order line.
+4. If you quote a receipt, say it is the ordered figure echoed back, not a
    measurement.
-4. If you quote the worksheet, multiply back up by the piece count, or label it
+5. If you quote the worksheet, multiply back up by the piece count, or label it
    per piece.
-5. Quote the `updated_at` of whatever snapshot you read - see
+6. Quote the `updated_at` of whatever snapshot you read - see
    `hagan-erp-architecture` for why.
+
+**The POs are not in the repo.** `fabric-orders.local.json` lives at
+`process.cwd()`, is a lazy Supabase document, and has no committed fallback in
+`src/data/` the way `sales-orders.json` and `fabric-receipts.json` do. A
+checkout without Supabase credentials can read the sales order lines and the
+receipts but genuinely cannot read a single PO. Say that specifically rather
+than claiming the ERP does not hold the data - it does, you just cannot see it
+from here.
 
 ## Worked example: fabric 50024
 
@@ -136,9 +184,12 @@ As of the `2026-08-04` snapshot, five lines carry Zegna 50024:
 | SO-2026-0123 | Pr Khaled Bin Salman | Overshirt+Trouser | 3.5 |
 
 10.9 m ordered in total, 5.5 m of it for Pr Khaled. These are decimals, so they
-were entered in the ERP and are probably true meters. **There is no receipt row
-for 50024 anywhere in the 1358 receipts**, so as of that snapshot the ERP does
-not record it arriving at all - and even if it did, point 1 applies.
+were entered in the ERP and are true meters, not the ClickUp garment count.
+**There is no receipt row for 50024 anywhere in the 1358 receipts**, so as of
+that snapshot the ERP does not record it arriving at all - and even if it did,
+point 1 applies. The Zegna POs carrying 50024 would show what was actually
+emailed to the mill, and could not be checked from the repo for the reason
+above.
 
 The `3.5` on SO-2026-0123 is where the worksheet's `1.75 m` came from: 3.5
 divided by the two pieces of an `Overshirt+Trouser`. Nothing was invented, and
