@@ -102,7 +102,7 @@ export function InvoiceEditor({
   async function rebuildLines() {
     if (
       !window.confirm(
-        "Rebuild every line on this invoice from its sales orders? Line prices you typed here will be replaced."
+        "Delete every line on this invoice and rebuild them from the sales orders? Any price you typed here is lost."
       )
     ) {
       return;
@@ -110,7 +110,7 @@ export function InvoiceEditor({
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`/api/customer-invoices/${invoice.id}/sync-lines`, {
+      const res = await fetch(`/api/customer-invoices/${invoice.id}/rebuild-lines`, {
         method: "POST",
       });
       const data = (await res.json()) as { error?: string };

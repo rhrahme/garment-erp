@@ -8,6 +8,7 @@ import {
 import { getSalesOrdersByIdsFresh, readSalesOrdersFresh, writeSalesOrders } from "@/lib/data/sales-orders";
 import {
   buildDraftInvoiceFromSalesOrders,
+  rebuildInvoiceLinesFromSalesOrders,
   syncInvoiceLinesFromSalesOrder,
   syncInvoiceLinesFromSalesOrders,
 } from "@/lib/invoicing/build-invoice";
@@ -202,6 +203,14 @@ export async function applyCustomerInvoiceLineSync(
       ? syncInvoiceLinesFromSalesOrders(invoice, orders)
       : syncInvoiceLinesFromSalesOrder(invoice, orders[0]!);
   return saveCustomerInvoice(withNormalizedPayments(synced));
+}
+
+export async function applyCustomerInvoiceLineRebuild(
+  invoice: CustomerInvoice,
+  orders: SalesOrder[]
+): Promise<CustomerInvoice> {
+  const rebuilt = rebuildInvoiceLinesFromSalesOrders(invoice, orders);
+  return saveCustomerInvoice(withNormalizedPayments(rebuilt));
 }
 
 export async function createCustomerInvoiceFromSalesOrders(

@@ -478,6 +478,49 @@ export function syncInvoiceLinesFromSalesOrder(
   };
 }
 
+/**
+ * Discard every stored line and regenerate from the covered orders.
+ *
+ * Unlike the sync above this keeps nothing: prices, quantities and merged rows
+ * written by an earlier build are thrown away. Use it when the stored lines are
+ * known to be wrong, not to pick up newly added articles.
+ */
+export function rebuildInvoiceLinesFromSalesOrders(
+  invoice: CustomerInvoice,
+  orders: SalesOrder[]
+): CustomerInvoice {
+  const unique = [...new Map(orders.map((order) => [order.id, order])).values()].sort((a, b) =>
+    a.so_number.localeCompare(b.so_number)
+  );
+  if (unique.length === 0) return invoice;
+
+  const built = renumberInvoiceArticles(
+    applyAllInvoiceLineReductions(unique.flatMap((order) => buildInvoiceLinesFromSalesOrder(order)))
+  );
+  const vat_rate = invoice.vat_rate ?? resolveInvoiceVatRate(invoice.delivery_destination);
+  const { lines, subtotal, vat_amount, total } = recalculateInvoiceTotals(built, vat_rate);
+  const totalCost = unique.reduce((sum, order) => {
+    const cost = getSalesOrderCost(order).total_cost_sar;
+    return cost != null ? sum + cost : sum;
+  }, 0);
+
+  return withOldestCoveredInvoiceDate(
+    withInvoiceSalesOrders(
+      {
+        ...invoice,
+        lines,
+        subtotal,
+        vat_rate,
+        vat_amount,
+        total,
+        total_cost_sar: totalCost || invoice.total_cost_sar,
+      },
+      unique.map((order) => ({ id: order.id, so_number: order.so_number }))
+    ),
+    unique.map((order) => order.order_date)
+  );
+}
+
 export function syncInvoiceLinesFromSalesOrders(
   invoice: CustomerInvoice,
   orders: SalesOrder[]
