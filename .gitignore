@@ -49,7 +49,10 @@ transporter-invoices.local.json
 /reference-documents/
 
 # local tooling / temp
-.cursor/
+# Skills are shared, so .cursor itself is not excluded - git cannot re-include a
+# path once a parent directory is excluded.
+.cursor/*
+!.cursor/skills/
 .clickup-mcp-payloads/
 .tmp-pages/
 
