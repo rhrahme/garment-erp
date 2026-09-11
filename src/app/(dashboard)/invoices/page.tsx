@@ -6,6 +6,7 @@ import {
   readCustomerInvoicesFresh,
 } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { invoiceSalesOrderIds } from "@/lib/invoicing/invoice-sales-orders";
 import { getInvoiceableSalesOrders } from "@/lib/invoicing/invoiceable-orders";
 import { getSessionContext } from "@/lib/auth/session";
 import { filterSalesOrdersForSession, getAllowedSalesBrandIds } from "@/lib/sales/access";
@@ -34,7 +35,9 @@ export default async function InvoicesPage() {
   const scopedFile = session.isSalesOperator
     ? {
         ...invoicesFile,
-        invoices: invoicesFile.invoices.filter((invoice) => orderIds.has(invoice.sales_order_id)),
+        invoices: invoicesFile.invoices.filter((invoice) =>
+          invoiceSalesOrderIds(invoice).some((id) => orderIds.has(id))
+        ),
       }
     : invoicesFile;
   const invoices = listCustomerInvoicesSortedFromFile(scopedFile).map((invoice) =>

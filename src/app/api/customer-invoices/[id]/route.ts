@@ -16,7 +16,8 @@ import type { CustomerInvoice, CustomerInvoiceLine, CustomerInvoiceStatus } from
 import { invalidateDocumentCache } from "@/lib/data/document-persistence";
 import path from "path";
 import { requireAuthenticated } from "@/lib/auth/session";
-import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
+import { getSalesOrdersByIdsFresh } from "@/lib/data/sales-orders";
+import { invoiceSalesOrderIds } from "@/lib/invoicing/invoice-sales-orders";
 import { canAccessSalesOrder } from "@/lib/sales/access";
 import { customerInvoiceForSession } from "@/lib/auth/invoice-cost-access";
 import { canViewMoney } from "@/lib/auth/invoice-amounts-access";
@@ -42,8 +43,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     if (!invoice) {
       return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
     }
-    const order = await getSalesOrderByIdFresh(invoice.sales_order_id);
-    if (!order || !canAccessSalesOrder(session, order)) {
+    const orders = await getSalesOrdersByIdsFresh(invoiceSalesOrderIds(invoice));
+    if (orders.length === 0 || !orders.some((order) => canAccessSalesOrder(session, order))) {
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
     const resolved = { ...invoice, lines: resolveInvoiceLines(invoice.lines) };
@@ -65,8 +66,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     if (!invoice) {
       return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
     }
-    const order = await getSalesOrderByIdFresh(invoice.sales_order_id);
-    if (!order || !canAccessSalesOrder(session, order)) {
+    const orders = await getSalesOrdersByIdsFresh(invoiceSalesOrderIds(invoice));
+    if (orders.length === 0 || !orders.some((order) => canAccessSalesOrder(session, order))) {
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
 

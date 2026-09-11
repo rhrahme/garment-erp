@@ -328,6 +328,7 @@ export function ZapierSetup() {
             <li>DELETE {baseUrl}/api/v1/thread-button-matching/photos/[photoId]</li>
             <li>POST {baseUrl}/api/v1/customer-invoices/[id]/mark-sent</li>
             <li>POST {baseUrl}/api/v1/customer-invoices/from-sales-order</li>
+            <li>POST {baseUrl}/api/v1/customer-invoices/combine body: invoice_ids[]</li>
             <li>PATCH {baseUrl}/api/v1/customer-invoices/[id]</li>
             <li>POST {baseUrl}/api/v1/customer-invoices/[id]/payments</li>
             <li>POST {baseUrl}/api/v1/sales/client-details</li>

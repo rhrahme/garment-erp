@@ -16,6 +16,7 @@ import {
   withNormalizedPayments,
 } from "@/lib/invoicing/payments";
 import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
+import { invoiceCoversSalesOrder } from "@/lib/invoicing/invoice-sales-orders";
 import type {
   CustomerInvoice,
   CustomerInvoiceSummary,
@@ -74,7 +75,7 @@ export async function getCustomerInvoiceByIdFresh(id: string): Promise<CustomerI
 }
 
 export function getCustomerInvoiceBySalesOrderId(salesOrderId: string): CustomerInvoice | undefined {
-  return readCustomerInvoices().invoices.find((invoice) => invoice.sales_order_id === salesOrderId);
+  return readCustomerInvoices().invoices.find((invoice) => invoiceCoversSalesOrder(invoice, salesOrderId));
 }
 
 /** Bypass in-process cache — use on order detail when invoice may exist in Supabase but not local cache. */
@@ -82,7 +83,17 @@ export async function getCustomerInvoiceBySalesOrderIdFresh(
   salesOrderId: string
 ): Promise<CustomerInvoice | undefined> {
   const store = await readCustomerInvoicesFresh();
-  return store.invoices.find((invoice) => invoice.sales_order_id === salesOrderId);
+  return store.invoices.find((invoice) => invoiceCoversSalesOrder(invoice, salesOrderId));
+}
+
+export async function removeCustomerInvoicesByIds(ids: string[]): Promise<number> {
+  const remove = new Set(ids.map((id) => id.trim()).filter(Boolean));
+  if (remove.size === 0) return 0;
+  const store = await readCustomerInvoicesFresh();
+  const next = store.invoices.filter((invoice) => !remove.has(invoice.id));
+  const removed = store.invoices.length - next.length;
+  if (removed > 0) await writeCustomerInvoices({ ...store, invoices: next });
+  return removed;
 }
 
 export function generateInvoiceNumber(invoices: CustomerInvoice[]): string {

@@ -18,16 +18,28 @@ export function InvoiceableOrdersPanel({
 }) {
   const router = useRouter();
   const [creatingId, setCreatingId] = useState<string | null>(null);
+  const [creatingClientCode, setCreatingClientCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function createInvoice(salesOrderId: string) {
-    setCreatingId(salesOrderId);
+  const clientGroups = orders.reduce<Record<string, InvoiceableSalesOrder[]>>((groups, order) => {
+    const key = order.client_code.trim() || order.client_name;
+    groups[key] = [...(groups[key] ?? []), order];
+    return groups;
+  }, {});
+
+  async function createInvoice(salesOrderIds: string[], creatingKey: string) {
+    setCreatingId(salesOrderIds.length === 1 ? salesOrderIds[0]! : null);
+    setCreatingClientCode(salesOrderIds.length > 1 ? creatingKey : null);
     setError(null);
     try {
       const res = await fetch("/api/customer-invoices/from-sales-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sales_order_id: salesOrderId }),
+        body: JSON.stringify(
+          salesOrderIds.length === 1
+            ? { sales_order_id: salesOrderIds[0] }
+            : { sales_order_ids: salesOrderIds }
+        ),
       });
       const data = (await res.json()) as {
         id?: string;
@@ -46,6 +58,7 @@ export function InvoiceableOrdersPanel({
       setError(err instanceof Error ? err.message : "Failed to create invoice.");
     } finally {
       setCreatingId(null);
+      setCreatingClientCode(null);
     }
   }
 
@@ -66,7 +79,8 @@ export function InvoiceableOrdersPanel({
         <div>
           <h3 className="text-base font-semibold text-slate-900">Ready to invoice</h3>
           <p className="text-sm text-slate-600">
-            {orders.length} bespoke order{orders.length !== 1 ? "s" : ""} without an invoice yet
+            {orders.length} bespoke order{orders.length !== 1 ? "s" : ""} without an invoice yet.
+            Same-client orders can be one invoice.
           </p>
         </div>
       </div>
@@ -74,6 +88,29 @@ export function InvoiceableOrdersPanel({
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
       )}
+
+      {Object.entries(clientGroups)
+        .filter(([, group]) => group.length >= 2)
+        .map(([clientCode, group]) => (
+          <div
+            key={clientCode}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950"
+          >
+            <p>
+              <span className="font-medium">{group[0]!.client_name}</span> has {group.length} orders
+              ready to invoice. Combine them into one invoice.
+            </p>
+            <Button
+              size="sm"
+              onClick={() => void createInvoice(group.map((order) => order.id), clientCode)}
+              disabled={creatingId != null || creatingClientCode != null}
+            >
+              {creatingClientCode === clientCode
+                ? "Creating…"
+                : `Create one invoice (${group.length} orders)`}
+            </Button>
+          </div>
+        ))}
 
       <div className="overflow-x-auto rounded-xl border border-emerald-200 bg-white">
         <table className="min-w-full text-sm">
@@ -112,8 +149,8 @@ export function InvoiceableOrdersPanel({
                 <td className="px-4 py-3 text-right">
                   <Button
                     size="sm"
-                    onClick={() => void createInvoice(order.id)}
-                    disabled={creatingId != null}
+                    onClick={() => void createInvoice([order.id], order.id)}
+                    disabled={creatingId != null || creatingClientCode != null}
                   >
                     <FilePlus2 className="mr-1.5 h-4 w-4" />
                     {creatingId === order.id ? "Creating…" : "Create invoice"}

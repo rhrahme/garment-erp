@@ -43,6 +43,8 @@ export interface CustomerInvoice {
   id: string;
   invoice_number: string;
   sales_order_id: string;
+  /** Set when one invoice covers more than one sales order. */
+  sales_order_ids?: string[];
   so_number: string;
   client_id: string;
   client_code: string;

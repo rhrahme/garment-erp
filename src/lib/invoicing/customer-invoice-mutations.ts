@@ -1,6 +1,18 @@
-import { saveCustomerInvoice } from "@/lib/data/customer-invoices";
+import {
+  generateInvoiceId,
+  generateInvoiceNumber,
+  readCustomerInvoicesFresh,
+  removeCustomerInvoicesByIds,
+  saveCustomerInvoice,
+} from "@/lib/data/customer-invoices";
 import { readSalesOrdersFresh, writeSalesOrders } from "@/lib/data/sales-orders";
-import { syncInvoiceLinesFromSalesOrder } from "@/lib/invoicing/build-invoice";
+import {
+  buildDraftInvoiceFromSalesOrders,
+  syncInvoiceLinesFromSalesOrder,
+  syncInvoiceLinesFromSalesOrders,
+} from "@/lib/invoicing/build-invoice";
+import { combineCustomerInvoices } from "@/lib/invoicing/combine-invoices";
+import { invoiceCoversSalesOrder, invoiceSalesOrderIds } from "@/lib/invoicing/invoice-sales-orders";
 import {
   generateInvoicePaymentId,
   getInvoiceAmountPaid,
@@ -77,16 +89,18 @@ export async function applyCustomerInvoiceStatusChange(
 
   if (status === "sent" || status === "paid") {
     const store = await readSalesOrdersFresh();
-    const orderIndex = store.orders.findIndex((order) => order.id === invoice.sales_order_id);
-    if (orderIndex >= 0) {
-      const order = store.orders[orderIndex]!;
+    const coveredIds = new Set(invoiceSalesOrderIds(invoice));
+    let changed = false;
+    for (const [orderIndex, order] of store.orders.entries()) {
+      if (!coveredIds.has(order.id)) continue;
       store.orders[orderIndex] = { ...order, status: "complete" };
-      await writeSalesOrders(store);
+      changed = true;
       await settleFabricReceivingForSalesOrder(order.id, {
         source,
         so_number: order.so_number,
       });
     }
+    if (changed) await writeSalesOrders(store);
   }
 
   const saved = await saveCustomerInvoice(next);
@@ -180,8 +194,76 @@ export async function recordCustomerInvoicePayment(
 
 export async function applyCustomerInvoiceLineSync(
   invoice: CustomerInvoice,
-  order: SalesOrder
+  order: SalesOrder | SalesOrder[]
 ): Promise<CustomerInvoice> {
-  const synced = syncInvoiceLinesFromSalesOrder(invoice, order);
+  const orders = Array.isArray(order) ? order : [order];
+  const synced =
+    orders.length > 1
+      ? syncInvoiceLinesFromSalesOrders(invoice, orders)
+      : syncInvoiceLinesFromSalesOrder(invoice, orders[0]!);
   return saveCustomerInvoice(withNormalizedPayments(synced));
+}
+
+export async function createCustomerInvoiceFromSalesOrders(
+  orders: SalesOrder[],
+  actor: string | null,
+  source: "erp" | "zapier" | "api" = "erp"
+): Promise<CustomerInvoice> {
+  const store = await readCustomerInvoicesFresh();
+  const already = orders.find((order) =>
+    store.invoices.some((invoice) => invoiceCoversSalesOrder(invoice, order.id))
+  );
+  if (already) {
+    const existing = store.invoices.find((invoice) => invoiceCoversSalesOrder(invoice, already.id));
+    const error = new Error(`An invoice already exists for ${already.so_number}.`);
+    (error as Error & { existingInvoice?: CustomerInvoice }).existingInvoice = existing;
+    throw error;
+  }
+  const draft = buildDraftInvoiceFromSalesOrders(
+    orders,
+    generateInvoiceNumber(store.invoices),
+    generateInvoiceId()
+  );
+  const saved = await saveCustomerInvoice(draft);
+  await notifyIntegration(
+    "invoice.created",
+    {
+      id: saved.id,
+      invoice_number: saved.invoice_number,
+      sales_order_id: saved.sales_order_id,
+      sales_order_ids: invoiceSalesOrderIds(saved),
+      so_number: saved.so_number,
+      created_by: actor,
+      total: saved.total,
+    },
+    source
+  );
+  return saved;
+}
+
+export async function combineDraftCustomerInvoices(
+  invoices: CustomerInvoice[],
+  actor: string | null,
+  source: "erp" | "zapier" | "api" = "erp"
+): Promise<CustomerInvoice> {
+  const combined = combineCustomerInvoices(invoices);
+  const absorbedIds = invoices.filter((invoice) => invoice.id !== combined.id).map((invoice) => invoice.id);
+  const saved = await saveCustomerInvoice(combined);
+  if (absorbedIds.length > 0) await removeCustomerInvoicesByIds(absorbedIds);
+  await notifyIntegration(
+    "invoice.updated",
+    {
+      id: saved.id,
+      invoice_number: saved.invoice_number,
+      sales_order_id: saved.sales_order_id,
+      sales_order_ids: invoiceSalesOrderIds(saved),
+      so_number: saved.so_number,
+      absorbed_invoice_ids: absorbedIds,
+      action: "combined",
+      updated_by: actor,
+      total: saved.total,
+    },
+    source
+  );
+  return saved;
 }

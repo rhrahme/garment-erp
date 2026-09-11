@@ -5,7 +5,8 @@ import {
   type CostHintWorksheet,
 } from "@/lib/costing/cost-hint-worksheet";
 import { getCustomerInvoiceById, readCustomerInvoices } from "@/lib/data/customer-invoices";
-import { getSalesOrderById, readSalesOrders } from "@/lib/data/sales-orders";
+import { getSalesOrderById, getSalesOrdersByIds, readSalesOrders } from "@/lib/data/sales-orders";
+import { invoiceSalesOrderIds } from "@/lib/invoicing/invoice-sales-orders";
 import { enrichInvoiceLinesWithCostHints, enrichInvoiceLinesWithFabricDetails } from "@/lib/invoicing/build-invoice";
 import { resolveInvoiceLines, sortInvoiceLinesByArticle } from "@/lib/invoicing/display";
 
@@ -19,9 +20,10 @@ export function loadCostHintWorksheet(query: {
   if (query.invoiceId) {
     const invoice = getCustomerInvoiceById(query.invoiceId);
     if (!invoice) return null;
-    const order = getSalesOrderById(invoice.sales_order_id);
+    const orders = getSalesOrdersByIds(invoiceSalesOrderIds(invoice));
+    const order = orders[0] ?? getSalesOrderById(invoice.sales_order_id);
     const lines = sortInvoiceLinesByArticle(
-      resolveInvoiceLines(enrichInvoiceLinesWithCostHints(enrichInvoiceLinesWithFabricDetails(invoice.lines, order), order))
+      resolveInvoiceLines(enrichInvoiceLinesWithCostHints(enrichInvoiceLinesWithFabricDetails(invoice.lines, orders), orders))
     );
     return buildCostHintWorksheetFromInvoice({
       invoice: { ...invoice, lines },

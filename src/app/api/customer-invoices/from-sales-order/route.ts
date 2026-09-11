@@ -1,17 +1,20 @@
 import { NextResponse } from "next/server";
-import {
-  generateInvoiceId,
-  generateInvoiceNumber,
-  readCustomerInvoicesFresh,
-  saveCustomerInvoice,
-} from "@/lib/data/customer-invoices";
-import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
-import { buildDraftInvoiceFromSalesOrder } from "@/lib/invoicing/build-invoice";
+import { readCustomerInvoicesFresh } from "@/lib/data/customer-invoices";
+import { getSalesOrdersByIdsFresh } from "@/lib/data/sales-orders";
+import { createCustomerInvoiceFromSalesOrders } from "@/lib/invoicing/customer-invoice-mutations";
+import { invoiceCoversSalesOrder } from "@/lib/invoicing/invoice-sales-orders";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
 import { requireAuthenticated } from "@/lib/auth/session";
 import { canAccessSalesOrder } from "@/lib/sales/access";
-import { notifyIntegration } from "@/lib/integrations";
 import { customerInvoiceForSession } from "@/lib/auth/invoice-cost-access";
+
+function parseSalesOrderIds(body: { sales_order_id?: string; sales_order_ids?: string[] }): string[] {
+  const listed = [
+    ...(Array.isArray(body.sales_order_ids) ? body.sales_order_ids : []),
+    body.sales_order_id ?? "",
+  ];
+  return [...new Set(listed.map((id) => String(id).trim()).filter(Boolean))];
+}
 
 export async function POST(request: Request) {
   try {
@@ -19,22 +22,24 @@ export async function POST(request: Request) {
     if (!session) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     await ensureDocumentsLoaded(["customer_invoices", "sales_orders", "costing_rates", "clients"]);
 
-    const body = (await request.json()) as { sales_order_id?: string };
-    const salesOrderId = String(body.sales_order_id ?? "").trim();
-    if (!salesOrderId) {
+    const body = (await request.json()) as { sales_order_id?: string; sales_order_ids?: string[] };
+    const salesOrderIds = parseSalesOrderIds(body);
+    if (salesOrderIds.length === 0) {
       return NextResponse.json({ error: "sales_order_id is required." }, { status: 400 });
     }
 
-    const order = await getSalesOrderByIdFresh(salesOrderId);
-    if (!order) {
+    const orders = await getSalesOrdersByIdsFresh(salesOrderIds);
+    if (orders.length !== salesOrderIds.length) {
       return NextResponse.json({ error: "Sales order not found." }, { status: 404 });
     }
-    if (!canAccessSalesOrder(session, order)) {
+    if (orders.some((order) => !canAccessSalesOrder(session, order))) {
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
 
     const store = await readCustomerInvoicesFresh();
-    const existing = store.invoices.find((invoice) => invoice.sales_order_id === salesOrderId);
+    const existing = store.invoices.find((invoice) =>
+      salesOrderIds.some((id) => invoiceCoversSalesOrder(invoice, id))
+    );
     if (existing) {
       return NextResponse.json(
         {
@@ -45,18 +50,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const invoiceNumber = generateInvoiceNumber(store.invoices);
-    const invoiceId = generateInvoiceId();
-    const draft = buildDraftInvoiceFromSalesOrder(order, invoiceNumber, invoiceId);
-    const saved = await saveCustomerInvoice(draft);
-    await notifyIntegration("invoice.created", {
-      id: saved.id,
-      invoice_number: saved.invoice_number,
-      sales_order_id: saved.sales_order_id,
-      created_by: session.email,
-      total: saved.total,
-    });
-
+    const saved = await createCustomerInvoiceFromSalesOrders(orders, session.email, "erp");
     return NextResponse.json(customerInvoiceForSession(session, saved), { status: 201 });
   } catch (error) {
     console.error("Failed to create customer invoice:", error);

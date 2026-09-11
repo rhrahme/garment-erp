@@ -4,11 +4,12 @@ import {
   type CustomerInvoicesFile,
 } from "@/lib/data/customer-invoices";
 import { isReadyMadeSalesOrder, listBespokeSalesOrders, readSalesOrders } from "@/lib/data/sales-orders";
+import { invoiceSalesOrderIds } from "@/lib/invoicing/invoice-sales-orders";
 import { isSalesOrderArchived } from "@/lib/sales-orders/archive";
 import type { InvoiceableSalesOrder } from "@/lib/types/invoiceable-orders";
 
 function invoicedSalesOrderIds(invoicesFile: CustomerInvoicesFile): Set<string> {
-  return new Set(invoicesFile.invoices.map((invoice) => invoice.sales_order_id));
+  return new Set(invoicesFile.invoices.flatMap((invoice) => invoiceSalesOrderIds(invoice)));
 }
 
 export function getInvoiceableSalesOrders(

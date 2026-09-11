@@ -799,6 +799,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   resume (shirts / overshirts / suits / total articles). Sitewide from
   Costing and Invoicing; one invoice from the invoice editor. Internal
   only. Client quote/invoice PDFs stay without hints.
+- **One invoice for several sales orders** (Sep 11 2026): same-client
+  draft invoices can be combined into one invoice. Ready to invoice can
+  also create one draft from several orders of the same client. The
+  invoice lists every SO number. Matching garment + fibre + gsm lines
+  still collapse. Paid invoices stay separate. The combined invoice uses
+  the oldest invoice date. First asked for Pr Khaled (three drafts into
+  one). Also covers the old Ajlan 0010+0011 case.
 
 ## Ready-made catalog photos
 

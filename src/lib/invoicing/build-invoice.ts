@@ -16,8 +16,10 @@ import {
 } from "@/lib/sales-orders/label-codes";
 import { resolveInvoiceComposition, sortInvoiceLinesByArticle } from "@/lib/invoicing/display";
 import { applyAllInvoiceLineReductions } from "@/lib/invoicing/line-reduction-suggestions";
+import { asSalesOrderList, withInvoiceSalesOrders } from "@/lib/invoicing/invoice-sales-orders";
 import { isCombinedInvoiceLine } from "@/lib/invoicing/suit-combine-lines";
 import { resolveInvoiceVatRate } from "@/lib/invoicing/vat";
+import { renumberInvoiceArticles } from "@/lib/invoicing/consolidate-lines";
 import { findFabricLineForInvoiceLine } from "@/lib/sales-orders/line-cross-reference";
 import type { CustomerInvoice, CustomerInvoiceLine } from "@/lib/types/customer-invoices";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
@@ -90,12 +92,15 @@ function resolveArticleNumber(
 
 export function enrichInvoiceLinesWithFabricDetails(
   lines: CustomerInvoiceLine[],
-  order: SalesOrder | undefined
+  order: SalesOrder | SalesOrder[] | undefined
 ): CustomerInvoiceLine[] {
-  if (!order) return lines;
+  const orders = asSalesOrderList(order);
+  if (orders.length === 0) return lines;
 
   return lines.map((line) => {
-    const fabricLine = findFabricLineForInvoiceLine(order, line);
+    const fabricLine = orders
+      .map((row) => findFabricLineForInvoiceLine(row, line))
+      .find((row): row is NonNullable<typeof row> => Boolean(row));
     if (!fabricLine) return line;
 
     const pieceName =
@@ -124,18 +129,25 @@ export function enrichInvoiceLinesWithFabricDetails(
 /** Recompute internal cost hints from current sales order costing (incl. catalog price fallback). */
 export function enrichInvoiceLinesWithCostHints(
   lines: CustomerInvoiceLine[],
-  order: SalesOrder | undefined
+  order: SalesOrder | SalesOrder[] | undefined
 ): CustomerInvoiceLine[] {
-  if (!order) return lines;
+  const orders = asSalesOrderList(order);
+  if (orders.length === 0) return lines;
 
-  const orderCost = getSalesOrderCost(order);
-  const costByLineId = new Map(orderCost.lines.map((line) => [line.line_id, line.total_cost_sar]));
-  const fabricCostByLineId = new Map(
-    orderCost.lines.map((line) => [line.line_id, line.fabric_cost_sar])
-  );
+  const costByLineId = new Map<string, number | null>();
+  const fabricCostByLineId = new Map<string, number | null>();
+  for (const row of orders) {
+    const orderCost = getSalesOrderCost(row);
+    for (const costLine of orderCost.lines) {
+      costByLineId.set(costLine.line_id, costLine.total_cost_sar);
+      fabricCostByLineId.set(costLine.line_id, costLine.fabric_cost_sar);
+    }
+  }
 
   return lines.map((line) => {
-    const fabricLine = findFabricLineForInvoiceLine(order, line);
+    const fabricLine = orders
+      .map((row) => findFabricLineForInvoiceLine(row, line))
+      .find((row): row is NonNullable<typeof row> => Boolean(row));
     if (!fabricLine) return line;
     const lineTotalCost = costByLineId.get(fabricLine.id) ?? null;
     const lineFabricCost = fabricCostByLineId.get(fabricLine.id) ?? null;
@@ -315,6 +327,63 @@ export function buildDraftInvoiceFromSalesOrder(
   };
 }
 
+export function buildDraftInvoiceFromSalesOrders(
+  orders: SalesOrder[],
+  invoiceNumber: string,
+  invoiceId: string
+): CustomerInvoice {
+  const unique = [
+    ...new Map(orders.map((order) => [order.id, order])).values(),
+  ].sort((a, b) => a.so_number.localeCompare(b.so_number));
+  if (unique.length === 0) {
+    throw new Error("Select at least one sales order.");
+  }
+  if (unique.length === 1) {
+    return buildDraftInvoiceFromSalesOrder(unique[0]!, invoiceNumber, invoiceId);
+  }
+
+  const clientIds = new Set(unique.map((order) => order.client_id));
+  if (clientIds.size > 1) {
+    throw new Error("Sales orders must belong to the same client.");
+  }
+  if (unique.some((order) => isReadyMadeSalesOrder(order))) {
+    throw new Error("Ready-made batches are invoiced separately - not from bespoke sales orders.");
+  }
+
+  const lines = applyAllInvoiceLineReductions(
+    unique.flatMap((order) => buildInvoiceLinesFromSalesOrder(order))
+  );
+  const first = buildDraftInvoiceFromSalesOrder(unique[0]!, invoiceNumber, invoiceId);
+  const vat_rate = resolveInvoiceVatRate(unique[0]!.delivery_destination);
+  const { lines: pricedLines, subtotal, vat_amount, total } = recalculateInvoiceTotals(
+    renumberInvoiceArticles(lines),
+    vat_rate
+  );
+  const totalCost = unique.reduce((sum, order) => {
+    const cost = getSalesOrderCost(order).total_cost_sar;
+    return cost != null ? sum + cost : sum;
+  }, 0);
+
+  const oldestOrderDate = unique
+    .map((order) => order.order_date)
+    .filter(Boolean)
+    .sort()[0] ?? first.invoice_date;
+
+  return withInvoiceSalesOrders(
+    {
+      ...first,
+      invoice_date: oldestOrderDate,
+      due_date: computeDueDate(oldestOrderDate, first.payment_terms),
+      lines: pricedLines,
+      subtotal,
+      vat_amount,
+      total,
+      total_cost_sar: totalCost || first.total_cost_sar,
+    },
+    unique.map((order) => ({ id: order.id, so_number: order.so_number }))
+  );
+}
+
 export function enrichInvoiceDeliveryDestination<T extends CustomerInvoice>(
   invoice: T,
   order: SalesOrder | undefined
@@ -408,4 +477,38 @@ export function syncInvoiceLinesFromSalesOrder(
     total,
     total_cost_sar: orderCost.total_cost_sar,
   };
+}
+
+export function syncInvoiceLinesFromSalesOrders(
+  invoice: CustomerInvoice,
+  orders: SalesOrder[]
+): CustomerInvoice {
+  const unique = [...new Map(orders.map((order) => [order.id, order])).values()];
+  if (unique.length === 0) return invoice;
+  let current = invoice;
+  for (const order of unique) {
+    current = syncInvoiceLinesFromSalesOrder(current, order);
+  }
+  const reduced = renumberInvoiceArticles(applyAllInvoiceLineReductions(current.lines));
+  const vat_rate = current.vat_rate ?? resolveInvoiceVatRate(current.delivery_destination);
+  const { lines: pricedLines, subtotal, vat_amount, total } = recalculateInvoiceTotals(
+    reduced,
+    vat_rate
+  );
+  const totalCost = unique.reduce((sum, order) => {
+    const cost = getSalesOrderCost(order).total_cost_sar;
+    return cost != null ? sum + cost : sum;
+  }, 0);
+  return withInvoiceSalesOrders(
+    {
+      ...current,
+      lines: pricedLines,
+      subtotal,
+      vat_rate,
+      vat_amount,
+      total,
+      total_cost_sar: totalCost || current.total_cost_sar,
+    },
+    unique.map((order) => ({ id: order.id, so_number: order.so_number }))
+  );
 }

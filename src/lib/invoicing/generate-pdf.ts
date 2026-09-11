@@ -87,8 +87,10 @@ export async function generateCustomerInvoicePdf(invoice: InvoiceDocumentData): 
   doc.text(formatInvoiceClientName(invoice.client_name), margin, y);
   doc.setFont("helvetica", "normal");
   let refY = y;
-  doc.text(`Sales order: ${invoice.so_number}`, margin + colW + 16, refY);
-  refY += 14;
+  const soLabel = invoice.so_number.includes(",") ? "Sales orders" : "Sales order";
+  const soLines = doc.splitTextToSize(`${soLabel}: ${invoice.so_number}`, colW);
+  doc.text(soLines, margin + colW + 16, refY);
+  refY += soLines.length * 14;
   if (clientRef) {
     doc.text(`Client ref: ${clientRef}`, margin + colW + 16, refY);
     refY += 14;

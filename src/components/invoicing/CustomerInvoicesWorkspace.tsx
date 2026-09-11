@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
@@ -13,7 +14,9 @@ import type { InvoiceableSalesOrder } from "@/lib/types/invoiceable-orders";
 import { getBrandClientCodePrefix } from "@/lib/clients/codes";
 import { formatInvoiceClientName } from "@/lib/invoicing/display";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
+import { groupCombinableDraftInvoices } from "@/lib/invoicing/combine-invoice-groups";
 import { customerInvoiceMatchesSearch } from "@/lib/invoicing/list-search";
+import { Button } from "@/components/ui/Button";
 import { formatDate, cn } from "@/lib/utils";
 import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import { getFactoryBrands } from "@/lib/data/factory-brands";
@@ -58,8 +61,11 @@ export function CustomerInvoicesWorkspace({
   const isBrandScoped = Boolean(allowedBrandIds && allowedBrandIds.length > 0);
   const defaultBrandId = allowedBrandIds?.length === 1 ? allowedBrandIds[0]! : null;
   const { brandId, setBrandId, hydrated: brandFilterHydrated } = useFactoryBrandFilter(defaultBrandId);
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_TABS)[number]["id"]>("all");
+  const [combiningClient, setCombiningClient] = useState<string | null>(null);
+  const [combineError, setCombineError] = useState<string | null>(null);
 
   const brandFilteredInvoices = useMemo(() => {
     if (!brandId) return invoices;
@@ -88,6 +94,31 @@ export function CustomerInvoicesWorkspace({
   }, [brandFilteredInvoices, searchQuery, statusFilter]);
 
   const hasActiveFilters = Boolean(searchQuery.trim() || brandId || statusFilter !== "all");
+  const combinableGroups = useMemo(
+    () => groupCombinableDraftInvoices(brandFilteredInvoices),
+    [brandFilteredInvoices]
+  );
+
+  async function combineGroup(invoicesToCombine: CustomerInvoice[]) {
+    const key = invoicesToCombine[0]?.client_id || invoicesToCombine[0]?.client_code || "";
+    setCombiningClient(key);
+    setCombineError(null);
+    try {
+      const res = await fetch("/api/customer-invoices/combine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoice_ids: invoicesToCombine.map((invoice) => invoice.id) }),
+      });
+      const data = (await res.json()) as { id?: string; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Failed to combine invoices.");
+      if (data.id) router.push(`/invoices/${data.id}`);
+      router.refresh();
+    } catch (err) {
+      setCombineError(err instanceof Error ? err.message : "Failed to combine invoices.");
+    } finally {
+      setCombiningClient(null);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -97,8 +128,9 @@ export function CustomerInvoicesWorkspace({
             <p className="font-medium">How invoicing works</p>
             <p className="mt-1 text-violet-900">
               Create a draft from <span className="font-medium">Ready to invoice</span> or a sales order page.
-              One invoice per bespoke order — lines are one per garment piece. Prices prefill from costing (fabric +
-              5% duty + make cost). Adjust before <span className="font-medium">Mark as sent</span>, then{" "}
+              Same-client sales orders can be one invoice. Matching garment + fibre + gsm lines combine.
+              Prices prefill from costing (fabric + 5% duty + make cost). Adjust before{" "}
+              <span className="font-medium">Mark as sent</span>, then{" "}
               <span className="font-medium">Mark paid</span> when collected.
             </p>
           </div>
@@ -148,6 +180,28 @@ export function CustomerInvoicesWorkspace({
         onLock={lock}
         revealWithoutPassword={revealWithoutPassword}
       />
+
+      {combineError ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{combineError}</div>
+      ) : null}
+      {combinableGroups.map((group) => {
+        const key = group[0]!.client_id || group[0]!.client_code;
+        return (
+          <div
+            key={key}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-950"
+          >
+            <p>
+              <span className="font-medium">{formatInvoiceClientName(group[0]!.client_name)}</span> has{" "}
+              {group.length} draft invoices ({group.map((invoice) => invoice.invoice_number).join(", ")}).
+              Combine them into one invoice.
+            </p>
+            <Button size="sm" onClick={() => void combineGroup(group)} disabled={combiningClient != null}>
+              {combiningClient === key ? "Combining…" : `Combine ${group.length} invoices into 1`}
+            </Button>
+          </div>
+        );
+      })}
 
       {brandFilterHydrated && (
         <FactoryBrandTabs

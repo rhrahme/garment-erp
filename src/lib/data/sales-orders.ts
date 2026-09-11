@@ -189,6 +189,12 @@ export function getSalesOrderById(id: string): SalesOrder | undefined {
   return readSalesOrders().orders.find((order) => order.id === id);
 }
 
+export function getSalesOrdersByIds(ids: string[]): SalesOrder[] {
+  const wanted = new Set(ids.map((id) => id.trim()).filter(Boolean));
+  if (wanted.size === 0) return [];
+  return readSalesOrders().orders.filter((order) => wanted.has(order.id));
+}
+
 /** Resolve a sales order when the fabric PO record is missing but the SO still references it. */
 export function findSalesOrderByFabricPoId(
   fabricPoId: string,
@@ -205,6 +211,15 @@ export async function getSalesOrderByIdFresh(id: string): Promise<SalesOrder | u
     await readJsonFileFreshAsync(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS, { force: true })
   );
   return store.orders.find((order) => order.id === id);
+}
+
+export async function getSalesOrdersByIdsFresh(ids: string[]): Promise<SalesOrder[]> {
+  const wanted = new Set(ids.map((id) => id.trim()).filter(Boolean));
+  if (wanted.size === 0) return [];
+  const store = normalizeSalesOrdersFile(
+    await readJsonFileFreshAsync(SALES_ORDERS_PATH, EMPTY_SALES_ORDERS, { force: true })
+  );
+  return store.orders.filter((order) => wanted.has(order.id));
 }
 
 export async function deleteSalesOrderById(

@@ -1,6 +1,7 @@
 import type { FabricSwatchKey } from "@/lib/fabric-sourcing/fabric-swatch-keys";
 import { isFabricOrderLineSent } from "@/lib/fabric-sourcing/fabric-order-line-status";
 import { resolveFabricSupplierId } from "@/lib/fabric-sourcing/supplier-aliases";
+import { asSalesOrderList, findSalesOrderForInvoiceLine } from "@/lib/invoicing/invoice-sales-orders";
 import type { CustomerInvoiceLine } from "@/lib/types/customer-invoices";
 import type { PurchaseOrder, PurchaseOrderLine } from "@/lib/types/fabric-sourcing";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
@@ -166,10 +167,11 @@ export interface InvoiceLineCrossRef {
 
 export function buildInvoiceLineCrossRef(
   line: CustomerInvoiceLine,
-  order: SalesOrder | undefined,
+  order: SalesOrder | SalesOrder[] | undefined,
   fabricPos: PurchaseOrder[]
 ): InvoiceLineCrossRef {
-  const fabricLine = order ? findFabricLineForInvoiceLine(order, line) : undefined;
+  const matched = findSalesOrderForInvoiceLine(asSalesOrderList(order), line);
+  const fabricLine = matched ? findFabricLineForInvoiceLine(matched, line) : undefined;
   const stickerCode =
     line.sticker_code ?? fabricLine?.label_stickers?.find((s) => s.code)?.code ?? null;
   const soArticle = stickerCode ? lineArticleFromStickerCode(stickerCode) : null;
@@ -186,7 +188,7 @@ export function buildInvoiceLineCrossRef(
 
 export function buildInvoiceLineCrossRefs(
   lines: CustomerInvoiceLine[],
-  order: SalesOrder | undefined,
+  order: SalesOrder | SalesOrder[] | undefined,
   fabricPos: PurchaseOrder[]
 ): Map<string, InvoiceLineCrossRef> {
   return new Map(
@@ -209,12 +211,13 @@ const FABRIC_BRAND_TO_SUPPLIER_ID: Record<string, string> = {
 
 function resolveInvoiceLineSwatchKey(
   line: CustomerInvoiceLine,
-  order: SalesOrder | undefined
+  order: SalesOrder | SalesOrder[] | undefined
 ): FabricSwatchKey | null {
   const fabricNumber = line.fabric_number?.trim();
   if (!fabricNumber) return null;
 
-  const fabricLine = order ? findFabricLineForInvoiceLine(order, line) : undefined;
+  const matched = findSalesOrderForInvoiceLine(asSalesOrderList(order), line);
+  const fabricLine = matched ? findFabricLineForInvoiceLine(matched, line) : undefined;
   if (fabricLine?.supplier_id) {
     return {
       supplier_id: resolveFabricSupplierId(fabricLine.supplier_id),
@@ -232,7 +235,7 @@ function resolveInvoiceLineSwatchKey(
 /** Supplier + fabric number per invoice line — for editor swatch thumbnails only. */
 export function buildInvoiceLineSwatchKeys(
   lines: CustomerInvoiceLine[],
-  order: SalesOrder | undefined
+  order: SalesOrder | SalesOrder[] | undefined
 ): Map<string, FabricSwatchKey> {
   return new Map(
     lines

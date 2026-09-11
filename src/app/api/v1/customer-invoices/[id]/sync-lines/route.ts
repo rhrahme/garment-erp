@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCustomerInvoiceByIdFresh } from "@/lib/data/customer-invoices";
-import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
+import { getSalesOrdersByIdsFresh } from "@/lib/data/sales-orders";
+import { invoiceSalesOrderIds } from "@/lib/invoicing/invoice-sales-orders";
 import { applyCustomerInvoiceLineSync } from "@/lib/invoicing/customer-invoice-mutations";
 import { verifyApiKey } from "@/lib/integrations/api-auth";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
@@ -21,12 +22,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
     }
 
-    const order = await getSalesOrderByIdFresh(invoice.sales_order_id);
-    if (!order) {
+    const orders = await getSalesOrdersByIdsFresh(invoiceSalesOrderIds(invoice));
+    if (orders.length === 0) {
       return NextResponse.json({ error: "Linked sales order not found." }, { status: 404 });
     }
 
-    const saved = await applyCustomerInvoiceLineSync(invoice, order);
+    const saved = await applyCustomerInvoiceLineSync(invoice, orders);
     return NextResponse.json({ ok: true, invoice: saved });
   } catch (error) {
     console.error("Failed to sync customer invoice lines (API):", error);

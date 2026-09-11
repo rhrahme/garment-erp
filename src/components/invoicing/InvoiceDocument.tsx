@@ -68,7 +68,9 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Reference</p>
-          <p className="mt-2 text-sm">Sales order: {invoice.so_number}</p>
+          <p className="mt-2 text-sm">
+            {invoice.so_number.includes(",") ? "Sales orders" : "Sales order"}: {invoice.so_number}
+          </p>
           {clientRef && <p className="text-sm text-slate-600">Client ref: {clientRef}</p>}
           {invoice.payment_terms && <p className="mt-1 text-sm text-slate-600">Terms: {invoice.payment_terms}</p>}
         </div>

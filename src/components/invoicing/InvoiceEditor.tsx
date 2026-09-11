@@ -25,6 +25,7 @@ import { LineReductionSuggestionsPanel } from "@/components/invoicing/LineReduct
 import { InvoiceTotalsFooter } from "@/components/invoicing/InvoiceTotalsFooter";
 import { isDubaiFabricDelivery, isRiyadhFabricDelivery } from "@/lib/invoicing/bank-details";
 import { RiyadhBankDetailsPdfLink } from "@/components/invoicing/RiyadhBankDetailsPdfLink";
+import { invoiceSalesOrderRefs } from "@/lib/invoicing/invoice-sales-orders";
 import { formatInvoiceSar } from "@/lib/invoicing/format-amount";
 import { getInvoiceAmountPaid, getInvoiceBalanceDue, normalizeInvoicePayments } from "@/lib/invoicing/payments";
 import type { InvoiceLineCrossRef } from "@/lib/sales-orders/line-cross-reference";
@@ -194,9 +195,14 @@ export function InvoiceEditor({
           </div>
           <p className="mt-1 text-sm text-slate-600">
             {formatInvoiceClientName(invoice.client_name)} · SO{" "}
-            <Link href={`/orders/${invoice.sales_order_id}`} className="font-mono text-indigo-600 hover:text-indigo-700">
-              {invoice.so_number}
-            </Link>
+            {invoiceSalesOrderRefs(invoice).map((ref, index) => (
+              <span key={ref.id}>
+                {index > 0 ? ", " : ""}
+                <Link href={`/orders/${ref.id}`} className="font-mono text-indigo-600 hover:text-indigo-700">
+                  {ref.so_number}
+                </Link>
+              </span>
+            ))}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

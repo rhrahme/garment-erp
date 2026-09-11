@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { InvoiceEditor } from "@/components/invoicing/InvoiceEditor";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { getCustomerInvoiceByIdFresh } from "@/lib/data/customer-invoices";
-import { getSalesOrderByIdFresh } from "@/lib/data/sales-orders";
+import { getSalesOrdersByIdsFresh } from "@/lib/data/sales-orders";
+import { invoiceSalesOrderIds } from "@/lib/invoicing/invoice-sales-orders";
 import { ensureFabricOrdersLoaded, listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 import {
   enrichInvoiceDeliveryDestination,
@@ -28,25 +29,27 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   const raw = await getCustomerInvoiceByIdFresh(id);
   if (!raw) notFound();
 
-  const order = await getSalesOrderByIdFresh(raw.sales_order_id);
+  const orders = await getSalesOrdersByIdsFresh(invoiceSalesOrderIds(raw));
   const session = await getSessionContext();
-  if (!order || !canAccessSalesOrder(session, order)) notFound();
+  if (orders.length === 0 || !orders.some((order) => canAccessSalesOrder(session, order))) notFound();
   const showMoney = canViewMoney(session);
   if (showMoney) await ensureFabricOrdersLoaded();
-  const fabricPos = order && showMoney
-    ? listStoredFabricOrders().filter(
-        (po) =>
-          po.sales_order_id === order.id ||
-          order.fabric_po_ids.includes(po.id) ||
-          po.client_reference?.includes(order.so_number)
+  const fabricPos = showMoney
+    ? listStoredFabricOrders().filter((po) =>
+        orders.some(
+          (order) =>
+            po.sales_order_id === order.id ||
+            order.fabric_po_ids.includes(po.id) ||
+            po.client_reference?.includes(order.so_number)
+        )
       )
     : [];
-  const fabricLines = enrichInvoiceLinesWithFabricDetails(raw.lines, order);
+  const fabricLines = enrichInvoiceLinesWithFabricDetails(raw.lines, orders);
   const resolvedLines = sortInvoiceLinesByArticle(
-    resolveInvoiceLines(showMoney ? enrichInvoiceLinesWithCostHints(fabricLines, order) : fabricLines)
+    resolveInvoiceLines(showMoney ? enrichInvoiceLinesWithCostHints(fabricLines, orders) : fabricLines)
   );
-  const lineCrossRefs = buildInvoiceLineCrossRefs(resolvedLines, order, fabricPos);
-  const lineSwatchKeys = buildInvoiceLineSwatchKeys(resolvedLines, order);
+  const lineCrossRefs = buildInvoiceLineCrossRefs(resolvedLines, orders, fabricPos);
+  const lineSwatchKeys = buildInvoiceLineSwatchKeys(resolvedLines, orders);
   const invoiceWithVat = enrichInvoiceVat(
     enrichInvoiceDeliveryDestination(
       {
@@ -54,7 +57,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         delivery_destination: raw.delivery_destination ?? null,
         lines: resolvedLines,
       },
-      order
+      orders[0]
     )
   );
   const invoice = customerInvoiceForSession(session, invoiceWithVat);
