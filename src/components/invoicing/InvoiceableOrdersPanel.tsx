@@ -11,9 +11,12 @@ import { formatDate } from "@/lib/utils";
 
 export function InvoiceableOrdersPanel({
   orders,
+  openDraftByClientCode = {},
   canViewAmounts = false,
 }: {
   orders: InvoiceableSalesOrder[];
+  /** Client code -> the client's open draft, so orders join it instead of starting a rival invoice. */
+  openDraftByClientCode?: Record<string, { id: string; invoice_number: string }>;
   canViewAmounts?: boolean;
 }) {
   const router = useRouter();
@@ -26,6 +29,30 @@ export function InvoiceableOrdersPanel({
     groups[key] = [...(groups[key] ?? []), order];
     return groups;
   }, {});
+
+  async function addOrdersToDraft(
+    draftId: string,
+    salesOrderIds: string[],
+    creatingKey: string
+  ) {
+    setCreatingClientCode(creatingKey);
+    setError(null);
+    try {
+      const res = await fetch("/api/customer-invoices/combine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoice_ids: [draftId], sales_order_ids: salesOrderIds }),
+      });
+      const data = (await res.json()) as { id?: string; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Failed to add orders to the invoice.");
+      router.push(`/invoices/${data.id ?? draftId}`);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add orders to the invoice.");
+    } finally {
+      setCreatingClientCode(null);
+    }
+  }
 
   async function createInvoice(salesOrderIds: string[], creatingKey: string) {
     setCreatingId(salesOrderIds.length === 1 ? salesOrderIds[0]! : null);
@@ -90,27 +117,42 @@ export function InvoiceableOrdersPanel({
       )}
 
       {Object.entries(clientGroups)
-        .filter(([, group]) => group.length >= 2)
-        .map(([clientCode, group]) => (
-          <div
-            key={clientCode}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950"
-          >
-            <p>
-              <span className="font-medium">{group[0]!.client_name}</span> has {group.length} orders
-              ready to invoice. Combine them into one invoice.
-            </p>
-            <Button
-              size="sm"
-              onClick={() => void createInvoice(group.map((order) => order.id), clientCode)}
-              disabled={creatingId != null || creatingClientCode != null}
+        .filter(([clientCode, group]) => group.length >= 2 || Boolean(openDraftByClientCode[clientCode]))
+        .map(([clientCode, group]) => {
+          const draft = openDraftByClientCode[clientCode];
+          const orderIds = group.map((order) => order.id);
+          return (
+            <div
+              key={clientCode}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950"
             >
-              {creatingClientCode === clientCode
-                ? "Creating…"
-                : `Create one invoice (${group.length} orders)`}
-            </Button>
-          </div>
-        ))}
+              <p>
+                <span className="font-medium">{group[0]!.client_name}</span> has {group.length} order
+                {group.length !== 1 ? "s" : ""} ready to invoice.{" "}
+                {draft
+                  ? `Put them on ${draft.invoice_number} instead of a second invoice.`
+                  : "Combine them into one invoice."}
+              </p>
+              <Button
+                size="sm"
+                onClick={() =>
+                  void (draft
+                    ? addOrdersToDraft(draft.id, orderIds, clientCode)
+                    : createInvoice(orderIds, clientCode))
+                }
+                disabled={creatingId != null || creatingClientCode != null}
+              >
+                {creatingClientCode === clientCode
+                  ? draft
+                    ? "Adding…"
+                    : "Creating…"
+                  : draft
+                    ? `Add ${group.length} order${group.length !== 1 ? "s" : ""} to ${draft.invoice_number}`
+                    : `Create one invoice (${group.length} orders)`}
+              </Button>
+            </div>
+          );
+        })}
 
       <div className="overflow-x-auto rounded-xl border border-emerald-200 bg-white">
         <table className="min-w-full text-sm">

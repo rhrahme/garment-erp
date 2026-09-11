@@ -129,6 +129,24 @@ export function CustomerInvoicesWorkspace({
     () => groupClientInvoiceWork(searchScopedInvoices, visibleInvoiceableOrders),
     [searchScopedInvoices, visibleInvoiceableOrders]
   );
+  /** Only one open draft per client makes "add these orders" unambiguous. */
+  const openDraftByClientCode = useMemo(() => {
+    const drafts = new Map<string, { id: string; invoice_number: string } | null>();
+    for (const invoice of searchScopedInvoices) {
+      if (invoice.status !== "draft") continue;
+      const code = invoice.client_code.trim();
+      if (!code) continue;
+      drafts.set(
+        code,
+        drafts.has(code) ? null : { id: invoice.id, invoice_number: invoice.invoice_number }
+      );
+    }
+    return Object.fromEntries(
+      [...drafts.entries()].filter((entry): entry is [string, { id: string; invoice_number: string }] =>
+        entry[1] != null
+      )
+    );
+  }, [searchScopedInvoices]);
 
   async function combineGroup(group: ClientInvoiceWork) {
     setCombiningClient(group.key);
@@ -348,7 +366,11 @@ export function CustomerInvoicesWorkspace({
         </div>
       )}
 
-      <InvoiceableOrdersPanel orders={visibleInvoiceableOrders} canViewAmounts={canToggleAmounts} />
+      <InvoiceableOrdersPanel
+        orders={visibleInvoiceableOrders}
+        openDraftByClientCode={openDraftByClientCode}
+        canViewAmounts={canToggleAmounts}
+      />
     </div>
   );
 }
