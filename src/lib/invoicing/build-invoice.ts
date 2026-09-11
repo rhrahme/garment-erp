@@ -4,6 +4,7 @@ import { getClientById } from "@/lib/data/clients";
 import { getFactoryBrandById } from "@/lib/data/factory-brands";
 import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display";
 import { isReadyMadeSalesOrder } from "@/lib/data/sales-orders";
+import { oldestCalendarDate, withOldestCoveredInvoiceDate } from "@/lib/invoicing/invoice-dates";
 import { computeDueDate } from "@/lib/invoicing/pricing";
 import {
   fabricLineArticleNumber,
@@ -364,10 +365,8 @@ export function buildDraftInvoiceFromSalesOrders(
     return cost != null ? sum + cost : sum;
   }, 0);
 
-  const oldestOrderDate = unique
-    .map((order) => order.order_date)
-    .filter(Boolean)
-    .sort()[0] ?? first.invoice_date;
+  const oldestOrderDate =
+    oldestCalendarDate(...unique.map((order) => order.order_date)) ?? first.invoice_date;
 
   return withInvoiceSalesOrders(
     {
@@ -499,16 +498,19 @@ export function syncInvoiceLinesFromSalesOrders(
     const cost = getSalesOrderCost(order).total_cost_sar;
     return cost != null ? sum + cost : sum;
   }, 0);
-  return withInvoiceSalesOrders(
-    {
-      ...current,
-      lines: pricedLines,
-      subtotal,
-      vat_rate,
-      vat_amount,
-      total,
-      total_cost_sar: totalCost || current.total_cost_sar,
-    },
-    unique.map((order) => ({ id: order.id, so_number: order.so_number }))
+  return withOldestCoveredInvoiceDate(
+    withInvoiceSalesOrders(
+      {
+        ...current,
+        lines: pricedLines,
+        subtotal,
+        vat_rate,
+        vat_amount,
+        total,
+        total_cost_sar: totalCost || current.total_cost_sar,
+      },
+      unique.map((order) => ({ id: order.id, so_number: order.so_number }))
+    ),
+    unique.map((order) => order.order_date)
   );
 }

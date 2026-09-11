@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { InvoiceEditor } from "@/components/invoicing/InvoiceEditor";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { getCustomerInvoiceByIdFresh } from "@/lib/data/customer-invoices";
+import { getCustomerInvoiceByIdFresh, saveCustomerInvoice } from "@/lib/data/customer-invoices";
 import { getSalesOrdersByIdsFresh } from "@/lib/data/sales-orders";
+import { withOldestCoveredInvoiceDate } from "@/lib/invoicing/invoice-dates";
 import { invoiceSalesOrderIds } from "@/lib/invoicing/invoice-sales-orders";
 import { ensureFabricOrdersLoaded, listStoredFabricOrders } from "@/lib/integrations/fabric-order-store";
 import {
@@ -32,6 +33,14 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   const orders = await getSalesOrdersByIdsFresh(invoiceSalesOrderIds(raw));
   const session = await getSessionContext();
   if (orders.length === 0 || !orders.some((order) => canAccessSalesOrder(session, order))) notFound();
+  const dated = withOldestCoveredInvoiceDate(
+    raw,
+    orders.map((order) => order.order_date)
+  );
+  const stored =
+    dated !== raw && raw.status === "draft" && invoiceSalesOrderIds(raw).length > 1
+      ? await saveCustomerInvoice(dated)
+      : dated;
   const showMoney = canViewMoney(session);
   if (showMoney) await ensureFabricOrdersLoaded();
   const fabricPos = showMoney
@@ -44,7 +53,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         )
       )
     : [];
-  const fabricLines = enrichInvoiceLinesWithFabricDetails(raw.lines, orders);
+  const fabricLines = enrichInvoiceLinesWithFabricDetails(stored.lines, orders);
   const resolvedLines = sortInvoiceLinesByArticle(
     resolveInvoiceLines(showMoney ? enrichInvoiceLinesWithCostHints(fabricLines, orders) : fabricLines)
   );
@@ -53,8 +62,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   const invoiceWithVat = enrichInvoiceVat(
     enrichInvoiceDeliveryDestination(
       {
-        ...raw,
-        delivery_destination: raw.delivery_destination ?? null,
+        ...stored,
+        delivery_destination: stored.delivery_destination ?? null,
         lines: resolvedLines,
       },
       orders[0]

@@ -6,6 +6,7 @@ import {
   readCustomerInvoicesFresh,
 } from "@/lib/data/customer-invoices";
 import { ensureDocumentsLoaded } from "@/lib/data/document-persistence";
+import { withOldestCoveredInvoiceDate } from "@/lib/invoicing/invoice-dates";
 import { invoiceSalesOrderIds } from "@/lib/invoicing/invoice-sales-orders";
 import { getInvoiceableSalesOrders } from "@/lib/invoicing/invoiceable-orders";
 import { getSessionContext } from "@/lib/auth/session";
@@ -40,8 +41,15 @@ export default async function InvoicesPage() {
         ),
       }
     : invoicesFile;
+  const orderDateById = new Map(visibleOrders.map((order) => [order.id, order.order_date]));
   const invoices = listCustomerInvoicesSortedFromFile(scopedFile).map((invoice) =>
-    customerInvoiceForSession(session, invoice)
+    customerInvoiceForSession(
+      session,
+      withOldestCoveredInvoiceDate(
+        invoice,
+        invoiceSalesOrderIds(invoice).map((id) => orderDateById.get(id))
+      )
+    )
   );
   const summary = canViewMoney(session)
     ? getCustomerInvoiceSummary(scopedFile)

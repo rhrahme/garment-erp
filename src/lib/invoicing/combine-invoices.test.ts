@@ -113,6 +113,41 @@ describe("combineCustomerInvoices", () => {
     assert.match(combined.notes ?? "", /INV-2026-0020, INV-2026-0021, INV-2026-0022/);
   });
 
+  it("uses the oldest sales-order date when every draft is dated today", () => {
+    const invoices = [
+      invoice({
+        id: "inv-a",
+        invoice_number: "INV-2026-0020",
+        sales_order_id: "so-111",
+        so_number: "SO-2026-0111",
+        payment_terms: "Net 30",
+      }),
+      invoice({
+        id: "inv-b",
+        invoice_number: "INV-2026-0021",
+        sales_order_id: "so-113",
+        so_number: "SO-2026-0113",
+        payment_terms: "Net 30",
+        lines: [line({ id: "inv-b-l1", fabric_number: "771002" })],
+      }),
+      invoice({
+        id: "inv-c",
+        invoice_number: "INV-2026-0022",
+        sales_order_id: "so-116",
+        so_number: "SO-2026-0116",
+        payment_terms: "Net 30",
+        lines: [line({ id: "inv-c-l1", fabric_number: "771003" })],
+      }),
+    ];
+
+    const combined = combineCustomerInvoices(invoices, {
+      orderDates: ["2026-09-01", "2026-07-15", "2026-08-01"],
+    });
+    assert.equal(combined.invoice_date, "2026-07-15");
+    assert.equal(combined.due_date, "2026-08-14");
+    assert.equal(combined.created_at, "2026-09-11T12:00:00.000Z");
+  });
+
   it("refuses paid invoices and different clients", () => {
     const paid = invoice({
       id: "paid",

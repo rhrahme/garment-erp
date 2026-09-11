@@ -5,7 +5,7 @@ import {
   removeCustomerInvoicesByIds,
   saveCustomerInvoice,
 } from "@/lib/data/customer-invoices";
-import { readSalesOrdersFresh, writeSalesOrders } from "@/lib/data/sales-orders";
+import { getSalesOrdersByIdsFresh, readSalesOrdersFresh, writeSalesOrders } from "@/lib/data/sales-orders";
 import {
   buildDraftInvoiceFromSalesOrders,
   syncInvoiceLinesFromSalesOrder,
@@ -246,7 +246,12 @@ export async function combineDraftCustomerInvoices(
   actor: string | null,
   source: "erp" | "zapier" | "api" = "erp"
 ): Promise<CustomerInvoice> {
-  const combined = combineCustomerInvoices(invoices);
+  const orders = await getSalesOrdersByIdsFresh(
+    invoices.flatMap((invoice) => invoiceSalesOrderIds(invoice))
+  );
+  const combined = combineCustomerInvoices(invoices, {
+    orderDates: orders.map((order) => order.order_date),
+  });
   const absorbedIds = invoices.filter((invoice) => invoice.id !== combined.id).map((invoice) => invoice.id);
   const saved = await saveCustomerInvoice(combined);
   if (absorbedIds.length > 0) await removeCustomerInvoicesByIds(absorbedIds);
