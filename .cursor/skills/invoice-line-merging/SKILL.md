@@ -29,6 +29,37 @@ trouser with unknown composition must never end up on the same row as a Zegna or
 Loro Piana trouser. Rows with unknown data are a data-entry problem to surface,
 not a gap to fill by guessing.
 
+## Two unknown prices are not the same price
+
+`costHintMoneyKey` maps an absent figure to `"-"`. That correctly stops a priced
+row merging with an unpriced one - but **two unpriced rows both key to `"-"` and
+therefore match each other**. When the price is missing, the only things holding
+the row together are composition and weight, and those are exactly the fields
+most likely to be wrong on an unpriced line.
+
+This produced a real, shipped error on INV-2026-0018. One row printed as
+
+```
+L11 x6  Overshirt+Trouser  50023, 50015, 66046, 50017, 66044, 59215
+        Zegna  71% Wool 15% Silk 14% Linen  250 gsm
+```
+
+Those six Zegna numbers are, per Zegna's own price list, four different
+compositions, three different weights and three different prices:
+
+| Number | Catalog row | Composition | Weight | Price |
+| --- | --- | --- | --- | --- |
+| 50023 | 50021-50034 | 71/15/14 wool-silk-linen | 260 gsm | USD 137.30 |
+| 50015, 50017 | 50014-50020 | 71/**17**/**12** | 240 gsm | USD 164.60 |
+| 66044, 66046 | 66044-66046 | **100% Linen** | **360 gsm** | USD 163.40 |
+| 59215 | 59214-59222 | **62% Silk 38% Linen** | 260 gsm | USD 128.80 |
+
+The merge key did exactly what it was told. The stored composition and weight
+were wrong, identically wrong on every line, so the rows looked identical.
+
+**When the fabric price is missing, do not merge.** An unpriced row has not
+earned the right to be collapsed into another one.
+
 ## Why price and mill belong in the key
 
 A merged row prints ONE mill and ONE price. If the merge key ignores them, two
