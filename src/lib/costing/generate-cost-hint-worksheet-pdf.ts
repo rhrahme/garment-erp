@@ -1,6 +1,7 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import {
+  costHintPrimaryFabricNumber,
   formatCostHintArticleSummary,
   formatCostHintComposition,
   formatCostHintWeight,
@@ -43,8 +44,14 @@ export async function generateCostHintWorksheetPdf(worksheet: CostHintWorksheet)
 
   const swatchJpegs = await loadFabricSwatchJpegsForPdf(
     worksheet.rows
-      .filter((row) => row.supplier_id && row.fabric_number)
-      .map((row) => ({ supplier_id: row.supplier_id as string, fabric_number: row.fabric_number }))
+      .map((row) => ({
+        supplier_id: row.supplier_id,
+        fabric_number: costHintPrimaryFabricNumber(row.fabric_number),
+      }))
+      .filter(
+        (row): row is { supplier_id: string; fabric_number: string } =>
+          Boolean(row.supplier_id && row.fabric_number)
+      )
   );
 
   const heading = worksheet.title?.trim() || "Cost hint worksheet";
@@ -143,8 +150,9 @@ export async function generateCostHintWorksheetPdf(worksheet: CostHintWorksheet)
     didDrawCell: (data) => {
       if (data.section !== "body" || data.column.index !== 5) return;
       const row = worksheet.rows[data.row.index];
-      if (!row?.supplier_id || !row.fabric_number) return;
-      const img = swatchJpegs.get(swatchCacheKey(row.supplier_id, row.fabric_number));
+      const fabricNumber = costHintPrimaryFabricNumber(row?.fabric_number);
+      if (!row?.supplier_id || !fabricNumber) return;
+      const img = swatchJpegs.get(swatchCacheKey(row.supplier_id, fabricNumber));
       if (!img) return;
       doc.addImage(
         img,

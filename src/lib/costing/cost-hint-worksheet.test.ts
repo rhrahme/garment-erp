@@ -6,6 +6,9 @@ import {
   applyCostHintMissingPriceCopy,
   buildCostHintWorksheet,
   buildCostHintWorksheetFromInvoice,
+  combineCostHintRowsByGarmentFibreWeight,
+  costHintInvoiceGroupKey,
+  costHintPrimaryFabricNumber,
   costHintGarmentFamily,
   costHintMissingPriceFilename,
   costHintNamedClientPackFiles,
@@ -275,6 +278,257 @@ describe("cost hint worksheet", () => {
       "2 Jackets. Total: 2 pcs"
     );
     assert.equal(worksheet.missing_price_count, 0);
+  });
+
+  it("combines invoice hint rows with the same garment, fibre, and gsm", () => {
+    const combinedInvoiceHint = buildCostHintWorksheetFromInvoice({
+      invoice: {
+        invoice_number: "INV-2026-0020",
+        so_number: "SO-2026-0133",
+        client_name: "Pr Khaled Bin Salman",
+        client_code: "FR-0626-0037",
+        lines: [
+          {
+            article_number: 1,
+            garment_type: "Shirt LS",
+            description: "Shirt LS",
+            fabric_number: "771001",
+            composition: "100% linen",
+            weight_gsm: 180,
+            quantity: 1,
+            unit_price: 0,
+            cost_hint_sar: null,
+          },
+          {
+            article_number: 2,
+            garment_type: "Shirt LS",
+            description: "Shirt LS",
+            fabric_number: "771002",
+            composition: "100% LI",
+            weight_gsm: 180,
+            quantity: 1,
+            unit_price: 0,
+            cost_hint_sar: null,
+          },
+          {
+            article_number: 3,
+            garment_type: "Shirt LS",
+            description: "Shirt LS",
+            fabric_number: "771099",
+            composition: "100% linen",
+            weight_gsm: 210,
+            quantity: 1,
+            unit_price: 0,
+            cost_hint_sar: null,
+          },
+        ],
+      } as CustomerInvoice,
+    });
+    assert.equal(combinedInvoiceHint.rows.length, 2);
+    const linen180 = combinedInvoiceHint.rows.find((row) => row.weight_gsm === 180);
+    assert.ok(linen180);
+    assert.equal(linen180.quantity, 2);
+    assert.equal(linen180.article_count, 2);
+    assert.match(linen180.fabric_number, /771001/);
+    assert.match(linen180.fabric_number, /771002/);
+    assert.equal(
+      formatCostHintArticleSummary(summarizeCostHintArticles(combinedInvoiceHint.rows)),
+      "3 Shirts. Total: 3 pcs"
+    );
+  });
+
+  it("combines mill collection names that share fibre and gsm", () => {
+    const worksheet = buildCostHintWorksheetFromInvoice({
+      invoice: {
+        invoice_number: "INV-2026-0021",
+        so_number: "SO-2026-0116",
+        client_name: "Pr Khaled Bin Salman",
+        client_code: "FR-0626-0037",
+        lines: [
+          {
+            article_number: 1,
+            garment_type: "Shirt LS",
+            description: "Shirt LS",
+            fabric_number: "SL-1",
+            composition: "STREET LINO ALOE NEW 100% LINEN",
+            weight_gsm: 195,
+            quantity: 1,
+            unit_price: 0,
+            cost_hint_sar: null,
+          },
+          {
+            article_number: 2,
+            garment_type: "Shirt LS",
+            description: "Shirt LS",
+            fabric_number: "SL-2",
+            composition: "STREET LINO DELAVE' ALOE NEW 100% LINEN",
+            weight_gsm: 195,
+            quantity: 1,
+            unit_price: 0,
+            cost_hint_sar: null,
+          },
+          {
+            article_number: 3,
+            garment_type: "Short",
+            description: "Short",
+            fabric_number: "ZEFIRO",
+            composition: "ZEFIRO 100% COTTON",
+            weight_gsm: 240,
+            quantity: 1,
+            unit_price: 0,
+            cost_hint_sar: null,
+          },
+        ],
+      } as CustomerInvoice,
+    });
+    assert.equal(worksheet.rows.length, 2);
+    const shirts = worksheet.rows.find((row) => row.garment === "Shirt LS");
+    assert.ok(shirts);
+    assert.equal(shirts.quantity, 2);
+    assert.equal(formatCostHintComposition(shirts.composition), "100% Linen");
+  });
+
+  it("combines hint rows with the same garment, fibre, and gsm on one sales order", () => {
+    const worksheet = buildCostHintWorksheet({
+      overview: overviewOf({
+        order_id: "so-khaled",
+        so_number: "SO-2026-0133",
+        client_name: "Pr Khaled Bin Salman",
+        client_code: "FR-0626-0037",
+        client_reference: null,
+        product_article: null,
+        order_date: "2026-07-30",
+        status: "fabric_pos_created",
+        is_archived: false,
+        line_count: 3,
+        lines_missing_price: 3,
+        fabric_base_sar: 0,
+        customs_duty_sar: 0,
+        import_vat_sar: 0,
+        vat_recoverable_sar: 0,
+        fabric_cash_outlay_sar: 0,
+        fabric_cost_sar: 0,
+        labor_cost_sar: 0,
+        washing_cost_sar: 0,
+        overhead_cost_sar: 0,
+        total_cost_sar: 0,
+        lines: [
+          {
+            line_id: "s1",
+            article_number: 1,
+            fabric_number: "771001",
+            supplier_id: "loro-piana",
+            supplier_name: "Loro Piana",
+            garment_type: "Shirt LS",
+            composition: "100% linen",
+            weight_gsm: 180,
+            width_label: null,
+            color: "white",
+            meters: 1.5,
+            unit: "meters",
+            unit_price: null,
+            supplier_line_total: null,
+            fabric_base_sar: null,
+            customs_duty_sar: 0,
+            import_vat_sar: 0,
+            vat_recoverable_sar: 0,
+            fabric_cash_outlay_sar: null,
+            fabric_cost_sar: null,
+            labor_cost_sar: 80,
+            washing_cost_sar: 10,
+            overhead_cost_sar: 10,
+            total_cost_sar: null,
+            has_fabric_price: false,
+          },
+          {
+            line_id: "s2",
+            article_number: 2,
+            fabric_number: "771002",
+            supplier_id: "loro-piana",
+            supplier_name: "Loro Piana",
+            garment_type: "Shirt LS",
+            composition: "100% LI",
+            weight_gsm: 180,
+            width_label: null,
+            color: "cream",
+            meters: 1.5,
+            unit: "meters",
+            unit_price: null,
+            supplier_line_total: null,
+            fabric_base_sar: null,
+            customs_duty_sar: 0,
+            import_vat_sar: 0,
+            vat_recoverable_sar: 0,
+            fabric_cash_outlay_sar: null,
+            fabric_cost_sar: null,
+            labor_cost_sar: 80,
+            washing_cost_sar: 10,
+            overhead_cost_sar: 10,
+            total_cost_sar: null,
+            has_fabric_price: false,
+          },
+          {
+            line_id: "s3",
+            article_number: 3,
+            fabric_number: "50024",
+            supplier_id: "zegna",
+            supplier_name: "Zegna",
+            garment_type: "Trouser",
+            composition: null,
+            weight_gsm: null,
+            width_label: null,
+            color: null,
+            meters: 1.2,
+            unit: "meters",
+            unit_price: null,
+            supplier_line_total: null,
+            fabric_base_sar: null,
+            customs_duty_sar: 0,
+            import_vat_sar: 0,
+            vat_recoverable_sar: 0,
+            fabric_cash_outlay_sar: null,
+            fabric_cost_sar: null,
+            labor_cost_sar: 80,
+            washing_cost_sar: 10,
+            overhead_cost_sar: 10,
+            total_cost_sar: null,
+            has_fabric_price: false,
+          },
+        ],
+      }),
+      salesOrders: [],
+      invoices: [],
+      clientTokens: ["khaled"],
+      generatedAt: "2026-09-11T12:00:00.000Z",
+    });
+    assert.equal(worksheet.rows.length, 2);
+    const shirts = worksheet.rows.find((row) => row.garment === "Shirt LS");
+    assert.ok(shirts);
+    assert.equal(shirts.quantity, 2);
+    assert.equal(shirts.article_count, 2);
+    assert.equal(costHintPrimaryFabricNumber(shirts.fabric_number), "771001");
+    assert.equal(
+      costHintInvoiceGroupKey({
+        so_number: "SO-2026-0133",
+        garment: "Shirt LS",
+        composition: "100% linen",
+        weight_gsm: 180,
+      }),
+      costHintInvoiceGroupKey({
+        so_number: "SO-2026-0133",
+        garment: "Shirt LS",
+        composition: "100% LI",
+        weight_gsm: 180,
+      })
+    );
+    assert.equal(
+      combineCostHintRowsByGarmentFibreWeight(worksheet.rows).length,
+      2
+    );
+    assert.equal(
+      formatCostHintArticleSummary(summarizeCostHintArticles(worksheet.rows)),
+      "2 Shirts, 1 Trouser. Total: 3 pcs"
+    );
   });
 
   it("prints fibre, gsm, and a mill swatch URL for the cost-hint worksheet", () => {

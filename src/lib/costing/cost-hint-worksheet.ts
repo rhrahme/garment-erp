@@ -157,6 +157,131 @@ export function formatCostHintWeight(weightGsm: number | null | undefined): stri
   return `${Math.round(weightGsm)} gsm`;
 }
 
+/** First mill code on a combined fabric cell - used for the mini swatch. */
+export function costHintPrimaryFabricNumber(fabricNumber: string | null | undefined): string {
+  const first = fabricNumber?.split(",")[0]?.trim() ?? "";
+  return first;
+}
+
+function costHintFibreKey(composition: string | null | undefined): string | null {
+  const fibre = formatCostHintComposition(composition);
+  if (!fibre || fibre === "-") return null;
+  return fibre.toLowerCase();
+}
+
+function costHintWeightKey(weightGsm: number | null | undefined): string | null {
+  if (weightGsm == null || !Number.isFinite(weightGsm)) return null;
+  return String(Math.round(weightGsm));
+}
+
+/**
+ * Same sales order + garment + fibre + gsm. Missing fibre or weight stays
+ * on its own row so unknown fabrics are not mashed together.
+ */
+export function costHintInvoiceGroupKey(
+  row: Pick<CostHintWorksheetRow, "so_number" | "garment" | "composition" | "weight_gsm">
+): string | null {
+  const fibre = costHintFibreKey(row.composition);
+  const weight = costHintWeightKey(row.weight_gsm);
+  const garment = row.garment.trim().toLowerCase();
+  const so = row.so_number.trim();
+  if (!so || !garment || !fibre || !weight) return null;
+  return `${so}|${garment}|${fibre}|${weight}`;
+}
+
+function uniqueJoined(values: Array<string | null | undefined>): string | null {
+  const seen = new Set<string>();
+  const ordered: string[] = [];
+  for (const value of values) {
+    const trimmed = value?.trim();
+    if (!trimmed || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    ordered.push(trimmed);
+  }
+  if (ordered.length === 0) return null;
+  return ordered.join(", ");
+}
+
+function sameNumber(values: Array<number | null | undefined>): number | null {
+  const present = values.filter((value): value is number => value != null && Number.isFinite(value));
+  if (present.length === 0 || present.length !== values.length) return null;
+  const first = present[0]!;
+  return present.every((value) => value === first) ? first : null;
+}
+
+function mergeCostHintGroup(group: CostHintWorksheetRow[]): CostHintWorksheetRow {
+  const first = group[0]!;
+  if (group.length === 1) return first;
+  const fabricNumbers = uniqueJoined(group.map((row) => row.fabric_number));
+  const brandSet = [
+    ...new Set(group.map((row) => row.fabric_brand?.trim()).filter((value): value is string => Boolean(value))),
+  ];
+  const supplierIds = [
+    ...new Set(group.map((row) => row.supplier_id?.trim()).filter((value): value is string => Boolean(value))),
+  ];
+  const colorSet = [
+    ...new Set(group.map((row) => row.color?.trim()).filter((value): value is string => Boolean(value))),
+  ];
+  const invoiceSet = [
+    ...new Set(group.map((row) => row.invoice_number?.trim()).filter((value): value is string => Boolean(value))),
+  ];
+  const articleLabels = group.map((row) => row.article_label.trim()).filter(Boolean);
+  const articleLabel =
+    articleLabels.length <= 1
+      ? first.article_label
+      : `${articleLabels[0]} x${articleLabels.length}`;
+  const missingPrice = group.some((row) => row.missing_price);
+  const pieceNames = [
+    ...new Set(group.flatMap((row) => row.piece_names ?? []).map((name) => name.trim()).filter(Boolean)),
+  ];
+  return {
+    ...first,
+    article_label: articleLabel,
+    fabric_number: fabricNumbers ?? first.fabric_number,
+    fabric_brand: brandSet.length === 1 ? brandSet[0]! : brandSet.length > 1 ? brandSet.join(", ") : first.fabric_brand,
+    supplier_id: supplierIds.length === 1 ? supplierIds[0]! : first.supplier_id,
+    color: colorSet.length === 1 ? colorSet[0]! : null,
+    invoice_number: invoiceSet.length === 1 ? invoiceSet[0]! : first.invoice_number,
+    quantity: group.reduce((sum, row) => sum + row.quantity, 0),
+    article_count: group.reduce((sum, row) => sum + row.article_count, 0),
+    fabric_cost_sar: sameNumber(group.map((row) => row.fabric_cost_sar)),
+    cost_hint_sar: sameNumber(group.map((row) => row.cost_hint_sar)),
+    unit_price_sar: sameNumber(group.map((row) => row.unit_price_sar)),
+    missing_price: missingPrice,
+    piece_names: pieceNames,
+  };
+}
+
+/** Collapse same garment + fibre + gsm on one sales order into one worksheet row. */
+export function combineCostHintRowsByGarmentFibreWeight(
+  rows: CostHintWorksheetRow[]
+): CostHintWorksheetRow[] {
+  const buckets = new Map<string, CostHintWorksheetRow[]>();
+  const firstIndex = new Map<string, number>();
+  const passthrough: Array<{ index: number; row: CostHintWorksheetRow }> = [];
+
+  rows.forEach((row, index) => {
+    const key = costHintInvoiceGroupKey(row);
+    if (!key) {
+      passthrough.push({ index, row });
+      return;
+    }
+    const bucket = buckets.get(key) ?? [];
+    if (bucket.length === 0) firstIndex.set(key, index);
+    bucket.push(row);
+    buckets.set(key, bucket);
+  });
+
+  const merged = [...buckets.entries()].map(([key, bucket]) => ({
+    index: firstIndex.get(key) ?? 0,
+    row: mergeCostHintGroup(bucket),
+  }));
+
+  return [...merged, ...passthrough]
+    .sort((a, b) => a.index - b.index)
+    .map((entry) => entry.row);
+}
+
 export function costHintSwatchUrl(
   supplierId: string | null | undefined,
   fabricNumber: string | null | undefined
@@ -569,6 +694,7 @@ export function buildCostHintWorksheet(options: {
           ? `${options.brandId} brand`
           : "all orders";
   const namedCopy = namedLabel ? namedClientHeading(namedLabel, rows) : null;
+  const combinedRows = combineCostHintRowsByGarmentFibreWeight(rows);
 
   return attachArticleSummary({
     title: namedCopy?.title ?? "Cost hint worksheet",
@@ -576,8 +702,8 @@ export function buildCostHintWorksheet(options: {
       namedCopy?.subtitle ??
       `Internal. Do not send to the client. ${scope}. Cost hint = fabric + 5% duty + make, per piece. VAT excluded.`,
     generated_at: options.generatedAt ?? new Date().toISOString(),
-    rows,
-    missing_price_count: rows.filter((row) => row.missing_price).length,
+    rows: combinedRows,
+    missing_price_count: combinedRows.filter((row) => row.missing_price).length,
   });
 }
 
@@ -624,13 +750,14 @@ export function buildCostHintWorksheetFromInvoice(options: {
       piece_names: pieceNamesFromInvoicePieceField(line.piece_name),
     };
   });
+  const combinedRows = combineCostHintRowsByGarmentFibreWeight(rows);
 
   return attachArticleSummary({
     title: "Cost hint worksheet",
     subtitle: `Internal. Do not send to the client. ${options.invoice.invoice_number} / ${options.invoice.so_number}. Cost hint = fabric + 5% duty + make, per piece. VAT excluded.`,
     generated_at: options.generatedAt ?? new Date().toISOString(),
-    rows,
-    missing_price_count: rows.filter((row) => row.missing_price).length,
+    rows: combinedRows,
+    missing_price_count: combinedRows.filter((row) => row.missing_price).length,
   });
 }
 

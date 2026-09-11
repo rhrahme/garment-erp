@@ -68,9 +68,133 @@ describe("suggestConsolidationGroups", () => {
     assert.equal(groups[0]!.merged.line_total, 9000);
   });
 
-  it("excludes unpriced lines from suggestions", () => {
+  it("excludes unpriced lines that have no fibre or weight", () => {
     const unpriced = so0005Jackets.map((row) => ({ ...row, unit_price: 0, line_total: 0 }));
     assert.equal(suggestConsolidationGroups(unpriced).length, 0);
+  });
+
+  it("suggests merging unpriced lines that share garment, fibre, and gsm", () => {
+    const unpriced = so0005Jackets.map((row) => ({
+      ...row,
+      unit_price: 0,
+      line_total: 0,
+      weight_gsm: 240,
+    }));
+    const groups = suggestConsolidationGroups(unpriced);
+    assert.equal(groups.length, 1);
+    assert.equal(groups[0]!.merged.quantity, 2);
+    assert.equal(groups[0]!.merged.unit_price, 0);
+  });
+
+  it("can ignore unit price so the same garment + fibre + gsm combine", () => {
+    const mixed = [
+      { ...so0005Jackets[0]!, weight_gsm: 240 },
+      { ...so0005Jackets[1]!, unit_price: 5100, line_total: 5100, weight_gsm: 240 },
+    ];
+    assert.equal(suggestConsolidationGroups(mixed).length, 0);
+    const groups = suggestConsolidationGroups(mixed, { ignoreUnitPrice: true });
+    assert.equal(groups.length, 1);
+    assert.equal(groups[0]!.lines.length, 2);
+    assert.equal(groups[0]!.merged.unit_price, 0);
+    assert.equal(groups[0]!.merged.quantity, 2);
+  });
+
+  it("treats mill collection names as the same fibre for merge", () => {
+    const shirts = [
+      line({
+        id: "aloe",
+        garment_type: "Shirt LS",
+        piece_name: "Shirt LS",
+        description: "Shirt LS",
+        composition: "STREET LINO ALOE NEW 100% LINEN",
+        weight_gsm: 195,
+        unit_price: 0,
+        line_total: 0,
+      }),
+      line({
+        id: "delave",
+        garment_type: "Shirt LS",
+        piece_name: "Shirt LS",
+        description: "Shirt LS",
+        composition: "STREET LINO DELAVE' ALOE NEW 100% LINEN",
+        weight_gsm: 195,
+        unit_price: 0,
+        line_total: 0,
+        article_number: 2,
+      }),
+      line({
+        id: "li",
+        garment_type: "Shirt LS",
+        piece_name: "Shirt LS",
+        description: "Shirt LS",
+        composition: "100% LI",
+        weight_gsm: 195,
+        unit_price: 0,
+        line_total: 0,
+        article_number: 3,
+      }),
+    ];
+    const groups = suggestConsolidationGroups(shirts, { ignoreUnitPrice: true });
+    assert.equal(groups.length, 1);
+    assert.equal(groups[0]!.merged.quantity, 3);
+  });
+
+  it("combines combo garments with the same fibre and gsm across fabric lines", () => {
+    const combos = [
+      line({
+        id: "os-1",
+        garment_type: "Overshirt+Trouser",
+        piece_name: "Overshirt + Trouser",
+        description: "Overshirt + Trouser",
+        sales_order_line_id: "line-a",
+        fabric_number: "771001",
+        composition: '71% WOOL 15% SILK 14% LINEN "SUMMERTIME"',
+        weight_gsm: 250,
+        unit_price: 0,
+        line_total: 0,
+      }),
+      line({
+        id: "os-2",
+        garment_type: "Overshirt+Trouser",
+        piece_name: "Overshirt + Trouser",
+        description: "Overshirt + Trouser",
+        sales_order_line_id: "line-b",
+        fabric_number: "771002",
+        composition: "71% wool 15% silk 14% linen",
+        weight_gsm: 250,
+        unit_price: 0,
+        line_total: 0,
+        article_number: 2,
+      }),
+    ];
+    const groups = suggestConsolidationGroups(combos, { ignoreUnitPrice: true });
+    assert.equal(groups.length, 1);
+    assert.equal(groups[0]!.merged.quantity, 2);
+  });
+
+  it("keeps priced combo lines without gsm on separate fabric lines", () => {
+    const suits = [
+      line({
+        id: "suit-a",
+        garment_type: "Suit",
+        piece_name: "Jacket + Trouser",
+        description: "Suit (Jacket + Trouser)",
+        sales_order_line_id: "line-fabric-1",
+        unit_price: 3500,
+        line_total: 3500,
+      }),
+      line({
+        id: "suit-b",
+        garment_type: "Suit",
+        piece_name: "Jacket + Trouser",
+        description: "Suit (Jacket + Trouser)",
+        sales_order_line_id: "line-fabric-2",
+        unit_price: 3500,
+        line_total: 3500,
+        article_number: 2,
+      }),
+    ];
+    assert.equal(suggestConsolidationGroups(suits, { ignoreUnitPrice: true }).length, 0);
   });
 
   it("does not split INV-0004-style combined suit lines", () => {

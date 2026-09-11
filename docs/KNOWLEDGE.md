@@ -643,10 +643,13 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
   Columns: SO, invoice, client, article,
   garment, mini mill swatch, fabric, mill brand (Caccioppoli / Loro
   Piana / Solbiati - not the factory brand), composition, weight gsm,
-  qty, fabric cost, cost hint, unit price, blank write-price. Swatch
-  uses the same mill JPEG embed as the sales-order PDF; blank if the
-  mill image is missing. Never on the client invoice PDF.
-  `canViewMoney` only.
+  qty, fabric cost, cost hint, unit price, blank write-price. Same
+  garment + fibre + gsm on one sales order collapse to one row (qty
+  summed). Mill collection names (STREET LINO, SUMMERTIME) do not
+  split a group. Missing fibre or gsm stays its own row. New invoices
+  apply the same combine. Swatch uses the same mill JPEG embed as the
+  sales-order PDF; blank if the mill image is missing. Never on the
+  client invoice PDF. `canViewMoney` only.
 - Print dialog: A4 portrait, scale 100% / Actual size, default margins.
 - Fabric swatch images on print sheets require the swatch manifest to ship
   into the Vercel image lambda (Caccioppoli fix `b5ac64f`); new fabric codes
@@ -1087,6 +1090,7 @@ Production: https://erp.hagan.pro (Vercel projects `garment-erp` + `garment-erp-
 
 ## Session notes index
 
+- [session-2026-09-11](session-2026-09-11.md) - Pr Khaled hint sheet combines same garment + fibre + gsm
 - [session-2026-09-09](session-2026-09-09.md) - Farid spelling (not Forid) site-wide
 - [session-2026-09-08](session-2026-09-08.md) - Cost hint PDFs; Stitch Attendance tab is wall QR door times
 - [session-2026-09-07](session-2026-09-07.md) - Wall Attendance QR; clock-in from 8 Sep Riyadh; Confirm Stop on closed sessions; HERE posters; tablet camera on Stitch kiosk; all-teams how-to

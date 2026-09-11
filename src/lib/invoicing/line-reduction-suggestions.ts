@@ -43,6 +43,10 @@ export type LineReductionSuggestion = {
 
 export type LineReductionOptions = ConsolidationOptions;
 
+function reductionOptions(options?: LineReductionOptions): LineReductionOptions {
+  return { ignoreUnitPrice: true, ...options };
+}
+
 const CROSS_SUIT_GROUP_PREFIX = "combine_cross_suit:";
 const SUIT_GROUP_PREFIX = "combine_suit:";
 const DUPLICATE_GROUP_PREFIX = "remove_duplicate:";
@@ -127,8 +131,8 @@ function consolidationSuggestion(
     type,
     title: isShirt ? "Consolidate matching shirts" : "Consolidate duplicate lines",
     explanation: isShirt
-      ? `${group.lines.length} shirt rows share the same composition, weight, and unit price — merge into one line with combined quantity.`
-      : `${group.lines.length} rows share the same garment type, composition, weight, and unit price — merge into one line with combined quantity.`,
+      ? `${group.lines.length} shirt rows share the same composition and weight — merge into one line with combined quantity.`
+      : `${group.lines.length} rows share the same garment type, composition, and weight — merge into one line with combined quantity.`,
     group_key: `${CONSOLIDATE_GROUP_PREFIX}${group.key}`,
     internal_key: group.key,
     from_line_count: group.lines.length,
@@ -157,8 +161,8 @@ export function detectInvoiceLineReductions(
     suggestions.push(duplicateLineSuggestion(group));
   }
 
-  for (const group of suggestConsolidationGroups(lines, options)) {
-    suggestions.push(consolidationSuggestion(group, options));
+  for (const group of suggestConsolidationGroups(lines, reductionOptions(options))) {
+    suggestions.push(consolidationSuggestion(group, reductionOptions(options)));
   }
 
   return suggestions.sort((a, b) => b.from_line_count - a.from_line_count);
@@ -211,7 +215,7 @@ export function applyInvoiceLineReduction(
   if (suggestion.type === "remove_duplicate_lines") {
     return applyDuplicateLineRemoval(lines, [suggestion.internal_key]);
   }
-  return applyConsolidation(lines, [suggestion.internal_key], options);
+  return applyConsolidation(lines, [suggestion.internal_key], reductionOptions(options));
 }
 
 /** Apply suggestions by group_key (suit combine runs before consolidation when both requested). */
@@ -239,7 +243,9 @@ export function applyInvoiceLineReductionsByKeys(
   let current = crossSuitKeys.length > 0 ? applyCrossFabricSuitCombine(lines, crossSuitKeys) : lines;
   if (suitKeys.length > 0) current = applySuitCombine(current, suitKeys);
   if (duplicateKeys.length > 0) current = applyDuplicateLineRemoval(current, duplicateKeys);
-  if (consolidateKeys.length > 0) current = applyConsolidation(current, consolidateKeys, options);
+  if (consolidateKeys.length > 0) {
+    current = applyConsolidation(current, consolidateKeys, reductionOptions(options));
+  }
   return current;
 }
 
@@ -251,5 +257,5 @@ export function applyAllInvoiceLineReductions(
   const crossCombined = applyCrossFabricSuitCombine(lines);
   const suitCombined = applySuitCombine(crossCombined);
   const deduped = applyDuplicateLineRemoval(suitCombined);
-  return applyAllConsolidations(deduped, options);
+  return applyAllConsolidations(deduped, reductionOptions(options));
 }

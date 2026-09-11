@@ -1,5 +1,5 @@
 import { getGarmentPieces } from "@/lib/sales-orders/label-codes";
-import { formatClientInvoiceComposition, sortInvoiceLinesByArticle } from "@/lib/invoicing/display";
+import { formatInvoiceFibreContent, sortInvoiceLinesByArticle } from "@/lib/invoicing/display";
 import type { CustomerInvoiceLine } from "@/lib/types/customer-invoices";
 
 function roundMoney(amount: number): number {
@@ -9,6 +9,8 @@ function roundMoney(amount: number): number {
 export type ConsolidationOptions = {
   /** When true, lines must share fabric_brand to merge. Default false. */
   includeFabricBrand?: boolean;
+  /** When true, garment + fibre + gsm can merge even if unit prices differ. */
+  ignoreUnitPrice?: boolean;
 };
 
 export type ConsolidationGroup = {
@@ -32,17 +34,27 @@ function isCombinedInvoiceLine(line: CustomerInvoiceLine): boolean {
   return pieceNamesFromLine(line.piece_name).length > 1;
 }
 
-/** Skip jacket/trouser splits — only whole garments or already-combined sets. */
-export function canConsolidateInvoiceLine(line: CustomerInvoiceLine): boolean {
-  if (line.unit_price === 0) return false;
-  if (!isMultiPieceGarment(line.garment_type)) return true;
-  return isCombinedInvoiceLine(line);
+function hasFibreAndWeight(line: CustomerInvoiceLine): boolean {
+  return Boolean(normalizeInvoiceCompositionKey(line.composition)) &&
+    line.weight_gsm != null &&
+    Number.isFinite(line.weight_gsm);
 }
 
+/** Skip jacket/trouser splits - only whole garments or already-combined sets. */
+export function canConsolidateInvoiceLine(line: CustomerInvoiceLine): boolean {
+  if (isMultiPieceGarment(line.garment_type) && !isCombinedInvoiceLine(line)) {
+    return false;
+  }
+  // Unpriced drafts (Pr Khaled) still combine when garment + fibre + gsm match.
+  if (line.unit_price === 0) return hasFibreAndWeight(line);
+  return true;
+}
+
+/** Fibre only - mill collection names (STREET LINO, SUMMERTIME) do not split a group. */
 export function normalizeInvoiceCompositionKey(composition: string | null | undefined): string {
   const raw = composition?.trim();
   if (!raw) return "";
-  return formatClientInvoiceComposition(raw).toLowerCase();
+  return formatInvoiceFibreContent(raw).toLowerCase();
 }
 
 function normalizeMergeKeyValue(
@@ -68,8 +80,8 @@ export function buildConsolidationMergeKey(
     "garment_type",
     "composition",
     "weight_gsm",
-    "unit_price",
   ];
+  if (!options?.ignoreUnitPrice) fields.push("unit_price");
   if (options?.includeFabricBrand) fields.push("fabric_brand");
   return fields.map((field) => normalizeMergeKeyValue(field, line)).join("|");
 }
@@ -77,7 +89,12 @@ export function buildConsolidationMergeKey(
 function mergeConsolidationGroup(group: CustomerInvoiceLine[]): CustomerInvoiceLine {
   const first = group[0]!;
   const quantity = group.reduce((sum, line) => sum + line.quantity, 0);
-  const lineTotal = roundMoney(group.reduce((sum, line) => sum + line.line_total, 0));
+  const unitPrices = group.map((line) => roundMoney(line.unit_price));
+  const sameUnitPrice = unitPrices.every((price) => price === unitPrices[0]);
+  const unitPrice = sameUnitPrice ? first.unit_price : 0;
+  const lineTotal = sameUnitPrice
+    ? roundMoney(group.reduce((sum, line) => sum + line.line_total, 0))
+    : 0;
   const costHints = group.map((line) => line.cost_hint_sar).filter((hint): hint is number => hint != null);
   const costHint =
     costHints.length > 0 ? roundMoney(costHints.reduce((sum, hint) => sum + hint, 0)) : null;
@@ -94,7 +111,7 @@ function mergeConsolidationGroup(group: CustomerInvoiceLine[]): CustomerInvoiceL
   return {
     ...first,
     quantity,
-    unit_price: first.unit_price,
+    unit_price: unitPrice,
     line_total: lineTotal,
     cost_hint_sar: costHint,
     fabric_cost_hint_sar: fabricCostHint,
@@ -124,7 +141,8 @@ export function suggestConsolidationGroups(
     );
     if (
       solIds.size > 1 &&
-      bucket.every((line) => isMultiPieceGarment(line.garment_type) && isCombinedInvoiceLine(line))
+      bucket.every((line) => isMultiPieceGarment(line.garment_type) && isCombinedInvoiceLine(line)) &&
+      !bucket.every(hasFibreAndWeight)
     ) {
       continue;
     }
