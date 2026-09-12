@@ -1434,13 +1434,20 @@ describe("cost hint worksheet - a consolidated invoice line and the cuts behind 
     assert.equal(total, 3, "three shorts were cut, so the sheet must show three");
   });
 
-  it("leaves a cut blank when the invoice has no quantity left for it", () => {
+  it("gives an unbilled cut the rate its twins were billed at, without an invoice", () => {
     const worksheet = worksheetFor(4, 3);
-    const billed = worksheet.rows.filter((row) => row.unit_price_sar != null);
-    const unbilled = worksheet.rows.filter((row) => row.unit_price_sar == null);
+    const billed = worksheet.rows.filter((row) => row.invoice_number != null);
+    const unbilled = worksheet.rows.filter((row) => row.invoice_number == null);
+
     assert.equal(billed.reduce((sum, row) => sum + row.quantity, 0), 3);
     assert.equal(unbilled.reduce((sum, row) => sum + row.quantity, 0), 1);
     assert.equal(unbilled[0]?.fabric_number, "S10015", "the cut nobody paid for stays visible");
+    assert.equal(unbilled[0]?.unit_price_sar, 2800, "a fourth short is worth what the first three were");
+    assert.equal(
+      worksheet.rows.length,
+      2,
+      "the same figure does not merge a billed cut with one that was never invoiced"
+    );
   });
 
   it("will not hand a price to a different garment of the same cloth", () => {
@@ -1454,5 +1461,164 @@ describe("cost hint worksheet - a consolidated invoice line and the cuts behind 
     });
     const trouser = worksheet.rows.find((row) => row.garment === "Trouser");
     assert.equal(trouser?.unit_price_sar, null, "a Short's price is not a Trouser's price");
+  });
+});
+
+describe("cost hint worksheet - the rate a cut inherits from its twin", () => {
+  function suitCut(lineId: string, fabricNumber: string, garment: string) {
+    return {
+      line_id: lineId,
+      article_number: Number(lineId.replace(/\D/g, "")),
+      fabric_number: fabricNumber,
+      supplier_id: "loro-piana",
+      supplier_name: "Loro Piana",
+      garment_type: garment,
+      composition: '100% WOOL SUPER 150\'S "AUSTRALIS"',
+      weight_gsm: 250,
+      width_label: "150 cm",
+      color: null,
+      meters: 1.5,
+      unit: "meters",
+      unit_price: 123.5,
+      supplier_line_total: 185.25,
+      fabric_base_sar: 833.63,
+      customs_duty_sar: 41.68,
+      import_vat_sar: 0,
+      vat_recoverable_sar: 0,
+      fabric_cash_outlay_sar: 0,
+      fabric_cost_sar: 875.31,
+      labor_cost_sar: 150,
+      washing_cost_sar: 40,
+      overhead_cost_sar: 30,
+      total_cost_sar: 1095.31,
+      has_fabric_price: true,
+    };
+  }
+
+  function build(lines: ReturnType<typeof suitCut>[], invoiceLines: unknown[]) {
+    return buildCostHintWorksheet({
+      overview: overviewOf({
+        order_id: "so-119",
+        so_number: "SO-2026-0119",
+        client_name: "Abdelaziz Mohamad Al Ajlan",
+        client_code: "FR-0726-0039",
+        client_reference: null,
+        product_article: null,
+        order_date: "2026-07-08",
+        status: "fabric_pos_created",
+        is_archived: false,
+        line_count: lines.length,
+        lines_missing_price: 0,
+        fabric_base_sar: 0,
+        customs_duty_sar: 0,
+        import_vat_sar: 0,
+        vat_recoverable_sar: 0,
+        fabric_cash_outlay_sar: 0,
+        fabric_cost_sar: 0,
+        labor_cost_sar: 0,
+        washing_cost_sar: 0,
+        overhead_cost_sar: 0,
+        total_cost_sar: 0,
+        lines,
+      } as unknown as SalesOrderCost),
+      salesOrders: [
+        {
+          id: "so-119",
+          so_number: "SO-2026-0119",
+          client_code: "FR-0726-0039",
+          fabric_lines: lines.map((line) => ({
+            id: line.line_id,
+            label_count: 1,
+            label_stickers: [{ code: line.line_id, piece_name: "Shirt", sequence: 1 }],
+          })),
+        } as unknown as SalesOrder,
+      ],
+      invoices: [
+        {
+          invoice_number: "INV-2026-0007",
+          invoice_date: "2026-07-08",
+          so_number: "SO-2026-0119",
+          lines: invoiceLines,
+        } as unknown as CustomerInvoice,
+      ],
+      generatedAt: "2026-09-12T12:00:00.000Z",
+    });
+  }
+
+  const australis = {
+    garment_type: "Shirt LS",
+    composition: '100% WOOL SUPER 150\'S "AUSTRALIS"',
+    weight_gsm: 250,
+    fabric_brand: "Loro Piana",
+  };
+
+  it("prices 781056 and 781060 from 781059, the same cloth on the same invoice", () => {
+    const worksheet = build(
+      [
+        suitCut("line-1", "781059", "Shirt LS"),
+        suitCut("line-2", "781060", "Shirt LS"),
+        suitCut("line-3", "781056", "Shirt LS"),
+      ],
+      [{ ...australis, sales_order_line_id: "line-1", fabric_number: "781059", quantity: 1, unit_price: 3800 }]
+    );
+
+    const uninvoiced = worksheet.rows.find((row) => row.invoice_number == null);
+    assert.equal(uninvoiced?.unit_price_sar, 3800);
+    assert.equal(uninvoiced?.quantity, 2, "both unbilled shirts sit on one row");
+    assert.equal(uninvoiced?.fabric_number, "781060, 781056");
+  });
+
+  it("keeps the invoice number off a cut that was never billed", () => {
+    const worksheet = build(
+      [suitCut("line-1", "781059", "Shirt LS"), suitCut("line-2", "781060", "Shirt LS")],
+      [{ ...australis, sales_order_line_id: "line-1", fabric_number: "781059", quantity: 1, unit_price: 3800 }]
+    );
+
+    assert.equal(worksheet.rows.length, 2, "same price, but one was invoiced and one was not");
+    assert.deepEqual(
+      worksheet.rows.map((row) => row.invoice_number),
+      ["INV-2026-0007", null]
+    );
+  });
+
+  it("will not invent a rate the invoice never quoted for that garment", () => {
+    // 772003 was cut as a Short and billed only inside a combined article, so
+    // there is no Short price in that cloth to copy.
+    const short = { ...suitCut("line-2", "772003", "Short"), composition: "65% COTTON 35% SILK", weight_gsm: 240 };
+    const worksheet = build(
+      [{ ...suitCut("line-1", "772003", "Shirt+Trouser+Short"), composition: "65% COTTON 35% SILK", weight_gsm: 240 }, short],
+      [
+        {
+          garment_type: "Shirt+Trouser+Short",
+          composition: "65% COTTON 35% SILK",
+          weight_gsm: 240,
+          fabric_brand: "Loro Piana",
+          sales_order_line_id: "line-1",
+          fabric_number: "772003",
+          quantity: 1,
+          unit_price: 8200,
+        },
+      ]
+    );
+
+    const shortRow = worksheet.rows.find((row) => row.garment === "Short");
+    assert.equal(shortRow?.unit_price_sar, null, "a combined article's price is not a Short's price");
+  });
+
+  it("will not choose between two prices quoted for one cloth and garment", () => {
+    const worksheet = build(
+      [
+        suitCut("line-1", "781059", "Shirt LS"),
+        suitCut("line-2", "781058", "Shirt LS"),
+        suitCut("line-3", "781060", "Shirt LS"),
+      ],
+      [
+        { ...australis, sales_order_line_id: "line-1", fabric_number: "781059", quantity: 1, unit_price: 3800 },
+        { ...australis, sales_order_line_id: "line-2", fabric_number: "781058", quantity: 1, unit_price: 4200 },
+      ]
+    );
+
+    const uninvoiced = worksheet.rows.find((row) => row.invoice_number == null);
+    assert.equal(uninvoiced?.unit_price_sar, null, "3800 and 4200 are not one rate");
   });
 });

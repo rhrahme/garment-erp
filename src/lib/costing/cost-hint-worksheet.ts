@@ -272,6 +272,7 @@ export function costHintInvoiceGroupKey(
     Partial<
       Pick<
         CostHintWorksheetRow,
+        | "invoice_number"
         | "supplier_id"
         | "fabric_brand"
         | "fabric_cost_sar"
@@ -291,7 +292,11 @@ export function costHintInvoiceGroupKey(
     .map(costHintMoneyKey)
     .join("/");
   const basis = [costHintMoneyKey(row.price_per_meter_sar), costHintMetersKey(row.meters_per_piece)].join("/");
-  return `${so}|${garment}|${fibre}|${weight}|${costHintMillKey(row)}|${money}|${basis}`;
+  // A garment that was billed and one that only carries the rate its twin was
+  // billed at are not the same article, even at the same figure. Merging them
+  // would put an invoice number over a cut that never reached an invoice.
+  const invoice = row.invoice_number?.trim() || "-";
+  return `${so}|${garment}|${fibre}|${weight}|${costHintMillKey(row)}|${money}|${basis}|${invoice}`;
 }
 
 function uniqueJoined(values: Array<string | null | undefined>): string | null {
@@ -803,6 +808,57 @@ export function spreadConsolidatedSellingPrices(
   }
 }
 
+/**
+ * What a cut would be charged if it were priced like its twin on the invoice.
+ *
+ * Pricing here follows the cloth and the garment: two Shirt LS in the same
+ * AUSTRALIS 250g are the same price whichever number is on the bolt. So a cut
+ * the invoice never billed still has a known rate, and showing it saves pricing
+ * the same cloth a second time.
+ *
+ * These rows deliberately keep a blank invoice number. The figure is what the
+ * garment is worth, not evidence that anyone was charged for it, and something
+ * made and never billed has to stay readable as exactly that. Two different
+ * prices for one cloth and garment is not a rate, so that cloth is left alone.
+ */
+export function inheritedSellingPriceByFabricLineId(
+  invoices: CustomerInvoice[],
+  orders: SalesOrderCost[],
+  billed: Map<string, CostHintSellingPrice>
+): Map<string, number> {
+  const inherited = new Map<string, number>();
+  const orderBySoNumber = new Map(orders.map((order) => [order.so_number, order]));
+
+  for (const invoice of invoices) {
+    const order = orderBySoNumber.get(invoice.so_number ?? "");
+    if (!order) continue;
+
+    const rateByKey = new Map<string, number>();
+    for (const line of invoice.lines ?? []) {
+      const key = consolidatedSellingKey(line);
+      if (!key) continue;
+      if (!Number.isFinite(line.unit_price) || line.unit_price <= 0) continue;
+      const seen = rateByKey.get(key);
+      if (seen != null && seen !== line.unit_price) {
+        rateByKey.set(key, Number.NaN);
+        continue;
+      }
+      rateByKey.set(key, line.unit_price);
+    }
+
+    for (const cost of order.lines) {
+      if (billed.has(cost.line_id) || inherited.has(cost.line_id)) continue;
+      const key = consolidatedSellingKey(cost);
+      if (!key) continue;
+      const rate = rateByKey.get(key);
+      if (rate == null || !Number.isFinite(rate)) continue;
+      inherited.set(cost.line_id, rate);
+    }
+  }
+
+  return inherited;
+}
+
 export function sellingPriceByFabricLineId(
   invoices: CustomerInvoice[]
 ): Map<string, CostHintSellingPrice> {
@@ -827,7 +883,8 @@ function rowFromCostLine(input: {
   order: SalesOrderCost;
   line: FabricLineCost;
   fabricLine: SalesOrderFabricLine | undefined;
-  selling: { invoice_number: string; unit_price_sar: number; quantity: number } | undefined;
+  selling: CostHintSellingPrice | undefined;
+  inheritedPrice: number | undefined;
 }): CostHintWorksheetRow {
   const pieces = input.fabricLine ? pieceCountForFabricLine(input.fabricLine) : 1;
   const fabricCost = unitCostFromLineTotal(input.line.fabric_cost_sar, pieces);
@@ -875,7 +932,7 @@ function rowFromCostLine(input: {
     meters_per_piece: basis.meters_per_piece,
     fabric_cost_sar: fabricCost,
     cost_hint_sar: costHint,
-    unit_price_sar: input.selling?.unit_price_sar ?? null,
+    unit_price_sar: input.selling?.unit_price_sar ?? input.inheritedPrice ?? null,
     missing_price: !input.line.has_fabric_price,
     article_count: articleCount,
     piece_names: input.fabricLine
@@ -897,6 +954,11 @@ export function buildCostHintWorksheet(options: {
   const soById = new Map(options.salesOrders.map((order) => [order.id, order]));
   const selling = sellingPriceByFabricLineId(options.invoices ?? []);
   spreadConsolidatedSellingPrices(options.invoices ?? [], options.overview.orders, selling);
+  const inherited = inheritedSellingPriceByFabricLineId(
+    options.invoices ?? [],
+    options.overview.orders,
+    selling
+  );
   const soFilter = options.soNumber?.trim().toUpperCase() ?? "";
   const clientTokens = options.clientTokens ?? [];
   const namedClients = clientTokens.length > 0;
@@ -916,6 +978,7 @@ export function buildCostHintWorksheet(options: {
           line,
           fabricLine: fabricById.get(line.line_id),
           selling: selling.get(line.line_id),
+          inheritedPrice: inherited.get(line.line_id),
         })
       );
     }
