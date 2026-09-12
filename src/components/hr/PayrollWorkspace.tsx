@@ -6,6 +6,7 @@ import { JobFunctionsEditor } from "@/components/hr/JobFunctionsEditor";
 import { StatCard } from "@/components/ui/PageHeader";
 import { usePayrollSalariesVisibility } from "@/hooks/usePayrollSalariesVisibility";
 import { MASKED_SALARY_AMOUNT } from "@/lib/auth/payroll-salary.constants";
+import { EMPLOYEE_JOB_FUNCTION_LABELS } from "@/lib/hr/job-functions";
 import { maskAccountNumber, sortPayrollEmployees } from "@/lib/hr/payroll-utils";
 import { FACTORY_WORKSTATIONS } from "@/lib/production/factory-workstations";
 import type { PayrollEmployee, PayrollSummary } from "@/lib/types/hr-payroll";
