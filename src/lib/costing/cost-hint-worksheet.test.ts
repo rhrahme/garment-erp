@@ -1150,11 +1150,11 @@ describe("cost hint worksheet - the price and length behind an invoice row", () 
       client_name: "Turki Al Luwaihiq",
       client_code: "FR-0826-0044",
       lines,
-    } as CustomerInvoice;
+    } as unknown as CustomerInvoice;
   }
 
   function orderOf(fabricLines: Record<string, unknown>[]): SalesOrder {
-    return { id: "so-99", so_number: "SO-2026-0099", fabric_lines: fabricLines } as SalesOrder;
+    return { id: "so-99", so_number: "SO-2026-0099", fabric_lines: fabricLines } as unknown as SalesOrder;
   }
 
   const shirtTrouser = {
