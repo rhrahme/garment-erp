@@ -14,10 +14,11 @@
  *   node scripts/download-drapers-fabric-images.mjs --codes 10101,90640,85119
  *   node scripts/download-drapers-fabric-images.mjs --by-collection --best --limit 20
  *   node scripts/download-drapers-fabric-images.mjs --by-collection --best --all
+ *   node scripts/download-drapers-fabric-images.mjs --by-collection --all --out ~/Desktop/Drapers --resume
  *   node scripts/download-drapers-fabric-images.mjs --retry-failed --by-collection --best --delay-ms 500
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync } from "node:fs";
 import { resolve, extname } from "node:path";
 
 const ROOT = process.cwd();
@@ -53,6 +54,7 @@ function parseArgs(argv) {
     byCollection: false,
     retryFailed: false,
     plan: false,
+    resume: false,
   };
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
@@ -61,6 +63,7 @@ function parseArgs(argv) {
     else if (arg === "--quality" && argv[i + 1]) args.quality = argv[++i];
     else if (arg === "--best") args.quality = "best";
     else if (arg === "--plan") args.plan = true;
+    else if (arg === "--resume") args.resume = true;
     else if (arg === "--by-collection") args.byCollection = true;
     else if (arg === "--retry-failed") args.retryFailed = true;
     else if (arg === "--out" && argv[i + 1]) args.out = resolve(ROOT, argv[++i]);
@@ -81,6 +84,7 @@ Options:
   --codes A,B,C   Specific fabric numbers instead of catalog order
   --delay-ms N    Pause between API calls (default: 200; 500 when --retry-failed)
   --retry-failed  Re-download only failed/missing items from existing manifest.json
+  --resume        Skip any fabric whose image is already in the output folder
   --plan          Print the folder plan and exit. Downloads nothing, needs no API key.
 `);
       process.exit(0);
@@ -294,6 +298,30 @@ function manifestItemFileExists(outDir, item) {
   return existsSync(resolve(outDir, item.filename));
 }
 
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"];
+
+/**
+ * The image this fabric would be written to, if a previous run already wrote it.
+ *
+ * Which extension it landed under depends on the URL the API hands back, which
+ * costs a call to learn, so all four are checked instead. This is what lets an
+ * interrupted run be restarted by repeating the same command: 1,500 fabrics over
+ * a home connection is long enough that finishing in one sitting is the
+ * exception, not the rule.
+ */
+function existingDownload(outDir, slug, fabricNumber) {
+  const base = normalizeCode(fabricNumber);
+  const dir = slug ? resolve(outDir, slug) : outDir;
+  for (const ext of IMAGE_EXTENSIONS) {
+    const filename = `${base}${ext}`;
+    const path = resolve(dir, filename);
+    if (existsSync(path)) {
+      return { path, filename: slug ? `${slug}/${filename}` : filename };
+    }
+  }
+  return null;
+}
+
 function loadRetryTargets(outDir) {
   const manifestPath = resolve(outDir, "manifest.json");
   if (!existsSync(manifestPath)) {
@@ -418,6 +446,18 @@ if (existsSync(originalManifestPath)) {
   }
 }
 
+// What a resumed run already knows about the files it is about to skip. Reusing
+// the recorded quality and dimensions keeps a resumed manifest as informative as
+// an uninterrupted one.
+const priorManifestPath = resolve(args.out, "manifest.json");
+const priorByFabric = new Map();
+if (args.resume && existsSync(priorManifestPath)) {
+  const prior = JSON.parse(readFileSync(priorManifestPath, "utf8"));
+  for (const item of prior.items ?? []) {
+    if (item.ok) priorByFabric.set(item.fabric_number, item);
+  }
+}
+
 const manifest = {
   downloaded_at: new Date().toISOString(),
   source: "Drapers API GET /fabrics/{code}/medias/",
@@ -434,6 +474,7 @@ const manifest = {
 let okCount = 0;
 let failCount = 0;
 let newlyDownloaded = 0;
+let skippedExisting = 0;
 const retriedByFabric = new Map();
 
 function bumpCollectionCount(slug, field) {
@@ -458,10 +499,80 @@ function recordFailedItem(fabricNumber, fabric, slug, error) {
   return item;
 }
 
+const manifestPath = resolve(args.out, "manifest.json");
+
+/**
+ * Write the manifest unless that would replace a good record with a worthless
+ * one. The images are gitignored, so this file is the only durable memory of
+ * what was ever downloaded - and a missing API key fails every single fabric.
+ */
+function writeManifestGuarded(okSoFar, failedSoFar) {
+  if (okSoFar === 0 && existsSync(manifestPath)) {
+    const prior = JSON.parse(readFileSync(manifestPath, "utf8"));
+    if ((prior.summary?.ok ?? 0) > 0) {
+      console.error(
+        `\nNothing downloaded. Keeping the existing manifest (${prior.summary.ok} ok from ${prior.downloaded_at}) rather than overwriting it with ${failedSoFar} failure${failedSoFar === 1 ? "" : "s"}.`
+      );
+      return false;
+    }
+  }
+  writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+  return true;
+}
+
+// Ctrl-C used to throw away the record of everything already fetched, because
+// the manifest was only written once the last fabric was done. The images
+// survived the interrupt; the account of them did not.
+let interrupted = false;
+for (const signal of ["SIGINT", "SIGTERM"]) {
+  process.on(signal, () => {
+    if (interrupted) process.exit(130);
+    interrupted = true;
+    const ok = manifest.items.filter((item) => item.ok).length;
+    const failed = manifest.items.length - ok;
+    manifest.summary = {
+      ok,
+      failed,
+      total: manifest.items.length,
+      interrupted: true,
+      ...(skippedExisting ? { skipped_existing: skippedExisting } : {}),
+      collection_folders: args.byCollection ? Object.keys(manifest.collections).sort() : undefined,
+    };
+    console.log(`\n\nStopped after ${manifest.items.length} of ${targets.length} fabrics.`);
+    if (writeManifestGuarded(ok, failed)) console.log(`Manifest: ${manifestPath}`);
+    console.log(`Add --resume to the same command to carry on where this left off.`);
+    process.exit(130);
+  });
+}
+
 for (const fabric of targets) {
   const fabricNumber = fabric.fabric_number;
   const slug = args.byCollection ? collectionSlug(fabric.collection) : null;
   const label = args.byCollection ? `${fabricNumber} [${slug}]` : fabricNumber;
+
+  if (args.resume) {
+    const already = existingDownload(args.out, slug, fabricNumber);
+    if (already) {
+      const prior = priorByFabric.get(fabricNumber);
+      const item = {
+        ...(prior ?? {}),
+        fabric_number: fabricNumber,
+        collection: fabric.collection,
+        collection_slug: slug,
+        ok: true,
+        filename: already.filename,
+        bytes: statSync(already.path).size,
+        skipped_existing: true,
+      };
+      manifest.items.push(item);
+      retriedByFabric.set(fabricNumber, item);
+      if (args.byCollection) bumpCollectionCount(slug, "ok");
+      okCount += 1;
+      skippedExisting += 1;
+      continue;
+    }
+  }
+
   process.stdout.write(`${label} ... `);
   try {
     const result = await lookupMedias(fabricNumber);
@@ -594,6 +705,7 @@ manifest.summary = {
   ok: finalOk,
   failed: finalFailed,
   total: finalTotal,
+  ...(skippedExisting ? { skipped_existing: skippedExisting } : {}),
   ...(args.retryFailed
     ? {
         newly_downloaded: newlyDownloaded,
@@ -604,24 +716,15 @@ manifest.summary = {
     : {}),
   collection_folders: args.byCollection ? Object.keys(manifest.collections).sort() : undefined,
 };
-const manifestPath = resolve(args.out, "manifest.json");
-// A run that saved nothing must not erase the record of a run that did. The
-// images are gitignored, so this manifest is the only tracked memory of what
-// was ever downloaded - and a missing API key fails every single fabric.
-if (finalOk === 0 && existsSync(manifestPath)) {
-  const prior = JSON.parse(readFileSync(manifestPath, "utf8"));
-  if ((prior.summary?.ok ?? 0) > 0) {
-    console.error(
-      `\nNothing downloaded. Keeping the existing manifest (${prior.summary.ok} ok from ${prior.downloaded_at}) rather than overwriting it with ${finalFailed} failure${finalFailed === 1 ? "" : "s"}.`
-    );
-    process.exit(1);
-  }
-}
-writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+if (!writeManifestGuarded(finalOk, finalFailed)) process.exit(1);
 
 if (args.retryFailed) {
   console.log(
     `\nDone: ${newlyDownloaded} newly downloaded, ${failCount} still failed (${finalOk} ok total, ${finalFailed} failed total)`,
+  );
+} else if (skippedExisting) {
+  console.log(
+    `\nDone: ${newlyDownloaded} downloaded, ${skippedExisting} already on disk, ${failCount} failed/skipped`,
   );
 } else {
   console.log(`\nDone: ${okCount} downloaded, ${failCount} failed/skipped`);
