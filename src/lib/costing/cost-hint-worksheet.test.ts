@@ -1659,4 +1659,112 @@ describe("cost hint worksheet - the price suggested for a cut nobody was billed 
     const uninvoiced = worksheet.rows.find((row) => row.invoice_number == null);
     assert.equal(uninvoiced?.suggested_price_sar, null, "3800 and 4200 are not one rate");
   });
+
+  it("reads a rate across a weight that was never recorded", () => {
+    // The only Overcoat ever invoiced has no weight against it. Refusing to
+    // read across that hole would leave every cashmere Overcoat unpriced.
+    const coat = { ...suitCut("line-1", "85132", "Overcoat"), composition: "100% cashmere", weight_gsm: 550 };
+    const worksheet = build(
+      [coat],
+      [],
+      [
+        {
+          invoice_number: "INV-2026-0004",
+          client_code: "FR-0726-0039",
+          lines: [
+            {
+              garment_type: "Overcoat",
+              composition: "100% cashmere",
+              weight_gsm: null,
+              fabric_number: "505050",
+              quantity: 1,
+              unit_price: 16500,
+            },
+          ],
+        },
+      ]
+    );
+
+    assert.equal(worksheet.rows[0]?.suggested_price_sar, 16500);
+    assert.equal(
+      worksheet.rows[0]?.suggested_price_basis,
+      "505050 on INV-2026-0004, no weight recorded",
+      "the basis admits the weight it came from"
+    );
+  });
+
+  it("will not price a 195g linen off a 330g one", () => {
+    const light = { ...suitCut("line-1", "S23050", "Shirt LS"), composition: "100% LINEN", weight_gsm: 195 };
+    const worksheet = build(
+      [light],
+      [],
+      [
+        {
+          invoice_number: "INV-2026-0002",
+          client_code: "FR-0726-0039",
+          lines: [
+            {
+              garment_type: "Shirt LS",
+              composition: "100% LINEN",
+              weight_gsm: 330,
+              fabric_number: "S23001",
+              quantity: 1,
+              unit_price: 2500,
+            },
+          ],
+        },
+      ]
+    );
+
+    assert.equal(worksheet.rows[0]?.suggested_price_sar, null, "those are not the same cloth");
+  });
+
+  it("prefers what this client pays over what another client was charged", () => {
+    // A plain cotton Shirt LS has gone out at five different figures, each one
+    // settled for the client who paid it.
+    const shirt = { ...suitCut("line-1", "C11436697-1", "Shirt LS"), composition: "100% cotton", weight_gsm: null };
+    const otherClient = (invoice: string, price: number) => ({
+      invoice_number: invoice,
+      client_code: "GL-0626-0011",
+      lines: [
+        {
+          garment_type: "Shirt LS",
+          composition: "100% Cotton",
+          weight_gsm: null,
+          fabric_number: "1415541-1",
+          quantity: 1,
+          unit_price: price,
+        },
+      ],
+    });
+    const worksheet = build(
+      [shirt],
+      [],
+      [
+        otherClient("INV-2026-0003", 600),
+        otherClient("INV-2026-0005", 900),
+        {
+          invoice_number: "INV-2026-0004",
+          client_code: "FR-0726-0039",
+          lines: [
+            {
+              garment_type: "Shirt LS",
+              composition: "100% Cotton",
+              weight_gsm: 175,
+              fabric_number: "71570/052",
+              quantity: 1,
+              unit_price: 1100,
+            },
+          ],
+        },
+      ]
+    );
+
+    assert.equal(
+      worksheet.rows[0]?.suggested_price_sar,
+      1100,
+      "his own settled rate, not the two the book cannot choose between"
+    );
+    assert.equal(worksheet.rows[0]?.suggested_price_basis, "71570/052 on INV-2026-0004, 175 gsm");
+  });
 });

@@ -824,52 +824,157 @@ export type CostHintPriceBookEntry = {
   basis: string;
 };
 
+/** One billed garment, kept with its weight so a near match can be judged. */
+type PriceObservation = {
+  weight: string | null;
+  price: number;
+  fabric: string;
+  invoice: string;
+};
+
+export type CostHintPriceBook = Map<string, PriceObservation[]>;
+
 /**
- * Every price charged for a garment in a given cloth, across all invoices.
+ * Garment and fibre, without the weight. Weight is matched separately.
  *
- * Pricing follows the cloth and the garment, not the bolt: the same garment in
- * the same fibre and weight carries the same price whichever fabric number it
- * was cut from, and across clients too. That holds for 52 of the 54
- * combinations invoiced so far.
- *
- * The other two are the point of the conflict rule. Where one garment and cloth
- * have been charged two different amounts - a Shirt LS in 71/15/14 at 250g went
- * out at both 3,100 and 3,300 - there is no single rate to report, so that
- * combination is dropped rather than resolved by picking a side. Choosing
- * between two prices Ralph set is his call, not the sheet's.
+ * Prefixed with a client code when there is one, because a plain cotton Shirt LS
+ * has gone out at 600, 900, 1,100, 2,100 and 2,300 - and every one of those is
+ * the settled rate for the client who paid it. Across the book the figure means
+ * nothing; within a client it has never varied once.
  */
-export function buildCostHintPriceBook(
-  invoices: CustomerInvoice[]
-): Map<string, CostHintPriceBookEntry> {
-  const seen = new Map<string, { price: number; basis: string; conflicted: boolean }>();
+function clothPriceKey(
+  input: { garment_type: string; composition?: string | null },
+  clientCode?: string | null
+): string | null {
+  const garment = input.garment_type?.trim().toLowerCase();
+  const fibre = costHintFibreKey(input.composition);
+  if (!garment || !fibre) return null;
+  const client = clientCode?.trim().toUpperCase();
+  return `${client ? `${client}|` : ""}${garment}|${fibre}`;
+}
+
+/**
+ * Every price charged for a garment in a given fibre, across all invoices.
+ *
+ * Each line is filed twice, once under its client and once under everyone, so a
+ * lookup can ask what this client pays before asking what the business charges.
+ *
+ * Kept as the raw observations rather than a resolved rate, because whether two
+ * cuts count as the same cloth depends on what is being asked. Weight is held
+ * beside each price so the lookup can insist on it first and relax afterwards.
+ */
+export function buildCostHintPriceBook(invoices: CustomerInvoice[]): CostHintPriceBook {
+  const book: CostHintPriceBook = new Map();
 
   for (const invoice of invoices) {
     for (const line of invoice.lines ?? []) {
-      const key = consolidatedSellingKey(line);
-      if (!key) continue;
       const price = Number(line.unit_price);
       if (!Number.isFinite(price) || price <= 0) continue;
 
-      const previous = seen.get(key);
-      if (!previous) {
-        const fabric = line.fabric_number?.trim();
-        seen.set(key, {
-          price,
-          basis: `${fabric ? `${fabric} on ` : ""}${invoice.invoice_number}`,
-          conflicted: false,
-        });
-        continue;
+      const observation: PriceObservation = {
+        weight: costHintWeightKey(line.weight_gsm),
+        price,
+        fabric: line.fabric_number?.trim() || "",
+        invoice: invoice.invoice_number,
+      };
+      for (const key of [clothPriceKey(line, invoice.client_code), clothPriceKey(line)]) {
+        if (!key) continue;
+        const observations = book.get(key) ?? [];
+        observations.push(observation);
+        book.set(key, observations);
       }
-      if (previous.price !== price) previous.conflicted = true;
     }
   }
 
-  const book = new Map<string, CostHintPriceBookEntry>();
-  for (const [key, entry] of seen) {
-    if (entry.conflicted) continue;
-    book.set(key, { price_sar: entry.price, basis: entry.basis });
-  }
   return book;
+}
+
+/**
+ * The one rate a set of billed cuts agrees on, or nothing.
+ *
+ * Two different prices for what is being treated as one cloth is not a rate, so
+ * it reports nothing rather than picking a side. Choosing between two prices
+ * Ralph set is his call.
+ */
+function agreedRate(
+  observations: PriceObservation[],
+  note: (from: PriceObservation) => string
+): CostHintPriceBookEntry | null {
+  const first = observations[0];
+  if (!first) return null;
+  if (observations.some((entry) => entry.price !== first.price)) return null;
+  return { price_sar: first.price, basis: note(first) };
+}
+
+/**
+ * How far apart two weights can be and still be the same cloth to a client.
+ *
+ * A 250g jacketing and a 260g one are the same thing in the hand; a 195g linen
+ * and a 330g linen are not, and pricing one off the other would be inventing a
+ * number rather than reporting one. 15% of the heavier draws that line without
+ * needing a rule per fibre.
+ */
+const COST_HINT_WEIGHT_TOLERANCE = 0.15;
+
+function nearEnoughWeight(a: string | null, b: string | null): boolean {
+  // An unrecorded weight is a hole in the data, not a different cloth. The only
+  // cashmere Overcoat ever invoiced has no weight against it, and refusing to
+  // read across that would leave the cloth unpriced forever.
+  if (a == null || b == null) return true;
+  const left = Number(a);
+  const right = Number(b);
+  if (!Number.isFinite(left) || !Number.isFinite(right)) return true;
+  return Math.abs(left - right) / Math.max(left, right) <= COST_HINT_WEIGHT_TOLERANCE;
+}
+
+/**
+ * What a cut of this cloth would be charged, on the closest evidence there is.
+ *
+ * Four questions, asked in order of how well the answer would hold up: what this
+ * client has paid for this exact cloth, what he has paid for near enough the
+ * same, then the same two of the whole book. The first one that comes back with
+ * a single agreed figure wins, so a client's own settled rate is never overruled
+ * by what someone else was charged.
+ *
+ * Relaxing the weight is what lets a 550g cashmere Overcoat take the rate from
+ * the only cashmere Overcoat ever invoiced, whose weight was never recorded. A
+ * relaxed match says so in its basis, naming the weight it actually came from,
+ * so a figure drawn across a difference can be seen for what it is.
+ */
+export function lookupCostHintPrice(
+  book: CostHintPriceBook,
+  input: {
+    garment_type: string;
+    composition?: string | null;
+    weight_gsm?: number | null;
+    client_code?: string | null;
+  }
+): CostHintPriceBookEntry | null {
+  const weight = costHintWeightKey(input.weight_gsm);
+  const exactly = (from: PriceObservation) =>
+    `${from.fabric ? `${from.fabric} on ` : ""}${from.invoice}`;
+  const roughly = (from: PriceObservation) =>
+    `${exactly(from)}, ${from.weight ? `${from.weight} gsm` : "no weight recorded"}`;
+
+  for (const clientCode of [input.client_code, null]) {
+    const key = clothPriceKey(input, clientCode);
+    const observations = key ? book.get(key) : undefined;
+    if (!observations || observations.length === 0) continue;
+
+    const exact = agreedRate(
+      observations.filter((entry) => entry.weight === weight),
+      exactly
+    );
+    if (exact) return exact;
+
+    const near = agreedRate(
+      observations.filter((entry) => nearEnoughWeight(entry.weight, weight)),
+      roughly
+    );
+    if (near) return near;
+  }
+
+  return null;
 }
 
 /**
@@ -881,8 +986,9 @@ export function buildCostHintPriceBook(
  * exactly that. Cuts the invoice did charge for are skipped, so a suggestion
  * never contradicts a real price.
  */
+
 export function suggestedPriceByFabricLineId(
-  book: Map<string, CostHintPriceBookEntry>,
+  book: CostHintPriceBook,
   orders: SalesOrderCost[],
   billed: Map<string, CostHintSellingPrice>
 ): Map<string, CostHintPriceBookEntry> {
@@ -891,9 +997,7 @@ export function suggestedPriceByFabricLineId(
   for (const order of orders) {
     for (const cost of order.lines) {
       if (billed.has(cost.line_id)) continue;
-      const key = consolidatedSellingKey(cost);
-      if (!key) continue;
-      const entry = book.get(key);
+      const entry = lookupCostHintPrice(book, { ...cost, client_code: order.client_code });
       if (entry) suggested.set(cost.line_id, entry);
     }
   }
