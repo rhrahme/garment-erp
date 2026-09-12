@@ -57,6 +57,8 @@ export async function generateCostHintWorksheetPdf(worksheet: CostHintWorksheet)
       )
   );
 
+  const hasSuggestion = worksheet.rows.some((row) => row.suggested_price_sar != null);
+
   const heading = worksheet.title?.trim() || "Cost hint worksheet";
   const title = heading.toUpperCase().startsWith("INTERNAL") ? heading : `INTERNAL - ${heading}`;
   const soCount = uniqueCostHintSoNumbers(worksheet.rows).length;
@@ -77,6 +79,14 @@ export async function generateCostHintWorksheetPdf(worksheet: CostHintWorksheet)
     y
   );
   y += 14;
+  if (hasSuggestion) {
+    doc.text(
+      "Suggested is what the same garment in the same cloth was charged elsewhere. Nobody has been billed it. Blank means the cloth has been priced two different ways.",
+      margin,
+      y
+    );
+    y += 14;
+  }
 
   const constant = costHintConstantColumns(worksheet.rows);
   const constantParts = [
@@ -146,6 +156,15 @@ export async function generateCostHintWorksheetPdf(worksheet: CostHintWorksheet)
       value: (row) => (row.missing_price && row.cost_hint_sar == null ? "-" : money(row.cost_hint_sar)),
     },
     { header: "Unit price", style: { cellWidth: 52, halign: "right" }, value: (row) => money(row.unit_price_sar) },
+    // Its own column, and only when something can be suggested. A rate carried
+    // over from another cut is not a price anyone was charged, so it must not
+    // sit in the unit price column where it would read as one.
+    {
+      header: "Suggested",
+      hidden: !hasSuggestion,
+      style: { cellWidth: 52, halign: "right" },
+      value: (row) => money(row.suggested_price_sar ?? null),
+    },
     { header: "Write price", style: { cellWidth: 46 }, value: () => "" },
   ];
   const visibleColumns = columns.filter((column) => !column.hidden);

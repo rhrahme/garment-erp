@@ -1434,7 +1434,7 @@ describe("cost hint worksheet - a consolidated invoice line and the cuts behind 
     assert.equal(total, 3, "three shorts were cut, so the sheet must show three");
   });
 
-  it("gives an unbilled cut the rate its twins were billed at, without an invoice", () => {
+  it("suggests a rate for an unbilled cut without charging it", () => {
     const worksheet = worksheetFor(4, 3);
     const billed = worksheet.rows.filter((row) => row.invoice_number != null);
     const unbilled = worksheet.rows.filter((row) => row.invoice_number == null);
@@ -1442,11 +1442,16 @@ describe("cost hint worksheet - a consolidated invoice line and the cuts behind 
     assert.equal(billed.reduce((sum, row) => sum + row.quantity, 0), 3);
     assert.equal(unbilled.reduce((sum, row) => sum + row.quantity, 0), 1);
     assert.equal(unbilled[0]?.fabric_number, "S10015", "the cut nobody paid for stays visible");
-    assert.equal(unbilled[0]?.unit_price_sar, 2800, "a fourth short is worth what the first three were");
+    assert.equal(unbilled[0]?.unit_price_sar, null, "nobody was charged for the fourth short");
+    assert.equal(
+      unbilled[0]?.suggested_price_sar,
+      2800,
+      "a fourth short is worth what the first three were"
+    );
     assert.equal(
       worksheet.rows.length,
       2,
-      "the same figure does not merge a billed cut with one that was never invoiced"
+      "a suggested figure does not merge an unbilled cut into the billed row"
     );
   });
 
@@ -1460,11 +1465,12 @@ describe("cost hint worksheet - a consolidated invoice line and the cuts behind 
       generatedAt: "2026-09-12T12:00:00.000Z",
     });
     const trouser = worksheet.rows.find((row) => row.garment === "Trouser");
-    assert.equal(trouser?.unit_price_sar, null, "a Short's price is not a Trouser's price");
+    assert.equal(trouser?.unit_price_sar, null);
+    assert.equal(trouser?.suggested_price_sar, null, "a Short's price is not a Trouser's price");
   });
 });
 
-describe("cost hint worksheet - the rate a cut inherits from its twin", () => {
+describe("cost hint worksheet - the price suggested for a cut nobody was billed for", () => {
   function suitCut(lineId: string, fabricNumber: string, garment: string) {
     return {
       line_id: lineId,
@@ -1495,7 +1501,11 @@ describe("cost hint worksheet - the rate a cut inherits from its twin", () => {
     };
   }
 
-  function build(lines: ReturnType<typeof suitCut>[], invoiceLines: unknown[]) {
+  function build(
+    lines: ReturnType<typeof suitCut>[],
+    invoiceLines: unknown[],
+    otherInvoices: unknown[] = []
+  ) {
     return buildCostHintWorksheet({
       overview: overviewOf({
         order_id: "so-119",
@@ -1540,6 +1550,7 @@ describe("cost hint worksheet - the rate a cut inherits from its twin", () => {
           so_number: "SO-2026-0119",
           lines: invoiceLines,
         } as unknown as CustomerInvoice,
+        ...(otherInvoices as CustomerInvoice[]),
       ],
       generatedAt: "2026-09-12T12:00:00.000Z",
     });
@@ -1563,22 +1574,44 @@ describe("cost hint worksheet - the rate a cut inherits from its twin", () => {
     );
 
     const uninvoiced = worksheet.rows.find((row) => row.invoice_number == null);
-    assert.equal(uninvoiced?.unit_price_sar, 3800);
+    assert.equal(uninvoiced?.suggested_price_sar, 3800);
+    assert.equal(uninvoiced?.suggested_price_basis, "781059 on INV-2026-0007");
     assert.equal(uninvoiced?.quantity, 2, "both unbilled shirts sit on one row");
     assert.equal(uninvoiced?.fabric_number, "781060, 781056");
   });
 
-  it("keeps the invoice number off a cut that was never billed", () => {
+  it("leaves the unit price blank on a cut nobody was charged for", () => {
     const worksheet = build(
       [suitCut("line-1", "781059", "Shirt LS"), suitCut("line-2", "781060", "Shirt LS")],
       [{ ...australis, sales_order_line_id: "line-1", fabric_number: "781059", quantity: 1, unit_price: 3800 }]
     );
 
-    assert.equal(worksheet.rows.length, 2, "same price, but one was invoiced and one was not");
+    assert.equal(worksheet.rows.length, 2, "one was invoiced and one was not");
     assert.deepEqual(
-      worksheet.rows.map((row) => row.invoice_number),
-      ["INV-2026-0007", null]
+      worksheet.rows.map((row) => [row.invoice_number, row.unit_price_sar, row.suggested_price_sar]),
+      [
+        ["INV-2026-0007", 3800, null],
+        [null, null, 3800],
+      ]
     );
+  });
+
+  it("suggests a rate charged on another client's invoice", () => {
+    const worksheet = build(
+      [suitCut("line-1", "781060", "Shirt LS")],
+      [],
+      [
+        {
+          invoice_number: "INV-2026-0002",
+          invoice_date: "2026-05-02",
+          so_number: "SO-2026-0101",
+          lines: [{ ...australis, fabric_number: "781059", quantity: 1, unit_price: 3800 }],
+        },
+      ]
+    );
+
+    assert.equal(worksheet.rows[0]?.suggested_price_sar, 3800, "same cloth, same garment, other client");
+    assert.equal(worksheet.rows[0]?.suggested_price_basis, "781059 on INV-2026-0002");
   });
 
   it("will not invent a rate the invoice never quoted for that garment", () => {
@@ -1602,7 +1635,12 @@ describe("cost hint worksheet - the rate a cut inherits from its twin", () => {
     );
 
     const shortRow = worksheet.rows.find((row) => row.garment === "Short");
-    assert.equal(shortRow?.unit_price_sar, null, "a combined article's price is not a Short's price");
+    assert.equal(shortRow?.unit_price_sar, null);
+    assert.equal(
+      shortRow?.suggested_price_sar,
+      null,
+      "a combined article's price is not a Short's price"
+    );
   });
 
   it("will not choose between two prices quoted for one cloth and garment", () => {
@@ -1619,6 +1657,6 @@ describe("cost hint worksheet - the rate a cut inherits from its twin", () => {
     );
 
     const uninvoiced = worksheet.rows.find((row) => row.invoice_number == null);
-    assert.equal(uninvoiced?.unit_price_sar, null, "3800 and 4200 are not one rate");
+    assert.equal(uninvoiced?.suggested_price_sar, null, "3800 and 4200 are not one rate");
   });
 });

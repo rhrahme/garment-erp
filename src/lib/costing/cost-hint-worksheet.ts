@@ -115,7 +115,12 @@ export type CostHintWorksheetRow = {
   meters_per_piece: number | null;
   fabric_cost_sar: number | null;
   cost_hint_sar: number | null;
+  /** What the invoice charged for this cut. Null means it was never billed. */
   unit_price_sar: number | null;
+  /** What the same cloth and garment was charged elsewhere. Never a billed figure. */
+  suggested_price_sar?: number | null;
+  /** The cut the suggestion came from, so it can be argued with. */
+  suggested_price_basis?: string | null;
   missing_price: boolean;
   article_count: number;
   piece_names?: string[];
@@ -292,9 +297,9 @@ export function costHintInvoiceGroupKey(
     .map(costHintMoneyKey)
     .join("/");
   const basis = [costHintMoneyKey(row.price_per_meter_sar), costHintMetersKey(row.meters_per_piece)].join("/");
-  // A garment that was billed and one that only carries the rate its twin was
-  // billed at are not the same article, even at the same figure. Merging them
-  // would put an invoice number over a cut that never reached an invoice.
+  // A merged row can only print one invoice number, so two cuts billed on
+  // different invoices - or one billed and one not - have to stay apart. Else
+  // an invoice number ends up over a garment that never reached that invoice.
   const invoice = row.invoice_number?.trim() || "-";
   return `${so}|${garment}|${fibre}|${weight}|${costHintMillKey(row)}|${money}|${basis}|${invoice}`;
 }
@@ -359,6 +364,11 @@ function mergeCostHintGroup(group: CostHintWorksheetRow[]): CostHintWorksheetRow
     fabric_cost_sar: sameNumber(group.map((row) => row.fabric_cost_sar)),
     cost_hint_sar: sameNumber(group.map((row) => row.cost_hint_sar)),
     unit_price_sar: sameNumber(group.map((row) => row.unit_price_sar)),
+    suggested_price_sar: sameNumber(group.map((row) => row.suggested_price_sar)),
+    suggested_price_basis:
+      new Set(group.map((row) => row.suggested_price_basis)).size === 1
+        ? first.suggested_price_basis
+        : null,
     missing_price: missingPrice,
     piece_names: pieceNames,
   };
@@ -808,55 +818,87 @@ export function spreadConsolidatedSellingPrices(
   }
 }
 
+export type CostHintPriceBookEntry = {
+  price_sar: number;
+  /** Where the figure came from, so the suggestion can be argued with. */
+  basis: string;
+};
+
 /**
- * What a cut would be charged if it were priced like its twin on the invoice.
+ * Every price charged for a garment in a given cloth, across all invoices.
  *
- * Pricing here follows the cloth and the garment: two Shirt LS in the same
- * AUSTRALIS 250g are the same price whichever number is on the bolt. So a cut
- * the invoice never billed still has a known rate, and showing it saves pricing
- * the same cloth a second time.
+ * Pricing follows the cloth and the garment, not the bolt: the same garment in
+ * the same fibre and weight carries the same price whichever fabric number it
+ * was cut from, and across clients too. That holds for 52 of the 54
+ * combinations invoiced so far.
  *
- * These rows deliberately keep a blank invoice number. The figure is what the
- * garment is worth, not evidence that anyone was charged for it, and something
- * made and never billed has to stay readable as exactly that. Two different
- * prices for one cloth and garment is not a rate, so that cloth is left alone.
+ * The other two are the point of the conflict rule. Where one garment and cloth
+ * have been charged two different amounts - a Shirt LS in 71/15/14 at 250g went
+ * out at both 3,100 and 3,300 - there is no single rate to report, so that
+ * combination is dropped rather than resolved by picking a side. Choosing
+ * between two prices Ralph set is his call, not the sheet's.
  */
-export function inheritedSellingPriceByFabricLineId(
-  invoices: CustomerInvoice[],
-  orders: SalesOrderCost[],
-  billed: Map<string, CostHintSellingPrice>
-): Map<string, number> {
-  const inherited = new Map<string, number>();
-  const orderBySoNumber = new Map(orders.map((order) => [order.so_number, order]));
+export function buildCostHintPriceBook(
+  invoices: CustomerInvoice[]
+): Map<string, CostHintPriceBookEntry> {
+  const seen = new Map<string, { price: number; basis: string; conflicted: boolean }>();
 
   for (const invoice of invoices) {
-    const order = orderBySoNumber.get(invoice.so_number ?? "");
-    if (!order) continue;
-
-    const rateByKey = new Map<string, number>();
     for (const line of invoice.lines ?? []) {
       const key = consolidatedSellingKey(line);
       if (!key) continue;
-      if (!Number.isFinite(line.unit_price) || line.unit_price <= 0) continue;
-      const seen = rateByKey.get(key);
-      if (seen != null && seen !== line.unit_price) {
-        rateByKey.set(key, Number.NaN);
+      const price = Number(line.unit_price);
+      if (!Number.isFinite(price) || price <= 0) continue;
+
+      const previous = seen.get(key);
+      if (!previous) {
+        const fabric = line.fabric_number?.trim();
+        seen.set(key, {
+          price,
+          basis: `${fabric ? `${fabric} on ` : ""}${invoice.invoice_number}`,
+          conflicted: false,
+        });
         continue;
       }
-      rateByKey.set(key, line.unit_price);
-    }
-
-    for (const cost of order.lines) {
-      if (billed.has(cost.line_id) || inherited.has(cost.line_id)) continue;
-      const key = consolidatedSellingKey(cost);
-      if (!key) continue;
-      const rate = rateByKey.get(key);
-      if (rate == null || !Number.isFinite(rate)) continue;
-      inherited.set(cost.line_id, rate);
+      if (previous.price !== price) previous.conflicted = true;
     }
   }
 
-  return inherited;
+  const book = new Map<string, CostHintPriceBookEntry>();
+  for (const [key, entry] of seen) {
+    if (entry.conflicted) continue;
+    book.set(key, { price_sar: entry.price, basis: entry.basis });
+  }
+  return book;
+}
+
+/**
+ * What a cut would be charged if it were priced like every other cut of that
+ * cloth and garment.
+ *
+ * This is a suggestion and is kept out of the unit price column, because a rate
+ * is not a receipt: a garment made and never billed has to stay readable as
+ * exactly that. Cuts the invoice did charge for are skipped, so a suggestion
+ * never contradicts a real price.
+ */
+export function suggestedPriceByFabricLineId(
+  book: Map<string, CostHintPriceBookEntry>,
+  orders: SalesOrderCost[],
+  billed: Map<string, CostHintSellingPrice>
+): Map<string, CostHintPriceBookEntry> {
+  const suggested = new Map<string, CostHintPriceBookEntry>();
+
+  for (const order of orders) {
+    for (const cost of order.lines) {
+      if (billed.has(cost.line_id)) continue;
+      const key = consolidatedSellingKey(cost);
+      if (!key) continue;
+      const entry = book.get(key);
+      if (entry) suggested.set(cost.line_id, entry);
+    }
+  }
+
+  return suggested;
 }
 
 export function sellingPriceByFabricLineId(
@@ -884,7 +926,7 @@ function rowFromCostLine(input: {
   line: FabricLineCost;
   fabricLine: SalesOrderFabricLine | undefined;
   selling: CostHintSellingPrice | undefined;
-  inheritedPrice: number | undefined;
+  suggested: CostHintPriceBookEntry | undefined;
 }): CostHintWorksheetRow {
   const pieces = input.fabricLine ? pieceCountForFabricLine(input.fabricLine) : 1;
   const fabricCost = unitCostFromLineTotal(input.line.fabric_cost_sar, pieces);
@@ -932,7 +974,9 @@ function rowFromCostLine(input: {
     meters_per_piece: basis.meters_per_piece,
     fabric_cost_sar: fabricCost,
     cost_hint_sar: costHint,
-    unit_price_sar: input.selling?.unit_price_sar ?? input.inheritedPrice ?? null,
+    unit_price_sar: input.selling?.unit_price_sar ?? null,
+    suggested_price_sar: input.selling ? null : (input.suggested?.price_sar ?? null),
+    suggested_price_basis: input.selling ? null : (input.suggested?.basis ?? null),
     missing_price: !input.line.has_fabric_price,
     article_count: articleCount,
     piece_names: input.fabricLine
@@ -954,8 +998,8 @@ export function buildCostHintWorksheet(options: {
   const soById = new Map(options.salesOrders.map((order) => [order.id, order]));
   const selling = sellingPriceByFabricLineId(options.invoices ?? []);
   spreadConsolidatedSellingPrices(options.invoices ?? [], options.overview.orders, selling);
-  const inherited = inheritedSellingPriceByFabricLineId(
-    options.invoices ?? [],
+  const suggested = suggestedPriceByFabricLineId(
+    buildCostHintPriceBook(options.invoices ?? []),
     options.overview.orders,
     selling
   );
@@ -978,7 +1022,7 @@ export function buildCostHintWorksheet(options: {
           line,
           fabricLine: fabricById.get(line.line_id),
           selling: selling.get(line.line_id),
-          inheritedPrice: inherited.get(line.line_id),
+          suggested: suggested.get(line.line_id),
         })
       );
     }

@@ -30,7 +30,9 @@ export function CostHintWorksheetView({
   const showSo = constant.so_numbers == null;
   const showInvoice = constant.invoice_number == null;
   const showClient = constant.client_name == null;
-  const columnCount = 14 + [showSo, showInvoice, showClient].filter(Boolean).length;
+  const showSuggested = worksheet.rows.some((row) => row.suggested_price_sar != null);
+  const columnCount =
+    14 + [showSo, showInvoice, showClient, showSuggested].filter(Boolean).length;
   const heading = worksheet.title.toUpperCase().startsWith("INTERNAL")
     ? worksheet.title
     : `INTERNAL - ${worksheet.title}`;
@@ -65,6 +67,12 @@ export function CostHintWorksheetView({
         {worksheet.rows.length} lines. {soCount} sales order{soCount === 1 ? "" : "s"}.{" "}
         {worksheet.missing_price_count} missing fabric price.
       </p>
+      {showSuggested ? (
+        <p className="mt-1 text-xs text-slate-500">
+          Suggested is what the same garment in the same cloth was charged elsewhere. Nobody has
+          been billed it. Blank means the cloth has been priced two different ways.
+        </p>
+      ) : null}
       <p className="mt-2 text-sm font-semibold text-slate-900">
         {worksheet.article_summary ||
           formatCostHintArticleSummary(summarizeCostHintArticles(worksheet.rows))}
@@ -116,6 +124,9 @@ export function CostHintWorksheetView({
             <th className="border border-slate-300 px-2 py-1.5 text-right">Fabric cost</th>
             <th className="border border-slate-300 px-2 py-1.5 text-right">Cost hint</th>
             <th className="border border-slate-300 px-2 py-1.5 text-right">Unit price</th>
+            {showSuggested ? (
+              <th className="border border-slate-300 px-2 py-1.5 text-right">Suggested</th>
+            ) : null}
             <th className="border border-slate-300 px-2 py-1.5">Write price</th>
           </tr>
         </thead>
@@ -172,6 +183,22 @@ export function CostHintWorksheetView({
                     {money(row.cost_hint_sar)}
                   </td>
                   <td className="border border-slate-200 px-2 py-1 text-right">{money(row.unit_price_sar)}</td>
+                  {showSuggested ? (
+                    <td className="border border-slate-200 px-2 py-1 text-right">
+                      {row.suggested_price_sar == null ? (
+                        "-"
+                      ) : (
+                        <>
+                          {money(row.suggested_price_sar)}
+                          {row.suggested_price_basis ? (
+                            <span className="block text-[10px] font-normal text-slate-500">
+                              {row.suggested_price_basis}
+                            </span>
+                          ) : null}
+                        </>
+                      )}
+                    </td>
+                  ) : null}
                   <td className="border border-slate-200 px-2 py-1">&nbsp;</td>
                 </tr>
               );
