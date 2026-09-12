@@ -201,29 +201,32 @@ export async function createPayrollEmployee(input: CreatePayrollEmployeeInput): 
   return employee;
 }
 
-export async function updatePayrollEmployee(
-  id: string,
-  patch: Partial<
-    Pick<
-      PayrollEmployee,
-      | "assigned_workstation_id"
-      | "is_mobile_floater"
-      | "job_functions"
-      | "short_name"
-      | "full_name"
-    >
+export type PayrollEmployeePatch = Partial<
+  Pick<
+    PayrollEmployee,
+    | "assigned_workstation_id"
+    | "is_mobile_floater"
+    | "job_functions"
+    | "short_name"
+    | "full_name"
+    | "is_active"
   >
-): Promise<PayrollEmployee> {
-  const store = readPayrollEmployees();
-  const index = store.employees.findIndex(
-    (employee) => employee.id === id || employee.employee_id_number === id
-  );
-  if (index < 0) {
-    throw new Error("Employee not found.");
-  }
+>;
 
-  const current = store.employees[index]!;
-  const updated: PayrollEmployee = {
+/**
+ * Merge an edit onto an employee record.
+ *
+ * Leavers are deactivated, never deleted: the record still has to answer for
+ * final settlement, past WPS transfers and the production work already
+ * attributed to them. `is_active: false` is what removes them from the floor,
+ * the kiosk, badge printing and the payroll total.
+ */
+export function applyPayrollEmployeePatch(
+  current: PayrollEmployee,
+  patch: PayrollEmployeePatch
+): PayrollEmployee {
+  const leaving = patch.is_active === false;
+  return {
     ...current,
     ...patch,
     short_name:
@@ -234,7 +237,35 @@ export async function updatePayrollEmployee(
       patch.job_functions !== undefined
         ? normalizeJobFunctions(patch.job_functions)
         : normalizeJobFunctions(current.job_functions),
+    // A leaver must not keep holding a bench someone else needs. Job functions
+    // stay on the record - they do nothing while inactive, and they are worth
+    // having if the same person is ever taken back on.
+    assigned_workstation_id: leaving
+      ? null
+      : patch.assigned_workstation_id !== undefined
+        ? patch.assigned_workstation_id
+        : (current.assigned_workstation_id ?? null),
+    is_mobile_floater: leaving
+      ? false
+      : patch.is_mobile_floater !== undefined
+        ? patch.is_mobile_floater
+        : Boolean(current.is_mobile_floater),
   };
+}
+
+export async function updatePayrollEmployee(
+  id: string,
+  patch: PayrollEmployeePatch
+): Promise<PayrollEmployee> {
+  const store = readPayrollEmployees();
+  const index = store.employees.findIndex(
+    (employee) => employee.id === id || employee.employee_id_number === id
+  );
+  if (index < 0) {
+    throw new Error("Employee not found.");
+  }
+
+  const updated = applyPayrollEmployeePatch(store.employees[index]!, patch);
   store.employees[index] = updated;
   await writePayrollEmployees(store);
   return updated;

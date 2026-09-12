@@ -20,6 +20,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       assigned_workstation_id?: string | null;
       is_mobile_floater?: boolean;
       job_functions?: unknown;
+      is_active?: boolean;
     };
 
     const assignedRaw = body.assigned_workstation_id;
@@ -35,7 +36,18 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       ...(body.assigned_workstation_id !== undefined ? { assigned_workstation_id } : {}),
       ...(body.is_mobile_floater !== undefined ? { is_mobile_floater: Boolean(body.is_mobile_floater) } : {}),
       ...(job_functions !== undefined ? { job_functions } : {}),
+      ...(body.is_active !== undefined ? { is_active: Boolean(body.is_active) } : {}),
     });
+
+    if (body.is_active !== undefined) {
+      await notifyIntegration("employee.updated", {
+        id: employee.id,
+        employee_id_number: employee.employee_id_number,
+        full_name: employee.full_name,
+        is_active: employee.is_active,
+        updated_by: session.email,
+      });
+    }
 
     if (job_functions !== undefined) {
       await notifyIntegration("employee.job_functions_updated", {
