@@ -5,7 +5,6 @@ import { Calculator, ChevronDown, ChevronRight } from "lucide-react";
 import { FactoryBrandTabs } from "@/components/brands/FactoryBrandTabs";
 import { DownloadCostHintPdfButton } from "@/components/costing/DownloadCostHintPdfButton";
 import { OrderCostDetailPanel } from "@/components/costing/OrderCostDetailPanel";
-import { COST_HINT_NAMED_CLIENT_KEYS } from "@/lib/costing/cost-hint-clients";
 import { costHintWorksheetQuery } from "@/lib/costing/cost-hint-worksheet-query";
 import {
   InvoiceAmountsRevealToggle,
@@ -237,10 +236,7 @@ export function CostingWorkspace({
             <p className="text-sm font-semibold text-amber-950">Print cost hints for offline work</p>
             <p className="mt-0.5 text-sm text-amber-900">
               Internal. Fabric cost, cost hint, and current unit price. Blank column to write your
-              selling price. Do not send to the client. Named download is one zip: each client gets
-              every sales order in one PDF. Pr Khaled has 7 orders (0111, 0113, 0116, 0121, 0123,
-              0131, 0133) in that file, plus one PDF per order, plus a PDF of lines with no fabric
-              price.
+              selling price. Do not send to the client.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -249,20 +245,6 @@ export function CostingWorkspace({
                 brandId,
                 includeArchived: showArchived,
               })}`}
-            />
-            <DownloadCostHintPdfButton
-              href={`/api/costing/hint-pdf${costHintWorksheetQuery({
-                clientTokens: COST_HINT_NAMED_CLIENT_KEYS,
-              })}`}
-              variant="primary"
-              label="Download Ibrahim, Mitwalli, Hicham, Al Sheikh, Pr Khaled"
-            />
-            <DownloadCostHintPdfButton
-              href={`/api/costing/hint-pdf${costHintWorksheetQuery({
-                clientTokens: ["khaled"],
-                missingPrices: true,
-              })}`}
-              label="Download Pr Khaled missing fabric prices"
             />
             <a
               href={`/costing/print${costHintWorksheetQuery({

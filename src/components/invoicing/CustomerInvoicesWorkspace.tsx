@@ -27,7 +27,6 @@ import { useFactoryBrandFilter } from "@/hooks/useFactoryBrandFilter";
 import { getFactoryBrands } from "@/lib/data/factory-brands";
 import { InvoiceableOrdersPanel } from "@/components/invoicing/InvoiceableOrdersPanel";
 import { DownloadCostHintPdfButton } from "@/components/costing/DownloadCostHintPdfButton";
-import { COST_HINT_NAMED_CLIENT_KEYS } from "@/lib/costing/cost-hint-clients";
 import { costHintWorksheetQuery } from "@/lib/costing/cost-hint-worksheet-query";
 import { RiyadhBankDetailsPdfLink } from "@/components/invoicing/RiyadhBankDetailsPdfLink";
 
@@ -191,20 +190,6 @@ export function CustomerInvoicesWorkspace({
                 <DownloadCostHintPdfButton
                   href={`/api/costing/hint-pdf${costHintWorksheetQuery({ brandId })}`}
                   label="Download cost hint PDF"
-                />
-                <DownloadCostHintPdfButton
-                  href={`/api/costing/hint-pdf${costHintWorksheetQuery({
-                    clientTokens: COST_HINT_NAMED_CLIENT_KEYS,
-                  })}`}
-                  variant="primary"
-                  label="Download Ibrahim, Mitwalli, Hicham, Al Sheikh, Pr Khaled"
-                />
-                <DownloadCostHintPdfButton
-                  href={`/api/costing/hint-pdf${costHintWorksheetQuery({
-                    clientTokens: ["khaled"],
-                    missingPrices: true,
-                  })}`}
-                  label="Download Pr Khaled missing fabric prices"
                 />
                 <a
                   href={`/costing/print${costHintWorksheetQuery({ brandId })}`}
