@@ -1,0 +1,21 @@
+{
+  "files.watcherExclude": {
+    "**/.next/**": true,
+    "**/node_modules/**": true,
+    "**/.git/objects/**": true,
+    "**/data/suppliers/*/images/**": true,
+    "**/data/suppliers/*/images-higher/**": true,
+    "**/data/suppliers/*/images-by-collection/**": true
+  },
+  "search.exclude": {
+    "**/.next": true,
+    "**/node_modules": true,
+    "**/package-lock.json": true,
+    "**/data/suppliers/*/images": true,
+    "**/data/suppliers/*/images-higher": true,
+    "**/data/suppliers/*/images-by-collection": true
+  },
+  "files.exclude": {
+    "**/.next/cache": true
+  }
+}
