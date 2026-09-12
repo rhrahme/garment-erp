@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { applyPayrollEmployeePatch } from "./payroll-employees.ts";
-import type { PayrollEmployee } from "../types/hr-payroll.ts";
+import { applyPayrollEmployeePatch } from "@/lib/data/payroll-employees";
+import type { PayrollEmployee } from "@/lib/types/hr-payroll";
 
 function employee(overrides: Partial<PayrollEmployee> = {}): PayrollEmployee {
   return {
