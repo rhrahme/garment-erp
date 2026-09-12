@@ -1,5 +1,5 @@
 import type { FabricSearchItem } from "@/lib/autosave/fabric-search-item";
-import { searchSupplierFabrics } from "@/lib/data/supplier-catalogs";
+import { findFabricByMillPatternCode, searchSupplierFabrics } from "@/lib/data/supplier-catalogs";
 import { getSupplierByIdFromContactsSync } from "@/lib/data/supplier-contacts";
 import { fabricNumberMatchesCatalogEntry } from "@/lib/fabric-sourcing/fabric-catalog-number-match";
 import {
@@ -102,6 +102,13 @@ function findExactCatalogMatch(supplierId: string, fabricNumber: string): Fabric
     fabricNumberMatchesCatalogEntry(lookupNumber, item.fabric_number)
   );
   if (inRange) return { ...inRange, fabric_number: trimmed };
+
+  // The cloth was written down with the mill's own pattern code while the price
+  // list files it under a bare number. Same cloth, two spellings, and the list
+  // states the pairing itself. Keep the number that was entered: it is already
+  // on the stickers and the supplier PO.
+  const byPattern = findFabricByMillPatternCode(canonicalId, trimmed);
+  if (byPattern) return { ...toSearchItem(byPattern, false), fabric_number: trimmed };
 
   return null;
 }

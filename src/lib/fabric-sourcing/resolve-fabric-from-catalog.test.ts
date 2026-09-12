@@ -66,3 +66,44 @@ describe("resolveFabricItemFromCatalog - catalog range rows", () => {
     assert.equal(item.composition, null);
   });
 });
+
+describe("resolveFabricItemFromCatalog - mill pattern codes", () => {
+  it("resolves a Canclini cloth written with the mill's pattern code", () => {
+    // The stock list files this cloth as "1422477-1" and records the mill's own
+    // "C11422477-1" beside it. Orders get written with the mill's spelling, so
+    // an exact-number lookup found nothing and the invoice printed blank.
+    const pattern = resolveFabricItemFromCatalog("canclini", "C11422477-1");
+    const bare = resolveFabricItemFromCatalog("canclini", "1422477-1");
+
+    assert.equal(pattern.manual, false, "C11422477-1 is 1422477-1");
+    assert.equal(pattern.composition, bare.composition);
+    assert.equal(pattern.unit_price, bare.unit_price);
+  });
+
+  it("keeps the pattern code on the number itself", () => {
+    // The stickers and the supplier PO already carry it as written.
+    assert.equal(
+      resolveFabricItemFromCatalog("canclini", "C11422477-1").fabric_number,
+      "C11422477-1"
+    );
+  });
+
+  it("leaves a contested pattern code to the row that owns the number", () => {
+    // Two Canclini rows describe themselves as C11422487-1, at 5.30 and 5.23,
+    // and one of them is also literally numbered C11422487-1. Choosing between
+    // those prices is not a lookup's decision, so the pattern index drops the
+    // code entirely and the row that owns the number outright is what answers.
+    const item = resolveFabricItemFromCatalog("canclini", "C11422487-1");
+
+    assert.equal(item.fabric_number, "C11422487-1");
+    assert.equal(item.unit_price, 5.23, "the row actually numbered C11422487-1");
+  });
+
+  it("does not invent a pattern match for an unknown code", () => {
+    const item = resolveFabricItemFromCatalog("canclini", "C19999999-1");
+
+    assert.equal(item.manual, true);
+    assert.equal(item.composition, null);
+    assert.equal(item.unit_price, null);
+  });
+});

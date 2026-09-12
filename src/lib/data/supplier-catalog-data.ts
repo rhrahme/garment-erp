@@ -320,6 +320,62 @@ export function supplierHasImportedCatalog(supplierId: string): boolean {
   return getFabricsBySupplierId(supplierId).length > 0;
 }
 
+/** The mill's own pattern code, where a price list records one beside the row. */
+function millPatternCode(description: string | null | undefined): string | null {
+  return /\bpattern\s+(\S+)/i.exec(description ?? "")?.[1] ?? null;
+}
+
+const millPatternIndexes = new Map<string, Map<string, SupplierFabric>>();
+
+/**
+ * Index of mill pattern code to catalog row.
+ *
+ * The Canclini stock list files a cloth under a bare number ("1422477-1")
+ * while the mill's own pattern code ("C11422477-1") is what gets written on
+ * an order, and the row's description records that code. So the two spellings
+ * are tied together by the price list itself, not by guesswork.
+ *
+ * A code only enters the index when exactly one row claims it and no row uses
+ * it as a literal fabric number. Two Canclini rows both describe themselves as
+ * "C11422487-1" at 5.30 and 5.23, and choosing between those is a pricing
+ * decision rather than a lookup. Ambiguous codes are left out, so they keep
+ * resolving to nothing and printing blank.
+ */
+function millPatternIndex(supplierId: string): Map<string, SupplierFabric> {
+  const canonicalId = resolveFabricSupplierId(supplierId);
+  const cached = millPatternIndexes.get(canonicalId);
+  if (cached) return cached;
+
+  const rows = getFabricsBySupplierId(canonicalId);
+  const literalNumbers = new Set(rows.map((row) => row.fabric_number.toUpperCase()));
+  const claims = new Map<string, SupplierFabric[]>();
+  for (const row of rows) {
+    const code = millPatternCode(row.description);
+    if (!code) continue;
+    const key = code.toUpperCase();
+    const bucket = claims.get(key) ?? [];
+    bucket.push(row);
+    claims.set(key, bucket);
+  }
+
+  const index = new Map<string, SupplierFabric>();
+  for (const [code, owners] of claims) {
+    if (owners.length === 1 && !literalNumbers.has(code)) index.set(code, owners[0]!);
+  }
+  millPatternIndexes.set(canonicalId, index);
+  return index;
+}
+
+/** Catalog row whose mill pattern code is exactly this, when only one row claims it. */
+export function findFabricByMillPatternCode(
+  supplierId: string,
+  code: string
+): SupplierFabric | null {
+  const trimmed = code.trim();
+  if (!trimmed) return null;
+  return millPatternIndex(supplierId).get(trimmed.toUpperCase()) ?? null;
+}
+
 export function searchSupplierFabrics(supplierId: string, query: string, limit: number): SupplierFabric[] {
   const canonicalId = resolveFabricSupplierId(supplierId);
   const items = getFabricsBySupplierId(canonicalId);
