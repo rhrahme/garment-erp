@@ -18,7 +18,10 @@ function formatSar(amount: number, showSalaries: boolean): string {
 }
 
 type EmployeePatch = Partial<
-  Pick<PayrollEmployee, "assigned_workstation_id" | "is_mobile_floater" | "job_functions">
+  Pick<
+    PayrollEmployee,
+    "assigned_workstation_id" | "is_mobile_floater" | "job_functions" | "is_active"
+  >
 >;
 
 async function patchEmployee(employeeId: string, patch: EmployeePatch): Promise<PayrollEmployee> {
@@ -86,6 +89,87 @@ function WorkstationEditor({
   );
 }
 
+function EmploymentEditor({
+  employee,
+  onUpdated,
+}: {
+  employee: PayrollEmployee;
+  onUpdated: (employee: PayrollEmployee) => void;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+
+  async function setActive(is_active: boolean) {
+    setSaving(true);
+    setError(null);
+    try {
+      onUpdated(await patchEmployee(employee.id, { is_active }));
+      setConfirming(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!employee.is_active) {
+    return (
+      <div className="space-y-1">
+        <span className="inline-flex rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+          Left
+        </span>
+        <button
+          type="button"
+          disabled={saving}
+          onClick={() => void setActive(true)}
+          className="block text-xs font-medium text-emerald-700 hover:underline disabled:opacity-50"
+        >
+          Reinstate
+        </button>
+        {error && <p className="text-xs text-red-600">{error}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-1">
+      {confirming ? (
+        <div className="space-y-1">
+          <p className="text-xs text-slate-600">Remove from the floor and payroll?</p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => void setActive(false)}
+              className="rounded bg-red-600 px-2 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Confirm"}
+            </button>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => setConfirming(false)}
+              className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          className="text-xs font-medium text-red-700 hover:underline"
+        >
+          Mark as left
+        </button>
+      )}
+      {error && <p className="text-xs text-red-600">{error}</p>}
+    </div>
+  );
+}
+
 export function PayrollWorkspace({
   employees: initialEmployees,
   summary,
@@ -99,6 +183,7 @@ export function PayrollWorkspace({
 }) {
   const [employees, setEmployees] = useState(initialEmployees);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showLeavers, setShowLeavers] = useState(false);
   const {
     visible: salariesVisible,
     unlock: unlockSalaries,
@@ -112,9 +197,13 @@ export function PayrollWorkspace({
    */
   const showSalaries = Boolean(salariesVisible);
 
+  const leaverCount = employees.filter((employee) => !employee.is_active).length;
+
   const filtered = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    const rows = sortPayrollEmployees(employees.filter((employee) => employee.is_active));
+    const rows = sortPayrollEmployees(
+      employees.filter((employee) => (showLeavers ? true : employee.is_active))
+    );
     if (!query) return rows;
     return rows.filter((employee) => {
       const fields = [
@@ -129,9 +218,12 @@ export function PayrollWorkspace({
       if (showSalaries) fields.push(employee.payment_description);
       return fields.join(" ").toLowerCase().includes(query);
     });
-  }, [employees, searchQuery, showSalaries]);
+  }, [employees, searchQuery, showSalaries, showLeavers]);
 
-  const filteredTotal = filtered.reduce((sum, employee) => sum + employee.salary_amount, 0);
+  // Leavers are off the payroll, so they must not move the total they are shown beside.
+  const filteredTotal = filtered
+    .filter((employee) => employee.is_active)
+    .reduce((sum, employee) => sum + employee.salary_amount, 0);
 
   function updateEmployee(updated: PayrollEmployee) {
     setEmployees((current) => current.map((row) => (row.id === updated.id ? updated : row)));
@@ -167,18 +259,30 @@ export function PayrollWorkspace({
             className="mt-1 block w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3"
           />
         </label>
-        <button
-          type="button"
-          onClick={handleSalaryToggle}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50"
-          title={showSalaries ? "Hide salaries" : "Show salaries"}
-          aria-label={showSalaries ? "Hide salaries" : "Show salaries"}
-          aria-pressed={showSalaries}
-          data-salaries-visible={showSalaries ? "1" : "0"}
-        >
-          {showSalaries ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          {showSalaries ? "Hide" : "Show"}
-        </button>
+        <div className="flex items-center gap-2">
+          {leaverCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowLeavers((current) => !current)}
+              className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50"
+              aria-pressed={showLeavers}
+            >
+              {showLeavers ? "Hide" : "Show"} {leaverCount} who left
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleSalaryToggle}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50"
+            title={showSalaries ? "Hide salaries" : "Show salaries"}
+            aria-label={showSalaries ? "Hide salaries" : "Show salaries"}
+            aria-pressed={showSalaries}
+            data-salaries-visible={showSalaries ? "1" : "0"}
+          >
+            {showSalaries ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {showSalaries ? "Hide" : "Show"}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -233,6 +337,7 @@ export function PayrollWorkspace({
                 <th className="px-4 py-3">Workstation</th>
                 <th className="px-4 py-3">Bank</th>
                 <th className="px-4 py-3">Account</th>
+                <th className="px-4 py-3">Employment</th>
                 {showSalaries ? (
                   <>
                     <th className="px-4 py-3">Basic</th>
@@ -246,9 +351,20 @@ export function PayrollWorkspace({
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.map((employee) => (
-                <tr key={employee.id} className="hover:bg-slate-50/60">
+                <tr
+                  key={employee.id}
+                  className={employee.is_active ? "hover:bg-slate-50/60" : "bg-slate-50/60 text-slate-400"}
+                >
                   <td className="px-4 py-3 text-slate-500">{employee.s_no}</td>
-                  <td className="px-4 py-3 font-medium text-slate-900">{employee.full_name}</td>
+                  <td
+                    className={
+                      employee.is_active
+                        ? "px-4 py-3 font-medium text-slate-900"
+                        : "px-4 py-3 font-medium text-slate-500 line-through"
+                    }
+                  >
+                    {employee.full_name}
+                  </td>
                   <td className="px-4 py-3 font-mono text-xs text-slate-600">{employee.employee_id_number}</td>
                   <td className="px-4 py-3">
                     <JobFunctionsEditor employee={employee} onUpdated={updateEmployee} />
@@ -259,6 +375,9 @@ export function PayrollWorkspace({
                   <td className="px-4 py-3 text-slate-600">{employee.bank_name}</td>
                   <td className="px-4 py-3 font-mono text-xs text-slate-500" title={employee.account_number}>
                     {maskAccountNumber(employee.account_number)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <EmploymentEditor employee={employee} onUpdated={updateEmployee} />
                   </td>
                   {showSalaries ? (
                     <>
@@ -282,7 +401,7 @@ export function PayrollWorkspace({
             </tbody>
             <tfoot>
               <tr className="border-t border-slate-200 bg-slate-50 font-medium">
-                <td className="px-4 py-3" colSpan={showSalaries ? 11 : 7}>
+                <td className="px-4 py-3" colSpan={showSalaries ? 12 : 8}>
                   {filtered.length} employee{filtered.length !== 1 ? "s" : ""} shown
                   {!showSalaries ? " (salaries hidden)" : ""}
                 </td>
