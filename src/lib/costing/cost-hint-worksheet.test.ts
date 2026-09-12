@@ -1314,3 +1314,145 @@ describe("cost hint worksheet - the price and length behind an invoice row", () 
     assert.doesNotMatch(worksheet.subtitle, /meters\/pc/);
   });
 });
+
+describe("cost hint worksheet - a consolidated invoice line and the cuts behind it", () => {
+  const ZEFIRO = "ZEFIRO 100% COTTON";
+
+  function shortCut(lineId: string, fabricNumber: string) {
+    return {
+      line_id: lineId,
+      article_number: Number(lineId.replace(/\D/g, "")),
+      fabric_number: fabricNumber,
+      // The order files every Solbiati cloth under Loro Piana; the invoice
+      // prints "Solbiati". That disagreement is the whole point of the fixture.
+      supplier_id: "loro-piana",
+      supplier_name: "Loro Piana",
+      garment_type: "Short",
+      composition: ZEFIRO,
+      weight_gsm: 240,
+      width_label: "150 cm",
+      color: null,
+      meters: 1,
+      unit: "meters",
+      unit_price: 60,
+      supplier_line_total: 60,
+      fabric_base_sar: 253.5,
+      customs_duty_sar: 12.68,
+      import_vat_sar: 0,
+      vat_recoverable_sar: 0,
+      fabric_cash_outlay_sar: 0,
+      fabric_cost_sar: 266.18,
+      labor_cost_sar: 150,
+      washing_cost_sar: 40,
+      overhead_cost_sar: 22.05,
+      total_cost_sar: 478.23,
+      has_fabric_price: true,
+    };
+  }
+
+  function orderCostOf(lines: ReturnType<typeof shortCut>[]) {
+    return {
+      order_id: "so-119",
+      so_number: "SO-2026-0119",
+      client_name: "Abdelaziz Mohamad Al Ajlan",
+      client_code: "FR-0726-0039",
+      client_reference: null,
+      product_article: null,
+      order_date: "2026-07-08",
+      status: "fabric_pos_created",
+      is_archived: false,
+      line_count: lines.length,
+      lines_missing_price: 0,
+      fabric_base_sar: 253.5 * lines.length,
+      customs_duty_sar: 12.68 * lines.length,
+      import_vat_sar: 0,
+      vat_recoverable_sar: 0,
+      fabric_cash_outlay_sar: 0,
+      fabric_cost_sar: 266.18 * lines.length,
+      labor_cost_sar: 150 * lines.length,
+      washing_cost_sar: 40 * lines.length,
+      overhead_cost_sar: 22.05 * lines.length,
+      total_cost_sar: 478.23 * lines.length,
+      lines,
+    } as unknown as SalesOrderCost;
+  }
+
+  function salesOrderOf(lineIds: string[]) {
+    return {
+      id: "so-119",
+      so_number: "SO-2026-0119",
+      client_code: "FR-0726-0039",
+      fabric_lines: lineIds.map((id) => ({
+        id,
+        label_count: 1,
+        label_stickers: [{ code: id, piece_name: "Short", sequence: 1 }],
+      })),
+    } as unknown as SalesOrder;
+  }
+
+  function invoiceBillingShorts(quantity: number) {
+    return {
+      invoice_number: "INV-2026-0007",
+      invoice_date: "2026-07-08",
+      so_number: "SO-2026-0119",
+      lines: [
+        {
+          sales_order_line_id: "line-1",
+          garment_type: "Short",
+          fabric_number: "S10005",
+          fabric_brand: "Solbiati",
+          composition: ZEFIRO,
+          weight_gsm: 240,
+          quantity,
+          unit_price: 2800,
+        },
+      ],
+    } as unknown as CustomerInvoice;
+  }
+
+  function worksheetFor(cutCount: number, billedQuantity: number) {
+    const numbers = ["S10005", "S10009", "S10012", "S10015"].slice(0, cutCount);
+    const lines = numbers.map((fabricNumber, index) => shortCut(`line-${index + 1}`, fabricNumber));
+    return buildCostHintWorksheet({
+      overview: overviewOf(orderCostOf(lines)),
+      salesOrders: [salesOrderOf(lines.map((line) => line.line_id))],
+      invoices: [invoiceBillingShorts(billedQuantity)],
+      generatedAt: "2026-09-12T12:00:00.000Z",
+    });
+  }
+
+  it("carries the quoted price onto every cut the line bills", () => {
+    const worksheet = worksheetFor(3, 3);
+    assert.equal(worksheet.rows.length, 1, "three identically priced cuts are one row");
+    assert.equal(worksheet.rows[0]?.unit_price_sar, 2800);
+    assert.equal(worksheet.rows[0]?.fabric_number, "S10005, S10009, S10012");
+  });
+
+  it("moves the billed quantity onto the cuts instead of counting it twice", () => {
+    const worksheet = worksheetFor(3, 3);
+    const total = worksheet.rows.reduce((sum, row) => sum + row.quantity, 0);
+    assert.equal(total, 3, "three shorts were cut, so the sheet must show three");
+  });
+
+  it("leaves a cut blank when the invoice has no quantity left for it", () => {
+    const worksheet = worksheetFor(4, 3);
+    const billed = worksheet.rows.filter((row) => row.unit_price_sar != null);
+    const unbilled = worksheet.rows.filter((row) => row.unit_price_sar == null);
+    assert.equal(billed.reduce((sum, row) => sum + row.quantity, 0), 3);
+    assert.equal(unbilled.reduce((sum, row) => sum + row.quantity, 0), 1);
+    assert.equal(unbilled[0]?.fabric_number, "S10015", "the cut nobody paid for stays visible");
+  });
+
+  it("will not hand a price to a different garment of the same cloth", () => {
+    const lines = [shortCut("line-1", "S10005"), shortCut("line-2", "S10009")];
+    lines[1]!.garment_type = "Trouser";
+    const worksheet = buildCostHintWorksheet({
+      overview: overviewOf(orderCostOf(lines)),
+      salesOrders: [salesOrderOf(["line-1", "line-2"])],
+      invoices: [invoiceBillingShorts(2)],
+      generatedAt: "2026-09-12T12:00:00.000Z",
+    });
+    const trouser = worksheet.rows.find((row) => row.garment === "Trouser");
+    assert.equal(trouser?.unit_price_sar, null, "a Short's price is not a Trouser's price");
+  });
+});

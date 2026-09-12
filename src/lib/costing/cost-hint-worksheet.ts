@@ -721,11 +721,92 @@ function matchesBrand(clientCode: string, brandId: string | null | undefined): b
   return clientCode.startsWith(`${prefix}-`) || clientCode === prefix;
 }
 
-export function sellingPriceByFabricLineId(invoices: CustomerInvoice[]): Map<
-  string,
-  { invoice_number: string; unit_price_sar: number; quantity: number }
-> {
-  const map = new Map<string, { invoice_number: string; unit_price_sar: number; quantity: number }>();
+export type CostHintSellingPrice = {
+  invoice_number: string;
+  unit_price_sar: number;
+  quantity: number;
+};
+
+/**
+ * Same sales order, garment, fibre and weight.
+ *
+ * This is the rule the invoice merged its own lines with, minus the mill. The
+ * mill has to go: a sales order records every Solbiati cloth under the
+ * `loro-piana` supplier id while the invoice prints "Solbiati" beside it, so
+ * including it would fail on precisely the consolidated lines this exists to
+ * match. Garment, fibre and weight inside one order is a tight enough key, and
+ * nothing is claimed beyond the quantity the invoice actually billed.
+ */
+function consolidatedSellingKey(input: {
+  garment_type: string;
+  composition?: string | null;
+  weight_gsm?: number | null;
+}): string | null {
+  const garment = input.garment_type?.trim().toLowerCase();
+  const fibre = costHintFibreKey(input.composition);
+  const weight = costHintWeightKey(input.weight_gsm);
+  if (!garment || !fibre || !weight) return null;
+  return `${garment}|${fibre}|${weight}`;
+}
+
+/**
+ * Give a consolidated invoice line's price to every cut it bills.
+ *
+ * When several cuts merge into one invoice article - six trousers of one fibre
+ * and weight billed as a single row - only the first keeps a
+ * `sales_order_line_id`. The rest printed a blank selling price beside a real
+ * cost, as if they had never been charged for, while the one matched row claimed
+ * the whole invoiced quantity and its siblings still counted themselves, so the
+ * sheet showed eleven trousers where six were cut.
+ *
+ * The quantity is moved, not invented: whatever is handed to the siblings is
+ * taken off the matched row, so the six stay six. Cuts the invoice has no
+ * quantity left for keep their blank, which is how a garment that was made and
+ * never billed stays visible.
+ */
+export function spreadConsolidatedSellingPrices(
+  invoices: CustomerInvoice[],
+  orders: SalesOrderCost[],
+  selling: Map<string, CostHintSellingPrice>
+): void {
+  const orderBySoNumber = new Map(orders.map((order) => [order.so_number, order]));
+
+  for (const invoice of invoices) {
+    const order = orderBySoNumber.get(invoice.so_number ?? "");
+    if (!order) continue;
+
+    for (const line of invoice.lines ?? []) {
+      const billed = Math.round(line.quantity);
+      if (!Number.isFinite(billed) || billed <= 1) continue;
+      const key = consolidatedSellingKey(line);
+      if (!key) continue;
+
+      const unclaimed = order.lines.filter(
+        (cost) => !selling.has(cost.line_id) && consolidatedSellingKey(cost) === key
+      );
+      const claimed = unclaimed.slice(0, billed - 1);
+      if (claimed.length === 0) continue;
+
+      for (const cost of claimed) {
+        selling.set(cost.line_id, {
+          invoice_number: invoice.invoice_number,
+          unit_price_sar: line.unit_price,
+          quantity: 1,
+        });
+      }
+
+      const matched = line.sales_order_line_id ? selling.get(line.sales_order_line_id) : undefined;
+      if (matched && matched.invoice_number === invoice.invoice_number) {
+        matched.quantity = billed - claimed.length;
+      }
+    }
+  }
+}
+
+export function sellingPriceByFabricLineId(
+  invoices: CustomerInvoice[]
+): Map<string, CostHintSellingPrice> {
+  const map = new Map<string, CostHintSellingPrice>();
   const newestFirst = [...invoices].sort((a, b) =>
     (b.invoice_date || "").localeCompare(a.invoice_date || "")
   );
@@ -815,6 +896,7 @@ export function buildCostHintWorksheet(options: {
 }): CostHintWorksheet {
   const soById = new Map(options.salesOrders.map((order) => [order.id, order]));
   const selling = sellingPriceByFabricLineId(options.invoices ?? []);
+  spreadConsolidatedSellingPrices(options.invoices ?? [], options.overview.orders, selling);
   const soFilter = options.soNumber?.trim().toUpperCase() ?? "";
   const clientTokens = options.clientTokens ?? [];
   const namedClients = clientTokens.length > 0;
