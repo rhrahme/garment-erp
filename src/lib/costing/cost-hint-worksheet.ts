@@ -11,8 +11,13 @@ import { formatFabricSupplierName } from "@/lib/fabric-sourcing/supplier-display
 import { formatInvoiceFibreContent } from "@/lib/invoicing/display";
 import { buildDownloadFilename } from "@/lib/pdf/download-filename";
 import { getLabelCountForGarment, GARMENT_STITCH_TYPES } from "@/lib/sales-orders/garment-types";
-import { getGarmentPieces, pieceNamesFromInvoicePieceField } from "@/lib/sales-orders/label-codes";
-import type { CustomerInvoice } from "@/lib/types/customer-invoices";
+import {
+  getGarmentPieces,
+  lineArticleFromStickerCode,
+  pieceNamesFromInvoicePieceField,
+  soArticleFromFabricLine,
+} from "@/lib/sales-orders/label-codes";
+import type { CustomerInvoice, CustomerInvoiceLine } from "@/lib/types/customer-invoices";
 import type { SalesOrder, SalesOrderFabricLine } from "@/lib/types/sales-orders";
 
 const MILL_LABEL_TO_SUPPLIER_ID: Record<string, string> = {
@@ -133,6 +138,12 @@ export type CostHintWorksheet = {
   rows: CostHintWorksheetRow[];
   missing_price_count: number;
   article_summary?: string;
+  /**
+   * What the length column counts. The sitewide sheet reports one piece of a
+   * garment; the per-invoice sheet reports a whole billed article, because that
+   * is the unit its fabric cost is stated in.
+   */
+  meters_column_header?: string;
 };
 
 export function articleLabelFromNumber(articleNumber: number): string {
@@ -854,6 +865,54 @@ export function buildCostHintWorksheet(options: {
   });
 }
 
+/**
+ * The order line a cost hint row is priced from.
+ *
+ * Not every invoice line carries `sales_order_line_id`: older lines were matched
+ * by the sticker printed on the cut and never had the id written back. Those
+ * rows still have a real fabric line behind them, and without it the sheet loses
+ * both the mill price and the length.
+ *
+ * The basis columns have to multiply out to the row's own fabric cost, so this
+ * only accepts a line identified beyond doubt - the stored link, the sticker, or
+ * the article that sticker names - and takes a fabric number only when a single
+ * line carries it. It stops short of matching on garment type: every Trouser
+ * line would satisfy that, and quoting one cloth's price beside another cloth's
+ * cost is worse than leaving the cell blank.
+ */
+function findCostHintFabricLine(
+  invoiceLine: CustomerInvoiceLine,
+  orders: SalesOrder[],
+  fabricById: Map<string, SalesOrderFabricLine>
+): SalesOrderFabricLine | undefined {
+  if (invoiceLine.sales_order_line_id) {
+    const byId = fabricById.get(invoiceLine.sales_order_line_id);
+    if (byId) return byId;
+  }
+
+  const allLines = orders.flatMap((order) => order.fabric_lines ?? []);
+
+  if (invoiceLine.sticker_code) {
+    const bySticker = allLines.find((line) =>
+      line.label_stickers?.some((sticker) => sticker.code === invoiceLine.sticker_code)
+    );
+    if (bySticker) return bySticker;
+
+    const article = lineArticleFromStickerCode(invoiceLine.sticker_code);
+    if (article != null) {
+      const byArticle = allLines.filter((line) => soArticleFromFabricLine(line) === article);
+      if (byArticle.length === 1) return byArticle[0];
+    }
+  }
+
+  if (invoiceLine.fabric_number) {
+    const byFabric = allLines.filter((line) => line.fabric_number === invoiceLine.fabric_number);
+    if (byFabric.length === 1) return byFabric[0];
+  }
+
+  return undefined;
+}
+
 export function buildCostHintWorksheetFromInvoice(options: {
   invoice: CustomerInvoice;
   /** Every order the invoice covers - a combined invoice spans several. */
@@ -877,7 +936,7 @@ export function buildCostHintWorksheetFromInvoice(options: {
     )
   );
   const rows: CostHintWorksheetRow[] = (options.invoice.lines ?? []).map((line, index) => {
-    const fabricLine = line.sales_order_line_id ? fabricById.get(line.sales_order_line_id) : undefined;
+    const fabricLine = findCostHintFabricLine(line, coveredOrders, fabricById);
     const fabricNumber = line.fabric_number ?? fabricLine?.fabric_number ?? "";
     const details = fillFabricDetails({
       supplier_id: fabricLine?.supplier_id ?? null,
@@ -891,17 +950,20 @@ export function buildCostHintWorksheetFromInvoice(options: {
       weight_gsm: line.weight_gsm ?? fabricLine?.weight_gsm ?? null,
       color: fabricLine?.color ?? null,
     });
+    const basisKey = fabricLine?.id ?? line.sales_order_line_id ?? null;
     const basis =
-      (line.sales_order_line_id
-        ? options.fabricBasisByLineId?.get(line.sales_order_line_id)
-        : undefined) ??
+      (basisKey ? options.fabricBasisByLineId?.get(basisKey) : undefined) ??
       (fabricLine
         ? costHintFabricBasis({
             unit_price: fabricLine.unit_price,
             supplier_id: fabricLine.supplier_id,
             meters: fabricLine.quantity,
             unit: fabricLine.unit,
-            pieces: pieceCountForFabricLine(fabricLine),
+            // A row here is one article the client is billed for, and its fabric
+            // cost is the whole line, not a share of it. A Shirt+Trouser costs
+            // its 2.7 m, so 2.7 m is what has to sit beside that cost. The
+            // sitewide sheet divides both by piece count instead.
+            pieces: 1,
           })
         : { price_per_meter_sar: null, meters_per_piece: null });
     return {
@@ -932,10 +994,11 @@ export function buildCostHintWorksheetFromInvoice(options: {
 
   return attachArticleSummary({
     title: "Cost hint worksheet",
-    subtitle: `Internal. Do not send to the client. ${options.invoice.invoice_number} / ${options.invoice.so_number}. SAR/m x meters/pc + 5% duty = fabric cost. Cost hint = fabric cost + make, per piece. VAT excluded.`,
+    subtitle: `Internal. Do not send to the client. ${options.invoice.invoice_number} / ${options.invoice.so_number}. SAR/m x meters + 5% duty on imported cloth = fabric cost. Cost hint = fabric cost + make, per article. VAT excluded.`,
     generated_at: options.generatedAt ?? new Date().toISOString(),
     rows: combinedRows,
     missing_price_count: combinedRows.filter((row) => row.missing_price).length,
+    meters_column_header: "Meters",
   });
 }
 

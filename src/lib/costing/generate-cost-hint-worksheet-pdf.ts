@@ -131,7 +131,7 @@ export async function generateCostHintWorksheetPdf(worksheet: CostHintWorksheet)
       value: (row) => money(row.price_per_meter_sar),
     },
     {
-      header: "Meters/pc",
+      header: worksheet.meters_column_header ?? "Meters/pc",
       style: { cellWidth: 42, halign: "right" },
       value: (row) => formatCostHintMeters(row.meters_per_piece),
     },

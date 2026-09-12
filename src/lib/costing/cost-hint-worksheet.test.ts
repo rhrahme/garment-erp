@@ -1141,3 +1141,176 @@ describe("cost hint fabric basis", () => {
     assert.notEqual(real5, real6, "the true catalog specs can never merge");
   });
 });
+
+describe("cost hint worksheet - the price and length behind an invoice row", () => {
+  function invoiceOf(lines: Record<string, unknown>[]): CustomerInvoice {
+    return {
+      invoice_number: "INV-2026-0099",
+      so_number: "SO-2026-0099",
+      client_name: "Turki Al Luwaihiq",
+      client_code: "FR-0826-0044",
+      lines,
+    } as CustomerInvoice;
+  }
+
+  function orderOf(fabricLines: Record<string, unknown>[]): SalesOrder {
+    return { id: "so-99", so_number: "SO-2026-0099", fabric_lines: fabricLines } as SalesOrder;
+  }
+
+  const shirtTrouser = {
+    id: "line-st",
+    supplier_id: "loro-piana",
+    supplier_name: "Loro Piana",
+    fabric_number: "771023",
+    unit: "meters",
+    quantity: 2.7,
+    label_count: 2,
+    label_stickers: [
+      { code: "FR-0826-0044-SO-2026-0099-L01-SHT-LS", piece_name: "Shirt", sequence: 1 },
+      { code: "FR-0826-0044-SO-2026-0099-L01-TR", piece_name: "Trouser", sequence: 2 },
+    ],
+  };
+
+  it("quotes the whole article's meters, not a share of them", () => {
+    // A Shirt+Trouser is billed as one article and carries the fabric cost of
+    // all 2.7 m. Halving the length to 1.35 left the sheet stating a price and
+    // a length that reached half its own fabric cost. That shipped.
+    const worksheet = buildCostHintWorksheetFromInvoice({
+      invoice: invoiceOf([
+        {
+          article_number: 1,
+          garment_type: "Shirt+Trouser",
+          description: "Shirt+Trouser",
+          fabric_number: "771023",
+          quantity: 1,
+          unit_price: 6100,
+          fabric_cost_hint_sar: 1390.57,
+          cost_hint_sar: 1840.57,
+          sales_order_line_id: "line-st",
+        },
+      ]),
+      // No basis map, so this exercises the sheet's own reading of the line.
+      salesOrder: orderOf([{ ...shirtTrouser, unit_price: 109 }]),
+    });
+
+    assert.equal(worksheet.rows[0]?.meters_per_piece, 2.7, "2.7 m of cloth, one article, one length");
+    assert.notEqual(worksheet.rows[0]?.meters_per_piece, 1.35, "halving by piece count is what shipped");
+  });
+
+  it("reconciles the price and length against the cost printed beside them", () => {
+    const worksheet = buildCostHintWorksheetFromInvoice({
+      invoice: invoiceOf([
+        {
+          article_number: 1,
+          garment_type: "Shirt+Trouser",
+          description: "Shirt+Trouser",
+          fabric_number: "771023",
+          quantity: 1,
+          unit_price: 6100,
+          fabric_cost_hint_sar: 1390.57,
+          cost_hint_sar: 1840.57,
+          sales_order_line_id: "line-st",
+        },
+      ]),
+      salesOrder: orderOf([shirtTrouser]),
+      fabricBasisByLineId: new Map([["line-st", { price_per_meter_sar: 490.5, meters_per_piece: 2.7 }]]),
+    });
+
+    const row = worksheet.rows[0];
+    assert.equal(
+      Math.round(row!.price_per_meter_sar! * row!.meters_per_piece! * 1.05 * 100) / 100,
+      row?.fabric_cost_sar,
+      "price x length + duty has to reach the fabric cost printed beside it"
+    );
+  });
+
+  it("still finds the cloth when the line was matched by its sticker", () => {
+    // Older invoice lines were matched by the sticker printed on the cut and
+    // never had sales_order_line_id written back. Looking up by that id alone
+    // left both columns blank on rows that have a perfectly good fabric line.
+    const worksheet = buildCostHintWorksheetFromInvoice({
+      invoice: invoiceOf([
+        {
+          article_number: 1,
+          garment_type: "Shirt+Trouser",
+          description: "Shirt+Trouser",
+          fabric_number: "771023",
+          sticker_code: "FR-0826-0044-SO-2026-0099-L01-TR",
+          sales_order_line_id: null,
+          quantity: 1,
+          unit_price: 6100,
+          fabric_cost_hint_sar: 1390.57,
+          cost_hint_sar: 1840.57,
+        },
+      ]),
+      salesOrder: orderOf([shirtTrouser]),
+      fabricBasisByLineId: new Map([["line-st", { price_per_meter_sar: 490.5, meters_per_piece: 2.7 }]]),
+    });
+
+    assert.equal(worksheet.rows[0]?.price_per_meter_sar, 490.5);
+    assert.equal(worksheet.rows[0]?.meters_per_piece, 2.7);
+  });
+
+  it("will not pick a fabric line on garment type alone", () => {
+    // Every Trouser on the order would satisfy a garment-type match. Quoting
+    // one cloth's price beside another cloth's cost is worse than a blank cell.
+    const worksheet = buildCostHintWorksheetFromInvoice({
+      invoice: invoiceOf([
+        {
+          article_number: 1,
+          garment_type: "Trouser",
+          description: "Trouser",
+          fabric_number: null,
+          sticker_code: null,
+          sales_order_line_id: null,
+          quantity: 1,
+          unit_price: 3000,
+          fabric_cost_hint_sar: null,
+          cost_hint_sar: null,
+        },
+      ]),
+      salesOrder: orderOf([
+        { ...shirtTrouser, id: "line-a", garment_type: "Trouser", fabric_number: "26130" },
+        { ...shirtTrouser, id: "line-b", garment_type: "Trouser", fabric_number: "26136" },
+      ]),
+    });
+
+    assert.equal(worksheet.rows[0]?.price_per_meter_sar, null);
+    assert.equal(worksheet.rows[0]?.meters_per_piece, null);
+  });
+
+  it("will not choose between two lines sharing one fabric number", () => {
+    const worksheet = buildCostHintWorksheetFromInvoice({
+      invoice: invoiceOf([
+        {
+          article_number: 1,
+          garment_type: "Trouser",
+          description: "Trouser",
+          fabric_number: "26136",
+          sticker_code: null,
+          sales_order_line_id: null,
+          quantity: 1,
+          unit_price: 2000,
+          fabric_cost_hint_sar: null,
+          cost_hint_sar: null,
+        },
+      ]),
+      salesOrder: orderOf([
+        { ...shirtTrouser, id: "line-a", fabric_number: "26136", quantity: 1.2, label_stickers: [] },
+        { ...shirtTrouser, id: "line-b", fabric_number: "26136", quantity: 3.4, label_stickers: [] },
+      ]),
+    });
+
+    assert.equal(worksheet.rows[0]?.meters_per_piece, null, "1.2 and 3.4 are not the same length");
+  });
+
+  it("labels the length column for the unit the invoice sheet counts in", () => {
+    const worksheet = buildCostHintWorksheetFromInvoice({
+      invoice: invoiceOf([]),
+      salesOrder: orderOf([]),
+    });
+    assert.equal(worksheet.meters_column_header, "Meters");
+    assert.match(worksheet.subtitle, /SAR\/m x meters \+ 5% duty on imported cloth = fabric cost/);
+    assert.doesNotMatch(worksheet.subtitle, /meters\/pc/);
+  });
+});

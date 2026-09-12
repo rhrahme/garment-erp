@@ -110,7 +110,9 @@ export function CostHintWorksheetView({
             <th className="border border-slate-300 px-2 py-1.5 text-right">Weight</th>
             <th className="border border-slate-300 px-2 py-1.5 text-right">Qty</th>
             <th className="border border-slate-300 px-2 py-1.5 text-right">SAR/m</th>
-            <th className="border border-slate-300 px-2 py-1.5 text-right">Meters/pc</th>
+            <th className="border border-slate-300 px-2 py-1.5 text-right">
+              {worksheet.meters_column_header ?? "Meters/pc"}
+            </th>
             <th className="border border-slate-300 px-2 py-1.5 text-right">Fabric cost</th>
             <th className="border border-slate-300 px-2 py-1.5 text-right">Cost hint</th>
             <th className="border border-slate-300 px-2 py-1.5 text-right">Unit price</th>

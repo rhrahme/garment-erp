@@ -3,7 +3,6 @@ import {
   buildCostHintWorksheet,
   buildCostHintWorksheetFromInvoice,
   costHintFabricBasis,
-  pieceCountForFabricLine,
   type CostHintFabricBasis,
   type CostHintWorksheet,
 } from "@/lib/costing/cost-hint-worksheet";
@@ -18,13 +17,14 @@ import type { SalesOrder } from "@/lib/types/sales-orders";
  * Cloth price and meters per fabric line, resolved through the costing layer so
  * the supplier catalog fallback applies. Most fabric lines store `unit_price: 0`
  * and the real price lives in the catalog.
+ *
+ * Meters are the whole line, undivided. This map feeds the per-invoice sheet
+ * only, where a row is one billed article carrying its full fabric cost, so the
+ * price and the length beside it have to multiply out to that cost.
  */
 function fabricBasisByLineId(orders: SalesOrder[]): Map<string, CostHintFabricBasis> {
   const basis = new Map<string, CostHintFabricBasis>();
   for (const order of orders) {
-    const pieceCountByLineId = new Map(
-      order.fabric_lines.map((line) => [line.id, pieceCountForFabricLine(line)] as const)
-    );
     for (const line of getSalesOrderCost(order).lines) {
       basis.set(
         line.line_id,
@@ -33,7 +33,7 @@ function fabricBasisByLineId(orders: SalesOrder[]): Map<string, CostHintFabricBa
           supplier_id: line.supplier_id,
           meters: line.meters,
           unit: line.unit,
-          pieces: pieceCountByLineId.get(line.line_id) ?? 1,
+          pieces: 1,
         })
       );
     }
