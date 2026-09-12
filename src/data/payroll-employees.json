@@ -753,7 +753,7 @@
       "bank_name": "Arab National Bank",
       "deduction": 0,
       "full_name": "MOHAMMED SOBHAN SOBAN BABRI BAPARY",
-      "is_active": true,
+      "is_active": false,
       "short_name": "Ab Sobhan",
       "basic_salary": 3500,
       "job_functions": [
