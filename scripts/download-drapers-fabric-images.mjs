@@ -52,6 +52,7 @@ function parseArgs(argv) {
     delayMsExplicit: false,
     byCollection: false,
     retryFailed: false,
+    plan: false,
   };
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
@@ -59,6 +60,7 @@ function parseArgs(argv) {
     else if (arg === "--all") args.all = true;
     else if (arg === "--quality" && argv[i + 1]) args.quality = argv[++i];
     else if (arg === "--best") args.quality = "best";
+    else if (arg === "--plan") args.plan = true;
     else if (arg === "--by-collection") args.byCollection = true;
     else if (arg === "--retry-failed") args.retryFailed = true;
     else if (arg === "--out" && argv[i + 1]) args.out = resolve(ROOT, argv[++i]);
@@ -79,6 +81,7 @@ Options:
   --codes A,B,C   Specific fabric numbers instead of catalog order
   --delay-ms N    Pause between API calls (default: 200; 500 when --retry-failed)
   --retry-failed  Re-download only failed/missing items from existing manifest.json
+  --plan          Print the folder plan and exit. Downloads nothing, needs no API key.
 `);
       process.exit(0);
     }
@@ -262,6 +265,11 @@ function collectionSlug(collection) {
   name = name.replace(/^[A-Z]{2}\d{2}\s*-\s*/i, "");
   name = name.toLowerCase().replace(/&/g, " ");
   name = name.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").replace(/-+/g, "-");
+  // Drapers writes one bunch two ways - "AI25 - SUPERBIO & BEAUSOLEIL" and
+  // "Superbio and Beausoleil", "AI20 - EARTH WIND & FIRE" and "EARTH WIND AND
+  // FIRE". Left alone that is one bunch in two folders, which is exactly what
+  // someone opening the folder is not expecting.
+  name = name.replace(/(?:^|-)and(?=-|$)/g, "").replace(/-+/g, "-").replace(/^-+|-+$/g, "");
   return name || "uncategorized";
 }
 
@@ -326,6 +334,45 @@ const args = parseArgs(process.argv);
 if (!args.retryFailed && !existsSync(CATALOG_PATH) && !args.codes) {
   console.error(`Catalog not found: ${CATALOG_PATH}`);
   process.exit(1);
+}
+
+if (args.plan) {
+  const fabrics = loadCatalogFabrics(args.codes);
+  const folders = new Map();
+  for (const fabric of fabrics) {
+    const slug = collectionSlug(fabric.collection);
+    const entry = folders.get(slug) ?? { count: 0, names: new Set() };
+    entry.count += 1;
+    entry.names.add(fabric.collection ?? "(none)");
+    folders.set(slug, entry);
+  }
+
+  console.log(`Drapers folder plan - nothing is downloaded\n`);
+  console.log(`  Output:  ${args.out}`);
+  console.log(`  Quality: ${args.quality}`);
+  console.log(`  ${fabrics.length} fabrics across ${folders.size} folders\n`);
+  for (const [slug, entry] of [...folders].sort((a, b) => b[1].count - a[1].count)) {
+    console.log(`  ${String(entry.count).padStart(4)}  ${slug}/`);
+  }
+
+  // The last run recorded the byte size of every image it kept, which is the
+  // only honest basis for telling someone how much disk this will want.
+  const priorPath = resolve(args.out, "manifest.json");
+  if (existsSync(priorPath)) {
+    const prior = JSON.parse(readFileSync(priorPath, "utf8"));
+    const sized = (prior.items ?? []).filter((item) => item.ok && item.bytes);
+    if (sized.length) {
+      const total = sized.reduce((sum, item) => sum + item.bytes, 0);
+      const perFabric = total / sized.length;
+      const projected = (perFabric * fabrics.length) / 1024 / 1024 / 1024;
+      console.log(
+        `\n  Last run kept ${sized.length} images averaging ${Math.round(perFabric / 1024)} KB.`
+      );
+      console.log(`  Expect roughly ${projected.toFixed(1)} GB for ${fabrics.length} fabrics.`);
+    }
+  }
+  console.log(`\n  Fetches: about ${fabrics.length * (args.quality === "best" ? 4 : 2)} HTTP calls at ${args.delayMs}ms apart.`);
+  process.exit(0);
 }
 
 mkdirSync(args.out, { recursive: true });
@@ -558,6 +605,18 @@ manifest.summary = {
   collection_folders: args.byCollection ? Object.keys(manifest.collections).sort() : undefined,
 };
 const manifestPath = resolve(args.out, "manifest.json");
+// A run that saved nothing must not erase the record of a run that did. The
+// images are gitignored, so this manifest is the only tracked memory of what
+// was ever downloaded - and a missing API key fails every single fabric.
+if (finalOk === 0 && existsSync(manifestPath)) {
+  const prior = JSON.parse(readFileSync(manifestPath, "utf8"));
+  if ((prior.summary?.ok ?? 0) > 0) {
+    console.error(
+      `\nNothing downloaded. Keeping the existing manifest (${prior.summary.ok} ok from ${prior.downloaded_at}) rather than overwriting it with ${finalFailed} failure${finalFailed === 1 ? "" : "s"}.`
+    );
+    process.exit(1);
+  }
+}
 writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 
 if (args.retryFailed) {
